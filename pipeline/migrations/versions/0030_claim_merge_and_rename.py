@@ -3,6 +3,10 @@
 Revision ID: 0030
 Revises: 0028
 
+Additive only: two nullable columns on `claim` and one new, empty table. It changes and
+backfills no existing row. The pipeline image runs `alembic upgrade head` when it
+starts, so it is applied by the next `docker compose up` after it is merged.
+
 Numbered 0030 because pull request 269 (`0029_lookup_indexes_and_link_lead_checks`) was
 open with 0029 when this was written, and two migrations with one number cannot both be
 recorded. Both revise 0028. Whichever of the two is merged second must change its
@@ -13,6 +17,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 revision: str = "0030"
 down_revision: str | None = "0028"
@@ -60,6 +65,32 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("decided_at", TIMESTAMP, nullable=False),
+        sa.Column("record", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("undone_at", TIMESTAMP, nullable=True),
+        sa.Column(
+            "undone_by",
+            sa.Enum(
+                "human",
+                "rule",
+                "seed",
+                "assistant",
+                name="undone_by",
+                native_enum=False,
+                create_constraint=True,
+                length=32,
+            ),
+            nullable=True,
+        ),
+        sa.Column("undone_reason", sa.Text(), nullable=True),
+        sa.CheckConstraint(
+            "(kind = 'merge') = (record IS NOT NULL)",
+            name=op.f("ck_claim_change_merge_has_record"),
+        ),
+        sa.CheckConstraint(
+            "(undone_at IS NULL) = (undone_by IS NULL) AND (undone_at IS NULL OR kind = 'merge')"
+            " AND (undone_by IS NULL OR undone_by IN ('human', 'assistant'))",
+            name=op.f("ck_claim_change_undone_is_recorded"),
+        ),
         sa.CheckConstraint("kind IN ('merge', 'rename')", name=op.f("ck_claim_change_kind_known")),
         sa.CheckConstraint(
             "decided_by IN ('human', 'assistant')",

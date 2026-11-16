@@ -9,7 +9,7 @@ from typing import Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.corrections import merge_claims
+from thenwhat.claims.corrections import SAME_BY_DECISION, merge_claims, unmerge_claim
 from thenwhat.claims.csv_import import CsvErrors, import_csv
 from thenwhat.claims.entry import (
     EntryError,
@@ -123,9 +123,21 @@ def claim_merge(
             " reason why they are one indication.",
         ),
     ] = False,
+    same_treatment_accepted: Annotated[
+        bool,
+        typer.Option(
+            "--same-treatment-accepted",
+            help="Merge though the two interventions share no name, substance record or"
+            " development code. Say in the reason how you know they are one treatment.",
+        ),
+    ] = False,
     awaiting_audit_accepted: Annotated[
         bool,
-        typer.Option("--awaiting-audit-accepted", help="Merge though one of the two awaits audit."),
+        typer.Option(
+            "--awaiting-audit-accepted",
+            help="Merge though one of the two awaits audit. The hold is kept: the kept"
+            " claim then waits for the audit too and is off the site until it is cleared.",
+        ),
     ] = False,
     drop_name: Annotated[
         bool,
@@ -162,6 +174,7 @@ def claim_merge(
             by=Decider.ASSISTANT if as_assistant else Decider.HUMAN,
             now=datetime.now(UTC),
             different_indication_accepted=different_indication_accepted,
+            same_treatment_accepted=same_treatment_accepted,
             awaiting_audit_accepted=awaiting_audit_accepted,
             drop_name=drop_name,
         )
@@ -183,6 +196,24 @@ def claim_merge(
             )
         if done.names_gained:
             out.print(f"Now also known as: {', '.join(done.names_gained)}.", markup=False)
+        if done.names_left:
+            out.print(
+                f"Not taken as synonyms, because they break an entry rule:"
+                f" {', '.join(done.names_left)}.",
+                markup=False,
+            )
+        if done.same_by == SAME_BY_DECISION:
+            out.print(
+                "Nothing stored showed they are one treatment: recorded as stated by you.",
+                markup=False,
+            )
+        if done.kept_now_awaits_audit:
+            out.print(
+                f"{done.merged.slug} was awaiting audit, so {done.kept.slug} now awaits"
+                " audit too: it is OFF THE SITE from the next export until `thenwhat"
+                f" audit clear {done.kept.slug}`.",
+                markup=False,
+            )
         if done.to_find_again:
             out.print(
                 "Approved records left with the merged claim, to look for after the"
@@ -192,7 +223,62 @@ def claim_merge(
         out.print(
             f"Registry matches and evidence events were not moved. Run `thenwhat prepare"
             f" {done.kept.slug}` (or `thenwhat prepare --due`), then export and deploy:"
-            f" /{done.merged.slug} will lead to /{done.kept.slug}.",
+            f" /{done.merged.slug} will lead to /{done.kept.slug}. To undo:"
+            f' thenwhat claim unmerge {done.merged.slug} --reason "..."',
+            markup=False,
+        )
+
+
+@claim_app.command("unmerge")
+def claim_unmerge(
+    slug: Annotated[str, typer.Argument(help="Slug of the claim that was merged away.")],
+    reason: Annotated[
+        str, typer.Option("--reason", help="Why the merge was wrong. Kept, never published.")
+    ],
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record this as decided by an AI assistant, not by the operator.",
+        ),
+    ] = False,
+) -> None:
+    """Undo a merge. Every article, promise, reported statement, link lead and named
+    entity the merge moved goes back, the kept claim loses the names it gained, and the
+    claim stands for its intervention again. Registry records found for the kept claim
+    since, under the names it now loses, stay with it for you to look at."""
+    with entry_session() as session:
+        done = unmerge_claim(
+            session,
+            slug,
+            reason=reason,
+            by=Decider.ASSISTANT if as_assistant else Decider.HUMAN,
+            now=datetime.now(UTC),
+        )
+        by = ", decided by the assistant" if as_assistant else ""
+        out.print(
+            f"Unmerged {done.claim.slug} from {done.kept.slug}{by}:"
+            f" {_count(done.articles_back, 'article')} went back.",
+            markup=False,
+        )
+        if done.names_removed:
+            out.print(
+                f"{done.kept.slug} is no longer known as: {', '.join(done.names_removed)}."
+                " Look at the registry matches it gained under those names.",
+                markup=False,
+            )
+        if done.still_archived:
+            out.print(
+                f"{done.claim.slug} was archived before the merge and still is.", markup=False
+            )
+        if done.kept_hold_released:
+            out.print(
+                f"{done.kept.slug} no longer awaits audit: what it waited for went back.",
+                markup=False,
+            )
+        out.print(
+            "Both registry searches are due again: run `thenwhat prepare --due`, then"
+            " export and deploy.",
             markup=False,
         )
 

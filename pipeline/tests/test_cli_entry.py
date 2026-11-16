@@ -328,6 +328,7 @@ def test_claim_merge_folds_the_duplicate_into_the_kept_claim(
         "--reason",
         "TRG-035 is the USAG-1 antibody",
         "--drop-name",
+        "--same-treatment-accepted",
         "--as-assistant",
     )
 
@@ -346,7 +347,13 @@ def test_claim_merge_refusal_explains_and_exits_1(run, session: Session, duplica
     session.flush()
 
     result = run(
-        "claim", "merge", "tooth-regrowth-usag1", "trg-035-tooth-agenesis", "--reason", "same"
+        "claim",
+        "merge",
+        "tooth-regrowth-usag1",
+        "trg-035-tooth-agenesis",
+        "--reason",
+        "same",
+        "--same-treatment-accepted",
     )
 
     assert result.exit_code == 1
@@ -383,3 +390,33 @@ def test_entity_rename_refusal_names_the_rule_and_exits_1(run, claim_with_articl
 
     assert result.exit_code == 1
     assert "carries no brackets" in result.output
+
+
+def test_claim_unmerge_puts_the_article_back(run, session: Session, duplicate_claim):
+    run(
+        "claim",
+        "merge",
+        "tooth-regrowth-usag1",
+        "trg-035-tooth-agenesis",
+        "--reason",
+        "TRG-035 is the USAG-1 antibody",
+        "--drop-name",
+        "--same-treatment-accepted",
+    )
+
+    result = run("claim", "unmerge", "tooth-regrowth-usag1", "--reason", "two antibodies")
+
+    assert result.exit_code == 0, result.output
+    assert "Unmerged tooth-regrowth-usag1 from trg-035-tooth-agenesis: 1 article went back" in (
+        result.output
+    )
+    claim = find_claim(session, "tooth-regrowth-usag1")
+    assert claim is not None and claim.archived_at is None
+    assert [a.url for a in articles_of(session, claim)] == [ARTICLE_URL]
+
+
+def test_claim_unmerge_refusal_explains_and_exits_1(run, claim_with_article):
+    result = run("claim", "unmerge", "tooth-regrowth-usag1", "--reason", "x")
+
+    assert result.exit_code == 1
+    assert "is not merged" in result.output

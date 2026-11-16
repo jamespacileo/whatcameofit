@@ -144,7 +144,8 @@ export async function handle(request, env, tools) {
       if (to) {
         return new Response(null, {
           status: 301,
-          headers: { Location: new URL(`/${to}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=3600" },
+          // Kept for five minutes only, so a merge that is undone stops redirecting soon after the next deploy.
+          headers: { Location: new URL(`/${to}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=300" },
         });
       }
       if (on) {

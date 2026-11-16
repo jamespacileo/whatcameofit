@@ -230,7 +230,13 @@ def test_merged_claims_address_leads_to_the_kept_claim(session: Session):
     new_claim(session, "tooth-regrowth-twin")
     exported(session, now=EARLIER)
     merge_claims(
-        session, "tooth-regrowth-twin", SLUG, reason="one antibody", by=Decider.HUMAN, now=NOW
+        session,
+        "tooth-regrowth-twin",
+        SLUG,
+        reason="one antibody",
+        by=Decider.HUMAN,
+        now=NOW,
+        same_treatment_accepted=True,
     )
 
     export = exported(session, now=NOW)

@@ -649,7 +649,7 @@ def unarchive_claim(session: Session, slug: str) -> Claim:
         assert kept is not None
         raise ArchiveRefused(
             f"Claim '{slug}' was merged into '{kept.slug}': its articles are there, and"
-            " its address leads there. A merged claim is not put back."
+            f" its address leads there. To undo the merge: thenwhat claim unmerge {slug}"
         )
     claim.archived_at = None
     claim.archive_reason = None

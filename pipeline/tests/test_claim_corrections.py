@@ -21,6 +21,7 @@ from thenwhat.claims.corrections import (
     moved_addresses,
     name_refusal,
     rename_intervention,
+    unmerge_claim,
 )
 from thenwhat.claims.entities import add_entity, add_synonym, entities_of, set_origin_paper
 from thenwhat.claims.entry import (
@@ -32,6 +33,7 @@ from thenwhat.claims.entry import (
     add_promise,
     archive_claim,
     articles_of,
+    awaiting_audit,
     promises_of,
     slug_of_claim_covering,
     unarchive_claim,
@@ -42,6 +44,7 @@ from thenwhat.db.models import (
     Entity,
     EntityArticle,
     EntityMatch,
+    EntitySubstance,
     EvidenceEvent,
     LinkLead,
     ReportedStatement,
@@ -58,7 +61,9 @@ from thenwhat.domain import (
     StatementKind,
     StatementSpeaker,
 )
+from thenwhat.export.build import build_export
 from thenwhat.prepare import plan_claims
+from thenwhat.review.decisions import record_decision
 
 NOW = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
 EARLIER = datetime(2026, 11, 10, 9, 0, tzinfo=UTC)
@@ -137,7 +142,13 @@ def pair(session: Session) -> tuple[Claim, Claim]:
 
 
 def merge(session: Session, **options) -> Merged:
-    values: dict[str, Any] = {"reason": "one vaccine, two names", "by": Decider.HUMAN, "now": NOW}
+    # Ervebo and VSV-EBOV share no stored name: the decider states they are one vaccine.
+    values: dict[str, Any] = {
+        "reason": "one vaccine, two names",
+        "by": Decider.HUMAN,
+        "now": NOW,
+        "same_treatment_accepted": True,
+    }
     return merge_claims(session, "vsv-ebov-ebola", "ervebo-ebola", **(values | options))
 
 
@@ -156,6 +167,7 @@ def test_merge_moves_what_the_articles_reported_to_the_kept_claim(session: Sessi
         title="A report",
         first_shared_at=EARLIER,
         read_outcome=ReadOutcome.NEW_CLAIM,
+        read_detail="drafted vsv-ebov-ebola",
         claim_id=duplicate.id,
         source_article_id=articles_of(session, duplicate)[0].id,
     )
@@ -169,7 +181,16 @@ def test_merge_moves_what_the_articles_reported_to_the_kept_claim(session: Sessi
     assert said.claim_id == kept.id
     assert kept.first_reported_date == date(2016, 12, 23)
     assert intervention(session, kept).synonyms == ["VSV-EBOV", "rVSV-ZEBOV"]
-    assert (lead.claim_id, lead.read_outcome) == (kept.id, ReadOutcome.ADDED_TO_CLAIM)
+    # Only the lead's pointer moved: what its read found is as the read left it, and
+    # the record of the merge names the lead and the claim it drafted.
+    assert (lead.claim_id, lead.read_outcome, lead.read_detail) == (
+        kept.id,
+        ReadOutcome.NEW_CLAIM,
+        "drafted vsv-ebov-ebola",
+    )
+    change = session.scalars(select(ClaimChange)).one()
+    assert change.record is not None
+    assert change.record["leads"] == [[lead.id, duplicate.id, lead.source_article_id]]
     assert (done.articles_moved, done.promises_moved, done.statements_moved) == (1, 1, 1)
     assert done.names_gained == ["VSV-EBOV", "rVSV-ZEBOV"]
 
@@ -190,7 +211,7 @@ def test_merged_claim_is_archived_with_a_pointer_and_who_decided(session: Sessio
     assert slug_of_claim_covering(session, "vsv-ebov", "Ebola virus disease") == "ervebo-ebola"
     with pytest.raises(DuplicateClaim, match="ervebo-ebola"):
         new_claim(session, "another", "rVSV-ZEBOV")
-    with pytest.raises(ArchiveRefused, match="merged into 'ervebo-ebola'"):
+    with pytest.raises(ArchiveRefused, match="thenwhat claim unmerge vsv-ebov-ebola"):
         unarchive_claim(session, duplicate.slug)
 
 
@@ -240,7 +261,9 @@ def test_named_papers_and_organisations_move_once(session: Session, pair):
         session, duplicate.slug, type=EntityType.PAPER, name="Ring trial", doi="10.1/ring"
     )
     set_origin_paper(session, duplicate.slug, "Ring trial")
+    paper.named_by = ["article", "registry"]
     identified = approved_match(session, paper, "10.1/ring")
+    which = approved_match(session, merck, "ror:merck")
     session.add(
         EntityArticle(entity_id=merck.id, source_article_id=articles_of(session, duplicate)[0].id)
     )
@@ -256,6 +279,10 @@ def test_named_papers_and_organisations_move_once(session: Session, pair):
         ("paper", "The kept paper"),
     ]
     assert done.entities_moved == 1
+    # A name a registry record also gave keeps that mark.
+    assert paper.named_by == ["article", "registry"]
+    # The record that says which company the duplicate's Merck is goes to the kept one.
+    assert which.entity_id == [e for e in entities_of(session, kept) if e.name == "Merck"][0].id
     # The paper came with the record that says which paper it is; the kept claim keeps
     # its own origin paper.
     assert paper.claim_id == kept.id and identified.entity_id == paper.id
@@ -305,17 +332,25 @@ def test_merge_into_an_archived_claim_is_refused(session: Session, pair):
 
 
 def test_merge_of_a_claim_awaiting_audit_is_refused_unless_said(session: Session, pair):
-    """Scenario: Claim awaiting audit"""
-    _, duplicate = pair
+    """Scenarios: Claim awaiting audit, A hold follows what it was for"""
+    kept, duplicate = pair
+    record_decision(kept, ReviewState.APPROVED, by=Decider.HUMAN, now=EARLIER)
+    assert [claim.slug for claim in build_export(session, now=EARLIER).claims] == [kept.slug]
     duplicate.awaiting_audit_at = EARLIER
     session.flush()
 
     with pytest.raises(MergeRefused, match="Awaiting audit: vsv-ebov-ebola"):
         merge(session)
 
-    merge(session, awaiting_audit_accepted=True)
+    done = merge(session, awaiting_audit_accepted=True)
+
+    # The hold is never dropped: the kept claim, which now has the unaudited articles,
+    # waits from the same time and leaves every export until it is cleared.
     assert duplicate.merged_into_id is not None
-    assert duplicate.awaiting_audit_at is None
+    assert duplicate.awaiting_audit_at == EARLIER
+    assert kept.awaiting_audit_at == EARLIER and done.kept_now_awaits_audit
+    assert kept.slug in [claim.slug for claim in awaiting_audit(session)]
+    assert build_export(session, now=NOW).claims == []
 
 
 def test_a_description_does_not_become_a_synonym(session: Session, pair):
@@ -329,6 +364,146 @@ def test_a_description_does_not_become_a_synonym(session: Session, pair):
 
     merge(session, drop_name=True)
     assert intervention(session, kept).synonyms == ["rVSV-ZEBOV"]
+
+
+def test_a_synonym_that_breaks_an_entry_rule_is_left_out(session: Session, pair):
+    kept, duplicate = pair
+    entity = intervention(session, duplicate)
+    entity.synonyms = [*entity.synonyms, "Ebola vaccine (Merck)"]
+    session.flush()
+
+    done = merge(session)
+
+    assert done.names_left == ["Ebola vaccine (Merck)"]
+    assert intervention(session, kept).synonyms == ["VSV-EBOV", "rVSV-ZEBOV"]
+
+
+def test_two_treatments_for_one_indication_are_not_merged(session: Session, pair):
+    """Scenario: Two different treatments"""
+    kept, duplicate = pair
+
+    with pytest.raises(MergeRefused, match="--same-treatment-accepted"):
+        merge(session, same_treatment_accepted=False)
+    assert duplicate.merged_into_id is None and intervention(session, kept).synonyms == []
+
+
+@pytest.mark.parametrize("shared", ["name", "substance", "code"])
+def test_a_stored_sign_that_they_are_one_treatment_is_enough(session: Session, pair, shared: str):
+    """Scenario: Shown to be one treatment by what is stored"""
+    kept, duplicate = pair
+    ours, theirs = intervention(session, kept), intervention(session, duplicate)
+    if shared == "name":
+        ours.synonyms = ["rvsv-zebov"]
+    for entity, code in ((ours, "V920"), (theirs, "V920" if shared == "code" else "BPSC-1001")):
+        session.add(
+            EntitySubstance(
+                entity_id=entity.id,
+                source_name="gsrs",
+                external_id="UNII-1" if shared == "substance" or entity is ours else "UNII-2",
+                url="https://substances.example/1",
+                payload={},
+                fetched_at=EARLIER,
+                codes=[code] if shared == "code" else [],
+            )
+        )
+    session.flush()
+
+    done = merge(session, same_treatment_accepted=False)
+
+    assert (
+        done.same_by
+        == {
+            "name": "shared_name",
+            "substance": "same_substance_record",
+            "code": "shared_development_code",
+        }[shared]
+    )
+
+
+def test_a_claim_archived_before_the_merge_keeps_its_reason(session: Session, pair):
+    _, duplicate = pair
+    archive_claim(session, duplicate.slug, reason="intervention is a description", now=EARLIER)
+
+    merge(session)
+
+    assert (duplicate.archived_at, duplicate.archive_reason) == (
+        EARLIER,
+        "intervention is a description",
+    )
+
+
+def test_unmerge_puts_back_everything_the_merge_moved(session: Session, pair):
+    """Scenario: Merge undone"""
+    kept, duplicate = pair
+    said = statement(session, duplicate, "The vaccine protected everyone given it.")
+    add_entity(session, kept.slug, type=EntityType.COMPANY, name="Merck")
+    merck = add_entity(session, duplicate.slug, type=EntityType.COMPANY, name="merck")
+    which = approved_match(session, merck, "ror:merck")
+    paper = add_entity(session, duplicate.slug, type=EntityType.PAPER, name="Ring trial")
+    set_origin_paper(session, duplicate.slug, "Ring trial")
+    [theirs] = articles_of(session, duplicate)
+    session.add(EntityArticle(entity_id=merck.id, source_article_id=theirs.id))
+    lead = LinkLead(
+        url=SECOND,
+        url_key="other.example.org/2016/vsv-ebov",
+        outlet="other.example.org",
+        outlet_kind=OutletKind.GENERAL_NEWS,
+        title="A report",
+        first_shared_at=EARLIER,
+        read_outcome=ReadOutcome.NEW_CLAIM,
+        claim_id=duplicate.id,
+        source_article_id=theirs.id,
+    )
+    session.add(lead)
+    duplicate.awaiting_audit_at = EARLIER
+    session.flush()
+    merge(session, awaiting_audit_accepted=True)
+    assert which.entity_id != merck.id and paper.claim_id == kept.id
+
+    done = unmerge_claim(
+        session, duplicate.slug, reason="two vaccines after all", by=Decider.ASSISTANT, now=NOW
+    )
+
+    assert (duplicate.merged_into_id, duplicate.archived_at) == (None, None)
+    assert [a.url for a in articles_of(session, duplicate)] == [SECOND]
+    assert [a.url for a in articles_of(session, kept)] == [FIRST]
+    assert [p.description for p in promises_of(session, duplicate)] == ["licensed by 2018"]
+    assert said.claim_id == duplicate.id
+    assert (lead.claim_id, lead.source_article_id) == (duplicate.id, theirs.id)
+    assert (paper.claim_id, paper.is_origin_paper) == (duplicate.id, True)
+    assert which.entity_id == merck.id
+    assert [
+        (link.entity_id, link.source_article_id) for link in session.scalars(select(EntityArticle))
+    ] == [(merck.id, theirs.id)]
+    assert intervention(session, kept).synonyms == []
+    assert done.names_removed == ["VSV-EBOV", "rVSV-ZEBOV"]
+    assert kept.first_reported_date == date(2019, 11, 12)
+    # The kept claim's hold was for what has gone back; the claim keeps its own.
+    assert kept.awaiting_audit_at is None and duplicate.awaiting_audit_at == EARLIER
+    assert slug_of_claim_covering(session, "VSV-EBOV", "Ebola virus disease") == duplicate.slug
+    change = session.scalars(select(ClaimChange)).one()
+    assert (change.undone_at, change.undone_by, change.undone_reason) == (
+        NOW,
+        Decider.ASSISTANT,
+        "two vaccines after all",
+    )
+
+
+def test_unmerge_of_a_claim_that_is_not_merged_is_refused(session: Session, pair):
+    with pytest.raises(MergeRefused, match="is not merged"):
+        unmerge_claim(session, "vsv-ebov-ebola", reason="x", by=Decider.HUMAN, now=NOW)
+
+
+def test_a_person_is_never_joined_to_another_by_name(session: Session, pair):
+    kept, duplicate = pair
+    ours = add_entity(session, kept.slug, type=EntityType.PERSON, name="A. Researcher")
+    theirs = add_entity(session, duplicate.slug, type=EntityType.PERSON, name="A. Researcher")
+    other = add_entity(session, duplicate.slug, type=EntityType.PERSON, name="B. Researcher")
+
+    merge(session)
+
+    assert (theirs.claim_id, other.claim_id) == (duplicate.id, kept.id)
+    assert ours.synonyms == []
 
 
 def test_merge_needs_a_reason_and_two_claims(session: Session, pair):
@@ -480,6 +655,7 @@ def test_a_former_slug_follows_its_claim_through_a_merge(session: Session, pair)
         session,
         "v920-ebola-virus-disease",
         "ervebo-ebola",
+        same_treatment_accepted=True,
         reason="one vaccine",
         by=Decider.HUMAN,
         now=NOW,
@@ -490,3 +666,25 @@ def test_a_former_slug_follows_its_claim_through_a_merge(session: Session, pair)
         ("vsv-ebov-ebola", "ervebo-ebola"),
     ]
     assert kept.archived_at is None
+
+
+def test_a_claim_that_takes_its_former_slug_back_rewrites_no_earlier_change(session: Session, pair):
+    _, claim = pair
+    claim.published_at = EARLIER
+    session.flush()
+    names = ["VSV-EBOV", "V920", "VSV-EBOV", "V920"]
+    for old, new in zip(names, names[1:], strict=False):
+        rename_intervention(session, claim.slug, old, new, by=Decider.HUMAN, now=NOW, reslug=True)
+
+    assert claim.slug == "v920-ebola-virus-disease"
+    changes = session.scalars(select(ClaimChange).order_by(ClaimChange.id)).all()
+    assert [change.former_slug for change in changes] == [
+        "vsv-ebov-ebola",
+        "v920-ebola-virus-disease",
+        "vsv-ebov-ebola-virus-disease",
+    ]
+    # The slug it took back is its own again and leads nowhere else.
+    assert [slug for slug, _ in moved_addresses(session)] == [
+        "vsv-ebov-ebola",
+        "vsv-ebov-ebola-virus-disease",
+    ]

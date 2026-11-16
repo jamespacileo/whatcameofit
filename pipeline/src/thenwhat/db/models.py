@@ -170,6 +170,12 @@ class ClaimChange(Base):
             name="rename_has_names",
         ),
         CheckConstraint("kind = 'rename' OR former_slug IS NULL", name="former_slug_of_a_rename"),
+        CheckConstraint("(kind = 'merge') = (record IS NOT NULL)", name="merge_has_record"),
+        CheckConstraint(
+            "(undone_at IS NULL) = (undone_by IS NULL) AND (undone_at IS NULL OR kind = 'merge')"
+            " AND (undone_by IS NULL OR undone_by IN ('human', 'assistant'))",
+            name="undone_is_recorded",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -186,6 +192,13 @@ class ClaimChange(Base):
     reason: Mapped[str | None] = mapped_column(Text)
     decided_by: Mapped[Decider] = mapped_column(_enum(Decider, "decided_by"))
     decided_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # For a merge: every row it moved and every name it added, by id, with what shows
+    # the two interventions are one treatment. `claim unmerge` puts back exactly these.
+    record: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # Set when a merge was undone, with who undid it and why. The row is kept.
+    undone_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    undone_by: Mapped[Decider | None] = mapped_column(_enum(Decider, "undone_by"))
+    undone_reason: Mapped[str | None] = mapped_column(Text)
 
 
 class SourceArticle(Base):
