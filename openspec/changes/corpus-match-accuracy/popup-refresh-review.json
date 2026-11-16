@@ -1,0 +1,41 @@
+{
+  "reviewed_head": "ad0f8c50658eea533f467bed628bed0b7b2ae7e7",
+  "base": "87d00501451dfdf968f26fdba516c4bbcf720d20",
+  "pr": "https://github.com/jamespacileo/whatcameofit/pull/211",
+  "standards": "clear at06205cf; finalmerge includes unrelated main changes only",
+  "specification": "clear atad0f8c after ETag correction",
+  "regression_tests": 174,
+  "local_rehearsal": "stopped when upstream export schema changed; full final PR CI rehearsal passed",
+  "pr_ci_run": 43839391021,
+  "pr_ci_conclusion": "success",
+  "main_commit": "0d4cc5f3c87cce2a0380c48784ab88a68d02e058",
+  "main_ci_run": 43839912830,
+  "published_data": "unchanged; full current main snapshot preserved",
+  "unpublished_export": "pp405-linked-export-v2.json requires audit of nine other existing-card changes",
+  "production": {
+    "main_commit": "0d4cc5f3c87cce2a0380c48784ab88a68d02e058",
+    "run_id": 43839912830,
+    "pr": 211,
+    "conclusion": "success",
+    "completed_at": "2026-11-16T09:32:26Z",
+    "jobs": [
+      {
+        "name": "Tests and build",
+        "conclusion": "success"
+      },
+      {
+        "name": "Deploy production",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "release_proof": "../../../extension/test-corpus/runs/2026-11-16-popup-refresh-release.json",
+  "sheet": {
+    "verified_at": "2026-11-16T09:35:17.260Z",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+    "changed_values_verified": 17,
+    "other_inspected_cells_preserved": 113,
+    "inspected_formatting_formulas_validation_notes_chips_preserved": true,
+    "native_render": "unverified: Google requires identity re-verification; connector values and inspected metadata verified"
+  }
+}
