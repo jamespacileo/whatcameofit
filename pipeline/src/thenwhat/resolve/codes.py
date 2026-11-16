@@ -18,7 +18,7 @@ from thenwhat.claims.entry import name_key
 from thenwhat.db.models import Claim, Entity, EntitySubstance
 from thenwhat.domain import EntityType
 from thenwhat.sources.base import SourceRecord
-from thenwhat.sources.gsrs import codes_of, label_of
+from thenwhat.sources.gsrs import codes_of, label_of, name_of
 
 
 class Substances(Protocol):
@@ -50,6 +50,26 @@ class Codes:
     record: SourceRecord | None = None
 
 
+def one_substance(records: list[SourceRecord]) -> SourceRecord | None:
+    """The one substance these records are, or None when they are several.
+
+    A registry files a drug and its forms apart: imatinib and imatinib mesylate,
+    dostarlimab and dostarlimab-gxly. They are one treatment. When one record's name
+    opens every other record's name, whole word for whole word, that record is the
+    substance and the others are its forms. Semaglutide and tirzepatide share no such
+    name and stay two.
+    """
+    if len(records) == 1:
+        return records[0]
+    named = [(name_key(name_of(record)), record) for record in records]
+    for base, record in named:
+        if base and all(
+            other == base or other.startswith((f"{base} ", f"{base}-")) for other, _ in named
+        ):
+            return record
+    return None
+
+
 def codes_for(substances: Substances, names: list[str]) -> Codes:
     """The development codes the registry lists for the substance these names belong to.
 
@@ -66,9 +86,10 @@ def codes_for(substances: Substances, names: list[str]) -> Codes:
     labels = [label_of(record) for record in found.values()]
     if not found:
         return Codes(Listing.NOT_LISTED, asked)
-    if len(found) > 1:
+    record = one_substance(list(found.values()))
+    if record is None:
         return Codes(Listing.SEVERAL_SUBSTANCES, asked, labels)
-    record = next(iter(found.values()))
+    labels = [label_of(record)]
     known = {name_key(name) for name in names}
     codes = [code for code in codes_of(record) if name_key(code) not in known]
     return Codes(Listing.ONE_SUBSTANCE, asked, labels, codes, record)
