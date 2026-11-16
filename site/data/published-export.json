@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-11-16T18:55:36.252844Z",
-  "last_checked_at": "2026-11-16T18:48:43.744181Z",
+  "generated_at": "2026-11-16T19:33:24.532964Z",
+  "last_checked_at": "2026-11-16T19:32:18.884811Z",
   "preview": false,
   "sources": [
     {
@@ -51265,6 +51265,1132 @@
         }
       ],
       "reported_statements": []
+    },
+    {
+      "slug": "beqvez-hemophilia-b",
+      "headline": "FDA approves Pfizer’s Beqvez gene therapy for hemophilia B at $3.5 million per dose",
+      "summary": "The FDA approved Beqvez for adults with hemophilia B. Pfizer set its price at $3.5 million per dose and said it would offer the treatment to patients during the quarter in which the article was published. The therapy is based on an adeno-associated viral vector.",
+      "vertical": "heart-and-circulation",
+      "approach": null,
+      "intervention": {
+        "name": "Beqvez",
+        "synonyms": [
+          "fidanacogene elaparvovec-dzkt",
+          "fidanacogene elaparvovec",
+          "PF-06838435"
+        ]
+      },
+      "indication": "Hemophilia B",
+      "first_reported_date": "2024-04-26",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.95,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.05
+          }
+        ]
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_3",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T19:32:17.419998Z",
+        "explained_by": [
+          30185,
+          30186
+        ],
+        "history": [
+          {
+            "on": "2015-06-29",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2015-11-18",
+            "code": "phase_2"
+          },
+          {
+            "on": "2019-07-29",
+            "code": "phase_3"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose",
+          "outlet": "Fierce Pharma",
+          "title": "Pfizer scores FDA nod for hemophilia B gene therapy, will charge $3.5M per dose",
+          "published_date": "2024-04-26",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [
+        {
+          "description": "Availability to patients during the second quarter of 2024",
+          "parsed_date": "2024-12-31",
+          "article_url": "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+        }
+      ],
+      "events": [
+        {
+          "id": 30188,
+          "type": "trial_registered",
+          "event_date": "2015-06-29",
+          "date_basis": "first posted",
+          "summary": "Trial NCT02484092 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02484092",
+          "trial_id": "NCT02484092",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30189,
+          "type": "trial_status_change",
+          "event_date": "2015-11-18",
+          "date_basis": "start date",
+          "summary": "Trial NCT02484092 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02484092",
+          "trial_id": "NCT02484092",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30193,
+          "type": "trial_status_change",
+          "event_date": "2017-06-22",
+          "date_basis": "start date",
+          "summary": "Trial NCT03307980 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03307980",
+          "trial_id": "NCT03307980",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30192,
+          "type": "trial_registered",
+          "event_date": "2017-10-12",
+          "date_basis": "first posted",
+          "summary": "Trial NCT03307980 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03307980",
+          "trial_id": "NCT03307980",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30185,
+          "type": "trial_registered",
+          "event_date": "2019-03-04",
+          "date_basis": "first posted",
+          "summary": "Trial NCT03861273 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03861273",
+          "trial_id": "NCT03861273",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30190,
+          "type": "trial_status_change",
+          "event_date": "2019-04-08",
+          "date_basis": "completion date",
+          "summary": "Trial NCT02484092 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02484092",
+          "trial_id": "NCT02484092",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30186,
+          "type": "trial_status_change",
+          "event_date": "2019-07-29",
+          "date_basis": "start date",
+          "summary": "Trial NCT03861273 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03861273",
+          "trial_id": "NCT03861273",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30191,
+          "type": "trial_results_posted",
+          "event_date": "2020-05-19",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT02484092.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02484092",
+          "trial_id": "NCT02484092",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30187,
+          "type": "trial_results_posted",
+          "event_date": "2024-03-27",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT03861273.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03861273",
+          "trial_id": "NCT03861273",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30194,
+          "type": "trial_status_change",
+          "event_date": "2026-07-23",
+          "date_basis": "completion date",
+          "summary": "Trial NCT03307980 terminated.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03307980",
+          "trial_id": "NCT03307980",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "terminated",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT03861273",
+          "url": "https://clinicaltrials.gov/study/NCT03861273",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study to Evaluate the Efficacy and Safety of Factor IX Gene Therapy With PF-06838435 in Adult Males With Moderately Severe to Severe Hemophilia B. For: Hemophilia B. Tests: PF-06838435/ fidanacogene elaparvovec. Phase 3, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT03307980",
+          "url": "https://clinicaltrials.gov/study/NCT03307980",
+          "score": 0.96,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Long-term Safety and Efficacy Study and Dose-Escalation Substudy of PF 06838435 in Individuals With Hemophilia B. For: Hemophilia B. Tests: PF-06838435 (formerly SPK-9001). Phase 2, terminated."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT02484092",
+          "url": "https://clinicaltrials.gov/study/NCT02484092",
+          "score": 0.92,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Gene Therapy Study for Hemophilia B. For: Hemophilia B. Tests: SPK-9001. Phase 2, completed."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT02484092",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT02484092",
+          "title": "A Gene Therapy Study for Hemophilia B",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-16T16:11:38.394712Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 15,
+              "basis": "actual"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Pfizer",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Number of Participants With Clinically Significant Change From Baseline in Physical Examination Findings",
+                "time_frame": "Baseline up to Week 52"
+              },
+              {
+                "measure": "Number of Participants With Clinically Significant Change From Baseline in Vital Signs",
+                "time_frame": "Baseline up to Week 52"
+              },
+              {
+                "measure": "Number of Participants With Clinical Laboratory Abnormalities Reported as TEAE",
+                "time_frame": "Baseline up to Week 52"
+              }
+            ],
+            "primary_outcomes_total": 8,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Number of Participants With Clinically Significant Change From Baseline in Physical Examination Findings",
+                  "time_frame": "Baseline up to Week 52",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "SPK-9001 (5 x 10^11 vg/kg)",
+                      "analysed": "15",
+                      "value": "0",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                },
+                {
+                  "title": "Number of Participants With Clinically Significant Change From Baseline in Vital Signs",
+                  "time_frame": "Baseline up to Week 52",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "SPK-9001 (5 x 10^11 vg/kg)",
+                      "analysed": "15",
+                      "value": "0",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                },
+                {
+                  "title": "Number of Participants With Clinical Laboratory Abnormalities Reported as TEAE",
+                  "time_frame": "Baseline up to Week 52",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "SPK-9001 (5 x 10^11 vg/kg)",
+                      "analysed": "15",
+                      "value": "2",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 8
+            }
+          },
+          "papers": [
+            "10.1007/s40262-025-01535-y",
+            "10.1055/s-0044-1787734",
+            "10.1056/nejmoa1708538"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Baseline up to Week 52",
+              "number": 52,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T16:11:38.394712Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Physical Examination Findings",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.84,
+              "read_on": "2026-11-16T16:11:38.394712Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Baseline up to Week 52",
+              "number": 52,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T16:11:38.394712Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Vital Signs",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.95,
+              "read_on": "2026-11-16T16:11:38.394712Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "Baseline up to Week 52",
+              "number": 52,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T16:11:38.394712Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Clinical Laboratory Abnormalities",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.97,
+              "read_on": "2026-11-16T16:11:38.394712Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT03307980",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT03307980",
+          "title": "Long-term Safety and Efficacy Study and Dose-Escalation Substudy of PF 06838435 in Individuals With Hemophilia B",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "terminated",
+          "facts_as_of": "2026-11-16T16:12:23.277963Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 21,
+              "basis": "actual"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Pfizer",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Incidence of PF-06838435 related adverse events",
+                "time_frame": "Baseline up to Year 6"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": "The study was terminated early due to Sponsor and participants may transition into a long-term follow-up study. The decision to terminate the trial was not based on any safety and/or efficacy concerns.",
+            "results": null
+          },
+          "papers": [
+            "10.1182/bloodadvances.2025019174",
+            "10.1007/s40262-025-01535-y",
+            "10.1056/nejmoa2307159"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Baseline up to Year 6",
+              "number": 6,
+              "unit": "years",
+              "code": null,
+              "confidence": 0.97,
+              "read_on": "2026-11-16T16:12:23.277963Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "related adverse events",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T16:12:23.277963Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT03861273",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT03861273",
+          "title": "A Study to Evaluate the Efficacy and Safety of Factor IX Gene Therapy With PF-06838435 in Adult Males With Moderately Severe to Severe Hemophilia B",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T16:12:04.584481Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 51,
+              "basis": "actual"
+            },
+            "allocation": "non_randomised",
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Pfizer",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Annualized Bleeding Rate (ABR) for Total Bleeds (Treated and Untreated) From Week 12 to Month 15",
+                "time_frame": "Pre-infusion period: minimum of 6 months through first dose of current study, an average of 1.31 years (FIX Prophylaxis arm); Week 12 to Month 15 post infusion in current study (PF-06838435 arm)"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Annualized Bleeding Rate (ABR) for Total Bleeds (Treated and Untreated) From Week 12 to Month 15",
+                  "time_frame": "Pre-infusion period: minimum of 6 months through first dose of current study, an average of 1.31 years (FIX Prophylaxis arm); Week 12 to Month 15 post infusion in current study (PF-06838435 arm)",
+                  "unit": "Total bleeds per year",
+                  "measure": "mean",
+                  "spread_kind": "95% Confidence Interval",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "FIX Prophylaxis",
+                      "analysed": "45",
+                      "value": "4.43",
+                      "spread": null,
+                      "lower": "1.81",
+                      "upper": "7.05"
+                    },
+                    {
+                      "title": "PF-06838435",
+                      "analysed": "45",
+                      "value": "1.30",
+                      "spread": null,
+                      "lower": "0.59",
+                      "upper": "2.02"
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "FIX Prophylaxis",
+                        "PF-06838435"
+                      ],
+                      "p_value": "0.0081",
+                      "method": "Generalized linear model (GLM)",
+                      "test": "non_inferiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 1
+            }
+          },
+          "papers": [
+            "10.1007/s40262-025-01535-y",
+            "10.1056/nejmoa2302982"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Month 15 post infusion",
+              "number": 15,
+              "unit": "months",
+              "code": null,
+              "confidence": 0.95,
+              "read_on": "2026-11-16T16:12:04.584481Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Annualized Bleeding Rate (ABR) for Total Bleeds (Treated and Untreated)",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T16:12:04.584481Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1007/s40262-025-01535-y",
+          "url": "https://doi.org/10.1007/s40262-025-01535-y",
+          "record_url": "https://europepmc.org/article/MED/40750723",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT02484092",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT03307980",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT03861273",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T16:11:42.478800Z",
+          "facts": {
+            "title": "Population Modeling of Factor IX Activity Following Administration of Fidanacogene Elaparvovec Gene Therapy in Participants with Hemophilia B.",
+            "journal": "Clinical pharmacokinetics",
+            "year": 2025,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1055/s-0044-1787734",
+          "url": "https://doi.org/10.1055/s-0044-1787734",
+          "record_url": "https://europepmc.org/article/MED/38863155",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT02484092",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T16:11:43.086264Z",
+          "facts": {
+            "title": "Field Study and Correlative Studies of Factor IX Variant FIX-R338L in Participants Treated with Fidanacogene Elaparvovec.",
+            "journal": "Thrombosis and haemostasis",
+            "year": 2024,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa1708538",
+          "url": "https://doi.org/10.1056/nejmoa1708538",
+          "record_url": "https://europepmc.org/article/MED/29211678",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT02484092",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T16:11:43.253903Z",
+          "facts": {
+            "title": "Hemophilia B Gene Therapy with a High-Specific-Activity Factor IX Variant.",
+            "journal": "The New England journal of medicine",
+            "year": 2017,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1182/bloodadvances.2025019174",
+          "url": "https://doi.org/10.1182/bloodadvances.2025019174",
+          "record_url": "https://europepmc.org/article/MED/41734390",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT03307980",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T16:12:23.332279Z",
+          "facts": {
+            "title": "Safety, efficacy, and patient-reported outcomes 6 years after fidanacogene elaparvovec in adults with hemophilia B.",
+            "journal": "Blood advances",
+            "year": 2026,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa2307159",
+          "url": "https://doi.org/10.1056/nejmoa2307159",
+          "record_url": "https://europepmc.org/article/MED/40239068",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT03307980",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T16:12:23.839944Z",
+          "facts": {
+            "title": "Fidanacogene Elaparvovec for Hemophilia B - A Multiyear Follow-up Study.",
+            "journal": "The New England journal of medicine",
+            "year": 2025,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa2302982",
+          "url": "https://doi.org/10.1056/nejmoa2302982",
+          "record_url": "https://europepmc.org/article/MED/39321362",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT03861273",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T16:12:10.489409Z",
+          "facts": {
+            "title": "Gene Therapy with Fidanacogene Elaparvovec in Adults with Hemophilia B.",
+            "journal": "The New England journal of medicine",
+            "year": 2024,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        }
+      ],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "exact",
+          "label": "Hemophilia B",
+          "name": null,
+          "definition": "A deficiency of blood coagulation factor IX inherited as an X-linked disorder. (Also known as Christmas Disease, after the first patient studied in detail, not the holy day.) Historical and clinical features resemble those in classic hemophilia (HEMOPHILIA A), but patients present with fewer symptoms. Severity of bleeding is usually similar in members of a single family. Many patients are asymptomatic until the hemostatic system is stressed by surgery or trauma. Treatment is similar to that for hemophilia A. (From Cecil Textbook of Medicine, 19th ed, p1008)",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D002836",
+          "source": "mesh",
+          "external_id": "D002836",
+          "version": "2026",
+          "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "label_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Hemophilia B",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-16T16:13:28.454202Z"
+        },
+        {
+          "kind": "intervention",
+          "fit": "kind",
+          "label": "Genetic Therapy",
+          "name": null,
+          "definition": "Techniques and strategies which include the use of coding sequences and other conventional or radical means to transform or modify cells for the purpose of treating or reversing disease conditions.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D015316",
+          "source": "mesh",
+          "external_id": "D015316",
+          "version": "2026",
+          "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "kind_chosen",
+              "trials": null,
+              "of": null,
+              "name": null,
+              "entry_term": null,
+              "kind": "gene_therapy",
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T20:54:16.445654Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "AstraZeneca",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Centers for Disease Control and Prevention",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "CSL",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "F. Hoffmann-La Roche AG",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "00by1q217",
+            "url": "https://ror.org/00by1q217",
+            "name": "F. Hoffmann-La Roche AG",
+            "kinds": [
+              "company",
+              "funder"
+            ],
+            "country": "Switzerland",
+            "website": "https://www.roche.com/",
+            "score": 1,
+            "read_at": "2026-11-16T09:41:02.497136Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Kyowa Kirin",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Orchard Therapeutics",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Pfizer",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT02484092",
+                "NCT03307980",
+                "NCT03861273"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Spark Therapeutics",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "uniQure",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "United States Food and Drug Administration",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "034xvzb47",
+            "url": "https://ror.org/034xvzb47",
+            "name": "United States Food and Drug Administration",
+            "kinds": [
+              "funder",
+              "government"
+            ],
+            "country": "United States",
+            "website": "https://www.fda.gov/",
+            "score": 1,
+            "read_at": "2026-11-16T18:43:55.646980Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "World Federation of Hemophilia",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "00x8d2j81",
+            "url": "https://ror.org/00x8d2j81",
+            "name": "World Federation of Hemophilia",
+            "kinds": [
+              "funder",
+              "nonprofit"
+            ],
+            "country": "Canada",
+            "website": "https://wfh.org",
+            "score": 1,
+            "read_at": "2026-11-16T18:27:53.060711Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose"
+              ],
+              "trial_ids": []
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "It uses an adeno-associated viral vector.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.82,
+          "article_url": "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "It is approved for adults with moderate-to-severe hemophilia B who do not have neutralizing antibodies to AAV serotype Rh74.",
+          "kind": "who_it_could_help",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.8,
+          "article_url": "https://www.fiercepharma.com/pharma/pfizer-scores-fda-nod-hemophilia-b-gene-therapy-will-charge-35m-dose",
+          "read_on": "2026-11-16"
+        }
+      ]
     },
     {
       "slug": "berberine-ursodeoxycholate-type-2-diabetes-mellitus",
@@ -490537,6 +491663,601 @@
           "basis": "people",
           "confidence": 0.8,
           "article_url": "https://www.bbc.com/news/articles/cqxgen498ejo",
+          "read_on": "2026-11-16"
+        }
+      ]
+    },
+    {
+      "slug": "nex-z-transthyretin-amyloidosis-with-cardiomyopathy",
+      "headline": "Intellia pauses two nex-z phase 3 trials after severe liver signal",
+      "summary": "Intellia Therapeutics paused dosing and screening in two phase 3 trials of nex-z after a patient in the cardiomyopathy trial developed grade 4 liver enzyme elevations and increased bilirubin and was hospitalized. The company is investigating the signal and working on a plan to resume enrollment; its other clinical candidate's studies are continuing.",
+      "vertical": "heart-and-circulation",
+      "approach": null,
+      "intervention": {
+        "name": "nex-z",
+        "synonyms": [
+          "nexiguran ziclumeran",
+          "NTLA-2001"
+        ]
+      },
+      "indication": "Transthyretin amyloidosis with cardiomyopathy",
+      "first_reported_date": "2025-10-27",
+      "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_3",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T19:32:16.532731Z",
+        "explained_by": [
+          30195,
+          30196
+        ],
+        "history": [
+          {
+            "on": "2020-10-23",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2020-11-05",
+            "code": "phase_1"
+          },
+          {
+            "on": "2023-12-13",
+            "code": "phase_3"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.fiercebiotech.com/biotech/intellia-pauses-phase-3-crispr-trials-after-patient-hospitalized",
+          "outlet": "Fierce Biotech",
+          "title": "Intellia pauses phase 3 CRISPR trials after patient is hospitalized",
+          "published_date": "2025-10-27",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [
+        {
+          "description": "Work to resolve the pause will take some weeks.",
+          "parsed_date": null,
+          "article_url": "https://www.fiercebiotech.com/biotech/intellia-pauses-phase-3-crispr-trials-after-patient-hospitalized"
+        }
+      ],
+      "events": [
+        {
+          "id": 30182,
+          "type": "trial_registered",
+          "event_date": "2020-10-23",
+          "date_basis": "first posted",
+          "summary": "Trial NCT04601051 registered (Phase 1).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04601051",
+          "trial_id": "NCT04601051",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30183,
+          "type": "trial_status_change",
+          "event_date": "2020-11-05",
+          "date_basis": "start date",
+          "summary": "Trial NCT04601051 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04601051",
+          "trial_id": "NCT04601051",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30195,
+          "type": "trial_registered",
+          "event_date": "2023-11-13",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06128629 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06128629",
+          "trial_id": "NCT06128629",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30196,
+          "type": "trial_status_change",
+          "event_date": "2023-12-13",
+          "date_basis": "start date",
+          "summary": "Trial NCT06128629 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06128629",
+          "trial_id": "NCT06128629",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 30184,
+          "type": "trial_status_change",
+          "event_date": "2025-09-12",
+          "date_basis": "completion date",
+          "summary": "Trial NCT04601051 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04601051",
+          "trial_id": "NCT04601051",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT04601051",
+          "url": "https://clinicaltrials.gov/study/NCT04601051",
+          "score": 0.96,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Study to Evaluate Safety, Tolerability, Pharmacokinetics, and Pharmacodynamics of NTLA-2001 in Patients With Hereditary Transthyretin Amyloidosis With Polyneuropathy (ATTRv-PN) and Patients With Transthyretin Amyloidosis-Related Cardiomyopathy (ATTR-CM). For: Transthyretin-Related (ATTR) Familial Amyloid Polyneuropathy, Transthyretin-Related (ATTR) Familial Amyloid Cardiomyopathy, Wild-Type Transt."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06128629",
+          "url": "https://clinicaltrials.gov/study/NCT06128629",
+          "score": 0.86,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "MAGNITUDE: A Phase 3 Study of NTLA-2001 in Participants With Transthyretin Amyloidosis With Cardiomyopathy (ATTR-CM). For: Transthyretin Amyloidosis (ATTR) With Cardiomyopathy. Tests: NTLA-2001, Placebo. Phase 3, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05697861",
+          "url": "https://clinicaltrials.gov/study/NCT05697861",
+          "score": 0.13,
+          "state": "candidate",
+          "reading": "not_a_match",
+          "decided_by": null,
+          "summary": "Long-Term Follow-Up (LTFU) of Subjects Dosed With NTLA-2001. For: Transthyretin-Related (ATTR) Familial Amyloid Polyneuropathy, Transthyretin-Related (ATTR) Familial Amyloid Cardiomyopathy, Wild-Type Transthyretin Cardiac Amyloidosis. enrolling by invitation."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT04601051",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT04601051",
+          "title": "Study to Evaluate Safety, Tolerability, Pharmacokinetics, and Pharmacodynamics of NTLA-2001 in Patients With Hereditary Transthyretin Amyloidosis With Polyneuropathy (ATTRv-PN) and Patients With Transthyretin Amyloidosis-Related Cardiomyopathy (ATTR-CM)",
+          "phases": [
+            "phase_1"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-16T19:32:16.688953Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 72,
+              "basis": "actual"
+            },
+            "allocation": "non_randomised",
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Intellia Therapeutics",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Number of Participants with Treatment-Emergent Adverse Events",
+                "time_frame": "up to Day 730"
+              },
+              {
+                "measure": "Number of Participants with Clinically Significant Clinical Laboratory Test Findings",
+                "time_frame": "up to Day 730"
+              },
+              {
+                "measure": "Number of Participants with Clinically Significant Safety Measurements",
+                "time_frame": "up to Day 730"
+              }
+            ],
+            "primary_outcomes_total": 13,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [
+            "10.7150/ijbs.138243",
+            "10.1056/nejmoa2510209",
+            "10.1056/nejmoa2412309",
+            "10.1056/nejmoa2107454",
+            "10.1016/bs.pmbts.2021.01.029"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Day 730",
+              "number": 730,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T19:32:16.688953Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Treatment-Emergent Adverse Events",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 1,
+              "read_on": "2026-11-16T19:32:16.688953Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Day 730",
+              "number": 730,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T19:32:16.688953Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Clinical Laboratory Test Findings",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.98,
+              "read_on": "2026-11-16T19:32:16.688953Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "Day 730",
+              "number": 730,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T19:32:16.688953Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Safety Measurements",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.83,
+              "read_on": "2026-11-16T19:32:16.688953Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT06128629",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06128629",
+          "title": "MAGNITUDE: A Phase 3 Study of NTLA-2001 in Participants With Transthyretin Amyloidosis With Cardiomyopathy (ATTR-CM)",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T19:32:18.884811Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 1200,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Intellia Therapeutics",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Composite outcome of cardiovascular (CV) mortality and CV events",
+                "time_frame": "Maximum study duration is dependent on event rates and is estimated to be at least 18 months and up to approximately 5 years"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "up to approximately 5 years",
+              "number": 5,
+              "unit": "years",
+              "code": null,
+              "confidence": 0.92,
+              "read_on": "2026-11-16T19:32:18.884811Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.7150/ijbs.138243",
+          "url": "https://doi.org/10.7150/ijbs.138243",
+          "record_url": "https://europepmc.org/article/MED/42524598",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT04601051",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T19:32:16.780970Z",
+          "facts": {
+            "title": "Cleaning, Chasing and Calming: Promising Paradigms of Senotherapy in Aging-Related Diseases.",
+            "journal": "International journal of biological sciences",
+            "year": 2026,
+            "kinds": [
+              "review",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa2510209",
+          "url": "https://doi.org/10.1056/nejmoa2510209",
+          "record_url": "https://europepmc.org/article/MED/41002250",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT04601051",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T19:32:17.236274Z",
+          "facts": {
+            "title": "Nexiguran Ziclumeran Gene Editing in Hereditary ATTR with Polyneuropathy.",
+            "journal": "The New England journal of medicine",
+            "year": 2025,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa2412309",
+          "url": "https://doi.org/10.1056/nejmoa2412309",
+          "record_url": "https://europepmc.org/article/MED/39555828",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT04601051",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T19:32:17.741470Z",
+          "facts": {
+            "title": "CRISPR-Cas9 Gene Editing with Nexiguran Ziclumeran for ATTR Cardiomyopathy.",
+            "journal": "The New England journal of medicine",
+            "year": 2024,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa2107454",
+          "url": "https://doi.org/10.1056/nejmoa2107454",
+          "record_url": "https://europepmc.org/article/MED/34215024",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT04601051",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T19:32:18.244427Z",
+          "facts": {
+            "title": "CRISPR-Cas9 In Vivo Gene Editing for Transthyretin Amyloidosis.",
+            "journal": "The New England journal of medicine",
+            "year": 2021,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1016/bs.pmbts.2021.01.029",
+          "url": "https://doi.org/10.1016/bs.pmbts.2021.01.029",
+          "record_url": "https://europepmc.org/article/MED/34175043",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT04601051",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T19:32:18.736122Z",
+          "facts": {
+            "title": "Gene editing and modulation for Duchenne muscular dystrophy.",
+            "journal": "Progress in molecular biology and translational science",
+            "year": 2021,
+            "kinds": [
+              "review",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        }
+      ],
+      "background": [
+        {
+          "kind": "intervention",
+          "fit": "kind",
+          "label": "Gene Editing",
+          "name": null,
+          "definition": "Genetic engineering or molecular biology techniques that involve DNA REPAIR mechanisms for incorporating site-specific modifications into a cell's genome.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D000072669",
+          "source": "mesh",
+          "external_id": "D000072669",
+          "version": "2026",
+          "score": 0.84,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "kind_chosen",
+              "trials": null,
+              "of": null,
+              "name": null,
+              "entry_term": null,
+              "kind": "gene_editing",
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T20:57:59.259299Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "Intellia Therapeutics",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.fiercebiotech.com/biotech/intellia-pauses-phase-3-crispr-trials-after-patient-hospitalized"
+              ],
+              "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT04601051",
+                "NCT06128629"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Nex-z is designed to inactivate the TTR gene.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 1,
+          "article_url": "https://www.fiercebiotech.com/biotech/intellia-pauses-phase-3-crispr-trials-after-patient-hospitalized",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "If approved, nex-z could offer a one-time alternative to existing therapies.",
+          "kind": "comparison",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 1,
+          "article_url": "https://www.fiercebiotech.com/biotech/intellia-pauses-phase-3-crispr-trials-after-patient-hospitalized",
           "read_on": "2026-11-16"
         }
       ]
