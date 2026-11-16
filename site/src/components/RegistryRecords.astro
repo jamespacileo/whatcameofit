@@ -1,37 +1,40 @@
 ---
 // Registry records that are not trials on the page yet, grouped by how each was read.
-// Each row: the study's title, its identifier at its registry with phase, state and how
-// sure the match is, then what it is for and what it names. Openspec
+// Each row: the study's title, then one line in the trials' own grammar ("Phase 3 ·
+// NCT… at ClinicalTrials.gov · Under way"), then what it is for and what it names.
+// A possible record leads that line with its match, so the uncertainty comes before its
+// phase and state; a matched one gives its match on a line of its own. Openspec
 // registry-record-rows; the score stays in the row's notes (openspec site-publishing,
 // "A match score reads as a note").
-import ExternalLink from "@lucide/astro/icons/external-link";
-import { matchNote } from "../lib/confidence";
+import ChevronDown from "@lucide/astro/icons/chevron-down";
 import type { ExportedMatch } from "../lib/export";
-import {
-  FOR_LABEL,
-  NAMED_LABEL,
-  NOT_COUNTED,
-  NOT_READ_YET,
-  groupByReading,
-  standingOf,
-} from "../lib/registry-records";
-import { sourceName } from "../lib/status";
-import { trialDetailsPath } from "../lib/trial-links.mjs";
+import { NOT_COUNTED, NOT_COUNTED_LINK, RECORDS_SHOWN, groupByReading } from "../lib/registry-records";
+import Row from "./RegistryRecordRow.astro";
 
 interface Props {
   matches: ExportedMatch[];
   /** The groups' heading level: 3 directly under the section, 4 under a subheading. */
   level?: 3 | 4;
-  /** Candidates: not counted in the status, which each group says, and drawn lighter
-   * than the records that count. */
+  /** Candidates: not counted in the status, which the list says once, with the rule. */
   possible?: boolean;
 }
 
 const { matches, level = 3, possible = false } = Astro.props;
 const Heading = `h${level}` as "h3" | "h4";
-const groups = groupByReading(matches);
+const groups = groupByReading(matches).map((group) => ({
+  ...group,
+  shown: group.matches.slice(0, RECORDS_SHOWN),
+  rest: group.matches.slice(RECORDS_SHOWN),
+}));
 ---
 
+{
+  possible && (
+    <p class="record-not-counted">
+      {NOT_COUNTED} <a href={NOT_COUNTED_LINK.href}>{NOT_COUNTED_LINK.text}</a>
+    </p>
+  )
+}
 {
   groups.map((group) => (
     <div class={possible ? "record-group record-group-possible" : "record-group"}>
@@ -43,50 +46,24 @@ const groups = groupByReading(matches);
           <span class="visually-hidden">{group.matches.length === 1 ? " record" : " records"}</span>
         </span>
       </Heading>
-      {possible && <p class="record-group-note">{NOT_COUNTED}</p>}
       <ul class="plain record-list">
-        {group.matches.map((match) => {
-          const record = match.record;
-          const local = trialDetailsPath(match.url);
-          const title = record?.title ?? `Registry record ${match.external_id}`;
-          const at = `${match.external_id} at ${sourceName(match.source_name)}`;
-          return (
-            <li class="record-row">
-              <p class="record-title">{local ? <a href={local}>{title}</a> : title}</p>
-              <p class="record-meta">
-                <span>
-                  {match.url ? (
-                    <a class="record-source" href={match.url} rel="noopener">
-                      {at}
-                      <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
-                    </a>
-                  ) : (
-                    at
-                  )}
-                </span>
-                {record ? standingOf(record).map((part) => <span>{part}</span>) : <span>{NOT_READ_YET}</span>}
-              </p>
-              <p class="record-match">{matchNote(match.score)}</p>
-              {record && (record.conditions.length > 0 || record.interventions.length > 0) && (
-                <dl class="record-fields">
-                  {record.conditions.length > 0 && (
-                    <div>
-                      <dt>{FOR_LABEL}</dt>
-                      <dd>{record.conditions.join("; ")}</dd>
-                    </div>
-                  )}
-                  {record.interventions.length > 0 && (
-                    <div>
-                      <dt>{NAMED_LABEL}</dt>
-                      <dd>{record.interventions.join("; ")}</dd>
-                    </div>
-                  )}
-                </dl>
-              )}
-            </li>
-          );
-        })}
+        {group.shown.map((match) => (
+          <Row match={match} possible={possible} />
+        ))}
       </ul>
+      {group.rest.length > 0 && (
+        <details class="papers-rest record-rest">
+          <summary>
+            The other {group.rest.length} of {group.matches.length} records
+            <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+          </summary>
+          <ul class="plain record-list">
+            {group.rest.map((match) => (
+              <Row match={match} possible={possible} />
+            ))}
+          </ul>
+        </details>
+      )}
     </div>
   ))
 }

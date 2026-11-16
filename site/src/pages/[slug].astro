@@ -921,7 +921,7 @@ const sections = [
             {untried.length > 0
               ? "Trial registry records found for this treatment and condition, with how sure each match is. A score is about the match, not about the treatment."
               : candidates.length > 0
-                ? "Trial registry records that may be about this treatment and condition, with how sure each match is. They are not counted in the status. A score is about the match, not about the treatment."
+                ? "Trial registry records that may be about this treatment and condition, with how sure each match is. A score is about the match, not about the treatment."
                 : "The trial registries were searched for this treatment and condition. No record matched."}
           </p>
           {untried.length > 0 && <RegistryRecords matches={untried} />}

@@ -1139,17 +1139,45 @@ test("Scenario: Possible record laid out field by field under its reading", () =
   const html = page("phase-claim/index.html");
   const registry = sectionOf(html, "matched");
   const words = wordsOf(registry);
+  // Said once, with the rule that would have counted it and where scoring is explained.
+  assert.equal(count(words, "None of these is counted in the status"), 1);
+  assert.match(registry, /<a href="\/guide\/match-and-confidence">How a match is scored<\/a>/);
   assert.match(registry, /<h3 class="record-group-head">\s*Read as this treatment for another condition, patient group or setting/);
-  assert.match(words, /setting , 1 record Not counted in the status: no rule or person has confirmed these matches\./);
   assert.match(registry, /<p class="record-title"><a href="\/trials\/NCT00000077">Synthetic trial of phase-claim agent in another condition<\/a>/);
-  assert.match(words, /NCT00000077 at ClinicalTrials\.gov Phase 1 Under way Match to this claim: low, 31%/);
+  // The line leads with the match, then the trials' own grammar.
+  assert.match(words, /Possible match: low, 31% Phase 1 NCT00000077 at ClinicalTrials\.gov Under way/);
   assert.match(words, /For Another Condition Named in the record Phase-claim agent; Placebo/);
-  // The record's one-line summary is not repeated, and no row says the trial is recruiting
-  // or that it tests everything the record names.
-  assert.doesNotMatch(words, /Recruiting|View trial details here|Tests/);
+  assert.doesNotMatch(words, /Recruiting|View trial details here|Tests|Match to this claim/);
   // The folded heading and the digest give the count; the digest's links to the section.
   assert.match(html, /<span class="fold-note">1 possible<\/span>/);
   assert.match(html, /, <a href="#matched">1 possible<\/a>/);
+});
+
+test("Scenario: Trial on ClinicalTrials.gov", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /NCT00000002 at ClinicalTrials\.gov/);
+});
+
+test("Scenario: Group of more than three records", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const claim = fixture.claims.find((each) => each.slug === "phase-claim");
+  const candidate = claim.matches[1];
+  for (let n = 0; n < 4; n += 1) {
+    claim.matches.push({ ...candidate, external_id: `NCT0000009${n}`, url: `https://clinicaltrials.gov/study/NCT0000009${n}`, score: 0.3 - n / 100 });
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-rest-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const registry = sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched");
+  const [shown, rest] = registry.split('<details class="papers-rest record-rest">');
+  assert.equal(count(shown, 'class="record-row"'), 3);
+  assert.equal(count(rest, 'class="record-row"'), 2);
+  assert.match(wordsOf(rest), /The other 2 of 5 records/);
 });
 
 test("Scenario: Possible record not yet read into fields", () => {
@@ -1165,7 +1193,7 @@ test("Scenario: Possible record not yet read into fields", () => {
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
-  assert.match(words, /Registry record NCT00000077 NCT00000077 at ClinicalTrials\.gov Details not read from the registry yet Match to this claim: low, 31%/);
+  assert.match(words, /Registry record NCT00000077 Possible match: low, 31% NCT00000077 at ClinicalTrials\.gov Details not read from the registry yet/);
   assert.doesNotMatch(words, /Synthetic trial of phase-claim agent in another condition/);
 });
 

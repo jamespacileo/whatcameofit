@@ -35,6 +35,12 @@ export function matchNote(score: number): string {
   return `Match to this claim: ${matchWords(score)}`;
 }
 
+/** "Possible match: medium, 78%": a candidate's note, led with so the uncertainty comes
+ * before its phase and state (openspec registry-record-rows). */
+export function possibleMatchNote(score: number): string {
+  return `Possible match: ${matchWords(score)}`;
+}
+
 /** Why the record scored as it did, from how it was read. */
 const READINGS:Record<string, string> = {
   match: "Read as a study of this treatment for this condition.",

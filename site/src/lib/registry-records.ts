@@ -31,14 +31,26 @@ export function groupByReading(matches: ExportedMatch[]): ReadingGroup[] {
 
 export const NO_PHASE_GIVEN = "Phase not given";
 export const NOT_READ_YET = "Details not read from the registry yet";
-/** Said under each group of possible records, so no row reads as a counted trial. */
-export const NOT_COUNTED = "Not counted in the status: no rule or person has confirmed these matches.";
+/** Said once above the possible records, with the rule that would have counted them,
+ * so no row reads as a counted trial (openspec auto-publish, "Confident candidates are
+ * approved by rule"). */
+export const NOT_COUNTED =
+  "None of these is counted in the status. A rule counts a record only when it is read as this treatment for this condition with a high enough score, and no person has confirmed these.";
+export const NOT_COUNTED_LINK = { href: "/guide/match-and-confidence", text: "How a match is scored" };
+/** Records shown in a group before the rest fold away. */
+export const RECORDS_SHOWN = 3;
+
 /** What the record lists among its interventions: the treatment, comparators and
  * procedures alike, so it is never worded as what the trial tests. */
 export const NAMED_LABEL = "Named in the record";
 export const FOR_LABEL = "For";
 
-/** "Phase 2", "Under way": the record's phase and state in the site's words. */
-export function standingOf(record: ExportedMatchRecord): string[] {
-  return [phaseText(record.phases) ?? NO_PHASE_GIVEN, TRIAL_STATE_WORDS[record.state]];
+/** "Phase 2": the record's phase in the site's words. */
+export function phaseOf(record: ExportedMatchRecord): string {
+  return phaseText(record.phases) ?? NO_PHASE_GIVEN;
+}
+
+/** "Under way": the record's state in the trial entries' words. */
+export function stateOf(record: ExportedMatchRecord): string {
+  return TRIAL_STATE_WORDS[record.state];
 }

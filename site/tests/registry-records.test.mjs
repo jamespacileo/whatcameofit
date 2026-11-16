@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { NO_PHASE_GIVEN, groupByReading, standingOf } from "../src/lib/registry-records.ts";
+import { NOT_COUNTED, NO_PHASE_GIVEN, groupByReading, phaseOf, stateOf } from "../src/lib/registry-records.ts";
+import { possibleMatchNote } from "../src/lib/confidence.ts";
 import { READING_HEADINGS, UNREAD_HEADING } from "../src/lib/confidence.ts";
 
 const match = (external_id, reading, record = null) => ({
@@ -37,11 +38,12 @@ test("records are grouped by reading, closest to the claim first, each in the or
 
 test("a record's phase and state are in the site's words, and a missing phase says so", () => {
   const record = { title: "T", conditions: [], interventions: [], phases: [], state: "under_way" };
-  assert.deepEqual(standingOf(record), [NO_PHASE_GIVEN, "Under way"]);
-  assert.deepEqual(standingOf({ ...record, phases: ["phase_1", "phase_2"] }), ["Phase 1/Phase 2", "Under way"]);
+  assert.equal(phaseOf(record), NO_PHASE_GIVEN);
+  assert.equal(phaseOf({ ...record, phases: ["phase_1", "phase_2"] }), "Phase 1/Phase 2");
+  assert.equal(stateOf(record), "Under way");
 });
 
 test("no reading heading is a verdict or says a trial is open to join", () => {
-  const words = [...Object.values(READING_HEADINGS), UNREAD_HEADING].join(" ");
+  const words = [...Object.values(READING_HEADINGS), UNREAD_HEADING, NOT_COUNTED, possibleMatchNote(0.78)].join(" ");
   assert.doesNotMatch(words, /dead|abandoned|works|failed|cure|proven|recruit|join|eligib/i);
 });

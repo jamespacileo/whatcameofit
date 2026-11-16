@@ -81,9 +81,8 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
       <span class="trial-name">
         {columns.phase && <span class="trial-phase">{columns.phase} · </span>}
         <a href={trial.url} rel="noopener">
-          {trial.trial_id}
+          {trial.trial_id} at {registry}
           <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
-          <span class="visually-hidden">(at {registry})</span>
         </a>
         <TrialDetailsLink url={trial.url} />
       </span>

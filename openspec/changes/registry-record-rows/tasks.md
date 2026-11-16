@@ -12,7 +12,12 @@
 - [x] 2.1 `lib/registry-records.ts` (grouping, phase and state words) and reading headings in `lib/confidence.ts`. Verify: `site/tests/registry-records.test.mjs`.
 - [x] 2.2 `RegistryRecords.astro` on the claim page in place of `MatchList` for registry records; styles; `DESIGN.md` entry. Verify: the two scenarios in `site/tests/site.test.mjs`; claim page at 1280px and 375px.
 
-## 3. Release
+## 3. Revisions after critique (2026-11-16)
 
-- [ ] 3.1 On the writer: `alembic upgrade head`, then `thenwhat entity record-facts`, before the next export.
-- [x] 3.2 `make check` with a branch-specific `TEST_DATABASE_URL`.
+- [x] 3.1 "Named in the record", counts on the folded heading, section list and digest, registry in sight with a 24px press area, a title slot for an unread record. Verify: site scenarios.
+- [x] 3.2 Possible rows open with their match; trial entries and record rows name the registry in one grammar; one "not counted" note with its rule and guide link; groups fold after three. Verify: site scenarios including "Group of more than three records".
+
+## 4. Release
+
+- [ ] 4.1 On the writer: `alembic upgrade head`, then `thenwhat entity record-facts`, before the next export.
+- [x] 4.2 `make check` with a branch-specific `TEST_DATABASE_URL`.
