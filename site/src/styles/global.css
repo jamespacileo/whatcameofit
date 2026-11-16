@@ -1909,8 +1909,8 @@ main nav.contents ul li + li {
   overflow: hidden;
 }
 
-/* The row's grey line is its disclosure's summary: whose words, the claim's words beside
-   the source's term, the match, then the words that open the card. */
+/* The row's grey line is its disclosure's summary: the words that open the card, then
+   whose words, the claim's words beside the source's term, and the match. */
 .glance-more {
   margin-top: 0.3rem;
 }
@@ -1944,13 +1944,18 @@ main nav.contents ul li + li {
   color: var(--ring);
 }
 
-/* The words and the chevron stay together. */
+/* The words and the chevron stay together, and lead the line. */
 .glance-more-label {
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
   white-space: nowrap;
   color: var(--blue);
+}
+
+/* In a flex row of its own, its dot already has the gap before it. */
+.glance-more summary > span.glance-more-label:not(:last-child)::after {
+  margin-left: 0.25rem;
 }
 
 .glance-more-words {
@@ -1981,9 +1986,11 @@ main nav.contents ul li + li {
   font-weight: 600;
 }
 
+
+
 .glance-note {
   margin: 0.7rem 0 0;
-  max-width: 62ch;
+  max-width: 52ch;
   text-wrap: pretty;
   font-size: 0.85rem;
   color: var(--muted);
@@ -6158,6 +6165,10 @@ body.framed {
 
   .glance-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .glance-facts > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .glance-more summary {

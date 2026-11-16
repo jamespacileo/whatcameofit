@@ -8,6 +8,7 @@ import {
   isDrugsTarget,
   mechanismTexts,
   moleculeKindText,
+  scoreLabel,
   type ExportedCard,
   type ExportedCardSource,
 } from "./background";
@@ -100,16 +101,9 @@ export function bandFacts(cards: GlanceCards): BandFact[] {
   return facts;
 }
 
-/** What stands for a score on a card made by rule, after "Term match:". */
-const RULE_MATCH_WORDS: Record<string, string> = {
-  drug: "by exact name",
-  target: "from the drug’s record",
-};
-
-/** A row's score, said as being about the term so it is never read as about the
- * treatment: "Term match: high, 81%", or the rule that stands for it. */
+/** A row's score, in the card's own words: "Term match: high, 81%". */
 export function termMatchText(card: Pick<ExportedCard, "kind" | "score">): string {
-  return `Term match: ${card.score === null ? RULE_MATCH_WORDS[card.kind] : matchWords(card.score)}`;
+  return scoreLabel(card, matchWords);
 }
 
 /** A source's short name for a row's grey line: the abbreviation its title gives in

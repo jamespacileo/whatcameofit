@@ -221,10 +221,11 @@ export const NO_TARGET_DEFINITION = "The source gives this gene no description."
 export const DRUG_NOTE =
   "What a drug acts on is its drug database’s record of the drug. It is not about this condition, and nothing here is a reason to start or stop a medicine.";
 export const NO_MECHANISM = "The record gives no mechanism for this drug.";
-/** What stands where a score would, on a card made by a rule and not scored. */
+/** What stands where a score would, on a card made by a rule and not scored, after
+ * "Term match:". */
 export const RULE_LABELS: Record<string, string> = {
-  drug: "Matched by exact name",
-  target: "From the drug’s record",
+  drug: "by exact name",
+  target: "from the drug’s record",
 };
 
 /** Whether a target card comes from a drug's record and not from the treatment's name. */
@@ -245,9 +246,11 @@ export function mechanismTexts(card: Pick<ExportedCard, "mechanisms">): string[]
   return (card.mechanisms ?? []).map(({ action, target }) => ACTION_WORDS[action](target));
 }
 
-/** The score as a word and a percentage, or what stands for it on an unscored card. */
+/** A card's score, said as being about the term so it is never read as about the
+ * treatment: "Term match: high, 81%", or the rule that stands for it. The same words in
+ * its row and on the card. */
 export function scoreLabel(card: Pick<ExportedCard, "kind" | "score">, scored: (score: number) => string): string {
-  return card.score === null ? RULE_LABELS[card.kind] : scored(card.score);
+  return `Term match: ${card.score === null ? RULE_LABELS[card.kind] : scored(card.score)}`;
 }
 
 /** Whose facts a card rests on when they are not its own source's, with the licence. */
