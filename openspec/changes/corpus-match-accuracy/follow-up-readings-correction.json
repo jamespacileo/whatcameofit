@@ -135,5 +135,12 @@
   },
   "claim_state": "pending",
   "published": false,
-  "interpretation": "The initial exact-cycle guard affected the pending diet card only. Extending qualified anchors after independent review also omits three misleading offsets on the existing MDMA/PTSD card. Original stored readings remain unchanged; a normal public export is still needed."
+  "interpretation": "The initial exact-cycle guard affected the pending diet card only. Extending qualified anchors after independent review also omits three misleading offsets on the existing MDMA/PTSD card. Original stored readings remain unchanged; a normal public export is still needed.",
+  "targeted_reread_usage": {
+    "ledger_id": 32456,
+    "input_tokens": 693,
+    "output_tokens": 87,
+    "cost_usd": "0.000113",
+    "created_at": "2026-11-16T00:19:20.694338Z"
+  }
 }
