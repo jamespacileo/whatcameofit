@@ -29,6 +29,22 @@ jobs:
           node-version: 24
           cache: npm
           cache-dependency-path: site/package-lock.json
+      # Drawn card images, kept by what decides their pixels (site/src/lib/card-image.ts).
+      # A run on main keeps them where every pull request's preview can read them.
+      - name: Restore drawn cards
+        id: cards
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/cards
+          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/package-lock.json') }}
+          restore-keys: site-cards-
+      - name: Look for kept dependencies
+        id: deps
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/node_modules
+          key: site-deps-${{ runner.os }}-node24-${{ hashFiles('site/package-lock.json') }}
+          lookup-only: true
       - run: make check
       - name: Save production extension package
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -47,6 +63,21 @@ jobs:
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
+      - name: Keep dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/node_modules
+          key: ${{ steps.deps.outputs.cache-primary-key }}
+      - name: Drop cards no longer drawn
+        if: steps.cards.outputs.cache-hit != 'true'
+        run: find site/.cache/cards -type f -mmin +30 -delete
+      - name: Keep drawn cards
+        if: steps.cards.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/cards
+          key: ${{ steps.cards.outputs.cache-primary-key }}
 
   deploy:
     name: Deploy production

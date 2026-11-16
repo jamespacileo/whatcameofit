@@ -3,7 +3,8 @@
 // is and where it appeared, and how it came to be listed. Openspec paper-facts: every
 // fact is the index's, and no word here says what the paper concluded or how good it is.
 import ExternalLink from "@lucide/astro/icons/external-link";
-import { matchNote } from "../lib/confidence";
+import { MATCH_MEANING, matchWords } from "../lib/confidence";
+import Score from "./Score.astro";
 import type { ExportedPaper } from "../lib/export";
 import {
   ALSO_WORDS,
@@ -64,7 +65,9 @@ const reasons = (related?.reasons ?? []).map((code) => PAPER_REASON_WORDS[code] 
   {
     related && typeof related.score === "number" && (
       <p class="paper-role">
-        <span>{matchNote(related.score)}</span>
+        <Score about="Match to this claim" words={matchWords(related.score)} shown>
+          <span>{MATCH_MEANING}</span>
+        </Score>
         {reasons.length > 0 && <span class="entry-note">{reasons.join(" · ")}</span>}
       </p>
     )

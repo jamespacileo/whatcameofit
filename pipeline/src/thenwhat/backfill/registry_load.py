@@ -10,10 +10,12 @@ from typing import Any, Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.errors import SourceStop
 from thenwhat.backfill.ledger import mark_changed
 from thenwhat.backfill.steps import Step
 from thenwhat.backfill.trial_names import indication_words, name_under_test
 from thenwhat.db.models import RegistryLoad, RegistryTrial
+from thenwhat.sources.base import SourceThrottled
 from thenwhat.sources.clinicaltrials import TrialPage
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
@@ -78,6 +80,8 @@ class LoadReport:
     updated: int = 0
     # The date changes were asked from, or None for a full load.
     changes_since: date | None = None
+    # Why the load ended before its last page, when the registry may not be asked now.
+    stopped: str | None = None
 
 
 def trial_fields(study: dict[str, Any]) -> dict[str, Any]:
@@ -149,6 +153,7 @@ def load_trials(
     changes_only: bool,
     now: Callable[[], datetime],
     before_request: Callable[[], None] | None = None,
+    refused: Callable[[float | None], SourceStop] | None = None,
 ) -> LoadReport:
     """Load every trial that meets the condition, a page per request and a transaction
     per page.
@@ -157,7 +162,12 @@ def load_trials(
     load of the same condition are asked for; when there is no such load, everything is.
     A load that stops part way is simply started again: trials already stored are updated
     in place, so each ends up stored once. `before_request` is called ahead of every
-    request, to claim it against the registry's allowance.
+    request, to claim it against the registry's allowance. `refused` is called when the
+    registry kept answering "too many requests", with the wait it stated, to record the
+    pause for every process; it returns the stop to report. When the registry may not be
+    asked now (its allowance is used up, or it said "too many requests"), the load stops
+    with what it stored so far and says why; it is not recorded as completed, so the next
+    load asks again from the same date.
     """
     started = now()
     report = LoadReport()
@@ -168,9 +178,20 @@ def load_trials(
                 report.changes_since = previous.loaded_from.date()
     token: str | None = None
     while True:
-        if before_request is not None:
-            before_request()
-        page = registry.list_page(condition, page_token=token, updated_since=report.changes_since)
+        try:
+            if before_request is not None:
+                before_request()
+            page = registry.list_page(
+                condition, page_token=token, updated_since=report.changes_since
+            )
+        except SourceStop as stop:
+            report.stopped = str(stop)
+            return report
+        except SourceThrottled as throttled:
+            if refused is None:
+                raise
+            report.stopped = str(refused(throttled.retry_after))
+            return report
         report.requests += 1
         with open_session() as session:
             for study in page.studies:
