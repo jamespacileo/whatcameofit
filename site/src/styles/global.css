@@ -1751,11 +1751,13 @@ main nav.contents ul li + li {
   font-size: 0.85rem;
 }
 
+/* A match reads left to right; where it stands is a column on the right, as in the
+   day-by-day list (openspec latest-rows). */
 .hit-row {
   display: grid;
-  grid-template-columns: 9rem minmax(0, 1fr);
-  gap: 0 1.1rem;
-  align-items: baseline;
+  grid-template-columns: minmax(0, 1fr) 10rem;
+  gap: 0 1.5rem;
+  align-items: start;
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--rule-soft);
 }
@@ -1763,6 +1765,13 @@ main nav.contents ul li + li {
 .hit-now {
   display: grid;
   gap: 0.3rem;
+  padding: 0.55rem 0.75rem 0.6rem;
+  background: var(--panel);
+  border-radius: 0.65rem;
+}
+
+.hit-main {
+  min-width: 0;
 }
 
 .hit-now .status-name {
@@ -1952,7 +1961,7 @@ main nav.contents ul li + li {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.15rem 0.6rem;
-    margin-bottom: 0.25rem;
+    margin-top: 0.6rem;
   }
 
   .hit-now .row-label {
@@ -2418,6 +2427,20 @@ main nav.contents ul li + li {
   height: 0.8rem;
   background: var(--blue);
   border-color: var(--blue);
+}
+
+/* A status off the path: a square beside the words, no path. */
+.track.off {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+}
+
+.track.off .off-mark {
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 1.75px solid var(--blue);
+  border-radius: 2px;
 }
 
 /* The path with each place named under its dot, in a panel that has room for the names. */

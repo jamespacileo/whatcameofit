@@ -113,6 +113,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
         </label>
         <slot name="narrow" />
       </div>
+      <p class="list-key">With each report and record: where its claim stands on record now. Press it for why.</p>
 
 
       <div class="day-list" data-day-list>
@@ -152,7 +153,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
                   row.kind === "report" ? (
                     <DayReport row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
                   ) : row.kind === "record" ? (
-                    <DayRecord row={row} />
+                    <DayRecord row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
                   ) : (
                     <DayPromise row={row} />
                   ),
@@ -698,8 +699,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   /* Rows. What was reported is on white, what is on record on the panel blue, what
      was promised on pale amber. Each row also says its kind in words. */
   .day-row {
-    padding: 1.4rem 0 1.3rem;
-    border-bottom: 1px solid var(--rule);
+    padding: 1.2rem 0 1.15rem;
+    border-bottom: 1px solid var(--rule-soft);
   }
 
   .row-source {
@@ -716,25 +717,39 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     white-space: nowrap;
   }
 
+  /* The outlet's name is enough in a row; its domain is on the claim page. */
+  .row-source .domain {
+    display: none;
+  }
+
+  /* Named once above the list: what the column at the right of each row says. */
+  .list-key {
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
   .row-label {
     font-size: 0.78rem;
     font-weight: 600;
     color: var(--muted);
   }
 
+  /* The topic in words, quiet: the outlet and the title carry the row. */
   .row-topic {
-    background: var(--tint);
+    color: var(--muted);
+  }
+
+  .row-age {
+    font-weight: 700;
     color: var(--ink);
-    border-radius: 999px;
-    padding: 0.05rem 0.6rem;
-    font-size: 0.8rem;
   }
 
   .row-title {
-    font-size: clamp(1.12rem, 3.2vw, 1.3rem);
+    font-size: clamp(1.08rem, 3vw, 1.2rem);
     font-weight: 700;
-    line-height: 1.25;
-    margin: 0.45rem 0 0.8rem;
+    line-height: 1.3;
+    margin: 0.3rem 0 0.25rem;
     text-wrap: balance;
   }
 
@@ -748,91 +763,193 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     text-decoration-thickness: 2px;
   }
 
-  /* A report row: what is on record leads in its own column, the report is beside it. */
-  .report-row {
-    display: grid;
-    grid-template-columns: 9rem minmax(0, 1fr);
-    gap: 0 1.1rem;
-    align-items: start;
-  }
-
-  .row-now {
-    display: grid;
-    gap: 0.15rem;
-    padding: 0.6rem 0.8rem 0.75rem;
-    background: var(--panel);
-    border-radius: var(--radius);
-  }
-
-  .row-now .status-name {
-    font-size: 1.05rem;
-    line-height: 1.25;
-    text-wrap: balance;
-  }
-
-  .row-now .status-name,
-  .row-status .status-name {
-    color: var(--blue);
-  }
-
-  .row-now > .track {
-    margin-top: 0.4rem;
-    width: min(100%, 6.5rem);
-  }
-
-  /* The button in the card's corner: what the status means and why this claim is here. */
-  .row-now {
-    position: relative;
-  }
-
-  .row-now .row-label {
-    padding-right: 1.6rem;
-  }
-
-  .row-now .row-why {
-    position: absolute;
-    top: 0.3rem;
-    right: 0.3rem;
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  /* Room for the path, the reason and its links without scrolling on a laptop screen. */
-  .row-now .pop {
-    max-height: min(30rem, calc(100dvh - 2rem));
-  }
-
-  .row-now .pop-reason {
-    margin-top: 0.7rem;
-    padding: 0.55rem 0.7rem 0.6rem;
-    background: var(--panel);
-    border-radius: 0.5rem;
-  }
-
-  .row-now .pop-reason-head {
-    font-size: 0.78rem;
-    font-weight: 700;
+  .row-claim {
+    margin: 0;
+    max-width: var(--measure);
+    text-wrap: pretty;
+    font-size: 0.9rem;
+    line-height: 1.45;
     color: var(--muted);
   }
 
-  .row-now .pop-reason + .pop-note {
-    margin-top: 0.7rem;
+  .row-intervention {
+    font-weight: 600;
+    color: var(--ink);
   }
 
-  .report-row .row-title {
-    margin: 0.35rem 0 0.5rem;
-  }
-
-  .report-row .row-foot {
-    margin-top: 0;
-  }
-
-  /* What the evidence was when first reported, and what the records add: opened by
-     the pointer or by focus. Clipped, never removed, so it is always read aloud. */
-  .row-more {
+  /* A report or registry row: the report and the claim read left to right; where the
+     claim stands is a column of its own on the right, so the eye runs down one edge to
+     compare. Its detail opens under the row, the width of both. */
+  .report-row,
+  .record-row {
     display: grid;
-    grid-template-rows: 0fr;
-    transition: grid-template-rows 0.32s var(--ease-out) 0.08s;
+    grid-template-columns: minmax(0, 1fr) 8.5rem;
+    gap: 0 1.25rem;
+    align-items: start;
+  }
+
+  /* The rows stack by the room the list has, not the window: beside two side columns
+     a laptop's list is as narrow as a tablet's. */
+  .day-list {
+    container-type: inline-size;
+  }
+
+  .row-main {
+    min-width: 0;
+  }
+
+  .row-now {
+    position: relative;
+    display: grid;
+    justify-items: start;
+    gap: 0.25rem;
+    width: 100%;
+    padding: 0.5rem 1.9rem 0.6rem 0.7rem;
+    font: inherit;
+    text-align: left;
+    color: var(--ink);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 0.65rem;
+    cursor: pointer;
+    transition: border-color 0.16s var(--ease-out), background-color 0.16s var(--ease-out);
+  }
+
+  .row-now:hover {
+    border-color: var(--rule);
+    background: var(--panel);
+  }
+
+  /* A status that changed that day keeps the panel blue: the rows that moved stand out
+     from the rows that only say where a claim stands. */
+  .row-now.is-changed {
+    background: var(--panel);
+  }
+
+  .row-now.is-changed:hover {
+    background: var(--tint);
+  }
+
+  .row-now .status-name {
+    font-size: 1rem;
+    line-height: 1.25;
+    color: var(--blue);
+    text-wrap: balance;
+  }
+
+  .row-now .track {
+    margin: 0.2rem 0 0.1rem;
+    width: min(100%, 6.5rem);
+  }
+
+  .row-now .track.off {
+    width: auto;
+  }
+
+  .row-change {
+    display: grid;
+    justify-items: start;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    line-height: 1.35;
+  }
+
+  .row-change .new-tag {
+    background: var(--blue);
+    color: var(--paper);
+  }
+
+  .row-was {
+    color: var(--muted);
+  }
+
+  .row-since {
+    margin-bottom: 0.4rem !important;
+    font-weight: 600;
+  }
+
+  .row-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .row-counts {
+    font-size: 0.8rem;
+    line-height: 1.35;
+    color: var(--muted);
+  }
+
+  .row-chev {
+    position: absolute;
+    top: 0.65rem;
+    right: 0.6rem;
+    display: grid;
+    color: var(--muted);
+    transition: transform 0.22s var(--ease-out);
+  }
+
+  .row-now[aria-expanded="true"] .row-chev {
+    transform: rotate(180deg);
+  }
+
+  /* What a registry row records: one dated item on the panel blue, beside the report it
+     belongs to on white. */
+  .row-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0.6rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .row-item {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.15rem 0.5rem;
+    min-height: 1.9rem;
+    padding: 0.2rem 0.7rem;
+    border-radius: 0.6rem;
+    font-size: 0.82rem;
+    background: var(--panel);
+  }
+
+  /* An item names its outlet; the outlet's domain is on the claim page. */
+  .row-item .domain {
+    display: none;
+  }
+
+  .row-item.is-report {
+    background: var(--paper);
+    box-shadow: inset 0 0 0 1px var(--rule);
+  }
+
+  .row-item .when {
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .row-item.is-record a {
+    font-weight: 600;
+  }
+
+  .row-detail {
+    margin: 0.4rem 0 0;
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  /* The row's detail, under it at the width of both columns. Open without the script
+     and on paper; with the script, closed until the status is pressed. */
+  .row-more {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.3s var(--ease-out);
   }
 
   .row-more > div {
@@ -840,73 +957,58 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     overflow: hidden;
   }
 
-  .report-row:hover .row-more,
-  .report-row:focus-within .row-more {
-    grid-template-rows: 1fr;
+  @media (scripting: enabled) {
+    .row-more:not([data-open]) {
+      grid-template-rows: 0fr;
+    }
   }
 
-  .row-then {
-    margin: 0.65rem 0 0;
-    padding-top: 0.6rem;
-    border-top: 1px solid var(--rule-soft);
-    max-width: var(--measure);
+  .row-more-body {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 0.8rem;
+    padding: 0.9rem 1rem 1rem;
+    background: var(--panel);
+    border-radius: 0.7rem;
     font-size: 0.92rem;
-    line-height: 1.45;
+    line-height: 1.5;
+  }
+
+  .row-more-body p {
+    margin: 0;
+    max-width: var(--measure);
+  }
+
+  .row-more-head {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--muted);
+  }
+
+  .row-meaning .track.named {
+    margin-top: 0.6rem;
+  }
+
+  .row-off {
+    margin-top: 0.3rem;
     color: var(--muted);
   }
 
   .row-then strong {
+    font-weight: 700;
+  }
+
+  .row-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1.25rem;
     font-weight: 600;
-    color: var(--ink);
   }
 
-  /* A touch screen has no pointer to rest on a row, and paper has none either. A
-     narrow window is treated as a phone, whatever it reports. */
-  @media (hover: none), (max-width: 34rem) {
-    .row-more {
-      grid-template-rows: 1fr;
-    }
-  }
-
-  @media print {
-    .row-more {
-      grid-template-rows: 1fr;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .row-more {
-      transition: none;
-    }
-  }
-
-  @media (max-width: 34rem) {
-    .report-row {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .row-now {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.15rem 0.7rem;
-      margin-bottom: 0.7rem;
-      padding-block: 0.5rem;
-    }
-
-    .row-now .row-label {
-      flex-basis: 100%;
-    }
-
-    .row-now > .track {
-      margin-top: 0;
-      width: 5.5rem;
-    }
-
-    .row-now .row-why {
-      top: 0.05rem;
-      right: 0.05rem;
-    }
+  .row-when {
+    font-size: 0.82rem;
+    color: var(--muted);
   }
 
   .row-promise {
@@ -917,41 +1019,54 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     font-size: 0.95rem;
   }
 
-  .row-foot {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.3rem 1rem;
-    margin: 0.8rem 0 0;
-    font-size: 0.9rem;
+  .row-more-body .row-promise {
+    margin: 0;
   }
 
-  .row-claim {
-    flex: 1 1 14rem;
-    color: var(--muted);
+  @media (prefers-reduced-motion: reduce) {
+    .row-more,
+    .row-now,
+    .row-chev {
+      transition: none;
+    }
   }
 
-  .row-foot a {
-    font-weight: 600;
-    white-space: nowrap;
-  }
+  /* Where the list is narrow the status sits under the claim, the width of the row. */
+  @container (max-width: 26rem) {
+    .report-row,
+    .record-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
 
-  .record-row {
-    background: var(--panel);
-    border-bottom: 0;
-    border-radius: var(--radius);
-    padding: 0.8rem 1rem 0.85rem;
-    margin: 1rem 0;
-  }
+    .row-now {
+      margin-top: 0.75rem;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      column-gap: 0.75rem;
+    }
 
-  .row-what,
-  .row-detail {
-    margin: 0.2rem 0 0;
-  }
+    .row-now > * {
+      grid-column: 1 / -1;
+    }
 
-  .row-detail {
-    font-size: 0.92rem;
-    color: var(--muted);
+    .row-now > .status-name {
+      grid-column: 1;
+    }
+
+    .row-now > .track {
+      grid-column: 2;
+      grid-row: 2;
+      margin: 0;
+      width: 5.5rem;
+    }
+
+    .row-now > .track.off {
+      width: auto;
+    }
+
+    .row-now {
+      background: var(--panel);
+    }
   }
 
   .row-status {
@@ -965,19 +1080,6 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
   .promise-status .gloss {
     display: inline;
-  }
-
-  .row-about {
-    margin: 0.5rem 0 0;
-    padding-top: 0.45rem;
-    border-top: 1px solid var(--rule);
-    font-size: 0.9rem;
-    color: var(--muted);
-    line-height: 1.45;
-  }
-
-  .row-about a {
-    font-weight: 600;
   }
 
   .promise-row .row-title {
@@ -1149,11 +1251,6 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       min-height: 2.75rem;
     }
 
-    /* The outlet's name is enough on a phone; its domain is on the claim page. */
-    .row-source .domain {
-      display: none;
-    }
-
     .day-list {
       display: flex;
       flex-direction: column;
@@ -1179,10 +1276,6 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       padding-top: 0.3rem;
     }
 
-    .record-row {
-      padding-top: 0.5rem;
-    }
-
     .row-title {
       margin-top: 0;
     }
@@ -1197,11 +1290,9 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       padding-block: 0.6rem;
     }
 
-    .row-foot a,
-    .row-about a,
-    .record-row .row-what a {
+    .row-item.is-record a {
       display: inline-block;
-      padding-block: 0.65rem;
+      padding-block: 0.4rem;
     }
   }
 
@@ -1214,7 +1305,9 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       outline-offset: -2px;
     }
 
-    .record-row,
+    .row-now,
+    .row-item,
+    .row-more-body,
     .row-promise {
       border: 1px solid CanvasText;
     }
@@ -1251,14 +1344,18 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       display: block;
     }
 
-    .record-row,
-    .row-now {
+    .row-now,
+    .row-more-body {
       background: none;
       border: 1px solid var(--rule);
     }
 
-    /* The claim page prints the same reasons beside its status; a row keeps to its card. */
-    .row-now .pop {
+    .row-more,
+    .row-more:not([data-open]) {
+      grid-template-rows: 1fr;
+    }
+
+    .row-chev {
       display: none;
     }
   }
