@@ -53,43 +53,32 @@ A registry trial in the corpus SHALL NOT be an evidence event and SHALL NOT be a
 
 ## ADDED Requirements
 
-### Requirement: Daily change load
-A load of changes SHALL be runnable each day with no input from a person. It SHALL ask the registry only for interventional studies changed since the last completed load, in pages, within the registry's allowance, and SHALL store each changed or new trial once. It SHALL report how many trials changed, how many were new, how many cited trials changed, and which claims became due.
+### Requirement: A load says which cited trials changed
+A load SHALL report, beside how many trials were new and how many already stored, how many of the trials it changed are cited by a claim and how many claims that made due for their registry refresh.
 
 #### Scenario: A day's changes
-- **WHEN** the registry has changed 900 interventional studies since the last completed load
-- **THEN** one page is requested, 900 records are updated or added, and the report gives the counts
+- **WHEN** a changes-only load stores 900 changed trials, 4 of them cited by 6 published claims, with a change of state, phases, dates or posting of results
+- **THEN** the report says 4 cited trials changed and 6 claims are due for their registry refresh
 
-#### Scenario: A load that stops part way
-- **WHEN** a daily load stops after its first page
-- **THEN** the next load asks again from the last load that completed, and every changed trial is stored once
+#### Scenario: No cited trial changed
+- **WHEN** a load changes only trials that no claim cites
+- **THEN** the report says no claim became due
 
-#### Scenario: The registry does not answer
-- **WHEN** the registry cannot be reached
-- **THEN** nothing is changed, the last completed load stands, and the report says the load did not run
-
-### Requirement: What a load may start without a person
-A load SHALL start, without a person, only work that sends no request or asks only the registry, and that calls no model: the offline linking, the registry refresh of a claim that cites a changed trial, and the full-record step for a trial in a named set. Refreshes started this way SHALL be capped at a configured number a day, and what is left SHALL stay due.
-
-#### Scenario: A cited trial changes state
-- **WHEN** a daily load stores a new state for a trial a claim cites
-- **THEN** the claim's registry refresh runs, its events are approved by the existing rule, and its status is derived again, with no model call
-
-#### Scenario: More refreshes than the cap
-- **WHEN** a load makes 5,000 claims due and the cap is 500
-- **THEN** 500 are refreshed, 4,500 stay due, and the report says so
-
-### Requirement: What a load never starts
-A load, and anything a load makes due, SHALL NOT by itself start: a model call of any kind; a request to the page reader; a news search; the creation of a claim; a match or its approval; a failure flag; an archive or its undoing; a release from audit; or a message to a reader. A claim's status SHALL change after a load only through the approved registry events of a trial it already cites. The news search for a changed trial SHALL become due and SHALL run only when the operator runs it.
+### Requirement: A load starts nothing
+A load SHALL store records and mark work due, and SHALL start no step: no model call, no request to the page reader, no news search, no claim, no match or approval, no failure flag, no archive or its undoing, no release from audit and no message to a reader. Work a load makes due SHALL run only when the operator runs it. The one exception is the daily run's existing registry refresh of published claims, which MAY take first the claims a load made due, within its own limit and spend guard.
 
 #### Scenario: A changed trial with a telling name
-- **WHEN** a daily load adds a trial whose name is telling and stored leads are strongly linked to it
-- **THEN** the links are recorded, no lead is read, no article is fetched and no usage is recorded
+- **WHEN** a load adds a trial whose name is telling and stored leads would be strongly linked to it
+- **THEN** the trial is due for the offline linking, no lead is read, no article is fetched and no usage is recorded
 
 #### Scenario: A trial due for the news search
-- **WHEN** a daily load makes 900 trials due for the news search
+- **WHEN** a load makes 900 trials due for the news search
 - **THEN** no search is sent until the operator runs the step
 
 #### Scenario: A day with no operator
-- **WHEN** daily loads run for a week with no command from the operator
-- **THEN** the month's model spend is unchanged by them
+- **WHEN** loads run daily for a week with no command from the operator
+- **THEN** no lead was read, no article fetched, no news search sent and no claim created because of them, and no run refreshed more claims than its limit
+
+#### Scenario: A cited trial changes state
+- **WHEN** a load stores a new state for a trial a published claim cites
+- **THEN** the claim's status is unchanged until its registry refresh has run, and changes then only through events the existing rule approves

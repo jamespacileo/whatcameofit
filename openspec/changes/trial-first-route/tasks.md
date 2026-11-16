@@ -1,25 +1,26 @@
 # Tasks
 
-Each section is useful when it is done, without the sections after it. Sections 2 to 5 need nothing from `cloudflare-source-of-truth`. Section 6 waits for it.
+Each section is useful when it is done, without the sections after it. Sections 2 to 5 need nothing from `cloudflare-source-of-truth`; section 2 builds on `daily-trial-refresh`. Section 6 waits for it.
 
 ## 1. Decisions before any build
 
 - [ ] 1.1 Put the ten open decisions of `design.md` to the operator; verify each answer replaces its question in `design.md`, and that a spec is revised where an answer differs from the recommendation it was written to
 - [ ] 1.2 Write `docs/adr/0010`: a registry trial has a page of registry facts without a claim, which facts it may state, and that no word for how a trial turned out is used; verify it names the glossary line and the `CLAUDE.md` lines it supersedes
 - [ ] 1.3 Add trial page, trial listing, telling name, strong link and set to `GLOSSARY.md`, and revise "Registry trial" ("never exported"); verify the terms match the specs word for word
-- [ ] 1.4 Reconcile section 2 and `specs/registry-corpus` with the change `daily-trial-refresh` (pull request 268, open on 2026-11-16), which already adds the daily `load-trials --changes-only` run and its own delta to `registry-corpus`: drop from this change what that one specifies, and keep here the wider fields, what a load makes due, and what it never starts; verify the outcome is recorded here before any task of section 2 starts
+- [x] 1.4 Reconcile section 2 and `specs/registry-corpus` with the change `daily-trial-refresh` (pull request 268, open on 2026-11-16); verify the outcome is recorded here before any task of section 2 starts. Done 2026-11-16, on paper: the daily step, the clean stop and "the daily run starts no step over loaded trials" are that change's and were removed from this one; a load here starts nothing; the refresh of a citing claim is the daily run's existing `refresh` step taking those claims first, not a new step, and it is not model-free; the export hold is on `thenwhat export`, since the daily run never exports. Table in `design.md`, decision 10. To check again if pull request 268 changes before it merges
+- [ ] 1.6 Apply this change only after `daily-trial-refresh` is merged; verify `openspec/changes/daily-trial-refresh` or its synced `daily-run` spec is on `main` before any task of section 2 starts
 - [ ] 1.5 Note the wider field list of the bulk load in `docs/sources.md` with the date and the bytes a trial measured in `design.md`; verify the entry is written before the client is changed
 
 ## 2. The corpus: wider records, kept current
 
 - [ ] 2.1 Add the fields of `specs/registry-corpus` to the list request and to the stored trial, with a new migration; verify a recorded fixture of one page with the wider fields loads, and a trial stored with ten fields gains the rest in place
 - [ ] 2.2 Keep no name for a sponsor classed as an individual; verify a test with such a record
-- [ ] 2.3 Load every interventional study again with the wider fields; verify the count stored equals the registry's count that day, and record here the requests sent, the time taken and the table's size
-- [ ] 2.4 Make the change load runnable daily with its report (changed, new, cited trials changed, claims made due); verify tests of a day's changes, a load that stops part way, and a registry that does not answer
-- [ ] 2.5 Make a cited trial's change of state, phases, dates or results posting make its claims due for the registry refresh, with the daily cap; verify tests for a cited trial, an uncited trial, and more due than the cap
-- [ ] 2.6 Hold the export while a cited trial's refresh is due, and say how many; verify a test that an export waits and one that it proceeds when none is due
-- [ ] 2.7 Verify with a test that a week of daily loads with no operator command records no model usage, sends no page-reader request and no news search, and creates no claim
-- [ ] 2.8 Add the daily load to the daily run with its report in the summary; verify `docs/daily-run.md` says what it starts and what it never starts
+- [ ] 2.3 Load every interventional study again with the wider fields, as a full load and not `--changes-only`, so trials unchanged since 16 November gain them; verify the count stored equals the registry's count that day, and record here the requests sent, the time taken and the table's size
+- [ ] 2.4 Add to a load's report how many cited trials changed and how many claims that made due; verify tests of a day with four cited trials changed and a day with none. The daily step and its clean stop are `daily-trial-refresh`'s and are not built again
+- [ ] 2.5 Make a cited trial's change of state, phases, dates or results posting make its claims due for the registry refresh, and make new or renamed trials due for the offline linking; verify tests for a cited trial, an uncited trial, and a field no step uses
+- [ ] 2.6 Have the daily run's `refresh` step take first the claims a load made due, within `DAILY_RUN_REFRESH_LIMIT` and its spend guard, and put both counts in the summary; verify with the stand-in in `scripts/tests/daily-run.test.sh`: the order, more due than the limit, and the spend guard stopping the run
+- [ ] 2.7 Refuse `thenwhat export` while a cited trial's refresh is due, saying how many and naming the command; verify one test that it refuses, one that it writes when none is due, and one that an uncited trial's change holds nothing
+- [ ] 2.8 Verify with a test that a load starts no step: after a load with a new telling-named trial, no lead is read, no page-reader request or news search is sent, no claim or match is created; and verify `docs/daily-run.md` says the refresh order and that the run still never exports
 
 ## 3. Strong links
 
@@ -34,7 +35,7 @@ Each section is useful when it is done, without the sections after it. Sections 
 ## 4. Reading a set
 
 - [ ] 4.1 Add the named sets and the command that names the one being worked; verify tests that an unknown name is refused with the list, and that `completed-recently` is refused while no completion date is stored
-- [ ] 4.2 Print the plan of `specs/trial-report-links` before a set is worked, and read nothing when the expected cost passes the route's share; verify tests of both
+- [ ] 4.2 Run the offline linking for trials a load left due, then print the plan of `specs/trial-report-links` before a set is worked, and read nothing when the expected cost passes the route's share; verify tests of both
 - [ ] 4.3 Read held leads with a strong link to the set being worked, never a rejected lead, in the order of `specs/trial-report-links`; verify tests for a held lead, a rejected lead and the order of two due leads
 - [ ] 4.4 Hand the strongly linked trials to preparation as candidates with their reason; verify a test that a linked trial is scored for the claim's indication and is not approved for having been linked
 - [ ] 4.5 Verify with a test that a claim drafted on this route is held awaiting audit and that no export publishes it before it is cleared

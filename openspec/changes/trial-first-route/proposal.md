@@ -23,11 +23,11 @@ So the route is not "search the news for each trial". It is: give every trial a 
 - **A trial has a page whether or not a claim cites it.** One address for each trial. It states what the registry record states, by fixed rules, with the date the record was read. It carries no status, no gloss, no score and no word about how the trial turned out. When no published claim cites the trial it says so in one fixed line. **BREAKING** for `registry-corpus`: a registry trial is no longer kept off the site.
 - **The trial page words a trial's state as the rest of the site does.** Under way, never "recruiting". **BREAKING** for `trial-records`: the page that exists today shows the registry's own status words, which include "Recruiting".
 - **The bulk load keeps more of each record**: sponsor name, completion dates, enrolment, the reason a trial stopped, whether and when results were posted, and when the registry last changed the record. About 0.9 KB a trial in place of 0.6 KB.
-- **A daily load of changes** keeps every stored trial current: about 500 to 950 trials a day, one or two requests. What a change makes due is listed, and so is what it must never start by itself: no model call, no page fetch, no news search, no new claim.
+- **The daily load of changes is the change `daily-trial-refresh`'s** (pull request 268), not this one's: about 500 to 950 trials a day, one or two requests. This change adds what a changed trial makes due, and what a load never starts: no read, no page fetch, no news search, no new claim. A load starts no step at all.
 - **A link from a lead to a trial is strong only on a telling name.** A development code, or a name a substance registry lists and headlines rarely hold, together with a word of the condition. Only a strong link changes what is read. The link screening makes today stays, as the weak signal it is.
 - **Reads are worked in sets the operator names**: trials under way in phase 3 first, then under way in phase 2, then recently completed. A set only orders the reading. It says nothing of how any trial turned out.
 - **A trial-first read is an ordinary read.** It drafts a claim or joins one, is prepared, and waits for its audit (`docs/adr/0007`). A link attaches nothing to a trial by itself: a lead is never shown on a trial page.
-- **One record for each trial serves both pages.** A claim page and the trial page state a trial's facts from the same stored record. When the daily load changes a trial a claim cites, that claim's registry evidence is refreshed by the rules that exist, before the next export.
+- **One record for each trial serves both pages.** A claim page and the trial page state a trial's facts from the same stored record. When the daily load changes a trial a claim cites, the daily run's existing refresh takes that claim first, and no export is written until it has.
 - **Before pages can be served from the store**, a listing of a chosen set of trials is built into the static site, and the trial page that exists today, which reads the registry on request, may open for trials in that listing. Whether it does is the operator's decision.
 
 Not in this change:
@@ -48,7 +48,8 @@ Not in this change:
 
 ### Modified Capabilities
 
-- `registry-corpus`: the stored record gains fields; the daily change load and what it makes due; what it never starts; a registry trial may be shown on its own page and in the trial listing, and is still not evidence.
+- `registry-corpus`: the stored record gains fields; what a change makes due; a load reports which cited trials changed and starts nothing; a registry trial may be shown on its own page and in the trial listing, and is still not evidence.
+- `daily-run`: its existing refresh takes first the claims that cite a changed trial, and its summary counts them. This capability is created by `daily-trial-refresh`, not yet synced; the requirements here are added beside that change's and apply after it.
 - `trial-records`: which identifiers the trial page answers for, and the words it uses for a trial's state.
 
 `lead-screening` and `lead-reading` are specified in `openspec/changes/social-link-backfill`, not yet synced. This change adds to them through `trial-report-links` and changes none of their requirements; the two places they meet are named in `design.md`, decision 5.
@@ -56,9 +57,9 @@ Not in this change:
 ## Impact
 
 - **Decision to record (ADR 0010):** a registry trial has a public page of registry facts without a claim; the facts a page may state; "successful" is never a word. It amends the glossary's "Registry trial" ("never exported") and `CLAUDE.md`'s layout notes.
-- **Depends on:** `cloudflare-source-of-truth` for a page for every stored trial (the store is what answers for 467,064 trials). The wider load, the daily change load, strong links, the phased reading and the listing of a chosen set need nothing from it.
+- **Depends on:** `daily-trial-refresh` for the daily load; `cloudflare-source-of-truth` for a page for every stored trial (the store is what answers for 467,064 trials). The wider load, strong links, the phased reading and the listing of a chosen set need nothing from it.
 - **Affects `cloudflare-source-of-truth`:** its size criterion was measured with 43,320 registry trials. The store now has to hold 467,064, with wider records. Estimated 0.6 to 0.9 GB more; to be measured there before the migration.
-- **Code:** `pipeline/src/thenwhat/sources/clinicaltrials.py` and `backfill/registry_load.py` (fields, daily load), `backfill/link_screen.py` (strong links), `backfill/link_read.py` (order), `export/` (the trial listing), `site/worker/trials.mjs` and `site/src/lib/trial-links.mjs` (the page and the listing), the site's wording module (state phrases).
-- **Spend:** at most about 27 US dollars to triage and read every stored lead that could be read today; each set is a few dollars. No spend is started by a load.
+- **Code:** `pipeline/src/thenwhat/sources/clinicaltrials.py` and `backfill/registry_load.py` (fields, what a change makes due), `scripts/daily-run.sh` (refresh order, summary), `export/` (the hold), `backfill/link_screen.py` (strong links), `backfill/link_read.py` (order), `export/` (the trial listing), `site/worker/trials.mjs` and `site/src/lib/trial-links.mjs` (the page and the listing), the site's wording module (state phrases).
+- **Spend:** at most about 27 US dollars to triage and read every stored lead that could be read today; each set is a few dollars. A load starts no spend; the daily run's refresh spends as it does today, within its own limit.
 - **Guardrails restated:** no verdicts, no medical advice, no article text, no model decides a status, a lead is never published, the site owns all wording.
 - **Sources:** the registry's terms were checked on 2026-11-15 (`docs/sources.md`); the field list of the bulk load changes and is noted there before the client is changed.

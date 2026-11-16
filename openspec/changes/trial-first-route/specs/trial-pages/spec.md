@@ -136,9 +136,20 @@ For one registry identifier, a trial page and every claim page that lists the tr
 - **WHEN** a claim's event stores a trial's record fetched in March and the corpus holds the same trial fetched in October
 - **THEN** the claim page and the trial page both state the trial's facts from the October record
 
+### Requirement: An export waits for the refresh of a changed cited trial
+`thenwhat export` SHALL write no export while a published claim is due for its registry refresh because a trial it cites changed. It SHALL say how many claims are due and name the command that refreshes them. No other reason for a claim to be due SHALL hold an export.
+
 #### Scenario: A cited trial is terminated
-- **WHEN** the daily load stores that a cited trial was terminated
-- **THEN** no export is written until the citing claim's registry evidence has been refreshed, and the pages built from that export agree
+- **WHEN** a load stored that a cited trial was terminated and the citing claim has not been refreshed since
+- **THEN** the export is refused, says one claim is due for its registry refresh, and names the command
+
+#### Scenario: The claim has been refreshed
+- **WHEN** every claim made due by a changed trial has been refreshed
+- **THEN** the export is written, and the claim page and the trial page built from it agree
+
+#### Scenario: An uncited trial changed
+- **WHEN** a load changed only trials that no claim cites
+- **THEN** the export is written
 
 ### Requirement: A trial listing built into the site
 The site SHALL be built with a listing of a set of stored trials the operator names: for each, its identifier, title, state, phases and start date, and the date the records were read. The listing SHALL hold registry facts only, SHALL hold no trial outside the named set, and SHALL be fetched only when a reader searches. A search for a listed trial's identifier or for words of its title SHALL be answered with that trial's page, after any claim that matches.

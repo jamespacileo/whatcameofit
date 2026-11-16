@@ -101,7 +101,7 @@ These are counts under the present, weak link. Under the strong link of decision
 - Every stored trial can be opened on the site as a page of registry facts, worded without verdict or advice.
 - Stored leads reach the trials they are about with no request for each trial, in an order the operator sets.
 - A trial page and a claim page never state different facts about one trial.
-- Every stored trial is kept current daily, and nothing that costs money or publishes is started by that.
+- Every stored trial is kept current daily (`daily-trial-refresh`), and nothing that reads, drafts or publishes is started by that.
 - Each phase is useful when it ships, before the next.
 
 **Non-Goals:**
@@ -290,38 +290,48 @@ They could disagree in two ways, and each is closed differently.
 
 **About the trial's own facts** (state, phase, dates, results posted). Today a claim's trial facts are read from the record stored with its events, and the corpus holds another copy from the bulk load, read on another day. Rule: for one registry identifier, both pages state facts from the record fetched most recently, whichever copy that is, and both show the date it was read. In the store on Cloudflare a record is kept once under its checksum (`docs/adr/0008`), which makes this the natural shape; before then the export and the listing apply the same "most recent" rule that `trial-facts` already states.
 
-**Between the trial's facts and the claim's status.** A status comes only from approved events, so a record can say "terminated" for a day while the claim still reads "Phase 3". Rule: when a load changes the state, phase, dates or results posting of a trial that a claim cites, that claim is due for its registry refresh, which is the existing step (one registry request a trial, events approved by the existing rule, status derived again), and the export is not written while a cited trial's refresh is due. The trial page lists the claim with the status the export gives it, and never words a status of its own.
+**Between the trial's facts and the claim's status.** A status comes only from approved events, so a record can say "terminated" for a day while the claim still reads "Phase 3". Rule: when a load changes the state, phase, dates or results posting of a trial that a claim cites, that claim is due for its registry refresh. The refresh is the step that exists (`thenwhat fetch`: the registries are read again for the claim, events are approved by the existing rule, the status is derived again). The daily run already refreshes a set number of published claims each run, in turn (`daily-trial-refresh`, `docs/daily-run.md`); it takes these claims first. `thenwhat export` writes nothing while a cited trial's refresh is due, and says how many are. The trial page lists the claim with the status the export gives it, and never words a status of its own.
 
-What is left is a matter of minutes inside one run, not of pages disagreeing in public.
+The daily run never exports, so the hold is on the export command, whoever runs it. What is left is the time between a load and the next refresh, during which nothing new is published.
 
 ### 10. The daily change load: what it makes due, and what it never starts
 
-Each day the load asks the registry for interventional studies changed since the last completed load (`registry-corpus`, "Loading changes only"), with the fields of decision 3.
+**The load itself is not this change's.** The change `daily-trial-refresh` (pull request 268) puts `thenwhat backfill load-trials --trials interventional --changes-only` in the daily run as a `trials` step before `refresh`, makes a load stop cleanly when the registry may not be asked, and says the daily run starts no step over the trials it loads. Reconciled with it on 2026-11-16: this change specifies none of that again and contradicts none of it.
 
-**It does, by itself:**
+What each change holds:
 
-- update the stored record, payload and fetch time;
-- store a trial the registry has added.
+| | `daily-trial-refresh` | This change |
+| --- | --- | --- |
+| The daily step, its order and its summary line | Yes | Adds two counts to the summary |
+| A load that stops when the allowance is used up | Yes ("Registry terms") | Nothing |
+| The daily run starts no step over loaded trials; `news_search` waits | Yes | Agrees, and says the same of the load for linking and the full record |
+| Which fields a stored trial holds | Nothing | The wider record (decision 3) |
+| What a change makes due | `news_search`, as before | Also the offline linking, the full record, and the refresh of a citing claim |
+| The order of the run's existing refresh | In turn | Claims citing a changed trial first |
+| The export | The daily run never exports | `thenwhat export` waits while a cited trial's refresh is due |
 
-**It makes due, and these may run without a person**, because they send nothing or ask only the registry, and call no model:
+**A load, by itself:** updates the stored record, payload and fetch time; stores a trial the registry added; marks work due. It starts no step.
 
-- the offline linking, for a trial that is new or whose names or conditions changed;
-- the registry refresh of a claim that cites the trial, when its state, phase, dates or results posting changed (decision 9);
-- the full record, for a trial in a named set whose record newly says results are posted (decision 3).
+**What a change makes due, and who runs it:**
 
-**It makes due, and this waits for the operator:**
+- *The registry refresh of a claim that cites the trial*, when its state, phase, dates or results posting changed (decision 9). Run by the daily run's existing `refresh` step, which takes these claims first, within `DAILY_RUN_REFRESH_LIMIT` and under the run's spend guard. That step can call a model, as it does today; this change adds no refresh beyond the limit, only an order.
+- *The offline linking*, for a trial that is new or whose names or conditions changed. No request and no model, but run by the operator, when a set is planned (task 4.2 links what is due first).
+- *The full record*, for a trial in a named set whose record newly says results are posted (decision 3). Run by the operator.
+- *The news search* (`article-leads`), as `registry-corpus` already says. At 4,000 requests a week it is run by command, for a set, never for the corpus.
 
-- the news search for the trial (`article-leads`), as `registry-corpus` already says. At 4,000 requests a week it is run by command, for a set, never for the corpus.
+An earlier draft let a load start the linking and the full record without a person. It was dropped for the rule `daily-trial-refresh` wrote: the daily run starts nothing over the trials it loads. Nothing is lost: both are wanted only when a set is worked.
 
-**It never starts, by any path:** a model call of any kind (triage, a read, a reading, a match decision); a request to the page reader; a news search; a new claim; a new match or its approval; a status that changes other than through a cited trial's approved registry events; a failure flag; an archive or its undoing; a release from audit; a message to a reader.
+**A load never starts, by any path:** a read of a lead; a request to the page reader; a news search; a new claim; a new match or its approval; a failure flag; an archive or its undoing; a release from audit; a message to a reader. A claim's status changes after a load only through the approved registry events of a trial it already cites, when its refresh runs.
 
-A day's load is reported: how many changed, how many were new, how many cited trials changed and which claims that made due.
+A load reports how many trials were new and already stored (`daily-trial-refresh`), and, added here, how many cited trials changed and how many claims that made due.
+
+**One thing to do in order.** A changes-only load asks with whatever field list the client has. After the client is widened, the first load must be a full one (468 requests), or trials unchanged since 16 November keep ten fields. Until that full load has completed, the daily step goes on as it is.
 
 ### 11. What ships before the store, and what waits
 
 **Needs nothing from `cloudflare-source-of-truth`:**
 
-- The wider load and the daily change load (pipeline only).
+- The wider load, and the order of the daily run's refresh (pipeline and `scripts/`; the daily load itself is `daily-trial-refresh`'s).
 - Strong links, sets and the ordered reads (pipeline only; works on the present database and, when it lands, in a run folder of `file-based-backfill`).
 - A **trial listing** built into the static site for a chosen set: identifier, title, state, phases, start date. For the 25,898 trials under way in phase 2 or 3 it is about 4.8 MB before compression, loaded only when a reader searches. Search then answers a trial identifier or a title from the listing, beside the claims.
 - The trial page's state wording (decision 2), on the page that exists.
@@ -345,14 +355,15 @@ Considered for the static site: a file for every thousand identifiers (468 files
 - **A telling-name rule still links the wrong trial.** → A strong link never attaches anything; it only chooses what is read. The read, the indication-scored match and the audit decide.
 - **The substance registry cannot be asked for 58,791 names quickly.** → Codes need no request. Names are asked set by set, within the source's allowance, and a name not yet asked is not telling.
 - **Scaled counts are wrong.** → They rest on 30,471 leads screened after the full load. Task 3.1 screens every lead again against the whole corpus before any set is planned, and the plan prints real counts.
-- **The daily load makes thousands of claims due at once after a registry-wide change.** → A cap on refreshes a day; the export waits only on cited trials whose refresh is due, and says how many.
+- **The daily load makes more claims due than a run refreshes.** → The run's existing limit holds and the rest stay due; the export waits only on those claims and says how many, so a backlog delays publishing and is visible.
+- **An export refused because of a backlog blocks an unrelated release.** → The refusal names the claims and the command; the operator can refresh those claims by hand at once.
 - **Opening the live-read page to a listing invites crawlers.** → Not indexed, not in the sitemap, the existing request limit, and only a chosen set until the store answers.
 - **The listing goes stale between builds.** → It carries the date the records were read; the page reads the registry itself.
 
 ## Migration Plan
 
 1. Note the new field list in `docs/sources.md`; widen the load; load every interventional study again (468 requests at 1,000 a page). Stored trials are updated in place.
-2. Turn on the daily change load. Watch a week of its reports.
+2. The daily change load is `daily-trial-refresh`'s. After the full wider load of step 1 has completed, its changes-only step carries the wider fields. Add the cited-trial counts and the refresh order; watch a week of summaries.
 3. Screen every lead again with strong links. Nothing is published by this.
 4. Work set 1 through read, prepare and audit. Review with the operator what it gave before set 2.
 5. Ship the listing for a chosen set and the state wording. Open the page to listed identifiers if the operator agrees.
@@ -386,4 +397,4 @@ Not for the operator, to settle while building:
 
 - The share of titles above which a substance's name is not telling (task 3.2).
 - Whether a registry trial's list payload is a column or an object in the store (`cloudflare-source-of-truth`).
-- The change `daily-trial-refresh` (pull request 268, open on 2026-11-16) already puts `load-trials --changes-only` in the daily run and has its own delta to `registry-corpus`. This change's daily-load requirements overlap it and are to be reconciled with it before any code (task 1.4).
+- **Reconciled on 2026-11-16** with `daily-trial-refresh` (pull request 268, open): see decision 10. This change's `specs/daily-run` adds requirements to a capability that change creates, so it is applied after it. If pull request 268 changes before it merges, decision 10's table is checked again (task 1.4).
