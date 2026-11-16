@@ -19,7 +19,7 @@ Four scenarios SHALL each have a limit and a target, in seconds from the moment 
 
 #### Scenario: A pull request preview is published
 - **WHEN** the scenario's last 20 successful runs are judged
-- **THEN** the limit is 90 s at p50 and 120 s at p90, and the target is 15 s at p50
+- **THEN** the limit is 20 s at p50 and 30 s at p90, and the target is 15 s at p50
 
 #### Scenario: A run whose checked inputs are unchanged since a recorded pass
 - **WHEN** the scenario's last 20 successful runs are judged
