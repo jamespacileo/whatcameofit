@@ -211,6 +211,12 @@ Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that ans
 
 - [x] 15.1 Finish a lead without asking the reader when its outlet answered 401 to at least five pages and served none; verify with tests that such a lead makes no request and that an outlet which served a page is still asked.
 
+## 16. Batch 2 audit faults
+
+Batch 2's audit (2026-11-16) archived 39 of 132 claims; batch 3's archived 54 of 137, 24 of them COVID-19 vaccine classes or brand and code names of live claims. The operator approved three fixes on 2026-11-16.
+
+- [x] 16.2 Search the substance's name from the registry of substances as a name, and reject by rule a read's claim filed under the same substance, form and condition as a claim that is neither rejected nor archived, moving its articles to that claim so none is lost. Measured on the database: 8 pairs, all duplicates (semaglutide / Wegovy, BNT162b2 / Pfizer vaccine, ChAdOx1 / AZD1222, daraxonrasib, MDMA, fluvoxamine). Verify with tests.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.

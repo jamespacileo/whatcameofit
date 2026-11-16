@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import UTC, date, datetime
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
@@ -18,7 +19,7 @@ from thenwhat.claims.entry import (
     find_claim,
 )
 from thenwhat.cli import app
-from thenwhat.db.models import LinkLead
+from thenwhat.db.models import LinkLead, SourceArticle
 from thenwhat.domain import Decider, OutletKind, ReadOutcome, ReviewState
 from thenwhat.prepare import decide_prepared_lead_claim, plan_claims, steps_for
 from thenwhat.review.decisions import record_decision
@@ -255,3 +256,65 @@ def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):
     assert "terms failed" in result.output
     claim = find_claim(session, "no-terms")
     assert claim is not None and claim.review_state is ReviewState.APPROVED
+
+
+def under_substance(session: Session, slug: str, substance: str) -> None:
+    """File the claim's intervention under a substance of the registry of substances."""
+    from thenwhat.db.models import Entity, EntitySubstance
+    from thenwhat.domain import EntityType
+
+    claim = find_claim(session, slug)
+    assert claim is not None
+    entity = session.scalars(
+        select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
+    ).one()
+    session.add(
+        EntitySubstance(
+            entity_id=entity.id,
+            source_name="gsrs",
+            external_id=substance,
+            url=f"https://gsrs.test/{substance}",
+            payload={"substance": {"_name": "Exampletinib"}},
+            fetched_at=NOW,
+        )
+    )
+    session.flush()
+
+
+def test_a_reads_claim_under_a_live_claims_substance_and_condition_is_rejected(
+    session: Session,
+):
+    """Scenarios: A brand of a live claim's substance, Another form of the substance, The
+    other claim is archived"""
+    from thenwhat.claims.entry import archive_claim
+
+    claim_with_articles(session, "live-one")
+    claim_with_articles(session, "brand-one", "https://news.example.org/brand")
+    for slug in ("oral-form", "after-archive"):
+        claim_with_articles(session, slug)
+    for slug in ("live-one", "brand-one", "oral-form", "after-archive"):
+        under_substance(session, slug, "s-1")
+    live = find_claim(session, "live-one")
+    brand = find_claim(session, "brand-one")
+    assert live is not None and brand is not None
+    record_decision(live, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    drafted_by_a_read(session, "brand-one")
+    [article] = session.scalars(select(SourceArticle).where(SourceArticle.claim_id == brand.id))
+    lead = session.scalars(select(LinkLead).where(LinkLead.claim_id == brand.id)).one()
+    lead.source_article_id = article.id
+    session.flush()
+
+    assert decide_prepared_lead_claim(session, "brand-one", now=NOW) is ReviewState.REJECTED
+    # Its article joins the live claim, so it is not lost.
+    assert article.claim_id == live.id
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, live.id)
+
+    # "oral-form" names its intervention in another form: not the same product.
+    drafted_by_a_read(session, "oral-form")
+    assert decide_prepared_lead_claim(session, "oral-form", now=NOW) is ReviewState.APPROVED
+
+    archive_claim(session, "live-one", reason="missed trial", now=NOW)
+    archive_claim(session, "oral-form", reason="audit", now=NOW)
+    drafted_by_a_read(session, "after-archive")
+
+    assert decide_prepared_lead_claim(session, "after-archive", now=NOW) is ReviewState.APPROVED

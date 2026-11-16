@@ -804,6 +804,28 @@ def test_development_codes_are_kept_with_their_source_and_searched_in_the_indica
     assert "development codes: ABC-123" in backend.states[0]
 
 
+def test_a_brand_is_also_searched_by_its_substances_name(session: Session):
+    """Scenario: A brand name and its substance"""
+    claim = add_claim(
+        session,
+        slug="toothgrow-tooth-agenesis",
+        headline="Drug regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothgrow",
+        indication="tooth agenesis",
+    )
+    registry = FakeSubstances({"Toothgrow": [EX1]})
+    trials = FakeTrials({"Exampletinib": [trial("NCT00000008", "Exampletinib in adults")]})
+
+    give_development_codes(session, claim, substances=registry)
+    added = resolve_claim(
+        session, claim, trials=trials, dois=FakeDois(set()), backend=Scoring(0.9), now=NOW
+    )
+
+    assert trials.searched == ["Toothgrow", "Exampletinib", "ABC-123"]
+    assert [match.external_id for match in added] == ["NCT00000008"]
+
+
 def test_an_intervention_the_registry_does_not_list_gets_no_code(session: Session):
     """Scenario: Intervention the substance registry does not list"""
     claim = add_claim(
