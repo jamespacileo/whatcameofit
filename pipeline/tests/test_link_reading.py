@@ -1447,3 +1447,26 @@ def test_a_trial_the_page_names_becomes_a_scored_candidate_and_is_not_approved_b
     assert match.score == pytest.approx(0.9) and match.review_state is ReviewState.PENDING
     # No literature source is configured, so the paper is left unrecorded.
     assert registry.fetched == ["NCT04184622"]
+
+
+# --- measured ------------------------------------------------------------------------
+
+
+def test_a_read_is_measured_under_the_leads_address_with_what_it_asked(
+    reader: Reader, measured_spans
+):
+    """processing-metrics, An address can be followed end to end: the read and every
+    decision made inside it are measured under the lead's address key, and the page
+    reader's request is counted in the read."""
+    lead = reader.lead("https://www.theguardian.com/science/2019/may/04/synthetic-teeth")
+    measured_spans.clear()
+
+    reader.read()
+
+    read = measured_spans[-1]
+    assert (read.step, read.trace, read.outcome) == ("link_read", lead.url_key, "done")
+    assert read.requests.get("reader", 0) >= 1
+    inside = measured_spans[:-1]
+    assert inside, "the read made decisions, and each is measured"
+    assert {made.trace for made in inside} == {lead.url_key}
+    assert all(made.step.startswith(("decision:", "read")) for made in inside)

@@ -672,3 +672,57 @@ def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_non
 
     assert refused.exit_code == 1
     assert "No lead of 'news.example.org'" in refused.output
+
+
+def test_plan_uses_a_steps_measured_cost_once_a_week_is_measured(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """processing-metrics, A saving is claimed only from measurements: with a week of
+    measurements the plan gives what a record did cost, not the step's estimate."""
+    from datetime import timedelta
+
+    from thenwhat.db.models import MeasureDaily
+
+    model_step(monkeypatch, "100")
+    add_trials(session, 100)
+    today = datetime.now(UTC).date()
+    for back in range(1, 8):
+        session.add(
+            MeasureDaily(
+                day=today - timedelta(days=back),
+                step="demo-model",
+                step_version=1,
+                writer="mini",
+                outcome="done",
+                spans=50,
+                records=1000,
+                reused=0,
+                ran_seconds=1.0,
+                waited_seconds=0.0,
+                waited_by_cause={},
+                requests_by_source={},
+                tokens_in=0,
+                tokens_out=0,
+                cost_usd=Decimal("0"),
+                inner_cost_usd=Decimal("1.00"),
+                rows_written=0,
+            )
+        )
+    session.flush()
+
+    result = run("plan")
+
+    assert result.exit_code == 0, result.output
+    # A thousand records a day cost $1.00: a tenth of a cent each, so $0.10 for 100.
+    assert "the due records need about $0.10 (measured over 7 days)" in result.output
+
+
+def test_plan_says_when_a_cost_is_the_steps_own_estimate(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    model_step(monkeypatch, "100")
+    add_trials(session, 100)
+
+    result = run("plan")
+
+    assert "the due records need about $0.40 (estimated)" in result.output

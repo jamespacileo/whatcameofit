@@ -781,3 +781,66 @@ class LinkLeadLabel(Base):
     label: Mapped[LeadVerdict] = mapped_column(_enum(LeadVerdict, "label"))
     labelled_by: Mapped[Decider] = mapped_column(_enum(Decider, "labelled_by"))
     labelled_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class MeasureDaily(Base):
+    """A day's measurements added up for one step, version, writer and outcome. These
+    totals are kept for good; the single measurements they came from are not.
+    Behavior: openspec processing-metrics."""
+
+    __tablename__ = "measure_daily"
+    __table_args__ = (
+        UniqueConstraint(
+            "day", "step", "step_version", "writer", "outcome", name="uq_measure_daily_key"
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    day: Mapped[date] = mapped_column(index=True)
+    step: Mapped[str] = mapped_column(Text)
+    step_version: Mapped[int]
+    writer: Mapped[str] = mapped_column(Text)
+    outcome: Mapped[str] = mapped_column(Text)
+    # How many measurements, and how many records they covered between them.
+    spans: Mapped[int]
+    records: Mapped[int]
+    reused: Mapped[int]
+    ran_seconds: Mapped[float]
+    waited_seconds: Mapped[float]
+    # Seconds waited by what was waited on, and requests sent by source.
+    waited_by_cause: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    requests_by_source: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    tokens_in: Mapped[int]
+    tokens_out: Mapped[int]
+    cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6))
+    # What the measurements made inside these cost: counted in their own totals, kept
+    # here so that the whole cost of a step for a record can be told.
+    inner_cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6))
+    rows_written: Mapped[int]
+
+
+class MeasureClaim(Base):
+    """What a claim took, added up from the measurements of its articles and of the
+    work done on the claim itself. Behavior: openspec processing-metrics."""
+
+    __tablename__ = "measure_claim"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), unique=True)
+    # When the first measured step on any of its articles, or on it, began.
+    first_seen_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    last_step_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    spans: Mapped[int]
+    ran_seconds: Mapped[float]
+    waited_seconds: Mapped[float]
+    cost_usd: Mapped[Decimal] = mapped_column(Numeric(12, 6))
+
+
+class MeasureRolledDay(Base):
+    """A day whose measurements have been added into the totals, so that adding them
+    again changes nothing. Behavior: openspec processing-metrics."""
+
+    __tablename__ = "measure_rolled_day"
+
+    day: Mapped[date] = mapped_column(primary_key=True)
+    rolled_at: Mapped[datetime] = mapped_column(TIMESTAMP)

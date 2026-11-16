@@ -24,6 +24,7 @@ from thenwhat.decide.steps import (
     score_papers,
 )
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.measure import spans as measure
 from thenwhat.resolve.reasons import NAMED_IN_ARTICLE, paper_reasons
 from thenwhat.resolve.service import (
     MAX_SUMMARY_CHARACTERS,
@@ -109,6 +110,9 @@ def _named_organisations(session: Session, claim: Claim) -> tuple[list[str], fro
     return [entity.name for entity in named], frozenset(identifiers)
 
 
+@measure.measuring(
+    "paper_search", trace_of=lambda session, claim, **_: measure.claim_trace(claim.slug)
+)
 def find_papers(
     session: Session,
     claim: Claim,

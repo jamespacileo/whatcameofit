@@ -14,6 +14,7 @@ from thenwhat.cli.export import export_command
 from thenwhat.cli.extract import extract_app
 from thenwhat.cli.icons import icons_command
 from thenwhat.cli.lookup import lookup_command
+from thenwhat.cli.measure import measure_command, start_measuring
 from thenwhat.cli.outlets import outlets_command
 from thenwhat.cli.prepare import prepare_command
 from thenwhat.cli.readings import readings_command
@@ -43,6 +44,7 @@ app.add_typer(review_app, name="review")
 app.command("icons")(icons_command)
 app.command("outlets")(outlets_command)
 app.command("export")(export_command)
+app.command("measure")(measure_command)
 app.command("archive")(archive_command)
 app.command("unarchive")(unarchive_command)
 app.add_typer(audit_app, name="audit")
@@ -53,6 +55,7 @@ app.add_typer(backfill_app, name="backfill")
 @app.callback()
 def main() -> None:
     """Track what happened to reported medical breakthroughs."""
+    start_measuring()
 
 
 @app.command()

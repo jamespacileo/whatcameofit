@@ -1,6 +1,7 @@
 """Settings read from the environment. Nothing here has a secret default."""
 
 from decimal import Decimal
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -159,6 +160,18 @@ class Settings(BaseSettings):
     # A lead for a claim that already has this many source articles is held, unless it
     # was shared before the claim's first reported date.
     lead_reads_per_claim: int = 3
+
+    # Measurements (openspec processing-metrics). The folder single-step measurements
+    # are written to; empty turns measuring off. No default on purpose: they are large
+    # and belong on a disk the operator chooses.
+    measure_dir: Path | None = None
+    # Who is writing them: this device's name in reports.
+    measure_writer: str = "pipeline"
+    # How many days single-step measurements are kept before only totals remain, and
+    # how many for those of readers' lookups. No defaults: measuring refuses to start
+    # without them.
+    measure_keep_days: int | None = Field(default=None, ge=1)
+    measure_lookup_keep_days: int | None = Field(default=None, ge=1)
 
     def chosen_subreddits(self) -> frozenset[str]:
         return frozenset(

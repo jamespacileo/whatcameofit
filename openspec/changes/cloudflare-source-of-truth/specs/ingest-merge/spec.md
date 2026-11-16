@@ -1,0 +1,109 @@
+# Spec Delta
+
+## Purpose
+
+Defines the one way records enter the truth store, whoever sends them: a reader's lookup, a backfill pushed from a device, a scheduled refresh or the migration. It makes every write safe to repeat and subject to the same rules.
+
+## ADDED Requirements
+
+### Requirement: Every write is a run
+A writer SHALL register a run before handing over records, stating the kind of writer, the device's name or the class of reader request, the code's commit and the version of each step that produced the records. Records SHALL be accepted only for a registered run, and SHALL enter the store only by that run's merge.
+
+#### Scenario: Records with no run
+- **WHEN** records are handed over naming a run that was not registered
+- **THEN** they are refused and nothing is stored
+
+#### Scenario: A lookup writes
+- **WHEN** a reader's lookup stores what it found
+- **THEN** it does so as a run of the kind reader lookup, through the same merge a device's push uses
+
+### Requirement: Records are matched by what they are
+The merge SHALL match a claim by its slug, a source article by claim and address, an evidence event by claim and its dedupe key, a registry trial by registry and trial number, a paper by its identifier, an entity by its kind and name, a link lead by its address key, and a share by lead, platform, community and time. A record SHALL refer to another by these keys and never by a row identifier.
+
+#### Scenario: A claim the store does not have
+- **WHEN** a run holds a claim whose slug the store has no claim for
+- **THEN** the claim and its records are added
+
+#### Scenario: A new article for a claim the store has
+- **WHEN** a run holds a source article for a claim the store already holds
+- **THEN** the article is added to that claim and the claim's other records are left as they are
+
+#### Scenario: Two writers found the same article
+- **WHEN** a device's run and a reader's lookup both hold the same article for the same claim
+- **THEN** the store holds one source article and one link lead, with each share once
+
+### Requirement: A merge is whole or not at all, and safe to repeat
+A run's merge SHALL apply all of its records or none. Merging a run already merged SHALL add and change nothing and SHALL say when it was first merged.
+
+#### Scenario: A failure part way
+- **WHEN** a merge fails on a late record
+- **THEN** the store is as it was before the merge began
+
+#### Scenario: The same run twice
+- **WHEN** a writer retries a merge that had succeeded
+- **THEN** nothing is added and the first merge's time is reported
+
+### Requirement: Refusals
+The merge SHALL refuse a run, applying nothing and saying why, when any step version it states is older than the version the store currently accepts, when a record lacks its natural key, or when the records handed over do not match the count and checksum the writer stated.
+
+#### Scenario: A run from older code
+- **WHEN** a run's triage version is lower than the store's
+- **THEN** the merge is refused and names the step and both versions
+
+#### Scenario: Records lost on the way
+- **WHEN** fewer records arrive than the writer stated
+- **THEN** the merge is refused
+
+### Requirement: What was decided in the store is kept
+The merge SHALL NOT unarchive a claim, a match or an event the store holds archived. It SHALL NOT replace a decision recorded by a person with one recorded by a rule, a model, the seed or an assistant. It SHALL NOT change a published claim's published time.
+
+#### Scenario: A claim the operator archived
+- **WHEN** a run holds new records for a claim the store holds archived
+- **THEN** the claim stays archived, its new source articles are stored, and the report lists it
+
+#### Scenario: A match a person rejected
+- **WHEN** a run holds an approval by rule of a trial match that a person rejected
+- **THEN** the rejection stands
+
+### Requirement: Evidence that differs is not overwritten
+When the store holds an approved evidence event and a run holds an event with the same dedupe key and different content, the merge SHALL keep the stored event, SHALL keep the run's event apart with the reason and the run it came from, where the audit can see both, and SHALL mark the claim awaiting audit. The run's event SHALL NOT be used to derive a status until a person or a rule accepts it.
+
+#### Scenario: A trial's record changed between two fetches
+- **WHEN** a run's event for a trial differs from the approved one stored
+- **THEN** the stored event is unchanged, the run's is kept apart with its reason, the claim is held, and the report counts one conflict
+
+#### Scenario: The same difference arrives twice
+- **WHEN** two runs hold the same differing event for a claim
+- **THEN** it is kept apart once
+
+### Requirement: The audit mark is carried and never cleared by a merge
+A claim that a run marks awaiting audit SHALL be awaiting audit after the merge. A merge SHALL never clear the mark. A claim a run states as cleared SHALL arrive cleared only when the store held no such claim before.
+
+#### Scenario: A batch pushed before its audit
+- **WHEN** a run of claims awaiting audit is merged and an export is taken
+- **THEN** the export leaves those claims out and counts them as held
+
+### Requirement: Writers do not block one another
+Merges that touch different claims SHALL proceed without waiting for one another. Merges that touch the same claim SHALL be applied one after the other, and the result SHALL be the same in either order.
+
+#### Scenario: A device pushes while a reader looks up
+- **WHEN** a device's merge of 5,000 records is running and a reader's lookup stores a lead for an unrelated article
+- **THEN** both complete, and the lookup is not refused or delayed past its own time limit
+
+#### Scenario: Same claim, either order
+- **WHEN** two runs that each add an article to one claim are merged in one order and, on a copy, in the other
+- **THEN** the two stores hold the same records
+
+### Requirement: A merge reports and reconciles
+A merge SHALL report, for each kind of record, how many were added, how many matched a record already held, and how many were conflicts, and SHALL apply nothing when those do not sum to the records handed over. A writer MAY ask for the report without applying.
+
+#### Scenario: A dry run
+- **WHEN** a writer asks for a run's report without applying
+- **THEN** the report is returned and the store is unchanged
+
+### Requirement: Spend is recorded by who spent it
+Model usage a run hands over SHALL be stored with the run's writer. The plan for a month SHALL show usage by device and by reader lookups, and their sum against the month's ceiling.
+
+#### Scenario: Two devices and readers in one month
+- **WHEN** two devices' runs and a day of lookups have been merged
+- **THEN** the plan shows each device's spend, the lookups' spend, and the total

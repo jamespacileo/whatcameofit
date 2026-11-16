@@ -34,6 +34,7 @@ from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.extract.names import is_a_name, is_a_search_phrase
 from thenwhat.extract.schema import MAX_SEARCH_PHRASES, Draft
 from thenwhat.llm.client import Llm
+from thenwhat.measure import spans as measure
 from thenwhat.review.decisions import record_decision
 from thenwhat.statements.service import (
     StatementChecker,
@@ -74,6 +75,7 @@ class Extracted:
     statements: StatementsRun
 
 
+@measure.measuring("read", trace_of=lambda *_, slug, **__: measure.claim_trace(slug))
 def draft_claim_from_article(
     session: Session,
     llm: Llm,
@@ -210,6 +212,7 @@ def article_from_draft(
     return article, statements
 
 
+@measure.measuring("read", trace_of=lambda *_, claim_slug, **__: measure.claim_trace(claim_slug))
 def extract_into_claim(
     session: Session,
     llm: Llm,

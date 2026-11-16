@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat import __version__
 from thenwhat.db.models import HttpCache, SourceAllowanceUse
+from thenwhat.measure import spans as measure
 from thenwhat.sources.terms import SOURCES
 
 
@@ -325,6 +326,7 @@ class Source:
         headers = {"User-Agent": user_agent(self._contact)} | self._extra_headers()
         for attempt in range(self._max_attempts):
             self._wait_for_turn()
+            measure.add_request(self.name)
             stated_delay = 0.0
             try:
                 if body is None:
@@ -345,7 +347,9 @@ class Source:
                     )
                 stated_delay = _retry_after(response)
             if attempt + 1 < self._max_attempts:
-                self._time.sleep(max(2.0**attempt, stated_delay))
+                delay = max(2.0**attempt, stated_delay)
+                self._time.sleep(delay)
+                measure.add_wait(self.name, delay)
         raise SourceUnavailable(f"{self.name} did not answer after {self._max_attempts} attempts.")
 
     def _extra_headers(self) -> dict[str, str]:
@@ -358,7 +362,9 @@ class Source:
         reads it here and raises when nothing is left, which also ends the retries."""
 
     def _wait_for_turn(self) -> None:
+        began = self._time.monotonic()
         self._pacer.wait(self._time, self._interval)
+        measure.add_wait(self.name, self._time.monotonic() - began)
 
 
 def _retry_after(response: httpx.Response) -> float:
