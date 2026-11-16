@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claim page: band, At a glance, score chip</title>
+<style>
+@font-face {
+  font-family: "Figtree Variable";
+  src: url("figtree-latin-wght-normal.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+:root {
+  --paper: #ffffff;
+  --ink: #0f1f38;
+  --blue: #14427f;
+  --muted: #46566b;
+  --panel: #f1f5fb;
+  --tint: #e6eef8;
+  --tag: #d6e2f2;
+  --rule: #d9e2ee;
+  --rule-soft: #e9eff5;
+  --footer: #0b2545;
+  --navy-soft: #c9d9ee;
+  --on-navy: #8ec1f5;
+  --on-navy-ink: #ffffff;
+  --on-navy-rule: rgb(255 255 255 / 0.22);
+  --ground: #f4f7fb;
+  --ring: #7f90a3;
+  --pop-shadow: 0 10px 28px -12px rgb(11 37 69 / 0.35);
+  /* New in this mock: the band's two further tones. Same in both themes, as --footer is. */
+  --band-main: #12325e;
+  --band-card: #1c4179;
+  --band-card-rule: rgb(142 193 245 / 0.3);
+  --radius: 0.85rem;
+  --radius-s: 0.65rem;
+  --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+:root[data-theme="dark"] {
+  --paper: #121821;
+  --ink: #e4eaf3;
+  --blue: #8ec1f5;
+  --muted: #a3b0c2;
+  --panel: #17202d;
+  --tint: #1d2838;
+  --tag: #2a4163;
+  --rule: #2b3546;
+  --rule-soft: #1f2733;
+  --ground: #0c1118;
+  --ring: #6d7c90;
+  --pop-shadow: 0 14px 32px -14px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-size: 106.25%; }
+body {
+  margin: 0;
+  font-family: var(--face);
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--ground);
+}
+a { color: var(--blue); text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+.band :focus-visible, .mast :focus-visible { outline-color: #fff; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+svg.i { width: 1em; height: 1em; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* Mock chrome */
+.mock-bar {
+  display: flex; gap: 1rem; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  padding: 0.5rem clamp(1rem, 4vw, 2rem);
+  background: var(--promise, #fff7df); color: #0f1f38; font-size: 0.82rem;
+  border-bottom: 1px dashed #d9c88a;
+}
+.mock-bar button { border: 1px solid #7f90a3; background: #fff; color: #0f1f38; border-radius: 99px; padding: 0.2rem 0.8rem; cursor: pointer; }
+
+.mast { background: var(--footer); color: #fff; border-bottom: 1px solid var(--on-navy-rule); }
+.frame {
+  max-width: 78rem; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem);
+  display: grid; grid-template-columns: 13.5rem minmax(0, 1fr) 19rem; column-gap: 0;
+}
+.mast .frame { align-items: center; min-height: 3.6rem; }
+.mast .name { font-size: 1.15rem; }
+.mast .name b { font-weight: 800; }
+.mast nav { grid-column: 2 / -1; justify-self: end; display: flex; gap: 1.4rem; font-weight: 600; font-size: 0.9rem; }
+
+/* ---------- Band: three tones ---------- */
+.band { background: var(--footer); color: var(--on-navy-ink); }
+.band a { color: inherit; }
+.band-side, .band-main, .band-aside { padding-block: 1.6rem 1.5rem; }
+.band-side { padding-right: 1.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
+.band-main { background: var(--band-main); padding-inline: 2rem; }
+.band-aside { padding-left: 1.5rem; }
+
+.topic-mark {
+  width: 5.2rem; height: 5.2rem; border-radius: 50%;
+  background: var(--band-main); display: grid; place-items: center; color: var(--on-navy);
+}
+.topic-mark svg { width: 2.6rem; height: 2.6rem; stroke-width: 1.4; }
+.side-fact { font-size: 0.85rem; color: var(--navy-soft); margin: 0; max-width: 11rem; }
+.side-fact a { color: #fff; font-weight: 600; text-decoration-color: rgb(255 255 255 / 0.5); }
+.side-fact + .side-fact { padding-top: 0.9rem; border-top: 1px solid var(--on-navy-rule); }
+.side-label { display: block; font-size: 0.75rem; color: var(--navy-soft); }
+
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--navy-soft); margin: 0 0 0.7rem; }
+.crumbs a { text-decoration-color: rgb(255 255 255 / 0.4); }
+.crumbs svg { width: 0.8rem; height: 0.8rem; }
+h1 { font-size: clamp(1.9rem, 4vw, 2.5rem); line-height: 1.12; letter-spacing: -0.01em; margin: 0 0 1rem; max-width: 20ch; text-wrap: balance; }
+.what { font-size: 0.9rem; color: var(--navy-soft); margin: 0 0 0.9rem; }
+.report { border-block: 1px solid var(--on-navy-rule); padding: 0.75rem 0; margin: 0 0 1.1rem; }
+.report a { font-weight: 600; font-size: 1.02rem; }
+.report p { margin: 0.15rem 0 0; font-size: 0.85rem; color: var(--navy-soft); }
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pill {
+  display: inline-flex; align-items: center; gap: 0.45rem; min-height: 2.2rem;
+  padding: 0.25rem 0.9rem; border-radius: 99px; border: 1px solid rgb(255 255 255 / 0.55);
+  background: transparent; color: #fff; font-weight: 600; font-size: 0.85rem; cursor: pointer; text-decoration: none;
+}
+.pill:hover { background: rgb(255 255 255 / 0.1); }
+
+/* Status card: a tone of the band, not a white object on it. */
+.status {
+  background: var(--band-card); border: 1px solid var(--band-card-rule); border-radius: var(--radius);
+  padding: 1.15rem 1.25rem 1.2rem;
+}
+.status-head { display: flex; align-items: center; gap: 0.5rem; }
+.status h2 { margin: 0; font-size: clamp(1.45rem, 3.6vw, 1.7rem); line-height: 1.15; color: #fff; }
+.info {
+  width: 1.9rem; height: 1.9rem; border-radius: 50%; border: 0; background: transparent; color: var(--on-navy);
+  display: grid; place-items: center; cursor: pointer; font-size: 1.1rem;
+}
+.info:hover { background: rgb(255 255 255 / 0.12); }
+.status .gloss { margin: 0.15rem 0 0.8rem; color: var(--navy-soft); font-size: 0.92rem; }
+.track { display: flex; align-items: center; margin: 0 0 0.3rem; }
+.track i { width: 0.5rem; height: 0.5rem; border-radius: 50%; border: 1.5px solid var(--navy-soft); flex: none; }
+.track i.here { width: 0.85rem; height: 0.85rem; background: var(--on-navy); border-color: var(--on-navy); }
+.track b { flex: 1; height: 1px; background: var(--on-navy-rule); }
+.place { margin: 0 0 0.9rem; font-size: 0.75rem; color: var(--navy-soft); }
+.meaning { margin: 0 0 0.9rem; font-weight: 600; font-size: 0.95rem; }
+.status dl { margin: 0; border-top: 1px solid var(--on-navy-rule); }
+.status dl div { display: flex; justify-content: space-between; gap: 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--on-navy-rule); font-size: 0.85rem; }
+.status dt { color: var(--navy-soft); }
+.status dt { white-space: nowrap; }
+.status dd { margin: 0; font-weight: 600; text-align: right; }
+.status dd a { text-decoration-color: rgb(255 255 255 / 0.5); }
+.status .later { display: inline-flex; gap: 0.4rem; align-items: center; margin-top: 0.8rem; font-size: 0.85rem; font-weight: 600; }
+
+/* ---------- Sheet ---------- */
+.page .frame { align-items: start; }
+.toc { position: sticky; top: 0; padding: 1.6rem 1.5rem 2rem 0; font-size: 0.88rem; }
+.toc h2 { font-size: 0.75rem; margin: 0 0 0.5rem; color: var(--muted); font-weight: 700; }
+.toc ul { list-style: none; margin: 0; padding: 0; }
+.toc a { display: flex; justify-content: space-between; padding: 0.38rem 0.6rem; border-radius: 0.5rem; color: var(--ink); text-decoration: none; }
+.toc a[aria-current] { background: var(--paper); color: var(--blue); font-weight: 700; box-shadow: 0 0 0 1px var(--rule); }
+.toc span { color: var(--muted); }
+.sheet { grid-column: 2 / -1; background: var(--paper); border-inline: 1px solid var(--rule); padding: 1.6rem 2rem 3rem; min-height: 60vh; }
+
+.lede { margin: 0; max-width: 62ch; }
+.lede.clamp { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.text-control { border: 0; background: none; padding: 0; color: var(--blue); font-weight: 600; font-size: 0.88rem; text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer; min-height: 1.8rem; }
+.unchecked { display: flex; gap: 0.5rem; align-items: baseline; flex-wrap: wrap; margin: 0.9rem 0 0; padding: 0.45rem 0.8rem; border: 1px dashed var(--ring); border-radius: var(--radius-s); font-size: 0.85rem; color: var(--muted); max-width: 62ch; }
+
+.sec-head { display: flex; align-items: center; gap: 0.6rem; margin: 2.2rem 0 0; padding-bottom: 0.7rem; border-bottom: 2px solid var(--ink); }
+.fold { width: 1.7rem; height: 1.7rem; border-radius: 50%; border: 0; background: var(--tint); color: var(--blue); display: grid; place-items: center; cursor: pointer; }
+.sec-head h2 { font-size: 1.2rem; margin: 0; }
+.sec-head .info { color: var(--muted); margin-left: -0.2rem; }
+.sec-head .info:hover { background: var(--tint); }
+.sec-head .holds { margin-left: auto; font-size: 0.82rem; color: var(--muted); }
+
+/* At a glance: two columns of term cells */
+.terms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0; }
+.term { padding: 1rem 0 1.05rem; border-bottom: 1px solid var(--rule); min-width: 0; }
+.term:nth-child(odd) { padding-right: 1.6rem; }
+.term:nth-child(even) { padding-left: 1.6rem; border-left: 1px solid var(--rule); }
+.term dt { font-size: 0.8rem; color: var(--muted); }
+.term dd { margin: 0; }
+.term .value { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; margin-top: 0.1rem; }
+.term .value strong { font-size: 1.12rem; font-weight: 700; }
+.term .aka { display: block; font-size: 0.85rem; color: var(--muted); }
+.term .def { margin: 0.35rem 0 0; font-size: 0.92rem; max-width: 46ch; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.why { margin-top: 0.45rem; font-size: 0.82rem; }
+.why summary { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--blue); font-weight: 600; text-decoration: underline; text-underline-offset: 0.18em; cursor: pointer; list-style: none; min-height: 1.6rem; }
+.why summary::-webkit-details-marker { display: none; }
+.why summary svg { transition: none; }
+.why[open] summary svg { transform: rotate(180deg); }
+.why-body { margin-top: 0.4rem; padding: 0.7rem 0.9rem; background: var(--panel); border-radius: var(--radius-s); color: var(--muted); }
+.why-body p { margin: 0; }
+.why-body p + p { margin-top: 0.35rem; }
+.why-body b { color: var(--ink); font-weight: 600; }
+
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem 1.5rem; margin: 0; padding: 1rem 0 1.1rem; border-bottom: 2px solid var(--ink); }
+.facts dt { font-size: 0.8rem; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; }
+
+/* ---------- Score chip: one component for every score ---------- */
+.score {
+  display: inline-flex; align-items: center; gap: 0.35rem; flex: none;
+  padding: 0.1rem 0.55rem; min-height: 1.55rem; border-radius: 99px;
+  border: 1px solid var(--rule); background: var(--paper); color: var(--muted);
+  font-size: 0.78rem; font-weight: 600; white-space: nowrap; cursor: pointer;
+}
+.score b { color: var(--ink); font-weight: 700; }
+.score:hover, .score[aria-expanded="true"] { border-color: var(--ring); background: var(--panel); }
+.score.low { border-style: dashed; border-color: var(--ring); }
+.score.plain { cursor: default; }
+
+[popover] {
+  position: fixed; inset: auto; margin: 0; width: min(20rem, calc(100vw - 2rem));
+  padding: 0.85rem 1rem 0.9rem; border: 1px solid var(--rule); border-radius: var(--radius-s);
+  background: var(--paper); color: var(--ink); box-shadow: var(--pop-shadow); font-size: 0.85rem; line-height: 1.5;
+}
+[popover] h3 { margin: 0 0 0.3rem; font-size: 0.9rem; }
+[popover] p { margin: 0; color: var(--muted); }
+[popover] p + p { margin-top: 0.45rem; }
+[popover] p b { color: var(--ink); font-weight: 600; }
+[popover] ul { margin: 0.3rem 0 0; padding-left: 1.1rem; color: var(--muted); }
+
+/* Spec block under the page */
+.spec { margin: 2.4rem 0 0; padding: 1.1rem 1.2rem 1.2rem; border: 1px dashed var(--ring); border-radius: var(--radius); }
+.spec h2 { font-size: 1rem; margin: 0 0 0.2rem; }
+.spec > p { margin: 0 0 0.9rem; font-size: 0.85rem; color: var(--muted); max-width: 62ch; }
+.spec table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.spec th { text-align: left; font-weight: 600; color: var(--muted); font-size: 0.78rem; padding: 0.4rem 0.75rem 0.4rem 0; border-bottom: 1px solid var(--rule); }
+.spec td { padding: 0.55rem 0.75rem 0.55rem 0; border-bottom: 1px solid var(--rule-soft); vertical-align: middle; }
+.spec td.was { color: var(--muted); }
+.swatches { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; font-size: 0.78rem; }
+.swatches span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.swatches i { width: 1.4rem; height: 1.4rem; border-radius: 0.3rem; border: 1px solid var(--rule); }
+
+@media (max-width: 68rem) {
+  .frame { grid-template-columns: minmax(0, 1fr) 19rem; }
+  .band-side, .toc { display: none; }
+  .band-main { padding-left: 0; background: none; }
+  .band { background: var(--band-main); }
+  .sheet { grid-column: 1 / -1; }
+  .mast nav { grid-column: 2; }
+}
+@media (max-width: 40rem) {
+  .frame { grid-template-columns: minmax(0, 1fr); }
+  .mast nav { display: none; }
+  .band-main { padding: 1.2rem 0 0; }
+  .band-aside { padding: 1rem 0 1.3rem; }
+  .what, .report { display: none; }
+  .actions { margin-bottom: 0; }
+  .pill { min-height: 2.75rem; }
+  .sheet { padding: 1.2rem 0 2.5rem; border: 0; background: none; }
+  body { background: var(--paper); }
+  .terms { grid-template-columns: 1fr; }
+  .term:nth-child(n) { padding-inline: 0; border-left: 0; }
+  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .facts div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* The chip stays small; its press area is 44px tall. */
+  .score { position: relative; }
+  .score::after { content: ""; position: absolute; inset: -0.6rem -0.25rem; }
+  .why summary, .text-control { min-height: 2.75rem; }
+  .sec-head .holds { display: none; }
+  .spec { overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></symbol>
+  <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="flag" viewBox="0 0 24 24"><path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.3 2a6.7 6.7 0 0 0 3.1-.7.8.8 0 0 1 1.6.3v10.6a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.5"/></symbol>
+  <symbol id="out" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="ribbon" viewBox="0 0 24 24"><path d="M12 11.2C11 10 10 9 10 8a2 2 0 0 1 4 0c0 1-1 2-2 3.2"/><path d="M9.3 14.5C7.7 12.2 6 10.2 6 7a6 5 0 0 1 12 0c0 3.2-1.8 5.2-3.4 7.5l3.5 4.5a1 1 0 0 1-.2 1.4l-1.9 1.4a1 1 0 0 1-1.4-.2L12 18l-2.7 3.6a1 1 0 0 1-1.4.2L6 20.4a1 1 0 0 1-.2-1.4z"/><path d="M9.3 14.5 12 11.2M12 18l2.6-3.5"/></symbol>
+</svg>
+
+<div class="mock-bar">
+  <span><b>Mock.</b> Band in three tones, At a glance in two columns, one score chip. Records shown are the ivonescimab page's.</span>
+  <button type="button" id="theme">Switch to dark</button>
+</div>
+
+<header class="mast">
+  <div class="frame">
+    <span class="name">What came <b>of it?</b></span>
+    <nav aria-label="Site"><span>Look up</span><span>Topics</span><span>It happened</span></nav>
+  </div>
+</header>
+
+<section class="band" aria-label="The claim and where it stands">
+  <div class="frame">
+    <div class="band-side">
+      <div class="topic-mark" aria-hidden="true"><svg class="i"><use href="#ribbon"/></svg></div>
+      <p class="side-fact"><span class="side-label">Kind of molecule</span><a href="#term-kind">Antibody</a></p>
+      <p class="side-fact"><span class="side-label">Claimed for</span><a href="#term-for">Lung cancer</a></p>
+    </div>
+
+    <div class="band-main">
+      <p class="crumbs"><a href="#">Topics</a><svg class="i" aria-hidden="true"><use href="#right"/></svg><a href="#">Cancer</a></p>
+      <h1>FDA rejects ivonescimab application for advanced lung cancer</h1>
+      <p class="what">A record of what followed this news report. <a href="#">How a status is set</a></p>
+      <div class="report">
+        <a href="#">“F.D.A. Rejects Closely Watched Lung Cancer Drug From China” <svg class="i" aria-hidden="true" style="width:.8em;height:.8em"><use href="#out"/></svg></a>
+        <p>The New York Times · nytimes.com · 15 Nov 2026</p>
+      </div>
+      <div class="actions">
+        <button class="pill" type="button"><svg class="i" aria-hidden="true"><use href="#bookmark"/></svg>Follow</button>
+        <button class="pill" type="button"><svg class="i" aria-hidden="true"><use href="#share"/></svg>Share</button>
+        <button class="pill" type="button"><svg class="i" aria-hidden="true"><use href="#clock"/></svg>Check again later</button>
+        <button class="pill" type="button"><svg class="i" aria-hidden="true"><use href="#flag"/></svg>Report an error</button>
+      </div>
+    </div>
+
+    <div class="band-aside">
+      <div class="status">
+        <div class="status-head">
+          <h2>Phase 3 trial</h2>
+          <button class="info" type="button" data-pop="pop-status" aria-expanded="false" aria-label="What this status rests on"><svg class="i" aria-hidden="true"><use href="#info"/></svg></button>
+        </div>
+        <p class="gloss">Large late-stage trial in people</p>
+        <div class="track" aria-hidden="true"><i></i><b></b><i></i><b></b><i></i><b></b><i></i><b></b><i class="here"></i><b></b><i></i></div>
+        <p class="place">Place 5 of 6, from preclinical to approved</p>
+        <p class="meaning">The furthest trial that has started is a Phase 3 trial.</p>
+        <dl>
+          <div><dt>Latest record</dt><dd><a href="#">13 Nov 2026</a></dd></div>
+          <div><dt>Registry</dt><dd><a href="#">15 matched</a> · <a href="#">5 possible</a></dd></div>
+        </dl>
+        <a class="later" href="#"><svg class="i" aria-hidden="true"><use href="#clock"/></svg>Check again later</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="page">
+  <div class="frame">
+    <nav class="toc" aria-label="On this page">
+      <h2>On this page</h2>
+      <ul>
+        <li><a href="#" aria-current="true">At a glance</a></li>
+        <li><a href="#">The record in brief</a></li>
+        <li><a href="#">What the report said</a></li>
+        <li><a href="#">Recorded <span>28</span></a></li>
+        <li><a href="#">Trials on record <span>15</span></a></li>
+        <li><a href="#">Possible registry records <span>5</span></a></li>
+        <li><a href="#">Papers on record <span>7</span></a></li>
+        <li><a href="#">Organisations named <span>12</span></a></li>
+      </ul>
+    </nav>
+
+    <main class="sheet">
+      <p class="lede clamp" id="lede">The FDA rejected Summit Therapeutics’ application for ivonescimab, saying the global trial did not show a statistically significant survival benefit. The article says the trial found the drug delayed cancer progression when given with chemotherapy. Summit attributed the survival result to slow enrollment and submitted additional analyses, which did not persuade regulators.</p>
+      <button class="text-control" type="button" id="lede-more" aria-expanded="false" aria-controls="lede">Read the full summary</button>
+      <p class="unchecked">Not yet checked by a person. <a href="#">What that means</a></p>
+
+      <div class="sec-head">
+        <button class="fold" type="button" aria-expanded="true" aria-label="Fold At a glance"><svg class="i" aria-hidden="true"><use href="#chev"/></svg></button>
+        <h2>At a glance</h2>
+        <button class="info" type="button" data-pop="pop-glance" aria-expanded="false" aria-label="About these terms"><svg class="i" aria-hidden="true"><use href="#info"/></svg></button>
+        <span class="holds">4 terms · 3 facts</span>
+      </div>
+
+      <dl class="terms">
+        <div class="term" id="term-treatment">
+          <dt>Treatment</dt>
+          <dd>
+            <div class="value"><strong>ivonescimab</strong></div>
+            <span class="aka">Also recorded as AK112, SMT112</span>
+          </dd>
+        </div>
+
+        <div class="term" id="term-kind">
+          <dt>Kind of molecule</dt>
+          <dd>
+            <div class="value">
+              <strong>Antibody</strong>
+              <button class="score" type="button" data-pop="pop-kind" aria-expanded="false"><span class="sr">Kind term match: </span><b>High</b> · 94%</button>
+            </div>
+            <details class="why">
+              <summary>Why this term <svg class="i" aria-hidden="true"><use href="#chev"/></svg></summary>
+              <div class="why-body">
+                <p><b>From ChEMBL.</b> Drug record found by exact name.</p>
+                <p>Kind term “Antibody” fits the record’s kind of molecule: high, 94%.</p>
+              </div>
+            </details>
+          </dd>
+        </div>
+
+        <div class="term" id="term-for">
+          <dt>Claimed for</dt>
+          <dd>
+            <div class="value">
+              <strong>Lung cancer</strong>
+              <button class="score" type="button" data-pop="pop-for" aria-expanded="false"><span class="sr">Term match: </span><b>High</b> · 98%</button>
+            </div>
+            <p class="def">“Tumors or cancer of the LUNG.”</p>
+            <details class="why">
+              <summary>Why this term <svg class="i" aria-hidden="true"><use href="#chev"/></svg></summary>
+              <div class="why-body">
+                <p><b>In MeSH’s words.</b> Lung cancer is filed there as Lung Neoplasms.</p>
+                <p>Matched on the claim’s own words and one entry term.</p>
+              </div>
+            </details>
+          </dd>
+        </div>
+
+        <div class="term" id="term-stage">
+          <dt>Evidence when first reported</dt>
+          <dd>
+            <div class="value">
+              <strong>Late human study</strong>
+              <button class="score low" type="button" data-pop="pop-stage" aria-expanded="false"><span class="sr">Reading: </span><b>Low confidence</b> · 41%</button>
+            </div>
+            <span class="aka">Not confirmed. Does not set the status.</span>
+          </dd>
+        </div>
+      </dl>
+
+      <dl class="facts">
+        <div><dt>First reported</dt><dd><a href="#">15 Nov 2026</a></dd></div>
+        <div><dt>Trial records</dt><dd>15</dd></div>
+        <div><dt>Papers</dt><dd>7</dd></div>
+      </dl>
+
+      <section class="spec" aria-labelledby="spec-h">
+        <h2 id="spec-h">Score chip: one component for every score on the page</h2>
+        <p>The band word and the percentage stay in sight on every match. What was matched, and what the number does and does not say, opens from the chip on hover, press or key.</p>
+        <table>
+          <thead><tr><th>Where</th><th>Today</th><th>Chip</th></tr></thead>
+          <tbody>
+            <tr><td>At a glance term</td><td class="was">Term match: high, 98%</td><td><button class="score" type="button" data-pop="pop-for" aria-expanded="false"><b>High</b> · 98%</button></td></tr>
+            <tr><td>Matched registry record</td><td class="was">Match to this claim: high, 92%</td><td><button class="score" type="button" data-pop="pop-record" aria-expanded="false"><b>High</b> · 92%</button></td></tr>
+            <tr><td>Possible registry record</td><td class="was">Possible match: medium, 78%</td><td><button class="score" type="button" data-pop="pop-possible" aria-expanded="false"><b>Possible</b> · 78%</button></td></tr>
+            <tr><td>Timetable record</td><td class="was">High match · 92%</td><td><button class="score" type="button" data-pop="pop-record" aria-expanded="false"><b>High</b> · 92%</button></td></tr>
+            <tr><td>Reported statement</td><td class="was">Very likely in the report · 92%</td><td><button class="score" type="button" data-pop="pop-statement" aria-expanded="false"><b>Very likely</b> · 92%</button></td></tr>
+            <tr><td>Lower-band reading</td><td class="was">Low confidence · 41%. Not confirmed…</td><td><button class="score low" type="button" data-pop="pop-stage" aria-expanded="false"><b>Low confidence</b> · 41%</button></td></tr>
+          </tbody>
+        </table>
+        <div class="swatches" aria-label="Band tones">
+          <span><i style="background:#0b2545"></i>--footer #0b2545 (side)</span>
+          <span><i style="background:#12325e"></i>--band-main #12325e</span>
+          <span><i style="background:#1c4179"></i>--band-card #1c4179</span>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<div popover="manual" id="pop-status" role="note">
+  <h3>What this status rests on</h3>
+  <p>The furthest trial that has started. Set by rule on 13 Nov 2026 from:</p>
+  <ul><li>NCT05899608, Phase 3, under way</li><li>NCT05184712, Phase 3, results posted</li></ul>
+  <p><a href="#">How a status is set</a></p>
+</div>
+<div popover="manual" id="pop-glance" role="note">
+  <h3>About these terms</h3>
+  <p>Each term is shown in an outside source’s words. A score is how well that source’s term fits this claim; it says nothing about the treatment.</p>
+  <p>Naming a source does not mean it endorses this site. Not medical advice. <a href="#">How these terms are chosen</a></p>
+</div>
+<div popover="manual" id="pop-for" role="note">
+  <h3>Term match: high, 98%</h3>
+  <p><b>Lung cancer</b> is filed in MeSH as <b>Lung Neoplasms</b>.</p>
+  <p>How well the source’s term fits this claim. It says nothing about the treatment. <a href="#">How a match is scored</a></p>
+</div>
+<div popover="manual" id="pop-kind" role="note">
+  <h3>Kind term: high, 94%</h3>
+  <p>Drug record in ChEMBL found <b>by exact name</b>. “Antibody” is that record’s kind of molecule.</p>
+  <p>How well the term fits the record, not how the drug performs. <a href="#">How a match is scored</a></p>
+</div>
+<div popover="manual" id="pop-record" role="note">
+  <h3>Match to this claim: high, 92%</h3>
+  <p>The record tests <b>ivonescimab</b> for <b>lung cancer</b>. Approved by rule.</p>
+  <p>How sure the pipeline is that the record is about this claim. <a href="#">How a match is scored</a></p>
+</div>
+<div popover="manual" id="pop-possible" role="note">
+  <h3>Possible match: medium, 78%</h3>
+  <p>Not counted towards the status. No person has checked it.</p>
+  <p>It is counted once its match is 80% or more. <a href="#">How a match is scored</a></p>
+</div>
+<div popover="manual" id="pop-statement" role="note">
+  <h3>Very likely in the report · 92%</h3>
+  <p>How sure the check is that the report said this. It does not say the statement is true.</p>
+</div>
+<div popover="manual" id="pop-stage" role="note">
+  <h3>Low confidence · 41%</h3>
+  <p>A reading in the lower band. It is shown with its score and <b>never sets a status</b>.</p>
+  <p><a href="#">How the evidence stage is read</a></p>
+</div>
+
+<script>
+// Theme switch, for review only.
+const themeBtn = document.getElementById("theme");
+themeBtn.addEventListener("click", () => {
+  const dark = document.documentElement.dataset.theme === "dark";
+  document.documentElement.dataset.theme = dark ? "light" : "dark";
+  themeBtn.textContent = dark ? "Switch to dark" : "Switch to light";
+});
+
+// Summary clamp.
+const lede = document.getElementById("lede");
+const more = document.getElementById("lede-more");
+more.addEventListener("click", () => {
+  const open = lede.classList.toggle("clamp") === false;
+  more.setAttribute("aria-expanded", String(open));
+  more.textContent = open ? "Show less" : "Read the full summary";
+});
+
+// Popovers: press or key pins one open; a mouse opens it on hover. Escape or a press outside closes.
+let pinned = null;
+let timer = 0;
+function place(btn, pop) {
+  const r = btn.getBoundingClientRect();
+  const w = pop.offsetWidth, h = pop.offsetHeight;
+  let left = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8);
+  let top = r.bottom + 8;
+  if (top + h > innerHeight - 8 && r.top - h - 8 > 8) top = r.top - h - 8;
+  pop.style.left = left + "px";
+  pop.style.top = top + "px";
+}
+function show(btn) {
+  const pop = document.getElementById(btn.dataset.pop);
+  document.querySelectorAll("[popover]").forEach((p) => { if (p !== pop && p.matches(":popover-open")) p.hidePopover(); });
+  document.querySelectorAll("[data-pop]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  if (!pop.matches(":popover-open")) pop.showPopover();
+  place(btn, pop);
+  btn.setAttribute("aria-expanded", "true");
+  pop._btn = btn;
+}
+function hide(pop) {
+  if (pop.matches(":popover-open")) pop.hidePopover();
+  if (pop._btn) pop._btn.setAttribute("aria-expanded", "false");
+  if (pinned === pop) pinned = null;
+}
+const canHover = matchMedia("(hover: hover)").matches;
+document.querySelectorAll("[data-pop]").forEach((btn) => {
+  const pop = document.getElementById(btn.dataset.pop);
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (pinned === pop && pop._btn === btn) { hide(pop); return; }
+    show(btn); pinned = pop;
+  });
+  if (canHover) {
+    btn.addEventListener("mouseenter", () => { clearTimeout(timer); if (!pinned) show(btn); });
+    btn.addEventListener("mouseleave", () => { if (!pinned) timer = setTimeout(() => hide(pop), 180); });
+    pop.addEventListener("mouseenter", () => clearTimeout(timer));
+    pop.addEventListener("mouseleave", () => { if (!pinned) timer = setTimeout(() => hide(pop), 180); });
+  }
+});
+document.addEventListener("click", (e) => { if (pinned && !pinned.contains(e.target)) hide(pinned); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  document.querySelectorAll("[popover]").forEach((p) => { if (p.matches(":popover-open")) { const b = p._btn; hide(p); b && b.focus(); } });
+});
+addEventListener("scroll", () => { document.querySelectorAll("[popover]").forEach((p) => { if (p.matches(":popover-open") && p._btn) place(p._btn, p); }); }, { passive: true });
+</script>
+</body>
+</html>

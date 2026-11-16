@@ -106,18 +106,33 @@ export function termMatchText(card: Pick<ExportedCard, "kind" | "score">): strin
   return scoreLabel(card, matchWords);
 }
 
-/** The scores a row's grey line shows, one per card in the row, each naming what was
- * matched. A drug row's value is what the drug's record says, so its first score is the
- * record's ("Drug record: by exact name"), never the kind of molecule's; a kind card
+/** One score chip of a row: what was matched and how well. */
+export interface RowScore {
+  about: string;
+  words: string;
+  /** Whether the chip says what was matched, in sight: only where a row has two. */
+  shown: boolean;
+}
+
+/** The scores a row shows beside its value, one chip per card in the row, each naming
+ * what was matched. A drug row's value is what the drug's record says, so its first score
+ * is the record's ("Drug record: by exact name"), never the kind of molecule's; a kind card
  * inside the same row keeps its own score in sight ("Kind term: high, 94%"). */
-export function rowMatchTexts(cards: Pick<ExportedCard, "kind" | "score">[]): string[] {
+export function rowScores(cards: Pick<ExportedCard, "kind" | "score">[]): RowScore[] {
   const [first, ...rest] = cards;
   if (!first) return [];
-  if (first.kind !== "drug") return [termMatchText(first)];
   const words = (card: Pick<ExportedCard, "kind" | "score">) =>
     termMatchText(card).replace(/^Term match: /, "");
-  return [`Drug record: ${words(first)}`, ...rest.map((card) => `Kind term: ${words(card)}`)];
+  if (first.kind !== "drug") return [{ about: "Term match", words: words(first), shown: false }];
+  return [
+    { about: "Drug record", words: words(first), shown: true },
+    ...rest.map((card) => ({ about: "Kind term", words: words(card), shown: true })),
+  ];
 }
+
+/** What a term's score is and is not, in the panel its chip opens. */
+export const TERM_SCORE_MEANING =
+  "How well this source’s term fits this claim. It says nothing about the treatment.";
 
 /** A source's short name for a row's grey line: the abbreviation its title gives in
  * brackets ("MeSH"), or its title up to any "through …" ("ChEMBL"). The full credit is
