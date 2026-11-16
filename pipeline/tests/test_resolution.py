@@ -403,6 +403,16 @@ def test_candidate_keeps_what_its_registry_record_says(session: Session):
         " Phase 1/Phase 2, active not recruiting."
     )
     assert of_the_paper.record_summary == "A paper"
+    # The same record field by field, for the site to lay out (openspec registry-record-rows).
+    # A recruiting state is never carried as such: the trial is "under way".
+    assert of_the_trial.record_facts == {
+        "title": "EX-1 in adults with missing teeth",
+        "conditions": ["Tooth Agenesis"],
+        "interventions": ["EX-1"],
+        "phases": ["phase_1", "phase_2"],
+        "state": "under_way",
+    }
+    assert of_the_paper.record_facts is None
 
 
 def two_trials() -> FakeTrials:

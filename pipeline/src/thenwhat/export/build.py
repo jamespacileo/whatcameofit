@@ -233,6 +233,16 @@ class ExportedFailureFlag(Strict):
     source_url: str
 
 
+class ExportedMatchRecord(Strict):
+    # A matched trial's registry record field by field (openspec registry-record-rows).
+    # Title and names as the registry wrote them; phases and state as codes the site words.
+    title: str | None
+    conditions: list[str]
+    interventions: list[str]
+    phases: list[TrialPhase]
+    state: TrialStateCode
+
+
 class ExportedMatch(Strict):
     # A registry record matched to the claim, with how sure the pipeline is. The site owns
     # the words: it turns `score` into "High match · 92%" and `reading` into a reason.
@@ -250,6 +260,9 @@ class ExportedMatch(Strict):
     decided_by: str | None
     # What the record says, in one line: title, conditions, phase, state.
     summary: str | None
+    # The same, field by field, for a trial. None for a match whose record has not been
+    # read into fields yet (`thenwhat entity record-facts`).
+    record: ExportedMatchRecord | None = None
 
 
 # Trial facts (openspec trial-facts): what a registry record says of its trial, read by
@@ -729,6 +742,11 @@ def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
                 else None
             ),
             summary=match.record_summary,
+            record=(
+                ExportedMatchRecord.model_validate(match.record_facts)
+                if match.record_facts is not None
+                else None
+            ),
         )
         for match in [*approved, *pending]
     ]

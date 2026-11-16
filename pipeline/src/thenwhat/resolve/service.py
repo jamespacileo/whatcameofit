@@ -8,7 +8,7 @@ import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol
+from typing import Any, Protocol
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -25,6 +25,8 @@ from thenwhat.decide.steps import (
     score_matches,
 )
 from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.events.trial import PHASES
+from thenwhat.events.trial_facts import STATES, is_registry_record
 from thenwhat.measure import spans as measure
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
@@ -66,6 +68,30 @@ def what_it_says(record: SourceRecord) -> str | None:
     if isinstance(title, list):
         title = title[0] if title else None
     return str(title)[:MAX_SUMMARY_CHARACTERS] if title else None
+
+
+def facts_of(record: SourceRecord) -> dict[str, Any] | None:
+    """What a trial's registry record says of it, field by field, for the site to lay out:
+    its title, conditions, interventions, phases and state, as written or as codes. None
+    for a record that is not a trial's. Behavior: openspec registry-record-rows."""
+    if not is_registry_record(record.payload):
+        return None
+    section = record.payload["protocolSection"]
+    tested = [
+        intervention.get("name")
+        for intervention in section.get("armsInterventionsModule", {}).get("interventions", [])
+    ]
+    return {
+        "title": section.get("identificationModule", {}).get("briefTitle"),
+        "conditions": list(section.get("conditionsModule", {}).get("conditions", [])),
+        "interventions": [name for name in tested if name],
+        "phases": [
+            PHASES[phase].value
+            for phase in section.get("designModule", {}).get("phases", [])
+            if phase in PHASES
+        ],
+        "state": STATES.get(section.get("statusModule", {}).get("overallStatus"), "unknown"),
+    }
 
 
 def _plain_phase(phase: str) -> str:
@@ -219,6 +245,7 @@ def resolve_claim(
             external_id=record.external_id,
             score=0.0,
             record_summary=what_it_says(record),
+            record_facts=facts_of(record),
         )
         session.add(match)
         added.append(match)
@@ -341,6 +368,7 @@ def rescore_claim(
             match = pending.pop((record.source_name, record.external_id), None)
             if match is not None:
                 match.record_summary = what_it_says(record)
+                match.record_facts = facts_of(record)
                 again.append((entity, match, record))
     score_matches(session, backend, claim=claim, candidates=again, now=now)
     rescored = [match for _, match, _ in again]
@@ -442,6 +470,7 @@ def redo_rule_approvals(
     rescored = [match for _, match, _ in again]
     for _, match, record in again:
         match.record_summary = what_it_says(record)
+        match.record_facts = facts_of(record)
         match.review_state = ReviewState.PENDING
         match.reviewed_at = None
         match.reviewed_by = None
@@ -470,3 +499,34 @@ def redo_rule_approvals(
         not_returned=sorted(not_returned),
         events_kept=events_kept,
     )
+
+
+class TrialRecords(Protocol):
+    def fetch_trial(self, nct_id: str) -> SourceRecord | None: ...
+
+
+def fill_record_facts(session: Session, registry: TrialRecords) -> tuple[int, list[str]]:
+    """Read the record of every shown trial match stored before its facts were kept, and
+    keep them. Returns how many were filled and the identifiers the registry no longer
+    answers for, which stay empty. Behavior: openspec registry-record-rows."""
+    waiting = session.scalars(
+        select(EntityMatch)
+        .where(
+            EntityMatch.source_name == ClinicalTrials.name,
+            EntityMatch.record_facts.is_(None),
+            EntityMatch.review_state.in_([ReviewState.APPROVED, ReviewState.PENDING]),
+        )
+        .order_by(EntityMatch.id)
+    ).all()
+    filled = 0
+    missing: list[str] = []
+    for match in waiting:
+        record = registry.fetch_trial(match.external_id)
+        facts = facts_of(record) if record is not None else None
+        if facts is None:
+            missing.append(match.external_id)
+            continue
+        match.record_facts = facts
+        filled += 1
+    session.flush()
+    return filled, missing

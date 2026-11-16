@@ -274,6 +274,10 @@ class EntityMatch(Reviewed, Base):
     score: Mapped[float]
     # What the registry record says, in one line, so a reviewer need not open every link.
     record_summary: Mapped[str | None] = mapped_column(Text)
+    # The same record field by field, for a trial: title, conditions, interventions,
+    # phases and state (openspec registry-record-rows). None for a paper, and for a match
+    # stored before the field existed until `entity record-facts` fills it.
+    record_facts: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
     # Why the record is a candidate, as codes found by rule and without a model. The
     # site owns their wording.
     reasons: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")

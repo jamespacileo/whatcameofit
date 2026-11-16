@@ -478,6 +478,27 @@ def test_at_most_five_candidates_are_exported(session: Session):
     assert matches[0]["external_id"] == "NCT00000016"
 
 
+def test_a_match_carries_its_record_field_by_field_once_it_is_read(session: Session):
+    """Openspec registry-record-rows: a match read into fields carries them; one stored
+    before the fields were kept carries none."""
+    claim = new_claim(session)
+    read = add_match(session, claim, "NCT00000001", 0.7, ReviewState.PENDING)
+    read.record_facts = {
+        "title": "EX-1 in tooth agenesis",
+        "conditions": ["Tooth Agenesis"],
+        "interventions": ["EX-1"],
+        "phases": ["phase_2"],
+        "state": "under_way",
+    }
+    add_match(session, claim, "NCT00000002", 0.6, ReviewState.PENDING)
+    session.flush()
+
+    first, second = claim_in(exported(session))["matches"]
+
+    assert first["record"] == read.record_facts
+    assert second["record"] is None
+
+
 def test_export_carries_retired_verticals_with_their_successors(
     session: Session, monkeypatch: pytest.MonkeyPatch
 ):
