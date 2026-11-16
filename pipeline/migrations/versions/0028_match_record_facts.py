@@ -1,7 +1,7 @@
 """Keep a matched trial's record field by field beside its one-line summary.
 
-Revision ID: 0027
-Revises: 0026
+Revision ID: 0028
+Revises: 0027
 """
 
 from collections.abc import Sequence
@@ -10,8 +10,8 @@ from alembic import op
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 
-revision: str = "0027"
-down_revision: str | None = "0026"
+revision: str = "0028"
+down_revision: str | None = "0027"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
