@@ -4,7 +4,7 @@
 
 News reports medical "breakthroughs" that are rarely mentioned again. thenwhat tracks what happened afterwards: each claim gets a status derived from dated, sourced evidence in public registries. Items are approved by deterministic rules, every match shown carries its confidence score, and a wrong item is removed by archiving it.
 
-`thenwhat` is the repository codename for [What came of it?](https://whatcameofit.com). The public site runs on Cloudflare; the curation pipeline and database stay local. GitHub tests each proposed change and deploys the committed snapshot from `main`.
+`thenwhat` is the repository codename for [What came of it?](https://whatcameofit.com). The public site runs on Cloudflare; the curation pipeline and database stay local. GitHub tests each proposed change, publishes a preview of it for its pull request, and deploys the committed snapshot from `main`.
 
 ## Setup
 
@@ -325,6 +325,15 @@ thenwhat backfill topics                        # how far each topic you named i
 - Every page is asked of the page reader, under its one allowance (`reader` in `SOURCE_ALLOWANCES`); how often each outlet is asked is the reader's to decide. A lead whose site the reader says cannot be asked now stays due with no attempt counted, and the run goes on with other leads. When the reader cannot be reached the run stops, and the leads stay due.
 - Topics you want covered first, such as GLP-1 drugs, are a name and its words in `backfill/topics.py`. A lead whose title names one is read before the others, and is read when triage held it (never when triage rejected it). `thenwhat backfill topics` shows, for each topic, where its leads stand and what each of its claims holds: articles, approved trials, approved papers and background cards.
 - `funnel` lists the outlets whose pages gave no date. That list is how the page reader learns an outlet's markup.
+
+## The daily run
+
+`scripts/daily-run.sh` is one day's upkeep of the private database as a single run: the newest shared links, a capped number of reads, the registries again for published claims, then a summary. It stops at the audit and publishes nothing. `docs/daily-run.md` has what it does, how it is installed as a launchd job, and how the audit and the publish stay a deliberate act.
+
+```sh
+sh scripts/daily-run.sh --dry-run   # every command a run would start; touches nothing
+sh scripts/daily-run.sh summary     # what the last run did
+```
 
 ## Development
 
