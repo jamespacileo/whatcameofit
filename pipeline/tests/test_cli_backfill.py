@@ -29,6 +29,7 @@ from thenwhat.db.models import (
     LinkShare,
     LlmUsage,
     RegistryTrial,
+    SourceAllowanceUse,
     WorkEntry,
 )
 from thenwhat.domain import Decider, OutletKind
@@ -856,6 +857,48 @@ def test_load_trials_stops_cleanly_when_the_allowance_is_used_up(
         result.output
     )
     assert len(session.scalars(select(RegistryTrial)).all()) == 3
+
+
+def test_load_trials_records_a_too_many_requests_and_stops_cleanly(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch, fake_time, fixture_json
+):
+    """The registry keeps answering 429 to the second page: the pause is recorded for
+    every process, the command stops with its counts and exit 0, and a second load the
+    same night sends nothing."""
+    first = fixture_json("clinicaltrials/list_page_1.json")
+    asked: list[bool] = []
+
+    def registry(request: httpx.Request) -> httpx.Response:
+        asked.append("pageToken" in request.url.params)
+        if "pageToken" in request.url.params:
+            return httpx.Response(429, headers={"Retry-After": "3600"}, text="slow down")
+        return httpx.Response(200, json=first)
+
+    monkeypatch.setattr(
+        "thenwhat.cli.backfill.make_registry",
+        lambda lookups, settings: ClinicalTrials(
+            lookups,
+            contact_email=settings.contact_email,
+            transport=httpx.MockTransport(registry),
+            time=fake_time,
+        ),
+    )
+
+    result = run("load-trials", "--trials", "interventional", "--changes-only")
+
+    assert result.exit_code == 0, result.output
+    assert "Loaded 3 trials in 1 requests: 3 new, 0 already stored." in result.output
+    assert "Stopped: clinicaltrials.gov said it was asked too often." in result.output
+    use = session.get(SourceAllowanceUse, "clinicaltrials.gov")
+    assert use is not None and use.paused_until is not None and use.refusals == 1
+
+    asked.clear()
+    again = run("load-trials", "--trials", "interventional", "--changes-only")
+
+    assert again.exit_code == 0, again.output
+    assert asked == []
+    assert "Loaded 0 trials in 0 requests" in again.output
+    assert "Stopped: clinicaltrials.gov said it was asked too often." in again.output
 
 
 def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
