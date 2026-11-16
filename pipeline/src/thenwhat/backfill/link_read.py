@@ -67,7 +67,12 @@ from thenwhat.decide.steps import (
     lead_ref,
 )
 from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome, WorkOutcome
-from thenwhat.extract.names import is_a_class, is_a_name
+from thenwhat.extract.names import (
+    condition_refusal,
+    is_a_class,
+    is_a_name,
+    names_no_product,
+)
 from thenwhat.extract.page import Page, published_day
 from thenwhat.extract.retrieve import (
     READER,
@@ -562,11 +567,23 @@ class LinkRead:
             return Failed(str(failure))
         # A class of treatments is every member of it, not one: "GLP-1 receptor agonists".
         # The name the read gave says so by rule, so no decision is paid for.
-        if is_a_class(draft.intervention) or names_only_a_class([draft.intervention]):
+        if (
+            is_a_class(draft.intervention)
+            or names_only_a_class([draft.intervention])
+            or names_no_product(draft.intervention, draft.indication)
+        ):
             return self._finish(
                 record,
                 ReadOutcome.NOT_ONE_TREATMENT,
                 f"{draft.intervention} for {draft.indication}; a class of treatments, not one",
+            )
+        # A claim is about one condition of people: not "Cancer", not a cat's illness.
+        refused_condition = condition_refusal(draft.indication)
+        if refused_condition is not None:
+            return self._finish(
+                record,
+                ReadOutcome.NOT_ONE_TREATMENT,
+                f"{draft.intervention} for {draft.indication}; {refused_condition}",
             )
         # A claim is one treatment for one condition. Triage sees only a headline, so what
         # the article turned out to be is asked here, of the read's own headline and

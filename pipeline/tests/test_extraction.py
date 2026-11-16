@@ -37,7 +37,12 @@ from thenwhat.domain import (
     StatementKind,
     StatementSpeaker,
 )
-from thenwhat.extract.names import is_a_class, is_a_name
+from thenwhat.extract.names import (
+    condition_refusal,
+    is_a_class,
+    is_a_name,
+    names_no_product,
+)
 from thenwhat.extract.phrases import backfill_search_phrases
 from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import (
@@ -821,3 +826,54 @@ def test_named_drug_given_no_phrase_keeps_none(session: Session):
     client, _ = llm(session, {"search_phrases": []})
 
     assert backfill_search_phrases(session, client, claim) == []
+
+
+# --- classes, techniques, schedules and conditions (batch 2 and 3 audits) ------------
+
+
+@pytest.mark.parametrize(
+    ("name", "refused"),
+    [
+        ("Statins", True),
+        ("glucose-responsive insulins", True),
+        ("antidepressants", True),
+        # A rule cannot tell a class from one antibody by its target: left to the audit.
+        ("Anti-USAG-1 antibody", False),
+        ("pembrolizumab", False),
+    ],
+)
+def test_a_class_named_by_its_plural_is_not_one_treatment(name: str, refused: bool):
+    assert is_a_class(name) is refused
+
+
+@pytest.mark.parametrize(
+    ("name", "condition", "refused"),
+    [
+        ("COVID-19 vaccine", "prevention of COVID-19", True),
+        ("third dose of COVID-19 vaccine", "COVID-19", True),
+        ("2024\u20132025 dose", "COVID-19", True),
+        ("three-dose vaccination", "prevention of COVID-19", True),
+        ("Pfizer-BioNTech COVID-19 vaccine", "prevention of COVID-19", False),
+        ("mRNA-1273", "COVID-19", False),
+        ("Janssen booster", "COVID-19", False),
+        ("RTS,S malaria vaccine", "malaria", False),
+    ],
+)
+def test_a_vaccine_or_schedule_with_no_product(name: str, condition: str, refused: bool):
+    assert names_no_product(name, condition) is refused
+
+
+@pytest.mark.parametrize(
+    ("condition", "why"),
+    [
+        ("Cancer", "no one condition"),
+        ("solid tumours", "no one condition"),
+        ("feline infectious peritonitis", "an animal's condition"),
+        ("Pancreatic cancer", None),
+        ("allergy to cats", None),
+        ("canine dander allergy", None),
+        ("HIV", None),
+    ],
+)
+def test_a_condition_that_is_not_one_condition_of_people(condition: str, why: str | None):
+    assert condition_refusal(condition) == why

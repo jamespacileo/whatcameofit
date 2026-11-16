@@ -1065,11 +1065,42 @@ def test_the_same_treatment_for_another_condition_stays_its_own_claim(session, f
     assert len(reader.backend.same_claim_asked) == 1
 
 
+@pytest.mark.parametrize(
+    ("intervention", "indication", "said"),
+    [
+        ("COVID-19 vaccination", "prevention of COVID-19", "a class of treatments, not one"),
+        ("third dose of COVID-19 vaccine", "COVID-19", "a class of treatments, not one"),
+        ("Statins", "dementia", "a class of treatments, not one"),
+        ("DHA", "Cancer", "no one condition"),
+        ("GS-441524", "feline infectious peritonitis", "an animal's condition"),
+    ],
+)
+def test_a_class_a_bare_cancer_or_an_animals_condition_makes_no_claim(
+    session, fake_time, intervention, indication, said
+):
+    """Scenarios: A vaccine or schedule with no product, A condition that is not one
+    condition of people"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT
+        | {"intervention": intervention, "intervention_synonyms": [], "indication": indication},
+    )
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.NOT_ONE_TREATMENT, None)
+    assert lead.read_detail is not None and lead.read_detail.endswith(said)
+    assert session.scalars(select(Claim)).all() == []
+
+
 @pytest.mark.parametrize("report_kind", [NEW_TREATMENT, BUSINESS_NEWS])
 def test_equal_generic_names_do_not_join_different_products(session, fake_time, report_kind):
-    """A generic vaccine name cannot override the products the summaries identify."""
+    """A generic vaccine name cannot override the products the summaries identify. (A
+    name such as "COVID-19 vaccine" is refused before this, as a class.)"""
     generic = DRAFT | {
-        "intervention": "COVID-19 vaccine",
+        "intervention": "Ad26 vaccine",
         "intervention_synonyms": [],
         "indication": "COVID-19",
     }
