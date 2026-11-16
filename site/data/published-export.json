@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T05:03:42.185229Z",
-  "last_checked_at": "2026-11-16T02:15:15.735202Z",
+  "generated_at": "2026-11-16T05:31:12.017751Z",
+  "last_checked_at": "2026-11-16T05:29:15.509618Z",
   "preview": false,
   "sources": [
     {
@@ -145518,6 +145518,14 @@
           "published_by": null
         },
         {
+          "url": "https://arstechnica.com/health/2026/10/personalized-mrna-cancer-vaccine-cut-melanoma-death-recurrence-by-42/",
+          "outlet": "Ars Technica",
+          "title": "Moderna and Merck say their mRNA cancer vaccine cut death, recurrence by 42%",
+          "published_date": "2026-10-22",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
           "url": "https://www.nbcnews.com/health/cancer/personalized-mrna-vaccine-melanoma-cut-risk-cancers-return-late-stage-rcna605208",
           "outlet": "NBC News",
           "title": "Personalized mRNA vaccine for melanoma cut risk of cancer’s return in late-stage trial",
@@ -177073,6 +177081,233 @@
           "read_on": "2026-11-14"
         }
       ]
+    },
+    {
+      "slug": "prp-sirna-prion-disease",
+      "headline": "PrP-targeting divalent siRNA entered a phase 1 safety study for prion disease",
+      "summary": "Broad Institute reported in April 2026 that a divalent small interfering RNA targeting prion-protein production was entering the PRiSM phase 1 trial. Prior mouse experiments reported lower prion-protein levels and longer survival; these findings do not establish benefit in people. The trial gives a single intrathecal dose and measures safety and biological activity. An October update added people without symptoms who carry high-risk PRNP variants. This candidate is distinct from ION717 and from the gene-editing approaches also mentioned in the report.",
+      "vertical": "brain-and-nerves",
+      "approach": "drug",
+      "intervention": {
+        "name": "PrP-siRNA",
+        "synonyms": [
+          "2439-exNA",
+          "2439-s4",
+          "divalent siRNA 2439-exNA"
+        ]
+      },
+      "indication": "Prion disease",
+      "first_reported_date": "2026-04-22",
+      "evidence_stage": "animal",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_1",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T05:29:15.365117Z",
+        "explained_by": [
+          11761,
+          11762
+        ],
+        "history": [
+          {
+            "on": "2026-03-03",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2026-05-15",
+            "code": "phase_1"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.broadinstitute.org/news/clinical-trial-prion-disease-drug-candidate-begins-enrolling-participants",
+          "outlet": "Broad Institute",
+          "title": "Clinical trial of a prion disease drug candidate begins enrolling participants",
+          "published_date": "2026-04-22",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 11761,
+          "type": "trial_registered",
+          "event_date": "2026-03-03",
+          "date_basis": "first posted",
+          "summary": "Trial NCT07444580 registered (Phase 1).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07444580",
+          "trial_id": "NCT07444580",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11762,
+          "type": "trial_status_change",
+          "event_date": "2026-05-15",
+          "date_basis": "start date",
+          "summary": "Trial NCT07444580 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07444580",
+          "trial_id": "NCT07444580",
+          "trial_phases": [
+            "phase_1"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07444580",
+          "url": "https://clinicaltrials.gov/study/NCT07444580",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "PrP-targeting siRNA Safety & Mechanism Study. For: Prion Disease. Tests: PrP-siRNA. Phase 1, recruiting."
+        },
+        {
+          "source_name": "crossref",
+          "external_id": "10.1093/nar/gkag287",
+          "url": "https://doi.org/10.1093/nar/gkag287",
+          "score": 0.76,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "assistant",
+          "summary": "Divalent siRNA for prion disease"
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT07444580",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT07444580",
+          "title": "PrP-targeting siRNA Safety & Mechanism Study",
+          "phases": [
+            "phase_1"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T05:29:15.509618Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 45,
+              "basis": "planned"
+            },
+            "allocation": "non_randomised",
+            "masking": "none",
+            "comparators": [
+              "no_treatment"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Broad Institute of MIT and Harvard",
+              "kind": "other"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Frequency of adverse events",
+                "time_frame": "Baseline to week 24"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Baseline to week 24",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-16T05:29:15.509618Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Frequency of adverse events",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T05:29:15.509618Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1093/nar/gkag287",
+          "url": "https://doi.org/10.1093/nar/gkag287",
+          "record_url": "https://europepmc.org/article/MED/42033217",
+          "roles": [
+            {
+              "role": "origin",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-16T05:30:39.365438Z",
+          "facts": {
+            "title": "Divalent siRNA for prion disease.",
+            "journal": "Nucleic acids research",
+            "year": 2026,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Broad Institute of MIT and Harvard",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT07444580"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": []
     },
     {
       "slug": "psilocybin-depression-and-anxiety-associated-with-advanced",

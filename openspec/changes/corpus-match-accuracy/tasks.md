@@ -1,5 +1,12 @@
 # Tasks
 
+## Additional Hacker News source coverage
+
+- [x] Read S017/S018's current outgoing links from the official Hacker News API; review both public articles and primary NCT05933577/NCT07444580 records without retaining article text.
+- [x] Add the verified October 22 Ars Technica reference to the existing complete melanoma-regimen card. Draft and normally prepare the distinct PrP-siRNA prion-disease card, preserve registry aliases, confirm its animal first-report stage as assistant, and retain only NCT07444580 as its approved trial. Preparation takes 65 seconds; the automatic article reader's 403 is respected. The browser-reviewed source and primary registry establish identity.
+- [x] Approve the explicit origin DOI and claim as assistant, then fetch its indexed paper facts. Leave seven new follow-up events and other undecided paper candidates pending. Stage the normal 174-card export: one new card, one added melanoma article, and 172 existing cards unchanged. The preparation ledger window records four model calls costing $0.001580; this is timing-based attribution, not a per-claim ledger key.
+- [ ] Complete production rehearsal, guarded linked-source checks and independent review; deploy the data update and rerun S017/S018 against the released site and installed Safari functions before updating corpus/Sheet. Native collector/popup/storage checks remain pending.
+
 ## Linked social coverage and enamel evidence
 
 - [x] Verify S030/S031 link distinct 2025 Nottingham and King's College London laboratory studies. Create and prepare separate cards, retain the specific materials and origin papers, confirm in-vitro stages as assistant, and reject four unsupported clinical/comparative statements. Normal batch preparation completes in 12 seconds.
