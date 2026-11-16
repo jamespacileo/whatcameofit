@@ -4,7 +4,7 @@
  "S012": "too little read: page text is only the player time ('0:00 / 1:40'); popup would fall back to a screenshot, not automated here",
  "S013": "too little read: page text is only the player time; popup would fall back to a screenshot, not automated here",
  "S014": "Requested CNN pancreatic-cancer vaccine caption is identified, rather than a recommended video. Installed Safari confirms the corrected subject; the specific trial and full video are not confirmed.",
- "S021": "Native Safari separates all three addressed claims and excludes replies. It finds two trial groups but misses RUBY and returns no cards.",
+ "S021": "RUBY discovery is corrected in both released paths. Three claims remain separate, but no cards are returned and page search limits leave partial coverage. The website does not display KEYNOTE-905 among its ten possible matches.",
  "S022": "Grouping works, but the website text path returns an unrelated omega-3/probiotic trial for PrEggNut. Native has three trial groups and an unchecked fourth. No cards; not an accuracy pass.",
  "S023": "too little read: Facebook rendered no post text without signing in; only the tab title had it",
  "S024": "Facebook reader included the comment thread with the post",
