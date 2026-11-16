@@ -2,7 +2,7 @@
 // No build, no network and no Cloudflare account.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { deployProblems } from "../scripts/deploy-checks.mjs";
+import { deployProblems, pullRequestWorker } from "../scripts/deploy-checks.mjs";
 
 const PUBLIC = "https://tracker.example.org";
 const claim = (slug, checked = true) => ({ slug, checked_by_person: checked });
@@ -54,3 +54,14 @@ test("every problem is reported at once", () => {
   // No address, a preview, and no claims.
   assert.equal(deployProblems({ data, siteUrl: undefined }).length, 3);
 });
+
+test("Scenario: A pull request's copy has its own Worker", () => {
+  assert.equal(pullRequestWorker("247"), "thenwhat-pr-247");
+  assert.equal(pullRequestWorker(247), "thenwhat-pr-247");
+});
+
+for (const number of [undefined, "", "0", "-1", "12 --name thenwhat", "thenwhat", "1.5"]) {
+  test(`Scenario: Not a pull request number (${JSON.stringify(number)})`, () => {
+    assert.equal(pullRequestWorker(number), null);
+  });
+}
