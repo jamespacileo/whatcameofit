@@ -10,7 +10,7 @@ from thenwhat.config import Settings
 
 
 def registered_steps(settings: Settings) -> list[Step]:
-    triage = LinkTriage(topic_terms=terms_of())
+    triage = LinkTriage(topic_terms=terms_of(), since=settings.lead_triage_since)
     return [
         NewsSearch(leads_per_trial=settings.leads_per_trial),
         LinkScreen(links_max=settings.lead_links_max),
@@ -28,5 +28,7 @@ def registered_steps(settings: Settings) -> list[Step]:
             approve_drafts_by_rule=settings.approve_drafts_by_rule,
             match_reject_below=settings.match_reject_below,
             match_accept_above=settings.match_accept_above,
+            outlet_gap_seconds=settings.reader_outlet_gap_seconds,
+            read_since=settings.lead_read_since,
         ),
     ]

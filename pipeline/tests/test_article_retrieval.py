@@ -327,3 +327,102 @@ def test_thin_main_content_cannot_be_read_even_with_long_metadata():
     reader = SyntheticReader(lambda request: httpx.Response(200, text=raw))
     with pytest.raises(ThinPage):
         retriever(reader).retrieve(ARTICLE_URL)
+
+
+# --- the reader at capacity ------------------------------------------------------------
+
+
+def _busy_retriever(reader, slept: list[float]):
+    import threading
+
+    from reader_support import READER_KEY, READER_URL
+    from thenwhat.extract.retrieve import ArticleRetriever
+
+    return ArticleRetriever(
+        reader_url=READER_URL,
+        reader_key=READER_KEY,
+        contact_email="ops@thenwhat.test",
+        turns=threading.BoundedSemaphore(2),
+        transport=httpx.MockTransport(reader),
+        sleep=slept.append,
+    )
+
+
+def _busy(wait: str | None) -> httpx.Response:
+    headers = {} if wait is None else {"Retry-After": wait}
+    return httpx.Response(429, headers=headers, json={"code": "ROUTER_BUSY"})
+
+
+def test_a_reader_at_capacity_is_asked_again_after_the_wait_it_states():
+    """The reader answers 429 with a Retry-After when it is busy. That is not the reader
+    failing and says nothing of the site: the page is asked for again after the wait."""
+    from reader_support import SyntheticReader
+    from thenwhat.extract.retrieve import NOT_SERVED
+
+    reader = SyntheticReader()
+    answers = [_busy("7"), _busy("3")]
+
+    def answer() -> httpx.Response:
+        if answers:
+            return answers.pop(0)
+        # The reader's ordinary answer for a page its site did not serve.
+        return httpx.Response(
+            200, json={"success": True, "data": {"metadata": {"statusCode": 404}}}
+        )
+
+    reader.answer = answer
+    slept: list[float] = []
+
+    probe = _busy_retriever(reader, slept).probe("https://news.example.org/a")
+
+    assert (probe.answer, probe.status) == (NOT_SERVED, 404)
+    assert slept == [7.0, 3.0]
+    assert len(reader.asked) == 3
+
+
+def test_a_reader_that_stays_busy_ends_as_unavailable():
+    from reader_support import SyntheticReader
+    from thenwhat.backfill.errors import ReaderUnavailable
+    from thenwhat.extract.retrieve import BUSY_TRIES
+
+    reader = SyntheticReader()
+    reader.answer = lambda: _busy("1")
+    slept: list[float] = []
+
+    with pytest.raises(ReaderUnavailable):
+        _busy_retriever(reader, slept).probe("https://news.example.org/a")
+
+    assert len(reader.asked) == BUSY_TRIES
+    assert len(slept) == BUSY_TRIES - 1
+
+
+@pytest.mark.parametrize("wait", [None, "3600", "soon"])
+def test_a_429_with_no_stated_wait_or_too_long_a_one_is_not_waited_for(wait):
+    from reader_support import SyntheticReader
+    from thenwhat.backfill.errors import ReaderUnavailable
+
+    reader = SyntheticReader()
+    reader.answer = lambda: _busy(wait)
+    slept: list[float] = []
+
+    with pytest.raises(ReaderUnavailable):
+        _busy_retriever(reader, slept).probe("https://news.example.org/a")
+
+    assert (len(reader.asked), slept) == (1, [])
+
+
+def test_a_site_that_cannot_be_asked_now_is_not_mistaken_for_a_busy_reader():
+    from reader_support import SyntheticReader
+    from thenwhat.extract.retrieve import NOT_NOW
+
+    reader = SyntheticReader()
+    reader.answer = lambda: httpx.Response(
+        429,
+        headers={"Retry-After": "5"},
+        json={"success": False, "code": "NOT_NOW", "reason": "rate limited", "retryAfter": 5},
+    )
+    slept: list[float] = []
+
+    probe = _busy_retriever(reader, slept).probe("https://news.example.org/a")
+
+    assert (probe.answer, slept, len(reader.asked)) == (NOT_NOW, [], 1)

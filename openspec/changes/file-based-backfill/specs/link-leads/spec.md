@@ -65,3 +65,14 @@ A load run with `--dry-run` SHALL read the files and print the report a load wou
 #### Scenario: A dry run before a load
 - **WHEN** the operator dry-runs a load and then runs it
 - **THEN** the dry run's count of shares on listed outlets equals the load's
+
+### Requirement: A run can be narrowed to a period
+Scoring and reading SHALL each take an optional first day, set by the operator (`LEAD_TRIAGE_SINCE`, `LEAD_READ_SINCE`). With a first day set, a lead first shared before it SHALL NOT be scored, or read, and SHALL NOT count as due; it SHALL keep its place and be due again once the day is moved back or unset. Screening is not narrowed: it costs nothing per lead.
+
+#### Scenario: A backfill of two years
+- **WHEN** the first day for scoring and for reading is 1 January 2025 and leads go back to 2014
+- **THEN** only leads first shared from that day on are scored and read, and the older ones are neither sent to a model nor asked of an outlet
+
+#### Scenario: The period is widened later
+- **WHEN** the first day is unset after such a run
+- **THEN** the older leads are due as if the period had never been set

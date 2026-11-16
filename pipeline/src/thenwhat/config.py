@@ -1,5 +1,6 @@
 """Settings read from the environment. Nothing here has a secret default."""
 
+from datetime import date
 from decimal import Decimal
 from pathlib import Path
 
@@ -160,6 +161,18 @@ class Settings(BaseSettings):
     # A lead for a claim that already has this many source articles is held, unless it
     # was shared before the claim's first reported date.
     lead_reads_per_claim: int = 3
+    # The least time between two pages asked of one outlet in a run of reads. A lead
+    # whose outlet was asked more recently is left for a later run, and the run goes on
+    # with other outlets. Whether a site may be asked is the page reader's decision;
+    # this only keeps the pipeline from sending it one outlet's pages back to back.
+    # 0 turns it off.
+    reader_outlet_gap_seconds: float = Field(default=30, ge=0)
+    # Read only leads first shared on or after this day. Unset reads leads of any date.
+    # It narrows a run to a period; a lead outside it stays due for a later run.
+    lead_read_since: date | None = None
+    # Score only leads first shared on or after this day. Unset scores leads of any date.
+    # An older lead stays unscored, and so unread, until a later run widens the period.
+    lead_triage_since: date | None = None
 
     # Measurements (openspec processing-metrics). The folder single-step measurements
     # are written to; empty turns measuring off. No default on purpose: they are large

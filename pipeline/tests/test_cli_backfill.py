@@ -726,3 +726,49 @@ def test_plan_says_when_a_cost_is_the_steps_own_estimate(
     result = run("plan")
 
     assert "the due records need about $0.40 (estimated)" in result.output
+
+
+def test_load_trials_asks_for_a_named_set(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch, fake_time, fixture_json
+):
+    """The trials under way now in phase 2 or 3 are asked for by name, in the registry's
+    own expression."""
+    page = fixture_json("clinicaltrials/list_page_2.json")
+    asked: list[str] = []
+
+    def registry(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.params.get("filter.advanced", ""))
+        return httpx.Response(200, json=page)
+
+    monkeypatch.setattr(
+        "thenwhat.cli.backfill.make_registry",
+        lambda lookups, settings: ClinicalTrials(
+            lookups,
+            contact_email=settings.contact_email,
+            transport=httpx.MockTransport(registry),
+            time=fake_time,
+        ),
+    )
+
+    result = run("load-trials", "--trials", "active-phase-2-3")
+
+    assert result.exit_code == 0, result.output
+    assert "AREA[Phase]PHASE2 OR AREA[Phase]PHASE3" in asked[0]
+    assert "RECRUITING OR ACTIVE_NOT_RECRUITING" in asked[0]
+
+
+def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
+    result = run("load-trials", "--trials", "successful")
+
+    assert result.exit_code == 1
+    assert (
+        "No set of trials is named 'successful'. Sets: active-phase-2-3, phase-3." in result.output
+    )
+    assert session.scalars(select(RegistryTrial)).all() == []
+
+
+def test_load_trials_refuses_a_set_and_a_condition_together(run):
+    result = run("load-trials", "--trials", "phase-3", "--condition", "AREA[Phase]PHASE1")
+
+    assert result.exit_code == 1
+    assert "Give --condition or --trials, not both." in result.output
