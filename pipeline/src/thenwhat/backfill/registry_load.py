@@ -33,11 +33,16 @@ ACTIVE_PHASE_2_OR_3 = (
     "AREA[OverallStatus](RECRUITING OR ACTIVE_NOT_RECRUITING OR ENROLLING_BY_INVITATION "
     f"OR NOT_YET_RECRUITING) AND {_DRUG_OR_BIOLOGICAL}"
 )
+# Every interventional study the registry holds, of any phase, state and kind of
+# intervention. Observational studies and expanded access records are not trials and are
+# left out.
+INTERVENTIONAL = "AREA[StudyType]INTERVENTIONAL"
 # The sets of trials a load can be asked for by name. A set is only which trials are
 # stored: it says nothing of how any of them turned out.
 TRIAL_SETS = {
     "phase-3": PHASE_3_DRUG_OR_BIOLOGICAL,
     "active-phase-2-3": ACTIVE_PHASE_2_OR_3,
+    "interventional": INTERVENTIONAL,
 }
 
 
