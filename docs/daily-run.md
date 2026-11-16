@@ -15,6 +15,7 @@ In this order, each step with its start, end and outcome in the day's log:
 | score | `thenwhat backfill run link_triage --limit DAILY_RUN_TRIAGE_LIMIT` | model |
 | read | `thenwhat backfill run link_read --limit DAILY_RUN_READ_LIMIT --workers DAILY_RUN_READ_WORKERS` | page reader, model |
 | prepare | `thenwhat prepare --pending` | registries, model |
+| trials | `thenwhat backfill load-trials --trials interventional --changes-only` | registry |
 | refresh | `thenwhat fetch <slug>` for published claims, `DAILY_RUN_REFRESH_LIMIT` a run, in turn | registries, model |
 | measure | `thenwhat measure --days 1` | no |
 
@@ -22,9 +23,19 @@ In this order, each step with its start, end and outcome in the day's log:
 - **Spend.** Before each step marked as spending, the run reads the month's recorded model cost from the database. It stops when that cost plus `DAILY_RUN_SPEND_MARGIN_USD` would reach `LLM_MONTHLY_BUDGET_USD`, or when today's cost has reached `DAILY_RUN_DAY_BUDGET_USD` if that is set. During the refresh it checks again before every 25th claim. A spend that cannot be read stops the run too. The pipeline's own refusal at the ceiling still holds underneath. `LLM_MONTHLY_BUDGET_USD` has to be set in the settings file: the run does not start on the pipeline's default.
 - **A failed step does not end the run.** It is recorded, and the next step starts. Every step takes up where it left off, so the next day's run takes what this one missed. A stop for spend, a missing drive or an unreachable database does end it.
 - **Pace.** The read asks the page reader, which decides whether and how a site is asked (`docs/adr/0006`). `READER_READS_AT_ONCE`, `READER_OUTLET_GAP_SECONDS` and `SOURCE_ALLOWANCES` pace it as in any other run; the job adds no setting of its own to them, and `DAILY_RUN_READ_WORKERS` may not exceed 4.
+- **Trials.** The `trials` step keeps every stored trial current (below). It calls no model, so no spend check stands before it.
 - **A period.** `LEAD_TRIAGE_SINCE` and `LEAD_READ_SINCE` narrow what is scored and read, here as anywhere.
 
-The run ends by writing a summary: what was loaded, screened, scored and read; how many claims await audit, await review, and are approved and not held, before and after; what failed; the spend today and this month.
+The run ends by writing a summary: what was loaded, screened, scored and read; how many trials the registry changed, new and already stored; how many claims await audit, await review, and are approved and not held, before and after; what failed; the spend today and this month.
+
+## Keeping the stored trials current
+
+Every interventional study on ClinicalTrials.gov was loaded into `registry_trial` on 16 November 2026 (467,064 trials, 468 requests). The `trials` step asks only for the trials the registry updated since the last completed load of the same set, `AREA[LastUpdatePostDate]RANGE[<that day>,MAX]`, a thousand to a request, and stores each in place with its raw payload and fetch time. Its line in the summary reads, for example, "Loaded 1,240 trials updated since 2026-11-16 in 2 requests: 85 new, 1,155 already stored."
+
+- **From when.** A load is completed when it reaches its last page. The next asks from the day that one started, so the 16 November load is the first `--changes-only` load's starting point. With no completed load of the set (a new database, or the `registry_load` row gone) it asks for every trial: about 470 requests and twenty minutes, still well inside the allowance.
+- **The allowance.** Each request is claimed against the registry's allowance in `SOURCE_ALLOWANCES`, 5,000 a day for `clinicaltrials.gov` unless set, shared with every other process that asks it. When it is used up, or the registry says "too many requests", the load stops with what it stored and a `Stopped:` line, and the step is not a failure; that load is not completed, so the next run asks again from the same day. The refresh after it reads the registries for published claims as before.
+- **What becomes due.** One step reads stored trials: `news_search`, which asks Media Cloud for articles naming a trial's intervention and indication, one request per trial. A trial the load adds has never been searched, so it is due. A trial the load updates is due again only when its searched name or indication changed (`mark_changed` compares what the step read with what is stored now); a new state, phase or date changes nothing due. `thenwhat backfill plan` shows how many are due and what they would ask.
+- **Nothing acts on it here.** The daily run never starts `news_search`, and `make scripts-test` fails if it would. Those trials wait for a `news_search` run started by hand, or by the separate `com.thenwhat.backfill` job (`scripts/backfill-job.sh`, docs/lookup.md) where that is installed, which stays within Media Cloud's own allowance (4,000 requests a week unless set).
 
 ## What it never does
 
@@ -33,6 +44,7 @@ The run ends by writing a summary: what was loaded, screened, scored and read; h
 - It never runs `thenwhat export` or `make publish-data`, and never touches `site/data/`.
 - It never commits, pushes, pulls or switches a branch. The checkout it runs from is updated by the operator.
 - It never starts Docker or the database.
+- It never starts `news_search`, or any step over the trials it loads.
 
 `sh scripts/daily-run.sh --dry-run` prints every command a run would start and touches nothing. `make scripts-test` checks, against a stand-in for the pipeline, that none of the commands above is ever among them.
 
@@ -63,7 +75,8 @@ The audit itself is in `docs/backfill-loop.md` (steps 3 and 4) and the publish p
 
 The job runs from the checkout the script is in. Use a checkout that stays on `main` and that no other work switches. In it:
 
-- `.env`, as for any run. A JSON value in it (`SOURCE_ALLOWANCES`) is in single quotes: `uv run --env-file` loses every line after an unquoted one, and the run refuses to start on such a file, naming the setting.
+- `.env`, as for any run, with `DAILY_RUN_DATABASE_URL`: the database as this machine reaches it, at its published port on 127.0.0.1, `postgresql+psycopg://thenwhat:<POSTGRES_PASSWORD>@127.0.0.1:<DB_PORT>/thenwhat`. The settings file has no `DATABASE_URL`, because Compose gives its containers their own, and the job runs on the host. `sh scripts/daily-run.sh plist` writes it into the property list as `DATABASE_URL`; the run takes `DATABASE_URL` from its environment first, then `DAILY_RUN_DATABASE_URL`, then a `DATABASE_URL` line in `.env`, and with none of them it stops before its first step and says so. Only where the address came from is logged, never the address. After changing it, write the property list again and load it again (uninstall, then install).
+- A JSON value in it (`SOURCE_ALLOWANCES`) is in single quotes: `uv run --env-file` loses every line after an unquoted one, and the run refuses to start on such a file, naming the setting.
 - `data/link-files`, the folder `scripts/fetch_link_files.py` writes to. On the Mac mini it is a link to the external drive: `ln -s /Volumes/<drive>/…/link-files data/link-files`.
 
 Look at what it would do, then install:
@@ -130,4 +143,5 @@ What `uv run` asks in return: `uv` on the job's `PATH` (the property list gives 
 - **Reddit links are not refreshed.** `scripts/fetch_link_files.py` keeps one file per community for the whole period asked and leaves a file that exists alone, so it cannot add a month to one. The daily run takes Hacker News only until the script can.
 - **The last days of a month.** The fetch replaces only the running month's file. Links shared after the last run of a month are picked up only if that month's file is fetched again by hand.
 - **`scripts/fetch_link_files.py` is not on `main` yet** (it is in pull request 222). Without it the run skips the fetch, says so in the summary, and loads the file already there.
+- **The first `trials` step after the 0027 migration.** It has been run only against a stand-in and recorded fixtures. Its first real run should be by hand, after the migration is applied: `uv run --env-file .env --directory pipeline thenwhat backfill load-trials --trials interventional --changes-only`, to see how many trials a day's changes come to.
 - **First real run.** The job has been run only against a stand-in. The first run on the Mac mini should be started by hand (`sh scripts/daily-run.sh`) and its summary read before the job is installed. macOS may ask once whether a background job may read the external drive.
