@@ -102,6 +102,20 @@ class Allowances:
             f"{source} said it was asked too often. It is not asked again before {_when(until)}."
         )
 
+    def hold(self, name: str, until: datetime) -> datetime:
+        """Record that `name` is not to be asked before `until`, for every process and
+        every later run: an outlet the page reader has stopped. The name needs no
+        allowance of its own; only the time is kept, beside the sources' pauses. A hold
+        already kept that ends later stands. Returns when the hold ends."""
+        with self._open_session() as session:
+            use = self._locked(session, name)
+            kept = use.paused_until
+            if kept is None or kept < until:
+                use.paused_until = kept = until
+                use.refusals += 1
+            session.flush()
+            return kept
+
     def status(self, session: Session, source: str) -> AllowanceStatus:
         allowance = self.of(source)
         use = session.get(SourceAllowanceUse, source)
@@ -128,6 +142,25 @@ class Allowances:
             .where(SourceAllowanceUse.source_name == source)
             .with_for_update()
         ).one()
+
+
+def held_until(session: Session, name: str, now: datetime) -> datetime | None:
+    """When the hold kept under `name` ends, or None when none is running."""
+    until = session.scalar(
+        select(SourceAllowanceUse.paused_until).where(SourceAllowanceUse.source_name == name)
+    )
+    return until if until is not None and until > now else None
+
+
+def holds_under(session: Session, prefix: str, now: datetime) -> dict[str, datetime]:
+    """Every running hold whose name begins with `prefix`, by the rest of its name."""
+    rows = session.execute(
+        select(SourceAllowanceUse.source_name, SourceAllowanceUse.paused_until).where(
+            SourceAllowanceUse.source_name.startswith(prefix, autoescape=True),
+            SourceAllowanceUse.paused_until > now,
+        )
+    )
+    return {name[len(prefix) :]: until for name, until in rows if until is not None}
 
 
 def _when(moment: datetime) -> str:
