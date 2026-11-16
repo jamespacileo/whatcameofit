@@ -51,6 +51,7 @@ import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
 import { confidenceLabel, stageReadingNote } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
+import RegistryRecords from "../components/RegistryRecords.astro";
 import Glance from "../components/Glance.astro";
 import GlanceBand from "../components/GlanceBand.astro";
 import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
@@ -907,11 +908,11 @@ const sections = [
                 ? "Trial registry records that may be about this treatment and condition, with how sure each match is. They are not counted in the status. A score is about the match, not about the treatment."
                 : "The trial registries were searched for this treatment and condition. No record matched."}
           </p>
-          {untried.length > 0 && <MatchList matches={untried} />}
+          {untried.length > 0 && <RegistryRecords matches={untried} />}
           {untried.length > 0 && candidates.length > 0 && (
             <h3 class="matched-group">Possible records, not counted in the status</h3>
           )}
-          {candidates.length > 0 && <MatchList matches={candidates} />}
+          {candidates.length > 0 && <RegistryRecords matches={candidates} level={untried.length > 0 ? 4 : 3} />}
         </section>
       )
     }

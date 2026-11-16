@@ -3613,6 +3613,100 @@ main ul:not([class]) li + li {
   color: var(--muted);
 }
 
+/* Registry records grouped by how each was read (openspec registry-record-rows): the
+   reading said once above its group, then the study's title, its identifier, phase,
+   state and match in one quiet line, and what it is for and tests. */
+.record-group + .record-group,
+.record-group + .matched-group {
+  margin-top: 1.6rem;
+}
+
+.record-group-head {
+  margin: 1.1rem 0 0.3rem;
+  font-size: 1rem;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.record-group-count {
+  display: inline-grid;
+  margin-left: 0.45rem;
+  vertical-align: 0.05em;
+  place-items: center;
+  min-width: 1.5rem;
+  padding: 0 0.4rem;
+  border-radius: 999px;
+  background: var(--tint);
+  color: var(--blue);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.record-row {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.record-row:first-child {
+  border-top: 1px solid var(--rule);
+}
+
+.record-title {
+  margin: 0 0 0.2rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.record-title a {
+  color: var(--ink);
+  text-decoration-color: var(--ring);
+}
+
+.record-title a:hover {
+  color: var(--blue);
+  text-decoration-color: currentColor;
+}
+
+.record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* The separator ends a part, so a wrapped line never starts with one. */
+.record-meta > span:not(:last-child)::after {
+  content: "·";
+  margin-left: 0.5rem;
+  color: var(--ring);
+}
+
+.record-meta .out {
+  margin-left: 0.15em;
+  vertical-align: -0.05em;
+}
+
+.record-fields {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.1rem 0.7rem;
+  margin: 0.4rem 0 0;
+  font-size: 0.9rem;
+  max-width: var(--measure);
+}
+
+.record-fields dt {
+  color: var(--muted);
+}
+
+.record-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .match-list li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

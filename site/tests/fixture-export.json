@@ -263,7 +263,14 @@
           "state": "approved",
           "reading": "match",
           "decided_by": "rule",
-          "summary": "NCT00000002: Synthetic trial of phase-claim agent in example condition. Phase 2. Completed."
+          "summary": "NCT00000002: Synthetic trial of phase-claim agent in example condition. Phase 2. Completed.",
+          "record": {
+            "title": "Synthetic trial of phase-claim agent in example condition",
+            "conditions": ["Example Condition"],
+            "interventions": ["Phase-claim agent"],
+            "phases": ["phase_2"],
+            "state": "completed"
+          }
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -273,7 +280,14 @@
           "state": "candidate",
           "reading": "other_indication",
           "decided_by": null,
-          "summary": "NCT00000077: Synthetic trial of phase-claim agent in another condition. Phase 1. Recruiting."
+          "summary": "NCT00000077: Synthetic trial of phase-claim agent in another condition. Phase 1. Recruiting.",
+          "record": {
+            "title": "Synthetic trial of phase-claim agent in another condition",
+            "conditions": ["Another Condition"],
+            "interventions": ["Phase-claim agent", "Placebo"],
+            "phases": ["phase_1"],
+            "state": "under_way"
+          }
         }
       ],
       "trials": [

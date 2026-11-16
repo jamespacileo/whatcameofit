@@ -178,6 +178,18 @@ export interface ExportedMatch {
   reading: string | null;
   decided_by: string | null;
   summary: string | null;
+  /** A trial's record field by field (openspec registry-record-rows). Null until the
+   * record has been read into fields; absent from an export made before then. */
+  record?: ExportedMatchRecord | null;
+}
+
+/** Names as the registry wrote them; phases and state as codes the site words. */
+export interface ExportedMatchRecord {
+  title: string | null;
+  conditions: string[];
+  interventions: string[];
+  phases: string[];
+  state: string;
 }
 
 export interface ExportedClaim {

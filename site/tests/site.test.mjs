@@ -1133,6 +1133,36 @@ test("an export made before trial facts still builds, with the matched records a
   assert.match(registry, /Match to this claim: high, 94%/);
 });
 
+// --- registry record rows (openspec registry-record-rows) ---
+
+test("Scenario: Possible record laid out field by field under its reading", () => {
+  const registry = sectionOf(page("phase-claim/index.html"), "matched");
+  const words = wordsOf(registry);
+  assert.match(registry, /<h3 class="record-group-head">\s*Read as this treatment for another condition, patient group or setting/);
+  assert.match(registry, /<p class="record-title"><a href="\/trials\/NCT00000077">Synthetic trial of phase-claim agent in another condition<\/a>/);
+  assert.match(words, /NCT00000077 on clinicaltrials\.gov Phase 1 Under way Match to this claim: low, 31%/);
+  assert.match(words, /For Another Condition Tests Phase-claim agent; Placebo/);
+  // The record's one-line summary is not repeated, and no row says the trial is recruiting.
+  assert.doesNotMatch(words, /Recruiting|View trial details here/);
+});
+
+test("Scenario: Possible record not yet read into fields", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const claim = fixture.claims.find((each) => each.slug === "phase-claim");
+  claim.matches[1].record = null;
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-unread-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
+  assert.match(words, /NCT00000077 on clinicaltrials\.gov Its registry record has not been read into fields yet\. Match to this claim: low, 31%/);
+  assert.doesNotMatch(words, /Synthetic trial of phase-claim agent in another condition/);
+});
+
 // --- background cards (openspec knowledge-cards, site-publishing) ---
 
 const backgroundOf = (html) => html.match(/<section class="glance"[\s\S]*?<\/section>/)?.[0];

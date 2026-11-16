@@ -46,6 +46,20 @@ const READINGS:Record<string, string> = {
 
 const UNREAD ="Scored before the condition was part of the question.";
 
+/** How a group of registry records was read, said once above the group (openspec
+ * registry-record-rows). The same readings as `READINGS`, as headings. */
+export const READING_HEADINGS: Record<string, string> = {
+  match: "Read as this treatment for this condition",
+  other_indication: "Read as this treatment for another condition, patient group or setting",
+  not_what_is_tested: "Read as studies this treatment is in but does not test",
+  not_a_match: "Read as studies of something else",
+};
+
+export const UNREAD_HEADING = "Scored before the condition was part of the question";
+
+/** The readings in the order their groups are shown: the closest to the claim first. */
+export const READING_ORDER = ["match", "other_indication", "not_what_is_tested", "not_a_match"];
+
 export function readingOf(reading: string | null): string {
   return (reading && READINGS[reading]) ?? UNREAD;
 }
