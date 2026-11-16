@@ -32,7 +32,7 @@ interface Props {
   /** The detail's id: unique on the page. */
   id: string;
   /** Set where the row stands for a change of the claim's status that day. */
-  change?: { code: StatusCode; said: string } | null;
+  change?: { code: StatusCode; before: StatusCode } | null;
 }
 
 const { claim, date, id, change = null } = Astro.props;
@@ -41,23 +41,36 @@ const label = STATUS_LABELS[code];
 const nowLabel = STATUS_LABELS[claim.status.code];
 const overlay = overlayText(claim.status.overlay_years);
 const stage = claim.evidence_stage ? EVIDENCE_STAGES[claim.evidence_stage] : null;
-const gloss = `${STATUS_GLOSSES[claim.status.code]}${overlay ? `. ${overlay}` : ""}`;
-const counts = claim.trials ? countsLine({ trials: claim.trials.length, results: withResults(claim.trials) }) : null;
+// The no-signal note is said in the column, once; the detail gives the gloss alone.
+const gloss = STATUS_GLOSSES[claim.status.code];
+// A count of nothing is not said: "No trial record found" already says it.
+const counts = claim.trials?.length ? countsLine({ trials: claim.trials.length, results: withResults(claim.trials) }) : null;
+const before = change ? STATUS_LABELS[change.before] : null;
+// The button's name is short: what it says and what it opens. The counts and the
+// row's sentences are its description.
+const name = `${change ? `Changed from ${before} to ${label}` : label}. More on ${claim.intervention.name}`;
+const descId = `${id}-said`;
 const sentences = rowSentences(claim, date);
 const promise = latestPromise(claim);
 const reason = statusReason(claim);
 const trialCount = claim.trials?.length ?? 0;
 ---
 
-<button type="button" class="row-now" aria-expanded="false" aria-controls={id} data-row-open>
+<button
+  type="button"
+  class:list={["row-now", { "is-changed": change }]}
+  aria-expanded="false"
+  aria-controls={id}
+  aria-label={name}
+  aria-describedby={counts || sentences.length > 0 ? descId : undefined}
+  data-row-open
+>
   {
-    change ? (
+    change && (
       <span class="row-change">
         <span class="new-tag">Changed</span>
-        <span>{change.said}</span>
+        <span class="row-was">from {before}</span>
       </span>
-    ) : (
-      <span class="row-label">On record now</span>
     )
   }
   <strong class="status-name">{label}</strong>
@@ -72,16 +85,15 @@ const trialCount = claim.trials?.length ?? 0;
   }
   {
     (counts || sentences.length > 0) && (
-      <span class="row-counts">
+      <span class="row-counts" id={descId}>
         {counts}
         {sentences.length > 0 && <span class="visually-hidden"> {sentences.join(" ")}</span>}
       </span>
     )
   }
   <span class="row-chev" aria-hidden="true"><ChevronDown size={16} stroke-width={2} /></span>
-  <span class="visually-hidden">More on {claim.intervention.name}</span>
 </button>
-<div class="row-more" id={id} data-row-more>
+<div class="row-more" id={id} role="region" aria-label={`More on ${claim.intervention.name}`} data-row-more>
   <div>
     <div class="row-more-body">
       <p class="row-then">
@@ -89,6 +101,11 @@ const trialCount = claim.trials?.length ?? 0;
         {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`].join(" ")}
       </p>
       <div class="row-meaning">
+        {
+          change && change.code !== claim.status.code && (
+            <p class="row-since">That day it changed to {label}. On record now: {nowLabel}.</p>
+          )
+        }
         <p class="row-more-head">{nowLabel}</p>
         <p>{STATUS_MEANINGS[claim.status.code]}</p>
         {
@@ -102,7 +119,7 @@ const trialCount = claim.trials?.length ?? 0;
       {
         reason && (
           <p>
-            <span class="row-more-head">Why this claim is here</span> {reason}
+            <span class="row-more-head">Why it has this status</span> {reason}
           </p>
         )
       }

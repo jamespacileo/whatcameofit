@@ -9,7 +9,7 @@ interface Props {
   ends?: boolean;
   /** Each place named under its dot, as in a panel that has room to say them. */
   named?: boolean;
-  /** For a status off the path: draw the path with no place marked and a square after it. */
+  /** For a status off the path: draw a square, no path, beside the words. */
   off?: boolean;
 }
 
@@ -54,11 +54,8 @@ const name = `Place ${place + 1} of ${STAGE_PATH.length} on the path from precli
 }
 {
   place < 0 && off && !named && (
-    <span class="track off">
-      <span class="steps" role="img" aria-label="Not a place on the path from preclinical to approved">
-        {STAGE_PATH.map(() => <span class="step" />)}
-      </span>
-      <span class="off-mark" aria-hidden="true" />
+    <span class="track off" role="img" aria-label="Not a place on the path from preclinical to approved">
+      <span class="off-mark" />
     </span>
   )
 }

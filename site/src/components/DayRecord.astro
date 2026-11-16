@@ -4,7 +4,6 @@
 // an earlier year; then the claim, and what was recorded as one dated item on the panel
 // blue. Where the claim stands is the column on the right, as on a report row.
 import type { RecordRow } from "../lib/day-list";
-import { changeSummary } from "../lib/changes";
 import { confidenceLabel } from "../lib/confidence";
 import { followedReports } from "../lib/reports";
 import { eventLabel, sourceName } from "../lib/status";
@@ -23,9 +22,10 @@ const [report] = followedReports(claim);
 const confidence = event.confidence ?? 1;
 // A trial's record is named by its identifier; any other by where it is kept.
 const sourceText = event.trial_id ?? sourceName(event.source_name);
-const said = change
-  ? changeSummary({ claim, on: row.date, code: change.code, before: change.before })
-  : null;
+// What was recorded, said of the record, never in a status's words: "registered",
+// "results posted", "terminated". A record with no trial keeps its own name.
+const label = eventLabel(event);
+const recorded = event.trial_id && label.startsWith("Trial ") ? label.slice(6) : label;
 // Years between the claim's first report and this record, said only when it is one or more.
 const firstYear = claim.first_reported_date?.slice(0, 4);
 const years = firstYear ? Number(row.date.slice(0, 4)) - Number(firstYear) : 0;
@@ -69,7 +69,7 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
       }
       <li class="row-item is-record">
         <a href={event.source_url}>{sourceText}</a>
-        <span>{eventLabel(event)}</span>
+        <span>{recorded}</span>
         <span class="when">{formatDate(row.date)}</span>
       </li>
     </ul>
@@ -77,5 +77,5 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
     {!event.trial_id && <p class="row-detail">{event.summary}</p>}
     {confidence < 1 && <p class="row-detail">{confidenceLabel(confidence)}</p>}
   </div>
-  <RowStanding claim={claim} date={row.date} id={moreId} change={change && said ? { code: change.code, said } : null} />
+  <RowStanding claim={claim} date={row.date} id={moreId} change={change} />
 </li>

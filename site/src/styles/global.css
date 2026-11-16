@@ -1568,8 +1568,6 @@ main nav.contents ul li + li {
 }
 
 .hit-now {
-  grid-column: 2;
-  grid-row: 1;
   display: grid;
   gap: 0.3rem;
   padding: 0.55rem 0.75rem 0.6rem;
@@ -1578,8 +1576,6 @@ main nav.contents ul li + li {
 }
 
 .hit-main {
-  grid-column: 1;
-  grid-row: 1;
   min-width: 0;
 }
 
@@ -1765,19 +1761,12 @@ main nav.contents ul li + li {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .hit-now,
-  .hit-main {
-    grid-column: 1;
-    grid-row: auto;
-  }
-
   .hit-now {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.15rem 0.6rem;
     margin-top: 0.6rem;
-    order: 1;
   }
 
   .hit-now .row-label {
@@ -2245,26 +2234,16 @@ main nav.contents ul li + li {
   border-color: var(--blue);
 }
 
-/* A status off the path: the line without a place on it, and a square after it. */
+/* A status off the path: a square beside the words, no path. */
 .track.off {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-}
-
-.track.off .steps {
-  flex: 1;
-  background: repeating-linear-gradient(90deg, var(--ring) 0 2px, transparent 2px 5px) center / 100% 1.5px no-repeat;
-}
-
-.track.off .step {
-  border-color: var(--rule);
+  width: auto;
 }
 
 .track.off .off-mark {
-  flex: none;
-  width: 0.6rem;
-  height: 0.6rem;
+  width: 0.65rem;
+  height: 0.65rem;
   border: 1.75px solid var(--blue);
   border-radius: 2px;
 }
