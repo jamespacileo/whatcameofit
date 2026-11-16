@@ -340,10 +340,9 @@ def test_merge_into_an_archived_claim_is_refused(session: Session, pair):
 def test_merge_of_a_claim_awaiting_audit_is_refused_unless_said(session: Session, pair):
     """Scenarios: Claim awaiting audit, A hold follows what it was for"""
     kept, duplicate = pair
-    record_decision(kept, ReviewState.APPROVED, by=Decider.HUMAN, now=EARLIER)
-    assert [claim.slug for claim in build_export(session, now=EARLIER).claims] == [kept.slug]
     duplicate.awaiting_audit_at = EARLIER
     session.flush()
+    assert [claim.slug for claim in build_export(session, now=EARLIER).claims] == [kept.slug]
 
     with pytest.raises(MergeRefused, match="Awaiting audit: vsv-ebov-ebola"):
         merge(session)
