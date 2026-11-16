@@ -417,8 +417,12 @@ def test_unarchiving_puts_it_back(session: Session):
         ("Semaglutide 2.4 mg once-weekly injections", "semaglutide"),
         ("MDMA-assisted psychotherapy", "mdma"),
         ("ivermectin 600 \u00b5g/kg once daily for 6 days", "ivermectin"),
-        ("high-dose oral ivermectin for five days", "ivermectin"),
+        ("high-dose oral ivermectin for five days", "oral ivermectin"),
         ("esketamine nasal spray", "esketamine nasal spray"),
+        # An oral form of an injected drug is another product.
+        ("Wegovy pill", "wegovy pill"),
+        ("oral semaglutide 25 mg daily", "oral semaglutide"),
+        ("semaglutide tablets", "semaglutide tablets"),
         ("COVID-19 vaccine", "covid-19 vaccine"),
     ],
 )

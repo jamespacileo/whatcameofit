@@ -202,8 +202,8 @@ _COUNT = r"(?:\d+|one|two|three|four|five|six|seven|eight|nine|ten|twelve)"
 _HOW_GIVEN = re.compile(
     r"\b(?:(?:once|twice|three times)[- ](?:a[- ])?(?:daily|weekly|monthly|day|week|month)"
     rf"|for {_COUNT} (?:days?|weeks?|months?)"
-    r"|(?:high|low|standard)[- ]dose|oral|daily|weekly|monthly"
-    r"|injections?|tablets?|pills?|capsules?|doses?|dosing)\b"
+    r"|(?:high|low|standard)[- ]dose|daily|weekly|monthly"
+    r"|injections?|doses?|dosing)\b"
 )
 _ASSISTED = re.compile(r"-assisted\b.*$")
 
@@ -212,8 +212,9 @@ def core_name(text: str) -> str:
     """The treatment a name names once its dose, schedule, form and any "-assisted ..."
     therapy are left out, in the compared form: "semaglutide 2.4 mg once-weekly
     injections" and "MDMA-assisted psychotherapy" give "semaglutide" and "mdma". A route
-    or a formulation that makes another product ("nasal spray", "extended release") is
-    kept. Used to find candidates and to refuse a duplicate, never to join one."""
+    or a form that makes another product ("nasal spray", "oral", "pill", "tablets",
+    "extended release") is kept: oral semaglutide is not the injected drug. Used to find
+    candidates and to refuse a duplicate, never to join one."""
     key = name_key(text)
     key = _ASSISTED.sub("", key)
     key = _HOW_GIVEN.sub(" ", _DOSE.sub(" ", key))
