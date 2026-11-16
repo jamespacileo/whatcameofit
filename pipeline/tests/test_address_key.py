@@ -35,3 +35,9 @@ def test_an_address_that_is_not_a_web_page_has_no_key(address: str):
 def test_an_address_with_no_host_or_a_bad_port_has_no_key():
     assert article_key("https:///news/story") is None
     assert article_key("https://example.org:port/news") is None
+
+
+@pytest.mark.parametrize(("one", "other"), CASES["different"])
+def test_two_different_articles_never_share_a_key(one: str, other: str):
+    """Scenario: An address that only looks like another (openspec address-identity)"""
+    assert article_key(one) != article_key(other)

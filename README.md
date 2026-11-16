@@ -276,6 +276,7 @@ A second backfill starts from the articles people shared. It reads bulk files of
 ```sh
 thenwhat backfill load-links hackernews 2019-05.parquet        # one month of Hacker News items
 thenwhat backfill load-links reddit science_submissions.zst    # one community's submissions
+thenwhat backfill rekey-links                                  # after the address key changed: what would change; --apply does it
 thenwhat backfill run link_screen                              # rules and stored data only
 thenwhat backfill links                                        # what was loaded, by where it was shared
 ```
