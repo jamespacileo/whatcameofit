@@ -170,7 +170,7 @@ grep -q 'not set' "$tmp/case/plist.err" && fail "plist: it says the address is n
 grep -qF '(umask 077 && sh scripts/daily-run.sh plist > ~/Library/LaunchAgents/com.thenwhat.daily-run.plist)' "$here/../docs/daily-run.md" ||
   fail "plist: the docs do not give the install line with umask 077"
 (umask 022 && umask 077 && HOME="$home" CALLS="$calls" sh "$root/scripts/daily-run.sh" plist >"$tmp/case/installed.plist" 2>/dev/null)
-[ "$(stat -f '%Lp' "$tmp/case/installed.plist" 2>/dev/null || stat -c '%a' "$tmp/case/installed.plist")" = 600 ] ||
+[ -n "$(find "$tmp/case/installed.plist" -perm 600)" ] ||
   fail "plist: written under umask 077 it is not mode 600"
 if command -v plutil >/dev/null 2>&1; then
   plutil -lint "$tmp/case/plist" >/dev/null || fail "plist: not a property list"
