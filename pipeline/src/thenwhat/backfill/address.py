@@ -9,18 +9,75 @@ makes them disagree fails a test. Change both together.
 import re
 from urllib.parse import parse_qsl, quote, urlsplit, urlunsplit
 
+# Which form of the key this is. Raise it with every change that gives a stored address
+# another key: link leads record the form they were keyed under, and loading is refused
+# until `thenwhat backfill rekey-links` has brought the stored leads up to date.
+# 2: more tracking parameters, outlets' own parameters, editions and renamed hosts,
+#    doubled slashes and the letter case of escapes (after the run of 2026-11-16).
+KEY_VERSION = 2
+
 # Parameters that describe how a reader arrived, not which article this is.
 TRACKING = re.compile(
     r"^(utm_.+|fbclid|gclid|dclid|msclkid|mc_cid|mc_eid|igshid|ref|ref_src|ref_url|referrer"
     r"|cmpid|cmp|ocid|smid|smtyp|ito|share|share_.+|at_.+|ns_.+|amp|amp_.+|outputtype|usqp"
     r"|mibextid|xtor|guccounter|guce_.+|soc_src|soc_trk|tsrc|ncid|sr_share|taid"
-    r"|unlocked_article_code|emc|partner|rss)$",
+    r"|unlocked_article_code|emc|partner|rss"
+    # Added after the run of 2026-11-16, each seen separating two leads for one article.
+    r"|_r|pgtype|wt\..+|contentcollection|contentplacement|clicksource|rref|mbid|fsrc"
+    r"|nlid|hpid|hpw|em_pos|nl_art|mtrref|smprod|gwh|gwt|mabreward|__twitter_impression"
+    r"|postshare|trk|trk_.+|__source|srnd|intcid|icid|ribbon-ad-idx|moduledetail|eventname"
+    r"|_ga|_gl|mkt_tok|yclid|twclid|gbraid|wbraid|_hsenc|_hsmi|hsctatracking|sref"
+    r"|leadsource|s_cid|spm|wpisrc|wpmm|wprss|wpmk|referringsource|accesstoken|reflink"
+    r"|cndid|spjobid|spmailingid|spreportid|spuserid|google_editors_picks|lipi|hootpostid"
+    r"|sharetoken|emailtoken|cx_.+)$",
     re.IGNORECASE,
 )
+# Parameters that say how a reader arrived, or which page of one article is shown, on one
+# outlet only. Elsewhere a parameter of the same name may name the article.
+OUTLET_TRACKING = {
+    "nytimes.com": re.compile(
+        r"^(action|module|region|version|hp|referer|nl|te|src|pagewanted)$", re.IGNORECASE
+    ),
+    "wsj.com": re.compile(r"^mod$", re.IGNORECASE),
+    "theatlantic.com": re.compile(r"^single_page$", re.IGNORECASE),
+    "newyorker.com": re.compile(r"^currentpage$", re.IGNORECASE),
+    "washingtonpost.com": re.compile(r"^(tid|noredirect)$", re.IGNORECASE),
+    "economist.com": re.compile(r"^(frsc|cid1)$", re.IGNORECASE),
+    "statnews.com": re.compile(r"^mod$", re.IGNORECASE),
+}
+# A parameter copied out of a page's source keeps the "amp;" of its "&amp;".
+ESCAPED_AMPERSAND = re.compile(r"^(amp;)+", re.IGNORECASE)
 # Leading host labels that serve the same article as the bare host.
 SAME_SITE_LABELS = re.compile(r"^(www|m|mobile|amp|edition)\.")
-# Hosts that serve one site under two names.
-HOST_ALIASES = {"bbc.co.uk": "bbc.com"}
+# Hosts that serve one site under two names: an edition, a mobile or text form, a
+# renamed site. Each was seen serving one article at one path under both names.
+HOST_ALIASES = {
+    "bbc.co.uk": "bbc.com",
+    "us.cnn.com": "cnn.com",
+    "lite.cnn.com": "cnn.com",
+    "www-m.cnn.com": "cnn.com",
+    "edition-m.cnn.com": "cnn.com",
+    "uk.businessinsider.com": "businessinsider.com",
+    "nordic.businessinsider.com": "businessinsider.com",
+    "beta.washingtonpost.com": "washingtonpost.com",
+    "beta.techcrunch.com": "techcrunch.com",
+    "social.techcrunch.com": "techcrunch.com",
+    "eu.usatoday.com": "usatoday.com",
+    "text.npr.org": "npr.org",
+    "motherboard.vice.com": "vice.com",
+    "tonic.vice.com": "vice.com",
+    "europe.newsweek.com": "newsweek.com",
+    "institutions.newscientist.com": "newscientist.com",
+    "beta.scmp.com": "scmp.com",
+    "beta.latimes.com": "latimes.com",
+    "next.ft.com": "ft.com",
+    "prime.nautil.us": "nautil.us",
+    "x.com": "twitter.com",
+    "old.reddit.com": "reddit.com",
+    "new.reddit.com": "reddit.com",
+    "np.reddit.com": "reddit.com",
+}
+ESCAPE = re.compile(r"%[0-9a-fA-F]{2}")
 
 YOUTUBE_HOSTS = ("youtube.com", "www.youtube.com", "m.youtube.com")
 VIDEO_ID = re.compile(r"^[\w-]{11}$", re.ASCII)
@@ -63,6 +120,11 @@ def _order(name: str) -> tuple[str, str]:
     return (name.casefold(), name.swapcase())
 
 
+def _says_how_a_reader_arrived(name: str, host: str) -> bool:
+    outlet = OUTLET_TRACKING.get(host)
+    return bool(TRACKING.match(name) or (outlet and outlet.match(name)))
+
+
 def article_key(address: str) -> str | None:
     """The host and path of an address in comparison form, or None when the address is
     not an http or https page."""
@@ -80,11 +142,18 @@ def article_key(address: str) -> str | None:
     if video:
         return video
 
+    host = host.strip(".")
     while SAME_SITE_LABELS.match(host):
         host = SAME_SITE_LABELS.sub("", host, count=1)
     host = HOST_ALIASES.get(host, host)
+    if not host:
+        return None
 
     path = quote(parts.path, safe=PATH_SAFE)
+    # An escape is the same character in either letter case, and a doubled slash the
+    # same place as a single one.
+    path = ESCAPE.sub(lambda escape: escape.group().upper(), path)
+    path = re.sub(r"/{2,}", "/", path)
     path = re.sub(r"/+$", "", path)
     path = re.sub(r"/index\.html?$", "", path, flags=re.IGNORECASE)
     path = re.sub(r"(/amp|\.amp)$", "", path, flags=re.IGNORECASE)
@@ -99,7 +168,11 @@ def article_key(address: str) -> str | None:
             path = f"/article-{mail.group(1)}"
 
     kept = sorted(
-        ((name, value) for name, value in query if not TRACKING.match(name)),
+        (
+            (name, value)
+            for name, value in ((ESCAPED_AMPERSAND.sub("", name), value) for name, value in query)
+            if not _says_how_a_reader_arrived(name, host)
+        ),
         key=lambda pair: _order(pair[0]),
     )
     rest = "&".join(
