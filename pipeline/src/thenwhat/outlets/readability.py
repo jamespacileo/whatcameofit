@@ -1,8 +1,8 @@
 """Which outlets the pipeline can read, and what their pages carry. Behavior: openspec live-lookup.
 
 Every tracked article's address is asked of the page reader once, and what came back is
-counted per outlet: read, thin, refused, failed, and which of the signals a lookup uses were
-on the page. How often each outlet is asked is the reader's to decide (openspec
+counted per outlet: read, thin, no date, refused, failed, and which of the signals a lookup
+uses were on the page. How often each outlet is asked is the reader's to decide (openspec
 page-reading). When the reader itself cannot be asked the check stops: nothing is counted
 against an outlet for it.
 Counts and codes only: no article text is kept, here or in the report.
@@ -46,7 +46,7 @@ class Checked:
     """How one article's address answered. Codes only."""
 
     url: str
-    # "read", "thin", "refused", or how it failed: the site's HTTP status or "not now".
+    # "read", "thin", "no date", "refused", or how it failed: the site's HTTP status or "not now".
     outcome: str
     signals: tuple[str, ...] = ()
     # With a lookup measured: "found first", "found" or "not found". Empty when none was.
@@ -59,8 +59,11 @@ class Outlet:
     articles: int = 0
     # The reader gave the article with enough text to read.
     read: int = 0
-    # The page lacks enough main text, a headline, or a usable publication date.
+    # The page's main text is too short to read as an article.
     thin: int = 0
+    # The page has enough main text but no headline or no publication date the
+    # pipeline can read, so a lead's read would refuse it.
+    undated: int = 0
     # The reader answered that the address is not allowed.
     refused: int = 0
     # The page did not come back: by the site's HTTP status, or "not now" when the
@@ -137,14 +140,14 @@ def _check_article(
         outlet.failed[failure] += 1
         checked = Checked(url, failure)
     else:
-        thin = (
-            len(page.text) < BODY_FROM
-            or not (page.headline or "").strip()
-            or published_day(page.published) is None
-        )
-        if thin:
+        if len(page.text) < BODY_FROM:
+            outcome = "thin"
             outlet.thin += 1
+        elif not (page.headline or "").strip() or published_day(page.published) is None:
+            outcome = "no date"
+            outlet.undated += 1
         else:
+            outcome = "read"
             outlet.read += 1
         signals = _signals(page)
         outlet.signals.update(signals)
@@ -155,7 +158,7 @@ def _check_article(
             outlet.found += measured.found
             outlet.first += measured.first
             lookup = "found first" if measured.first else "found" if measured.found else "not found"
-        checked = Checked(url, "thin" if thin else "read", tuple(signals), lookup)
+        checked = Checked(url, outcome, tuple(signals), lookup)
     outlet.checked.append(checked)
     return checked
 
@@ -163,12 +166,21 @@ def _check_article(
 def report(outlets: list[Outlet], *, checked: date) -> str:
     """The record as a Markdown page."""
     measured = any(outlet.measured for outlet in outlets)
-    columns = ["Outlet", "Articles", "Read", "Thin", "Refused", "Failed", *SIGNALS]
+    columns = ["Outlet", "Articles", "Read", "Thin", "No date", "Refused", "Failed", *SIGNALS]
     if measured:
         columns += ["Lookups", "Trial found", "Trial first"]
     total = Outlet("All outlets")
     for outlet in outlets:
-        for name in ("articles", "read", "thin", "refused", "measured", "found", "first"):
+        for name in (
+            "articles",
+            "read",
+            "thin",
+            "undated",
+            "refused",
+            "measured",
+            "found",
+            "first",
+        ):
             setattr(total, name, getattr(total, name) + getattr(outlet, name))
         total.failed.update(outlet.failed)
         total.signals.update(outlet.signals)
@@ -180,6 +192,7 @@ def report(outlets: list[Outlet], *, checked: date) -> str:
             outlet.articles,
             outlet.read,
             outlet.thin,
+            outlet.undated,
             outlet.refused,
             failed or 0,
             *(outlet.signals[signal] for signal in SIGNALS),
@@ -196,7 +209,8 @@ def report(outlets: list[Outlet], *, checked: date) -> str:
         "",
         "- Every article was asked of the page reader, which decides how each site is asked.",
         "- **Read:** the reader gave enough main text, a headline and a publication date."
-        " **Thin:** at least one of those is missing.",
+        " **Thin:** the main text was too short to read. **No date:** enough text, but no"
+        " headline or no publication date the pipeline can read, so a lead's read refuses it.",
         "- **Refused:** the reader answered that the address is not allowed. **Failed:** the"
         " page did not come back, by the site's HTTP status, or *not now* when the reader"
         " said the site could not be asked yet.",

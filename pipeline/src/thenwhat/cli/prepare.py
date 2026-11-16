@@ -15,7 +15,13 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import ReviewState
-from thenwhat.prepare import ClaimPlan, decide_prepared_lead_claim, plan_claims, steps_for
+from thenwhat.prepare import (
+    NOT_NEEDED_TO_DECIDE,
+    ClaimPlan,
+    decide_prepared_lead_claim,
+    plan_claims,
+    steps_for,
+)
 
 
 def run_step(arguments: list[str]) -> tuple[bool, str]:
@@ -35,7 +41,8 @@ def _prepare(plan: ClaimPlan) -> list[str]:
     for step in steps_for(plan):
         step_started = time.monotonic()
         succeeded, said = run_step(step)
-        every_step_succeeded = every_step_succeeded and succeeded
+        if step[0] not in NOT_NEEDED_TO_DECIDE:
+            every_step_succeeded = every_step_succeeded and succeeded
         name = "read" if step[0] == "extract" else step[0]
         took = f"{time.monotonic() - step_started:.0f}s"
         report.append(
@@ -70,13 +77,13 @@ def prepare_command(
     ] = 4,
 ) -> None:
     """Get claims ready for review: read their unread articles, search the registries,
-    read the registries for matches already approved, and read the stored trial records
-    into record readings.
+    read the registries for matches already approved, read the stored trial records
+    into record readings, and propose subject terms, which background cards come from.
 
     Claims are worked on side by side. A step that fails is reported and the claim's
     other steps still run. Nothing is approved here beyond what those steps approve by
     rule, with one exception: a claim that a link lead's read drafted is decided by the
-    rule for drafts once every step for it has succeeded.
+    rule for drafts once every step for it has succeeded, the terms step aside.
     """
     if not slugs and not pending:
         err.print("Name the claims to prepare, or use --pending for every claim awaiting review.")

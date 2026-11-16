@@ -50,7 +50,15 @@ def make_measure():
                 )
         except (SourceError, LlmError, DecisionFailed):
             return None
-        likely = [candidate.external_id for candidate in found.candidates if candidate.likely]
+        claims = found.claims or [found]
+        if any(claim.check_state != "complete" for claim in claims):
+            return None
+        likely = [
+            candidate.external_id
+            for claim in claims
+            for candidate in claim.candidates
+            if candidate.likely
+        ]
         return Measured(
             found=bool(set(likely) & set(approved)), first=bool(likely) and likely[0] in approved
         )

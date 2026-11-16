@@ -45,6 +45,33 @@ const shown = {
   notices: ["A registered clinical trial is not a treatment option."],
 };
 
+test("a roundup renders separate claim headings, cards and unchecked notices", () => {
+  const found = { about_a_treatment: true, claims: [
+    { about_a_treatment: true, treatment: "EX-1", condition: "condition one", tracked: [{ headline: "First card", page: "/first" }],
+      candidates: [{ id: "NCT00000001", title: "First trial", url: "https://clinicaltrials.gov/study/NCT00000001", answer: "match", score: .9 }] },
+    { about_a_treatment: true, treatment: "EX-2 plus EX-3", condition: "condition two", tracked: [], candidates: [], check_state: "unchecked", check_reason: "work_limit" },
+  ] };
+  const described = describeAnswer(found);
+  const root = new Element("main");
+  render(root, { kind: "answer", shown: described }, site, actions);
+  const sections = elements(root, "section").filter(one => one.className === "independent-claim");
+  assert.equal(sections.length, 2);
+  assert.match(sections[0].textContent, /EX-1.*condition one.*First card.*First trial/);
+  assert.doesNotMatch(sections[0].textContent, /condition two|EX-2/);
+  assert.match(sections[1].textContent, /EX-2 plus EX-3.*condition two.*remains unchecked/);
+  assert.doesNotMatch(sections[1].textContent, /No matching trial|First trial/);
+  assert.equal(elements(root, "h1").length, 1);
+  assert.deepEqual(sections.map(section => elements(section, "h2")[0].textContent), ["EX-1", "EX-2 plus EX-3"]);
+  assert.equal(elements(sections[0], "h3").length, 2);
+  const answer = answerOf({ kind: "answer", shown: described });
+  assert.equal(answer.groups.length, 2);
+  assert.ok(candidatesOf({ answer }, site).every(candidate => candidate.title.startsWith("EX-1 for condition one")));
+  assert.match(answer.limitation, /EX-2 plus EX-3.*remains unchecked/);
+  render(root, { kind: "recent", entries: [{ answer, candidates: candidatesOf({ answer }, site),
+    title: "Synthetic roundup", url: "https://example.org/roundup", outlet: "example.org", at: Date.now() }] }, site, actions);
+  assert.match(root.textContent, /EX-2 plus EX-3.*remains unchecked/);
+});
+
 test("search and privacy controls announce that their destination opens in a new tab", () => {
   for (const [state, label, path] of [
     [{ kind: "untracked" }, "Search tracked claims", "/"],

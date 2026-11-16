@@ -268,7 +268,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     try {
       const { response, saved } = await bounded(cacheProbeTimeoutMs, scope.signal, async (signal) => {
         const response = await fetch(site.url + live, { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cacheOnly: true, pageUrl }), signal });
+          body: JSON.stringify({ cacheOnly: true, pageUrl, claimResults: true }), signal });
         return { response, saved: await response.json() };
       });
       return response.ok && saved?.cache?.shared && typeof saved.cache.checkedAt === "number" &&
@@ -310,7 +310,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
         core = event.result;
         stages = { core_ms: scope.elapsed() };
         if (coreShown()) {
-          const pending = core.about_a_treatment === true && !core.research;
+          const pending = core.about_a_treatment === true && !core.research && !core.claims;
           const timings = timingsOf(stages, event.timings);
           scope.showPage(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "loading" } : {}), ...timings }));
           scope.keep(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "incomplete" } : {}), ...timings }));
@@ -324,7 +324,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (!await current(scope)) return null;
     if (!core) return refusedBy(scope, "failed");
     if (coreShown()) {
-      const pending = core.about_a_treatment === true && !core.research;
+      const pending = core.about_a_treatment === true && !core.research && !core.claims;
       scope.showPage(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "incomplete" } : {}), ...timingsOf(stages) }));
     }
     // A non-treatment core is a finished identification, so its screenshot may follow.
@@ -339,7 +339,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     // A staged answer is asked for; a service that answers in one piece is read as before.
     const response = await fetch(site.url + live, {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/x-ndjson, application/json" },
-      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}), stream: true }), signal: scope.signal,
+      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}), stream: true, claimResults: true,
+        timeBudgetMs: Math.max(1, lookupTimeoutMs - scope.elapsed() - 1000) }), signal: scope.signal,
     });
     if (streamed(response)) return receive(scope, response, { key, provisional });
     const found = await response.json();

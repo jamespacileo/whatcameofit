@@ -11,7 +11,11 @@ const MAX_LINKED = 5;
 const ENTITIES = { nbsp: " ", amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
 const HEADLINE_TAGS = ["og:title", "twitter:title"];
 const SUMMARY_TAGS = ["og:description", "description", "twitter:description"];
-const DATE_TAGS = ["article:published_time", "date", "dc.date", "pubdate", "parsely-pub-date"];
+// Tags that name the day of publication, read before the article's structured data.
+const PUBLISHED_TAGS = ["article:published_time", "pubdate", "parsely-pub-date"];
+// Tags that name only "a date", read after it: medscape.com puts the day an article was
+// changed in its "date" tag (seen 2026-11-16).
+const DATE_TAGS = ["date", "dc.date"];
 const STRUCTURED_FIELDS = ["headline", "description", "datePublished", "articleBody"];
 
 const SKIPPED = /<(script|style|noscript|template|svg)\b[\s\S]*?<\/\1\s*>/gi;
@@ -105,7 +109,7 @@ export function readPage(html) {
     text,
     headline: first(HEADLINE_TAGS) ?? described.headline ?? (title ? tidy(decoded(title[1])) || null : null),
     summary: first(SUMMARY_TAGS) ?? described.description ?? null,
-    published: first(DATE_TAGS) ?? described.datePublished ?? null,
+    published: first(PUBLISHED_TAGS) ?? described.datePublished ?? first(DATE_TAGS) ?? null,
     body: described.articleBody ?? null,
     ...linkSignals(links, allText),
   };

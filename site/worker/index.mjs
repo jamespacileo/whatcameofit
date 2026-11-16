@@ -43,6 +43,8 @@ function answer(body, status = 200, timings = null) {
 const refuse = (status, error, more = {}) => answer({ error, ...more }, status);
 // The same refusal, before it is known whether it is answered as JSON or as an event.
 const refusal = (status, error, more = {}) => ({ status, body: { error, ...more } });
+// A pre-upgrade caller must never mistake the first item for coverage of a roundup.
+const unsupportedClaims = (found, sent) => Array.isArray(found?.claims) && sent?.claimResults !== true;
 
 function realTools(env) {
   return {
@@ -126,6 +128,7 @@ async function withLinkedArticle(platform, post, index, { fetch, contact }) {
 
 /** @param {{ model: object, registry: object, papers?: object, fetch?: Function } | undefined} tools stand-ins, for tests */
 export async function handle(request, env, tools) {
+  const started = Date.now();
   const here = new URL(request.url);
   if (here.pathname.startsWith("/trials/")) return handleTrial(request, env, tools?.trial);
   // The built reader is a server template, never a public page of placeholders.
@@ -157,7 +160,8 @@ export async function handle(request, env, tools) {
     const reader = request.headers.get("CF-Connecting-IP") ?? "unknown";
     const limits = await Promise.all([env.LOOKUP_PER_READER.limit({ key: reader }), env.LOOKUP_IN_ALL.limit({ key: "all" })]);
     if (limits.some(limit => !limit.success)) return refuse(429, "busy");
-    return answer(await currentResult(env, pageUrl, here) ?? { cacheMiss: true });
+    const cached = await currentResult(env, pageUrl, here);
+    return unsupportedClaims(cached, sent) ? refuse(409, "multiple_claims") : answer(cached ?? { cacheMiss: true });
   }
   const address = typeof sent?.url === "string" ? sent.url.trim() : "";
   let text = typeof sent?.text === "string" ? sent.text.trim() : "";
@@ -193,12 +197,12 @@ export async function handle(request, env, tools) {
   const cacheUrl = address ? sourceUrl(address) : pageUrl;
   if (!image && sent?.refresh !== true && cacheUrl) {
     const cached = await currentResult(env, cacheUrl, here);
-    if (cached) return answer(cached);
+    if (cached) return unsupportedClaims(cached, sent) ? refuse(409, "multiple_claims") : answer(cached);
   }
 
   // An opted-in caller is answered in stages: the completed clinical answer as soon as
   // it is ready, then the answer with research enrichment. Others get one JSON answer.
-  const work = (onCore, timings) => lookUpFor({ sent, read, text, links, platform, image, pageUrl, cacheUrl, here, env, tools, onCore, timings });
+  const work = (onCore, timings) => lookUpFor({ sent, read, text, links, platform, image, pageUrl, cacheUrl, here, env, tools, onCore, timings, started });
   if (sent?.stream !== true) {
     const timings = {};
     const { status, body, keep } = await work(null, timings);
@@ -230,7 +234,7 @@ async function currentResult(env, address, here) {
 
 /** One lookup after its request is accepted: a status, the body to answer with and, for
  * an answer, how to keep it for the next reader: only once complete, and only when public. */
-async function lookUpFor({ sent, read, text, links, platform, image, pageUrl, cacheUrl, here, env, tools, onCore, timings }) {
+async function lookUpFor({ sent, read, text, links, platform, image, pageUrl, cacheUrl, here, env, tools, onCore, timings, started }) {
   try {
     const { model, registry, papers, research, fetch: get = fetch, proofTimeoutMs = PROOF_TIMEOUT_MS,
       paperAllowanceMs, paperSpacingMs } = tools ?? realTools(env);
@@ -289,8 +293,10 @@ async function lookUpFor({ sent, read, text, links, platform, image, pageUrl, ca
     const placed = (found) => ({ ...found, post,
       ...(image ? { source: { kind: "screenshot", host: pageUrl ? new URL(pageUrl).hostname : null } } : {}) });
     const found = placed(await lookUp({ text, model, registry, index, page, papers, research, image, pageUrl, timings,
+      timeBudgetMs: Math.max(0, Math.min(45_000, Number.isFinite(sent?.timeBudgetMs) ? Math.max(0, sent.timeBudgetMs) : 45_000) - (Date.now() - started)),
       ...(paperAllowanceMs ? { paperAllowanceMs } : {}), ...(paperSpacingMs ? { paperSpacingMs } : {}),
-      ...(onCore ? { onCore: (core) => onCore(placed(core)) } : {}) }));
+      ...(onCore ? { onCore: (core) => { if (!unsupportedClaims(core, sent)) onCore(placed(core)); } } : {}) }));
+    if (unsupportedClaims(found, sent)) return refusal(409, "multiple_claims");
     return { status: 200, body: found, keep: () => storeResult(env.LOOKUP_RESULTS, cacheUrl, found, publicVerified) };
   } catch (error) {
     // What failed may quote what was sent, so it is not written anywhere.

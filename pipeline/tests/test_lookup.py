@@ -66,6 +66,7 @@ class FakeTrials:
         self.by_id = by_id or {}
         self.by_trial_name: dict[str, list[SourceRecord]] = {}
         self.searched: list[tuple[str, str | None]] = []
+        self.named: list[tuple[str, str | None]] = []
 
     def search_trials(self, intervention: str, condition: str | None = None) -> list[SourceRecord]:
         self.searched.append((intervention, condition))
@@ -74,7 +75,8 @@ class FakeTrials:
     def fetch_trial(self, nct_id: str) -> SourceRecord | None:
         return self.by_id.get(nct_id)
 
-    def named_trials(self, name: str) -> list[SourceRecord]:
+    def named_trials(self, name: str, condition: str | None = None) -> list[SourceRecord]:
+        self.named.append((name, condition))
         return self.by_trial_name.get(name, [])
 
 
@@ -395,6 +397,7 @@ def test_the_trial_the_text_names_is_searched_for_and_ranked_first(session: Sess
     found = find(session, trials, reading={**READING, "trial_name": "REGROW-2"})
 
     assert found.details.trial_name == "REGROW-2"
+    assert trials.named == [("REGROW-2", "tooth agenesis")]
     assert [(c.external_id, c.agrees) for c in found.candidates] == [
         ("NCT00000009", ["trial_name"]),
         ("NCT00000001", []),
@@ -530,6 +533,148 @@ def test_the_model_is_shown_the_text(session: Session):
     look_up(session, model, ByCondition(), FakeTrials({}), text=TEXT, now=NOW)
 
     assert TEXT in prompts[0]
+
+
+def test_independent_claims_share_reading_and_records_but_not_scores_or_cards(session: Session):
+    one: dict[str, Any] = {**READING, "other_names": [], "search_phrases": []}
+    two = {**one, "intervention": "EX-2 plus EX-3", "indication": "example condition"}
+    for slug, reading in [("one", one), ("two", two)]:
+        add_claim(
+            session,
+            slug=slug,
+            headline=slug,
+            vertical="mouth-and-teeth",
+            intervention=reading["intervention"],
+            indication=reading["indication"],
+            summary="Synthetic claim.",
+        )
+    model, prompts = llm(session, {**one, "additional_claims": [two]})
+    fetched = []
+
+    class SharedTrials(FakeTrials):
+        def fetch_trial(self, nct_id):
+            fetched.append(nct_id)
+            return super().fetch_trial(nct_id)
+
+    class PerClaim:
+        name = "fake"
+
+        def answer(self, step, state, options):
+            claim_text, record_text = state.split("Candidate record", 1)
+            compatible = ("Indication: tooth agenesis" in claim_text) == (
+                "Tooth Agenesis" in record_text
+            )
+            choice = "match" if compatible else "other_indication"
+            return BackendAnswer(
+                choice, {option: 1.0 if option == choice else 0.0 for option in options}
+            )
+
+    records = {
+        "NCT00000001": trial("NCT00000001", "EX-1 trial"),
+        "NCT00000002": trial("NCT00000002", "Combination trial", "Example Condition"),
+    }
+    found = look_up(
+        session,
+        model,
+        PerClaim(),
+        SharedTrials({}, records),
+        text="Synthetic roundup NCT00000001 NCT00000002",
+        now=NOW,
+    )
+    assert len(prompts) == 1
+    assert fetched == list(records)
+    assert found.intervention is None and found.candidates == [] and found.tracked == []
+    assert [claim.intervention for claim in found.claims] == ["EX-1", "EX-2 plus EX-3"]
+    assert [claim.tracked for claim in found.claims] == [["one"], ["two"]]
+    assert [
+        [record.external_id for record in claim.candidates if record.answer == "match"]
+        for claim in found.claims
+    ] == [["NCT00000001"], ["NCT00000002"]]
+    assert all(claim.check_state == "complete" for claim in found.claims)
+    assert [
+        [candidate.external_id for candidate in claim.candidates if candidate.likely]
+        for claim in found.claims
+    ] == [["NCT00000001"], ["NCT00000002"]]
+
+
+def test_roundup_study_name_discovery_keeps_claim_conditions_separate(session: Session):
+    one = {**READING, "trial_name": "EXAMPLE", "other_names": [], "search_phrases": []}
+    two = {**one, "indication": "example condition"}
+    model, _ = llm(session, {**one, "additional_claims": [two]})
+    asked = []
+
+    class NamedTrials(FakeTrials):
+        def named_trials(self, name, condition=None):
+            assert condition is not None
+            asked.append((name, condition))
+            identifier = "NCT00000001" if condition == one["indication"] else "NCT00000002"
+            return [trial(identifier, "Synthetic study", condition)]
+
+    found = look_up(
+        session, model, ByCondition(), NamedTrials({}), text="Synthetic roundup", now=NOW
+    )
+    assert asked == [("EXAMPLE", one["indication"]), ("EXAMPLE", two["indication"])]
+    assert [[c.external_id for c in group.candidates] for group in found.claims] == [
+        ["NCT00000001"],
+        ["NCT00000002"],
+    ]
+
+
+def test_roundup_marks_failed_linked_paper_discovery_incomplete(session: Session):
+    class UnavailablePaper:
+        def trial_numbers(self, **_):
+            raise SourceUnavailable("Synthetic paper source failure")
+
+    model, _ = llm(session, {**READING, "additional_claims": [{**READING, "intervention": "EX-2"}]})
+    found = look_up(
+        session,
+        model,
+        ByCondition(),
+        FakeTrials({}),
+        text="Synthetic roundup",
+        now=NOW,
+        page=Page(text="Synthetic roundup", dois=("10.1234/synthetic",)),
+        papers=UnavailablePaper(),
+    )
+    assert all(
+        claim.check_state == "unchecked" and claim.check_reason == "source_unavailable"
+        for claim in found.claims
+    )
+
+
+def test_roundup_has_one_discovery_and_scoring_allowance(session: Session):
+    readings: list[dict[str, Any]] = [
+        {
+            **READING,
+            "intervention": f"EX-{at}",
+            "other_names": [],
+            "search_phrases": [],
+            "known_names": [f"alias-{at}-{n}" for n in range(5)],
+        }
+        for at in range(4)
+    ]
+    model, _ = llm(session, {**readings[0], "additional_claims": readings[1:]})
+    records = [trial(f"NCT{at:08}", "Synthetic trial") for at in range(70)]
+    trials = FakeTrials(
+        {
+            name: records
+            for reading in readings
+            for name in [reading["intervention"], *reading["known_names"]]
+        }
+    )
+    found = look_up(session, model, ByCondition(), trials, text="Synthetic roundup", now=NOW)
+    assert len(trials.searched) == 12
+    assert [name for name, _ in trials.searched[:4]] == [
+        reading["intervention"] for reading in readings
+    ]
+    assert [len(claim.candidates) for claim in found.claims] == [15] * 4
+    assert [claim.known_names for claim in found.claims] == [
+        [f"alias-{at}-0", f"alias-{at}-1"] for at in range(4)
+    ]
+    assert all(
+        claim.check_state == "partial" and claim.check_reason == "work_limit"
+        for claim in found.claims
+    )
 
 
 # --- development codes -------------------------------------------------------------

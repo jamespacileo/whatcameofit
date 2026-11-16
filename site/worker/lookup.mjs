@@ -7,7 +7,7 @@ import { PAPER, STATED, agreeing } from "./details.mjs";
 import { isAName, partsOf } from "./names.mjs";
 import { withCurrentClaims } from "./tracked.mjs";
 import { LIKELY_FROM } from "../src/lib/live-lookup.mjs";
-import { timedOut } from "./deadline.mjs";
+import { timedOut, withDeadline } from "./deadline.mjs";
 
 const REGISTRY_NUMBER = /\bNCT\d{8}\b/gi;
 // The most records one lookup will ask the model about.
@@ -182,7 +182,7 @@ async function paperNumbers(page, papers, signal, { allowanceMs, spacingMs }) {
  *   registry_ms sums active requests, excluding time waiting in the lookup queue.
  */
 export async function lookUp({ text, model, registry, index, page, papers, research, image, pageUrl, onCore, timings,
-  paperAllowanceMs = PAPER_ALLOWANCE_MS, paperSpacingMs = PAPER_SPACING_MS, now = Date.now }) {
+  paperAllowanceMs = PAPER_ALLOWANCE_MS, paperSpacingMs = PAPER_SPACING_MS, timeBudgetMs = 45_000, now = Date.now }) {
   const started = now();
   const took = (stage, since = started) => { if (timings) timings[stage] = Math.max(0, now() - since); };
   const numbers = unique([
@@ -223,6 +223,16 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     throw error;
   }
   took("read_ms");
+  const claims = [reading, ...(Array.isArray(reading.additional_claims) ? reading.additional_claims : [])]
+    .filter(one => one?.about_a_treatment && one.intervention);
+  if (claims.length > 1) {
+    try {
+      return await lookUpMany({ claims, model, registry, index, numbers, linking, stating, ask, asking,
+        others, core, took, started, now, timeBudgetMs });
+    } finally { others.abort(); }
+  }
+  // An identifiable second item must not be lost if the first was an unspecified drug.
+  if (claims.length === 1) reading = claims[0];
   if (!reading.about_a_treatment || !reading.intervention) {
     others.abort();
     const found = core(nothingFound(reading, numbers));
@@ -261,7 +271,7 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
       const given = await Promise.all(fromPapers.map((number) => ask(FROM_PAPERS, () => registry.fetch(number, asking))));
       return { fromPapers, unchecked, given };
     });
-    const byName = details.trial_name ? ask(BY_NAME, () => registry.named(details.trial_name, asking)) : Promise.resolve([]);
+    const byName = details.trial_name ? ask(BY_NAME, () => registry.named(details.trial_name, { ...asking, condition: reading.indication })) : Promise.resolve([]);
     const bySearch = Promise.all(terms.map((term) => ask(BY_SEARCH, () => registry.search(term, reading.indication, asking))));
     const [stated, { fromPapers, unchecked: papersUnchecked, given }, named, searched] =
       await Promise.all([stating, byPapers, byName, bySearch]);
@@ -283,40 +293,7 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     const scores = found.length ? await model.score(intro, found.map(candidateText)) : [];
     took("score_ms", scoring);
 
-    const candidates = found
-      .map((study, at) => ({ study, scored: scores[at] }))
-      .filter(({ scored }) => scored)
-      .map(({ study, scored }) => {
-        const section = study.protocolSection;
-        return {
-          id: idOf(study),
-          url: `https://clinicaltrials.gov/study/${idOf(study)}`,
-          score: scored.probabilities.match,
-          answer: scored.answer,
-          // Why it is ranked where it is, beyond the score: codes from worker/details.mjs.
-          agrees: [
-            ...(numbers.includes(idOf(study)) ? [STATED] : []),
-            ...(fromPapers.includes(idOf(study)) ? [PAPER] : []),
-            ...agreeing(study, details),
-          ],
-          title: section.identificationModule?.briefTitle ?? "",
-          conditions: section.conditionsModule?.conditions ?? [],
-          interventions: (section.armsInterventionsModule?.interventions ?? []).map((one) => one.name),
-          phases: section.designModule?.phases ?? [],
-          state: section.statusModule?.overallStatus ?? null,
-        };
-      })
-      // A record the article itself names is first whatever its score. Then the records
-      // that read as trials of the treatment, those agreeing with more details first.
-      .sort(
-        (a, b) =>
-          Number(b.agrees.includes(STATED)) - Number(a.agrees.includes(STATED)) ||
-          Number(b.score >= LIKELY_FROM) - Number(a.score >= LIKELY_FROM) ||
-          b.agrees.length - a.agrees.length ||
-          b.score - a.score ||
-          a.id.localeCompare(b.id),
-      );
-
+    const candidates = rankedCandidates(found, scores, { numbers, fromPapers, details });
 
     const clinical = core(withCurrentClaims({
       about_a_treatment: true,
@@ -340,4 +317,144 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     // Whatever is still waiting, on success or failure, is no longer needed.
     others.abort();
   }
+}
+
+/** A roundup shares one allowance, not a full independent lookup per claim. Explicit
+ * records/papers are fetched once; each record is still scored against its own claim. */
+async function lookUpMany({ claims, model, registry, index, numbers, linking, stating, ask, asking,
+  others, core, took, started, now, timeBudgetMs }) {
+  const plans = claims.map(reading => {
+    const names = unique([reading.intervention, ...(reading.other_names ?? []).filter(isAName)]);
+    const known = unique((reading.known_names ?? []).filter(isAName)).filter(name => !names.includes(name));
+    const details = { trial_name: reading.trial_name ?? null, participants: reading.participants ?? null, sponsor: reading.sponsor ?? null };
+    const terms = unique([...names, ...names.flatMap(partsOf), ...known, ...(reading.search_phrases ?? [])]);
+    const also = [...names.slice(1), ...known];
+    return { reading, names, known, details, records: [], selected: [], scores: [], queries: [], searched: new Set(), missing: false,
+      intro: `Claim: ${reading.gist ?? ""}\nIntervention: ${names[0]}${also.length ? ` (also known as: ${also.join(", ")})` : ""}.\nIndication: ${reading.indication}.\n\nEntity to match (intervention): ${names[0]}`,
+      jobs: [
+        ...(details.trial_name ? [{ key: ["named", details.trial_name, reading.indication], priority: BY_NAME, work: () => registry.named(details.trial_name, { ...asking, condition: reading.indication }) }] : []),
+        ...terms.map(term => ({ key: ["search", term, reading.indication], priority: BY_SEARCH, work: () => registry.search(term, reading.indication, asking) })),
+      ],
+    };
+  });
+  let fromPapers = [], papersUnchecked = 0, failure = null;
+  try {
+    const remaining = timeBudgetMs - (now() - started);
+    if (remaining <= 0) throw timedOut("lookup");
+    await withDeadline(remaining, async signal => {
+      const stop = () => others.abort(signal.reason);
+      signal.addEventListener("abort", stop, { once: true });
+      try {
+        const byPapers = linking.then(async ({ numbers: linked, unchecked }) => {
+          fromPapers = linked.filter(number => !numbers.includes(number));
+          papersUnchecked = unchecked;
+          return Promise.all(fromPapers.map(number => ask(FROM_PAPERS, () => registry.fetch(number, asking))));
+        });
+        byPapers.catch(() => {});
+        const shared = new Map();
+        // Round-robin admission gives each claim its first search before aliases can
+        // exhaust the twelve-query page allowance. The queue retains source pacing.
+        for (let at = 0; plans.some(plan => at < plan.jobs.length); at++) {
+          for (const plan of plans) {
+            const job = plan.jobs[at];
+            if (!job) continue;
+            const key = JSON.stringify(job.key);
+            if (!shared.has(key) && shared.size >= 12) { plan.missing = true; continue; }
+            if (!shared.has(key)) {
+              const pending = ask(job.priority, job.work);
+              pending.catch(() => {});
+              shared.set(key, pending);
+            }
+            plan.queries.push(shared.get(key));
+            if (job.key[0] === "search") plan.searched.add(job.key[1]);
+          }
+        }
+        const [stated, linked, searched] = await Promise.all([
+          stating, byPapers, Promise.all(plans.map(plan => Promise.all(plan.queries))),
+        ]);
+        if (signal.aborted) throw signal.reason;
+        for (let at = 0; at < plans.length; at++) {
+          const records = new Map();
+          for (const record of [...stated, ...linked, ...searched[at].flat()]) {
+            if (record && !records.has(idOf(record))) records.set(idOf(record), record);
+          }
+          plans[at].records = [...records.values()];
+        }
+        // The sixty-pair limit covers all claims, including repeated records scored
+        // for different indications. No clinical score is shared between claims.
+        const pairs = [];
+        for (let at = 0; pairs.length < MAX_CANDIDATES && plans.some(plan => at < plan.records.length); at++) {
+          for (const plan of plans) {
+            if (pairs.length === MAX_CANDIDATES) break;
+            const record = plan.records[at];
+            if (record) { plan.selected.push(record); pairs.push({ plan, record }); }
+          }
+        }
+        const scoring = now();
+        const scores = pairs.length ? await model.score(
+          "Each item contains its own independent claim and one candidate record. Compare only that item's claim and record; never transfer an identity or score between items.",
+          pairs.map(({ plan, record }) => `${plan.intro}\n\n${candidateText(record)}`), { signal },
+        ) : [];
+        took("score_ms", scoring);
+        if (signal.aborted) throw signal.reason;
+        pairs.forEach(({ plan }, at) => plan.scores.push(scores[at] ?? null));
+      } finally { signal.removeEventListener("abort", stop); }
+    }, { label: "lookup" });
+  } catch (error) {
+    if (error?.code === "budget_exhausted") throw error;
+    failure = error?.code === "timeout" ? "timeout" : "source_unavailable";
+  }
+  const answers = plans.map(plan => {
+    const candidates = rankedCandidates(plan.selected, plan.scores, { numbers, fromPapers, details: plan.details });
+    const unscored = plan.records.length - candidates.length;
+    const reason = failure ?? (papersUnchecked ? "source_unavailable" : plan.missing || unscored ? "work_limit" : null);
+    return withCurrentClaims({
+      about_a_treatment: true, treatment: plan.names[0], condition: plan.reading.indication ?? null,
+      gist: plan.reading.gist ?? "", names: plan.names, known_names: failure ? [] : plan.known.filter(name => plan.searched.has(name)),
+      registry_numbers: numbers, paper_numbers: fromPapers, papers_unchecked: papersUnchecked,
+      details: plan.details, candidates, unscored,
+      check_state: reason ? candidates.length ? "partial" : "unchecked" : "complete", check_reason: reason,
+      research: { papers: [], organisations: [], availability: { openalex: "not_checked", ror: "not_checked" } },
+    }, index);
+  });
+  const found = core({ ...nothingFound({}, numbers), about_a_treatment: true, claims: answers });
+  took("total_ms");
+  return found;
+}
+
+/** One candidate representation and ranking for single and grouped answers. */
+function rankedCandidates(records, scores, { numbers, fromPapers, details }) {
+  return records
+    .map((study, at) => ({ study, scored: scores[at] }))
+    .filter(({ scored }) => scored)
+    .map(({ study, scored }) => {
+      const section = study.protocolSection;
+      return {
+        id: idOf(study),
+        url: `https://clinicaltrials.gov/study/${idOf(study)}`,
+        score: scored.probabilities.match,
+        answer: scored.answer,
+        // Why it is ranked where it is, beyond the score: codes from worker/details.mjs.
+        agrees: [
+          ...(numbers.includes(idOf(study)) ? [STATED] : []),
+          ...(fromPapers.includes(idOf(study)) ? [PAPER] : []),
+          ...agreeing(study, details),
+        ],
+        title: section.identificationModule?.briefTitle ?? "",
+        conditions: section.conditionsModule?.conditions ?? [],
+        interventions: (section.armsInterventionsModule?.interventions ?? []).map((one) => one.name),
+        phases: section.designModule?.phases ?? [],
+        state: section.statusModule?.overallStatus ?? null,
+      };
+    })
+    // A record the article itself names is first whatever its score. Then the records
+    // that read as trials of the treatment, those agreeing with more details first.
+    .sort(
+      (a, b) =>
+        Number(b.agrees.includes(STATED)) - Number(a.agrees.includes(STATED)) ||
+        Number(b.score >= LIKELY_FROM) - Number(a.score >= LIKELY_FROM) ||
+        b.agrees.length - a.agrees.length ||
+        b.score - a.score ||
+        a.id.localeCompare(b.id),
+    );
 }
