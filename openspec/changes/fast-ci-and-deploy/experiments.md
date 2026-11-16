@@ -58,3 +58,7 @@ What would lower the site-changing case, largest first, none tried:
 | Draw or copy the cards outside Astro, beside the page build | 4 s off | The card routes leave `src/pages`; the dev server needs another way to show them |
 | A runner that stays warm (the operator's machine), with dependencies, stores and the last build in place | Start and restore 11 s to about 2 s, build about 3 times faster; run plausibly under 20 s | Pull request code runs at home with a Cloudflare token; needs the operator's decision and an ADR |
 | An uploader that asks Cloudflare directly | Perhaps 2 s off Wrangler's 9 s | A second way to publish, to be kept in step with Wrangler |
+
+## Decision, 2026-11-16
+
+The operator chose to stop at 50 s for a push that changes the site. None of the options above is taken. See `design.md` decision 7.

@@ -9,7 +9,7 @@ Read `design.md` first. Strategy numbers (S1 to S9) refer to its table. Every fi
 - [x] 0.3 Restore the installed dependencies and the card store in the preview job, and keep both from `CI and deploy` so `main` seeds every pull request; verified: restores take 2 s each, the CI rehearsal fell from 107 s to 19 s
 - [x] 0.4 Record the behaviour in the `deployment` delta, `docs/deploy.md` and the ledger; verified: `openspec validate fast-ci-and-deploy --strict` passes
 - [ ] 0.5 After this is on `main`, open a pull request that changes nothing under `site/` and one that changes one page; verify from the ledger that each one's first preview restored the stores kept by `main` and record both times
-- [ ] 0.6 Decide with the operator which option in the ledger's verdict to take for a push that changes the site (50 s against a 20 s limit); verify the choice is recorded in `design.md` before work on it starts
+- [x] 0.6 Decide with the operator which option in the ledger's verdict to take for a push that changes the site; decided 2026-11-16: stop at 50 s, none of the four options is taken (`design.md` decision 7)
 
 ## 1. Timing report and baseline
 

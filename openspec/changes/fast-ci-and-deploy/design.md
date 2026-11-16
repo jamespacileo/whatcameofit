@@ -112,6 +112,12 @@ Three consecutive refuted hypotheses for the same step also end work on that ste
 
 `docs/deploy.md` gains a section with the limits, the targets, the command, the input list file and the canaries. The change's ledger holds every experiment. The verdicts go into the main spec through the change's delta.
 
+### 7. A preview that is rebuilt stops at about 50 s
+
+Decided by the operator on 2026-11-16, after the measurements in `experiments.md`. A push that changes nothing the site is made from republishes nothing and takes 11 to 14 s. A push that changes the site takes about 50 s, of which about 23 s is spent before any build and in Wrangler's own sending. The operator asked for 20 s, saw that only a runner kept warm at home was likely to reach it, and chose to stop here. None of the four options in the ledger is taken: no split build, no cards outside Astro, no home runner, no second uploader.
+
+The limit for a rebuilt preview is therefore 60 s at p50 and 90 s at p90. Those two numbers are this document's, with headroom over one measured run, and are for the operator to correct. The discovery loop does not reopen the preview unless the timing report shows it over that limit.
+
 ## Risks / Trade-offs
 
 - [An input list misses a file and a broken change is answered by an old pass] → Lists fail closed (decision 4); the forgotten-file canary; the first two weeks of reuse run in shadow, computing what would have been skipped while still running everything, and the ledger records any shadow skip that then failed.
