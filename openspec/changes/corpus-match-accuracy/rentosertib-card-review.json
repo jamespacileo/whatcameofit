@@ -127,11 +127,12 @@
     "https://clinicaltrials.gov/study/NCT05938920": "5d0c6f5461f80365ed261501661c50c2b6b5d1a167d8440c8582526789920d04"
   },
   "validation": {
-    "review": "pending",
+    "review": "clear: independent standards and specification reviews",
     "public_rehearsal": "passed",
     "released_checks": "pending",
     "strict_spec": "passed",
-    "standards_review": "clear: no actionable findings"
+    "standards_review": "clear: no actionable findings",
+    "specification_review": "clear: no actionable findings"
   },
   "remaining": [
     "independent publication review and release checks",
