@@ -590,13 +590,14 @@ def _move_entities(
             twins.append(change)
             # The records that say which paper or organisation this is go to the kept
             # claim's entity, where it does not have that record already.
-            has = set(
-                session.execute(
+            has = {
+                (source, external)
+                for source, external in session.execute(
                     select(EntityMatch.source_name, EntityMatch.external_id).where(
                         EntityMatch.entity_id == twin.id
                     )
-                ).tuples()
-            )
+                )
+            }
             for match in session.scalars(
                 select(EntityMatch).where(EntityMatch.entity_id == entity.id)
             ):
