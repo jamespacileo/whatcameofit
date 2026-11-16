@@ -1003,6 +1003,8 @@ test("Scenario: Paper of a study in mice, retracted follow-up paper, record read
   assert.match(papers, /Europe PMC record\s+read\s+3\s+Oct\s+2026/);
   // A paper the index does not hold is listed by its number, with no facts.
   assert.match(papers, /PubMed 90000003/);
+  assert.match(papers, /No Europe PMC details are available here/);
+  assert.doesNotMatch(papers, /holds no record of it/);
   // The preprint's record states neither people nor animals, so its entry says neither.
   const preprint = papers.slice(papers.indexOf("A synthetic preprint on the compound"));
   assert.doesNotMatch(preprint, /subject headings:/);

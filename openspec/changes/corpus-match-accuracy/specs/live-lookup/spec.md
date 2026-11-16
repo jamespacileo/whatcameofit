@@ -4,6 +4,21 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: A tracked linked article is described as deliberately reused
+When a post links to an article already in the published index, the shared presenter SHALL say its card is shown without another article read or automatic search. It SHALL retain whether the service or browser read the post, and SHALL NOT describe the skipped read as a failure. Saved answers SHALL receive the correction without invalidation or extra requests.
+
+#### Scenario: Browser post links to a tracked source
+- **WHEN** a browser-read post returns an exact tracked linked-article answer
+- **THEN** its source wording identifies the browser reading and deliberate reuse of the tracked card
+
+#### Scenario: Service post links to a tracked source
+- **WHEN** a service-read post returns an exact tracked linked-article answer
+- **THEN** its source wording identifies the platform reading without claiming the linked article was unreadable
+
+#### Scenario: Untracked article read is refused
+- **WHEN** the article is not tracked and its attempted read is refused
+- **THEN** the existing refusal explanation remains
+
 ### Requirement: Readings preserve formulation, population and activation roles
 Both lookup readers SHALL preserve explicit formulation, route and population constraints. The transient gist supplied to scoring SHALL retain delivery and activation details. The indication SHALL retain the reported target and studied population without inflating surrogate benefits. Only experimental treatments SHALL form combination names; explicitly identified activation agents, adjuvants and supportive care SHALL retain their stated roles.
 
