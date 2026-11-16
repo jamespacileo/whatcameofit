@@ -26,7 +26,7 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     until the reader presses play. Its records are dated, because a video cannot be
     rebuilt with the site; the pages under it are the current word.
   */}
-  <figure class="explainer">
+  <figure class="explainer" data-explainer>
     <video
       controls
       preload="none"
@@ -443,3 +443,13 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
     )
   }
 </Base>
+
+<script>
+  // Once the reader starts the video it is shown at its playing brightness.
+  const explainer = document.querySelector<HTMLElement>("[data-explainer]");
+  explainer?.querySelector("video")?.addEventListener(
+    "play",
+    () => explainer.setAttribute("data-started", ""),
+    { once: true },
+  );
+</script>

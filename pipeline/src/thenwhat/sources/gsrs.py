@@ -48,6 +48,12 @@ def codes_of(record: SourceRecord) -> list[str]:
     return list(dict.fromkeys(code for code in codes if code))
 
 
+def name_of(record: SourceRecord) -> str:
+    """What GSRS calls the substance, or its identifier when it gives no name."""
+    substance = record.payload.get("substance") or {}
+    return " ".join(str(substance.get("_name") or record.external_id).split())
+
+
 def label_of(record: SourceRecord) -> str:
     """What GSRS calls the substance, with its Unique Ingredient Identifier when it has one."""
     substance = record.payload.get("substance") or {}

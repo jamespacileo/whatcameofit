@@ -17,17 +17,20 @@ for drafts, so that no claim is published with a status no search stands behind.
 
 import re
 import threading
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Generator, Sequence
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, or_, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key, without_tracking
-from thenwhat.backfill.allowance import Allowances
+from thenwhat.backfill.allowance import Allowances, held_until, holds_under
 from thenwhat.backfill.errors import BackfillError, SpendCeilingReached
+from thenwhat.backfill.ledger import due_records
 from thenwhat.backfill.link_evaluation import reading_refusal
 from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.link_triage import is_passed
@@ -43,6 +46,7 @@ from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
     claim_by_slug,
+    claims_of_a_named_substance,
     claims_sharing_a_name,
     core_name,
     find_article,
@@ -77,10 +81,12 @@ from thenwhat.extract.names import (
 from thenwhat.extract.page import Page, published_day
 from thenwhat.extract.retrieve import (
     READER,
+    WAIT_MOST,
     ArticleRetriever,
     NotAllowed,
     NotNow,
     NotServed,
+    Retrieved,
     ThinPage,
 )
 from thenwhat.extract.schema import Draft
@@ -118,6 +124,15 @@ NOT_NOW_BEFORE_LEAVING = 3
 # of one outlet's pages is the likeliest way to lose such a route.
 OUTLET_JUST_ASKED = "not asked in this run: its outlet was asked a moment ago"
 OUTLET_NOT_NOW = "not asked in this run: the page reader could not get its outlet's last pages"
+# The reader states a wait with every "not now": seconds for a site it is pacing, hours
+# for an outlet it has stopped because the outlet refuses it. Until that wait is over
+# the outlet's leads are left without a request, in this run and in every later one.
+# The backfill of 2026-11-16 asked two outlets that had banned the reader's machine
+# three times in every run. The hold is kept under this name and the outlet's.
+OUTLET_HOLD = "reader:"
+OUTLET_STOPPED = "not asked: the page reader says its outlet cannot be asked before"
+# The first key of the lock that gives one worker at a time an outlet's turn.
+OUTLET_TURN_LOCK = 7_468
 # Outcomes only a page the reader got can give.
 READ_FROM_A_PAGE = (
     ReadOutcome.ADDED_TO_CLAIM,
@@ -206,6 +221,56 @@ def retry_outlet(session: Session, outlet: str) -> int:
         entry.stale = True
     session.flush()
     return len(ids)
+
+
+@dataclass(frozen=True, slots=True)
+class HeldOutlet:
+    """An outlet the page reader said cannot be asked before a time, and how many of its
+    leads are due and wait for that."""
+
+    outlet: str
+    until: datetime
+    leads: int
+
+
+def held_outlets(
+    session: Session, step: "LinkRead", attempt_limit: int, now: datetime
+) -> list[HeldOutlet]:
+    """The outlets held now that have leads due, the one with most leads first. Asks
+    nothing: the plan says what a run would leave alone."""
+    holds = holds_under(session, OUTLET_HOLD, now)
+    if not holds:
+        return []
+    due = dict(
+        session.execute(
+            due_records(step, attempt_limit)
+            .with_only_columns(LinkLead.outlet, func.count())
+            .where(LinkLead.outlet.in_(holds))
+            .order_by(None)
+            .group_by(LinkLead.outlet)
+        ).all()
+    )
+    held = [HeldOutlet(outlet, holds[outlet], leads) for outlet, leads in due.items()]
+    return sorted(held, key=lambda one: (-one.leads, one.outlet))
+
+
+@contextmanager
+def _asking(session: Session, outlet: str) -> Generator[None]:
+    """Hold the outlet's turn, among every worker of every process, while its hold is
+    looked at and the page reader is asked. The lock is the connection's and is given
+    back as soon as the reader has answered: the read that follows needs no turn."""
+    key = func.hashtext(OUTLET_HOLD + outlet)
+    session.execute(select(func.pg_advisory_lock(OUTLET_TURN_LOCK, key)))
+    try:
+        yield
+    finally:
+        try:
+            session.execute(select(func.pg_advisory_unlock(OUTLET_TURN_LOCK, key)))
+        except SQLAlchemyError:
+            # The turn could not be given back on a transaction that has failed. The
+            # connection is closed instead of returned to its pool, which gives it back.
+            session.connection().invalidate()
+            raise
 
 
 class NotMeasured(BackfillError):
@@ -479,9 +544,8 @@ class LinkRead:
         # its dose, schedule, form or "-assisted ..." therapy, finds candidates too:
         # "MDMA-assisted psychotherapy" shares no whole word with "MDMA".
         cores = [core for name in names if (core := core_name(name))]
-        candidates = claims_sharing_a_name(
-            session, [*names, *cores, *other_names_of(names)], indication=draft.indication
-        )
+        looked_for = [*names, *cores, *other_names_of(names)]
+        candidates = claims_sharing_a_name(session, looked_for, indication=draft.indication)
         linked_by_title = named_claims(
             session,
             list(
@@ -497,6 +561,17 @@ class LinkRead:
         offered = {claim.slug for claim in candidates}
         candidates += [claim for claim in linked_by_title if claim.slug not in offered]
         candidates = candidates[:MAX_NAMED_CLAIMS]
+        # A claim filed under a substance the registry of substances gives one of these
+        # names (a brand, a code) is a candidate too. These are added after the cut, so
+        # none takes the place of a claim offered without them.
+        offered = {claim.slug for claim in candidates}
+        candidates += [
+            claim
+            for claim in claims_of_a_named_substance(
+                session, looked_for, indication=draft.indication
+            )
+            if claim.slug not in offered
+        ]
         if not candidates:
             return None, None
         answer = choose_same_claim(
@@ -553,6 +628,27 @@ class LinkRead:
                 f"{OUTLET_REFUSES} for {refusals} pages and served none",
             )
 
+        # One request at a time for an outlet, in this process or any other, from the
+        # look at its hold to the reader's answer: a worker never asks an outlet while
+        # another's request may be about to stop it.
+        with _asking(session, record.outlet):
+            page = self._ask_for_the_page(session, record, client, now)
+        if not isinstance(page, Retrieved):
+            return page
+        retrieved = page
+        return self._read(session, record, client, now, outlet, retrieved)
+
+    def _ask_for_the_page(
+        self, session: Session, record: LinkLead, client: ReadClient, now: datetime
+    ) -> Retrieved | WorkOutcome | Deferred:
+        """The lead's page from the page reader, or what became of the lead without one.
+        Run while this worker holds the outlet's turn."""
+        held = held_until(session, OUTLET_HOLD + record.outlet, now)
+        if held is not None:
+            # The reader said when this outlet may be asked again, in this run or an
+            # earlier one. Until then: no request, no allowance, no attempt.
+            return Deferred(f"{OUTLET_STOPPED} {held:%Y-%m-%d %H:%M} UTC: {record.outlet}")
+
         # The page reader is asked for the page. Whether the outlet may be asked, and how
         # often, is the reader's to decide; the pipeline acts on its answer.
         # Decided and noted in one step: two workers must not both find the outlet free.
@@ -580,6 +676,13 @@ class LinkRead:
             # with no attempt counted, and the run goes on with other leads.
             with self._outlets:
                 self._not_now[record.outlet] = self._not_now.get(record.outlet, 0) + 1
+            if later.retry_after_seconds:
+                # Kept in its own short transaction, as a claim on an allowance is, and
+                # before the outlet's turn is given up: the next worker finds it.
+                client.allowances.hold(
+                    OUTLET_HOLD + record.outlet,
+                    now + timedelta(seconds=min(later.retry_after_seconds, WAIT_MOST)),
+                )
             return Deferred(str(later))
         except NotAllowed as refused:
             return self._finish(
@@ -596,6 +699,19 @@ class LinkRead:
         # The reader got a page from this outlet: it can be asked again.
         with self._outlets:
             self._not_now.pop(record.outlet, None)
+        return retrieved
+
+    def _read(
+        self,
+        session: Session,
+        record: LinkLead,
+        client: ReadClient,
+        now: datetime,
+        outlet: str,
+        retrieved: Retrieved,
+    ) -> WorkOutcome | Failed | Deferred:
+        """What the page the reader gave becomes: a source article, a new claim, or the
+        reason it is neither."""
         page = retrieved.page
         day = published_day(page.published if page else None)
         if day is None:

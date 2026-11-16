@@ -16,6 +16,7 @@ from thenwhat.claims.entry import (
     add_article,
     add_claim,
     articles_of,
+    claims_of_a_named_substance,
     claims_sharing_a_name,
     free_slug_for,
     promises_of,
@@ -279,6 +280,46 @@ def test_claims_with_an_equal_name_come_first_and_every_condition_comes_back(ses
     ]
     assert (found[0].intervention, found[0].indication) == ("esketamine", "depression")
     assert sharing(session, "spravato") == ["esketamine-spray-pain"]
+
+
+def test_a_claim_shares_a_name_the_registry_of_substances_gives_its_substance(session: Session):
+    from thenwhat.db.models import EntitySubstance
+
+    named(session, "exampletumab-depression", "exampletumab")
+    named(session, "ketamine-depression", "ketamine")
+    entity = session.scalars(select(Entity).where(Entity.name == "exampletumab")).one()
+    session.add(
+        EntitySubstance(
+            entity_id=entity.id,
+            source_name="gsrs",
+            external_id="synthetic-substance",
+            url="https://gsrs.test/synthetic-substance",
+            payload={
+                "substance": {"_name": "EXAMPLETUMAB ALFA"},
+                "names": [
+                    {"name": "Moodera", "type": "bn"},
+                    {"name": "exampletumab hydrochloride monohydrate", "type": "sys"},
+                    {"name": "Oldera", "type": "bn", "deprecated": True},
+                ],
+            },
+            fetched_at=datetime(2026, 11, 16, tzinfo=UTC),
+            codes=["EX-77"],
+        )
+    )
+    session.flush()
+
+    def of_substance(*names: str) -> list[str]:
+        return [claim.slug for claim in claims_of_a_named_substance(session, names)]
+
+    # A brand, a development code and the registry's own name for the substance, whole.
+    assert of_substance("moodera") == ["exampletumab-depression"]
+    assert of_substance("EX-77") == ["exampletumab-depression"]
+    assert of_substance("Exampletumab alfa") == ["exampletumab-depression"]
+    # Not a word of one of its names, and not a name the registry has withdrawn.
+    assert of_substance("hydrochloride") == []
+    assert of_substance("Oldera") == []
+    # What the claim's own name finds is unchanged by the record.
+    assert sharing(session, "moodera") == []
 
 
 def test_no_more_claims_are_offered_than_the_decision_is_shown(session: Session):
