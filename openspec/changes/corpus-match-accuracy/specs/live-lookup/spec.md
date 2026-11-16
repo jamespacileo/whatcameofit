@@ -128,6 +128,23 @@ Both lookup implementations SHALL recognise a missing space, hyphen or underscor
 - **WHEN** a report names REGROW2 and the fetched registry record names REGROW 2
 - **THEN** the record gains the trial-name agreement, but REGROW 21, REGROW 3 and REGROW2A do not
 
+### Requirement: Ambiguous study names retain condition-specific discovery
+When a study-name search exceeds twenty records, both lookup implementations SHALL narrow it at most once with the unchanged name and full stated condition, if available. They SHALL preserve existing work allowances and source pacing, without pagination or another model call. Multi-claim query reuse SHALL include condition in its identity. Returned records SHALL still undergo clinical scoring; a shared acronym SHALL not establish compatibility.
+
+#### Scenario: Study acronym shared by unrelated conditions
+- **GIVEN** a title/acronym identifies more than twenty records across conditions
+- **WHEN** the reported condition narrows it to a bounded set
+- **THEN** those records remain candidates for the same full claim's clinical scoring
+- **AND** a second independent claim with that acronym and a different condition does not reuse the first narrowed set
+
+#### Scenario: Study name remains ambiguous
+- **WHEN** a study name remains over the limit within the condition, or no condition is available
+- **THEN** it contributes no candidates without further discovery requests
+
+#### Scenario: Saved answer predates condition narrowing
+- **WHEN** a completed answer predates this discovery correction
+- **THEN** it is invalidated while public source responses remain reusable
+
 ### Requirement: Presentation correction reuses bounded saved answers
 The existing ten-record display cap SHALL apply across both groups, prioritising possible matches. The corrected presentation SHALL apply to saved answers without invalidation and SHALL add no model or source requests.
 

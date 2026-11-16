@@ -186,9 +186,9 @@ class ClinicalTrials(Source):
                 return narrowed
         return []
 
-    def named_trials(self, name: str) -> list[SourceRecord]:
+    def named_trials(self, name: str, condition: str | None = None) -> list[SourceRecord]:
         """The trials that carry this name in their acronym or title, such as SURMOUNT-5.
-        Empty when so many do that the name does not identify a trial."""
+        Narrow a broad name once by condition; never paginate ambiguous names."""
         phrase = name.replace('"', " ").strip()
         if not phrase:
             return []
@@ -198,16 +198,18 @@ class ClinicalTrials(Source):
             "fields": SEARCH_FIELDS,
             "countTotal": "true",
         }
-        try:
-            fetched = self._get(f"{API}/studies", params)
-        except _UnreadableQuery as unreadable:
-            raise UnsearchableTerm(name, unreadable.reason, self.name) from None
-        if fetched is None:
-            return []
-        studies = fetched.payload.get("studies", [])
-        if fetched.payload.get("totalCount", len(studies)) > MAX_NAMED_TRIALS:
-            return []
-        return [self._record(study, fetched.fetched_at) for study in studies]
+        for within in (None, condition) if condition else (None,):
+            narrowed = params | ({"query.cond": within} if within else {})
+            try:
+                fetched = self._get(f"{API}/studies", narrowed)
+            except _UnreadableQuery as unreadable:
+                raise UnsearchableTerm(name, unreadable.reason, self.name) from None
+            if fetched is None:
+                return []
+            studies = fetched.payload.get("studies", [])
+            if fetched.payload.get("totalCount", len(studies)) <= MAX_NAMED_TRIALS:
+                return [self._record(study, fetched.fetched_at) for study in studies]
+        return []
 
     def list_page(
         self,

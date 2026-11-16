@@ -84,6 +84,19 @@ test("a roundup shares sixty scored pairs and twelve discovery queries; omitted 
   assert.equal(store.values.size, 0, "partial work is never cached as a completed page");
 });
 
+test("the same study name in different claim conditions has independent discovery", async () => {
+  const asked = [];
+  const found = await lookUp({ text: "Synthetic roundup", index, model: {
+    read: async () => ({ ...first, trial_name: "EXAMPLE", additional_claims: [{ ...second, trial_name: "EXAMPLE" }] }),
+    score: async (_intro, items) => items.map(yes),
+  }, registry: { ...quiet, named: async (name, { condition }) => {
+    asked.push([name, condition]);
+    return [condition === first.indication ? a : b];
+  } } });
+  assert.deepEqual(asked, [["EXAMPLE", first.indication], ["EXAMPLE", second.indication]]);
+  assert.deepEqual(found.claims.map(one => one.candidates.map(c => c.id)), [["NCT00000001"], ["NCT00000002"]]);
+});
+
 test("reused multi-claim answers reassociate every card and persist no nested gist", async () => {
   const found = await lookUp({ text: "Synthetic roundup", index, registry: quiet,
     model: { read: async () => reading, score: async () => [] } });

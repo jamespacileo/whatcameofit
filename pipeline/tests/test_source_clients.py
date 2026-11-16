@@ -367,6 +367,31 @@ def test_a_trial_name_that_many_trials_carry_identifies_none(
     assert source.named_trials("study") == []
 
 
+def test_broad_trial_name_is_narrowed_once_by_condition(session: Session, fake_time):
+    wanted = {
+        "protocolSection": {
+            "identificationModule": {
+                "nctId": "NCT00000009",
+                "briefTitle": "EXAMPLE study of EX-1 for tinnitus",
+            }
+        }
+    }
+
+    def route(request):
+        condition = request.url.params.get("query.cond")
+        if condition == "Tinnitus":
+            return {"studies": [wanted], "totalCount": 1}
+        return {"studies": [], "totalCount": 24}
+
+    source, replay = trials(session, fake_time, route)
+    assert [r.external_id for r in source.named_trials("EXAMPLE", condition="Tinnitus")] == [
+        "NCT00000009"
+    ]
+    assert len(replay.requests) == 2
+    assert source.named_trials("EXAMPLE", condition="Migraine") == []
+    assert len(replay.requests) == 3  # The unchanged broad query is reused.
+
+
 # --- Europe PMC ------------------------------------------------------------------
 
 
