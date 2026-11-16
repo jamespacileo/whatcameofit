@@ -140,10 +140,10 @@ class LinkTriage:
         # first, so a topic need not wait for every older lead.
         self._names_a_topic = title_names(topic_terms)
 
-    def order(self) -> list[ColumnElement[Any]]:
-        """First the leads whose title names one of the operator's topics. The order
+    def first(self) -> ColumnElement[bool] | None:
+        """The leads whose title names one of the operator's topics come first. The order
         changes which lead is scored when, never what it scores."""
-        return [] if self._names_a_topic is None else [self._names_a_topic.desc()]
+        return self._names_a_topic
 
     def scope(self) -> ColumnElement[bool]:
         """Leads that screening left in scope: on a listed outlet and not yet tracked."""
