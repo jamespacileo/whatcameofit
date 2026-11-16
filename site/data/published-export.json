@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T02:23:57.815010Z",
+  "generated_at": "2026-11-16T02:57:06.624053Z",
   "last_checked_at": "2026-11-16T02:15:15.735202Z",
   "preview": false,
   "sources": [
@@ -36425,7 +36425,7 @@
     {
       "slug": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
       "headline": "Daraxonrasib improved survival outcomes versus chemotherapy in a phase 3 pancreatic cancer trial",
-      "summary": "The article reports phase 3 results for daraxonrasib as second-line treatment for previously treated metastatic pancreatic cancer. In 500 patients, median overall survival was 13.2 months with daraxonrasib versus 6.7 months with chemotherapy, and median progression-free survival was 7.2 versus 3.6 months. It also reports response and safety results and says a separate trial is evaluating the drug as a possible first-line treatment.",
+      "summary": "The May 2026 Dana-Farber report describes phase 3 results for daraxonrasib as second-line treatment for previously treated metastatic pancreatic cancer. In 500 patients, median overall survival was 13.2 months with daraxonrasib versus 6.7 months with chemotherapy, and median progression-free survival was 7.2 versus 3.6 months. It also reports response and safety results and says a separate trial is evaluating the drug as a possible first-line treatment.",
       "vertical": "cancer",
       "approach": null,
       "intervention": {
@@ -36436,7 +36436,7 @@
         ]
       },
       "indication": "Previously treated metastatic pancreatic cancer",
-      "first_reported_date": "2026-05-31",
+      "first_reported_date": "2026-04-13",
       "evidence_stage": "late_human",
       "evidence_stage_reading": null,
       "checked_by_person": false,
@@ -36464,10 +36464,90 @@
       },
       "articles": [
         {
+          "url": "https://www.cnbc.com/2026/04/13/pancreatic-cancer-drug-daraxonrasib-from-revolution-medicines-succeeds-in-trial.html",
+          "outlet": "CNBC",
+          "title": "Revolution Medicines says its potential breakthrough pancreatic cancer drug succeeds in late-stage trial",
+          "published_date": "2026-04-13",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://health.yahoo.com/conditions/cancer/pancreatic-cancer/articles/pancreatic-cancer-drug-nearly-doubles-195720621.html",
+          "outlet": "Yahoo Health",
+          "title": "New Pancreatic Cancer Drug Nearly Doubles Survival. Here’s What Patients Should Know",
+          "published_date": "2026-04-14",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.foxnews.com/health/new-pancreatic-cancer-pill-could-reshape-treatment-early-trial-results-stun-researchers.amp",
+          "outlet": "Fox News",
+          "title": "New pancreatic cancer pill nearly doubles survival time in breakthrough trial",
+          "published_date": "2026-05-18",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
           "url": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
           "outlet": "Dana-Farber Cancer Institute",
           "title": "RAS(ON) Inhibitor Doubles Median Overall Survival in Results of Phase 3 Trial for Patients with Metastatic Pancreatic Cancer",
           "published_date": "2026-05-31",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.ladbible.com/news/science/pancreatic-cancer-treatment-pill-daraxonrasib-double-survival-time-751047-20260601",
+          "outlet": "LADbible",
+          "title": "New daily pill can double survival time for world's deadliest cancer patients",
+          "published_date": "2026-06-01",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.pharmazeutische-zeitung.de/neues-medikament-verdoppelt-ueberlebenszeit-165686/",
+          "outlet": "Pharmazeutische Zeitung",
+          "title": "Pankreaskarzinom: Neues Medikament verdoppelt Überlebenszeit",
+          "published_date": "2026-06-01",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.yahoo.com/news/science/articles/breakthrough-drug-nearly-doubles-survival-183205832.html",
+          "outlet": "Yahoo News",
+          "title": "Breakthrough drug nearly doubles survival with advanced pancreatic cancer – an oncologist explains how daraxonrasib overcame an ‘undruggable’ disease",
+          "published_date": "2026-06-02",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.aponet.de/artikel/bauchspeicheldruesenkrebs-neues-medikament-verdoppelt-in-studie-die-ueberlebenszeit-33426",
+          "outlet": "aponet.de",
+          "title": "Bauchspeicheldrüsenkrebs: Neues Medikament verdoppelt in Studie die Überlebenszeit",
+          "published_date": "2026-06-03",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.newsweekjapan.jp/articles/-/324447",
+          "outlet": "Newsweek Japan",
+          "title": "膵臓がん治療の「ゲームチェンジャー」 死亡リスクを60%減らす革新的な新薬 | ニューズウィーク日本版 オフィシャルサイト",
+          "published_date": "2026-06-03",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.statnews.com/2026/06/04/readout-loud-podcast-revolution-medicines-pancreatic-cancer-patient-asco/",
+          "outlet": "STAT Readout LOUD",
+          "title": "What RevMed's pancreatic cancer drug meant for one patient",
+          "published_date": "2026-06-04",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.webmd.com/cancer/pancreatic-cancer/daraxonrasib-study-pancreatic-cancer",
+          "outlet": "WebMD",
+          "title": "FDA Approves Daraxonrasib (Rasonque) for Metastatic Pancreatic Cancer",
+          "published_date": "2026-07-08",
           "archive_url": null,
           "published_by": null
         }
@@ -166091,12 +166171,8 @@
         "explained_by": [
           534,
           535,
-          539,
-          540,
           532,
-          531,
-          590,
-          589
+          531
         ],
         "history": [
           {
@@ -166194,38 +166270,6 @@
           "confidence": 1
         },
         {
-          "id": 787,
-          "type": "trial_registered",
-          "event_date": "2024-04-11",
-          "date_basis": "first posted",
-          "summary": "Trial NCT06360354 registered (Phase 1).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06360354",
-          "trial_id": "NCT06360354",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 788,
-          "type": "trial_status_change",
-          "event_date": "2024-05-29",
-          "date_basis": "start date",
-          "summary": "Trial NCT06360354 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT06360354",
-          "trial_id": "NCT06360354",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
           "id": 534,
           "type": "trial_registered",
           "event_date": "2024-10-03",
@@ -166254,70 +166298,6 @@
             "phase_3"
           ],
           "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 539,
-          "type": "trial_registered",
-          "event_date": "2025-11-26",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07252232 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07252232",
-          "trial_id": "NCT07252232",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 540,
-          "type": "trial_status_change",
-          "event_date": "2025-12-15",
-          "date_basis": "start date",
-          "summary": "Trial NCT07252232 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07252232",
-          "trial_id": "NCT07252232",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 592,
-          "type": "trial_status_change",
-          "event_date": "2026-01-08",
-          "date_basis": "start date",
-          "summary": "Trial NCT07349537 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07349537",
-          "trial_id": "NCT07349537",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 591,
-          "type": "trial_registered",
-          "event_date": "2026-01-16",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07349537 registered (Phase 1).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07349537",
-          "trial_id": "NCT07349537",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": null,
           "regulatory_outcome": null,
           "confidence": 1
         },
@@ -166352,86 +166332,6 @@
           "trial_state": null,
           "regulatory_outcome": null,
           "confidence": 1
-        },
-        {
-          "id": 593,
-          "type": "trial_registered",
-          "event_date": "2026-08-10",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07756281 registered (Phase 1).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07756281",
-          "trial_id": "NCT07756281",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 590,
-          "type": "trial_status_change",
-          "event_date": "2026-08-28",
-          "date_basis": "start date",
-          "summary": "Trial NCT07805954 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07805954",
-          "trial_id": "NCT07805954",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 594,
-          "type": "trial_status_change",
-          "event_date": "2026-09-01",
-          "date_basis": "start date",
-          "summary": "Trial NCT07756281 started.",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07756281",
-          "trial_id": "NCT07756281",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": "started",
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 589,
-          "type": "trial_registered",
-          "event_date": "2026-09-08",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07805954 registered (Phase 3).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07805954",
-          "trial_id": "NCT07805954",
-          "trial_phases": [
-            "phase_3"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
-        },
-        {
-          "id": 533,
-          "type": "trial_registered",
-          "event_date": "2026-10-27",
-          "date_basis": "first posted",
-          "summary": "Trial NCT07898813 registered (Phase 1).",
-          "source_name": "clinicaltrials.gov",
-          "source_url": "https://clinicaltrials.gov/study/NCT07898813",
-          "trial_id": "NCT07898813",
-          "trial_phases": [
-            "phase_1"
-          ],
-          "trial_state": null,
-          "regulatory_outcome": null,
-          "confidence": 1
         }
       ],
       "failure_flags": [],
@@ -166448,26 +166348,6 @@
         },
         {
           "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07805954",
-          "url": "https://clinicaltrials.gov/study/NCT07805954",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Study of Zoldonrasib (RMC-9805) Plus Daraxonrasib (RMC-6236) Versus Gemcitabine and Nab-Paclitaxel as First-Line Treatment in Metastatic KRAS G12D-Mutated Pancreatic Adenocarcinoma. For: Pancreatic Cancer, Pancreatic Cancer Metastatic, PDAC, PDAC - Pancreatic Ductal Adenocarcinoma, Pancreatic Ductal Adenocarcinoma (PDAC), Pancreatic Adenocarcinoma Metastatic, Pancreatic Adenocarcinoma, Pancreatic ."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07756281",
-          "url": "https://clinicaltrials.gov/study/NCT07756281",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "First in Human Study of SNV1521 With a RAS Inhibitor for People With Advanced Pancreatic Cancer. For: Pancreatic Cancer, Pancreatic Acinar Carcinoma. Tests: SNV1521, daraxonrasib. Phase 1, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
           "external_id": "NCT05379985",
           "url": "https://clinicaltrials.gov/study/NCT05379985",
           "score": 1,
@@ -166475,16 +166355,6 @@
           "reading": "match",
           "decided_by": "rule",
           "summary": "Study of RMC-6236 in Patients With Advanced Solid Tumors Harboring Specific Mutations in RAS. For: Non-small Cell Lung Cancer (NSCLC), Colorectal Cancer (CRC), Pancreatic Ductal Adenocarcinoma (PDAC), Advanced Solid Tumors. Tests: RMC-6236. Phase 1/Phase 2, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06360354",
-          "url": "https://clinicaltrials.gov/study/NCT06360354",
-          "score": 1,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "A Study Evaluating Anvumetostat in Combination With Other Therapies in Participants With Advanced Gastrointestinal, Biliary Tract, or Pancreatic Cancers With Homozygous Methylthioadenosine Phosphorylase (MTAP)-Deletion (MTAPESTRY 103). For: Advanced Gastrointestinal, Biliary Tract, and Pancreatic Cancers. Tests: Anvumetostat, Gemcitabine, Nab-paclitaxel, Modified FOLFIRINOX, RMC-6236. Phase 1, act."
         },
         {
           "source_name": "clinicaltrials.gov",
@@ -166505,56 +166375,6 @@
           "reading": "match",
           "decided_by": "assistant",
           "summary": "Study of Daraxonrasib and Daraxonrasib + GnP as First-line Treatment in Patients With Metastatic Pancreatic Adenocarcinoma. For: Pancreatic Cancer, Pancreatic Cancer Metastatic, PDAC, PDAC - Pancreatic Ductal Adenocarcinoma, Pancreatic Ductal Adenocarcinoma (PDAC), Pancreatic Adenocarcinoma Metastatic, Pancreatic Adenocarcinoma, Pancreatic Adenosquamous Carcinoma. Tests: daraxonrasib, gemcitabine,."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07898813",
-          "url": "https://clinicaltrials.gov/study/NCT07898813",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "assistant",
-          "summary": "Daraxonrasib in Resectable PDAC. For: Pancreatic Ductal Adenocarcinoma, Pancreatic Cancer, Resectable Pancreatic Ductal Adenocarcinoma. Tests: Daraxonrasib, Surgical Resection, Adjuvant Chemotherapy, Adjuvant Radiation Therapy. Phase 1, not yet recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07349537",
-          "url": "https://clinicaltrials.gov/study/NCT07349537",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "rule",
-          "summary": "Study of RMC-5127 in Patients With Advanced KRAS G12V-Mutant Solid Tumors. For: Non-small Cell Lung Cancer (NSCLC), Colorectal Cancer (CRC), Pancreatic Adenocarcinoma, Pancreatic Ductal Adenocarcinoma (PDAC), PDAC, CRC, NSCLC, Pancreatic Cancer, Lung Cancer (NSCLC), Advanced Solid Tumors. Tests: RMC-5127, daraxonrasib, cetuximab. Phase 1, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07252232",
-          "url": "https://clinicaltrials.gov/study/NCT07252232",
-          "score": 0.99,
-          "state": "approved",
-          "reading": "match",
-          "decided_by": "assistant",
-          "summary": "Study of Daraxonrasib (RMC-6236) in Patients With Resected Pancreatic Ductal Adenocarcinoma (PDAC). For: Pancreatic Cancer, PDAC, PDAC - Pancreatic Ductal Adenocarcinoma, Resectable Pancreatic Ductal Adenocarcinoma (PDAC), Resected Pancreatic Adenocarcinoma. Tests: daraxonrasib. Phase 3, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT06040541",
-          "url": "https://clinicaltrials.gov/study/NCT06040541",
-          "score": 0.58,
-          "state": "candidate",
-          "reading": "match",
-          "decided_by": null,
-          "summary": "Study of RMC-9805 in Participants With KRAS G12D-Mutant Solid Tumors. For: Non-small Cell Lung Cancer (NSCLC), Colorectal Cancer (CRC), Pancreatic Ductal Adenocarcinoma (PDAC), Advanced Solid Tumors. Tests: RMC-9805, RMC-6236. Phase 1, recruiting."
-        },
-        {
-          "source_name": "clinicaltrials.gov",
-          "external_id": "NCT07492680",
-          "url": "https://clinicaltrials.gov/study/NCT07492680",
-          "score": 0.26,
-          "state": "candidate",
-          "reading": "other_indication",
-          "decided_by": null,
-          "summary": "A Study of Navlimetostat (BMS-986504) Monotherapy and in Combination With Other Agents in Participants With Advanced and/or Metastatic Solid Tumors With Homozygous MTAP Deletion (MountainTAP-5). For: Solid Tumors. Tests: Navlimetostat, Daraxonrasib, Temozolomide, Pumitamig, Pemetrexed, Carboplatin, Nab-paclitaxel, Gemcitabine, Paclitaxel, Cisplatin. Phase 2, recruiting."
         }
       ],
       "trials": [
@@ -166764,122 +166584,6 @@
           ]
         },
         {
-          "trial_id": "NCT06360354",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT06360354",
-          "title": "A Study Evaluating Anvumetostat in Combination With Other Therapies in Participants With Advanced Gastrointestinal, Biliary Tract, or Pancreatic Cancers With Homozygous Methylthioadenosine Phosphorylase (MTAP)-Deletion (MTAPESTRY 103)",
-          "phases": [
-            "phase_1"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-14T21:11:32.529731Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 120,
-              "basis": "actual"
-            },
-            "allocation": "non_randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Amgen",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Number of Participants Experiencing Dose Limiting Toxicities (DLT)",
-                "time_frame": "Up to 28 days"
-              },
-              {
-                "measure": "Number of Participants Experiencing Treatment Emergent Adverse Events (TEAE)",
-                "time_frame": "Up to approximately 2 years"
-              },
-              {
-                "measure": "Number of Participants Experiencing Serious Adverse Events (SAE)",
-                "time_frame": "Up to approximately 2 years"
-              }
-            ],
-            "primary_outcomes_total": 3,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "Up to 28 days",
-              "number": 28,
-              "unit": "days",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-14T21:11:32.529731Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Number of Participants Experiencing Dose Limiting Toxicities (DLT)",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 1,
-              "read_on": "2026-11-14T21:11:32.529731Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "Up to approximately 2 years",
-              "number": 2,
-              "unit": "years",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-14T21:11:32.529731Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Number of Participants Experiencing Treatment Emergent Adverse Events (TEAE)",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 1,
-              "read_on": "2026-11-14T21:11:32.529731Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "Up to approximately 2 years",
-              "number": 2,
-              "unit": "years",
-              "code": null,
-              "confidence": 1,
-              "read_on": "2026-11-14T21:11:32.529731Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "Number of Participants Experiencing Serious Adverse Events (SAE)",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 1,
-              "read_on": "2026-11-14T21:11:32.529731Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT06625320",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT06625320",
@@ -166974,188 +166678,6 @@
           ]
         },
         {
-          "trial_id": "NCT07252232",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07252232",
-          "title": "Study of Daraxonrasib (RMC-6236) in Patients With Resected Pancreatic Ductal Adenocarcinoma (PDAC)",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-12T13:03:49.580337Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 500,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [
-              "no_treatment"
-            ],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Revolution Medicines, Inc.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Disease-Free Survival (DFS) per Investigator",
-                "time_frame": "Up to approximately 5 years"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "5 years",
-              "number": 5,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-12T13:03:49.580337Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Disease-Free Survival (DFS)",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 1,
-              "read_on": "2026-11-12T13:03:49.580337Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07349537",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07349537",
-          "title": "Study of RMC-5127 in Patients With Advanced KRAS G12V-Mutant Solid Tumors",
-          "phases": [
-            "phase_1"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-13T18:56:42.485820Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 574,
-              "basis": "planned"
-            },
-            "allocation": "non_randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Revolution Medicines, Inc.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Number of patients with adverse events (AEs)",
-                "time_frame": "Up to approximately 3 years"
-              },
-              {
-                "measure": "Changes in vital signs",
-                "time_frame": "Up to approximately 3 years"
-              },
-              {
-                "measure": "Changes in electrocardiogram (ECG) test values",
-                "time_frame": "Up to approximately 3 years"
-              }
-            ],
-            "primary_outcomes_total": 5,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "3 years",
-              "number": 3,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-13T18:56:42.485820Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "adverse events (AEs)",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-13T18:56:42.485820Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "3 years",
-              "number": 3,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-13T18:56:42.485820Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "vital signs",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.94,
-              "read_on": "2026-11-13T18:56:42.485820Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 2,
-              "field": "time_frame",
-              "words": "3 years",
-              "number": 3,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-13T18:56:42.485820Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 2,
-              "field": "measure",
-              "words": "electrocardiogram (ECG) test values",
-              "number": null,
-              "unit": null,
-              "code": "body_measure",
-              "confidence": 0.95,
-              "read_on": "2026-11-13T18:56:42.485820Z"
-            }
-          ]
-        },
-        {
           "trial_id": "NCT07491445",
           "source_name": "clinicaltrials.gov",
           "url": "https://clinicaltrials.gov/study/NCT07491445",
@@ -167244,224 +166766,6 @@
               "code": "survival",
               "confidence": 1,
               "read_on": "2026-11-12T13:03:47.946256Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07756281",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07756281",
-          "title": "First in Human Study of SNV1521 With a RAS Inhibitor for People With Advanced Pancreatic Cancer",
-          "phases": [
-            "phase_1"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-13T18:56:42.998947Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 40,
-              "basis": "planned"
-            },
-            "allocation": null,
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "ParVation Therapeutics, Inc.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Safety and tolerability of SNV1521 plus daraxonrasib: treatment-emergent adverse events, serious adverse events, and dose-limiting toxicities",
-                "time_frame": "through study completion, an average of 1 year"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "1 year",
-              "number": 1,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-13T18:56:42.998947Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "treatment-emergent adverse events, serious adverse events, and dose-limiting toxicities",
-              "number": null,
-              "unit": null,
-              "code": "side_effects",
-              "confidence": 0.99,
-              "read_on": "2026-11-13T18:56:42.998947Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07805954",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07805954",
-          "title": "Study of Zoldonrasib (RMC-9805) Plus Daraxonrasib (RMC-6236) Versus Gemcitabine and Nab-Paclitaxel as First-Line Treatment in Metastatic KRAS G12D-Mutated Pancreatic Adenocarcinoma",
-          "phases": [
-            "phase_3"
-          ],
-          "state": "under_way",
-          "facts_as_of": "2026-11-13T18:56:40.987576Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 400,
-              "basis": "planned"
-            },
-            "allocation": "randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Revolution Medicines, Inc.",
-              "kind": "industry"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Progression free survival (PFS)",
-                "time_frame": "Up to approximately 4 years"
-              },
-              {
-                "measure": "Overall survival (OS)",
-                "time_frame": "Up to approximately 4 years"
-              }
-            ],
-            "primary_outcomes_total": 2,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "4 years",
-              "number": 4,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-13T18:56:40.987576Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Progression free survival (PFS)",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 1,
-              "read_on": "2026-11-13T18:56:40.987576Z"
-            },
-            {
-              "kind": "follow_up",
-              "outcome": 1,
-              "field": "time_frame",
-              "words": "4 years",
-              "number": 4,
-              "unit": "years",
-              "code": null,
-              "confidence": 0.98,
-              "read_on": "2026-11-13T18:56:40.987576Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 1,
-              "field": "measure",
-              "words": "Overall survival (OS)",
-              "number": null,
-              "unit": null,
-              "code": "survival",
-              "confidence": 1,
-              "read_on": "2026-11-13T18:56:40.987576Z"
-            }
-          ]
-        },
-        {
-          "trial_id": "NCT07898813",
-          "source_name": "clinicaltrials.gov",
-          "url": "https://clinicaltrials.gov/study/NCT07898813",
-          "title": "Daraxonrasib in Resectable PDAC",
-          "phases": [
-            "phase_1"
-          ],
-          "state": "not_started",
-          "facts_as_of": "2026-11-12T13:03:48.569524Z",
-          "facts": {
-            "study_kind": "interventional",
-            "participants": {
-              "count": 30,
-              "basis": "planned"
-            },
-            "allocation": "non_randomised",
-            "masking": "none",
-            "comparators": [],
-            "healthy_volunteers": false,
-            "age_groups": [
-              "adult",
-              "older_adult"
-            ],
-            "sponsor": {
-              "name": "Dana-Farber Cancer Institute",
-              "kind": "other"
-            },
-            "primary_outcomes": [
-              {
-                "measure": "Successful Receipt of Surgery Rate",
-                "time_frame": "After 6- or 12-weeks of neoadjuvant therapy"
-              }
-            ],
-            "primary_outcomes_total": 1,
-            "why_stopped": null,
-            "results": null
-          },
-          "papers": [],
-          "readings": [
-            {
-              "kind": "follow_up",
-              "outcome": 0,
-              "field": "time_frame",
-              "words": "12-weeks",
-              "number": 12,
-              "unit": "weeks",
-              "code": null,
-              "confidence": 0.99,
-              "read_on": "2026-11-12T13:03:48.569524Z"
-            },
-            {
-              "kind": "measure",
-              "outcome": 0,
-              "field": "measure",
-              "words": "Rate",
-              "number": null,
-              "unit": null,
-              "code": "frequency",
-              "confidence": 0.91,
-              "read_on": "2026-11-12T13:03:48.569524Z"
             }
           ]
         }
@@ -168050,61 +167354,6 @@
           ]
         },
         {
-          "name": "Amgen",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT06360354"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Dana-Farber Cancer Institute",
-          "identified": true,
-          "record": {
-            "source": "ror",
-            "external_id": "02jzgtq86",
-            "url": "https://ror.org/02jzgtq86",
-            "name": "Dana-Farber Cancer Institute",
-            "kinds": [
-              "facility",
-              "funder"
-            ],
-            "country": "United States",
-            "website": null,
-            "score": 1,
-            "read_at": "2026-11-15T21:48:34.495852Z"
-          },
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07898813"
-              ]
-            }
-          ]
-        },
-        {
-          "name": "ParVation Therapeutics, Inc.",
-          "identified": false,
-          "record": null,
-          "roles": [
-            {
-              "role": "sponsor",
-              "article_urls": [],
-              "trial_ids": [
-                "NCT07756281"
-              ]
-            }
-          ]
-        },
-        {
           "name": "Revolution Medicines, Inc.",
           "identified": false,
           "record": null,
@@ -168116,10 +167365,7 @@
                 "NCT05379985",
                 "NCT06128551",
                 "NCT06625320",
-                "NCT07252232",
-                "NCT07349537",
-                "NCT07491445",
-                "NCT07805954"
+                "NCT07491445"
               ]
             }
           ]
