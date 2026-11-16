@@ -1059,6 +1059,37 @@ def test_an_ingredient_kept_before_vaccines_were_told_apart_is_searched_once_loo
     assert trials.searched == ["Toothvax", "examplevirus antigen"]
 
 
+def test_a_brand_the_source_could_not_answer_whole_keeps_what_was_kept(session: Session):
+    """Scenario: The source of brands cannot answer whole"""
+    from thenwhat.sources.rxnorm import PartMissing
+
+    claim = add_claim(
+        session,
+        slug="toothvax-tooth-agenesis",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+    found = ingredient("111", "examplevirus antigen", "Toothvax")
+    give_development_codes(
+        session, claim, substances=FakeSubstances({}), brands=FakeBrands({"Toothvax": [found]})
+    )
+
+    class HalfAnswering(FakeBrands):
+        def substances_named(self, name: str) -> list[SourceRecord]:
+            raise PartMissing("RxNorm gave no branded drugs for the brand 'Toothvax'.")
+
+    with pytest.raises(PartMissing):
+        give_development_codes(
+            session, claim, substances=FakeSubstances({}), brands=HalfAnswering({})
+        )
+
+    [intervention] = entities_of(session, claim)
+    kept = session.get(EntitySubstance, intervention.id)
+    assert kept is not None and kept.payload == found.payload
+
+
 def test_the_source_of_brands_is_not_asked_when_the_registry_answered(session: Session):
     """Scenario: The substance registry lists the intervention"""
     claim = add_claim(

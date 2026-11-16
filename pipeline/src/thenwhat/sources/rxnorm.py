@@ -19,7 +19,7 @@ source said; whoever searches decides not to search a vaccine's antigen.
 from datetime import datetime, timedelta
 from typing import Any
 
-from thenwhat.sources.base import Source, SourceRecord
+from thenwhat.sources.base import Source, SourceError, SourceRecord
 
 API = "https://rxnav.nlm.nih.gov/REST"
 # Where a reader can open a concept's record.
@@ -77,6 +77,12 @@ MAX_CONCEPTS = 5
 # A brand's ingredients change rarely. NLM recommends keeping answers 12 to 24 hours at
 # least; the vocabulary itself is released monthly.
 KEPT_FOR = timedelta(days=30)
+
+
+class PartMissing(SourceError):
+    """RxNorm lists the name as a brand, but part of what tells its ingredient or its
+    kind is missing from its answers. Nothing kept for the name is changed: the source
+    did not say the name is not a brand."""
 
 
 def _key(name: str) -> str:
@@ -150,7 +156,12 @@ def vaccine_codes(payload: Any) -> list[str]:
 def not_searched(source_name: str, payload: Any) -> bool:
     """Whether a kept substance's name is kept from searches and from finding claims:
     an RxNorm ingredient of a vaccine brand, or one kept before RxNorm's vaccine codes
-    were read, whose brand is not known to be no vaccine until it is looked up again."""
+    were read, whose brand is not known to be no vaccine until it is looked up again.
+
+    Every RxNorm record kept since then has the codes: an ingredient is kept only for a
+    brand of one ingredient (`codes_for`, with `forms` off), and the client reads the
+    codes for every such brand. A brand of several ingredients is returned without
+    them, but its ingredients are several substances and none is kept."""
     if source_name != "rxnorm":
         return False
     return (
@@ -193,9 +204,12 @@ class RxNorm(Source):
         to answer.
 
         The answer is whole or it is nothing. A name more than `MAX_CONCEPTS` concepts
-        carry finds nothing, and so does a brand when a concept's own record or its
-        list of ingredients is missing: part of an answer could show one ingredient
-        where the brand has two.
+        carry finds nothing. When a concept's own record, its list of ingredients, or
+        for a brand of one ingredient its branded drugs or one's vaccine code is
+        missing, or it has more than `MAX_PRODUCTS` branded drugs, `PartMissing` is
+        raised: part of an answer could show one ingredient where the brand has two, or
+        a drug where it is a vaccine, and a source that could not answer whole has not
+        said the name is no brand.
         """
         asked = " ".join(name.split())
         if not asked:
@@ -212,7 +226,7 @@ class RxNorm(Source):
                 return []
             fetched = self._get(f"{API}/rxcui/{identifier}/properties.json", ttl=KEPT_FOR)
             if fetched is None or not isinstance(fetched.payload, dict):
-                return []
+                raise PartMissing(f"RxNorm gave no record for concept {identifier} of '{asked}'.")
             brand = _brand(fetched.payload, asked)
             if brand is None:
                 continue
@@ -220,16 +234,13 @@ class RxNorm(Source):
                 f"{API}/rxcui/{identifier}/related.json", {"tty": INGREDIENT}, ttl=KEPT_FOR
             )
             if related is None or not isinstance(related.payload, dict):
-                return []
+                raise PartMissing(f"RxNorm gave no ingredients for the brand '{asked}'.")
             ingredients = _concepts(related.payload)
             # A brand of several ingredients identifies none, so it is asked no more.
             fetched_at = related.fetched_at
             products: dict[str, Any] = {}
             if len(ingredients) == 1:
-                asked_more = self._products(identifier)
-                if asked_more is None:
-                    return []
-                products, fetched_at = asked_more
+                products, fetched_at = self._products(identifier, asked)
             for ingredient in ingredients:
                 records.setdefault(
                     ingredient["rxcui"],
@@ -248,25 +259,28 @@ class RxNorm(Source):
                 )
         return list(records.values())
 
-    def _products(self, brand: str) -> tuple[dict[str, Any], datetime] | None:
+    def _products(self, brand: str, asked: str) -> tuple[dict[str, Any], datetime]:
         """The brand's branded drugs, and the vaccine code of each, asked until one is a
-        vaccine's, as fetched, with the time of the last answer. None when an answer is
-        missing, or the brand has more than `MAX_PRODUCTS`: without them a vaccine could
-        not be told from a drug."""
+        vaccine's, as fetched, with the time of the last answer. Raises `PartMissing`
+        when an answer is missing, or the brand has more than `MAX_PRODUCTS`: without
+        them a vaccine could not be told from a drug."""
         drugs = self._get(f"{API}/rxcui/{brand}/related.json", {"tty": BRANDED_DRUG}, ttl=KEPT_FOR)
         if drugs is None or not isinstance(drugs.payload, dict):
-            return None
+            raise PartMissing(f"RxNorm gave no branded drugs for the brand '{asked}'.")
         codes: dict[str, Any] = {}
         fetched_at = drugs.fetched_at
         products = _branded_drugs(drugs.payload)
         if len(products) > MAX_PRODUCTS:
-            return None
+            raise PartMissing(
+                f"The brand '{asked}' has {len(products)} branded drugs in RxNorm, more than"
+                f" the {MAX_PRODUCTS} asked about, so whether it is a vaccine is not known."
+            )
         for drug in products:
             answer = self._get(
                 f"{API}/rxcui/{drug}/property.json", {"propName": VACCINE_CODE}, ttl=KEPT_FOR
             )
             if answer is None or not isinstance(answer.payload, dict):
-                return None
+                raise PartMissing(f"RxNorm gave no vaccine code answer for branded drug {drug}.")
             codes[drug], fetched_at = answer.payload, answer.fetched_at
             if vaccine_codes({"product_codes": codes}):
                 break

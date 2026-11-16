@@ -325,8 +325,16 @@ def test_audit_list_shows_reads_that_overlap_a_claim(run, session: Session):
     assert said.index("overlap-0") < said.index("overlap-1")
 
 
-def under_substance(session: Session, slug: str, substance: str) -> None:
-    """File the claim's intervention under a substance of the registry of substances."""
+def under_substance(
+    session: Session,
+    slug: str,
+    substance: str,
+    *,
+    source: str = "gsrs",
+    payload: dict | None = None,
+) -> None:
+    """File the claim's intervention under a substance of the registry of substances,
+    or under an ingredient of the source of brands."""
     from thenwhat.db.models import Entity, EntitySubstance
     from thenwhat.domain import EntityType
 
@@ -338,10 +346,10 @@ def under_substance(session: Session, slug: str, substance: str) -> None:
     session.add(
         EntitySubstance(
             entity_id=entity.id,
-            source_name="gsrs",
+            source_name=source,
             external_id=substance,
-            url=f"https://gsrs.test/{substance}",
-            payload={"substance": {"_name": "Exampletinib"}},
+            url=f"https://{source}.test/{substance}",
+            payload=payload or {"substance": {"_name": "Exampletinib"}},
             fetched_at=NOW,
         )
     )
@@ -385,6 +393,40 @@ def test_a_reads_claim_under_a_live_claims_substance_and_condition_is_rejected(
     drafted_by_a_read(session, "after-archive")
 
     assert decide_prepared_lead_claim(session, "after-archive", now=NOW) is ReviewState.APPROVED
+
+
+VACCINE = {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "204"}]}}
+
+
+@pytest.mark.parametrize(
+    ("product_codes", "joined"),
+    [
+        # Two brands of one drug, which RxNorm lists under one ingredient: twins.
+        ({"2": {}}, True),
+        # Two makers' vaccines filed under one antigen: not one product.
+        ({"2": VACCINE}, False),
+        # Kept before vaccines were told apart: not known to be no vaccine.
+        (None, False),
+    ],
+)
+def test_two_brands_under_one_rxnorm_ingredient_are_twins_only_when_no_vaccine(
+    session: Session, product_codes, joined: bool
+):
+    """Scenario: Two vaccines filed under one antigen"""
+    for slug in ("first-vaccine", "second-vaccine"):
+        claim_with_articles(session, slug)
+        payload: dict = {"substance": {"rxcui": "777", "_name": "examplevirus glycoprotein"}}
+        if product_codes is not None:
+            payload["product_codes"] = product_codes
+        under_substance(session, slug, "777", source="rxnorm", payload=payload)
+    first = find_claim(session, "first-vaccine")
+    assert first is not None
+    record_decision(first, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    drafted_by_a_read(session, "second-vaccine")
+
+    decided = decide_prepared_lead_claim(session, "second-vaccine", now=NOW)
+
+    assert decided is (ReviewState.REJECTED if joined else ReviewState.APPROVED)
 
 
 def test_a_combination_never_shares_a_single_drugs_substance(session: Session):

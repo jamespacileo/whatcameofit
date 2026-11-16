@@ -32,6 +32,7 @@ from thenwhat.domain import Decider, EntityType, ReadOutcome, ReviewState
 from thenwhat.extract.names import is_a_name
 from thenwhat.resolve.service import combination_search
 from thenwhat.review.decisions import record_decision
+from thenwhat.sources.rxnorm import not_searched
 
 
 @dataclass(frozen=True, slots=True)
@@ -142,19 +143,23 @@ def claim_sharing_its_substance(session: Session, claim: Claim) -> str | None:
     None when this claim's intervention has no substance, or no such claim exists.
 
     An archived claim does not count, so a claim archived for a fault can be replaced.
+    A vaccine filed under its antigen by the source of brands shares nothing either.
     Nor does one named in another form, such as an oral or nasal form of the substance.
     A combination never shares a substance with anything: "bimagrumab plus semaglutide"
     is not semaglutide, whatever single substance its names were filed under.
     """
     if _is_a_combination(session, claim.id):
         return None
-    substance = session.scalar(
-        select(EntitySubstance.external_id)
+    kept = session.execute(
+        select(EntitySubstance.external_id, EntitySubstance.source_name, EntitySubstance.payload)
         .join(Entity, Entity.id == EntitySubstance.entity_id)
         .where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
-    )
-    if substance is None:
+    ).first()
+    # A vaccine's antigen is not its identity: two makers' vaccines can share one. Nor
+    # is an ingredient whose brand is not yet known to be no vaccine (`not_searched`).
+    if kept is None or not_searched(kept.source_name, kept.payload):
         return None
+    substance = kept.external_id
     others = session.execute(
         select(Claim.slug, Claim.id, Claim.indication)
         .join(Entity, Entity.claim_id == Claim.id)
