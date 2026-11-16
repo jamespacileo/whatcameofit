@@ -1,6 +1,6 @@
 {
   "checked_at": "2026-11-16T02:58:09.912437+00:00",
-  "released": false,
+  "released": true,
   "scope": "Ten verified article references and clinical-trial associations on the two existing daraxonrasib cards. This is not a comprehensive re-review of all published papers or statements.",
   "references_added": [
     {
@@ -231,12 +231,25 @@
     "removed": []
   },
   "validation": {
-    "public_rehearsal": "pending",
-    "standards_review": "pending",
-    "specification_review": "pending"
+    "public_rehearsal": "passed",
+    "strict_spec": "passed",
+    "standards_review": "clear: no actionable findings",
+    "specification_review": "clear: no actionable findings",
+    "released_checks": "passed: public data, all 258 exact mappings, eleven browser URL submissions, both changed cards and installed extension functions; native popup/storage unverified",
+    "sheet_readback": "passed: 209 edited values and 833 other inspected cells preserved, including formulas, formats and validation",
+    "corpus_cache_tests": "9 passed"
   },
   "remaining": [
     "Native Safari popup and browser-storage reuse remain unverified; automation still reports the Mac locked after the latest unlock confirmation.",
     "A019, A042 and other corpus gaps remain unresolved."
-  ]
+  ],
+  "release": {
+    "pr": 190,
+    "commit": "da97c75ebf5a1a660a5a0c6f15bc5fe4363fac23",
+    "ci_run": 43795920862,
+    "worker_id": "7b840088-0f90-498f-b1d1-3b3d660f7106",
+    "deployed_at": "2026-11-16T03:08:36Z",
+    "checks": "1562 pipeline, 656 site, 170 extension; lint/types and public rehearsal passed",
+    "evidence": "extension/test-corpus/runs/2026-11-16-daraxonrasib-coverage-release.json"
+  }
 }
