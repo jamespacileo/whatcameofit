@@ -299,3 +299,87 @@ def test_unarchive_refusal_explains_and_exits_1(run, claim_with_article):
 
     assert result.exit_code == 1
     assert "is not archived" in result.output
+
+
+# --- merging and renaming (openspec claims) -------------------------------------------
+
+
+@pytest.fixture
+def duplicate_claim(session: Session, claim_with_article):
+    """A second claim for the same indication under another name of the same antibody."""
+    return add_claim(
+        session,
+        slug="trg-035-tooth-agenesis",
+        headline="Antibody regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="TRG-035",
+        indication="tooth agenesis",
+    )
+
+
+def test_claim_merge_folds_the_duplicate_into_the_kept_claim(
+    run, session: Session, duplicate_claim
+):
+    result = run(
+        "claim",
+        "merge",
+        "tooth-regrowth-usag1",
+        "trg-035-tooth-agenesis",
+        "--reason",
+        "TRG-035 is the USAG-1 antibody",
+        "--drop-name",
+        "--as-assistant",
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Merged tooth-regrowth-usag1 into trg-035-tooth-agenesis, decided by the assistant" in (
+        result.output
+    )
+    assert "Moved 1 article" in result.output
+    assert [a.url for a in articles_of(session, duplicate_claim)] == [ARTICLE_URL]
+    merged = find_claim(session, "tooth-regrowth-usag1")
+    assert merged is not None and merged.merged_into_id == duplicate_claim.id
+
+
+def test_claim_merge_refusal_explains_and_exits_1(run, session: Session, duplicate_claim):
+    duplicate_claim.indication = "missing teeth"
+    session.flush()
+
+    result = run(
+        "claim", "merge", "tooth-regrowth-usag1", "trg-035-tooth-agenesis", "--reason", "same"
+    )
+
+    assert result.exit_code == 1
+    assert "The indications differ" in result.output
+    assert "--different-indication-accepted" in result.output
+    assert articles_of(session, duplicate_claim) == []
+
+
+def test_entity_rename_corrects_the_name_and_makes_the_search_due(
+    run, session: Session, claim_with_article
+):
+    result = run(
+        "entity",
+        "rename",
+        "tooth-regrowth-usag1",
+        "USAG-1 antibody",
+        "TRG-035",
+        "--old-is-description",
+        "--reslug",
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Renamed the intervention of trg-035-tooth-agenesis to TRG-035" in result.output
+    assert "'USAG-1 antibody' was dropped" in result.output
+    assert "thenwhat prepare --due" in result.output
+    claim = find_claim(session, "trg-035-tooth-agenesis")
+    assert claim is not None and claim.registry_search_due_at is not None
+
+
+def test_entity_rename_refusal_names_the_rule_and_exits_1(run, claim_with_article):
+    result = run(
+        "entity", "rename", "tooth-regrowth-usag1", "USAG-1 antibody", "TRG-035 (anti-USAG-1)"
+    )
+
+    assert result.exit_code == 1
+    assert "carries no brackets" in result.output

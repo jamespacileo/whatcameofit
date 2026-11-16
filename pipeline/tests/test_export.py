@@ -13,6 +13,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.corrections import merge_claims, rename_intervention
 from thenwhat.claims.entities import add_entity, add_synonym, entities_of, set_origin_paper
 from thenwhat.claims.entry import (
     add_article,
@@ -221,6 +222,43 @@ def test_archived_claim_leaves_the_export_and_is_listed(session: Session):
     assert export["claims"] == []
     assert export["archived"] == [{"slug": SLUG, "on": "2026-11-20"}]
     assert "wrong trial" not in json.dumps(export)
+
+
+def test_merged_claims_address_leads_to_the_kept_claim(session: Session):
+    """Scenario: Merged claim's address (openspec site-publishing)"""
+    new_claim(session)
+    new_claim(session, "tooth-regrowth-twin")
+    exported(session, now=EARLIER)
+    merge_claims(
+        session, "tooth-regrowth-twin", SLUG, reason="one antibody", by=Decider.HUMAN, now=NOW
+    )
+
+    export = exported(session, now=NOW)
+
+    assert [claim["slug"] for claim in export["claims"]] == [SLUG]
+    assert export["moved"] == [{"slug": "tooth-regrowth-twin", "to": SLUG}]
+    assert export["archived"] == []
+    assert "one antibody" not in json.dumps(export)
+
+    # Once the kept claim is taken down too, both addresses answer gone.
+    archive_claim(session, SLUG, reason="wrong trial", now=NOW)
+    export = exported(session, now=NOW)
+    assert export["moved"] == []
+    assert [entry["slug"] for entry in export["archived"]] == [SLUG, "tooth-regrowth-twin"]
+
+
+def test_renamed_claims_old_address_leads_to_its_new_one(session: Session):
+    """Scenario: Renamed claim's old address (openspec site-publishing)"""
+    new_claim(session)
+    exported(session, now=EARLIER)
+    rename_intervention(
+        session, SLUG, f"EX-1 antibody {SLUG}", "TRG-035", by=Decider.HUMAN, now=NOW, reslug=True
+    )
+
+    export = exported(session, now=NOW)
+
+    assert [claim["slug"] for claim in export["claims"]] == ["trg-035-tooth-agenesis"]
+    assert export["moved"] == [{"slug": SLUG, "to": "trg-035-tooth-agenesis"}]
 
 
 def test_claim_archived_before_it_was_published_is_not_listed(session: Session):

@@ -111,6 +111,10 @@ class Claim(Reviewed, Base):
             "(archived_at IS NULL) = (archive_reason IS NULL)",
             name="archive_has_reason",
         ),
+        CheckConstraint(
+            "merged_into_id IS NULL OR (archived_at IS NOT NULL AND merged_into_id <> id)",
+            name="merged_is_archived",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -140,7 +144,48 @@ class Claim(Reviewed, Base):
     # Approved by `thenwhat prepare` for a link lead's read, and held off the site until
     # the batch it came in has been audited (`thenwhat audit clear`). Never exported.
     awaiting_audit_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    # The claim this one was merged into (`thenwhat claim merge`). A merged claim is
+    # archived, stands for no intervention any more, and its address leads to that claim.
+    merged_into_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"), index=True)
+    # Set when the intervention gained or changed a name, so its registries are to be
+    # searched again (`thenwhat prepare --due`). Cleared by a registry search that succeeds.
+    registry_search_due_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class ClaimChange(Base):
+    """A correction to which claim stands for a treatment, or to what its intervention
+    is called: a merge of one claim into another, or a rename. Kept for good, with who
+    decided it. Behavior: openspec claims, "Merging duplicate claims" and "Renaming an
+    intervention"."""
+
+    __tablename__ = "claim_change"
+    __table_args__ = (
+        CheckConstraint("kind IN ('merge', 'rename')", name="kind_known"),
+        CheckConstraint("decided_by IN ('human', 'assistant')", name="decided_by_a_reader"),
+        CheckConstraint("(kind = 'merge') = (into_claim_id IS NOT NULL)", name="merge_has_target"),
+        CheckConstraint(
+            "(kind = 'rename') = (old_name IS NOT NULL) AND (kind = 'rename') ="
+            " (new_name IS NOT NULL)",
+            name="rename_has_names",
+        ),
+        CheckConstraint("kind = 'rename' OR former_slug IS NULL", name="former_slug_of_a_rename"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    # The claim that was merged away, or whose intervention was renamed.
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    kind: Mapped[str] = mapped_column(Text)
+    into_claim_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"))
+    old_name: Mapped[str | None] = mapped_column(Text)
+    new_name: Mapped[str | None] = mapped_column(Text)
+    # The slug the claim had before a rename made it a new one. The address stays taken,
+    # and leads to the claim's page wherever that now is.
+    former_slug: Mapped[str | None] = mapped_column(Text, unique=True)
+    # Private, like an archive reason: never exported.
+    reason: Mapped[str | None] = mapped_column(Text)
+    decided_by: Mapped[Decider] = mapped_column(_enum(Decider, "decided_by"))
+    decided_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
 class SourceArticle(Base):

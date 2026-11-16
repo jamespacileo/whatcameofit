@@ -2,13 +2,14 @@
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
 import typer
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.corrections import merge_claims
 from thenwhat.claims.csv_import import CsvErrors, import_csv
 from thenwhat.claims.entry import (
     EntryError,
@@ -20,6 +21,7 @@ from thenwhat.claims.entry import (
 )
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import open_session
+from thenwhat.domain import Decider
 from thenwhat.llm.errors import LlmError
 from thenwhat.sources.base import SourceError
 
@@ -104,6 +106,95 @@ def claim_rename_slug(
     with entry_session() as session:
         claim = rename_slug(session, slug, new_slug)
         out.print(f"Renamed {slug} to {claim.slug}.", markup=False)
+
+
+@claim_app.command("merge")
+def claim_merge(
+    from_slug: Annotated[str, typer.Argument(help="Slug of the duplicate, which is archived.")],
+    into_slug: Annotated[str, typer.Argument(help="Slug of the claim that is kept.")],
+    reason: Annotated[
+        str, typer.Option("--reason", help="Why they are one claim. Kept, never published.")
+    ],
+    different_indication_accepted: Annotated[
+        bool,
+        typer.Option(
+            "--different-indication-accepted",
+            help="Merge though the two indications are worded differently. Say in the"
+            " reason why they are one indication.",
+        ),
+    ] = False,
+    awaiting_audit_accepted: Annotated[
+        bool,
+        typer.Option("--awaiting-audit-accepted", help="Merge though one of the two awaits audit."),
+    ] = False,
+    drop_name: Annotated[
+        bool,
+        typer.Option(
+            "--drop-name",
+            help="The duplicate's intervention name is a description: do not keep it as"
+            " a synonym. Its synonyms are still kept.",
+        ),
+    ] = False,
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record the merge as decided by an AI assistant, not by the operator.",
+        ),
+    ] = False,
+) -> None:
+    """Fold a duplicate claim into the claim that is kept: the same intervention for the
+    same indication.
+
+    The duplicate's articles, promises, reported statements, link leads, the names of
+    its intervention and the papers, organisations and people its articles named move to
+    the kept claim. Its registry matches and evidence events do not: the kept claim's
+    registries are due to be searched again under every name it now has, so its status
+    lists only events found for it. The duplicate is archived, never deleted, and its
+    address leads to the kept claim after the next export.
+    """
+    with entry_session() as session:
+        done = merge_claims(
+            session,
+            from_slug,
+            into_slug,
+            reason=reason,
+            by=Decider.ASSISTANT if as_assistant else Decider.HUMAN,
+            now=datetime.now(UTC),
+            different_indication_accepted=different_indication_accepted,
+            awaiting_audit_accepted=awaiting_audit_accepted,
+            drop_name=drop_name,
+        )
+        by = ", decided by the assistant" if as_assistant else ""
+        out.print(f"Merged {done.merged.slug} into {done.kept.slug}{by}.", markup=False)
+        out.print(
+            f"Moved {_count(done.articles_moved, 'article')},"
+            f" {_count(done.promises_moved, 'promise')},"
+            f" {_count(done.statements_moved, 'reported statement')},"
+            f" {_count(done.leads_moved, 'link lead')} and"
+            f" {done.entities_moved} named papers, organisations or people.",
+            markup=False,
+        )
+        if done.articles_already_there:
+            out.print(
+                f"{_count(done.articles_already_there, 'article')} the kept claim already"
+                " had stayed behind.",
+                markup=False,
+            )
+        if done.names_gained:
+            out.print(f"Now also known as: {', '.join(done.names_gained)}.", markup=False)
+        if done.to_find_again:
+            out.print(
+                "Approved records left with the merged claim, to look for after the"
+                f" search: {', '.join(done.to_find_again)}.",
+                markup=False,
+            )
+        out.print(
+            f"Registry matches and evidence events were not moved. Run `thenwhat prepare"
+            f" {done.kept.slug}` (or `thenwhat prepare --due`), then export and deploy:"
+            f" /{done.merged.slug} will lead to /{done.kept.slug}.",
+            markup=False,
+        )
 
 
 @claim_app.command("import-csv")

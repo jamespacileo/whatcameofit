@@ -9,6 +9,7 @@ import typer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.corrections import rename_intervention
 from thenwhat.claims.entities import (
     add_entity,
     add_search_phrase,
@@ -228,6 +229,68 @@ def entity_synonym(
         entity = add_synonym(session, claim_slug, entity_name, synonym)
         names = ", ".join(entity.synonyms)
         out.print(f"{entity.name} is also known as: {names}.", markup=False)
+
+
+@entity_app.command("rename")
+def entity_rename(
+    claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
+    old_name: Annotated[str, typer.Argument(help="What the intervention is called now.")],
+    new_name: Annotated[str, typer.Argument(help="Its name alone: no maker, dose or brackets.")],
+    old_is_description: Annotated[
+        bool,
+        typer.Option(
+            "--old-is-description",
+            help="The old name is a description, a dose or carries brackets: drop it."
+            " Without this it is kept as a synonym.",
+        ),
+    ] = False,
+    reslug: Annotated[
+        bool,
+        typer.Option(
+            "--reslug",
+            help="Make the slug again by rule from the new name. The old address leads"
+            " to the new one.",
+        ),
+    ] = False,
+    as_assistant: Annotated[
+        bool,
+        typer.Option(
+            "--as-assistant",
+            help="Record the rename as decided by an AI assistant, not by the operator.",
+        ),
+    ] = False,
+) -> None:
+    """Correct the name of a claim's intervention. Its registries are due to be searched
+    again under the new name (`thenwhat prepare --due`)."""
+    with entry_session() as session:
+        done = rename_intervention(
+            session,
+            claim_slug,
+            old_name,
+            new_name,
+            by=Decider.ASSISTANT if as_assistant else Decider.HUMAN,
+            now=datetime.now(UTC),
+            old_is_description=old_is_description,
+            reslug=reslug,
+        )
+        by = ", decided by the assistant" if as_assistant else ""
+        kept = "kept as a synonym" if done.kept_as_synonym else "dropped"
+        out.print(
+            f"Renamed the intervention of {done.claim.slug} to {done.entity.name}{by}."
+            f" '{done.old_name}' was {kept}.",
+            markup=False,
+        )
+        if done.old_slug is not None:
+            out.print(
+                f"The slug is now {done.claim.slug}. After the next export and deploy,"
+                f" /{done.old_slug} leads to it.",
+                markup=False,
+            )
+        out.print(
+            f"Its registry search is due again: run `thenwhat prepare {done.claim.slug}`"
+            " or `thenwhat prepare --due`.",
+            markup=False,
+        )
 
 
 @entity_app.command("phrase")
@@ -721,6 +784,8 @@ def resolve_command(
             # model's recorded cost and the registries' cached answers are to be kept.
             failure = str(failed)
         else:
+            # The search this claim was due after a merge or a rename has now been made.
+            claim.registry_search_due_at = None
             _say_matches(
                 claim,
                 added,
