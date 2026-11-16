@@ -128,8 +128,10 @@
   },
   "validation": {
     "review": "pending",
-    "public_rehearsal": "pending",
-    "released_checks": "pending"
+    "public_rehearsal": "passed",
+    "released_checks": "pending",
+    "strict_spec": "passed",
+    "standards_review": "clear: no actionable findings"
   },
   "remaining": [
     "independent publication review and release checks",
