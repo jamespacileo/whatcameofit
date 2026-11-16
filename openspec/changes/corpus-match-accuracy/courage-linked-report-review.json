@@ -1,0 +1,33 @@
+{
+  "checked_at": "2026-11-16T03:51:30Z",
+  "released": false,
+  "corpus_id": "S036",
+  "claim_id": 571,
+  "slug": "semaglutide-trevogrumab-obesity",
+  "source_url": "https://investor.regeneron.com/news-releases/news-release-details/results-phase-2-courage-trial-demonstrating-potential-improve/",
+  "source_date": "2025-09-17",
+  "evidence": "The current public LinkedIn post links this Regeneron report and describes the two-drug COURAGE regimen. The report identifies semaglutide plus trevogrumab, including the 200/400 mg arms, for adults with obesity at BMI at least 30. Its 26-week results agree with the regimen and population of the existing Phase 2 card. The article also reports a separate triplet; the attached card remains explicitly the two-drug regimen.",
+  "change": "One news reference added through normal article entry. Shared address reading now unwraps LinkedIn /safety/go/ article links, preventing extension request composition from discarding them as same-site links. Safari version becomes 0.9.18. Clinical evidence, scores, summaries, statuses, post identity boundaries and condition equivalence rules remain unchanged.",
+  "efficiency": "The existing withLinkedArticle path checks published source references before requesting a page or model reading. A tracked reference returns its card without a page-reader or model request.",
+  "previous_fresh_result": "Release 5907850c2c5b returns NCT06299098 at 94% but no card for the freshly observed caption: its detailed condition wording differs from Obesity. This reference correction avoids treating condition strings as equivalent.",
+  "export_delta": {
+    "before": 171,
+    "after": 171,
+    "changed": [
+      "semaglutide-trevogrumab-obesity"
+    ],
+    "existing_cards_unchanged": 170,
+    "added": [],
+    "removed": []
+  },
+  "validation": {
+    "independent_reviews": "pending",
+    "public_rehearsal": "pending",
+    "released_check": "pending"
+  },
+  "regression": {
+    "before": "Two targeted tests failed: safety wrapper classified as a post, and its outgoing article discarded.",
+    "after": "Shared address and request-composition regressions pass; unsupported redirect targets remain excluded.",
+    "cache": "Content fingerprints include normalized outgoing links; the corrected article link changes the key before local answer reuse, so no blanket cache invalidation is required."
+  }
+}

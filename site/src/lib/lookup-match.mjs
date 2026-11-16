@@ -63,6 +63,7 @@ const WRAPPERS = [
   ["out.reddit.com", "", ["url"]],
   ["google.com", "/url", ["url", "q"]],
   ["linkedin.com", "/redir/", ["url"]],
+  ["linkedin.com", "/safety/go/", ["url"]],
   ["slack-redir.net", "", ["url"]],
   ["youtube.com", "/redirect", ["q"]],
   ["away.vk.com", "", ["to"]],
