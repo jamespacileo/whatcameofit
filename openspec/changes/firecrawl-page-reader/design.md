@@ -220,5 +220,5 @@ The reads still lost against the baseline, and where each belongs:
 | Daily Mail (10) | the site answers 403 to the reader | the service (ADR 0006): how the site is asked |
 | Yahoo (2 on this run, up to 6 on others) | an intermittent redirect to `consent.yahoo.com` ("Your privacy choices"); the page has no date, so a lead hitting it ends as cannot be read although a later read would succeed | the service: how a consent wall is answered |
 | USA Today (1) | the site answers 402 | the service |
-| Medscape (1) | its date is given as `9/6/2026`, which `published_day` does not read; day and month order is not guessed | open |
+| Medscape (1) | its `date` tag holds `9/6/2026`, the day the article was changed; its structured data gives `datePublished` 2026-09-05. `read_page` in the pipeline and `readPage` in the Worker now read tags that name publication, then structured `datePublished`, then tags named only `date` or `dc.date`. Day and month order in a slashed date is still not guessed | fixed in the pipeline, 2026-11-16 |
 | QMUL (1) | the reader's main content is 768 characters against 4,309 for the page; it also has no date | the service: its main-content cut |
