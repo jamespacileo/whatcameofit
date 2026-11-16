@@ -30,13 +30,19 @@ So the route is not "search the news for each trial". It is: give every trial a 
 - **One record for each trial serves both pages.** A claim page and the trial page state a trial's facts from the same stored record. When the daily load changes a trial a claim cites, the daily run's existing refresh takes that claim first, and no export is written until it has.
 - **Before pages can be served from the store**, a listing of a chosen set of trials is built into the static site, and the trial page that exists today, which reads the registry on request, may open for trials in that listing. Whether it does is the operator's decision.
 
+- **From the trial's end** (added 2026-11-17 at the operator's request): for a trial with recent registry activity and no linked article, a fingerprint is built by rule (number, acronym, codes, telling names, sponsor) and coverage is looked for by routes in a fixed order, free and exact first: the papers the registry record names; papers that carry the trial's number; stored leads matched on the fingerprint; a news search that carries about ten trials a request. Wires, paid search and a mentions index are specified, off, and wait for the operator.
+- **An experiment decided the shape of the news search.** In 19 requests: about ten trials fit one request before the index times out, not fifty; about one hit in twenty can be given back to a trial; of 28 tied hits judged, 10 named the right drug and none the right trial.
+- **Papers on a trial page.** The papers a registry record names, and papers whose own record carries the trial's number, are listed as papers. They say nothing of how a trial turned out and are never a news report.
+- **Every article any route finds goes through the path that exists**, unchanged: triage, the page reader, the same-claim decision, drafting, preparation, the audit hold.
+
 Not in this change:
 
-- A news search for each trial. The source allows 4,000 requests a week, and 209,439 trials are due.
+- A news search for each trial, one request a trial. The source allows 4,000 requests a week, and 209,439 trials are due.
 - Any new status, verdict or summary of how a trial turned out. "Results posted" is a registry fact. "Successful" is not a word.
 - Lighter publishing for claims this route drafts. The audit hold stands.
 - Claim pages served on request. They stay built (`cloudflare-source-of-truth`, decision 8).
-- Registries other than ClinicalTrials.gov, papers a record names, and regulators' decisions for a trial no claim cites.
+- Registries other than ClinicalTrials.gov, and regulators' decisions for a trial no claim cites.
+- Searching a press-release wire's own site, which their terms forbid, and an encyclopedia route, which 17 trials would use.
 - Readings by a model of a trial no claim cites.
 
 ## Capabilities
@@ -45,6 +51,7 @@ Not in this change:
 
 - `trial-pages`: what a trial is on the site without a claim: the record, the page, what it states and never states, its fixed wording, how it differs from a claim page, the listing built into the static site, and that both pages read one record.
 - `trial-report-links`: how stored leads are linked to trials with no request and no model: telling names, strong links, named sets, what a strong link may change, and what a read on this route becomes.
+- `trial-coverage`: looking for papers and news from a trial's own end: the fingerprint, which terms may be sent to a source, the two sets, the routes and their order, how a hit is tied to a trial, that a source is checked before it is asked, and that every article found goes through the existing path.
 
 ### Modified Capabilities
 
@@ -62,4 +69,4 @@ Not in this change:
 - **Code:** `pipeline/src/thenwhat/sources/clinicaltrials.py` and `backfill/registry_load.py` (fields, what a change makes due), `scripts/daily-run.sh` (refresh order, summary), `export/` (the hold), `backfill/link_screen.py` (strong links), `backfill/link_read.py` (order), `export/` (the trial listing), `site/worker/trials.mjs` and `site/src/lib/trial-links.mjs` (the page and the listing), the site's wording module (state phrases).
 - **Spend:** at most about 27 US dollars to triage and read every stored lead that could be read today; each set is a few dollars. A load starts no spend; the daily run's refresh spends as it does today, within its own limit.
 - **Guardrails restated:** no verdicts, no medical advice, no article text, no model decides a status, a lead is never published, the site owns all wording.
-- **Sources:** the registry's terms were checked on 2026-11-15 (`docs/sources.md`); the field list of the bulk load changes and is noted there before the client is changed.
+- **Sources:** the registry's terms were checked on 2026-11-15 (`docs/sources.md`); the field list of the bulk load changes and is noted there before the client is changed. PubMed's E-utilities, the wires' feeds, the paid news searches and Altmetric are not in `docs/sources.md`: what public pages said on 2026-11-16 is cited in `design.md`, decision 13, and each needs its dated entry before any client.

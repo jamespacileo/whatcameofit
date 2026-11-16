@@ -4,7 +4,7 @@ Each section is useful when it is done, without the sections after it. Sections 
 
 ## 1. Decisions before any build
 
-- [ ] 1.1 Put the ten open decisions of `design.md` to the operator; verify each answer replaces its question in `design.md`, and that a spec is revised where an answer differs from the recommendation it was written to
+- [ ] 1.1 Put the open decisions of `design.md` to the operator; verify each answer replaces its question in `design.md`, and that a spec is revised where an answer differs from the recommendation it was written to
 - [ ] 1.2 Write `docs/adr/0010`: a registry trial has a page of registry facts without a claim, which facts it may state, and that no word for how a trial turned out is used; verify it names the glossary line and the `CLAUDE.md` lines it supersedes
 - [ ] 1.3 Add trial page, trial listing, telling name, strong link and set to `GLOSSARY.md`, and revise "Registry trial" ("never exported"); verify the terms match the specs word for word
 - [x] 1.4 Reconcile section 2 and `specs/registry-corpus` with the change `daily-trial-refresh` (pull request 268, open on 2026-11-16); verify the outcome is recorded here before any task of section 2 starts. Done 2026-11-16, on paper: the daily step, the clean stop and "the daily run starts no step over loaded trials" are that change's and were removed from this one; a load here starts nothing; the refresh of a citing claim is the daily run's existing `refresh` step taking those claims first, not a new step, and it is not model-free; the export hold is on `thenwhat export`, since the daily run never exports. Table in `design.md`, decision 10. To check again if pull request 268 changes before it merges
@@ -62,7 +62,27 @@ Each section is useful when it is done, without the sections after it. Sections 
 - [ ] 6.4 Search every stored trial by identifier and by word from the store; verify tests, and that the static listing is no longer built
 - [ ] 6.5 Add the full-record step for trials of a named set whose record says results are posted, one registry request a trial and no model, and show primary outcomes from it by the `trial-facts` rules; verify with recorded fixtures and a test that a page without a full record names no outcome
 
+## 8. From the trial's end
+
+Free and deterministic first. Each task is useful when done; 8.1 to 8.6 send no request to a news source. Section 2's wider load comes first.
+
+- [x] 8.1 Run the batching experiment before specifying the news search; verify its request count, limits, attribution and a hand sample of 40 are in `design.md`. Done 2026-11-17: 19 requests logged, counted as 20; results under "The batching experiment"
+- [ ] 8.2 Correct the news index's allowance count by 20 requests for the week of 2026-11-16, and add to its entry in `docs/sources.md` the limits read from its source and the limits observed; verify the entry is dated
+- [ ] 8.3 Build a trial's fingerprint by rule from the stored record, with each term marked fit or not; verify tests for an acronym that is an ordinary word, one that is a condition's abbreviation, one with a digit, a code, and a trial with no fit term but its number
+- [ ] 8.4 Add the sets `active-recent` and `completed-with-results` with their dates as settings with no default; verify tests that each is refused before the wider load, that a cited trial is left out, and that an unknown name is refused with the list
+- [ ] 8.5 Attach the papers a stored record lists as result or derived, with the registry's kind, never background, and store a link the record gives on a listed outlet as a link lead; verify tests for each kind and for a link on an unlisted domain
+- [ ] 8.6 Treat a fit acronym and a registry number as strong links in the offline linking; verify tests for an acronym in a headline and a number in an address, and record here how many stored leads link to each set
+- [ ] 8.7 Write PubMed's entry in `docs/sources.md` from its current pages, including the usage-policy chapter that could not be read on 2026-11-16, then its client with recorded fixtures: one request a trial for the number in the publisher's field, "nothing found" stored; verify no paper with more than three numbers is attached and none that only mentions the number
+- [ ] 8.8 List attached papers on the trial page under the two fixed headings with paper facts; verify a test that a paper leaves the no-report line in place and that the page states nothing of what a paper found
+- [ ] 8.9 Build the batched news search as a step: fit terms only, the number of trials a request as a setting starting at ten, a request cut short asked again in halves, a timed-out request leaving its trials due, a hit tied only on headline or address, untied hits counted and dropped; verify with recorded fixtures on synthetic headlines
+- [ ] 8.10 Try title-only search on three requests of ten trials when the index is not slow, and record here whether it answers faster and how many hits tie; keep it only if it does
+- [ ] 8.11 Run the batched search for `completed-with-results`, then judge 40 tied hits by hand; record here the requests, time-outs, stories, ties and the judgement, and stop to tell the operator if fewer than half name the trial's own treatment
+- [ ] 8.12 Print the plan of `specs/trial-coverage` before any route runs; verify tests of a plan, of a route that is off, and of a route turned on with no dated entry for its source
+- [ ] 8.13 Verify with one test for each route that a found article is a lead and nothing more: no claim, source article, match or event exists until it is read, a rejected lead is not read, and a drafted claim is held awaiting audit
+- [ ] 8.14 Only on the operator's answers to open decisions 11, 13 and 14: write the entry in `docs/sources.md`, then the client, for a wire's feeds, a full-text search or a mentions index; verify each is off by default
+
 ## 7. Records
 
 - [ ] 7.1 Revise `CLAUDE.md`'s guardrails and layout: a trial page, the daily load and what it never starts; verify no line still says a registry trial is never shown
 - [ ] 7.2 When `social-link-backfill` is synced, fold the held-on-a-strong-link case and the reading order into `lead-reading`; verify `openspec validate` passes for both
+- [ ] 7.3 Add fingerprint, fit term and the two sets to `GLOSSARY.md`, and revise "Results paper" if papers that carry the number are shown; verify the terms match `specs/trial-coverage`

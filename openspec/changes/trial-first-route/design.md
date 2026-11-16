@@ -94,6 +94,122 @@ These are counts under the present, weak link. Under the strong link of decision
 - `site/src/pages/trial-index.json.ts` lists, for each cited identifier, the claims citing it. It is what the Worker checks an identifier against and what search answers an identifier from.
 - A listing of identifier, title, state, phases and start date, as JSON: about 73 MB for all 467,064 trials (50 MB of it titles), about 4.8 MB for the 25,898 under way in phase 2 or 3. Sizes are sums of field lengths, uncompressed.
 
+### From the trial's end: what was measured on 2026-11-16 and 17
+
+Added after the operator asked to close the gap from the trial's side: for a trial with recent activity and no linked article, build its fingerprint and look for coverage. Everything below was measured with throwaway scripts outside the repository, a generic client name, nothing written to the working database, and nothing kept but counts and addresses.
+
+**The two sets, counted at the registry:**
+
+| Set | Trials |
+| --- | --- |
+| Not started or under way, phase 2 or 3, record changed since 2025-01-01 | 23,328 (phase 3 alone: 7,302) |
+| Completed, primary completion since 2025-01-01, results posted | 2,114 (phase 2 or 3: 707) |
+| Completed at any time, results first posted since 2025-01-01 | 9,283 (phase 2 or 3: 3,207) |
+
+**What a fingerprint can hold.** 900 trials under way in phase 3 with a drug or biological intervention were drawn at random from the working database and their records read from the registry (9 requests). 439 (49%) have an acronym. 440 have an acronym or a development code that passed a first, loose rule. 200 of those were the experiment's trials: 138 with an acronym, 84 with a code, 51 with an invented drug name; 311 terms in all; 189 changed since 2025.
+
+**What the registry record itself links** (first page of 1,000 of each set, which is the registry's order and not a sample):
+
+| | Under way, phase 2 or 3, changed since 2025 | Completed phase 2 or 3, results first posted since 2025 |
+| --- | --- | --- |
+| Acronym | 373 | 331 |
+| A paper of the kind result | 30 | 67 |
+| A paper of the kind derived | 121 | 445 |
+| A paper of the kind background | 90 | 113 |
+| A see-also link | 120 | 239 |
+| Other names on an intervention | 384 | 580 |
+
+The see-also links go to sponsors' trial sites and hospitals (mdanderson.org, mskcc.org, merckclinicaltrials.com, bms.com, a file host for sponsors' result summaries). None of the twelve most common hosts in either set is a news outlet. "Derived" has no written definition on the registry's pages; its study page shows these papers under "From PubMed" and says they are filled in automatically and may or may not be about the study. It is in effect the paper index's own list of papers that carry the number.
+
+**Papers that carry the number:**
+
+| Asked | Trials with at least one paper | Papers |
+| --- | --- | --- |
+| Europe PMC, the number as a phrase in full text, 100 of the experiment's trials | 58 | 790, median 6 |
+| Europe PMC, the same, 99 completed phase 2 or 3 trials with results first posted since 2025 | 85 | 1,129, median 6 |
+| PubMed, the number in the field publishers supply it in (`[si]`), 60 of the experiment's trials | 9 | 14 |
+
+For one well-known trial the agent's check found 490 papers by full text and 15 in the supplied field. Full text finds every review that cites a trial; the supplied field finds the trial's own papers.
+
+**Stored leads matched on the fingerprints.** The 311 terms against the 559,092 stored leads in scope, as whole words in the title: 211 leads for 15 of the 200 trials. By kind of term: acronym, 192 leads for 8 trials, of which triage rejected 137 and passed 7; code, 1 lead, passed; drug name, 18 leads for 6 trials, 12 passed. The acronym hits are ordinary words that passed the loose rule.
+
+**An encyclopedia.** Wikidata holds 391,574 items with a ClinicalTrials.gov number. 17 of them have an English Wikipedia article.
+
+**The size of the wider record.** With every field this change now names (decision 3): 1,273 bytes a trial, 595 MB for the corpus. With planned primary outcomes too: 1,588 bytes, 742 MB. The ten fields kept today are 601.
+
+### The batching experiment
+
+**Question:** can one request to the news index carry many trials, and can each hit be given back to the right trial?
+
+**How.** 20 requests at most, 30 seconds apart, to Media Cloud's story search, with the operator's key read from the main checkout's settings and never printed, over the two configured collections (United States and United Kingdom national), for stories from 2025-01-01. A query was the trials' terms as quoted phrases joined by OR. A hit was given to a trial when its headline or its address held one of that trial's terms as whole words. **19 requests were sent and logged; a twentieth may have been in flight when the first run was stopped. Count 20 against the week's allowance.**
+
+**Limits, documented.** Read by the assistant's research agent on 2026-11-16 from Media Cloud's query guide, search API guide and public server source (the limits are in source code, not on a policy page): a query of at most 16,384 characters; at most 1,000 stories a page, with a token for the next page; a bare query searches full text; a title can be searched with `article_title:`; 2 requests a minute for an ordinary user; a default weekly quota written in the source as 10,000, where `docs/sources.md` records 4,000 from the pages read on 14 November. Its terms-of-use page answered 404 that day.
+
+**Limits, observed.**
+
+| Request | Trials | Terms | Query characters | Answer | Seconds | Stories |
+| --- | --- | --- | --- | --- | --- | --- |
+| Full text | 10 | 16 | 217 | 200 | 42.8 | 584 |
+| Full text | 10 | 12 | 171 | 200 | 31.7 | 81 |
+| Full text | 10 | 16 | 232 | 200 | 30.0 | 266 |
+| Full text | 10 | 14 | 192 | 200 | 39.6 | 105 |
+| Full text | 10 | 11 | 142 | 200 | 22.9 | 727 |
+| Full text | 25 | 36 | 510 | 200 | 56.1 | 845 |
+| Full text | 25 | 33 | 456 | 200 | 57.1 | 907 |
+| Full text | 50 | 68 | 956 | 504 | 60.2 | |
+| Full text | 50 | 74 | about 1,000 | 504 | 60 | |
+| Title only | 25 | 36 | 526 | 504 | 60.6 | |
+| Title only | 50 | 68 | 972 | 504 | 60.4 | |
+| Title only | 200 | 291 | 4,246 | 520 | 0.4 | |
+| Title only | 100 | 138 | 2,002 | 504 | 60.5 | |
+| Full text | 25 | 40 | 594 | 504 | 60.7 | |
+| Full text, stricter terms | 22 | 31 | 443 | 504 | 60.4 | |
+| Full text, from 2026 only | 50 | 68 | 956 | 504 | 60.2 | |
+| Title only, stricter terms | 167 | 241 | 3,563 | 400, "request line is too large" | 0.8 | |
+| Full text, the first request again | 10 | 16 | 217 | 504 | 60 | |
+| Full text, the fifth request again | 10 | 11 | 142 | 200 | 53.8 | 727 |
+
+What this says:
+
+- **The limit that binds is time, not length.** A gateway in front of the index gives up at 60 seconds. Ten trials answered in 23 to 43 seconds in the first quarter hour; 25 trials in 56 and 57 seconds, at the edge; 50 never. An hour later the index was slower: the same ten-trial request that took 22.9 seconds took 53.8, and the one that took 42.8 timed out. 8 of 19 requests were answered.
+- **The request line is limited before the query is.** A query of 3,563 characters (an address of about 4,700) was refused as too large and one of 4,246 broke the gateway, far under the documented 16,384. About 2,000 characters was accepted and then timed out.
+- **No answer was cut short.** The most stories in one answer was 907, under the page of 1,000.
+- **Title-only search was not measured.** All five title-only requests failed, four of them on time during the slow hour. Whether it is faster is still unknown.
+
+**Giving hits back to trials.** Stories are returned with a headline and an address and nothing that says which term matched. Headlines were held in memory only; those of the first run were lost when it was stopped, so the two figures below are what was kept.
+
+| Request | Stories | Tied to one trial | To several | To none | Trials of the 10 with a tied hit |
+| --- | --- | --- | --- | --- | --- |
+| First, 10 trials | 584 | 29 in all | | 555 | not kept |
+| Last, 10 trials | 727 | 46 | 0 | 681 | 2 |
+
+So about one hit in twenty can be given to a trial from what the index returns. The rest matched somewhere in the article's text, and without the text, which this project never takes, nothing says for which trial.
+
+**Forty hits judged by hand**, from the last request, by headline and outlet only: 28 drawn from the 46 tied hits and 12 from the 681 untied.
+
+| Judged | Of 40 |
+| --- | --- |
+| Tied, the trial's own treatment (all ten on one invented drug name, "MariTide") | 10 |
+| Of those, about that trial and not another trial of the same drug | 0 that the headline shows; the trial was the drug's study in Japan and the headlines are about its phase 2 results and its other phase 3 studies |
+| Tied, wrong (all eighteen on "NSCLC", a disease's abbreviation that one record gives as its acronym) | 18 |
+| Untied, with nothing in the headline to say which of the ten trials it is about | 12 |
+
+Precision of a tie to the right treatment: 10 of 28. To the right trial: 0 of 28. Both figures turn on two terms, one good and one bad, which is itself the finding: a batch is as noisy as its worst term, and one request cannot say which term that is.
+
+The outlets tell the rest: benzinga.com and prnewswire.co.uk carry most of the hits. Inside the national collections, a trial's code is found mainly in press-release copy.
+
+**What a week's allowance would cover**, at ten trials a request, the size that answered reliably when the index was not slow:
+
+| Set | Requests | Share of 4,000 a week | Hours at 30 seconds apart and about 40 seconds an answer |
+| --- | --- | --- | --- |
+| Under way, phase 2 or 3, changed since 2025 (23,328) | 2,333 | 58% | about 45 |
+| Phase 3 only (7,302) | 731 | 18% | about 14 |
+| Completed since 2025 with results (2,114) | 212 | 5% | about 4 |
+
+Only about half of those trials have a term fit to send, so the real figures are near half. About 230 requests are left this week after this experiment: enough for the completed set once, with nothing spare for the requests that time out.
+
+**Verdict.** One request can carry about ten trials, not fifty. The allowance then covers both sets inside a week, which a request for each trial could not. But what comes back is mostly not attributable, and what is attributable names a drug, not a trial. Batched search is worth building only after the routes that tie by the registry number, only with strict terms, and only to feed the reading path with headlines that triage then judges.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -102,6 +218,7 @@ These are counts under the present, weak link. Under the strong link of decision
 - Stored leads reach the trials they are about with no request for each trial, in an order the operator sets.
 - A trial page and a claim page never state different facts about one trial.
 - Every stored trial is kept current daily (`daily-trial-refresh`), and nothing that reads, drafts or publishes is started by that.
+- A trial with recent activity and no linked article is looked for from its own end, by routes that are free and exact before any that are paid or loose.
 - Each phase is useful when it ships, before the next.
 
 **Non-Goals:**
@@ -199,6 +316,8 @@ Results: "Results were first posted on the registry record on 3 March 2025." or 
 ### 3. The bulk load keeps the fields the page needs
 
 The list request gains the fields of the first table in decision 2. Not the planned primary outcomes (a third more again, and the page of a cited trial already has them from its full record), and not the results section.
+
+The routes of decision 12 need more of the record: the acronym, the official title, the sponsor's and other identifiers, collaborators, the papers and links the record lists, and the date it was first posted. With those the record is 1,273 bytes a trial, 595 MB for the corpus, measured on a page of 1,000.
 
 A full record is fetched for an uncited trial only by a step, never by a load, and only for trials in a set the operator has named, when the list response says results are posted. One registry request a trial, no model. Until it has run, the page states that results are posted and when.
 
@@ -347,6 +466,68 @@ A load reports how many trials were new and already stored (`daily-trial-refresh
 
 Considered for the static site: a file for every thousand identifiers (468 files of about 156 KB), so any stored trial is answered by identifier with one fetch. It gives no search by word and is retired by the store. Offered as open decision 2.
 
+### 12. From the trial's end: a fingerprint, two sets, and routes in a fixed order
+
+Decisions 4 to 8 start from stored leads and ask which trials they name. This starts from a trial and asks what names it. The two meet in the same place, the reading path, and neither replaces the other.
+
+**The fingerprint** is built by rule from the stored record (`specs/trial-coverage`): the registry number, the record's other identifiers, the acronym, development codes, telling names, the sponsor's name. No model.
+
+**A term is fit to send to a source only when it cannot be an ordinary word.** The experiment's worst term was "NSCLC", which one record gives as its acronym; the stored-lead match's worst were words like it. So an acronym is fit only when it is not on the word list, is not a word of any trial's conditions, is held by few other trials' titles, and is long enough or carries a digit or hyphen. The registry number is always fit. A term that is not fit can still confirm a hit another term found.
+
+**The sets** are the operator's two, named for what they hold and nothing else: `active-recent` (23,328 today) and `completed-with-results` (2,114 by the operator's wording; 9,283 if "recent" is read from the day results were posted, which is open decision 17). A trial a published claim already cites is left out. Both need the wider load.
+
+**The fields the routes need on a stored trial**, beyond decision 2's: `Acronym`, `OfficialTitle`, `OrgStudyId`, `SecondaryId` and `SecondaryIdType`, `CollaboratorName` and `CollaboratorClass`, `ReferencePMID` and `ReferenceType`, `SeeAlsoLinkURL` and `SeeAlsoLinkLabel`, `StudyFirstPostDate`. Not `ReferenceCitation`, which is free text and large. `InterventionOtherName` is already stored. With these the record is 1,273 bytes a trial. The list was given to the session that widens the load on 2026-11-16, so that one reload suffices.
+
+### 13. The routes, in order of preference
+
+Free and deterministic first. "Tie" is how a hit is given to a trial.
+
+| | Route | Yields | Tie | Cost | Terms | Measured |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | The registry record's own references and links | Papers. No news | The record names the paper | Nothing: the fields come with the wider load | ClinicalTrials.gov, in `docs/sources.md` | A result paper on 3% of the under-way page and 7% of the completed one; a derived paper on 12% and 45%. Links go to sponsors and hospitals, not outlets |
+| 2 | Papers that carry the number | Papers | The number, in the field the publisher supplied | One request a trial, free. PubMed: 3 a second with no key, 10 with a free key; more than 100 requests are asked for off-peak | PubMed's E-utilities are **not yet in `docs/sources.md`**. Pages read 2026-11-16: [NLM data guide](https://www.nlm.nih.gov/dataguide/eutilities/utilities.html), [NCBI policies](https://www.ncbi.nlm.nih.gov/home/about/policies/), [PubMed help](https://pubmed.ncbi.nlm.nih.gov/help/), [NLM download terms](https://www.nlm.nih.gov/databases/download/terms_and_conditions.html). The usage-policy chapter itself could not be read. Europe PMC is in `docs/sources.md` | 9 of 60 under-way phase 3 trials in PubMed's field. By full text in Europe PMC, 58 of 100 and 85 of 99, but that counts every paper that cites the trial |
+| 3 | Stored leads matched on the fingerprint | News | A fit term in the headline, then decisions 4 and 5 | Nothing | None: stored data | 19 leads for 7 of 200 trials on codes and drug names, 13 of them passed by triage. Acronyms under the loose rule: 192 leads, 137 rejected |
+| 4 | Batched news search | News, mostly press-release copy | A fit term in the headline or address. About 1 hit in 20 can be tied | About ten trials a request; both sets inside one week's 4,000 | Media Cloud, in `docs/sources.md`; its limits as read from its source are added there | See "The batching experiment" |
+| 5 | Press-release wires | Sponsors' releases. Already a listed outlet group | The release's page gives the number | Free, if allowed at all | **Their sites may not be searched by a program.** Read 2026-11-16: PR Newswire's [terms](https://www.prnewswire.com/terms-of-use/) forbid any robot or site search application; GlobeNewswire's [robots file](https://www.globenewswire.com/robots.txt) disallows `/search` and its customer terms forbid bots; EurekAlert's [robots file](https://www.eurekalert.org/robots.txt) disallows both its searches and its [terms](https://www.eurekalert.org/termsAndConditions) forbid storing its material in a retrieval system without permission; Business Wire refused every page, its robots file included | Not measured. What is left: the wires' own subject feeds for new releases (GlobeNewswire has one for clinical studies; PR Newswire has health feeds of 20 items), if their terms let a program read a feed, which is open decision 13; and the wire copy other routes already find |
+| 6 | Full-text news search by number or acronym | News | The page gives the number or a fit term | GDELT: free, one request every five seconds, 250 results. NewsAPI.ai: 90 US dollars a month for 5,000 searches, archive from 2014, five times the tokens for each year searched back. NewsAPI.org: 449 dollars a month for other than development | GDELT's DOC interface is in `docs/sources.md` as refusing every request from the operator's address on 2026-11-14; its documented window and its live behaviour disagree. The two paid services are **not in `docs/sources.md`**. Read 2026-11-16: [NewsAPI.ai plans](https://newsapi.ai/plans) and [terms](https://newsapi.ai/terms), which allow storing what is retrieved and do not count a site of headlines that link to publishers as a competitor; [NewsAPI.org pricing](https://newsapi.org/pricing) and [terms](https://newsapi.org/terms) | Not measured. Whether any of them indexes a registry number as a searchable word is unknown |
+| 7 | A paper-to-news mentions index | News about a trial's papers | The paper is the trial's by route 1 or 2; the index lists news that mentions the paper | Altmetric: by contract, no listed price | **Not in `docs/sources.md`.** Read 2026-11-16: [Altmetric's API pages](https://docs.altmetric.com/details-page-api/) and [its API offer](https://www.altmetric.com/solutions/altmetric-api/). Since 10 November 2025 every request needs a key. A free key is for a researcher's one-off academic project. Only the paid endpoint lists single mentions. Headlines and links of United Kingdom newspapers are withheld without a separate licence. Crossref's Event Data was [retired on 23 April 2026](https://www.crossref.org/deprecated/) | Not measured |
+| | Wikipedia and Wikidata | An entry about a named trial, and the news it cites | The entry carries the number | Free. Read 2026-11-16: [API etiquette](https://www.mediawiki.org/wiki/API:Etiquette), [User-Agent policy](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy), [query service manual](https://www.mediawiki.org/wiki/Wikidata_Query_Service/User_Manual) | Text CC BY-SA 4.0, data CC0 | **Dropped.** 391,574 items carry a registry number and 17 have an English Wikipedia article |
+
+Three things the order rests on:
+
+- **Routes 1 and 2 give papers, not news, and are the only routes whose tie is exact.** They are worth having for themselves: a trial page can list the papers of a trial that the news never reported (decision 15). They also feed route 7, should it ever be bought.
+- **Every news route ties by a word, and a word names a drug or a study, not a registry record.** The experiment's best term tied ten headlines to the right drug and none to the right trial. So a news hit is a lead with a candidate trial. It is never a trial's report by having been found.
+- **The wires are where the registry number is printed, and they may not be searched.** The practical way to them is through what already indexes them (routes 4 and 6) and through the page reader for one release at a time, which is the page reader's decision (`docs/adr/0006`).
+
+Considered: sending a set's trials one a request to learn which term matched. That is the search the allowance rules out. Considered: asking the index twice, the second time for the untied hits' terms one by one. It spends the allowance on stories that matched an ordinary word.
+
+### 14. Every article found goes through the path that exists
+
+A route's hit is a link lead or an article lead with the reason it was found, and nothing more. From there nothing is new: screening, triage, the page reader, extraction, the same-claim decision, drafting or joining, `thenwhat prepare --pending`, the audit hold (`docs/adr/0007`), `thenwhat audit clear`. A lead triage rejects is not read, whatever found it. The trial that led to the article is handed to preparation as a candidate, scored for the claim's indication, and never approved for having led there (decision 8). `specs/trial-coverage` states this as one requirement with a scenario for each step, because every route will be tempted to skip one.
+
+A search is planned and run by the operator for a set. No load and no daily run starts one, which is decision 10 and `daily-trial-refresh` said again.
+
+### 15. Papers on a trial page
+
+Decision 2 said a trial page states registry facts. A paper the registry record names is one, and a paper whose own record carries the trial's number is a fact of the paper index. Both are listed on the trial page under two fixed headings, with paper facts as `paper-facts` gives them and a link, and nothing about what a paper found. A paper never removes the line that no news report is linked.
+
+Not shown: a paper that only mentions the number in its text. For one trial that was 490 papers against 15.
+
+A paper of the registry's kind "derived" is shown under the paper index's heading and not as a paper the sponsor named, since the registry fills that list from PubMed by itself and says it may not be about the study.
+
+This replaces the earlier open decision that left papers out of this change.
+
+### 16. Order of building, and what each step costs
+
+1. With the wider load: fingerprints and fit terms for every stored trial. No request.
+2. Route 1, from stored fields. No request. Papers on trial pages once the paper index has their records (one request a paper, as `paper-facts` does now).
+3. Route 3, stored leads on fingerprints. No request. The reads it sends are counted in decision 7's plan.
+4. Route 2, after PubMed's entry is in `docs/sources.md`: 2,114 requests for the completed set, 23,328 for the active one, off-peak, free.
+5. Route 4, for `completed-with-results` first: about 100 to 210 requests of the week's 4,000. Kept only if a hand sample of its tied hits, taken as task 8.9 says, shows it worth the allowance.
+6. Routes 5 to 7 only on the operator's decisions 13, 14 and 11.
+
+Model spend comes only from the reads a route's leads lead to, at 2.62 dollars a thousand, inside the route's share of the ceiling (open decision 8). No search step spends on a model.
+
 ## Risks / Trade-offs
 
 - **A page of registry facts reads as an endorsement or a way in.** → No word about taking part, no location or contact, the site's notice that a registered trial is not a treatment option on every trial page, and the state worded as "under way".
@@ -359,6 +540,12 @@ Considered for the static site: a file for every thousand identifiers (468 files
 - **An export refused because of a backlog blocks an unrelated release.** → The refusal names the claims and the command; the operator can refresh those claims by hand at once.
 - **Opening the live-read page to a listing invites crawlers.** → Not indexed, not in the sitemap, the existing request limit, and only a chosen set until the store answers.
 - **The listing goes stale between builds.** → It carries the date the records were read; the page reads the registry itself.
+
+- **A batch's worst term fills the answer.** → Only fit terms are sent; a term that returns more than a set number of untied stories is marked unfit and not sent again; ten trials a request.
+- **The news index is slow or refuses.** → A request that times out leaves its trials due; a search stops at the allowance and says what is left; no other route waits on it.
+- **A paper is attached to the wrong trial.** → Only on the number in the publisher's field or on the registry's own list; never on a mention; never when a record carries more than three numbers.
+- **A source's terms are read loosely.** → No client before a dated entry in `docs/sources.md`; a source that forbids or does not say is not asked; the wires' searches are not asked at all.
+- **A found article is treated as the trial's report.** → It is a lead. Only a published claim that cites the trial removes "no news report is linked yet".
 
 ## Migration Plan
 
@@ -384,14 +571,35 @@ Decisions for the operator. Each has the assistant's recommendation first.
    - *Phase 3 of any state, 50,238, about 8 MB by proportion.*
    - *Every trial, as 468 files by identifier:* answers an identifier, no search by word.
    - *Nothing until the store.*
-3. **Which fields the load gains.** Recommended: those of decision 2's first table, 909 bytes a trial. The alternative adds planned primary outcomes at 1,224 bytes, so an uncited page can name what the trial set out to measure.
+3. **Which fields the load gains.** Those of decision 2's first table and decision 12's list are needed: 1,273 bytes a trial. Open is only whether planned primary outcomes are stored too, at 1,588 bytes. Recommended now: store them, because the reload is being done once, tonight, and storing a field decides nothing about showing it. Before, the recommendation was to leave them out, at 909 bytes against 1,224, so an uncited page can name what the trial set out to measure.
 4. **Does a claim drafted on this route wait for its audit?** Recommended: yes, as every backfill batch does (`docs/adr/0007`). The alternative, publishing by rule when the article's page names a registry number that preparation then approves, is what `docs/adr/0009` allows a reader's lead, and would remove the audit as the limit on this route.
 5. **Is a held lead read on a strong link?** Recommended: yes, for the set being worked. Otherwise only passed leads are read and the route changes order alone.
 6. **May search engines index a trial page with no claim?** Recommended: no, until the wording has been read on real pages; the page restates a public record. The alternative is the largest change to the site's size the project has considered.
 7. **The fixed phrases of decision 2**, especially "completed", "unknown" and the no-report line. The operator's to approve or reword.
 8. **The share of the ceiling for this route.** Recommended: 15 dollars a month, checked before each batch like any other.
 9. **How recent is "recently completed".** Recommended: primary completion in the last two years.
-10. **Should a trial page name the papers its registry record lists as results?** Not in this change. It is a way a trial gets something beyond registry facts with no search and no model (`Results paper` in the glossary), and is the natural next change.
+10. **Papers on a trial page** (decision 15). Now in this change. Open is which papers:
+   - *Papers the registry names as results, and papers whose own record carries the number in the publisher's field, under two plain headings (recommended).*
+   - *Only papers the sponsor listed as results:* exact and sparse, 3% to 7% of trials.
+   - *Also papers that mention the number anywhere in their text:* many more, mostly reviews. Not recommended.
+11. **Pay for a mentions index?** Altmetric is by contract with no listed price, its free key is for a researcher's one-off project, and it withholds United Kingdom newspapers' headlines without a further licence.
+   - *No, not now (recommended).* Routes 1 to 4 are free and unmeasured at size; a mentions index only helps trials that already have a paper.
+   - *Ask Altmetric for a quote and whether a public non-commercial site qualifies for the free key.* An email by the operator; costs nothing.
+   - *Buy.* Only after route 2 shows how many of the two sets have a paper at all.
+12. **Ask Media Cloud for a higher allowance, and whether batched queries are welcome?** Recommended: yes, one email by the operator. Their source gives a default of 10,000 a week where our note says 4,000, and the experiment's requests ran into their gateway's 60 seconds. Until answered, ten trials a request and the noted 4,000.
+13. **May the wires' subject feeds be read by a program?** Their searches may not. PR Newswire's terms forbid any automatic device; GlobeNewswire's robots file allows its feeds and its customer terms forbid bots; EurekAlert has no feed and forbids storing its material in a retrieval system.
+   - *Not until the operator has read the three terms pages and, for EurekAlert, asked AAAS (recommended).* The wires are already listed outlets, so their releases still arrive as shared links and through the news index.
+   - *Read GlobeNewswire's clinical-study feed only,* the one a robots file plainly allows.
+14. **Pay for a full-text news search?** NewsAPI.ai at 90 US dollars a month has terms that fit and an archive from 2014.
+   - *No, not now (recommended).* It would take nearly the whole ceiling's free part, and whether it finds a registry number is untested.
+   - *One month, for the completed set only,* after routes 1 to 4 have been measured, with ten trial numbers tried in its free evaluation first.
+   - *GDELT's free search instead.* It refused every request from the operator's address on 14 November; try ten numbers once more before anything is built.
+15. **Add PubMed's E-utilities as a source?** Recommended: yes. Free, exact, and the only place a trial's own papers are listed by its number. The operator registers the free key; the entry goes in `docs/sources.md` first.
+16. **The dates of the two sets.** Recommended: settings with no default, set to 2025-01-01 now, so the sets do not grow stale as written.
+17. **What "completed with results" means.**
+   - *Primary completion since the date and results posted: 2,114 trials (the operator's wording; recommended to start).*
+   - *Results first posted since the date, whenever the trial completed: 9,283 trials.* The posting is the recent activity, and a trial completed in 2022 whose results appeared last month is news now. Recommended as the second step.
+18. **Wikipedia and Wikidata.** Recommended: dropped. 17 trials have an article.
 
 Not for the operator, to settle while building:
 

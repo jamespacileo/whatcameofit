@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Registry trial record
-A registry trial SHALL be stored once per registry and registry identifier, with its title, conditions, interventions with their types and other names, phases, overall status, start date, primary completion date, completion date, each date's kind as the registry marks it (actual or estimated), the date the registry first posted the record and the date it last changed it, whether the record holds posted results and the date they were first posted, the enrolment count and its kind, the reason the registry gives for a stopped trial, the lead sponsor's class and name, the raw payload as the registry returned it, and the time it was fetched. The name of a lead sponsor the registry classes as an individual SHALL NOT be kept outside the raw payload.
+A registry trial SHALL be stored once per registry and registry identifier, with its title, official title, acronym, the sponsor's own study identifier and its secondary identifiers with their kinds, conditions, interventions with their types and other names, phases, overall status, start date, primary completion date, completion date, each date's kind as the registry marks it (actual or estimated), the date the registry first posted the record and the date it last changed it, whether the record holds posted results and the date they were first posted, the enrolment count and its kind, the reason the registry gives for a stopped trial, the lead sponsor's class and name, its collaborators' names and classes, the paper index numbers of the papers the record lists with the kind the registry gives each, the links the record gives with their labels, the raw payload as the registry returned it, and the time it was fetched. The name of a lead sponsor the registry classes as an individual SHALL NOT be kept outside the raw payload.
 
 #### Scenario: A trial is loaded
 - **WHEN** a trial is loaded from the registry
@@ -16,6 +16,10 @@ A registry trial SHALL be stored once per registry and registry identifier, with
 #### Scenario: A trial stored before the wider load
 - **WHEN** a trial stored with ten fields is loaded again by the wider load
 - **THEN** the same record gains the new fields and no second record is created
+
+#### Scenario: A record that lists papers
+- **WHEN** a loaded trial's record lists one paper of the kind result and two of the kind background
+- **THEN** the three paper numbers are stored with their kinds, and no citation text is
 
 #### Scenario: A trial sponsored by a person
 - **WHEN** a loaded trial's lead sponsor is classed as an individual
