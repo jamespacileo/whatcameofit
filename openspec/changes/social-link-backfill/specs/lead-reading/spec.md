@@ -306,11 +306,15 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** the claim is approved by rule, is marked awaiting audit, and is published, with the status its approved evidence gives, by the first export after its audit is cleared
 
 ### Requirement: A prepared batch waits for its audit
-Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
+Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. It SHALL then list each lead left identity unresolved because its treatment and condition overlap a claim that is now archived, with that claim and the lead's address, so the claim can be fixed and unarchived and the lead read again. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
 
 #### Scenario: Held until audited
 - **WHEN** an export runs while an approved, unarchived claim awaits audit
 - **THEN** the claim is not in the export, is not listed as archived, has no published time, and the export command says one approved claim was left out
+
+#### Scenario: A read that overlaps an archived claim
+- **WHEN** `thenwhat audit list` runs while a lead was left identity unresolved naming a claim that is now archived, and another naming a claim that is not
+- **THEN** the first lead is listed with the archived claim and its address, and the second is not
 
 #### Scenario: Audit passed
 - **WHEN** `thenwhat audit clear` names a claim awaiting audit and an export runs
@@ -377,11 +381,23 @@ A read SHALL offer the same-claim decision every claim whose intervention shares
 - **THEN** that claim does not stop the read from drafting a claim
 
 ### Requirement: An outlet that refuses the reader page after page is not asked again
-Before asking the page reader for a lead's page, the read SHALL count the outlet's leads whose page the site answered with 401. When there are at least five and none of the outlet's leads has given an outcome only a served page gives (added to a claim, a new claim, needs a vertical, not one treatment, business news, identity unresolved), the lead SHALL be finished as cannot be read, saying the outlet answered 401 for that many pages and served none, and the reader SHALL NOT be asked. Whether a site is asked stays the reader's decision (ADR 0006): this acts on the site's own answers, and only on 401.
+Before asking the page reader for a lead's page, the read SHALL count the outlet's leads whose page the site answered with 401 in the last 30 days. When there are at least five and none of the outlet's leads has given an outcome only a served page gives (added to a claim, a new claim, needs a vertical, not one treatment, business news, identity unresolved), the lead SHALL be finished as cannot be read, saying the outlet answered 401 for that many pages and served none, and the reader SHALL NOT be asked. Whether a site is asked stays the reader's decision (ADR 0006): this acts on the site's own answers, and only on 401. `thenwhat backfill retry-outlet <outlet>` SHALL put the outlet's leads refused with 401, or not asked because of those refusals, back to not read, and SHALL refuse when it has none.
 
 #### Scenario: An outlet that refuses the reader
 - **WHEN** five of an outlet's pages were answered 401 and none was served, and another of its leads is due
 - **THEN** that lead cannot be read, its reason names the five refusals, and no request is made
+
+#### Scenario: Refusals that have lapsed
+- **WHEN** an outlet's five 401 answers are all older than 30 days, and another of its leads is due
+- **THEN** that lead is asked of the reader
+
+#### Scenario: Asking an outlet again
+- **WHEN** the operator runs `thenwhat backfill retry-outlet` for an outlet with leads refused with 401 or left unasked
+- **THEN** those leads are due again, and the next run asks the reader for them
+
+#### Scenario: An outlet with nothing to retry
+- **WHEN** the operator runs `thenwhat backfill retry-outlet` for an outlet with no such lead
+- **THEN** the command exits with 1 and changes nothing
 
 #### Scenario: An outlet that served a page
 - **WHEN** an outlet has five 401 answers and one lead that was read from its page
