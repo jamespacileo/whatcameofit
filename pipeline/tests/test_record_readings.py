@@ -195,6 +195,7 @@ def test_explicit_offsets_after_treatment_progress_are_refused(time_frame: str):
     [
         "6 days after surgery",
         "6 days after the first dose",
+        "6 days after the first dose of cycle 1",
         "6 days after randomization",
         "At 6 days from baseline, then 12 days after the third cycle",
         "After the third cycle, assessment at month 6 from baseline",
@@ -814,6 +815,30 @@ def test_export_rechecks_legacy_offsets_without_changing_the_read_or_calling_a_m
     assert session.get(Reading, legacy.id) is legacy
     assert (trial_read.instructions_version, trial_read.refusals) == ("1", [])
     assert len(session.scalars(select(LlmUsage)).all()) == usage
+
+
+def test_first_dose_of_a_cycle_remains_stored_and_exported(
+    session: Session, claim: Claim, fixture_json
+):
+    outcomes = copy.deepcopy(OUTCOMES)
+    outcomes[0]["timeFrame"] = "within 6 days after the first dose of cycle 1"
+    store_record(
+        session,
+        claim,
+        study_with(fixture_json, outcomes, results_posted=True),
+        fetched_at=FETCHED_AGAIN,
+    )
+    run = read(
+        session, claim, Scripted(with_follow_up(number=6, unit="days", words="within 6 days"))
+    )
+    assert run.refused == {}
+    assert len(stored(session)) == 4
+    # The same guard is used for a current or earlier reading at export.
+    reads(session)[0].instructions_version = "1"
+    [trial] = exported(session)["claims"][0]["trials"]
+    duration = next(r for r in trial["readings"] if r["outcome"] == 0 and r["kind"] == "follow_up")
+    assert (duration["number"], duration["unit"]) == (6, "days")
+    assert trial["facts"]["primary_outcomes"][0]["time_frame"] == outcomes[0]["timeFrame"]
 
 
 def test_the_reading_bar_has_its_default(monkeypatch: pytest.MonkeyPatch):

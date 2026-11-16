@@ -104,8 +104,12 @@ def later_event_offset(number: int, unit: str, time_frame: str) -> bool:
         r"(?:(?:[2-9]|\d{2,})(?:st|nd|rd|th)?|second|third|fourth|fifth|sixth|last|final)"
     )
     # Allow short modifiers such as "monthly diet" or "treatment", without
-    # crossing punctuation into another clause or interpreting a schedule.
-    modifiers = r"(?:[a-z0-9][a-z0-9-]*\s+){0,3}"
+    # crossing another event noun or connecting phrase: "first dose of cycle 1"
+    # is anchored to the first dose, not the completion of cycle 1.
+    modifiers = (
+        r"(?:(?!(?:dose|infusion|session|cycle|course|administration|of|and|or|after|before|"
+        r"following|from|to|at|in|start|starting|beginning)\b)[a-z0-9][a-z0-9-]*\s+){0,3}"
+    )
     event = (
         rf"(?:{ordinal}\s+{modifiers}(?:cycle|course)\b"
         rf"|(?:cycle|course)\s+{ordinal}\b"
