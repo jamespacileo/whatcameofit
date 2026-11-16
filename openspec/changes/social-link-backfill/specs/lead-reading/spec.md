@@ -299,7 +299,7 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** no claim is created and the lead's failure names the slug
 
 ### Requirement: A read's claim is decided after it is prepared
-`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. While a step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
+`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. It SHALL then propose the claim's subject terms, kind and drug record, which its background cards come from; a failure there SHALL be reported and SHALL NOT keep the claim waiting, as cards are not evidence. While another step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
 
 #### Scenario: Prepared and named
 - **WHEN** `thenwhat prepare --pending` has run every step without failure for a claim a read drafted
@@ -320,8 +320,12 @@ Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give
 - **WHEN** `thenwhat audit clear` names a claim awaiting audit and one that does not
 - **THEN** the command exits with 1, names the claim that does not, and releases neither
 
+#### Scenario: Terms that could not be proposed
+- **WHEN** every step for a claim a read drafted succeeds except proposing its terms
+- **THEN** the failure is reported and the claim is decided by the rule for drafts
+
 #### Scenario: A step that failed
-- **WHEN** a step of `thenwhat prepare` fails for a claim a read drafted
+- **WHEN** a step of `thenwhat prepare` other than proposing terms fails for a claim a read drafted
 - **THEN** the claim keeps awaiting review, and the next `thenwhat prepare --pending` works on it again
 
 #### Scenario: A claim the operator entered

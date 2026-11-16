@@ -194,6 +194,12 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 12.4 Verify with tests: prepare marks the claim, the export skips it until cleared, and the command refuses a claim not held while clearing nothing.
 - [x] 12.5 Raise the export's schema version to 2 and have the site read only 2, so an export from pipeline code older than the hold stops the build; verify with a site test.
 
+## 13. Batch 1 audit faults: search names and cards
+
+Batch 1's audit (2026-11-16) archived 10 claims for missed or wrong trials. None had another name, and only 2 had GSRS codes; four were combinations the registry cannot find by their name as written ("aspirin plus avelumab" finds nothing, "(aspirin) AND (avelumab)" finds NCT04188119).
+
+- [x] 13.1 Search a combination's treatments together, joined by AND, besides its name as written; verify with a test that the joined search runs and its trial becomes a candidate.
+- [x] 13.2 Have `thenwhat prepare` run `terms` after `readings`, so every prepared claim gets its subject terms and background cards (part of 10.5); a terms failure is reported and does not keep the claim waiting.
 ## 15. Outlets that refuse the reader
 
 Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that answered 401 to every page: reuters.com (44) and wsj.com (39). By batch 2 they stood at 50 and 43, with no page served.

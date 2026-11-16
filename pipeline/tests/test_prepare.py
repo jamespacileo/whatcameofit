@@ -64,6 +64,7 @@ def test_a_claim_needs_its_unread_articles_read_then_a_search_then_a_fetch(sessi
         ["resolve", "one"],
         ["fetch", "one"],
         ["readings", "one"],
+        ["terms", "one"],
     ]
 
 
@@ -77,7 +78,12 @@ def test_a_decided_claim_is_searched_and_fetched_but_its_articles_are_not_read(s
     [plan] = plan_claims(session, ["one"])
 
     assert plan.unread_articles == []
-    assert steps_for(plan) == [["resolve", "one"], ["fetch", "one"], ["readings", "one"]]
+    assert steps_for(plan) == [
+        ["resolve", "one"],
+        ["fetch", "one"],
+        ["readings", "one"],
+        ["terms", "one"],
+    ]
 
 
 def test_without_names_every_claim_awaiting_review_is_planned(session: Session):
@@ -110,7 +116,9 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
 
     def fake_step(arguments: list[str]) -> tuple[bool, str]:
         ran.append(arguments)
-        failed = arguments[0] == "extract" and arguments[-1].endswith("/blocked")
+        failed = (arguments[0] == "extract" and arguments[-1].endswith("/blocked")) or (
+            arguments[0] == "terms" and arguments[-1].endswith("no-terms")
+        )
         return (not failed, "could not be read" if failed else "done")
 
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
@@ -130,7 +138,7 @@ def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_
     result, ran = run("prepare", "one")
 
     assert result.exit_code == 0, result.output
-    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings"]
+    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings", "terms"]
     assert "one" in result.output and "could not be read" in result.output
 
 
@@ -234,3 +242,16 @@ def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, sess
         if (claim := find_claim(session, slug))
     }
     assert states == {"searched": ReviewState.APPROVED, "unsearched": ReviewState.PENDING}
+
+
+def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):
+    """Scenario: Terms that could not be proposed"""
+    claim_with_articles(session, "no-terms", "https://news.example.org/a")
+    drafted_by_a_read(session, "no-terms")
+
+    result, _ = run("prepare", "no-terms")
+
+    assert result.exit_code == 0, result.output
+    assert "terms failed" in result.output
+    claim = find_claim(session, "no-terms")
+    assert claim is not None and claim.review_state is ReviewState.APPROVED
