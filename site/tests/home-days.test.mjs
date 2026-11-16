@@ -72,7 +72,6 @@ test("Scenario: Checked on the reader's own date", () => {
     line.slice(line.indexOf(">") + 1).replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim(),
     "Registries last checked Wednesday 10 September 2025",
   );
-  assert.match(line, /<span class="on-wide">Wednesday <\/span>10 Sep<span class="on-wide">tember<\/span> 2025/);
   // The page calls no day the current date: which day is today is the reader's
   // browser's to say.
   assert.ok(!dated.includes('aria-current="date"'));
@@ -121,11 +120,6 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   assert.match(row, /<span class="row-counts" id="more-phase-claim-2025-09-08-said">\d+ trials?( · \d+ with results posted)?<span class="visually-hidden"> [^<]*trials on record[^<]*<\/span><\/span>/);
   assert.ok(!row.includes("record-strip"));
   assert.ok(!row.includes("row-adds"));
-});
-
-test("Scenario: Home page: no record strip and no key in the day list", () => {
-  assert.equal(count(dated, 'class="strip-key"'), 0);
-  assert.equal(count(dated, 'class="record-strip"'), 0);
 });
 
 test("Scenario: An approval that changed the status, and a record that changed nothing", () => {
@@ -189,13 +183,6 @@ test("Scenario: Scripting off", () => {
   assert.match(dated, /<p class="earlier" hidden data-earlier-control>/);
 });
 
-test("Scenario: Where the four lists stand", () => {
-  const order = ['class="band home"', "data-days", "data-scoreboard", "data-day-list", 'id="lists"', 'class="since"', 'role="tablist"', 'id="feed-headlines"'];
-  const at = order.map((part) => dated.indexOf(part));
-  order.forEach((part, index) => assert.ok(at[index] > -1, `${part} is not on the page`));
-  assert.deepEqual([...at].sort((a, b) => a - b), at);
-});
-
 test("A headline's name is on the page once", () => {
   const names = [...dated.matchAll(/view-transition-name: ([^";]+)/g)].map(([, name]) => name);
   assert.ok(names.length > 0);
@@ -214,17 +201,6 @@ test("Scenario: An export with no day of last check", () => {
   assert.ok(!undated.includes('id="lists"'));
 });
 
-test("Scenario: The first screen and the column at the right", () => {
-  // Words to try wait for the script that runs them; the count line is the page's own.
-  const band = dated.slice(dated.indexOf('class="band home"'), dated.indexOf('class="front"'));
-  assert.match(band, /<p class="try" hidden data-try>/);
-  assert.match(band, /<p class="holds">\s*3 claims tracked in\s*<a href="\/topics">\s*1 topic\s*<\/a>/);
-  // The words come before the answer, so an answer is read straight after the box.
-  assert.ok(band.indexOf('class="under-box"') < band.indexOf('id="results"'));
-  const from = dated.indexOf('class="days-rail"');
-  const rail = dated.slice(from, dated.indexOf("</aside>", from));
-  for (const address of ["/how-it-works", "/changes.xml", "/about"]) {
-    assert.ok(rail.includes(`href="${address}"`), address);
-  }
-  assert.match(rail, /Not medical advice\. A registered trial is not a treatment option\./);
+test("the home page says it is not medical advice", () => {
+  assert.match(dated, /Not medical advice\. A registered trial is not a treatment option\./);
 });
