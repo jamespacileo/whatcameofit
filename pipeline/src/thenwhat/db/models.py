@@ -710,7 +710,9 @@ class LinkLead(Base):
     )
     # Set by triage (openspec lead-triage): the probability that the headline reports a
     # specific treatment for a specific condition, and the step version that gave it.
-    triage_score: Mapped[float | None]
+    # Indexed: reading picks its next lead by score, and without the index every pick
+    # matched the topic words against every in-scope title.
+    triage_score: Mapped[float | None] = mapped_column(index=True)
     triage_version: Mapped[int | None]
     # Set by reading (openspec lead-reading).
     read_outcome: Mapped[ReadOutcome | None] = mapped_column(_enum(ReadOutcome, "read_outcome"))
