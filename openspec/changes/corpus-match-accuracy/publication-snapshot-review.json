@@ -1,0 +1,202 @@
+{
+  "checked_at": "2026-11-16T00:59:10.050380+00:00",
+  "base": "6b72d585c88fa7d4ddfd9c11f1fb8660418fe5de",
+  "snapshot_source": "Normal export from all approved unarchived private claims; no manual snapshot splicing.",
+  "preview": false,
+  "before_cards": 157,
+  "after_cards": 164,
+  "before_unique_articles": 233,
+  "after_unique_articles": 262,
+  "added_cards": [
+    "670-nm-deep-red-light-exposure-age-related-decline-in",
+    "bionaut-medical-microrobot-drug-delivery-system-brainstem",
+    "electrically-accelerated-and-enhanced-remineralisation-tooth",
+    "fasting-mimicking-diet-mild-to-moderate-crohns-disease",
+    "live-attenuated-hsv-2-vaccine-herpes-simplex-virus-infection",
+    "lsd-microdosing-alzheimers-disease",
+    "lugdunin-mrsa-and-other-staph-infections",
+    "md3606-influenza",
+    "orforglipron-type-2-diabetes",
+    "pep005-hiv-infection",
+    "psilocybin-severe-treatment-resistant-depression",
+    "romidepsin-social-deficits-associated-with-autism-spectrum",
+    "semaglutide-obesity",
+    "tirzepatide-overweight-or-obesity",
+    "tulsa-prostate-cancer",
+    "uterus-transplant-inability-to-give-birth-because-of-an",
+    "vagus-nerve-stimulation-persistent-vegetative-state",
+    "very-low-calorie-diet-type-2-diabetes"
+  ],
+  "removed_cards": [
+    "bacteroides-vulgatus-metabolite-type-2-diabetes",
+    "compounded-semaglutide-obesity",
+    "metabolite-of-bacteroides-vulgatus-type-2-diabetes",
+    "microdosing-ozempic-obesity",
+    "mounjaro-and-zepbound-prevention-of-diabetes-in-people-with",
+    "ozempic-diabetic-kidney-disease",
+    "ozempic-kidney-deterioration-in-people-with-type-2-diabetes",
+    "semaglutide-addiction",
+    "semaglutide-anxiety-and-depression",
+    "wegovy-obesity",
+    "wegovy-obesity-related-heart-failure-with-preserved-ejection"
+  ],
+  "changed_shared_cards": {
+    "brp-obesity": [
+      "organisations"
+    ],
+    "mdma-post-traumatic-stress-disorder-ptsd": [
+      "trials"
+    ],
+    "remdesivir-covid-19": [
+      "status"
+    ],
+    "semaglutide-2-4-mg-weekly-heart-failure-with-preserved": [
+      "indication",
+      "articles"
+    ],
+    "semaglutide-chronic-kidney-disease-in-people-with-type-2": [
+      "first_reported_date",
+      "articles"
+    ]
+  },
+  "incidental_changes": {
+    "brp-obesity": "Only the shared Stanford University ROR read_at timestamp changed during normal diet preparation; identity and roles unchanged.",
+    "remdesivir-covid-19": "The no-signal anniversary moved from four to five years at midnight; stage and explaining events unchanged.",
+    "mdma-post-traumatic-stress-disorder-ptsd": "Normal export removes three unsafe legacy later-session duration readings under released PR181; raw registry wording and other readings remain."
+  },
+  "preserved_duplicate_article_links": [
+    {
+      "url": "https://finance.yahoo.com/news/shares-dialysis-providers-drop-ozempics-100259954.html",
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2"
+    },
+    {
+      "url": "https://www.ctvnews.ca/health/article/health-canada-approves-ozempic-to-reduce-kidney-deterioration-in-people-with-diabetes/",
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2"
+    },
+    {
+      "url": "https://www.cnbc.com/2025/01/28/novo-nordisks-ozempic-wins-fda-approval-for-chronic-kidney-disease.html",
+      "slug": "semaglutide-chronic-kidney-disease-in-people-with-type-2"
+    },
+    {
+      "url": "https://www.biospace.com/novo-s-wegovy-shows-stronger-weight-loss-effects-in-women-than-men-study",
+      "slug": "semaglutide-2-4-mg-weekly-heart-failure-with-preserved"
+    },
+    {
+      "url": "https://abcnews.go.com/Health/wireStory/lost-weight-wegovy-stop-taking-109831498",
+      "slug": "semaglutide-obesity"
+    }
+  ],
+  "excluded_associations": [
+    {
+      "slug": "psilocybin-severe-treatment-resistant-depression",
+      "trial_id": "NCT07164755"
+    },
+    {
+      "slug": "psilocybin-severe-treatment-resistant-depression",
+      "trial_id": "NCT07373535"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT06588296"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT06606821"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT06737042"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT07078838"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT07619508"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT07931196"
+    },
+    {
+      "slug": "tulsa-prostate-cancer",
+      "trial_id": "NCT05917860"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT01945840"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT04957589"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT05491005"
+    },
+    {
+      "slug": "orforglipron-type-2-diabetes",
+      "trial_id": "NCT06993792"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT06143956"
+    },
+    {
+      "slug": "tirzepatide-overweight-or-obesity",
+      "trial_id": "NCT07701005"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT04363710"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT03225339"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT04805996"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT05744232"
+    },
+    {
+      "slug": "very-low-calorie-diet-type-2-diabetes",
+      "trial_id": "NCT07270068"
+    },
+    {
+      "slug": "semaglutide-obesity",
+      "trial_id": "NCT07701005"
+    },
+    {
+      "slug": "semaglutide-obesity",
+      "trial_id": "NCT05870462"
+    }
+  ],
+  "remaining_unmapped_archived_articles": [
+    "https://www.cnbc.com/2023/09/10/ozempic-wegovy-drinking-smoking-what-we-know.html",
+    "https://www.nytimes.com/2024/08/06/well/ozempic-semaglutide-overdose-risks.html",
+    "https://www.nytimes.com/2024/11/13/well/ozempic-prediabetes.html",
+    "https://www.nytimes.com/2024/12/05/well/ozempic-microdose-weight-loss.html",
+    "https://www.sciencealert.com/scientists-may-have-discovered-a-natural-alternative-to-ozempic",
+    "https://www.sciencealert.com/scientists-may-have-found-a-natural-alternative-to-ozempic",
+    "https://www.theguardian.com/science/2026/mar/18/glp-1-type-2-diabetes-drugs-semaglutide-anxiety-depression"
+  ],
+  "verification": [
+    "22 excluded associations absent from approved matches and public trials",
+    "14 reviewed semaglutide obesity trials retained",
+    "NCT05606471 restored for VLCD based on independent primary-report evidence",
+    "A066 exactly NCT04147585, assistant approval and 86 registry participants preserved separately from 97 in article",
+    "A066 has no duration reading detached from its third-cycle anchor; three approved statements only",
+    "Theravax candidate identity and obesity-related HFpEF population preserved"
+  ],
+  "limitations": [
+    "Private/normal export validation only until released checks finish.",
+    "Six association holds remain excluded; they are not labelled proven mismatches.",
+    "Seven other archived article URLs have no verified active survivor; no whole-corpus completeness claim.",
+    "Native Safari and native Sheet layout remain unverified while the Mac is inaccessible."
+  ]
+}
