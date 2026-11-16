@@ -114,6 +114,45 @@ ISRCTN, EU CTIS, WHO ICTRP, PubMed E-utilities, NIH RePORTER, UKRI Gateway to Re
 - **Behavior (observed 2026-11-12):** three made-up trial records as three `choice` questions were answered in 1.96 seconds using 709 input tokens: the right option for each, probabilities summing to 1. A question the model declines comes back as `{"type": "refusal"}`; the pipeline treats it as no answer.
 - **How the pipeline uses it:** as the decision backend `openai-decisions` (`DECISION_BACKEND`), for scoring candidate records and any other bounded choice. The probabilities are the model's own estimate and are not calibrated, like the other backend's.
 
+- **Read again 2026-11-16**, from the same guide, for what else it offers. Not tried.
+  - **Questions a request:** 1 to 400, up from 200 in the public beta. Triage sends 20.
+  - **Prompt caching:** the guide says Decisions places an implicit cache breakpoint at the end of the shared `input`, so that repeated requests with the same shared input "receive discounted cache-read pricing". `usage.input_tokens_details` reports `cached_tokens` and `cache_write_tokens`. A cache write is charged at its own rate. Breakpoints are not supported in a question's instructions, so wording that rides with each question is never cached, which is how triage is asked today.
+  - **Regions and retention:** Zero Data Retention for eligible customers; regional processing in the United States and Europe (EEA and Switzerland).
+
+## OpenAI platform features read for the backfill (none in use)
+
+Read on 2026-11-16 from OpenAI's guides, to see what could lower the cost or raise the rate of the backfill (`openspec/changes/work-reuse-and-metrics`). Nothing here is in use and no request was sent. Prices are on OpenAI's pricing page and were not read; read them, and the terms, before any of this is tried.
+
+### Prompt caching
+
+- **Guide:** <https://developers.openai.com/api/docs/guides/prompt-caching>
+- **What it is:** a request whose prompt begins with a prefix an earlier request already sent is billed at a reduced cached-input rate for that prefix, "discounted up to 95%". It applies by itself; no setting turns it on.
+- **Limits:** the whole prefix must match. A prefix shorter than the minimum cacheable length is not cached: 1,024 tokens for the newest models, and varying with the request for earlier ones. Entries are kept for a minimum lifetime of about 30 minutes, up to 24 hours with extended retention. The guide says the cache holds the model's internal state for the prefix, not the prompt's text, for at most 24 hours.
+- **For the pipeline:** only if the triage wording is moved into the shared input and is long enough. To be measured on the fixed sample before any change (`work-reuse-and-metrics`, design decision 6).
+
+### Batch API
+
+- **Guide:** <https://developers.openai.com/api/docs/guides/batch>
+- **What it is:** requests collected in one file and answered within 24 hours, at "50% lower costs", from "a separate pool of significantly higher rate limits".
+- **Limits:** up to 50,000 requests and 200 MB a batch; up to 2,000 batches an hour.
+- **Endpoints listed:** Responses, Chat Completions, Embeddings, Moderations, and image generation and edits. **The Decisions endpoint is not listed**, so triage and match scoring could not use it as read.
+- **For the pipeline:** the extraction call of a backfill read, where nobody is waiting. **Not to be tried before this is settled:** a batch's input file holds each request's content at OpenAI until it is processed, and for a read that content is the article's text. The project stores article text nowhere. Whether a file awaiting processing at a provider counts, how long it is kept, and whether Zero Data Retention covers it were not established.
+
+### Embeddings
+
+- **Guide:** <https://developers.openai.com/api/docs/guides/embeddings>
+- **What it is:** a list of numbers for a text, close for texts that mean similar things. Can be sent through the Batch API.
+- **For the pipeline:** grouping the same story's headlines across outlets where the wording differs, and as an input to the prefilter if a linear model over words cannot hold the required recall. A headline as shared is what would be sent; it is kept privately with its lead today and reaches no export.
+
+### Read and set aside
+
+- **Fine-tuning:** the guide says the platform is being wound down and is closed to new users. No triage model can be tuned there.
+- **Evals:** the guide says the Evals platform is being deprecated. Evaluation stays in the project's own commands.
+- **Fast mode** (called priority processing until 30 July 2026): faster at a premium for each token. Not for a backfill.
+- **Flex processing:** cheaper and slower, in beta on some models, and a request may be refused when capacity is short. Possible later for work that is neither urgent nor batchable.
+- **Web search tool:** the model fetches pages itself. Not used: only the page reader asks a news site (`docs/adr/0006`).
+- **File search and vector stores:** would hold content at OpenAI. Not used.
+
 ## Social media posts
 
 A reader may give the address of a post in place of an article's. A post is read only on a platform that offers posts to software without signing in, and only that one post, once, when a reader asks. The text is shown to the model and dropped; who wrote the post is never read out. Code: `site/worker/post.mjs`, `thenwhat.extract.post`.
