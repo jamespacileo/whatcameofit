@@ -13,6 +13,10 @@ The pipeline's address key and the article key of the site and the extension SHA
 - **WHEN** a rule is added to the pipeline's key and not to the site's
 - **THEN** a case for it in the shared file fails the site's test
 
+#### Scenario: A difference only one side would see
+- **WHEN** an address has parameters whose order depends on a locale, or a path with characters a browser and the pipeline escape differently
+- **THEN** the shared file holds a case for it and both give its key
+
 #### Scenario: An address that only looks like another
 - **WHEN** two addresses differ in the letter case of the path, in a page suffix, or in a parameter that names the article
 - **THEN** they have different keys
@@ -62,16 +66,28 @@ The address key SHALL carry a version that is raised with every change that give
 - **WHEN** a lead's new key is the key of another lead
 - **THEN** one lead remains, with the shares of both and the earlier first share, and a share both held is kept once
 
+#### Scenario: What screening found for either lead is kept
+- **WHEN** two leads are merged and screening had found stored records for the one removed
+- **THEN** the lead that remains holds them, each once
+
+#### Scenario: A run is under way
+- **WHEN** `--apply` is given while a step worked on a link lead in the last ten minutes
+- **THEN** it is refused and nothing is changed
+
 #### Scenario: Bringing the leads up to date twice
 - **WHEN** it is run again after it finished
 - **THEN** no lead is looked at
 
 ### Requirement: Rekeying pays for nothing
-Of two leads that are one article, the lead kept SHALL be the one that has come furthest: read, else scored, else screened, else the older. Bringing a lead to the current key SHALL NOT make it due again for a step that asks a source or a model. A step that asks nothing SHALL be due again when what it reads changed.
+Of two leads that are one article, the lead kept SHALL be the one that has come furthest: one that drafted a claim, else one that joined a claim, else read, scored, screened, else the older. The lead that remains SHALL point at the claim and source article that either lead pointed at. Bringing a lead to the current key SHALL NOT make it due again for a step that asks a source or a model. A step that asks nothing SHALL be due again when what it reads changed.
 
 #### Scenario: A lead that was scored is not scored again
 - **WHEN** a scored lead is merged with an unscored one, or takes a new key, and triage is run again
 - **THEN** no model call is made for it and it keeps its score
+
+#### Scenario: One of the two leads drafted a claim
+- **WHEN** an older lead was read and made nothing, and a newer lead of the same article drafted a claim
+- **THEN** the newer lead is the one kept, with its claim and source article
 
 #### Scenario: Screening looks again
 - **WHEN** a screened lead takes a new key

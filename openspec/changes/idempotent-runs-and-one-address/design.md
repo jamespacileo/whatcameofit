@@ -87,12 +87,58 @@ The rules added, each in both files and in the cases file:
 - **Tracking parameters by name**, everywhere: `_r`, `pgtype`, `wt.*`, `mbid`, `intcid`, `fsrc`, `trk`, `_hsenc`, `_hsmi`, `mkt_tok`, `gbraid`, `postshare`, `wpisrc`, `sharetoken` and the rest of the list in the code. Each was seen separating two leads of one article.
 - **An outlet's own parameters, on that outlet only**: `action`, `module`, `region`, `version`, `hp`, `referer`, `nl`, `te`, `src`, `pagewanted` on nytimes.com; `mod` on wsj.com and statnews.com; `single_page` on theatlantic.com; `currentpage` on newyorker.com; `tid`, `noredirect` on washingtonpost.com; `frsc`, `cid1` on economist.com. On any other site `index.php?action=view` keeps its parameter.
 - **A parameter name that kept the `amp;` of an `&amp;`** is read without it.
-- **Hosts that serve one site under two names**, by a fixed list of pairs each seen serving one article at one path: editions (`uk.` and `nordic.businessinsider.com`, `us.cnn.com`, `eu.usatoday.com`, `europe.newsweek.com`), mobile and text forms (`lite.`, `www-m.`, `edition-m.cnn.com`, `text.npr.org`), earlier names (`motherboard.` and `tonic.vice.com`, `beta.` hosts of four outlets, `next.ft.com`, `x.com` for `twitter.com`, `old.`, `new.` and `np.reddit.com`). No rule for a label in general: `lite.` or `uk.` on a site not listed stays its own host.
-- **A leading or trailing dot on the host, doubled slashes in the path, and the letter case of an escape.**
+- **Hosts that serve one site under two names**, by a fixed list of pairs each seen serving one article at one path: editions (`uk.` and `nordic.businessinsider.com`, `us.cnn.com`, `eu.usatoday.com`, `europe.newsweek.com`), mobile and text forms (`lite.`, `www-m.`, `edition-m.cnn.com`, `text.npr.org`), earlier names (`motherboard.` and `tonic.vice.com`, `beta.` hosts of four outlets, `social.techcrunch.com`, `institutions.newscientist.com`, `prime.nautil.us`, `next.ft.com`, `x.com` for `twitter.com`, `old.reddit.com`). No rule for a label in general: `lite.` or `uk.` on a site not listed stays its own host. The table under "Evidence for each host pair" gives the count for every pair; a pair with no article seen at one path on both hosts is not on the list (`new.` and `np.reddit.com` were proposed and dropped: no lead is on either).
+- **A leading or trailing dot on the host, doubled slashes in the path, and the letter case of an escape.** The dot is removed before anything else reads the host, so a YouTube address with one is still its video.
+- **Two differences between the two files that no case covered**, found in review and closed here. Parameter names are now sorted by character code in both (the site used the locale's order, which puts `_` and `-` before digits; the pipeline used a caseless order). The path is now escaped alike: the site escapes `[ ] | ^`, which a browser leaves as they are, and the pipeline works out `.` and `..` parts and reads `\` as `/`, as a browser does. Each has a case in the shared file.
 
 `KEY_VERSION` in `address.py` is raised with any change that gives a stored address another key. It is 2 with this change.
 
 Alternative considered: dropping every parameter on listed news outlets. It folds 7,913 leads instead of 5,367 but would fold `nytimes.com/movie/review?res=…` pages into one. Not taken.
+
+### Evidence for each host pair
+
+Leads on the first host, and how many of their paths are also the path of a lead on the second (working database, 2026-11-16):
+
+| Host | Counted as | Leads | Same path on both |
+| --- | --- | --- | --- |
+| `bbc.co.uk` | `bbc.com` | 10,482 | 8 |
+| `us.cnn.com` | `cnn.com` | 40 | 14 |
+| `lite.cnn.com` | `cnn.com` | 1,132 | 4 |
+| `www-m.cnn.com` | `cnn.com` | 53 | 20 |
+| `edition-m.cnn.com` | `cnn.com` | 36 | 10 |
+| `uk.businessinsider.com` | `businessinsider.com` | 614 | 164 |
+| `nordic.businessinsider.com` | `businessinsider.com` | 58 | 12 |
+| `beta.washingtonpost.com` | `washingtonpost.com` | 23 | 12 |
+| `beta.techcrunch.com` | `techcrunch.com` | 26 | 11 |
+| `social.techcrunch.com` | `techcrunch.com` | 17 | 9 |
+| `eu.usatoday.com` | `usatoday.com` | 54 | 13 |
+| `text.npr.org` | `npr.org` | 244 | 10 |
+| `motherboard.vice.com` | `vice.com` | 3,182 | 18 |
+| `tonic.vice.com` | `vice.com` | 22 | 2 |
+| `europe.newsweek.com` | `newsweek.com` | 36 | 3 |
+| `institutions.newscientist.com` | `newscientist.com` | 4 | 4 |
+| `beta.scmp.com` | `scmp.com` | 15 | 3 |
+| `beta.latimes.com` | `latimes.com` | 18 | 2 |
+| `next.ft.com` | `ft.com` | 55 | 1 |
+| `prime.nautil.us` | `nautil.us` | 14 | 8 |
+| `x.com` | `twitter.com` | 46 | 2 |
+| `old.reddit.com` | `reddit.com` | 41 | 4 |
+
+For example `social.techcrunch.com/2019/01/10/improbable-and-epic-games-establish-25m-fund-…` and `techcrunch.com/2019/01/10/…`; `institutions.newscientist.com/article/2219321-bees-are-better-at-counting-…` and `www.newscientist.com/article/2219321-…`; `prime.nautil.us/issue/22/slow/before-there-were-stars-rp` and `nautil.us/issue/22/slow/…`.
+
+### Evidence for the tracking names applied on every host
+
+Asked in review of eight names: does any carry an article's identity somewhere? In the stored leads each appears on one publisher's article pages only, never on a path too short to name an article, and where one article was shared with two values of a name the path was the same article:
+
+| Name | Leads | Hosts | Articles seen with two values |
+| --- | --- | --- | --- |
+| `_r` | 3,771 | nytimes.com and its blogs | 141 |
+| `hpid` | 336 | washingtonpost.com | 9 |
+| `eventname` | 117 | nytimes.com and its blogs | 0 |
+| `cndid` | 29 | wired.com, newyorker.com | 0 |
+| `spreportid`, `spjobid`, `spuserid`, `spmailingid` | 12 each | newyorker.com | 0 |
+
+This says they are not identity where they were seen. It cannot say so for a site that was never shared.
 
 ### 2. Stored leads follow the key, without paying again
 
@@ -100,7 +146,7 @@ Alternative considered: dropping every parameter on listed news outlets. It fold
 
 - key unchanged: the version is set.
 - key changed, no other lead has it: the key, outlet and outlet kind are set.
-- key changed, another lead has it: the two are merged. **The lead kept is the one that has come furthest** (read, else scored, else screened, else the older), so nothing paid for is dropped. Its shares gain the other's; a share both hold is kept once. A label moves unless the same reader labelled both. The other lead's screening links and ledger entries are removed with it. The first share time becomes the earlier of the two. The kept lead keeps its own title and address.
+- key changed, another lead has it: the two are merged. **The lead kept is the one that has come furthest**: one that drafted a claim, else one that joined a claim, else read, scored, screened, else the older. Preparing a claim looks for the lead that drafted it (`prepare.py`, `decide_prepared_lead_claim`), and the funnel counts claims through it, so that pointer is never the one dropped while the other lead has none. Its shares gain the other's; a share both hold is kept once. The records screening found for the other lead move to it, each once: the kept lead's screening is usually still current and would not find them again. A label moves unless the same reader labelled both. A kept lead with a claim and no source article takes the other's when both point at one claim. The other lead's ledger entries are removed with it. The first share time becomes the earlier of the two. The kept lead keeps its own title and address.
 - when both leads had made or joined different claims, the pair of claims is reported for the operator to compare. No claim, source article or match is changed.
 
 **What is due again afterwards**: a step that asks nothing (screening) is due again when what it reads changed, because a new key can now match a tracked article and a new outlet can be on a list. A step that asks a source or a model keeps its entry, with its fingerprint rewritten for the lead as it now is: the article is the same article, and a lead whose host was `lite.cnn.com` is not a new headline. Without this, 21,946 leads would be due for triage and for reading again.
@@ -109,16 +155,21 @@ Loading and the link steps are refused while any lead is behind (`refuse_stale_k
 
 ### 3. Bringing the working database up to date (not run)
 
-After the current backfill run has ended, with no step running:
+**The migration applies itself.** `pipeline/Dockerfile` starts the pipeline container with `alembic upgrade head`, and so does `compose.yaml`, so migration `0027` runs on the next `docker compose up` of an image built from this change, whatever else is planned. It is additive: one column with a default, no row rewritten, no key changed, nothing merged. What it does change at once is behaviour: from that start on, `load-links` and every step over link leads refuse to run until the rekey is done. So the image must not be rebuilt while a load or a run is wanted.
 
-1. Back up the database (`~/automation/backup-services.sh` or `pg_dump`).
-2. `alembic upgrade head` (adds the column; instant).
-3. `thenwhat backfill rekey-links` to see the counts. Expected from the measurement: 612,148 behind, about 590,200 keep their key, about 16,190 get a new key, about 5,756 are merged.
-4. `thenwhat backfill rekey-links --apply`. It names the 2 pairs of claims to compare.
-5. `thenwhat backfill run link_screen` (no spend) for the leads whose key changed.
-6. `thenwhat backfill plan link_triage` and `plan link_read` should show nothing newly due beyond leads that a listed outlet gained (a `lite.cnn.com` lead that was on no list and is now on cnn.com's).
+In this order:
+
+1. Stop every loader and every run over link leads (`load-links`, `backfill run link_screen`, `link_triage`, `link_read`), and wait for them to end.
+2. Back up the database (`~/automation/backup-services.sh` or `pg_dump`).
+3. Rebuild and start the pipeline container, which runs `alembic upgrade head` and adds the column.
+4. `thenwhat backfill rekey-links` to see the counts. Expected from the measurement: 612,148 behind, about 590,200 keep their key, about 16,190 get a new key, about 5,756 are merged. More leads will have been loaded by then.
+5. `thenwhat backfill rekey-links --apply`. It refuses while the ledger shows a step working on a link lead in the last ten minutes. A load leaves no trace in the ledger, which is why step 1 comes first. It names the pairs of claims to compare.
+6. `thenwhat backfill run link_screen` (no spend) for the leads whose key changed.
+7. `thenwhat backfill plan link_triage` and `plan link_read` should show nothing newly due beyond leads that a listed outlet gained (a `lite.cnn.com` lead that was on no list and is now on cnn.com's).
 
 To go back: restore the backup. `alembic downgrade 0026` drops the column but does not bring merged leads back.
+
+When two merged leads had each drafted a claim, the claim of the lead that is removed has no lead pointing at it afterwards, and `prepare --pending` will not approve it by rule. That is the pair the command names: the operator compares the two claims and archives one.
 
 Not covered by the command and left as tasks: the 5 claims that hold one article twice, and the 121 article leads too many.
 

@@ -29,7 +29,12 @@ from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_read import LinkRead, ReadClient, retry_outlet
 from thenwhat.backfill.link_readers import posts_of
-from thenwhat.backfill.link_rekey import refuse_stale_keys, rekey_links, survey
+from thenwhat.backfill.link_rekey import (
+    refuse_stale_keys,
+    refuse_while_steps_run,
+    rekey_links,
+    survey,
+)
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
 from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
@@ -482,7 +487,8 @@ def rekey_links_command(
     until it is done. Two leads that are one article under the current form become one
     lead with the shares of both, and the one that was scored or read is kept. Sends no
     request and calls no model, and makes no lead due again for a step that does. It
-    can be stopped and run again.
+    can be stopped and run again. Stop every load and run first: it is refused while a
+    step worked on a link lead in the last ten minutes.
     """
     settings = settings_or_exit()
     with refusals():
@@ -498,6 +504,8 @@ def rekey_links_command(
                 markup=False,
             )
             return
+        with open_session() as session:
+            refuse_while_steps_run(session, datetime.now(UTC))
         report = rekey_links(open_session, steps)
     out.print(
         f"Brought {report.checked:,} link leads up to date: {report.unchanged:,} kept "

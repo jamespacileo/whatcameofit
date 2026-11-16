@@ -10,23 +10,27 @@ the one it was. Only steps that ask nothing, such as screening, are due again.
 from collections.abc import Callable, Sequence
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 
 from sqlalchemy import delete, func, literal, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import KEY_VERSION, article_key
-from thenwhat.backfill.errors import KeysOutOfDate
+from thenwhat.backfill.errors import KeysOutOfDate, WorkInProgress
 from thenwhat.backfill.ledger import find_entry, fingerprint
 from thenwhat.backfill.outlet_kinds import kind_of
 from thenwhat.backfill.steps import NO_SOURCE, Step
 from thenwhat.db.models import LinkLead, LinkLeadLabel, LinkLeadLink, LinkShare, WorkEntry
+from thenwhat.domain import ReadOutcome
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 
 RECORD_KIND = "link_lead"
 # How many leads are brought up to date together. A run that stops loses at most these.
 LEADS_PER_TRANSACTION = 500
+# How long the ledger must have been quiet for link leads before they are rekeyed.
+QUIET_BEFORE_REKEY = timedelta(minutes=10)
 
 
 @dataclass(slots=True)
@@ -69,6 +73,21 @@ def refuse_stale_keys(session: Session) -> None:
         )
 
 
+def refuse_while_steps_run(session: Session, now: datetime) -> None:
+    """Refuse while a step over link leads was at work in the last ten minutes, as far
+    as the ledger shows: a run would be working on leads that are being merged. A load
+    leaves no trace in the ledger; the operator stops loads before this is run."""
+    latest = session.scalar(
+        select(func.max(WorkEntry.last_attempt_at)).where(WorkEntry.record_kind == RECORD_KIND)
+    )
+    if latest is not None and now - latest < QUIET_BEFORE_REKEY:
+        raise WorkInProgress(
+            f"A step worked on a link lead at {latest:%H:%M:%S} UTC, less than "
+            f"{QUIET_BEFORE_REKEY.seconds // 60} minutes ago. Stop every run and load, "
+            "wait, and run this again. Nothing was changed."
+        )
+
+
 def survey(session: Session) -> RekeyReport:
     """What bringing the leads up to date would do, without doing it. Two leads behind
     that would meet each other are counted as one merge."""
@@ -104,10 +123,14 @@ def survey(session: Session) -> RekeyReport:
     return report
 
 
-def _progress(lead: LinkLead) -> tuple[bool, bool, bool, int]:
+def _progress(lead: LinkLead) -> tuple[bool, bool, bool, bool, bool, int]:
     """How far a lead has come. Of two leads for one article the one that has come
-    furthest is kept, so that nothing paid for is thrown away; the older one on a tie."""
+    furthest is kept, so that nothing paid for is thrown away: a lead that drafted a
+    claim, else one that joined a claim, else one that was read, scored, screened; the
+    older one on a tie. Preparing a claim looks for the lead that drafted it."""
     return (
+        lead.claim_id is not None,
+        lead.claim_id is not None and lead.read_outcome is ReadOutcome.NEW_CLAIM,
         lead.read_outcome is not None,
         lead.triage_score is not None,
         lead.screen_outcome is not None,
@@ -173,6 +196,21 @@ def _merge(session: Session, kept: LinkLead, gone: LinkLead, report: RekeyReport
         .values(link_lead_id=kept.id)
     )
     session.execute(delete(LinkLeadLabel).where(LinkLeadLabel.link_lead_id == gone.id))
+    # The kept lead's screening may be current and so never run again: the records
+    # screening found for the other lead are kept, each once.
+    session.execute(
+        insert(LinkLeadLink)
+        .from_select(
+            ["link_lead_id", "record_kind", "record_id", "reason"],
+            select(
+                literal(kept.id),
+                LinkLeadLink.record_kind,
+                LinkLeadLink.record_id,
+                LinkLeadLink.reason,
+            ).where(LinkLeadLink.link_lead_id == gone.id),
+        )
+        .on_conflict_do_nothing(constraint="uq_link_lead_link_lead_record_reason")
+    )
     session.execute(delete(LinkLeadLink).where(LinkLeadLink.link_lead_id == gone.id))
     session.execute(
         delete(WorkEntry).where(
@@ -183,6 +221,12 @@ def _merge(session: Session, kept: LinkLead, gone: LinkLead, report: RekeyReport
         report.claims_to_compare.append(
             (min(kept.claim_id, gone.claim_id), max(kept.claim_id, gone.claim_id))
         )
+    if kept.claim_id is None and gone.claim_id is not None:
+        # The kept lead points at what the other one made, with how its read ended.
+        kept.claim_id, kept.source_article_id = gone.claim_id, gone.source_article_id
+        kept.read_outcome, kept.read_detail = gone.read_outcome, gone.read_detail
+    elif kept.source_article_id is None and kept.claim_id == gone.claim_id:
+        kept.source_article_id = gone.source_article_id
     kept.first_shared_at = min(kept.first_shared_at, gone.first_shared_at)
     # Deleted here and now: the kept lead may be about to take the key this one holds.
     session.execute(delete(LinkLead).where(LinkLead.id == gone.id))

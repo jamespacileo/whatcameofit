@@ -438,6 +438,19 @@ def test_rekey_links_says_what_it_would_do_and_does_it_when_told(run, session: S
     assert lead.url_key == "theguardian.com/science/a"
 
 
+def test_rekey_links_is_refused_while_a_step_has_just_worked_on_a_lead(
+    run, session: Session, tmp_path: Path
+):
+    """Scenario: A run is under way"""
+    run("load-links", "hackernews", str(stories_file(tmp_path)))
+    run("run", "link_screen")
+
+    result = run("rekey-links", "--apply")
+
+    assert result.exit_code == 1
+    assert "Stop every run and load" in result.output
+
+
 def test_loading_and_link_steps_are_refused_until_the_leads_are_up_to_date(
     run, session: Session, tmp_path: Path
 ):

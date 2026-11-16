@@ -10,16 +10,24 @@ from sqlalchemy.orm import Session
 from backfill_support import Client, same_session
 from test_link_triage import Clock, Headlines
 from thenwhat.backfill.address import KEY_VERSION
-from thenwhat.backfill.errors import KeysOutOfDate
+from thenwhat.backfill.errors import KeysOutOfDate, WorkInProgress
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_readers import HACKER_NEWS, SharedLink
-from thenwhat.backfill.link_rekey import rekey_links, survey
+from thenwhat.backfill.link_rekey import refuse_while_steps_run, rekey_links, survey
 from thenwhat.backfill.link_screen import LinkScreen
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage
 from thenwhat.backfill.outlet_kinds import kind_of
 from thenwhat.backfill.runner import run_step
-from thenwhat.db.models import LinkLead, LinkLeadLabel, LinkShare, WorkEntry
-from thenwhat.domain import Decider, LeadVerdict, ScreenOutcome
+from thenwhat.db.models import (
+    Claim,
+    LinkLead,
+    LinkLeadLabel,
+    LinkLeadLink,
+    LinkShare,
+    SourceArticle,
+    WorkEntry,
+)
+from thenwhat.domain import Decider, LeadVerdict, ReadOutcome, ScreenOutcome
 
 NOW = datetime(2026, 11, 20, 9, 0, tzinfo=UTC)
 WHEN = datetime(2019, 5, 4, 10, 30, tzinfo=UTC)
@@ -197,3 +205,112 @@ def test_a_load_is_refused_while_a_lead_is_keyed_under_an_earlier_form(session: 
         load_links(same_session(session), HACKER_NEWS, [post], steps=[])
 
     assert len(leads(session)) == 1
+
+
+def add_claim(session: Session, slug: str) -> Claim:
+    claim = Claim(slug=slug, headline="h", summary="s", indication="i", vertical="mouth-and-teeth")
+    session.add(claim)
+    session.flush()
+    return claim
+
+
+def test_the_records_screening_found_for_the_removed_lead_are_kept(session: Session):
+    """Scenario: What screening found for either lead is kept"""
+    kept = earlier_lead(session, STORY, "bbc.com/news/health-1")
+    gone = earlier_lead(session, f"{STORY}?mbid=a", "bbc.com/news/health-1?mbid=a", item=2)
+    screening = LinkScreen()
+    screen(session, screening)
+    for lead_id, record_id in ((kept.id, 7), (gone.id, 7), (gone.id, 8)):
+        session.add(
+            LinkLeadLink(
+                link_lead_id=lead_id, record_kind="claim", record_id=record_id, reason="named"
+            )
+        )
+    session.flush()
+
+    rekey_links(same_session(session), [screening])
+
+    # The kept lead's key and title are as they were, so screening will not run for it
+    # again: what it holds now is what reading will see.
+    assert screen(session, screening).processed == 0
+    links = session.scalars(select(LinkLeadLink).order_by(LinkLeadLink.record_id)).all()
+    assert [(link.link_lead_id, link.record_id) for link in links] == [(kept.id, 7), (kept.id, 8)]
+
+
+def test_the_lead_that_drafted_a_claim_is_kept_over_an_older_lead_that_was_read(
+    session: Session,
+):
+    """Scenario: One of the two leads drafted a claim"""
+    claim = add_claim(session, "synthetic-claim")
+    article = SourceArticle(
+        claim_id=claim.id,
+        url=f"{STORY}?mbid=a",
+        outlet="BBC",
+        title="t",
+        published_date=WHEN.date(),
+    )
+    session.add(article)
+    session.flush()
+    older = earlier_lead(session, STORY, "bbc.com/news/health-1")
+    older.triage_score, older.read_outcome = 0.9, ReadOutcome.CANNOT_BE_READ
+    drafted = earlier_lead(session, f"{STORY}?mbid=a", "bbc.com/news/health-1?mbid=a", item=2)
+    drafted.triage_score, drafted.read_outcome = 0.9, ReadOutcome.NEW_CLAIM
+    drafted.claim_id, drafted.source_article_id = claim.id, article.id
+    session.flush()
+
+    report = rekey_links(same_session(session), steps=[])
+
+    [lead] = leads(session)
+    assert lead.id == drafted.id != older.id
+    assert (lead.url_key, lead.read_outcome) == ("bbc.com/news/health-1", ReadOutcome.NEW_CLAIM)
+    assert (lead.claim_id, lead.source_article_id) == (claim.id, article.id)
+    assert report.claims_to_compare == []
+
+
+def test_a_kept_lead_without_its_source_article_takes_the_other_leads(session: Session):
+    """Scenario: One of the two leads drafted a claim"""
+    claim = add_claim(session, "synthetic-claim")
+    article = SourceArticle(
+        claim_id=claim.id, url=STORY, outlet="BBC", title="t", published_date=WHEN.date()
+    )
+    session.add(article)
+    session.flush()
+    first = earlier_lead(session, STORY, "bbc.com/news/health-1")
+    first.read_outcome, first.claim_id = ReadOutcome.NEW_CLAIM, claim.id
+    second = earlier_lead(session, f"{STORY}?mbid=a", "bbc.com/news/health-1?mbid=a", item=2)
+    second.read_outcome, second.claim_id = ReadOutcome.ADDED_TO_CLAIM, claim.id
+    second.source_article_id = article.id
+    session.flush()
+
+    rekey_links(same_session(session), steps=[])
+
+    [lead] = leads(session)
+    assert (lead.id, lead.claim_id, lead.source_article_id) == (first.id, claim.id, article.id)
+
+
+def test_two_leads_that_made_two_claims_are_named_for_the_operator(session: Session):
+    """Scenario: Two leads that made two claims"""
+    one, other = add_claim(session, "synthetic-one"), add_claim(session, "synthetic-other")
+    first = earlier_lead(session, STORY, "bbc.com/news/health-1")
+    first.read_outcome, first.claim_id = ReadOutcome.NEW_CLAIM, one.id
+    second = earlier_lead(session, f"{STORY}?mbid=a", "bbc.com/news/health-1?mbid=a", item=2)
+    second.read_outcome, second.claim_id = ReadOutcome.NEW_CLAIM, other.id
+    session.flush()
+
+    report = rekey_links(same_session(session), steps=[])
+
+    [lead] = leads(session)
+    assert (lead.id, lead.claim_id) == (first.id, one.id)
+    assert report.claims_to_compare == [(one.id, other.id)]
+    assert len(session.scalars(select(Claim)).all()) == 2
+
+
+def test_rekeying_is_refused_while_a_step_worked_on_a_lead_a_moment_ago(session: Session):
+    """Scenario: A run is under way"""
+    earlier_lead(session, STORY, "bbc.com/news/health-1")
+    screen(session, LinkScreen())
+
+    with pytest.raises(WorkInProgress, match="Stop every run and load"):
+        refuse_while_steps_run(session, NOW + timedelta(minutes=9))
+
+    refuse_while_steps_run(session, NOW + timedelta(minutes=11))

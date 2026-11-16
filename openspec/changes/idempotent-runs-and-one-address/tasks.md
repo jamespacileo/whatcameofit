@@ -19,8 +19,9 @@
 - [x] 3.3 `thenwhat backfill rekey-links`, reporting only unless `--apply`
 - [x] 3.4 `load-links` and steps over link leads refused while a lead is behind
 - [x] 3.5 Tests at the session seam and one success and one refusal for the command
-- [ ] 3.6 Operator: run it on the working database after the current run (design.md, "Bringing the working database up to date")
-- [ ] 3.7 Operator: compare the two pairs of claims it names
+- [x] 3.6 After review: screening's records move with a merge; the lead that drafted a claim is kept and claim pointers carried; `--apply` refused while the ledger shows a step at work; host dot removed before the YouTube rule; parameter order and path escaping made the same in both files
+- [ ] 3.7 Operator: run it on the working database after the current run (design.md, "Bringing the working database up to date")
+- [ ] 3.8 Operator: compare the two pairs of claims it names
 
 ## 4. Waiting for the operator's decisions (PR body)
 
