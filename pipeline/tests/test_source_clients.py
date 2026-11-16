@@ -331,18 +331,25 @@ def test_refused_condition_fallback_keeps_the_candidate_limit(
     assert all("pageToken" not in r.url.params for r in replay.requests)
 
 
-def test_name_still_broad_within_the_condition_gives_no_candidates(
+def test_name_still_broad_within_the_condition_gives_its_most_relevant_page(
     session: Session, fake_time, fixture_json
 ):
-    """Scenario: Name that identifies nothing"""
-    # A phrase such as "the drug": thousands of trials whatever the condition.
+    """Scenario: An established drug with many trials for the condition"""
+    # Thousands of trials whatever the condition, as for buprenorphine and opioid use
+    # disorder: the first page within the condition is kept, and no further page asked.
     broad = fixture_json("clinicaltrials/search_broad_count.json")
     source, replay = trials(session, fake_time, lambda request: broad)
 
-    records = source.search_trials("the drug", condition="Muscle loss")
+    records = source.search_trials("buprenorphine", condition="Opioid use disorder")
 
-    assert records == []
+    assert [record.external_id for record in records] == [
+        "NCT03798509",
+        "NCT05022849",
+        "NCT07383233",
+    ]
     assert len(replay.requests) == 2
+    assert replay.requests[1].url.params["query.cond"] == "Opioid use disorder"
+    assert all("pageToken" not in request.url.params for request in replay.requests)
 
 
 def test_trials_that_carry_a_trial_name_are_found(session: Session, fake_time, fixture_json):
@@ -365,6 +372,31 @@ def test_a_trial_name_that_many_trials_carry_identifies_none(
     source, _ = trials(session, fake_time, lambda request: named)
 
     assert source.named_trials("study") == []
+
+
+def test_broad_trial_name_is_narrowed_once_by_condition(session: Session, fake_time):
+    wanted = {
+        "protocolSection": {
+            "identificationModule": {
+                "nctId": "NCT00000009",
+                "briefTitle": "EXAMPLE study of EX-1 for tinnitus",
+            }
+        }
+    }
+
+    def route(request):
+        condition = request.url.params.get("query.cond")
+        if condition == "Tinnitus":
+            return {"studies": [wanted], "totalCount": 1}
+        return {"studies": [], "totalCount": 24}
+
+    source, replay = trials(session, fake_time, route)
+    assert [r.external_id for r in source.named_trials("EXAMPLE", condition="Tinnitus")] == [
+        "NCT00000009"
+    ]
+    assert len(replay.requests) == 2
+    assert source.named_trials("EXAMPLE", condition="Migraine") == []
+    assert len(replay.requests) == 3  # The unchanged broad query is reused.
 
 
 # --- Europe PMC ------------------------------------------------------------------

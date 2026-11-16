@@ -1,10 +1,10 @@
 // Private to this browser. A previous answer is useful, but never silently current.
-// Version 13 excludes readings that could infer a treatment from only a disease and an unnamed drug.
+// Version 16 requires study identity for interventions identified only by their study.
 // Only completed answers can be reused.
 import { withCurrentClaims } from "../../site/worker/tracked.mjs";
 
 export const RESULT_TTL = 24 * 60 * 60 * 1000;
-const VERSION = 13;
+const VERSION = 16;
 const MAX_RESULTS = 10;
 
 /** Whether an answer is whole: not an error, a miss, a partial stream or one that is
@@ -12,6 +12,8 @@ const MAX_RESULTS = 10;
 export function completed(found) {
   if (!found || typeof found !== "object" || found.error || found.cacheMiss || found.incomplete) return false;
   if (typeof found.about_a_treatment !== "boolean" || found.papers_unchecked > 0) return false;
+  if (["partial", "unchecked"].includes(found.check_state)) return false;
+  if (Array.isArray(found.claims)) return found.claims.length > 0 && found.claims.every(completed);
   return found.about_a_treatment || (Array.isArray(found.candidates) && found.papers_unchecked === 0);
 }
 export function reusable(entries, key, fingerprint, now, index) {
@@ -30,7 +32,8 @@ export function remember(entries, key, fingerprint, found, now) {
   // opening the page again asks again.
   if (!fingerprint || !key || !Number.isFinite(now) || !completed(found)) return entries;
   // The model's summary of the page is not needed to show the answer, so it is not kept.
-  const { gist, ...kept } = found;
+  const strip = ({ gist, claims, ...answer }) => ({ ...answer, ...(Array.isArray(claims) ? { claims: claims.map(strip) } : {}) });
+  const kept = strip(found);
   // `now` is when the answer was checked, which for a shared answer may be earlier.
   const current = Math.max(now, Date.now());
   return [{ version: VERSION, key, fingerprint, found: kept, at: now }, ...(Array.isArray(entries) ? entries : [])

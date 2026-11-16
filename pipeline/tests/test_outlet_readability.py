@@ -180,11 +180,16 @@ def test_the_record_is_a_table_with_a_total_and_no_article_text():
     page = report([opened, paid], checked=date(2026, 11, 12))
 
     assert "Checked 2026-11-12" in page
-    assert "| open.example.org | 2 | 1 | 1 | 0 | 0 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 |" in page
     assert (
-        "| paid.example.org | 1 | 0 | 0 | 0 | 402 ×1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |" in page
+        "| open.example.org | 2 | 1 | 1 | 0 | 0 | 0 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 |" in page
     )
-    assert "| All outlets | 3 | 1 | 1 | 0 | 402 ×1 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 |" in page
+    assert (
+        "| paid.example.org | 1 | 0 | 0 | 0 | 0 | 402 ×1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |"
+        in page
+    )
+    assert (
+        "| All outlets | 3 | 1 | 1 | 0 | 0 | 402 ×1 | 2 | 0 | 0 | 0 | 1 | 0 | 1 | 1 | 0 |" in page
+    )
 
 
 @pytest.fixture
@@ -208,8 +213,8 @@ def test_outlets_prints_and_saves_the_record(tracked: Session, run, tmp_path: Pa
     result = run("outlets", "--save", str(saved), "--articles", str(rows))
 
     assert result.exit_code == 0, result.output
-    assert "| closed.example.org | 1 | 0 | 0 | 1 |" in result.output
-    assert "| open.example.org | 3 | 2 | 1 | 0 |" in saved.read_text()
+    assert "| closed.example.org | 1 | 0 | 0 | 0 | 1 |" in result.output
+    assert "| open.example.org | 3 | 2 | 1 | 0 | 0 |" in saved.read_text()
     assert "EX-1 regrew teeth" not in saved.read_text() + rows.read_text()
     assert rows.read_text().splitlines()[:3] == [
         "outlet,url,outcome,signals,lookup",
@@ -240,5 +245,8 @@ def test_preview_metadata_cannot_make_an_incomplete_page_readable(missing, monke
     monkeypatch.setattr(reader, "probe", lambda url: Probe(READ, 200, page))
     outlet = Outlet("example.org")
     checked = _check_article(outlet, reader, "https://example.org/article", [], None)
-    assert checked.outcome == "thin"
-    assert (outlet.read, outlet.thin) == (0, 1)
+    if missing == "body":
+        assert (checked.outcome, outlet.thin, outlet.undated) == ("thin", 1, 0)
+    else:
+        assert (checked.outcome, outlet.thin, outlet.undated) == ("no date", 0, 1)
+    assert outlet.read == 0

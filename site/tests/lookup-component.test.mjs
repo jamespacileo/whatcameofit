@@ -60,6 +60,40 @@ const script = stripTypeScriptTypes(
 const settle = () => new Promise((resolve) => setImmediate(resolve));
 const SENTENCE = "Earlier report. Status: Trial registered. Not medical advice. https://example.test/old";
 
+test("the website opts in and displays each independent claim with its own results", async () => {
+  const { document, window } = parseHTML('<html><body><form id="search"><input id="query"></form><div id="results" data-live="/api/lookup"></div></body></html>');
+  const sent = [];
+  const found = { about_a_treatment: true, claims: [
+    { about_a_treatment: true, treatment: "EX-1", condition: "condition one", candidates: [], tracked: [{ headline: "First card", page: "/first" }] },
+    { about_a_treatment: true, treatment: "EX-2 plus EX-3", condition: "condition two", candidates: [], tracked: [], check_state: "unchecked", check_reason: "work_limit" },
+  ] };
+  document.querySelector("#results").scrollIntoView = () => {};
+  vm.runInNewContext(script, {
+    document, URL, navigator: {}, getSelection: () => null, setTimeout,
+    BRAND: { name: "Example tracker" }, readAddress, closestClaims,
+    LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
+    location: { href: "https://example.test/" }, history: { replaceState() {} },
+    fetch: async (_url, options) => {
+      if (options?.method === "POST") { sent.push(JSON.parse(options.body)); return { status: 200, json: async () => found }; }
+      return { json: async () => ({ articles: {}, claims: {}, places: 6 }) };
+    },
+  });
+  document.querySelector("#query").value = "https://example.org/synthetic-roundup";
+  document.querySelector("#search").dispatchEvent(new window.Event("submit", { cancelable: true }));
+  await settle();
+  document.querySelector(".live-offer").click();
+  await settle();
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].claimResults, true);
+  const claims = [...document.querySelectorAll(".independent-claim")];
+  assert.equal(claims.length, 2);
+  assert.match(claims[0].textContent, /EX-1.*condition one.*First card/);
+  assert.doesNotMatch(claims[0].textContent, /condition two/);
+  assert.match(claims[1].textContent, /EX-2 plus EX-3.*condition two.*remains unchecked/);
+  assert.doesNotMatch(claims[1].textContent, /No matching trial|First card/);
+  assert.equal(document.querySelectorAll(".unchecked").length, 1, "one page-level provenance notice");
+});
+
 async function trackedAnswer({ navigator, carried = true }) {
   const sentences = { "/old": { sentence: SENTENCE, card: "/og/old.png" } };
   const { document, window } = parseHTML(

@@ -27,7 +27,7 @@ from thenwhat.backfill.link_evaluation import (
 )
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_load import load_links
-from thenwhat.backfill.link_read import LinkRead, ReadClient
+from thenwhat.backfill.link_read import LinkRead, ReadClient, retry_outlet
 from thenwhat.backfill.link_readers import posts_of
 from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
 from thenwhat.backfill.link_topics import coverage
@@ -428,6 +428,23 @@ def load_links_command(
     )
     for reason, number in sorted(report.skipped.items()):
         out.print(f"  skipped, {reason.value}: {number:,}", markup=False)
+
+
+@backfill_app.command("retry-outlet")
+def retry_outlet_command(
+    outlet: Annotated[str, typer.Argument(help="The outlet's domain, for example reuters.com.")],
+) -> None:
+    """Ask the page reader again for an outlet's leads that it refused with 401, or that
+    were not asked because of those refusals. Its old refusals lapse after 30 days on
+    their own; this is for an outlet known to serve the reader now."""
+    with refusals(), open_session() as session:
+        retried = retry_outlet(session, outlet)
+    noun = "lead" if retried == 1 else "leads"
+    out.print(
+        f"{retried:,} {noun} of {outlet} are due to be read again."
+        " Run `thenwhat backfill run link_read`.",
+        markup=False,
+    )
 
 
 @backfill_app.command("leads")

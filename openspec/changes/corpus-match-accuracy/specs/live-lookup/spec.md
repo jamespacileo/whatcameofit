@@ -4,6 +4,21 @@ Associates automatic article and post lookups with existing knowledge cards only
 
 ## ADDED Requirements
 
+### Requirement: Independent claims receive separate answers
+Several identifiable independent intervention/indication pairs SHALL receive separate matches and card associations, retaining each pair's scores, scope, provenance and uncertainty. Genuine combinations SHALL remain whole; unspecified treatments SHALL not acquire invented identities. One source reading and eligible fetched records SHALL be reused within existing request and deadline limits. Unprocessed claims SHALL remain explicitly unchecked.
+
+#### Scenario: Roundup identifies two independent treatments
+- **WHEN** the source separately describes two identifiable treatments and their conditions
+- **THEN** each receives its own answer and compatible cards, without combining the treatments or assigning one claim's trial to the other
+
+#### Scenario: A genuine combination and a vague reference coexist
+- **WHEN** the source describes a studied two-treatment regimen and an unspecified new drug
+- **THEN** the complete regimen remains one claim and the vague reference establishes no invented treatment or match
+
+#### Scenario: Existing work limits prevent complete coverage
+- **WHEN** the lookup cannot finish all identified claims within its existing bounds
+- **THEN** the answer identifies the unchecked claims and does not imply the whole page was verified
+
 ### Requirement: An unspecified drug does not establish treatment identity
 Both lookup readers SHALL distinguish a specifically described unnamed intervention from disease and generic drug wording alone. The latter SHALL produce a negative identification without invented products or aliases, term search, scoring or research enrichment. Specific descriptions and reported study identities SHALL remain usable evidence, without automatically establishing a match. Obsolete saved answers SHALL be invalidated; no extra model call SHALL be added.
 
@@ -112,6 +127,39 @@ Both lookup implementations SHALL recognise a missing space, hyphen or underscor
 #### Scenario: Study name is written as a hashtag
 - **WHEN** a report names REGROW2 and the fetched registry record names REGROW 2
 - **THEN** the record gains the trial-name agreement, but REGROW 21, REGROW 3 and REGROW2A do not
+
+### Requirement: Ambiguous study names retain condition-specific discovery
+When a study-name search exceeds twenty records, both lookup implementations SHALL narrow it at most once with the unchanged name and full stated condition, if available. They SHALL preserve existing work allowances and source pacing, without pagination or another model call. Multi-claim query reuse SHALL include condition in its identity. Returned records SHALL still undergo clinical scoring; a shared acronym SHALL not establish compatibility.
+
+#### Scenario: Study acronym shared by unrelated conditions
+- **GIVEN** a title/acronym identifies more than twenty records across conditions
+- **WHEN** the reported condition narrows it to a bounded set
+- **THEN** those records remain candidates for the same full claim's clinical scoring
+- **AND** a second independent claim with that acronym and a different condition does not reuse the first narrowed set
+
+#### Scenario: Study name remains ambiguous
+- **WHEN** a study name remains over the limit within the condition, or no condition is available
+- **THEN** it contributes no candidates without further discovery requests
+
+#### Scenario: Saved answer predates condition narrowing
+- **WHEN** a completed answer predates this discovery correction
+- **THEN** it is invalidated while public source responses remain reusable
+
+### Requirement: Study-only interventions retain their study identity
+When a report identifies an intervention only by its trial or paper, both scorers SHALL require the candidate to establish the same study identity. Similar conditions or outcomes SHALL NOT supply the missing intervention. Registry acronyms SHALL be preserved within the existing bounded candidate context. Differently named studies of a specifically identified intervention SHALL remain eligible. Corrected completed answers SHALL replace older saved results without clearing source caches.
+
+#### Scenario: Unnamed intervention and unrelated same-condition study
+- **WHEN** the reported intervention is identified only by a study name and a candidate does not establish that study identity
+- **THEN** the scorer is instructed to reject the candidate instead of inferring its intervention from the shared condition
+
+#### Scenario: Registry acronym carries the identity
+- **WHEN** a candidate's acronym identifies the reported study but its title and long descriptions do not
+- **THEN** the acronym still reaches clinical scoring within the existing candidate text limit
+- **AND** the name alone does not override a clinical conflict
+
+#### Scenario: Treatment is specifically identified
+- **WHEN** the claim names the complete treatment and a compatible trial has a different study name
+- **THEN** that different name alone does not disqualify the trial
 
 ### Requirement: Presentation correction reuses bounded saved answers
 The existing ten-record display cap SHALL apply across both groups, prioritising possible matches. The corrected presentation SHALL apply to saved answers without invalidation and SHALL add no model or source requests.
@@ -235,7 +283,7 @@ The service and extension SHALL reject saved results produced before the claim-i
 - **THEN** the next eligible lookup does not reuse it
 
 ### Requirement: Combination readings retain the complete experiment
-When a report's main experiment adds one named treatment to another, the reading SHALL retain the complete regimen. Discussion of a component-only comparison arm SHALL NOT by itself shorten that regimen to its newest component. A report explicitly centred on monotherapy SHALL retain that monotherapy. Unrelated roundups and company profiles SHALL remain negative identifications. Both lookup implementations SHALL use equivalent reading instructions and obsolete saved answers SHALL be invalidated.
+Both lookup readers SHALL retain the complete experimental regimen, without shortening it because a component-only comparison arm is discussed. Explicit monotherapy SHALL remain monotherapy. Unrelated roundup items SHALL remain separate claims; company profiles SHALL remain negative identifications. The readers SHALL use equivalent instructions and obsolete saved answers SHALL be invalidated.
 
 #### Scenario: Combination trial discusses a component-only result
 - **WHEN** a report describes A plus B and also highlights an A-only arm

@@ -64,6 +64,7 @@ def test_a_claim_needs_its_unread_articles_read_then_a_search_then_a_fetch(sessi
         ["resolve", "one"],
         ["fetch", "one"],
         ["readings", "one"],
+        ["terms", "one"],
     ]
 
 
@@ -77,7 +78,12 @@ def test_a_decided_claim_is_searched_and_fetched_but_its_articles_are_not_read(s
     [plan] = plan_claims(session, ["one"])
 
     assert plan.unread_articles == []
-    assert steps_for(plan) == [["resolve", "one"], ["fetch", "one"], ["readings", "one"]]
+    assert steps_for(plan) == [
+        ["resolve", "one"],
+        ["fetch", "one"],
+        ["readings", "one"],
+        ["terms", "one"],
+    ]
 
 
 def test_without_names_every_claim_awaiting_review_is_planned(session: Session):
@@ -110,7 +116,9 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
 
     def fake_step(arguments: list[str]) -> tuple[bool, str]:
         ran.append(arguments)
-        failed = arguments[0] == "extract" and arguments[-1].endswith("/blocked")
+        failed = (arguments[0] == "extract" and arguments[-1].endswith("/blocked")) or (
+            arguments[0] == "terms" and arguments[-1].endswith("no-terms")
+        )
         return (not failed, "could not be read" if failed else "done")
 
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
@@ -130,7 +138,7 @@ def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_
     result, ran = run("prepare", "one")
 
     assert result.exit_code == 0, result.output
-    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings"]
+    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings", "terms"]
     assert "one" in result.output and "could not be read" in result.output
 
 
@@ -222,7 +230,9 @@ def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, sess
     for slug in ("searched", "unsearched"):
         drafted_by_a_read(session, slug)
 
-    result, _ = run("prepare", "--pending")
+    # One at a time: every claim's thread would otherwise share the one test session, and
+    # two flushing it at once fail with "Session is already flushing".
+    result, _ = run("prepare", "--pending", "--workers", "1")
 
     assert result.exit_code == 0, result.output
     assert "approved by rule, now that its registries have been searched" in result.output
@@ -232,3 +242,48 @@ def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, sess
         if (claim := find_claim(session, slug))
     }
     assert states == {"searched": ReviewState.APPROVED, "unsearched": ReviewState.PENDING}
+
+
+def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):
+    """Scenario: Terms that could not be proposed"""
+    claim_with_articles(session, "no-terms", "https://news.example.org/a")
+    drafted_by_a_read(session, "no-terms")
+
+    result, _ = run("prepare", "no-terms")
+
+    assert result.exit_code == 0, result.output
+    assert "terms failed" in result.output
+    claim = find_claim(session, "no-terms")
+    assert claim is not None and claim.review_state is ReviewState.APPROVED
+
+
+def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Session):
+    """Scenario: A read that overlaps an archived claim"""
+    from thenwhat.backfill.link_read import NAMES_OVERLAP
+    from thenwhat.claims.entry import archive_claim
+
+    for slug in ("archived-one", "live-one"):
+        claim_with_articles(session, slug)
+    archive_claim(session, "archived-one", reason="missed trial", now=NOW)
+    for number, slug in enumerate(("archived-one", "live-one")):
+        session.add(
+            LinkLead(
+                url=f"https://news.example.org/overlap-{number}",
+                url_key=f"news.example.org/overlap-{number}",
+                outlet="news.example.org",
+                outlet_kind=OutletKind.GENERAL_NEWS,
+                title="words a person wrote when sharing the link",
+                first_shared_at=NOW,
+                read_outcome=ReadOutcome.IDENTITY_UNRESOLVED,
+                read_detail=f"X for Y; {NAMES_OVERLAP} {slug}, but the same treatment and"
+                " condition were not established",
+            )
+        )
+    session.flush()
+
+    listed, _ = run("audit", "list")
+
+    assert listed.exit_code == 0, listed.output
+    assert "overlaps archived archived-one  https://news.example.org/overlap-0" in listed.output
+    assert "live-one" not in listed.output
+    assert "1 read overlaps an archived claim" in listed.output

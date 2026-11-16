@@ -134,6 +134,7 @@ test("repeated arm labels do not crowd out how a combination is activated", asyn
 test("scoring retains routes and separate arms before a long official title", async () => {
   for (const description of ["Delivered by inhalation", "Subcutaneous injection"]) {
     const record = study("NCT00000001", "EX-1 trial");
+    record.protocolSection.identificationModule.acronym = "EXAMPLE-2";
     record.protocolSection.identificationModule.officialTitle = "A long official title ".repeat(150);
     record.protocolSection.armsInterventionsModule = {
       interventions: [
@@ -154,6 +155,7 @@ test("scoring retains routes and separate arms before a long official title", as
     };
     const found = await lookUp({text: TEXT, model, registry: fakeRegistry({"EX-1": [record]}), index: INDEX});
     assert.equal(scored.length, 1);
+    assert.ok(scored[0].includes('"acronym":"EXAMPLE-2"'));
     assert.ok(scored[0].includes(description));
     assert.ok(scored[0].includes('"interventions":["Drug: EX-1"]') && scored[0].includes('"interventions":["Drug: EX-2"]'));
     assert.ok(scored[0].includes('"arms":["unpaired","suffix-conflict"]'));
@@ -310,6 +312,21 @@ test("Scenario: Text that names the trial", async () => {
 
   assert.equal(found.details.trial_name, "REGROW-2");
   assert.deepEqual(found.candidates.map((c) => [c.id, c.agrees]), [["NCT00000009", ["trial_name"]], ["NCT00000001", []]]);
+});
+
+test("study identity reaches scoring ahead of an oversized condition list", async () => {
+  const record = study("NCT00000001", "Synthetic study", "Synthetic condition ".repeat(150), { acronym: "EXAMPLE-2" });
+  const model = fakeModel();
+  const scored = [];
+  model.score = async (_intro, items) => {
+    scored.push(...items);
+    return items.map(() => ({ answer: "not_a_match", probabilities: { match: 0 } }));
+  };
+  await lookUp({ text: TEXT, model, registry: fakeRegistry({ "EX-1": [record] }), index: INDEX });
+  assert.equal(scored.length, 1);
+  assert.ok(scored[0].includes('"acronym":"EXAMPLE-2"'));
+  assert.ok(scored[0].endsWith(" [truncated]"));
+  assert.ok(scored[0].split("\n").slice(1).join("\n").length <= 1500);
 });
 
 test("a study name written as a hashtag agrees with its spaced registry name", async () => {
@@ -485,6 +502,21 @@ test("trials are found by a trial's name, and a name that many trials carry iden
   assert.deepEqual(await registry.named("  "), []);
 });
 
+test("a broad trial name is narrowed once by its claim's condition", async () => {
+  const { registry, asked } = registryOver({
+    '"EXAMPLE"||': { studies: [], totalCount: 24 },
+    '"EXAMPLE"|Tinnitus|': { studies: [study("NCT00000009", "nine")], totalCount: 1 },
+    '"EXAMPLE"|Migraine|': { studies: [], totalCount: 21 },
+  });
+
+  assert.deepEqual((await registry.named("EXAMPLE", { condition: "Tinnitus" })).map(s => s.protocolSection.identificationModule.nctId), ["NCT00000009"]);
+  assert.equal(asked.length, 2);
+  assert.deepEqual(await registry.named("EXAMPLE", { condition: "Migraine" }), []);
+  assert.equal(asked.length, 4);
+  assert.deepEqual(await registry.named("EXAMPLE"), []);
+  assert.equal(asked.length, 5);
+});
+
 // --- papers -------------------------------------------------------------------------
 
 function papersOver(byQuery) {
@@ -539,6 +571,16 @@ test("Scenario: Page that describes itself in its tags", () => {
   );
   const bare = readPage("<html><head><title>Teeth &amp; gums</title></head><body><p>Hi</p></body></html>");
   assert.deepEqual([bare.headline, bare.summary, bare.published, bare.body], ["Teeth & gums", null, null, null]);
+});
+
+test("the article's own publication date is preferred to a tag named only date, as in the pipeline", () => {
+  // Seen on medscape.com on 2026-11-16: its "date" tag held the day it was changed.
+  const changed = readPage('<head><meta name="date" content="9/6/2026"><script type="application/ld+json">'
+    + '{"@type": "NewsArticle", "datePublished": "2026-09-05", "dateModified": "2026-09-06"}</script></head>');
+  const named = readPage('<head><meta name="parsely-pub-date" content="2026-03-04T09:30:00Z">'
+    + '<script type="application/ld+json">{"datePublished": "2026-03-05"}</script></head>');
+
+  assert.deepEqual([changed.published, named.published], ["2026-09-05", "2026-03-04T09:30:00Z"]);
 });
 
 test("Scenario: Page that carries the article as structured data", () => {

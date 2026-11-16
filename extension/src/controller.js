@@ -10,7 +10,7 @@ import {
   outletOf,
   unfollow as withoutFollowed,
 } from "./kept.js";
-import { CACHE_VERSION, isFresh, stateFor } from "./lookup.js";
+import { CACHE_VERSION, stateFor } from "./lookup.js";
 import { remember, reusable, savedFor } from "./results.js";
 import { fingerprint, publicWebUrl } from "./visual.js";
 import { remind as withReminder, reminderDay, unremind as withoutReminder } from "./watch.js";
@@ -18,7 +18,6 @@ import { remind as withReminder, reminderDay, unremind as withoutReminder } from
 // A check that ended in one of these is worth finding again in the reader's own list.
 const KEPT_KINDS = new Set(["tracked", "answer", "untracked"]);
 
-const SIX_HOURS = 6 * 60 * 60 * 1000;
 // One search or screenshot attempt, everything in it included, ends by this time.
 const LOOKUP_TIMEOUT_MS = 45_000;
 // The lookup file and an earlier shared result are each waited on no longer than this.
@@ -173,17 +172,22 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
 
   async function loadIndex() {
     const { lookup: saved = null } = await storage.get("lookup").catch(() => ({}));
-    if (saved?.version === CACHE_VERSION && isFresh(saved.savedAt, Date.now(), SIX_HOURS)) {
-      return { index: saved.index, savedAt: null };
-    }
+    if (closed) return { index: null, savedAt: null };
+    // Publication can add or remove a card while a clinical answer is still reusable.
+    // Revalidate before either path, transferring no body when the index is unchanged.
+    const etag = saved?.version === CACHE_VERSION && typeof saved.etag === "string" ? saved.etag : null;
     try {
-      const index = await bounded(indexTimeoutMs, abort.signal, async (signal) => {
-        const response = await fetch(`${site.url}/lookup.json`, { cache: "no-store", signal });
+      const refreshed = await bounded(indexTimeoutMs, abort.signal, async (signal) => {
+        const response = await fetch(`${site.url}/lookup.json`, {
+          cache: "no-store", signal, ...(etag ? { headers: { "If-None-Match": etag } } : {}),
+        });
+        if (response.status === 304 && etag) return { index: saved.index, etag };
         if (!response.ok) throw new Error(`status ${response.status}`);
-        return response.json();
+        return { index: await response.json(), etag: response.headers?.get("ETag") ?? null };
       });
-      await storage.set({ lookup: { version: CACHE_VERSION, index, savedAt: Date.now() } }).catch(() => {});
-      return { index, savedAt: null };
+      if (closed) return { index: null, savedAt: null };
+      await storage.set({ lookup: { version: CACHE_VERSION, ...refreshed, savedAt: Date.now() } }).catch(() => {});
+      return { index: refreshed.index, savedAt: null };
     } catch {
       return saved ? { index: saved.index, savedAt: saved.savedAt } : { index: null, savedAt: null };
     }
@@ -264,7 +268,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     try {
       const { response, saved } = await bounded(cacheProbeTimeoutMs, scope.signal, async (signal) => {
         const response = await fetch(site.url + live, { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cacheOnly: true, pageUrl }), signal });
+          body: JSON.stringify({ cacheOnly: true, pageUrl, claimResults: true }), signal });
         return { response, saved: await response.json() };
       });
       return response.ok && saved?.cache?.shared && typeof saved.cache.checkedAt === "number" &&
@@ -306,7 +310,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
         core = event.result;
         stages = { core_ms: scope.elapsed() };
         if (coreShown()) {
-          const pending = core.about_a_treatment === true && !core.research;
+          const pending = core.about_a_treatment === true && !core.research && !core.claims;
           const timings = timingsOf(stages, event.timings);
           scope.showPage(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "loading" } : {}), ...timings }));
           scope.keep(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "incomplete" } : {}), ...timings }));
@@ -320,7 +324,7 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (!await current(scope)) return null;
     if (!core) return refusedBy(scope, "failed");
     if (coreShown()) {
-      const pending = core.about_a_treatment === true && !core.research;
+      const pending = core.about_a_treatment === true && !core.research && !core.claims;
       scope.showPage(resultState(core, core.cache?.checkedAt ?? null, { ...(pending ? { research: "incomplete" } : {}), ...timingsOf(stages) }));
     }
     // A non-treatment core is a finished identification, so its screenshot may follow.
@@ -335,7 +339,8 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     // A staged answer is asked for; a service that answers in one piece is read as before.
     const response = await fetch(site.url + live, {
       method: "POST", headers: { "Content-Type": "application/json", Accept: "application/x-ndjson, application/json" },
-      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}), stream: true }), signal: scope.signal,
+      body: JSON.stringify({ ...serviceRequest(request), ...(request.pageUrl ? { refresh: !reuse } : {}), stream: true, claimResults: true,
+        timeBudgetMs: Math.max(1, lookupTimeoutMs - scope.elapsed() - 1000) }), signal: scope.signal,
     });
     if (streamed(response)) return receive(scope, response, { key, provisional });
     const found = await response.json();

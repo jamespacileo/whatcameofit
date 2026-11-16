@@ -22,6 +22,8 @@ function setup(overrides = {}) {
     describeAnswer: found => found,
     present: state => states.push(state),
     ...overrides,
+    fetch: (url, options) => options.method === "POST"
+      ? overrides.fetch(url, options) : Promise.resolve(Response.json(values.lookup.index)),
   });
   return { controller, states, values, writes };
 }

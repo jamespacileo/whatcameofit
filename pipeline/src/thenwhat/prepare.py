@@ -54,14 +54,21 @@ def plan_claims(session: Session, slugs: list[str] | None) -> list[ClaimPlan]:
 
 def steps_for(plan: ClaimPlan) -> list[list[str]]:
     """The commands that prepare one claim, in order: read its unread articles, search the
-    registries, read the registries for whatever matches are already approved, then have
-    the stored trial records read into record readings."""
+    registries, read the registries for whatever matches are already approved, have the
+    stored trial records read into record readings, then propose the claim's subject
+    terms, kind and drug record, which its background cards come from."""
     return [
         *(["extract", "article", plan.slug, "--article-url", url] for url in plan.unread_articles),
         ["resolve", plan.slug],
         ["fetch", plan.slug],
         ["readings", plan.slug],
+        ["terms", plan.slug],
     ]
+
+
+# A claim's background cards describe its terms and are not evidence: a claim whose
+# terms could not be proposed is still decided once the other steps have succeeded.
+NOT_NEEDED_TO_DECIDE = {"terms"}
 
 
 def decide_prepared_lead_claim(session: Session, slug: str, *, now: datetime) -> ReviewState | None:

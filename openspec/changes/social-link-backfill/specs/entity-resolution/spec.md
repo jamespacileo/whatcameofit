@@ -44,3 +44,31 @@ The question asked about a trial record SHALL offer, beside a match, another ind
 #### Scenario: The claim's drug is the treatment on trial
 - **WHEN** a trial's arms differ in whether patients receive the claim's drug for the claim's condition
 - **THEN** the record can be read as a match and approved by rule as before
+
+### Requirement: A combination is searched for all its treatments together
+When the intervention's name or one of its other names joins several treatments ("plus", "with", "and", "in combination with", "combined with", "+" or "/"), the registry search SHALL also look for every one of those treatments at once, each part in brackets and the parts joined by AND, under the same rules as a name. The name as written SHALL still be searched. Every trial found is a candidate scored like any other; finding it by the parts does not make it a match.
+
+#### Scenario: A combination
+- **WHEN** a claim's intervention is "aspirin plus avelumab"
+- **THEN** the registry is searched for "aspirin plus avelumab" and for "(aspirin) AND (avelumab)", and a trial the second search finds becomes a candidate
+
+#### Scenario: One treatment
+- **WHEN** a claim's intervention is "semaglutide"
+- **THEN** only its names, phrases and codes are searched, as before
+
+## MODIFIED Requirements
+
+### Requirement: Broad names are searched within the indication
+When the registries are searched for a claim, the search SHALL be narrowed by the claim's indication, so that a broad intervention name returns trials for that condition. A name that still returns more than a hundred trials within the indication SHALL contribute the registry's first page there, its hundred most relevant trials, each scored like any candidate; no further page is asked for. A search phrase that does so SHALL contribute none, as a phrase is broader than a name. A name or phrase with no trial within the indication SHALL contribute none.
+
+#### Scenario: Broad intervention name
+- **WHEN** the intervention is "CAR-T cell therapy" and the indication is stiff person syndrome
+- **THEN** the search returns trials of CAR-T cell therapy in stiff person syndrome, not every CAR-T trial
+
+#### Scenario: An established drug with many trials for the condition
+- **WHEN** a claim is about buprenorphine for opioid use disorder and the registry holds hundreds of such trials
+- **THEN** the hundred the registry ranks first within the condition become candidates, and the claim does not read "no trial record found" for want of them
+
+#### Scenario: Name that identifies nothing
+- **WHEN** a search phrase still returns more than a hundred trials within the indication, or a name or phrase returns none
+- **THEN** it contributes no candidates

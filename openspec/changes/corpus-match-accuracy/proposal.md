@@ -6,6 +6,9 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 
 ## What Changes
 
+- Show separate matches and cards for each identifiable independent claim on a page, as the operator chose on 2026-11-16; keep genuine combination regimens together and retain uncertainty for unidentified claims.
+- Narrow ambiguous study acronyms once by the reported condition, preserving candidate limits, per-claim query identity and full clinical scoring.
+- Revalidate the extension's published card index when its popup opens, using conditional requests to avoid transferring an unchanged index and retaining bounded offline fallback. Newly published exact-source cards must precede saved clinical answers.
 - Require the same condition and complete intervention when associating a live answer with an existing card; uncertainty must not become a positive association.
 - Respect explicit patient populations and treatment settings when scoring registry trials, including a separately linked first-line trial in an article about previously treated patients.
 - Capture the currently visible slide within an identity-bound carousel, respecting ancestor clipping and the existing consent/privacy limits.
@@ -45,3 +48,5 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 ## Impact
 
 Public lookup index, Worker and Python lookup matching, extension collector/capture/cache, corpus tooling and existing Google Sheet. No additional provider call for card matching, no new permissions, no video/audio download, and no fabricated positive results or medical advice. Deployment continues through reviewed CI; Safari updates preserve signing and rollback.
+
+- Require established study identity when the intervention is named only by a study; preserve registry acronyms in bounded scoring context and reject unrelated same-condition candidates.

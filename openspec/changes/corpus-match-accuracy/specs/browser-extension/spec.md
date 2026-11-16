@@ -1,5 +1,22 @@
 ## ADDED Requirements
 
+### Requirement: Popup checks the current published card index
+Each web-page popup SHALL revalidate the published index before source matching or clinical-answer reuse. Conditional requests SHALL avoid an unchanged body. Failure SHALL retain the dated offline fallback and five-second bound. This static request SHALL send no source-page URL, text or image. Clinical-answer lifetimes and background refresh frequency SHALL remain unchanged.
+
+#### Scenario: A card was published after the previous popup
+- **GIVEN** a recent saved index lacks the page's exact-source card and an earlier clinical answer exists
+- **WHEN** the server supplies the updated index
+- **THEN** the popup displays the exact-source card without reading the page or requesting a clinical search
+- **AND** a recent saved index does not suppress the check within its former six-hour lifetime
+
+#### Scenario: Published index has not changed
+- **WHEN** the server answers the saved ETag with 304
+- **THEN** the popup reuses the saved index without parsing a response body and retains normal clinical-answer reuse
+
+#### Scenario: A published mapping has been removed
+- **WHEN** a fresh index no longer contains the saved index's exact-source card
+- **THEN** the old source card is not shown as current
+
 ### Requirement: LinkedIn safety redirects retain the article
 The shared address reader SHALL unwrap an HTTP(S) article URL carried by LinkedIn's `/safety/go/` redirect. The extension SHALL retain that article as an outgoing source link rather than discard it as a link within LinkedIn. The existing tracked-linked-article path SHALL remain available without a page read or model request. This SHALL NOT change post identity boundaries or condition equivalence rules.
 

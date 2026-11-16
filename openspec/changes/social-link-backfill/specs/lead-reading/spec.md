@@ -299,18 +299,22 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** no claim is created and the lead's failure names the slug
 
 ### Requirement: A read's claim is decided after it is prepared
-`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. While a step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
+`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. It SHALL then propose the claim's subject terms, kind and drug record, which its background cards come from; a failure there SHALL be reported and SHALL NOT keep the claim waiting, as cards are not evidence. While another step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
 
 #### Scenario: Prepared and named
 - **WHEN** `thenwhat prepare --pending` has run every step without failure for a claim a read drafted
 - **THEN** the claim is approved by rule, is marked awaiting audit, and is published, with the status its approved evidence gives, by the first export after its audit is cleared
 
 ### Requirement: A prepared batch waits for its audit
-Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
+Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. It SHALL then list each lead left identity unresolved because its treatment and condition overlap a claim that is now archived, with that claim and the lead's address, so the claim can be fixed and unarchived and the lead read again. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
 
 #### Scenario: Held until audited
 - **WHEN** an export runs while an approved, unarchived claim awaits audit
 - **THEN** the claim is not in the export, is not listed as archived, has no published time, and the export command says one approved claim was left out
+
+#### Scenario: A read that overlaps an archived claim
+- **WHEN** `thenwhat audit list` runs while a lead was left identity unresolved naming a claim that is now archived, and another naming a claim that is not
+- **THEN** the first lead is listed with the archived claim and its address, and the second is not
 
 #### Scenario: Audit passed
 - **WHEN** `thenwhat audit clear` names a claim awaiting audit and an export runs
@@ -320,8 +324,12 @@ Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give
 - **WHEN** `thenwhat audit clear` names a claim awaiting audit and one that does not
 - **THEN** the command exits with 1, names the claim that does not, and releases neither
 
+#### Scenario: Terms that could not be proposed
+- **WHEN** every step for a claim a read drafted succeeds except proposing its terms
+- **THEN** the failure is reported and the claim is decided by the rule for drafts
+
 #### Scenario: A step that failed
-- **WHEN** a step of `thenwhat prepare` fails for a claim a read drafted
+- **WHEN** a step of `thenwhat prepare` other than proposing terms fails for a claim a read drafted
 - **THEN** the claim keeps awaiting review, and the next `thenwhat prepare --pending` works on it again
 
 #### Scenario: A claim the operator entered
@@ -356,3 +364,41 @@ A lead linked by its title to a claim that already has the configured number of 
 #### Scenario: After a limited run
 - **WHEN** 200 leads have been through the reading step
 - **THEN** the report gives each count and the two costs, and no request is sent
+
+### Requirement: A read does not draft a duplicate of a claim by its dose or form
+A read SHALL offer the same-claim decision every claim whose intervention shares a name with the read's treatment once dose, schedule, form and any "-assisted" therapy are left out of the names ("semaglutide 2.4 mg once-weekly injections" and "MDMA-assisted psychotherapy" give "semaglutide" and "MDMA"). A route or form that makes another product, such as "nasal spray", "oral", "pill" or "tablets", SHALL be kept. When the decision does not join the article to a claim, and a claim that is not rejected has that same treatment and a condition that is the read's, or the read's with words in front that only narrow it, the read SHALL draft no claim and SHALL record the lead as identity unresolved, naming that claim. A condition that only ends with the other's words after "in", "with" or the like is another condition. Words in brackets are left out of the comparison. This rule SHALL never join an article to a claim: only the decision joins.
+
+#### Scenario: A name with a dose or an assisted therapy
+- **WHEN** a read names "MDMA-assisted psychotherapy" for post-traumatic stress disorder and a claim exists for MDMA for post-traumatic stress disorder (PTSD)
+- **THEN** that claim is offered to the same-claim decision
+
+#### Scenario: A duplicate refused
+- **WHEN** the decision does not establish the same claim, and the read's treatment and condition are a claim's once dose and form are left out
+- **THEN** no claim is drafted, and the lead is identity unresolved, naming that claim
+
+#### Scenario: Another condition that ends with the same words
+- **WHEN** a read names orforglipron for obstructive sleep apnoea in people with obesity and a claim exists for orforglipron for obesity
+- **THEN** that claim does not stop the read from drafting a claim
+
+### Requirement: An outlet that refuses the reader page after page is not asked again
+Before asking the page reader for a lead's page, the read SHALL count the outlet's leads whose page the site answered with 401 in the last 30 days. When there are at least five and none of the outlet's leads has given an outcome only a served page gives (added to a claim, a new claim, needs a vertical, not one treatment, business news, identity unresolved), the lead SHALL be finished as cannot be read, saying the outlet answered 401 for that many pages and served none, and the reader SHALL NOT be asked. Whether a site is asked stays the reader's decision (ADR 0006): this acts on the site's own answers, and only on 401. `thenwhat backfill retry-outlet <outlet>` SHALL put the outlet's leads refused with 401, or not asked because of those refusals, back to not read, and SHALL refuse when it has none.
+
+#### Scenario: An outlet that refuses the reader
+- **WHEN** five of an outlet's pages were answered 401 and none was served, and another of its leads is due
+- **THEN** that lead cannot be read, its reason names the five refusals, and no request is made
+
+#### Scenario: Refusals that have lapsed
+- **WHEN** an outlet's five 401 answers are all older than 30 days, and another of its leads is due
+- **THEN** that lead is asked of the reader
+
+#### Scenario: Asking an outlet again
+- **WHEN** the operator runs `thenwhat backfill retry-outlet` for an outlet with leads refused with 401 or left unasked
+- **THEN** those leads are due again, and the next run asks the reader for them
+
+#### Scenario: An outlet with nothing to retry
+- **WHEN** the operator runs `thenwhat backfill retry-outlet` for an outlet with no such lead
+- **THEN** the command exits with 1 and changes nothing
+
+#### Scenario: An outlet that served a page
+- **WHEN** an outlet has five 401 answers and one lead that was read from its page
+- **THEN** its next lead is asked of the reader as before

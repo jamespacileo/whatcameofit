@@ -194,6 +194,31 @@ The article's date is decided: from the page only (`specs/lead-reading/spec.md`,
 - [x] 12.4 Verify with tests: prepare marks the claim, the export skips it until cleared, and the command refuses a claim not held while clearing nothing.
 - [x] 12.5 Raise the export's schema version to 2 and have the site read only 2, so an export from pipeline code older than the hold stops the build; verify with a site test.
 
+## 13. Batch 1 audit faults: search names and cards
+
+Batch 1's audit (2026-11-16) archived 10 claims for missed or wrong trials. None had another name, and only 2 had GSRS codes; four were combinations the registry cannot find by their name as written ("aspirin plus avelumab" finds nothing, "(aspirin) AND (avelumab)" finds NCT04188119).
+
+- [x] 13.1 Search a combination's treatments together, joined by AND, besides its name as written; verify with a test that the joined search runs and its trial becomes a candidate.
+- [x] 13.2 Have `thenwhat prepare` run `terms` after `readings`, so every prepared claim gets its subject terms and background cards (part of 10.5); a terms failure is reported and does not keep the claim waiting.
+## 14. Batch 1 audit faults: duplicates by dose or form
+
+Batch 1's audit (2026-11-16) archived 7 claims as duplicates of live ones, drafted because a dose, a schedule or "-assisted psychotherapy" kept the names from matching. Measured on 336 claims, the rule below pairs 13, every one a duplicate the audit archived or would archive, and none for another condition once "in", "with" and the like stop a match.
+
+- [x] 14.1 Offer the same-claim decision the claims sharing a read's core name, and refuse a new claim whose core name and condition are a claim's; record the lead as identity unresolved. Verify with tests: the claim is offered, the duplicate is refused, and a condition about other people is not matched.
+- [x] 14.2 List in `thenwhat audit list` the reads left identity unresolved because they overlap an archived claim, so a claim archived for a fault can be fixed, unarchived and its leads read again (review of PR 216); verify with a test that only reads naming an archived claim are listed.
+## 15. Outlets that refuse the reader
+
+Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that answered 401 to every page: reuters.com (44) and wsj.com (39). By batch 2 they stood at 50 and 43, with no page served.
+
+- [x] 15.1 Finish a lead without asking the reader when its outlet answered 401 to at least five pages and served none; verify with tests that such a lead makes no request and that an outlet which served a page is still asked.
+- [x] 15.2 Count only 401 answers from the last 30 days, and add `thenwhat backfill retry-outlet <outlet>` to ask an outlet's refused and unasked leads again; verify with tests that lapsed refusals do not stop a read, and one success and one refusal of the command.
+
+## 16. Batch 2 audit faults
+
+Batch 2's audit (2026-11-16) archived 39 of 132 claims: 14 established drugs read "no trial found" though the registry holds hundreds of their trials (buprenorphine for opioid use disorder: 316 within the condition), brand names missed their registry names (Mosquirix finds 1 malaria trial, RTS,S finds 36), and class names and a bare "Cancer" got through. The operator approved three fixes the same day.
+
+- [x] 16.1 Keep the registry's first page (its 100 most relevant trials) for a name still broad within the condition, scored like any candidate, instead of nothing; a search phrase still gives none. Verify with a test against a recorded broad search.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.

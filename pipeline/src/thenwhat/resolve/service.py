@@ -4,6 +4,7 @@ Every candidate is stored and scored. A rule rejects one scored near zero and ap
 a trial scored high for the claim's indication; the rest wait for review.
 """
 
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -80,6 +81,25 @@ class TrialSearch(Protocol):
     def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]: ...
 
 
+# The words that join the treatments of a combination in a name: "aspirin plus avelumab",
+# "UV1 vaccine plus pembrolizumab with GM-CSF", "emtricitabine/tenofovir".
+COMBINATION = re.compile(
+    r"\s+(?:plus|with|and|in combination with|combined with)\s+|\s*[+/]\s*", re.IGNORECASE
+)
+
+
+def combination_search(name: str) -> str | None:
+    """The registry search for each treatment of a combination at once, or None when the
+    name names one treatment. The registry reads the name as written as one treatment
+    whose description holds every word, joining words such as "plus" included, so a
+    combination is never found by its name; the search for its parts joined by AND finds
+    the trials that give all of them."""
+    parts = [part.strip() for part in COMBINATION.split(name) if part.strip()]
+    if len(parts) < 2:
+        return None
+    return " AND ".join(f"({part})" for part in parts)
+
+
 def trials_of(
     trials: TrialSearch,
     entity: Entity,
@@ -89,16 +109,19 @@ def trials_of(
 ) -> list[SourceRecord]:
     """Every trial the registry holds under the intervention's name, its other names, its
     search phrases and its development codes. A phrase or a code is searched within the
-    indication only.
+    indication only. A name that joins several treatments is also searched for all of
+    them together.
 
     A term the registry cannot search for as written is passed to `unsearchable` and the
     other terms are still searched: each term is its own search. Nothing simpler is
     tried in its place. With no `unsearchable`, the failure is raised.
     """
+    names = [entity.name, *entity.synonyms]
+    combined = [search for name in names if (search := combination_search(name))]
     searches: list[Callable[[], list[SourceRecord]]] = [
         *(
             (lambda term=term: trials.search_trials(term, indication))
-            for term in [entity.name, *entity.synonyms]
+            for term in dict.fromkeys([*names, *combined])
         ),
         *(
             (lambda phrase=phrase: trials.search_phrase(phrase, indication))
