@@ -246,6 +246,7 @@ test("Scenario: Post that links to a tracked article", async () => {
   const said = describeAnswer(found);
   assert.deepEqual([said.marked, said.likely, said.none], [null, [], null]);
   assert.match(said.lead, /links to an article we track/);
+  assert.equal(said.source, "Read from a post on Bluesky. The linked article at news.example.org is already tracked; its card is shown without another article read or automatic search.");
 });
 
 test("Scenario: Post on a platform that cannot be read", async () => {
@@ -308,6 +309,7 @@ test("a link-only post pointing at a reviewed article keeps the no-model path", 
   assert.equal(found.article_tracked, true);
   assert.deepEqual(shown, []);
   assert.deepEqual(net.addresses(), []);
+  assert.equal(describeAnswer(found).source, "Read by your browser from the post on X you have open. The linked article at news.example.org is already tracked; its card is shown without another article read or automatic search.");
 });
 
 test("a post whose only link is a shortened one is looked up from its own words, and the answer says why", async () => {
