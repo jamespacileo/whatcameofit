@@ -1,0 +1,150 @@
+{
+  "checked_at": "2026-11-16T03:33:05.606453+00:00",
+  "by": "assistant",
+  "released": false,
+  "claims": [
+    472,
+    509,
+    571
+  ],
+  "moved_promises": [
+    {
+      "id": 222,
+      "from_claim": 472,
+      "from_article": 579,
+      "to_claim": 509,
+      "to_article": 749,
+      "description": "A human trial of two Regeneron muscle-enhancing antibodies combined with semaglutide was due to begin later in 2024.",
+      "parsed_date": "2024-12-31",
+      "reason": "Atlantic attributes the planned human trial to the two Regeneron antibodies with semaglutide, not bimagrumab."
+    }
+  ],
+  "rejected_statements": [
+    2282,
+    2283,
+    2286,
+    2529,
+    2530,
+    2531,
+    2534
+  ],
+  "approved_statements": [
+    2284,
+    2533
+  ],
+  "rejected_trials": [
+    15578,
+    15579,
+    15580,
+    15581,
+    15592,
+    15616,
+    15639,
+    15755,
+    15718,
+    15768
+  ],
+  "approved_trials": [
+    15537,
+    15515,
+    17955
+  ],
+  "sources": {
+    "bimagrumab_report": "https://www.pharmacytimes.com/view/bimagrumab-semaglutide-combination-achieves-significant-weight-loss-while-preserving-muscle-mass",
+    "bimagrumab_primary_paper": "https://www.nature.com/articles/s41591-026-04204-0",
+    "courage_interim": "https://investor.regeneron.com/news-releases/news-release-details/interim-results-ongoing-phase-2-courage-trial-confirm-potential",
+    "courage_later_doublet": "https://investor.regeneron.com/news-releases/news-release-details/phase-2-courage-trial-confirms-trevogrumab-prevents-lean-mass",
+    "original_mixed_report": "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/",
+    "original_report_linked_primary": "https://investor.regeneron.com/static-files/7dfdabe2-05d1-4145-b5c5-342cec0ce9c4"
+  },
+  "scope": [
+    {
+      "claim_id": 472,
+      "regimen": "Bimagrumab plus semaglutide",
+      "trial": "NCT05616013",
+      "arms": "Four combination arms contain both drugs. Obesity is included; summary identifies the wider trial population and diabetes exclusion.",
+      "limits": "Less lean-mass loss does not mean no lean-mass loss or proven strength benefit."
+    },
+    {
+      "claim_id": 509,
+      "regimen": "Semaglutide plus trevogrumab plus garetosmab",
+      "trial": "NCT06299098",
+      "arms": "D0 and D1: all three drugs together during the 26-week weight-loss phase.",
+      "limits": "June 2025 interim efficacy analysis excluded data after discontinuation; higher severe adverse-event and discontinuation rates prevent a benefit-only summary."
+    },
+    {
+      "claim_id": 571,
+      "regimen": "Semaglutide plus trevogrumab",
+      "trial": "NCT06299098",
+      "arms": "B0/B1/C0/C1 in Part B; arms 2/3 in Part C. Garetosmab is not an active component.",
+      "limits": "October 2026 lower-dose results concern 52-week lean-mass preservation, without meaningful additional weight loss. Phase 2, not an approved combination."
+    }
+  ],
+  "statement_corrections": {
+    "2529": "Misstates 50.8/51.3% relative lean-mass preservation as percentages of weight loss from fat. Rejected; original text and scores retained.",
+    "2530": "Two-drug result does not belong on the narrowed three-drug card.",
+    "2531": "80.9% wording fails to specify preservation relative to semaglutide-associated loss, not 80.9% of baseline lean mass. Rejected.",
+    "2534": "Generic with-or-without mechanism does not define the three-drug regimen.",
+    "2282,2283": "Monotherapy findings are not findings for the combination.",
+    "2286": "Regeneron antibodies are not bimagrumab."
+  },
+  "promise_correction": {
+    "preserved_id_text_and_date": true,
+    "source_reference_preserved": true,
+    "original_misattribution_preserved_in_audit": true,
+    "verification": "Atlantic links the January 8 2024 Regeneron presentation, slides 20\u201321, naming trevogrumab, garetosmab and semaglutide and the planned mid-2024 Phase 2 trial. Only claim/source foreign keys changed; the promise was neither deleted nor rewritten."
+  },
+  "excluded_papers": [
+    15777,
+    15778,
+    15779,
+    15783
+  ],
+  "paper_exclusion_reason": "These concern semaglutide without the complete three-drug regimen (including STEP 1 and STEP 4), not COURAGE.",
+  "preparation": {
+    "new_claim": 571,
+    "first_pass_seconds": 10,
+    "second_pass_seconds": 6,
+    "second_pass_reason": "After assistant approval of NCT06299098, fetch its cached record and read outcomes. Resolve found zero new matches.",
+    "older_claims_rerun": false,
+    "article_models_rerun": false
+  },
+  "preservation": {
+    "original_scores": true,
+    "raw_registry_payloads": true,
+    "old_records_deleted": false
+  },
+  "registry_payload_sha256": {
+    "NCT05616013": "5a90965352ab21857fa24cca03f42e016c2171d61d43dcb4b8b99f796cc45cfc",
+    "NCT06299098": "09ec0c8ae3529352abab55eba65985bcdd6c0bc7dbe2822112c400ea6e677d57"
+  },
+  "export_delta": {
+    "before": 168,
+    "after": 171,
+    "added": [
+      "bimagrumab-plus-semaglutide-obesity-and-weight-loss",
+      "semaglutide-plus-trevogrumab-with-or-without-garetosmab",
+      "semaglutide-trevogrumab-obesity"
+    ],
+    "existing_cards_unchanged": 168,
+    "removed": []
+  },
+  "corpus_scope": {
+    "articles": [
+      "A076",
+      "A077"
+    ],
+    "socials": [
+      "S036",
+      "S045",
+      "S053"
+    ],
+    "native_safari": "Not verified: current control connection reports locked despite user unlock confirmations.",
+    "social_limits": "New release replay still required. S045 retains a reported caption/slide follow-up discrepancy; S053 video/audio completeness must not be inferred from caption checks."
+  },
+  "validation": {
+    "public_rehearsal": "pending",
+    "independent_reviews": "pending",
+    "released_checks": "pending"
+  }
+}

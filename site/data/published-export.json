@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T02:57:06.624053Z",
+  "generated_at": "2026-11-16T03:34:51.308267Z",
   "last_checked_at": "2026-11-16T02:15:15.735202Z",
   "preview": false,
   "sources": [
@@ -11417,6 +11417,676 @@
           "basis": "not_said",
           "confidence": 0.89,
           "article_url": "https://www.sciencealert.com/this-type-of-fiber-could-have-weight-loss-benefits-similar-to-ozempic",
+          "read_on": "2026-11-15"
+        }
+      ]
+    },
+    {
+      "slug": "bimagrumab-plus-semaglutide-obesity-and-weight-loss",
+      "headline": "Bimagrumab plus semaglutide is being tested for weight loss and lean-mass preservation",
+      "summary": "BELIEVE tested bimagrumab plus semaglutide in adults with obesity or overweight and a weight-related condition. The March 2026 report described greater weight and fat loss and less lean-mass loss than semaglutide alone. Lean mass still fell in the high-dose combination group. The trial excluded diabetes, and these findings do not establish improved strength or long-term health outcomes.",
+      "vertical": "diabetes-and-hormones",
+      "approach": "drug",
+      "intervention": {
+        "name": "Bimagrumab plus semaglutide",
+        "synonyms": []
+      },
+      "indication": "Obesity",
+      "first_reported_date": "2024-02-02",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.87,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.12
+          }
+        ]
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-15T22:33:31.298784Z",
+        "explained_by": [
+          10100,
+          10101
+        ],
+        "history": [
+          {
+            "on": "2022-11-14",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2022-11-16",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/",
+          "outlet": "The Atlantic",
+          "title": "Ozempic Makes You Lose More Than Fat",
+          "published_date": "2024-02-02",
+          "archive_url": "http://web.archive.org/web/20260102180320/https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/",
+          "published_by": null
+        },
+        {
+          "url": "https://www.pharmacytimes.com/view/bimagrumab-semaglutide-combination-achieves-significant-weight-loss-while-preserving-muscle-mass",
+          "outlet": "Pharmacy Times",
+          "title": "Bimagrumab-Semaglutide Combination Achieves Significant Weight Loss While Preserving Muscle Mass",
+          "published_date": "2026-03-12",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 10100,
+          "type": "trial_registered",
+          "event_date": "2022-11-14",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05616013 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05616013",
+          "trial_id": "NCT05616013",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 10101,
+          "type": "trial_status_change",
+          "event_date": "2022-11-16",
+          "date_basis": "start date",
+          "summary": "Trial NCT05616013 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05616013",
+          "trial_id": "NCT05616013",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 10102,
+          "type": "trial_status_change",
+          "event_date": "2025-06-14",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05616013 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05616013",
+          "trial_id": "NCT05616013",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 10103,
+          "type": "trial_results_posted",
+          "event_date": "2025-07-18",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT05616013.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05616013",
+          "trial_id": "NCT05616013",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05616013",
+          "url": "https://clinicaltrials.gov/study/NCT05616013",
+          "score": 0.78,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "assistant",
+          "summary": "Safety and Efficacy of Bimagrumab and Semaglutide in Adults Who Are Overweight or Obese. For: Obesity, Obese, Overweight or Obesity. Tests: Bimagrumab, Semaglutide, Placebo. Phase 2, completed."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT05616013",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05616013",
+          "title": "Safety and Efficacy of Bimagrumab and Semaglutide in Adults Who Are Overweight or Obese",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-15T13:17:13.632715Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 507,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Eli Lilly and Company",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change From Baseline in Body Weight at Week 48",
+                "time_frame": "Baseline, Week 48"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Change From Baseline in Body Weight at Week 48",
+                  "time_frame": "Baseline, Week 48",
+                  "unit": "kilogram (kg)",
+                  "measure": "least_squares_mean",
+                  "spread_kind": "Standard Error",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Placebo/30 mg/kg Bimagrumab",
+                      "analysed": "35",
+                      "value": "-3.31",
+                      "spread": "1.39",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "10/30 mg/kg Bimagrumab",
+                      "analysed": "31",
+                      "value": "-5.99",
+                      "spread": "1.42",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "30 mg/kg Bimagrumab",
+                      "analysed": "37",
+                      "value": "-9.25",
+                      "spread": "1.33",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Placebo + 1.0 mg Semaglutide",
+                      "analysed": "45",
+                      "value": "-9.76",
+                      "spread": "1.25",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Placebo + 2.4 mg Semaglutide",
+                      "analysed": "51",
+                      "value": "-14.24",
+                      "spread": "1.17",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "10 mg/kg Bimagrumab + 1.0 mg Semaglutide",
+                      "analysed": "41",
+                      "value": "-12.73",
+                      "spread": "1.29",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "10 mg/kg Bimagrumab + 2.4 mg Semaglutide",
+                      "analysed": "40",
+                      "value": "-14.31",
+                      "spread": "1.34",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "30 mg/kg Bimagrumab + 1.0 mg Semaglutide",
+                      "analysed": "43",
+                      "value": "-13.86",
+                      "spread": "1.29",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "30 mg/kg Bimagrumab + 2.4 mg Semaglutide",
+                      "analysed": "43",
+                      "value": "-17.79",
+                      "spread": "1.29",
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "30 mg/kg Bimagrumab + 2.4 mg Semaglutide"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "30 mg/kg Bimagrumab + 1.0 mg Semaglutide"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "10 mg/kg Bimagrumab + 2.4 mg Semaglutide"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "10 mg/kg Bimagrumab + 1.0 mg Semaglutide"
+                      ],
+                      "p_value": "<.001",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "Placebo + 2.4 mg Semaglutide"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "Placebo + 1.0 mg Semaglutide"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "30 mg/kg Bimagrumab"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo/30 mg/kg Bimagrumab",
+                        "10/30 mg/kg Bimagrumab"
+                      ],
+                      "p_value": "0.133",
+                      "method": "ANCOVA",
+                      "test": "superiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 1
+            }
+          },
+          "papers": [
+            "10.1038/s41591-026-04204-0",
+            "10.1002/jcsm.13811"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 48",
+              "number": 48,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T13:17:13.632715Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Body Weight",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 1,
+              "read_on": "2026-11-15T13:17:13.632715Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1038/s41591-026-04204-0",
+          "url": "https://doi.org/10.1038/s41591-026-04204-0",
+          "record_url": "https://europepmc.org/article/MED/41772149",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT05616013",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "Bimagrumab plus semaglutide alone or in combination for the treatment of obesity: a randomized phase 2 trial. 2026. article. Nature Medicine"
+            }
+          ],
+          "facts_as_of": "2026-11-15T13:17:13.726533Z",
+          "facts": {
+            "title": "Bimagrumab plus semaglutide alone or in combination for the treatment of obesity: a randomized phase 2 trial.",
+            "journal": "Nature medicine",
+            "year": 2026,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1002/jcsm.13811",
+          "url": "https://doi.org/10.1002/jcsm.13811",
+          "record_url": "https://europepmc.org/article/MED/40230053",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT05616013",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-15T13:17:14.232855Z",
+          "facts": {
+            "title": "Association of Appendicular Skeletal Muscle Mass Index and Insulin Resistance With Mortality in Multi-Nationwide Cohorts.",
+            "journal": "Journal of cachexia, sarcopenia and muscle",
+            "year": 2025,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        }
+      ],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "exact",
+          "label": "Obesity",
+          "name": null,
+          "definition": "A status with BODY WEIGHT that is grossly above the recommended standards, usually due to accumulation of excess FATS in the body. The standards may vary with age, sex, genetic or cultural background. In the BODY MASS INDEX, a BMI greater than 30.0 kg/m2 is considered obese, and a BMI greater than 40.0 kg/m2 is considered morbidly obese (MORBID OBESITY).",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D009765",
+          "source": "mesh",
+          "external_id": "D009765",
+          "version": "2026",
+          "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 1,
+              "of": 1,
+              "name": null,
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T18:25:29.632087Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "Eli Lilly",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Massachusetts General Hospital",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "002pd6e78",
+            "url": "https://ror.org/002pd6e78",
+            "name": "Massachusetts General Hospital",
+            "kinds": [
+              "funder",
+              "healthcare"
+            ],
+            "country": "United States",
+            "website": null,
+            "score": 1,
+            "read_at": "2026-11-15T20:36:26.230820Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Northwestern University",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Regeneron",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Scholar Rock",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "University of Kansas Medical Center",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "036c9yv20",
+            "url": "https://ror.org/036c9yv20",
+            "name": "University of Kansas Medical Center",
+            "kinds": [
+              "funder",
+              "healthcare"
+            ],
+            "country": "United States",
+            "website": "https://www.kumc.edu",
+            "score": 1,
+            "read_at": "2026-11-15T15:14:36.949369Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "University of Leicester",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "04h699437",
+            "url": "https://ror.org/04h699437",
+            "name": "University of Leicester",
+            "kinds": [
+              "education",
+              "funder"
+            ],
+            "country": "United Kingdom",
+            "website": "https://le.ac.uk",
+            "score": 1,
+            "read_at": "2026-11-15T20:37:08.894151Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Eli Lilly and Company",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT05616013"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Combining bimagrumab with semaglutide could potentially increase weight loss while helping preserve or build muscle.",
+          "kind": "effect",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.79,
+          "article_url": "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "Preserving or adding muscle could raise energy use while semaglutide reduces calorie intake.",
+          "kind": "how_it_works",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.87,
+          "article_url": "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "How these combinations might work in the body still needs to be understood.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.94,
+          "article_url": "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/",
           "read_on": "2026-11-15"
         }
       ]
@@ -211315,6 +211985,393 @@
       ]
     },
     {
+      "slug": "semaglutide-plus-trevogrumab-with-or-without-garetosmab",
+      "headline": "A three-drug obesity combination showed lean-mass preservation with more treatment discontinuations",
+      "summary": "The June 2025 interim COURAGE report described semaglutide with trevogrumab and garetosmab in adults with obesity without diabetes. Compared with semaglutide alone, this three-drug regimen showed greater fat loss and less lean-mass loss, but more severe adverse events and treatment discontinuations. The interim analysis covered half the participants reaching 26 weeks; it did not establish long-term benefit.",
+      "vertical": "diabetes-and-hormones",
+      "approach": "drug",
+      "intervention": {
+        "name": "Semaglutide plus trevogrumab plus garetosmab",
+        "synonyms": []
+      },
+      "indication": "Obesity",
+      "first_reported_date": "2024-02-02",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.89,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.11
+          }
+        ]
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-15T15:14:45.630531Z",
+        "explained_by": [
+          10104,
+          10105
+        ],
+        "history": [
+          {
+            "on": "2024-02-02",
+            "code": "no_trial_found"
+          },
+          {
+            "on": "2024-03-07",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2024-03-13",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/",
+          "outlet": "The Atlantic",
+          "title": "Ozempic Makes You Lose More Than Fat",
+          "published_date": "2024-02-02",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://investor.regeneron.com/news-releases/news-release-details/interim-results-ongoing-phase-2-courage-trial-confirm-potential",
+          "outlet": "Regeneron",
+          "title": "Interim Results from Ongoing Phase 2 COURAGE Trial Confirm Potential to Improve the Quality of Semaglutide (GLP-1 receptor agonist)-induced Weight Loss by Preserving Lean Mass",
+          "published_date": "2025-06-02",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.pharmexec.com/view/regeneron-semaglutide-trevogrumab-demonstrates-superior-fat-loss-reduced-muscle-wasting-obesity-trial",
+          "outlet": "Pharmaceutical Executive",
+          "title": "Regeneron’s Semaglutide Plus Trevogrumab Combo Demonstrates Superior Fat Loss with Reduced Muscle Wasting in Obesity Trial | PharmExec",
+          "published_date": "2025-06-03",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [
+        {
+          "description": "A human trial of two Regeneron muscle-enhancing antibodies combined with semaglutide was due to begin later in 2024.",
+          "parsed_date": "2024-12-31",
+          "article_url": "https://www.theatlantic.com/health/archive/2024/02/ozempics-muscle-loss-problem/677326/"
+        },
+        {
+          "description": "Full data set later in 2025",
+          "parsed_date": "2025-12-31",
+          "article_url": "https://www.pharmexec.com/view/regeneron-semaglutide-trevogrumab-demonstrates-superior-fat-loss-reduced-muscle-wasting-obesity-trial"
+        }
+      ],
+      "events": [
+        {
+          "id": 10104,
+          "type": "trial_registered",
+          "event_date": "2024-03-07",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06299098 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06299098",
+          "trial_id": "NCT06299098",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 10105,
+          "type": "trial_status_change",
+          "event_date": "2024-03-13",
+          "date_basis": "start date",
+          "summary": "Trial NCT06299098 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06299098",
+          "trial_id": "NCT06299098",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 10106,
+          "type": "trial_status_change",
+          "event_date": "2026-10-21",
+          "date_basis": "completion date",
+          "summary": "Trial NCT06299098 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06299098",
+          "trial_id": "NCT06299098",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06299098",
+          "url": "https://clinicaltrials.gov/study/NCT06299098",
+          "score": 0.99,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "assistant",
+          "summary": "A Study to Test if Trevogrumab or Trevogrumab With Garetosmab When Taken With Semaglutide is Safe and How Well They Work in Adult Patients With Obesity for Weight Loss, Fat Loss, and Lean Mass Preservation. For: Obesity. Tests: Trevogrumab-Part A, Trevogrumab-Part B and Part C, Garetosmab, Semaglutide, Matching Placebo-Part A, Matching Placebo-Trevogrumab, Matching Placebo-Garetosmab. Phase 2, com."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT06299098",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06299098",
+          "title": "A Study to Test if Trevogrumab or Trevogrumab With Garetosmab When Taken With Semaglutide is Safe and How Well They Work in Adult Patients With Obesity for Weight Loss, Fat Loss, and Lean Mass Preservation",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-15T13:17:16.105013Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 1005,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": true,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Regeneron Pharmaceuticals",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Incidence of treatment-emergent adverse events (TEAEs)",
+                "time_frame": "Baseline to week 7"
+              },
+              {
+                "measure": "Severity of TEAEs",
+                "time_frame": "Baseline to week 7"
+              },
+              {
+                "measure": "Percent change in total fat mass",
+                "time_frame": "Baseline to week 26"
+              }
+            ],
+            "primary_outcomes_total": 8,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [
+            "10.1016/s0140-6736(26)01953-7"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Baseline to week 7",
+              "number": 7,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Incidence",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.98,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Baseline to week 7",
+              "number": 7,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Severity of TEAEs",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.98,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "Baseline to week 26",
+              "number": 26,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "total fat mass",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.98,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1016/s0140-6736(26)01953-7",
+          "url": "https://doi.org/10.1016/s0140-6736(26)01953-7",
+          "record_url": "https://europepmc.org/article/MED/43014326",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06299098",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-15T13:17:16.603899Z",
+          "facts": {
+            "title": "Trevogrumab (anti-GDF8) with or without garetosmab (anti-activin A) for prevention of muscle loss during semaglutide-induced weight reduction in people with obesity (COURAGE): a two-part, phase 2, double-blind, placebo-controlled, randomised trial.",
+            "journal": "Lancet (London, England)",
+            "year": 2026,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": []
+          }
+        }
+      ],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "exact",
+          "label": "Obesity",
+          "name": null,
+          "definition": "A status with BODY WEIGHT that is grossly above the recommended standards, usually due to accumulation of excess FATS in the body. The standards may vary with age, sex, genetic or cultural background. In the BODY MASS INDEX, a BMI greater than 30.0 kg/m2 is considered obese, and a BMI greater than 40.0 kg/m2 is considered morbidly obese (MORBID OBESITY).",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D009765",
+          "source": "mesh",
+          "external_id": "D009765",
+          "version": "2026",
+          "score": 0.99,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 1,
+              "of": 1,
+              "name": null,
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T18:25:29.632087Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "Regeneron",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.pharmexec.com/view/regeneron-semaglutide-trevogrumab-demonstrates-superior-fat-loss-reduced-muscle-wasting-obesity-trial"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Regeneron Pharmaceuticals",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06299098"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Severe adverse events and discontinuations were most frequent with the three-drug combination, at 10.1% and 28.3%, respectively.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.82,
+          "article_url": "https://www.pharmexec.com/view/regeneron-semaglutide-trevogrumab-demonstrates-superior-fat-loss-reduced-muscle-wasting-obesity-trial",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "Two deaths occurred in the three-drug group; the company said a causal link to the investigational treatments had not been established.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "people",
+          "confidence": 0.45,
+          "article_url": "https://www.pharmexec.com/view/regeneron-semaglutide-trevogrumab-demonstrates-superior-fat-loss-reduced-muscle-wasting-obesity-trial",
+          "read_on": "2026-11-15"
+        }
+      ]
+    },
+    {
       "slug": "semaglutide-prediabetes",
       "headline": "Semaglutide improved blood sugar and weight in a trial of adults with schizophrenia and prediabetes",
       "summary": "A Danish randomized, placebo-controlled trial followed 154 adults with schizophrenia, obesity and prediabetes for 30 weeks. Compared with placebo, once-weekly semaglutide lowered HbA1c and body weight and improved physical quality-of-life scores. Mental quality of life and schizophrenia symptom scores did not differ significantly between groups.",
@@ -212629,6 +213686,315 @@
           "read_on": "2026-11-15"
         }
       ]
+    },
+    {
+      "slug": "semaglutide-trevogrumab-obesity",
+      "headline": "Trevogrumab is being tested to preserve lean mass during semaglutide weight loss",
+      "summary": "COURAGE tested semaglutide with trevogrumab in adults with obesity without diabetes. Regeneron reported in October 2026 that lower-dose combinations reduced lean-mass loss over 52 weeks, without meaningfully increasing weight loss. These findings concern the two-drug combination; the trial also tested a separate three-drug regimen containing garetosmab.",
+      "vertical": "diabetes-and-hormones",
+      "approach": "drug",
+      "intervention": {
+        "name": "Semaglutide plus trevogrumab",
+        "synonyms": []
+      },
+      "indication": "Obesity",
+      "first_reported_date": "2025-06-02",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.79,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.19
+          }
+        ]
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T03:33:08.070500Z",
+        "explained_by": [
+          11756,
+          11757
+        ],
+        "history": [
+          {
+            "on": "2024-03-07",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2024-03-13",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://investor.regeneron.com/news-releases/news-release-details/interim-results-ongoing-phase-2-courage-trial-confirm-potential",
+          "outlet": "Regeneron",
+          "title": "Interim Results from Ongoing Phase 2 COURAGE Trial Confirm Potential to Improve the Quality of Semaglutide (GLP-1 receptor agonist)-induced Weight Loss by Preserving Lean Mass",
+          "published_date": "2025-06-02",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://investor.regeneron.com/news-releases/news-release-details/phase-2-courage-trial-confirms-trevogrumab-prevents-lean-mass",
+          "outlet": "Regeneron",
+          "title": "Phase 2 COURAGE Trial Confirms Trevogrumab Prevents Lean Mass and Muscle Loss During GLP-1 Receptor Agonist-induced Weight Loss",
+          "published_date": "2026-10-01",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 11756,
+          "type": "trial_registered",
+          "event_date": "2024-03-07",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06299098 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06299098",
+          "trial_id": "NCT06299098",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11757,
+          "type": "trial_status_change",
+          "event_date": "2024-03-13",
+          "date_basis": "start date",
+          "summary": "Trial NCT06299098 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06299098",
+          "trial_id": "NCT06299098",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11758,
+          "type": "trial_status_change",
+          "event_date": "2026-10-21",
+          "date_basis": "completion date",
+          "summary": "Trial NCT06299098 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06299098",
+          "trial_id": "NCT06299098",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06299098",
+          "url": "https://clinicaltrials.gov/study/NCT06299098",
+          "score": 0.75,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "assistant",
+          "summary": "A Study to Test if Trevogrumab or Trevogrumab With Garetosmab When Taken With Semaglutide is Safe and How Well They Work in Adult Patients With Obesity for Weight Loss, Fat Loss, and Lean Mass Preservation. For: Obesity. Tests: Trevogrumab-Part A, Trevogrumab-Part B and Part C, Garetosmab, Semaglutide, Matching Placebo-Part A, Matching Placebo-Trevogrumab, Matching Placebo-Garetosmab. Phase 2, com."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT06299098",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06299098",
+          "title": "A Study to Test if Trevogrumab or Trevogrumab With Garetosmab When Taken With Semaglutide is Safe and How Well They Work in Adult Patients With Obesity for Weight Loss, Fat Loss, and Lean Mass Preservation",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-15T13:17:16.105013Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 1005,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": true,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Regeneron Pharmaceuticals",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Incidence of treatment-emergent adverse events (TEAEs)",
+                "time_frame": "Baseline to week 7"
+              },
+              {
+                "measure": "Severity of TEAEs",
+                "time_frame": "Baseline to week 7"
+              },
+              {
+                "measure": "Percent change in total fat mass",
+                "time_frame": "Baseline to week 26"
+              }
+            ],
+            "primary_outcomes_total": 8,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [
+            "10.1016/s0140-6736(26)01953-7"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Baseline to week 7",
+              "number": 7,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Incidence",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.98,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Baseline to week 7",
+              "number": 7,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Severity of TEAEs",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.98,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "Baseline to week 26",
+              "number": 26,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "total fat mass",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.98,
+              "read_on": "2026-11-15T13:17:16.105013Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1016/s0140-6736(26)01953-7",
+          "url": "https://doi.org/10.1016/s0140-6736(26)01953-7",
+          "record_url": "https://europepmc.org/article/MED/43014326",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06299098",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "Trevogrumab (anti-GDF8) with or without garetosmab (anti-activin A) for prevention of muscle loss during semaglutide-induced weight reduction in people with obesity (COURAGE): a two-part, phase 2, double-blind, placebo-controlled, randomised trial. 2026. article. The Lancet"
+            }
+          ],
+          "facts_as_of": "2026-11-15T13:17:16.603899Z",
+          "facts": {
+            "title": "Trevogrumab (anti-GDF8) with or without garetosmab (anti-activin A) for prevention of muscle loss during semaglutide-induced weight reduction in people with obesity (COURAGE): a two-part, phase 2, double-blind, placebo-controlled, randomised trial.",
+            "journal": "Lancet (London, England)",
+            "year": 2026,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": []
+          }
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Regeneron Pharmaceuticals",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06299098"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": []
     },
     {
       "slug": "senescent-cells-senomune-0257",
