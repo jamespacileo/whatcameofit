@@ -206,3 +206,19 @@ Both previously refused outlets became readable, QUB (1) and The Sun (3). Other 
 Outlets whose Read counts fell were au.news.yahoo.com (1 to 0), bbc.co.uk (20 to 19), dailymail.co.uk (3 to 0), dailymail.com (7 to 0), eurekalert.org (5 to 0), idw-online.de (1 to 0), kyoto-u.ac.jp (1 to 0), medscape.com (1 to 0), news.yahoo.com (2 to 0), nottingham.ac.uk (1 to 0), nz.news.yahoo.com (1 to 0), okayama-u.ac.jp (1 to 0), plymouth.ac.uk (1 to 0), qmul.ac.uk (1 to 0), riken.jp (1 to 0), sg.news.yahoo.com (2 to 0), tohoku.ac.jp (1 to 0), and usatoday.com (1 to 0).
 
 Repeat inspection used up to three newly readable articles per outlet, or all when fewer were available, and recorded headline, publication date, body length and paragraph count without retaining article text. AP, Fierce Biotech, Fierce Pharma, Financial Times, QUB, The Atlantic, The Sun, US News, Dana-Farber and Washington Post passed those mechanical checks. Washington Post bodies were only 528–744 characters, so completeness is uncertain despite meeting the existing 500-character threshold. Bloomberg's two pages failed on repeat with no body or metadata. Its initial two Read results are therefore not a reliable gain.
+
+## The outlets report splits Thin from No date (2026-11-15, after merge)
+
+The acceptance run above counted a page as Thin when its main text was short *or* it had no headline or readable date. Over the 399 baseline URLs, 13 of the 21 pages that moved from Read to Thin had 1,500 to 10,000 characters of main text and had no readable date in the baseline either (EurekAlert 5, idw-online, Kyoto, Nottingham, Okayama, Plymouth, QMUL, RIKEN, Tohoku, one BBC video page). That was a change in what Thin counts, not a loss of reading. The reading step refused undated pages before and after the change.
+
+The report now has two columns: **Thin**, main text under 500 characters, as the requirement "Outlets are measured through the reader" uses the word; and **No date**, enough text but no headline or readable date, which a lead's read refuses. A rerun on 2026-11-15 over the matching 399 URLs gave Read 333 (baseline 337), Thin 5 (0), No date 18, Refused 0 (4) and failed 43 (58). The five Thin pages are Washington Post paywall stubs, which the baseline could not fetch at all.
+
+The reads still lost against the baseline, and where each belongs:
+
+| Pages | What happens | Whose to fix |
+| --- | --- | --- |
+| Daily Mail (10) | the site answers 403 to the reader | the service (ADR 0006): how the site is asked |
+| Yahoo (2 on this run, up to 6 on others) | an intermittent redirect to `consent.yahoo.com` ("Your privacy choices"); the page has no date, so a lead hitting it ends as cannot be read although a later read would succeed | the service: how a consent wall is answered |
+| USA Today (1) | the site answers 402 | the service |
+| Medscape (1) | its `date` tag holds `9/6/2026`, the day the article was changed; its structured data gives `datePublished` 2026-09-05. `read_page` in the pipeline and `readPage` in the Worker now read tags that name publication, then structured `datePublished`, then tags named only `date` or `dc.date`. Day and month order in a slashed date is still not guessed | fixed in the pipeline, 2026-11-16 |
+| QMUL (1) | the reader's main content is 768 characters against 4,309 for the page; it also has no date | the service: its main-content cut |
