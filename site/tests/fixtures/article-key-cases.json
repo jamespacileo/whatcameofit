@@ -40,7 +40,9 @@
         "https://www.example.org/a/b/",
         "https://example.org/a/b/index.html",
         "https://example.org/a//b",
-        "https://example.org//a/b/index.html"
+        "https://example.org//a/b/index.html",
+        "https://example.org/x/../a/./b",
+        "https://example.org/a/b/c/.."
       ]
     },
     {
@@ -119,7 +121,9 @@
         "https://www.youtube.com/watch?v=abcdefghijk",
         "https://youtu.be/abcdefghijk",
         "https://m.youtube.com/shorts/abcdefghijk",
-        "https://www.youtube.com/watch?v=abcdefghijk&t=42s"
+        "https://www.youtube.com/watch?v=abcdefghijk&t=42s",
+        "https://www.youtube.com./shorts/abcdefghijk",
+        "https://youtube.com./watch?v=abcdefghijk"
       ]
     },
     {
@@ -203,8 +207,22 @@
       "key": "reddit.com/r/example",
       "addresses": [
         "https://www.reddit.com/r/example/",
-        "https://old.reddit.com/r/example",
-        "https://np.reddit.com/r/example/"
+        "https://old.reddit.com/r/example"
+      ]
+    },
+    {
+      "key": "example.org/p?B=3&_a=2&a-b=4&a1=5&a_b=6&b=1",
+      "addresses": [
+        "https://example.org/p?b=1&_a=2&B=3&a-b=4&a1=5&a_b=6",
+        "https://example.org/p?a_b=6&a1=5&a-b=4&B=3&_a=2&b=1"
+      ]
+    },
+    {
+      "key": "example.org/a/%5Bb%5D%7Cc%5Ed",
+      "addresses": [
+        "https://example.org/a/[b]|c^d",
+        "https://example.org/a/%5Bb%5D%7Cc%5Ed",
+        "https://example.org/a/%5bb%5d|c%5ed"
       ]
     }
   ],
@@ -244,6 +262,10 @@
     [
       "https://uk.example.org/news/1",
       "https://example.org/news/1"
+    ],
+    [
+      "https://np.reddit.com/r/example",
+      "https://www.reddit.com/r/example"
     ]
   ]
 }

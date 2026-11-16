@@ -54,8 +54,6 @@ const HOST_ALIASES = {
   "prime.nautil.us": "nautil.us",
   "x.com": "twitter.com",
   "old.reddit.com": "reddit.com",
-  "new.reddit.com": "reddit.com",
-  "np.reddit.com": "reddit.com",
 };
 
 /** A single YouTube video, regardless of share, Shorts, live or watch URL form. */
@@ -63,7 +61,8 @@ export function youtubeVideoUrl(value) {
   let url;
   try { url = new URL(value); } catch { return null; }
   if (!/^https?:$/.test(url.protocol) || url.username || url.password || url.port) return null;
-  const host = url.hostname;
+  // A host with a stray dot before or after it is the same host.
+  const host = url.hostname.replace(/^\.+|\.+$/g, "");
   let id;
   if (host === "youtu.be") id = url.pathname.match(/^\/([\w-]{11})\/?$/)?.[1];
   else if (["youtube.com", "www.youtube.com", "m.youtube.com"].includes(host)) {
@@ -101,7 +100,9 @@ export function articleKey(address) {
 
   // An escape is the same character in either letter case, and a doubled slash the same
   // place as a single one.
+  // Four characters a browser leaves as they are in a path and the pipeline escapes.
   let path = url.pathname
+    .replace(/[[\]|^]/g, (character) => encodeURIComponent(character))
     .replace(/%[0-9a-f]{2}/gi, (escape) => escape.toUpperCase())
     .replace(/\/{2,}/g, "/")
     .replace(/\/+$/, "")
@@ -118,7 +119,8 @@ export function articleKey(address) {
   const kept = [...url.searchParams.entries()]
     .map(([name, value]) => [name.replace(ESCAPED_AMPERSAND, ""), value])
     .filter(([name]) => !TRACKING.test(name) && !outlet?.test(name))
-    .sort(([a], [b]) => a.localeCompare(b))
+    // By character code, not by a locale's rules: the pipeline sorts the same way.
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
     .map(([name, value]) => `${encodeURIComponent(name)}=${encodeURIComponent(value)}`);
 
   return host + path + (kept.length ? `?${kept.join("&")}` : "");

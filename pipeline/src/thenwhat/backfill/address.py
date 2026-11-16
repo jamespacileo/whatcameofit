@@ -74,8 +74,6 @@ HOST_ALIASES = {
     "prime.nautil.us": "nautil.us",
     "x.com": "twitter.com",
     "old.reddit.com": "reddit.com",
-    "new.reddit.com": "reddit.com",
-    "np.reddit.com": "reddit.com",
 }
 ESCAPE = re.compile(r"%[0-9a-fA-F]{2}")
 
@@ -89,11 +87,10 @@ UNRESERVED = "-_.!~*'()"
 PATH_SAFE = "/%:@!$&'()*+,;=-._~"
 
 
-def _youtube_key(parts, query: list[tuple[str, str]]) -> str | None:
+def _youtube_key(parts, host: str, query: list[tuple[str, str]]) -> str | None:
     """One YouTube video, whatever form its address takes."""
     if parts.username or parts.password or parts.port:
         return None
-    host = (parts.hostname or "").lower()
     path = parts.path or "/"
     video = None
     if host == "youtu.be":
@@ -114,10 +111,25 @@ def _youtube_key(parts, query: list[tuple[str, str]]) -> str | None:
     return f"youtube.com/watch?v={video}"
 
 
-def _order(name: str) -> tuple[str, str]:
-    """Parameter names in the order the site sorts them: without regard to letter case,
-    lower case first where two names differ only in case."""
-    return (name.casefold(), name.swapcase())
+def _order(name: str) -> bytes:
+    """Parameter names in the order the site sorts them: by character code, as
+    JavaScript compares two strings. No locale has a say in it."""
+    return name.encode("utf-16-be", "surrogatepass")
+
+
+def _without_dot_segments(path: str) -> str:
+    """A path with its "." and ".." parts worked out, as a browser does before asking."""
+    kept: list[str] = []
+    parts = path.split("/")
+    for place, part in enumerate(parts):
+        if part in (".", ".."):
+            if part == ".." and len(kept) > 1:
+                kept.pop()
+            if place == len(parts) - 1:
+                kept.append("")
+        else:
+            kept.append(part)
+    return "/".join(kept)
 
 
 def _says_how_a_reader_arrived(name: str, host: str) -> bool:
@@ -130,7 +142,8 @@ def article_key(address: str) -> str | None:
     not an http or https page."""
     try:
         parts = urlsplit(address.strip())
-        host = (parts.hostname or "").lower()
+        # A host with a stray dot before or after it is the same host.
+        host = (parts.hostname or "").lower().strip(".")
         _ = parts.port  # raises for a port that is not a number
     except ValueError:
         return None
@@ -138,18 +151,15 @@ def article_key(address: str) -> str | None:
         return None
     query = parse_qsl(parts.query, keep_blank_values=True)
 
-    video = _youtube_key(parts, query)
+    video = _youtube_key(parts, host, query)
     if video:
         return video
 
-    host = host.strip(".")
     while SAME_SITE_LABELS.match(host):
         host = SAME_SITE_LABELS.sub("", host, count=1)
     host = HOST_ALIASES.get(host, host)
-    if not host:
-        return None
 
-    path = quote(parts.path, safe=PATH_SAFE)
+    path = quote(_without_dot_segments(parts.path.replace("\\", "/")), safe=PATH_SAFE)
     # An escape is the same character in either letter case, and a doubled slash the
     # same place as a single one.
     path = ESCAPE.sub(lambda escape: escape.group().upper(), path)
