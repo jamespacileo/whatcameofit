@@ -246,6 +246,7 @@ thenwhat backfill steps                       # the steps that exist
 thenwhat backfill plan                        # what is due, the requests and hours it needs
 thenwhat backfill run news_search --limit 200 # search the news for 200 trials
 thenwhat backfill leads                       # how many searched trials have an article
+thenwhat backfill trial-sets                  # active-since-2025 and completed-with-results-since-2025, by phase
 ```
 
 - `plan` sends nothing. Run it before `run`: it shows how many records are due, how many requests they need, and how much of the source's allowance is left.
