@@ -306,11 +306,15 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** the claim is approved by rule, is marked awaiting audit, and is published, with the status its approved evidence gives, by the first export after its audit is cleared
 
 ### Requirement: A prepared batch waits for its audit
-Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
+Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. It SHALL then list each lead left identity unresolved because its treatment and condition overlap a claim that is now archived, with that claim and the lead's address, so the claim can be fixed and unarchived and the lead read again. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
 
 #### Scenario: Held until audited
 - **WHEN** an export runs while an approved, unarchived claim awaits audit
 - **THEN** the claim is not in the export, is not listed as archived, has no published time, and the export command says one approved claim was left out
+
+#### Scenario: A read that overlaps an archived claim
+- **WHEN** `thenwhat audit list` runs while a lead was left identity unresolved naming a claim that is now archived, and another naming a claim that is not
+- **THEN** the first lead is listed with the archived claim and its address, and the second is not
 
 #### Scenario: Audit passed
 - **WHEN** `thenwhat audit clear` names a claim awaiting audit and an export runs
