@@ -14,9 +14,9 @@ const original='https://clinicaltrials.gov/study/'+id;
 const template='<!doctype html><html><head><title>__TRIAL_TITLE__ | What came of it?</title><link rel="canonical" href="https://whatcameofit.com/trials/__TRIAL_ID__"></head><body><main class="trial-reader">__TRIAL_CONTENT__</main><footer>This site gives no medical advice. A registered clinical trial is not a treatment option.</footer></body></html>';
 const record={protocolSection:{identificationModule:{nctId:id,briefTitle:'A study of CIN-107',officialTitle:'CIN-107 & primary aldosteronism'},statusModule:{overallStatus:'COMPLETED',lastUpdatePostDateStruct:{date:'2026-03-03'},studyFirstPostDateStruct:{date:'2020-10-28'},startDateStruct:{date:'2021-03-08',type:'ACTUAL'},completionDateStruct:{date:'2027-04',type:'ESTIMATED'}},descriptionModule:{briefSummary:'Patients received CIN-107.\n\nBlood pressure was measured.'},conditionsModule:{conditions:['Primary aldosteronism']},armsInterventionsModule:{interventions:[{name:'CIN-107',type:'DRUG',description:'Once daily'}]},designModule:{phases:['PHASE2'],studyType:'INTERVENTIONAL',enrollmentInfo:{count:15,type:'ACTUAL'}},sponsorCollaboratorsModule:{leadSponsor:{name:'Example Sponsor'}}},hasResults:true};
 const index={trials:{[id]:[{slug:'primary-aldosteronism-baxdrostat',headline:'Baxdrostat claim'}]}};
-function setup({payload=record,status=200,fail=false,entry,deny=false,contact=true}={}){
+function setup({payload=record,status=200,fail=false,entry,deny=false,contact=true,trialIndex=index}={}){
  const calls=[];const cache=new Map(entry?[[key,entry]]:[]);const puts=[];
- const env={CONTACT_EMAIL:contact?'corrections@whatcameofit.com':undefined,ASSETS:{fetch:async r=>{const p=new URL(r.url||r).pathname;return p==='/trial-index.json'?Response.json(index):p==='/trial-reader'?new Response(template):new Response('missing',{status:404});}},LOOKUP_RESULTS:{get:async(k)=>cache.get(k)??null,put:async(k,v,o)=>{puts.push({k,v:JSON.parse(v),options:o});cache.set(k,JSON.parse(v));}},TRIAL_RECORD_READS:{limit:async()=>({success:!deny})}};
+ const env={CONTACT_EMAIL:contact?'corrections@whatcameofit.com':undefined,ASSETS:{fetch:async r=>{const p=new URL(r.url||r).pathname;return p==='/trial-index.json'?Response.json(trialIndex):p==='/trial-reader'?new Response(template):new Response('missing',{status:404});}},LOOKUP_RESULTS:{get:async(k)=>cache.get(k)??null,put:async(k,v,o)=>{puts.push({k,v:JSON.parse(v),options:o});cache.set(k,JSON.parse(v));}},TRIAL_RECORD_READS:{limit:async()=>({success:!deny})}};
  const fetch=async(url,options)=>{calls.push({url:String(url),options});if(fail)throw new Error('PRIVATE_ERROR_SECRET');return status===200?Response.json(payload):new Response('upstream failure',{status});};
  const run=(url='/trials/'+id,opts={})=>handleTrial(new Request('http://localhost'+url,opts),env,{fetch,now:()=>now});
  return {calls,cache,puts,env,run};
@@ -27,6 +27,14 @@ await test('recognises only official trial URLs and preserves identity',()=>{
  for(const url of ['https://clinicaltrials.gov.evil.test/study/'+id,'https://evil.test/study/'+id,'javascript:alert(1)',null,'https://clinicaltrials.gov/study/NCT1'])assert.equal(trialDetailsPath(url),null);
  const d=buildTrialIndex({claims:[{slug:'claim',headline:'Claim',events:[{source_url:original}],matches:[{url:original},{url:'https://evil.test/study/NCT07007793'}]}]});
  assert.deepEqual(Object.keys(d.trials),[id]);assert.equal(d.trials[id].length,1);assert.equal(d.trials[id][0].slug,'claim');
+});
+await test('Scenario: Trial page reached from a possible match',async()=>{
+ const d=buildTrialIndex({claims:[{slug:'cited',headline:'Cited',events:[],matches:[{url:original,state:'approved'}]},{slug:'maybe',headline:'Maybe',events:[],matches:[{url:original,state:'candidate'}]}]});
+ assert.deepEqual(d.trials[id],[{slug:'cited',headline:'Cited'},{slug:'maybe',headline:'Maybe',possible:true}]);
+ const s=setup({trialIndex:d});const h=await (await s.run()).text();
+ const [citing,maybe]=h.split('Claims this record may be about');
+ assert.ok(citing.includes('/cited')&&!citing.includes('/maybe'));
+ assert.match(maybe,/not counted in these claims/);assert.ok(maybe.includes('/maybe'));
 });
 await test('serves real readable HTML with source and independent dates',async()=>{
  const s=setup();const r=await s.run();const h=await r.text();assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/text\/html/);

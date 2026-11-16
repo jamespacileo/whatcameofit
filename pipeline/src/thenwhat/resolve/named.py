@@ -22,7 +22,7 @@ from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.resolve.papers import PAPER_SOURCE, PaperSearch, TrialRegistry, paper_line
 from thenwhat.resolve.papers import _reasons as paper_reasons_of
 from thenwhat.resolve.reasons import NAMED_IN_ARTICLE
-from thenwhat.resolve.service import approve_confident, reject_near_zero, what_it_says
+from thenwhat.resolve.service import approve_confident, facts_of, reject_near_zero, what_it_says
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -91,6 +91,7 @@ def candidates_named_in_article(
             external_id=record.external_id,
             score=0.0,
             record_summary=what_it_says(record),
+            record_facts=facts_of(record),
             reasons=[NAMED_IN_ARTICLE],
         )
         have[(match.source_name, match.external_id.lower())] = match

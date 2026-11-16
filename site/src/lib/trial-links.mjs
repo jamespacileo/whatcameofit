@@ -9,20 +9,29 @@ export function trialDetailsPath(address) {
   } catch { return null; }
 }
 
+// A claim cites a trial through its events and its approved matches. A candidate match
+// may only be about the claim and counts for nothing, so a claim that reaches a trial by
+// a candidate alone is marked possible (openspec registry-record-rows).
 export function buildTrialIndex(data) {
   const trials = {};
   for (const claim of data.claims ?? []) {
-    const urls = [
+    const citing = [
       ...(claim.events ?? []).map(event => event.source_url),
-      ...(claim.matches ?? []).map(match => match.url),
+      ...(claim.matches ?? []).filter(match => match.state !== "candidate").map(match => match.url),
     ];
-    for (const address of urls) {
-      const local = trialDetailsPath(address);
-      if (!local) continue;
-      const id = local.split("/").at(-1);
-      const claims = trials[id] ??= [];
-      if (!claims.some(item => item.slug === claim.slug)) {
-        claims.push({ slug: claim.slug, headline: claim.headline });
+    const possible = (claim.matches ?? []).filter(match => match.state === "candidate").map(match => match.url);
+    for (const [urls, isPossible] of [[citing, false], [possible, true]]) {
+      for (const address of urls) {
+        const local = trialDetailsPath(address);
+        if (!local) continue;
+        const id = local.split("/").at(-1);
+        const claims = trials[id] ??= [];
+        if (claims.some(item => item.slug === claim.slug)) continue;
+        claims.push(
+          isPossible
+            ? { slug: claim.slug, headline: claim.headline, possible: true }
+            : { slug: claim.slug, headline: claim.headline },
+        );
       }
     }
   }

@@ -239,6 +239,23 @@ class ExportedFailureFlag(Strict):
     source_url: str
 
 
+class ExportedParticipants(Strict):
+    count: int
+    basis: ParticipantBasis
+
+
+class ExportedMatchRecord(Strict):
+    # A matched trial's registry record field by field (openspec registry-record-rows).
+    # Title and names as the registry wrote them; phases and state as codes the site words.
+    title: str | None
+    conditions: list[str]
+    interventions: list[str]
+    phases: list[TrialPhase]
+    state: TrialStateCode
+    # How many people the record says took part or are planned. None when it says not.
+    participants: ExportedParticipants | None = None
+
+
 class ExportedMatch(Strict):
     # A registry record matched to the claim, with how sure the pipeline is. The site owns
     # the words: it turns `score` into "High match · 92%" and `reading` into a reason.
@@ -256,15 +273,13 @@ class ExportedMatch(Strict):
     decided_by: str | None
     # What the record says, in one line: title, conditions, phase, state.
     summary: str | None
+    # The same, field by field, for a trial. None for a match whose record has not been
+    # read into fields yet (`thenwhat entity record-facts`).
+    record: ExportedMatchRecord | None = None
 
 
 # Trial facts (openspec trial-facts): what a registry record says of its trial, read by
 # rule. Codes only; the site owns the words. Registry numbers stay strings as written.
-
-
-class ExportedParticipants(Strict):
-    count: int
-    basis: ParticipantBasis
 
 
 class ExportedSponsor(Strict):
@@ -641,6 +656,10 @@ class Export(Strict):
     archived: list[ExportedArchived] = []
     # The sources of the cards in `background`, each once.
     card_sources: list[ExportedCardSource] = []
+    # The score at or above which a registry match is approved by rule, so the site can
+    # say what a possible record lacks (openspec registry-record-rows). None when the
+    # rule is off and only a person approves a match.
+    match_accept_above: float | None = None
 
 
 def _group_of(vertical: str) -> ExportedGroup | None:
@@ -749,6 +768,11 @@ def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
                 else None
             ),
             summary=match.record_summary,
+            record=(
+                ExportedMatchRecord.model_validate(match.record_facts)
+                if match.record_facts is not None
+                else None
+            ),
         )
         for match in [*approved, *pending]
     ]
@@ -1221,6 +1245,7 @@ def build_export(
     no_signal_years: int = 3,
     reading_accept_above: float = 0.8,
     stage_show_above: float = 0.5,
+    match_accept_above: float = 0.0,
 ) -> Export:
     """Everything the site may show, as of now.
 
@@ -1375,6 +1400,7 @@ def build_export(
         schema_version=SCHEMA_VERSION,
         generated_at=now,
         last_checked_at=last_checked,
+        match_accept_above=match_accept_above if match_accept_above > 0 else None,
         sources=[
             ExportedSource(name=name, url=url)
             for name, url in [
@@ -1424,6 +1450,7 @@ def write_export(
     no_signal_years: int = 3,
     reading_accept_above: float = 0.8,
     stage_show_above: float = 0.5,
+    match_accept_above: float = 0.0,
 ) -> Export:
     """Write the export to `path`, replacing any earlier file only once it is complete."""
     export = build_export(
@@ -1432,6 +1459,7 @@ def write_export(
         no_signal_years=no_signal_years,
         reading_accept_above=reading_accept_above,
         stage_show_above=stage_show_above,
+        match_accept_above=match_accept_above,
     )
     path.parent.mkdir(parents=True, exist_ok=True)
     partial = path.with_suffix(path.suffix + ".partial")

@@ -42,6 +42,7 @@ from thenwhat.resolve.service import (
     DoiLookup,
     RuleRedo,
     TrialSearch,
+    fill_record_facts,
     redo_rule_approvals,
     rescore_claim,
     resolve_claim,
@@ -367,6 +368,20 @@ def entity_delete_people(
     with entry_session() as session:
         for entity in delete_people(session, ids):
             out.print(f"Deleted person {entity.name} ({entity.id}).", markup=False)
+
+
+@entity_app.command("record-facts")
+def entity_record_facts() -> None:
+    """Read the registry record of every shown trial match stored before its facts were
+    kept, so the claim page can lay it out field by field. Run once after migration 0027;
+    a match stored since then has its facts already."""
+    with entry_session() as session:
+        filled, missing = fill_record_facts(session, make_research(session).registry)
+    out.print(f"Read the facts of {filled} trial matches.")
+    for external_id in missing:
+        err.print(f"No registry record for {external_id}; its facts stay empty.", markup=False)
+    if missing:
+        raise typer.Exit(1)
 
 
 @entity_app.command("origin-paper")

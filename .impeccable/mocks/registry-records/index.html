@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registry records variants</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Tokens copied from site/src/styles/global.css. Light only, as DESIGN.md says. */
+:root {
+  --paper: #ffffff; --ink: #0f1f38; --blue: #14427f; --muted: #46566b;
+  --panel: #f1f5fb; --tint: #e6eef8; --tag: #d6e2f2; --rule: #d9e2ee; --rule-soft: #e9eff5;
+  --footer: #0b2545; --navy-soft: #c9d9ee; --ground: #f4f7fb; --ring: #7f90a3;
+  --face: "Figtree", "Helvetica Neue", Arial, sans-serif;
+  --measure: 66ch; --radius: 0.85rem; --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--face); font-size: 106.25%; line-height: 1.55; color: var(--ink);
+  background: var(--ground); font-variant-numeric: tabular-nums lining-nums; scrollbar-color: var(--blue) var(--tint); }
+body { margin: 0; overflow-wrap: break-word; }
+::selection { background: var(--tag); color: var(--ink); }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+h1, h2, h3 { line-height: 1.14; text-wrap: balance; margin: 0; }
+p { margin: 0 0 1em; max-width: var(--measure); }
+ul.plain { list-style: none; margin: 0; padding: 0; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+svg.chev { width: 14px; height: 14px; flex: none; transition: transform 200ms var(--ease-out); }
+details[open] > summary svg.chev { transform: rotate(180deg); }
+summary { cursor: pointer; list-style: none; }
+summary::-webkit-details-marker { display: none; }
+
+/* ---------- Mock chrome (not part of any variant) ---------- */
+.bar { position: sticky; top: 0; z-index: 3; background: var(--footer); color: var(--paper); }
+.bar-in { max-width: 78rem; margin: 0 auto; padding: 0.7rem 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; align-items: center; }
+.bar strong { font-size: 1rem; }
+.bar nav { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; font-size: 0.9rem; }
+.bar nav a { color: var(--navy-soft); text-decoration: none; }
+.bar nav a:hover { color: var(--paper); text-decoration: underline; }
+.bar :focus-visible { outline-color: var(--paper); }
+.widths { margin-left: auto; display: flex; gap: 0.3rem; font-size: 0.85rem; }
+.widths button { font: inherit; color: var(--paper); background: transparent; border: 1px solid var(--navy-soft); border-radius: 999px; padding: 0.2rem 0.8rem; cursor: pointer; }
+.widths button[aria-pressed="true"] { background: var(--paper); color: var(--footer); border-color: var(--paper); }
+.intro { max-width: 78rem; margin: 0 auto; padding: 2rem 1rem 0.5rem; }
+.intro h1 { font-size: clamp(1.6rem, 4vw, 2.1rem); margin-bottom: 0.6rem; }
+.intro p { color: var(--muted); }
+.variant { max-width: 78rem; margin: 2.5rem auto 0; padding: 0 1rem; scroll-margin-top: 4rem; }
+.variant:last-of-type { margin-bottom: 4rem; }
+.vhead { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); gap: 0.4rem 2rem; margin-bottom: 0.9rem; }
+.vhead h2 { font-size: 1.35rem; }
+.vhead .gist { color: var(--muted); margin: 0.3rem 0 0; }
+.vhead .trade { font-size: 0.85rem; color: var(--muted); margin: 0; border-top: 1px solid var(--rule); padding-top: 0.5rem; }
+.vhead .trade b { color: var(--ink); }
+@media (max-width: 52rem) { .vhead { grid-template-columns: 1fr; } }
+.sheet { container-type: inline-size; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: clamp(1rem, 3vw, 2rem); max-width: 50rem; margin: 0; transition: max-width 300ms var(--ease-out); }
+body.phone .sheet { max-width: 390px; padding: 1rem; }
+
+/* ---------- Shared section pieces (as on the claim page) ---------- */
+.fold-head { display: flex; align-items: center; gap: 0.6rem; }
+.fold-head .knob { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--tint); color: var(--blue); }
+.fold-head h3 { font-size: 1.2rem; }
+.take-why { color: var(--muted); margin: 0.35rem 0 0.9rem; }
+.note { font-size: 0.85rem; color: var(--muted); }
+.meta { font-size: 0.85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0 0.5rem; }
+.meta > * + *::before { content: "·"; margin-right: 0.5rem; color: var(--ring); }
+.ext svg { width: 0.8em; height: 0.8em; vertical-align: -0.05em; margin-left: 0.15em; }
+.band { font-weight: 600; white-space: nowrap; }
+.pct { font-weight: 700; font-size: 1.05rem; color: var(--ink); }
+
+/* Key: said once, then each row carries only the figure. */
+.key { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.3rem 1rem; font-size: 0.85rem; color: var(--muted); border-bottom: 1px solid var(--rule); padding-bottom: 0.5rem; }
+.key b { color: var(--ink); font-weight: 600; }
+
+/* ---------- A: Title-led list ---------- */
+.va li { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem; gap: 0.25rem 1.2rem; padding: 0.95rem 0; border-bottom: 1px solid var(--rule-soft); }
+.va .title { font-weight: 600; font-size: 1rem; line-height: 1.35; text-wrap: pretty; }
+.va .title a { color: var(--ink); text-decoration-color: var(--ring); }
+.va .title a:hover { color: var(--blue); text-decoration-color: currentColor; }
+.va dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.1rem 0.7rem; margin: 0.35rem 0 0; font-size: 0.9rem; }
+.va dt { color: var(--muted); }
+.va dd { margin: 0; }
+.va .score { text-align: right; }
+.va .score .band { display: block; font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+.va details.why { grid-column: 1 / -1; font-size: 0.85rem; }
+.va details.why summary { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--blue); }
+.va details.why p { margin: 0.3rem 0 0; color: var(--muted); }
+@container (max-width: 34rem) {
+  .va li { grid-template-columns: 1fr; }
+  .va .score { grid-row: 1; text-align: left; display: flex; align-items: baseline; gap: 0.4rem; }
+  .va .score .band { display: inline; }
+  .va dl { grid-template-columns: 1fr; gap: 0; }
+  .va dd + dt { margin-top: 0.25rem; }
+}
+@container (max-width: 34rem) {
+  .ve li, .vc li { grid-template-columns: 1fr; }
+  .ve .score, .vc .score { grid-row: 1; text-align: left; display: flex; align-items: baseline; gap: 0.4rem; }
+  .ve .score .band { display: inline; }
+}
+
+/* ---------- B: Register table ---------- */
+.vb table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; font-size: 0.92rem; }
+.vb thead th { background: var(--footer); color: var(--paper); font-weight: 600; text-align: left; padding: 0.55rem 0.8rem; font-size: 0.82rem; }
+.vb thead th.num, .vb td.num { text-align: right; }
+.vb tbody td { padding: 0.75rem 0.8rem; vertical-align: top; border-top: 1px solid var(--rule-soft); }
+.vb tbody tr:nth-child(4n+1) td, .vb tbody tr:nth-child(4n+2) td { background: var(--paper); }
+.vb tr.more td { border-top: 0; padding-top: 0; }
+.vb .t { font-weight: 600; line-height: 1.35; display: block; }
+.vb .id { font-size: 0.82rem; }
+.vb td.num .pct { font-size: 1rem; }
+.vb td.num .band { display: block; font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+.vb details summary { display: inline-flex; gap: 0.3rem; align-items: center; color: var(--blue); font-size: 0.85rem; }
+.vb details .inner { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.15rem 0.8rem; margin-top: 0.4rem; font-size: 0.88rem; }
+.vb details .inner dt { color: var(--muted); }
+.vb details .inner dd { margin: 0; }
+.vb .nowrap { white-space: nowrap; }
+@container (max-width: 34rem) {
+  .vb table, .vb tbody, .vb tr, .vb td { display: block; }
+  .vb table { border: 0; }
+  .vb thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .vb tr.row { display: grid; grid-template-columns: minmax(0,1fr) auto; border-top: 1px solid var(--rule); padding-top: 0.8rem; }
+  .vb tr.row td { border: 0; padding: 0 0 0.3rem; }
+  .vb tr.row td:first-child { grid-column: 1 / -1; }
+  .vb tr.row td[data-l]::before { content: attr(data-l) ": "; color: var(--muted); }
+  .vb tr.row td.num { grid-column: 2; grid-row: 2 / span 2; }
+  .vb tr.more td { padding: 0 0 0.8rem; }
+}
+
+/* ---------- C: Grouped by how each was read ---------- */
+.vc .group { margin-top: 1.1rem; }
+.vc .group h4 { font-size: 1rem; margin: 0; }
+.vc .group > p { font-size: 0.88rem; color: var(--muted); margin: 0.15rem 0 0.3rem; }
+.vc li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0.15rem 1rem; padding: 0.7rem 0; border-top: 1px solid var(--rule-soft); }
+.vc .title { font-weight: 600; line-height: 1.35; }
+.vc .score { text-align: right; white-space: nowrap; }
+.vc .tests { grid-column: 1; font-size: 0.88rem; }
+.vc .tests span { color: var(--muted); }
+
+/* ---------- D: Answer first, records folded ---------- */
+.vd .digest { background: var(--panel); border-radius: var(--radius); padding: 1rem 1.2rem; display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); gap: 0.6rem 1.6rem; margin-bottom: 1rem; }
+.vd .digest p { margin: 0; }
+.vd .digest .lead { font-size: 1.05rem; }
+.vd .digest dl { margin: 0; display: grid; grid-template-columns: auto auto; justify-content: start; gap: 0.1rem 0.9rem; font-size: 0.88rem; }
+.vd .digest dt { color: var(--muted); }
+.vd .digest dd { margin: 0; font-weight: 600; }
+@container (max-width: 34rem) { .vd .digest { grid-template-columns: 1fr; } }
+.vd li { border-bottom: 1px solid var(--rule-soft); }
+.vd li > details > summary { display: grid; grid-template-columns: minmax(0,1fr) auto auto; align-items: baseline; gap: 0.2rem 0.8rem; padding: 0.7rem 0; }
+.vd li > details > summary:hover .title { color: var(--blue); }
+.vd .title { font-weight: 600; line-height: 1.35; }
+.vd .sub { grid-column: 1; font-size: 0.82rem; color: var(--muted); }
+.vd summary .pct { font-size: 0.95rem; }
+.vd summary svg.chev { color: var(--blue); align-self: center; }
+.vd .body { padding: 0 0 0.9rem; display: grid; gap: 0.5rem; }
+.vd .body dl { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 0.1rem 0.7rem; margin: 0; font-size: 0.9rem; }
+.vd .body dt { color: var(--muted); }
+.vd .body dd { margin: 0; }
+.vd .body .links { display: flex; flex-wrap: wrap; gap: 0.2rem 1.2rem; font-size: 0.9rem; }
+
+/* ---------- E: Why it matched ---------- */
+.ve li { padding: 1rem 0; border-bottom: 1px solid var(--rule-soft); display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0.3rem 1.2rem; }
+.ve .title { font-weight: 600; line-height: 1.35; }
+.ve .score { text-align: right; white-space: nowrap; }
+.ve .score .band { display: block; font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+.ve .checks { grid-column: 1 / -1; display: grid; grid-template-columns: 6.2rem minmax(0,1fr); gap: 0.25rem 0.8rem; font-size: 0.9rem; margin: 0.2rem 0 0; }
+.ve .checks dt { color: var(--muted); }
+.ve .checks dd { margin: 0; }
+.ve mark { background: var(--tag); color: var(--ink); font-weight: 600; border-radius: 0.2rem; padding: 0 0.12rem; margin: 0 -0.12rem; }
+.ve .aka { color: var(--muted); font-size: 0.85rem; }
+.ve .reading { grid-column: 1 / -1; font-size: 0.85rem; color: var(--muted); margin: 0.1rem 0 0; }
+.ve .legend { font-size: 0.85rem; color: var(--muted); margin: 0 0 0.3rem; }
+@container (max-width: 34rem) { .ve .checks { grid-template-columns: 1fr; gap: 0; } .ve .checks dd { margin-bottom: 0.3rem; } }
+
+/* ---------- Current, for comparison ---------- */
+.v0 li { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0.2rem 1rem; padding: 0.8rem 0; border-bottom: 1px solid var(--rule-soft); }
+.v0 .rec { display: grid; gap: 0.1rem; }
+.v0 .rec .alt { font-size: 0.8rem; margin-left: 0.65em; }
+.v0 .rec .n { font-size: 0.9rem; color: var(--muted); }
+.v0 summary { display: inline-flex; gap: 0.3rem; align-items: center; color: var(--blue); white-space: nowrap; }
+@container (max-width: 34rem) { .v0 li { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="bar-in">
+    <strong>Possible registry records: variants</strong>
+    <nav aria-label="Variants">
+      <a href="#v0">Now</a><a href="#va">A</a><a href="#vb">B</a><a href="#vc">C</a><a href="#vd">D</a><a href="#ve">E</a>
+    </nav>
+    <div class="widths" role="group" aria-label="Sheet width">
+      <button type="button" aria-pressed="true" data-w="full">Desktop</button>
+      <button type="button" aria-pressed="false" data-w="phone">Phone 390</button>
+    </div>
+  </div>
+</header>
+
+<div class="intro">
+  <h1>Five ways to show possible registry records</h1>
+  <p>Claim: ivonescimab for non-small cell lung cancer. The five candidate records and scores are the ones on the live page. Titles, conditions, interventions, phase and recruitment are split out of each record's summary here; on the site they arrive as one sentence, so every variant except "Now" needs those fields carried in the export. The readings (why each record scored as it did) are illustrative.</p>
+</div>
+
+<main id="variants"></main>
+
+<script>
+const CLAIM = { intervention: "ivonescimab", synonyms: ["AK112"], indication: "non-small cell lung cancer" };
+const R = [
+  { id: "NCT07234877", score: 0.79, reading: "other_indication",
+    title: "Phase II Study of Upfront SRT Plus Ivonescimab/Chemotherapy vs Ivonescimab/Chemotherapy in NSCLC Brain Mets",
+    for: ["Non Small Cell Lung Cancer"], tests: ["Ivonescimab", "Carboplatin", "Pemetrexed", "Paclitaxel", "Paclitaxel-albumin", "Stereotactic Radiosurgery (SRS) or Fractionated Stereotactic Radiotherapy (FSRT)"],
+    phase: "Phase 2", recruit: "Not yet recruiting" },
+  { id: "NCT05899608", score: 0.78, reading: "match",
+    title: "Clinical Study of Ivonescimab for First-line Treatment of Metastatic NSCLC Patients",
+    for: ["Non-Small Cell Lung Cancer"], tests: ["Ivonescimab Injection", "Pembrolizumab Injection"],
+    phase: "Phase 3", recruit: "Active, not recruiting" },
+  { id: "NCT07393555", score: 0.76, reading: "other_indication",
+    title: "Treatment for Advanced Non-small Cell Lung Cancer With Actionable Genomic Alterations After Targeted Treatment and Chemotherapy (An Expanded Lung-MAP Treatment Trial)",
+    for: ["Recurrent Lung Non-Small Cell Carcinoma", "Stage IV Lung Cancer AJCC v8"], tests: ["Biospecimen Collection", "Computed Tomography", "Ivonescimab", "Magnetic Resonance Imaging", "Sacituzumab Govitecan"],
+    phase: "Phase 2", recruit: "Recruiting" },
+  { id: "NCT05499390", score: 0.74, reading: "match",
+    title: "AK112 in Advanced Non-Small Cell Lung Cancer",
+    for: ["Advanced Non-small-cell Lung Cancer"], tests: ["AK112", "Pembrolizumab"],
+    phase: "Phase 3", recruit: "Active, not recruiting" },
+  { id: "NCT07359040", score: 0.71, reading: "other_indication",
+    title: "Mechanism of Enhanced Efficacy of Ivonescimab in Neoadjuvant Therapy for Non-Small Cell Lung Cancer",
+    for: ["Non-Small Cell Lung Cancer", "Neoadjuvant Therapy", "PD-1 Inhibitors", "Immunotherapy"], tests: ["Ivonescimab", "PD-1 Inhibitors"],
+    phase: null, recruit: "Recruiting" },
+];
+const READINGS = {
+  match: "Read as a study of this treatment for this condition.",
+  other_indication: "Read as the same treatment studied for a different condition, patient group or treatment setting.",
+};
+const READ_SHORT = {
+  match: "Studies of ivonescimab for non-small cell lung cancer",
+  other_indication: "Ivonescimab in a narrower group or setting",
+};
+
+const pct = (s) => Math.round(s * 100);
+const band = (s) => (s >= 0.8 ? "High" : s >= 0.5 ? "Medium" : "Low");
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const reg = (id) => `https://clinicaltrials.gov/study/${id}`;
+const local = (id) => `#trial-${id}`;
+const CHEV = `<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>`;
+const EXT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>`;
+const regLink = (id) => `<a class="ext" href="${reg(id)}" rel="noopener">${id}${EXT}<span class="vh"> on ClinicalTrials.gov</span></a>`;
+const status = (r) => [r.phase ?? "No phase given", r.recruit];
+const head = (title) => `<div class="fold-head"><span class="knob">${CHEV}</span><h3>${title}</h3></div>`;
+const WHY = `<p class="take-why">Trial registry records that may be about this treatment and condition. They are not counted in the status. A score is about the match, not about the treatment.</p>`;
+const KEY = `<div class="key"><span><b>Match</b>: how sure the pipeline is that a record is about ivonescimab for non-small cell lung cancer.</span><span>High 80% and over · Medium 50–79%</span></div>`;
+
+// Marks the claim's intervention, and its other names, inside a list of tested items.
+function marked(item) {
+  const names = [CLAIM.intervention, ...CLAIM.synonyms];
+  for (const n of names) {
+    const i = item.toLowerCase().indexOf(n.toLowerCase());
+    if (i >= 0) {
+      const hit = item.slice(i, i + n.length);
+      const aka = n.toLowerCase() !== CLAIM.intervention ? ` <span class="aka">(another name for ivonescimab)</span>` : "";
+      return `${esc(item.slice(0, i))}<mark>${esc(hit)}</mark>${esc(item.slice(i + n.length))}${aka}`;
+    }
+  }
+  return esc(item);
+}
+
+const V = [];
+
+V.push({ key: "v0", name: "Now", gist: "The section as it ships: identifier first, a second link under it, the summary as one run-on sentence, and the full match sentence repeated on every row.",
+  trade: "<b>Problems:</b> the identifier means nothing to most readers; two links per row; “Match to this claim” said five times; phase and recruitment buried at the sentence's end.",
+  html: () => `<section class="v0">${head("Possible registry records")}${WHY}<ul class="plain">${R.map((r) => `
+    <li><span class="rec"><span><a href="${reg(r.id)}">${r.id}</a></span><a class="alt" href="${local(r.id)}">View trial details here</a>
+    <span class="n">${esc(r.title)}. For: ${esc(r.for.join(", "))}. Tests: ${esc(r.tests.join(", "))}. ${r.phase ? r.phase + ", " : ""}${r.recruit.toLowerCase()}.</span></span>
+    <details><summary>Match to this claim: ${band(r.score).toLowerCase()}, ${pct(r.score)}% ${CHEV}</summary><p class="note">${READINGS[r.reading]}</p></details></li>`).join("")}</ul></section>` });
+
+V.push({ key: "va", name: "A · Title-led list", gist: "Refinement of the current shape. The study's title leads and opens the trial page here; the identifier moves to a quiet line with phase and recruitment, linking out to the registry. Condition and tested items become two labelled lines. The match sentence is said once in a key, so each row shows only its figure.",
+  trade: "<b>Keeps</b> the list and the reading one press away. <b>Gains</b> scannable titles and one link per purpose. <b>Costs</b> a little height per row.",
+  html: () => `<section class="va">${head("Possible registry records")}${WHY}${KEY}<ul class="plain">${R.map((r) => `
+    <li><div><div class="title"><a href="${local(r.id)}">${esc(r.title)}</a></div>
+      <div class="meta"><span>${regLink(r.id)}</span>${status(r).map((s) => `<span>${s}</span>`).join("")}</div>
+      <dl><dt>For</dt><dd>${esc(r.for.join("; "))}</dd><dt>Tests</dt><dd>${esc(r.tests.join("; "))}</dd></dl></div>
+      <div class="score"><span class="pct">${pct(r.score)}%</span><span class="band">${band(r.score)} match</span></div>
+      <details class="why"><summary>How it was read ${CHEV}</summary><p>${READINGS[r.reading]}</p></details></li>`).join("")}</ul></section>` });
+
+V.push({ key: "vb", name: "B · Register table", gist: "A table in the site's navy-headed table style. Phase, recruitment and match line up in columns so five or fifty records compare at a glance; what each tests and how it was read open under the row. On a phone each row becomes a labelled block.",
+  trade: "<b>Gains</b> comparison across records, and it scales to long lists. <b>Costs</b> the tested items are hidden until opened, and a table is heavier than this section's weight on the page.",
+  html: () => `<section class="vb">${head("Possible registry records")}${WHY}<table><caption class="vh">Possible registry records, with phase, recruitment and how sure each match is</caption>
+    <thead><tr><th scope="col">Study</th><th scope="col">Phase</th><th scope="col">Recruitment</th><th scope="col" class="num">Match</th></tr></thead><tbody>${R.map((r) => `
+    <tr class="row"><td><a class="t" href="${local(r.id)}">${esc(r.title)}</a><span class="id">${regLink(r.id)}</span></td>
+      <td data-l="Phase" class="nowrap">${r.phase ?? "Not given"}</td><td data-l="Recruitment">${r.recruit}</td>
+      <td class="num"><span class="pct">${pct(r.score)}%</span><span class="band">${band(r.score)}</span></td></tr>
+    <tr class="more"><td colspan="4"><details><summary>For, tests and how it was read ${CHEV}</summary>
+      <dl class="inner"><dt>For</dt><dd>${esc(r.for.join("; "))}</dd><dt>Tests</dt><dd>${esc(r.tests.join("; "))}</dd><dt>Read as</dt><dd>${READINGS[r.reading]}</dd></dl></details></td></tr>`).join("")}
+    </tbody></table><p class="note" style="margin-top:.5rem">Match: how sure the pipeline is that a record is about ivonescimab for non-small cell lung cancer. High 80% and over, medium 50–79%.</p></section>` });
+
+V.push({ key: "vc", name: "C · Grouped by how each was read", gist: "The reading becomes the grouping. Records read as studies of this treatment for this condition come first; those read as the same treatment in a narrower group or setting come next. Each group says its reading once, so no row needs a disclosure.",
+  trade: "<b>Gains</b> the most useful distinction up front: two of the five are about this claim, three are adjacent. <b>Costs</b> sorting by score is broken across groups; depends on readings being present.",
+  html: () => {
+    const groups = ["match", "other_indication"].map((k) => ({ k, rs: R.filter((r) => r.reading === k) })).filter((g) => g.rs.length);
+    return `<section class="vc">${head("Possible registry records")}${WHY}${KEY}${groups.map((g) => `
+      <div class="group"><h4>${READ_SHORT[g.k]} <span class="note">(${g.rs.length})</span></h4><p>${READINGS[g.k]}</p><ul class="plain">${g.rs.map((r) => `
+        <li><a class="title" href="${local(r.id)}">${esc(r.title)}</a><span class="score"><span class="pct">${pct(r.score)}%</span> <span class="note">${band(r.score)}</span></span>
+        <div class="meta"><span>${regLink(r.id)}</span>${status(r).map((s) => `<span>${s}</span>`).join("")}</div>
+        <div class="tests"><span>Tests:</span> ${esc(r.tests.join("; "))}</div></li>`).join("")}</ul></div>`).join("")}</section>`;
+  } });
+
+V.push({ key: "vd", name: "D · Answer first, records folded", gist: "Follows the page's own principle: answer first. A small panel says how many records, how sure, and what they cover by phase and recruitment, all counted from the rows below. Each record is then one line, title and figure, opening to the detail.",
+  trade: "<b>Gains</b> the shortest section; the reader gets the gist without reading five titles. <b>Costs</b> another panel-blue surface near the digest; the detail is one press per record.",
+  html: () => {
+    const n = R.length, lo = Math.min(...R.map((r) => pct(r.score))), hi = Math.max(...R.map((r) => pct(r.score)));
+    const count = (f) => R.filter(f).length;
+    return `<section class="vd">${head("Possible registry records")}
+      <div class="digest"><p class="lead">${n} registry records may be about ivonescimab for non-small cell lung cancer. All are medium matches, ${lo}–${hi}%. None is counted in the status.</p>
+      <dl><dt>Phase 3</dt><dd>${count((r) => r.phase === "Phase 3")}</dd><dt>Phase 2</dt><dd>${count((r) => r.phase === "Phase 2")}</dd><dt>No phase given</dt><dd>${count((r) => !r.phase)}</dd>
+      <dt>Recruiting</dt><dd>${count((r) => r.recruit === "Recruiting")}</dd><dt>Not yet recruiting</dt><dd>${count((r) => r.recruit === "Not yet recruiting")}</dd><dt>Active, not recruiting</dt><dd>${count((r) => r.recruit.startsWith("Active"))}</dd></dl></div>
+      <p class="note">A score is about the match, not about the treatment.</p>
+      <ul class="plain">${R.map((r) => `<li><details><summary><span class="title">${esc(r.title)}</span><span class="pct">${pct(r.score)}%</span>${CHEV}
+        <span class="sub">${status(r).join(" · ")}</span></summary>
+        <div class="body"><dl><dt>For</dt><dd>${esc(r.for.join("; "))}</dd><dt>Tests</dt><dd>${esc(r.tests.join("; "))}</dd><dt>Read as</dt><dd>${READINGS[r.reading]}</dd></dl>
+        <div class="links"><a href="${local(r.id)}">Trial details here</a><span>${regLink(r.id)}</span></div></div></details></li>`).join("")}</ul></section>`;
+  } });
+
+V.push({ key: "ve", name: "E · Why it matched", gist: "Shows the evidence for each score in the record itself. The claim's treatment is marked wherever the record names it, including under another name (AK112). The reading is printed under each record instead of folded, since it is the reason the score is what it is.",
+  trade: "<b>Gains</b> the reader can check the match without opening anything; makes “AK112” legible. <b>Costs</b> longest variant; the mark must stay a highlight of words, never a grade.",
+  html: () => `<section class="ve">${head("Possible registry records")}${WHY}${KEY}<p class="legend" style="margin-top:.5rem"><mark>Marked</mark>: where the record names ivonescimab.</p><ul class="plain">${R.map((r) => `
+    <li><a class="title" href="${local(r.id)}">${esc(r.title)}</a><span class="score"><span class="pct">${pct(r.score)}%</span><span class="band">${band(r.score)} match</span></span>
+      <div class="meta" style="grid-column:1/-1"><span>${regLink(r.id)}</span>${status(r).map((s) => `<span>${s}</span>`).join("")}</div>
+      <dl class="checks"><dt>Tests</dt><dd>${r.tests.map(marked).join("; ")}</dd><dt>For</dt><dd>${esc(r.for.join("; "))}</dd></dl>
+      <p class="reading">${READINGS[r.reading]}</p></li>`).join("")}</ul></section>` });
+
+document.getElementById("variants").innerHTML = V.map((v) => `
+  <article class="variant" id="${v.key}" aria-labelledby="${v.key}-h">
+    <div class="vhead"><div><h2 id="${v.key}-h">${v.name}</h2><p class="gist">${v.gist}</p></div><p class="trade">${v.trade}</p></div>
+    <div class="sheet">${v.html()}</div>
+  </article>`).join("");
+
+for (const b of document.querySelectorAll(".widths button")) {
+  b.addEventListener("click", () => {
+    document.body.classList.toggle("phone", b.dataset.w === "phone");
+    for (const o of document.querySelectorAll(".widths button")) o.setAttribute("aria-pressed", String(o === b));
+  });
+}
+</script>
+</body>
+</html>

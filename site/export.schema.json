@@ -922,6 +922,17 @@
             }
           ],
           "title": "Summary"
+        },
+        "record": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedMatchRecord"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -935,6 +946,76 @@
         "summary"
       ],
       "title": "ExportedMatch",
+      "type": "object"
+    },
+    "ExportedMatchRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Title"
+        },
+        "conditions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Conditions",
+          "type": "array"
+        },
+        "interventions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Interventions",
+          "type": "array"
+        },
+        "phases": {
+          "items": {
+            "$ref": "#/$defs/TrialPhase"
+          },
+          "title": "Phases",
+          "type": "array"
+        },
+        "state": {
+          "enum": [
+            "not_started",
+            "under_way",
+            "completed",
+            "suspended",
+            "terminated",
+            "withdrawn",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "participants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedParticipants"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "title",
+        "conditions",
+        "interventions",
+        "phases",
+        "state"
+      ],
+      "title": "ExportedMatchRecord",
       "type": "object"
     },
     "ExportedMechanism": {
@@ -2516,6 +2597,18 @@
       },
       "title": "Card Sources",
       "type": "array"
+    },
+    "match_accept_above": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Match Accept Above"
     }
   },
   "required": [

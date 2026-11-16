@@ -198,6 +198,20 @@ export interface ExportedMatch {
   reading: string | null;
   decided_by: string | null;
   summary: string | null;
+  /** A trial's record field by field (openspec registry-record-rows). Null until the
+   * record has been read into fields; absent from an export made before then. */
+  record?: ExportedMatchRecord | null;
+}
+
+/** Names as the registry wrote them; phases and state as codes the site words. */
+export interface ExportedMatchRecord {
+  title: string | null;
+  conditions: string[];
+  interventions: string[];
+  phases: string[];
+  state: string;
+  /** How many people the record says took part or are planned; null when it says not. */
+  participants?: { count: number; basis: "actual" | "planned" } | null;
 }
 
 export interface ExportedClaim {
@@ -288,6 +302,9 @@ export interface Export {
   archived?: { slug: string; on: string }[];
   /** The sources of the claims' background cards, each once. */
   card_sources?: ExportedCardSource[];
+  /** The score at or above which a registry match is approved by rule; null when only a
+   * person approves one. Absent from an export made before openspec registry-record-rows. */
+  match_accept_above?: number | null;
 }
 
 // 2: the pipeline leaves claims awaiting audit out (docs/adr/0007). An export from

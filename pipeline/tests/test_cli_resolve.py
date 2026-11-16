@@ -669,3 +669,66 @@ def test_resolve_failing_after_the_search_keeps_and_reports_what_it_stored(run, 
     assert "No candidates were stored" not in result.output
     assert len(session.scalars(select(EntityMatch)).all()) == 1
     assert any(entry.error is not None for entry in session.scalars(select(DecisionLog)))
+
+
+# --- record facts (openspec registry-record-rows) ---------------------------------------
+
+
+def stored_trial_match(session: Session, external_id: str) -> EntityMatch:
+    from thenwhat.claims.entry import find_claim
+
+    claim = find_claim(session, SLUG)
+    assert claim is not None
+    [intervention] = entities_of(session, claim)
+    match = EntityMatch(
+        entity_id=intervention.id,
+        source_name="clinicaltrials.gov",
+        external_id=external_id,
+        score=0.6,
+        record_summary="A trial.",
+    )
+    session.add(match)
+    session.flush()
+    return match
+
+
+class OneTrial(Nothing):
+    def fetch_trial(self, nct_id: str) -> SourceRecord | None:
+        payload = {
+            "protocolSection": {
+                "identificationModule": {"nctId": nct_id, "briefTitle": "EX-1 in agenesis"},
+                "statusModule": {"overallStatus": "RECRUITING"},
+            }
+        }
+        return SourceRecord("clinicaltrials.gov", nct_id, "https://x.test", payload, NOW)
+
+
+def test_entity_record_facts_reads_each_stored_trial_match(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    match = stored_trial_match(session, "NCT00000002")
+    monkeypatch.setattr(
+        "thenwhat.cli.resolve.make_research",
+        lambda s: Research(
+            papers=None, numbers=Nothing(), registry=OneTrial(), organisations=Nothing()
+        ),
+    )
+
+    result = run("entity", "record-facts")
+
+    assert result.exit_code == 0, result.output
+    assert "Read the facts of 1 trial matches." in result.output
+    assert match.record_facts is not None
+    assert match.record_facts["state"] == "under_way"
+
+
+def test_entity_record_facts_names_a_trial_the_registry_does_not_answer_and_exits_1(
+    run, session: Session
+):
+    match = stored_trial_match(session, "NCT00000003")
+
+    result = run("entity", "record-facts")
+
+    assert result.exit_code == 1
+    assert "No registry record for NCT00000003" in result.output
+    assert match.record_facts is None

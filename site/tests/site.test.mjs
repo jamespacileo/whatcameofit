@@ -1154,6 +1154,88 @@ test("an export made before trial facts still builds, with the matched records a
   assert.match(registry, /Match to this claim: high, 94%/);
 });
 
+// --- registry record rows (openspec registry-record-rows) ---
+
+test("Scenario: Possible record laid out field by field under its reading", () => {
+  const html = page("phase-claim/index.html");
+  const registry = sectionOf(html, "matched");
+  const words = wordsOf(registry);
+  // Said once, with the rule that would have counted it and where scoring is explained.
+  assert.equal(count(words, "None of these is counted in the status"), 1);
+  assert.match(words, /None of these is counted in the status, and no person has checked them\. A record counts only when it is read as this treatment for this condition and its match is 80% or more\./);
+  assert.match(registry, /<a href="\/guide\/match-and-confidence">How a match is scored<\/a>/);
+  assert.match(registry, /<h3 class="record-group-head">\s*Read as this treatment for another condition, patient group or setting/);
+  assert.match(registry, /<p class="record-title">Synthetic trial of phase-claim agent in another condition<\/p>/);
+  // The line leads with the match, then the trials table's words; then the record and its
+  // page here, as a trial entry names them.
+  assert.match(words, /Possible match: low, 31% Phase 1 120 people planned Under way NCT00000077 at ClinicalTrials\.gov View trial details here/);
+  assert.match(words, /For Another Condition Named in the record Phase-claim agent; Placebo/);
+  assert.doesNotMatch(words, /Recruiting|Tests|Match to this claim/);
+  // The folded heading and the digest give the count; the digest's links to the section.
+  assert.match(html, /<span class="fold-note">1 possible<\/span>/);
+  assert.match(html, /, <a href="#matched">1 possible<\/a>/);
+});
+
+test("Scenario: Trial on ClinicalTrials.gov", () => {
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(trials, /NCT00000002 at ClinicalTrials\.gov/);
+});
+
+test("Scenario: Possible records when only a person approves a match", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.match_accept_above = null;
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-person-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
+  assert.match(words, /A record counts only once a person confirms it\./);
+  assert.doesNotMatch(words, /% or more/);
+});
+
+test("Scenario: Group of more than three records", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const claim = fixture.claims.find((each) => each.slug === "phase-claim");
+  const candidate = claim.matches[1];
+  for (let n = 0; n < 4; n += 1) {
+    claim.matches.push({ ...candidate, external_id: `NCT0000009${n}`, url: `https://clinicaltrials.gov/study/NCT0000009${n}`, score: 0.3 - n / 100 });
+  }
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-rest-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const registry = sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched");
+  const [shown, rest] = registry.split('<details class="papers-rest record-rest">');
+  assert.equal(count(shown, 'class="record-row"'), 3);
+  assert.equal(count(rest, 'class="record-row"'), 2);
+  assert.match(wordsOf(rest), /The other 2 of 5 records/);
+});
+
+test("Scenario: Possible record not yet read into fields", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const claim = fixture.claims.find((each) => each.slug === "phase-claim");
+  claim.matches[1].record = null;
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-unread-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const out = path.join(directory, "dist");
+
+  const result = build(file, out);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
+  assert.match(words, /Registry record NCT00000077 Possible match: low, 31% Details not read from the registry yet NCT00000077 at ClinicalTrials\.gov/);
+  assert.doesNotMatch(words, /Synthetic trial of phase-claim agent in another condition/);
+});
+
 // --- background cards (openspec knowledge-cards, site-publishing) ---
 
 const backgroundOf = (html) => html.match(/<section class="glance"[\s\S]*?<\/section>/)?.[0];
