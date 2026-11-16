@@ -10,6 +10,7 @@ comparison. Nor are eligibility criteria, locations, contacts or the responsible
 party's name. Registry numbers stay strings exactly as the registry wrote them.
 """
 
+import re
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -23,6 +24,15 @@ ParticipantBasis = Literal["actual", "planned"]
 Allocation = Literal["randomised", "non_randomised"]
 Masking = Literal["none", "single", "double", "triple", "quadruple"]
 Comparator = Literal["placebo", "sham", "active", "no_treatment"]
+ArmKind = Literal[
+    "experimental",
+    "active_comparator",
+    "placebo_comparator",
+    "sham_comparator",
+    "no_intervention",
+    "other",
+]
+ClaimArm = Literal["experimental", "comparator"]
 AgeGroup = Literal["child", "adult", "older_adult"]
 SponsorKind = Literal["industry", "government", "individual", "network", "other"]
 MeasureKind = Literal[
@@ -87,6 +97,29 @@ COMPARATORS: dict[str, Comparator] = {
     "ACTIVE_COMPARATOR": "active",
     "NO_INTERVENTION": "no_treatment",
 }
+ARM_KINDS: dict[str, ArmKind] = {
+    "EXPERIMENTAL": "experimental",
+    "ACTIVE_COMPARATOR": "active_comparator",
+    "PLACEBO_COMPARATOR": "placebo_comparator",
+    "SHAM_COMPARATOR": "sham_comparator",
+    "NO_INTERVENTION": "no_intervention",
+    "OTHER": "other",
+}
+# ClinicalTrials.gov writes an arm's intervention as "<type>: <name>"; the type is one of
+# these and is dropped, the name kept as written.
+INTERVENTION_TYPES = (
+    "Drug",
+    "Device",
+    "Biological",
+    "Procedure",
+    "Radiation",
+    "Behavioral",
+    "Genetic",
+    "Dietary Supplement",
+    "Combination Product",
+    "Diagnostic Test",
+    "Other",
+)
 # In the order the age groups are listed.
 AGE_GROUPS: dict[str, AgeGroup] = {"CHILD": "child", "ADULT": "adult", "OLDER_ADULT": "older_adult"}
 # The class INDIV is not here: a person is caught before the class is read (`_sponsor`).
@@ -175,6 +208,16 @@ class Results:
 
 
 @dataclass(frozen=True, slots=True)
+class Arm:
+    """One arm of the trial as the record lists it: its label, its kind and the
+    interventions it gets, by name."""
+
+    label: str | None
+    kind: ArmKind
+    interventions: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
 class TrialFacts:
     study_kind: StudyKind | None
     participants: Participants | None
@@ -188,6 +231,8 @@ class TrialFacts:
     primary_outcomes_total: int
     why_stopped: str | None
     results: Results | None
+    # In the record's order.
+    arms: tuple[Arm, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -257,6 +302,7 @@ def read_trial(study: dict[str, Any]) -> RegistryTrial:
             primary_outcomes_total=len(planned),
             why_stopped=_text(status, "whyStopped"),
             results=_results(study),
+            arms=_arms(protocol),
         ),
         results_papers=_results_papers(protocol),
     )
@@ -280,6 +326,55 @@ def reported_state(state: TrialState | None) -> TrialStateCode:
     """The state of a trial with no registry record, from the state its newest
     status-change event reports; one with no status change has not started."""
     return "not_started" if state is None else REPORTED_STATES[state]
+
+
+def _arms(protocol: dict[str, Any]) -> tuple[Arm, ...]:
+    arms: list[Arm] = []
+    for arm in _objects(protocol, "armsInterventionsModule", "armGroups"):
+        kind = _code(ARM_KINDS, arm.get("type")) or "other"
+        names = tuple(_intervention_name(name) for name in _strings(arm, "interventionNames"))
+        arms.append(Arm(_text(arm, "label"), kind, names))
+    return tuple(arms)
+
+
+def _intervention_name(written: str) -> str:
+    for kind in INTERVENTION_TYPES:
+        if written.startswith(f"{kind}: "):
+            return written[len(kind) + 2 :].strip()
+    return written.strip()
+
+
+def claim_arm(arms: tuple[Arm, ...], names: list[str]) -> ClaimArm | None:
+    """Whether the claim's intervention, by its name or a synonym, is in an experimental
+    arm, or only in comparator arms. A name counts only as a whole word, ignoring case,
+    in an arm's interventions or label. None when no arm names it, or only arms of kind
+    "other" do: nothing is guessed."""
+    patterns = [
+        re.compile(rf"(?<!\w){re.escape(name.strip())}(?!\w)", re.I)
+        for name in names
+        if name.strip()
+    ]
+
+    def names_it(arm: Arm) -> bool:
+        texts = [*arm.interventions, *([arm.label] if arm.label else [])]
+        return any(pattern.search(text) for pattern in patterns for text in texts)
+
+    named = [arm for arm in arms if names_it(arm)]
+    # As for comparators: with no experimental arm, an "active comparator" arm is the
+    # treatment under test.
+    tested = (
+        {"experimental"}
+        if any(arm.kind == "experimental" for arm in arms)
+        else {
+            "experimental",
+            "active_comparator",
+        }
+    )
+    if any(arm.kind in tested for arm in named):
+        return "experimental"
+    if any(arm.kind not in ("experimental", "other") for arm in named):
+        return "comparator"
+    return None
 
 
 def _comparators(arm_types: set[str | None]) -> tuple[Comparator, ...]:

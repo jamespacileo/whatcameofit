@@ -14,9 +14,12 @@ import {
   groupValueText,
   isPaperMatch,
   measureText,
+  comparedNames,
+  measureGlosses,
   orderTrials,
   participantsText,
   phaseGroups,
+  testedNames,
   plainFacts,
   resultTable,
   sponsorText,
@@ -349,7 +352,7 @@ test("Scenario: Claim with fifteen trials across three phases", () => {
     groups.map((group) => [group.name, group.trials.length, group.mixed]),
     [
       ["Phase 3", 4, false],
-      ["Phase 2 and Phase 1/Phase 2", 10, true],
+      ["Phase 2, including Phase 1/Phase 2", 10, true],
       ["No phase given", 1, false],
     ],
   );
@@ -361,4 +364,51 @@ test("Scenario: Claim with twelve Phase 2 trials", () => {
   assert.equal(groups[0].trials.length, 12);
   // Ten shown is the page's rule; the group keeps them in the order orderTrials gives.
   assert.deepEqual(groups[0].trials, orderTrials(groups[0].trials));
+});
+
+test("Scenario: Trials with posted results lead, whatever their phase", () => {
+  const results = { outcomes: [], outcomes_total: 0 };
+  const groups = phaseGroups([
+    trial("NCT3", ["phase_3"]),
+    trial("NCT2", ["phase_2"], { facts: facts({ results }) }),
+    trial("NCT1", ["phase_1"]),
+  ]);
+  assert.deepEqual(
+    groups.map((group) => [group.name, group.trials.map((entry) => entry.trial_id)]),
+    [
+      ["Results posted", ["NCT2"]],
+      ["Phase 3", ["NCT3"]],
+      ["Phase 1", ["NCT1"]],
+    ],
+  );
+  assert.equal(groups[0].mixed, true);
+});
+
+test("an abbreviation in a main measure is said plainly, once", () => {
+  assert.deepEqual(measureGlosses("PFS assessed by IRRC per RECIST v1.1"), [
+    "PFS: progression-free survival, the time before the illness grew or got worse",
+    "IRRC: an independent review committee",
+    "RECIST: standard rules for measuring tumour size",
+  ]);
+  // TEAE and TEAEs say the same, so only the first is given.
+  assert.equal(measureGlosses("TEAEs and TEAE").length, 1);
+  // Whole words only, and case as the registry writes it.
+  assert.deepEqual(measureGlosses("Cost of osteoporosis care"), []);
+});
+
+test("a comparison is named by its arms, an active arm only beside an experimental one", () => {
+  const arm = (kind, interventions, label = null) => ({ kind, interventions, label });
+  assert.equal(
+    comparedNames([arm("experimental", ["Mometasone"]), arm("active_comparator", ["Montelukast"]), arm("placebo_comparator", ["Placebo"])]),
+    "Montelukast and Placebo",
+  );
+  // With no experimental arm, the "active comparator" is the treatment itself.
+  assert.equal(comparedNames([arm("active_comparator", ["Tideglusib"]), arm("placebo_comparator", ["Placebo"])]), "Placebo");
+  assert.equal(comparedNames([arm("experimental", ["A"]), arm("no_intervention", [])]), "No treatment");
+  assert.equal(comparedNames([arm("experimental", ["A"])]), null);
+  assert.equal(
+    comparedNames([arm("experimental", ["A"]), ...["B", "C", "D"].map((name) => arm("active_comparator", [name]))]),
+    "B, C and 1 more",
+  );
+  assert.equal(testedNames([arm("experimental", ["Mometasone"]), arm("active_comparator", ["Montelukast"])]), "Mometasone");
 });

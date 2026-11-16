@@ -71,6 +71,7 @@ import {
   trialDates,
   isPaperMatch,
   orderTrials,
+  measureGlosses,
   phaseGroups,
   withResults,
 } from "../lib/trial-facts";
@@ -142,6 +143,21 @@ const trials = orderTrials(claim.trials ?? []);
 const trialIds = new Set(trials.map((trial) => trial.trial_id));
 // The trials by furthest phase, furthest first; each phase shows its first ten.
 const trialGroups = phaseGroups(trials);
+// Each abbreviation in a main measure is said plainly once, on the first row that uses it.
+const glossSeen = new Set<string>();
+const trialGlosses = new Map<string, string[]>();
+for (const group of trialGroups) {
+  for (const trial of group.trials) {
+    const measure = trial.facts?.primary_outcomes[0]?.measure;
+    const fresh = (measure ? measureGlosses(measure) : []).filter((gloss) => {
+      const plain = gloss.slice(gloss.indexOf(": ") + 2);
+      if (glossSeen.has(plain)) return false;
+      glossSeen.add(plain);
+      return true;
+    });
+    trialGlosses.set(trial.trial_id, fresh);
+  }
+}
 const matchOf = (trialId: string) =>
   registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
 const bridge = digestBridge(claim);
@@ -189,8 +205,7 @@ const timetableNote = [
   plural(counts.records, "record"),
   "newest first",
 ].join(" · ");
-// The trials table's columns, named once for every phase's table. Only the first
-// table shows them; the others carry them for a screen reader.
+// The trials table's columns, named over every group's table.
 const TRIAL_COLUMNS = ["People", "Compared with", "Main measure", "State", "Trial"];
 const posted = withResults(trials);
 const trialsNote = [
@@ -848,14 +863,12 @@ const sections = [
         <section class="trials" data-pagefind-ignore>
           <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
           <p class="take-why">{TRIALS_NOTE}</p>
-          {trialGroups.map((group, index) => {
+          {trialGroups.map((group) => {
             const shown = group.trials.slice(0, TRIALS_PER_PHASE);
             const rest = group.trials.slice(TRIALS_PER_PHASE);
-            const restPosted = withResults(rest);
-            const groupPosted = withResults(group.trials);
-            const table = (list: typeof trials, label: string, head: boolean) => (
+            const table = (list: typeof trials, label: string) => (
               <div class="trial-table" role="table" aria-label={label}>
-                <div class={head ? "trial-row trial-columns" : "trial-row trial-columns visually-hidden"} role="row">
+                <div class="trial-row trial-columns" role="row">
                   {TRIAL_COLUMNS.map((name) => (
                     <span role="columnheader">{name}</span>
                   ))}
@@ -867,6 +880,8 @@ const sections = [
                     approach={claim.approach}
                     dates={trialDates(claim.events, trial.trial_id)}
                     showPhase={group.mixed}
+                    glosses={trialGlosses.get(trial.trial_id) ?? []}
+                    treatment={claim.intervention.name}
                   />
                 ))}
               </div>
@@ -876,19 +891,18 @@ const sections = [
                 <h3 class="trial-phase-head">
                   {group.name}
                   <span class="entry-note">
+                    <span class="visually-hidden">, </span>
                     {plural(group.trials.length, "trial")}
-                    {groupPosted > 0 && ` · ${groupPosted} with posted results`}
                   </span>
                 </h3>
-                {table(shown, `${group.name}: trials on record`, index === 0)}
+                {table(shown, `${group.name}: trials on record`)}
                 {rest.length > 0 && (
                   <details class="trials-rest">
                     <summary>
                       The other {rest.length} of {group.trials.length} trials
-                      {restPosted > 0 && ` (${restPosted} with results posted)`}
                       <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
                     </summary>
-                    {table(rest, `The other ${group.name} trials`, false)}
+                    {table(rest, `The other ${group.name} trials`)}
                   </details>
                 )}
               </div>

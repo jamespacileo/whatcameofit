@@ -13,7 +13,17 @@ Four directions were mocked on that claim's data (`.impeccable/mocks/trials-tabl
 - Each phase shows its first ten trials; the rest of that phase open on request, from a control that counts them and their posted results. The first-five rule across all trials goes.
 - Only the first phase's table shows the column names; the others carry them for a screen reader.
 
+### After the critique (16 Nov 2026, 22/36)
+
+The operator asked for every finding to be fixed, the pipeline included, and for trials with posted results to lead:
+
+- Trials that posted results come first, under "Results posted", whatever their phase.
+- Each trial's arms are exported in the record's words, with whether the claim's treatment is the arm under test or only the comparison (exact name match, else no answer). "Compared with" names the comparator arms, and a trial that tests another drug says so.
+- Known registry abbreviations in the main measure are said plainly, once per section. The sponsor carries its kind in the row.
+- The opened row says the match and the design once, in two columns on a wide screen. Every table shows its column names, group headings stay in view, and on a phone the identifier is a 44px target opposite the size.
+
 ## Impact
 
-- `site/src/lib/trial-facts.ts` (`phaseGroups`, `TRIALS_PER_PHASE`), `site/src/components/Trial.astro`, `site/src/pages/[slug].astro`, `site/src/styles/global.css`, `DESIGN.md`.
+- `pipeline/src/thenwhat/events/trial_facts.py` (arms, `claim_arm`), `pipeline/src/thenwhat/export/build.py`, `site/export.schema.json`, `site/data/seed-export.json`, `site/src/lib/export.ts`.
+- `site/src/lib/trial-facts.ts` (`phaseGroups`, `TRIALS_PER_PHASE`, `measureGlosses`, `comparedNames`), `site/src/components/Trial.astro`, `site/src/pages/[slug].astro`, `site/src/styles/global.css`, `DESIGN.md`.
 - Modifies "A long list of trials opens with the furthest" in `site-publishing`, and the column list of "Trials read across as a table" in the `page-frame` change, which is not yet archived.

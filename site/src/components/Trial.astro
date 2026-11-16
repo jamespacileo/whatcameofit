@@ -8,7 +8,7 @@
 // takes place or who may take part.
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import ExternalLink from "@lucide/astro/icons/external-link";
-import { confidenceLabel, matchWords, readingOf } from "../lib/confidence";
+import { matchWords, readingOf } from "../lib/confidence";
 import type { ExportedMatch, ExportedTrial } from "../lib/export";
 import { paperAnchor } from "../lib/paper-facts";
 import { measureWords } from "../lib/readings";
@@ -21,8 +21,10 @@ import {
   designText,
   measureLead,
   measureText,
+  comparedNames,
   phaseText,
   RESULTS_POSTED,
+  testedNames,
   resultTable,
   sponsorText,
   studiedText,
@@ -41,9 +43,19 @@ interface Props {
   dates: TrialDates;
   /** Its phase group holds more than one phase wording, so the row names its own. */
   showPhase?: boolean;
+  /** Its main measure's abbreviations said plainly, those not already said above it. */
+  glosses?: string[];
+  /** The claim's treatment, by name, for a trial that has it only as a comparison. */
+  treatment?: string;
 }
 
-const { trial, match, approach, dates, showPhase = false } = Astro.props;
+const { trial, match, approach, dates, showPhase = false, glosses = [], treatment } = Astro.props;
+// What it was compared with, by the names its record gives its comparator arms; else in
+// the plain words for the kinds of comparator.
+const arms = trial.facts?.arms ?? [];
+const compared = comparedNames(arms);
+// The claim's treatment is what this trial compares with, not what it tests.
+const asComparison = trial.claim_arm === "comparator" ? testedNames(arms) : null;
 // Its own page on this site, where the registry's record is shown in full; else the registry.
 const local = trialDetailsPath(trial.url);
 const NO_SIZE = "Size not stated";
@@ -87,13 +99,24 @@ const mainMeasure = planned[0]?.measure ?? null;
       >
         <span class="chev" aria-hidden="true"><ChevronDown size={14} stroke-width={2.2} /></span>
         <span class="trial-title">{columns.isTitle ? NO_SIZE : columns.lead}</span>
+        <span class="visually-hidden">: more from its record</span>
       </button>
     </div>
-    <div class="trial-cell" role="cell"><span class="lbl">Compared with</span>{columns.compared}</div>
+    <div class="trial-cell" role="cell">
+      <span class="lbl">Compared with</span>{compared ?? columns.compared}
+      {
+        asComparison && (
+          <span class="trial-by">
+            It tests {asComparison}; {treatment ?? "this treatment"} is what it is compared with.
+          </span>
+        )
+      }
+    </div>
     <div class="trial-cell trial-measure" role="cell">
       <span class="lbl">Main measure</span>
       <span class="trial-measure-words">{mainMeasure ?? "Not stated in the record"}</span>
-      {trial.facts?.sponsor?.name && <span class="trial-by">{trial.facts.sponsor.name}</span>}
+      {glosses.length > 0 && <span class="trial-gloss">{glosses.join(" · ")}</span>}
+      {sponsor && <span class="trial-by">Run by {sponsor}</span>}
     </div>
     <div class="trial-cell" role="cell">
       <span class="lbl">State</span>{columns.state ?? "Not stated in the record"}
@@ -119,7 +142,13 @@ const mainMeasure = planned[0]?.measure ?? null;
     )
   }
   <p class="entry-note trial-meta">
-    {match && <span class="unbroken">Match to this claim: {matchWords(match.score)}</span>}
+    {
+      match && (
+        <span>
+          <span class="unbroken">Match to this claim: {matchWords(match.score)}</span>. {readingOf(match.reading)}
+        </span>
+      )
+    }
     {
       papers.length > 0 && (
         <a class="unbroken" href={`#${paperAnchor(papers[0])}`}>
@@ -154,14 +183,6 @@ const mainMeasure = planned[0]?.measure ?? null;
         )
       }
       {
-        sponsor && (
-          <div>
-            <dt>Run by</dt>
-            <dd>{sponsor}</dd>
-          </div>
-        )
-      }
-      {
         kind && (
           <div>
             <dt>Kind of study</dt>
@@ -179,16 +200,11 @@ const mainMeasure = planned[0]?.measure ?? null;
       }
       <div>
         <dt>Design</dt>
-        <dd>{columns.design.length > 0 ? columns.design.join(" · ") : "Not stated in the record"}</dd>
+        <dd>
+          {columns.design.length > 0 ? columns.design.join(" · ") : "Not stated in the record"}
+          {design && <span class="entry-note">In the registry's terms: {design}</span>}
+        </dd>
       </div>
-      {
-        design && (
-          <div>
-            <dt>Design, in the registry's terms</dt>
-            <dd>{design}</dd>
-          </div>
-        )
-      }
       <div>
         <dt>Phase</dt>
         <dd>
@@ -310,17 +326,6 @@ const mainMeasure = planned[0]?.measure ?? null;
                   See the {registry} record
                 </a>
               </p>
-            </dd>
-          </div>
-        )
-      }
-      {
-        match && (
-          <div>
-            <dt>How sure the match is</dt>
-            <dd>
-              {confidenceLabel(match.score)}
-              <span class="entry-note">{readingOf(match.reading)}</span>
             </dd>
           </div>
         )

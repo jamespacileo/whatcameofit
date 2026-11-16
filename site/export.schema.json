@@ -60,6 +60,48 @@
       "title": "ExportedArchived",
       "type": "object"
     },
+    "ExportedArm": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Label"
+        },
+        "kind": {
+          "enum": [
+            "experimental",
+            "active_comparator",
+            "placebo_comparator",
+            "sham_comparator",
+            "no_intervention",
+            "other"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "interventions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Interventions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "label",
+        "kind",
+        "interventions"
+      ],
+      "title": "ExportedArm",
+      "type": "object"
+    },
     "ExportedArticle": {
       "additionalProperties": false,
       "properties": {
@@ -2024,6 +2066,22 @@
           },
           "title": "Readings",
           "type": "array"
+        },
+        "claim_arm": {
+          "anyOf": [
+            {
+              "enum": [
+                "experimental",
+                "comparator"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Claim Arm"
         }
       },
       "required": [
@@ -2178,6 +2236,14 @@
               "type": "null"
             }
           ]
+        },
+        "arms": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/ExportedArm"
+          },
+          "title": "Arms",
+          "type": "array"
         }
       },
       "required": [

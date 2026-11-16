@@ -4074,6 +4074,22 @@ main ul:not([class]) li + li {
   overflow-wrap: anywhere;
 }
 
+.trial-facts dd > .entry-note {
+  display: block;
+}
+
+/* On a wide screen a trial's facts read in two columns; posted results take the width. */
+@media (min-width: 60rem) {
+  .trial-table .trial-facts {
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.6rem;
+  }
+
+  .trial-table .trial-facts > .trial-results {
+    grid-column: 1 / -1;
+  }
+}
+
 .trial-measures {
   list-style: none;
   margin: 0;
@@ -6322,14 +6338,26 @@ body.framed {
   margin-left: 1.9rem;
 }
 
+/* Below 68rem the section chips stay at the top; a phase heading sticks under them. */
+@media (max-width: 68rem) {
+  .trials {
+    --sticky-top: 3.85rem;
+  }
+}
+
 /* Trials by phase: each phase is a heading over its own table; only the first table
    shows the column names, the others keep them for a screen reader. */
 .trial-phase-head {
+  position: sticky;
+  top: var(--sticky-top, 0);
+  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.1rem 0.7rem;
   margin: 1.6rem 0 0.55rem;
+  padding-block: 0.35rem;
+  background: var(--paper);
   font-size: 1.05rem;
 }
 
@@ -6339,15 +6367,6 @@ body.framed {
 
 .trial-phase-head .entry-note {
   font-weight: 400;
-}
-
-.trial-row.trial-columns.visually-hidden {
-  position: absolute;
-  padding: 0;
-}
-
-.trial-columns.visually-hidden + .trial-group {
-  border-top: 0;
 }
 
 .trial-by,
@@ -6361,7 +6380,16 @@ body.framed {
 .trial-posted {
   display: block;
   margin-top: 0.15rem;
-  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.trial-gloss {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
 }
 
 .trial-measure-words {
@@ -6419,6 +6447,30 @@ body.framed {
 
   .trial-measure-words {
     display: inline;
+  }
+
+  /* On a phone the identifier sits opposite the size, and is a full-height target. */
+  .trial-lead {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .trial-id {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .trial-cell.trial-id .lbl {
+    display: none;
+  }
+
+  .trial-id a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-block: -0.6rem;
   }
 
   .trial-cell .lbl {

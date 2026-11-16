@@ -793,21 +793,21 @@ test("Scenario: Claim with one completed Phase 2 trial", () => {
   // identifier. The phase is the heading of its group; the design is in the fold.
   assert.match(
     entry,
-    /83 people\s+Compared with\s*A placebo\s+Main measure\s*[^]*?State\s*Finished\s*Results posted 1 Sep 2025\s+Trial\s*NCT00000002/,
+    /83 people\s*: more from its record\s+Compared with\s*Placebo\s+Main measure\s*[^]*?State\s*Finished\s*Results posted 1 Sep 2025\s+Trial\s*NCT00000002/,
   );
   assert.match(entry, /Design\s+Assigned at random · Blinded/);
   // The row opens to what it measured.
   assert.match(entry, /It measured the change in a symptom score over 12 weeks\./);
   assert.match(entry, /What it measured was read by a model and checked against the record/);
   // The registry's own terms are inside the fold.
-  assert.match(entry, /Design, in the registry's terms\s+Randomised, double-blind, compared with placebo/);
+  assert.match(entry, /In the registry's terms: Randomised, double-blind, compared with placebo/);
   assert.match(trials, /Change in synthetic score/);
   // Posted results are a table: a row for each group, the registry's numbers.
   const table = trials.match(/<table class="result-table"[\s\S]*?<\/table>/)[0];
   assert.match(wordsOf(table), /Group\s+Mean\s+Standard Deviation\s+People analysed/);
   assert.match(wordsOf(table), /3\.4\s+Standard Deviation 1\.1\s+1\.1\s+41/);
   assert.match(trials, /The registry record says what this measure runs from and to/);
-  assert.match(trials, /High match · 94%/);
+  assert.match(trials, /Match to this claim: high, 94%/);
   // Three of five planned measures are shown, and the page says where the rest are.
   assert.match(trials, /2 more in the ClinicalTrials\.gov record/);
 });
@@ -831,20 +831,33 @@ test("Scenario: Claim with no trial", () => {
 });
 
 test("Scenario: Claim with fifteen trials across three phases", () => {
-  // Here seven: one Phase 3, one Phase 2, five Phase 1. Each phase is a heading over its
-  // own table, furthest first, and with ten or fewer in a phase every trial is shown.
+  // Here seven: one with posted results (Phase 2), one Phase 3, five Phase 1. The trials
+  // with posted results come first, whatever their phase; then each phase is a heading
+  // over its own table, furthest first. With ten or fewer in a group every trial shows.
   const trials = sectionOf(page("phase-claim/index.html"), "trials");
   const heads = [...trials.matchAll(/<h3 class="trial-phase-head"[^>]*>\s*([^<]*?)\s*</g)].map((m) => m[1]);
-  assert.deepEqual(heads, ["Phase 3", "Phase 2", "Phase 1"]);
+  assert.deepEqual(heads, ["Results posted", "Phase 3", "Phase 1"]);
   assert.equal(count(trials, 'class="trial-group"'), 7);
   assert.ok(!trials.includes('class="trials-rest"'));
-  assert.match(wordsOf(trials), /Phase 2\s+1 trial · 1 with posted results/);
-  // Only the first table shows its column names; the others keep them for a screen reader.
-  assert.equal(count(trials, 'class="trial-row trial-columns" role="row"'), 1);
-  assert.equal(count(trials, 'class="trial-row trial-columns visually-hidden" role="row"'), 2);
+  // The heading and its count read apart to a screen reader.
+  assert.match(wordsOf(trials), /Results posted\s*,\s*1 trial/);
+  // In the results group each row names its own phase.
+  assert.match(wordsOf(trials), /NCT00000002[^]*?Phase 2/);
+  // Every table shows its column names.
+  assert.equal(count(trials, 'class="trial-row trial-columns" role="row"'), 3);
   // An identifier with no page on this site leads to its registry record (the rule for
   // which have one is trialDetailsPath's, tested on its own).
   assert.match(trials, /class="trial-cell trial-id"[^>]*>[^]*?href="https:\/\/registry\.example\/record\/5"/);
+});
+
+test("Scenario: The claim's treatment is only what a trial compares with", () => {
+  // Change trials-by-phase: the comparison is named from the record's arms, and a trial
+  // that tests something else says so.
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(
+    trials,
+    /Compared with\s*Phase-claim agent\s*It tests Synthetic other agent; phase-claim agent is what it is compared with\./,
+  );
 });
 
 // Openspec site-publishing (change claim-at-a-glance): "The record in brief". The rules
@@ -957,7 +970,7 @@ test("Scenario: Outcome reported at four time points", () => {
 
 test("Scenario: Trial the registry shows as recruiting", () => {
   const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
-  assert.match(trials, /1,200 people planned\s+Compared with/);
+  assert.match(trials, /1,200 people planned\s*: more from its record\s+Compared with/);
   assert.match(trials, /State\s*Under way/);
   assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
 });
