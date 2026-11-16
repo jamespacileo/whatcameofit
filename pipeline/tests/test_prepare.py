@@ -306,8 +306,9 @@ def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):
     assert claim is not None and claim.review_state is ReviewState.APPROVED
 
 
-def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Session):
-    """Scenario: A read that overlaps an archived claim"""
+def test_audit_list_shows_reads_that_overlap_a_claim(run, session: Session):
+    """Scenarios: A read that overlaps an archived claim, A read that overlaps a claim
+    that is not archived"""
     from thenwhat.backfill.link_read import NAMES_OVERLAP
     from thenwhat.claims.entry import archive_claim
 
@@ -333,9 +334,14 @@ def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Ses
     listed, _ = run("audit", "list")
 
     assert listed.exit_code == 0, listed.output
-    assert "overlaps archived archived-one  https://news.example.org/overlap-0" in listed.output
-    assert "live-one" not in listed.output
-    assert "1 read overlaps an archived claim" in listed.output
+    said = " ".join(listed.output.split())
+    assert "overlaps archived archived-one https://news.example.org/overlap-0" in said
+    assert "1 read overlaps an archived claim" in said
+    # A read that overlaps a claim that is not archived is never read again, so it is
+    # listed apart, for the operator to attach or leave.
+    assert "overlaps live-one (pending) https://news.example.org/overlap-1" in said
+    assert "1 read overlaps a claim that is not archived and made no claim" in said
+    assert said.index("overlap-0") < said.index("overlap-1")
 
 
 def under_substance(session: Session, slug: str, substance: str) -> None:

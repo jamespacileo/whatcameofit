@@ -61,7 +61,7 @@ from thenwhat.sources.europepmc import EuropePmc
 from thenwhat.sources.gsrs import Gsrs
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
-from thenwhat.sources.rxnorm import RxNorm
+from thenwhat.sources.rxnorm import RxNorm, vaccine_codes
 from thenwhat.sources.terms import SOURCES
 
 entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no_args_is_help=True)
@@ -155,6 +155,13 @@ def say_codes(slug: str, answer: Codes) -> None:
             f"{nothing}. {by} lists it as a brand of more than one ingredient"
             f" ({'; '.join(answer.substances)}), so none was taken. No development code"
             " was added."
+        )
+    elif fell_back and answer.record is not None and vaccine_codes(answer.record.payload):
+        said = (
+            f"{nothing}. {by} lists it as a brand of {answer.substances[0]}, and as a"
+            f" vaccine (CVX {', '.join(vaccine_codes(answer.record.payload))}): the"
+            " ingredient is an antigen, kept but not searched as a name. No development"
+            " code was added."
         )
     elif fell_back:
         said = (
