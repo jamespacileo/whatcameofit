@@ -373,7 +373,7 @@ def entity_delete_people(
 @entity_app.command("record-facts")
 def entity_record_facts() -> None:
     """Read the registry record of every shown trial match stored before its facts were
-    kept, so the claim page can lay it out field by field. Run once after migration 0027;
+    kept, so the claim page can lay it out field by field. Run once after migration 0028;
     a match stored since then has its facts already."""
     with entry_session() as session:
         filled, missing = fill_record_facts(session, make_research(session).registry)
