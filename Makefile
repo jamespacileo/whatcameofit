@@ -1,9 +1,14 @@
-.PHONY: smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
 # Tests drop and recreate this database, so its name must end in _test.
 export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(DB_PORT)/thenwhat_test
+
+# A fresh clone or worktree, ready to work in. Packages come from pnpm's shared
+# store on this machine, so a second worktree installs in seconds and downloads nothing.
+setup: site/node_modules
+	uv sync --directory pipeline
 
 # Everything CI runs. Needs Docker for the database; no internet access is
 # needed once dependencies and the Postgres image are present.
@@ -29,15 +34,15 @@ scripts-test:
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
 	sh scripts/tests/daily-run.test.sh
 
-site/node_modules: site/package-lock.json
-	npm --prefix site ci
+site/node_modules: site/pnpm-lock.yaml
+	pnpm --dir site install --frozen-lockfile --prefer-offline
 	@touch site/node_modules
 
 site-test: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site test
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site test
 
 site-build: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
 
 # Live: reads each article in site/tests/fixtures/research/cases, asks the model, OpenAlex
 # and ROR, and checks the report's paper is found. Costs a model call and up to five
@@ -108,5 +113,5 @@ deploy: site/node_modules public-export
 # Reads the model settings from .env and builds from site/data/export.json if there is one.
 lookup-dev: site/node_modules
 	node site/scripts/dev-vars.mjs
-	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
-	cd site && wrangler dev --port 8787
+	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
+	pnpm --dir site exec wrangler dev --port 8787

@@ -24,11 +24,14 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           version: "0.11.20"
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: site/package-lock.json
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
       # Drawn card images, kept by what decides their pixels (site/src/lib/card-image.ts).
       # A run on main keeps them where every pull request's preview can read them.
       - name: Restore drawn cards
@@ -36,14 +39,14 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: site/.cache/cards
-          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/package-lock.json') }}
+          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/pnpm-lock.yaml') }}
           restore-keys: site-cards-
       - name: Look for kept dependencies
         id: deps
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: site/node_modules
-          key: site-deps-${{ runner.os }}-node24-${{ hashFiles('site/package-lock.json') }}
+          key: site-deps-${{ runner.os }}-node26-${{ hashFiles('site/pnpm-lock.yaml') }}
           lookup-only: true
       - run: make check
       - name: Save production extension package
@@ -95,12 +98,15 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-      - run: npm --prefix site ci
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      - run: pnpm --dir site install --frozen-lockfile
       - name: Verify Cloudflare authentication
         run: node site/node_modules/wrangler/bin/wrangler.js whoami
         env:
