@@ -98,6 +98,9 @@ if (stateOnly) {
   process.exit(0);
 }
 
+// How long each part took, in the log, where the timing report can read it.
+const seconds = (since) => ((Date.now() - since) / 1000).toFixed(1);
+let started = Date.now();
 console.log(`Building ${data.claims.length} claims for ${worker}.`);
 const build = spawnSync("npm", ["run", "build"], {
   cwd: SITE_DIR,
@@ -105,6 +108,7 @@ const build = spawnSync("npm", ["run", "build"], {
   env: settings,
 });
 if (build.status !== 0) stop(["The site did not build."]);
+console.log(`Built in ${seconds(started)} s.`);
 
 const built = JSON.parse(fs.readFileSync(path.join(SITE_DIR, "dist/lookup.json"), "utf8"));
 if (built.preview) stop(["The built site is a preview build."]);
@@ -118,6 +122,7 @@ const args = ["deploy", "--config", "wrangler.preview.jsonc", "--name", worker];
 // The contact address is how the trial reader presents itself to the registry.
 if (process.env.CONTACT_EMAIL) args.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
 if (dryRun) args.push("--dry-run");
+started = Date.now();
 const sent = spawnSync(process.execPath, [path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js"), ...args], {
   cwd: SITE_DIR,
   stdio: ["inherit", "pipe", "inherit"],
@@ -125,6 +130,7 @@ const sent = spawnSync(process.execPath, [path.join(SITE_DIR, "node_modules/wran
 });
 process.stdout.write(sent.stdout ?? "");
 if (sent.status !== 0) stop([`Wrangler failed. ${worker} was not updated by this step.`]);
+console.log(`${dryRun ? "Checked" : "Sent"} in ${seconds(started)} s.`);
 
 if (dryRun) {
   console.log(`Dry run finished. Nothing was published. Without --dry-run this would go to ${worker}.`);
