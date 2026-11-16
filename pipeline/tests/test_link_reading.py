@@ -2,7 +2,7 @@
 names are from openspec lead-reading. The outlets, pages and model here are fakes, and
 every word of every page is synthetic: no article text may be stored, tests included."""
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -501,13 +501,41 @@ def test_a_page_the_site_did_not_serve_cannot_be_read(reader: Reader):
     assert reader.prompts == []
 
 
-def refused_earlier(reader: Reader, outlet_url: str, count: int) -> None:
-    """Leads of the outlet read before, each answered 401 by the site."""
+def refused_earlier(reader: Reader, outlet_url: str, count: int, *, days_ago: int = 1) -> None:
+    """Leads of the outlet read before, each answered 401 by the site, `days_ago` by
+    the test's clock, which the step is given."""
+    reader.step = step(time=reader.time)
     for number in range(count):
         earlier = reader.lead(f"{outlet_url}/refused-{number}", score=None, serves=None)
         earlier.read_outcome = ReadOutcome.CANNOT_BE_READ
         earlier.read_detail = f"{NO_PAGE} (the site answered 401)"
+        reader.session.add(
+            WorkEntry(
+                record_kind="link_lead",
+                record_id=earlier.id,
+                step="link_read",
+                step_version=1,
+                outcome=WorkOutcome.NOTHING_FOUND,
+                attempts=1,
+                requests_used=1,
+                fingerprint="earlier",
+                last_attempt_at=reader.time.now() - timedelta(days=days_ago),
+            )
+        )
     reader.session.flush()
+
+
+def test_an_outlets_old_refusals_lapse(reader: Reader):
+    """Scenario: Refusals that have lapsed"""
+    refused_earlier(
+        reader, "https://www.theguardian.com/science", REFUSALS_BEFORE_STOPPING, days_ago=31
+    )
+    lead = reader.lead()
+
+    reader.read()
+
+    assert reader.client.requests_made == 1
+    assert lead.read_detail is None or OUTLET_REFUSES not in lead.read_detail
 
 
 def test_an_outlet_that_refuses_the_reader_page_after_page_is_not_asked_again(reader: Reader):

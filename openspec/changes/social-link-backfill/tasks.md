@@ -211,6 +211,7 @@ Batch 1's audit (2026-11-16) archived 7 claims as duplicates of live ones, draft
 Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that answered 401 to every page: reuters.com (44) and wsj.com (39). By batch 2 they stood at 50 and 43, with no page served.
 
 - [x] 15.1 Finish a lead without asking the reader when its outlet answered 401 to at least five pages and served none; verify with tests that such a lead makes no request and that an outlet which served a page is still asked.
+- [x] 15.2 Count only 401 answers from the last 30 days, and add `thenwhat backfill retry-outlet <outlet>` to ask an outlet's refused and unasked leads again; verify with tests that lapsed refusals do not stop a read, and one success and one refusal of the command.
 
 ## Workflow follow-up
 
