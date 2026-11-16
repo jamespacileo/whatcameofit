@@ -83,15 +83,11 @@ Where leads are due, a stage SHALL take first those whose title names a topic wo
 - **THEN** it is read, before leads that name no topic
 
 ### Requirement: Push
-`thenwhat backfill push` SHALL hand a run's results and usage to the truth store as one or more store runs of no more than the size the store sets, each holding the records another of its records refers to or following the store run that does. For each it SHALL register the store run, hand over its records with their counts and checksums, ask for the merge, and print the merge's report. A push that stopped after some store runs were merged SHALL be finished by pushing again, and SHALL add nothing twice. It SHALL hand over, for a lead that was scored and not read, its address key, shares, screening outcome and score. It SHALL hand over nothing for a link on an unlisted outlet. `--report-only` SHALL print the report and change nothing in the store.
+`thenwhat backfill push` SHALL register the run with the truth store, hand over the run's results and usage with their counts and checksums, ask for the merge, and print the merge's report. It SHALL hand over, for a lead that was scored and not read, its address key, shares, screening outcome and score. It SHALL hand over nothing for a link on an unlisted outlet. `--report-only` SHALL print the report and change nothing in the store.
 
 #### Scenario: A run of 200 reads
 - **WHEN** a run that read 200 leads and drafted or joined 60 claims is pushed
 - **THEN** the report gives the claims, articles and events added, matched and in conflict, and the claims held for audit
-
-#### Scenario: A push stopped part way
-- **WHEN** a push of three store runs stops after the first is merged, and the run is pushed again
-- **THEN** the first is answered as merged before, the other two are merged, and the store holds each record once
 
 #### Scenario: Pushing twice
 - **WHEN** a pushed run is pushed again
@@ -104,6 +100,13 @@ Where leads are due, a stage SHALL take first those whose title names a topic wo
 #### Scenario: No ingest address configured
 - **WHEN** `INGEST_URL` or `INGEST_TOKEN` is empty
 - **THEN** push refuses and names the setting
+
+### Requirement: A large push is several store runs
+A push SHALL hand a run's records over as one or more store runs, none larger than the size the store sets, and a record SHALL be in the same store run as the record it refers to or in a later one. Each store run SHALL be registered, merged and reported on its own. A push that stopped after some store runs were merged SHALL be finished by pushing again, and SHALL add nothing twice.
+
+#### Scenario: A push stopped part way
+- **WHEN** a push of three store runs stops after the first is merged, and the run is pushed again
+- **THEN** the first is answered as merged before, the other two are merged, and the store holds each record once
 
 ### Requirement: A pushed run can be deleted
 After a push the run SHALL be marked pushed, and deleting its folder SHALL lose nothing the truth store needs.
