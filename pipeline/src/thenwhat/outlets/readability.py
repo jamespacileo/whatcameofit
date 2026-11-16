@@ -15,11 +15,12 @@ from collections import Counter
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.outlet_hold import OpenSession, probe_unless_held
 from thenwhat.db.models import Claim, Entity, EntityMatch, SourceArticle
 from thenwhat.domain import ReviewState
 from thenwhat.extract.page import BODY_FROM, Page, published_day
@@ -27,6 +28,8 @@ from thenwhat.extract.retrieve import NOT_ALLOWED, NOT_NOW, NOT_SERVED, ArticleR
 from thenwhat.outlets.icons import outlet_domain
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
+# How an article is recorded when its outlet was held and the reader was not asked.
+HELD = "held"
 # What a page can carry that a lookup uses, in the order the report shows them.
 SIGNALS = ("headline", "summary", "date", "structured article", "paper link", "registry number")
 
@@ -46,7 +49,8 @@ class Checked:
     """How one article's address answered. Codes only."""
 
     url: str
-    # "read", "thin", "no date", "refused", or how it failed: the site's HTTP status or "not now".
+    # "read", "thin", "no date", "refused", or how it failed: the site's HTTP status, "not
+    # now", or "held" when the outlet was held and the reader was not asked.
     outcome: str
     signals: tuple[str, ...] = ()
     # With a lookup measured: "found first", "found" or "not found". Empty when none was.
@@ -83,6 +87,8 @@ def check_outlets(
     measure: Callable[[Page, list[str]], Measured | None] | None = None,
     workers: int = 1,
     on_article: Callable[[Checked], None] | None = None,
+    open_session: OpenSession | None = None,
+    now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> list[Outlet]:
     """Ask for every tracked article once and count, per outlet, how its site answered.
 
@@ -92,6 +98,10 @@ def check_outlets(
     With more than one worker, several outlets are checked at the same time, and `measure`
     is then called from several threads at once. The retriever caps the requests in flight
     with the reader. `on_article` is told of each article as it is finished.
+
+    With `open_session`, an outlet the reader has said cannot be asked before a later time
+    is not asked until then (`thenwhat.backfill.outlet_hold`): its articles are counted as
+    failed, "held", and a "not now" that states a wait holds the outlet from then on.
     """
     approved = _approved_trials(session)
     by_outlet: dict[str, list[tuple[str, list[str]]]] = {}
@@ -107,7 +117,7 @@ def check_outlets(
     def one_outlet(domain: str) -> Outlet:
         outlet = Outlet(domain)
         for url, trials in by_outlet[domain]:
-            checked = _check_article(outlet, retriever, url, trials, measure)
+            checked = _check_article(outlet, retriever, url, trials, measure, open_session, now)
             if on_article is not None:
                 with telling:
                     on_article(checked)
@@ -127,10 +137,21 @@ def _check_article(
     url: str,
     trials: list[str],
     measure: Callable[[Page, list[str]], Measured | None] | None,
+    open_session: OpenSession | None = None,
+    now: Callable[[], datetime] = lambda: datetime.now(UTC),
 ) -> Checked:
     """Ask for one article, count the answer in its outlet's row, and return its own row."""
     outlet.articles += 1
-    probe = retriever.probe(url)
+    if open_session is None:
+        probe = retriever.probe(url)
+    else:
+        probe = probe_unless_held(open_session, retriever, url, now())
+    if probe is None:
+        # The reader said this outlet cannot be asked yet, so it was not asked.
+        outlet.failed[HELD] += 1
+        checked = Checked(url, HELD)
+        outlet.checked.append(checked)
+        return checked
     page = probe.page
     if probe.answer == NOT_ALLOWED:
         outlet.refused += 1
@@ -213,7 +234,8 @@ def report(outlets: list[Outlet], *, checked: date) -> str:
         " headline or no publication date the pipeline can read, so a lead's read refuses it.",
         "- **Refused:** the reader answered that the address is not allowed. **Failed:** the"
         " page did not come back, by the site's HTTP status, or *not now* when the reader"
-        " said the site could not be asked yet.",
+        " said the site could not be asked yet, or *held* when the reader had said so"
+        " earlier and the address was not asked.",
         "- The signal columns count the pages that carried each thing a lookup uses.",
     ]
     if measured:

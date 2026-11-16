@@ -236,6 +236,7 @@ The backfill of 2026-11-16 read about 800 pages and drafted 257 claims; the audi
 - [x] 17.3 Review of PR 258: give one worker at a time an outlet's turn, across processes, from the look at its hold to the reader's answer, so no request is in flight for an outlet another request is about to stop. Verify with a test that the turn is not free while a request is in flight and is free after.
 - [x] 17.4 Review of PR 258: read a stated wait longer than 24 hours as 24 hours. Verify with tests that a wait in milliseconds and one no time can hold give a hold of a day and end no run.
 - [x] 17.5 Review of PR 258: add the claims found by their substance's names after the candidates offered before, up to eight more, so none takes a place. Verify with a test that a claim found by name is still offered beside eight found by substance.
+- [x] 17.6 Apply the hold to `thenwhat statements` and `thenwhat outlets` (the operator, 2026-11-16), from one module the read step shares. Verify with tests: each asks a stopped outlet once, keeps the hold, and asks nothing more of it within the wait. `thenwhat lookup` and `thenwhat extract` read one address the operator gives and are left as they were.
 
 ## Workflow follow-up
 

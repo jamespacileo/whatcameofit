@@ -7,8 +7,9 @@ from typing import Annotated
 import typer
 
 from thenwhat.backfill.errors import ReaderUnavailable
+from thenwhat.backfill.outlet_hold import retrieve_unless_held
 from thenwhat.claims.entry import EntryError, claim_by_slug
-from thenwhat.cli import extract
+from thenwhat.cli import entry, extract
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.db.models import SourceArticle
@@ -95,7 +96,11 @@ def statements_command(
                     raise EntryError("No article text arrived on standard input.")
             else:
                 try:
-                    text = retriever.retrieve(article.url).text
+                    # An outlet the page reader has stopped is not asked before its
+                    # wait is over, here as in the backfill's read.
+                    text = retrieve_unless_held(
+                        lambda: entry.open_session(), retriever, article.url, datetime.now(UTC)
+                    ).text
                 except ReaderUnavailable as down:
                     raise EntryError(str(down)) from None
                 except PasteNeeded as needed:

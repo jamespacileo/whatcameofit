@@ -123,6 +123,40 @@ def test_each_outlet_is_counted_by_how_the_reader_answered(tracked: Session):
     assert [c.outcome for c in (*closed.checked, *paid.checked)] == ["refused", "402"]
 
 
+def test_an_outlet_the_reader_has_stopped_is_asked_once_and_then_held(tracked: Session):
+    """Scenario: A stopped outlet is held for every command that reads articles"""
+    from backfill_support import same_session
+
+    web = Web()
+    reader = SyntheticReader(web)
+    reader.not_now["open.example.org"] = 3600
+
+    def check() -> dict[str, Outlet]:
+        found = check_outlets(
+            tracked,
+            reader_retriever(reader),
+            open_session=same_session(tracked),
+            now=lambda: NOW,
+        )
+        return {outlet.domain: outlet for outlet in found}
+
+    first = check()
+
+    # One request told the check; the outlet's two other articles were not asked for.
+    assert dict(first["open.example.org"].failed) == {"not now": 1, "held": 2}
+    assert sum("open.example.org" in body["url"] for body in reader.asked) == 1
+    assert dict(first["paid.example.org"].failed) == {"402": 1}
+
+    # A later check within the wait asks the outlet for nothing, though it would answer.
+    reader.not_now.clear()
+    reader.asked.clear()
+    second = check()
+
+    assert dict(second["open.example.org"].failed) == {"held": 3}
+    assert not any("open.example.org" in body["url"] for body in reader.asked)
+    assert second["paid.example.org"].articles == 1
+
+
 def test_the_reader_down_stops_the_check_with_nothing_counted(tracked: Session):
     reader = SyntheticReader(Web())
     reader.answer = lambda: httpx.Response(503)
