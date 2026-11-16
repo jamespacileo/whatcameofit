@@ -24,6 +24,8 @@ from thenwhat.backfill.link_read import (
     NO_NAME,
     NO_PAGE,
     NOT_ALLOWED,
+    OUTLET_REFUSES,
+    REFUSALS_BEFORE_STOPPING,
     LinkRead,
     NotMeasured,
     ReadClient,
@@ -497,6 +499,42 @@ def test_a_page_the_site_did_not_serve_cannot_be_read(reader: Reader):
     assert lead.read_outcome is ReadOutcome.CANNOT_BE_READ
     assert lead.read_detail == f"{NO_PAGE} (the site answered 404)"
     assert reader.prompts == []
+
+
+def refused_earlier(reader: Reader, outlet_url: str, count: int) -> None:
+    """Leads of the outlet read before, each answered 401 by the site."""
+    for number in range(count):
+        earlier = reader.lead(f"{outlet_url}/refused-{number}", score=None, serves=None)
+        earlier.read_outcome = ReadOutcome.CANNOT_BE_READ
+        earlier.read_detail = f"{NO_PAGE} (the site answered 401)"
+    reader.session.flush()
+
+
+def test_an_outlet_that_refuses_the_reader_page_after_page_is_not_asked_again(reader: Reader):
+    """Scenario: An outlet that refuses the reader"""
+    refused_earlier(reader, "https://www.theguardian.com/science", REFUSALS_BEFORE_STOPPING)
+    lead = reader.lead()
+
+    reader.read()
+
+    assert lead.read_outcome is ReadOutcome.CANNOT_BE_READ
+    assert lead.read_detail == (
+        f"{OUTLET_REFUSES} for {REFUSALS_BEFORE_STOPPING} pages and served none"
+    )
+    assert (reader.client.requests_made, reader.prompts) == (0, [])
+
+
+def test_an_outlet_that_served_a_page_is_still_asked(reader: Reader):
+    """Scenario: An outlet that served a page"""
+    refused_earlier(reader, "https://www.theguardian.com/science", REFUSALS_BEFORE_STOPPING)
+    served = reader.lead("https://www.theguardian.com/science/served", score=None, serves=None)
+    served.read_outcome = ReadOutcome.NOT_ONE_TREATMENT
+    lead = reader.lead()
+
+    reader.read()
+
+    assert reader.client.requests_made == 1
+    assert lead.read_detail is None or OUTLET_REFUSES not in lead.read_detail
 
 
 def test_two_leads_on_one_outlet_are_both_asked_of_the_reader(reader: Reader):
