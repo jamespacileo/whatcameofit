@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import name_key
 from thenwhat.db.models import Claim, Entity
-from thenwhat.decide.core import Backend, decide_many
+from thenwhat.decide.core import Backend, Decision, decide_many
 from thenwhat.decide.steps import MATCH, TRIAL_OPTIONS, TRIAL_QUESTION, candidate_text
 from thenwhat.domain import EntityType
 from thenwhat.extract.names import is_a_name
@@ -229,9 +229,8 @@ class Candidate:
 
     @property
     def likely(self) -> bool:
-        """Whether the record reads as a trial of the treatment for the condition, or the
-        text itself names it."""
-        return self.score >= LIKELY_FROM or STATED in self.agrees
+        """A compatible scored record; a citation alone establishes only provenance."""
+        return self.answer == MATCH and LIKELY_FROM <= self.score <= 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -313,7 +312,8 @@ def look_up(
         if is_a_name(name) and not REGISTRY_NUMBER.fullmatch(name.strip()) and name not in names
     ]
     details = Details(reading.trial_name, reading.participants, reading.sponsor)
-    from_papers = [number for number in _paper_numbers(page, papers) if number not in numbers]
+    linked_numbers, _ = _paper_numbers(page, papers)
+    from_papers = [number for number in linked_numbers if number not in numbers]
     # What is known by number or by the trial's name comes first, so it is never cut off.
     records: dict[str, SourceRecord] = {}
     for number in [*numbers, *from_papers]:
@@ -346,32 +346,7 @@ def look_up(
         options=TRIAL_OPTIONS,
         now=now,
     )
-    candidates = sorted(
-        (
-            Candidate(
-                record.external_id,
-                record.url,
-                decision.probabilities[MATCH],
-                decision.choice,
-                what_it_says(record) or "",
-                [
-                    *([STATED] if record.external_id in numbers else []),
-                    *([PAPER] if record.external_id in from_papers else []),
-                    *agreeing(record.payload, details),
-                ],
-            )
-            for record, decision in zip(found, decisions, strict=True)
-        ),
-        # A record the article itself names is first whatever its score. Then the records
-        # that read as trials of the treatment, those agreeing with more details first.
-        key=lambda candidate: (
-            STATED not in candidate.agrees,
-            candidate.score < LIKELY_FROM,
-            -len(candidate.agrees),
-            -candidate.score,
-            candidate.external_id,
-        ),
-    )
+    candidates = _ranked_candidates(found, decisions, numbers, from_papers, details)
     return Lookup(
         reading.gist,
         names[0],
@@ -397,6 +372,7 @@ class _ClaimSearch:
     jobs: list[tuple[str, str, str | None]]
     records: dict[str, SourceRecord] = field(default_factory=dict)
     selected: list[SourceRecord] = field(default_factory=list)
+    decisions: list[Decision] = field(default_factory=list)
     searched: set[str] = field(default_factory=set)
     missing: bool = False
 
@@ -460,9 +436,11 @@ def _look_up_many(
             )
         )
     from_papers: list[str] = []
+    papers_unchecked = 0
     failure: str | None = None
     try:
-        from_papers = [number for number in _paper_numbers(page, papers) if number not in numbers]
+        linked_numbers, papers_unchecked = _paper_numbers(page, papers)
+        from_papers = [number for number in linked_numbers if number not in numbers]
         shared_records: dict[str, SourceRecord] = {}
         for number in [*numbers, *from_papers]:
             record = trials.fetch_trial(number)
@@ -530,36 +508,22 @@ def _look_up_many(
         if pairs
         else []
     )
-    for (number, record), decision in zip(pairs, decisions, strict=True):
+    for (number, _record), decision in zip(pairs, decisions, strict=True):
         plan = plans[number]
-        plan.answer.candidates.append(
-            Candidate(
-                record.external_id,
-                record.url,
-                decision.probabilities[MATCH],
-                decision.choice,
-                what_it_says(record) or "",
-                [
-                    *([STATED] if record.external_id in numbers else []),
-                    *([PAPER] if record.external_id in from_papers else []),
-                    *agreeing(record.payload, plan.answer.details),
-                ],
-            )
-        )
+        plan.decisions.append(decision)
     answers = []
     for plan in plans:
-        candidates = sorted(
-            plan.answer.candidates,
-            key=lambda candidate: (
-                STATED not in candidate.agrees,
-                candidate.score < LIKELY_FROM,
-                -len(candidate.agrees),
-                -candidate.score,
-                candidate.external_id,
-            ),
+        candidates = _ranked_candidates(
+            plan.selected, plan.decisions, numbers, from_papers, plan.answer.details
         )
         unscored = len(plan.records) - len(candidates)
-        reason = failure or ("work_limit" if plan.missing or unscored else None)
+        reason = failure or (
+            "source_unavailable"
+            if papers_unchecked
+            else "work_limit"
+            if plan.missing or unscored
+            else None
+        )
         answers.append(
             replace(
                 plan.answer,
@@ -602,22 +566,23 @@ def _codes(
     return codes, None
 
 
-def _paper_numbers(page: Page | None, papers: Papers | None) -> list[str]:
+def _paper_numbers(page: Page | None, papers: Papers | None) -> tuple[list[str], int]:
     """The registry numbers given by the papers the page links to. A paper that cannot
     be looked up is passed over: the lookup goes on without it."""
     if page is None or papers is None:
-        return []
+        return [], 0
     linked: list[dict[str, str]] = [
         *({"doi": doi} for doi in page.dois),
         *({"pubmed_id": pubmed_id} for pubmed_id in page.pubmed_ids),
     ]
     found: list[str] = []
+    unchecked = 0
     for paper in linked[:MAX_PAPERS]:
         try:
             found += papers.trial_numbers(**paper)
         except SourceError:
-            continue
-    return list(dict.fromkeys(found))
+            unchecked += 1
+    return list(dict.fromkeys(found)), unchecked
 
 
 def _parts(name: str) -> list[str]:
@@ -690,3 +655,39 @@ def _tracked(session: Session, names: list[str], indication: str | None) -> list
         )
     ]
     return list(dict.fromkeys(slugs))
+
+
+def _ranked_candidates(
+    records: list[SourceRecord],
+    decisions: list[Decision],
+    numbers: list[str],
+    from_papers: list[str],
+    details: Details,
+) -> list[Candidate]:
+    """One representation and ordering for single and grouped candidates."""
+    return sorted(
+        (
+            Candidate(
+                record.external_id,
+                record.url,
+                decision.probabilities[MATCH],
+                decision.choice,
+                what_it_says(record) or "",
+                [
+                    *([STATED] if record.external_id in numbers else []),
+                    *([PAPER] if record.external_id in from_papers else []),
+                    *agreeing(record.payload, details),
+                ],
+            )
+            for record, decision in zip(records, decisions, strict=True)
+        ),
+        # A record the article itself names is first whatever its score. Then the records
+        # that read as trials of the treatment, those agreeing with more details first.
+        key=lambda candidate: (
+            STATED not in candidate.agrees,
+            candidate.score < LIKELY_FROM,
+            -len(candidate.agrees),
+            -candidate.score,
+            candidate.external_id,
+        ),
+    )

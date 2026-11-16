@@ -222,6 +222,8 @@ def _print_lookup(found: "Lookup") -> None:
             f"  {candidate.score:.2f}  {candidate.external_id}  {candidate.url}", markup=False
         )
         out.print(f"        {candidate.summary}", markup=False)
+        if not candidate.likely:
+            out.print("        Not established as a match to this claim.")
         if candidate.agrees:
             why = "; ".join(WHY[reason] for reason in candidate.agrees)
             out.print(f"        Agrees: {why}", markup=False)

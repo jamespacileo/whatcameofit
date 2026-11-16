@@ -1,11 +1,11 @@
-// Manual live reader regression, outside CI: four synthetic reports and no source
-// requests. Uses the existing configured model; output is structured evidence only.
+// Manual live regression, outside CI: synthetic reports and registry records, no
+// source requests. Uses the configured model; output is structured evidence only.
 import assert from "node:assert/strict";
 import { makeModel } from "../worker/model.mjs";
 import { lookUp } from "../worker/lookup.mjs";
 
 assert.ok(process.env.OPENAI_API_KEY && process.env.LLM_MODEL, "Configure the existing lookup reader first");
-const usage = { requests: 0, input_tokens: 0, output_tokens: 0 };
+const usage = { requests: 0, reported_input_tokens: 0, reported_output_tokens: 0, requests_without_token_usage: 0 };
 const model = makeModel({ apiKey: process.env.OPENAI_API_KEY, model: process.env.LLM_MODEL,
   baseUrl: process.env.LLM_BASE_URL || undefined,
   decisions: process.env.DECISION_BACKEND === "openai-decisions",
@@ -14,8 +14,9 @@ const model = makeModel({ apiKey: process.env.OPENAI_API_KEY, model: process.env
     usage.requests++;
     const response = await fetch(...args);
     const body = await response.clone().json();
-    usage.input_tokens += body.usage?.prompt_tokens ?? 0;
-    usage.output_tokens += body.usage?.completion_tokens ?? 0;
+    usage.reported_input_tokens += body.usage?.prompt_tokens ?? body.usage?.input_tokens ?? 0;
+    usage.reported_output_tokens += body.usage?.completion_tokens ?? body.usage?.output_tokens ?? 0;
+    if (!body.usage) usage.requests_without_token_usage++;
     return response;
   },
 });

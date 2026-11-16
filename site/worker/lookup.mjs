@@ -293,40 +293,7 @@ export async function lookUp({ text, model, registry, index, page, papers, resea
     const scores = found.length ? await model.score(intro, found.map(candidateText)) : [];
     took("score_ms", scoring);
 
-    const candidates = found
-      .map((study, at) => ({ study, scored: scores[at] }))
-      .filter(({ scored }) => scored)
-      .map(({ study, scored }) => {
-        const section = study.protocolSection;
-        return {
-          id: idOf(study),
-          url: `https://clinicaltrials.gov/study/${idOf(study)}`,
-          score: scored.probabilities.match,
-          answer: scored.answer,
-          // Why it is ranked where it is, beyond the score: codes from worker/details.mjs.
-          agrees: [
-            ...(numbers.includes(idOf(study)) ? [STATED] : []),
-            ...(fromPapers.includes(idOf(study)) ? [PAPER] : []),
-            ...agreeing(study, details),
-          ],
-          title: section.identificationModule?.briefTitle ?? "",
-          conditions: section.conditionsModule?.conditions ?? [],
-          interventions: (section.armsInterventionsModule?.interventions ?? []).map((one) => one.name),
-          phases: section.designModule?.phases ?? [],
-          state: section.statusModule?.overallStatus ?? null,
-        };
-      })
-      // A record the article itself names is first whatever its score. Then the records
-      // that read as trials of the treatment, those agreeing with more details first.
-      .sort(
-        (a, b) =>
-          Number(b.agrees.includes(STATED)) - Number(a.agrees.includes(STATED)) ||
-          Number(b.score >= LIKELY_FROM) - Number(a.score >= LIKELY_FROM) ||
-          b.agrees.length - a.agrees.length ||
-          b.score - a.score ||
-          a.id.localeCompare(b.id),
-      );
-
+    const candidates = rankedCandidates(found, scores, { numbers, fromPapers, details });
 
     const clinical = core(withCurrentClaims({
       about_a_treatment: true,
@@ -438,21 +405,9 @@ async function lookUpMany({ claims, model, registry, index, numbers, linking, st
     failure = error?.code === "timeout" ? "timeout" : "source_unavailable";
   }
   const answers = plans.map(plan => {
-    const candidates = plan.selected.flatMap((study, at) => {
-      const scored = plan.scores[at];
-      if (!scored) return [];
-      const section = study.protocolSection;
-      return [{ id: idOf(study), url: `https://clinicaltrials.gov/study/${idOf(study)}`,
-        score: scored.probabilities.match, answer: scored.answer,
-        agrees: [...(numbers.includes(idOf(study)) ? [STATED] : []), ...(fromPapers.includes(idOf(study)) ? [PAPER] : []), ...agreeing(study, plan.details)],
-        title: section.identificationModule?.briefTitle ?? "", conditions: section.conditionsModule?.conditions ?? [],
-        interventions: (section.armsInterventionsModule?.interventions ?? []).map(one => one.name),
-        phases: section.designModule?.phases ?? [], state: section.statusModule?.overallStatus ?? null,
-      }];
-    }).sort((a, b) => Number(b.agrees.includes(STATED)) - Number(a.agrees.includes(STATED)) ||
-      Number(b.score >= LIKELY_FROM) - Number(a.score >= LIKELY_FROM) || b.agrees.length - a.agrees.length || b.score - a.score || a.id.localeCompare(b.id));
+    const candidates = rankedCandidates(plan.selected, plan.scores, { numbers, fromPapers, details: plan.details });
     const unscored = plan.records.length - candidates.length;
-    const reason = failure ?? (plan.missing || unscored ? "work_limit" : null);
+    const reason = failure ?? (papersUnchecked ? "source_unavailable" : plan.missing || unscored ? "work_limit" : null);
     return withCurrentClaims({
       about_a_treatment: true, treatment: plan.names[0], condition: plan.reading.indication ?? null,
       gist: plan.reading.gist ?? "", names: plan.names, known_names: failure ? [] : plan.known.filter(name => plan.searched.has(name)),
@@ -465,4 +420,41 @@ async function lookUpMany({ claims, model, registry, index, numbers, linking, st
   const found = core({ ...nothingFound({}, numbers), about_a_treatment: true, claims: answers });
   took("total_ms");
   return found;
+}
+
+/** One candidate representation and ranking for single and grouped answers. */
+function rankedCandidates(records, scores, { numbers, fromPapers, details }) {
+  return records
+    .map((study, at) => ({ study, scored: scores[at] }))
+    .filter(({ scored }) => scored)
+    .map(({ study, scored }) => {
+      const section = study.protocolSection;
+      return {
+        id: idOf(study),
+        url: `https://clinicaltrials.gov/study/${idOf(study)}`,
+        score: scored.probabilities.match,
+        answer: scored.answer,
+        // Why it is ranked where it is, beyond the score: codes from worker/details.mjs.
+        agrees: [
+          ...(numbers.includes(idOf(study)) ? [STATED] : []),
+          ...(fromPapers.includes(idOf(study)) ? [PAPER] : []),
+          ...agreeing(study, details),
+        ],
+        title: section.identificationModule?.briefTitle ?? "",
+        conditions: section.conditionsModule?.conditions ?? [],
+        interventions: (section.armsInterventionsModule?.interventions ?? []).map((one) => one.name),
+        phases: section.designModule?.phases ?? [],
+        state: section.statusModule?.overallStatus ?? null,
+      };
+    })
+    // A record the article itself names is first whatever its score. Then the records
+    // that read as trials of the treatment, those agreeing with more details first.
+    .sort(
+      (a, b) =>
+        Number(b.agrees.includes(STATED)) - Number(a.agrees.includes(STATED)) ||
+        Number(b.score >= LIKELY_FROM) - Number(a.score >= LIKELY_FROM) ||
+        b.agrees.length - a.agrees.length ||
+        b.score - a.score ||
+        a.id.localeCompare(b.id),
+    );
 }

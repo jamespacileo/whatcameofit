@@ -155,3 +155,12 @@ test("time already spent before discovery leaves claims unchecked without starti
   assert.equal(searches, 0);
   assert.equal(scores, 0);
 });
+
+test("a failed linked paper makes every affected group incomplete rather than a negative finding", async () => {
+  const found = await lookUp({ text: "Synthetic roundup", index, registry: quiet,
+    model: { read: async () => reading, score: async () => [] }, page: { dois: ["10.1234/synthetic"] },
+    papers: { trialNumbers: async () => { throw new Error("Synthetic paper source failure"); } } });
+  assert.ok(found.claims.every(one => one.check_state === "unchecked" && one.check_reason === "source_unavailable"));
+  assert.ok(describeAnswer(found).claims.every(one => one.none === null));
+  assert.equal(completed(found), false);
+});

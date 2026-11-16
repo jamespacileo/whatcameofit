@@ -588,6 +588,32 @@ def test_independent_claims_share_reading_and_records_but_not_scores_or_cards(se
         for claim in found.claims
     ] == [["NCT00000001"], ["NCT00000002"]]
     assert all(claim.check_state == "complete" for claim in found.claims)
+    assert [
+        [candidate.external_id for candidate in claim.candidates if candidate.likely]
+        for claim in found.claims
+    ] == [["NCT00000001"], ["NCT00000002"]]
+
+
+def test_roundup_marks_failed_linked_paper_discovery_incomplete(session: Session):
+    class UnavailablePaper:
+        def trial_numbers(self, **_):
+            raise SourceUnavailable("Synthetic paper source failure")
+
+    model, _ = llm(session, {**READING, "additional_claims": [{**READING, "intervention": "EX-2"}]})
+    found = look_up(
+        session,
+        model,
+        ByCondition(),
+        FakeTrials({}),
+        text="Synthetic roundup",
+        now=NOW,
+        page=Page(text="Synthetic roundup", dois=("10.1234/synthetic",)),
+        papers=UnavailablePaper(),
+    )
+    assert all(
+        claim.check_state == "unchecked" and claim.check_reason == "source_unavailable"
+        for claim in found.claims
+    )
 
 
 def test_roundup_has_one_discovery_and_scoring_allowance(session: Session):
