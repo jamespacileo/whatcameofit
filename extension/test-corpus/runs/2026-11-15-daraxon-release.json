@@ -1,0 +1,31 @@
+{
+  "release_commit": "f616aaa5fe040e2211bdf7913d3376f203148693",
+  "worker": "4b40ba0b-1e82-4257-b703-b916abc3b3f7",
+  "deployed_at": "2026-11-15T22:20:15Z",
+  "checked_at": "2026-11-15T22:24:51.164Z",
+  "index_claims": 157,
+  "method": "Released index, rendered card and unchanged released extension stateFor function; not native Safari; no paid lookup",
+  "row": "A018",
+  "url": "https://www.dana-farber.org/newsroom/news-releases/2026/rason-inhibitor-doubles-median-overall-survival-in-results-of-phase-3-trial-for-patients-with-metastatic-pancreatic-cancer",
+  "exact_address_card": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer",
+  "card_http": 200,
+  "extension_mapping": "tracked",
+  "indication": "Previously treated metastatic pancreatic cancer",
+  "retained_trials_present": [
+    "NCT06625320"
+  ],
+  "rejected_trials_absent": [
+    "NCT06445062",
+    "NCT07573215",
+    "NCT07756281",
+    "NCT06922591",
+    "NCT06040541",
+    "NCT07349537",
+    "NCT07492680",
+    "NCT07898813",
+    "NCT07491445"
+  ],
+  "fda_event_source_present": true,
+  "fda_event_date_present": "2026-08-26",
+  "model_requests": 0
+}

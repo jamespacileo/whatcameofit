@@ -33,6 +33,7 @@ class Refusal(StrEnum):
     UNKNOWN_UNIT = "unknown_unit"
     UNKNOWN_CODE = "unknown_code"
     NUMBER_NOT_IN_WORDS = "number_not_in_words"
+    LATER_EVENT_OFFSET = "later_event_offset"
     # A second reading of one kind for one outcome in the same answer. Found by the
     # step that stores readings, not by `refusal`, which sees one reading at a time.
     REPEATED = "repeated"
@@ -86,7 +87,46 @@ def refusal(reading: Proposed, outcomes: Sequence[Outcome]) -> Refusal | None:
         return Refusal.UNKNOWN_UNIT
     if reading.number is None or not number_in(reading.number, reading.words):
         return Refusal.NUMBER_NOT_IN_WORDS
+    if later_event_offset(reading.number, reading.unit, text):
+        return Refusal.LATER_EVENT_OFFSET
     return None
+
+
+def later_event_offset(number: int, unit: str, time_frame: str) -> bool:
+    """Recognize explicit offsets from a later treatment event, not study start.
+
+    Check the whole field: a proposed quote can omit the anchor after its duration.
+    This is a refusal boundary, not a general parser or a calculated follow-up.
+    Surgery and the first dose may be the start; a completed cycle or later dose is not.
+    """
+    ordinal = r"(?:\d+(?:st|nd|rd|th)?|first|second|third|fourth|fifth|sixth|last|final)"
+    later_ordinal = (
+        r"(?:(?:[2-9]|\d{2,})(?:st|nd|rd|th)?|second|third|fourth|fifth|sixth|last|final)"
+    )
+    # Allow short modifiers such as "monthly diet" or "treatment", without
+    # crossing another event noun or connecting phrase: "first dose of cycle 1"
+    # is anchored to the first dose, not the completion of cycle 1.
+    modifiers = (
+        r"(?:(?!(?:dose|infusion|session|cycle|course|administration|of|and|or|after|before|"
+        r"following|from|to|at|in|start|starting|beginning)\b)[a-z0-9][a-z0-9-]*\s+){0,3}"
+    )
+    event = (
+        rf"(?:{ordinal}\s+{modifiers}(?:cycle|course)\b"
+        rf"|(?:cycle|course)\s+{ordinal}\b"
+        rf"|{later_ordinal}\s+{modifiers}(?:dose|infusion|session)\b"
+        rf"|(?:dose|infusion|session)\s+{later_ordinal}\b"
+        r"|(?:completion|end|discontinuation)\s+of\s+(?:the\s+)?(?:treatment|therapy|intervention)\b"
+        r"|(?:treatment|therapy|intervention)\s+(?:completion|end|discontinuation)\b)"
+    )
+    return (
+        re.search(
+            rf"(?<![\d.,]){number}\s+{re.escape(unit.removesuffix('s'))}s?\b"
+            rf"\s+(?:after|following)\s+(?:the\s+)?{event}",
+            time_frame,
+            flags=re.IGNORECASE,
+        )
+        is not None
+    )
 
 
 def number_in(number: int, words: str) -> bool:

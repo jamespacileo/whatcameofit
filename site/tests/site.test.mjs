@@ -998,14 +998,16 @@ test("Scenario: Reader goes from a trial to its paper", () => {
 
 test("Scenario: Paper of a study in mice, retracted follow-up paper, record read on 3 October 2026", () => {
   const papers = wordsOf(sectionOf(page("phase-claim/index.html"), "papers"));
-  assert.match(papers, /Europe PMC files it as a study in animals\./);
+  assert.match(papers, /Europe PMC subject headings: animals\./);
   assert.match(papers, /This paper has been retracted/);
   assert.match(papers, /Europe PMC record\s+read\s+3\s+Oct\s+2026/);
   // A paper the index does not hold is listed by its number, with no facts.
   assert.match(papers, /PubMed 90000003/);
+  assert.match(papers, /No Europe PMC details are available here/);
+  assert.doesNotMatch(papers, /holds no record of it/);
   // The preprint's record states neither people nor animals, so its entry says neither.
   const preprint = papers.slice(papers.indexOf("A synthetic preprint on the compound"));
-  assert.doesNotMatch(preprint, /files it as/);
+  assert.doesNotMatch(preprint, /subject headings:/);
 });
 
 test("related papers are shown as a group of the papers on record, with score and reasons", () => {
@@ -1018,16 +1020,16 @@ test("related papers are shown as a group of the papers on record, with score an
 });
 
 test("Scenario: Claim with three trials and one mouse paper", () => {
-  // Seven trials and two papers filed as studies in people; two papers filed in animals.
+  // Subject headings do not turn papers into additional trial records.
   const html = wordsOf(page("phase-claim/index.html"));
-  assert.match(html, /Records of studies\s+9 in people · 2 in animals/);
+  assert.match(html, /Records listed\s+7 trial records · 5 papers/);
 });
 
 test("Scenario: Claim with no paper", () => {
   const html = page("approved-claim/index.html");
   assert.ok(!html.includes('id="papers"'));
   assert.ok(!html.includes("Papers on record"));
-  assert.ok(!html.includes("Records of studies"));
+  assert.ok(!html.includes("Records listed"));
 });
 
 test("Scenario: Kind code without site wording", () => {
@@ -1073,7 +1075,7 @@ test("an export made before paper facts still builds, with the matched papers as
   assert.match(sectionOf(quiet, "papers"), /Matched papers/);
   const phase = fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8");
   assert.ok(!phase.includes("Papers on record"));
-  assert.ok(!phase.includes("Records of studies"));
+  assert.ok(!phase.includes("Records listed"));
 });
 
 test("Scenario: Follow-up paper scored 0.6", () => {

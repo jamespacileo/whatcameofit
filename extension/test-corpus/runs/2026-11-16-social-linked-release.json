@@ -1,0 +1,238 @@
+{
+  "release_commit": "c1d2ac86ab6318a46eecf979f8342821f6b45b08",
+  "checked_at": "2026-11-16T04:46:34.208Z",
+  "public_cards": 173,
+  "public_data_matches_rehearsed_build": true,
+  "all_258_exact_mappings_unchanged": true,
+  "installed_extension": {
+    "version": "0.9.18",
+    "build": 26,
+    "resource_hashes_verified": 35,
+    "native_verified": false,
+    "source_commit": "36f2b83bf77bcfcd79d8584c930e08464b4067ac",
+    "method": "Existing signed resources unchanged. Installed composition/exact-address functions checked against release; native popup/storage unverified."
+  },
+  "website_form_verified": [
+    "S030",
+    "S031"
+  ],
+  "release": {
+    "commit": "c1d2ac86ab6318a46eecf979f8342821f6b45b08",
+    "pr": 195,
+    "production_ci": 43805655414,
+    "ci_conclusion": "success",
+    "worker_version": "9c272524-d9ee-448b-94a2-925d8e22be70",
+    "deployed_at": "2026-11-16T04:45:55Z",
+    "tests": {
+      "pipeline": 1562,
+      "site": 658,
+      "extension": 170
+    }
+  },
+  "followup_findings": [
+    {
+      "scope": "linked-post provenance",
+      "observation": "The successful S031 tracked-source result says the article could not be read even though the tracked-link path intentionally skips reading it. Correct card returned; provenance wording needs follow-up."
+    },
+    {
+      "scope": "paper metadata absence",
+      "observation": "The Nottingham origin paper is shown by DOI with Europe PMC holds no record wording. Verify whether missing facts mean an absent record or an unprepared lookup before making that claim."
+    }
+  ],
+  "summary": {
+    "corpus_verdicts": {
+      "review": 32,
+      "pass": 137,
+      "partial": 62,
+      "blocked": 27
+    },
+    "knowledge_cards": {
+      "review": 33,
+      "not applicable": 10,
+      "no card": 61,
+      "match": 127,
+      "not checked": 27
+    }
+  },
+  "request_checks": {
+    "S030": {
+      "url": "https://news.ycombinator.com/item?id=45826995",
+      "slug": "enamel-repair-elastin-like-recombinamer",
+      "http": 200,
+      "ms": 284,
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://www.nottingham.ac.uk/news/new-gel-restores-dental-enamel-and-could-revolutionise-tooth-repair",
+        "article_host": "nottingham.ac.uk",
+        "article_read": false
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "post_api_requests": 1,
+      "extension_ms": 50,
+      "extension_kind": "tracked",
+      "method": "Fresh original URL through released service and official Hacker News reader. Returned source link composed through installed Safari 0.9.18 functions and sent to released service; exact source lookup also verified. Native collector/popup/storage unverified."
+    },
+    "S031": {
+      "url": "https://news.ycombinator.com/item?id=44922571",
+      "slug": "keratin-film-enamel-repair",
+      "http": 200,
+      "ms": 265,
+      "post": {
+        "platform": "Hacker News",
+        "article": "https://www.kcl.ac.uk/news/toothpaste-made-from-hair-provides-natural-root-to-repair-teeth",
+        "article_host": "kcl.ac.uk",
+        "article_read": false
+      },
+      "article_tracked": true,
+      "candidates": 0,
+      "model_requests": 0,
+      "article_requests": 0,
+      "registry_requests": 0,
+      "post_api_requests": 1,
+      "extension_ms": 37,
+      "extension_kind": "tracked",
+      "method": "Fresh original URL through released service and official Hacker News reader. Returned source link composed through installed Safari 0.9.18 functions and sent to released service; exact source lookup also verified. Native collector/popup/storage unverified."
+    }
+  },
+  "facebook_request": {
+    "id": "S023",
+    "release_commit": "c1d2ac86ab6318a46eecf979f8342821f6b45b08",
+    "checked_at": "2026-11-16T04:47:01.192Z",
+    "http": 200,
+    "ms": 5951,
+    "treatment": "daraxonrasib",
+    "condition": "Previously treated metastatic pancreatic cancer",
+    "tracked": [
+      "daraxonrasib-previously-treated-metastatic-pancreatic-cancer"
+    ],
+    "article_tracked": false,
+    "post": {
+      "platform": "Facebook",
+      "article": "https://go.nih.gov/yMfvxQL",
+      "article_host": "go.nih.gov",
+      "article_read": false,
+      "read_in_browser": true
+    },
+    "trial_records": 22,
+    "likely_records": 1,
+    "top": [
+      {
+        "id": "NCT06625320",
+        "score": 1
+      },
+      {
+        "id": "NCT05379985",
+        "score": 0.28
+      },
+      {
+        "id": "NCT06445062",
+        "score": 0.27
+      },
+      {
+        "id": "NCT06128551",
+        "score": 0.24
+      }
+    ],
+    "error": null,
+    "method": "Fresh currently visible public Facebook caption and NIH link, composed with installed Safari 0.9.18 functions and sent to released service; no native collector/popup/storage verification."
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T04:54:01.553Z",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+    "rows": {
+      "S023": 165,
+      "S030": 236,
+      "S031": 237,
+      "S034": 240
+    },
+    "values_verified": 65,
+    "other_inspected_cells_preserved": 319,
+    "formulas_formatting_validation_preserved": true,
+    "rendered_layout_verified": false,
+    "rendered_layout_limitation": "Google-rendered Sheet remains behind identity verification; native Safari reports locked. Values and style metadata checked through Sheets API.",
+    "summary": [
+      [
+        "Extension test corpus",
+        "2026-11-16: release c1d2ac86ab63 is live; signed Safari 0.9.18 (26) remains installed. S030/S031 return distinct laboratory enamel cards in 284/265 ms with no model calls; released website forms and installed functions pass. Fresh S023 caption returns the correct card and RASolute 302 at 100% in 6.0 s. S034 now meets a CAPTCHA; no fresh match is claimed. Corpus: 137 pass, 62 partial, 32 review, 27 blocked; 127 matching cards. Two provenance/metadata wording follow-ups recorded. Native Safari popup/storage and rendered Sheet layout remain unverified."
+      ],
+      null,
+      [
+        "Group",
+        "URLs",
+        "pass",
+        "partial",
+        "fail",
+        "blocked",
+        "review",
+        "not run"
+      ],
+      [
+        "Social",
+        "53",
+        "8",
+        "20",
+        "0",
+        "2",
+        "23",
+        "0"
+      ],
+      [
+        "Article",
+        "84",
+        "22",
+        "34",
+        "0",
+        "22",
+        "6",
+        "0"
+      ],
+      [
+        "Negative",
+        "22",
+        "8",
+        "8",
+        "0",
+        "3",
+        "3",
+        "0"
+      ],
+      [
+        "Tracked",
+        "99",
+        "99",
+        "0",
+        "0",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "Total",
+        "258",
+        "137",
+        "62",
+        "0",
+        "27",
+        "32",
+        "0"
+      ]
+    ],
+    "website_time_correction": "Two site-result cells now explicitly label the recording timestamp; service times remain separate. Bounded observation window retained in corpus."
+  },
+  "website_verification_recorded_at": "2026-11-16T04:50:59.479874+00:00",
+  "website_observation_window": {
+    "after": "2026-11-16T04:46:34.208Z",
+    "by": "2026-11-16T04:50:59.479874+00:00",
+    "note": "Exact observation clock time was not recorded; recording time is labelled separately."
+  },
+  "rows": {
+    "S023": {"lookup_answer": "daraxonrasib for Previously treated metastatic pancreatic cancer", "tracked_claim": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer", "trial_records": 22, "likely_records": 1, "top_record": "NCT06625320 · 100%", "test_result": "pass", "reason": "Fresh public Facebook caption and observed NIH link, composed through installed Safari 0.9.18 and sent to the released service, return the exact previously treated metastatic pancreatic cancer card and RASolute 302. NIH article reading remains refused; the caption supplies the clinical identity. Native collector/popup/storage remain unverified.", "how_read": "fresh browser-observed public caption; installed Safari composition; released service", "ms": 5951, "last_tested": "2026-11-16T04:47:01.192Z", "tested_build": "site c1d2ac86ab63; installed Safari 0.9.18 (26)", "site_result": "2026-11-16T04:47:01.192Z: released service returns matching trial and card from bounded browser caption. Original Facebook URL alone requires the browser reader.", "extension_result": "Fresh public Facebook caption and observed NIH link, composed through installed Safari 0.9.18 and sent to the released service, return the exact previously treated metastatic pancreatic cancer card and RASolute 302. NIH article reading remains refused; the caption supplies the clinical identity. Native collector/popup/storage remain unverified.", "knowledge_card_result": "match", "knowledge_card_notes": "daraxonrasib-previously-treated-metastatic-pancreatic-cancer; Fresh public Facebook caption and observed NIH link, composed through installed Safari 0.9.18 and sent to the released service, return the exact previously treated metastatic pancreatic cancer card and RASolute 302. NIH article reading remains refused; the caption supplies the clinical identity. Native collector/popup/storage remain unverified.", "native_safari_result": {"checked_date": "2026-11-15", "outcome": "trial match", "native_lookup_completed": true, "trial": "NCT06625320", "score": 1, "knowledge_card": "no card", "note": "Dismissed public sign-in invitation and declined optional cookies; native popup identified prior-treated metastatic pancreatic cancer and RASolute 302."}, "social_linked_release": "runs/2026-11-16-social-linked-release.json"},
+    "S030": {"lookup_answer": "Elastin-like recombinamer matrix for Enamel erosion and exposed dentine", "tracked_claim": "enamel-repair-elastin-like-recombinamer", "trial_records": 0, "likely_records": 0, "top_record": "10.1038/s41467-025-64982-y · origin paper; no human trial", "test_result": "pass", "reason": "Fresh original Hacker News URL returns the distinct published laboratory card through its verified source link. Website form and card verified; installed Safari composition and exact-source functions pass. One official post request; no article, registry or model call. This is a correct preclinical card and origin-paper match, not a human-trial match. Native collector/popup/storage remain unverified.", "how_read": "released website form and service; official Hacker News reader; installed Safari functions", "ms": 284, "last_tested": "2026-11-16T04:46:34.208Z", "tested_build": "site c1d2ac86ab63; installed Safari 0.9.18 (26)", "site_result": "Recorded 2026-11-16T04:50:59.479874+00:00: original post URL submitted through released website, correct card opened. Preclinical-only stage, correct origin paper and separate record counts verified.", "extension_result": "Fresh original URL through released service and official Hacker News reader. Returned source link composed through installed Safari 0.9.18 functions and sent to released service; exact source lookup also verified. Native collector/popup/storage unverified.", "knowledge_card_result": "match", "knowledge_card_notes": "enamel-repair-elastin-like-recombinamer; Fresh original Hacker News URL returns the distinct published laboratory card through its verified source link. Website form and card verified; installed Safari composition and exact-source functions pass. One official post request; no article, registry or model call. This is a correct preclinical card and origin-paper match, not a human-trial match. Native collector/popup/storage remain unverified.", "social_linked_release": "runs/2026-11-16-social-linked-release.json", "website_observation_window": {"after": "2026-11-16T04:46:34.208Z", "by": "2026-11-16T04:50:59.479874+00:00", "note": "Exact observation clock time was not recorded; recording time is labelled separately."}},
+    "S031": {"lookup_answer": "Keratin film for Early enamel lesions", "tracked_claim": "keratin-film-enamel-repair", "trial_records": 0, "likely_records": 0, "top_record": "10.1002/adhm.202502465 · origin paper; no human trial", "test_result": "pass", "reason": "Fresh original Hacker News URL returns the distinct published laboratory card through its verified source link. Website form and card verified; installed Safari composition and exact-source functions pass. One official post request; no article, registry or model call. This is a correct preclinical card and origin-paper match, not a human-trial match. Native collector/popup/storage remain unverified.", "how_read": "released website form and service; official Hacker News reader; installed Safari functions", "ms": 265, "last_tested": "2026-11-16T04:46:34.208Z", "tested_build": "site c1d2ac86ab63; installed Safari 0.9.18 (26)", "site_result": "Recorded 2026-11-16T04:50:59.479874+00:00: original post URL submitted through released website, correct card opened. Preclinical-only stage, correct origin paper and separate record counts verified.", "extension_result": "Fresh original URL through released service and official Hacker News reader. Returned source link composed through installed Safari 0.9.18 functions and sent to released service; exact source lookup also verified. Native collector/popup/storage unverified.", "knowledge_card_result": "match", "knowledge_card_notes": "keratin-film-enamel-repair; Fresh original Hacker News URL returns the distinct published laboratory card through its verified source link. Website form and card verified; installed Safari composition and exact-source functions pass. One official post request; no article, registry or model call. This is a correct preclinical card and origin-paper match, not a human-trial match. Native collector/popup/storage remain unverified.", "social_linked_release": "runs/2026-11-16-social-linked-release.json", "website_observation_window": {"after": "2026-11-16T04:46:34.208Z", "by": "2026-11-16T04:50:59.479874+00:00", "note": "Exact observation clock time was not recorded; recording time is labelled separately."}},
+    "S034": {"lookup_answer": "", "tracked_claim": "", "trial_records": "", "likely_records": "", "top_record": "", "test_result": "blocked", "reason": "Fresh public Reddit access presents a CAPTCHA. No challenge was completed and no new lookup was submitted. The earlier treatment reading and no-card outcome remain in history; the newly published enamel card is not counted as a fresh match for this post.", "how_read": "fresh browser access check only", "ms": null, "last_tested": "2026-11-16", "tested_build": "current public Reddit access; no service or native-extension rerun", "site_result": "Fresh public Reddit access presents a CAPTCHA. No challenge was completed and no new lookup was submitted. The earlier treatment reading and no-card outcome remain in history; the newly published enamel card is not counted as a fresh match for this post.", "extension_result": "Current page content unavailable behind CAPTCHA; native popup/storage not tested.", "knowledge_card_result": "not checked", "knowledge_card_notes": "Fresh public Reddit access presents a CAPTCHA. No challenge was completed and no new lookup was submitted. The earlier treatment reading and no-card outcome remain in history; the newly published enamel card is not counted as a fresh match for this post.", "social_linked_release": "runs/2026-11-16-social-linked-release.json"}
+  }
+}

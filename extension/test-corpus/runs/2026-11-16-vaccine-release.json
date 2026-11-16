@@ -1,0 +1,124 @@
+{
+  "checked_at": "2026-11-16T01:36:14.914Z",
+  "release_commit": "a4439d8f00a5777c0d2d38bb337a8dba050ebfa5",
+  "pr": 184,
+  "public_cards": 165,
+  "public_articles": 263,
+  "public_data_matches_rehearsed_build": true,
+  "card": {
+    "slug": "alpha-lactalbumin-vaccine-tnbc-prevention",
+    "source_url": "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study",
+    "status": "phase_1",
+    "trial_ids": [
+      "NCT04674306"
+    ],
+    "participants": {
+      "count": 35,
+      "basis": "actual"
+    },
+    "page_http": 200,
+    "page_sha256": "a855a00bf24e97b86e6fb0709cd3c1e810ce328b495719519d0055114d235013"
+  },
+  "corpus": {
+    "rows": 258,
+    "changed_rows": [
+      "A083"
+    ],
+    "method": "All source-address associations checked against released static index; no fresh 258-page read or registry scoring.",
+    "paid_registry_reruns": 0
+  },
+  "installed_extension": {
+    "version": "0.9.15",
+    "build": 24,
+    "resource_hashes_verified": 35,
+    "method": "Pure exact-address function from installed signed app with released index; not native popup or browser-storage reuse.",
+    "kind": "tracked",
+    "pages": [
+      "/alpha-lactalbumin-vaccine-tnbc-prevention"
+    ],
+    "native_verified": false
+  },
+  "website_browser": {
+    "verified": true,
+    "verified_at": "2026-11-16T01:36:53.279528+00:00",
+    "browser": "in-app browser",
+    "url_submission": "Exact Cleveland Clinic source URL entered into the released home search; displayed This article is one we track and the matching vaccine card.",
+    "opened_card": "alpha-lactalbumin-vaccine-tnbc-prevention",
+    "visible_details": [
+      "NCT04674306 only",
+      "Phase 1",
+      "35 actual registry participants",
+      "Report-linked 74% immune response",
+      "Mixed cohorts and no demonstrated cancer-prevention claim"
+    ],
+    "native_safari": false
+  },
+  "release_checks": {
+    "pr": 184,
+    "reviewed_head": "9a1671e633a2a39b19c81afeed2f8e2b2a270dee",
+    "spec_review": "clear",
+    "standards_review": "clear",
+    "pr_ci": 43786451143,
+    "production_ci": 43786746367,
+    "production_conclusion": "success",
+    "worker_version": "c3c00be1-5077-4e74-8ae0-1817308933c8",
+    "deployed_at": "2026-11-16T01:35:23.3997238Z",
+    "tests": {
+      "pipeline": 1562,
+      "site": 656,
+      "extension": 170,
+      "corpus": 9
+    },
+    "public_deployment_rehearsal": "pass",
+    "strict_openspec": "pass",
+    "corpus_test_environment": "Requires openpyxl for assembly subprocesses; initial missing-dependency run failed, configured run passed all nine."
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 34,
+      "pass": 118,
+      "partial": 80,
+      "blocked": 26
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 82,
+      "match": 108,
+      "not checked": 26
+    }
+  },
+  "saved_reading_associations": {
+    "checked_at": "2026-11-16T01:29:24.936Z",
+    "method": "Pure saved structured-reading association comparison. No fresh page, registry, model or native Safari run.",
+    "changes": []
+  },
+  "sheet_verification": {
+    "verified_at": "2026-11-16T01:37:48.303Z",
+    "spreadsheet_url": "https://docs.google.com/spreadsheets/d/15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA/edit?ouid=118272730050776001505",
+    "ranges": [
+      "URLs!H234:P234",
+      "URLs!Z234:AF234",
+      "Summary!B1"
+    ],
+    "value_cells": 17,
+    "read_back_values": 96,
+    "unchanged_other_url_cells": 16,
+    "formulas_preserved": true,
+    "formatting_validation_chips_preserved": true,
+    "totals": [
+      "Total",
+      "258",
+      "118",
+      "80",
+      "0",
+      "26",
+      "34",
+      "0"
+    ],
+    "native_layout": "Unverified: known in-app Google Sheet view requests sign-in; native automation reports the Mac locked. API formatting and structure verified."
+  },
+  "rows": {
+    "A083": {"lookup_answer": "α-lactalbumin vaccine for Prevention of triple-negative breast cancer", "tracked_claim": "alpha-lactalbumin-vaccine-tnbc-prevention", "trial_records": "", "likely_records": "", "top_record": "NCT04674306 · verified on the released card; no fresh registry scoring", "test_result": "pass", "reason": "The released website recognizes the exact Cleveland Clinic URL and opens the preventive α-lactalbumin vaccine card. NCT04674306, 35 actual participants and Phase 1 are retained. Immune response is distinguished from demonstrated cancer prevention. No native Safari pass is claimed.", "how_read": "released website URL lookup and card; installed Safari function replay", "ms": null, "last_tested": "2026-11-16T01:36:53.279528+00:00", "tested_build": "site a4439d8f00a5; installed Safari 0.9.15 (24), native popup unverified", "site_result": "2026-11-16T01:36:53.279528+00:00: production a4439d8f00a5. In-app browser URL submission returns the exact vaccine card. Opened card shows NCT04674306, Phase 1, 35 registry participants and the report-linked immune-response statement, with no proven-prevention claim. No paid registry search on this exact-card path.", "extension_result": "Installed Safari 0.9.15 (24): all 35 resource hashes match the signed installation receipt. Its exact-address function returns this card with the released index. This is a function replay, not a native popup or browser-storage reuse check. Native automation still reports the Mac locked after the unlock reply.", "knowledge_card_result": "match", "knowledge_card_notes": "alpha-lactalbumin-vaccine-tnbc-prevention; exact source, complete vaccine identity and preventive scope verified on the released website. Mixed cohorts are described explicitly. The registry adjuvant is not mistaken for a separate experimental medicine. Native Safari remains unverified.", "trial_role_release": "runs/2026-11-15-trial-role-release.json", "vaccine_release": "runs/2026-11-16-vaccine-release.json"}
+  }
+}

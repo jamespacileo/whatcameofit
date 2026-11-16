@@ -1,0 +1,133 @@
+{
+  "reviewed_on": "2026-11-16",
+  "scope": "Source provenance, missing paper details and verified S032 reference",
+  "s032": {
+    "source_url": "https://www.technologyreview.com/2026/01/27/1131796/the-first-human-test-of-a-rejuvenation-method-will-begin-shortly/",
+    "source_published_date": "2026-01-27",
+    "source_verification": "Current public article read in browser; no article body retained.",
+    "primary_record": "https://clinicaltrials.gov/study/NCT07290244",
+    "primary_record_verification": "Official API returned NCT07290244, intravitreal ER-100 OSK gene delivery with eight-week doxycycline activation and an explicitly diagnosed open-angle glaucoma cohort. A separate NAION cohort does not broaden this card.",
+    "claim": "er-100-open-angle-glaucoma",
+    "decision": "Add verified reference through normal article entry; preserve treatment, indication, trial evidence and phase 1 status.",
+    "chronology": "First report moves from 2026-10-08 to 2026-01-27. Assistant confirms animal stage at that announcement. Summary distinguishes January plans from October human safety update; no clinical efficacy is asserted."
+  },
+  "nottingham": {
+    "origin_doi": "10.1038/s41467-025-64982-y",
+    "pubmed_id": "41188228",
+    "fetched_at": "2026-11-16T04:55:09.884509Z",
+    "finding": "Preparation preceded explicit origin approval. Normal fetch now provides paper facts without a model call; their earlier absence did not establish index absence.",
+    "pending_followups": [
+      11759,
+      11760
+    ],
+    "publication_boundary": "Both follow-up events remain pending; neither appears in the normal public export. Laboratory evidence stage and status remain unchanged."
+  },
+  "normal_export": {
+    "claims": 173,
+    "unchanged_claims": 171,
+    "changed_claims": {
+      "enamel-repair-elastin-like-recombinamer": [
+        "papers"
+      ],
+      "er-100-open-angle-glaucoma": [
+        "summary",
+        "first_reported_date",
+        "evidence_stage",
+        "articles"
+      ]
+    },
+    "added_claims": 0,
+    "removed_claims": 0
+  },
+  "release_verification": "Reviewed PR #197 is deployed; live index/data match rehearsal. Three original Hacker News URLs, website forms and installed Safari functions pass; S032/S036 installed link-only requests pass. Native collector/popup/storage remain unverified. Five Sheet rows and summary updated; 81 values verified and 161 other inspected cells preserved.",
+  "candidate_checks": {
+    "checked_at": "2026-11-16T05:07:05.062Z",
+    "public_cards": 173,
+    "method": "Local candidate Worker code with staged index, fresh official Hacker News API, and fail-closed paid/source request guards. No post body stored.",
+    "checks": [
+      {
+        "id": "S032",
+        "url": "https://news.ycombinator.com/item?id=46811037",
+        "slug": "er-100-open-angle-glaucoma",
+        "source": "Read from a post on Hacker News. The linked article at technologyreview.com is already tracked; its card is shown without another article read or automatic search.",
+        "http": 200,
+        "ms": 286,
+        "post": {
+          "platform": "Hacker News",
+          "article": "https://www.technologyreview.com/2026/01/27/1131796/the-first-human-test-of-a-rejuvenation-method-will-begin-shortly/",
+          "article_host": "technologyreview.com",
+          "article_read": false
+        },
+        "post_api_requests": 1,
+        "article_requests": 0,
+        "model_requests": 0,
+        "registry_requests": 0
+      },
+      {
+        "id": "S030",
+        "url": "https://news.ycombinator.com/item?id=45826995",
+        "slug": "enamel-repair-elastin-like-recombinamer",
+        "source": "Read from a post on Hacker News. The linked article at nottingham.ac.uk is already tracked; its card is shown without another article read or automatic search.",
+        "http": 200,
+        "ms": 251,
+        "post": {
+          "platform": "Hacker News",
+          "article": "https://www.nottingham.ac.uk/news/new-gel-restores-dental-enamel-and-could-revolutionise-tooth-repair",
+          "article_host": "nottingham.ac.uk",
+          "article_read": false
+        },
+        "post_api_requests": 1,
+        "article_requests": 0,
+        "model_requests": 0,
+        "registry_requests": 0
+      },
+      {
+        "id": "S031",
+        "url": "https://news.ycombinator.com/item?id=44922571",
+        "slug": "keratin-film-enamel-repair",
+        "source": "Read from a post on Hacker News. The linked article at kcl.ac.uk is already tracked; its card is shown without another article read or automatic search.",
+        "http": 200,
+        "ms": 127,
+        "post": {
+          "platform": "Hacker News",
+          "article": "https://www.kcl.ac.uk/news/toothpaste-made-from-hair-provides-natural-root-to-repair-teeth",
+          "article_host": "kcl.ac.uk",
+          "article_read": false
+        },
+        "post_api_requests": 1,
+        "article_requests": 0,
+        "model_requests": 0,
+        "registry_requests": 0
+      }
+    ]
+  },
+  "validation": {
+    "site_tests": 658,
+    "extension_tests": 170,
+    "production_rehearsal": "pass",
+    "openspec_strict": "pass",
+    "safari_candidate": "Universal Safari 0.9.19 (27) installed, signed and all 35 resources verified; rollback retained."
+  },
+  "release": {
+    "pr": 197,
+    "main": "7e4464262e3e4552a956062e03be28e82d0581fe",
+    "production_ci": 43808697407,
+    "worker_version": "ef869215-5d23-409f-aed4-d39e899024e3",
+    "deployed_at": "2026-11-16T05:15:49.2921291Z",
+    "validation": {
+      "pipeline_tests": 1562,
+      "site_tests": 658,
+      "extension_tests": 170,
+      "lint_types_rehearsal": "pass",
+      "independent_reviews": "Both clear at 90355b3eef1ceeb2f0ab722685647a36a9e8510a"
+    }
+  },
+  "installed_extension": {
+    "version": "0.9.19",
+    "build": 27,
+    "source_commit": "7e4464262e3e4552a956062e03be28e82d0581fe",
+    "resource_hashes_verified": 35,
+    "native_verified": false
+  },
+  "released_evidence": "extension/test-corpus/runs/2026-11-16-source-provenance-release.json"
+}

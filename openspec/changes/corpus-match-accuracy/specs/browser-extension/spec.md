@@ -1,5 +1,16 @@
 ## ADDED Requirements
 
+### Requirement: LinkedIn safety redirects retain the article
+The shared address reader SHALL unwrap an HTTP(S) article URL carried by LinkedIn's `/safety/go/` redirect. The extension SHALL retain that article as an outgoing source link rather than discard it as a link within LinkedIn. The existing tracked-linked-article path SHALL remain available without a page read or model request. This SHALL NOT change post identity boundaries or condition equivalence rules.
+
+#### Scenario: Current LinkedIn post wraps a tracked article
+- **WHEN** an identity-bound post links to a tracked article through `https://www.linkedin.com/safety/go/?url=...`
+- **THEN** request composition retains the decoded article URL and the service returns its published card through the linked-article path
+
+#### Scenario: Redirect target is not HTTP or HTTPS
+- **WHEN** the safety redirect carries an invalid or unsupported target scheme
+- **THEN** no article target is recovered from that parameter
+
 ### Requirement: Current carousel slide stays within its post
 Visual fallback for an identity-bound social carousel SHALL capture only its currently visible media within ancestor clipping boundaries. A hidden metadata image MAY establish carousel identity but SHALL NOT supply invisible pixels. Missing, conflicting or ambiguous slide identity SHALL fail closed. No automatic slide navigation or extra screenshot SHALL be required.
 

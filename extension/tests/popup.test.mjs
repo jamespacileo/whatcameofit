@@ -41,6 +41,8 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
       "popup.js": "extension/src/popup.js",
       "controller.js": "extension/src/controller.js",
       "results.js": "extension/src/results.js",
+      "tracked.js": "site/worker/tracked.mjs",
+      "names.js": "site/worker/names.mjs",
       "visual.js": "extension/src/visual.js",
       "source-url.js": "site/src/lib/source-url.mjs",
       "lookup.js": "extension/src/lookup.js",
@@ -56,7 +58,9 @@ async function runPopup(navigate, words = "EX-1 is being studied as a treatment 
     };
     for (const [name, source] of Object.entries(files)) {
       const content = (await fs.readFile(path.join(root, source), "utf8")).replaceAll("./article-key.mjs", "./article-key.js")
-        .replace("../../site/src/lib/source-url.mjs", "./source-url.js");
+        .replace("../../site/src/lib/source-url.mjs", "./source-url.js")
+        .replace("../../site/worker/tracked.mjs", "./tracked.js")
+        .replace("./names.mjs", "./names.js");
       await fs.writeFile(path.join(directory, name), content);
     }
     await fs.writeFile(path.join(directory, "package.json"), '{"type":"module"}');

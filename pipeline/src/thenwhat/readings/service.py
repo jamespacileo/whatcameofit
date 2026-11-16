@@ -40,7 +40,7 @@ if TYPE_CHECKING:
 PURPOSE = "readings"
 # Changed with any change to INSTRUCTIONS or to the answer's shape: a trial read under
 # another version is read again.
-INSTRUCTIONS_VERSION = "1"
+INSTRUCTIONS_VERSION = "2"
 INSTRUCTIONS = """\
 You read the planned primary outcomes of one clinical trial, as its registry record
 lists them: each has a number, a title and a time frame. You answer in the fixed fields
@@ -54,6 +54,11 @@ as a number with a unit. `number` is that number, in digits as the time frame wr
 read it from, copied character for character. When the time frame gives several times,
 read the last. Never convert between units and never work a number out. When the time
 frame gives no such number, leave follow_up empty.
+An offset after a later cycle, later dose, or the end of treatment is not a duration
+from the start. For example, "within 6 days after the third monthly cycle" does not
+give a six-day follow-up. Leave follow_up empty in that case; do not add cycle lengths
+or infer a total. A time measured from starting treatment, the first dose, or surgery
+can be a follow-up. Retain the words that identify the starting point in `words`.
 
 measure: what kind of measure the title names. `code` is one of:
 symptom_score (a score or scale of symptoms or of how severe a condition is),
@@ -202,7 +207,25 @@ def readings_for(
     read = stored_read(session, source_name, trial_id)
     if read is None or read.input_hash != input_hash(outcomes):
         return []
-    return readings_of(session, read)
+    # Recheck old reads without paying for another model call or rewriting their
+    # provenance. A new refusal leaves the registry's own field in the export.
+    return [
+        reading
+        for reading in readings_of(session, read)
+        if refusal(
+            Proposed(
+                outcome=reading.outcome,
+                kind=reading.kind.value,
+                field=reading.field.value,
+                words=reading.words,
+                number=reading.number,
+                unit=reading.unit.value if reading.unit is not None else None,
+                code=reading.code.value if reading.code is not None else None,
+            ),
+            outcomes,
+        )
+        is None
+    ]
 
 
 def is_current(read: TrialRead | None, trial: TrialRecord) -> bool:

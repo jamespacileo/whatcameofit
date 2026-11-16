@@ -1,0 +1,127 @@
+{
+  "release_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+  "checked_at": "2026-11-16T06:40:32.921Z",
+  "public_cards": 174,
+  "public_data_matches_rehearsed_build": true,
+  "index_fetch_ms": 265,
+  "installed_extension": {
+    "version": "0.9.21",
+    "build": 29,
+    "resource_hashes_verified": 35,
+    "source_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+    "native_verified": false,
+    "method": "Signed installed resources matched; shortener classification, request composition, exact-source state and shared presenter checked. Native collector/popup/storage unverified."
+  },
+  "website_observations": {
+    "S006": {
+      "recorded_at": "2026-11-16T06:41:04.563Z",
+      "finding": "Original Bluesky URL through the released website form returns the melanoma combination card. Provenance explicitly says the NEJM destination is already tracked and no further article read or automatic search was needed."
+    },
+    "S019": {
+      "recorded_at": "2026-11-16T06:41:10.569Z",
+      "finding": "Original Substack URL through the released website form returns the exact tracked article card, complete intismeran-plus-pembrolizumab treatment, Phase 3 trial status, October 22 first-report date and software-review disclosure. No registry-search action was needed."
+    }
+  },
+  "deployment": {
+    "pull_request": 202,
+    "reviewed_head": "1fcad8d47f29a21313e7d43c6457a0e1ffd649f9",
+    "main_commit": "50f3a7ce6b25e7aaa363fb5d4e6f66394c5a6ab5",
+    "production_run": 43817780787,
+    "conclusion": "success",
+    "worker_version": "7e986144-5923-4d17-8c2b-f9c0f671d4d6",
+    "deployed_at": "2026-11-16T06:40:10.4118564Z",
+    "reviews": {
+      "standards": "clear",
+      "spec": "clear"
+    }
+  },
+  "validation": {
+    "pipeline_tests": 1562,
+    "site_tests": 660,
+    "extension_tests": 170,
+    "corpus_tests": 9,
+    "lint_types": "pass",
+    "openspec_strict": "pass",
+    "public_rehearsal": "pass"
+  },
+  "summary": {
+    "corpus_verdicts": {
+      "review": 31,
+      "pass": 142,
+      "partial": 57,
+      "blocked": 28
+    },
+    "knowledge_cards": {
+      "review": 32,
+      "not applicable": 10,
+      "no card": 56,
+      "not checked": 28,
+      "match": 132
+    }
+  },
+  "request_checks": {
+    "S006": {
+      "url": "https://bsky.app/profile/nejm.org/post/3n24mxzs2f62a",
+      "slug": "melanoma-mrna-vaccine-intismeran",
+      "http": 200,
+      "ms": 472,
+      "post": {
+        "platform": "Bluesky",
+        "article": "https://www.nejm.org/doi/full/10.1056/NEJMoa2609762",
+        "article_host": "nejm.org",
+        "article_read": false
+      },
+      "extension_ms": 198,
+      "article_tracked": true,
+      "candidates": 0,
+      "source": "Read from a post on Bluesky. The linked article at nejm.org is already tracked; its card is shown without another article read or automatic search.",
+      "model_requests": 0,
+      "registry_requests": 0,
+      "article_requests": 0,
+      "post_api_requests": 1,
+      "shortener_requests": 2,
+      "method": "Fresh original URL through released service. Observed short link supplied to installed Safari request functions and sent separately to released service. Native collector/popup/storage unverified."
+    },
+    "S019": {
+      "url": "https://drjessemorse.substack.com/p/a-personalized-mrna-cancer-vaccine",
+      "slug": "melanoma-mrna-vaccine-intismeran",
+      "ms": 0.678,
+      "index_fetch_ms": 265,
+      "kind": "tracked",
+      "model_requests": 0,
+      "registry_requests": 0,
+      "article_requests": 0,
+      "lookup_api_requests": 0,
+      "method": "Exact original-URL matching through the installed Safari state function with the freshly fetched released index. Duration is local matching after index load, not an HTTP lookup. Native collector/popup/storage unverified."
+    }
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T06:42:53.226Z",
+    "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+    "ranges": [
+      "URLs!H7:P7",
+      "URLs!Z7:AF7",
+      "URLs!H20:P20",
+      "URLs!Z20:AF20",
+      "Summary!B1"
+    ],
+    "values_verified": 33,
+    "other_cells_preserved": 127,
+    "formats_formulas_validation_notes_chips_preserved": true,
+    "summary_total": [
+      "Total",
+      "258",
+      "142",
+      "57",
+      "0",
+      "28",
+      "31",
+      "0"
+    ],
+    "native_layout": "Unverified: previous browser access requires identity verification; existing styles preserved and checked through native cell metadata."
+  },
+  "rows": {
+    "S006": {"lookup_answer": "Intismeran autogene plus pembrolizumab for Completely resected stage IIB–IV cutaneous melanoma", "tracked_claim": "melanoma-mrna-vaccine-intismeran", "trial_records": "", "likely_records": "", "top_record": "NCT05933577 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Verified source identifies intismeran autogene plus pembrolizumab for completely resected stage IIB–IV cutaneous melanoma and NCT05933577. Fresh original Bluesky URL resolves the permitted NEJM short link and returns the exact reviewed card without model, registry or journal-body requests. The public abstract was reviewed; subscriber-only full text was not read. Native Safari collector/popup/storage remain unverified.", "how_read": "fresh released service and website form; official Bluesky API and permitted short redirect; installed Safari functions", "ms": 472, "last_tested": "2026-11-16T06:40:32.921Z", "tested_build": "site 50f3a7ce6b25; installed Safari 0.9.21 (29)", "site_result": "Original Bluesky URL through the released website form returns the melanoma combination card. Provenance explicitly says the NEJM destination is already tracked and no further article read or automatic search was needed.", "extension_result": "Installed Safari 0.9.21 (29) request composition preserves the observed nej.md link; released service returns its exact card in 198 ms. Shortener classification and shared presenter verified. Signature and 35 resource hashes verified. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "melanoma-mrna-vaccine-intismeran; Verified source identifies intismeran autogene plus pembrolizumab for completely resected stage IIB–IV cutaneous melanoma and NCT05933577. Fresh original Bluesky URL resolves the permitted NEJM short link and returns the exact reviewed card without model, registry or journal-body requests. The public abstract was reviewed; subscriber-only full text was not read. Native Safari collector/popup/storage remain unverified.", "closest_tracked_claim": "", "melanoma_sources_release": "runs/2026-11-16-melanoma-sources-release.json", "website_observation": {"recorded_at": "2026-11-16T06:41:04.563Z", "finding": "Original Bluesky URL through the released website form returns the melanoma combination card. Provenance explicitly says the NEJM destination is already tracked and no further article read or automatic search was needed."}},
+    "S019": {"lookup_answer": "Intismeran autogene plus pembrolizumab for Completely resected stage IIB–IV cutaneous melanoma", "tracked_claim": "melanoma-mrna-vaccine-intismeran", "trial_records": "", "likely_records": "", "top_record": "NCT05933577 · verified released card; no fresh scoring", "test_result": "pass", "reason": "Verified source identifies intismeran autogene plus pembrolizumab for completely resected stage IIB–IV cutaneous melanoma and NCT05933577. Released website form and installed Safari exact-source matching return the existing card directly from the new published index. No clinical lookup, article read or paid work is needed. Native Safari collector/popup/storage remain unverified.", "how_read": "released website form and published exact-source index; installed Safari matching function", "ms": 0.678, "last_tested": "2026-11-16T06:40:32.921Z", "tested_build": "site 50f3a7ce6b25; installed Safari 0.9.21 (29)", "site_result": "Original Substack URL through the released website form returns the exact tracked article card, complete intismeran-plus-pembrolizumab treatment, Phase 3 trial status, October 22 first-report date and software-review disclosure. No registry-search action was needed.", "extension_result": "Installed Safari 0.9.21 (29) exact original-URL lookup returns the correct card in 0.678 ms after index load; shared index download took 265 ms. No clinical API request. Signature and 35 resource hashes verified. Native collector/popup/storage remain unverified; computer control reports locked.", "knowledge_card_result": "match", "knowledge_card_notes": "melanoma-mrna-vaccine-intismeran; Verified source identifies intismeran autogene plus pembrolizumab for completely resected stage IIB–IV cutaneous melanoma and NCT05933577. Released website form and installed Safari exact-source matching return the existing card directly from the new published index. No clinical lookup, article read or paid work is needed. Native Safari collector/popup/storage remain unverified.", "closest_tracked_claim": "", "melanoma_sources_release": "runs/2026-11-16-melanoma-sources-release.json", "website_observation": {"recorded_at": "2026-11-16T06:41:10.569Z", "finding": "Original Substack URL through the released website form returns the exact tracked article card, complete intismeran-plus-pembrolizumab treatment, Phase 3 trial status, October 22 first-report date and software-review disclosure. No registry-search action was needed."}}
+  }
+}
