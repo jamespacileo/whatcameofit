@@ -1,0 +1,111 @@
+name: Pull request preview
+
+# One Worker per pull request (thenwhat-pr-<number>) at a workers.dev address:
+# published when the pull request opens, replaced on every push, deleted when it
+# closes. It does not wait for the tests; "CI and deploy" still gates main.
+# See docs/deploy.md.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+concurrency:
+  group: pr-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number }}
+  MARKER: "<!-- thenwhat-pr-preview -->"
+
+jobs:
+  publish:
+    name: Publish preview
+    # A fork's or Dependabot's pull request is given no Cloudflare token, so it gets no preview.
+    if: >-
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - name: Build and publish
+        id: preview
+        run: make pr-preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          SUGGEST_URL: ${{ vars.SUGGEST_URL }}
+          CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+      - name: Say where it is
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.preview.outputs.url }}
+          WORKER: ${{ steps.preview.outputs.worker }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          body="$MARKER
+          **Preview:** $PREVIEW_URL
+
+          Worker \`$WORKER\`, built from \`$HEAD_SHA\`. Replaced on every push and deleted when this pull request closes. Not indexed, and without the registry search."
+          comments="repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments"
+          existing=$(gh api "$comments" --paginate --jq ".[] | select(.user.type == \"Bot\" and (.body | contains(\"$MARKER\"))) | .id" | head -n 1)
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -f body="$body" --silent
+          else
+            gh api --method POST "$comments" -f body="$body" --silent
+          fi
+
+  remove:
+    name: Remove preview
+    if: >-
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      # No checkout: nothing from the pull request runs with the token here.
+      - name: Delete the Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          worker="thenwhat-pr-$PR_NUMBER"
+          status=$(curl --silent --show-error --output response.json --write-out '%{http_code}' \
+            --request DELETE \
+            --header "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+            "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/$worker?force=true")
+          case "$status" in
+            200) echo "Deleted $worker." ;;
+            404) echo "$worker was already absent." ;;
+            *) echo "Cloudflare answered $status for $worker:"; cat response.json; exit 1 ;;
+          esac
+      - name: Say it is gone
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          comments="repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments"
+          existing=$(gh api "$comments" --paginate --jq ".[] | select(.user.type == \"Bot\" and (.body | contains(\"$MARKER\"))) | .id" | head -n 1)
+          if [ -n "$existing" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" \
+              -f body="$MARKER
+          Preview removed: this pull request is closed and \`thenwhat-pr-$PR_NUMBER\` was deleted." --silent
+          fi
