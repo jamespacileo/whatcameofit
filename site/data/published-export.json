@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-11-16T07:25:01.613070Z",
+  "generated_at": "2026-11-16T07:46:27.298183Z",
   "last_checked_at": "2026-11-16T07:22:51.045087Z",
   "preview": false,
   "sources": [
@@ -51455,6 +51455,1857 @@
           "confidence": 0.96,
           "article_url": "https://www.independent.co.uk/news/science/experimental-gene-therapy-brain-reduces-epileptic-seizures-science-b3080366.html",
           "read_on": "2026-11-14"
+        }
+      ]
+    },
+    {
+      "slug": "duodenal-mucosal-resurfacing-type-2-diabetes",
+      "headline": "Intestinal procedure linked to improved blood sugar in people with type 2 diabetes",
+      "summary": "A small study in Amsterdam found that an hour-long procedure that removes the small intestine’s mucous lining with hot water was followed by stable disease in 90% of participants a year later. Researchers also reported early blood-sugar improvements and that most participants in initial results no longer used insulin. A larger study was recruiting.",
+      "vertical": "diabetes-and-hormones",
+      "approach": null,
+      "intervention": {
+        "name": "Duodenal mucosal resurfacing",
+        "synonyms": []
+      },
+      "indication": "Type 2 diabetes",
+      "first_reported_date": "2018-10-24",
+      "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "trial_registered",
+        "overlay_years": null,
+        "updated_at": "2026-11-15T11:56:06.671021Z",
+        "explained_by": [
+          4079,
+          4063,
+          4068,
+          4060,
+          4075,
+          4072,
+          4077
+        ],
+        "history": [
+          {
+            "on": "2015-03-23",
+            "code": "trial_registered"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.theguardian.com/society/2018/oct/24/spectacular-diabetes-treatment-could-end-daily-insulin-injections",
+          "outlet": "The Guardian",
+          "title": "'Spectacular' diabetes treatment could end daily insulin injections",
+          "published_date": "2018-10-24",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 4080,
+          "type": "trial_status_change",
+          "event_date": "2015-03-23",
+          "date_basis": "start date",
+          "summary": "Trial NCT02413567 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02413567",
+          "trial_id": "NCT02413567",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4079,
+          "type": "trial_registered",
+          "event_date": "2015-04-10",
+          "date_basis": "first posted",
+          "summary": "Trial NCT02413567 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02413567",
+          "trial_id": "NCT02413567",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4063,
+          "type": "trial_registered",
+          "event_date": "2016-08-25",
+          "date_basis": "first posted",
+          "summary": "Trial NCT02879383 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02879383",
+          "trial_id": "NCT02879383",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4064,
+          "type": "trial_status_change",
+          "event_date": "2017-03-01",
+          "date_basis": "start date",
+          "summary": "Trial NCT02879383 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02879383",
+          "trial_id": "NCT02879383",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4068,
+          "type": "trial_registered",
+          "event_date": "2018-08-31",
+          "date_basis": "first posted",
+          "summary": "Trial NCT03653091 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03653091",
+          "trial_id": "NCT03653091",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4069,
+          "type": "trial_status_change",
+          "event_date": "2018-09-28",
+          "date_basis": "start date",
+          "summary": "Trial NCT03653091 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03653091",
+          "trial_id": "NCT03653091",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4081,
+          "type": "trial_status_change",
+          "event_date": "2019-09-18",
+          "date_basis": "completion date",
+          "summary": "Trial NCT02413567 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02413567",
+          "trial_id": "NCT02413567",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4065,
+          "type": "trial_status_change",
+          "event_date": "2019-12-20",
+          "date_basis": "completion date",
+          "summary": "Trial NCT02879383 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02879383",
+          "trial_id": "NCT02879383",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4060,
+          "type": "trial_registered",
+          "event_date": "2020-06-05",
+          "date_basis": "first posted",
+          "summary": "Trial NCT04419779 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04419779",
+          "trial_id": "NCT04419779",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4070,
+          "type": "trial_status_change",
+          "event_date": "2020-08-10",
+          "date_basis": "completion date",
+          "summary": "Trial NCT03653091 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03653091",
+          "trial_id": "NCT03653091",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4061,
+          "type": "trial_status_change",
+          "event_date": "2021-03-08",
+          "date_basis": "start date",
+          "summary": "Trial NCT04419779 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04419779",
+          "trial_id": "NCT04419779",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4066,
+          "type": "trial_results_posted",
+          "event_date": "2021-05-25",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT02879383.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT02879383",
+          "trial_id": "NCT02879383",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4071,
+          "type": "trial_results_posted",
+          "event_date": "2022-07-26",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT03653091.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03653091",
+          "trial_id": "NCT03653091",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4073,
+          "type": "trial_status_change",
+          "event_date": "2023-06-27",
+          "date_basis": "start date",
+          "summary": "Trial NCT06256497 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06256497",
+          "trial_id": "NCT06256497",
+          "trial_phases": [],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4075,
+          "type": "trial_registered",
+          "event_date": "2023-10-23",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06092476 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06092476",
+          "trial_id": "NCT06092476",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4078,
+          "type": "trial_status_change",
+          "event_date": "2024-02-01",
+          "date_basis": "start date",
+          "summary": "Trial NCT06305208 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06305208",
+          "trial_id": "NCT06305208",
+          "trial_phases": [],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4072,
+          "type": "trial_registered",
+          "event_date": "2024-02-13",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06256497 registered (phase not given).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06256497",
+          "trial_id": "NCT06256497",
+          "trial_phases": [],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4077,
+          "type": "trial_registered",
+          "event_date": "2024-03-12",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06305208 registered (phase not given).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06305208",
+          "trial_id": "NCT06305208",
+          "trial_phases": [],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4076,
+          "type": "trial_status_change",
+          "event_date": "2024-08-09",
+          "date_basis": "start date",
+          "summary": "Trial NCT06092476 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06092476",
+          "trial_id": "NCT06092476",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4074,
+          "type": "trial_status_change",
+          "event_date": "2025-03-14",
+          "date_basis": "last update posted",
+          "summary": "Trial NCT06256497 suspended.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06256497",
+          "trial_id": "NCT06256497",
+          "trial_phases": [],
+          "trial_state": "suspended",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 4062,
+          "type": "trial_status_change",
+          "event_date": "2025-11-13",
+          "date_basis": "last update posted",
+          "summary": "Trial NCT04419779 suspended.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04419779",
+          "trial_id": "NCT04419779",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "suspended",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT03653091",
+          "url": "https://clinicaltrials.gov/study/NCT03653091",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Safety & Effectiveness of Duodenal Mucosal Resurfacing (DMR) Using the Revita™ System in Treatment of Type 2 Diabetes. For: Type 2 Diabetes. Tests: Duodenal Mucosal Resurfacing (DMR), Duodenal Mucosal Resurfacing Sham (Sham). No phase, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06256497",
+          "url": "https://clinicaltrials.gov/study/NCT06256497",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Prospective Study to Evaluate Revita DMR Post Market Pilot Clinical Follow-Up Registry in Patient With Type 2 Diabetes. For: Diabetes Mellitus, Type 2. Tests: Duodenal Mucosal Resurfacing (DMR). suspended."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT02413567",
+          "url": "https://clinicaltrials.gov/study/NCT02413567",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Evaluation of Duodenal Mucosal Resurfacing in Subjects With Type 2 Diabetes. For: Diabetes Mellitus, Type 2, Diabetes Mellitus. Tests: DMR Procedure (Fractyl). No phase, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT04419779",
+          "url": "https://clinicaltrials.gov/study/NCT04419779",
+          "score": 0.99,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Evaluation of the Efficacy and Safety of DMR Using the Revita® in Subjects With Inadequately Controlled Type 2 Diabetes. For: Type 2 Diabetes. Tests: Duodenal Mucosal Resurfacing (DMR), Duodenal Mucosal Resurfacing (Sham). No phase, suspended."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT02879383",
+          "url": "https://clinicaltrials.gov/study/NCT02879383",
+          "score": 0.99,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Effect of Duodenal Mucosal Resurfacing (DMR) Using the Revita System in the Treatment of Type 2 Diabetes (T2D). For: Diabetes Mellitus, Type 2, Noninsulin-Dependent Diabetes Mellitus. Tests: DMR Procedure, Sham Procedure. No phase, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06092476",
+          "url": "https://clinicaltrials.gov/study/NCT06092476",
+          "score": 0.99,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Trial to Evaluate Efficacy+Safety of Revita DMR Treatment Paradigm 1 and Retreatment in Type 2 Diabetes Patients. For: Diabetes Mellitus, Type 2. Tests: Revita® DMR Treatment, Sham procedure. No phase, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06305208",
+          "url": "https://clinicaltrials.gov/study/NCT06305208",
+          "score": 0.89,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A UK Registry for Metabolic and Bariatric Endoscopic Interventions. For: Obesity, Diabetes Mellitus, Type 2. Tests: Endoscopic gastric suturing, Endoscopic gastric plication, Revisional gastroplasty, Transoral outlet reduction endoscopy (TORe), Duodenal mucosal resurfacing (DMR), Intragastric balloon(s). recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06724822",
+          "url": "https://clinicaltrials.gov/study/NCT06724822",
+          "score": 0.72,
+          "state": "candidate",
+          "reading": "match",
+          "decided_by": null,
+          "summary": "RF Vapor Ablation Retreatment of Duodenal Mucosa in Non-responders With Type-2 Diabetes Mellitus. For: Diabetes Mellitus, Type 2. Tests: RF Vapor Ablation. No phase, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06385704",
+          "url": "https://clinicaltrials.gov/study/NCT06385704",
+          "score": 0.59,
+          "state": "candidate",
+          "reading": "match",
+          "decided_by": null,
+          "summary": "Research on Changes in Intestinal Barrier Function and Gut Microbiome in Patients With Type 2 Diabetes After Duodenal Mucosal Resurfacing (DMR). For: Type 2 Diabetes Mellitus. Tests: DMR Procedure. No phase, unknown."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05984238",
+          "url": "https://clinicaltrials.gov/study/NCT05984238",
+          "score": 0.54,
+          "state": "candidate",
+          "reading": "match",
+          "decided_by": null,
+          "summary": "A Trial to Evaluate Safety, Feasibility and Efficacy of Endoscopic Duodenal PEF Therapy. For: Diabetes Mellitus, Type 2. Tests: PEF therapy using the Endogenex Device, Semaglutide, 1.0 mg/mL, Sham procedure. No phase, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06267391",
+          "url": "https://clinicaltrials.gov/study/NCT06267391",
+          "score": 0.22,
+          "state": "candidate",
+          "reading": "not_a_match",
+          "decided_by": null,
+          "summary": "Safety and Effectiveness of Endoscopic Intestinal Re-Cellularization Therapy in Individuals With Type II Diabetes. For: Type 2 Diabetes Mellitus, Type2diabetes, Diabetes Mellitus, Type 2, Diabetes, Type 2 Diabetes. Tests: Endogenex Treatment, Sham Procedure. No phase, active not recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07390422",
+          "url": "https://clinicaltrials.gov/study/NCT07390422",
+          "score": 0.16,
+          "state": "candidate",
+          "reading": "not_a_match",
+          "decided_by": null,
+          "summary": "Duodenal pulsENDO for Suboptimally Controlled Type II Diabetes Mellitus and Steatotic Liver Disease. For: T2DM (Type 2 Diabetes Mellitus), MASLD - Metabolic Dysfunction-Associated Steatotic Liver Disease, Metabolic Syndrome (MetS). Tests: pulsENDO treatment. No phase, recruiting."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT02413567",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT02413567",
+          "title": "Evaluation of Duodenal Mucosal Resurfacing in Subjects With Type 2 Diabetes",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-15T11:56:10.303181Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 60,
+              "basis": "actual"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Fractyl Health Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "mean reduction in HbA1c (glycated hemoglobin) from baseline at 24 weeks post-procedure",
+                "time_frame": "24 weeks post-procedure"
+              },
+              {
+                "measure": "Device or procedure related Serious Adverse Events (SAEs) and Unanticipated Adverse Device Effects (UADEs)",
+                "time_frame": "24 weeks post-procedure"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [
+            "10.1016/j.gie.2024.01.031",
+            "10.1016/j.diabres.2022.109194",
+            "10.1136/gutjnl-2019-318349"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "24 weeks post-procedure",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:10.303181Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "HbA1c (glycated hemoglobin)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:10.303181Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "24 weeks post-procedure",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:10.303181Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Serious Adverse Events (SAEs) and Unanticipated Adverse Device Effects (UADEs)",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:10.303181Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT02879383",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT02879383",
+          "title": "Effect of Duodenal Mucosal Resurfacing (DMR) Using the Revita System in the Treatment of Type 2 Diabetes (T2D)",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-15T11:56:07.285332Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 109,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "sham"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Fractyl Health Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change From Baseline at 24 Weeks in Hemoglobin A1c (HbA1c), DMR vs Sham.",
+                "time_frame": "Baseline and 24 Weeks post-procedure"
+              },
+              {
+                "measure": "Change From Baseline at 12 Weeks in MR-PDFF, DMR vs Sham",
+                "time_frame": "Baseline and 12 Weeks post-procedure"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Change From Baseline at 24 Weeks in Hemoglobin A1c (HbA1c), DMR vs Sham.",
+                  "time_frame": "Baseline and 24 Weeks post-procedure",
+                  "unit": "percentage change from baseline",
+                  "measure": "median",
+                  "spread_kind": "Inter-Quartile Range",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "DMR Procedure (Europe)",
+                      "analysed": "39",
+                      "value": "-0.60",
+                      "spread": null,
+                      "lower": "-1.40",
+                      "upper": "0.20"
+                    },
+                    {
+                      "title": "Sham Procedure (Europe)",
+                      "analysed": "36",
+                      "value": "-0.30",
+                      "spread": null,
+                      "lower": "-0.80",
+                      "upper": "0.20"
+                    },
+                    {
+                      "title": "DMR Procedure (Brazil)",
+                      "analysed": "17",
+                      "value": "-1.85",
+                      "spread": null,
+                      "lower": "-2.40",
+                      "upper": "-1.10"
+                    },
+                    {
+                      "title": "Sham Procedure (Brazil)",
+                      "analysed": "16",
+                      "value": "-1.60",
+                      "spread": null,
+                      "lower": "-2.00",
+                      "upper": "-1.10"
+                    }
+                  ],
+                  "comparisons": []
+                },
+                {
+                  "title": "Change From Baseline at 12 Weeks in MR-PDFF, DMR vs Sham",
+                  "time_frame": "Baseline and 12 Weeks post-procedure",
+                  "unit": "percentage change from baseline",
+                  "measure": "median",
+                  "spread_kind": "Inter-Quartile Range",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "DMR Procedure (Europe)",
+                      "analysed": "33",
+                      "value": "-5.4",
+                      "spread": null,
+                      "lower": "-8.35",
+                      "upper": "-2.25"
+                    },
+                    {
+                      "title": "Sham Procedure (Europe)",
+                      "analysed": "28",
+                      "value": "-2.24",
+                      "spread": null,
+                      "lower": "-4.61",
+                      "upper": "-0.32"
+                    },
+                    {
+                      "title": "DMR Procedure (Brazil)",
+                      "analysed": "15",
+                      "value": "-5.4",
+                      "spread": null,
+                      "lower": "-12",
+                      "upper": "-2.84"
+                    },
+                    {
+                      "title": "Sham Procedure (Brazil)",
+                      "analysed": "15",
+                      "value": "-6.07",
+                      "spread": null,
+                      "lower": "-10.95",
+                      "upper": "-3.12"
+                    }
+                  ],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 2
+            }
+          },
+          "papers": [
+            "10.1136/gutjnl-2020-323608"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "24 Weeks",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:07.285332Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Hemoglobin A1c (HbA1c)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:07.285332Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "12 Weeks",
+              "number": 12,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:07.285332Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "MR-PDFF",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.88,
+              "read_on": "2026-11-15T11:56:07.285332Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT03653091",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT03653091",
+          "title": "Safety & Effectiveness of Duodenal Mucosal Resurfacing (DMR) Using the Revita™ System in Treatment of Type 2 Diabetes",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-15T11:56:08.298749Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 9,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "sham"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Fractyl Health Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change in Hemoglobin A1c (HbA1c)",
+                "time_frame": "24 weeks post procedure"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Change in Hemoglobin A1c (HbA1c)",
+                  "time_frame": "24 weeks post procedure",
+                  "unit": "mmol/mol",
+                  "measure": "mean",
+                  "spread_kind": "Standard Deviation",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Duodenal Mucosal Resurfacing (DMR)",
+                      "analysed": "5",
+                      "value": "-0.33",
+                      "spread": ".252",
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Duodenal Mucosal Resurfacing Sham (Sham)",
+                      "analysed": "4",
+                      "value": "-0.70",
+                      "spread": ".469",
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 1
+            }
+          },
+          "papers": [
+            "10.1016/j.gie.2024.01.031"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "24 weeks",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:08.298749Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Hemoglobin A1c (HbA1c)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:08.298749Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT04419779",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT04419779",
+          "title": "Evaluation of the Efficacy and Safety of DMR Using the Revita® in Subjects With Inadequately Controlled Type 2 Diabetes",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "suspended",
+          "facts_as_of": "2026-11-15T11:56:06.798503Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 320,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "sham"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Fractyl Health Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Demonstrate superiority of Revita DMR to sham in improving glycemic control",
+                "time_frame": "Baseline to Week 24"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": "Enrollment pause",
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 24",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:06.798503Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "glycemic control",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.84,
+              "read_on": "2026-11-15T11:56:06.798503Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT06092476",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06092476",
+          "title": "Trial to Evaluate Efficacy+Safety of Revita DMR Treatment Paradigm 1 and Retreatment in Type 2 Diabetes Patients",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-15T11:56:09.303813Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 18,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "sham"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Academisch Medisch Centrum - Universiteit van Amsterdam (AMC-UvA)",
+              "kind": "other"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Safety endpoint",
+                "time_frame": "12 weeks post DMR and 12 weeks post retreatment with DMR"
+              },
+              {
+                "measure": "Feasibility endpoint 1",
+                "time_frame": "During procedure"
+              },
+              {
+                "measure": "Feasibility endpoint 2",
+                "time_frame": "During procedure"
+              }
+            ],
+            "primary_outcomes_total": 5,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "12 weeks post retreatment with DMR",
+              "number": 12,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:09.303813Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Safety",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.98,
+              "read_on": "2026-11-15T11:56:09.303813Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Feasibility endpoint 1",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.99,
+              "read_on": "2026-11-15T11:56:09.303813Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Feasibility endpoint 2",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.99,
+              "read_on": "2026-11-15T11:56:09.303813Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT06256497",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06256497",
+          "title": "A Prospective Study to Evaluate Revita DMR Post Market Pilot Clinical Follow-Up Registry in Patient With Type 2 Diabetes",
+          "phases": [],
+          "state": "suspended",
+          "facts_as_of": "2026-11-15T11:56:08.803864Z",
+          "facts": {
+            "study_kind": "observational",
+            "participants": {
+              "count": 100,
+              "basis": "planned"
+            },
+            "allocation": null,
+            "masking": null,
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Fractyl Health Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Clinical effectiveness",
+                "time_frame": "Baseline, 1, 3-, 6-, 12-, and 24-months post-procedure."
+              },
+              {
+                "measure": "Clinical effectiveness",
+                "time_frame": "Baseline, 1, 3-, 6-, 12-, and 24-months post-procedure."
+              },
+              {
+                "measure": "Clinical effectiveness",
+                "time_frame": "Baseline, 1, 3-, 6-, 12-, and 24-months post-procedure."
+              }
+            ],
+            "primary_outcomes_total": 6,
+            "why_stopped": "The company paused enrollment due to a strategic decision to pause commercialization in the EU and specifically Germany. The company will follow currently enrolled subjects per protocol.",
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "24-months",
+              "number": 24,
+              "unit": "months",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T11:56:08.803864Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Clinical effectiveness",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.9,
+              "read_on": "2026-11-15T11:56:08.803864Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "24-months",
+              "number": 24,
+              "unit": "months",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T11:56:08.803864Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Clinical effectiveness",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.9,
+              "read_on": "2026-11-15T11:56:08.803864Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "24-months",
+              "number": 24,
+              "unit": "months",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-15T11:56:08.803864Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Clinical effectiveness",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.9,
+              "read_on": "2026-11-15T11:56:08.803864Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT06305208",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06305208",
+          "title": "A UK Registry for Metabolic and Bariatric Endoscopic Interventions",
+          "phases": [],
+          "state": "under_way",
+          "facts_as_of": "2026-11-15T11:56:09.805006Z",
+          "facts": {
+            "study_kind": "observational",
+            "participants": {
+              "count": 300,
+              "basis": "planned"
+            },
+            "allocation": null,
+            "masking": null,
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Cleveland Clinic London",
+              "kind": "other"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Total body weight loss percentage (TBWL%)",
+                "time_frame": "6-months, 1-, 2-, 3-, 5-years"
+              },
+              {
+                "measure": "Change in glycated haemoglobin (HbA1c; mmol/mol)",
+                "time_frame": "6-months, 1-, 2-, 3-, 5-years"
+              },
+              {
+                "measure": "Change in the number and dose of anti-diabetic medications",
+                "time_frame": "6-months, 1-, 2-, 3-, 5-years"
+              }
+            ],
+            "primary_outcomes_total": 3,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "5-years",
+              "number": 5,
+              "unit": "years",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:09.805006Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Total body weight loss percentage (TBWL%)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.99,
+              "read_on": "2026-11-15T11:56:09.805006Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "5-years",
+              "number": 5,
+              "unit": "years",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:09.805006Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "glycated haemoglobin (HbA1c; mmol/mol)",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.99,
+              "read_on": "2026-11-15T11:56:09.805006Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "5-years",
+              "number": 5,
+              "unit": "years",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T11:56:09.805006Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "number and dose of anti-diabetic medications",
+              "number": null,
+              "unit": null,
+              "code": "use_of_treatment",
+              "confidence": 0.95,
+              "read_on": "2026-11-15T11:56:09.805006Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1136/gutjnl-2019-318349",
+          "url": "https://doi.org/10.1136/gutjnl-2019-318349",
+          "record_url": "https://europepmc.org/article/MED/31331994",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT02413567",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "Endoscopic duodenal mucosal resurfacing for the treatment of type 2 diabetes mellitus: one year results from the first international, open-label, prospective, multicentre study. 2019. article. Gut"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:56:10.837331Z",
+          "facts": {
+            "title": "Endoscopic duodenal mucosal resurfacing for the treatment of type 2 diabetes mellitus: one year results from the first international, open-label, prospective, multicentre study.",
+            "journal": "Gut",
+            "year": 2020,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1016/j.diabres.2022.109194",
+          "url": "https://doi.org/10.1016/j.diabres.2022.109194",
+          "record_url": "https://europepmc.org/article/MED/35032562",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT02413567",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "Durable metabolic improvements 2 years after duodenal mucosal resurfacing (DMR) in patients with type 2 diabetes (REVITA-1 Study). 2022. article. Diabetes Research and Clinical Practice"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:56:10.320462Z",
+          "facts": {
+            "title": "Durable metabolic improvements 2 years after duodenal mucosal resurfacing (DMR) in patients with type 2 diabetes (REVITA-1 Study).",
+            "journal": "Diabetes research and clinical practice",
+            "year": 2022,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1016/j.gie.2024.01.031",
+          "url": "https://doi.org/10.1016/j.gie.2024.01.031",
+          "record_url": "https://europepmc.org/article/MED/38280531",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT02413567",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT03653091",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:56:08.536526Z",
+          "facts": {
+            "title": "Insulin sensitivity and beta cell function after duodenal mucosal resurfacing: an open-label, mechanistic, pilot study.",
+            "journal": "Gastrointestinal endoscopy",
+            "year": 2024,
+            "kinds": [
+              "randomised_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1136/gutjnl-2020-323608",
+          "url": "https://doi.org/10.1136/gutjnl-2020-323608",
+          "record_url": "https://europepmc.org/article/MED/33597157",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT02879383",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:56:07.343711Z",
+          "facts": {
+            "title": "Safety and efficacy of hydrothermal duodenal mucosal resurfacing in patients with type 2 diabetes: the randomised, double-blind, sham-controlled, multicentre REVITA-2 feasibility trial.",
+            "journal": "Gut",
+            "year": 2022,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.2337/dc16-0383",
+          "url": "https://doi.org/10.2337/dc16-0383",
+          "record_url": "https://europepmc.org/article/MED/27519448",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Endoscopic Duodenal Mucosal Resurfacing for the Treatment of Type 2 Diabetes: 6-Month Interim Analysis From the First-in-Human Proof-of-Concept Study. 2016. article. Diabetes Care"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:54.721252Z",
+          "facts": {
+            "title": "Endoscopic Duodenal Mucosal Resurfacing for the Treatment of Type 2 Diabetes: 6-Month Interim Analysis From the First-in-Human Proof-of-Concept Study.",
+            "journal": "Diabetes care",
+            "year": 2016,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1016/j.jhepr.2019.10.006",
+          "url": "https://doi.org/10.1016/j.jhepr.2019.10.006",
+          "record_url": "https://europepmc.org/article/MED/32039394",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "Endoscopic duodenal mucosal resurfacing improves glycaemic and hepatic indices in type 2 diabetes: 6-month multicentre results. 2019. article. JHEP Reports"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:55.237311Z",
+          "facts": {
+            "title": "Endoscopic duodenal mucosal resurfacing improves glycaemic and hepatic indices in type 2 diabetes: 6-month multicentre results.",
+            "journal": "JHEP reports : innovation in hepatology",
+            "year": 2019,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": []
+          }
+        },
+        {
+          "identifier": "10.1136/gutjnl-2018-bsgabstracts.61",
+          "url": "https://doi.org/10.1136/gutjnl-2018-bsgabstracts.61",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "PTH-040 Endoscopic duodenal mucosal resurfacing in type 2 diabetes – a single centre experience. 2018. conference-abstract. Gut"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1136/bmjnph-2024-001006",
+          "url": "https://doi.org/10.1136/bmjnph-2024-001006",
+          "record_url": "https://europepmc.org/article/MED/40771521",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "Long-term effects of duodenal mucosal resurfacing and liraglutide on glycaemic control in patients with type 2 diabetes. 2025. article. BMJ Nutrition Prevention & Health"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:56.218902Z",
+          "facts": {
+            "title": "Long-term effects of duodenal mucosal resurfacing and liraglutide on glycaemic control in patients with type 2 diabetes.",
+            "journal": "BMJ nutrition, prevention & health",
+            "year": 2025,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": []
+          }
+        },
+        {
+          "identifier": "10.1007/s12664-024-01640-z",
+          "url": "https://doi.org/10.1007/s12664-024-01640-z",
+          "record_url": "https://europepmc.org/article/MED/38990467",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "Endoscopic duodenal mucosal ablation via spray coagulation technique for duodenal mucosal resurfacing in patients with type 2 diabetes mellitus (with video). 2024. article. Indian Journal of Gastroenterology"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:56.704898Z",
+          "facts": {
+            "title": "Endoscopic duodenal mucosal ablation via spray coagulation technique for duodenal mucosal resurfacing in patients with type 2 diabetes mellitus (with video).",
+            "journal": "Indian journal of gastroenterology : official journal of the Indian Society of Gastroenterology",
+            "year": 2024,
+            "kinds": [
+              "comment"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1016/j.gie.2020.12.021",
+          "url": "https://doi.org/10.1016/j.gie.2020.12.021",
+          "record_url": "https://europepmc.org/article/MED/33359437",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "Duodenal mucosal resurfacing combined with glucagon-like peptide-1 receptor agonism to discontinue insulin in type 2 diabetes: a feasibility study. 2020. article. Gastrointestinal Endoscopy"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:57.228562Z",
+          "facts": {
+            "title": "Duodenal mucosal resurfacing combined with glucagon-like peptide-1 receptor agonism to discontinue insulin in type 2 diabetes: a feasibility study.",
+            "journal": "Gastrointestinal endoscopy",
+            "year": 2021,
+            "kinds": [
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.3389/fcdhc.2022.856661",
+          "url": "https://doi.org/10.3389/fcdhc.2022.856661",
+          "record_url": "https://europepmc.org/article/MED/36992788",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "indication_named",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "A Changed Gut Microbiota Diversity Is Associated With Metabolic Improvements After Duodenal Mucosal Resurfacing With Glucagon-Like-Peptide-1 Receptor Agonist in Type 2 Diabetes in a Pilot Study. 2022. article. Frontiers in Clinical Diabetes and Healthcare"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:58.297365Z",
+          "facts": {
+            "title": "A Changed Gut Microbiota Diversity Is Associated With Metabolic Improvements After Duodenal Mucosal Resurfacing With Glucagon-Like-Peptide-1 Receptor Agonist in Type 2 Diabetes in a Pilot Study.",
+            "journal": "Frontiers in clinical diabetes and healthcare",
+            "year": 2022,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": []
+          }
+        },
+        {
+          "identifier": "10.1016/j.gie.2019.03.024",
+          "url": "https://doi.org/10.1016/j.gie.2019.03.024",
+          "record_url": "https://europepmc.org/article/MED/30935932",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.99,
+              "reasons": [
+                "named_in_title"
+              ],
+              "decided_by": "rule",
+              "summary": "Duodenal mucosal resurfacing: proof-of-concept, procedural development, and initial implementation in the clinical setting. 2019. article. Gastrointestinal Endoscopy"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:58.751541Z",
+          "facts": {
+            "title": "Duodenal mucosal resurfacing: proof-of-concept, procedural development, and initial implementation in the clinical setting.",
+            "journal": "Gastrointestinal endoscopy",
+            "year": 2019,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1177/20420188241252308",
+          "url": "https://doi.org/10.1177/20420188241252308",
+          "record_url": "https://europepmc.org/article/MED/38715967",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.97,
+              "reasons": [
+                "named_in_title",
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "Potential of duodenal mucosal resurfacing in achieving glycemic control in Asians with type 2 diabetes. 2024. article. Therapeutic Advances in Endocrinology and Metabolism"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:55:59.277299Z",
+          "facts": {
+            "title": "Potential of duodenal mucosal resurfacing in achieving glycemic control in Asians with type 2 diabetes.",
+            "journal": "Therapeutic advances in endocrinology and metabolism",
+            "year": 2024,
+            "kinds": [
+              "comment",
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": []
+          }
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Amsterdam University Medical Centers",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "05grdyy37",
+            "url": "https://ror.org/05grdyy37",
+            "name": "Amsterdam University Medical Centers",
+            "kinds": [
+              "funder",
+              "healthcare"
+            ],
+            "country": "The Netherlands",
+            "website": "https://www.amsterdamumc.org",
+            "score": 1,
+            "read_at": "2026-11-15T11:55:52.661649Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.theguardian.com/society/2018/oct/24/spectacular-diabetes-treatment-could-end-daily-insulin-injections"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Academisch Medisch Centrum - Universiteit van Amsterdam (AMC-UvA)",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06092476"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Cleveland Clinic London",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "04dx81q90",
+            "url": "https://ror.org/04dx81q90",
+            "name": "Cleveland Clinic London",
+            "kinds": [
+              "healthcare"
+            ],
+            "country": "United Kingdom",
+            "website": "https://clevelandcliniclondon.uk/",
+            "score": 1,
+            "read_at": "2026-11-15T20:38:16.842085Z"
+          },
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06305208"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Fractyl Health Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT02413567",
+                "NCT02879383",
+                "NCT03653091",
+                "NCT04419779",
+                "NCT06256497"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Blood sugar levels improved by the day after the procedure, before patients had lost weight.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "researcher",
+          "basis": "people",
+          "confidence": 0.85,
+          "article_url": "https://www.theguardian.com/society/2018/oct/24/spectacular-diabetes-treatment-could-end-daily-insulin-injections",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "Most patients in the initial results were no longer using insulin after the procedure, though assessment of stopping insulin was still underway.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "researcher",
+          "basis": "people",
+          "confidence": 0.85,
+          "article_url": "https://www.theguardian.com/society/2018/oct/24/spectacular-diabetes-treatment-could-end-daily-insulin-injections",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "The procedure may postpone or possibly prevent the need to use insulin.",
+          "kind": "what_it_could_lead_to",
+          "firmness": "possibility",
+          "speaker": "researcher",
+          "basis": "people",
+          "confidence": 0.92,
+          "article_url": "https://www.theguardian.com/society/2018/oct/24/spectacular-diabetes-treatment-could-end-daily-insulin-injections",
+          "read_on": "2026-11-15"
         }
       ]
     },
@@ -240457,6 +242308,833 @@
           "confidence": 0.8,
           "article_url": "https://www.medscape.com/viewarticle/how-old-antibiotic-can-now-kill-drug-resistant-superbug-2026a1000x1u",
           "read_on": "2026-11-14"
+        }
+      ]
+    },
+    {
+      "slug": "vsv-ebov-prevention-of-ebola-virus-disease",
+      "headline": "Preliminary Guinea trial results suggest an Ebola vaccine protected vaccinated contacts",
+      "summary": "In a ring-vaccination trial in Guinea, no Ebola cases were reported among 2,014 close contacts vaccinated immediately, while 16 occurred among those vaccinated three weeks later. The article describes the results as preliminary and says the vaccine was considered safe; more data were still being collected.",
+      "vertical": "infections",
+      "approach": null,
+      "intervention": {
+        "name": "VSV-EBOV",
+        "synonyms": []
+      },
+      "indication": "Prevention of Ebola virus disease",
+      "first_reported_date": "2015-07-31",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.76,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.24
+          }
+        ]
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-15T22:33:31.267708Z",
+        "explained_by": [
+          9878,
+          9879
+        ],
+        "history": [
+          {
+            "on": "2015-07-31",
+            "code": "no_trial_found"
+          },
+          {
+            "on": "2017-01-26",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2017-08-01",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "http://www.bbc.com/news/health-33733711",
+          "outlet": "BBC News",
+          "title": "Ebola vaccine is 'potential game-changer'",
+          "published_date": "2015-07-31",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 9878,
+          "type": "trial_registered",
+          "event_date": "2017-01-26",
+          "date_basis": "first posted",
+          "summary": "Trial NCT03031912 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03031912",
+          "trial_id": "NCT03031912",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 9879,
+          "type": "trial_status_change",
+          "event_date": "2017-08-01",
+          "date_basis": "start date",
+          "summary": "Trial NCT03031912 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03031912",
+          "trial_id": "NCT03031912",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 9880,
+          "type": "trial_status_change",
+          "event_date": "2023-03-03",
+          "date_basis": "completion date",
+          "summary": "Trial NCT03031912 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03031912",
+          "trial_id": "NCT03031912",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 9881,
+          "type": "trial_results_posted",
+          "event_date": "2026-01-12",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT03031912.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT03031912",
+          "trial_id": "NCT03031912",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT03031912",
+          "url": "https://clinicaltrials.gov/study/NCT03031912",
+          "score": 0.27,
+          "state": "approved",
+          "reading": "other_indication",
+          "decided_by": "assistant",
+          "summary": "African-Canadian Study of HIV-Infected Adults and a Vaccine for Ebola - ACHIV-Ebola. For: Ebola. Tests: V920 (rVSVΔG-ZEBOV-GP) Ebola Virus Vaccine, Saline. Phase 2, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05959421",
+          "url": "https://clinicaltrials.gov/study/NCT05959421",
+          "score": 0.65,
+          "state": "candidate",
+          "reading": "match",
+          "decided_by": null,
+          "summary": "Immunity Induced by VSV-EBOV and Assessment of a Booster Dose in Individuals at Potential Occupational Risk for Exposure. For: Ebola Vaccine. Tests: ERVEBO® (rVSV∆G-ZEBOV-GP), ERVEBO® (rVSV∆G-ZEBOV-GP). Phase 3, withdrawn."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT03140774",
+          "url": "https://clinicaltrials.gov/study/NCT03140774",
+          "score": 0.53,
+          "state": "candidate",
+          "reading": "match",
+          "decided_by": null,
+          "summary": "Persistence of the Immune Response After Immunisation With Ebola Virus Vaccines. For: Ebola Virus Disease. Tests: Previously exposed to Ebola vaccine. completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT04822376",
+          "url": "https://clinicaltrials.gov/study/NCT04822376",
+          "score": 0.44,
+          "state": "candidate",
+          "reading": "not_a_match",
+          "decided_by": null,
+          "summary": "Prophylaxis Vaccine Antibodies Ebola. For: Ebola Virus Disease. Tests: ansuvimab, Ervebo. Phase 2, unknown."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT02287480",
+          "url": "https://clinicaltrials.gov/study/NCT02287480",
+          "score": 0.36,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "VSV-ZEBOV Geneva Vaccine Trial. For: Ebolavirus Disease. Tests: VSV-ZEBOV. Phase 1/Phase 2, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT02374385",
+          "url": "https://clinicaltrials.gov/study/NCT02374385",
+          "score": 0.21,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "Phase I Trial to Assess the Safety, Tolerability and Immunogenicity of a Ebola Virus Vaccine. For: Ebola Viruses. Tests: BPSC-1001 (VSVΔG-ZEBOV), Placebo. Phase 1, completed."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT03031912",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT03031912",
+          "title": "African-Canadian Study of HIV-Infected Adults and a Vaccine for Ebola - ACHIV-Ebola",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-15T13:24:00.591700Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 251,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "child",
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Canadian Immunization Research Network",
+              "kind": "network"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Number of Participants With Solicited Adverse Events Following V920 Vaccination",
+                "time_frame": "From vaccine administration up to day 14 following vaccination"
+              },
+              {
+                "measure": "Number of Participants With Solicited Adverse Events Following V920 Vaccination",
+                "time_frame": "From vaccine administration up to 42 days postvaccination"
+              },
+              {
+                "measure": "Number of Participants With Unsolicited Adverse Events Following V920 Vaccination",
+                "time_frame": "From vaccine administration up to day 42 postvaccination"
+              }
+            ],
+            "primary_outcomes_total": 6,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Number of Participants With Solicited Adverse Events Following V920 Vaccination",
+                  "time_frame": "From vaccine administration up to day 14 following vaccination",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 17,
+                  "groups": [],
+                  "comparisons": []
+                },
+                {
+                  "title": "Number of Participants With Solicited Adverse Events Following V920 Vaccination",
+                  "time_frame": "From vaccine administration up to 42 days postvaccination",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 5,
+                  "groups": [],
+                  "comparisons": []
+                },
+                {
+                  "title": "Number of Participants With Unsolicited Adverse Events Following V920 Vaccination",
+                  "time_frame": "From vaccine administration up to day 42 postvaccination",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 84,
+                  "groups": [],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 6
+            }
+          },
+          "papers": [
+            "10.1016/s2352-3018(26)00118-9"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "day 14",
+              "number": 14,
+              "unit": "days",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T13:24:00.591700Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Number of Participants With Solicited Adverse Events",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-15T13:24:00.591700Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "42 days",
+              "number": 42,
+              "unit": "days",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T13:24:00.591700Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Number of Participants With Solicited Adverse Events",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-15T13:24:00.591700Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "day 42",
+              "number": 42,
+              "unit": "days",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-15T13:24:00.591700Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Number of Participants With Unsolicited Adverse Events",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-15T13:24:00.591700Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1016/s2352-3018(26)00118-9",
+          "url": "https://doi.org/10.1016/s2352-3018(26)00118-9",
+          "record_url": "https://europepmc.org/article/MED/42567171",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT03031912",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-15T13:24:12.231644Z",
+          "facts": {
+            "title": "Safety and immunogenicity of one or two doses of the rVSVΔG-ZEBOV-GP Ebola virus vaccine in adults and adolescents living with HIV: a phase 2, multicentre, double-blind, randomised, placebo-controlled trial.",
+            "journal": "The lancet. HIV",
+            "year": 2026,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.3389/fviro.2021.747198",
+          "url": "https://doi.org/10.3389/fviro.2021.747198",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title"
+              ],
+              "decided_by": "rule",
+              "summary": "VSV-EBOV Induces Temporal and Dose-Dependent Transcriptional Responses in Non-human Primates. 2021. article. Frontiers in Virology"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.3390/v17030342",
+          "url": "https://doi.org/10.3390/v17030342",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [],
+              "decided_by": "rule",
+              "summary": "Durability of Immunogenicity and Protection of rVSV∆G-ZEBOV-GP Vaccine in a Nonhuman Primate EBOV Challenge Model. 2025. article. Viruses"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1016/s0140-6736(15)61117-5",
+          "url": "https://doi.org/10.1016/s0140-6736(15)61117-5",
+          "record_url": "https://europepmc.org/article/MED/26248676",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.99,
+              "reasons": [
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "Efficacy and effectiveness of an rVSV-vectored vaccine expressing Ebola surface glycoprotein: interim results from the Guinea ring vaccination cluster-randomised trial. 2015. article. The Lancet"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:58:28.742410Z",
+          "facts": {
+            "title": "Efficacy and effectiveness of an rVSV-vectored vaccine expressing Ebola surface glycoprotein: interim results from the Guinea ring vaccination cluster-randomised trial.",
+            "journal": "Lancet (London, England)",
+            "year": 2015,
+            "kinds": [
+              "randomised_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1126/science.aab3920",
+          "url": "https://doi.org/10.1126/science.aab3920",
+          "record_url": "https://europepmc.org/article/MED/26249231",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.99,
+              "reasons": [
+                "named_in_title",
+                "named_institution"
+              ],
+              "decided_by": "rule",
+              "summary": "VSV-EBOV rapidly protects macaques against infection with the 2014/15 Ebola virus outbreak strain. 2015. article. Science"
+            }
+          ],
+          "facts_as_of": "2026-11-15T13:23:56.444534Z",
+          "facts": {
+            "title": "EBOLA VACCINE. VSV-EBOV rapidly protects macaques against infection with the 2014/15 Ebola virus outbreak strain.",
+            "journal": "Science (New York, N.Y.)",
+            "year": 2015,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.3201/eid2806.212223",
+          "url": "https://doi.org/10.3201/eid2806.212223",
+          "record_url": "https://europepmc.org/article/MED/35608607",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.99,
+              "reasons": [],
+              "decided_by": "rule",
+              "summary": "Effect of Recombinant Vesicular Stomatitis Virus–Zaire Ebola Virus Vaccination on Ebola Virus Disease Illness and Death, Democratic Republic of the Congo. 2022. article. Emerging infectious diseases"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:58:32.290433Z",
+          "facts": {
+            "title": "Effect of Recombinant Vesicular Stomatitis Virus-Zaire Ebola Virus Vaccination on Ebola Virus Disease Illness and Death, Democratic Republic of the Congo.",
+            "journal": "Emerging infectious diseases",
+            "year": 2022,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1093/infdis/jiad208",
+          "url": "https://doi.org/10.1093/infdis/jiad208",
+          "record_url": "https://europepmc.org/article/MED/37290042",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.98,
+              "reasons": [],
+              "decided_by": "rule",
+              "summary": "Preexisting Immunity Does Not Prevent Efficacy of Vesicular Stomatitis Virus–Based Filovirus Vaccines in Nonhuman Primates. 2023. article. The Journal of Infectious Diseases"
+            }
+          ],
+          "facts_as_of": "2026-11-15T13:23:56.992034Z",
+          "facts": {
+            "title": "Preexisting Immunity Does Not Prevent Efficacy of Vesicular Stomatitis Virus-Based Filovirus Vaccines in Nonhuman Primates.",
+            "journal": "The Journal of infectious diseases",
+            "year": 2023,
+            "kinds": [
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        },
+        {
+          "identifier": "10.11606/t.9.2021.tde-05082021-120102",
+          "url": "https://doi.org/10.11606/t.9.2021.tde-05082021-120102",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.84,
+              "reasons": [],
+              "decided_by": "rule",
+              "summary": "Vacinologia de Sistemas Aplicada à Vacina rVSV-ZEBOV contra Ebola. 2021. dissertation. Digital Library of Theses and Dissertations  (Universidade de São Paulo)"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1097/01.qai.0000479622.47644.bc",
+          "url": "https://doi.org/10.1097/01.qai.0000479622.47644.bc",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.82,
+              "reasons": [
+                "indication_named"
+              ],
+              "decided_by": "rule",
+              "summary": "E-106 Establishment of a clinical research program in the setting of the ebola outbreak in West Africa. 2016. conference-abstract. JAIDS Journal of Acquired Immune Deficiency Syndromes"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1038/s41467-020-17446-4",
+          "url": "https://doi.org/10.1038/s41467-020-17446-4",
+          "record_url": "https://europepmc.org/article/MED/32719371",
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 0.8,
+              "reasons": [],
+              "decided_by": "rule",
+              "summary": "Prior vaccination with rVSV-ZEBOV does not interfere with but improves efficacy of postexposure antibody treatment. 2020. article. Nature Communications"
+            }
+          ],
+          "facts_as_of": "2026-11-15T11:58:32.227716Z",
+          "facts": {
+            "title": "Prior vaccination with rVSV-ZEBOV does not interfere with but improves efficacy of postexposure antibody treatment.",
+            "journal": "Nature communications",
+            "year": 2020,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people",
+              "animals"
+            ]
+          }
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "GSK",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Johnson & Johnson",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "London School of Hygiene & Tropical Medicine",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "00a0jsq62",
+            "url": "https://ror.org/00a0jsq62",
+            "name": "London School of Hygiene & Tropical Medicine",
+            "kinds": [
+              "education",
+              "funder"
+            ],
+            "country": "United Kingdom",
+            "website": null,
+            "score": 1,
+            "read_at": "2026-11-15T12:40:54.096901Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Merck Sharp & Dohme (MSD)",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Médecins sans Frontières (MSF)",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Public Health Agency of Canada",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "023xf2a37",
+            "url": "https://ror.org/023xf2a37",
+            "name": "Public Health Agency of Canada",
+            "kinds": [
+              "funder",
+              "government"
+            ],
+            "country": "Canada",
+            "website": "https://www.canada.ca/en/public-health.html",
+            "score": 1,
+            "read_at": "2026-11-15T13:23:42.186397Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Wellcome Trust",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "029chgv08",
+            "url": "https://ror.org/029chgv08",
+            "name": "Wellcome Trust",
+            "kinds": [
+              "funder",
+              "nonprofit"
+            ],
+            "country": "United Kingdom",
+            "website": "https://wellcome.org",
+            "score": 1,
+            "read_at": "2026-11-15T13:23:43.560866Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "World Health Organization",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "http://www.bbc.com/news/health-33733711"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Canadian Immunization Research Network",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "039v19p29",
+            "url": "https://ror.org/039v19p29",
+            "name": "Canadian Immunization Research Network",
+            "kinds": [
+              "funder",
+              "nonprofit"
+            ],
+            "country": "Canada",
+            "website": "https://cirnetwork.ca",
+            "score": 1,
+            "read_at": "2026-11-15T20:37:26.283939Z"
+          },
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT03031912"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "No Ebola cases followed immediate vaccination among 2,014 close contacts, compared with 16 cases among contacts vaccinated three weeks later.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.93,
+          "article_url": "http://www.bbc.com/news/health-33733711",
+          "read_on": "2026-11-15"
+        },
+        {
+          "text": "The vaccine pairs an Ebola-virus fragment with a different, safer virus to train the immune system to fight Ebola.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 1,
+          "article_url": "http://www.bbc.com/news/health-33733711",
+          "read_on": "2026-11-15"
         }
       ]
     },
