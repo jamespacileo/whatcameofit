@@ -1,0 +1,140 @@
+{
+  "release_commit": "67b1d4737f224d9974428d73598834f8c4fe0b26",
+  "deployment_run": 43854214760,
+  "deployment_conclusion": "success",
+  "deployment_completed_at": "2026-11-16T11:06:43Z",
+  "installed_extension": {
+    "version": "0.9.24",
+    "build": 32,
+    "enabled_native_preferences_verified": true,
+    "resource_hashes_verified": 35,
+    "permissions_unchanged": true
+  },
+  "method": "Fresh released website form/text flow and actual installed Safari popup. No post body, screenshots or model gist retained. Native latency and source/model request counts not instrumented.",
+  "native_results": {
+    "S021": {
+      "claims": [
+        {
+          "intervention": "Enfortumab vedotin plus pembrolizumab",
+          "indication": "Bladder cancer",
+          "displayed_possible": 10,
+          "first_record": "NCT03924895",
+          "confidence": 0.71,
+          "state": "partial"
+        },
+        {
+          "intervention": "Left atrial appendage closure",
+          "indication": "Atrial fibrillation",
+          "displayed_possible": 1,
+          "first_record": "NCT03463317",
+          "confidence": 0.92
+        },
+        {
+          "intervention": "HBG1 and HBG2 promoter editing",
+          "indication": "Sickle cell disease",
+          "displayed_possible": 1,
+          "first_record": "NCT04853576",
+          "confidence": 0.97,
+          "state": "partial"
+        }
+      ],
+      "cards": [],
+      "reply_claims_excluded": true,
+      "provenance": "Browser-read addressed Threads post only; linked NEJM article unreadable"
+    }
+  },
+  "validation": {
+    "pipeline_passed": 1603,
+    "site_passed": 674,
+    "extension_passed": 175,
+    "lint_format_types": "pass",
+    "strict_openspec": "pass",
+    "production_build_rehearsal": "pass",
+    "standards_review": "no findings",
+    "spec_review": "no findings"
+  },
+  "bounded_candidate_check": {
+    "registry_requests": 2,
+    "milliseconds": 314,
+    "records": [
+      "NCT04853576"
+    ],
+    "model_requests": 0,
+    "scope": "Pre-release client discovery only; not end-to-end latency"
+  },
+  "remaining": [
+    "No cards returned for S021; first and third claims remain partly checked within page allowance",
+    "S022 wrong PrEggNut trial remains open",
+    "S027 source failure handling remains open",
+    "N013 readable-caption lookup failure remains open",
+    "S021 website did not display KEYNOTE-905 among its ten possible matches; candidate/scoring coverage not yet diagnosed"
+  ],
+  "site_result": {
+    "S021": {
+      "address": "Threads text-paste guidance; address alone not read",
+      "claims": [
+        {
+          "intervention": "Enfortumab vedotin plus pembrolizumab",
+          "indication": "Bladder cancer",
+          "displayed_possible": 10,
+          "first_record": "NCT06809140",
+          "confidence": 0.99,
+          "state": "partial",
+          "note": "Reported KEYNOTE-905 NCT03924895 not among ten displayed possible matches; remaining records not inspected"
+        },
+        {
+          "intervention": "Left atrial appendage closure",
+          "indication": "Atrial fibrillation",
+          "displayed_possible": 1,
+          "first_record": "NCT03463317",
+          "confidence": 0.98
+        },
+        {
+          "intervention": "HBG1 and HBG2 promoter editing",
+          "indication": "Sickle cell disease",
+          "displayed_possible": 1,
+          "first_record": "NCT04853576",
+          "confidence": 0.55,
+          "state": "partial"
+        }
+      ],
+      "cards": [],
+      "input_scope": "Text of the three addressed public reports only, with their visible links; no replies or unrelated cover contents"
+    }
+  },
+  "checked_at": "2026-11-16T11:10:34.179821+00:00",
+  "counts": {
+    "review": 27,
+    "pass": 144,
+    "partial": 54,
+    "blocked": 32,
+    "fail": 1
+  },
+  "card_counts": {
+    "review": 28,
+    "not applicable": 10,
+    "no card": 54,
+    "not checked": 32,
+    "match": 134
+  },
+  "sheet_verification": {
+    "checked_at": "2026-11-16T11:11:32.033Z",
+    "changed_values_verified": 17,
+    "other_inspected_values_preserved": 161,
+    "all_inspected_metadata_preserved": true,
+    "totals": [
+      "Total",
+      "258",
+      "144",
+      "54",
+      "1",
+      "32",
+      "27",
+      "0"
+    ],
+    "visual": "Native display unverified behind Google identity verification; existing formatting and wrap preserved"
+  },
+  "rows": {
+    "S021": {"test_result": "partial", "reason": "RUBY discovery is corrected in both released paths. Three claims remain separate, but no cards are returned and page search limits leave partial coverage. The website does not display KEYNOTE-905 among its ten possible matches.", "how_read": "released website address/text form and actual installed Safari popup", "lookup_answer": "3 separate claims; RUBY now found in site and Safari; no cards; partial search allowance", "trial_records": "", "likely_records": 12, "top_record": "Safari: NCT03924895 (71%); NCT03463317 (92%); RUBY NCT04853576 (97%). Site: NCT06809140 (99%); NCT03463317 (98%); RUBY NCT04853576 (55%).", "tracked_claim": "", "closest_tracked_claim": "", "ms": null, "last_tested": "2026-11-16T11:10:34.179821+00:00", "tested_build": "site 67b1d4737f22; installed Safari 0.9.24 (32)", "site_result": "Released address form offers Threads text paste. Pasting the three addressed reports returns three groups and RUBY NCT04853576 (55%); LAA closure NCT03463317 (98%). Bladder combination and RUBY remain partial within allowance; KEYNOTE-905 is not among the ten displayed possible bladder matches. No cards.", "extension_result": "Actual Safari 0.9.24 popup: three groups; bladder combination 10 possible matches (first NCT03924895, 71%); LAA closure NCT03463317 (92%); RUBY NCT04853576 (97%). First/third groups partial within allowance. No cards. Replies excluded; linked NEJM article unreadable. Signed universal build, 35 resources verified and version enabled. Latency/request counts not instrumented.", "knowledge_card_result": "no card", "knowledge_card_notes": "No knowledge cards returned. Correct RUBY discovery does not establish complete search or card coverage.", "named_condition_release": "runs/2026-11-16-named-condition-release.json"}
+  }
+}
