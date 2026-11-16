@@ -111,6 +111,19 @@ PLURAL_KINDS = frozenset(
         "vaccines",
         "antibodies",
         "prescriptions",
+        # Classes of drug named by their plural (batch 2 and 3 audits, 2026-11-16).
+        "statins",
+        "antidepressants",
+        "insulins",
+        "opioids",
+        "antibiotics",
+        "antivirals",
+        "immunotherapies",
+        "vaccinations",
+        "boosters",
+        "regimens",
+        "biologics",
+        "psychedelics",
     ]
 )
 # The plural of a code: "GLP-1s", "SGLT2s". A code names a target or a family when it
@@ -170,3 +183,68 @@ def is_a_search_phrase(text: str) -> bool:
     while words and words[0] in OPENERS:
         words = words[1:]
     return any(word not in KINDS for word in words)
+
+
+# Words of a vaccine or a schedule that hold no product: "COVID-19 vaccine", "third
+# dose of COVID-19 vaccine", "2024-2025 dose", "three-dose vaccination".
+SCHEDULE_WORDS = frozenset(
+    [
+        "vaccine", "vaccines", "vaccination", "vaccinations", "booster", "boosters",
+        "dose", "doses", "dosing", "regimen", "regimens", "shot", "shots", "jab", "jabs",
+        "immunisation", "immunization", "of", "the", "a", "an", "for", "against", "and",
+        "first", "second", "third", "fourth", "fifth", "single", "updated", "seasonal",
+        "annual", "bivalent", "monovalent", "coronavirus", "covid", "covid-19",
+        "sars-cov-2", "flu", "influenza",
+    ]
+)  # fmt: skip
+_SCHEDULE_PATTERN = re.compile(r"\d+(?:st|nd|rd|th)|\d{4}(?:[-\u2013/]\d{2,4})?|\w+-dose|\d+")
+SCHEDULE_MARKERS = frozenset(
+    ["vaccine", "vaccines", "vaccination", "vaccinations", "booster", "boosters", "dose",
+     "doses", "dosing", "regimen", "regimens", "immunisation", "immunization"]
+)  # fmt: skip
+
+
+def names_no_product(intervention: str, indication: str) -> bool:
+    """Whether a vaccine or schedule name holds no product once the condition's own
+    words are left out: "COVID-19 vaccination" for prevention of COVID-19 does;
+    "Pfizer-BioNTech COVID-19 vaccine" does not."""
+    words = [word.strip(PUNCTUATION).lower() for word in intervention.split()]
+    words = [word for word in words if word]
+    if (
+        not words
+        or not SCHEDULE_MARKERS & set(words)
+        and not any(word.endswith("-dose") for word in words)
+    ):
+        return False
+    condition = {word.strip(PUNCTUATION).lower() for word in indication.split()}
+    left = [
+        word
+        for word in words
+        if word not in SCHEDULE_WORDS
+        and word not in condition
+        and not _SCHEDULE_PATTERN.fullmatch(word)
+    ]
+    return not left
+
+
+# A condition that names no one condition: "Cancer". Words of an animal's condition: a
+# claim is about people.
+NO_ONE_CONDITION = frozenset(
+    ["cancer", "cancers", "tumour", "tumours", "tumor", "tumors", "solid tumours",
+     "solid tumors", "disease", "diseases"]
+)  # fmt: skip
+ANIMAL_WORDS = frozenset(
+    ["feline", "canine", "equine", "bovine", "veterinary", "cats", "dogs", "horses",
+     "cattle", "pets"]
+)  # fmt: skip
+
+
+def condition_refusal(indication: str) -> str | None:
+    """Why a read's condition cannot make a claim, or None: it names no one condition,
+    or it is an animal's."""
+    words = [word.strip(PUNCTUATION).lower() for word in indication.split()]
+    if " ".join(words) in NO_ONE_CONDITION:
+        return "no one condition"
+    if ANIMAL_WORDS & set(words):
+        return "an animal's condition"
+    return None

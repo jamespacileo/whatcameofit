@@ -211,6 +211,12 @@ Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that ans
 
 - [x] 15.1 Finish a lead without asking the reader when its outlet answered 401 to at least five pages and served none; verify with tests that such a lead makes no request and that an outlet which served a page is still asked.
 
+## 16. Batch 2 audit faults
+
+Batch 2's audit (2026-11-16) archived 39 of 132 claims; batch 3's archived 54 of 137, 24 of them COVID-19 vaccine classes or brand and code names of live claims. The operator approved three fixes on 2026-11-16.
+
+- [x] 16.3 Refuse at the read a class named by its plural, a vaccine or schedule name with no product, a condition that is no one condition ("Cancer") and an animal's condition. Measured on the database: of 619 claims these refuse 1 live ("COVID-19 vaccination" for cardiovascular events) and 28 archived. A target-and-kind rule ("anti-PD-1 immunotherapy") was dropped: it also refused anti-USAG-1 antibody and CAR-T for stiff person syndrome. Verify with tests.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.

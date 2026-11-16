@@ -386,3 +386,14 @@ Before asking the page reader for a lead's page, the read SHALL count the outlet
 #### Scenario: An outlet that served a page
 - **WHEN** an outlet has five 401 answers and one lead that was read from its page
 - **THEN** its next lead is asked of the reader as before
+
+### Requirement: A read names one product for one condition of people
+A read SHALL draft no claim, and SHALL record the lead as not one treatment, when its treatment's name is a class named by its plural (statins, antidepressants, insulins and the like), or a vaccine or schedule name that holds no product once the condition's own words, schedule words, ordinals and years are left out ("COVID-19 vaccination", "third dose of COVID-19 vaccine", "2024-2025 dose"). It SHALL do the same when the condition is no one condition ("Cancer", "solid tumours") or an animal's ("feline infectious peritonitis"). A product name with a vaccine word ("Pfizer-BioNTech COVID-19 vaccine", "mRNA-1273", "RTS,S malaria vaccine") is not refused. A target followed by a kind ("anti-USAG-1 antibody") is not refused by rule: a rule cannot tell one antibody from a class by its target.
+
+#### Scenario: A vaccine or schedule with no product
+- **WHEN** a read names "COVID-19 vaccination" for prevention of COVID-19
+- **THEN** no claim is drafted and the lead is not one treatment, a class of treatments
+
+#### Scenario: A condition that is not one condition of people
+- **WHEN** a read names DHA for "Cancer", or GS-441524 for feline infectious peritonitis
+- **THEN** no claim is drafted, and the lead says no one condition, or an animal's condition
