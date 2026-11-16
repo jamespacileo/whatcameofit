@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>At a glance variants</title>
+<style>
+@font-face {
+  font-family: "Figtree Variable";
+  src: url("figtree-latin-wght-normal.woff2") format("woff2");
+  font-weight: 300 900;
+  font-display: swap;
+}
+:root {
+  --paper: #ffffff;
+  --ink: #0f1f38;
+  --blue: #14427f;
+  --muted: #46566b;
+  --panel: #f1f5fb;
+  --tint: #e6eef8;
+  --tag: #d6e2f2;
+  --rule: #d9e2ee;
+  --rule-soft: #e9eff5;
+  --footer: #0b2545;
+  --navy-soft: #c9d9ee;
+  --ground: #f4f7fb;
+  --ring: #7f90a3;
+  --radius: 0.85rem;
+  --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+  font-size: 106.25%;
+}
+* , *::before, *::after { box-sizing: border-box; }
+html { font-family: var(--face); line-height: 1.55; color: var(--ink); background: var(--ground); font-variant-numeric: tabular-nums lining-nums; scrollbar-color: var(--blue) var(--tint); }
+body { margin: 0; }
+::selection { background: var(--tag); color: var(--ink); }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+a { color: var(--blue); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+button { font: inherit; color: inherit; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Mock chrome ---------- */
+.mock-top { background: var(--footer); color: #fff; padding: 1.1rem clamp(1rem, 4vw, 2rem); }
+.mock-top h1 { margin: 0; font-size: 1.35rem; }
+.mock-top p { margin: 0.25rem 0 0; color: var(--navy-soft); font-size: 0.9rem; max-width: 70ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 0.6rem 1.5rem; padding: 0.9rem clamp(1rem, 4vw, 2rem); background: var(--paper); border-bottom: 1px solid var(--rule); position: sticky; top: 0; z-index: 5; }
+.seg { display: flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+.seg > span { font-size: 0.8rem; color: var(--muted); margin-right: 0.2rem; }
+.seg button { border: 1px solid var(--ring); background: var(--paper); border-radius: 999px; padding: 0.3rem 0.8rem; font-size: 0.85rem; cursor: pointer; min-height: 2.1rem; }
+.seg button[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: #fff; }
+.layout { max-width: 78rem; margin: 0 auto; padding: 1.5rem clamp(1rem, 4vw, 2rem) 4rem; display: grid; grid-template-columns: 17rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+@media (max-width: 68rem) { .layout { grid-template-columns: 1fr; } }
+.why { position: sticky; top: 5rem; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1rem 1.1rem; font-size: 0.88rem; }
+@media (max-width: 68rem) { .why { position: static; } }
+.why h2 { font-size: 1.05rem; margin: 0 0 0.35rem; }
+.why p { margin: 0 0 0.6rem; }
+.why ul { margin: 0 0 0.6rem; padding-left: 1.1rem; }
+.why li { margin-bottom: 0.25rem; }
+.why .k { font-weight: 700; font-size: 0.8rem; color: var(--muted); margin: 0.8rem 0 0.2rem; }
+.stage-wrap { display: flex; justify-content: center; }
+.sheet { background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1.6rem clamp(1rem, 3vw, 2rem) 2rem; width: 100%; container-type: inline-size; transition: max-width 0.25s ease; }
+.sheet.phone { max-width: 390px; padding: 1.2rem 1rem 1.6rem; }
+.context { color: var(--muted); font-size: 0.85rem; border-bottom: 1px dashed var(--rule); padding-bottom: 0.9rem; margin-bottom: 1.4rem; }
+.context strong { color: var(--ink); }
+.after { color: var(--muted); font-size: 0.85rem; border-top: 1px dashed var(--rule); padding-top: 0.9rem; margin-top: 1.8rem; }
+
+/* ---------- Site pieces shared by every variant ---------- */
+.fold-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.8rem; }
+.bar { font-size: 1.2rem; margin: 0; line-height: 1.14; }
+.fold { display: inline-flex; align-items: center; gap: 0.6rem; border: 0; background: none; padding: 0; cursor: pointer; font-weight: 700; }
+.chev { display: inline-grid; place-items: center; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--tint); color: var(--blue); }
+.fold-note { font-size: 0.85rem; color: var(--muted); }
+.ico { width: 14px; height: 14px; flex: none; }
+.note { margin: 0.8rem 0 0; max-width: 62ch; text-wrap: pretty; font-size: 0.85rem; color: var(--muted); }
+.aka { display: block; font-size: 0.85rem; color: var(--muted); font-weight: 400; }
+details > summary { list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+details[open] > summary .ico.turn { transform: rotate(180deg); }
+
+/* The background card, as built (TermCard). */
+.term-card { border: 1px solid var(--rule); border-radius: 0.65rem; padding: 0.85rem 1rem; max-width: 64ch; margin-top: 0.55rem; font-size: 0.92rem; }
+.card-kind { display: block; font-size: 0.8rem; color: var(--muted); }
+.card-label { font-weight: 600; }
+.card-words-label { margin: 0.6rem 0 0.2rem; font-size: 0.8rem; color: var(--muted); }
+.card-words blockquote, .card-facts { margin: 0; background: var(--panel); border-radius: 0.5rem; padding: 0.55rem 0.75rem; }
+.card-facts { margin-top: 0.6rem; }
+.card-facts p { margin: 0; }
+.card-facts ul { margin: 0.2rem 0 0; padding-left: 1.1rem; }
+.term-card p { margin: 0; }
+.term-credit { margin-top: 0.6rem !important; font-size: 0.8rem; color: var(--muted); }
+.term-credit a { color: var(--muted); text-decoration-color: var(--rule); }
+.match-why { margin-top: 0.6rem; font-size: 0.85rem; color: var(--muted); }
+.match-why-head { color: var(--ink); font-weight: 600; }
+.term-note { margin-top: 0.6rem !important; font-size: 0.82rem; color: var(--muted); }
+.entry-note { color: var(--muted); }
+
+/* ---------- V0: as built ---------- */
+.v0 .rows { margin: 0.7rem 0 0; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; }
+.v0 .rows > div { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 0.15rem 1.25rem; padding: 0.85rem 1.1rem; border-top: 1px solid var(--rule-soft); }
+.v0 .rows > div:first-child { border-top: 0; }
+.v0 dt { font-size: 0.9rem; color: var(--muted); padding-top: 0.1rem; }
+.v0 dd { margin: 0; min-width: 0; }
+.v0 .val { font-weight: 600; }
+.v0 summary { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.55rem; min-height: 2rem; color: var(--blue); font-size: 0.9rem; margin-top: 0.3rem; }
+.v0 .lbl { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
+.v0 .lbl u { text-underline-offset: 0.18em; }
+.v0 .score { color: var(--muted); }
+@container (max-width: 40rem) { .v0 .rows > div { grid-template-columns: 1fr; } }
+
+/* ---------- V1: two halves ---------- */
+.v1 .frame { margin-top: 0.7rem; border: 1px solid var(--rule); border-radius: var(--radius); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+.v1 .half { padding: 1rem 1.15rem 1.1rem; }
+.v1 .half + .half { border-left: 1px solid var(--rule); background: var(--panel); border-radius: 0 var(--radius) var(--radius) 0; }
+.v1 h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+.v1 dl { margin: 0; }
+.v1 .item { padding: 0.55rem 0; border-top: 1px solid var(--rule-soft); }
+.v1 .half + .half .item { border-top-color: var(--rule); }
+.v1 .item:first-child { border-top: 0; padding-top: 0; }
+.v1 dt { font-size: 0.8rem; color: var(--muted); }
+.v1 dd { margin: 0; }
+.v1 .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; }
+.v1 .val { font-weight: 600; font-size: 1.05rem; }
+.v1 .line > .val { order: 0; } .v1 .line summary { order: 1; } .v1 .line > .aka { order: 2; flex-basis: 100%; margin-top: -0.2rem; } .v1 .line > .cards { order: 3; flex-basis: 100%; }
+.v1 summary { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; color: var(--blue); min-height: 1.8rem; }
+.v1 summary .m { color: var(--muted); }
+.v1 summary u { text-underline-offset: 0.18em; }
+@container (max-width: 40rem) {
+  .v1 .frame { grid-template-columns: 1fr; }
+  .v1 .half + .half { border-left: 0; border-top: 1px solid var(--rule); border-radius: 0 0 var(--radius) var(--radius); }
+  .v1 summary { min-height: 2.75rem; }
+}
+
+/* ---------- V2: claim's words beside the vocabulary's ---------- */
+.v2 table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 0.7rem; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; font-size: 0.95rem; }
+.v2 th { text-align: left; font-size: 0.8rem; font-weight: 600; color: var(--muted); background: var(--panel); padding: 0.55rem 0.9rem; border-bottom: 1px solid var(--rule); }
+.v2 td { padding: 0.7rem 0.9rem; border-top: 1px solid var(--rule-soft); vertical-align: top; }
+.v2 tbody tr:first-child td { border-top: 0; }
+.v2 .num { text-align: right; white-space: nowrap; }
+.v2 .claimword { font-weight: 600; }
+.v2 .role { display: block; font-size: 0.8rem; color: var(--muted); }
+.v2 .arrowcell { color: var(--ring); width: 1.5rem; padding-left: 0; padding-right: 0; }
+.v2 .src { display: block; font-size: 0.8rem; color: var(--muted); }
+.v2 .open { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--blue); font-size: 0.82rem; border: 0; background: none; padding: 0; cursor: pointer; min-height: 1.8rem; }
+.v2 .open u { text-underline-offset: 0.18em; }
+.v2 .open[aria-expanded="true"] .ico { transform: rotate(180deg); }
+.v2 tr.detail td { border-top: 0; padding-top: 0; }
+.v2 tr.detail .term-card { margin-top: 0; }
+.v2 .facts { display: flex; flex-wrap: wrap; gap: 0.4rem 1.75rem; margin: 0.9rem 0 0; padding: 0; }
+.v2 .facts div { display: flex; flex-direction: column; }
+.v2 .facts dt { font-size: 0.8rem; color: var(--muted); }
+.v2 .facts dd { margin: 0; font-weight: 600; }
+@container (max-width: 40rem) {
+  .v2 table, .v2 tbody, .v2 tr, .v2 td { display: block; }
+  .v2 thead, .v2 tr[hidden] { display: none; }
+  .v2 tr.main { padding: 0.75rem 0.9rem 0.2rem; border-top: 1px solid var(--rule-soft); }
+  .v2 tbody tr.main:first-child { border-top: 0; }
+  .v2 td { padding: 0; border: 0; }
+  .v2 .arrowcell { display: none; }
+  .v2 td.rec::before { content: "Recorded as"; display: block; font-size: 0.75rem; color: var(--muted); margin-top: 0.4rem; }
+  .v2 .num { text-align: left; margin-top: 0.15rem; }
+  .v2 .num::before { content: "Term match: "; color: var(--muted); }
+  .v2 .open { min-height: 2.75rem; }
+  .v2 tr.detail td { padding: 0 0.9rem 0.8rem; }
+}
+
+/* ---------- V3: one strip, one drawer ---------- */
+.v3 .strip { margin: 0.7rem 0 0; display: flex; flex-wrap: wrap; border: 1px solid var(--rule); border-radius: var(--radius); overflow: hidden; background: var(--rule-soft); gap: 1px; }
+.v3 .cell { flex: 1 1 9.5rem; background: var(--paper); padding: 0.75rem 0.95rem 0.8rem; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.v3 .cell dt { font-size: 0.78rem; color: var(--muted); }
+.v3 .cell dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.v3 .cell.term { cursor: pointer; }
+.v3 .pick { margin-top: auto; padding-top: 0.25rem; display: inline-flex; align-items: center; gap: 0.25rem; border: 0; background: none; padding-left: 0; padding-right: 0; color: var(--blue); font-size: 0.8rem; cursor: pointer; text-align: left; min-height: 1.8rem; }
+.v3 .pick u { text-underline-offset: 0.18em; }
+.v3 .pm { font-size: 0.78rem; color: var(--muted); margin-top: auto; padding-top: 0.35rem; }
+.v3 .pm + .pick { margin-top: 0; padding-top: 0; }
+.v3 .cell.on { background: var(--tint); }
+.v3 .cell.on .pick .ico { transform: rotate(180deg); }
+.v3 .drawer { border: 1px solid var(--rule); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); margin-top: -0.6rem; padding: 1.2rem 1.1rem 1rem; background: var(--tint); }
+.v3 .drawer[hidden] { display: none; }
+.v3 .drawer .term-card { background: var(--paper); margin-top: 0; }
+.v3 .drawer .term-card + .term-card { margin-top: 0.6rem; }
+.v3 .strip.with-drawer { border-radius: var(--radius) var(--radius) 0 0; }
+@container (max-width: 40rem) { .v3 .cell { flex-basis: 40%; } .v3 .pick { min-height: 2.75rem; } }
+
+/* ---------- V4: definitions in sight ---------- */
+.v4 .terms { margin: 0.7rem 0 0; display: grid; gap: 0; border-top: 2px solid var(--ink); }
+.v4 .t { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 0.2rem 1.25rem; padding: 0.9rem 0; border-bottom: 1px solid var(--rule); }
+.v4 dt { font-size: 0.85rem; color: var(--muted); padding-top: 0.15rem; }
+.v4 dd { margin: 0; min-width: 0; }
+.v4 .val { font-weight: 700; font-size: 1.08rem; }
+.v4 .def { margin: 0.35rem 0 0; max-width: 60ch; }
+.v4 .def q { quotes: "\201C" "\201D"; }
+.v4 .by { display: flex; flex-wrap: wrap; gap: 0.1rem 0.5rem; align-items: center; margin-top: 0.3rem; font-size: 0.8rem; color: var(--muted); }
+.v4 .by .dot { color: var(--ring); }
+.v4 summary { display: inline-flex; align-items: center; gap: 0.25rem; color: var(--blue); min-height: 1.8rem; }
+.v4 summary u { text-underline-offset: 0.18em; }
+.v4 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem 1.25rem; margin: 0; padding: 0.9rem 0 0.95rem; border-bottom: 2px solid var(--ink); }
+.v4 .facts dt { font-size: 0.8rem; }
+.v4 .facts dd { font-weight: 600; }
+@container (max-width: 40rem) {
+  .v4 .t { grid-template-columns: 1fr; }
+  .v4 .facts { grid-template-columns: 1fr 1fr; }
+  .v4 summary { min-height: 2.75rem; }
+}
+
+/* ---------- V5: a sentence first ---------- */
+.v5 .lede { margin: 0.8rem 0 0; font-size: 1.12rem; line-height: 1.6; max-width: 58ch; text-wrap: pretty; }
+.v5 .lede .termbtn { border: 0; background: none; padding: 0; font-weight: 700; color: var(--ink); cursor: pointer; text-decoration: underline dotted var(--ring) 2px; text-underline-offset: 0.25em; }
+.v5 .lede .termbtn:hover { text-decoration-color: var(--blue); }
+.v5 .lede .termbtn[aria-expanded="true"] { background: var(--tag); border-radius: 0.25rem; text-decoration-color: var(--blue); }
+.v5 .lede a { font-weight: 600; }
+.v5 .slot { margin-top: 0.4rem; }
+.v5 .slot .term-card { background: var(--paper); box-shadow: 0 6px 22px -10px rgba(15, 31, 56, 0.25); }
+.v5 .ledger { margin: 1rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); font-size: 0.88rem; }
+.v5 .ledger li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.1rem 1rem; padding: 0.5rem 0; border-bottom: 1px solid var(--rule-soft); }
+.v5 .ledger .w { font-weight: 600; }
+.v5 .ledger .w span { font-weight: 400; color: var(--muted); }
+.v5 .ledger .m { color: var(--muted); }
+.v5 .ledger-h { margin: 1.1rem 0 0; font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header class="mock-top">
+  <h1>At a glance: six ways to lay it out</h1>
+  <p>Mock only. Real data from the published export. The section between the digest and “The record in brief” on a claim page. Light only, as DESIGN.md says.</p>
+</header>
+
+<div class="controls" role="group" aria-label="Mock controls">
+  <div class="seg" id="seg-variant"><span>Variant</span></div>
+  <div class="seg" id="seg-claim"><span>Claim</span></div>
+  <div class="seg" id="seg-width"><span>Width</span></div>
+</div>
+
+<div class="layout">
+  <aside class="why" id="why" aria-live="polite"></aside>
+  <div class="stage-wrap">
+    <div class="sheet" id="sheet">
+      <div class="context">…digest panel, follow offer and notes above. <strong>Status: Phase 3.</strong></div>
+      <div id="stage"></div>
+      <div class="after">…The record in brief follows.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CHEV = '<svg class="ico turn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+const ARROW = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
+const NOTE = "These notes describe the terms this claim uses, in their sources’ own words and not this site’s; naming a source does not mean it endorses this site. They are not about this claim’s evidence and they are not medical advice, and a score is about how well a term fits the claim, not about the treatment.";
+const NOTE_LINK = ' <a href="#">How these terms are chosen</a>';
+const DRUG_NOTE = "This is a drug database’s record of the drug. It is not about this condition and is no reason to start or stop a medicine.";
+const MESH = "MeSH 2026, U.S. National Library of Medicine";
+
+// Cards, in the shape TermCard renders.
+const CLAIMS = {
+  ivo: {
+    tab: "ivonescimab · lung cancer",
+    treatment: "ivonescimab",
+    terms: [
+      { row: "Treatment", value: "ivonescimab", detail: null, words: "ivonescimab", role: "The treatment", cards: [] },
+      { row: "Kind of molecule", value: "Antibody", detail: null, words: "ivonescimab", role: "The drug", match: "by exact name", matchShort: "exact-name match", recorded: "IVONESCIMAB", recordedAs: "ivonescimab", src: "Open Targets · ChEMBL",
+        def: null,
+        cards: [
+          { kind: "The drug, as a drug database records it", label: "ivonescimab", facts: { molecule: "Antibody", mechanisms: [] }, credit: "Open Targets Platform, CC0", read: "16 November 2026", extra: "Kind of molecule and what it acts on: ChEMBL, EMBL-EBI, CC BY-SA 3.0 Unported", head: "Match to this claim: by exact name", reasons: ["The drug’s name is the treatment’s name as written."], note: DRUG_NOTE },
+          { kind: "The kind of treatment this is, not the treatment itself", label: "Antibodies, Monoclonal", definition: "Antibodies produced by a single clone of cells.", credit: MESH, read: "14 November 2026", head: "Match to this claim: high, 94%", reasons: ["Chosen as the kind of treatment: antibody.", "The registry lists it as a drug in 3 trials."] },
+        ] },
+      { row: "Claimed for", value: "Lung cancer", detail: null, words: "Lung cancer", role: "The condition", match: "high, 98%", matchShort: "98% match", recorded: "Lung Neoplasms", src: "MeSH 2026",
+        def: "Tumors or cancer of the LUNG.",
+        cards: [
+          { kind: "The condition", label: "Lung Neoplasms", definition: "Tumors or cancer of the LUNG.", credit: MESH, read: "16 November 2026", head: "Match to this claim: high, 98%", reasons: ["“Lung Cancer” is one of this heading’s entry terms, and it is the claim’s own wording."] },
+        ] },
+    ],
+    facts: [
+      { row: "First reported", value: '<a href="#">15 Nov 2026</a>', plain: "15 Nov 2026" },
+      { row: "Evidence when first reported", value: "Late human study", short: "Evidence then" },
+      { row: "Records listed", value: "15 trial records · 7 papers", short: "Records" },
+    ],
+    lede: (t) => `${t("Treatment","ivonescimab")}, ${t("Kind of molecule","an antibody")}, was reported on <a href="#">15 Nov 2026</a> as a treatment for ${t("Claimed for","lung cancer")}. The evidence then was a late human study. This page lists <a href="#">15 trial records and 7 papers</a>.`,
+  },
+  api: {
+    tab: "apitegromab · obesity",
+    treatment: "apitegromab",
+    terms: [
+      { row: "Treatment", value: "apitegromab", detail: null, words: "apitegromab", role: "The treatment", match: "high, 100%", matchShort: "100% match", recorded: "apitegromab", src: "NCI Thesaurus",
+        def: "monoclonal antibody that binds to human promyostatin and latent myostatin",
+        cards: [
+          { kind: "The treatment, as a vocabulary records it", label: "apitegromab", definition: "monoclonal antibody that binds to human promyostatin and latent myostatin", credit: "NCI Thesaurus 26.10d, National Cancer Institute", read: "12 November 2026", head: "Match to this claim: high, 100%", reasons: ["The entry’s name is the treatment’s name as written."] },
+        ] },
+      { row: "Kind of molecule", value: "Antibody", detail: "Inhibitor of growth/differentiation factor 8", words: "apitegromab", role: "The drug", match: "by exact name", matchShort: "exact-name match", recorded: "APITEGROMAB", recordedAs: "apitegromab", src: "Open Targets · ChEMBL",
+        def: null,
+        cards: [
+          { kind: "The drug, as a drug database records it", label: "apitegromab", facts: { molecule: "Antibody", mechanisms: ["Inhibitor of Growth/differentiation factor 8"] }, credit: "Open Targets Platform, CC0", read: "12 November 2026", extra: "Kind of molecule and what it acts on: ChEMBL, EMBL-EBI, CC BY-SA 3.0 Unported", head: "Match to this claim: by exact name", reasons: ["The drug’s name is the treatment’s name as written."], note: DRUG_NOTE },
+        ] },
+      { row: "Acts on", value: "MSTN", detail: "myostatin", words: "MSTN", role: "What the drug acts on", match: "from the drug’s record", matchShort: "from drug record", recorded: "MSTN", src: "UniProt",
+        def: "Acts specifically as a negative regulator of skeletal muscle growth.",
+        cards: [
+          { kind: "What the drug acts on, as its record says", label: "MSTN", name: "myostatin", definition: "Acts specifically as a negative regulator of skeletal muscle growth.", credit: "Open Targets Platform, CC0", read: "12 November 2026", extra: "Description by UniProt Consortium, CC BY 4.0", head: "Match to this claim: taken from the drug’s record", reasons: ["The drug’s record names this as what it acts on."], note: DRUG_NOTE },
+        ] },
+      { row: "Claimed for", value: "Obesity", detail: null, words: "Obesity", role: "The condition", match: "high, 100%", matchShort: "100% match", recorded: "Obesity", src: "MeSH 2026",
+        def: "A status with BODY WEIGHT that is grossly above the recommended standards, usually due to accumulation of excess FATS in the body.",
+        cards: [
+          { kind: "The condition", label: "Obesity", definition: "A status with BODY WEIGHT that is grossly above the recommended standards, usually due to accumulation of excess FATS in the body. The standards may vary with age, sex, genetic or cultural background.", credit: MESH, read: "12 November 2026", head: "Match to this claim: high, 100%", reasons: ["The heading’s name is the claim’s own wording."] },
+        ] },
+    ],
+    facts: [
+      { row: "First reported", value: '<a href="#">8 Jun 2026</a>', plain: "8 Jun 2026" },
+      { row: "Evidence when first reported", value: "Early human study", short: "Evidence then" },
+      { row: "Records listed", value: "4 trial records · 2 papers", short: "Records" },
+    ],
+    lede: (t) => `${t("Treatment","apitegromab")}, ${t("Kind of molecule","an antibody")} that ${t("Acts on","acts on myostatin")}, was reported on <a href="#">8 Jun 2026</a> as a treatment for ${t("Claimed for","obesity")}. The evidence then was an early human study. This page lists <a href="#">4 trial records and 2 papers</a>.`,
+  },
+};
+
+function card(c) {
+  const body = c.facts
+    ? `<div class="card-facts"><p>${c.facts.molecule}</p>${c.facts.mechanisms.length ? `<ul>${c.facts.mechanisms.map(m => `<li>${m}</li>`).join("")}</ul>` : `<p class="entry-note">The record gives no mechanism for this drug.</p>`}</div>`
+    : `<div class="card-words"><p class="card-words-label">Definition, in the source’s words</p><blockquote>${c.definition}</blockquote></div>`;
+  return `<div class="term-card">
+    <p><span class="card-kind">${c.kind}</span><a class="card-label" href="#">${c.label}</a>${c.name ? ` <span class="entry-note">${c.name}</span>` : ""}</p>
+    ${body}
+    <p class="term-credit"><a href="#">${c.credit}</a>. Record read ${c.read}.${c.extra ? ` <a href="#">${c.extra}</a>.` : ""}</p>
+    <div class="match-why"><p class="match-why-head">${c.head}</p>${c.reasons.map(r => `<p>${r}</p>`).join("")}</div>
+    ${c.note ? `<p class="term-note">${c.note}</p>` : ""}
+  </div>`;
+}
+const head = (note) => `<div class="fold-head"><h2 class="bar"><button class="fold" type="button" aria-expanded="true"><span class="chev">${CHEV}</span><span>At a glance</span></button></h2>${note ? `<span class="fold-note">${note}</span>` : ""}</div>`;
+const firstMatch = (t) => t.cards.length ? t.match : null;
+
+// ---------- Variants ----------
+const VARIANTS = [
+  {
+    id: "v0", name: "As built",
+    why: `<h2>As built</h2><p>The section today: one framed row per fact, label left, each term with “Source and definition” and its match.</p>
+      <p class="k">Costs</p><ul><li>Terms and the claim’s dates read as one list, though they answer different questions.</li><li>“Source and definition” repeats on every term row; the useful part, a one-line definition, is a press away.</li><li>Tall on a phone: six rows, each with a label over its value.</li></ul>`,
+    render(c) {
+      const rows = c.terms.map(t => `<div><dt>${t.row}</dt><dd><span class="val">${t.value}</span>${t.detail ? `<span class="aka">${t.detail}</span>` : ""}
+        ${t.cards.length ? `<details><summary><span class="lbl"><u>Source and definition</u>${CHEV}</span><span class="score">Term match: ${t.match}</span></summary>${t.cards.map(card).join("")}</details>` : ""}</dd></div>`).join("");
+      const facts = c.facts.map(f => `<div><dt>${f.row}</dt><dd>${f.value}</dd></div>`).join("");
+      return `<section class="v0">${head()}<dl class="rows">${rows}${facts}</dl><p class="note">${NOTE}${NOTE_LINK}</p></section>`;
+    },
+  },
+  {
+    id: "v1", name: "Two halves",
+    why: `<h2>Two halves</h2><p>Splits the box by the question each half answers: <b>what the words mean</b> (from outside vocabularies, with a match) and <b>this claim</b> (the site’s own dates and counts, on the panel blue).</p>
+      <p class="k">Gains</p><ul><li>The match score only ever sits beside a term, never beside a date, so it is not read as a score of the claim.</li><li>Half the height on a wide screen.</li><li>The disclosure shrinks to the match itself: “98% match” is the link.</li></ul>
+      <p class="k">Costs</p><ul><li>Two headings inside a section heading.</li><li>The panel blue is the digest’s colour; using it here may blur that signature.</li></ul>`,
+    render(c) {
+      const terms = c.terms.map(t => `<div class="item"><dt>${t.row}</dt><dd><div class="line"><span class="val">${t.value}</span>
+        ${t.cards.length ? `<details style="display:contents"><summary><u>Definition</u><span class="m">· ${t.matchShort}</span>${CHEV}</summary><div class="cards">${t.cards.map(card).join("")}</div></details>` : ""}${t.detail ? `<span class="aka">${t.detail}</span>` : ""}</div></dd></div>`).join("");
+      const facts = c.facts.map(f => `<div class="item"><dt>${f.row}</dt><dd style="font-weight:600">${f.value}</dd></div>`).join("");
+      return `<section class="v1">${head()}<div class="frame"><div class="half"><h3>What the terms mean</h3><dl>${terms}</dl></div><div class="half"><h3>This claim</h3><dl>${facts}</dl></div></div><p class="note">${NOTE}${NOTE_LINK}</p></section>`;
+    },
+  },
+  {
+    id: "v2", name: "Claim’s words, source’s term",
+    why: `<h2>Claim’s words beside the source’s term</h2><p>A small table that shows the matching itself: the word the claim uses, the heading an outside source files it under, and how well they fit. “Lung cancer” → “Lung Neoplasms, MeSH, 98%”.</p>
+      <p class="k">Gains</p><ul><li>Shows the work, which is the brand: the reader sees why a score is there without opening anything.</li><li>A source’s capitals (LUNG, IVONESCIMAB) are shown as the source’s, beside the claim’s own wording.</li><li>The claim facts drop to one line under the table.</li></ul>
+      <p class="k">Costs</p><ul><li>Reads as method before meaning: a reader who wanted “what is an antibody?” meets a vocabulary name first.</li><li>Phone layout turns the table into blocks.</li></ul>`,
+    render(c) {
+      const rows = c.terms.filter(t => t.cards.length).map((t, i) => `<tr class="main"><td><span class="role">${t.role}</span><span class="claimword">${t.words}</span>${t.row === "Kind of molecule" ? `<span class="aka">${t.value}${t.detail ? " · " + t.detail : ""}</span>` : t.detail ? `<span class="aka">${t.detail}</span>` : ""}</td>
+        <td class="arrowcell" aria-hidden="true">${ARROW}</td>
+        <td class="rec">${t.recorded}<span class="src">${t.src}</span><button class="open" type="button" aria-expanded="false" aria-controls="v2d${i}"><u>Definition and reasons</u>${CHEV}</button></td>
+        <td class="num">${t.match}</td></tr>
+        <tr class="detail" id="v2d${i}" hidden><td colspan="4">${t.cards.map(card).join("")}</td></tr>`).join("");
+      const facts = c.facts.map(f => `<div><dt>${f.row}</dt><dd>${f.value}</dd></div>`).join("");
+      const treat = "";
+      return `<section class="v2">${head(`${c.terms.filter(t => t.cards.length).length} terms matched`)}${treat}<table><thead><tr><th scope="col">In this claim</th><th aria-hidden="true"></th><th scope="col">Recorded by an outside source as</th><th scope="col" class="num">Term match</th></tr></thead><tbody>${rows}</tbody></table>
+        <dl class="facts">${facts}</dl><p class="note">${NOTE}${NOTE_LINK}</p></section>`;
+    },
+    wire(root) {
+      root.querySelectorAll(".open").forEach(b => b.addEventListener("click", () => {
+        const d = root.querySelector("#" + b.getAttribute("aria-controls"));
+        const open = b.getAttribute("aria-expanded") !== "true";
+        b.setAttribute("aria-expanded", open); d.hidden = !open;
+      }));
+    },
+  },
+  {
+    id: "v3", name: "Strip and drawer",
+    why: `<h2>One strip, one drawer</h2><p>Every fact in one wrapping strip, label over value, like a specification line. A term’s cell opens one shared drawer under the strip; only one card is ever open.</p>
+      <p class="k">Gains</p><ul><li>Shortest by far: two lines on a wide screen, three on a phone.</li><li>Cards open full width, so a long definition is not squeezed into the value column.</li></ul>
+      <p class="k">Costs</p><ul><li>Needs script for the shared drawer (without it, every card would be shown open under the strip).</li><li>Match scores move inside the drawer, out of sight until asked for: conflicts with “every match the site shows carries its score”.</li></ul>`,
+    render(c) {
+      const cells = c.terms.map((t, i) => t.cards.length
+        ? `<div class="cell term" data-i="${i}"><dt>${t.row}</dt><dd>${t.value}${t.detail ? `<span class="aka">${t.detail}</span>` : ""}</dd><span class="pm">${t.matchShort}</span><button class="pick" type="button" aria-expanded="false" aria-controls="v3drawer"><u>Definition</u>${CHEV}</button></div>`
+        : `<div class="cell"><dt>${t.row}</dt><dd>${t.value}</dd></div>`).join("");
+      const facts = c.facts.map(f => `<div class="cell"><dt>${f.short || f.row}</dt><dd>${f.value}</dd></div>`).join("");
+      return `<section class="v3">${head()}<dl class="strip">${cells}${facts}</dl><div class="drawer" id="v3drawer" hidden></div><p class="note">${NOTE}${NOTE_LINK}</p></section>`;
+    },
+    wire(root, c) {
+      const drawer = root.querySelector(".drawer"), strip = root.querySelector(".strip");
+      root.querySelectorAll(".cell.term").forEach(cell => {
+        const btn = cell.querySelector(".pick");
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const was = btn.getAttribute("aria-expanded") === "true";
+          root.querySelectorAll(".cell.term").forEach(x => { x.classList.remove("on"); x.querySelector(".pick").setAttribute("aria-expanded", "false"); });
+          if (was) { drawer.hidden = true; strip.classList.remove("with-drawer"); return; }
+          const t = c.terms[+cell.dataset.i];
+          cell.classList.add("on"); btn.setAttribute("aria-expanded", "true");
+          drawer.innerHTML = t.cards.map(card).join(""); drawer.hidden = false; strip.classList.add("with-drawer");
+        });
+        cell.addEventListener("click", () => btn.click());
+      });
+    },
+  },
+  {
+    id: "v4", name: "Definitions in sight",
+    why: `<h2>Definitions in sight</h2><p>The definitions are short, so they are shown, not hidden: each term with its source’s words in quotation marks and a small credit line with the match. Only the reasons and full credit fold. The claim facts become one row of three under the terms.</p>
+      <p class="k">Gains</p><ul><li>Answers “what is this?” without a press, the closest to an Examine-style summary.</li><li>The ink rules echo “The record in brief” below, so the two sections read as a pair.</li><li>The match stays in sight on every term.</li></ul>
+      <p class="k">Costs</p><ul><li>Longer when a definition is long (obesity is two sentences).</li><li>Shows a source’s words before the reader asked, so the note’s caution matters more; keep it under the section.</li></ul>`,
+    render(c) {
+      const terms = c.terms.map(t => {
+        const cd = t.cards[0];
+        return `<div class="t"><dt>${t.row}</dt><dd><span class="val">${t.value}</span>${t.detail ? `<span class="aka">${t.detail}</span>` : ""}
+          ${t.def ? `<p class="def"><q>${t.def}</q></p>` : ""}
+          ${cd ? `<div class="by"><span>${t.def ? "" : "Recorded as “" + (t.recordedAs || t.recorded) + "” by "}${t.src}</span><span class="dot">·</span><span>Term match: ${t.match}</span><span class="dot">·</span>
+            <details style="display:inline"><summary><u>Why this term</u>${CHEV}</summary></details></div>
+            <div class="slot" hidden>${t.cards.map(card).join("")}</div>` : ""}</dd></div>`;
+      }).join("");
+      const facts = c.facts.map(f => `<div><dt>${f.row}</dt><dd>${f.value}</dd></div>`).join("");
+      return `<section class="v4">${head()}<dl class="terms">${terms}</dl><dl class="facts">${facts}</dl><p class="note">${NOTE}${NOTE_LINK}</p></section>`;
+    },
+    wire(root) {
+      root.querySelectorAll(".t details").forEach(d => d.addEventListener("toggle", () => {
+        d.closest("dd").querySelector(".slot").hidden = !d.open;
+      }));
+    },
+  },
+  {
+    id: "v5", name: "A sentence first",
+    why: `<h2>A sentence first</h2><p>The facts said once as plain prose, in the site’s dry voice; each term in the sentence opens its card in place. Under it, a short ledger lists each term with the source and match, so scores stay in sight.</p>
+      <p class="k">Gains</p><ul><li>Reads like an answer, not a form: the phone reader gets everything in three lines.</li><li>The ledger keeps the method visible without shouting.</li></ul>
+      <p class="k">Costs</p><ul><li>A sentence has to be composed per claim from codes; every gap (no kind, no target, no records) needs its own wording, and the site build must refuse verdict words in it.</li><li>Dotted terms inside prose are a new pattern on the site.</li></ul>`,
+    render(c) {
+      const t = (row, words) => {
+        const term = c.terms.find(x => x.row === row);
+        return term && term.cards.length ? `<button class="termbtn" type="button" aria-expanded="false" data-row="${row}">${words}</button>` : `<b>${words}</b>`;
+      };
+      const ledger = c.terms.filter(x => x.cards.length).map(x => `<li><span class="w">${x.value} <span>→ ${x.recorded}, ${x.src}</span></span><span class="m">Term match: ${x.match}</span></li>`).join("");
+      return `<section class="v5">${head()}<p class="lede">${c.lede(t)}</p><div class="slot" hidden></div>
+        <p class="ledger-h">Where the terms come from</p><ul class="ledger">${ledger}</ul><p class="note">${NOTE}${NOTE_LINK}</p></section>`;
+    },
+    wire(root, c) {
+      const slot = root.querySelector(".slot");
+      root.querySelectorAll(".termbtn").forEach(b => b.addEventListener("click", () => {
+        const was = b.getAttribute("aria-expanded") === "true";
+        root.querySelectorAll(".termbtn").forEach(x => x.setAttribute("aria-expanded", "false"));
+        if (was) { slot.hidden = true; return; }
+        b.setAttribute("aria-expanded", "true");
+        slot.innerHTML = c.terms.find(x => x.row === b.dataset.row).cards.map(card).join(""); slot.hidden = false;
+      }));
+    },
+  },
+];
+
+// ---------- Controls ----------
+const state = { v: "v0", c: "ivo", w: "wide" };
+try { Object.assign(state, JSON.parse(localStorage.getItem("glance-mock") || "{}")); } catch (e) {}
+function seg(id, items, key) {
+  const el = document.getElementById(id);
+  items.forEach(([val, label]) => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.dataset.val = val;
+    b.addEventListener("click", () => { state[key] = val; draw(); });
+    el.appendChild(b);
+  });
+}
+seg("seg-variant", VARIANTS.map((v, i) => [v.id, `${i}. ${v.name}`]), "v");
+seg("seg-claim", Object.entries(CLAIMS).map(([k, c]) => [k, c.tab]), "c");
+seg("seg-width", [["wide", "Desktop"], ["phone", "Phone 390"]], "w");
+function draw() {
+  try { localStorage.setItem("glance-mock", JSON.stringify(state)); } catch (e) {}
+  document.querySelectorAll(".seg button").forEach(b => {
+    const key = b.parentElement.id === "seg-variant" ? "v" : b.parentElement.id === "seg-claim" ? "c" : "w";
+    b.setAttribute("aria-pressed", state[key] === b.dataset.val);
+  });
+  const v = VARIANTS.find(x => x.id === state.v), c = CLAIMS[state.c];
+  const stage = document.getElementById("stage");
+  stage.innerHTML = v.render(c);
+  v.wire && v.wire(stage, c);
+  document.getElementById("why").innerHTML = v.why;
+  document.getElementById("sheet").classList.toggle("phone", state.w === "phone");
+}
+draw();
+</script>
+</body>
+</html>
