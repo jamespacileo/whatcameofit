@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     LargeBinary,
     MetaData,
@@ -75,6 +76,17 @@ def _enum(members: type[StrEnum], name: str) -> Enum:
         create_constraint=True,
         length=32,
         values_callable=lambda cls: [member.value for member in cls],
+    )
+
+
+def _article_of_claim(name: str) -> ForeignKeyConstraint:
+    """A row that names a source article and a claim names the article's own claim. An
+    article moved to another claim, as a duplicate's are, takes the row with it."""
+    return ForeignKeyConstraint(
+        ["source_article_id", "claim_id"],
+        ["source_article.id", "source_article.claim_id"],
+        name=name,
+        onupdate="CASCADE",
     )
 
 
@@ -145,7 +157,11 @@ class Claim(Reviewed, Base):
 
 class SourceArticle(Base):
     __tablename__ = "source_article"
-    __table_args__ = (UniqueConstraint("claim_id", "url", name="uq_source_article_claim_url"),)
+    __table_args__ = (
+        UniqueConstraint("claim_id", "url", name="uq_source_article_claim_url"),
+        # So that a row naming both an article and a claim can be held to the article's own.
+        UniqueConstraint("id", "claim_id", name="uq_source_article_id_claim"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
@@ -159,10 +175,11 @@ class SourceArticle(Base):
 
 class Promise(Base):
     __tablename__ = "promise"
+    __table_args__ = (_article_of_claim("fk_promise_article_of_claim"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
-    source_article_id: Mapped[int] = mapped_column(ForeignKey("source_article.id"))
+    source_article_id: Mapped[int] = mapped_column(ForeignKey("source_article.id"), index=True)
     description: Mapped[str] = mapped_column(Text)
     parsed_date: Mapped[date | None]
 
@@ -184,6 +201,7 @@ class ReportedStatement(Reviewed, Base):
         CheckConstraint("char_length(text) BETWEEN 1 AND 200", name="text_length"),
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
         _review_decision_recorded(),
+        _article_of_claim("fk_reported_statement_article_of_claim"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -213,6 +231,13 @@ class Entity(Base):
             "claim_id",
             unique=True,
             postgresql_where=text("is_origin_paper"),
+        ),
+        # The intervention half of a claim's identity: one, never two.
+        Index(
+            "uq_entity_intervention_per_claim",
+            "claim_id",
+            unique=True,
+            postgresql_where=text("type = 'intervention'"),
         ),
         CheckConstraint("NOT is_origin_paper OR type = 'paper'", name="origin_paper_is_paper"),
         CheckConstraint("doi IS NULL OR type = 'paper'", name="doi_only_on_papers"),
@@ -253,7 +278,7 @@ class EntityArticle(Base):
 
     entity_id: Mapped[int] = mapped_column(ForeignKey("entity.id"), primary_key=True)
     source_article_id: Mapped[int] = mapped_column(
-        ForeignKey("source_article.id"), primary_key=True
+        ForeignKey("source_article.id"), primary_key=True, index=True
     )
 
 
@@ -371,6 +396,8 @@ class EvidenceEvent(Reviewed, Base):
     __tablename__ = "evidence_event"
     __table_args__ = (
         UniqueConstraint("claim_id", "dedupe_key", name="uq_evidence_event_claim_dedupe"),
+        # So that a failure flag can be held to its event's own claim.
+        UniqueConstraint("id", "claim_id", name="uq_evidence_event_id_claim"),
         CheckConstraint("char_length(btrim(source_url)) > 0", name="source_url_present"),
         CheckConstraint("confidence >= 0 AND confidence <= 1", name="confidence_range"),
         CheckConstraint(
@@ -386,7 +413,7 @@ class EvidenceEvent(Reviewed, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
-    entity_match_id: Mapped[int | None] = mapped_column(ForeignKey("entity_match.id"))
+    entity_match_id: Mapped[int | None] = mapped_column(ForeignKey("entity_match.id"), index=True)
     type: Mapped[EventType] = mapped_column(_enum(EventType, "type"))
     event_date: Mapped[date]
     date_basis: Mapped[str | None] = mapped_column(Text)
@@ -411,12 +438,17 @@ class FailureFlag(Base):
     __table_args__ = (
         UniqueConstraint("claim_id", "trial_external_id", name="uq_failure_flag_claim_trial"),
         CheckConstraint("char_length(btrim(source_url)) > 0", name="source_url_present"),
+        ForeignKeyConstraint(
+            ["evidence_event_id", "claim_id"],
+            ["evidence_event.id", "evidence_event.claim_id"],
+            name="fk_failure_flag_event_of_claim",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
     trial_external_id: Mapped[str] = mapped_column(Text)
-    evidence_event_id: Mapped[int] = mapped_column(ForeignKey("evidence_event.id"))
+    evidence_event_id: Mapped[int] = mapped_column(ForeignKey("evidence_event.id"), index=True)
     source_url: Mapped[str] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
@@ -515,6 +547,12 @@ class DecisionLog(Base):
 
 class LlmUsage(Base):
     __tablename__ = "llm_usage"
+    __table_args__ = (
+        CheckConstraint(
+            "input_tokens >= 0 AND output_tokens >= 0 AND cost_usd >= 0",
+            name="amounts_not_negative",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     purpose: Mapped[str] = mapped_column(Text)
@@ -595,6 +633,7 @@ class WorkEntry(Base):
             name="uq_work_entry_record_step_version",
         ),
         CheckConstraint("(outcome = 'failed') = (error IS NOT NULL)", name="failure_has_error"),
+        CheckConstraint("attempts >= 0 AND requests_used >= 0", name="counts_not_negative"),
         # The unique index leads with the record, so a step's entries need their own.
         Index("ix_work_entry_step_step_version", "step", "step_version"),
     )
@@ -620,6 +659,9 @@ class SourceAllowanceUse(Base):
     that asks that source. Behavior: openspec source-allowances."""
 
     __tablename__ = "source_allowance_use"
+    __table_args__ = (
+        CheckConstraint("requests_used >= 0 AND refusals >= 0", name="counts_not_negative"),
+    )
 
     source_name: Mapped[str] = mapped_column(Text, primary_key=True)
     period_start: Mapped[datetime] = mapped_column(TIMESTAMP)
@@ -718,6 +760,12 @@ class LinkLead(Base):
             "ix_link_lead_read_outcome",
             "read_outcome",
             postgresql_where=text("read_outcome IS NOT NULL"),
+        ),
+        _article_of_claim("fk_link_lead_article_of_claim"),
+        Index(
+            "ix_link_lead_source_article_id",
+            "source_article_id",
+            postgresql_where=text("source_article_id IS NOT NULL"),
         ),
     )
 
