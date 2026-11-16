@@ -30,7 +30,13 @@ export function groupByReading(matches: ExportedMatch[]): ReadingGroup[] {
 }
 
 export const NO_PHASE_GIVEN = "Phase not given";
-export const NOT_READ_YET = "Its registry record has not been read into fields yet.";
+export const NOT_READ_YET = "Details not read from the registry yet";
+/** Said under each group of possible records, so no row reads as a counted trial. */
+export const NOT_COUNTED = "Not counted in the status: no rule or person has confirmed these matches.";
+/** What the record lists among its interventions: the treatment, comparators and
+ * procedures alike, so it is never worded as what the trial tests. */
+export const NAMED_LABEL = "Named in the record";
+export const FOR_LABEL = "For";
 
 /** "Phase 2", "Under way": the record's phase and state in the site's words. */
 export function standingOf(record: ExportedMatchRecord): string[] {

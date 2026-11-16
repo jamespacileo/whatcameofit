@@ -1136,14 +1136,20 @@ test("an export made before trial facts still builds, with the matched records a
 // --- registry record rows (openspec registry-record-rows) ---
 
 test("Scenario: Possible record laid out field by field under its reading", () => {
-  const registry = sectionOf(page("phase-claim/index.html"), "matched");
+  const html = page("phase-claim/index.html");
+  const registry = sectionOf(html, "matched");
   const words = wordsOf(registry);
   assert.match(registry, /<h3 class="record-group-head">\s*Read as this treatment for another condition, patient group or setting/);
+  assert.match(words, /setting , 1 record Not counted in the status: no rule or person has confirmed these matches\./);
   assert.match(registry, /<p class="record-title"><a href="\/trials\/NCT00000077">Synthetic trial of phase-claim agent in another condition<\/a>/);
-  assert.match(words, /NCT00000077 on clinicaltrials\.gov Phase 1 Under way Match to this claim: low, 31%/);
-  assert.match(words, /For Another Condition Tests Phase-claim agent; Placebo/);
-  // The record's one-line summary is not repeated, and no row says the trial is recruiting.
-  assert.doesNotMatch(words, /Recruiting|View trial details here/);
+  assert.match(words, /NCT00000077 at ClinicalTrials\.gov Phase 1 Under way Match to this claim: low, 31%/);
+  assert.match(words, /For Another Condition Named in the record Phase-claim agent; Placebo/);
+  // The record's one-line summary is not repeated, and no row says the trial is recruiting
+  // or that it tests everything the record names.
+  assert.doesNotMatch(words, /Recruiting|View trial details here|Tests/);
+  // The folded heading and the digest give the count; the digest's links to the section.
+  assert.match(html, /<span class="fold-note">1 possible<\/span>/);
+  assert.match(html, /, <a href="#matched">1 possible<\/a>/);
 });
 
 test("Scenario: Possible record not yet read into fields", () => {
@@ -1159,7 +1165,7 @@ test("Scenario: Possible record not yet read into fields", () => {
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
-  assert.match(words, /NCT00000077 on clinicaltrials\.gov Its registry record has not been read into fields yet\. Match to this claim: low, 31%/);
+  assert.match(words, /Registry record NCT00000077 NCT00000077 at ClinicalTrials\.gov Details not read from the registry yet Match to this claim: low, 31%/);
   assert.doesNotMatch(words, /Synthetic trial of phase-claim agent in another condition/);
 });
 

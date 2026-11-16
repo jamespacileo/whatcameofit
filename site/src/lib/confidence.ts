@@ -55,7 +55,7 @@ export const READING_HEADINGS: Record<string, string> = {
   not_a_match: "Read as studies of something else",
 };
 
-export const UNREAD_HEADING = "Scored before the condition was part of the question";
+export const UNREAD_HEADING = "Scored without checking the condition";
 
 /** The readings in the order their groups are shown: the closest to the claim first. */
 export const READING_ORDER = ["match", "other_indication", "not_what_is_tested", "not_a_match"];

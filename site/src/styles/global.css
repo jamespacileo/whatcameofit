@@ -3622,7 +3622,7 @@ main ul:not([class]) li + li {
 }
 
 .record-group-head {
-  margin: 1.1rem 0 0.3rem;
+  margin: 1.4rem 0 0.6rem;
   font-size: 1rem;
   line-height: 1.3;
   text-wrap: pretty;
@@ -3651,6 +3651,18 @@ main ul:not([class]) li + li {
   border-top: 1px solid var(--rule);
 }
 
+/* Said once under a group of possible records: none of them counts. */
+.record-group-note {
+  margin: -0.35rem 0 0.6rem;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* A possible record is drawn a step lighter than one that counts. */
+.record-group-possible .record-title {
+  font-weight: 500;
+}
+
 .record-title {
   margin: 0 0 0.2rem;
   font-weight: 600;
@@ -3668,13 +3680,18 @@ main ul:not([class]) li + li {
   text-decoration-color: currentColor;
 }
 
+.record-meta,
+.record-match {
+  margin: 0;
+  max-width: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .record-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0 0.5rem;
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--muted);
 }
 
 /* The separator ends a part, so a wrapped line never starts with one. */
@@ -3689,13 +3706,37 @@ main ul:not([class]) li + li {
   vertical-align: -0.05em;
 }
 
+/* The registry link is short; on a phone its press area is raised to 24px and more. */
+@media (max-width: 40rem) {
+  .record-source {
+    display: inline-block;
+    padding-block: 0.3rem;
+    margin-block: -0.15rem;
+  }
+}
+
 .record-fields {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.1rem 0.7rem;
-  margin: 0.4rem 0 0;
+  gap: 0.15rem;
+  margin: 0.45rem 0 0;
   font-size: 0.9rem;
   max-width: var(--measure);
+}
+
+.record-fields > div {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 0 0.7rem;
+}
+
+@media (max-width: 40rem) {
+  .record-fields > div {
+    grid-template-columns: 1fr;
+  }
+
+  .record-fields > div + div {
+    margin-top: 0.3rem;
+  }
 }
 
 .record-fields dt {

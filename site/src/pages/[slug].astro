@@ -159,6 +159,12 @@ const publisherNote = (url: string) => {
 const untried = registryMatches.filter(
   (match) => match.state === "approved" && !trialIds.has(match.external_id),
 );
+// What the registry records section holds, said beside its heading while it is folded.
+const matchedNote =
+  [
+    ...(untried.length > 0 ? [`${untried.length} matched`] : []),
+    ...(candidates.length > 0 ? [`${candidates.length} possible`] : []),
+  ].join(" · ") || null;
 // A reader arrives from a headline, so the page names the reports it is about, newest first.
 const reports = followedReports(claim);
 const shownReports = reports.slice(0, FOLLOWED_SHOWN);
@@ -220,7 +226,13 @@ const sections = [
   },
   ...(trials.length > 0 ? [{ id: "trials", name: "Trials on record", count: trials.length }] : []),
   ...(claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0)
-    ? [{ id: "matched", name: "Registry records" }]
+    ? [
+        {
+          id: "matched",
+          name: "Registry records",
+          ...(untried.length + candidates.length > 0 ? { count: untried.length + candidates.length } : {}),
+        },
+      ]
     : []),
   ...(paperCount > 0 ? [{ id: "papers", name: "Papers on record", count: paperCount }] : []),
   ...(organisations.length > 0
@@ -439,7 +451,11 @@ const sections = [
                     ? "No registry record matched"
                     : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
                 </a>
-                {possible > 0 && `, ${possible} possible`}
+                {possible > 0 && (
+                  <>
+                    , <a href="#matched">{possible} possible</a>
+                  </>
+                )}
               </p>
             )
           }
@@ -896,7 +912,7 @@ const sections = [
          is no trial at all, the section says the registries were searched. */
       claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
         <section class="matched" data-pagefind-ignore>
-          <FoldHead id="matched" phone="folded">
+          <FoldHead id="matched" phone="folded" note={matchedNote}>
             {untried.length > 0 || candidates.length === 0
               ? "Matched registry records"
               : "Possible registry records"}
@@ -912,7 +928,9 @@ const sections = [
           {untried.length > 0 && candidates.length > 0 && (
             <h3 class="matched-group">Possible records, not counted in the status</h3>
           )}
-          {candidates.length > 0 && <RegistryRecords matches={candidates} level={untried.length > 0 ? 4 : 3} />}
+          {candidates.length > 0 && (
+            <RegistryRecords matches={candidates} level={untried.length > 0 ? 4 : 3} possible />
+          )}
         </section>
       )
     }

@@ -1,71 +1,85 @@
 ---
 // Registry records that are not trials on the page yet, grouped by how each was read.
-// Each row: the study's title, its identifier with phase, state and how sure the match
-// is, then what it is for and what it tests. Openspec registry-record-rows; the score
-// stays in the row's notes (openspec site-publishing, "A match score reads as a note").
+// Each row: the study's title, its identifier at its registry with phase, state and how
+// sure the match is, then what it is for and what it names. Openspec
+// registry-record-rows; the score stays in the row's notes (openspec site-publishing,
+// "A match score reads as a note").
 import ExternalLink from "@lucide/astro/icons/external-link";
 import { matchNote } from "../lib/confidence";
 import type { ExportedMatch } from "../lib/export";
-import { NOT_READ_YET, groupByReading, standingOf } from "../lib/registry-records";
+import {
+  FOR_LABEL,
+  NAMED_LABEL,
+  NOT_COUNTED,
+  NOT_READ_YET,
+  groupByReading,
+  standingOf,
+} from "../lib/registry-records";
+import { sourceName } from "../lib/status";
 import { trialDetailsPath } from "../lib/trial-links.mjs";
 
 interface Props {
   matches: ExportedMatch[];
   /** The groups' heading level: 3 directly under the section, 4 under a subheading. */
   level?: 3 | 4;
+  /** Candidates: not counted in the status, which each group says, and drawn lighter
+   * than the records that count. */
+  possible?: boolean;
 }
 
-const { matches, level = 3 } = Astro.props;
+const { matches, level = 3, possible = false } = Astro.props;
 const Heading = `h${level}` as "h3" | "h4";
 const groups = groupByReading(matches);
 ---
 
 {
   groups.map((group) => (
-    <div class="record-group">
+    <div class={possible ? "record-group record-group-possible" : "record-group"}>
       <Heading class="record-group-head">
         {group.heading}
+        <span class="visually-hidden">, </span>
         <span class="record-group-count">
           {group.matches.length}
           <span class="visually-hidden">{group.matches.length === 1 ? " record" : " records"}</span>
         </span>
       </Heading>
+      {possible && <p class="record-group-note">{NOT_COUNTED}</p>}
       <ul class="plain record-list">
         {group.matches.map((match) => {
           const record = match.record;
           const local = trialDetailsPath(match.url);
-          const identifier = match.url ? (
-            <a href={match.url} rel="noopener">
-              {match.external_id}
-              <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
-              <span class="visually-hidden"> on {match.source_name}</span>
-            </a>
-          ) : (
-            match.external_id
-          );
+          const title = record?.title ?? `Registry record ${match.external_id}`;
+          const at = `${match.external_id} at ${sourceName(match.source_name)}`;
           return (
             <li class="record-row">
-              {record?.title ? (
-                <p class="record-title">{local ? <a href={local}>{record.title}</a> : record.title}</p>
-              ) : null}
+              <p class="record-title">{local ? <a href={local}>{title}</a> : title}</p>
               <p class="record-meta">
-                <span>{identifier}</span>
+                <span>
+                  {match.url ? (
+                    <a class="record-source" href={match.url} rel="noopener">
+                      {at}
+                      <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
+                    </a>
+                  ) : (
+                    at
+                  )}
+                </span>
                 {record ? standingOf(record).map((part) => <span>{part}</span>) : <span>{NOT_READ_YET}</span>}
-                <span>{matchNote(match.score)}</span>
               </p>
+              <p class="record-match">{matchNote(match.score)}</p>
               {record && (record.conditions.length > 0 || record.interventions.length > 0) && (
                 <dl class="record-fields">
                   {record.conditions.length > 0 && (
-                    <>
-                      <dt>For</dt>
+                    <div>
+                      <dt>{FOR_LABEL}</dt>
                       <dd>{record.conditions.join("; ")}</dd>
-                    </>
+                    </div>
                   )}
                   {record.interventions.length > 0 && (
-                    <>
-                      <dt>Tests</dt>
+                    <div>
+                      <dt>{NAMED_LABEL}</dt>
                       <dd>{record.interventions.join("; ")}</dd>
-                    </>
+                    </div>
                   )}
                 </dl>
               )}
