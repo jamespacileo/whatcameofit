@@ -101,6 +101,19 @@ class Substances:
         return [SourceRecord("gsrs", "s-1", "https://gsrs.test/s-1", payload, NOW)]
 
 
+class Brands:
+    """A source of brands that lists one brand, under one ingredient."""
+
+    name = "rxnorm"
+
+    def substances_named(self, name: str) -> list[SourceRecord]:
+        if name != "Toothvax":
+            return []
+        concept = {"rxcui": "111", "name": "examplevirus antigen", "tty": "IN"}
+        payload = {"substance": concept | {"_name": concept["name"]}, "brand": {}}
+        return [SourceRecord("rxnorm", "111", "https://rxnorm.test/111", payload, NOW)]
+
+
 class Backend:
     name = "fake"
 
@@ -140,6 +153,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: Backend())
     monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research())
     monkeypatch.setattr("thenwhat.cli.resolve.make_substances", lambda s: Substances())
+    monkeypatch.setattr("thenwhat.cli.resolve.make_brands", lambda s: Brands())
     add_claim(
         session,
         slug=SLUG,
@@ -274,17 +288,35 @@ def test_entity_codes_keeps_the_codes_the_substance_registry_lists(run, session:
         indication="tooth agenesis",
     )
 
-    result = run("entity", "codes", "coded-drug", SLUG)
+    add_claim(
+        session,
+        slug="branded-vaccine",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+
+    result = run("entity", "codes", "coded-drug", "branded-vaccine", SLUG)
 
     assert result.exit_code == 0, result.output
     said = " ".join(result.output.split())
     assert "coded-drug: GSRS lists 'exampletinib' as Exampletinib (UNII UNII000001)" in said
     assert "ABC-123" in said
-    # An intervention the registry does not list is said to have no code.
-    assert f"{SLUG}: GSRS lists no substance named 'EX-1 antibody'" in said
-    assert "2 claims: GSRS lists the intervention of 1 under one substance" in said
-    [kept] = session.scalars(select(EntitySubstance)).all()
-    assert kept.codes == ["ABC-123"]
+    # A brand the registry does not list: the line says which source answered.
+    assert (
+        "branded-vaccine: GSRS lists no substance named 'Toothvax'. RxNorm lists it as a"
+        " brand of examplevirus antigen (RxCUI 111), which is searched as a name."
+    ) in said
+    # An intervention neither lists is said to have no code.
+    assert (
+        f"{SLUG}: GSRS lists no substance named 'EX-1 antibody', and RxNorm lists no brand"
+        " of that name."
+    ) in said
+    assert "3 claims: GSRS lists the intervention of 1 under one substance" in said
+    assert "RxNorm lists 1 more as a brand of one ingredient." in said
+    kept = {row.source_name: row.codes for row in session.scalars(select(EntitySubstance))}
+    assert kept == {"gsrs": ["ABC-123"], "rxnorm": []}
 
 
 def test_entity_codes_refuses_without_claims_or_all(run):

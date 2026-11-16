@@ -20,3 +20,22 @@ Before the trial registry is searched for an intervention, the system SHALL look
 #### Scenario: A brand listed under a substance and its salt
 - **WHEN** the substances found are one substance and its forms, each form's name being the substance's name followed by further whole words or a hyphenated suffix (imatinib and imatinib mesylate, dostarlimab and dostarlimab-gxly)
 - **THEN** they count as that one substance, its record and its codes are kept, and its name is searched in the trial registry as a name of the intervention
+
+### Requirement: A brand the substance registry does not list is looked up under its ingredient
+When the substance registry lists no substance under any of an intervention's names, the system SHALL ask a second source, one that files brand names under their ingredients and whose terms are recorded, about the same names. The second source SHALL NOT be asked when the substance registry lists the names under one substance or under more than one. A brand SHALL be resolved only when the second source lists one of the names as a brand, equal to it ignoring letter case and runs of spaces and nothing else, and the brands found lead to exactly one ingredient, counting an ingredient and its forms as one by the same rule as for the substance registry. The system SHALL then keep that ingredient's record as fetched, with the second source's name, the ingredient's identifier there and the fetch time, in place of a substance's record, and SHALL keep no code from it. The ingredient's name SHALL be searched in the trial registry as a name of the intervention, as a substance's name is, and SHALL NOT be stored or shown as a name of the intervention. A brand of more than one ingredient, and a name the second source does not list as a brand, SHALL keep nothing. No model SHALL supply an ingredient and no loose match SHALL be taken. The command SHALL say which source answered, and when neither listed the names SHALL say so of both. A later run SHALL replace what was kept, and SHALL remove it when neither source lists the names under one substance any longer.
+
+#### Scenario: Brand the substance registry does not list, of one ingredient
+- **WHEN** the substance registry lists none of an intervention's names and the second source lists its name as a brand of one ingredient
+- **THEN** the ingredient's record is kept with the second source's name, its identifier and the fetch time, no code is kept, the ingredient's name is searched in the trial registry as a name, the intervention's synonyms and search phrases are unchanged, and the command names the second source as the one that answered
+
+#### Scenario: The substance registry lists the intervention
+- **WHEN** the substance registry lists the intervention's names under one substance, or under more than one
+- **THEN** the second source is not asked
+
+#### Scenario: Brand of more than one ingredient
+- **WHEN** the substance registry lists none of the names and the second source lists the brand under two ingredients, neither a form of the other
+- **THEN** nothing is kept and the command names the ingredients found
+
+#### Scenario: Brand neither source lists
+- **WHEN** neither the substance registry nor the second source lists any of the names
+- **THEN** nothing is kept, the command says that neither lists it, and the trial registry is searched as before
