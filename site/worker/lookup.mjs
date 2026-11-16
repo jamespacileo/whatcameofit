@@ -38,6 +38,7 @@ function candidateText(study) {
   // Long titles remain secondary so boilerplate cannot displace treatment details.
   const title = official && official.length <= 240 ? official : section.identificationModule?.briefTitle;
   const described = {
+    acronym: excerpt(section.identificationModule?.acronym, 240),
     conditions: section.conditionsModule?.conditions ?? [],
     study_type: section.designModule?.studyType,
     title: excerpt(title, 240),
