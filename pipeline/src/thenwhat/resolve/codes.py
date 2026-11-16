@@ -63,7 +63,7 @@ class Codes:
         return self.sources[-1] if self.sources else ""
 
 
-def one_substance(records: list[SourceRecord]) -> SourceRecord | None:
+def one_substance(records: list[SourceRecord], *, forms: bool = True) -> SourceRecord | None:
     """The one substance these records are, or None when they are several.
 
     A registry files a drug and its forms apart: imatinib and imatinib mesylate,
@@ -71,10 +71,17 @@ def one_substance(records: list[SourceRecord]) -> SourceRecord | None:
     opens every other record's name, whole word for whole word, that record is the
     substance and the others are its forms. Semaglutide and tirzepatide share no such
     name and stay two.
+
+    That holds for a registry of substances. A source of brands lists ingredients, and
+    two ingredients are two molecules even when one's name opens the other's: with
+    `forms` off, the records are one only when they are one, or all carry one name.
     """
     if len(records) == 1:
         return records[0]
     named = [(name_key(name_of(record)), record) for record in records]
+    if not forms:
+        same = bool(named[0][0]) and all(name == named[0][0] for name, _ in named)
+        return records[0] if same else None
     for base, record in named:
         if base and all(
             other == base or other.startswith((f"{base} ", f"{base}-")) for other, _ in named
@@ -84,7 +91,11 @@ def one_substance(records: list[SourceRecord]) -> SourceRecord | None:
 
 
 def codes_for(
-    substances: Substances, names: list[str], *, brands: Substances | None = None
+    substances: Substances,
+    names: list[str],
+    *,
+    brands: Substances | None = None,
+    forms: bool = True,
 ) -> Codes:
     """The development codes the registry lists for the substance these names belong to.
 
@@ -93,8 +104,9 @@ def codes_for(
     gets no code. A code equal to one of the names is left out, as it is searched for as
     a name already.
 
-    `brands` is asked only when the registry lists none of the names, and by the same
-    rule: the names must be a brand it lists under exactly one ingredient.
+    `brands` is asked only when the registry lists none of the names. The names must
+    be a brand it lists under exactly one ingredient: ingredients named differently are
+    several, with no allowance for a name that opens another (`forms` off).
     """
     asked = names[0] if names else ""
     found: dict[str, SourceRecord] = {}
@@ -106,9 +118,9 @@ def codes_for(
     if not found:
         if brands is None:
             return Codes(Listing.NOT_LISTED, asked, sources=sources)
-        answer = codes_for(brands, names)
+        answer = codes_for(brands, names, forms=False)
         return replace(answer, sources=sources + answer.sources)
-    record = one_substance(list(found.values()))
+    record = one_substance(list(found.values()), forms=forms)
     if record is None:
         return Codes(Listing.SEVERAL_SUBSTANCES, asked, labels, sources=sources)
     labels = [label_of(record)]

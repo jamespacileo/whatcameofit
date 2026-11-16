@@ -3,6 +3,7 @@
 The rules are tested in test_resolution.py and test_decide.py.
 """
 
+import dataclasses
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
@@ -19,13 +20,15 @@ from typer.testing import CliRunner, Result
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim, claim_by_slug
 from thenwhat.cli import app
-from thenwhat.cli.resolve import Research
+from thenwhat.cli.resolve import Research, make_brands
 from thenwhat.db.models import DecisionLog, EntityMatch, EntitySubstance
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import ClaimStatus, Decider, EvidenceStage, ReviewState
 from thenwhat.llm.client import Llm, LlmSettings
-from thenwhat.sources.base import SourceRecord, UnsearchableTerm
+from thenwhat.sources.base import SourceRecord, SourceUnavailable, UnsearchableTerm
 from thenwhat.sources.openalex import OpenAlex
+from thenwhat.sources.rxnorm import RxNorm
+from thenwhat.sources.terms import SOURCES
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
 SLUG = "tooth-regrowth-ex1"
@@ -107,6 +110,8 @@ class Brands:
     name = "rxnorm"
 
     def substances_named(self, name: str) -> list[SourceRecord]:
+        if name == "Downvax":
+            raise SourceUnavailable("rxnorm did not answer after 2 attempts.")
         if name != "Toothvax":
             return []
         concept = {"rxcui": "111", "name": "examplevirus antigen", "tty": "IN"}
@@ -317,6 +322,63 @@ def test_entity_codes_keeps_the_codes_the_substance_registry_lists(run, session:
     assert "RxNorm lists 1 more as a brand of one ingredient." in said
     kept = {row.source_name: row.codes for row in session.scalars(select(EntitySubstance))}
     assert kept == {"gsrs": ["ABC-123"], "rxnorm": []}
+
+
+def test_entity_codes_goes_on_past_a_claim_whose_source_did_not_answer(run, session: Session):
+    for slug, intervention in [("a-down", "Downvax"), ("b-branded", "Toothvax")]:
+        add_claim(
+            session,
+            slug=slug,
+            headline="Vaccine regrows teeth",
+            vertical="mouth-and-teeth",
+            intervention=intervention,
+            indication="tooth agenesis",
+        )
+
+    result = run("entity", "codes", "a-down", "b-branded")
+
+    assert result.exit_code == 0, result.output
+    said = " ".join(result.output.split())
+    assert (
+        "a-down: development codes were not looked up: rxnorm did not answer after 2 attempts."
+    ) in said
+    # The claim after it is still looked up, and nothing is kept for the one that failed.
+    assert "b-branded: GSRS lists no substance named 'Toothvax'. RxNorm lists it" in said
+    assert "1 were not looked up" in said
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    assert kept.external_id == "111"
+
+
+def test_the_source_of_brands_is_not_asked_until_its_terms_are_accepted(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    # `make_brands` here is the command's own, taken before the fixture replaced it.
+    assert SOURCES["rxnorm"].accepted is False
+    assert make_brands(session) is None
+    monkeypatch.setattr("thenwhat.cli.resolve.make_brands", make_brands)
+    add_claim(
+        session,
+        slug="branded-vaccine",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+
+    result = run("entity", "codes", "branded-vaccine")
+
+    assert result.exit_code == 0, result.output
+    said = " ".join(result.output.split())
+    assert "RxNorm is not asked about brands: its terms are not accepted" in said
+    assert (
+        "branded-vaccine: GSRS lists no substance named 'Toothvax'. No development code was added."
+    ) in said
+    assert session.scalars(select(EntitySubstance)).all() == []
+
+    # Once the operator accepts them, the command builds the client.
+    monkeypatch.setitem(SOURCES, "rxnorm", dataclasses.replace(SOURCES["rxnorm"], accepted=True))
+    monkeypatch.setenv("CONTACT_EMAIL", "ops@thenwhat.test")
+    assert isinstance(make_brands(session), RxNorm)
 
 
 def test_entity_codes_refuses_without_claims_or_all(run):

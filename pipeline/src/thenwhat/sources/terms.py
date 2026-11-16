@@ -107,8 +107,10 @@ _LISTED = (
         in_data_file=True,
     ),
     # Read only to give a brand its ingredient as a name to search the trial registry
-    # for. Nothing from it is published. It stays out of the data file until the operator
-    # decides where the statement NLM asks for is shown (docs/sources.md).
+    # for. Its terms were read on the date below and the operator has not accepted them,
+    # so it is not asked (`cli.resolve.make_brands`): the operator decides whether the
+    # terms are accepted and whether and where the statement NLM asks for is shown
+    # (docs/sources.md). Nothing from it is published, and it is out of the data file.
     SourceTerms(
         name="rxnorm",
         title="RxNorm, through the RxNav API",
@@ -123,7 +125,7 @@ _LISTED = (
         home_url="https://www.nlm.nih.gov/research/umls/rxnorm/index.html",
         terms_url="https://lhncbc.nlm.nih.gov/RxNav/TermsofService.html",
         read_on=date(2026, 11, 16),
-        accepted=True,
+        accepted=False,
         in_data_file=False,
     ),
     # The three below are read for target and drug cards. The operator accepted Open

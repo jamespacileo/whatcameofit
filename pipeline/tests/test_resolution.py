@@ -31,7 +31,7 @@ from thenwhat.domain import (
     ReviewState,
     TrialPhase,
 )
-from thenwhat.resolve.codes import Listing, give_development_codes
+from thenwhat.resolve.codes import Listing, give_development_codes, one_substance
 from thenwhat.resolve.service import combination_search, redo_rule_approvals, resolve_claim
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
@@ -1016,6 +1016,35 @@ def test_a_brand_of_two_ingredients_or_of_none_keeps_nothing(session: Session):
     assert none is not None and none.listing is Listing.NOT_LISTED
     assert none.sources == ("gsrs", "rxnorm")
     assert session.scalars(select(EntitySubstance)).all() == []
+
+
+def test_an_ingredient_whose_name_opens_anothers_is_another_ingredient(session: Session):
+    """Scenario: Brand of two ingredients, one's name opening the other's"""
+    claim = add_claim(
+        session,
+        slug="toothvax-tooth-agenesis",
+        headline="Vaccine regrows teeth",
+        vertical="mouth-and-teeth",
+        intervention="Toothvax",
+        indication="tooth agenesis",
+    )
+    # In the registry of substances these would be a substance and its form. Two
+    # ingredients of a brand are two molecules.
+    found = [
+        ingredient("111", "examplevirus antigen", "Toothvax"),
+        ingredient("112", "examplevirus antigen adjuvant", "Toothvax"),
+    ]
+    assert one_substance(found) is found[0]
+
+    answer = give_development_codes(
+        session, claim, substances=FakeSubstances({}), brands=FakeBrands({"Toothvax": found})
+    )
+
+    assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
+    assert session.scalars(select(EntitySubstance)).all() == []
+    # One ingredient reached twice, under one name, is one.
+    twice = [found[0], ingredient("113", "Examplevirus  antigen", "Toothvax")]
+    assert one_substance(twice, forms=False) is found[0]
 
 
 def test_a_substance_no_longer_listed_loses_its_codes(session: Session):

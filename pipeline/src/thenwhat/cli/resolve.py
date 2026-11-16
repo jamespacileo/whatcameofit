@@ -46,7 +46,7 @@ from thenwhat.resolve.service import (
     rescore_claim,
     resolve_claim,
 )
-from thenwhat.sources.base import UnsearchableTerm
+from thenwhat.sources.base import SourceError, UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
@@ -54,6 +54,7 @@ from thenwhat.sources.gsrs import Gsrs
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.rxnorm import RxNorm
+from thenwhat.sources.terms import SOURCES
 
 entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no_args_is_help=True)
 
@@ -115,7 +116,11 @@ def make_substances(session: Session) -> Substances:
     return Gsrs(session, contact_email=settings_or_exit().contact_email)
 
 
-def make_brands(session: Session) -> Substances:
+def make_brands(session: Session) -> Substances | None:
+    """The source of brands, or None while the operator has not accepted its terms: a
+    source whose terms are read but not accepted is not asked."""
+    if not SOURCES[RxNorm.name].accepted:
+        return None
     return RxNorm(session, contact_email=settings_or_exit().contact_email)
 
 
@@ -291,9 +296,25 @@ def entity_codes(
         else:
             claims = list(session.scalars(select(Claim).order_by(Claim.slug)))
         substances, brands = make_substances(session), make_brands(session)
-        listed = coded = by_brand = 0
+        if brands is None:
+            out.print(
+                "RxNorm is not asked about brands: its terms are not accepted (docs/sources.md)."
+            )
+        listed = coded = by_brand = failed = 0
         for claim in claims:
-            answer = give_development_codes(session, claim, substances=substances, brands=brands)
+            try:
+                # In a savepoint, so a source that fails leaves this claim as it was.
+                with session.begin_nested():
+                    answer = give_development_codes(
+                        session, claim, substances=substances, brands=brands
+                    )
+            except SourceError as not_asked:
+                failed += 1
+                err.print(
+                    f"{claim.slug}: development codes were not looked up: {not_asked}",
+                    markup=False,
+                )
+                continue
             if answer is None:
                 out.print(f"{claim.slug}: the claim has no intervention.", markup=False)
                 continue
@@ -307,6 +328,11 @@ def entity_codes(
             f" substance, and gave {coded} of them at least one development code."
             f" RxNorm lists {by_brand} more as a brand of one ingredient."
         )
+        if failed:
+            err.print(
+                f"{failed} were not looked up, and what was kept for them is unchanged."
+                " Run this again for them."
+            )
 
 
 @entity_app.command("people")
