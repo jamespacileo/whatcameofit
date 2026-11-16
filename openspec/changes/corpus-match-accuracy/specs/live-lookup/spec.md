@@ -93,7 +93,7 @@ The existing 1,500-character record limit, request counts and source caches SHAL
 - **THEN** the shortened input remains within 1,500 characters, carries a truncation marker and adds no request
 
 ### Requirement: Trial summaries retain identity and population context
-Both lookup scorers and private-pipeline matching SHALL receive a bounded registry brief-summary excerpt when it fits after the existing arm, intervention and delivery details. The excerpt SHALL be limited to 350 characters within the existing 1,500-character record limit; shortened content SHALL be marked. Registry searches SHALL request this field in their existing calls, and obsolete completed answers SHALL be invalidated.
+Both lookup scorers and private-pipeline matching SHALL receive a bounded registry brief-summary excerpt when it fits after the existing arm, intervention, delivery and title details. The excerpt SHALL be limited to 350 characters within the existing 1,500-character record limit; shortened content SHALL be marked. Registry searches SHALL request this field in their existing calls, and obsolete completed answers SHALL be invalidated.
 
 #### Scenario: The registry summary supplies the missing alias and population
 - **GIVEN** the title names a diet by one name and only the brief summary supplies its other name and explicit patient population
@@ -102,7 +102,19 @@ Both lookup scorers and private-pipeline matching SHALL receive a bounded regist
 
 #### Scenario: A lengthy summary competes with treatment-role evidence
 - **WHEN** the brief summary is long
-- **THEN** its bounded excerpt follows existing arm and intervention details, and the entire record still respects the input limit
+- **THEN** its bounded excerpt follows existing arm, intervention and secondary-title details, and the entire record still respects the input limit
+
+### Requirement: Trial identity and treatment purpose remain distinct from background
+Both scorers SHALL distinguish the condition a study aims to treat from a separate disease its participants have. A diagnostic or imaging agent SHALL NOT be treated as a therapy for the disease being investigated. When a claim lacks enough information to distinguish its intervention from other treatments, shared condition or broad class membership SHALL NOT establish product identity.
+
+#### Scenario: A study targets a separate comorbidity
+- **GIVEN** the claim concerns treatment of one disease and the trial targets a separate comorbidity in patients with that disease
+- **WHEN** the same intervention appears in both
+- **THEN** the trial is read as another indication, not a match for the underlying disease
+
+#### Scenario: An unspecified new medicine
+- **WHEN** a report supplies only a vague description such as a new cancer medicine
+- **THEN** a candidate's condition or broad treatment class alone does not establish that it is the reported intervention
 
 ### Requirement: Trial scoring distinguishes access and treatment roles
 Both scorers SHALL receive study type and arm roles/membership before verbose intervention descriptions. They SHALL use the fourth `not_what_is_tested` answer for a comparator, background medicine or other incidental role, as specified in `social-link-backfill`. Expanded access SHALL be read as `not_a_match`. Missing or truncated details SHALL retain uncertainty.

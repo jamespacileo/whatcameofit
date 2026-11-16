@@ -138,6 +138,23 @@ test("registry search carries arm roles and study type into bounded scoring", as
   assert.ok(requests.some(url=>url.searchParams.has("query.intr")));
 });
 
+test("a registry summary does not displace the detailed title's patient setting", async () => {
+  const record = study("NCT00000001", "Synthetic treatment study", "Example cancer after surgery");
+  record.protocolSection.identificationModule.officialTitle =
+    "A multicentre randomized synthetic study of EX-1 ".repeat(3) +
+    "Previously operated patients only. " + "Detailed protocol wording. ".repeat(10);
+  record.protocolSection.armsInterventionsModule.interventions[0].description = "Synthetic delivery detail. ".repeat(20);
+  record.protocolSection.descriptionModule = {briefSummary: "Generic study background. ".repeat(50)};
+  const model = fakeModel();
+  model.score = async (_intro, items) => {
+    assert.ok(items[0].includes("Previously operated patients only"));
+    assert.ok(items[0].indexOf("Previously operated patients only") < items[0].indexOf("Generic study background"));
+    assert.ok(items[0].split("\n").slice(1).join("\n").length <= 1500);
+    return [{answer: "match", probabilities: {match: .9}}];
+  };
+  await lookUp({text: TEXT, model, registry: fakeRegistry({"EX-1": [record]}), index: INDEX});
+});
+
 test("repeated arm labels do not crowd out how a combination is activated", async () => {
   const record=study("NCT00000001", "Synthetic therapy in two eye conditions and three treatment cohorts with different doses");
   record.protocolSection.identificationModule.officialTitle="Synthetic therapy for first-line unresectable disease";

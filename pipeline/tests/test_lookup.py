@@ -187,6 +187,35 @@ def test_scoring_receives_summary_only_alias_and_population(session: Session):
     assert found.candidates[0].answer == "match"
 
 
+def test_summary_follows_the_detailed_title_patient_setting(session: Session):
+    record = trial(
+        "NCT00000001", "Synthetic treatment study", condition="Example cancer after surgery"
+    )
+    section = record.payload["protocolSection"]
+    section["identificationModule"]["officialTitle"] = (
+        "A multicentre randomized synthetic study of EX-1 " * 3
+        + "Previously operated patients only. "
+        + "Detailed protocol wording. " * 10
+    )
+    section["armsInterventionsModule"]["interventions"][0]["description"] = (
+        "Synthetic delivery detail. " * 20
+    )
+    section["descriptionModule"] = {"briefSummary": "Generic study background. " * 50}
+
+    class Capture:
+        name = "capture"
+
+        def answer(self, step, state, options):
+            assert "Previously operated patients only" in state
+            assert state.index("Previously operated patients only") < state.index(
+                "Generic study background"
+            )
+            return BackendAnswer("match", {o: float(o == "match") for o in options})
+
+    model, _ = llm(session, READING)
+    look_up(session, model, Capture(), FakeTrials({"EX-1": [record]}), text=TEXT, now=NOW)
+
+
 @pytest.mark.parametrize("description", ["Delivered by inhalation", "Subcutaneous injection"])
 def test_scoring_receives_route_and_separate_arm_details(session: Session, description: str):
     record = trial("NCT00000001", "EX-1 trial", condition="Example disease")

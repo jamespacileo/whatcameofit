@@ -56,7 +56,7 @@ outside knowledge about the subject.`;
 const ASKED = "Is this record a trial of the claim's intervention for the claim's indication?";
 // Each answer and when it applies.
 const CHOICES = [
-  ["match", "the record establishes the same complete intervention, including any explicit route, formulation, stereoisomer and regimen, in the claim's indication, in a form of that condition, or in patients who have it, respecting any explicit patient population or treatment setting in the claim, and the trial tests it as a treatment for that condition."],
+  ["match", "the record establishes the same complete intervention, including any explicit route, formulation, stereoisomer and regimen, and tests it as a treatment for the claim's indication or a form of that condition, respecting any explicit patient population or treatment setting in the claim."],
   ["other_indication", "it tests the same complete intervention for a different condition, an incompatible patient population or treatment setting, or only in healthy volunteers."],
   ["not_what_is_tested", "the claim's intervention is in the record, but the trial does not test it as a treatment for the indication: it is the comparator or control for something else under test, it is given to every arm alongside what is tested, or it has another role in the trial, such as the anaesthetic for a procedure."],
   ["not_a_match", "it is not a trial of this intervention, including a conflicting route, formulation, stereoisomer or regimen."],
@@ -70,6 +70,9 @@ const QUESTION = [ASKED, ...CHOICES.map(([option, when]) => `- ${option}: ${when
   "A trial mentioned in the article may be a separate study; its mention does not override a conflicting setting. " +
   "If the record does not establish compatibility with an explicit restriction, retain uncertainty. " +
   "Do not invent restrictions when the claim gives none. " +
+  "Having a disease is not the same as being treated for it: a study targeting a separate comorbidity is other_indication, even when participants have the claim's condition. " +
+  "A diagnostic or imaging agent is not a treatment for the disease being investigated. " +
+  "When the claim lacks enough information to distinguish its intervention from other treatments, identity remains unestablished; do not infer a particular product from a shared condition or broad treatment class. " +
   "Explicit route, formulation, stereoisomer and combination-regimen restrictions are part of the intervention. " +
   "A conflicting intervention is not_a_match. " +
   "Check intervention descriptions and arm membership: separate arms testing A and B do not establish a trial of A plus B. " +

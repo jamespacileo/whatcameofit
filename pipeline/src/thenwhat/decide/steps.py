@@ -36,11 +36,9 @@ TRIAL_OPTIONS = [MATCH, OTHER_INDICATION, NOT_WHAT_IS_TESTED, NOT_A_MATCH]
 TRIAL_QUESTION = (
     "Is this record a trial of the claim's intervention for the claim's indication?\n"
     f"- {MATCH}: the record establishes the same complete intervention, including any"
-    " explicit route, formulation, stereoisomer and regimen, in the claim's indication,"
-    " in a form of"
-    " that condition, or in patients who have it, respecting any explicit patient"
-    " population or treatment setting in the claim, and the trial tests it as a"
-    " treatment for that condition.\n"
+    " explicit route, formulation, stereoisomer and regimen, and tests it as a treatment"
+    " for the claim's indication or a form of that condition, respecting any explicit"
+    " patient population or treatment setting in the claim.\n"
     f"- {OTHER_INDICATION}: it tests the same complete intervention for a different condition,"
     " an incompatible patient population or treatment setting, or only in healthy volunteers.\n"
     f"- {NOT_WHAT_IS_TESTED}: the claim's intervention is in the record, but the trial does"
@@ -57,6 +55,12 @@ TRIAL_QUESTION = (
     " may be a separate study; its mention does not override a conflicting setting."
     " If the record does not establish compatibility with an explicit restriction,"
     " retain uncertainty. Do not invent restrictions when the claim gives none."
+    " Having a disease is not the same as being treated for it: a study targeting a"
+    " separate comorbidity is other_indication, even when participants have the claim's condition."
+    " A diagnostic or imaging agent is not a treatment for the disease being investigated."
+    " When the claim lacks enough information to distinguish its intervention from other"
+    " treatments, identity remains unestablished; do not infer a particular product from"
+    " a shared condition or broad treatment class."
     " Explicit route, formulation, stereoisomer and combination-regimen restrictions"
     " are part of the intervention. A conflicting intervention is not_a_match."
     " Check intervention descriptions and arm membership: separate arms testing A"
@@ -697,11 +701,11 @@ def _describe(candidate: SourceRecord) -> str:
                 for arm in treatment.get("armGroups", [])
                 if arm.get("description")
             ],
-            # A summary may supply an alias or patient restriction absent from the title.
+            "official_title": _excerpt(official, 240) if official != title else None,
+            # Preserve existing title/role evidence before adding summary context.
             "brief_summary": _excerpt(
                 section.get("descriptionModule", {}).get("briefSummary"), 350
             ),
-            "official_title": _excerpt(official, 240) if official != title else None,
             "phases": section.get("designModule", {}).get("phases", []),
             "status": section.get("statusModule", {}).get("overallStatus"),
             "sponsor": section.get("sponsorCollaboratorsModule", {})
