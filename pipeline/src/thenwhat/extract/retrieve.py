@@ -12,6 +12,7 @@ The text is returned to the caller and kept nowhere: not cached, not logged.
 import math
 import threading
 import time as system_time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
@@ -109,6 +110,12 @@ class Probe:
     page: Page | None = None
 
 
+# The reader answers 429 with a Retry-After when it is at capacity, which is not a
+# failure: it is asked again after the wait it states, this many times in all, and
+# only for a wait this short. Anything longer or unstated ends the run as before.
+BUSY_TRIES = 5
+BUSY_WAIT_MOST = 120.0
+
 _turns: dict[int, threading.BoundedSemaphore] = {}
 _turns_lock = threading.Lock()
 
@@ -130,10 +137,12 @@ class ArticleRetriever:
         turns: threading.BoundedSemaphore,
         timeout_seconds: float = 120,
         transport: httpx.BaseTransport | None = None,
+        sleep: Callable[[float], None] = system_time.sleep,
     ) -> None:
         self._scrape = reader_url.rstrip("/") + SCRAPE
         self._key = reader_key
         self._turns = turns
+        self._sleep = sleep
         self._contact = (contact_email or "").strip()
         self._reader = httpx.Client(transport=transport, timeout=timeout_seconds)
         # Only for the platforms' own interfaces that `json` asks, until posts are read
@@ -186,24 +195,55 @@ class ArticleRetriever:
             "storeInCache": False,
         }
         headers = {"Authorization": f"Bearer {self._key}"}
-        began = system_time.monotonic()
-        with self._turns:
-            # Time spent waiting for one of the reader's turns is waiting, not reading.
-            measure.add_wait(READER_SOURCE, system_time.monotonic() - began)
-            measure.add_request(READER_SOURCE)
-            try:
-                response = self._reader.post(self._scrape, json=body, headers=headers)
-            except httpx.TimeoutException:
-                raise ReaderUnavailable(
-                    "The page reader did not answer in time. Nothing was recorded against the"
-                    " site; try again when the reader is running."
-                ) from None
-            except httpx.TransportError:
-                raise ReaderUnavailable(
-                    "The page reader could not be reached. Nothing was recorded against the"
-                    " site; try again when the reader is running."
-                ) from None
+        for attempt in range(BUSY_TRIES):
+            began = system_time.monotonic()
+            with self._turns:
+                # Time spent waiting for one of the reader's turns is waiting, not reading.
+                measure.add_wait(READER_SOURCE, system_time.monotonic() - began)
+                measure.add_request(READER_SOURCE)
+                try:
+                    response = self._reader.post(self._scrape, json=body, headers=headers)
+                except httpx.TimeoutException:
+                    raise ReaderUnavailable(
+                        "The page reader did not answer in time. Nothing was recorded against"
+                        " the site; try again when the reader is running."
+                    ) from None
+                except httpx.TransportError:
+                    raise ReaderUnavailable(
+                        "The page reader could not be reached. Nothing was recorded against"
+                        " the site; try again when the reader is running."
+                    ) from None
+            wait = _busy_for(response)
+            if wait is None or attempt + 1 == BUSY_TRIES:
+                break
+            # The reader is at capacity and says when to ask again. The turn is given
+            # back first, so the wait holds no other request up.
+            measure.add_wait(READER_SOURCE, wait)
+            self._sleep(wait)
         return _answer_of(response)
+
+
+def _busy_for(response: httpx.Response) -> float | None:
+    """How long the reader asks to be left alone when it answers that it is at capacity:
+    a 429 that states a wait of no more than `BUSY_WAIT_MOST` seconds. None for any
+    other answer, a 429 with no stated wait among them, which is still the reader
+    failing."""
+    if response.status_code != 429:
+        return None
+    try:
+        answered = response.json()
+    except ValueError:
+        answered = None
+    if isinstance(answered, dict) and answered.get("code") in (NOT_NOW_CODE, NOT_ALLOWED_CODE):
+        # That is the reader's answer about the site, not about itself.
+        return None
+    try:
+        wait = float(response.headers.get("Retry-After", ""))
+    except ValueError:
+        return None
+    if not math.isfinite(wait) or wait < 0 or wait > BUSY_WAIT_MOST:
+        return None
+    return wait
 
 
 @dataclass(frozen=True, slots=True)

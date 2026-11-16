@@ -28,5 +28,6 @@ def registered_steps(settings: Settings) -> list[Step]:
             approve_drafts_by_rule=settings.approve_drafts_by_rule,
             match_reject_below=settings.match_reject_below,
             match_accept_above=settings.match_accept_above,
+            outlet_gap_seconds=settings.reader_outlet_gap_seconds,
         ),
     ]
