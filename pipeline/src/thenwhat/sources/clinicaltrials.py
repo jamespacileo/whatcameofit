@@ -143,12 +143,15 @@ class ClinicalTrials(Source):
         A specific name returns every trial it has, across all result pages. A broad name
         (more than BROAD_NAME trials) is searched within the condition instead: first by the
         condition as worded, then by its telling words. A name that is still broad within
-        the condition, or has no trial under it, returns nothing: it does not identify one
-        intervention, and its trials would only be noise for the reviewer.
+        the condition returns the registry's first page there, its most relevant
+        BROAD_NAME trials, each to be scored like any candidate: an established drug such as
+        buprenorphine has hundreds of trials for opioid use disorder, and returning none
+        made its claim read "no trial found" (batch 2's audit, 2026-11-16). A name with no
+        trial under the condition returns nothing.
         """
         first, total, next_token = self._page(intervention, None, None)
         if condition and total > BROAD_NAME:
-            return self._condition_trials(intervention, condition)
+            return self._condition_trials(intervention, condition, keep_most_relevant=True)
         records = first
         while next_token:
             more, _, next_token = self._page(intervention, None, next_token)
@@ -167,8 +170,12 @@ class ClinicalTrials(Source):
             return []
         return self._condition_trials(phrase, condition)
 
-    def _condition_trials(self, intervention: str, condition: str) -> list[SourceRecord]:
-        """Discover candidates with at most two wordings, never altering scoring scope."""
+    def _condition_trials(
+        self, intervention: str, condition: str, *, keep_most_relevant: bool = False
+    ) -> list[SourceRecord]:
+        """Discover candidates with at most two wordings, never altering scoring scope.
+        A search still broad within the condition gives nothing, or, for a name, the
+        first page the registry returns there."""
         wordings = [condition]
         fallback = _telling_words(condition)
         if fallback and fallback != condition:
@@ -181,7 +188,7 @@ class ClinicalTrials(Source):
                     raise
                 continue
             if within > BROAD_NAME:
-                return []
+                return narrowed if keep_most_relevant else []
             if narrowed:
                 return narrowed
         return []

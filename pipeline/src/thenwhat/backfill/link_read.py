@@ -15,9 +15,10 @@ awaits `thenwhat prepare`, which searches the registries and then decides it by 
 for drafts, so that no claim is published with a status no search stands behind.
 """
 
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, or_, select
@@ -49,7 +50,14 @@ from thenwhat.claims.entry import (
     slug_of_claim_close_to,
     slug_of_claim_covering,
 )
-from thenwhat.db.models import Claim, LinkLead, LinkLeadLink, LinkShare, SourceArticle
+from thenwhat.db.models import (
+    Claim,
+    LinkLead,
+    LinkLeadLink,
+    LinkShare,
+    SourceArticle,
+    WorkEntry,
+)
 from thenwhat.decide.core import Backend, DecisionFailed
 from thenwhat.decide.steps import (
     ESTABLISHED_TREATMENT,
@@ -94,6 +102,9 @@ NO_PAGE = "the page could not be retrieved"
 # the outlet's other leads are finished without asking it.
 REFUSED_STATUS = 401
 REFUSALS_BEFORE_STOPPING = 5
+# How long an outlet's 401 answers count. `thenwhat backfill retry-outlet` asks again
+# sooner.
+REFUSALS_COUNT_FOR = timedelta(days=30)
 OUTLET_REFUSES = "not asked: its outlet answered 401 to the page reader"
 # Outcomes only a page the reader got can give.
 READ_FROM_A_PAGE = (
@@ -113,6 +124,76 @@ CLAIM_IDENTITY_LOCK = 7_468_656_001
 # An article joins a candidate claim only when the same-claim decision gives that claim
 # more than every other answer together.
 SAME_CLAIM_MAJORITY = 0.5
+
+
+# How a read that would duplicate a claim names that claim in its detail.
+NAMES_OVERLAP = "names overlap"
+_OVERLAPPING = re.compile(rf"; {NAMES_OVERLAP} ([a-z0-9-]+),")
+
+
+def reads_naming_archived_claims(session: Session) -> list[tuple[LinkLead, Claim]]:
+    """Leads whose read was left identity unresolved because its treatment and condition
+    overlap a claim that is now archived, with that claim, oldest lead first. A claim
+    archived at audit for a fault can then be fixed and unarchived, and its leads read
+    again, instead of the reads staying unresolved."""
+    leads = session.scalars(
+        select(LinkLead)
+        .where(LinkLead.read_outcome == ReadOutcome.IDENTITY_UNRESOLVED)
+        .order_by(LinkLead.id)
+    )
+    named = [
+        (lead, found[1]) for lead in leads if (found := _OVERLAPPING.search(lead.read_detail or ""))
+    ]
+    archived = {
+        claim.slug: claim
+        for claim in session.scalars(
+            select(Claim).where(
+                Claim.slug.in_({slug for _, slug in named}), Claim.archived_at.is_not(None)
+            )
+        )
+    }
+    return [(lead, archived[slug]) for lead, slug in named if slug in archived]
+
+
+class NothingToRetry(BackfillError):
+    pass
+
+
+def retry_outlet(session: Session, outlet: str) -> int:
+    """Put the outlet's leads that it refused with 401, or that were not asked because
+    of those refusals, back to not read, and mark their reading stale, so the next run
+    asks the page reader for them again. Returns how many. Refuses when the outlet has no
+    such lead."""
+    refused = or_(
+        LinkLead.read_detail == f"{NO_PAGE} (the site answered {REFUSED_STATUS})",
+        LinkLead.read_detail.startswith(OUTLET_REFUSES),
+    )
+    ids = list(
+        session.scalars(
+            select(LinkLead.id).where(
+                LinkLead.outlet == outlet,
+                LinkLead.read_outcome == ReadOutcome.CANNOT_BE_READ,
+                refused,
+            )
+        )
+    )
+    if not ids:
+        raise NothingToRetry(f"No lead of '{outlet}' was refused with 401 or left unasked.")
+    for lead in session.scalars(select(LinkLead).where(LinkLead.id.in_(ids))):
+        lead.read_outcome = None
+        lead.read_detail = None
+    # Marked stale, as the ledger marks a record whose inputs changed: the entry stays,
+    # with its last attempt, until the next run reads the lead again.
+    for entry in session.scalars(
+        select(WorkEntry).where(
+            WorkEntry.record_kind == LinkRead.record_kind,
+            WorkEntry.step == LinkRead.name,
+            WorkEntry.record_id.in_(ids),
+        )
+    ):
+        entry.stale = True
+    session.flush()
+    return len(ids)
 
 
 class NotMeasured(BackfillError):
@@ -256,16 +337,29 @@ class LinkRead:
                 return claim_id
         return None
 
-    def _outlet_refusals(self, session: Session, outlet: str) -> int | None:
-        """How many of the outlet's pages answered 401 to the page reader, when that is at
-        least REFUSALS_BEFORE_STOPPING and the reader got none of its pages. None while
-        the outlet may still be asked. Pages refused for another reason, or answered
-        with another status, do not count either way."""
+    def _outlet_refusals(self, session: Session, outlet: str, now: datetime) -> int | None:
+        """How many of the outlet's pages answered 401 to the page reader in the last
+        REFUSALS_COUNT_FOR, when that is at least REFUSALS_BEFORE_STOPPING and the reader
+        got none of its pages. None while the outlet may still be asked. Pages refused
+        for another reason, or answered with another status, do not count either way.
+        Older answers lapse, so a site that starts serving the reader is asked again."""
         refused_detail = f"{NO_PAGE} (the site answered {REFUSED_STATUS})"
         refused = (
             session.scalar(
-                select(func.count()).where(
-                    LinkLead.outlet == outlet, LinkLead.read_detail == refused_detail
+                select(func.count())
+                .select_from(LinkLead)
+                .join(
+                    WorkEntry,
+                    and_(
+                        WorkEntry.record_kind == self.record_kind,
+                        WorkEntry.record_id == LinkLead.id,
+                        WorkEntry.step == self.name,
+                    ),
+                )
+                .where(
+                    LinkLead.outlet == outlet,
+                    LinkLead.read_detail == refused_detail,
+                    WorkEntry.last_attempt_at >= now - REFUSALS_COUNT_FOR,
                 )
             )
             or 0
@@ -422,7 +516,7 @@ class LinkRead:
         if outlet is None:
             return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_NAME)
 
-        refusals = self._outlet_refusals(session, record.outlet)
+        refusals = self._outlet_refusals(session, record.outlet, now)
         if refusals is not None:
             return self._finish(
                 record,
@@ -578,7 +672,7 @@ class LinkRead:
                 return self._finish(
                     record,
                     ReadOutcome.IDENTITY_UNRESOLVED,
-                    f"{draft.intervention} for {draft.indication}; names overlap {collision}, "
+                    f"{draft.intervention} for {draft.indication}; {NAMES_OVERLAP} {collision}, "
                     "but the same treatment and condition were not established",
                 )
             if business:

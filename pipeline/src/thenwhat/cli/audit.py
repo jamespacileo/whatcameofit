@@ -3,7 +3,9 @@
 from typing import Annotated
 
 import typer
+from sqlalchemy.orm import Session
 
+from thenwhat.backfill.link_read import reads_naming_archived_claims
 from thenwhat.claims.entry import awaiting_audit, clear_audit
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
@@ -13,12 +15,10 @@ audit_app = typer.Typer(no_args_is_help=True, help="Claims held off the site unt
 
 @audit_app.command("list")
 def audit_list() -> None:
-    """List the claims held off the site until audited, oldest hold first."""
+    """List the claims held off the site until audited, oldest hold first, then the
+    reads left unresolved because they overlap an archived claim."""
     with entry_session() as session:
         held = awaiting_audit(session)
-        if not held:
-            out.print("No claim awaits audit.")
-            return
         for claim in held:
             assert claim.awaiting_audit_at is not None
             archived = "  archived" if claim.archived_at is not None else ""
@@ -27,8 +27,24 @@ def audit_list() -> None:
                 f"  {claim.current_status.value}{archived}",
                 markup=False,
             )
-        noun = "claim awaits" if len(held) == 1 else "claims await"
-        out.print(f"{len(held)} {noun} audit.", markup=False)
+        if held:
+            noun = "claim awaits" if len(held) == 1 else "claims await"
+            out.print(f"{len(held)} {noun} audit.", markup=False)
+        else:
+            out.print("No claim awaits audit.")
+        _list_archived_overlaps(session)
+
+
+def _list_archived_overlaps(session: Session) -> None:
+    """Reads that drafted no claim because an archived claim has their treatment and
+    condition. Fixing and unarchiving the claim, then reading the lead again, joins it."""
+    overlaps = reads_naming_archived_claims(session)
+    if not overlaps:
+        return
+    for lead, claim in overlaps:
+        out.print(f"lead {lead.id}  overlaps archived {claim.slug}  {lead.url}", markup=False)
+    noun = "read overlaps" if len(overlaps) == 1 else "reads overlap"
+    out.print(f"{len(overlaps)} {noun} an archived claim and made no claim.", markup=False)
 
 
 @audit_app.command("clear")
