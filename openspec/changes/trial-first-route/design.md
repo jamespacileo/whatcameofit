@@ -386,4 +386,4 @@ Not for the operator, to settle while building:
 
 - The share of titles above which a substance's name is not telling (task 3.2).
 - Whether a registry trial's list payload is a column or an object in the store (`cloudflare-source-of-truth`).
-- What the sibling work on trial status changes has already built of the daily load; this change's section 2 is to be reconciled with it before any code.
+- The change `daily-trial-refresh` (pull request 268, open on 2026-11-16) already puts `load-trials --changes-only` in the daily run and has its own delta to `registry-corpus`. This change's daily-load requirements overlap it and are to be reconciled with it before any code (task 1.4).

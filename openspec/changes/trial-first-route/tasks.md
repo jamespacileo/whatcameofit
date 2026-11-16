@@ -7,7 +7,7 @@ Each section is useful when it is done, without the sections after it. Sections 
 - [ ] 1.1 Put the ten open decisions of `design.md` to the operator; verify each answer replaces its question in `design.md`, and that a spec is revised where an answer differs from the recommendation it was written to
 - [ ] 1.2 Write `docs/adr/0010`: a registry trial has a page of registry facts without a claim, which facts it may state, and that no word for how a trial turned out is used; verify it names the glossary line and the `CLAUDE.md` lines it supersedes
 - [ ] 1.3 Add trial page, trial listing, telling name, strong link and set to `GLOSSARY.md`, and revise "Registry trial" ("never exported"); verify the terms match the specs word for word
-- [ ] 1.4 Read what the sibling work on trial status changes has built of the daily load and reconcile section 2 with it; verify the outcome is recorded here before any task of section 2 starts
+- [ ] 1.4 Reconcile section 2 and `specs/registry-corpus` with the change `daily-trial-refresh` (pull request 268, open on 2026-11-16), which already adds the daily `load-trials --changes-only` run and its own delta to `registry-corpus`: drop from this change what that one specifies, and keep here the wider fields, what a load makes due, and what it never starts; verify the outcome is recorded here before any task of section 2 starts
 - [ ] 1.5 Note the wider field list of the bulk load in `docs/sources.md` with the date and the bytes a trial measured in `design.md`; verify the entry is written before the client is changed
 
 ## 2. The corpus: wider records, kept current
