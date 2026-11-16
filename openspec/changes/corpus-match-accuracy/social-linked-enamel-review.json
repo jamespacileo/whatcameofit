@@ -1,6 +1,6 @@
 {
   "checked_at": "2026-11-16T04:35:00Z",
-  "released": false,
+  "released": true,
   "corpus_ids": [
     "S023",
     "S030",
@@ -169,5 +169,31 @@
       ],
       "method": "Fresh manually bounded public post caption and observed NIH link, composed with installed Safari 0.9.18 functions; no native collector/popup/storage verification."
     }
+  },
+  "release": {
+    "commit": "c1d2ac86ab6318a46eecf979f8342821f6b45b08",
+    "pr": 195,
+    "production_ci": 43805655414,
+    "ci_conclusion": "success",
+    "worker_version": "9c272524-d9ee-448b-94a2-925d8e22be70",
+    "deployed_at": "2026-11-16T04:45:55Z",
+    "tests": {
+      "pipeline": 1562,
+      "site": 658,
+      "extension": 170
+    }
+  },
+  "installed_extension": {
+    "version": "0.9.18",
+    "build": 26,
+    "resource_hashes_verified": 35,
+    "native_verified": false,
+    "source_commit": "36f2b83bf77bcfcd79d8584c930e08464b4067ac",
+    "method": "Existing signed resources unchanged. Installed composition/exact-address functions checked against release; native popup/storage unverified."
+  },
+  "validation": {
+    "independent_reviews": "Standards and specification reviews clear at 57b3b9d after method/glossary/design wording alignment.",
+    "public_rehearsal": "Passed; production CI verifies full suite and public build.",
+    "released_checks": "Live data/index match rehearsal; all 258 exact address mappings unchanged. Fresh Hacker News service requests, website forms, installed Safari functions and public card content verified. Fresh Facebook caption returns correct trial/card. Native popup/storage and Reddit CAPTCHA remain unresolved."
   }
 }
