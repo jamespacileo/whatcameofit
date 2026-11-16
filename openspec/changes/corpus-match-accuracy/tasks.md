@@ -2,9 +2,11 @@
 
 ## Unspecified treatment identification
 
-- [x] Reproduce S016 returning an 87% trial candidate from an unnamed pancreatic-cancer drug while its Economist article is inaccessible. Reproduce the same search trigger with a synthetic report. Distinguish specific descriptions and explicit study identities from generic drug wording in both lookup readers and their field schemas; add no model call or source request.
+- [x] Reproduce a search from a synthetic disease-only headline. Distinguish specific descriptions and explicit study identities from generic drug wording in both lookup readers and their field schemas; add no model call or source request. Correct the initial S016 diagnosis: the complete official post supplies NCT06625320, so its earlier 87% candidate was not established to be an invented identity.
 - [x] Pass seven final live synthetic controls, recording the two intermediate control failures and evaluation usage in `unspecified-treatment-review.json`. Keep the bounded manual regression in `site/scripts/check-reading-identity.mjs`; it is outside offline CI. Invalidate old shared and browser results and prepare Safari 0.9.20.
-- [ ] Complete regression checks and independent review, deploy through production CI, install signed Safari, and rerun S016 against released versions. Record its identity/access limit without claiming a verified clinical or card match.
+- [x] Complete all 2,390 regression checks, nine corpus checks, strict OpenSpec validation, public rehearsal and both reviews. Release PR #200/main 3690b4ffeaa93 through successful CI 43813721268 (Worker 8c9f5242-a601-4d8d-b173-7fbca44babf3), and install signed universal Safari 0.9.20 (28) with unchanged permissions and rollback retained.
+- [x] Correct the incomplete first extension test, which omitted the official post body and registry link. Rerun both paths with complete source information: the explicitly cited NCT06625320 is returned at 97%/99% in 14,680/7,990 ms. The primary registry record and released website form agree. No card is returned; the Economist article remains unreadable. Installed composition/presenter/cache functions pass; native collector/popup/storage remain unverified. No draft trial-number guard was committed or deployed.
+- [x] Record the corrected S016 partial/no-card result and read back all 17 Google Sheet values. Preserve 97 other inspected cells, formulas, formatting, validation, notes and chips. Earlier results and the incomplete-input diagnostic remain in history/audit. Totals: 140 pass, 59 partial, 31 review, 28 blocked; 130 matching cards. Native Sheet layout remains unverified.
 
 ## Additional Hacker News source coverage
 
