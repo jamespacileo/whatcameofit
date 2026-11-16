@@ -1,4 +1,4 @@
-.PHONY: smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci lookup-dev
+.PHONY: smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -80,6 +80,15 @@ deploy-ci-check: site/node_modules
 
 deploy-ci: site/node_modules
 	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs
+
+# One pull request's copy of the site, on its own Worker thenwhat-pr-<number> at a
+# workers.dev address. Never production. GitHub runs this for every pull request.
+#   PR_NUMBER=12 make pr-preview-check
+pr-preview-check: site/node_modules
+	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs --dry-run
+
+pr-preview: site/node_modules
+	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs
 
 # Everything a deployment does except publishing: the checks, a public build, and
 # Wrangler's own dry run.
