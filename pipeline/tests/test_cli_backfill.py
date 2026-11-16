@@ -821,6 +821,43 @@ def test_load_trials_asks_for_a_named_set(
     assert "RECRUITING OR ACTIVE_NOT_RECRUITING" in asked[0]
 
 
+def test_load_trials_stops_cleanly_when_the_allowance_is_used_up(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch, fake_time, fixture_json
+):
+    """The daily run loads changes every day: an allowance used up is a stop that is
+    meant, with the counts so far, and not a failure."""
+    page = fixture_json("clinicaltrials/list_page_1.json")
+    asked: list[str] = []
+
+    def registry(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.params.get("filter.advanced", ""))
+        return httpx.Response(200, json=page)
+
+    monkeypatch.setattr(
+        "thenwhat.cli.backfill.make_registry",
+        lambda lookups, settings: ClinicalTrials(
+            lookups,
+            contact_email=settings.contact_email,
+            transport=httpx.MockTransport(registry),
+            time=fake_time,
+        ),
+    )
+    monkeypatch.setenv(
+        "SOURCE_ALLOWANCES",
+        '{"clinicaltrials.gov": {"requests": 1, "period_hours": 24, "interval_seconds": 0}}',
+    )
+
+    result = run("load-trials", "--trials", "interventional", "--changes-only")
+
+    assert result.exit_code == 0, result.output
+    assert asked == ["AREA[StudyType]INTERVENTIONAL"]
+    assert "Loaded 3 trials in 1 requests: 3 new, 0 already stored." in result.output
+    assert "Stopped: The allowance for clinicaltrials.gov (1 requests) is used up." in (
+        result.output
+    )
+    assert len(session.scalars(select(RegistryTrial)).all()) == 3
+
+
 def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
     result = run("load-trials", "--trials", "successful")
 

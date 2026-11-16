@@ -9,6 +9,7 @@ from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
 from backfill_support import DemoStep, committed_sessions, remove_committed, same_session
+from thenwhat.backfill.errors import AllowanceUsedUp
 from thenwhat.backfill.ledger import count
 from thenwhat.backfill.registry_load import load_trials
 from thenwhat.backfill.runner import run_step
@@ -208,6 +209,29 @@ def test_requests_are_claimed_before_they_are_sent(session: Session, fake_time, 
     load(session, fake_time, registry, before_request=lambda: claimed.append(len(registry.asked)))
 
     assert claimed == [0, 1]
+
+
+def test_a_load_that_reaches_the_allowance_stops_with_what_it_stored(
+    session: Session, fake_time, fixture_json
+):
+    """The allowance runs out after the first page: the load ends without an error, says
+    why, keeps the first page's trials, and is not recorded as completed, so the next
+    changes-only load asks from the same date."""
+    registry = Registry(fixture_json)
+    claims: list[int] = []
+
+    def before_request() -> None:
+        claims.append(1)
+        if len(claims) > 1:
+            raise AllowanceUsedUp("The allowance for clinicaltrials.gov is used up.")
+
+    report = load(session, fake_time, registry, before_request=before_request)
+
+    assert report.stopped == "The allowance for clinicaltrials.gov is used up."
+    assert (report.requests, report.added, report.updated) == (1, 3, 0)
+    assert len(registry.asked) == 1
+    assert len(stored(session)) == 3
+    assert session.get(RegistryLoad, (REGISTRY, CONDITION)) is None
 
 
 def test_no_request_is_sent_without_a_contact_address(session: Session, fake_time, fixture_json):
