@@ -150,6 +150,60 @@ def test_a_number_the_words_do_not_give_is_refused():
     assert refusal(twelve_weeks, PLANNED) is Refusal.NUMBER_NOT_IN_WORDS
 
 
+def test_a_later_cycle_offset_is_not_follow_up_from_the_start():
+    # NCT04147585's recorded primary-outcome time frame; no article content.
+    time_frame = (
+        "Assessed within 6 days after 3rd cycle of IRCD. 1 cycle of IRCD lasts 5 days "
+        "and is administered once a month, followed by regular diet for the rest of the month."
+    )
+    proposed = follow_up(number=6, unit="days", words="within 6 days")
+
+    assert (
+        refusal(proposed, [Outcome("Clinical response", time_frame)]) is Refusal.LATER_EVENT_OFFSET
+    )
+
+
+@pytest.mark.parametrize(
+    "time_frame",
+    [
+        "6 days after the third cycle",
+        "6 days following cycle 3",
+        "6 days after the first cycle",
+        "6 days after the second dose",
+        "6 days following infusion 12",
+        "6 days after the final session",
+        "6 days after completion of treatment",
+        "6 days after the end of the therapy",
+    ],
+)
+def test_explicit_offsets_after_treatment_progress_are_refused(time_frame: str):
+    assert (
+        refusal(
+            follow_up(number=6, unit="days", words="6 days"),
+            [Outcome("Symptoms", time_frame)],
+        )
+        is Refusal.LATER_EVENT_OFFSET
+    )
+
+
+@pytest.mark.parametrize(
+    "time_frame",
+    [
+        "6 days after surgery",
+        "6 days after the first dose",
+        "6 days after randomization",
+        "At 6 days from baseline, then 12 days after the third cycle",
+        "After the third cycle, assessment at month 6 from baseline",
+    ],
+)
+def test_a_duration_with_its_own_start_is_not_a_later_event_offset(time_frame: str):
+    unit = "months" if "month 6" in time_frame else "days"
+    assert (
+        refusal(follow_up(number=6, unit=unit, words=time_frame), [Outcome("Symptoms", time_frame)])
+        is None
+    )
+
+
 @pytest.mark.parametrize(
     ("number", "words", "found"),
     [
@@ -467,6 +521,29 @@ def test_a_second_run_with_nothing_changed_asks_the_model_nothing(session: Sessi
     assert len(session.scalars(select(LlmUsage)).all()) == 1
 
 
+def test_later_cycle_offset_is_refused_stored_and_reused_without_a_second_call(
+    session: Session, claim: Claim, fixture_json
+):
+    outcomes = copy.deepcopy(OUTCOMES)
+    outcomes[0]["timeFrame"] = "Assessed within 6 days after 3rd cycle of treatment"
+    store_record(
+        session,
+        claim,
+        study_with(fixture_json, outcomes, results_posted=True),
+        fetched_at=FETCHED_AGAIN,
+    )
+    model = Scripted(with_follow_up(number=6, unit="days", words="within 6 days"))
+
+    run = read(session, claim, model)
+    assert run.refused == {Refusal.LATER_EVENT_OFFSET: 1}
+    assert (0, ReadingKind.FOLLOW_UP) not in [(r.outcome, r.kind) for r in stored(session)]
+    assert reads(session)[0].refusals == [
+        {"outcome": 0, "kind": "follow_up", "reason": "later_event_offset"}
+    ]
+    assert read(session, claim, model).unchanged == [TRIAL]
+    assert len(model.shown) == 1
+
+
 def test_a_trial_whose_readings_were_all_refused_is_not_asked_about_again(
     session: Session, claim: Claim
 ):
@@ -690,6 +767,47 @@ def test_a_reading_below_the_bar_is_not_exported(session: Session, claim: Claim)
         "follow_up",
         "measure",
     ]
+
+
+def test_export_rechecks_legacy_offsets_without_changing_the_read_or_calling_a_model(
+    session: Session, claim: Claim, fixture_json
+):
+    outcomes = copy.deepcopy(OUTCOMES)
+    outcomes[0]["timeFrame"] = "Assessed within 6 days after 3rd cycle of treatment"
+    store_record(
+        session,
+        claim,
+        study_with(fixture_json, outcomes, results_posted=True),
+        fetched_at=FETCHED_AGAIN,
+    )
+    read(session, claim, Scripted(with_follow_up(number=6, unit="days", words="within 6 days")))
+    trial_read = reads(session)[0]
+    # Simulate the earlier instructions and rules accepting this exact model answer.
+    trial_read.instructions_version = "1"
+    trial_read.refusals = []
+    legacy = Reading(
+        trial_read_id=trial_read.id,
+        outcome=0,
+        kind=ReadingKind.FOLLOW_UP,
+        field=ReadingField.TIME_FRAME,
+        words="within 6 days",
+        number=6,
+        unit=FollowUpUnit.DAYS,
+        confidence=0.99,
+        decided_by=ReadBy.MODEL,
+    )
+    session.add(legacy)
+    session.flush()
+    usage = len(session.scalars(select(LlmUsage)).all())
+
+    [trial] = exported(session)["claims"][0]["trials"]
+
+    assert not [r for r in trial["readings"] if r["outcome"] == 0 and r["kind"] == "follow_up"]
+    assert trial["facts"]["primary_outcomes"][0]["time_frame"] == outcomes[0]["timeFrame"]
+    assert len(trial["readings"]) == 3
+    assert session.get(Reading, legacy.id) is legacy
+    assert (trial_read.instructions_version, trial_read.refusals) == ("1", [])
+    assert len(session.scalars(select(LlmUsage)).all()) == usage
 
 
 def test_the_reading_bar_has_its_default(monkeypatch: pytest.MonkeyPatch):

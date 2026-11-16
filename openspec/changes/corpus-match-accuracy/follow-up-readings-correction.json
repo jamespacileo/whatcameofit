@@ -1,0 +1,101 @@
+{
+  "corpus_id": "A066",
+  "claim": "fasting-mimicking-diet-mild-to-moderate-crohns-disease",
+  "trial": "NCT04147585",
+  "before": {
+    "checked_at": "2026-11-16T00:19:16.374290+00:00",
+    "claims": 163,
+    "trials": 961,
+    "readings_checked": 2805,
+    "newly_refused": [
+      {
+        "claim": "fasting-mimicking-diet-mild-to-moderate-crohns-disease",
+        "trial": "NCT04147585",
+        "kind": "follow_up",
+        "outcome": 0,
+        "number": 6,
+        "unit": "days",
+        "reason": "later_event_offset",
+        "words": "within 6 days",
+        "time_frame": "Assessed within 6 days after 3rd cycle of IRCD. 1 cycle of IRCD lasts 5 days and is administered once a month, followed by regular diet for the rest of the month.",
+        "confidence": 0.99
+      }
+    ],
+    "diet": {
+      "read_id": 1625,
+      "instructions_version": "1",
+      "read_at": "2026-11-16T00:08:49.650893+00:00",
+      "input_hash": "59679688281a3041ad3035123910a8834f0c38db09d54b88c915f5fad8046153",
+      "refusals": [],
+      "readings": [
+        {
+          "id": "4970",
+          "trial_read_id": "1625",
+          "outcome": "0",
+          "kind": "follow_up",
+          "field": "time_frame",
+          "words": "within 6 days",
+          "number": "6",
+          "unit": "days",
+          "code": "None",
+          "confidence": "0.99",
+          "decided_by": "model",
+          "created_at": "2026-11-16 00:08:49.641610+00:00"
+        },
+        {
+          "id": "4971",
+          "trial_read_id": "1625",
+          "outcome": "0",
+          "kind": "measure",
+          "field": "measure",
+          "words": "Number of Participants",
+          "number": "None",
+          "unit": "None",
+          "code": "frequency",
+          "confidence": "0.99",
+          "decided_by": "model",
+          "created_at": "2026-11-16 00:08:49.641610+00:00"
+        }
+      ]
+    },
+    "model_calls_for_audit": 0
+  },
+  "after": {
+    "checked_at": "2026-11-16T00:19:59.620577+00:00",
+    "claims": 163,
+    "trials": 961,
+    "readings_checked": 2804,
+    "newly_refused": [],
+    "diet": {
+      "read_id": 1626,
+      "instructions_version": "2",
+      "read_at": "2026-11-16T00:19:17.021351+00:00",
+      "input_hash": "59679688281a3041ad3035123910a8834f0c38db09d54b88c915f5fad8046153",
+      "refusals": [],
+      "readings": [
+        {
+          "id": "4972",
+          "trial_read_id": "1626",
+          "outcome": "0",
+          "kind": "measure",
+          "field": "measure",
+          "words": "Number of Participants",
+          "number": "None",
+          "unit": "None",
+          "code": "frequency",
+          "confidence": "1.0",
+          "decided_by": "model",
+          "created_at": "2026-11-16 00:19:17.014284+00:00"
+        }
+      ]
+    },
+    "model_calls_for_audit": 0
+  },
+  "unchanged_repeat": {
+    "read": 0,
+    "unchanged": 1,
+    "model_calls": 0
+  },
+  "claim_state": "pending",
+  "published": false
+}
