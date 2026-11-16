@@ -159,6 +159,11 @@ const publisherNote = (url: string) => {
 const untried = registryMatches.filter(
   (match) => match.state === "approved" && !trialIds.has(match.external_id),
 );
+// The registry records section's name, the same in its heading and the section list.
+const matchedHeading =
+  untried.length > 0 || candidates.length === 0 ? "Matched registry records" : "Possible registry records";
+// The trials section above already says what a score is about; said once on the page.
+const scoreNote = trials.length > 0 ? "" : " A score is about the match, not about the treatment.";
 // What the registry records section holds, said beside its heading while it is folded.
 const matchedNote =
   [
@@ -229,7 +234,7 @@ const sections = [
     ? [
         {
           id: "matched",
-          name: "Registry records",
+          name: matchedHeading,
           ...(untried.length + candidates.length > 0 ? { count: untried.length + candidates.length } : {}),
         },
       ]
@@ -913,23 +918,26 @@ const sections = [
       claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
         <section class="matched" data-pagefind-ignore>
           <FoldHead id="matched" phone="folded" note={matchedNote}>
-            {untried.length > 0 || candidates.length === 0
-              ? "Matched registry records"
-              : "Possible registry records"}
+            {matchedHeading}
           </FoldHead>
           <p class="take-why">
             {untried.length > 0
-              ? "Trial registry records found for this treatment and condition, with how sure each match is. A score is about the match, not about the treatment."
+              ? `Trial registry records found for this treatment and condition, with how sure each match is.${scoreNote}`
               : candidates.length > 0
-                ? "Trial registry records that may be about this treatment and condition, with how sure each match is. A score is about the match, not about the treatment."
+                ? `Trial registry records that may be about this treatment and condition, with how sure each match is.${scoreNote}`
                 : "The trial registries were searched for this treatment and condition. No record matched."}
           </p>
           {untried.length > 0 && <RegistryRecords matches={untried} />}
           {untried.length > 0 && candidates.length > 0 && (
-            <h3 class="matched-group">Possible records, not counted in the status</h3>
+            <h3 class="matched-group">Possible records</h3>
           )}
           {candidates.length > 0 && (
-            <RegistryRecords matches={candidates} level={untried.length > 0 ? 4 : 3} possible />
+            <RegistryRecords
+              matches={candidates}
+              level={untried.length > 0 ? 4 : 3}
+              possible
+              acceptAbove={data.match_accept_above ?? null}
+            />
           )}
         </section>
       )

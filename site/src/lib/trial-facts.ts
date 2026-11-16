@@ -206,6 +206,14 @@ export function withResults(trials: ExportedTrial[]): number {
   return trials.filter((trial) => trial.facts?.results).length;
 }
 
+/** "135 people" or "330 people planned": a trial's size as the trials table leads with it,
+ * and as a registry record row gives it. Null when the record states none. */
+export function sizeText(stated: { count: number; basis: string } | null): string | null {
+  if (!stated) return null;
+  const people = `${number(stated.count)} ${stated.count === 1 ? "person" : "people"}`;
+  return stated.basis === "planned" ? `${people} planned` : people;
+}
+
 /** "83 participants enrolled" or "400 participants planned". */
 export function participantsText(facts: ExportedTrialFacts | null): string | null {
   const stated = facts?.participants;
@@ -432,18 +440,14 @@ export function trialColumns(
 ): TrialColumns {
   const facts = trial.facts;
   const stated = facts?.participants;
-  const people = stated ? `${number(stated.count)} ${stated.count === 1 ? "person" : "people"}` : null;
+  const size = sizeText(stated ?? null);
   const compared = (facts?.comparators ?? []).map((code) => comparatorWords(code, approach));
   const comparedText = compared.join(" and ");
   const state = PLAIN_STATE[trial.state] ?? null;
   const phased = trial.phases.filter((code) => code !== "not_applicable");
   return {
-    lead: people
-      ? stated!.basis === "planned"
-        ? `${people} planned`
-        : people
-      : (trial.title ?? `Trial ${trial.trial_id}`),
-    isTitle: !people,
+    lead: size ?? trial.title ?? `Trial ${trial.trial_id}`,
+    isTitle: !size,
     phase: phased.length > 0 ? phaseText(phased) : null,
     compared:
       comparedText.length > 0

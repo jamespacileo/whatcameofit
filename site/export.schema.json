@@ -953,6 +953,17 @@
           ],
           "title": "State",
           "type": "string"
+        },
+        "participants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedParticipants"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -2520,6 +2531,18 @@
       },
       "title": "Card Sources",
       "type": "array"
+    },
+    "match_accept_above": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Match Accept Above"
     }
   },
   "required": [

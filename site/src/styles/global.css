@@ -3629,17 +3629,10 @@ main ul:not([class]) li + li {
 }
 
 .record-group-count {
-  display: inline-grid;
-  margin-left: 0.45rem;
-  vertical-align: 0.05em;
-  place-items: center;
-  min-width: 1.5rem;
-  padding: 0 0.4rem;
-  border-radius: 999px;
-  background: var(--tint);
-  color: var(--blue);
-  font-size: 0.8rem;
-  font-weight: 700;
+  margin-left: 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
 }
 
 .record-row {
@@ -3683,18 +3676,11 @@ main ul:not([class]) li + li {
   text-wrap: pretty;
 }
 
-.record-title a {
-  color: var(--ink);
-  text-decoration-color: var(--ring);
-}
-
-.record-title a:hover {
-  color: var(--blue);
-  text-decoration-color: currentColor;
-}
 
 .record-meta,
-.record-match {
+.record-match,
+.record-unread,
+.record-links {
   margin: 0;
   max-width: none;
   font-size: 0.85rem;

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { NOT_COUNTED, NO_PHASE_GIVEN, groupByReading, phaseOf, stateOf } from "../src/lib/registry-records.ts";
+import { NO_PHASE_GIVEN, groupByReading, notCounted, phaseOf, sizeOf, stateOf } from "../src/lib/registry-records.ts";
 import { possibleMatchNote } from "../src/lib/confidence.ts";
 import { READING_HEADINGS, UNREAD_HEADING } from "../src/lib/confidence.ts";
 
@@ -44,6 +44,15 @@ test("a record's phase and state are in the site's words, and a missing phase sa
 });
 
 test("no reading heading is a verdict or says a trial is open to join", () => {
-  const words = [...Object.values(READING_HEADINGS), UNREAD_HEADING, NOT_COUNTED, possibleMatchNote(0.78)].join(" ");
+  const words = [...Object.values(READING_HEADINGS), UNREAD_HEADING, notCounted(0.8), notCounted(null), possibleMatchNote(0.78)].join(" ");
   assert.doesNotMatch(words, /dead|abandoned|works|failed|cure|proven|recruit|join|eligib/i);
+});
+
+test("a possible record's size is in the trials table's words, and the rule names its score", () => {
+  const record = { title: "T", conditions: [], interventions: [], phases: [], state: "under_way" };
+  assert.equal(sizeOf({ ...record, participants: { count: 780, basis: "planned" } }), "780 people planned");
+  assert.equal(sizeOf({ ...record, participants: { count: 1, basis: "actual" } }), "1 person");
+  assert.equal(sizeOf(record), null);
+  assert.match(notCounted(0.8), /its match is 80% or more\./);
+  assert.match(notCounted(null), /only once a person confirms it\./);
 });

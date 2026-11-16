@@ -26,7 +26,7 @@ from thenwhat.decide.steps import (
 )
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.events.trial import PHASES
-from thenwhat.events.trial_facts import STATES, is_registry_record
+from thenwhat.events.trial_facts import STATES, is_registry_record, read_trial
 from thenwhat.measure import spans as measure
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
@@ -72,7 +72,7 @@ def what_it_says(record: SourceRecord) -> str | None:
 
 def facts_of(record: SourceRecord) -> dict[str, Any] | None:
     """What a trial's registry record says of it, field by field, for the site to lay out:
-    its title, conditions, interventions, phases and state, as written or as codes. None
+    its title, conditions, interventions, phases, state and size, as written or as codes. None
     for a record that is not a trial's. Behavior: openspec registry-record-rows."""
     if not is_registry_record(record.payload):
         return None
@@ -91,6 +91,11 @@ def facts_of(record: SourceRecord) -> dict[str, Any] | None:
             if phase in PHASES
         ],
         "state": STATES.get(section.get("statusModule", {}).get("overallStatus"), "unknown"),
+        "participants": (
+            {"count": participants.count, "basis": participants.basis}
+            if (participants := read_trial(record.payload).facts.participants)
+            else None
+        ),
     }
 
 

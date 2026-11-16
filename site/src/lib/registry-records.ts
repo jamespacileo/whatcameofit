@@ -3,7 +3,7 @@
 
 import { READING_HEADINGS, READING_ORDER, UNREAD_HEADING } from "./confidence.ts";
 import type { ExportedMatch, ExportedMatchRecord } from "./export";
-import { TRIAL_STATE_WORDS, phaseText } from "./trial-facts.ts";
+import { TRIAL_STATE_WORDS, phaseText, sizeText } from "./trial-facts.ts";
 
 export interface ReadingGroup {
   /** The reading code, or null for records scored before readings were asked. */
@@ -31,11 +31,17 @@ export function groupByReading(matches: ExportedMatch[]): ReadingGroup[] {
 
 export const NO_PHASE_GIVEN = "Phase not given";
 export const NOT_READ_YET = "Details not read from the registry yet";
-/** Said once above the possible records, with the rule that would have counted them,
- * so no row reads as a counted trial (openspec auto-publish, "Confident candidates are
- * approved by rule"). */
-export const NOT_COUNTED =
-  "None of these is counted in the status. A rule counts a record only when it is read as this treatment for this condition with a high enough score, and no person has confirmed these.";
+/** Said once above the possible records: none counts, and the rule that would count one,
+ * with the score the pipeline's rule needs, so no row reads as a counted trial (openspec
+ * registry-record-rows; openspec auto-publish, "Confident candidates are approved by
+ * rule"). With the rule off, only a person counts a record. */
+export function notCounted(acceptAbove: number | null): string {
+  const rule =
+    acceptAbove === null
+      ? "A record counts only once a person confirms it."
+      : `A record counts only when it is read as this treatment for this condition and its match is ${Math.round(acceptAbove * 100)}% or more.`;
+  return `None of these is counted in the status, and no person has checked them. ${rule}`;
+}
 export const NOT_COUNTED_LINK = { href: "/guide/match-and-confidence", text: "How a match is scored" };
 /** Records shown in a group before the rest fold away. */
 export const RECORDS_SHOWN = 3;
@@ -53,4 +59,9 @@ export function phaseOf(record: ExportedMatchRecord): string {
 /** "Under way": the record's state in the trial entries' words. */
 export function stateOf(record: ExportedMatchRecord): string {
   return TRIAL_STATE_WORDS[record.state];
+}
+
+/** "780 people planned": the record's size in the trials table's words, or null. */
+export function sizeOf(record: ExportedMatchRecord): string | null {
+  return sizeText(record.participants ?? null);
 }

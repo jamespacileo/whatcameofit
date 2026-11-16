@@ -411,6 +411,7 @@ def test_candidate_keeps_what_its_registry_record_says(session: Session):
         "interventions": ["EX-1"],
         "phases": ["phase_1", "phase_2"],
         "state": "under_way",
+        "participants": None,
     }
     assert of_the_paper.record_facts is None
 

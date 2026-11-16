@@ -1,14 +1,16 @@
 ---
-// One registry record in RegistryRecords: its title, one line in the trials' grammar
-// ("Phase 3 · NCT… at ClinicalTrials.gov · Under way"), then what it is for and names.
-// A possible record leads the line with its match; a matched one gives its match on a
-// line of its own. Openspec registry-record-rows.
+// One registry record in RegistryRecords: its title as the registry wrote it; a line of
+// what the record says of the trial in the trials table's words ("Phase 3 · 780 people
+// planned · Under way"), opened by its match when it is only possible; then the record
+// and its page here in the trials' own grammar ("NCT… at ClinicalTrials.gov", "View
+// trial details here"); a matched record's match note; then what it is for and names.
+// Openspec registry-record-rows.
 import ExternalLink from "@lucide/astro/icons/external-link";
 import { matchNote, possibleMatchNote } from "../lib/confidence";
 import type { ExportedMatch } from "../lib/export";
-import { FOR_LABEL, NAMED_LABEL, NOT_READ_YET, phaseOf, stateOf } from "../lib/registry-records";
+import { FOR_LABEL, NAMED_LABEL, NOT_READ_YET, phaseOf, sizeOf, stateOf } from "../lib/registry-records";
 import { sourceName } from "../lib/status";
-import { trialDetailsPath } from "../lib/trial-links.mjs";
+import TrialDetailsLink from "./TrialDetailsLink.astro";
 
 interface Props {
   match: ExportedMatch;
@@ -17,29 +19,39 @@ interface Props {
 
 const { match, possible } = Astro.props;
 const record = match.record ?? null;
-const local = trialDetailsPath(match.url);
 const title = record?.title ?? `Registry record ${match.external_id}`;
 const at = `${match.external_id} at ${sourceName(match.source_name)}`;
+const size = record ? sizeOf(record) : null;
+const standing = [
+  ...(possible ? [possibleMatchNote(match.score)] : []),
+  ...(record ? [phaseOf(record), ...(size ? [size] : []), stateOf(record)] : []),
+];
 ---
 
 <li class="record-row">
-  <p class="record-title">{local ? <a href={local}>{title}</a> : title}</p>
-  <p class="record-meta">
-    {possible && <span class="record-possible">{possibleMatchNote(match.score)}</span>}
-    {record && <span>{phaseOf(record)}</span>}
-    <span>
-      {
-        match.url ? (
-          <a class="record-source" href={match.url} rel="noopener">
-            {at}
-            <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
-          </a>
-        ) : (
-          at
-        )
-      }
-    </span>
-    <span>{record ? stateOf(record) : NOT_READ_YET}</span>
+  <p class="record-title">{title}</p>
+  {
+    standing.length > 0 && (
+      <p class="record-meta">
+        {standing.map((part, index) => (
+          <span class={possible && index === 0 ? "record-possible" : undefined}>{part}</span>
+        ))}
+      </p>
+    )
+  }
+  {!record && <p class="record-unread">{NOT_READ_YET}</p>}
+  <p class="record-links">
+    {
+      match.url ? (
+        <a class="record-source" href={match.url} rel="noopener">
+          {at}
+          <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
+        </a>
+      ) : (
+        at
+      )
+    }
+    <TrialDetailsLink url={match.url} />
   </p>
   {!possible && <p class="record-match">{matchNote(match.score)}</p>}
   {

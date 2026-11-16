@@ -495,8 +495,15 @@ def test_a_match_carries_its_record_field_by_field_once_it_is_read(session: Sess
 
     first, second = claim_in(exported(session))["matches"]
 
-    assert first["record"] == read.record_facts
+    assert first["record"] == {**read.record_facts, "participants": None}
     assert second["record"] is None
+
+
+def test_export_says_the_score_a_match_needs_to_be_approved_by_rule(session: Session):
+    """Openspec registry-record-rows: the site says what a possible record lacks."""
+    assert build_export(session, now=NOW, match_accept_above=0.8).match_accept_above == 0.8
+    # With the rule off only a person approves a match, and there is no score to name.
+    assert build_export(session, now=NOW).match_accept_above is None
 
 
 def test_export_carries_retired_verticals_with_their_successors(
