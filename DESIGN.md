@@ -38,7 +38,36 @@ Rules:
 - Inside the extension's popup the popup's own treatment governs, in the extension and where the site draws it on the extension page: the latest promise is a rounded pale amber box (13px corners) with no dashed rule (`extension/src/popup.css`, `.facts .promise`), because the drawn popup must match the real one. Amber still means "promised" and nothing else.
 - Amber is kept for a promise that exists. An empty Promised cell is white, with "Nothing promised for this year." for screen readers; the column heading stays amber. Where a past year has a promise and no record, "No record" is in ink at body size, not in grey: the same words, easier to find. A claim with no dated promise has no Promised column, and says "No dated promise on record." above the table.
 - There is no colour for any status. No red, no green.
-- Light only. No dark theme.
+- Two themes, light and dark, with the same meanings. See "Dark theme".
+
+## Dark theme
+
+Asked for by the operator on 2026-11-16 (openspec change `dark-theme`). The same evidence digest under low light: the page is a deep neutral slate, not navy, so the masthead, the record band and the footer keep their navy (`--footer`, unchanged) as a hue of their own. The accent is the lifted blue the masthead already used. Amber still means "promised" and nothing else, and no status has a colour.
+
+| Token | Dark value |
+|---|---|
+| `--paper` | `#121821` |
+| `--ground` | `#0c1118` |
+| `--ink` | `#e4eaf3` |
+| `--blue` | `#8ec1f5` |
+| `--muted` | `#a3b0c2` |
+| `--panel`, `--tint`, `--tag` | `#17202d`, `#1d2838`, `#2a4163` |
+| `--rule`, `--rule-soft` | `#2b3546`, `#1f2733` |
+| `--table-head` | `#161d28` (light `#f8fafd`) |
+| `--promise`, `--promise-rule`, `--promise-mark` | `#362b10`, `#8a7230`, `#d9b44a` |
+| `--ring` | `#6d7c90` |
+| `--on-blue`, `--blue-hover`, `--blue-fill` | `#0c1118`, `#c4ddf8`, `#6fa6e0` (light: white, the footer navy, the accent) |
+| `--raised`, `--raised-rule`, `--band-card-rule` | `#202c40`, blue at 24%, blue at 32% (light: white, `#d9e2ee`, none) |
+| `--lift`, `--band-card-shadow` | black at 55%, a 14px drop in black at 70% (light: navy at 35%, none) |
+| `--media-dim`, `--media-rest` | `brightness(0.85)`, `brightness(0.7)` (light: none) |
+
+- `--on-navy-ink` is the white lettering on the navy grounds and `--on-navy-rule` (white at 22%) their hairlines, the same in both themes; page tokens are never used on navy. A filled blue control is `--blue-fill` with `--on-blue` lettering and hovers to `--blue-hover`; in the dark theme the fill is a step below the accent, so the page's main button is not its brightest patch.
+- The status card on a band is `--raised`: white on the light page, where it stands out with no edge; in the dark theme a step above the navy, ringed in faint blue (`--band-card-rule`) and with a soft drop below, so it lifts off the band rather than sinking into it.
+- In the dark theme the explainer video is dimmed to 70% until the reader starts it, hovers or focuses it, then plays at 85%. The amber fill is warmer than a plain darkening of the light amber, so "promised" reads as a marker, not a stain.
+- With no choice stored, the site follows the device, live and with no script. The masthead's switch, at its end, always changes the look: a moon while the page is light, a sun while it is dark, in white line, 44 pixels square, drawn only where a script can act on it. Switching to the device's own look clears the stored choice, so the page follows the device again; switching away from it stores the choice in this browser. Its label names the action ("Switch to dark appearance"); while a kept look differs from the device, the label also says so and that the press returns to the device ("Switch to light appearance, as your device. Dark is kept in this browser."), and a polite status line says what was chosen and whether it is kept. Another tab's choice is drawn without being written back, and colours change in one frame, with no transitions.
+- Printed pages, the embed and the drawn extension popup (`.theme-light`) stay light.
+- Contrast on the dark page, calculated on 2026-11-16: text 14.7:1, blue 9.4:1, blue on the panel 8.7:1, blue on the tag 5.5:1, blue on the raised card 7.4:1, secondary text 8.1:1 and on the raised card 6.4:1 and on amber 6.3:1, the promise mark 9.0:1, the empty-place ring 4.2:1, lettering on a filled blue control 7.4:1.
+- Checked by eye on the home and claim pages at desktop and phone width; a scan of every other page found no light surface left. A dual-agent critique on 2026-11-16 (`.impeccable/critique/`) asked for the switch's two states, the raised card, the band's hairlines, the warmer amber, the dimmer fill and video and the cross-tab fix, which are in; a contrast probe of six pages in each theme found no text under 4.5:1.
 
 ## Type
 
