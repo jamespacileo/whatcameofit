@@ -35,6 +35,12 @@ export function matchNote(score: number): string {
   return `Match to this claim: ${matchWords(score)}`;
 }
 
+/** "Possible match: medium, 78%": a candidate's note, led with so the uncertainty comes
+ * before its phase and state (openspec registry-record-rows). */
+export function possibleMatchNote(score: number): string {
+  return `Possible match: ${matchWords(score)}`;
+}
+
 /** Why the record scored as it did, from how it was read. */
 const READINGS:Record<string, string> = {
   match: "Read as a study of this treatment for this condition.",
@@ -45,6 +51,20 @@ const READINGS:Record<string, string> = {
 };
 
 const UNREAD ="Scored before the condition was part of the question.";
+
+/** How a group of registry records was read, said once above the group (openspec
+ * registry-record-rows). The same readings as `READINGS`, as headings. */
+export const READING_HEADINGS: Record<string, string> = {
+  match: "Read as this treatment for this condition",
+  other_indication: "Read as this treatment for another condition, patient group or setting",
+  not_what_is_tested: "Read as studies this treatment is in but does not test",
+  not_a_match: "Read as studies of something else",
+};
+
+export const UNREAD_HEADING = "Scored without checking the condition";
+
+/** The readings in the order their groups are shown: the closest to the claim first. */
+export const READING_ORDER = ["match", "other_indication", "not_what_is_tested", "not_a_match"];
 
 export function readingOf(reading: string | null): string {
   return (reading && READINGS[reading]) ?? UNREAD;

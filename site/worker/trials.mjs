@@ -54,9 +54,18 @@ function paragraphs(value) {
   return text(value).trim().split(/\n\s*\n/).filter(Boolean).map(line => `<p>${escape(line)}</p>`).join("");
 }
 
+// Claims that cite the record, then claims it is only a possible match for, which is not
+// counted in their status (openspec registry-record-rows).
 function claimLinks(claims) {
   const safe = items(claims).filter(c => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(c?.slug) && text(c.headline));
-  return safe.length ? `<nav aria-label="Claims citing this trial"><h2>Claims citing this record</h2><ul class="trial-links">${safe.map(c => `<li><a href="/${escape(c.slug)}">${escape(c.headline)}</a></li>`).join("")}</ul></nav>` : `<p><a href="/">Back to ${escape(SITE.name)}</a></p>`;
+  if (!safe.length) return `<p><a href="/">Back to ${escape(SITE.name)}</a></p>`;
+  const list = group => `<ul class="trial-links">${group.map(c => `<li><a href="/${escape(c.slug)}">${escape(c.headline)}</a></li>`).join("")}</ul>`;
+  const citing = safe.filter(c => c.possible !== true);
+  const possible = safe.filter(c => c.possible === true);
+  return [
+    citing.length ? `<nav aria-label="Claims citing this trial"><h2>Claims citing this record</h2>${list(citing)}</nav>` : "",
+    possible.length ? `<nav aria-label="Claims this trial may be about"><h2>Claims this record may be about</h2><p class="trial-source">A possible match only: it is not counted in these claims' status.</p>${list(possible)}</nav>` : "",
+  ].join("");
 }
 
 function sourceLink(id) {

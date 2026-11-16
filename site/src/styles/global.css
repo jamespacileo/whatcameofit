@@ -4017,6 +4017,140 @@ main ul:not([class]) li + li {
   color: var(--muted);
 }
 
+/* Registry records grouped by how each was read (openspec registry-record-rows): the
+   reading said once above its group, then the study's title, its identifier, phase,
+   state and match in one quiet line, and what it is for and tests. */
+.record-group + .record-group,
+.record-group + .matched-group {
+  margin-top: 1.6rem;
+}
+
+.record-group-head {
+  margin: 1.4rem 0 0.6rem;
+  font-size: 1rem;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.record-group-count {
+  margin-left: 0.4rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.record-row {
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--rule-soft);
+}
+
+.record-row:first-child {
+  border-top: 1px solid var(--rule);
+}
+
+/* Said once above the possible records: none counts, and the rule that would. */
+.record-not-counted {
+  margin: 0 0 0.4rem;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+/* A possible record's line opens with its match, so it is read before phase and state. */
+.record-possible {
+  color: var(--ink);
+}
+
+.record-rest {
+  max-width: none;
+}
+
+.record-rest > .record-list {
+  margin-top: 0.4rem;
+}
+
+/* A possible record is drawn a step lighter than one that counts. */
+.record-group-possible .record-title {
+  font-weight: 500;
+}
+
+.record-title {
+  margin: 0 0 0.2rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+
+.record-meta,
+.record-match,
+.record-unread,
+.record-links {
+  margin: 0;
+  max-width: none;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.5rem;
+}
+
+/* The separator ends a part, so a wrapped line never starts with one. */
+.record-meta > span:not(:last-child)::after {
+  content: "·";
+  margin-left: 0.5rem;
+  color: var(--ring);
+}
+
+.record-meta .out {
+  margin-left: 0.15em;
+  vertical-align: -0.05em;
+}
+
+/* The registry link is short; on a phone its press area is raised to 24px and more. */
+@media (max-width: 40rem) {
+  .record-source {
+    display: inline-block;
+    padding-block: 0.3rem;
+    margin-block: -0.15rem;
+  }
+}
+
+.record-fields {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0.45rem 0 0;
+  font-size: 0.9rem;
+  max-width: var(--measure);
+}
+
+.record-fields > div {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr);
+  gap: 0 0.7rem;
+}
+
+@media (max-width: 40rem) {
+  .record-fields > div {
+    grid-template-columns: 1fr;
+  }
+
+  .record-fields > div + div {
+    margin-top: 0.3rem;
+  }
+}
+
+.record-fields dt {
+  color: var(--muted);
+}
+
+.record-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 .match-list li {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

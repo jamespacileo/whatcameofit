@@ -29,6 +29,7 @@ from thenwhat.resolve.reasons import NAMED_IN_ARTICLE, paper_reasons
 from thenwhat.resolve.service import (
     MAX_SUMMARY_CHARACTERS,
     approve_confident,
+    facts_of,
     reject_near_zero,
     what_it_says,
 )
@@ -336,6 +337,7 @@ def trials_from_papers(
             external_id=record.external_id,
             score=0.0,
             record_summary=what_it_says(record),
+            record_facts=facts_of(record),
         )
         for entity, record in found
     ]

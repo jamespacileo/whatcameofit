@@ -304,7 +304,8 @@
           "state": "approved",
           "reading": null,
           "decided_by": "seed",
-          "summary": null
+          "summary": null,
+          "record": null
         }
       ],
       "trials": [
