@@ -1,6 +1,6 @@
 {
   "checked_at": "2026-11-16T02:26:00Z",
-  "released": false,
+  "released": true,
   "corpus_id": "A052",
   "claim_id": 570,
   "slug": "rentosertib-proteomic-ageing-ipf",
@@ -129,14 +129,21 @@
   "validation": {
     "review": "clear: independent standards and specification reviews",
     "public_rehearsal": "passed",
-    "released_checks": "pending",
+    "released_checks": "passed: exact URL in website, released index/data, installed signed extension function replay, and Sheet readback",
     "strict_spec": "passed",
     "standards_review": "clear: no actionable findings",
     "specification_review": "clear: no actionable findings"
   },
   "remaining": [
-    "independent publication review and release checks",
-    "A052 corpus and Sheet update after release",
-    "native Safari popup remains unverified"
-  ]
+    "native Safari popup and browser-storage reuse remain unverified",
+    "other corpus coverage remains incomplete"
+  ],
+  "release": {
+    "pr": 188,
+    "commit": "db09bbe6ed37c6e5134f8c9e8accfab4a6b4ef2e",
+    "ci_run": 43792862635,
+    "worker_id": "b62c777a-bf12-49d5-88c6-10549e46b42e",
+    "checks": "1562 pipeline, 656 site, 170 extension; lint/types and public rehearsal passed",
+    "evidence": "extension/test-corpus/runs/2026-11-16-rentosertib-release.json"
+  }
 }
