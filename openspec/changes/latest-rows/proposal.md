@@ -12,6 +12,7 @@ On 2026-11-16 the operator asked for the rows of the home page's Latest list, an
 - A status off the path (no trial record found, failed, terminated, retracted) is drawn as the path with no place marked and a square after it, beside its words.
 - In search results the status column moves to the right of the match, the same as in the Latest list.
 - Status words stay in the site's one accent colour. No status has a colour of its own.
+- The meaning of "Trial registered" becomes "A clinical trial is registered. None that has started has a phase." The old wording, "No trial with a phase has started", read as a contradiction beside a detail saying the claim's trials had started (decided by the operator on 2026-11-16).
 
 ## Not changing
 

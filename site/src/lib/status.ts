@@ -19,7 +19,7 @@ export const STATUS_MEANINGS: Record<StatusCode, string> = {
     "The confirmed first-report evidence is laboratory or animal work. No clinical trial was found in the registries checked.",
   no_trial_found:
     "No clinical trial was found in the registries checked. This does not establish whether the treatment has been studied in people.",
-  trial_registered: "A clinical trial is registered. No trial with a phase has started.",
+  trial_registered: "A clinical trial is registered. None that has started has a phase.",
   phase_1: "The furthest trial that has started is a Phase 1 trial.",
   phase_2: "The furthest trial that has started is a Phase 2 trial.",
   phase_3: "The furthest trial that has started is a Phase 3 trial.",
