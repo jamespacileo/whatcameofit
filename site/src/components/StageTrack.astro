@@ -9,6 +9,8 @@ interface Props {
   ends?: boolean;
   /** Each place named under its dot, as in a panel that has room to say them. */
   named?: boolean;
+  /** For a status off the path: draw the path with no place marked and a square after it. */
+  off?: boolean;
 }
 
 // Short enough to sit under a dot; the full labels are STATUS_LABELS.
@@ -21,7 +23,7 @@ const PLACE_NAMES: Record<string, string> = {
   approved: "Approved",
 };
 
-const { code, ends = false, named = false } = Astro.props;
+const { code, ends = false, named = false, off = false } = Astro.props;
 const place = STAGE_PATH.indexOf(code);
 const name = `Place ${place + 1} of ${STAGE_PATH.length} on the path from preclinical to approved`;
 ---
@@ -47,6 +49,16 @@ const name = `Place ${place + 1} of ${STAGE_PATH.length} on the path from precli
           Place {place + 1} of {STAGE_PATH.length}, from preclinical to approved
         </span>
       )}
+    </span>
+  )
+}
+{
+  place < 0 && off && !named && (
+    <span class="track off">
+      <span class="steps" role="img" aria-label="Not a place on the path from preclinical to approved">
+        {STAGE_PATH.map(() => <span class="step" />)}
+      </span>
+      <span class="off-mark" aria-hidden="true" />
     </span>
   )
 }
