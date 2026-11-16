@@ -2838,7 +2838,8 @@ body:has(.band.home) .wrap {
   max-width: var(--frame);
 }
 
-/* Under the list the page keeps its reading width, centred. */
+/* Under the list the page keeps its reading width, centred, until the list's side
+   column stands; from there every section keeps the list's columns. */
 body:has(.band.home) .feed > :not(.days),
 body:has(.band.home) .front ~ * {
   max-width: 60rem;
@@ -2847,6 +2848,110 @@ body:has(.band.home) .front ~ * {
 
 body:has(.band.home) .table-frame {
   background: var(--paper);
+}
+
+/* One hairline across the page parts each section under the list from the next, as
+   the right column's hairlines part its three short parts. The space is above the
+   rule and below it alike, so the rule sits between the two sections, not on one. */
+.feed > .days:has(~ .lists-title) {
+  padding-bottom: var(--section-space);
+  border-bottom: 1px solid var(--rule);
+}
+
+.feed > .lists-title {
+  margin-top: var(--section-space);
+}
+
+.home-section {
+  margin-top: var(--section-space);
+  padding-top: var(--section-space);
+  border-top: 1px solid var(--rule);
+}
+
+.home-section > :is(.bar, .bar-row):first-child {
+  margin-top: 0;
+}
+
+/* The reader's own list opens the page, under the band: no rule above it. */
+.home-section.following {
+  margin-top: clamp(1.25rem, 4vw, 1.75rem);
+  padding-top: 0;
+  border-top: 0;
+}
+
+:root {
+  --section-space: clamp(2rem, 5vw, 2.75rem);
+}
+
+/* Where the list's side column stands, what is under the list takes the frame's full
+   width, so its edges are the list's edges. */
+@media (min-width: 56rem) {
+  body:has(.band.home) .feed > :not(.days),
+  body:has(.band.home) .front ~ * {
+    max-width: none;
+    margin-inline: 0;
+  }
+}
+
+/* Where the right column stands too, each section is laid on the list's three
+   columns: its heading in the left column, under the list's links, and what it holds
+   across the sheet and the right column. The lists' heading stays in sight beside
+   them while they are read. */
+@media (min-width: 72rem) {
+  .feed:has(> .days ~ .lists-title),
+  .home-section:not([hidden]) {
+    display: grid;
+    grid-template-columns: var(--list) minmax(0, 1fr) var(--rail);
+    column-gap: var(--column-gap);
+    align-items: start;
+  }
+
+  .feed > .days {
+    grid-column: 1 / -1;
+  }
+
+  .feed > .days ~ * {
+    grid-column: 2 / -1;
+    margin-top: 0;
+  }
+
+  .feed > .days ~ .lists-title,
+  .home-section > :is(.bar, .bar-row):first-child {
+    grid-column: 1;
+    grid-row: 1 / span 12;
+    margin: 0;
+  }
+
+  .feed > .days ~ .lists-title {
+    grid-row: 2 / span 12;
+    position: sticky;
+    top: 1.25rem;
+    margin-top: var(--section-space);
+    text-wrap: balance;
+  }
+
+  /* The first thing beside the heading starts on the heading's line. */
+  .feed > .days ~ .since:not([hidden]),
+  .feed > .days ~ .since[hidden] + .feed-tabs {
+    margin-top: var(--section-space);
+  }
+
+  .feed > .days ~ .since:not([hidden]) + .feed-tabs {
+    margin-top: 1rem;
+  }
+
+  .home-section > :not(:first-child) {
+    grid-column: 2 / -1;
+  }
+
+  .home-section > :is(.bar, .bar-row):first-child + * {
+    margin-top: 0;
+  }
+
+  .home-section > .bar-row:first-child {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 .band.home {
@@ -5546,6 +5651,9 @@ main ul:not([class]) li + li {
   --ground: #f4f7fb;
   --frame: 78rem;
   --list: 13.5rem;
+  /* The home page's right column and the space between its columns. */
+  --rail: 15rem;
+  --column-gap: 2rem;
   /* Secondary text on the navy. */
   --navy-soft: #c9d9ee;
 }
