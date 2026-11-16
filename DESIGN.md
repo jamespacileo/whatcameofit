@@ -54,15 +54,19 @@ Asked for by the operator on 2026-11-16 (openspec change `dark-theme`). The same
 | `--panel`, `--tint`, `--tag` | `#17202d`, `#1d2838`, `#2a4163` |
 | `--rule`, `--rule-soft` | `#2b3546`, `#1f2733` |
 | `--table-head` | `#161d28` (light `#f8fafd`) |
-| `--promise`, `--promise-rule`, `--promise-mark` | `#29220f`, `#6f5d2c`, `#d9b44a` |
+| `--promise`, `--promise-rule`, `--promise-mark` | `#362b10`, `#8a7230`, `#d9b44a` |
 | `--ring` | `#6d7c90` |
-| `--on-blue`, `--blue-hover` | `#0c1118`, `#c4ddf8` (light: white, the footer navy) |
+| `--on-blue`, `--blue-hover`, `--blue-fill` | `#0c1118`, `#c4ddf8`, `#6fa6e0` (light: white, the footer navy, the accent) |
+| `--raised`, `--raised-rule` | `#1a2332`, blue at 24% (light: white, `#d9e2ee`) |
+| `--lift`, `--media-dim` | black at 55%, `brightness(0.85)` (light: navy at 35%, none) |
 
-- `--on-navy-ink` is the white lettering on the navy grounds, white in both themes; `--paper` is never used for it. A filled blue control letters with `--on-blue` and hovers to `--blue-hover`.
-- With no choice stored, the site follows the device, live and with no script. The masthead's appearance control, at its end, steps from "as your device" to the look the page is not showing, then the other, then back; it is drawn as half a disc, a sun or a moon in white line, 44 pixels square, and only where a script can act on it. The choice is kept in the browser and set before the first paint.
+- `--on-navy-ink` is the white lettering on the navy grounds and `--on-navy-rule` (white at 22%) their hairlines, the same in both themes; page tokens are never used on navy. A filled blue control is `--blue-fill` with `--on-blue` lettering and hovers to `--blue-hover`; in the dark theme the fill is a step below the accent, so the page's main button is not its brightest patch.
+- The status card on a band is `--raised`: white on the light page, and in the dark theme the lightest surface, ringed in faint blue, so it lifts off the navy rather than sinking into it.
+- The explainer video is dimmed to 85% in the dark theme. The amber fill is warmer than a plain darkening of the light amber, so "promised" reads as a marker, not a stain.
+- With no choice stored, the site follows the device, live and with no script. The masthead's switch, at its end, always changes the look: a moon while the page is light, a sun while it is dark, in white line, 44 pixels square, drawn only where a script can act on it. Switching to the device's own look clears the stored choice, so the page follows the device again; switching away from it stores the choice in this browser. Its label names the action ("Switch to dark appearance"), and a polite status line says what was chosen and whether it is kept. Another tab's choice is drawn without being written back, and colours change in one frame, with no transitions.
 - Printed pages, the embed and the drawn extension popup (`.theme-light`) stay light.
-- Contrast on the dark page, calculated on 2026-11-16: text 14.7:1, blue 9.4:1, blue on the panel 8.7:1, blue on the tag 5.5:1, secondary text 8.1:1 and on amber 7.2:1, the promise mark 9.0:1, the empty-place ring 4.2:1, lettering on a filled blue control 10.0:1.
-- Checked by eye on the home and claim pages at desktop and phone width; a scan of every other page found no light surface left. The reviewer has not judged it.
+- Contrast on the dark page, calculated on 2026-11-16: text 14.7:1, blue 9.4:1, blue on the panel 8.7:1, blue on the tag 5.5:1, blue on the raised card 8.3:1, secondary text 8.1:1 and on amber 6.3:1, the promise mark 9.0:1, the empty-place ring 4.2:1, lettering on a filled blue control 7.4:1.
+- Checked by eye on the home and claim pages at desktop and phone width; a scan of every other page found no light surface left. A dual-agent critique on 2026-11-16 (`.impeccable/critique/`) asked for the switch's two states, the raised card, the band's hairlines, the warmer amber, the dimmer fill and video and the cross-tab fix, which are in; a contrast probe of six pages in each theme found no text under 4.5:1.
 
 ## Type
 

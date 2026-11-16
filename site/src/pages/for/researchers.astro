@@ -37,7 +37,7 @@ const count = data.claims.length;
       <div>
         <dt>Holds</dt>
         <dd>
-          {count}
+          {count}{" "}
           {count === 1 ? "claim" : "claims"} in {listedTopics.length}{" "}
           {listedTopics.length === 1 ? "topic" : "topics"}, as JSON
         </dd>
@@ -148,7 +148,7 @@ const count = data.claims.length;
     min-height: 3.2rem;
     padding: 0 1.4rem;
     border-radius: 0.65rem;
-    background: var(--blue);
+    background: var(--blue-fill);
     color: var(--on-blue);
     font-size: 1.08rem;
     font-weight: 700;

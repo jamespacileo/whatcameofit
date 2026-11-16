@@ -8,7 +8,7 @@ Readers arrive from a search engine or a shared link, often on a phone at night,
 
 - A dark theme: the same evidence digest under low light. The page is a deep neutral slate so the navy masthead, record band and footer keep their navy as a hue of their own; the accent is the lifted blue the masthead already uses. Amber still means "promised" and nothing else. No colour is given to any status.
 - With no choice made, the site follows the device's appearance, and changes with it while a page is open. This works with no script.
-- An appearance control at the end of the masthead steps through "as your device", then the look the page is not showing, then the other. The choice is kept in the reader's browser only and set before the first paint. It is drawn only where a script can act on it.
+- An appearance switch at the end of the masthead always changes the look. Switching to the device's own look clears the stored choice, so the page follows the device again; switching away from it keeps the choice in the reader's browser only, set before the first paint. It is drawn only where a script can act on it, and a status line says what was chosen.
 - Paper is always printed light. The embed stays light, because it sits inside other sites. The drawn extension popup stays light, because it must match the real popup.
 - `DESIGN.md` records the dark palette and its contrast.
 

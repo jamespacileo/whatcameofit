@@ -8,8 +8,13 @@
 
 ## 2. Control
 
-- [x] 2.1 Add the masthead control and `scripts/theme.ts`; set a stored choice before the first paint. Verify: pressing steps device → the other look → its opposite → device, the label names the choice in force, and a reload keeps it.
+- [x] 2.1 Add the masthead control and `scripts/theme.ts`; set a stored choice before the first paint. Verify: a reload keeps the choice.
 - [x] 2.2 Follow a device change live when no choice is stored. Verify: switching the emulated scheme changes an open page.
+- [x] 2.3 After the critique of 2026-11-16: make the control a two-state switch whose press to the device's look clears the choice, announce the choice in a status line, apply another tab's choice without writing it back, and change colours in one frame. Verify: ten fast presses with a second tab open give one storage event per write and none after.
+
+## 4. After the critique
+
+- [x] 4.1 Raise the status card on the band (`--raised`), give the navy band its own hairline (`--on-navy-rule`), warm the dark amber, step the filled blue down (`--blue-fill`), dim the explainer video, and make the search box's lift show in dark. Verify: contrast probe of six pages in each theme finds no text under 4.5:1.
 
 ## 3. Record
 
