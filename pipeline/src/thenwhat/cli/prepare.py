@@ -18,6 +18,7 @@ from thenwhat.domain import ReviewState
 from thenwhat.prepare import (
     NOT_NEEDED_TO_DECIDE,
     ClaimPlan,
+    claim_sharing_its_substance,
     decide_prepared_lead_claim,
     plan_claims,
     steps_for,
@@ -63,7 +64,13 @@ def _prepare(plan: ClaimPlan) -> list[str]:
                     " held off the site until audited"
                 )
             elif decided is ReviewState.REJECTED:
-                report.append("  rejected by rule: its intervention is a description, not a name")
+                claim = find_claim(session, plan.slug)
+                twin = claim_sharing_its_substance(session, claim) if claim else None
+                report.append(
+                    f"  rejected by rule: {twin} stands for the same substance and condition"
+                    if twin
+                    else "  rejected by rule: its intervention is a description, not a name"
+                )
     return [f"{plan.slug} ({time.monotonic() - started:.0f}s)", *report]
 
 

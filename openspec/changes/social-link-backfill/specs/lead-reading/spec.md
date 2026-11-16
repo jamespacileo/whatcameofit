@@ -299,7 +299,7 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** no claim is created and the lead's failure names the slug
 
 ### Requirement: A read's claim is decided after it is prepared
-`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. It SHALL then propose the claim's subject terms, kind and drug record, which its background cards come from; a failure there SHALL be reported and SHALL NOT keep the claim waiting, as cards are not evidence. While another step has failed, the claim SHALL keep awaiting review. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
+`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. It SHALL then propose the claim's subject terms, kind and drug record, which its background cards come from; a failure there SHALL be reported and SHALL NOT keep the claim waiting, as cards are not evidence. While another step has failed, the claim SHALL keep awaiting review. A claim whose intervention the registry of substances files under the same substance as another claim that is neither rejected nor archived, for a condition that is the other's or the other's narrowed by words in front, SHALL be rejected by rule, naming that claim, and its articles, with their promises and statements, SHALL join that claim, the lead being recorded as added to it; an article that claim already has is not copied. An archived claim does not count, so one archived for a fault can be replaced, nor does one whose intervention is named in another route or form (oral, pill, tablet, capsule, nasal, spray, inhaled, patch, topical), and a combination never shares a substance with anything, on either side. This is the one join made by rule, on registry identity: the core-name rule above still never joins. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
 
 #### Scenario: Prepared and named
 - **WHEN** `thenwhat prepare --pending` has run every step without failure for a claim a read drafted
@@ -331,6 +331,22 @@ Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give
 #### Scenario: A step that failed
 - **WHEN** a step of `thenwhat prepare` other than proposing terms fails for a claim a read drafted
 - **THEN** the claim keeps awaiting review, and the next `thenwhat prepare --pending` works on it again
+
+#### Scenario: A brand of a live claim's substance
+- **WHEN** a claim a read drafted names Wegovy for obesity, and a claim for semaglutide for obesity is live, both filed under one substance
+- **THEN** the drafted claim is rejected by rule, naming the semaglutide claim, and its article and lead join the semaglutide claim
+
+#### Scenario: Another form of the substance
+- **WHEN** a claim a read drafted names oral semaglutide for obesity, and the live claim names semaglutide
+- **THEN** the drafted claim is decided as before
+
+#### Scenario: A combination under one substance
+- **WHEN** a claim a read drafted names bimagrumab plus semaglutide, filed under semaglutide's substance, and a semaglutide claim for the same condition is live
+- **THEN** the drafted claim is decided as before
+
+#### Scenario: The other claim is archived
+- **WHEN** the only other claim under that substance and condition is archived
+- **THEN** the drafted claim is decided as before
 
 #### Scenario: A claim the operator entered
 - **WHEN** `thenwhat prepare` runs for a claim that awaits review and that no read drafted

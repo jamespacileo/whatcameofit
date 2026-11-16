@@ -67,6 +67,17 @@ def whole_intervention_names(names: Sequence[str]) -> list[str]:
     return [name for name in names if name.strip() and name_key(name) not in components]
 
 
+def substance_name(session: Session, entity: Entity) -> str | None:
+    """What the registry of substances calls the intervention's one substance, such as
+    "Semaglutide" for Wegovy or "Aducanumab" for Aduhelm. None when the registry does
+    not list it under one substance, or was never asked."""
+    kept = session.get(EntitySubstance, entity.id)
+    if kept is None:
+        return None
+    name = (kept.payload.get("substance") or {}).get("_name")
+    return " ".join(name.split()) if isinstance(name, str) and name.strip() else None
+
+
 def development_codes(session: Session, entity: Entity) -> list[str]:
     """The codes a registry of substances lists for the intervention's substance. Empty
     when the registry does not list it under one substance, or was never asked."""

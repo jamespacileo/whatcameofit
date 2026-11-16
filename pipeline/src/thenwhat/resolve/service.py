@@ -13,7 +13,8 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import development_codes, entities_of
+from thenwhat.claims.entities import development_codes, entities_of, substance_name
+from thenwhat.claims.entry import name_key
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
 from thenwhat.decide.core import Backend, DecisionFailed
@@ -106,17 +107,22 @@ def trials_of(
     indication: str | None,
     unsearchable: Callable[[UnsearchableTerm], None] | None = None,
     codes: Sequence[str] = (),
+    substance: str | None = None,
 ) -> list[SourceRecord]:
     """Every trial the registry holds under the intervention's name, its other names, its
     search phrases and its development codes. A phrase or a code is searched within the
     indication only. A name that joins several treatments is also searched for all of
-    them together.
+    them together. The name the registry of substances gives the intervention's
+    substance is searched as a name too, so a brand such as Mosquirix or Aduhelm finds
+    the trials filed under the substance.
 
     A term the registry cannot search for as written is passed to `unsearchable` and the
     other terms are still searched: each term is its own search. Nothing simpler is
     tried in its place. With no `unsearchable`, the failure is raised.
     """
     names = [entity.name, *entity.synonyms]
+    if substance and name_key(substance) not in {name_key(name) for name in names}:
+        names.append(substance)
     combined = [search for name in names if (search := combination_search(name))]
     searches: list[Callable[[], list[SourceRecord]]] = [
         *(
@@ -186,7 +192,12 @@ def resolve_claim(
     for entity in entities:
         if entity.type is EntityType.INTERVENTION:
             for record in trials_of(
-                trials, entity, claim.indication, unsearchable, development_codes(session, entity)
+                trials,
+                entity,
+                claim.indication,
+                unsearchable,
+                development_codes(session, entity),
+                substance_name(session, entity),
             ):
                 consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
@@ -316,7 +327,12 @@ def rescore_claim(
             if match.id not in just_scored
         }
         for record in trials_of(
-            trials, entity, claim.indication, unsearchable, development_codes(session, entity)
+            trials,
+            entity,
+            claim.indication,
+            unsearchable,
+            development_codes(session, entity),
+            substance_name(session, entity),
         ):
             match = pending.pop((record.source_name, record.external_id), None)
             if match is not None:
@@ -401,7 +417,12 @@ def redo_rule_approvals(
         if not approved:
             continue
         for record in trials_of(
-            trials, entity, claim.indication, unsearchable, development_codes(session, entity)
+            trials,
+            entity,
+            claim.indication,
+            unsearchable,
+            development_codes(session, entity),
+            substance_name(session, entity),
         ):
             match = approved.pop((record.source_name, record.external_id), None)
             if match is not None:

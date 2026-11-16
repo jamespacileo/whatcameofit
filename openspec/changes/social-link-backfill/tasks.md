@@ -218,6 +218,8 @@ Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that ans
 Batch 2's audit (2026-11-16) archived 39 of 132 claims: 14 established drugs read "no trial found" though the registry holds hundreds of their trials (buprenorphine for opioid use disorder: 316 within the condition), brand names missed their registry names (Mosquirix finds 1 malaria trial, RTS,S finds 36), and class names and a bare "Cancer" got through. The operator approved three fixes the same day.
 
 - [x] 16.1 Keep the registry's first page (its 100 most relevant trials) for a name still broad within the condition, scored like any candidate, instead of nothing; a search phrase still gives none. Verify with a test against a recorded broad search.
+- [x] 16.2 Search the substance's name from the registry of substances as a name, and reject by rule a read's claim filed under the same substance, form and condition as a claim that is neither rejected nor archived, moving its articles to that claim so none is lost. Measured on the database: 8 pairs, all duplicates (semaglutide / Wegovy, BNT162b2 / Pfizer vaccine, ChAdOx1 / AZD1222, daraxonrasib, MDMA, fluvoxamine). Verify with tests.
+
 
 ## 16. Batch 2 audit faults
 

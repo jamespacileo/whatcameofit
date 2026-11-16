@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from datetime import UTC, date, datetime
 
 import pytest
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
@@ -18,7 +19,7 @@ from thenwhat.claims.entry import (
     find_claim,
 )
 from thenwhat.cli import app
-from thenwhat.db.models import LinkLead
+from thenwhat.db.models import LinkLead, SourceArticle
 from thenwhat.domain import Decider, OutletKind, ReadOutcome, ReviewState
 from thenwhat.prepare import decide_prepared_lead_claim, plan_claims, steps_for
 from thenwhat.review.decisions import record_decision
@@ -287,3 +288,92 @@ def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Ses
     assert "overlaps archived archived-one  https://news.example.org/overlap-0" in listed.output
     assert "live-one" not in listed.output
     assert "1 read overlaps an archived claim" in listed.output
+
+
+def under_substance(session: Session, slug: str, substance: str) -> None:
+    """File the claim's intervention under a substance of the registry of substances."""
+    from thenwhat.db.models import Entity, EntitySubstance
+    from thenwhat.domain import EntityType
+
+    claim = find_claim(session, slug)
+    assert claim is not None
+    entity = session.scalars(
+        select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
+    ).one()
+    session.add(
+        EntitySubstance(
+            entity_id=entity.id,
+            source_name="gsrs",
+            external_id=substance,
+            url=f"https://gsrs.test/{substance}",
+            payload={"substance": {"_name": "Exampletinib"}},
+            fetched_at=NOW,
+        )
+    )
+    session.flush()
+
+
+def test_a_reads_claim_under_a_live_claims_substance_and_condition_is_rejected(
+    session: Session,
+):
+    """Scenarios: A brand of a live claim's substance, Another form of the substance, The
+    other claim is archived"""
+    from thenwhat.claims.entry import archive_claim
+
+    claim_with_articles(session, "live-one")
+    claim_with_articles(session, "brand-one", "https://news.example.org/brand")
+    for slug in ("oral-form", "after-archive"):
+        claim_with_articles(session, slug)
+    for slug in ("live-one", "brand-one", "oral-form", "after-archive"):
+        under_substance(session, slug, "s-1")
+    live = find_claim(session, "live-one")
+    brand = find_claim(session, "brand-one")
+    assert live is not None and brand is not None
+    record_decision(live, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    drafted_by_a_read(session, "brand-one")
+    [article] = session.scalars(select(SourceArticle).where(SourceArticle.claim_id == brand.id))
+    lead = session.scalars(select(LinkLead).where(LinkLead.claim_id == brand.id)).one()
+    lead.source_article_id = article.id
+    session.flush()
+
+    assert decide_prepared_lead_claim(session, "brand-one", now=NOW) is ReviewState.REJECTED
+    # Its article joins the live claim, so it is not lost.
+    assert article.claim_id == live.id
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, live.id)
+
+    # "oral-form" names its intervention in another form: not the same product.
+    drafted_by_a_read(session, "oral-form")
+    assert decide_prepared_lead_claim(session, "oral-form", now=NOW) is ReviewState.APPROVED
+
+    archive_claim(session, "live-one", reason="missed trial", now=NOW)
+    archive_claim(session, "oral-form", reason="audit", now=NOW)
+    drafted_by_a_read(session, "after-archive")
+
+    assert decide_prepared_lead_claim(session, "after-archive", now=NOW) is ReviewState.APPROVED
+
+
+def test_a_combination_never_shares_a_single_drugs_substance(session: Session):
+    """Scenario: A combination under one substance"""
+    from thenwhat.claims.entry import add_claim
+
+    claim_with_articles(session, "single-drug")
+    add_claim(
+        session,
+        slug="bimagrumab-plus-semaglutide-obesity",
+        headline="Combination for obesity",
+        vertical="mouth-and-teeth",
+        intervention="bimagrumab plus semaglutide",
+        indication="tooth agenesis",
+        summary="A combination.",
+    )
+    for slug in ("single-drug", "bimagrumab-plus-semaglutide-obesity"):
+        under_substance(session, slug, "s-1")
+    single = find_claim(session, "single-drug")
+    assert single is not None
+    record_decision(single, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    drafted_by_a_read(session, "bimagrumab-plus-semaglutide-obesity")
+
+    assert (
+        decide_prepared_lead_claim(session, "bimagrumab-plus-semaglutide-obesity", now=NOW)
+        is ReviewState.APPROVED
+    )
