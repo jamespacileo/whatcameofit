@@ -18,7 +18,7 @@ Defines a backfill from bulk files as a run that lives in a folder of files on a
 - **THEN** the stage stops and names the file
 
 ### Requirement: Stages run in order and say what they did
-A run's stages SHALL be load, screen, triage, read and prepare. A stage SHALL refuse to run before the stage it depends on has completed. Each stage SHALL report how many rows or leads it took, how many went on and how many were left out for each reason, and SHALL fail when those do not sum.
+A run's stages SHALL be load, screen, triage, read and prepare. The prepare stage SHALL only write the run's results in the form the merge takes; it SHALL NOT search a registry or approve a claim, a match or an event, which the truth store's side does after the push. A stage SHALL refuse to run before the stage it depends on has completed. Each stage SHALL report how many rows or leads it took, how many went on and how many were left out for each reason, and SHALL fail when those do not sum.
 
 #### Scenario: Triage before screening
 - **WHEN** triage is asked to run in a folder where screening has not completed
@@ -83,11 +83,15 @@ Where leads are due, a stage SHALL take first those whose title names a topic wo
 - **THEN** it is read, before leads that name no topic
 
 ### Requirement: Push
-`thenwhat backfill push` SHALL register the run with the truth store, hand over the run's results and usage with their counts and checksums, ask for the merge, and print the merge's report. It SHALL hand over, for a lead that was scored and not read, its address key, shares, screening outcome and score. It SHALL hand over nothing for a link on an unlisted outlet. `--report-only` SHALL print the report and change nothing in the store.
+`thenwhat backfill push` SHALL hand a run's results and usage to the truth store as one or more store runs of no more than the size the store sets, each holding the records another of its records refers to or following the store run that does. For each it SHALL register the store run, hand over its records with their counts and checksums, ask for the merge, and print the merge's report. A push that stopped after some store runs were merged SHALL be finished by pushing again, and SHALL add nothing twice. It SHALL hand over, for a lead that was scored and not read, its address key, shares, screening outcome and score. It SHALL hand over nothing for a link on an unlisted outlet. `--report-only` SHALL print the report and change nothing in the store.
 
 #### Scenario: A run of 200 reads
 - **WHEN** a run that read 200 leads and drafted or joined 60 claims is pushed
 - **THEN** the report gives the claims, articles and events added, matched and in conflict, and the claims held for audit
+
+#### Scenario: A push stopped part way
+- **WHEN** a push of three store runs stops after the first is merged, and the run is pushed again
+- **THEN** the first is answered as merged before, the other two are merged, and the store holds each record once
 
 #### Scenario: Pushing twice
 - **WHEN** a pushed run is pushed again
