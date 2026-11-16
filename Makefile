@@ -5,11 +5,6 @@ export SITE_URL ?= https://whatcameofit.com
 # Tests drop and recreate this database, so its name must end in _test.
 export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(DB_PORT)/thenwhat_test
 
-# A fresh clone or worktree, ready to work in. Packages come from pnpm's shared
-# store on this machine, so a second worktree installs in seconds and downloads nothing.
-setup: site/node_modules
-	uv sync --directory pipeline
-
 # Everything CI runs. Needs Docker for the database; no internet access is
 # needed once dependencies and the Postgres image are present.
 check: lint types test scripts-test site-test site-build extension-test
@@ -31,12 +26,18 @@ test: db-up site/node_modules
 # The daily job's script, against a stand-in for the pipeline: no database, no network.
 scripts-test:
 	sh -n scripts/daily-run.sh
+	sh -n scripts/worktree-setup.sh
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
 	sh scripts/tests/daily-run.test.sh
 
+# Linked from pnpm's shared store: seconds in a new worktree. See scripts/worktree-setup.sh.
 site/node_modules: site/pnpm-lock.yaml
-	pnpm --dir site install --frozen-lockfile --prefer-offline
-	@touch site/node_modules
+	sh scripts/worktree-setup.sh site
+
+# Everything a new checkout or worktree needs before `make check`.
+setup:
+	sh scripts/worktree-setup.sh
+	uv sync --directory pipeline
 
 site-test: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site test
