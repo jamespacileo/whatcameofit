@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T06:54:31.014203Z",
-  "last_checked_at": "2026-11-16T06:52:40.495825Z",
+  "generated_at": "2026-11-16T07:25:01.613070Z",
+  "last_checked_at": "2026-11-16T07:22:51.045087Z",
   "preview": false,
   "sources": [
     {
@@ -13267,7 +13267,7 @@
             "country": "United States",
             "website": "https://www.ucla.edu",
             "score": 1,
-            "read_at": "2026-11-15T13:22:05.912289Z"
+            "read_at": "2026-11-16T07:19:11.290008Z"
           },
           "roles": [
             {
@@ -126124,7 +126124,7 @@
             "country": "United States",
             "website": "https://www.massgeneralbrigham.org/",
             "score": 1,
-            "read_at": "2026-11-14T20:04:34.786165Z"
+            "read_at": "2026-11-16T07:19:11.752419Z"
           },
           "roles": [
             {
@@ -132030,7 +132030,7 @@
             "country": "United States",
             "website": "https://www.ucla.edu",
             "score": 1,
-            "read_at": "2026-11-15T13:22:05.912289Z"
+            "read_at": "2026-11-16T07:19:11.290008Z"
           },
           "roles": [
             {
@@ -174309,7 +174309,7 @@
             "country": "United States",
             "website": "https://www.ucla.edu",
             "score": 1,
-            "read_at": "2026-11-15T13:22:05.912289Z"
+            "read_at": "2026-11-16T07:19:11.290008Z"
           },
           "roles": [
             {
@@ -174369,6 +174369,695 @@
           "confidence": 0.97,
           "article_url": "https://www.dental-tribune.com/news/research-team-aims-to-develop-periodontal-disease-fighting-membrane/",
           "read_on": "2026-11-14"
+        }
+      ]
+    },
+    {
+      "slug": "pp405-androgenetic-alopecia",
+      "headline": "PP405 topical gel was reported to show early hair-regrowth signals in a small trial",
+      "summary": "Pelage reported that a 78-person Phase 2a trial of topical PP405 met safety and pharmacokinetic objectives. Hair-density changes at week eight were exploratory findings in a subgroup of men with more extensive hair loss after four weeks of treatment. Long-term benefit remains uncertain. The later AWAKEN study is registered as Phase 2/3 in men; a separate Phase 2 study in women has an estimated start date. These are distinct trials, not proof of approval or efficacy.",
+      "vertical": "skin-and-hair",
+      "approach": "drug",
+      "intervention": {
+        "name": "PP405",
+        "synonyms": []
+      },
+      "indication": "Androgenetic alopecia",
+      "first_reported_date": "2025-06-17",
+      "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T07:19:17.415927Z",
+        "explained_by": [
+          11774,
+          11775,
+          11778,
+          11779
+        ],
+        "history": [
+          {
+            "on": "2024-05-01",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2024-06-05",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/",
+          "outlet": "Pelage Pharmaceuticals",
+          "title": "Pelage Pharmaceuticals Announces Positive Phase 2a Clinical Trial Results for PP405 in Regenerative Hair Loss Therapy",
+          "published_date": "2025-06-17",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://pelagepharma.com/press-releases/pp405-awaken-trial-first-patient-dosed/",
+          "outlet": "Pelage Pharmaceuticals",
+          "title": "Pelage Pharmaceuticals Announces First Patient Dosed in Phase 2/3 AWAKEN Trial of PP405 for Androgenetic Alopecia, the Most Common Form of Hair Loss",
+          "published_date": "2026-10-14",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [
+        {
+          "description": "Initiate Phase 3 studies in 2026",
+          "parsed_date": "2026-12-31",
+          "article_url": "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+        }
+      ],
+      "events": [
+        {
+          "id": 11774,
+          "type": "trial_registered",
+          "event_date": "2024-05-01",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06393452 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06393452",
+          "trial_id": "NCT06393452",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11775,
+          "type": "trial_status_change",
+          "event_date": "2024-06-05",
+          "date_basis": "start date",
+          "summary": "Trial NCT06393452 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06393452",
+          "trial_id": "NCT06393452",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11776,
+          "type": "trial_status_change",
+          "event_date": "2025-10-01",
+          "date_basis": "completion date",
+          "summary": "Trial NCT06393452 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06393452",
+          "trial_id": "NCT06393452",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11778,
+          "type": "trial_registered",
+          "event_date": "2026-09-15",
+          "date_basis": "first posted",
+          "summary": "Trial NCT07819435 registered (Phase 2/Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07819435",
+          "trial_id": "NCT07819435",
+          "trial_phases": [
+            "phase_2",
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11779,
+          "type": "trial_status_change",
+          "event_date": "2026-09-21",
+          "date_basis": "start date",
+          "summary": "Trial NCT07819435 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07819435",
+          "trial_id": "NCT07819435",
+          "trial_phases": [
+            "phase_2",
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11777,
+          "type": "trial_results_posted",
+          "event_date": "2026-09-22",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT06393452.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06393452",
+          "trial_id": "NCT06393452",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11780,
+          "type": "trial_registered",
+          "event_date": "2026-10-30",
+          "date_basis": "first posted",
+          "summary": "Trial NCT07907783 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT07907783",
+          "trial_id": "NCT07907783",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06393452",
+          "url": "https://clinicaltrials.gov/study/NCT06393452",
+          "score": 0.98,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA. For: Androgenetic Alopecia. Tests: PP405 0.05% Topical Gel, Topical Vehicle Gel. Phase 2, completed."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07819435",
+          "url": "https://clinicaltrials.gov/study/NCT07819435",
+          "score": 0.9,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males. For: Androgenetic Alopecia. Tests: PP405 0.05% Topical Gel, Vehicle Topical Gel. Phase 2/Phase 3, recruiting."
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07907783",
+          "url": "https://clinicaltrials.gov/study/NCT07907783",
+          "score": 0.76,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "assistant",
+          "summary": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia. For: Androgenetic Alopecia. Tests: PP405 0.05% Topical Gel, Vehicle Topical Gel. Phase 2, not yet recruiting."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT06393452",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06393452",
+          "title": "Safety, Pharmacokinetics and Efficacy of PP405 in Adults With AGA",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-16T07:19:17.565959Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 78,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": true,
+            "age_groups": [
+              "adult"
+            ],
+            "sponsor": {
+              "name": "Pelage Pharmaceuticals, Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Subjects With Adverse Events",
+                "time_frame": "Baseline to Day 84 of the randomized portion of the study"
+              },
+              {
+                "measure": "Percentage of Subjects With Adverse Events",
+                "time_frame": "Baseline to Day 84 of the open label extension portion of the study"
+              },
+              {
+                "measure": "Change in Local Dermal Tolerability as Assessed by Subject and Investigator",
+                "time_frame": "Post-dose at day 28 of the randomized portion of the study"
+              }
+            ],
+            "primary_outcomes_total": 20,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Subjects With Adverse Events",
+                  "time_frame": "Baseline to Day 84 of the randomized portion of the study",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 3,
+                  "groups": [],
+                  "comparisons": []
+                },
+                {
+                  "title": "Percentage of Subjects With Adverse Events",
+                  "time_frame": "Baseline to Day 84 of the open label extension portion of the study",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 3,
+                  "groups": [],
+                  "comparisons": []
+                },
+                {
+                  "title": "Change in Local Dermal Tolerability as Assessed by Subject and Investigator",
+                  "time_frame": "Post-dose at day 28 of the randomized portion of the study",
+                  "unit": "Participants",
+                  "measure": "count_of_participants",
+                  "spread_kind": null,
+                  "rows": 24,
+                  "groups": [],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 20
+            }
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Day 84",
+              "number": 84,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.98,
+              "read_on": "2026-11-16T07:19:17.565959Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Adverse Events",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 1,
+              "read_on": "2026-11-16T07:19:17.565959Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Day 84",
+              "number": 84,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.98,
+              "read_on": "2026-11-16T07:19:17.565959Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Adverse Events",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 1,
+              "read_on": "2026-11-16T07:19:17.565959Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "day 28",
+              "number": 28,
+              "unit": "days",
+              "code": null,
+              "confidence": 0.85,
+              "read_on": "2026-11-16T07:19:17.565959Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Local Dermal Tolerability",
+              "number": null,
+              "unit": null,
+              "code": "side_effects",
+              "confidence": 0.88,
+              "read_on": "2026-11-16T07:19:17.565959Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT07819435",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT07819435",
+          "title": "Phase 2/3 Efficacy and Safety of PP405 in Adult Males",
+          "phases": [
+            "phase_2",
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-16T07:19:18.044853Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 600,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult"
+            ],
+            "sponsor": {
+              "name": "Pelage Pharmaceuticals, Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change from baseline in non-vellus target area hair count",
+                "time_frame": "Week 24"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 24",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T07:19:18.044853Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "non-vellus target area hair count",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.97,
+              "read_on": "2026-11-16T07:19:18.044853Z"
+            }
+          ]
+        },
+        {
+          "trial_id": "NCT07907783",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT07907783",
+          "title": "Phase 2 Efficacy and Safety of PP405 in Adult Females With Androgenetic Alopecia",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "not_started",
+          "facts_as_of": "2026-11-16T07:22:51.045087Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 200,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Pelage Pharmaceuticals, Inc.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change from baseline in non-vellus target area hair count",
+                "time_frame": "Week 24"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 24",
+              "number": 24,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T07:22:51.045087Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "non-vellus target area hair count",
+              "number": null,
+              "unit": null,
+              "code": "body_measure",
+              "confidence": 0.98,
+              "read_on": "2026-11-16T07:22:51.045087Z"
+            }
+          ]
+        }
+      ],
+      "papers": [],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Brigham and Women's Hospital",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "04b6nzv94",
+            "url": "https://ror.org/04b6nzv94",
+            "name": "Brigham and Women's Hospital",
+            "kinds": [
+              "funder",
+              "healthcare"
+            ],
+            "country": "United States",
+            "website": null,
+            "score": 1,
+            "read_at": "2026-11-15T10:50:41.600782Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "GV (Google Ventures)",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Main Street Advisors",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Mass General Brigham",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "04py2rh25",
+            "url": "https://ror.org/04py2rh25",
+            "name": "Mass General Brigham",
+            "kinds": [
+              "funder",
+              "healthcare"
+            ],
+            "country": "United States",
+            "website": "https://www.massgeneralbrigham.org/",
+            "score": 1,
+            "read_at": "2026-11-16T07:19:11.752419Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Pelage Pharmaceuticals",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "University of California, Los Angeles",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "046rm7j60",
+            "url": "https://ror.org/046rm7j60",
+            "name": "University of California, Los Angeles",
+            "kinds": [
+              "education",
+              "funder"
+            ],
+            "country": "United States",
+            "website": "https://www.ucla.edu",
+            "score": 1,
+            "read_at": "2026-11-16T07:19:11.290008Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Visionary Ventures",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "YK Bioventures",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Pelage Pharmaceuticals, Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06393452",
+                "NCT07819435",
+                "NCT07907783"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "In men with more extensive hair loss, 31% using PP405 had a hair-density increase above 20% at week eight, compared with 0% using placebo.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "people",
+          "confidence": 0.71,
+          "article_url": "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/",
+          "read_on": "2026-11-16"
+        },
+        {
+          "text": "The treatment was well tolerated, and no PP405 was detected in participants' blood.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "company",
+          "basis": "people",
+          "confidence": 0.86,
+          "article_url": "https://pelagepharma.com/press-releases/pelage-pharmaceuticals-announces-positive-phase-2a-clinical-trial-results-for-pp405-in-regenerative-hair-loss-therapy/",
+          "read_on": "2026-11-16"
         }
       ]
     },
@@ -226477,7 +227166,7 @@
             "country": "United States",
             "website": "https://www.ucla.edu",
             "score": 1,
-            "read_at": "2026-11-15T13:22:05.912289Z"
+            "read_at": "2026-11-16T07:19:11.290008Z"
           },
           "roles": [
             {
