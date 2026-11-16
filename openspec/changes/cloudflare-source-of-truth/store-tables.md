@@ -29,7 +29,7 @@ Read with `store/schema.sql`. Row counts and sizes are of the working database `
 | `link_share` | 826,187 | 165 MB | Reshaped | `link_share` | The shares of the leads kept: 507,906. A reader's asking is a share with a date and nothing else, which a CHECK holds |
 | `link_lead_link` | 11,595 | 3.4 MB | Reshaped | `link_lead_link` | Names the record by natural key, not by row id |
 | `link_lead_label` | 560 | 0.1 MB | As is | `link_lead_label` | |
-| `decision_log` | 456,537 | 171 MB | Reshaped | `decision_log` | Keyed by run and place in the run; `input_ref` rewritten to natural keys. **Proposed: the 420,115 `lead_triage` decisions stay local** (decision 3 in the pull request): the lead already holds its score and version |
+| `decision_log` | 456,537 | 171 MB | Reshaped | `decision_log` | Keyed by run and place in the run; `input_ref` rewritten to natural keys. **The 420,115 `lead_triage` decisions stay local**, decided by the operator on 2026-11-16 (`design.md` decision 16): the lead already holds its score and version |
 | `llm_usage` | 49,910 | 6.9 MB | Reshaped | `llm_usage` | Keyed by run and place in the run. The run says which device or which readers spent it |
 | `work_entry` | 1,104,014 | 283 MB | Reshaped, mostly dropped | `work_entry`, `work_item` | The 1,100,282 link-step entries are dropped: a lead's own columns say what was scored and read. The 3,732 `news_search` entries move, named by natural key. Work the store itself is to do is `work_item` |
 | `measure_daily` | 0 | | As is | `measure_daily` | A merge adds a run's totals to the day's |

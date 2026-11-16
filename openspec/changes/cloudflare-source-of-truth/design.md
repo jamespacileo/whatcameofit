@@ -87,7 +87,7 @@ Under D1, an evidence event's or registry trial's raw payload is stored in R2 un
 
 A registry record with posted results can exceed 2 MB, which is what forces this under D1: the present database holds one of 2,366,561 bytes.
 
-Drafted on 2026-11-16 and awaiting the operator (decision 1 in the pull request): a payload of 16 KB or less is kept in the store itself, in the `payload` table, and only a larger one is an R2 object. That is every registry listing record (467,064 of them, 642 bytes on average, 12 KB at most) and none of the large records. Half a million tiny objects would otherwise have to be uploaded before the first merge, and a trial's page would need a second service to show its record. `docs/adr/0008` says R2 for every payload and would be amended.
+**Decided by the operator on 2026-11-16** (decision 16, and the amendment at the end of `docs/adr/0008`): a payload of 16 KB or less is kept in the store itself, in the `payload` table, and only a larger one is an R2 object. That is every registry listing record (467,064 of them, 642 bytes on average, 12 KB at most) and none of the large records. Half a million tiny objects would otherwise have to be uploaded before the first merge, and a trial's page would need a second service to show its record. `docs/adr/0008` said R2 for every payload and is amended.
 
 A payload is stored once, under its checksum, however many events point to it. The present database stores that record four times, once for each event read from it; 546 MB of event payloads as text will be less once each distinct payload is kept once. How much less is measured in task 2.2.
 
@@ -164,7 +164,7 @@ Rollback before step 5 is to do nothing. After step 5 it is to point CI back at 
 
 ### 10. The schema and the merge, as drafted
 
-Drafted on 2026-11-16 for the operator's review; nothing is deployed. `store/schema.sql` is the schema, `store/merge.sql` the merge, `store/ingest.sql` what surrounds it, and `store-tables.md` says where each Postgres table goes and why.
+Drafted on 2026-11-16; the operator took its eight recommendations the same day (decision 16). Nothing is deployed. `store/schema.sql` is the schema, `store/merge.sql` the merge, `store/ingest.sql` what surrounds it, and `store-tables.md` says where each Postgres table goes and why.
 
 What differs from the spike's merge, and why:
 
@@ -205,13 +205,13 @@ Read replication is left off. The database is in the European Union; a reader el
 
 **Two Workers and a queue.**
 
-- **The ingest service**, a Worker of its own, not on the site's hostname. It holds the D1 and R2 bindings and answers only to tokens: a device's (register a run, put a payload, stage, merge, read the reference file, take a slice), the operator's (the same, and actions), and the export's (read a snapshot). It is a few hundred lines with no rule in it: every rule is in `store/merge.sql`, which is bundled into it at build. Proposed in JavaScript, because the Python SDK cannot send a batch without a private name (decision 4 in the pull request).
+- **The ingest service**, a Worker of its own, not on the site's hostname. It holds the D1 and R2 bindings and answers only to tokens: a device's (register a run, put a payload, stage, merge, read the reference file, take a slice), the operator's (the same, and actions), and the export's (read a snapshot). It is a few hundred lines with no rule in it: every rule is in `store/merge.sql`, which is bundled into it at build. It is written in JavaScript, because the Python SDK cannot send a batch without a private name (decision 16).
 - **The site's Worker** gains the D1 binding. After it has answered a reader, and only when records from lookups are turned on, it registers a run of the kind lookup, stages the lead, the reader share, the trials found and its reading, runs the same bundled merge, and sends the lead's address key to the Queue.
 - **The consumer**, in Python, takes work the store says is due (`work_item`, leased by one statement). The Queue's message only wakes it: what is due is read from the store, so a lost message loses nothing, and a lead left due at the spend ceiling is still due next month. For a reader's lead it asks the page reader at home for the article (`docs/adr/0005`, `0006`), reads it, drafts or joins a claim and merges that as a run of the kind consumer. For a pending claim it runs `prepare`: registry search, matching, evidence events, status by the Python rules, approval by rule, and merges again.
 
-**Where `prepare` runs: store-side, for every claim.** A merge leaves each pending claim it added due for `prepare`. A reader's claim is approved without the audit mark; a claim from a backfill's read batch is approved with it. This moves the `prepare` stage of `file-based-backfill` off the device: a device pushes what it read, and the store prepares it (decision 6 in the pull request).
+**Where `prepare` runs: store-side, for every claim.** A merge leaves each pending claim it added due for `prepare`. A reader's claim is approved without the audit mark; a claim from a backfill's read batch is approved with it. This moves the `prepare` stage of `file-based-backfill` off the device: a device pushes what it read, and the store prepares it (decision 16).
 
-**Where the consumer runs.** Proposed: as a Python Workflow on Cloudflare, each step of a lead a Workflow step, so a slow outlet costs waiting and not CPU, and a failed step is retried by the platform. The spike ran a two-step Python Workflow; it did not run the pipeline's own packages there. If they do not load, the same consumer runs on a device and leases work through the ingest service; it is the same code and the same statements, so the choice can be changed later (decision 5 in the pull request).
+**Where the consumer runs.** As a Python Workflow on Cloudflare, provided the pipeline's packages load there (task 8.9 tries that first), each step of a lead a Workflow step, so a slow outlet costs waiting and not CPU, and a failed step is retried by the platform. The spike ran a two-step Python Workflow; it did not run the pipeline's own packages there. If they do not load, the same consumer runs on a device and leases work through the ingest service; it is the same code and the same statements, so the choice can be changed later (decision 16).
 
 **How a device's run folder becomes a merge.** `thenwhat backfill push`:
 
@@ -268,6 +268,19 @@ What would first cost money, and how much: rows read past 25 billion at 0.001 do
 
 Pages read, all under `developers.cloudflare.com`: `d1/platform/limits`, `d1/platform/pricing`, `d1/configuration/data-location`, `d1/best-practices/read-replication`, `d1/sql-api/sql-statements`, `r2/pricing`, `queues/platform/pricing`, `queues/platform/limits`, `workflows/reference/pricing`, `workflows/reference/limits`, `workers/platform/pricing`, `workers/platform/limits`, `workers/languages/python`, `kv/platform/pricing`, `workers/runtime-apis/cache`. What they said that the Context above did not have: a query's result is at most 50 MB; a batch counts as one query against the 30 seconds; a jurisdiction of `us` now exists beside `eu` and `fedramp`; each index a row is in counts as one more row written; a Queue's consumer has 15 minutes; a Workflow step has no limit on waiting and 30 seconds of CPU, or 5 minutes when set. The pages do not say whether Python Workers or Python Workflows are still in beta, nor how many statements a batch may hold; D1's local engine refused a compound SELECT of some thirty terms, which its limits page does not mention.
 
+### 16. What the operator decided on the draft
+
+**Decided by the operator on 2026-11-16**, taking the assistant's recommendation on each of the eight questions put at the top of pull request 273:
+
+1. **A payload of 16 KB or less is kept in the store**, in `payload`; only a larger one is an R2 object. `docs/adr/0008` is amended.
+2. **Evidence differs when its content differs**, not its payload: the fields a status is derived from, as `content_sha256`.
+3. **The `lead_triage` decisions stay local** (420,115 of them). A lead keeps its score and the version that gave it.
+4. **The ingest service is JavaScript.** It holds no rule; the rules are the SQL. Processing stays in Python.
+5. **The consumer is a Python Workflow on Cloudflare**, if the pipeline's packages load there, which task 8.9 tries before anything is built on it. Otherwise it runs on a device and leases work through the ingest service.
+6. **`prepare` runs store-side for every claim**, a backfill's included. `file-based-backfill` loses its `prepare` stage on the device (task 9.5).
+7. **CI's export reads a snapshot from the ingest service** into a SQLite file of the store's schema. CI holds no Cloudflare API token for the database.
+8. **A merged claim keeps its entities, matches and events**, archived with it. Its articles, their statements and promises, and its leads move, and the claim that stays is prepared again.
+
 ## Risks / Trade-offs
 
 - **D1's limits are reached later.** → Criterion 1 leaves headroom; payloads are already outside; the merge and its tests hold for Postgres, so moving stores later is a data migration, not a redesign.
@@ -292,5 +305,5 @@ Pages read, all under `developers.cloudflare.com`: `d1/platform/limits`, `d1/pla
 - **Which Postgres provider, if the fallback is taken.** Prices were read; terms were not.
 - **How a source's allowance is shared** between a device and the store-side consumer, which both ask the registries. Each keeps its own count today (`source_allowance_use` stays local); the consumer's share of each allowance is a setting until something better is needed.
 - **How often an approved event's content differs** under one key between two fetches. Counted during the parallel run (decision 13).
-- **What a merge of claims should do with the claim that goes.** Drafted: its entities, matches and events stay with it and the claim that stays is prepared again. The session adding the pipeline's command may need them moved instead; the store's statements for that are few.
+- **Answered on 2026-11-16:** a merged claim's entities, matches and events stay with it, and the claim that stays is prepared again (decision 16). The session adding the pipeline's command is told in the shared notes.
 - **Reporting without applying, on D1.** A batch cannot be rolled back on request (decision 10).
