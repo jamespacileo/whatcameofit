@@ -83,6 +83,22 @@ NO_DATE = "the page gives no publication date"
 NO_HEADLINE = "the page gives no headline"
 NOT_ALLOWED = "the page reader does not allow the address"
 NO_PAGE = "the page could not be retrieved"
+# A site that answers "401 Unauthorized" to the page reader for page after page and has
+# served it none is refusing the reader, not one page. Batch 1 (2026-11-16) spent 83 of
+# its 300 requests on two such outlets. After this many such answers and no page served,
+# the outlet's other leads are finished without asking it.
+REFUSED_STATUS = 401
+REFUSALS_BEFORE_STOPPING = 5
+OUTLET_REFUSES = "not asked: its outlet answered 401 to the page reader"
+# Outcomes only a page the reader got can give.
+READ_FROM_A_PAGE = (
+    ReadOutcome.ADDED_TO_CLAIM,
+    ReadOutcome.NEW_CLAIM,
+    ReadOutcome.NEEDS_VERTICAL,
+    ReadOutcome.NOT_ONE_TREATMENT,
+    ReadOutcome.BUSINESS_NEWS,
+    ReadOutcome.IDENTITY_UNRESOLVED,
+)
 # The name a lead's read is recorded under in the usage ledger, apart from articles an
 # operator has read, so the funnel can say what reading leads has cost.
 LEAD_READING = "extraction:link_lead"
@@ -235,6 +251,29 @@ class LinkRead:
                 return claim_id
         return None
 
+    def _outlet_refusals(self, session: Session, outlet: str) -> int | None:
+        """How many of the outlet's pages answered 401 to the page reader, when that is at
+        least REFUSALS_BEFORE_STOPPING and the reader got none of its pages. None while
+        the outlet may still be asked. Pages refused for another reason, or answered
+        with another status, do not count either way."""
+        refused_detail = f"{NO_PAGE} (the site answered {REFUSED_STATUS})"
+        refused = (
+            session.scalar(
+                select(func.count()).where(
+                    LinkLead.outlet == outlet, LinkLead.read_detail == refused_detail
+                )
+            )
+            or 0
+        )
+        if refused < REFUSALS_BEFORE_STOPPING:
+            return None
+        served = session.scalar(
+            select(LinkLead.id)
+            .where(LinkLead.outlet == outlet, LinkLead.read_outcome.in_(READ_FROM_A_PAGE))
+            .limit(1)
+        )
+        return refused if served is None else None
+
     def _has_enough(self, session: Session, record: LinkLead) -> str | None:
         """Why the lead is held, when every claim its title names already has enough
         articles and the lead was shared no earlier than the claim was first reported."""
@@ -377,6 +416,14 @@ class LinkRead:
         outlet = name_of(record.outlet)
         if outlet is None:
             return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_NAME)
+
+        refusals = self._outlet_refusals(session, record.outlet)
+        if refusals is not None:
+            return self._finish(
+                record,
+                ReadOutcome.CANNOT_BE_READ,
+                f"{OUTLET_REFUSES} for {refusals} pages and served none",
+            )
 
         # The page reader is asked for the page. Whether the outlet may be asked, and how
         # often, is the reader's to decide; the pipeline acts on its answer.
