@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T00:58:59.622702Z",
-  "last_checked_at": "2026-11-16T00:08:21.325552Z",
+  "generated_at": "2026-11-16T01:25:26.177943Z",
+  "last_checked_at": "2026-11-16T01:23:45.637266Z",
   "preview": false,
   "sources": [
     {
@@ -2640,6 +2640,441 @@
           "confidence": 1,
           "article_url": "https://www.sciencealert.com/after-30-years-fda-approves-first-ever-drug-for-a-rare-neurological-disorder",
           "read_on": "2026-11-14"
+        }
+      ]
+    },
+    {
+      "slug": "alpha-lactalbumin-vaccine-tnbc-prevention",
+      "headline": "Phase 1 trial reports immune response to preventive breast cancer vaccine",
+      "summary": "Cleveland Clinic reported an immune response in 74% of 35 Phase 1 participants. The study included people at risk of recurrence after triple-negative breast cancer treatment and cancer-free people with inherited risk; one cohort also received pembrolizumab. The report described tolerability and dose finding, not demonstrated cancer prevention. It said a Phase 2 efficacy study was planned for late 2026.",
+      "vertical": "cancer",
+      "approach": null,
+      "intervention": {
+        "name": "α-lactalbumin vaccine",
+        "synonyms": [
+          "alpha-lactalbumin vaccine",
+          "aLA breast cancer vaccine"
+        ]
+      },
+      "indication": "Prevention of triple-negative breast cancer",
+      "first_reported_date": "2025-12-11",
+      "evidence_stage": "early_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_1",
+        "overlay_years": null,
+        "updated_at": "2026-11-16T01:23:45.484977Z",
+        "explained_by": [
+          11734,
+          11735
+        ],
+        "history": [
+          {
+            "on": "2020-12-19",
+            "code": "trial_registered"
+          },
+          {
+            "on": "2021-10-01",
+            "code": "phase_1"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study",
+          "outlet": "Cleveland Clinic",
+          "title": "Cleveland Clinic Presents Final Results of Phase 1 Clinical Trial of Preventive Breast Cancer Vaccine Study",
+          "published_date": "2025-12-11",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [
+        {
+          "description": "Phase 2 is expected to begin late 2026 and is projected to last about two to three years.",
+          "parsed_date": "2026-12-31",
+          "article_url": "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study"
+        }
+      ],
+      "events": [
+        {
+          "id": 11734,
+          "type": "trial_registered",
+          "event_date": "2020-12-19",
+          "date_basis": "first posted",
+          "summary": "Trial NCT04674306 registered (Early Phase 1).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04674306",
+          "trial_id": "NCT04674306",
+          "trial_phases": [
+            "early_phase_1"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11735,
+          "type": "trial_status_change",
+          "event_date": "2021-10-01",
+          "date_basis": "start date",
+          "summary": "Trial NCT04674306 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04674306",
+          "trial_id": "NCT04674306",
+          "trial_phases": [
+            "early_phase_1"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11736,
+          "type": "trial_status_change",
+          "event_date": "2025-12-29",
+          "date_basis": "completion date",
+          "summary": "Trial NCT04674306 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04674306",
+          "trial_id": "NCT04674306",
+          "trial_phases": [
+            "early_phase_1"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 11737,
+          "type": "trial_results_posted",
+          "event_date": "2026-07-17",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT04674306.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04674306",
+          "trial_id": "NCT04674306",
+          "trial_phases": [
+            "early_phase_1"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT04674306",
+          "url": "https://clinicaltrials.gov/study/NCT04674306",
+          "score": 0.91,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Adjuvant Therapy With an Alpha-lactalbumin Vaccine in Triple-Negative Breast Cancer. For: Pathologic Stage IIA-IIIC Triple-Negative Breast Cancer, TNBC - Triple-Negative Breast Cancer, Residual Disease. Tests: α-lactalbumin vaccine, Zymosan. Early Phase 1, completed."
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT04674306",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT04674306",
+          "title": "Adjuvant Therapy With an Alpha-lactalbumin Vaccine in Triple-Negative Breast Cancer",
+          "phases": [
+            "early_phase_1"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-16T01:23:45.637266Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 35,
+              "basis": "actual"
+            },
+            "allocation": "non_randomised",
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": true,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": null,
+              "kind": "individual"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Treatment Cohort MTD of α-lactalbumin Vaccine",
+                "time_frame": "Day 84"
+              },
+              {
+                "measure": "Preventative Cohort MTD of α-lactalbumin Vaccine",
+                "time_frame": "Day 84"
+              },
+              {
+                "measure": "Pembrolizumab Cohort of α-lactalbumin Vaccine",
+                "time_frame": "Day 84"
+              }
+            ],
+            "primary_outcomes_total": 3,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Treatment Cohort MTD of α-lactalbumin Vaccine",
+                  "time_frame": "Day 84",
+                  "unit": "microgram (mcg)",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 2,
+                  "groups": [],
+                  "comparisons": []
+                },
+                {
+                  "title": "Preventative Cohort MTD of α-lactalbumin Vaccine",
+                  "time_frame": "Day 84",
+                  "unit": "microgram (mcg)",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Preventitive A-lactalbumin and Zymosan",
+                      "analysed": "4",
+                      "value": "NA",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                },
+                {
+                  "title": "Pembrolizumab Cohort of α-lactalbumin Vaccine",
+                  "time_frame": "Day 84",
+                  "unit": "microgram (mcg)",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Standard of Care With A-lactalbumin and Zymosan",
+                      "analysed": "5",
+                      "value": "NA",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 3
+            }
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Day 84",
+              "number": 84,
+              "unit": "days",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T01:23:45.637266Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "MTD",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.96,
+              "read_on": "2026-11-16T01:23:45.637266Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Day 84",
+              "number": 84,
+              "unit": "days",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T01:23:45.637266Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "MTD",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.96,
+              "read_on": "2026-11-16T01:23:45.637266Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 2,
+              "field": "time_frame",
+              "words": "Day 84",
+              "number": 84,
+              "unit": "days",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-16T01:23:45.637266Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "Pembrolizumab Cohort",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.99,
+              "read_on": "2026-11-16T01:23:45.637266Z"
+            }
+          ]
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "10.1136/jitc-2024-sitc2024.0631",
+          "url": "https://doi.org/10.1136/jitc-2024-sitc2024.0631",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "631 Phase I trial of alpha-lactalbumin vaccine in patients with high-risk early triple-negative breast cancer (TNBC) and those at genetic risk for TNBC. 2024. conference-abstract. Journal for ImmunoTherapy of Cancer"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1158/1538-7445.sabcs23-po2-17-12",
+          "url": "https://doi.org/10.1158/1538-7445.sabcs23-po2-17-12",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "related",
+              "trial_id": null,
+              "listed": null,
+              "event_id": null,
+              "score": 1,
+              "reasons": [
+                "named_in_title",
+                "named_institution",
+                "published_before_report"
+              ],
+              "decided_by": "rule",
+              "summary": "Abstract PO2-17-12: Phase I Trial of alpha-lactalbumin vaccine in high risk operable triple negative breast cancer (TNBC) and patients at high genetic risk for TNBC. 2024. conference-abstract. Cancer Research"
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        }
+      ],
+      "background": [],
+      "organisations": [
+        {
+          "name": "Anixa Biosciences, Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Cleveland Clinic",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "03xjacd83",
+            "url": "https://ror.org/03xjacd83",
+            "name": "Cleveland Clinic",
+            "kinds": [
+              "funder",
+              "healthcare"
+            ],
+            "country": "United States",
+            "website": "https://my.clevelandclinic.org/",
+            "score": 1,
+            "read_at": "2026-11-15T20:36:54.151489Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "United States Department of Defense",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "0447fe631",
+            "url": "https://ror.org/0447fe631",
+            "name": "United States Department of Defense",
+            "kinds": [
+              "funder",
+              "government"
+            ],
+            "country": "United States",
+            "website": "https://www.defense.gov",
+            "score": 1,
+            "read_at": "2026-11-16T01:23:40.698340Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study"
+              ],
+              "trial_ids": []
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "The vaccine elicited an immune response in 74% of participants across the three study cohorts.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.87,
+          "article_url": "https://newsroom.clevelandclinic.org/2025/12/11/cleveland-clinic-presents-final-results-of-phase-1-clinical-trial-of-preventive-breast-cancer-vaccine-study",
+          "read_on": "2026-11-16"
         }
       ]
     },
