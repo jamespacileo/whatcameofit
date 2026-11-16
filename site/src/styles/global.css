@@ -69,6 +69,10 @@
   --note-size: 0.85rem;
   --panel-pad: 0.85rem 1rem;
   --label-col: 11rem;
+  /* The record band's two further tones, a step and two steps above the navy: its main
+     column and the status card. The same in both themes, as the navy is. */
+  --band-main: #12325e;
+  --band-card: #1c4179;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -138,6 +142,20 @@
     --ring: #6d7c90;
     color-scheme: dark;
   }
+}
+
+/* The page's own colours under second names. A custom property that refers to another is
+   settled where it is declared, so these carry the page's values, light or dark, into a
+   place that has renamed the first ones: a panel that opens out of the band's card. */
+:root {
+  --page-paper: var(--paper);
+  --page-ink: var(--ink);
+  --page-blue: var(--blue);
+  --page-muted: var(--muted);
+  --page-rule: var(--rule);
+  --page-ring: var(--ring);
+  --page-tag: var(--tag);
+  --page-panel: var(--panel);
 }
 
 *,
@@ -7363,5 +7381,112 @@ body.framed {
 
   .band-grid > .band-actions {
     margin-top: 0;
+  }
+}
+
+/* The record band in three tones (openspec band-tones): the navy at the sides, a lighter
+   main column that runs into the sheet below it, and the status card a step lighter
+   still, so the card reads as part of the band and not as a white object on it. */
+@media screen {
+  .band.record .digest {
+    --paper: var(--band-card);
+    --ink: var(--on-navy-ink);
+    --blue: var(--on-navy);
+    --muted: var(--navy-soft);
+    --rule: var(--on-navy-rule);
+    --ring: #9db4d2;
+    --tag: rgb(255 255 255 / 0.14);
+    --panel: rgb(255 255 255 / 0.08);
+    --promise: #362b10;
+    --promise-rule: #8a7230;
+    --promise-mark: #d9b44a;
+    background: var(--band-card);
+    color: var(--ink);
+    border-color: rgb(142 193 245 / 0.3);
+    box-shadow: none;
+  }
+
+  .band.record .digest :focus-visible {
+    outline-color: var(--on-navy-ink);
+  }
+
+  .band.record .digest ::selection {
+    background: var(--on-navy-ink);
+    color: var(--footer);
+  }
+
+  /* A panel that opens out of the card is the page's, not the band's. */
+  .band.record .digest .pop {
+    --paper: var(--page-paper);
+    --ink: var(--page-ink);
+    --blue: var(--page-blue);
+    --muted: var(--page-muted);
+    --rule: var(--page-rule);
+    --ring: var(--page-ring);
+    --tag: var(--page-tag);
+    --panel: var(--page-panel);
+    color: var(--ink);
+  }
+
+  .band.record .digest .pop :focus-visible {
+    outline-color: var(--blue);
+  }
+}
+
+@media screen and (min-width: 68.01rem) {
+  .band-grid {
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* The main column's tone, from the band's top edge to the sheet. */
+  .band-grid::before {
+    content: "";
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    z-index: -1;
+    align-self: stretch;
+    margin: -1.5rem -1rem -2rem 0;
+    background: var(--band-main);
+  }
+
+  /* The title starts where the sheet's words do. */
+  .band-grid > .band-main,
+  .band-grid > .band-actions {
+    padding-left: clamp(1.1rem, 3vw, 2.4rem);
+  }
+
+  /* The tone is a grid item too, so the column's own items say which row they are in. */
+  .band-grid > .band-main {
+    grid-row: 1;
+  }
+
+  .band-grid > .band-actions {
+    grid-row: 2;
+  }
+}
+
+/* At a glance in two columns on a wide screen (openspec band-tones): each term is a cell,
+   its label over its value. A cell whose card is open takes the full width, so the
+   source's words keep their measure. */
+@media (min-width: 60rem) {
+  .glance-rows {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 2.5rem;
+  }
+
+  .glance-rows > div {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+  }
+
+  .glance-rows > div:has(details[open]) {
+    grid-column: 1 / -1;
+  }
+
+  /* An odd last cell has no neighbour: its rule still runs the full width. */
+  .glance-rows > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 }
