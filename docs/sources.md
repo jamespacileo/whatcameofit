@@ -373,6 +373,16 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 - **How the operator obtains it:** download the monthly files wanted from the dataset's `data/` folder. No request is sent by the pipeline.
 - **Rate limit and authentication:** none for the pipeline; the hub's own limits apply to the download.
 
+- **Checked again 2026-11-16:** the hub's file list still ends at 2026-08, last changed 2026-08-23, so the 2026-08 file stops on that day. Months 2025-01 to 2026-07 are 19 files, 1.4 GB. `scripts/fetch_link_files.py` downloads the months the archive holds in full and leaves out the newest one listed.
+
+### ClickHouse public copy of Hacker News (used for months the archive lacks)
+
+- **Checked:** 2026-11-16. [Playground page](https://clickhouse.com/docs/getting-started/playground), which says queries run as a read-only user and "the service also has quotas on its usage". No terms page for the data was found; the items are the same ones the official API publishes, and the parquet archive above names this copy as its own origin.
+- **What it is:** the table `hackernews.hackernews` behind ClickHouse's SQL playground, asked over HTTPS at `sql-clickhouse.clickhouse.com` as the user `demo` with no password. On this date its newest item was minutes old. The host the playground page names, `play.clickhouse.com`, answered 404 for this table.
+- **Limits (observed):** an answer of more than 10,000 rows or 10 MB is refused, a query may run 60 seconds, and one shape of query may be sent 20 times an hour (`QUOTA_EXCEEDED`, with the time the hour ends). The script asks for a month in pages of 10,000 by item number and waits out a quota refusal.
+- **Fields asked for:** `id`, `type`, `url`, `title`, `time`, `score`, `dead`, `deleted`, for stories with a link only. `by` and `text` are never named in a query. The script writes them as a monthly parquet file with the archive's column names, so the same reader takes it. A story with no link is not in these files; the reader would skip it anyway.
+- **Scores:** as the copy held them on the day asked. A recent story's score is still moving.
+
 ### Hacker News on BigQuery (not read)
 
 - **Checked:** not read on 2026-11-14. It needs a Google Cloud project of the operator's, and offers nothing the parquet archive lacks. Read its terms before using it.
@@ -392,7 +402,16 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 - **Limits applied to that decision (proposed by the assistant, not yet confirmed line by line):** what is kept from a submission is the address of the article it links to, the subreddit, the time, the score and the title it was shared under. The title is kept with the link lead, privately: the operator labels a sample of leads from their titles, and a reworded triage has to score the same title again (change `social-link-backfill`, design decision 4). It never reaches the export or the site. An earlier wording of this entry said the title would be dropped after triage; that could not be done. The author, the post's id and address, its text and its comments are never read out of the file or kept. Nothing in the export says an article was found through Reddit. Only link submissions are read; comment files are not downloaded.
 - **Not a legal reading:** the decision rests on the operator's own view. Two points for whoever revisits it: the question Reddit raises is its terms of access, not copyright, and "fair use" is a United States doctrine while the operator is in the United Kingdom. Addresses and dates are facts, which is why only they are kept.
 - **Rate limit and authentication:** none; the files are downloaded once by torrent and read locally.
-- **Crossref Event Data's Reddit events:** allowed under the same decision and the same limits, if that archive is used.
+- **Crossref Event Data's Reddit events:** allowed under the same decision and the same limits, if that archive is used. Checked 2026-11-16: Crossref stopped the service on 23 April 2026; a final archive (2017-02-17 to 2026-04-23, up to 282 GB) is listed on [Academic Torrents](https://academictorrents.com/details/16396475b640d8487a6b723eada8a440fb33d3ce). Not downloaded.
+
+### Arctic Shift search interface (used for chosen communities, 2025 on)
+
+- **Checked:** 2026-11-16. [Interface documentation](https://github.com/ArthurHeitmann/arctic_shift/blob/master/api/README.md), read directly. It is the same third-party archive as the dumps above, so the operator's decision of 2026-11-14 and its limits apply unchanged. The operator approved fetching through it on 2026-11-16.
+- **Why not the dumps:** the monthly submission files for 2025-01 to 2026-10 are about 17 GB each, some 375 GB, and the per-community release ends at 2023-12. The interface answers for one community and a range of dates, and on this date held posts made the same day.
+- **Authentication:** none. **Rate limit:** set by the server's load, not published as a number. A 429 carries `X-RateLimit-Reset` in seconds; a 422 with "Timeout. Maybe slow down a bit" was seen twice on single requests. The documentation says: "this is a free service, so be considerate. If you want to process massive amounts of data, use the monthly dumps instead." The script sends one request a second, waits as told on a 429 and backs off on a timeout.
+- **Field names, checked on live answers without printing any post (task 1.3 of `social-link-backfill`):** `url`, `subreddit`, `created_utc`, `score`, `title`, `is_self` and `removed_by_category` are all present, as `design.md` decision 3 expects. `is_self` and `removed_by_category` cannot be asked for alone (`fields=` refuses them), so whole submissions are answered.
+- **What is written:** `scripts/fetch_link_files.py` reduces each submission to those seven fields as it arrives and writes one zstandard-compressed file a community, one JSON object a line, in `data/link-files/reddit/`. The author, the text, the post's id and its address reach no file; the id is held in memory to tell one page from the next.
+- **Scores and removals:** as the archive captured them, usually soon after posting. A removal after capture is not known to it.
 
 ## Live lookup source reuse (14 November 2026)
 
