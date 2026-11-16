@@ -134,6 +134,34 @@ def slug_for(intervention: str, indication: str) -> str:
     return slug
 
 
+def owner_of_rule_slug(session: Session, intervention: str, indication: str) -> Claim | None:
+    """The claim that has the slug the rule makes from this intervention and indication,
+    when the rule makes that slug from the claim's own intervention name or a synonym and
+    its own indication: then it is the same treatment and condition by their words,
+    though one may write "alcohol-use" and the other "alcohol use". A claim given the
+    slug by hand for something else is not its owner."""
+    try:
+        slug = slug_for(intervention, indication)
+    except InvalidSlug:
+        return None
+    claim = find_claim(session, slug)
+    if claim is None:
+        return None
+    names = session.execute(
+        select(Entity.name, Entity.synonyms).where(
+            Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION
+        )
+    ).all()
+    for name, synonyms in names:
+        for known in (name, *synonyms):
+            try:
+                if slug_for(known, claim.indication) == slug:
+                    return claim
+            except InvalidSlug:
+                continue
+    return None
+
+
 def free_slug_for(session: Session, intervention: str, indication: str) -> str:
     """The slug the rule makes for a new claim. Refuses, naming the slug, when a claim
     already has it: no other slug is tried in its place."""
@@ -228,13 +256,19 @@ _BRACKETED = re.compile(r"\([^)]*\)")
 _LINKING = {"in", "with", "after", "for", "of", "among", "without", "during", "from", "to", "at"}
 
 
+def condition_words(text: str) -> list[str]:
+    """A condition's words in the compared form: letter case, spacing and hyphens do not
+    matter, so "Alcohol-use disorder" and "alcohol use disorder" have the same words."""
+    return re.findall(r"[^\W_]+", name_key(text))
+
+
 def _conditions_overlap(first: str, second: str) -> bool:
     """Whether one condition is the other, or the other with words that only narrow it
     put in front: "advanced pancreatic cancer" and "pancreatic cancer". Words in
     brackets are left out ("post-traumatic stress disorder (PTSD)"). A condition that
     only ends with the other after "in", "with" or the like is another condition."""
     short, long = sorted(
-        (tidy(_BRACKETED.sub(" ", name_key(text))).split() for text in (first, second)), key=len
+        (condition_words(_BRACKETED.sub(" ", text)) for text in (first, second)), key=len
     )
     if not short or long[len(long) - len(short) :] != short:
         return False
@@ -322,7 +356,7 @@ def claims_sharing_a_name(
     if not wanted:
         return []
     found: list[tuple[bool, bool, int, NamedClaim]] = []
-    wanted_condition = name_key(indication)
+    wanted_condition = condition_words(indication)
     rows = session.execute(
         select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms, Claim.summary)
         .join(Entity, Entity.claim_id == Claim.id)
@@ -334,7 +368,7 @@ def claims_sharing_a_name(
         if not any(_one_within_the_other(mine, theirs) for mine in wanted for theirs in known):
             continue
         equal = any(mine == theirs for mine in wanted for theirs in known)
-        exact = equal and name_key(condition) == wanted_condition
+        exact = equal and condition_words(condition) == wanted_condition
         found.append((not exact, not equal, claim_id, NamedClaim(slug, name, condition, summary)))
     found.sort(key=lambda entry: entry[:3])
     return [claim for _, _, _, claim in found[:MAX_NAMED_CLAIMS]]

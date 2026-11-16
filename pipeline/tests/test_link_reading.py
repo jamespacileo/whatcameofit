@@ -30,11 +30,18 @@ from thenwhat.backfill.link_read import (
     NotMeasured,
     ReadClient,
     held_outlets,
+    reads_naming_archived_claims,
 )
 from thenwhat.backfill.link_screen import REGISTRY_TRIAL, TITLE_NAMES_CLAIM
 from thenwhat.backfill.outlet_hold import OUTLET_HOLD, OUTLET_TURN_LOCK
 from thenwhat.backfill.runner import RunReport, run_step
-from thenwhat.claims.entry import add_article, add_claim, articles_of
+from thenwhat.claims.entry import (
+    add_article,
+    add_claim,
+    archive_claim,
+    articles_of,
+    slug_for,
+)
 from thenwhat.config import SourceAllowance
 from thenwhat.db.models import (
     Base,
@@ -1332,6 +1339,78 @@ def test_exact_name_and_condition_remain_a_candidate_beyond_eight_older_claims(r
     [asked] = reader.backend.same_claim_asked
     assert f"- {claim.slug}: " in asked
     assert asked.count("Claim summary:") == 8
+
+
+# A read for a treatment and condition a claim already has, the condition written another
+# way: the slug the rule would give a new claim is that claim's. Synthetic, shaped like
+# the read the backfill of 2026-11-16 recorded as failed.
+OWNED_DRAFT = DRAFT | {"intervention": "semaglutide", "intervention_synonyms": []}
+
+
+def claim_owning_the_slug(session: Session, indication: str, *, older: int = 8) -> Claim:
+    """Older claims of the same treatment for other conditions, as many as the decision
+    is shown, then the claim whose slug a read for `indication` would be given."""
+    for number in range(older):
+        add_claim(
+            session,
+            slug=f"semaglutide-other-{number}",
+            headline="Synthetic claim for another condition",
+            vertical="mouth-and-teeth",
+            intervention="semaglutide",
+            indication=f"Other condition {number}",
+        )
+    return add_claim(
+        session,
+        slug=slug_for("semaglutide", indication),
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention="semaglutide",
+        indication=indication,
+    )
+
+
+def test_a_read_whose_slug_a_claim_has_joins_it_when_the_decision_agrees(session, fake_time):
+    """Scenario: A read whose new slug a claim already has"""
+    reader = Reader(session, fake_time, OWNED_DRAFT | {"indication": "Alcohol-use disorder"})
+    claim = claim_owning_the_slug(session, "alcohol use disorder")
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    [asked] = reader.backend.same_claim_asked
+    assert f"- {claim.slug}: " in asked
+
+
+def test_a_read_whose_slug_a_claim_has_is_an_overlap_when_the_decision_declines(session, fake_time):
+    """Scenario: A read whose new slug a claim already has, not established as that claim.
+    The conditions differ by an accent, so only the slug says they are one."""
+    reader = Reader(session, fake_time, OWNED_DRAFT | {"indication": "Meniere's disease"})
+    claim = claim_owning_the_slug(session, "Ménière's disease")
+    lead = reader.lead()
+
+    report = reader.read()
+
+    assert report.failed == 0
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.IDENTITY_UNRESOLVED, None)
+    assert f"names overlap {claim.slug}," in (lead.read_detail or "")
+    assert f"- {claim.slug}: " in reader.backend.same_claim_asked[0]
+    assert session.scalar(select(func.count()).select_from(Claim)) == 9
+    assert reader.read().processed == 0
+
+
+def test_a_read_whose_slug_an_archived_claim_has_is_listed_as_overlapping_it(session, fake_time):
+    """Scenario: A read whose new slug an archived claim has"""
+    reader = Reader(session, fake_time, OWNED_DRAFT | {"indication": "Alcohol-use disorder"})
+    claim = claim_owning_the_slug(session, "alcohol use disorder", older=0)
+    archive_claim(session, claim.slug, reason="synthetic fault", now=NOW)
+    lead = reader.lead()
+
+    reader.read()
+
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.IDENTITY_UNRESOLVED, None)
+    assert reads_naming_archived_claims(session) == [(lead, claim)]
 
 
 def test_rejected_equal_name_is_recorded_as_unresolved_without_retry(reader: Reader):

@@ -51,6 +51,7 @@ from thenwhat.claims.entry import (
     find_article,
     free_slug_for,
     named_claims,
+    owner_of_rule_slug,
     slug_of_claim_close_to,
     slug_of_claim_covering,
 )
@@ -548,6 +549,12 @@ class LinkRead:
             )
             if claim.slug not in offered
         ]
+        # The claim with the slug a new claim would be given has this treatment and
+        # condition by its own words, written alike or not ("alcohol-use" and "alcohol
+        # use"), so it is always offered, beyond any cut.
+        owner = owner_of_rule_slug(session, draft.intervention, draft.indication)
+        if owner is not None and owner.slug not in {claim.slug for claim in candidates}:
+            candidates += named_claims(session, [owner.id])
         if not candidates:
             return None, None
         answer = choose_same_claim(
@@ -802,9 +809,15 @@ class LinkRead:
 
             # A claim for the same treatment and condition, as named or once dose,
             # schedule and form are left out, means a new claim would duplicate it.
-            collision = slug_of_claim_covering(
-                session, draft.intervention, draft.indication
-            ) or slug_of_claim_close_to(session, draft.intervention, draft.indication)
+            # So does a claim that has the slug the rule would give it: the slug is made
+            # from the same words. The backfill of 2026-11-16 recorded such a read as
+            # failed when the slug was refused.
+            owner = owner_of_rule_slug(session, draft.intervention, draft.indication)
+            collision = (
+                slug_of_claim_covering(session, draft.intervention, draft.indication)
+                or slug_of_claim_close_to(session, draft.intervention, draft.indication)
+                or (owner.slug if owner is not None else None)
+            )
             if collision is not None:
                 # The names are already taken, but identity was not established. Neither
                 # force the article onto that claim nor pay to retry an unchanged read.
@@ -812,7 +825,8 @@ class LinkRead:
                     record,
                     ReadOutcome.IDENTITY_UNRESOLVED,
                     f"{draft.intervention} for {draft.indication}; {NAMES_OVERLAP} {collision}, "
-                    "but the same treatment and condition were not established",
+                    "but the same treatment and condition were not established, so no "
+                    "claim was drafted",
                 )
             if business:
                 return self._finish(
