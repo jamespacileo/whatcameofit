@@ -116,6 +116,11 @@ class Probe:
 BUSY_TRIES = 5
 BUSY_WAIT_MOST = 120.0
 
+# The longest wait a "not now" is taken to state. The reader documents waits of at most
+# six hours; anything past a day is a unit mistaken or a sentinel, and is read as a day,
+# so no outlet is left for weeks and no time is computed that cannot be.
+WAIT_MOST = 24 * 60 * 60.0
+
 _turns: dict[int, threading.BoundedSemaphore] = {}
 _turns_lock = threading.Lock()
 
@@ -280,7 +285,11 @@ def _answer_of(response: httpx.Response) -> _Answer:
                 and math.isfinite(retry)
                 and retry >= 0
             ):
-                return _Answer(NOT_NOW, reason=reason.strip(), retry_after_seconds=float(retry))
+                return _Answer(
+                    NOT_NOW,
+                    reason=reason.strip(),
+                    retry_after_seconds=min(float(retry), WAIT_MOST),
+                )
             raise _unknown(response)
     if response.status_code in (401, 403):
         raise ReaderUnavailable(

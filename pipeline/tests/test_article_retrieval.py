@@ -451,3 +451,21 @@ def test_an_outlet_the_reader_has_stopped_for_hours_is_its_refusal_with_the_wait
 
     assert stopped.value.retry_after_seconds == 14400
     assert (slept, len(reader.asked)) == ([], 1)
+
+
+@pytest.mark.parametrize("stated", [86_400_000, 1e300])
+def test_a_wait_past_a_day_is_read_as_a_day(stated):
+    """Milliseconds for seconds, or a sentinel: no outlet is left for weeks by it."""
+    from reader_support import SyntheticReader
+    from thenwhat.extract.retrieve import WAIT_MOST, NotNow
+
+    reader = SyntheticReader()
+    reader.answer = lambda: httpx.Response(
+        429,
+        json={"success": False, "code": "NOT_NOW", "reason": "stopped", "retryAfter": stated},
+    )
+
+    with pytest.raises(NotNow) as stopped:
+        _busy_retriever(reader, []).retrieve("https://news.example.org/a")
+
+    assert stopped.value.retry_after_seconds == WAIT_MOST == 86_400

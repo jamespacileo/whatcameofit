@@ -305,11 +305,6 @@ def _one_within_the_other(first: list[str], second: list[str]) -> bool:
     )
 
 
-# Every name the registry of substances lists for a claim's substance, leaving out any
-# it has withdrawn, from the record kept with the intervention.
-_SUBSTANCE_NAMES = "$.names[*] ? (!(@.deprecated == true)).name"
-
-
 def claims_sharing_a_name(
     session: Session, names: Sequence[str], *, indication: str = ""
 ) -> list[NamedClaim]:
@@ -317,12 +312,8 @@ def claims_sharing_a_name(
 
     A name is shared when a claim's intervention name or synonym is one of the names, or
     when one sits whole inside the other, word for word: "esketamine" inside "esketamine
-    nasal spray". It is shared as well when one of the names is, whole, a name the
-    registry of substances gives the claim's substance: what it calls the substance, a
-    brand, another name or a development code. A claim entered as lecanemab is then found
-    by Leqembi, and one entered as BAN2401 by either, though they share no word. This
-    finds candidates and decides nothing: two claims for one drug and two conditions both
-    come back. Claims whose name is equal come first, then the oldest.
+    nasal spray". This finds candidates and decides nothing: two claims for one drug and
+    two conditions both come back. Claims whose name is equal come first, then the oldest.
     The exact name and condition pair comes first so the limit cannot hide it.
     A rejected draft is never a candidate: it would only take the decision's votes from
     the claim that stands.
@@ -333,12 +324,55 @@ def claims_sharing_a_name(
     found: list[tuple[bool, bool, int, NamedClaim]] = []
     wanted_condition = name_key(indication)
     rows = session.execute(
+        select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms, Claim.summary)
+        .join(Entity, Entity.claim_id == Claim.id)
+        .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
+        .order_by(Claim.id)
+    )
+    for claim_id, slug, condition, name, synonyms, summary in rows:
+        known = [name_key(known_name).split() for known_name in (name, *synonyms)]
+        if not any(_one_within_the_other(mine, theirs) for mine in wanted for theirs in known):
+            continue
+        equal = any(mine == theirs for mine in wanted for theirs in known)
+        exact = equal and name_key(condition) == wanted_condition
+        found.append((not exact, not equal, claim_id, NamedClaim(slug, name, condition, summary)))
+    found.sort(key=lambda entry: entry[:3])
+    return [claim for _, _, _, claim in found[:MAX_NAMED_CLAIMS]]
+
+
+# Every name the registry of substances lists for a claim's substance, leaving out any
+# it has withdrawn, from the record kept with the intervention.
+_SUBSTANCE_NAMES = "$.names[*] ? (!(@.deprecated == true)).name"
+# How many claims found only by their substance's names are offered to the same-claim
+# decision, beside the claims `claims_sharing_a_name` gives: they are added to those,
+# and never take the place of one.
+MAX_SUBSTANCE_CLAIMS = 8
+
+
+def claims_of_a_named_substance(
+    session: Session, names: Sequence[str], *, indication: str = ""
+) -> list[NamedClaim]:
+    """Claims whose substance the registry of substances gives one of these names, in
+    the record kept with the claim's intervention: what it calls the substance, a brand,
+    another name it has not withdrawn, or a development code. A claim entered as
+    lecanemab is found by Leqembi, and one entered as BAN2401 by either, though they
+    share no word.
+
+    The name is shared only whole: the registry's chemical names run to many words, and
+    a word of one is no name for the treatment. This finds candidates and decides
+    nothing. A claim for the same condition, or that condition narrowed, comes first,
+    then the oldest. A rejected draft is never a candidate.
+    """
+    wanted = [words for name in names if (words := name_key(name).split())]
+    if not wanted:
+        return []
+    found: list[tuple[bool, int, NamedClaim]] = []
+    rows = session.execute(
         select(
             Claim.id,
             Claim.slug,
             Claim.indication,
             Entity.name,
-            Entity.synonyms,
             Claim.summary,
             # Only the names are read from the substance's record, which is large.
             EntitySubstance.payload["substance"]["_name"].astext,
@@ -346,29 +380,22 @@ def claims_sharing_a_name(
             EntitySubstance.codes,
         )
         .join(Entity, Entity.claim_id == Claim.id)
-        .outerjoin(EntitySubstance, EntitySubstance.entity_id == Entity.id)
+        .join(EntitySubstance, EntitySubstance.entity_id == Entity.id)
         .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
         .order_by(Claim.id)
     )
-    for claim_id, slug, condition, name, synonyms, summary, substance, listed, codes in rows:
-        known = [name_key(known_name).split() for known_name in (name, *synonyms)]
-        # A registry's name for the substance is shared only whole: its chemical names
-        # run to many words, and a word of one is no name for the treatment.
+    for claim_id, slug, condition, name, summary, substance, listed, codes in rows:
         registered = [
             name_key(other).split()
             for other in (substance, *(listed or ()), *(codes or ()))
             if isinstance(other, str)
         ]
-        by_registry = any(mine == theirs for mine in wanted for theirs in registered)
-        if not by_registry and not any(
-            _one_within_the_other(mine, theirs) for mine in wanted for theirs in known
-        ):
+        if not any(mine == theirs for mine in wanted for theirs in registered):
             continue
-        equal = by_registry or any(mine == theirs for mine in wanted for theirs in known)
-        exact = equal and name_key(condition) == wanted_condition
-        found.append((not exact, not equal, claim_id, NamedClaim(slug, name, condition, summary)))
-    found.sort(key=lambda entry: entry[:3])
-    return [claim for _, _, _, claim in found[:MAX_NAMED_CLAIMS]]
+        same_condition = bool(indication) and _conditions_overlap(indication, condition)
+        found.append((not same_condition, claim_id, NamedClaim(slug, name, condition, summary)))
+    found.sort(key=lambda entry: entry[:2])
+    return [claim for _, _, claim in found[:MAX_SUBSTANCE_CLAIMS]]
 
 
 def add_claim(

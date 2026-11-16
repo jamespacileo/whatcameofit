@@ -233,6 +233,9 @@ The backfill of 2026-11-16 read about 800 pages and drafted 257 claims; the audi
 
 - [x] 17.1 Keep the time a "not now" wait ends for the lead's outlet beside the sources' pauses, leave the outlet's due leads without a request until then, across runs, and say in `thenwhat backfill plan` how many leads are held; read a `NOT_NOW` on a 429 as the outlet's answer however long its wait. Verify with tests on a synthetic reader: a stopped outlet is not asked in the next run, is asked after the wait, and another outlet is read meanwhile. Not verified against the live reader.
 - [x] 17.2 Offer the same-claim decision the claims whose substance record, kept from the registry of substances, lists one of the read's names whole: the substance's name, a brand or other name not withdrawn, or a development code. The decision and its thresholds are unchanged. Verify with tests on synthetic articles: a read naming a brand joins the claim entered under the generic, and another treatment for the same condition still drafts its own claim. A claim with no substance record (a product the registry does not list, or a claim not yet prepared) is found as before, by its name, synonyms and title only.
+- [x] 17.3 Review of PR 258: give one worker at a time an outlet's turn, across processes, from the look at its hold to the reader's answer, so no request is in flight for an outlet another request is about to stop. Verify with a test that the turn is not free while a request is in flight and is free after.
+- [x] 17.4 Review of PR 258: read a stated wait longer than 24 hours as 24 hours. Verify with tests that a wait in milliseconds and one no time can hold give a hold of a day and end no run.
+- [x] 17.5 Review of PR 258: add the claims found by their substance's names after the candidates offered before, up to eight more, so none takes a place. Verify with a test that a claim found by name is still offered beside eight found by substance.
 
 ## Workflow follow-up
 

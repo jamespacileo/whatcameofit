@@ -24,7 +24,9 @@ from thenwhat.backfill.link_read import (
     NO_NAME,
     NO_PAGE,
     NOT_ALLOWED,
+    OUTLET_HOLD,
     OUTLET_REFUSES,
+    OUTLET_TURN_LOCK,
     REFUSALS_BEFORE_STOPPING,
     LinkRead,
     NotMeasured,
@@ -1034,6 +1036,46 @@ def test_a_brand_the_substance_record_names_joins_the_claim_under_the_generic(se
     assert session.scalar(select(func.count()).select_from(Claim)) == 1
 
 
+def test_claims_found_by_their_substance_take_no_place_from_a_claim_found_by_name(
+    session, fake_time
+):
+    """Scenario: More claims under the substance than the decision was shown before"""
+    reader = Reader(
+        session,
+        fake_time,
+        DRAFT | {"intervention": "Toothera gel", "intervention_synonyms": ["Toothera"]},
+    )
+    # Eight older claims found only through their substance's record, for other
+    # conditions, and then the claim the read's own name finds.
+    for number in range(8):
+        other = add_claim(
+            session,
+            slug=f"exampletumab-condition-{number}",
+            headline="A synthetic headline",
+            vertical="mouth-and-teeth",
+            intervention=f"exampletumab form {number}",
+            indication=f"condition {number}",
+        )
+        filed_under_a_substance(session, other, "exampletumab", "Toothera")
+    by_name = add_claim(
+        session,
+        slug="toothera-gel-tooth-agenesis",
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention="Toothera gel",
+        indication="tooth agenesis",
+    )
+    reader.backend.same_claim = by_name.slug
+    lead = reader.lead()
+
+    reader.read()
+
+    shown = reader.backend.same_claim_asked[0]
+    assert "- toothera-gel-tooth-agenesis: Toothera gel for tooth agenesis" in shown
+    assert all(f"- exampletumab-condition-{number}:" in shown for number in range(8))
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, by_name.id)
+
+
 def test_another_treatment_for_the_same_condition_still_drafts_its_own_claim(session, fake_time):
     """Scenario: Another treatment for the condition of a claim filed under a substance"""
     reader = Reader(
@@ -1589,6 +1631,55 @@ def test_a_read_is_measured_under_the_leads_address_with_what_it_asked(
     assert inside, "the read made decisions, and each is measured"
     assert {made.trace for made in inside} == {lead.url_key}
     assert all(made.step.startswith(("decision:", "read")) for made in inside)
+
+
+def test_an_outlets_turn_is_held_from_the_look_at_its_hold_to_the_readers_answer(
+    reader: Reader, engine
+):
+    """Scenario: Two workers, one stopped outlet. A second worker cannot look at the
+    outlet's hold, and so cannot ask, while the first worker's request is in flight; it
+    may once the answer, and any hold it brought, is kept."""
+    reader.lead()
+    turn = select(
+        func.pg_try_advisory_lock(OUTLET_TURN_LOCK, func.hashtext(OUTLET_HOLD + "theguardian.com"))
+    )
+    free_in_flight: list[bool] = []
+
+    def stopped() -> httpx.Response:
+        with engine.connect() as another_worker:
+            free_in_flight.append(bool(another_worker.scalar(turn)))
+        return httpx.Response(
+            429,
+            json={"success": False, "code": "NOT_NOW", "reason": "stopped", "retryAfter": 3600},
+        )
+
+    reader.page_reader.answer = stopped
+
+    reader.read()
+
+    assert free_in_flight == [False]
+    # The hold was kept, and the turn is free again for the worker that waited: it finds
+    # the hold and asks nothing.
+    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
+    assert held.outlet == "theguardian.com"
+    with engine.connect() as another_worker:
+        assert another_worker.scalar(turn) is True
+        # The lock is the connection's, and the connection goes back to a pool.
+        another_worker.execute(select(func.pg_advisory_unlock_all()))
+
+
+def test_a_wait_past_a_day_holds_the_outlet_for_a_day_and_ends_no_run(reader: Reader):
+    """Scenario: A wait no reader means. Milliseconds, or a number no time can hold, is
+    read as a day."""
+    reader.lead()
+    reader.page_reader.not_now["www.theguardian.com"] = 1e300
+    began = reader.time.now()
+
+    report = reader.read()
+
+    assert (report.deferred, report.failed, report.stopped) == (1, 0, None)
+    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
+    assert held.until == began + timedelta(hours=24)
 
 
 def test_an_outlet_the_reader_cannot_get_is_left_after_three_pages(reader: Reader):
