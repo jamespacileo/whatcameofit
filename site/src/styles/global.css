@@ -2711,6 +2711,123 @@ main nav.contents ul li + li {
   font-weight: 700;
 }
 
+/* Score chip: one score, wherever the claim page shows one. The band in words and the
+   percentage are in sight; what the number is about opens from the chip. No colour says
+   how good a score is: a lower-band reading is outlined in dashes and says so in words. */
+.pop-trigger.score {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  flex: none;
+  padding: 0.12rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 99px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  vertical-align: 0.08em;
+}
+
+.score .score-about {
+  font-weight: 500;
+}
+
+.score .score-words {
+  display: inline-block;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+/* "high, 92%" is written as it is said in a sentence, and drawn with a capital. */
+.score .score-words::first-letter {
+  text-transform: uppercase;
+}
+
+.pop-trigger.score:hover,
+.pop-trigger.score:has(+ .pop:popover-open) {
+  border-color: var(--ring);
+  background: var(--panel);
+}
+
+.pop-trigger.score.low {
+  border-style: dashed;
+  border-color: var(--ring);
+}
+
+/* A chip's panel is a span, so a chip may stand inside a paragraph. */
+span.pop {
+  text-align: left;
+  white-space: normal;
+}
+
+span.pop:popover-open {
+  display: block;
+}
+
+span.pop > span {
+  display: block;
+  color: var(--muted);
+}
+
+span.pop > span + span {
+  margin-top: 0.5rem;
+}
+
+.glance-head,
+.record-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 0.9rem;
+}
+
+.glance-scores {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.3rem;
+}
+
+.record-head .record-title {
+  min-width: 0;
+}
+
+@media (max-width: 40rem) {
+  /* The chip stays small; its press area is 44 pixels tall. */
+  .pop-trigger.score::after {
+    content: "";
+    position: absolute;
+    inset: -0.65rem -0.25rem;
+  }
+
+  .glance-head,
+  .record-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .glance-scores {
+    justify-content: flex-start;
+    margin: 0.2rem 0 0.1rem;
+  }
+
+  .record-head .score {
+    margin-bottom: 0.35rem;
+  }
+}
+
+@media print {
+  .pop-trigger.score {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+}
+
 .pop .pop-head .basis-mark,
 .pop .pop-note .basis-mark {
   margin: 0 0.15rem 0 0;
@@ -4055,11 +4172,6 @@ main ul:not([class]) li + li {
   color: var(--ink);
 }
 
-/* A possible record's line opens with its match, so it is read before phase and state. */
-.record-possible {
-  color: var(--ink);
-}
-
 .record-rest {
   max-width: none;
 }
@@ -4082,7 +4194,6 @@ main ul:not([class]) li + li {
 
 
 .record-meta,
-.record-match,
 .record-unread,
 .record-links {
   margin: 0;

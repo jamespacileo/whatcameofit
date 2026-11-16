@@ -16,6 +16,7 @@ import LookupAgain from "../components/LookupAgain.astro";
 import Outlet from "../components/Outlet.astro";
 import KindIcon from "../components/KindIcon.astro";
 import Pop from "../components/Pop.astro";
+import Score from "../components/Score.astro";
 import RecordBrief from "../components/RecordBrief.astro";
 import RecordStrip from "../components/RecordStrip.astro";
 import StripKey from "../components/StripKey.astro";
@@ -49,7 +50,7 @@ import {
 } from "../lib/status";
 import { cardAlt, clip, shareSentence } from "../lib/card";
 import { embedSnippet, shareLinks } from "../lib/share";
-import { confidenceLabel, stageReadingNote } from "../lib/confidence";
+import { LOW_READING_MEANING, MATCH_MEANING, matchWords, stageReading } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
 import RegistryRecords from "../components/RegistryRecords.astro";
 import Glance from "../components/Glance.astro";
@@ -90,6 +91,10 @@ interface Props {
 }
 
 const { claim } = Astro.props;
+// A lower-band reading of the evidence stage, in the parts its chip shows.
+const stageRead = claim.evidence_stage_reading
+  ? stageReading(claim.evidence_stage_reading, (code) => EVIDENCE_STAGES[code] ?? code)
+  : null;
 const timetable = buildTimetable(claim, data.generated_at);
 const overlay = overlayText(claim.status.overlay_years);
 const thisYear = Number(data.generated_at.slice(0, 4));
@@ -604,10 +609,12 @@ const sections = [
           <div>
             <dt>Evidence when first reported</dt>
             <dd>
-              {EVIDENCE_STAGES[claim.evidence_stage_reading.stage] ?? claim.evidence_stage_reading.stage}
-              <span class="aka">
-                {stageReadingNote(claim.evidence_stage_reading, (code) => EVIDENCE_STAGES[code] ?? code)}
-              </span>
+              {EVIDENCE_STAGES[claim.evidence_stage_reading.stage] ?? claim.evidence_stage_reading.stage}{" "}
+              <Score words={stageRead!.chip} low>
+                {stageRead!.also && <span>{stageRead!.also}</span>}
+                <span>{LOW_READING_MEANING}</span>
+              </Score>
+              <span class="aka">{stageRead!.note}</span>
             </dd>
           </div>
         )
@@ -836,9 +843,9 @@ const sections = [
                                      rule, such as a follow-up paper, says how sure it is. */
                                   typeof line.steps[0].event.confidence === "number" &&
                                     line.steps[0].event.confidence < 1 && (
-                                      <span class="entry-note">
-                                        {confidenceLabel(line.steps[0].event.confidence)}
-                                      </span>
+                                      <Score about="Match to this claim" words={matchWords(line.steps[0].event.confidence)}>
+                                        <span>{MATCH_MEANING}</span>
+                                      </Score>
                                     )
                                 }
                               </span>
