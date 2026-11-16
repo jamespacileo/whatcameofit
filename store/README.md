@@ -6,7 +6,8 @@ The truth store's SQL: the D1 schema and the one merge path every writer uses. A
 | --- | --- |
 | `schema.sql` | Tables, natural keys, CHECK guards, the FTS5 indexes, and the views that find a staged record's parent |
 | `merge.sql` | The merge: 85 fixed statements sent as one D1 batch, each with its conflict rule above it |
-| `ingest.sql` | What surrounds a merge: registering a run, staging records, reading the report, the work queue, slices |
+| `preview.sql` | The report without the merge: what a run would add, match and put in conflict, counted and not tried |
+| `ingest.sql` | What surrounds a merge: registering a run, staging records, reading the report, dropping a previewed run, the work queue, slices |
 | `proof/` | A local proof in plain SQLite, and a check on D1's local engine |
 
 Which Postgres table became what, and why: `openspec/changes/cloudflare-source-of-truth/store-tables.md`.
@@ -17,7 +18,7 @@ Which Postgres table became what, and why: `openspec/changes/cloudflare-source-o
 python3 store/proof/proof.py --scenarios
 ```
 
-Builds the schema in memory and runs 55 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's.
+Builds the schema in memory and runs 58 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's. Before every merge it also takes the report without applying (`preview.sql`) and holds it to what the merge then reports.
 
 ```bash
 docker exec -i thenwhat-db-1 psql -U thenwhat -d thenwhat -q -f - < store/proof/export_sample.sql > store/proof/sample/records.jsonl
@@ -31,7 +32,7 @@ python3 store/proof/proof.py
 
 Runs the scenarios, then loads the sample through the same merge in runs of 20,000 records, pushes the first run again to show nothing is added, and prints each table's size projected to the whole database against D1's limits.
 
-Optional, and offline: `store/proof/d1_local.sh` applies the schema and one merge on D1's own local engine through `wrangler d1 execute --local`. It found one thing plain SQLite did not: D1 refuses a compound SELECT of many terms, so the report is several statements.
+Optional, and offline: `store/proof/d1_local.sh` applies the schema, one preview and one merge on D1's own local engine through `wrangler d1 execute --local`. It found one thing plain SQLite did not: D1 refuses a compound SELECT of many terms, so the report is several statements.
 
 ## How a writer hands over records
 
@@ -40,9 +41,13 @@ Optional, and offline: `store/proof/d1_local.sh` applies the schema and one merg
 3. The statements of `merge.sql`, in order, as one batch, with the run as `?1`.
 4. `report`.
 
+For a report without applying, step 3 is the statements of `preview.sql` instead, followed by `discard_run`. A D1 batch cannot be undone on request, so the report is counted from the staged records and the store, not by running the merge and taking it back.
+
 A payload over 16 KB is put in R2 under `payload/<sha256>` before the merge; the staged `payload` record then carries `r2_key` and no `body`.
 
 ## Kinds and the keys their bodies carry
+
+A staged record's `key` is its natural key as one string, parts joined by `|`. Five are relied on by `preview.sql`, which looks a parent up by them: a claim's is its slug, a source article's `slug|url_key`, an entity's `slug|type|name`, a link lead's its address key, a trial's `registry|number`.
 
 | Kind | Parent named by | Its own key |
 | --- | --- | --- |

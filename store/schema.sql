@@ -847,3 +847,82 @@ CREATE VIEW staged_claim_merge AS
   JOIN claim_key k ON k.slug = s.body ->> 'into_slug'
   JOIN claim kept ON kept.id = k.claim_id
   WHERE s.kind = 'action' AND s.body ->> 'action' = 'merge' AND gone.id <> k.claim_id;
+
+-- ---------------------------------------------------------------------------------------
+-- 12. Previewing a merge: what it would do, without doing it
+-- ---------------------------------------------------------------------------------------
+
+-- A D1 batch cannot be undone on request, so a report without applying is counted, not
+-- tried (store/preview.sql). These views are the `staged_of_*` views again, except that a
+-- parent counts as found when the same run brings it. They rely on the key a staged
+-- record carries: a claim's is its slug, a source article's `slug|url_key`, an entity's
+-- `slug|type|name`, a lead's its address key, a trial's `registry|number`. The parent's
+-- id is empty when the run brings it and the store does not hold it yet. They look the
+-- parent up in `stg` by run, kind and key, which is its primary key.
+
+CREATE VIEW preview_of_claim AS
+  SELECT s.run_id, s.kind, s.key, s.body, k.claim_id
+  FROM staged s LEFT JOIN claim_key k ON k.slug = s.body ->> 'slug'
+  WHERE k.claim_id IS NOT NULL
+     OR EXISTS (SELECT 1 FROM stg n WHERE n.run_id = s.run_id AND n.kind = 'claim' AND n.key = s.body ->> 'slug');
+
+CREATE VIEW preview_of_article AS
+  SELECT s.run_id, s.kind, s.key, s.body, s.claim_id, a.id AS source_article_id
+  FROM preview_of_claim s
+  LEFT JOIN source_article a ON a.claim_id = s.claim_id AND a.url_key = s.body ->> 'url_key'
+  WHERE a.id IS NOT NULL
+     OR EXISTS (SELECT 1 FROM stg n WHERE n.run_id = s.run_id AND n.kind = 'source_article'
+                AND n.key = (s.body ->> 'slug') || '|' || (s.body ->> 'url_key'));
+
+CREATE VIEW preview_of_entity AS
+  SELECT s.run_id, s.kind, s.key, s.body, s.claim_id, e.id AS entity_id
+  FROM preview_of_claim s
+  LEFT JOIN entity e ON e.claim_id = s.claim_id
+                    AND e.type = s.body ->> 'entity_type' AND e.name = s.body ->> 'entity_name'
+  WHERE e.id IS NOT NULL
+     OR EXISTS (SELECT 1 FROM stg n WHERE n.run_id = s.run_id AND n.kind = 'entity'
+                AND n.key = (s.body ->> 'slug') || '|' || (s.body ->> 'entity_type') || '|' || (s.body ->> 'entity_name'));
+
+CREATE VIEW preview_of_lead AS
+  SELECT s.run_id, s.kind, s.key, s.body, l.id AS link_lead_id
+  FROM staged s LEFT JOIN link_lead l ON l.url_key = s.body ->> 'lead_url_key'
+  WHERE l.id IS NOT NULL
+     OR EXISTS (SELECT 1 FROM stg n WHERE n.run_id = s.run_id AND n.kind = 'link_lead' AND n.key = s.body ->> 'lead_url_key');
+
+CREATE VIEW preview_of_trial AS
+  SELECT s.run_id, s.kind, s.key, s.body, t.id AS trial_id
+  FROM staged s
+  LEFT JOIN registry_trial t ON t.registry_name = s.body ->> 'registry_name'
+                            AND t.external_id = s.body ->> 'trial_id'
+  WHERE t.id IS NOT NULL
+     OR EXISTS (SELECT 1 FROM stg n WHERE n.run_id = s.run_id AND n.kind = 'registry_trial'
+                AND n.key = (s.body ->> 'registry_name') || '|' || (s.body ->> 'trial_id'));
+
+-- A staged event that says something else than the approved event stored under its key.
+CREATE VIEW preview_conflict AS
+  SELECT s.claim_id, s.key
+  FROM staged_of_claim s
+  JOIN evidence_event e ON e.claim_id = s.claim_id AND e.dedupe_key = s.body ->> 'dedupe_key'
+  WHERE s.kind = 'evidence_event' AND e.review_state = 'approved'
+    AND e.content_sha256 <> s.body ->> 'content_sha256';
+
+-- Each staged action with the state its claim will be in when the action is reached: as
+-- the store holds the claim, or as the run brings it, with the audit mark the run carries
+-- or its differing evidence causes.
+CREATE VIEW preview_action AS
+  SELECT s.run_id, s.key, s.body, s.body ->> 'action' AS action, s.claim_id,
+         d.id AS own_id, d.merged_into AS own_merged_into,   -- the claim holding that very slug
+         CASE WHEN c.id IS NULL THEN n.body ->> 'awaiting_audit_at' IS NOT NULL
+              ELSE c.awaiting_audit_at IS NOT NULL OR n.body ->> 'awaiting_audit_at' IS NOT NULL
+                   OR EXISTS (SELECT 1 FROM preview_conflict x WHERE x.claim_id = c.id) END AS held,
+         EXISTS (SELECT 1 FROM evidence_conflict x WHERE x.claim_id = c.id AND x.state = 'open')
+           OR EXISTS (SELECT 1 FROM preview_conflict x WHERE x.claim_id = c.id) AS conflicted,
+         coalesce(c.archived_at IS NOT NULL, 0) AS archived,
+         coalesce(c.merged_into IS NOT NULL, 0) AS merged,
+         coalesce(c.review_state, n.body ->> 'review_state', 'pending') = 'approved' AS approved,
+         coalesce(c.published_at IS NOT NULL, 0) AS published
+  FROM preview_of_claim s
+  LEFT JOIN claim c ON c.id = s.claim_id
+  LEFT JOIN claim d ON d.slug = s.body ->> 'slug'
+  LEFT JOIN stg n ON n.run_id = s.run_id AND n.kind = 'claim' AND n.key = s.body ->> 'slug'
+  WHERE s.kind = 'action';

@@ -18,15 +18,20 @@ INSERT INTO stg VALUES ('r1', 'registry_trial', 't', '{"registry_name":"clinical
 SQL
 d1 --file "$state/stage.sql" >/dev/null
 # One statement a line, comments dropped: the form a batch is sent in.
-python3 - "$state/merge.sql" <<'PY'
+python3 - "$state" <<'PY'
 import pathlib, sys
-out = []
-for chunk in pathlib.Path("../merge.sql").read_text().split("\n;\n"):
+for name in ("preview", "merge"):
+  out = []
+  for chunk in pathlib.Path(f"../{name}.sql").read_text().split("\n;\n"):
     lines = [l.strip() for l in chunk.splitlines() if l.strip() and not l.startswith("--")]
     if lines:
         out.append(" ".join(lines).replace("?1", "'r1'") + ";")
-pathlib.Path(sys.argv[1]).write_text("\n".join(out) + "\n")
+  pathlib.Path(sys.argv[1], f"{name}.sql").write_text("\n".join(out) + "\n")
 PY
+# The report without applying first: its statements must run on D1's engine too.
+d1 --file "$state/preview.sql" >/dev/null
+d1 --json --command "SELECT (SELECT count(*) FROM claim) AS claims_after_preview, (SELECT count(*) FROM merging) AS merging_left" \
+  | python3 -c "import json,sys; [print(row) for row in json.load(sys.stdin)[0]['results']]"
 d1 --file "$state/merge.sql" >/dev/null
 for query in \
   "SELECT r.status, m.kind, m.resolved, m.added FROM run r JOIN merge_report m ON m.run_id = r.id ORDER BY m.kind" \

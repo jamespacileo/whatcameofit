@@ -551,6 +551,19 @@ UPDATE claim SET awaiting_audit_at = NULL, changed_run = (SELECT run_id FROM mer
 WHERE id IN (SELECT a.claim_id FROM claim_action a JOIN merging m ON m.run_id = a.run_id
              WHERE a.action = 'audit_clear')
 ;
+-- A published time is set once, on an approved claim that is neither held nor archived,
+-- and no merge changes it afterwards. (Before archiving, so that a claim the migration
+-- brings as published and since archived keeps the time it was published.)
+INSERT INTO claim_action (claim_id, action, detail, decided_by, at, run_id)
+SELECT s.claim_id, 'publish', NULL, 'rule', s.body ->> 'at', s.run_id
+FROM staged_of_claim s JOIN claim c ON c.id = s.claim_id
+WHERE s.kind = 'action' AND s.body ->> 'action' = 'publish' AND c.published_at IS NULL
+  AND c.review_state = 'approved' AND c.archived_at IS NULL AND c.awaiting_audit_at IS NULL
+;
+UPDATE claim SET published_at = a.at, changed_run = a.run_id
+FROM claim_action a JOIN merging m ON m.run_id = a.run_id
+WHERE a.action = 'publish' AND claim.id = a.claim_id
+;
 -- A claim not archived is archived with its reason; an archived one keeps its first reason.
 INSERT INTO claim_action (claim_id, action, detail, decided_by, at, run_id)
 SELECT s.claim_id, 'archive', s.body ->> 'reason', s.body ->> 'decided_by', s.body ->> 'at', s.run_id
@@ -664,18 +677,6 @@ UPDATE evidence_conflict SET state = CASE a.action WHEN 'conflict_accept' THEN '
 FROM claim_action a JOIN merging m ON m.run_id = a.run_id
 WHERE a.action IN ('conflict_accept', 'conflict_dismiss') AND evidence_conflict.state = 'open'
   AND evidence_conflict.claim_id = a.claim_id AND evidence_conflict.dedupe_key = a.detail
-;
--- A published time is set once, on an approved claim that is neither held nor archived,
--- and no merge changes it afterwards.
-INSERT INTO claim_action (claim_id, action, detail, decided_by, at, run_id)
-SELECT s.claim_id, 'publish', NULL, 'rule', s.body ->> 'at', s.run_id
-FROM staged_of_claim s JOIN claim c ON c.id = s.claim_id
-WHERE s.kind = 'action' AND s.body ->> 'action' = 'publish' AND c.published_at IS NULL
-  AND c.review_state = 'approved' AND c.archived_at IS NULL AND c.awaiting_audit_at IS NULL
-;
-UPDATE claim SET published_at = a.at, changed_run = a.run_id
-FROM claim_action a JOIN merging m ON m.run_id = a.run_id
-WHERE a.action = 'publish' AND claim.id = a.claim_id
 ;
 
 -- =========================================================================================

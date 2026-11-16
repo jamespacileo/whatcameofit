@@ -41,6 +41,21 @@ SELECT r.status, r.refusal, r.merged_at, m.kind, m.resolved, m.added, m.conflict
 FROM run r LEFT JOIN merge_report m ON m.run_id = r.id
 WHERE r.id = ?1
 ;
+-- name: discard_run
+-- After a report without applying (store/preview.sql): the run and what it staged are
+-- dropped, so the store is as it was. A run that was merged or refused is kept.
+-- Four statements, sent as one batch; ?1 run
+DELETE FROM stg WHERE run_id = ?1 AND (SELECT status FROM run WHERE id = ?1) = 'registered'
+;
+-- name: discard_run_steps
+DELETE FROM run_step WHERE run_id = ?1 AND (SELECT status FROM run WHERE id = ?1) = 'registered'
+;
+-- name: discard_run_counts
+DELETE FROM run_stated WHERE run_id = ?1 AND (SELECT status FROM run WHERE id = ?1) = 'registered'
+;
+-- name: discard_run_row
+DELETE FROM run WHERE id = ?1 AND status = 'registered'
+;
 -- name: discard_staged
 -- A refused run's staged records are dropped.
 DELETE FROM stg WHERE run_id = ?1 AND (SELECT status FROM run WHERE id = ?1) <> 'registered'

@@ -54,6 +54,10 @@ def named(path):
 
 MERGE = statements(STORE / "merge.sql")
 INGEST = named(STORE / "ingest.sql")
+PREVIEW = statements(STORE / "preview.sql")
+
+# Every merge the proof runs is first previewed; these count how the two reports compared.
+previews = {"same": 0, "differ": [], "not reconciling seen": 0, "not reconciling missed": []}
 
 
 class Store:
@@ -85,8 +89,47 @@ class Store:
         for i in range(0, len(chunk), 2000):
             self.db.execute(INGEST["stage"], (run, json.dumps(chunk[i:i + 2000])))
 
+    def preview(self, run):
+        """store/preview.sql as a D1 batch: committed, and it writes nothing that stays.
+        Returns the report it counts and whether the run's counts would reconcile."""
+        report, reconciles, registered = {}, True, False
+        self.db.execute("BEGIN")
+        for sql in PREVIEW:
+            cursor = self.db.execute(sql, (run,) if "?1" in sql else ())
+            names = [c[0] for c in cursor.description or []]
+            for row in cursor.fetchall():
+                if names[:2] == ["status", "refusal"]:
+                    registered = row[0] == "registered" and row[1] is None
+                elif names[:2] == ["kind", "stated"]:
+                    reconciles = reconciles and row[1] == row[2] == report.get(row[0], (0,))[0]
+                else:
+                    r = dict(zip(names, row))
+                    report[r["kind"]] = (r["resolved"], r["added"], r["conflicts"], r["resolved"] - r["added"] - r["conflicts"])
+        self.db.execute("COMMIT")
+        return report, reconciles, registered
+
+    def discard(self, run):
+        self.db.execute("BEGIN")
+        for name in ("discard_run", "discard_run_steps", "discard_run_counts", "discard_run_row"):
+            self.db.execute(INGEST[name], (run,))
+        self.db.execute("COMMIT")
+
     def merge(self, run, apply=True):
-        """As a D1 batch: every statement or none. False when the batch was undone."""
+        """As a D1 batch: every statement or none. False when the batch was undone.
+        Before it, the report without applying is taken, and afterwards held to the merge's."""
+        counted, reconciles, registered = self.preview(run)
+        ok = self._merge(run, apply)
+        if registered and apply:
+            if ok:
+                same = counted == self.report(run)
+                previews["same"] += same
+                if not same:
+                    previews["differ"].append((run, counted, self.report(run)))
+            elif "reconciled" in self.last_error:
+                previews["not reconciling seen" if not reconciles else "not reconciling missed"] += 1 if not reconciles else [run]
+        return ok
+
+    def _merge(self, run, apply=True):
         self.db.execute("BEGIN")
         try:
             for sql in MERGE:
@@ -280,10 +323,17 @@ def scenarios():
     ok, r = s.run([event("NCT5", pay=404)])
     check("16 an event whose payload was never handed over: batch undone", not ok and s.dump() == before)
     s.db.execute("DELETE FROM stg")
-    s.stage("dry", [article("dry.com/1")])
-    check("17 report without applying: store unchanged, run still registered", s.merge("dry", apply=False)
-          and s.dump() == before and s.one("SELECT status FROM run WHERE id = 'dry'") == "registered")
+    rows = lambda: [s.one(f"SELECT count(*) FROM {t}") for t in ("run", "run_step", "run_stated", "stg", "merging", "merge_report", "source_article")]
+    untouched = rows()
+    s.stage("dry", [article("dry.com/1"), article("bbc.com/a")])
+    counted, reconciles, _ = s.preview("dry")
+    check("17 report without applying: counted, not tried; one would be added and one matched",
+          counted == {"source_article": (2, 1, 0, 1)} and reconciles and s.dump() == before)
+    s.discard("dry")
+    check("17b after it the run is dropped and the store is as it was", rows() == untouched
+          and s.one("SELECT count(*) FROM run WHERE id = 'dry'") == 0)
     try:
+        s.stage("dry", [])
         s.db.execute(INGEST["stage"], ("dry", json.dumps([{"kind": "claim", "key": "", "body": {}}])))
         keyless = False
     except sqlite3.IntegrityError:
@@ -447,6 +497,10 @@ def scenarios():
     s, r1 = base()
     check("56 which records one run added is answered from the records alone", s.one(
           "SELECT count(*) FROM source_article a JOIN run r ON r.id = a.added_run WHERE r.device = 'mini' AND substr(r.registered_at, 1, 10) = '2026-11-16'") == 1)
+    check(f"57 the report without applying said what the merge then said, for every merge above ({previews['same']})",
+          not previews["differ"] and not previews["not reconciling missed"] and previews["same"] >= 50)
+    check(f"58 it also said so of every run whose counts did not reconcile ({previews['not reconciling seen']})",
+          previews["not reconciling seen"] >= 2)
     return results
 
 
@@ -479,7 +533,11 @@ def load_sample():
         longest_body = max(longest_body, max(len(json.dumps(b)) for _, _, b in chunk))
         s.stage(f"migrate-{i // 20000}", chunk, writer="migration")
         started = time.time()
-        if not s.merge(f"migrate-{i // 20000}"):
+        merged = s.merge(f"migrate-{i // 20000}")
+        if previews["differ"]:
+            run, counted, said = previews["differ"][-1]
+            print("  report without applying differed:", {k: (counted.get(k), said.get(k)) for k in set(counted) | set(said) if counted.get(k) != said.get(k)})
+        if not merged:
             print("  merge undone:", s.last_error)
             for row in s.all("SELECT t.kind, t.records, (SELECT count(*) FROM stg WHERE run_id = t.run_id AND kind = t.kind) FROM run_stated t WHERE t.run_id = ?", f"migrate-{i // 20000}"):
                 print("   stated", row)
@@ -493,6 +551,7 @@ def load_sample():
     s.merge("migrate-again")
     added = s.one("SELECT sum(added) FROM merge_report WHERE run_id = 'migrate-again'")
     print(f"  the first 20,000 pushed again as a new run: {added} added, store {'unchanged' if s.dump() == again else 'CHANGED'}")
+    print(f"  the report without applying said what each of those merges then said: {'yes' if not previews['differ'] else 'NO'}")
     print("  held:", s.one("SELECT count(*) FROM claim WHERE awaiting_audit_at IS NOT NULL"), "archived:",
           s.one("SELECT count(*) FROM claim WHERE archived_at IS NOT NULL"), "public:", s.one("SELECT count(*) FROM claim_public"))
     s.db.execute("DELETE FROM merge_report")
