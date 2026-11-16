@@ -1,7 +1,8 @@
 #!/bin/sh
 # The daily run: brings in the newest shared links, screens, scores and reads a capped
-# number of them, prepares the claims they draft, and reads the registries again for
-# published claims. One run, in order, under a lock, each step logged. docs/daily-run.md
+# number of them, prepares the claims they draft, loads the trials the registry changed
+# since the last load, and reads the registries again for published claims. One run, in
+# order, under a lock, each step logged. docs/daily-run.md
 #
 #   sh scripts/daily-run.sh              one run, as the job does it
 #   sh scripts/daily-run.sh --dry-run    print every command a run would start; touch nothing
@@ -80,12 +81,25 @@ case "$command" in
     exit 0
     ;;
   plist)
+    # The database as this machine reaches it. Compose gives its containers their own
+    # address; the job runs on the host, so it needs the published port on 127.0.0.1.
+    # Escaped for XML, and passed to awk through the environment so that no character in
+    # it is read as part of a command.
+    database=$(setting DAILY_RUN_DATABASE_URL "")
+    entry=""
+    if [ -n "$database" ]; then
+      entry="    <key>DATABASE_URL</key><string>$(printf '%s' "$database" |
+        sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g')</string>"
+    else
+      echo "DAILY_RUN_DATABASE_URL is not set, so the property list gives the job no database address. Set it in $env_file and write the property list again." >&2
+    fi
     hour=$(setting DAILY_RUN_HOUR 4)
     minute=$(setting DAILY_RUN_MINUTE 30)
     whole_number DAILY_RUN_HOUR "$hour"
     whole_number DAILY_RUN_MINUTE "$minute"
     sed -e "s|@ROOT@|$root|g" -e "s|@HOME@|$HOME|g" -e "s|@LOGS@|$logs|g" \
-      -e "s|@ENV_FILE@|$env_file|g" -e "s|@HOUR@|$hour|g" -e "s|@MINUTE@|$minute|g" "$template"
+      -e "s|@ENV_FILE@|$env_file|g" -e "s|@HOUR@|$hour|g" -e "s|@MINUTE@|$minute|g" "$template" |
+      ENTRY="$entry" awk '/@DATABASE_URL_ENTRY@/ { if (ENVIRON["ENTRY"] != "") print ENVIRON["ENTRY"]; next } { print }'
     exit 0
     ;;
 esac
@@ -100,6 +114,25 @@ keep_days=$(setting DAILY_RUN_KEEP_DAYS 30)
 margin=$(setting DAILY_RUN_SPEND_MARGIN_USD 1)
 day_budget=$(setting DAILY_RUN_DAY_BUDGET_USD "")
 ceiling=$(setting LLM_MONTHLY_BUDGET_USD "")
+# The database address the pipeline is given. The settings file has none (Compose gives
+# its containers their own), so it comes from DATABASE_URL in the environment (the
+# property list sets it), else DAILY_RUN_DATABASE_URL, else DATABASE_URL in the file.
+# Only where it came from is ever logged: it holds the password.
+database_from="DATABASE_URL in the environment"
+database=$(printenv DATABASE_URL 2>/dev/null || true)
+if [ -z "$database" ]; then
+  database_from="DAILY_RUN_DATABASE_URL"
+  database=$(setting DAILY_RUN_DATABASE_URL "")
+fi
+if [ -z "$database" ]; then
+  database_from="DATABASE_URL in $env_file"
+  database=$(setting DATABASE_URL "")
+fi
+if [ -n "$database" ]; then
+  export DATABASE_URL="$database"
+else
+  database_from=""
+fi
 whole_number DAILY_RUN_READ_LIMIT "$read_limit"
 whole_number DAILY_RUN_TRIAGE_LIMIT "$triage_limit"
 whole_number DAILY_RUN_REFRESH_LIMIT "$refresh_limit"
@@ -317,8 +350,9 @@ write_summary() {
     else
       echo "- Prepared: did not run"
     fi
+    echo "- Trials: $(report_of trials '^Loaded ' 'did not run')"
     echo "- Registries: ${refresh_line:-did not run}"
-    for name in screen score read; do
+    for name in screen score read trials; do
       [ -f "$work/$name.out" ] && grep -E '^Stopped: ' "$work/$name.out" | sed "s/^/- $name: /"
     done
     echo
@@ -362,6 +396,11 @@ if [ "$dry" = 1 ]; then
   [ -f "$env_file" ] || say "would stop here: that file is missing"
   [ -d "$link_files/" ] || say "would stop here: $link_files is not there (is the drive mounted?)"
   [ -n "$ceiling" ] || say "would stop here: LLM_MONTHLY_BUDGET_USD is not set"
+  if [ -n "$database_from" ]; then
+    say "database address from $database_from"
+  else
+    say "would stop here: no database address is set (DAILY_RUN_DATABASE_URL)"
+  fi
   [ -e "$paused" ] && say "would not start: paused"
   say "lock $lock, log $log, summary $summary"
 else
@@ -397,6 +436,9 @@ else
     # `uv run --env-file` drops every line after an unquoted JSON value, without a word.
     trouble=1
     stop "a JSON value in $env_file is not in single quotes (line:name $(echo "$unquoted" | tr '\n' ' ')), and every setting after it would be lost"
+  elif [ -z "$database_from" ]; then
+    trouble=1
+    stop "no database address is set. Put DAILY_RUN_DATABASE_URL in $env_file, the database's published port on 127.0.0.1 (see .env.example), then write the property list again"
   elif [ -z "$ceiling" ]; then
     trouble=1
     stop "LLM_MONTHLY_BUDGET_USD is not set, so there is no ceiling to hold the run to"
@@ -464,11 +506,19 @@ pipeline_step read backfill run link_read --limit "$read_limit" --workers "$read
 spend_check prepare
 pipeline_step prepare prepare --pending || true
 
-# 7. Registry status of published claims. The spend check is inside: before the first
+# 7. Every stored trial kept current: only the trials ClinicalTrials.gov updated since
+#    the last completed load of the set are asked for, a thousand a request. Spends no
+#    model money. Each request is claimed against the registry's allowance
+#    (SOURCE_ALLOWANCES); when it is used up the load stops, says so, and is not a
+#    failure, and the next run asks again from the same date. A trial whose searched
+#    fields changed becomes due for news_search, which this job never starts.
+pipeline_step trials backfill load-trials --trials interventional --changes-only || true
+
+# 8. Registry status of published claims. The spend check is inside: before the first
 #    claim and before every 25th after it.
 refresh
 
-# 8. What the day took, into the log. Runs even when the run stopped early for spend.
+# 9. What the day took, into the log. Runs even when the run stopped early for spend.
 held="$stopped"
 [ "$db_ok" = 1 ] && stopped=""
 pipeline_step measure measure --days 1 || true
