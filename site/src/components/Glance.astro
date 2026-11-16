@@ -11,7 +11,7 @@ import ArrowRight from "@lucide/astro/icons/arrow-right";
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import FoldHead from "./FoldHead.astro";
 import TermCard from "./TermCard.astro";
-import { BACKGROUND_NOTE, type ExportedCard, type ExportedCardSource } from "../lib/background";
+import { BACKGROUND_NOTE, GLANCE_LEAD, type ExportedCard, type ExportedCardSource } from "../lib/background";
 import {
   GLANCE_ID,
   GLANCE_TITLE,
@@ -23,7 +23,7 @@ import {
   rowId,
   rowLabel,
   sentenceCase,
-  termMatchText,
+  rowMatchTexts,
   wordsLine,
   type GlanceRow,
 } from "../lib/glance";
@@ -75,6 +75,7 @@ const rows: Row[] = [
 
 <section class="glance" data-pagefind-ignore>
   <FoldHead id={GLANCE_ID}>{GLANCE_TITLE}</FoldHead>
+  {cards.length > 0 && <p class="glance-lead">{GLANCE_LEAD}</p>}
   <dl class="glance-rows">
     {
       rows.map(({ row, value, detail, cards: rowCards }) => {
@@ -121,28 +122,35 @@ const rows: Row[] = [
                   <summary>
                     {/* The words that open the card lead, so they never end up alone on a
                         line of their own; a definition cut short says where the rest is. */}
+                    {/* Spaces between the parts are written out, so a screen reader and a
+                        copy of the text never run two parts together. */}
                     <span class="glance-more-label">
                       <span class="glance-more-words">{short || !words ? "Why this term" : "Full definition and why this term"}</span>
-                      <span class="visually-hidden"> for {value}</span>
+                      <span class="visually-hidden"> for {value}.</span>
                       <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-                    </span>
-                    <span>{wordsLine(card, words ? wordsBy! : sourceOf(card.facts_source ?? card.source)!, words !== null)}</span>
+                    </span>{" "}
+                    <span>{wordsLine(card, words ? wordsBy! : sourceOf(card.facts_source ?? card.source)!, words !== null)}</span>{" "}
                     {filed && (
                       <span class="glance-filed">
                         {claimWords}
                         <ArrowRight size={13} stroke-width={2} aria-hidden="true" />
-                        <span class="visually-hidden">is filed there as</span>
+                        <span class="visually-hidden"> is filed there as </span>
                         {filed}
                       </span>
-                    )}
-                    <span>{termMatchText(card)}</span>
+                    )}{filed && " "}
+                    {rowMatchTexts(rowCards).map((text, index) => (
+                      <>
+                        {index > 0 && " "}
+                        <span>{text}</span>
+                      </>
+                    ))}
                   </summary>
                   {rowCards.map((each, index) => (
                     <TermCard
                       card={each}
                       sources={sources}
                       label={each.kind === "drug" ? drugName(each) : each.label}
-                      wordsInRow={index === 0 && words !== null ? (short ? "whole" : "cut") : undefined}
+                      wordsInRow={index === 0 && words !== null}
                       drugAs={found.drug ? drugName(found.drug) : undefined}
                     />
                   ))}

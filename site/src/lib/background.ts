@@ -268,6 +268,13 @@ export function definitionCreditText(source: Pick<ExportedCardSource, "credit" |
   return `Description by ${source.credit}, ${source.licence}`;
 }
 
+/** The card's heading over its reasons: the score itself is in sight on its row. */
+export const MATCH_WHY_HEAD = "Why it matched";
+
+/** One line under the section's heading, where a reader first meets a term match. */
+export const GLANCE_LEAD =
+  "Each term is shown in an outside source’s words. A term match is how well that source’s term fits this claim; it says nothing about the treatment.";
+
 /** What the section says of itself, once, above the cards. */
 export const BACKGROUND_NOTE =
   "These notes describe the terms this claim uses, in their sources’ own words and not this site’s; naming a source does not mean it endorses this site. They are not about this claim’s evidence and they are not medical advice, and a score is about how well a term fits the claim, not about the treatment.";

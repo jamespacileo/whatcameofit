@@ -1831,6 +1831,15 @@ main nav.contents ul li + li {
   }
 }
 
+/* The line under the heading that says what a term match is, where it is first met. */
+.glance-lead {
+  margin: 0.5rem 0 0;
+  max-width: 52ch;
+  text-wrap: pretty;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 /* At a glance: one row per term, its label at the left and its value at the right, with
    the source's own words in sight and a grey line that says whose they are and how well
    the term fits. Ruled in ink above and below, as the record in brief is, with the
@@ -1907,6 +1916,14 @@ main nav.contents ul li + li {
   -webkit-line-clamp: 3;
   line-clamp: 3;
   overflow: hidden;
+}
+
+/* Opened, the row gives the definition whole, and the card does not repeat it. */
+.glance-words-long:has(~ .glance-more[open]) {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: none;
+  overflow: visible;
 }
 
 /* The row's grey line is its disclosure's summary: the words that open the card, then
@@ -6173,6 +6190,16 @@ body.framed {
 
   .glance-more summary {
     min-height: 2.75rem;
+  }
+
+  /* On a phone the words that open the card take a line of their own, and what the
+     row matched follows on the next. */
+  .glance-more summary > .glance-more-label {
+    flex-basis: 100%;
+  }
+
+  .glance-more summary > span.glance-more-label:not(:last-child)::after {
+    content: none;
   }
 
   .phone-reported {

@@ -101,9 +101,22 @@ export function bandFacts(cards: GlanceCards): BandFact[] {
   return facts;
 }
 
-/** A row's score, in the card's own words: "Term match: high, 81%". */
+/** A row's score, said as being about the term: "Term match: high, 81%". */
 export function termMatchText(card: Pick<ExportedCard, "kind" | "score">): string {
   return scoreLabel(card, matchWords);
+}
+
+/** The scores a row's grey line shows, one per card in the row, each naming what was
+ * matched. A drug row's value is what the drug's record says, so its first score is the
+ * record's ("Drug record: by exact name"), never the kind of molecule's; a kind card
+ * inside the same row keeps its own score in sight ("Kind term: high, 94%"). */
+export function rowMatchTexts(cards: Pick<ExportedCard, "kind" | "score">[]): string[] {
+  const [first, ...rest] = cards;
+  if (!first) return [];
+  if (first.kind !== "drug") return [termMatchText(first)];
+  const words = (card: Pick<ExportedCard, "kind" | "score">) =>
+    termMatchText(card).replace(/^Term match: /, "");
+  return [`Drug record: ${words(first)}`, ...rest.map((card) => `Kind term: ${words(card)}`)];
 }
 
 /** A source's short name for a row's grey line: the abbreviation its title gives in
