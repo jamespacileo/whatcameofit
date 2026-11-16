@@ -18,8 +18,9 @@ const index = { articles: {}, claims: {}, live: "/api/lookup" };
 const answer = { about_a_treatment: true, treatment: "EX-1", candidates: [] };
 const fresh = { lookup: { version: 2, index, savedAt: Date.now() } };
 
-function setup(overrides = {}) {
+function setup({ indexFetch = async () => Response.json(index), ...overrides } = {}) {
   const calls = { states: [], writes: [], posts: [] };
+  const send = async (_url, options) => { calls.posts.push(options); return { ok: true, json: async () => answer }; };
   const controller = createPopupController({
     lookupTimeoutMs: 30,
     site: { url: "https://whatcameofit.example" },
@@ -27,10 +28,10 @@ function setup(overrides = {}) {
     readTab: async () => tab,
     isCurrentPage: async () => true,
     readPage: async () => ({ text: "A report of EX-1 for a condition.", links: [], contentFingerprint: "print" }),
-    fetch: async (_url, options) => { calls.posts.push(options); return { ok: true, json: async () => answer }; },
     describeAnswer: (value) => value,
     present: (state) => calls.states.push(state),
     ...overrides,
+    fetch: (url, options) => options.method === "POST" ? (overrides.fetch ?? send)(url, options) : indexFetch(url, options),
   });
   return { controller, calls };
 }
@@ -47,7 +48,7 @@ test("a stalled response body times out, is aborted, and a retry gets a fresh si
   await within(controller.open());
   assert.deepEqual(calls.states.at(-1), { kind: "refused", code: "timeout" });
   assert.equal(calls.posts[0].signal.aborted, true);
-  assert.equal(calls.writes.length, 0, "a timeout is not saved as a result");
+  assert.equal(calls.writes.filter(value => !value.lookup).length, 0, "a timeout is not saved as a result");
   await within(controller.search());
   assert.equal(calls.posts[1].signal.aborted, false, "the retry is not poisoned by the aborted attempt");
   assert.equal(calls.states.at(-1).kind, "answer");
@@ -78,10 +79,7 @@ test("a stalled lookup file is bounded and aborted", async () => {
   const { controller, calls } = setup({
     indexTimeoutMs: 20,
     storage: { get: async () => ({}), set: async () => {} },
-    fetch: async (url, options) => {
-      if (String(url).endsWith("/lookup.json")) { signal = options.signal; return { ok: true, json: never }; }
-      return { ok: true, json: async () => answer };
-    },
+    indexFetch: async (_url, options) => { signal = options.signal; return { ok: true, json: never }; },
   });
   await within(controller.open());
   assert.equal(signal.aborted, true);
@@ -171,7 +169,7 @@ test("page reading completed after timeout cannot start a request", async () => 
   finishRead({ text: "Browser text received too late", links: [] });
   await pause(10);
   assert.equal(calls.posts.length, 0);
-  assert.equal(calls.writes.length, 0);
+  assert.equal(calls.writes.filter(value => !value.lookup).length, 0);
   assert.equal(calls.states.length, stateCount);
   controller.close();
 });

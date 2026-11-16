@@ -22,7 +22,7 @@ async function refresh() {
   const response = await fetch(`${SITE.url}/lookup.json`, { cache: "no-store" });
   if (!response.ok) return;
   const index = await response.json();
-  await api.storage.local.set({ lookup: { version: CACHE_VERSION, index, savedAt: Date.now() } });
+  await api.storage.local.set({ lookup: { version: CACHE_VERSION, index, etag: response.headers?.get("ETag") ?? null, savedAt: Date.now() } });
   if (!canNotify) return;
   const { follows = [], told = {} } = await api.storage.local.get(["follows", "told"]);
   const { tell, told: nowTold } = changesToTell(follows, index, told);
