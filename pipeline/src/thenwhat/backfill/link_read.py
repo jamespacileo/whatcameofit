@@ -124,8 +124,9 @@ class NothingToRetry(BackfillError):
 
 def retry_outlet(session: Session, outlet: str) -> int:
     """Put the outlet's leads that it refused with 401, or that were not asked because
-    of those refusals, back to not read, so the next run asks the page reader for them
-    again. Returns how many. Refuses when the outlet has no such lead."""
+    of those refusals, back to not read, and mark their reading stale, so the next run
+    asks the page reader for them again. Returns how many. Refuses when the outlet has no
+    such lead."""
     refused = or_(
         LinkLead.read_detail == f"{NO_PAGE} (the site answered {REFUSED_STATUS})",
         LinkLead.read_detail.startswith(OUTLET_REFUSES),
@@ -144,6 +145,8 @@ def retry_outlet(session: Session, outlet: str) -> int:
     for lead in session.scalars(select(LinkLead).where(LinkLead.id.in_(ids))):
         lead.read_outcome = None
         lead.read_detail = None
+    # Marked stale, as the ledger marks a record whose inputs changed: the entry stays,
+    # with its last attempt, until the next run reads the lead again.
     for entry in session.scalars(
         select(WorkEntry).where(
             WorkEntry.record_kind == LinkRead.record_kind,
@@ -151,7 +154,7 @@ def retry_outlet(session: Session, outlet: str) -> int:
             WorkEntry.record_id.in_(ids),
         )
     ):
-        session.delete(entry)
+        entry.stale = True
     session.flush()
     return len(ids)
 

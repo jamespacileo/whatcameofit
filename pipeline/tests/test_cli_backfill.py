@@ -666,7 +666,7 @@ def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_non
     assert "2 leads of news.example.org are due to be read again" in result.output
     leads = session.scalars(select(LinkLead).where(LinkLead.outlet == "news.example.org"))
     assert {(lead.read_outcome, lead.read_detail) for lead in leads} == {(None, None)}
-    assert session.scalars(select(WorkEntry)).all() == []
+    assert [entry.stale for entry in session.scalars(select(WorkEntry))] == [True, True]
 
     refused = run("retry-outlet", "news.example.org")
 
