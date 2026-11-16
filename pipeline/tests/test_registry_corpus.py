@@ -9,6 +9,7 @@ from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
 from backfill_support import DemoStep, committed_sessions, remove_committed, same_session
+from thenwhat.backfill.errors import AllowanceUsedUp, SourcePaused
 from thenwhat.backfill.ledger import count
 from thenwhat.backfill.registry_load import load_trials
 from thenwhat.backfill.runner import run_step
@@ -24,10 +25,13 @@ REGISTRY = "clinicaltrials.gov"
 class Registry:
     """Serves the two recorded pages and remembers each request's parameters."""
 
-    def __init__(self, fixture_json, *, fail_on_second_page: bool = False) -> None:
+    def __init__(
+        self, fixture_json, *, fail_on_second_page: bool = False, throttle_second_page=False
+    ) -> None:
         self.first = fixture_json("clinicaltrials/list_page_1.json")
         self.second = fixture_json("clinicaltrials/list_page_2.json")
         self.fail_on_second_page = fail_on_second_page
+        self.throttle_second_page = throttle_second_page
         self.asked: list[dict[str, str]] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
@@ -35,6 +39,8 @@ class Registry:
         self.asked.append(params)
         if "pageToken" not in params:
             return httpx.Response(200, json=self.first)
+        if self.throttle_second_page:
+            return httpx.Response(429, headers={"Retry-After": "120"}, text="slow down")
         if self.fail_on_second_page:
             return httpx.Response(400, text="bad request")
         return httpx.Response(200, json=self.second)
@@ -208,6 +214,51 @@ def test_requests_are_claimed_before_they_are_sent(session: Session, fake_time, 
     load(session, fake_time, registry, before_request=lambda: claimed.append(len(registry.asked)))
 
     assert claimed == [0, 1]
+
+
+def test_a_load_that_reaches_the_allowance_stops_with_what_it_stored(
+    session: Session, fake_time, fixture_json
+):
+    """The allowance runs out after the first page: the load ends without an error, says
+    why, keeps the first page's trials, and is not recorded as completed, so the next
+    changes-only load asks from the same date."""
+    registry = Registry(fixture_json)
+    claims: list[int] = []
+
+    def before_request() -> None:
+        claims.append(1)
+        if len(claims) > 1:
+            raise AllowanceUsedUp("The allowance for clinicaltrials.gov is used up.")
+
+    report = load(session, fake_time, registry, before_request=before_request)
+
+    assert report.stopped == "The allowance for clinicaltrials.gov is used up."
+    assert (report.requests, report.added, report.updated) == (1, 3, 0)
+    assert len(registry.asked) == 1
+    assert len(stored(session)) == 3
+    assert session.get(RegistryLoad, (REGISTRY, CONDITION)) is None
+
+
+def test_a_load_the_registry_asks_to_wait_records_the_pause_and_stops(
+    session: Session, fake_time, fixture_json
+):
+    """The registry answers "too many requests" to the second page every time it is
+    asked: the refusal is recorded with the wait it stated, the load ends without an
+    error with the first page stored, and it is not recorded as completed."""
+    registry = Registry(fixture_json, throttle_second_page=True)
+    waits: list[float | None] = []
+
+    def refused(wait: float | None) -> SourcePaused:
+        waits.append(wait)
+        return SourcePaused("clinicaltrials.gov said it was asked too often.")
+
+    report = load(session, fake_time, registry, refused=refused)
+
+    assert waits == [120.0]
+    assert report.stopped == "clinicaltrials.gov said it was asked too often."
+    assert (report.added, report.updated) == (3, 0)
+    assert len(stored(session)) == 3
+    assert session.get(RegistryLoad, (REGISTRY, CONDITION)) is None
 
 
 def test_no_request_is_sent_without_a_contact_address(session: Session, fake_time, fixture_json):
