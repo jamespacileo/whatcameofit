@@ -14,12 +14,14 @@ import pytest
 
 from thenwhat.domain import TrialState
 from thenwhat.events.trial_facts import (
+    Arm,
     Comparison,
     Participants,
     PlannedOutcome,
     ResultGroup,
     Sponsor,
     TrialFacts,
+    claim_arm,
     is_registry_record,
     read_trial,
     reported_state,
@@ -607,3 +609,50 @@ def test_registry_record_is_told_apart_from_details_entered_by_hand(load: Load):
     assert is_registry_record(load("study_NCT02586935"))
     assert not is_registry_record({"entered_by": "operator", "external_id": "jRCT2051240154"})
     assert not is_registry_record({"protocolSection": "not an object"})
+
+
+# --- arms and the claim's arm (change trials-by-phase) ---------------------------------
+
+
+def test_arms_are_read_in_the_records_order_without_the_type_prefix(load: Load):
+    arms = facts(load("study_NCT02586935")).arms
+
+    assert arms == (
+        Arm("Tideglusib", "active_comparator", ("Tideglusib",)),
+        Arm("Placebo", "placebo_comparator", ("Placebo",)),
+    )
+
+
+def test_claims_drug_in_the_only_active_arm_with_no_experimental_arm_is_the_tested_arm(
+    load: Load,
+):
+    arms = facts(load("study_NCT02586935")).arms
+
+    assert claim_arm(arms, ["tideglusib"]) == "experimental"
+
+
+def test_claims_drug_only_in_a_comparator_arm_is_said_to_be_the_comparator(load: Load):
+    study = load("study_NCT02586935")
+    protocol(study)["armsInterventionsModule"]["armGroups"] = [
+        {"label": "MF DPI", "type": "EXPERIMENTAL", "interventionNames": ["Drug: Mometasone"]},
+        {"label": "ML", "type": "ACTIVE_COMPARATOR", "interventionNames": ["Drug: Montelukast"]},
+    ]
+    arms = facts(study).arms
+
+    assert claim_arm(arms, ["Montelukast", "Singulair"]) == "comparator"
+    assert claim_arm(arms, ["mometasone"]) == "experimental"
+
+
+def test_claims_arm_is_not_guessed_without_a_whole_word_match(load: Load):
+    arms = facts(load("study_NCT02586935")).arms
+
+    assert claim_arm(arms, ["tideglu"]) is None
+    assert claim_arm(arms, ["aspirin"]) is None
+    assert claim_arm((), ["tideglusib"]) is None
+
+
+def test_record_with_no_arms_lists_none(load: Load):
+    study = load("study_NCT02586935")
+    del protocol(study)["armsInterventionsModule"]
+
+    assert facts(study).arms == ()

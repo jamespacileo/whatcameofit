@@ -320,7 +320,8 @@
           "facts_as_of": null,
           "facts": null,
           "papers": [],
-          "readings": []
+          "readings": [],
+          "claim_arm": null
         }
       ],
       "papers": [

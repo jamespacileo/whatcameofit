@@ -788,25 +788,26 @@ test("Scenario: Claim with one completed Phase 2 trial", () => {
   assert.equal(count(html, 'id="trial-NCT00000002"'), 1);
   const trials = sectionOf(html, "trials");
   const entry = wordsOf(trials.slice(trials.indexOf('id="trial-NCT00000002"'))).replace(/\u00a0|&nbsp;/g, " ");
-  // A row to read across: how many people and the phase, then what it was compared
-  // with, its design, its state and its results, each under its column's name.
-  assert.match(entry, /83 people\s+Phase 2 · /);
+  // A row to read across, each value under its column's name: how many people, what it
+  // was compared with, its main measure, its state with its posted results, and its
+  // identifier. The phase is the heading of its group; the design is in the fold.
   assert.match(
     entry,
-    /Compared with\s*A placebo\s+Design\s*Assigned at random · Blinded\s+State\s*Finished\s+Results\s*Posted 1 Sep 2025/,
+    /83 people\s*: more from its record\s+Compared with\s*Placebo\s+Main measure\s*[^]*?State\s*Finished\s*Results posted 1 Sep 2025\s+Trial\s*NCT00000002/,
   );
+  assert.match(entry, /Design\s+Assigned at random · Blinded/);
   // The row opens to what it measured.
   assert.match(entry, /It measured the change in a symptom score over 12 weeks\./);
   assert.match(entry, /What it measured was read by a model and checked against the record/);
   // The registry's own terms are inside the fold.
-  assert.match(entry, /Design, in the registry's terms\s+Randomised, double-blind, compared with placebo/);
+  assert.match(entry, /In the registry's terms: Randomised, double-blind, compared with placebo/);
   assert.match(trials, /Change in synthetic score/);
   // Posted results are a table: a row for each group, the registry's numbers.
   const table = trials.match(/<table class="result-table"[\s\S]*?<\/table>/)[0];
   assert.match(wordsOf(table), /Group\s+Mean\s+Standard Deviation\s+People analysed/);
   assert.match(wordsOf(table), /3\.4\s+Standard Deviation 1\.1\s+1\.1\s+41/);
   assert.match(trials, /The registry record says what this measure runs from and to/);
-  assert.match(trials, /High match · 94%/);
+  assert.match(trials, /Match to this claim: high, 94%/);
   // Three of five planned measures are shown, and the page says where the rest are.
   assert.match(trials, /2 more in the ClinicalTrials\.gov record/);
 });
@@ -829,14 +830,34 @@ test("Scenario: Claim with no trial", () => {
   assert.ok(!html.includes("Trials in people"));
 });
 
-test("Scenario: Claim with thirty-three trials", () => {
-  // Seven here: five shown, furthest phase first, the other two one press away.
+test("Scenario: Claim with fifteen trials across three phases", () => {
+  // Here seven: one with posted results (Phase 2), one Phase 3, five Phase 1. The trials
+  // with posted results come first, whatever their phase; then each phase is a heading
+  // over its own table, furthest first. With ten or fewer in a group every trial shows.
   const trials = sectionOf(page("phase-claim/index.html"), "trials");
-  const [shown, rest] = trials.split('class="trials-rest"');
-  assert.equal(count(shown, 'class="trial-group"'), 5);
-  assert.equal(count(rest, 'class="trial-group"'), 2);
-  assert.ok(shown.indexOf("NCT00000030") < shown.indexOf("NCT00000002"), "Phase 3 is not first");
-  assert.match(rest, /The other 2 of 7 trials/);
+  const heads = [...trials.matchAll(/<h3 class="trial-phase-head"[^>]*>\s*([^<]*?)\s*</g)].map((m) => m[1]);
+  assert.deepEqual(heads, ["Results posted", "Phase 3", "Phase 1"]);
+  assert.equal(count(trials, 'class="trial-group"'), 7);
+  assert.ok(!trials.includes('class="trials-rest"'));
+  // The heading and its count read apart to a screen reader.
+  assert.match(wordsOf(trials), /Results posted\s*,\s*1 trial/);
+  // In the results group each row names its own phase.
+  assert.match(wordsOf(trials), /NCT00000002[^]*?Phase 2/);
+  // Every table shows its column names.
+  assert.equal(count(trials, 'class="trial-row trial-columns" role="row"'), 3);
+  // An identifier with no page on this site leads to its registry record (the rule for
+  // which have one is trialDetailsPath's, tested on its own).
+  assert.match(trials, /class="trial-cell trial-id"[^>]*>[^]*?href="https:\/\/registry\.example\/record\/5"/);
+});
+
+test("Scenario: The claim's treatment is only what a trial compares with", () => {
+  // Change trials-by-phase: the comparison is named from the record's arms, and a trial
+  // that tests something else says so.
+  const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
+  assert.match(
+    trials,
+    /Compared with\s*Phase-claim agent\s*It tests Synthetic other agent; phase-claim agent is what it is compared with\./,
+  );
 });
 
 // Openspec site-publishing (change claim-at-a-glance): "The record in brief". The rules
@@ -949,7 +970,7 @@ test("Scenario: Outcome reported at four time points", () => {
 
 test("Scenario: Trial the registry shows as recruiting", () => {
   const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
-  assert.match(trials, /1,200 people planned\s+Phase 3 · /);
+  assert.match(trials, /1,200 people planned\s*: more from its record\s+Compared with/);
   assert.match(trials, /State\s*Under way/);
   assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
 });
@@ -1808,7 +1829,7 @@ test("Scenario: Registry records only", () => {
 test("Scenario: Three finished trials", () => {
   const trials = sectionOf(page("phase-claim/index.html"), "trials");
   const table = trials.slice(trials.indexOf('role="table"'));
-  for (const name of ["Trial", "Compared with", "Design", "State", "Results"]) {
+  for (const name of ["People", "Compared with", "Main measure", "State", "Trial"]) {
     assert.ok(table.includes(`<span role="columnheader">${name}</span>`), `no column named ${name}`);
   }
   // A row is a row; the control that opens it says whether it is open and names what it opens.

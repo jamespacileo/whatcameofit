@@ -88,7 +88,7 @@ Wherever a claim page states how many entries its timetable holds, it SHALL give
 - **THEN** the section list, the section heading and the controls that narrow the timetable all give 4 promises and 17 records, and none gives 21
 
 ### Requirement: Trials read across as a table
-The trials section SHALL show its trials as rows of one table with columns for the trial, what it was compared with, its design, its state and its results. A row SHALL open to show the rest of what the export carries for that trial, its match and its record. Below the phone breakpoint each value SHALL carry its column's name. The control that opens a row SHALL say whether it is open.
+The trials section SHALL show its trials as rows of a table with columns for how many people, what it was compared with, its main measure, its state and the trial's identifier (change `trials-by-phase`: one table per phase). A row SHALL open to show the rest of what the export carries for that trial, its match and its record. Below the phone breakpoint each value SHALL carry its column's name. The control that opens a row SHALL say whether it is open.
 
 #### Scenario: Three finished trials
 - **WHEN** a reader opens a claim with three finished trials on a wide screen

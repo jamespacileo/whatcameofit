@@ -71,6 +71,8 @@ from thenwhat.events.paper_records import PUBMED_PREFIX, paper_reference, stored
 from thenwhat.events.trial_facts import (
     AgeGroup,
     Allocation,
+    ArmKind,
+    ClaimArm,
     Comparator,
     HowListed,
     Masking,
@@ -80,6 +82,7 @@ from thenwhat.events.trial_facts import (
     StudyKind,
     TestKind,
     TrialStateCode,
+    claim_arm,
     read_trial,
     reported_state,
 )
@@ -312,6 +315,14 @@ class ExportedResults(Strict):
     outcomes_total: int
 
 
+class ExportedArm(Strict):
+    # The record's words for the arm and its interventions, unaltered but for the
+    # registry's "Drug: " style prefix.
+    label: str | None
+    kind: ArmKind
+    interventions: list[str]
+
+
 class ExportedTrialFacts(Strict):
     study_kind: StudyKind | None
     participants: ExportedParticipants | None
@@ -326,6 +337,8 @@ class ExportedTrialFacts(Strict):
     primary_outcomes_total: int
     why_stopped: str | None
     results: ExportedResults | None
+    # The record's arms in its order; empty for a registry that lists none.
+    arms: list[ExportedArm] = []
 
 
 class ExportedReading(Strict):
@@ -373,6 +386,10 @@ class ExportedTrial(Strict):
     # Stored readings of the record the facts were read from. Empty when it has not
     # been read, or no reading passed the rules.
     readings: list[ExportedReading] = []
+    # Whether the claim's intervention is in the trial's experimental arm or only in its
+    # comparator arms, by an exact match of its name or a synonym; None when that
+    # cannot be told from the record.
+    claim_arm: ClaimArm | None = None
 
 
 # Papers (openspec paper-facts): each paper a claim page lists, once, with the roles it
@@ -861,6 +878,7 @@ def _trials(
     events: list[EvidenceEvent],
     papers: _Papers,
     reading_accept_above: float = 0.8,
+    intervention_names: list[str] | None = None,
 ) -> list[ExportedTrial]:
     """One entry per registry identifier among the claim's approved trial events, given
     oldest first. Openspec trial-facts: the facts are read from the most recently fetched
@@ -879,12 +897,14 @@ def _trials(
             changes = [event for event in held if event.type is EventType.TRIAL_STATUS_CHANGE]
             state = reported_state(changes[-1].trial_state if changes else None)
             title, facts, facts_as_of = None, None, None
+            arm_of_claim: ClaimArm | None = None
             results: list[str] = []
             readings: list[ExportedReading] = []
         else:
             read = read_trial(record.raw_payload)
             state, title, facts_as_of = read.state, read.title, record.fetched_at
             facts = ExportedTrialFacts.model_validate(asdict(read.facts))
+            arm_of_claim = claim_arm(read.facts.arms, intervention_names or [])
             readings = [
                 ExportedReading(
                     kind=reading.kind,
@@ -931,6 +951,7 @@ def _trials(
                 facts=facts,
                 papers=list(dict.fromkeys(results)),
                 readings=readings,
+                claim_arm=arm_of_claim,
             )
         )
     return trials
@@ -1252,7 +1273,13 @@ def build_export(
         assert intervention is not None, "every claim is created with its intervention entity"
         papers = _Papers(session)
         _collect_papers(session, claim, events, papers)
-        trials = _trials(session, events, papers, reading_accept_above)
+        trials = _trials(
+            session,
+            events,
+            papers,
+            reading_accept_above,
+            [intervention.name, *intervention.synonyms],
+        )
         organisations = organisations_of(
             session,
             claim,
