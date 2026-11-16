@@ -7,6 +7,7 @@ from thenwhat import __version__
 from thenwhat.cli.archive import archive_command, unarchive_command
 from thenwhat.cli.audit import audit_app
 from thenwhat.cli.backfill import backfill_app
+from thenwhat.cli.cache import cache_prune_command
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import article_app, claim_app, promise_app
 from thenwhat.cli.events import event_app, fetch_command
@@ -47,6 +48,7 @@ app.command("export")(export_command)
 app.command("measure")(measure_command)
 app.command("archive")(archive_command)
 app.command("unarchive")(unarchive_command)
+app.command("cache-prune")(cache_prune_command)
 app.add_typer(audit_app, name="audit")
 app.add_typer(seed_app, name="seed")
 app.add_typer(backfill_app, name="backfill")

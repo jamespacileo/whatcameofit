@@ -313,6 +313,21 @@ def test_leads_that_name_a_topic_are_scored_first(session: Session):
     assert all(lead.triage_score is not None for lead in leads)
 
 
+def test_a_call_that_the_topic_leads_do_not_fill_takes_older_leads_too(session: Session):
+    """Scenario: Fewer topic leads than a call takes"""
+    titles = [f"An older trial result number {n}" for n in range(25)]
+    leads = add_leads(session, [*titles, "Zepbound in one trial", "Zepbound in another"])
+    backend = Headlines(session)
+
+    triage(session, backend, LinkTriage(Clock(), topic_terms=("Zepbound",)))
+
+    # Both topic leads and the eighteen oldest of the rest, then the other seven: each once.
+    assert [len(call) for call in backend.calls] == [20, 7]
+    assert sum("Zepbound" in headline for headline in backend.calls[0]) == 2
+    assert all(lead.triage_score is not None for lead in leads)
+    assert len(log(session)) == 27
+
+
 # --- measured ----------------------------------------------------------------------
 
 
