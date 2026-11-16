@@ -211,6 +211,12 @@ Batch 1 (2026-11-16) spent 83 of its 300 reader requests on two outlets that ans
 
 - [x] 15.1 Finish a lead without asking the reader when its outlet answered 401 to at least five pages and served none; verify with tests that such a lead makes no request and that an outlet which served a page is still asked.
 
+## 16. Batch 2 audit faults
+
+Batch 2's audit (2026-11-16) archived 39 of 132 claims: 14 established drugs read "no trial found" though the registry holds hundreds of their trials (buprenorphine for opioid use disorder: 316 within the condition), brand names missed their registry names (Mosquirix finds 1 malaria trial, RTS,S finds 36), and class names and a bare "Cancer" got through. The operator approved three fixes the same day.
+
+- [x] 16.1 Keep the registry's first page (its 100 most relevant trials) for a name still broad within the condition, scored like any candidate, instead of nothing; a search phrase still gives none. Verify with a test against a recorded broad search.
+
 ## Workflow follow-up
 
 - Archive `backfill-work-ledger` before this change is archived, so that `work-ledger` exists in the main specs.
