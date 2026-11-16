@@ -2,6 +2,15 @@
 
 Read `design.md` first. Strategy numbers (S1 to S9) refer to its table. Every figure in a task is checked with `node scripts/ci-timing.mjs`; "the ledger" is `openspec/changes/fast-ci-and-deploy/experiments.md`.
 
+## 0. Pull request preview fast path (done on pull request 267, 2026-11-16)
+
+- [x] 0.1 Keep drawn card images under the hash of the renderer's input (`site/src/lib/card-image.ts`, `site/tests/card-store.test.mjs`); verified: two builds, cold then warm, give byte-identical files, and the card routes fall from 76 s to 4.3 s in CI
+- [x] 0.2 Give a preview the key of what it was made from at `/build-key.txt` and skip a push with the same key (`site/scripts/build-key.mjs`, `make pr-preview-state`, `site/tests/build-key.test.mjs`); verified: a notes-only push ran in 11 s and left the Worker as it was, a push changing `site/scripts` rebuilt
+- [x] 0.3 Restore the installed dependencies and the card store in the preview job, and keep both from `CI and deploy` so `main` seeds every pull request; verified: restores take 2 s each, the CI rehearsal fell from 107 s to 19 s
+- [x] 0.4 Record the behaviour in the `deployment` delta, `docs/deploy.md` and the ledger; verified: `openspec validate fast-ci-and-deploy --strict` passes
+- [ ] 0.5 After this is on `main`, open a pull request that changes nothing under `site/` and one that changes one page; verify from the ledger that each one's first preview restored the stores kept by `main` and record both times
+- [ ] 0.6 Decide with the operator which option in the ledger's verdict to take for a push that changes the site (50 s against a 20 s limit); verify the choice is recorded in `design.md` before work on it starts
+
 ## 1. Timing report and baseline
 
 - [ ] 1.1 Write `scripts/ci-budgets.json` with the four scenarios' limits and targets from `specs/delivery-time/spec.md`; verify each number matches the spec's four scenarios
@@ -42,7 +51,7 @@ Read `design.md` first. Strategy numbers (S1 to S9) refer to its table. Every fi
 - [ ] 5.2 S4: compute each check's key from its inputs' blob ids, lock files, tool versions and settings; upload a pass record per key; add the `CI_REUSE` variable with `off`, `shadow` and `on`; verify in `shadow` that a run's summary lists, per check, the key and the earlier run that would have answered it
 - [ ] 5.3 Run in `shadow` for 40 pushes to `main` or two weeks, whichever is first; verify the ledger records how many checks would have been answered, and that none of those then failed when run
 - [ ] 5.4 S5: store the rehearsed build under its key and have a deploying run fetch it only from a run of this repository, verifying the digest; verify with a fork-style test (a recorded API answer whose `head_repository` differs) that it is refused
-- [ ] 5.5 S7: profile the production build per route and per card image, record the profile in the ledger, and store the dominant pieces between runs by their own inputs; verify a rebuild with an unchanged snapshot is under 30 s at the median over five runs and its output digest equals a build without the store, or record the refutation
+- [ ] 5.5 S7 (the store itself is done in 0.1 and 0.3; this is its measurement for production): verify a rebuild with an unchanged snapshot is under 30 s at the median over five runs and its output digest equals a build without the store, or record the refutation
 - [ ] 5.6 S9: establish whether the registry search switch changes built files; if it can move to the Worker's settings, publish previews from the stored build through `make pr-preview`; verify a preview's pages still send the no-index header and its search still answers that it is not set up, and that preview publishing is under 90 s at p50
 - [ ] 5.7 Run `make ci-canaries` with `CI_REUSE=on` on the scratch branches; verify all nine fail, including the forgotten-file patch, then set `CI_REUSE=on` for the repository
 - [ ] 5.8 Update `docs/deploy.md` with the input list file, the `CI_REUSE` variable and how to turn reuse off; verify the rollback as written returns a run to executing every check
