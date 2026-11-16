@@ -870,6 +870,8 @@ def test_a_vaccine_or_schedule_with_no_product(name: str, condition: str, refuse
         ("solid tumours", "no one condition"),
         ("feline infectious peritonitis", "an animal's condition"),
         ("Pancreatic cancer", None),
+        ("allergy to cats", None),
+        ("canine dander allergy", None),
         ("HIV", None),
     ],
 )

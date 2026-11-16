@@ -233,10 +233,10 @@ NO_ONE_CONDITION = frozenset(
     ["cancer", "cancers", "tumour", "tumours", "tumor", "tumors", "solid tumours",
      "solid tumors", "disease", "diseases"]
 )  # fmt: skip
-ANIMAL_WORDS = frozenset(
-    ["feline", "canine", "equine", "bovine", "veterinary", "cats", "dogs", "horses",
-     "cattle", "pets"]
-)  # fmt: skip
+# Only the adjectives, so "allergy to cats" or "pet dander allergy" stays a condition of
+# people (review of PR 230).
+ANIMAL_WORDS = frozenset(["feline", "canine", "equine", "bovine", "veterinary"])
+ALLERGY_WORDS = frozenset(["allergy", "allergies", "allergic"])
 
 
 def condition_refusal(indication: str) -> str | None:
@@ -245,6 +245,6 @@ def condition_refusal(indication: str) -> str | None:
     words = [word.strip(PUNCTUATION).lower() for word in indication.split()]
     if " ".join(words) in NO_ONE_CONDITION:
         return "no one condition"
-    if ANIMAL_WORDS & set(words):
+    if ANIMAL_WORDS & set(words) and not ALLERGY_WORDS & set(words):
         return "an animal's condition"
     return None
