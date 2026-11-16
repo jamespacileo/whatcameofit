@@ -1,0 +1,95 @@
+{
+  "date": "2026-11-16",
+  "claim": "melanoma-mrna-vaccine-intismeran",
+  "identity": "Intismeran autogene plus pembrolizumab for completely resected stage IIB–IV cutaneous melanoma; INTerpath-001, NCT05933577.",
+  "source_review": [
+    {
+      "id": "S019",
+      "url": "https://drjessemorse.substack.com/p/a-personalized-mrna-cancer-vaccine",
+      "title": "A Personalized mRNA Cancer Vaccine Just Won a Phase 3 Trial. Here’s What It Did.",
+      "published": "2026-11-13",
+      "source_access": "Public article read in the in-app browser; no article text retained. Subscription form untouched.",
+      "identity_review": "Article explicitly identifies intismeran autogene plus pembrolizumab, completely resected stage IIB–IV cutaneous melanoma, INTerpath-001 and NCT05933577. This is the existing melanoma-mrna-vaccine-intismeran claim, not a preventive vaccine or monotherapy.",
+      "linked_paper": "https://www.nejm.org/doi/full/10.1056/NEJMoa2609762",
+      "primary_record": "https://clinicaltrials.gov/study/NCT05933577",
+      "mutations_performed": true,
+      "remaining": "Canonical source reference added through normal article entry. Release and fresh corpus/Sheet verification pending."
+    },
+    {
+      "id": "S006",
+      "url": "https://bsky.app/profile/nejm.org/post/3n24mxzs2f62a",
+      "post_published": "2026-11-12T14:00:00Z",
+      "short_url": "https://nej.md/4sTuIgb",
+      "canonical_url": "https://www.nejm.org/doi/full/10.1056/NEJMoa2609762",
+      "title": "Intismeran Autogene plus Pembrolizumab for Resected Stage IIB to IV Melanoma",
+      "article_published": "2026-11-11",
+      "access": "Public Bluesky post, redirect destination and journal abstract read in the browser. The full journal article requires subscription and was not read. No source body retained.",
+      "identity_review": "The public abstract explicitly identifies the full regimen, resected stage IIB–IV melanoma, INTerpath-001 and NCT05933577, consistent with the existing card.",
+      "mutations_performed": true
+    }
+  ],
+  "data_work": "Both canonical references added through normal article entry. Normal export staged. No new claim, trial decision, event, statement, promise, status, first-report date or evidence-stage change.",
+  "diagnosis": {
+    "reproduction": "Worker-boundary test for a synthetic Bluesky post using nej.md failed: article_tracked was absent. Existing classification incorrectly treated the short URL as the article.",
+    "fix": "Add nej.md to the shared known-shortener list. Existing bounded reader, contact client, current robots check and refusal behavior are retained.",
+    "red_green": "Before: one success-path regression failed, refusal control passed. After: both pass, including service and browser-read inputs.",
+    "scope": "Single known-host classification addition, not a new source client or alternate article fetch path. No broad hypothesis loop needed for this directly reproduced classification defect.",
+    "cache": "No clinical-reading or score change. Existing valid saved clinical answers keep their lifetime; fresh release checks explicitly refresh S006. Exact S019 source mapping uses the refreshed published index."
+  },
+  "candidate": {
+    "checked_at": "2026-11-16T06:30:07.618Z",
+    "base_commit": "035221314aa48de6154f69e20948fd316e1cb704",
+    "public_cards": 174,
+    "unchanged_cards": 173,
+    "changed_fields": [
+      "generated_at",
+      "melanoma-mrna-vaccine-intismeran.articles"
+    ],
+    "added_references": [
+      "https://www.nejm.org/doi/full/10.1056/NEJMoa2609762",
+      "https://drjessemorse.substack.com/p/a-personalized-mrna-cancer-vaccine"
+    ],
+    "checks": {
+      "S006": {
+        "url": "https://bsky.app/profile/nejm.org/post/3n24mxzs2f62a",
+        "http": 200,
+        "ms": 463,
+        "slug": "melanoma-mrna-vaccine-intismeran",
+        "requests": [
+          {
+            "url": "https://public.api.bsky.app/xrpc/app.bsky.feed.getPostThread?uri=at%3A%2F%2Fnejm.org%2Fapp.bsky.feed.post%2F3n24mxzs2f62a&depth=0&parentHeight=0",
+            "status": 200
+          },
+          {
+            "url": "https://nej.md/robots.txt",
+            "status": 200
+          },
+          {
+            "url": "https://nej.md/4sTuIgb",
+            "status": 301
+          }
+        ],
+        "model_requests": 0,
+        "registry_requests": 0,
+        "article_requests": 0
+      },
+      "S019": {
+        "url": "https://drjessemorse.substack.com/p/a-personalized-mrna-cancer-vaccine",
+        "ms": 0,
+        "slug": "melanoma-mrna-vaccine-intismeran",
+        "method": "Exact published-index lookup, the ordinary website/extension path; no clinical API call.",
+        "requests": [],
+        "model_requests": 0,
+        "registry_requests": 0,
+        "article_requests": 0
+      }
+    },
+    "limits": "Candidate Worker with live official Bluesky and robots-permitted shortener replies, guarded against model/registry/article work. Not released or native Safari verification. No source bodies retained."
+  },
+  "verification": {
+    "regressions": "make check passed: 1,562 pipeline, 660 site and 170 extension tests; lint and types passed. Both journal-short-link tests pass after the reproduced failure. Strict OpenSpec validation passed.",
+    "public_rehearsal": "make deploy-ci-check passed for the normal 174-card snapshot; no production publication yet.",
+    "release": "pending",
+    "native_safari": "unverified; computer control still reports locked"
+  }
+}

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-16T05:31:12.017751Z",
+  "generated_at": "2026-11-16T06:24:02.138516Z",
   "last_checked_at": "2026-11-16T05:29:15.509618Z",
   "preview": false,
   "sources": [
@@ -145546,6 +145546,22 @@
           "outlet": "ScienceAlert",
           "title": "World-First Cancer Vaccine Cuts Melanoma Recurrence or Death Risk by 42% in Landmark Trial",
           "published_date": "2026-10-26",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.nejm.org/doi/full/10.1056/NEJMoa2609762",
+          "outlet": "The New England Journal of Medicine",
+          "title": "Intismeran Autogene plus Pembrolizumab for Resected Stage IIB to IV Melanoma",
+          "published_date": "2026-11-11",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://drjessemorse.substack.com/p/a-personalized-mrna-cancer-vaccine",
+          "outlet": "The Morse Method",
+          "title": "A Personalized mRNA Cancer Vaccine Just Won a Phase 3 Trial. Here’s What It Did.",
+          "published_date": "2026-11-13",
           "archive_url": null,
           "published_by": null
         }

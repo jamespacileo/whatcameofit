@@ -1,5 +1,13 @@
 # Tasks
 
+## Journal and Substack melanoma sources
+
+- [x] Review S019's public Substack article and S006's public Bluesky post, NEJM short-link destination and public abstract. Verify the complete intismeran-plus-pembrolizumab regimen, resected stage IIB–IV cutaneous melanoma and NCT05933577. Add the two canonical references through normal article entry; retain no source body, bypass no subscription restriction and change no clinical evidence decision.
+- [x] Reproduce the journal short-link failure at the Worker boundary before adding `nej.md` to the shared shortener list. Verify service/browser inputs return an exact tracked destination without reading or searching, and a robots refusal remains unfollowed. Prepare Safari 0.9.21 with unchanged permissions and cache policy.
+- [x] Stage the normal 174-card export: only the melanoma card's reference list changes; the other 173 cards and its clinical evidence, first-report date and status are unchanged.
+- [ ] Complete regression checks, production rehearsal and independent reviews; deploy and install signed Safari 0.9.21.
+- [ ] Rerun S006/S019 against the released site and installed extension, record precise verification limits, and update the corpus and Google Sheet with read-back verification.
+
 ## Unspecified treatment identification
 
 - [x] Reproduce a search from a synthetic disease-only headline. Distinguish specific descriptions and explicit study identities from generic drug wording in both lookup readers and their field schemas; add no model call or source request. Correct the initial S016 diagnosis: the complete official post supplies NCT06625320, so its earlier 87% candidate was not established to be an invented identity.
