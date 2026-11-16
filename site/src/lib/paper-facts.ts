@@ -55,11 +55,11 @@ export const ALSO_WORDS: Record<string, string> = {
   related: "Also found by the literature search",
 };
 
-/** What the index's subject headings say the study was in. Attributed to the index. */
+/** Index subject headings can describe tissue sources, not just living participants. */
 export const STUDIED_IN_WORDS: Record<string, string> = {
-  people: `${PAPER_INDEX} files it as a study in people`,
-  animals: `${PAPER_INDEX} files it as a study in animals`,
-  "people+animals": `${PAPER_INDEX} files it as a study in people and in animals`,
+  people: `${PAPER_INDEX} subject headings: humans`,
+  animals: `${PAPER_INDEX} subject headings: animals`,
+  "people+animals": `${PAPER_INDEX} subject headings: humans and animals`,
 };
 
 /** Why the literature search listed a related paper, found by rule. */
@@ -151,7 +151,7 @@ export function paperStanding(paper: ExportedPaper): string | null {
   return parts.length > 0 ? parts.join(" · ") : null;
 }
 
-/** What the index says the study was in, or null when it says neither. */
+/** The index's human/animal subject headings, or null when neither is present. */
 export function studiedInText(paper: ExportedPaper): string | null {
   const subjects = paper.facts?.studied_in ?? [];
   if (subjects.length === 0) return null;
@@ -181,27 +181,22 @@ export function trialRoles(paper: ExportedPaper): ExportedPaperRole[] {
   return paper.roles.filter((role) => role.role === "trial_result" && role.trial_id);
 }
 
-export interface SubjectCount {
-  /** The claim's trials, and its papers the index files as studies in people. */
-  people: number;
-  /** The claim's papers the index files as studies in animals. */
-  animals: number;
+export interface RecordCount {
+  trials: number;
+  papers: number;
 }
 
 /** Counts of records, never of people or of studies: a trial and the paper that reports
  * it are two records. */
-export function countSubjects(claim: Pick<ExportedClaim, "trials" | "papers">): SubjectCount {
-  const papers = claim.papers ?? [];
-  const filed = (subject: string) =>
-    papers.filter((paper) => paper.facts?.studied_in.includes(subject)).length;
-  return { people: (claim.trials ?? []).length + filed("people"), animals: filed("animals") };
+export function countRecords(claim: Pick<ExportedClaim, "trials" | "papers">): RecordCount {
+  return { trials: (claim.trials ?? []).length, papers: (claim.papers ?? []).length };
 }
 
-/** "3 in people · 1 in animals". Null when the claim has no such record. */
-export function subjectCountText(tally: SubjectCount): string | null {
+/** "3 trial records · 1 paper". Null when the claim has no record. */
+export function recordCountText(tally: RecordCount): string | null {
   const parts = [
-    tally.people > 0 ? `${tally.people.toLocaleString("en-GB")} in people` : null,
-    tally.animals > 0 ? `${tally.animals.toLocaleString("en-GB")} in animals` : null,
+    tally.trials > 0 ? `${tally.trials.toLocaleString("en-GB")} trial ${tally.trials === 1 ? "record" : "records"}` : null,
+    tally.papers > 0 ? `${tally.papers.toLocaleString("en-GB")} ${tally.papers === 1 ? "paper" : "papers"}` : null,
   ].filter((part): part is string => part !== null);
   return parts.length > 0 ? parts.join(" · ") : null;
 }

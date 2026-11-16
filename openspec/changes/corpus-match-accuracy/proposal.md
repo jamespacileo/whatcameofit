@@ -29,6 +29,7 @@ Released corpus checks found a trial match accompanied by a knowledge card for a
 
 ### Modified Capabilities
 
+- `paper-facts`: identify human/animal indexing terms as subject headings, without implying a trial in living participants.
 - `source-clients`: permit one existing condition-keyword fallback after an explicit condition-field parse refusal, without rewriting treatment names or expanding candidate limits.
 - `knowledge-cards`: keep component cards from representing complete regimens; include verified vocabulary entry-name evidence in term checks and support explicit, bounded rereads of undecided terms.
 - `llm-usage`: commit incurred provider usage independently of the caller's transaction.

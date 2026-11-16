@@ -61,9 +61,9 @@ import Trial from "../components/Trial.astro";
 import {
   PAPERS_NOTE,
   PAPERS_SHOWN,
-  countSubjects,
+  countRecords,
   groupPapers,
-  subjectCountText,
+  recordCountText,
 } from "../lib/paper-facts";
 import {
   TRIALS_NOTE,
@@ -131,7 +131,7 @@ const matched = claim.matches ?? [];
 // An export made before openspec paper-facts lists its papers among the matches.
 const papers = claim.papers ? [] : matched.filter(isPaperMatch);
 const paperGroups = groupPapers(claim.papers ?? []);
-const subjectCount = claim.papers ? subjectCountText(countSubjects(claim)) : null;
+const recordCount = claim.papers ? recordCountText(countRecords(claim)) : null;
 const registryMatches = matched.filter((match) => !isPaperMatch(match));
 const counted = registryMatches.filter((match) => match.state === "approved").length;
 const candidates = registryMatches.filter((match) => match.state === "candidate");
@@ -574,14 +574,12 @@ const sections = [
         )
       }
       {
-        /* Counts of records, as the registries and the index file them: never that a
-           treatment does anything in people or in animals. */
-        subjectCount && (
+        /* A paper and its trial record remain distinct records. */
+        recordCount && (
           <div>
-            <dt>Records of studies</dt>
+            <dt>Records listed</dt>
             <dd>
-              {subjectCount}
-              <span class="aka">Trials, and papers as Europe PMC files them</span>
+              {recordCount}
             </dd>
           </div>
         )

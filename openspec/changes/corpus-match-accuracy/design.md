@@ -1,5 +1,9 @@
 # Design
 
+## Enamel-paper subject headings
+
+The keratin enamel paper uses extracted human teeth and wool-derived material, but its Europe PMC record has both human and animal subject headings. Those tags do not establish a study in living participants. Preserve the source metadata and confirmed in-vitro stage; label the tags as subject headings on paper entries. Count trial records and papers separately in the claim facts, counting each structured paper once regardless of its roles or missing metadata. Keep the legacy-export fallback. This is presentation only: it changes no trial match, clinical stage, source request, schema or extension resource.
+
 ## Registry search projection and treatment roles
 
 The earlier scoring formatter accepted descriptions and arm membership from full records, but name/title searches omitted those fields in their API projection. Request study type, descriptions and arm roles/membership in the existing searches on both paths. Query selection, source pacing, cache lifetime, page limits and candidate counts stay unchanged. A changed fields parameter naturally gives a different source-cache key; there is no per-candidate enrichment fetch.
