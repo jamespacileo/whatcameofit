@@ -1,7 +1,12 @@
 """Merged claims, former slugs, and a registry search that is due again.
 
-Revision ID: 0029
+Revision ID: 0030
 Revises: 0028
+
+Numbered 0030 because pull request 269 (`0029_lookup_indexes_and_link_lead_checks`) was
+open with 0029 when this was written, and two migrations with one number cannot both be
+recorded. Both revise 0028. Whichever of the two is merged second must change its
+`down_revision` to the other's number, so the migrations stay one line.
 """
 
 from collections.abc import Sequence
@@ -9,7 +14,7 @@ from collections.abc import Sequence
 import sqlalchemy as sa
 from alembic import op
 
-revision: str = "0029"
+revision: str = "0030"
 down_revision: str | None = "0028"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
