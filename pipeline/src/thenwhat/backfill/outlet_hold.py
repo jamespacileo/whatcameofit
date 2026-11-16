@@ -34,6 +34,10 @@ OpenSession = Callable[[], AbstractContextManager[Session]]
 
 # The name an outlet's hold is kept under, before the outlet's own.
 OUTLET_HOLD = "reader:"
+# What a command exits with when it left an article for later because its outlet is held
+# or was just stopped: not a success, since nothing was read, and not a failure of the
+# command. The value is the conventional one for "try again later".
+LEFT_FOR_LATER = 75
 # The first key of the lock that gives one worker at a time an outlet's turn.
 OUTLET_TURN_LOCK = 7_468
 

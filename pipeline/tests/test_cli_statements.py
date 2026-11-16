@@ -221,8 +221,11 @@ def test_an_outlet_the_reader_has_stopped_is_not_asked_again_by_statements(
     # The reader would now give the page, but its wait is not over: it is not asked.
     held = run("statements", SLUG, web=Retrieved(TEXT))
 
-    assert held.exit_code == 1
+    # Left for later is no failure of the command: nothing else went wrong, so it exits 0.
+    assert held.exit_code == 0, held.output
+    assert "Left for later." in output(held)
     assert "was not asked for: the page reader said news.example.org cannot be asked before" in (
         output(held)
     )
+    assert "Pasted text is needed" not in output(held)
     assert statements(session) == []

@@ -7,7 +7,7 @@ from typing import Annotated
 import typer
 
 from thenwhat.backfill.errors import ReaderUnavailable
-from thenwhat.backfill.outlet_hold import retrieve_unless_held
+from thenwhat.backfill.outlet_hold import OutletHeld, retrieve_unless_held
 from thenwhat.claims.entry import EntryError, claim_by_slug
 from thenwhat.cli import entry, extract
 from thenwhat.cli.console import err, out
@@ -103,6 +103,11 @@ def statements_command(
                     ).text
                 except ReaderUnavailable as down:
                     raise EntryError(str(down)) from None
+                except OutletHeld as held:
+                    # Not a problem with the command or the article: the outlet is asked
+                    # again once its wait is over.
+                    out.print(f"  Left for later. {held}", markup=False)
+                    continue
                 except PasteNeeded as needed:
                     problems += 1
                     err.print(f"  {_paste_needed(slug, article, str(needed))}", markup=False)
