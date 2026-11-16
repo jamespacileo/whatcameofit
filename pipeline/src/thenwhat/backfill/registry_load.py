@@ -84,10 +84,26 @@ class LoadReport:
     stopped: str | None = None
 
 
+def _struct(status: dict[str, Any], key: str) -> dict[str, Any]:
+    return status.get(key) or {}
+
+
+def _posted(status: dict[str, Any], key: str) -> date | None:
+    """A date the registry posted something, which it always gives as a full day. Any
+    other form is left empty here and kept in the raw record."""
+    value = _struct(status, key).get("date")
+    try:
+        return date.fromisoformat(value) if value and len(value) == 10 else None
+    except ValueError:
+        return None
+
+
 def trial_fields(study: dict[str, Any]) -> dict[str, Any]:
-    """The columns of a registry trial, read from the registry's own record."""
+    """The columns of a registry trial, read from the registry's own record. A field the
+    registry leaves out is stored empty: nothing is worked out from other fields."""
     protocol = study["protocolSection"]
     status = protocol.get("statusModule", {})
+    lead_sponsor = protocol.get("sponsorCollaboratorsModule", {}).get("leadSponsor", {})
     interventions = [
         {
             "type": intervention.get("type"),
@@ -104,13 +120,54 @@ def trial_fields(study: dict[str, Any]) -> dict[str, Any]:
         "interventions": interventions,
         "phases": protocol.get("designModule", {}).get("phases", []),
         "overall_status": status.get("overallStatus"),
-        "start_date": (status.get("startDateStruct") or {}).get("date"),
-        "sponsor_class": (
-            protocol.get("sponsorCollaboratorsModule", {}).get("leadSponsor", {}).get("class")
-        ),
+        "start_date": _struct(status, "startDateStruct").get("date"),
+        "start_date_type": _struct(status, "startDateStruct").get("type"),
+        "sponsor_class": lead_sponsor.get("class"),
         "search_name": name_under_test(interventions),
         "search_indication": indication_words(conditions),
+        "last_update_posted": _posted(status, "lastUpdatePostDateStruct"),
+        "study_first_posted": _posted(status, "studyFirstPostDateStruct"),
+        "primary_completion_date": _struct(status, "primaryCompletionDateStruct").get("date"),
+        "primary_completion_date_type": (
+            _struct(status, "primaryCompletionDateStruct").get("type")
+        ),
+        "completion_date": _struct(status, "completionDateStruct").get("date"),
+        "completion_date_type": _struct(status, "completionDateStruct").get("type"),
+        "results_first_posted": _posted(status, "resultsFirstPostDateStruct"),
+        "has_results": study.get("hasResults"),
+        "acronym": protocol["identificationModule"].get("acronym"),
+        # A sponsor who is a person is not named in a column.
+        "lead_sponsor_name": (
+            None if lead_sponsor.get("class") == INDIVIDUAL else lead_sponsor.get("name")
+        ),
     }
+
+
+INDIVIDUAL = "INDIVIDUAL"
+
+
+def without_people(study: dict[str, Any]) -> dict[str, Any]:
+    """The registry's record as stored: exactly as the registry gave it, except that the
+    name of a lead sponsor or collaborator whose class is INDIVIDUAL is removed. That is
+    the one thing removed, because the project keeps no personal data beyond subscriber
+    emails and such a name is a person's. The class is kept, so the record still says a
+    person sponsors or collaborates on the trial. The record given is not changed."""
+    sponsors = study.get("protocolSection", {}).get("sponsorCollaboratorsModule")
+    if not sponsors:
+        return study
+
+    def unnamed(party: dict[str, Any]) -> dict[str, Any]:
+        if party.get("class") != INDIVIDUAL:
+            return party
+        return {key: value for key, value in party.items() if key != "name"}
+
+    kept = dict(sponsors)
+    if isinstance(sponsors.get("leadSponsor"), dict):
+        kept["leadSponsor"] = unnamed(sponsors["leadSponsor"])
+    if isinstance(sponsors.get("collaborators"), list):
+        kept["collaborators"] = [unnamed(party) for party in sponsors["collaborators"]]
+    protocol = {**study["protocolSection"], "sponsorCollaboratorsModule": kept}
+    return {**study, "protocolSection": protocol}
 
 
 def store_trial(
@@ -136,7 +193,7 @@ def store_trial(
         session.add(trial)
     for column, value in fields.items():
         setattr(trial, column, value)
-    trial.raw_payload = study
+    trial.raw_payload = without_people(study)
     trial.fetched_at = fetched_at
     session.flush()
     if not is_new:
