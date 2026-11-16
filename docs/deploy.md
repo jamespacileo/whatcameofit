@@ -4,7 +4,7 @@ The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare
 
 ## Normal publishing workflow
 
-Changes to `main` run the complete test suite and a public deployment rehearsal in GitHub Actions. Only after those pass does GitHub deploy production and check the live home, method, sitemap and claim pages. Pull requests run the checks without deployment credentials and do not create public previews. The Actions page also offers a manual run for `main`.
+Changes to `main` run the complete test suite and a public deployment rehearsal in GitHub Actions. Only after those pass does GitHub deploy production and check the live home, method, sitemap and claim pages. Pull requests run the checks and get their own preview (below); they never change production. The Actions page also offers a manual run for `main`.
 
 To publish newly approved claims, run:
 
@@ -24,6 +24,32 @@ Commit `site/data/published-export.json` and `site/data/published-topics.json` w
 
 Staging first asks the running pipeline for a normal export with preview mode disabled. It validates the export and replaces the snapshot atomically. Invalid JSON, a preview or an empty export leaves the previous snapshot unchanged. GitHub cannot reach the local database; database changes alone therefore never publish anything.
 
+## Pull request previews
+
+Decided by the operator on 16 November 2026 (change `pull-request-previews`). Every pull request from a branch of this repository gets its own copy of the site on its own Worker, `thenwhat-pr-<number>`, at `https://thenwhat-pr-<number>.<account subdomain>.workers.dev`. The `Pull request preview` workflow publishes it when the pull request opens, replaces it on every push, and deletes the Worker when the pull request is merged or closed. One comment on the pull request carries the address, links to the main pages and files, the claims the pull request adds, the commit, the build log and the Worker's dashboard page. Every run and re-run edits that same comment (`site/scripts/pr-preview-comment.mjs`); a failed build and the removal are written into it too. The workflow does not wait for the tests, so the address is usually ready before `Tests and build` finishes; a preview existing says nothing about whether the checks pass.
+
+A preview differs from production in these ways, all set in `site/wrangler.preview.jsonc` and `site/scripts/pr-preview.mjs`:
+
+- It is built from the pull request's own `site/data/published-export.json`, as a public build for the production address, so canonical links, feeds and embed snippets name `whatcameofit.com`.
+- Every file is sent with `X-Robots-Tag: noindex`.
+- It has no registry search: no model settings, no `OPENAI_API_KEY`, no `OPENALEX_API_KEY`, no `LOOKUP_RESULTS` namespace. `/api/lookup` answers "not set up" and can spend nothing.
+- The trial reader works, with its own rate-limit counter and no saved copies.
+- Worker logging stays off.
+
+A pull request from a fork, or from Dependabot, gets no preview: GitHub gives those runs no Cloudflare token. A data pull request's preview shows its claims at a public address before the merge, as the pull request itself already does.
+
+The preview uses the same `CLOUDFLARE_API_TOKEN` repository secret as production, which any workflow run on a branch of this repository can read. Only people with write access can push such a branch. A separate token limited to Workers Scripts, stored in its own GitHub environment, would narrow this; it is not set up.
+
+To publish or remove one by hand:
+
+```sh
+PR_NUMBER=12 make pr-preview-check   # builds and rehearses; publishes nothing
+PR_NUMBER=12 make pr-preview
+npx --prefix site wrangler delete --name thenwhat-pr-12 --config site/wrangler.preview.jsonc
+```
+
+`npx --prefix site wrangler deployments list --name thenwhat-pr-12` shows what a preview is serving. A Worker named `thenwhat-pr-*` whose pull request is closed is a leftover and can be deleted.
+
 ## GitHub configuration
 
 The repository uses a `production` environment restricted to `main`. Production deployments are serialized; a superseded revision is skipped when it reaches the deployment queue. GitHub Actions are pinned to reviewed commit revisions; Wrangler is pinned in `site/package-lock.json` and installed with `npm ci`. Main requires the `Tests and build` check and disallows force pushes and deletion; repository administrators retain GitHub's standard bypass.
@@ -41,7 +67,7 @@ Set these repository values in Settings → Secrets and variables → Actions:
 
 The token permits Workers Scripts editing in Palladio, Workers Routes editing for `whatcameofit.com`, and Zone read for that domain. It expires on 12 November 2027; replace the encrypted GitHub secret before then. It has no billing, database, model-provider, or email permissions.
 
-Cloudflare's [GitHub Actions guide](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/) documents deployment credentials. Keep deployment credentials out of pull requests and workflow logs.
+Cloudflare's [GitHub Actions guide](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/) documents deployment credentials. Keep deployment credentials out of workflow logs, and out of any run a fork's pull request starts.
 
 ## Local checks and emergency deployment
 
@@ -55,7 +81,7 @@ make deploy-ci       # publishes that snapshot; needs Cloudflare authentication
 
 For local authentication, run `npx --prefix site wrangler login` and verify with `npx --prefix site wrangler whoami` before deployment. `make deploy-check` and `make deploy` remain available: both first export directly from the running local pipeline. `SITE_URL` defaults to https://whatcameofit.com and can be overridden explicitly.
 
-Never run raw `wrangler deploy`: it bypasses the public-data checks and could publish an old preview build. All supported deploy targets validate the export, build it afresh as a public site, and check its sitemap and preview flag before invoking Wrangler.
+Never run raw `wrangler deploy`: it bypasses the public-data checks and could publish an old preview build. ("Preview build" here means a build of unreviewed data, not a pull request preview.) All supported deploy targets validate the export, build it afresh as a public site, and check its sitemap and preview flag before invoking Wrangler.
 
 ## Domain and contact settings
 

@@ -11,6 +11,7 @@ import {
   NO_TARGET_DEFINITION,
   TARGET_DEFINITION_LABEL,
   TARGET_NOTE,
+  MATCH_WHY_HEAD,
   NO_MECHANISM,
   cardKindText,
   creditText,
@@ -19,12 +20,10 @@ import {
   isDrugsTarget,
   mechanismTexts,
   moleculeKindText,
-  scoreLabel,
   reasonTexts,
   type ExportedCard,
   type ExportedCardSource,
 } from "../lib/background";
-import { matchNote } from "../lib/confidence";
 
 interface Props {
   card: ExportedCard;
@@ -32,9 +31,24 @@ interface Props {
   /** The label to show when the claim's own wording of it is known (a drug matched by
    * its exact name); otherwise the source's. */
   label?: string;
+  /** The card's row shows its definition (a long one cut to three lines until the row
+   * is opened, then whole), so the card does not repeat it. */
+  wordsInRow?: boolean;
+  /** The drug's name as the claim writes it, for a reason that names the drug: the
+   * source writes it in capitals. */
+  drugAs?: string;
 }
 
-const { card, sources, label = card.label } = Astro.props;
+const { card, sources, label = card.label, wordsInRow = false, drugAs } = Astro.props;
+// A reason that names the drug names it as the claim does, as the drug's own row does.
+const reasons = reasonTexts({
+  ...card,
+  reasons: card.reasons.map((reason) =>
+    drugAs && reason.code === "drug_record_names_target" && reason.name?.toLowerCase() === drugAs.toLowerCase()
+      ? { ...reason, name: drugAs }
+      : reason,
+  ),
+});
 const source = sources.find((each) => each.name === card.source)!;
 // The source a definition's words are from, when it is not the card's own source.
 const wordsBy =
@@ -79,7 +93,7 @@ const day = (stamp: string) =>
           <p class="entry-note">{NO_MECHANISM}</p>
         )}
       </div>
-    ) : card.definition ? (
+    ) : card.definition && wordsInRow ? null : card.definition ? (
       <div class="card-words">
         <p class="card-words-label">{isTarget ? TARGET_DEFINITION_LABEL : DEFINITION_LABEL}</p>
         <blockquote cite={card.url}>{card.definition}</blockquote>
@@ -117,8 +131,8 @@ const day = (stamp: string) =>
     }
   </p>
   <div class="match-why">
-    <p class="match-why-head">{scoreLabel(card, matchNote)}</p>
-    {reasonTexts(card).map((reason) => <p>{reason}</p>)}
+    <p class="match-why-head">{MATCH_WHY_HEAD}</p>
+    {reasons.map((reason) => <p>{reason}</p>)}
     {card.reasons.length === 0 && <p>{NO_REASON}</p>}
   </div>
   {note && <p class="term-note">{note}</p>}

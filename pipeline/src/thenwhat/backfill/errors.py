@@ -17,6 +17,14 @@ class NoAllowance(BackfillError):
     """A step's source has no configured allowance."""
 
 
+class KeysOutOfDate(BackfillError):
+    """Stored link leads were keyed under an earlier form of the address key."""
+
+
+class WorkInProgress(BackfillError):
+    """A step over the same records was at work a moment ago."""
+
+
 class SourceStop(Exception):
     """A source may not be asked right now. The run ends; the record stays due and no
     attempt is counted."""

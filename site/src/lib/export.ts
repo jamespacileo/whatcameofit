@@ -85,6 +85,22 @@ export interface ExportedTrialFacts {
   primary_outcomes_total: number;
   why_stopped: string | null;
   results: { outcomes: ExportedResultOutcome[]; outcomes_total: number } | null;
+  /** The record's arms in its order. Absent from an export made before change
+   * trials-by-phase; empty for a registry that lists none. */
+  arms?: ExportedArm[];
+}
+
+/** One arm of a trial, in the record's words. */
+export interface ExportedArm {
+  label: string | null;
+  kind:
+    | "experimental"
+    | "active_comparator"
+    | "placebo_comparator"
+    | "sham_comparator"
+    | "no_intervention"
+    | "other";
+  interventions: string[];
 }
 
 /** One trial behind a claim's approved events. Openspec trial-facts. */
@@ -122,6 +138,10 @@ export interface ExportedTrial {
   papers?: string[];
   /** Absent from an export made before openspec record-readings. */
   readings?: ExportedReading[];
+  /** Whether the claim's treatment is in the trial's experimental arm or only in its
+   * comparator arms, by an exact name match; null when the record cannot tell. Absent
+   * from an export made before change trials-by-phase. */
+  claim_arm?: "experimental" | "comparator" | null;
 }
 
 /** One role a paper plays for a claim. Openspec paper-facts. */

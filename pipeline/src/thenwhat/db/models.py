@@ -702,6 +702,9 @@ class LinkLead(Base):
     url: Mapped[str] = mapped_column(Text)
     # The address in the form the site compares addresses in: one lead per key.
     url_key: Mapped[str] = mapped_column(Text, unique=True)
+    # Which form of the key that is (`address.KEY_VERSION`). Leads keyed under an
+    # earlier form are brought up to date by `thenwhat backfill rekey-links`.
+    url_key_version: Mapped[int] = mapped_column(server_default=text("1"))
     outlet: Mapped[str] = mapped_column(Text, index=True)
     outlet_kind: Mapped[OutletKind] = mapped_column(_enum(OutletKind, "outlet_kind"))
     # The title the article was first shared under. Private: the operator labels from

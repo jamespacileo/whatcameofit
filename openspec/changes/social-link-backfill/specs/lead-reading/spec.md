@@ -230,7 +230,7 @@ When the read names an intervention and an indication that an existing claim cov
 - **THEN** it stays approved, and no field the operator reviewed is changed
 
 ### Requirement: The same story in other words
-When no existing claim has the read's intervention and indication as written, the claims whose intervention shares a name with the read's, followed by the claims that screening found named in the lead's title, SHALL be candidates, up to a fixed number. A rejected claim SHALL NOT be a candidate. A name is shared when a claim's intervention name or synonym equals one of the names the read gives, or when one sits whole inside the other, word for word. A decision SHALL say whether the article reports one of the candidates or none of them. It SHALL be shown each side's treatment and condition and nothing of the article's text. The article reports a candidate when the treatment is the same and the article's condition is the candidate's condition, a narrower form of it or a wider wording of it; a different condition is a different claim. The article SHALL be added to the candidate the decision gives the highest probability when two things hold: the probability that the article reports one of the candidates, which is one minus the probability the decision gives to none of them, is at or above the configured probability, 0.6 unless set; and that candidate's own probability is more than half. Otherwise a new claim SHALL be drafted. Being added SHALL change nothing of the claim that adding any article does not change: the claim keeps the indication and headline it was first given. The decision SHALL be logged.
+When no existing claim has the read's intervention and indication as written, the claims whose intervention shares a name with the read's, followed by the claims that screening found named in the lead's title, SHALL be candidates, up to a fixed number. A rejected claim SHALL NOT be a candidate. A name is shared when a claim's intervention name or synonym equals one of the names the read gives, or when one sits whole inside the other, word for word. A name is shared as well when one of the names the read gives equals, whole, a name the registry of substances gives the claim's substance in the record kept with the claim's intervention: what the registry calls the substance, any name it lists for it and has not withdrawn, or a development code. A word of one of those names SHALL NOT make a candidate. Claims found only this way SHALL be added after the candidates above and their fixed number, up to eight more, the claims for the read's condition first: none SHALL take the place of a claim that would be offered without them. This widens only which claims are offered; the decision and its two tests are unchanged. A decision SHALL say whether the article reports one of the candidates or none of them. It SHALL be shown each side's treatment and condition and nothing of the article's text. The article reports a candidate when the treatment is the same and the article's condition is the candidate's condition, a narrower form of it or a wider wording of it; a different condition is a different claim. The article SHALL be added to the candidate the decision gives the highest probability when two things hold: the probability that the article reports one of the candidates, which is one minus the probability the decision gives to none of them, is at or above the configured probability, 0.6 unless set; and that candidate's own probability is more than half. Otherwise a new claim SHALL be drafted. Being added SHALL change nothing of the claim that adding any article does not change: the claim keeps the indication and headline it was first given. The decision SHALL be logged.
 
 #### Scenario: The same story in another outlet's words
 - **WHEN** a claim exists for esketamine for major depressive disorder and suicidal thinking, and a lead's read names esketamine for treatment-resistant depression, and the decision gives that claim 0.9 and none of the candidates 0.1
@@ -267,6 +267,22 @@ When no existing claim has the read's intervention and indication as written, th
 #### Scenario: No claim shares the name
 - **WHEN** no claim's intervention shares a name with the read's and screening linked the lead's title to no claim
 - **THEN** no decision is asked and a new claim is drafted
+
+#### Scenario: A brand the registry of substances lists for a claim's substance
+- **WHEN** a claim was entered under a generic name, the record of its substance lists a brand, and a lead's read names only the brand for the claim's condition
+- **THEN** the claim is a candidate, shown under the name it was entered by, and the article is added to it when the decision says it is the same claim
+
+#### Scenario: A development code the registry lists
+- **WHEN** a read names a treatment by a code the registry of substances lists for a claim's substance
+- **THEN** that claim is a candidate
+
+#### Scenario: More claims under the substance than the decision was shown before
+- **WHEN** eight claims are found only through their substance's record and a ninth, newer claim shares the read's own name
+- **THEN** the ninth is still a candidate, and the eight are candidates beside it
+
+#### Scenario: Another treatment for the condition of a claim filed under a substance
+- **WHEN** a read names a treatment that shares only a word with one of the names of a claim's substance, for the same condition
+- **THEN** the claim is not a candidate, no decision is asked and a new claim is drafted
 
 #### Scenario: A claim screening found in the title
 - **WHEN** screening linked the lead's title to a claim whose intervention name the read does not share
@@ -429,3 +445,38 @@ A read SHALL draft no claim, and SHALL record the lead as not one treatment, whe
 #### Scenario: A condition that is not one condition of people
 - **WHEN** a read names DHA for "Cancer", or GS-441524 for feline infectious peritonitis
 - **THEN** no claim is drafted, and the lead says no one condition, or an animal's condition
+
+### Requirement: An outlet the reader has stopped is left until its wait is over
+When the page reader answers "not now" for a lead's page and states a wait longer than none, the read SHALL keep, for the lead's outlet, the time that wait ends, where every process and every later run sees it. Until that time a due lead of the outlet SHALL be left as "not now" leaves it (no outcome, no attempt, still due) without a request to the reader and without a request taken from its allowance. After that time the outlet SHALL be asked again. A hold SHALL NOT be shortened by a later answer that states a shorter wait. A stated wait longer than 24 hours SHALL be read as 24 hours, and no stated wait SHALL end a run: the reader documents waits of at most six hours, so a longer one is a unit mistaken or a sentinel. From the look at an outlet's hold to the reader's answer for its page, and the keeping of any hold that answer brings, one worker at a time SHALL have the outlet's turn, among every worker of every process: a worker that waited for the turn finds the hold and asks nothing. A "not now" carried on HTTP 429 SHALL be read as the reader's answer about the outlet however long its wait, never as the reader being overloaded. Whether and when an outlet is asked stays the reader's decision (ADR 0006): the hold only keeps the reader's own answer for as long as the reader said. `thenwhat backfill plan` SHALL say how many due leads are held, outlet by outlet, and until when. The hold SHALL bind every command that asks the reader for many articles: `thenwhat statements` SHALL not ask for an article of a held outlet and SHALL say until when it is held, and `thenwhat outlets` SHALL record such an article as held without asking. Each SHALL keep the hold when the reader's "not now" states a wait. A held outlet is no failure of a command: `thenwhat statements` SHALL say the article was left for later and SHALL exit 0 when nothing else went wrong. `thenwhat prepare` SHALL read a claim's unread articles the same way (`thenwhat extract article --unless-held`): an article of a held outlet, or one whose outlet the reader stops at that request, SHALL be reported as left for later and not as a failed step, the claim's other steps SHALL still run, and a claim a read drafted SHALL NOT be decided until a later run has read the article. `thenwhat extract article` without that option, `thenwhat extract new` and `thenwhat lookup` read one address the operator gives and SHALL ask the reader whatever it said before.
+
+#### Scenario: An outlet the reader has stopped is left until its wait is over
+- **WHEN** the reader answers "not now" with a wait of two hours for one lead of an outlet, and four more of the outlet's leads are due
+- **THEN** no other request is made for that outlet in the run, and a run an hour later makes none either and counts no attempt
+
+#### Scenario: The wait is over
+- **WHEN** the two hours have passed and a run starts
+- **THEN** the outlet's leads are asked of the reader again
+
+#### Scenario: Another outlet meanwhile
+- **WHEN** one outlet is held and a lead of another outlet is due
+- **THEN** the other outlet's lead is read as usual
+
+#### Scenario: Two workers, one stopped outlet
+- **WHEN** one worker's request for an outlet's page is in flight and another worker holds a due lead of that outlet
+- **THEN** the second worker waits, and when the first answer was "not now" with a wait it makes no request
+
+#### Scenario: A wait no reader means
+- **WHEN** the reader answers "not now" with a wait of 86,400,000 seconds
+- **THEN** the outlet is held for 24 hours and the run goes on
+
+#### Scenario: A stopped outlet is held for every command that reads articles
+- **WHEN** an outlet is held and `thenwhat statements` or `thenwhat outlets` comes to one of its articles
+- **THEN** the reader is not asked for it, and the command says the outlet is held
+
+#### Scenario: Prepare comes to an article of a stopped outlet
+- **WHEN** `thenwhat prepare` works on a claim with an unread article of a held outlet
+- **THEN** the reader is not asked for it, the article is reported as left for later, the claim's registries are still searched, and the claim keeps awaiting review
+
+#### Scenario: The plan says what is held
+- **WHEN** an outlet is held and has four leads due
+- **THEN** the plan names the outlet, the four leads and the time the hold ends

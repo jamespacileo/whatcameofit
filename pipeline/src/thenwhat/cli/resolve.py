@@ -47,13 +47,21 @@ from thenwhat.resolve.service import (
     rescore_claim,
     resolve_claim,
 )
-from thenwhat.sources.base import UnsearchableTerm
+from thenwhat.sources.base import (
+    MissingContact,
+    MissingKey,
+    SourceError,
+    TermsNotRecorded,
+    UnsearchableTerm,
+)
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
 from thenwhat.sources.gsrs import Gsrs
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
+from thenwhat.sources.rxnorm import RxNorm
+from thenwhat.sources.terms import SOURCES
 
 entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no_args_is_help=True)
 
@@ -115,25 +123,56 @@ def make_substances(session: Session) -> Substances:
     return Gsrs(session, contact_email=settings_or_exit().contact_email)
 
 
+def make_brands(session: Session) -> Substances | None:
+    """The source of brands, or None when the list of sources does not record its terms
+    as accepted by the operator: a source whose terms are read but not accepted is not
+    asked."""
+    if not SOURCES[RxNorm.name].accepted:
+        return None
+    return RxNorm(session, contact_email=settings_or_exit().contact_email)
+
+
+# What each source of substances is called in a line to the operator.
+SOURCE_TITLES = {Gsrs.name: "GSRS", RxNorm.name: "RxNorm"}
+
+
 def say_codes(slug: str, answer: Codes) -> None:
-    """One line on what the registry of substances lists for a claim's intervention.
-    An intervention it does not list is said to have no code; none is guessed."""
+    """One line on what the registry of substances lists for a claim's intervention,
+    naming the source that answered. An intervention it does not list is said to have
+    no code; none is guessed."""
     name = answer.asked
+    titles = [SOURCE_TITLES.get(source, source) for source in answer.sources] or ["GSRS"]
+    first, by = titles[0], titles[-1]
+    # The registry of substances listed nothing, and the source of brands was asked.
+    fell_back = len(titles) > 1
+    nothing = f"{first} lists no substance named '{name}'"
     if answer.listing is Listing.NOT_LISTED:
-        said = f"GSRS lists no substance named '{name}'. No development code was added."
+        also = f", and {by} lists no brand of that name" if fell_back else ""
+        said = f"{nothing}{also}. No development code was added."
+    elif fell_back and answer.listing is Listing.SEVERAL_SUBSTANCES:
+        said = (
+            f"{nothing}. {by} lists it as a brand of more than one ingredient"
+            f" ({'; '.join(answer.substances)}), so none was taken. No development code"
+            " was added."
+        )
+    elif fell_back:
+        said = (
+            f"{nothing}. {by} lists it as a brand of {answer.substances[0]}, which is"
+            " searched as a name. No development code was added."
+        )
     elif answer.listing is Listing.SEVERAL_SUBSTANCES:
         said = (
-            f"GSRS lists the names of '{name}' under more than one substance"
+            f"{by} lists the names of '{name}' under more than one substance"
             f" ({'; '.join(answer.substances)}). No development code was added."
         )
     elif answer.codes:
         said = (
-            f"GSRS lists '{name}' as {answer.substances[0]}, with the development"
+            f"{by} lists '{name}' as {answer.substances[0]}, with the development"
             f" code(s): {', '.join(answer.codes)}. Each is searched within the indication."
         )
     else:
         said = (
-            f"GSRS lists '{name}' as {answer.substances[0]}, with no development code"
+            f"{by} lists '{name}' as {answer.substances[0]}, with no development code"
             " beyond its names."
         )
     out.print(f"{slug}: {said}", markup=False)
@@ -249,7 +288,8 @@ def entity_codes(
     every: Annotated[bool, typer.Option("--all", help="Every claim.")] = False,
 ) -> None:
     """Look each claim's intervention up in the substance registry (GSRS) and keep the
-    development codes it lists, such as CIN-107 for baxdrostat.
+    development codes it lists, such as CIN-107 for baxdrostat. A brand GSRS does not
+    list is asked of RxNorm, which gives its one ingredient as a name to search for.
 
     A code is kept only when the registry lists the intervention's names, letter for
     letter, under exactly one substance. Nothing is matched loosely and no model is
@@ -263,20 +303,49 @@ def entity_codes(
             claims = [claim_by_slug(session, slug) for slug in slugs]
         else:
             claims = list(session.scalars(select(Claim).order_by(Claim.slug)))
-        substances = make_substances(session)
-        listed = coded = 0
+        substances, brands = make_substances(session), make_brands(session)
+        if brands is None:
+            out.print(
+                "RxNorm is not asked about brands: its terms are not accepted (docs/sources.md)."
+            )
+        listed = coded = by_brand = failed = 0
         for claim in claims:
-            answer = give_development_codes(session, claim, substances=substances)
+            try:
+                # In a savepoint, so a source that fails leaves this claim as it was.
+                with session.begin_nested():
+                    answer = give_development_codes(
+                        session, claim, substances=substances, brands=brands
+                    )
+            except (MissingContact, MissingKey, TermsNotRecorded):
+                # The setup is wrong, not the source: no claim could be looked up.
+                raise
+            except SourceError as not_asked:
+                failed += 1
+                err.print(
+                    f"{claim.slug}: development codes were not looked up: {not_asked}",
+                    markup=False,
+                )
+                continue
             if answer is None:
                 out.print(f"{claim.slug}: the claim has no intervention.", markup=False)
                 continue
             say_codes(claim.slug, answer)
-            listed += answer.listing is Listing.ONE_SUBSTANCE
+            one = answer.listing is Listing.ONE_SUBSTANCE
+            listed += one and answer.source == Gsrs.name
+            by_brand += one and answer.source == RxNorm.name
             coded += bool(answer.codes)
         out.print(
             f"{len(claims)} claims: GSRS lists the intervention of {listed} under one"
             f" substance, and gave {coded} of them at least one development code."
+            f" RxNorm lists {by_brand} more as a brand of one ingredient."
         )
+    # Outside the session, so what was kept for the other claims is not undone.
+    if failed:
+        err.print(
+            f"{failed} were not looked up, and what was kept for them is unchanged."
+            " Run this again for them."
+        )
+        raise typer.Exit(code=1)
 
 
 @entity_app.command("people")
@@ -574,7 +643,12 @@ def resolve_command(
         codes = _step(
             session,
             "Development codes were not looked up",
-            lambda: give_development_codes(session, claim, substances=make_substances(session)),
+            lambda: give_development_codes(
+                session,
+                claim,
+                substances=make_substances(session),
+                brands=make_brands(session),
+            ),
         )
         if codes is not None:
             say_codes(claim.slug, codes)

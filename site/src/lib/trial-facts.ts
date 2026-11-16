@@ -10,7 +10,7 @@ import type {
   ExportedTrial,
   ExportedTrialFacts,
 } from "./export";
-import type { ExportedEvent } from "./export";
+import type { ExportedArm, ExportedEvent } from "./export";
 import { assertNeutral } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
@@ -108,7 +108,7 @@ const BASIS_WORDS: Record<string, string> = {
 
 /** What the section says of itself, once, above the trials. */
 export const TRIALS_NOTE =
-  "Each trial on record for this treatment and condition, furthest phase first. The facts are a selection, unaltered, from the trial's registry record. Results are the numbers the trial's sponsor posted to the registry. A score is about the match, not about the treatment.";
+  "Each trial on record for this treatment and condition: those that have posted results first, then the rest by furthest phase. The facts are a selection, unaltered, from the trial's registry record. Results are the numbers the trial's sponsor posted to the registry. A score is about the match, not about the treatment.";
 
 export const NO_P_VALUE = "Comparison posted with no p value";
 
@@ -214,6 +214,123 @@ export function sizeText(stated: { count: number; basis: string } | null): strin
   return stated.basis === "planned" ? `${people} planned` : people;
 }
 
+/** What the trial compared with, by the names its record gives its comparator arms:
+ * "Fluticasone and placebo". An "active comparator" arm counts only beside an
+ * experimental arm, as for the comparator codes. Null when no arm names one. */
+export function comparedNames(arms: ExportedArm[], shown = 2): string | null {
+  const tested = arms.some((arm) => arm.kind === "experimental");
+  const names = [
+    ...new Set(
+      arms
+        .filter((arm) =>
+          arm.kind === "active_comparator"
+            ? tested
+            : ["placebo_comparator", "sham_comparator", "no_intervention"].includes(arm.kind),
+        )
+        .flatMap((arm) =>
+          arm.interventions.length > 0
+            ? arm.interventions
+            : arm.kind === "no_intervention"
+              ? [COMPARATOR_WORDS.no_treatment]
+              : arm.label
+                ? [arm.label]
+                : [],
+        ),
+    ),
+  ];
+  if (names.length === 0) return null;
+  const listed = names.slice(0, shown);
+  const more = names.length - listed.length;
+  const text = more > 0 ? `${listed.join(", ")} and ${more} more` : listed.join(" and ");
+  return `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
+}
+
+/** What the trial tests, by its experimental arms' interventions: "Mometasone". */
+export function testedNames(arms: ExportedArm[]): string | null {
+  const names = [
+    ...new Set(arms.filter((arm) => arm.kind === "experimental").flatMap((arm) => arm.interventions)),
+  ];
+  return names.length > 0 ? names.slice(0, 2).join(" and ") : null;
+}
+
+/** Registry abbreviations a trial's main measure often uses, said plainly. Shown under
+ * the registry's own words, which stay as written. Whole words only, case as listed. */
+export const MEASURE_ABBREVIATIONS: Record<string, string> = {
+  OS: "overall survival, how long people lived",
+  PFS: "progression-free survival, the time before the illness grew or got worse",
+  EFS: "event-free survival, the time before a set event such as the illness returning",
+  DFS: "disease-free survival, the time with no sign of the illness",
+  ORR: "objective response rate, the share whose tumours shrank by a set amount",
+  pCR: "pathological complete response, no cancer found in tissue removed after treatment",
+  TEAE: "side effects that began or worsened during treatment",
+  TEAEs: "side effects that began or worsened during treatment",
+  AE: "adverse event, any unwanted medical event",
+  AEs: "adverse events, any unwanted medical events",
+  SAE: "serious adverse event",
+  SAEs: "serious adverse events",
+  DLT: "dose-limiting toxicity, a side effect serious enough to limit the dose",
+  DLTs: "dose-limiting toxicities, side effects serious enough to limit the dose",
+  RECIST: "standard rules for measuring tumour size",
+  IRRC: "an independent review committee",
+  BICR: "an independent review committee",
+  HbA1c: "average blood sugar over about three months",
+  FEV1: "how much air a person can blow out in one second",
+  MACE: "major heart and circulation events",
+};
+
+assertNoOutcomeVerdict(Object.values(MEASURE_ABBREVIATIONS));
+
+/** The abbreviations a measure's text uses, in the order they first appear, each said
+ * once: "PFS: progression-free survival, …". */
+export function measureGlosses(text: string): string[] {
+  const found = new Map<string, string>();
+  for (const word of text.match(/[A-Za-z][A-Za-z0-9]*/g) ?? []) {
+    const plain = MEASURE_ABBREVIATIONS[word];
+    if (plain && ![...found.values()].includes(plain)) found.set(word, plain);
+  }
+  return [...found.entries()].map(([word, plain]) => `${word}: ${plain}`);
+}
+
+/** How many trials of one phase are shown before the rest of that phase fold away. */
+export const TRIALS_PER_PHASE = 10;
+
+export const NO_PHASE_GROUP = "No phase given";
+export const RESULTS_GROUP = "Results posted";
+
+export interface PhaseGroup {
+  /** "Results posted", "Phase 3", "Phase 2, including Phase 1/Phase 2", or "No phase given". */
+  name: string;
+  /** In the order `orderTrials` gives them. */
+  trials: ExportedTrial[];
+  /** More than one phase wording in the group, so each row names its own. */
+  mixed: boolean;
+}
+
+/** Ordered trials in groups: first every trial that has posted results, whatever its
+ * phase, then the rest by furthest phase, furthest first. A trial of Phase 1/Phase 2 sits
+ * with Phase 2. A trial with no phase, or "not applicable", is in the last group. */
+export function phaseGroups(trials: ExportedTrial[]): PhaseGroup[] {
+  const ordered = orderTrials(trials);
+  const posted = ordered.filter((trial) => trial.facts?.results);
+  const byRank = new Map<number, ExportedTrial[]>();
+  for (const trial of ordered) {
+    if (trial.facts?.results) continue;
+    const rank = Math.max(0, phaseRank(trial));
+    byRank.set(rank, [...(byRank.get(rank) ?? []), trial]);
+  }
+  const phases = [...byRank.entries()]
+    .sort(([a], [b]) => b - a)
+    .map(([rank, members]) => {
+      if (rank === 0) return { name: NO_PHASE_GROUP, trials: members, mixed: false };
+      const words = [
+        ...new Set(members.map((trial) => phaseText(trial.phases.filter((code) => code !== "not_applicable"))!)),
+      ].sort((a, b) => a.length - b.length || (a < b ? -1 : 1));
+      const name = words.length > 1 ? `${words[0]}, including ${words.slice(1).join(" and ")}` : words[0];
+      return { name, trials: members, mixed: words.length > 1 };
+    });
+  return posted.length > 0 ? [{ name: RESULTS_GROUP, trials: posted, mixed: true }, ...phases] : phases;
+}
+
 /** "83 participants enrolled" or "400 participants planned". */
 export function participantsText(facts: ExportedTrialFacts | null): string | null {
   const stated = facts?.participants;
@@ -304,8 +421,6 @@ export function isPaperMatch(match: { source_name: string }): boolean {
 }
 
 /** How many trials the page shows before the rest go behind one press. */
-export const TRIALS_SHOWN = 5;
-
 // A trial's entry in plain words (openspec site-publishing, change plain-trial-entries):
 // a heading a lay reader can read, the design and state said plainly, and posted results
 // as a table. The registry's exact terms stay one press away, in the entry's fold.

@@ -18,6 +18,7 @@ from backfill_support import NOW, ModelStep, QuietStep, add_trials, same_session
 from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
+from thenwhat.backfill.registry_load import condition_of
 from thenwhat.cli import app
 from thenwhat.cli.backfill import _hours
 from thenwhat.config import SourceAllowance
@@ -403,6 +404,69 @@ def test_a_reddit_load_is_refused_while_no_community_is_configured(
     assert session.scalars(select(LinkLead)).all() == []
 
 
+# --- rekey-links -------------------------------------------------------------------------
+
+
+def earlier_lead(session: Session) -> LinkLead:
+    """A lead as the first form of the address key stored it."""
+    lead = LinkLead(
+        url="https://www.theguardian.com/science/a?mbid=synd_feed",
+        url_key="theguardian.com/science/a?mbid=synd_feed",
+        url_key_version=1,
+        outlet="theguardian.com",
+        outlet_kind=OutletKind.GENERAL_NEWS,
+        title="One",
+        first_shared_at=datetime(2019, 5, 3, 10, 30, tzinfo=UTC),
+    )
+    session.add(lead)
+    session.flush()
+    return lead
+
+
+def test_rekey_links_says_what_it_would_do_and_does_it_when_told(run, session: Session):
+    """Scenarios: Looking before bringing the leads up to date, A stored lead's key changes"""
+    lead = earlier_lead(session)
+
+    looked = run("rekey-links")
+    done = run("rekey-links", "--apply")
+
+    assert looked.exit_code == 0, looked.output
+    assert "1 link leads are keyed under an earlier form" in looked.output
+    assert "1 would get a new key" in looked.output
+    assert done.exit_code == 0, done.output
+    assert "Brought 1 link leads up to date: 0 kept their key, 1 got a new key" in done.output
+    session.refresh(lead)
+    assert lead.url_key == "theguardian.com/science/a"
+
+
+def test_rekey_links_is_refused_while_a_step_has_just_worked_on_a_lead(
+    run, session: Session, tmp_path: Path
+):
+    """Scenario: A run is under way"""
+    run("load-links", "hackernews", str(stories_file(tmp_path)))
+    run("run", "link_screen")
+
+    result = run("rekey-links", "--apply")
+
+    assert result.exit_code == 1
+    assert "Stop every run and load" in result.output
+
+
+def test_loading_and_link_steps_are_refused_until_the_leads_are_up_to_date(
+    run, session: Session, tmp_path: Path
+):
+    """Scenario: Loading before the stored leads are up to date"""
+    earlier_lead(session)
+
+    load = run("load-links", "hackernews", str(stories_file(tmp_path)))
+    step = run("run", "link_screen")
+
+    assert (load.exit_code, step.exit_code) == (1, 1)
+    assert "thenwhat backfill rekey-links --apply" in load.output
+    assert "thenwhat backfill rekey-links --apply" in step.output
+    assert len(session.scalars(select(LinkLead)).all()) == 1
+
+
 # --- links -------------------------------------------------------------------------------
 
 
@@ -762,9 +826,16 @@ def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
 
     assert result.exit_code == 1
     assert (
-        "No set of trials is named 'successful'. Sets: active-phase-2-3, phase-3." in result.output
+        "No set of trials is named 'successful'. Sets: active-phase-2-3, interventional, phase-3."
+        in result.output
     )
     assert session.scalars(select(RegistryTrial)).all() == []
+
+
+def test_the_set_of_every_trial_is_every_interventional_study():
+    """Every trial means every interventional study, whatever its phase, state or kind of
+    intervention; observational studies are not asked for."""
+    assert condition_of("interventional") == "AREA[StudyType]INTERVENTIONAL"
 
 
 def test_load_trials_refuses_a_set_and_a_condition_together(run):

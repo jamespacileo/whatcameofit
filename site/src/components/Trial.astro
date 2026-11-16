@@ -8,7 +8,7 @@
 // takes place or who may take part.
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import ExternalLink from "@lucide/astro/icons/external-link";
-import { confidenceLabel, matchWords, readingOf } from "../lib/confidence";
+import { matchWords, readingOf } from "../lib/confidence";
 import type { ExportedMatch, ExportedTrial } from "../lib/export";
 import { paperAnchor } from "../lib/paper-facts";
 import { measureWords } from "../lib/readings";
@@ -21,14 +21,17 @@ import {
   designText,
   measureLead,
   measureText,
+  comparedNames,
   phaseText,
+  RESULTS_POSTED,
+  testedNames,
   resultTable,
   sponsorText,
   studiedText,
   trialColumns,
   type TrialDates,
 } from "../lib/trial-facts";
-import TrialDetailsLink from "./TrialDetailsLink.astro";
+import { trialDetailsPath } from "../lib/trial-links.mjs";
 
 interface Props {
   trial: ExportedTrial;
@@ -38,9 +41,24 @@ interface Props {
   approach: string | null;
   /** When the trial finished and when it last posted results, from the claim's events. */
   dates: TrialDates;
+  /** Its phase group holds more than one phase wording, so the row names its own. */
+  showPhase?: boolean;
+  /** Its main measure's abbreviations said plainly, those not already said above it. */
+  glosses?: string[];
+  /** The claim's treatment, by name, for a trial that has it only as a comparison. */
+  treatment?: string;
 }
 
-const { trial, match, approach, dates } = Astro.props;
+const { trial, match, approach, dates, showPhase = false, glosses = [], treatment } = Astro.props;
+// What it was compared with, by the names its record gives its comparator arms; else in
+// the plain words for the kinds of comparator.
+const arms = trial.facts?.arms ?? [];
+const compared = comparedNames(arms);
+// The claim's treatment is what this trial compares with, not what it tests.
+const asComparison = trial.claim_arm === "comparator" ? testedNames(arms) : null;
+// Its own page on this site, where the registry's record is shown in full; else the registry.
+const local = trialDetailsPath(trial.url);
+const NO_SIZE = "Size not stated";
 // The papers its registry record names, each with an entry under "Papers on record".
 const papers = trial.papers ?? [];
 const facts = trial.facts;
@@ -64,6 +82,10 @@ const results = facts?.results ?? null;
 const planned = facts?.primary_outcomes ?? [];
 const morePlanned = (facts?.primary_outcomes_total ?? 0) - planned.length;
 const morePosted = results ? results.outcomes_total - results.outcomes.length : 0;
+// The row's main measure, in the registry's own words: the plain reading groups
+// measures (overall survival and progression-free survival read alike), so it stays
+// in the fold's sentence and the row keeps what tells trials apart.
+const mainMeasure = planned[0]?.measure ?? null;
 ---
 
 <div class="trial-group" role="rowgroup" id={`trial-${trial.trial_id}`}>
@@ -76,23 +98,39 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
         aria-controls={`trial-detail-${trial.trial_id}`}
       >
         <span class="chev" aria-hidden="true"><ChevronDown size={14} stroke-width={2.2} /></span>
-        <span class="trial-title">{columns.lead}</span>
+        <span class="trial-title">{columns.isTitle ? NO_SIZE : columns.lead}</span>
+        <span class="visually-hidden">: more from its record</span>
       </button>
-      <span class="trial-name">
-        {columns.phase && <span class="trial-phase">{columns.phase} · </span>}
-        <a href={trial.url} rel="noopener">
-          {trial.trial_id} at {registry}
-          <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
-        </a>
-        <TrialDetailsLink url={trial.url} />
-      </span>
     </div>
-    <div class="trial-cell" role="cell"><span class="lbl">Compared with</span>{columns.compared}</div>
     <div class="trial-cell" role="cell">
-      <span class="lbl">Design</span>{columns.design.length > 0 ? columns.design.join(" · ") : "Not stated in the record"}
+      <span class="lbl">Compared with</span>{compared ?? columns.compared}
+      {
+        asComparison && (
+          <span class="trial-by">
+            It tests {asComparison}; {treatment ?? "this treatment"} is what it is compared with.
+          </span>
+        )
+      }
     </div>
-    <div class="trial-cell" role="cell"><span class="lbl">State</span>{columns.state ?? "Not stated in the record"}</div>
-    <div class="trial-cell" role="cell"><span class="lbl">Results</span>{columns.results}</div>
+    <div class="trial-cell trial-measure" role="cell">
+      <span class="lbl">Main measure</span>
+      <span class="trial-measure-words">{mainMeasure ?? "Not stated in the record"}</span>
+      {glosses.length > 0 && <span class="trial-gloss">{glosses.join(" · ")}</span>}
+      {sponsor && <span class="trial-by">Run by {sponsor}</span>}
+    </div>
+    <div class="trial-cell" role="cell">
+      <span class="lbl">State</span>{columns.state ?? "Not stated in the record"}
+      {results && <span class="trial-posted">{RESULTS_POSTED}{columns.results.replace(/^Posted/, "")}</span>}
+    </div>
+    <div class="trial-cell trial-id" role="cell">
+      <span class="lbl">Trial</span>
+      <a href={local ?? trial.url} rel={local ? undefined : "noopener"}>
+        {trial.trial_id}
+        {!local && <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />}
+        <span class="visually-hidden">{local ? "(its record, on this site)" : `(at ${registry})`}</span>
+      </a>
+      {showPhase && columns.phase && <span class="trial-phase">{columns.phase}</span>}
+    </div>
   </div>
   <div class="trial-detail" role="row" id={`trial-detail-${trial.trial_id}`}>
     <div role="cell" aria-colspan="5">
@@ -104,7 +142,13 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
     )
   }
   <p class="entry-note trial-meta">
-    {match && <span class="unbroken">Match to this claim: {matchWords(match.score)}</span>}
+    {
+      match && (
+        <span>
+          <span class="unbroken">Match to this claim: {matchWords(match.score)}</span>. {readingOf(match.reading)}
+        </span>
+      )
+    }
     {
       papers.length > 0 && (
         <a class="unbroken" href={`#${paperAnchor(papers[0])}`}>
@@ -120,6 +164,14 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
       )
     }
     {measuredPhrase && <span>What it measured was read by a model and checked against the record</span>}
+    {
+      trial.url && (
+        <a class="unbroken" href={trial.url} rel="noopener">
+          {trial.trial_id} at {registry}
+          <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
+        </a>
+      )
+    }
   </p>
     <dl class="trial-facts">
       {
@@ -127,14 +179,6 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
           <div>
             <dt>Who took part</dt>
             <dd>{studied}</dd>
-          </div>
-        )
-      }
-      {
-        sponsor && (
-          <div>
-            <dt>Run by</dt>
-            <dd>{sponsor}</dd>
           </div>
         )
       }
@@ -147,21 +191,20 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
         )
       }
       {
-        trial.title && !columns.isTitle && (
+        trial.title && (
           <div>
             <dt>The registry's title</dt>
             <dd>{trial.title}</dd>
           </div>
         )
       }
-      {
-        design && (
-          <div>
-            <dt>Design, in the registry's terms</dt>
-            <dd>{design}</dd>
-          </div>
-        )
-      }
+      <div>
+        <dt>Design</dt>
+        <dd>
+          {columns.design.length > 0 ? columns.design.join(" · ") : "Not stated in the record"}
+          {design && <span class="entry-note">In the registry's terms: {design}</span>}
+        </dd>
+      </div>
       <div>
         <dt>Phase</dt>
         <dd>
@@ -283,17 +326,6 @@ const morePosted = results ? results.outcomes_total - results.outcomes.length : 
                   See the {registry} record
                 </a>
               </p>
-            </dd>
-          </div>
-        )
-      }
-      {
-        match && (
-          <div>
-            <dt>How sure the match is</dt>
-            <dd>
-              {confidenceLabel(match.score)}
-              <span class="entry-note">{readingOf(match.reading)}</span>
             </dd>
           </div>
         )

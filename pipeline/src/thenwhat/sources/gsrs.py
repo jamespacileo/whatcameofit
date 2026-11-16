@@ -48,12 +48,21 @@ def codes_of(record: SourceRecord) -> list[str]:
     return list(dict.fromkeys(code for code in codes if code))
 
 
+def name_of(record: SourceRecord) -> str:
+    """What GSRS calls the substance, or its identifier when it gives no name."""
+    substance = record.payload.get("substance") or {}
+    return " ".join(str(substance.get("_name") or record.external_id).split())
+
+
 def label_of(record: SourceRecord) -> str:
-    """What GSRS calls the substance, with its Unique Ingredient Identifier when it has one."""
+    """What the source calls the substance, with its Unique Ingredient Identifier when
+    GSRS gives one, or its RxNorm concept identifier when it is an RxNorm ingredient."""
     substance = record.payload.get("substance") or {}
     name = str(substance.get("_name") or record.external_id)
-    unii = substance.get("approvalID")
-    return f"{name} (UNII {unii})" if unii else name
+    unii, rxcui = substance.get("approvalID"), substance.get("rxcui")
+    if unii:
+        return f"{name} (UNII {unii})"
+    return f"{name} (RxCUI {rxcui})" if rxcui else name
 
 
 class Gsrs(Source):

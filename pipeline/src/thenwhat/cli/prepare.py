@@ -9,6 +9,7 @@ from typing import Annotated
 
 import typer
 
+from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
 from thenwhat.claims.entry import find_claim
 from thenwhat.claims.mesh_areas import suggestion_line
 from thenwhat.cli.console import err, out
@@ -26,14 +27,14 @@ from thenwhat.prepare import (
 )
 
 
-def run_step(arguments: list[str]) -> tuple[bool, str]:
+def run_step(arguments: list[str]) -> tuple[int, str]:
     """Run one command of this program on its own, so each has its own transaction and a
-    failure stays with its claim. Returns whether it succeeded and its last line."""
+    failure stays with its claim. Returns what it exited with and its last line."""
     done = subprocess.run(
         [sys.argv[0], *arguments], capture_output=True, text=True, stdin=subprocess.DEVNULL
     )
     lines = [line.strip() for line in (done.stdout + done.stderr).splitlines() if line.strip()]
-    return done.returncode == 0, lines[-1] if lines else ""
+    return done.returncode, lines[-1] if lines else ""
 
 
 def _prepare(plan: ClaimPlan) -> list[str]:
@@ -47,16 +48,23 @@ def _prepare_measured(plan: ClaimPlan, span: measure.Running) -> list[str]:
     every_step_succeeded = True
     for step in steps_for(plan):
         step_started = time.monotonic()
-        succeeded, said = run_step(step)
+        exited, said = run_step(step)
+        succeeded = exited == 0
+        # An article whose outlet the page reader has stopped is left for later: not a
+        # failed step, but the claim is not decided until a later run has read it.
+        left_for_later = step[0] == "extract" and exited == LEFT_FOR_LATER
         if step[0] not in NOT_NEEDED_TO_DECIDE:
             every_step_succeeded = every_step_succeeded and succeeded
         name = "read" if step[0] == "extract" else step[0]
         # The step ran as its own process and measured itself: its time is its own.
         span.add_inner(time.monotonic() - step_started)
         took = f"{time.monotonic() - step_started:.0f}s"
-        report.append(
-            f"  {name} ({took}): {said}" if succeeded else f"  {name} failed ({took}): {said}"
-        )
+        if left_for_later:
+            report.append(f"  {name} left for later ({took}): {said}")
+        else:
+            report.append(
+                f"  {name} ({took}): {said}" if succeeded else f"  {name} failed ({took}): {said}"
+            )
     with entry_session() as session:
         claim = find_claim(session, plan.slug)
         if claim is not None:
@@ -96,7 +104,9 @@ def prepare_command(
     into record readings, and propose subject terms, which background cards come from.
 
     Claims are worked on side by side. A step that fails is reported and the claim's
-    other steps still run. Nothing is approved here beyond what those steps approve by
+    other steps still run. An article whose outlet the page reader has said cannot be
+    asked yet is left for later, which is no failure; its claim is decided once a later
+    run has read it. Nothing is approved here beyond what those steps approve by
     rule, with one exception: a claim that a link lead's read drafted is decided by the
     rule for drafts once every step for it has succeeded, the terms step aside.
     """

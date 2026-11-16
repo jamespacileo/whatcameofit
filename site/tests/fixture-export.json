@@ -406,7 +406,23 @@
                   "comparisons": []
                 }
               ]
-            }
+            },
+            "arms": [
+              {
+                "label": "Treatment",
+                "kind": "experimental",
+                "interventions": [
+                  "phase-claim agent"
+                ]
+              },
+              {
+                "label": "Placebo",
+                "kind": "placebo_comparator",
+                "interventions": [
+                  "Placebo"
+                ]
+              }
+            ]
           },
           "papers": [
             "10.5555/synthetic.origin",
@@ -435,7 +451,8 @@
               "confidence": 0.97,
               "read_on": "2026-10-03T08:00:00Z"
             }
-          ]
+          ],
+          "claim_arm": "experimental"
         },
         {
           "trial_id": "NCT00000030",
@@ -455,7 +472,9 @@
             },
             "allocation": null,
             "masking": null,
-            "comparators": [],
+            "comparators": [
+              "active"
+            ],
             "healthy_volunteers": null,
             "age_groups": [],
             "sponsor": {
@@ -465,12 +484,29 @@
             "primary_outcomes": [],
             "primary_outcomes_total": 0,
             "why_stopped": null,
-            "results": null
+            "results": null,
+            "arms": [
+              {
+                "label": "Other agent",
+                "kind": "experimental",
+                "interventions": [
+                  "Synthetic other agent"
+                ]
+              },
+              {
+                "label": "Phase-claim agent",
+                "kind": "active_comparator",
+                "interventions": [
+                  "phase-claim agent"
+                ]
+              }
+            ]
           },
           "papers": [
             "pmid:90000003"
           ],
-          "readings": []
+          "readings": [],
+          "claim_arm": "comparator"
         },
         {
           "trial_id": "jRCT0000000011",

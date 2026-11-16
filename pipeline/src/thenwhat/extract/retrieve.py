@@ -13,7 +13,7 @@ import math
 import threading
 import time as system_time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -108,6 +108,8 @@ class Probe:
     # The site's HTTP status, as the reader reports it.
     status: int | None = None
     page: Page | None = None
+    # With NOT_NOW: the wait the reader stated. Not part of how the address answered.
+    retry_after_seconds: float | None = field(default=None, compare=False)
 
 
 # The reader answers 429 with a Retry-After when it is at capacity, which is not a
@@ -115,6 +117,11 @@ class Probe:
 # only for a wait this short. Anything longer or unstated ends the run as before.
 BUSY_TRIES = 5
 BUSY_WAIT_MOST = 120.0
+
+# The longest wait a "not now" is taken to state. The reader documents waits of at most
+# six hours; anything past a day is a unit mistaken or a sentinel, and is read as a day,
+# so no outlet is left for weeks and no time is computed that cannot be.
+WAIT_MOST = 24 * 60 * 60.0
 
 _turns: dict[int, threading.BoundedSemaphore] = {}
 _turns_lock = threading.Lock()
@@ -169,7 +176,7 @@ class ArticleRetriever:
         ReaderUnavailable when the reader itself could not be asked: that is not the
         outlet's answer."""
         data = self._ask(url)
-        return Probe(data.answer, data.status, data.page)
+        return Probe(data.answer, data.status, data.page, data.retry_after_seconds)
 
     def json(self, url: str) -> Any:
         """The JSON a platform's own interface for software serves at this address, or
@@ -264,7 +271,10 @@ def _answer_of(response: httpx.Response) -> _Answer:
         answered = response.json()
     except ValueError:
         answered = None
-    if isinstance(answered, dict) and answered.get("success") is False:
+    # A refusal carried on a 429 is still the reader's answer about the site, however
+    # long the wait it states: an outlet the reader has stopped for hours is not the
+    # reader being overloaded.
+    if isinstance(answered, dict) and answered.get("success") is not True:
         code = answered.get("code")
         reason = answered.get("reason")
         if code == NOT_ALLOWED_CODE and isinstance(reason, str) and reason.strip():
@@ -277,7 +287,11 @@ def _answer_of(response: httpx.Response) -> _Answer:
                 and math.isfinite(retry)
                 and retry >= 0
             ):
-                return _Answer(NOT_NOW, reason=reason.strip(), retry_after_seconds=float(retry))
+                return _Answer(
+                    NOT_NOW,
+                    reason=reason.strip(),
+                    retry_after_seconds=min(float(retry), WAIT_MOST),
+                )
             raise _unknown(response)
     if response.status_code in (401, 403):
         raise ReaderUnavailable(
