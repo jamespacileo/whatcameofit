@@ -20,6 +20,7 @@ from thenwhat.backfill.steps import (
     batch_size_of,
 )
 from thenwhat.domain import WorkOutcome
+from thenwhat.measure import spans as measure
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 # How many failures' errors a run's report carries. The ledger keeps every one.
@@ -87,6 +88,17 @@ def process_next(
     return _process_record(session, step, record, client, now)
 
 
+# How a measurement names a record that may not be worked on now.
+DEFERRED = "deferred"
+
+
+def _trace_of(record: Any) -> str | None:
+    """What a measurement says a record is: a link lead's address key. Other kinds of
+    record are measured without one."""
+    key = getattr(record, "url_key", None)
+    return key if isinstance(key, str) else None
+
+
 def _outcome_of(answer: "WorkOutcome | Failed") -> tuple[WorkOutcome, str | None]:
     """A step's answer as an outcome and its error. A failure the step returns keeps
     what the step wrote; one it raises does not."""
@@ -102,18 +114,22 @@ def _process_record(
     undoes what the step wrote for it and is recorded in the entry."""
     before = client.requests_made
     error: str | None = None
-    try:
-        with session.begin_nested():
-            answer = step.run(session, record, client)
-            if isinstance(answer, Deferred):
-                # Nothing is written for it: it stays due with its attempts unchanged.
-                return record.id, answer, answer.reason
-            outcome, error = _outcome_of(answer)
-    except SourceStop:
-        raise
-    except Exception as failure:  # one record's failure must not end the run
-        outcome = WorkOutcome.FAILED
-        error = f"{type(failure).__name__}: {failure}"[:2000]
+    with measure.measured(step.name, version=step.version, trace=_trace_of(record)) as span:
+        try:
+            with session.begin_nested():
+                answer = step.run(session, record, client)
+                if isinstance(answer, Deferred):
+                    # Nothing is written for it: it stays due with its attempts unchanged.
+                    span.ended(DEFERRED)
+                    return record.id, answer, answer.reason
+                outcome, error = _outcome_of(answer)
+        except SourceStop:
+            raise
+        except Exception as failure:  # one record's failure must not end the run
+            outcome = WorkOutcome.FAILED
+            error = f"{type(failure).__name__}: {failure}"[:2000]
+            span.span.error_kind = type(failure).__name__
+        span.ended(outcome.value)
     record_outcome(
         session,
         step,
@@ -168,8 +184,13 @@ def process_batch(
     if not held:
         return processed
     before = client.requests_made
+    traces = [trace for record in held if (trace := _trace_of(record)) is not None]
     try:
-        with session.begin_nested():
+        # One call answers for all of them, so it is one measurement that names each.
+        with (
+            measure.measured(step.name, version=step.version, batch=len(held), traces=traces),
+            session.begin_nested(),
+        ):
             outcomes = list(cast(BatchStep, step).run_many(session, held, client))
             if len(outcomes) != len(held):
                 raise ValueError(f"The step answered for {len(outcomes)} of {len(held)} records.")

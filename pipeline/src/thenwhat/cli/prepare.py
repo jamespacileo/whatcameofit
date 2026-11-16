@@ -15,6 +15,7 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import ReviewState
+from thenwhat.measure import spans as measure
 from thenwhat.prepare import (
     NOT_NEEDED_TO_DECIDE,
     ClaimPlan,
@@ -36,6 +37,11 @@ def run_step(arguments: list[str]) -> tuple[bool, str]:
 
 
 def _prepare(plan: ClaimPlan) -> list[str]:
+    with measure.measured("prepare", trace=measure.claim_trace(plan.slug)) as span:
+        return _prepare_measured(plan, span)
+
+
+def _prepare_measured(plan: ClaimPlan, span: measure.Running) -> list[str]:
     started = time.monotonic()
     report: list[str] = []
     every_step_succeeded = True
@@ -45,6 +51,8 @@ def _prepare(plan: ClaimPlan) -> list[str]:
         if step[0] not in NOT_NEEDED_TO_DECIDE:
             every_step_succeeded = every_step_succeeded and succeeded
         name = "read" if step[0] == "extract" else step[0]
+        # The step ran as its own process and measured itself: its time is its own.
+        span.add_inner(time.monotonic() - step_started)
         took = f"{time.monotonic() - step_started:.0f}s"
         report.append(
             f"  {name} ({took}): {said}" if succeeded else f"  {name} failed ({took}): {said}"

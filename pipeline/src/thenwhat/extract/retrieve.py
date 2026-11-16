@@ -11,6 +11,7 @@ The text is returned to the caller and kept nowhere: not cached, not logged.
 
 import math
 import threading
+import time as system_time
 from dataclasses import dataclass
 from typing import Any
 
@@ -18,6 +19,7 @@ import httpx
 
 from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.extract.page import BODY_FROM, Page, read_page
+from thenwhat.measure import spans as measure
 from thenwhat.sources.base import require_contact, user_agent
 
 # The name the read step's allowance is kept under.
@@ -36,6 +38,10 @@ READ = "read"
 NOT_ALLOWED = "not_allowed"
 NOT_NOW = "not_now"
 NOT_SERVED = "not_served"
+
+
+# The name the page reader goes by in allowances and in measurements.
+READER_SOURCE = "reader"
 
 
 class PasteNeeded(Exception):
@@ -180,7 +186,11 @@ class ArticleRetriever:
             "storeInCache": False,
         }
         headers = {"Authorization": f"Bearer {self._key}"}
+        began = system_time.monotonic()
         with self._turns:
+            # Time spent waiting for one of the reader's turns is waiting, not reading.
+            measure.add_wait(READER_SOURCE, system_time.monotonic() - began)
+            measure.add_request(READER_SOURCE)
             try:
                 response = self._reader.post(self._scrape, json=body, headers=headers)
             except httpx.TimeoutException:

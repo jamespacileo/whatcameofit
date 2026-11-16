@@ -63,6 +63,7 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.config import Settings, SourceAllowance
 from thenwhat.domain import Decider, LeadVerdict, OutletKind
+from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 
@@ -176,21 +177,33 @@ def _dollars(amount: Decimal) -> str:
     return f"${amount.quantize(Decimal('0.01'))}"
 
 
-def _spend_line(session: Session, settings: Settings, spend: ModelSpend, due: int) -> str:
+def _spend_line(
+    session: Session, settings: Settings, spend: ModelSpend, due: int, step_name: str
+) -> str:
     """What a model step's due records would cost beside what is left of the month's
-    ceiling. No cost is given while a price is not configured."""
+    ceiling. The cost of a record is the measured one where a week or more of
+    measurements exist for the step, and the step's own estimate otherwise. No cost is
+    given while a price is not configured."""
     try:
         prices = prices_for(settings, spend.door)
     except PricesNotSet as missing:
         return f"  calls a model: no cost can be given, {missing}"
-    cost = cost_of(spend, prices, due)
-    left = left_this_month(session, settings, datetime.now(UTC))
+    now = datetime.now(UTC)
+    measured = measured_cost_of_a_record(session, step_name, today=now.date())
+    left = left_this_month(session, settings, now)
+    if measured is not None:
+        cost = measured.per_record * due
+        basis = f"measured over {measured.days} days"
+        covered = None if measured.per_record <= 0 else int(left // measured.per_record)
+    else:
+        cost = cost_of(spend, prices, due)
+        basis = "estimated"
+        covered = records_covered(spend, prices, left)
     line = (
-        f"  calls a model: the due records need about {_dollars(cost)}; "
+        f"  calls a model: the due records need about {_dollars(cost)} ({basis}); "
         f"{_dollars(left)} of the month's {_dollars(settings.llm_monthly_budget_usd)} "
         "ceiling is left"
     )
-    covered = records_covered(spend, prices, left)
     if covered is None or covered >= due:
         return f"{line}, which covers them all"
     return f"{line}, which covers {covered:,} of the {due:,} due records"
@@ -252,7 +265,10 @@ def plan_command() -> None:
                     out.print("  asks no source: the due records need 0 requests", markup=False)
                 spend = model_spend_of(step)
                 if spend is not None:
-                    out.print(_spend_line(session, settings, spend, counts.due), markup=False)
+                    out.print(
+                        _spend_line(session, settings, spend, counts.due, step.name),
+                        markup=False,
+                    )
                 if counts.needs_attention:
                     out.print(
                         f"  {counts.needs_attention:,} failed "

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import DecisionLog
 from thenwhat.llm.errors import LlmCallFailed, LlmError
+from thenwhat.measure import spans as measure
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
@@ -23,6 +24,10 @@ SUM_TOLERANCE = 1e-6
 RESCALE_WITHIN = 0.1
 # How many items a backend is asked about in one call.
 BATCH_SIZE = 20
+
+
+# What a decision's measurement is named: this, then the decision's own name.
+DECISION = "decision:"
 
 
 def rescaled(probabilities: dict[str, float]) -> dict[str, float]:
@@ -89,6 +94,32 @@ def decide(
     now: datetime,
 ) -> Decision:
     """Ask the backend to choose one of the options, and log the call whatever happens."""
+    with measure.measured(f"{DECISION}{step}") as span:
+        try:
+            return _decide(
+                session,
+                backend,
+                step=step,
+                state=state,
+                options=options,
+                input_ref=input_ref,
+                now=now,
+            )
+        except DecisionFailed:
+            span.ended(measure.FAILED)
+            raise
+
+
+def _decide(
+    session: Session,
+    backend: Backend,
+    *,
+    step: str,
+    state: str,
+    options: Sequence[str],
+    input_ref: str,
+    now: datetime,
+) -> Decision:
     offered = list(options)
     entry = DecisionLog(
         step=step, input_ref=input_ref, backend=backend.name, options=offered, created_at=now
@@ -155,7 +186,9 @@ def decide_many(
         failure: str | None = None
         unreachable = False
         try:
-            answers = answer_many(step, intro, question, [text for _, text in batch], offered)
+            # One call for the whole batch: measured once, inside the step that asked.
+            with measure.measured(f"{DECISION}{step}", batch=len(batch)):
+                answers = answer_many(step, intro, question, [text for _, text in batch], offered)
         except LlmError as error:
             failure = str(error)
             unreachable = isinstance(error, LlmCallFailed)

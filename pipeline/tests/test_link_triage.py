@@ -298,3 +298,21 @@ def test_leads_that_name_a_topic_are_scored_first(session: Session):
     assert leads[-1].title == "Zepbound in a synthetic trial"
     assert any("Zepbound" in headline for headline in backend.calls[0])
     assert all(lead.triage_score is not None for lead in leads)
+
+
+# --- measured ----------------------------------------------------------------------
+
+
+def test_a_triage_call_is_measured_once_and_names_each_lead(session: Session, measured_spans):
+    """processing-metrics, Every step is measured: one call scores twenty leads, so it
+    is one measurement that names them, with the decision inside it measured apart."""
+    leads = add_leads(session, [f"A trial result number {n}" for n in range(3)])
+    measured_spans.clear()
+
+    triage(session, Headlines(session))
+
+    decision, step = measured_spans
+    assert (step.step, step.step_version, step.batch) == ("link_triage", 1, 3)
+    assert step.traces == [lead.url_key for lead in leads]
+    assert (decision.step, decision.batch) == (f"decision:{LEAD_TRIAGE}", 3)
+    assert decision.traces == step.traces
