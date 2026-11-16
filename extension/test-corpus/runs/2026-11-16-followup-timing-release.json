@@ -1,0 +1,37 @@
+{
+  "release_commit": "6b72d585c88fa7d4ddfd9c11f1fb8660418fe5de",
+  "deployment": {
+    "run": 43780934366,
+    "worker": "a3fb6615-0c4a-412b-9e6d-a7d3289a74e1",
+    "deployed_at": "2026-11-16T00:35:19.1431634Z",
+    "ci_conclusion": "success"
+  },
+  "checks": {
+    "pipeline": 1562,
+    "site": 656,
+    "extension": 170,
+    "openspec": "strict passed",
+    "independent_reviews": "standards and spec clear at368a44b"
+  },
+  "public_snapshot_changed": false,
+  "safari": {
+    "installed": "0.9.15 (24)",
+    "resources_changed": false,
+    "native_check": "not performed: Mac still locked; prior unlock request remains pending"
+  },
+  "sheet_update": {
+    "spreadsheet_id": "15DclgztI5Pbh-wOpHzi7ITtOFSCgke2yrba7LRzcoxA",
+    "ranges": [
+      "URLs!AF207",
+      "Summary!B1"
+    ],
+    "verified_at": "2026-11-16T00:37:10.342Z",
+    "changed_cells": 2,
+    "untouched_url_cells_checked": 31,
+    "formatting_validation_preserved": true,
+    "visual": "unverified: Mac locked"
+  },
+  "rows": {
+    "A066": {"checked_at": "2026-11-16T00:39:44.629Z", "lookup_claims": 157, "preview": false, "source_url": "https://med.stanford.edu/news/all-news/2026/01/crohns-disease-diet.html", "exact_cards": [], "method": "released static index only; no fresh registry scoring or native extension check", "model_calls": 0, "released_result": "review", "card_result": "no card", "private_draft": "pending", "timing_correction": "measure reading retained; misleading later-cycle duration omitted", "publication": "pending wider data reconciliation"}
+  }
+}
