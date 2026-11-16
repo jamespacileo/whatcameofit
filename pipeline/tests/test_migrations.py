@@ -37,6 +37,7 @@ EXPECTED_TABLES = {
     "link_share",
     "link_lead_link",
     "link_lead_label",
+    "claim_change",
 }
 
 # The migration that records where an entity was named (openspec organisations).

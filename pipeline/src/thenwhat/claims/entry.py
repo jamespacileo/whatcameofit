@@ -12,7 +12,14 @@ from sqlalchemy.orm import Session
 
 from thenwhat.claims.promises import parse_promise_date
 from thenwhat.claims.verticals import APPROACHES, VERTICALS
-from thenwhat.db.models import Claim, Entity, EntitySubstance, Promise, SourceArticle
+from thenwhat.db.models import (
+    Claim,
+    ClaimChange,
+    Entity,
+    EntitySubstance,
+    Promise,
+    SourceArticle,
+)
 from thenwhat.domain import EntityType, ReviewState
 from thenwhat.sources.rxnorm import not_searched
 
@@ -167,7 +174,7 @@ def free_slug_for(session: Session, intervention: str, indication: str) -> str:
     """The slug the rule makes for a new claim. Refuses, naming the slug, when a claim
     already has it: no other slug is tried in its place."""
     slug = slug_for(intervention, indication)
-    if find_claim(session, slug) is not None:
+    if slug_in_use(session, slug):
         raise SlugTaken(
             f"The slug '{slug}', made by rule from the intervention '{intervention}' and "
             f"the indication '{indication}', belongs to another claim."
@@ -196,6 +203,15 @@ def find_claim(session: Session, slug: str) -> Claim | None:
     return session.scalars(select(Claim).where(Claim.slug == slug)).one_or_none()
 
 
+def slug_in_use(session: Session, slug: str) -> bool:
+    """Whether a claim has this slug, or had it before a rename: a former slug stays
+    taken, because its address leads to the renamed claim."""
+    if find_claim(session, slug) is not None:
+        return True
+    former = session.scalar(select(ClaimChange.id).where(ClaimChange.former_slug == slug))
+    return former is not None
+
+
 def claim_by_slug(session: Session, slug: str) -> Claim:
     claim = find_claim(session, slug)
     if claim is None:
@@ -206,12 +222,14 @@ def claim_by_slug(session: Session, slug: str) -> Claim:
 def slug_of_claim_covering(session: Session, intervention: str, indication: str) -> str | None:
     """Slug of the claim for this intervention and indication, if one exists.
 
-    The intervention matches on its entity's name or any synonym.
+    The intervention matches on its entity's name or any synonym. A claim merged into
+    another stands for nothing any more and is never the answer.
     """
     candidates = session.execute(
         select(Claim.slug, Entity.name, Entity.synonyms)
         .join(Entity, Entity.claim_id == Claim.id)
-        .where(Entity.type == EntityType.INTERVENTION)
+        .where(Entity.type == EntityType.INTERVENTION, Claim.merged_into_id.is_(None))
+        .order_by(Claim.id)
     )
     wanted = (name_key(intervention), name_key(indication))
     indications = dict(session.execute(select(Claim.slug, Claim.indication)).all())
@@ -287,7 +305,11 @@ def slug_of_claim_close_to(session: Session, intervention: str, indication: str)
     rows = session.execute(
         select(Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
         .join(Entity, Entity.claim_id == Claim.id)
-        .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
+        .where(
+            Entity.type == EntityType.INTERVENTION,
+            Claim.review_state != ReviewState.REJECTED,
+            Claim.merged_into_id.is_(None),
+        )
         .order_by(Claim.id)
     )
     for slug, condition, name, synonyms in rows:
@@ -324,6 +346,7 @@ def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]
             Entity.type == EntityType.INTERVENTION,
             Claim.id.in_(claim_ids),
             Claim.review_state != ReviewState.REJECTED,
+            Claim.merged_into_id.is_(None),
         )
         .order_by(Claim.id)
     )
@@ -361,7 +384,11 @@ def claims_sharing_a_name(
     rows = session.execute(
         select(Claim.id, Claim.slug, Claim.indication, Entity.name, Entity.synonyms, Claim.summary)
         .join(Entity, Entity.claim_id == Claim.id)
-        .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
+        .where(
+            Entity.type == EntityType.INTERVENTION,
+            Claim.review_state != ReviewState.REJECTED,
+            Claim.merged_into_id.is_(None),
+        )
         .order_by(Claim.id)
     )
     for claim_id, slug, condition, name, synonyms, summary in rows:
@@ -419,7 +446,11 @@ def claims_of_a_named_substance(
         )
         .join(Entity, Entity.claim_id == Claim.id)
         .join(EntitySubstance, EntitySubstance.entity_id == Entity.id)
-        .where(Entity.type == EntityType.INTERVENTION, Claim.review_state != ReviewState.REJECTED)
+        .where(
+            Entity.type == EntityType.INTERVENTION,
+            Claim.review_state != ReviewState.REJECTED,
+            Claim.merged_into_id.is_(None),
+        )
         .order_by(Claim.id)
     )
     for (
@@ -469,7 +500,7 @@ def add_claim(
     indication = _required("indication", indication)
     _check_vertical(vertical)
     approach = _approach(approach)
-    if find_claim(session, slug) is not None:
+    if slug_in_use(session, slug):
         raise SlugTaken(f"Slug '{slug}' is already taken.")
     existing = slug_of_claim_covering(session, intervention, indication)
     if existing is not None:
@@ -529,7 +560,7 @@ def check_new_claim(session: Session, slug: str, vertical: str) -> None:
     """Refuse a slug or vertical that `add_claim` would refuse, before any costly work."""
     _check_slug(slug)
     _check_vertical(vertical)
-    if find_claim(session, slug) is not None:
+    if slug_in_use(session, slug):
         raise SlugTaken(f"Slug '{slug}' is already taken.")
 
 
@@ -614,7 +645,7 @@ def rename_slug(session: Session, slug: str, new_slug: str) -> Claim:
     if claim.published_at is not None:
         raise SlugLocked(f"Claim '{slug}' has been published, so its slug can no longer change.")
     _check_slug(new_slug)
-    if find_claim(session, new_slug) is not None:
+    if slug_in_use(session, new_slug):
         raise SlugTaken(f"Slug '{new_slug}' is already taken.")
     claim.slug = new_slug
     session.flush()
@@ -666,6 +697,13 @@ def unarchive_claim(session: Session, slug: str) -> Claim:
     claim = claim_by_slug(session, slug)
     if claim.archived_at is None:
         raise ArchiveRefused(f"Claim '{slug}' is not archived.")
+    if claim.merged_into_id is not None:
+        kept = session.get(Claim, claim.merged_into_id)
+        assert kept is not None
+        raise ArchiveRefused(
+            f"Claim '{slug}' was merged into '{kept.slug}': its articles are there, and"
+            f" its address leads there. To undo the merge: thenwhat claim unmerge {slug}"
+        )
     claim.archived_at = None
     claim.archive_reason = None
     session.flush()
