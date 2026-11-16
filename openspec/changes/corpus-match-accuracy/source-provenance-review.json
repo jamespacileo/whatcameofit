@@ -39,7 +39,7 @@
     "added_claims": 0,
     "removed_claims": 0
   },
-  "release_verification": "Pending reviewed CI deployment and Safari 0.9.19 installation. Native popup and storage checks remain unavailable while the Mac reports locked.",
+  "release_verification": "Reviewed PR #197 is deployed; live index/data match rehearsal. Three original Hacker News URLs, website forms and installed Safari functions pass; S032/S036 installed link-only requests pass. Native collector/popup/storage remain unverified. Five Sheet rows and summary updated; 81 values verified and 161 other inspected cells preserved.",
   "candidate_checks": {
     "checked_at": "2026-11-16T05:07:05.062Z",
     "public_cards": 173,
@@ -106,6 +106,28 @@
     "extension_tests": 170,
     "production_rehearsal": "pass",
     "openspec_strict": "pass",
-    "safari_candidate": "universal 0.9.19 (27) built; not yet installed"
-  }
+    "safari_candidate": "Universal Safari 0.9.19 (27) installed, signed and all 35 resources verified; rollback retained."
+  },
+  "release": {
+    "pr": 197,
+    "main": "7e4464262e3e4552a956062e03be28e82d0581fe",
+    "production_ci": 43808697407,
+    "worker_version": "ef869215-5d23-409f-aed4-d39e899024e3",
+    "deployed_at": "2026-11-16T05:15:49.2921291Z",
+    "validation": {
+      "pipeline_tests": 1562,
+      "site_tests": 658,
+      "extension_tests": 170,
+      "lint_types_rehearsal": "pass",
+      "independent_reviews": "Both clear at 90355b3eef1ceeb2f0ab722685647a36a9e8510a"
+    }
+  },
+  "installed_extension": {
+    "version": "0.9.19",
+    "build": 27,
+    "source_commit": "7e4464262e3e4552a956062e03be28e82d0581fe",
+    "resource_hashes_verified": 35,
+    "native_verified": false
+  },
+  "released_evidence": "extension/test-corpus/runs/2026-11-16-source-provenance-release.json"
 }
