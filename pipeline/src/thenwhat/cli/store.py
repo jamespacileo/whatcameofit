@@ -17,8 +17,18 @@ from thenwhat.cli.export import STORE_SQL, reading_session
 from thenwhat.store.build import BuildFailed, build
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
-from thenwhat.store.gather import gather
+from thenwhat.store.gather import Gathered, gather, stream
 from thenwhat.store.push import USER_AGENT, PushFailed, push, read_state, write_state
+from thenwhat.store.tiers import (
+    ALL,
+    BOTH,
+    CHOICES,
+    answer_row,
+    checksums,
+    hash_of,
+    hot_records,
+    split_build,
+)
 
 store_app = typer.Typer(help="Fill the truth store in bulk, and restore it.", no_args_is_help=True)
 
@@ -48,10 +58,21 @@ def build_command(
         ),
     ],
     store_sql: StoreSql = STORE_SQL,
+    tier: Annotated[
+        str,
+        typer.Option(
+            help="both: a hot file for D1 and a bulk file for R2 (store.hot.sqlite,"
+            " store.bulk.sqlite); hot or bulk: that one; all: the one whole file."
+        ),
+    ] = BOTH,
 ) -> None:
-    """Build the whole store as one SQLite file from the database, through the store's own
-    merge. The database is only read. Beside the file, `<file>.pushed.json` records what
-    it holds, for `thenwhat backfill push` to start from once it is loaded."""
+    """Build the store from the database, through the store's own merge, as the hot tier
+    loaded into D1 and the bulk tier kept as one file in R2 (docs/adr/0010). The database
+    is only read. `<file>.pushed.json` records what the build holds, for
+    `thenwhat backfill push` to start from once it is loaded."""
+    if tier not in CHOICES:
+        err.print(f"--tier is one of {', '.join(CHOICES)}.")
+        raise typer.Exit(code=1)
     if not (store_sql / "merge.sql").is_file():
         err.print(f"No merge.sql in {store_sql}. Name the store's folder with --store-sql.")
         raise typer.Exit(code=1)
@@ -71,7 +92,7 @@ def build_command(
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None
     write_state(state_path(file), report.state)
-    out.print(f"Built {file} ({_size(report.size)}) in {report.runs} runs.", markup=False)
+    out.print(f"Built the whole store ({_size(report.size)}) in {report.runs} runs.", markup=False)
     for kind in sorted(report.handed):
         out.print(
             f"  {kind}: {report.handed[kind]:,} handed over, {report.added[kind]:,} added",
@@ -86,6 +107,55 @@ def build_command(
         out.print(f"{count:,} {kind} rows share a natural key with an earlier row.", markup=False)
     for kind, count in sorted(report.unnamed.items()):
         out.print(f"{count:,} {kind} rows name no record the store keeps.", markup=False)
+    for written in split_build(file, payloads, tier):
+        objects = payloads / written.stem.rsplit(".", 1)[-1]
+        out.print(
+            f"Wrote {written} ({_size(written.stat().st_size)})"
+            + (f", its payload objects in {objects}." if tier != ALL else "."),
+            markup=False,
+        )
+
+
+@store_app.command("checksum")
+def checksum_command(
+    file: Annotated[Path, typer.Argument(help="A store file.")],
+    tier: Annotated[
+        str | None, typer.Option(help="Only the tables of this tier: hot or bulk.")
+    ] = None,
+    sql: Annotated[
+        Path | None,
+        typer.Option(help="Also write each table's SQL to this JSON file, for the D1 side."),
+    ] = None,
+    against: Annotated[
+        Path | None,
+        typer.Option(
+            help="A JSON object of D1's answers by table (each the `wrangler d1 execute"
+            " --json` answer to that table's SQL): exit 1 where a checksum differs."
+        ),
+    ] = None,
+) -> None:
+    """Each table's rows and checksum in a store file, and the SQL that gives D1 the same
+    checksum in one row: one scan of aggregates a table, no sort."""
+    if not file.is_file():
+        err.print(f"No store file at {file}.")
+        raise typer.Exit(code=1)
+    found = checksums(file, tier)
+    if sql is not None:
+        sql.write_text(json.dumps({c.table: c.sql for c in found}, indent=1) + "\n")
+    answers = json.loads(against.read_text()) if against is not None else None
+    differ = 0
+    for checksum in found:
+        line = f"{checksum.table}\t{checksum.rows}\t{checksum.sha256}"
+        if answers is not None:
+            given = answers.get(checksum.table)
+            theirs = hash_of(answer_row(given)) if given is not None else "missing"
+            same = theirs == checksum.sha256
+            differ += not same
+            line += "\tsame" if same else f"\tDIFFERS ({theirs})"
+        out.print(line, markup=False)
+    if differ:
+        err.print(f"{differ} table(s) differ.")
+        raise typer.Exit(code=1)
 
 
 @store_app.command("dump")
@@ -185,6 +255,14 @@ def push_command(
     actions: Annotated[
         bool, typer.Option("--actions", help="Also hand over actions (the operator's token only).")
     ] = False,
+    every_tier: Annotated[
+        bool,
+        typer.Option(
+            "--every-tier",
+            help="Also hand over bulk kinds (trials, leads, shares...), for a store that"
+            " holds the bulk tier in D1.",
+        ),
+    ] = False,
     report_only: Annotated[
         bool,
         typer.Option("--report-only", help="Say what each run would do, apply nothing."),
@@ -217,8 +295,14 @@ def push_command(
         if not payload.inline and f"payload\t{payload.sha256}" not in held:
             texts[payload.sha256] = payload.text
 
+    left_out = 0
     with reading_session() as session:
-        records = gather(session, keep_payload=keep_payload).records
+        if every_tier:
+            records = gather(session, keep_payload=keep_payload).records
+        else:
+            records, left_out = hot_records(
+                stream(session, Gathered(records=[]), keep_payload=keep_payload)
+            )
     with httpx.Client(
         base_url=url,
         headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
@@ -248,6 +332,11 @@ def push_command(
     for kind in sorted(report.handed):
         out.print(
             f"  {kind}: {report.handed[kind]:,} handed over, {report.added[kind]:,} added",
+            markup=False,
+        )
+    if left_out:
+        out.print(
+            f"{left_out:,} records of the bulk tier left out: they go with the next bulk file.",
             markup=False,
         )
     for reason, count in sorted(report.left_out.items()):
