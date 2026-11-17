@@ -2,14 +2,22 @@
 
     cd pipeline
     uv run python ../scripts/fetch_link_files.py hackernews 2025-01 2026-11
+    uv run python ../scripts/fetch_link_files.py hackernews 2026-09 2026-09 --merge
     uv run python ../scripts/fetch_link_files.py hackernews --since-days 3
+    uv run python ../scripts/fetch_link_files.py hackernews --since-last-fetch 3
     uv run python ../scripts/fetch_link_files.py reddit 2025-01 2026-11 science longevity
 
 Files land in data/link-files/, which is not committed. A file already there is kept,
-so a stopped run is simply started again. `--since-days N` asks only for the Hacker News
-stories of the last N days (from midnight UTC N days ago) and merges them into each
-month's file the window touches, keeping every row already there: a nightly run's one
-or two queries in place of a whole month's. It prints the months it wrote.
+so a stopped run is simply started again; `--merge` fetches a Hacker News month that
+already has a file again and merges it in, keeping every row already there.
+
+`--since-days N` asks only for the Hacker News stories since midnight UTC N days ago and
+merges them into each month's file the window touches. `--since-last-fetch N` starts
+instead a day before the end of the last window fetched (recorded in
+hackernews/last-fetch.json), or N days back when there is no record, and covers at most
+20 days a run, so a nightly run stays at one or two queries and a run after missed
+nights catches up from the oldest day, night by night, losing none. Either prints the
+months it wrote.
 
 Sources, terms and limits: docs/sources.md, "Link datasets for the social-link backfill".
 
@@ -64,6 +72,10 @@ REDDIT_FIELDS = (
 )
 SECONDS_BETWEEN_REQUESTS = 1.0
 CLICKHOUSE_PAGE = 10_000
+# How far one windowed fetch may reach: about 1,000 stories with a link a day, so 20
+# days is two pages of 10,000. A longer gap is caught up over the following runs.
+MAX_WINDOW_DAYS = 20
+LAST_FETCH = "last-fetch.json"
 
 
 def months(first: str, last: str) -> list[str]:
@@ -163,7 +175,7 @@ def hacker_news_from_clickhouse(client: httpx.Client, month: str, target: Path) 
     say(f"hackernews {month}: {len(rows)} stories with a link, from ClickHouse")
 
 
-def fetch_hacker_news(first: str, last: str) -> None:
+def fetch_hacker_news(first: str, last: str, merge: bool = False) -> None:
     folder = ROOT / "hackernews"
     folder.mkdir(parents=True, exist_ok=True)
     this_month = f"{date.today():%Y-%m}"
@@ -171,10 +183,17 @@ def fetch_hacker_news(first: str, last: str) -> None:
         listed = archive_months(client)
         for month in months(first, min(last, this_month)):
             target = folder / f"{month}.parquet"
+            if target.exists() and merge:
+                # Asked again and merged in, so a gap in a past month's file is filled.
+                rows = clickhouse_stories(
+                    client, month, f"{month}-01 00:00:00", f"{next_month(month)}-01 00:00:00"
+                )
+                added = merge_into(target, rows)
+                say(f"hackernews {month}: {len(rows)} stories with a link, {added} new to the file")
             # The running month is fetched again each time: it is not complete yet.
-            if target.exists() and month != this_month:
+            elif target.exists() and month != this_month:
                 continue
-            if month in listed:
+            elif month in listed:
                 hacker_news_from_archive(client, month, listed[month], target)
             else:
                 hacker_news_from_clickhouse(client, month, target)
@@ -200,25 +219,69 @@ def merge_into(target: Path, rows: list[dict]) -> int:
     return added
 
 
-def fetch_hacker_news_window(days: int, today: date | None = None) -> list[str]:
-    """The stories of the last `days` days, merged into each month's file the window
-    touches. Returns those months, oldest first."""
+def midnight(at: datetime) -> datetime:
+    return at.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def read_last_fetch(folder: Path) -> datetime | None:
+    """The end of the last window fetched in full, or None when there is no record."""
+    try:
+        return datetime.fromisoformat(json.loads((folder / LAST_FETCH).read_text())["through"])
+    except (FileNotFoundError, KeyError, ValueError):
+        return None
+
+
+def write_last_fetch(folder: Path, through: datetime) -> None:
+    partial = folder / f"{LAST_FETCH}.partial"
+    partial.write_text(json.dumps({"through": through.isoformat()}) + "\n")
+    partial.rename(folder / LAST_FETCH)
+
+
+def window_from_last_fetch(
+    last: datetime | None, now: datetime, fallback_days: int
+) -> tuple[datetime, datetime | None]:
+    """Where a run that goes on from the last fetch starts and ends (None: now). It starts
+    a day before the last window's end, as the copy may lag behind the newest items, or
+    `fallback_days` back from midnight when there is no record. It covers at most
+    MAX_WINDOW_DAYS, so after a long gap the oldest days come first."""
+    start = (
+        midnight(last) - timedelta(days=1)
+        if last
+        else midnight(now) - timedelta(days=fallback_days)
+    )
+    end = start + timedelta(days=MAX_WINDOW_DAYS)
+    return start, (end if end < now else None)
+
+
+def fetch_hacker_news_window(start: datetime, end: datetime | None, now: datetime) -> list[str]:
+    """The stories with a link posted from `start` to `end` (None: now), merged into each
+    month's file the window touches. The record of the last fetch moves on to the
+    window's end only when the window starts at or before it, so a later, narrower
+    window never hides a gap. Returns the months written, oldest first."""
     folder = ROOT / "hackernews"
     folder.mkdir(parents=True, exist_ok=True)
-    today = today or datetime.now(UTC).date()
-    first_day = today - timedelta(days=days)
-    touched = months(f"{first_day:%Y-%m}", f"{today:%Y-%m}")
+    through = end or now
+    touched = months(f"{start:%Y-%m}", f"{through:%Y-%m}")
     with httpx.Client(headers={"User-Agent": CLIENT_NAME}, timeout=120) as client:
-        rows = clickhouse_stories(client, f"last {days} days", f"{first_day} 00:00:00", None)
+        rows = clickhouse_stories(
+            client,
+            f"from {start:%Y-%m-%d}",
+            f"{start:%Y-%m-%d %H:%M:%S}",
+            f"{end:%Y-%m-%d %H:%M:%S}" if end else None,
+        )
     new = 0
     for month in touched:
         in_month = [row for row in rows if f"{row['time']:%Y-%m}" == month]
         added = merge_into(folder / f"{month}.parquet", in_month)
         new += added
         say(f"hackernews {month}: {len(in_month)} stories with a link, {added} new to the file")
+    last = read_last_fetch(folder)
+    if last is None or start <= last:
+        write_last_fetch(folder, max(through, last) if last else through)
+    behind = f"; still behind, the next run goes on from {through:%Y-%m-%d}" if end else ""
     print(
         f"Months written: {' '.join(touched)} ({len(rows):,} stories with a link "
-        f"from the last {days} days, {new:,} new to the files)",
+        f"from {start:%Y-%m-%d %H:%M} UTC, {new:,} new to the files{behind})",
         flush=True,
     )
     return touched
@@ -285,22 +348,36 @@ def fetch_reddit(first: str, last: str, communities: list[str]) -> None:
             say(f"r/{community}: {posts} submissions, {links} of them links")
 
 
-def main() -> None:
-    if sys.argv[1:3] == ["hackernews", "--since-days"] and len(sys.argv) == 4:
-        days = int(sys.argv[3]) if sys.argv[3].isdigit() else 0
-        if not 1 <= days <= 28:
-            raise SystemExit("--since-days takes a whole number of days from 1 to 28.")
-        fetch_hacker_news_window(days)
+def days_argument(text: str) -> int:
+    days = int(text) if text.isdigit() else 0
+    if not 1 <= days <= 28:
+        raise SystemExit("A window takes a whole number of days from 1 to 28.")
+    return days
+
+
+def main(arguments: list[str] | None = None, now: datetime | None = None) -> None:
+    arguments = sys.argv[1:] if arguments is None else arguments
+    now = now or datetime.now(UTC)
+    if arguments[:2] == ["hackernews", "--since-days"] and len(arguments) == 3:
+        start = midnight(now) - timedelta(days=days_argument(arguments[2]))
+        fetch_hacker_news_window(start, None, now)
         return
-    if len(sys.argv) < 4 or sys.argv[1] not in ("hackernews", "reddit"):
+    if arguments[:2] == ["hackernews", "--since-last-fetch"] and len(arguments) == 3:
+        last = read_last_fetch(ROOT / "hackernews")
+        start, end = window_from_last_fetch(last, now, days_argument(arguments[2]))
+        fetch_hacker_news_window(start, end, now)
+        return
+    if len(arguments) < 3 or arguments[0] not in ("hackernews", "reddit"):
         raise SystemExit(__doc__)
-    platform, first, last, *communities = sys.argv[1:]
+    platform, first, last, *rest = arguments
     if platform == "hackernews":
-        fetch_hacker_news(first, last)
-    elif not communities:
+        if rest not in ([], ["--merge"]):
+            raise SystemExit(__doc__)
+        fetch_hacker_news(first, last, merge=rest == ["--merge"])
+    elif not rest:
         raise SystemExit("Name the communities to fetch after the two months.")
     else:
-        fetch_reddit(first, last, communities)
+        fetch_reddit(first, last, rest)
 
 
 if __name__ == "__main__":
