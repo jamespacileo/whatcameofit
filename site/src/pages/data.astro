@@ -2,12 +2,13 @@
 import Base from "../layouts/Base.astro";
 import { SITE } from "../../site.config.mjs";
 import { data } from "../lib/export";
-import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit } from "../lib/open-data";
+import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit, recordPath } from "../lib/open-data";
 import { datasetData } from "../lib/structured";
 
 const credit = dataCredit(SITE.name, SITE.url);
+const example = data.claims[0]?.slug;
 const description =
-  "Every published claim, with its status, records and sources, as one file you can download and reuse.";
+  "Every published claim, with its status, records and sources, as JSON you can download and reuse: an index of every claim, and one file per claim.";
 ---
 
 <Base
@@ -24,21 +25,21 @@ const description =
   <h1 class="title">Data</h1>
   <p class="lede">
     Every published claim, with its status, the records that produced it, its source reports and
-    its promises, as one file you can download, cite and build on.
+    its promises, as JSON you can download, cite and build on.
   </p>
 
   {
     data.preview && (
       <p class="entry-note">
-        This is a preview. The file holds claims that no person has yet checked, and each is marked.
+        This is a preview. The files hold claims that no person has yet checked, and each is marked.
       </p>
     )
   }
 
-  <h2 class="bar">The file</h2>
+  <h2 class="bar">The files</h2>
   <ul class="plain">
     <li>
-      <a href="/data/claims.json" download>Download claims.json</a>
+      <a href="/data/claims.json" download>Download the index, claims.json</a>
       <span class="entry-note">
         {data.claims.length}
         {data.claims.length === 1 ? " claim" : " claims"}, as JSON
@@ -46,7 +47,17 @@ const description =
     </li>
   </ul>
   <p>
-    The file leaves out article text, claims not approved in review, and outlet icons.
+    The index lists every claim with its headline, treatment, condition, status code, the date it
+    was first reported and the day the registries were last checked. Each entry's
+    <code>record</code> is the address of that claim's full record, such as{" "}
+    {example ? <a href={recordPath(example)}><code>{recordPath(example)}</code></a> : <code>/data/claims/&lt;slug&gt;.json</code>}.
+    Each record file carries the licence and credit line too, so it can be used on its own.
+  </p>
+  <p>
+    To get everything, download the index, then each address in its <code>record</code> fields.
+  </p>
+  <p>
+    The files leave out article text, claims not approved in review, and outlet icons.
   </p>
 
   <h2 class="bar">Licence and credit</h2>

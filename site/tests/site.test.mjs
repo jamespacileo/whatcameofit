@@ -1500,8 +1500,10 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(section, /<blockquote[^>]*>A synthetic definition of a KIND OF TREATMENT, as the vocabulary writes it\.<\/blockquote>/);
   assert.match(section, /The kind of treatment this is, not the treatment itself/);
   // The open data file carries the kind card with its reasons.
-  const data = JSON.parse(fs.readFileSync(path.join(dist, "data/claims.json"), "utf8"));
-  const cards = data.claims.find((claim) => claim.slug === "approved-claim").background;
+  const record = (slug) =>
+    JSON.parse(fs.readFileSync(path.join(dist, `data/claims/${slug}.json`), "utf8"));
+  const data = record("approved-claim");
+  const cards = data.claim.background;
   assert.deepEqual(cards.map((card) => [card.kind, card.fit]), [
     ["condition", "exact"],
     ["intervention", "kind"],
@@ -1510,13 +1512,14 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.equal(cards[2].definition_source, "uniprot");
   assert.ok(data.card_sources.some((held) => held.name === "uniprot" && held.licence === "CC BY 4.0"));
   // The share-alike drug facts are not in the file, and the file names the source left out.
-  const kept = data.claims.find((claim) => claim.slug === "phase-claim").background;
+  const phase = record("phase-claim");
+  const kept = phase.claim.background;
   // The condition and treatment cards and the kind card added above stay; the drug and
   // its target do not.
   assert.deepEqual(kept.map((card) => card.kind), ["condition", "intervention", "intervention"]);
-  assert.ok(!JSON.stringify(data.claims).includes("EXAMPLUMAB"));
-  assert.ok(!JSON.stringify(data.claims).includes("Example receptor 1"));
-  assert.deepEqual(data.left_out.map((left) => [left.source, left.licence]), [
+  assert.ok(!JSON.stringify(phase.claim).includes("EXAMPLUMAB"));
+  assert.ok(!JSON.stringify(phase.claim).includes("Example receptor 1"));
+  assert.deepEqual(phase.left_out.map((left) => [left.source, left.licence]), [
     ["Example Drugs", "CC BY-SA 3.0 Unported"],
   ]);
 

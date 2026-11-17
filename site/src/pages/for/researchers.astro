@@ -7,16 +7,12 @@ import Audience from "../../layouts/Audience.astro";
 import { CLAIM_FIELDS } from "../../lib/audiences";
 import { CORRECTION_SUBJECT, contactLink } from "../../lib/contact.mjs";
 import { data, listedTopics } from "../../lib/export";
-import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit, openData } from "../../lib/open-data";
+import { DATA_LICENCE, DATA_LICENCE_URL } from "../../lib/open-data";
+import { siteOpenData } from "../../lib/site-open-data";
 import { formatDate } from "../../lib/timetable";
 
-const file = openData(
-  data,
-  DATA_LICENCE,
-  dataCredit(SITE.name, SITE.url),
-  `${SITE.url}/how-it-works`,
-);
-// The fields are read from the file as built, so the list cannot name one it lacks.
+const file = siteOpenData();
+// The fields are read from the records as built, so the list cannot name one it lacks.
 const fields = Object.keys(file.claims[0] ?? CLAIM_FIELDS);
 const corrections = contactLink(SITE.correctionsUrl, "", CORRECTION_SUBJECT);
 const count = data.claims.length;
@@ -25,13 +21,13 @@ const count = data.claims.length;
 <Audience
   audience="researchers"
   title="Studying what follows the news?"
-  lede="Every published claim, with its status, the records behind it, its news reports and its promises, as one file you can download, cite and build on."
+  lede="Every published claim, with its status, the records behind it, its news reports and its promises, as JSON you can download, cite and build on."
   description="The open data file of reported medical breakthroughs and what the public records show since: its licence, the day it was built and its fields."
 >
   <div class="file" slot="tool">
     <a class="get" href="/data/claims.json" download>
       <Download size={18} stroke-width={1.9} aria-hidden="true" />
-      Download claims.json
+      Download the index, claims.json
     </a>
     <dl class="about-file">
       <div>
@@ -63,7 +59,11 @@ const count = data.claims.length;
     </dl>
   </div>
 
-  <h2 class="bar" id="fields">What each claim holds</h2>
+  <h2 class="bar" id="fields">What each claim's record holds</h2>
+  <p>
+    The index lists each claim with the address of its full record, one file per claim.{" "}
+    <a href="/data">The data page</a> says how to fetch them all.
+  </p>
   <dl class="fields">
     {
       fields.map((field) => (
@@ -77,7 +77,7 @@ const count = data.claims.length;
     }
   </dl>
   <p>
-    The file leaves out article text, claims not approved in review, and outlet icons.{" "}
+    The files leave out article text, claims not approved in review, and outlet icons.{" "}
     <a href="/data">The data page</a> gives the credit line to use.
   </p>
 
@@ -130,7 +130,7 @@ const count = data.claims.length;
       registry.
     </p>
     <p>
-      No outlet, researcher or company is ranked or scored, and the file holds no article text.
+      No outlet, researcher or company is ranked or scored, and the files hold no article text.
     </p>
   </Fragment>
 </Audience>
