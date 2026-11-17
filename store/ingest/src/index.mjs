@@ -17,6 +17,7 @@
 import { principal } from "./auth.mjs";
 import { Refusal, checkRecords } from "./check.mjs";
 import { sha256 } from "./hash.mjs";
+import { peopleInText } from "./people.mjs";
 import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_INBOX_RECORDS, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
 import { INGEST } from "./sql.generated.mjs";
 import * as store from "./store.mjs";
@@ -91,6 +92,9 @@ async function putPayload(request, env, who, checksum) {
   const bytes = await body(request, ["application/octet-stream", "application/json"], limits(env).MAX_PAYLOAD_BYTES);
   if (bytes.length <= INLINE_PAYLOAD_BYTES) refuse(422, "small_payload", `a payload of ${INLINE_PAYLOAD_BYTES} bytes or less is kept in its staged record, not here`);
   if ((await sha256(bytes)) !== checksum) refuse(422, "checksum_mismatch", "the body is not what its checksum says; nothing was stored");
+  // A registry record that still names people is not stored: the store keeps no personal data.
+  const people = peopleInText(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
+  if (people.length) refuse(422, "personal_data", "a registry record is handed over without the people it names; nothing was stored", { people });
   const key = `payload/${checksum}`;
   if (await env.PAYLOADS.head(key)) return json(200, { key, bytes: bytes.length, stored: false });
   await env.PAYLOADS.put(key, bytes, { sha256: checksum });

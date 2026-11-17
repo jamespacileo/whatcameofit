@@ -248,6 +248,17 @@ The ingest service SHALL refuse a record that has a field no statement reading t
 - **WHEN** a record's title holds several thousand characters
 - **THEN** the chunk is refused and nothing is staged
 
+### Requirement: No stored registry record names a person
+The ingest service SHALL refuse a ClinicalTrials.gov record that names a person, whether it arrives in a payload record, in a source record or as a payload object: its officials and contacts, a site's contacts, the investigator a responsible party is, a sponsor or collaborator who is a person, the results' point of contact, and any email or phone. The refusal SHALL say which kinds of field were found and SHALL NOT repeat a name or a means of contact. Nothing of a refused record SHALL be stored.
+
+#### Scenario: A lookup hands over a record as the registry gave it
+- **WHEN** a lookup's token stages or puts a trial's record that still holds its overall officials
+- **THEN** it is refused, naming the kind of field, and no row or object is stored
+
+#### Scenario: The same record with its people removed
+- **WHEN** the record is handed over with those fields removed
+- **THEN** it is taken
+
 ### Requirement: A report without applying leaves no run
 When a writer asks for a run's report without applying, the service SHALL return the report with what it cannot see (what only a constraint of the store refuses; and a run that names one claim by two slugs for one record or whose actions depend on one another beyond a clear before a publication), and SHALL then drop the run and what it staged.
 

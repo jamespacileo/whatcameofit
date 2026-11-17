@@ -516,6 +516,51 @@ test("the inbox keeps every kind the pipeline calls bulk", { skip }, async () =>
   assert.deepEqual(bulk.filter((kind) => !INBOX_KINDS.includes(kind)), []);
 });
 
+test("a registry record that names a person is refused, in a record and in the bucket", { skip }, async () => {
+  const { peopleIn } = await import("../src/people.mjs");
+  const clean = { protocolSection: { identificationModule: { nctId: "NCT900", briefTitle: "A trial" },
+    contactsLocationsModule: { locations: [{ facility: "A hospital", city: "Leeds", country: "United Kingdom" }] },
+    sponsorCollaboratorsModule: { leadSponsor: { name: "A university", class: "OTHER" }, responsibleParty: { type: "SPONSOR" }, collaborators: [{ name: "A company", class: "INDUSTRY" }] } },
+    resultsSection: { moreInfoModule: { certainAgreement: { piSponsorEmployee: false } } } };
+  assert.deepEqual(peopleIn(clean), []);
+  assert.deepEqual(peopleIn({ nctId: "NCT1", email: "not a study" }), []);
+  const each = {
+    centralContacts: (s) => { s.protocolSection.contactsLocationsModule.centralContacts = [{ name: "A Person", role: "CONTACT" }]; },
+    overallOfficials: (s) => { s.protocolSection.contactsLocationsModule.overallOfficials = [{ name: "A Person" }]; },
+    "location contacts": (s) => { s.protocolSection.contactsLocationsModule.locations[0].contacts = [{ name: "A Person" }]; },
+    "investigator name, title or affiliation": (s) => { s.protocolSection.sponsorCollaboratorsModule.responsibleParty.investigatorFullName = "A Person"; },
+    "person lead sponsor's name": (s) => { s.protocolSection.sponsorCollaboratorsModule.responsibleParty.type = "SPONSOR_INVESTIGATOR"; },
+    "person collaborator's name": (s) => { s.protocolSection.sponsorCollaboratorsModule.collaborators.push({ name: "A Person", class: "INDIV" }); },
+    "results point of contact": (s) => { s.resultsSection.moreInfoModule.pointOfContact = { title: "A Person", organization: "A university" }; },
+    email: (s) => { s.resultsSection.moreInfoModule.certainAgreement.email = "person@example.org"; },
+    phone: (s) => { s.resultsSection.moreInfoModule.certainAgreement.phoneExt = "12"; },
+  };
+  for (const [field, add] of Object.entries(each)) {
+    const study = structuredClone(clean);
+    add(study);
+    assert.deepEqual(peopleIn(study), [field], field);
+    const text = JSON.stringify(study);
+    const answer = await stageOne("lookup", "lookup", ["payload", sha(text), { sha256: sha(text), bytes: Buffer.byteLength(text), body: text }]);
+    assert.deepEqual([answer?.status, answer?.body.error, answer?.body.detail.people], [422, "personal_data", [field]], field);
+    assert.ok(!answer.text.includes("A Person") && !answer.text.includes("person@example.org"), "the refusal does not repeat who");
+  }
+  // The same record without people goes through, and so does a payload that is no registry record.
+  const text = JSON.stringify(clean);
+  assert.equal(await stageOne("lookup", "lookup", ["payload", sha(text), { sha256: sha(text), bytes: Buffer.byteLength(text), body: text }]), null);
+  // Over 16 KB the record goes to the bucket, and is held to the same.
+  const large = structuredClone(clean);
+  large.protocolSection.descriptionModule = { detailedDescription: "d".repeat(17_000) };
+  const kept = JSON.stringify(large);
+  large.protocolSection.contactsLocationsModule.overallOfficials = [{ name: "A Person", affiliation: "A university" }];
+  const named = JSON.stringify(large);
+  const put = (body) => s.ask("PUT", `/payloads/${sha(body)}`, { as: "lookup", body, type: "application/octet-stream" });
+  const refused = await put(named);
+  assert.deepEqual([refused.status, refused.body.error, refused.body.detail.people], [422, "personal_data", ["overallOfficials"]]);
+  const bucket = await s.mf.getR2Bucket("PAYLOADS");
+  assert.equal(await bucket.head(`payload/${sha(named)}`), null, "nothing is stored for it");
+  assert.equal((await put(kept)).status, 201);
+});
+
 test("a merge wakes the consumer once for each step with work due, saying nothing else", { skip }, async () => {
   const day = new Date().toISOString().slice(0, 10);
   const done = await push([["link_lead", "wake.com/1", { url_key: "wake.com/1", url_key_version: 2, url: "https://wake.com/1", outlet: "wake.com", outlet_kind: "general_news",

@@ -274,6 +274,8 @@ A lookup's bulk records wait in D1's inbox until they are safe in R2. The order 
 
 A restore of the bulk tier is `download-bulk.mjs`, then `download-deltas.mjs <build id> <folder>`, then `thenwhat store apply-delta` for each delta in the list's order.
 
+The ingest service now refuses a registry record that still names a person, in a record or as a payload object, so the fault cannot return through it. The bulk load does not pass that door: a store file is only as clean as the build that made it.
+
 ### Which database a script acts on
 
 `import-folder.mjs`, `checksum-d1.mjs` and `empty-store.mjs` act on the database named by the Wrangler configuration in use (`--config`, else the preview's) and print its name first. A name not ending in `-preview` is production: loading or checking it needs `--production <that name>`, and emptying it is refused whatever is passed. The bucket scripts write to the preview bucket unless `--remote --production <bucket>` names production's.
