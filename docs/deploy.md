@@ -220,38 +220,38 @@ The store is in two tiers. Which table is in which is stated in `store/store-tab
 - The merge still writes whatever kind it is handed. A reader's lead or a found trial is added to D1's copy of the table and is not matched against the bulk file, so a lead the bulk file already has is added again in D1.
 - A record whose parent is only in the bulk file is not resolved: a share, label or reading of a lead, or an article lead of a trial, that the run does not also carry. The run's counts then do not reconcile and the merge is undone. A run must carry such a parent itself until the merge is taught the tiers.
 
-### Cut-over, in order
+### Cut-over: one command
 
-Rehearse first, on this machine, with nothing sent anywhere. It runs every step below against Wrangler's local engine, times each, and exits 1 on any failure or difference:
+The cut-over is not done by hand. One script holds the order, for this machine, the preview and production (`store/ingest/scripts/cutover.mjs`). On 17 November 2026 the steps run by hand went out of order three times; the hand sequence that stood here is gone.
 
 ```bash
-make store-rehearsal STORE_HOT=<hot.sqlite> STORE_BULK=<bulk.sqlite> PAYLOADS=<payload folder>
+make store-rehearsal STORE_DIR=<a build's folder>                                  # this machine, nothing sent
+make store-cutover ENV=preview STORE_DIR=<a build's folder> ARGS="--dry-run"       # the plan, nothing run
+make store-cutover ENV=preview STORE_DIR=<a build's folder>
+make store-cutover ENV=production STORE_DIR=<a build's folder> CONFIRM=thenwhat-store
 ```
 
-Then, against the real resources (`--remote`; production also needs `--production <bucket>` for the bucket scripts):
+A build's folder is what `thenwhat store build` leaves: `store.hot.sqlite`, `store.bulk.sqlite`, `payloads/hot`, `payloads/bulk`, and `checks.json` (made by the command when it is not there). The stages, in order; the first that fails stops the run and is named:
 
-1. Read the jurisdiction back (above), apply the migrations, and note the restore bookmark (below).
-2. Dump the hot file and try the dump here.
-   ```bash
-   node store/ingest/scripts/dump-for-import.mjs <hot.sqlite> <folder>/store.sql --rows-a-file 60000
-   node store/ingest/scripts/check-dump.mjs <folder>
-   ```
-3. Load it, and hold D1 to the file by checksum. No row is fetched back: one statement a table is run on both and the answers compared. With `--checks`, the statements and expected answers are the ones `thenwhat store checksum` writes. D1 answers at most 100 columns a statement (found on the preview on 17 November 2026; the local engine has no such cap), so a table of many columns is checked by several statements of at most 90.
-   ```bash
-   node store/ingest/scripts/import-folder.mjs <folder> --remote
-   node store/ingest/scripts/checksum-d1.mjs --file <hot.sqlite> --remote
-   ```
-4. Put the payload objects in the bucket.
-   ```bash
-   node store/ingest/scripts/upload-payloads.mjs <payload folder> --remote
-   ```
-5. Put the bulk file in the bucket. It is compressed, cut into parts of 200 MB (Wrangler's `r2 object put` takes 300 MiB at most, read from Wrangler 4.161.0's source), and its manifest, with the SHA-256 of each part and of the whole file, is written last.
-   ```bash
-   node store/ingest/scripts/upload-bulk.mjs <bulk.sqlite> --remote
-   ```
-6. Compare the exports: `make export-compare` with `STORE_FILE` and `STORE_PAYLOADS`.
+| | Stage | What it does |
+| --- | --- | --- |
+| 0 | privacy | `thenwhat store prove-no-people` on both files and both payload folders. If it fails or cannot be run, nothing is sent. |
+| 1 | jurisdiction | The database's jurisdiction is read back and must be `eu`; the bucket must be found in `eu`. |
+| 2 | config | The configuration for the environment, with the database's id looked up by name, in a git-ignored file. Production's is removed at the end. |
+| 3 | migrations | All of `store/ingest/migrations/`. |
+| 4 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. |
+| 5 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`. |
+| 6 | dump | The hot file as SQL (`dump-for-import.mjs`), and that SQL replayed strictly on this machine (`check-dump.mjs`). |
+| 7 | import | The files, in order, counted against the manifest (`import-folder.mjs`). |
+| 8 | checksum | Every hot table in D1 against the build's checks (`checksum-d1.mjs --checks`). No row is fetched back. |
+| 9 | payloads | The payload objects of both tiers (`upload-payloads.mjs`), twenty read back. |
+| 10 | bulk | The bulk file, compressed, in parts of 200 MB, its manifest last (`upload-bulk.mjs`). |
+| 11 | verify | The bulk manifest read back and held to the file. On this machine the whole file comes back and is compared. |
+| 12 | export | On this machine only: `thenwhat export-compare` of the hot file against the working database (`ARGS="--skip-export"` leaves it out). |
 
-If a step fails, restore to the bookmark, or empty the store, before loading again.
+Production needs both `ENV=production` and `CONFIRM=thenwhat-store`, and every script it calls is given `--production` explicitly. Everything the steps print goes, as it arrives and unfiltered, to `<build's folder>/cutover/<env>-<time>.log`; the terminal shows the same with ids masked. `result-<env>-<time>.json` beside it has each stage's seconds, the rows D1 says were written, and the build's id. The log can hold a database's id: it stays in the build's folder and is not committed.
+
+If a stage fails after the import began, restore to the bookmark, or for the preview run again with `--replace`.
 
 ### Restore, in two tiers
 

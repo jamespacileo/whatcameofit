@@ -95,17 +95,25 @@ extension-safari: extension
 export-compare:
 	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
 
-# The whole cut-over chain on this machine, nothing sent anywhere: the hot file dumped,
-# replayed strictly, loaded into D1's local engine and held to the file by checksum; the
-# payload objects and the bulk file put in the local bucket and read back; then the
-# export from the hot file compared with the working database's. Each stage is timed.
-# Exit 1 on any failure or difference.
-#   make store-rehearsal STORE_HOT=/path/hot.sqlite STORE_BULK=/path/bulk.sqlite PAYLOADS=/path/payloads
-#   ... ARGS="--skip-export"     without the export comparison, which needs DATABASE_URL
-.PHONY: store-rehearsal
+# The cut-over of the store, one command and one order (store/ingest/scripts/cutover.mjs,
+# docs/deploy.md): the build proved free of people, the jurisdiction read back, migrations,
+# the store found empty, the bookmark noted, the hot file dumped, replayed here, loaded
+# and held to its checks, the payload objects and the bulk file put in the bucket and the
+# manifest read back. It stops at the first stage that fails and names it; each stage is
+# timed; everything goes to a log in the build's folder.
+#   make store-rehearsal STORE_DIR=/path/build                 the same on this machine, nothing sent
+#   make store-cutover ENV=preview STORE_DIR=/path/build       ARGS="--dry-run" prints the plan
+#   make store-cutover ENV=production STORE_DIR=/path/build CONFIRM=thenwhat-store
+# ARGS: --replace (clear a preview store that is not empty), --skip-export (rehearsal only).
+.PHONY: store-rehearsal store-cutover
 store-rehearsal: store/ingest/node_modules
-	@test -n "$(STORE_HOT)" -a -n "$(STORE_BULK)" -a -n "$(PAYLOADS)" || { echo "Name STORE_HOT, STORE_BULK and PAYLOADS."; exit 1; }
-	node store/ingest/scripts/rehearsal.mjs --hot $(STORE_HOT) --bulk $(STORE_BULK) --payloads $(PAYLOADS) $(ARGS)
+	@test -n "$(STORE_DIR)" || { echo "Name the build's folder with STORE_DIR."; exit 1; }
+	node store/ingest/scripts/cutover.mjs --env local --store-dir $(STORE_DIR) $(ARGS)
+
+store-cutover: store/ingest/node_modules
+	@test -n "$(ENV)" -a -n "$(STORE_DIR)" || { echo "Name ENV (preview or production) and STORE_DIR."; exit 1; }
+	@test "$(ENV)" != "local" || { echo "For this machine use make store-rehearsal."; exit 1; }
+	node store/ingest/scripts/cutover.mjs --env $(ENV) --store-dir $(STORE_DIR) $(if $(CONFIRM),--confirm $(CONFIRM)) $(ARGS)
 
 # A rehearsal of taking the site's export from the truth store (task 6.2). It reads the D1
 # database and the bucket named, writes an export under STORE_REHEARSAL, holds it to the
