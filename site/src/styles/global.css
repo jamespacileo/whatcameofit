@@ -69,10 +69,11 @@
   --note-size: 0.85rem;
   --panel-pad: 0.85rem 1rem;
   --label-col: 11rem;
-  /* The record band's two further tones, a step and two steps above the navy: its main
-     column and the status card. The same in both themes, as the navy is. */
-  --band-main: #12325e;
-  --band-card: #1c4179;
+  /* The record band's two further tones (openspec band-well): its main surface, a clear
+     step above the navy, and the status card, a well a step below the navy. The same in
+     both themes, as the navy is. */
+  --band-main: #163a6c;
+  --band-card: #081b36;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -6263,6 +6264,8 @@ main ul:not([class]) li + li {
   --column-gap: 2rem;
   /* Secondary text on the navy. */
   --navy-soft: #c9d9ee;
+  /* The sheet's inner margin: the band's title and status card keep to it too. */
+  --sheet-pad: clamp(1.1rem, 3vw, 2.4rem);
 }
 
 body.framed {
@@ -6432,7 +6435,7 @@ body.framed {
   background: var(--paper);
   border: 1px solid var(--rule);
   border-top: 0;
-  padding: 1.5rem clamp(1.1rem, 3vw, 2.4rem) 2.4rem;
+  padding: 1.5rem var(--sheet-pad) 2.4rem;
 }
 
 .sheet > .lede {
@@ -7420,9 +7423,9 @@ body.framed {
   }
 }
 
-/* The record band in three tones (openspec band-tones): the navy at the sides, a lighter
-   main column that runs into the sheet below it, and the status card a step lighter
-   still, so the card reads as part of the band and not as a white object on it. */
+/* The record band in three tones (openspec band-tones, then band-well): the navy at the
+   sides, a lighter main surface as wide as the sheet below it, and on that surface the
+   status card as a darker well, so the title and the status read as one block. */
 @media screen {
   .band.record .digest {
     --paper: var(--band-card);
@@ -7475,21 +7478,42 @@ body.framed {
     isolation: isolate;
   }
 
-  /* The main column's tone, from the band's top edge to the sheet. */
+  /* The card's column also holds the sheet's margin, so the card keeps its width. */
+  .band-grid {
+    grid-template-columns: var(--list) minmax(0, 1fr) calc(21rem + var(--sheet-pad));
+  }
+
+  /* The main surface, from the band's top edge to the sheet and exactly as wide as it:
+     the title and the status card both stand on it. */
   .band-grid::before {
     content: "";
-    grid-column: 2;
+    grid-column: 2 / 4;
     grid-row: 1 / span 2;
     z-index: -1;
     align-self: stretch;
-    margin: -1.5rem -1rem -2rem 0;
+    margin: -1.5rem 0 -2rem;
     background: var(--band-main);
   }
 
-  /* The title starts where the sheet's words do. */
+  /* The title starts where the sheet's words do, and the card ends where they end. */
   .band-grid > .band-main,
   .band-grid > .band-actions {
-    padding-left: clamp(1.1rem, 3vw, 2.4rem);
+    padding-left: var(--sheet-pad);
+  }
+
+  .band-grid > .digest {
+    margin-inline-end: var(--sheet-pad);
+  }
+
+  /* Beside the card the title leads: a sentence-long headline is set a step above the
+     status label, which gives up a step in turn. */
+  .band.record .title.long {
+    font-size: 1.95rem;
+    line-height: 1.18;
+  }
+
+  .band.record .digest .label {
+    font-size: 1.5rem;
   }
 
   /* The tone is a grid item too, so the column's own items say which row they are in. */
@@ -7499,6 +7523,14 @@ body.framed {
 
   .band-grid > .band-actions {
     grid-row: 2;
+  }
+}
+
+/* Where the section list is a row of chips the band is one surface, the main tone,
+   a step above the masthead's navy, with the status card as the well on it. */
+@media screen and (max-width: 68rem) {
+  .band.record {
+    background: var(--band-main);
   }
 }
 
