@@ -90,6 +90,23 @@ Since openspec `band-structure` (chosen by the operator on 2026-11-17 from `.imp
 | Body | `1rem` (root is 106.25%), line-height 1.55 | 400 |
 | Notes, labels, facts | `0.75rem` to `0.9rem` | 400 to 700 |
 
+**The scale** (openspec `type-scale`, 2026-11-17). Every font size in `global.css` is one of seven steps for running text or one of three named roles, defined once as custom properties; a title's size is a `clamp`. A test fails on any other size. Root is 17px.
+
+| Token | Size | Used for |
+|---|---|---|
+| `--text-micro` | `0.72rem` (12.2px) | An outlet's letter tile, the "new" tag, a named place on the stage track |
+| `--text-xs` | `0.78rem` (13.3px) | Score chips, counts, the smallest labels |
+| `--text-s` | `0.85rem` (14.5px) | Notes, labels, column heads (`--label-size` and `--note-size` are this step) |
+| `--text-m` | `0.92rem` (15.6px) | Table cells, secondary text, small controls |
+| `--text-body` | `1rem` (17px) | Body |
+| `--text-l` | `1.08rem` (18.4px) | A summary, a lead sentence, a sub-heading |
+| `--text-xl` | `1.2rem` (20.4px) | Section headings in the page's face, search fields |
+| `--text-wordmark` | `1.25rem` | The masthead's name |
+| `--text-heading` | `1.35rem` | A record page's section heading, in the heading face |
+| `--text-status` | `1.5rem` | The status label beside the title |
+
+Sizes this document gives elsewhere as raw `rem` values (0.75 to 1.25) are drawn at the nearest step: 0.66 to 0.74 at micro; 0.75 to 0.8 at xs; 0.82 to 0.88 at s; 0.9 to 0.95 at m; 1 and 1.02 at body; 1.04 to 1.1 at l; 1.15 to 1.25 at xl. The scale covers the shared stylesheet; sizes written inside a component's or a page's own styles (the lookup, the day list, the drawn popup, the about page) are not yet on it.
+
 Figures are tabular and lining throughout. Reading measure is 66 characters. A name with a hyphen in a headline never breaks at the hyphen.
 
 ## Layout

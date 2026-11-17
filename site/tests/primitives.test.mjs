@@ -67,3 +67,20 @@ test("label columns are one width", () => {
   uses(".glance-rows > div", "grid-template-columns", "label-col");
   uses(".brief-group", "grid-template-columns", "label-col");
 });
+
+// The type scale (openspec type-scale): seven steps for running text and three named
+// roles, defined once. No rule writes a size of its own; a title's size is a clamp, and
+// the two sizes below are not rem sizes at all.
+test("every font size is a step of the type scale", () => {
+  const steps = ["micro", "xs", "s", "m", "body", "l", "xl", "wordmark", "heading", "status"];
+  for (const step of steps) {
+    assert.equal(css.split(`\n  --text-${step}:`).length - 1, 1, `--text-${step} is defined once`);
+  }
+  const allowed = new RegExp(
+    `^(var\\(--text-(${steps.join("|")})\\)|var\\(--(label|note)-size\\)|clamp\\(.+\\)|inherit|0\\.85em|106\\.25%)$`,
+  );
+  const strays = [...css.matchAll(/font-size:\s*([^;]+);/g)]
+    .map((found) => found[1].trim())
+    .filter((value) => !allowed.test(value));
+  assert.deepEqual(strays, [], "a font-size outside the scale");
+});
