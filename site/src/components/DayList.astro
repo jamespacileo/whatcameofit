@@ -157,11 +157,11 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
                 <span class="day-col">Status now</span>
               </div>
               <ol>
-                {gatherRecords(heading.rows).map(({ row, follows }) =>
+                {gatherRecords(heading.rows).map(({ row, follows }, index, all) =>
                   row.kind === "report" ? (
                     <DayReport row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
                   ) : row.kind === "record" ? (
-                    <DayRecord row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} follows={follows} />
+                    <DayRecord row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} follows={follows} first={follows && !all[index - 1].follows} />
                   ) : (
                     <DayPromise row={row} />
                   ),
@@ -328,12 +328,15 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
         for (const row of rows) row.hidden = out(row);
         // One record listed for several claims: the first of its rows left in the day
         // stands for the record, the rest follow it as short lines.
-        const led = new Set<string>();
+        const led = new Map<string, number>();
         for (const row of left) {
           const key = row.dataset.record;
           if (!key) continue;
-          row.toggleAttribute("data-follows", led.has(key));
-          led.add(key);
+          const before = led.get(key) ?? 0;
+          // The first to follow carries the one label over them all.
+          if (before === 0) row.removeAttribute("data-follows");
+          else row.setAttribute("data-follows", before === 1 ? "first" : "");
+          led.set(key, before + 1);
         }
         // A long day stops after its first rows until the reader asks for the rest. The
         // rows past that are marked; only a narrow list leaves them out.
@@ -1091,16 +1094,61 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     white-space: nowrap;
   }
 
-  /* A record listed for several claims is drawn once. Each further claim follows as
-     one short line: "Also for", the treatment as the link, what it is for. */
+  /* A record listed for several claims is drawn once. The further claims follow as a
+     close list under one label: each a line of the treatment, as the link, and what it
+     is for, with that claim's status on one line beside it. */
   .row-also-label {
     display: none;
-    font-weight: 400;
+    margin: 0 0 0.45rem;
+    font-size: var(--text-xs);
+    font-weight: 600;
     color: var(--muted);
   }
 
+  .record-row[data-follows="first"] .row-also-label {
+    display: block;
+  }
+
   .record-row[data-follows] {
-    padding-top: 0.55rem;
+    align-items: end;
+    padding-block: 0.3rem;
+  }
+
+  .record-row[data-follows="first"] {
+    padding-top: 0.7rem;
+  }
+
+  /* The last of them closes the record before the next row. */
+  .record-row[data-follows]:not(:has(+ .record-row[data-follows])) {
+    padding-bottom: 0.9rem;
+  }
+
+  /* Its panel is one line: the status and the control's mark. Its place on the path
+     and the counts are in the detail it opens. */
+  .record-row[data-follows] .row-now {
+    margin-top: 0;
+    padding-block: 0.4rem;
+  }
+
+  .record-row[data-follows] .row-now .status-name {
+    font-size: var(--text-m);
+  }
+
+  .record-row[data-follows] .row-now .row-chev {
+    top: 0.45rem;
+  }
+
+  .record-row[data-follows] .row-now :is(.track, .row-counts) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .record-row[data-follows] .row-more-body .row-more-counts {
+    display: block;
   }
 
   .day-row:has(+ .record-row[data-follows]:not([hidden])) {
@@ -1115,10 +1163,6 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
   .record-row[data-follows] :is(.row-source, .row-about, .row-intervention, .row-detail) {
     display: none;
-  }
-
-  .record-row[data-follows] .row-also-label {
-    display: inline;
   }
 
   .record-row:not([data-follows]) .row-whom,
@@ -1655,7 +1699,28 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     }
 
     .day-row + .record-row[data-follows] {
-      padding-top: 0.5rem;
+      padding-top: 0.35rem;
+    }
+
+    .day-row + .record-row[data-follows="first"] {
+      padding-top: 0.7rem;
+    }
+
+    /* Under the claim a following row's panel keeps its place on the path. */
+    .record-row[data-follows] .row-now {
+      margin-top: 0.35rem;
+    }
+
+    .record-row[data-follows] .row-now .track {
+      position: static;
+      width: 5.5rem;
+      height: auto;
+      overflow: visible;
+      clip-path: none;
+    }
+
+    .record-row[data-follows] .row-now .status-name {
+      font-size: var(--text-body);
     }
 
     /* Its link runs in the line; the room to press it is above and below the words. */
