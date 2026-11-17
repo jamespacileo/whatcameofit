@@ -493,10 +493,10 @@ def test_a_record_going_a_b_a_is_merged_each_day_and_replays(session: Session, t
     state = dict(report.state)
     when = datetime(2026, 11, 18, tzinfo=UTC)
     deltas = []
-    for day, score in enumerate((0.9, 0.5, 0.9)):
-        changed = Record(
-            "link_lead", lead.key, {**lead.body, "triage_score": score, "triage_version": 4 + day}
-        )
+    # Day three's record is day one's, byte for byte.
+    for day, (score, version) in enumerate(((0.9, 4), (0.5, 5), (0.9, 4))):
+        body = {**lead.body, "triage_score": score, "triage_version": version}
+        changed = Record("link_lead", lead.key, body)
         deltas.append(tmp_path / f"d{day}.jsonl.gz")
         chosen, _ = merge_day(bulk, [changed], state, delta=deltas[-1], store_sql=STORE, now=when)
         assert chosen.records == [changed], day
