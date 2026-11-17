@@ -341,9 +341,10 @@ sh scripts/daily-run.sh summary     # what the last run did
 
 ## Development
 
-Needs [uv](https://docs.astral.sh/uv/), Node 22.23.4 or later, make and Docker.
+Needs [uv](https://docs.astral.sh/uv/), Node 26, [pnpm](https://pnpm.io/) 10, make and Docker.
 
 ```sh
+make setup   # once per clone or worktree
 make check
 ```
 

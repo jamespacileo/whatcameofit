@@ -54,10 +54,14 @@ jobs:
         run: make pr-preview-state
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: steps.state.outputs.published != 'true'
+        with:
+          package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         if: steps.state.outputs.published != 'true'
         with:
-          node-version: 24
+          node-version-file: .node-version
       # The installed dependencies, whole, so nothing is installed when the lock file is unchanged.
       - name: Restore dependencies
         id: deps
@@ -65,7 +69,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: site/node_modules
-          key: site-deps-${{ runner.os }}-node24-${{ hashFiles('site/package-lock.json') }}
+          key: site-deps-${{ runner.os }}-node26-${{ hashFiles('site/pnpm-lock.yaml') }}
       # Drawing the card images is most of a build; a drawn card is kept by what decides
       # its pixels (site/src/lib/card-image.ts), so only changed cards are drawn again.
       - name: Restore drawn cards
@@ -74,7 +78,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: site/.cache/cards
-          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/package-lock.json') }}
+          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/pnpm-lock.yaml') }}
           restore-keys: site-cards-
       - name: Build and publish
         id: preview

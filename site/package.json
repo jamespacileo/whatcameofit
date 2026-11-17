@@ -2,8 +2,9 @@
   "name": "thenwhat-site",
   "type": "module",
   "version": "0.0.1",
+  "packageManager": "pnpm@10.34.5",
   "engines": {
-    "node": ">=22.23.4"
+    "node": ">=26"
   },
   "scripts": {
     "dev": "astro dev",
@@ -28,7 +29,13 @@
     "pagefind": "^1.6.0",
     "wrangler": "4.161.0"
   },
-  "overrides": {
-    "fflate": "0.7.5"
+  "pnpm": {
+    "overrides": {
+      "fflate": "0.7.5"
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
   }
 }

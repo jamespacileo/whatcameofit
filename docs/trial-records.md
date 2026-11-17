@@ -13,8 +13,8 @@ Validated raw records are saved in the existing `LOOKUP_RESULTS` KV namespace un
 From `site/`, after installing the existing dependencies:
 
 ```sh
-EXPORT_FILE=data/published-export.json ASTRO_TELEMETRY_DISABLED=1 npm run build
-npx wrangler dev --local --ip 127.0.0.1 --port 8789 --inspector-port 9239 --var CONTACT_EMAIL:corrections@whatcameofit.com
+EXPORT_FILE=data/published-export.json ASTRO_TELEMETRY_DISABLED=1 pnpm run build
+pnpm exec wrangler dev --local --ip 127.0.0.1 --port 8789 --inspector-port 9239 --var CONTACT_EMAIL:corrections@whatcameofit.com
 ```
 
 This uses local bindings and fetches public registry data. It does not deploy or use model credentials. Plain Astro preview cannot execute the Worker route. Keep the preview on loopback and do not expose a home-network server publicly.
