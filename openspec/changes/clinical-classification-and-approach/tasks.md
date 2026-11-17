@@ -75,7 +75,7 @@
 
 - [ ] 9.2 <a id="task-f23"></a>Include vocabulary year in refresh eligibility. Test changed and retired records across two years and reuse of current records on an unchanged rerun. [F23](../../../docs/reviews/2026-11-17-code-review.md#finding-f23) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-stored-descriptor-changes-in-a-new-vocabulary-year)
 
-- [ ] 9.3 <a id="task-f24"></a>Load newly approved condition ancestry during normal preparation. Test the first prepare-to-export cycle and the existing pending behavior when NLM is unavailable. [F24](../../../docs/reviews/2026-11-17-code-review.md#finding-f24) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-preparation-first-discovers-an-approved-condition-term)
+- [x] 9.3 <a id="task-f24"></a>Load newly approved condition ancestry during normal preparation. Test the first prepare-to-export cycle and the existing pending behavior when NLM is unavailable. [F24](../../../docs/reviews/2026-11-17-code-review.md#finding-f24) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-preparation-first-discovers-an-approved-condition-term)
 
 - [x] 9.4 <a id="task-f25"></a>Update browse copy to describe the three evidence sources. Render a model-only assignment beside one supported by a trial and check the source wording. [F25](../../../docs/reviews/2026-11-17-code-review.md#finding-f25) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-category-comes-only-from-the-checked-condition)
 

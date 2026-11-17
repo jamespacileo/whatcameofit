@@ -134,6 +134,12 @@ def terms_command(
 def _say_terms(slug: str, found: TermsFound) -> None:
     """What proposing a claim's terms gave, part by part."""
     run, kind, targets, drug = found.terms, found.kind, found.targets, found.drug
+    if found.tree_error is not None:
+        err.print(
+            f"{slug}: MeSH ancestry is still pending ({found.tree_error}). "
+            "Run `thenwhat clinical tree` to retry.",
+            markup=False,
+        )
     if run is not None:
         approved = [t for t in run.scored if t.review_state is ReviewState.APPROVED]
         exact = sum(term.fit is TermFit.EXACT for term in approved)
