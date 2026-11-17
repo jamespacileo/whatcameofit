@@ -48,7 +48,7 @@ from thenwhat.export.build import build_export
 from thenwhat.export.compare import canonical_bytes, compare
 from thenwhat.export.parallel import compare_with_store
 from thenwhat.export.rehearsal import against, problems
-from thenwhat.export.store_records import StoreFault, StoreRecords
+from thenwhat.export.store_records import TABLES_READ, StoreFault, StoreRecords
 from thenwhat.review.queue import confirm_stage, flag_failure
 from thenwhat.seed.load import load_seed
 
@@ -711,3 +711,57 @@ def test_rehearsal_passes_an_export_from_the_store_and_refuses_one_the_site_cann
     )
     assert any("status" in problem for problem in problems(broken, schema))
     assert problems({**export, "claims": []}, schema)[-1] == "The export holds no claim."
+
+
+def test_a_store_file_of_only_the_tables_an_export_reads_gives_the_same_export(
+    session: Session, tmp_path: Path, fixture_json
+):
+    """Scenario: A store that holds only the hot tier"""
+    claim = new_claim(session)
+    add_registry_events(session, claim, study(fixture_json, "study_NCT03491397_rows"))
+    add_match(session, claim, "NCT09999999", 0.7, ReviewState.PENDING)
+    twin = new_claim(session, "second-claim")
+    archive_claim(session, twin.slug, reason="entered twice", now=NOW)
+    records, _ = store_of(session, tmp_path, NOW)
+    whole = json.loads(build_export(records, now=NOW).model_dump_json())
+    records.close()
+    with sqlite3.connect(tmp_path / "store.db") as db:
+        db.execute("PRAGMA foreign_keys = OFF")
+        for (view,) in db.execute("SELECT name FROM sqlite_master WHERE type = 'view'").fetchall():
+            db.execute(f"DROP VIEW {view}")
+        tables = [
+            name
+            for (name,) in db.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+            )
+        ]
+        dropped = [table for table in tables if table not in TABLES_READ]
+        for table in dropped:
+            # A search table takes its shadow tables with it.
+            db.execute(f"DROP TABLE IF EXISTS {table}")
+    assert {"registry_trial", "link_lead", "work_entry", "llm_usage"} <= set(dropped)
+
+    hot = StoreRecords(tmp_path / "store.db", payloads=tmp_path / "objects")
+    export = json.loads(build_export(hot, now=NOW).model_dump_json())
+    hot.close()
+
+    assert canonical_bytes(export) == canonical_bytes(whole)
+    assert claim_in(export)["trials"]
+
+
+def test_export_refuses_a_store_missing_a_column_it_reads_and_names_it(
+    session: Session, tmp_path: Path
+):
+    """Scenario: Not a store file"""
+    new_claim(session)
+    store_of(session, tmp_path, NOW)[0].close()
+    with sqlite3.connect(tmp_path / "store.db") as db:
+        db.execute("ALTER TABLE promise RENAME COLUMN parsed_date TO parsed")
+        db.execute("PRAGMA foreign_keys = OFF")
+        db.execute("DROP TABLE outlet_icon")
+
+    with pytest.raises(StoreFault) as refused:
+        StoreRecords(tmp_path / "store.db")
+
+    assert "it has no table outlet_icon" in str(refused.value)
+    assert "it has no column promise.parsed_date" in str(refused.value)
