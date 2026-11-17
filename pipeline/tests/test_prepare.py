@@ -1,211 +1,175 @@
-"""Preparing many claims for review in one command: which steps each claim needs
-(`plan_claims`, on a real database) and the `prepare` command with its steps faked."""
+"""Preparing many claims with `thenwhat prepare`, the rule that decides a read's draft
+once it is prepared, and the audit of a prepared batch. The steps themselves are tested
+in test_claim_steps.py; here the command runs them on the test session with their
+sources faked (claim_support.py). Scenario names are from openspec claim-extraction,
+entity-resolution and lead-reading."""
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import UTC, date, datetime
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
-from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
-from thenwhat.claims.entry import (
-    ClaimNotFound,
-    add_article,
-    add_claim,
-    awaiting_audit,
-    find_article,
-    find_claim,
+from backfill_support import same_session
+from claim_support import (
+    NOW,
+    Registry,
+    Sources,
+    drafted_by_a_read,
+    new_claim,
+    trial,
 )
+from thenwhat.claims.corrections import rename_intervention
+from thenwhat.claims.entry import awaiting_audit, find_claim
 from thenwhat.cli import app
-from thenwhat.db.models import LinkLead, SourceArticle
+from thenwhat.db.models import Entity, LinkLead, SourceArticle
 from thenwhat.domain import Decider, OutletKind, ReadOutcome, ReviewState
-from thenwhat.prepare import decide_prepared_lead_claim, plan_claims, steps_for
+from thenwhat.extract.retrieve import NotNow
+from thenwhat.prepare import decide_prepared_lead_claim
 from thenwhat.review.decisions import record_decision
-
-NOW = datetime(2026, 11, 20, tzinfo=UTC)
-
-
-def claim_with_articles(session: Session, slug: str, *urls: str) -> None:
-    add_claim(
-        session,
-        slug=slug,
-        headline="Antibody regrows teeth in mice",
-        vertical="mouth-and-teeth",
-        intervention=f"EX-1 antibody {slug}",
-        indication="tooth agenesis",
-        summary="An antibody restored missing teeth in mice.",
-    )
-    for number, url in enumerate(urls, 1):
-        add_article(
-            session,
-            slug,
-            url=url,
-            outlet="Example News",
-            title=f"Report {number}",
-            published_date=date(2018, 3, number),
-        )
-
-
-def test_a_claim_needs_its_unread_articles_read_then_a_search_then_a_fetch(session: Session):
-    claim_with_articles(session, "one", "https://news.example.org/a", "https://news.example.org/b")
-    one = find_claim(session, "one")
-    assert one is not None
-    read = find_article(session, one, "https://news.example.org/a")
-    assert read is not None
-    read.content_hash = "already read"
-    session.flush()
-
-    [plan] = plan_claims(session, ["one"])
-
-    assert plan.unread_articles == ["https://news.example.org/b"]
-    assert steps_for(plan) == [
-        [
-            "extract",
-            "article",
-            "one",
-            "--article-url",
-            "https://news.example.org/b",
-            "--unless-held",
-        ],
-        ["resolve", "one"],
-        ["fetch", "one"],
-        ["readings", "one"],
-        ["terms", "one"],
-    ]
-
-
-def test_a_decided_claim_is_searched_and_fetched_but_its_articles_are_not_read(session: Session):
-    claim_with_articles(session, "one", "https://news.example.org/a")
-    one = find_claim(session, "one")
-    assert one is not None
-    record_decision(one, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
-    session.flush()
-
-    [plan] = plan_claims(session, ["one"])
-
-    assert plan.unread_articles == []
-    assert steps_for(plan) == [
-        ["resolve", "one"],
-        ["fetch", "one"],
-        ["readings", "one"],
-        ["terms", "one"],
-    ]
-
-
-def test_without_names_every_claim_awaiting_review_is_planned(session: Session):
-    claim_with_articles(session, "pending-one", "https://news.example.org/a")
-    claim_with_articles(session, "decided-one", "https://news.example.org/b")
-    decided = find_claim(session, "decided-one")
-    assert decided is not None
-    record_decision(decided, ReviewState.REJECTED, by=Decider.HUMAN, now=NOW)
-    session.flush()
-
-    assert [plan.slug for plan in plan_claims(session, None)] == ["pending-one"]
-
-
-def test_an_unknown_claim_is_refused_before_anything_runs(session: Session):
-    with pytest.raises(ClaimNotFound, match="no-such-claim"):
-        plan_claims(session, ["no-such-claim"])
-
-
-# --- the command -----------------------------------------------------------------------
 
 
 @pytest.fixture
-def run(session: Session, monkeypatch: pytest.MonkeyPatch):
+def sources() -> Sources:
+    return Sources(Registry([trial("NCT00000001")]))
+
+
+@pytest.fixture
+def run(session: Session, monkeypatch: pytest.MonkeyPatch, sources: Sources):
     @contextmanager
     def test_session() -> Generator[Session]:
         yield session
         session.flush()
 
-    ran: list[list[str]] = []
-
-    def fake_step(arguments: list[str]) -> tuple[int, str]:
-        ran.append(arguments)
-        address = arguments[4] if arguments[0] == "extract" else ""
-        if address.endswith("/held"):
-            return (LEFT_FOR_LATER, "Left for later. Its outlet cannot be asked yet.")
-        failed = address.endswith("/blocked") or (
-            arguments[0] == "terms" and arguments[-1].endswith("no-terms")
-        )
-        return (1 if failed else 0, "could not be read" if failed else "done")
-
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
-    monkeypatch.setattr("thenwhat.cli.prepare.run_step", fake_step)
+    monkeypatch.setattr("thenwhat.cli.claim_steps.claim_sources", sources.claim_sources)
+    sources.open_session = same_session(session)
     runner = CliRunner()
-    # The settings are read for the rule that decides a read's claim; the database they
-    # name is never opened, because the session above stands in for it.
-    env = {"COLUMNS": "200", "DATABASE_URL": "postgresql+psycopg://unused/unused"}
-    return lambda *arguments: (runner.invoke(app, list(arguments), env=env), ran)
+    # The settings are read for the steps; the database they name is never opened,
+    # because the session above stands in for it.
+    env = {
+        "COLUMNS": "200",
+        "DATABASE_URL": "postgresql+psycopg://unused/unused",
+        "MATCH_ACCEPT_ABOVE": "0.8",
+        "APPROVE_DRAFTS_BY_RULE": "true",
+    }
+    return lambda *arguments: runner.invoke(app, list(arguments), env=env)
 
 
-def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_read(
-    run, session: Session
-):
-    claim_with_articles(session, "one", "https://news.example.org/blocked")
-
-    result, ran = run("prepare", "one")
-
-    assert result.exit_code == 0, result.output
-    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings", "terms"]
-    assert "one" in result.output and "could not be read" in result.output
+def said(result) -> str:
+    return " ".join(result.output.split())
 
 
-def test_prepare_due_prepares_the_claims_whose_registry_search_is_due(run, session: Session):
-    """Scenario: Search due after a rename (openspec claims)"""
-    claim_with_articles(session, "not-due", "https://news.example.org/a")
-    due = find_claim(session, "not-due")
-    assert due is not None
-    record_decision(due, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
-    claim_with_articles(session, "renamed", "https://news.example.org/b")
-    renamed = find_claim(session, "renamed")
-    assert renamed is not None
-    record_decision(renamed, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
-    renamed.registry_search_due_at = NOW
-    session.flush()
+# --- the command -----------------------------------------------------------------------
 
-    result, ran = run("prepare", "--due")
+
+def test_prepare_works_through_every_step_and_decides_a_reads_draft(run, session: Session):
+    """Scenarios: Prepared and named; Unfinished parts of a published claim are completed"""
+    new_claim(session, "drafted-one")
+    drafted_by_a_read(session, "drafted-one")
+    published = new_claim(session, "published-one")
+    record_decision(published, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+
+    result = run("prepare", "--pending", "--workers", "1")
 
     assert result.exit_code == 0, result.output
-    assert {step[1] for step in ran if step[0] == "resolve"} == {"renamed"}
+    # Each step says how many claims it did, put off, left needing a fix and failed.
+    assert "claim_trials: 2 done, 0 found nothing, 0 put off, 0 need a fix, 0 failed" in said(
+        result
+    )
+    assert (
+        "drafted-one: approved by rule, now that its registries have been searched; held off"
+        " the site until audited" in said(result)
+    )
+    drafted = find_claim(session, "drafted-one")
+    assert drafted is not None and drafted.review_state is ReviewState.APPROVED
+    assert drafted.awaiting_audit_at is not None
 
 
 def test_prepare_with_no_claims_named_explains_and_exits_1(run):
-    result, ran = run("prepare")
+    result = run("prepare")
 
     assert result.exit_code == 1
     assert "--pending" in result.output
-    assert ran == []
 
 
-# --- a claim that a link lead's read drafted ---------------------------------------------
+def test_prepare_of_an_unknown_claim_is_refused(run):
+    result = run("prepare", "no-such-claim")
+
+    assert result.exit_code == 1
+    assert "no-such-claim" in result.output
 
 
-def drafted_by_a_read(session: Session, slug: str) -> None:
-    """Mark the claim as the new claim of a link lead's read."""
-    claim = find_claim(session, slug)
-    assert claim is not None
-    session.add(
-        LinkLead(
-            url=f"https://news.example.org/{slug}",
-            url_key=f"news.example.org/{slug}",
-            outlet="news.example.org",
-            outlet_kind=OutletKind.GENERAL_NEWS,
-            title="words a person wrote when sharing the link",
-            first_shared_at=NOW,
-            read_outcome=ReadOutcome.NEW_CLAIM,
-            claim_id=claim.id,
-        )
+def test_an_article_of_a_held_outlet_is_left_for_later_and_its_claim_waits(
+    run, session: Session, sources: Sources
+):
+    """Scenario: Prepare comes to an article of a stopped outlet"""
+    new_claim(session, "waiting", "https://held.example.org/a")
+    drafted_by_a_read(session, "waiting")
+
+    class Stopped:
+        def retrieve(self, url: str):
+            raise NotNow(url, "the outlet is stopped", 3600)
+
+    sources.retriever = Stopped()
+
+    result = run("prepare", "waiting", "--workers", "1")
+
+    assert result.exit_code == 0, result.output
+    assert "waiting: claim_articles put off until" in said(result)
+    # Its registries were still searched, and it is not decided before the article is read.
+    assert "claim_trials: 1 done" in said(result)
+    claim = find_claim(session, "waiting")
+    assert claim is not None and claim.review_state is ReviewState.PENDING
+
+
+def test_prepare_due_searches_only_the_claims_whose_search_is_due(
+    run, session: Session, sources: Sources
+):
+    """Scenario: Search due after a rename (openspec claims)"""
+    for slug in ("not-due", "renamed"):
+        claim = new_claim(session, slug)
+        record_decision(claim, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    assert run("prepare", "--pending", "--workers", "1").exit_code == 0
+    renamed = find_claim(session, "renamed")
+    assert renamed is not None
+    old = session.scalars(select(Entity.name).where(Entity.claim_id == renamed.id)).one()
+    rename_intervention(session, "renamed", old, "EX-2 antibody", by=Decider.HUMAN, now=NOW)
+    sources.registry.asked.clear()
+
+    result = run("prepare", "--due", "--workers", "1")
+
+    assert result.exit_code == 0, result.output
+    assert "EX-2 antibody" in sources.registry.asked
+    assert not any("not-due" in term for term in sources.registry.asked)
+
+
+def test_a_claim_never_searched_is_reported_by_prepare_and_the_audit_list(
+    run, session: Session, sources: Sources
+):
+    """Scenario: A claim with no search record"""
+    new_claim(session, "unsearched")
+    sources.registry.down = True
+
+    prepared = run("prepare", "--pending", "--workers", "1")
+    listed = run("audit", "list")
+
+    assert prepared.exit_code == 0, prepared.output
+    assert "unsearched: claim_trials put off until" in said(prepared)
+    assert "Never searched: 1 claim(s) have no record of a registry search: unsearched." in (
+        said(prepared)
     )
-    session.flush()
+    assert "unsearched never searched" in said(listed)
+
+
+# --- the rule for drafts and the audit -----------------------------------------------------
 
 
 def test_a_claim_a_read_drafted_is_approved_by_rule_once_it_is_prepared(session: Session):
     """Scenario: Prepared and named"""
-    claim_with_articles(session, "one")
+    new_claim(session, "one")
     drafted_by_a_read(session, "one")
 
     assert decide_prepared_lead_claim(session, "one", now=NOW) is ReviewState.APPROVED
@@ -221,7 +185,7 @@ def test_a_claim_a_read_drafted_is_approved_by_rule_once_it_is_prepared(session:
 
 def test_a_pending_claim_no_read_drafted_keeps_waiting_for_the_operator(session: Session):
     """Scenario: A claim the operator entered"""
-    claim_with_articles(session, "one")
+    new_claim(session, "one")
 
     assert decide_prepared_lead_claim(session, "one", now=NOW) is None
 
@@ -235,75 +199,23 @@ def test_a_pending_claim_no_read_drafted_keeps_waiting_for_the_operator(session:
 def test_audit_clear_releases_held_claims_and_refuses_one_not_held(run, session: Session):
     """Scenarios: Audit passed, Not awaiting audit"""
     for slug in ("held", "also-held", "never-held"):
-        claim_with_articles(session, slug)
+        new_claim(session, slug)
     for slug in ("held", "also-held"):
         drafted_by_a_read(session, slug)
         decide_prepared_lead_claim(session, slug, now=NOW)
 
-    refused, _ = run("audit", "clear", "held", "never-held")
+    refused = run("audit", "clear", "held", "never-held")
 
     assert refused.exit_code == 1
     assert "never-held" in refused.output and "Nothing was cleared" in refused.output
     assert [claim.slug for claim in awaiting_audit(session)] == ["also-held", "held"]
 
-    cleared, _ = run("audit", "clear", "held")
+    cleared = run("audit", "clear", "held")
 
     assert cleared.exit_code == 0, cleared.output
     assert [claim.slug for claim in awaiting_audit(session)] == ["also-held"]
-    listed, _ = run("audit", "list")
+    listed = run("audit", "list")
     assert "also-held" in listed.output and "1 claim awaits audit" in listed.output
-
-
-def test_prepare_approves_a_reads_claim_only_when_every_step_succeeded(run, session: Session):
-    """Scenarios: Prepared and named, A step that failed"""
-    claim_with_articles(session, "searched", "https://news.example.org/a")
-    claim_with_articles(session, "unsearched", "https://news.example.org/blocked")
-    for slug in ("searched", "unsearched"):
-        drafted_by_a_read(session, slug)
-
-    # One at a time: every claim's thread would otherwise share the one test session, and
-    # two flushing it at once fail with "Session is already flushing".
-    result, _ = run("prepare", "--pending", "--workers", "1")
-
-    assert result.exit_code == 0, result.output
-    assert "approved by rule, now that its registries have been searched" in result.output
-    states = {
-        slug: claim.review_state
-        for slug in ("searched", "unsearched")
-        if (claim := find_claim(session, slug))
-    }
-    assert states == {"searched": ReviewState.APPROVED, "unsearched": ReviewState.PENDING}
-
-
-def test_an_article_of_a_held_outlet_is_left_for_later_and_its_claim_waits(run, session: Session):
-    """Scenario: Prepare comes to an article of a stopped outlet"""
-    claim_with_articles(session, "waiting", "https://news.example.org/held")
-    drafted_by_a_read(session, "waiting")
-
-    result, ran = run("prepare", "waiting")
-
-    assert result.exit_code == 0, result.output
-    # Asked not to ask a held outlet, reported as left for later and not as failed, and
-    # the claim's other steps ran.
-    assert ran[0][-1] == "--unless-held"
-    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings", "terms"]
-    assert "read left for later" in result.output and "failed" not in result.output
-    # Not decided: a later run reads the article first.
-    claim = find_claim(session, "waiting")
-    assert claim is not None and claim.review_state is ReviewState.PENDING
-
-
-def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):
-    """Scenario: Terms that could not be proposed"""
-    claim_with_articles(session, "no-terms", "https://news.example.org/a")
-    drafted_by_a_read(session, "no-terms")
-
-    result, _ = run("prepare", "no-terms")
-
-    assert result.exit_code == 0, result.output
-    assert "terms failed" in result.output
-    claim = find_claim(session, "no-terms")
-    assert claim is not None and claim.review_state is ReviewState.APPROVED
 
 
 def test_audit_list_shows_reads_that_overlap_a_claim(run, session: Session):
@@ -313,7 +225,7 @@ def test_audit_list_shows_reads_that_overlap_a_claim(run, session: Session):
     from thenwhat.claims.entry import archive_claim
 
     for slug in ("archived-one", "live-one"):
-        claim_with_articles(session, slug)
+        new_claim(session, slug)
     archive_claim(session, "archived-one", reason="missed trial", now=NOW)
     for number, slug in enumerate(("archived-one", "live-one")):
         session.add(
@@ -331,7 +243,7 @@ def test_audit_list_shows_reads_that_overlap_a_claim(run, session: Session):
         )
     session.flush()
 
-    listed, _ = run("audit", "list")
+    listed = run("audit", "list")
 
     assert listed.exit_code == 0, listed.output
     said = " ".join(listed.output.split())
@@ -382,10 +294,10 @@ def test_a_reads_claim_under_a_live_claims_substance_and_condition_is_rejected(
     other claim is archived"""
     from thenwhat.claims.entry import archive_claim
 
-    claim_with_articles(session, "live-one")
-    claim_with_articles(session, "brand-one", "https://news.example.org/brand")
+    new_claim(session, "live-one")
+    new_claim(session, "brand-one", "https://news.example.org/brand")
     for slug in ("oral-form", "after-archive"):
-        claim_with_articles(session, slug)
+        new_claim(session, slug)
     for slug in ("live-one", "brand-one", "oral-form", "after-archive"):
         under_substance(session, slug, "s-1")
     live = find_claim(session, "live-one")
@@ -417,6 +329,9 @@ def test_a_reads_claim_under_a_live_claims_substance_and_condition_is_rejected(
 VACCINE = {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "204"}]}}
 
 
+VACCINE = {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "204"}]}}
+
+
 @pytest.mark.parametrize(
     ("product_codes", "joined"),
     [
@@ -433,7 +348,7 @@ def test_two_brands_under_one_rxnorm_ingredient_are_twins_only_when_no_vaccine(
 ):
     """Scenario: Two vaccines filed under one antigen"""
     for slug in ("first-vaccine", "second-vaccine"):
-        claim_with_articles(session, slug)
+        new_claim(session, slug)
         payload: dict = {"substance": {"rxcui": "777", "_name": "examplevirus glycoprotein"}}
         if product_codes is not None:
             payload["product_codes"] = product_codes
@@ -452,7 +367,7 @@ def test_a_combination_never_shares_a_single_drugs_substance(session: Session):
     """Scenario: A combination under one substance"""
     from thenwhat.claims.entry import add_claim
 
-    claim_with_articles(session, "single-drug")
+    new_claim(session, "single-drug")
     add_claim(
         session,
         slug="bimagrumab-plus-semaglutide-obesity",

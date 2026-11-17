@@ -1,88 +1,65 @@
-"""What `thenwhat prepare` decides for a claim a read drafted, by how each of its steps
-ended: characterisation tests.
+"""What `thenwhat prepare` decides for a claim a read drafted, by how each part of its
+preparation ended: characterisation tests.
 
-These tests pin present behaviour for openspec change `one-work-runner`, task 1.2, at the
-level `test_prepare.py` tests the command: its steps are faked by what each exited with
-and said, with the fakes of `test_prepare.py`, and `resolve` itself with the fakes of
-`test_cli_resolve.py`. A case an existing test asserts in full is not repeated here; it
+Written for openspec change `one-work-runner`, task 1.2, against the process-per-step
+runner, and kept, rewritten for the steps of the work ledger that replaced it, for the
+cases that change made. A case an existing test asserts in full is not repeated here; it
 is listed with that test.
 
 Coverage, case -> test (this module unless a module is named):
 
   every step succeeds: approved by rule -> test_prepare.py::
-    test_prepare_approves_a_reads_claim_only_when_every_step_succeeded
+    test_prepare_works_through_every_step_and_decides_a_reads_draft
   the registry search fails: the claim stays pending
     -> test_a_claim_whose_registry_search_failed_stays_pending
-  terms fail: the claim is still decided -> test_prepare.py::
-    test_a_claim_whose_terms_failed_is_still_decided
-  the substance lookup fails inside resolve: resolve still exits 0
-    -> test_resolve_succeeds_when_the_substance_lookup_failed
-  ... and prepare then decides the claim
-    -> test_a_claim_whose_substance_lookup_failed_is_still_decided
+  terms fail: the claim is decided, and its terms are due again -> test_claim_steps.py::
+    test_a_claim_whose_terms_failed_is_decided_and_its_terms_are_due_next_run
+  the substance lookup fails inside resolve: the search is left unfinished
+    -> test_resolve_leaves_the_search_unfinished_when_the_substance_lookup_failed
+  ... and prepare then leaves the claim waiting
+    -> test_a_claim_whose_substance_lookup_failed_waits
 """
 
-# CHANGES under one-work-runner:
-# test_resolve_succeeds_when_the_substance_lookup_failed: the search is left unfinished.
-# test_a_claim_whose_substance_lookup_failed_is_still_decided: the claim waits instead.
-# test_prepare.py::test_a_claim_whose_terms_failed_is_still_decided: terms leave the
-#   decision gate; the claim is decided and its terms are due again on the next run.
-
-import re
+# LANDED under one-work-runner (task 7, 2026-11-17):
+# test_resolve_leaves_the_search_unfinished_when_the_substance_lookup_failed: `resolve`
+#   exited 0 when the substance lookup failed; the lookup is now a step of its own, put
+#   off, the trial search waits for it, and the command exits 1.
+# test_a_claim_whose_substance_lookup_failed_waits: the claim was decided on a search
+#   that did not run; it now waits until the lookup finishes.
+# test_claim_steps.py::test_a_claim_whose_terms_failed_is_decided_and_its_terms_are_due_next_run:
+#   terms left the decision gate before this change; now they also stay due, and the
+#   next run proposes them, for a decided claim as for one that is not.
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 import test_cli_resolve
-import test_prepare
-import thenwhat.cli.prepare
-from test_prepare import claim_with_articles, drafted_by_a_read
-from thenwhat.claims.entry import add_claim, find_claim
-from thenwhat.db.models import Claim, EntitySubstance
-from thenwhat.domain import Decider, ReviewState
+from claim_support import (
+    SLUG,
+    Registry,
+    Sources,
+    Substances,
+    drafted_by_a_read,
+    entry,
+    new_claim,
+    prepare,
+)
+from thenwhat.db.models import EntitySubstance
+from thenwhat.domain import ReviewState, WorkOutcome
+from thenwhat.sources.base import SourceUnavailable
 
-# The `prepare` command with its steps faked, and the `resolve` command with its sources
-# faked, each as its own tests have them.
-prepared = test_prepare.run
+# The `resolve` command with its sources faked, as its own tests have it.
 resolved = test_cli_resolve.run
 
-# What `resolve` says when the substance lookup failed, as the fakes make it fail.
-LOOKUP_FAILED = "Development codes were not looked up: rxnorm did not answer after 2 attempts."
 
+def test_a_claim_whose_registry_search_failed_stays_pending(session: Session):
+    claim = new_claim(session)
+    drafted_by_a_read(session, SLUG)
 
-def answering(monkeypatch: pytest.MonkeyPatch, command: str, exited: int, said: str) -> None:
-    """Have one command of the faked steps exit and say what is given. Every step is
-    still recorded by the fake the `prepared` fixture set."""
-    faked = thenwhat.cli.prepare.run_step
+    prepare(session, Sources(Registry(down=True)))
 
-    def run_step(arguments: list[str]) -> tuple[int, str]:
-        answer = faked(arguments)
-        return (exited, said) if arguments[0] == command else answer
-
-    monkeypatch.setattr("thenwhat.cli.prepare.run_step", run_step)
-
-
-def claim_of(session: Session, slug: str) -> Claim:
-    claim = find_claim(session, slug)
-    assert claim is not None
-    return claim
-
-
-def test_a_claim_whose_registry_search_failed_stays_pending(
-    prepared, session: Session, monkeypatch: pytest.MonkeyPatch
-):
-    claim_with_articles(session, "unsearched", "https://news.example.org/a")
-    drafted_by_a_read(session, "unsearched")
-    answering(monkeypatch, "resolve", 1, "SourceUnavailable: the registry did not answer.")
-
-    result, ran = prepared("prepare", "unsearched")
-
-    # The command succeeds; the failed step is reported and the steps after it still run.
-    assert result.exit_code == 0, result.output
-    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings", "terms"]
-    assert "resolve failed" in result.output
-    assert "approved by rule" not in result.output
-    claim = claim_of(session, "unsearched")
+    assert entry(session, "claim_trials", claim).outcome is WorkOutcome.LATER
     assert (claim.review_state, claim.reviewed_by, claim.awaiting_audit_at) == (
         ReviewState.PENDING,
         None,
@@ -90,40 +67,30 @@ def test_a_claim_whose_registry_search_failed_stays_pending(
     )
 
 
-def test_resolve_succeeds_when_the_substance_lookup_failed(resolved, session: Session):
-    add_claim(
-        session,
-        slug="downvax-tooth-agenesis",
-        headline="Vaccine regrows teeth",
-        vertical="mouth-and-teeth",
-        intervention="Downvax",
-        indication="tooth agenesis",
-    )
+def test_resolve_leaves_the_search_unfinished_when_the_substance_lookup_failed(
+    resolved, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    class Down(test_cli_resolve.Substances):
+        def substances_named(self, name: str):
+            raise SourceUnavailable("gsrs did not answer after 4 attempts.")
 
-    result = resolved("resolve", "downvax-tooth-agenesis")
+    monkeypatch.setattr("thenwhat.cli.resolve.make_substances", lambda s: Down())
 
-    assert result.exit_code == 0, result.output
-    assert LOOKUP_FAILED in " ".join(result.output.split())
+    result = resolved("resolve", test_cli_resolve.SLUG)
+
+    said = " ".join(result.output.split())
+    assert result.exit_code == 1
+    assert "claim_substance put off until" in said and "gsrs did not answer" in said
+    assert "claim_trials did not run: an earlier step has not finished." in said
     assert session.scalars(select(EntitySubstance)).all() == []
 
 
-def test_a_claim_whose_substance_lookup_failed_is_still_decided(
-    prepared, session: Session, monkeypatch: pytest.MonkeyPatch
-):
-    claim_with_articles(session, "unlooked", "https://news.example.org/a")
-    drafted_by_a_read(session, "unlooked")
-    # `resolve` exits 0 when the substance lookup failed, and says so last.
-    answering(monkeypatch, "resolve", 0, LOOKUP_FAILED)
+def test_a_claim_whose_substance_lookup_failed_waits(session: Session):
+    claim = new_claim(session)
+    drafted_by_a_read(session, SLUG)
 
-    result, ran = prepared("prepare", "unlooked")
+    prepare(session, Sources(substances=Substances(down=True)))
 
-    assert result.exit_code == 0, result.output
-    assert [step[0] for step in ran] == ["extract", "resolve", "fetch", "readings", "terms"]
-    assert re.search(rf"resolve \(\d+s\): {re.escape(LOOKUP_FAILED)}", result.output)
-    assert "resolve failed" not in result.output
-    assert "approved by rule, now that its registries have been searched" in result.output
-    # Decided with no substance record, so no claim for its substance could be found.
-    claim = claim_of(session, "unlooked")
-    assert (claim.review_state, claim.reviewed_by) == (ReviewState.APPROVED, Decider.RULE)
-    assert claim.awaiting_audit_at is not None
+    assert entry(session, "claim_substance", claim).outcome is WorkOutcome.LATER
+    assert claim.review_state is ReviewState.PENDING
     assert session.scalars(select(EntitySubstance)).all() == []

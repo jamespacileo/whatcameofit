@@ -1,14 +1,9 @@
-"""Working out what each claim needs before it can be reviewed, and deciding a claim
-that a link lead's read drafted once it has been prepared.
+"""Deciding a claim that a link lead's read drafted, by the rule for drafts, once it has
+been prepared: the step `claim_decide` (`thenwhat.claimsteps.decide`) runs it."""
 
-Planning: which articles are unread, and the commands to run. Running them is the
-command's job.
-"""
-
-from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import (
@@ -33,79 +28,6 @@ from thenwhat.extract.names import is_a_name
 from thenwhat.resolve.service import combination_search
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.rxnorm import not_searched
-
-
-@dataclass(frozen=True, slots=True)
-class ClaimPlan:
-    slug: str
-    # Articles the model has not read yet. Only a claim still awaiting review has any:
-    # a decided claim is never redrafted.
-    unread_articles: list[str]
-
-
-def plan_claims(
-    session: Session, slugs: list[str] | None, *, pending: bool = True, due: bool = False
-) -> list[ClaimPlan]:
-    """A plan for each named claim. When none is named: for every claim awaiting review
-    (`pending`), and for every claim whose registry search is due again after a merge or
-    a rename (`due`). A claim merged into another is never one of them."""
-    if slugs is None:
-        wanted = []
-        if pending:
-            wanted.append(Claim.review_state == ReviewState.PENDING)
-        if due:
-            wanted.append(Claim.registry_search_due_at.is_not(None))
-        claims = (
-            list(
-                session.scalars(
-                    select(Claim)
-                    .where(or_(*wanted), Claim.merged_into_id.is_(None))
-                    .order_by(Claim.slug)
-                )
-            )
-            if wanted
-            else []
-        )
-    else:
-        claims = [claim_by_slug(session, slug) for slug in slugs]
-
-    plans: list[ClaimPlan] = []
-    for claim in claims:
-        unread: list[str] = []
-        if claim.review_state is ReviewState.PENDING:
-            unread = list(
-                session.scalars(
-                    select(SourceArticle.url)
-                    .where(SourceArticle.claim_id == claim.id, SourceArticle.content_hash.is_(None))
-                    .order_by(SourceArticle.published_date, SourceArticle.id)
-                )
-            )
-        plans.append(ClaimPlan(claim.slug, unread))
-    return plans
-
-
-def steps_for(plan: ClaimPlan) -> list[list[str]]:
-    """The commands that prepare one claim, in order: read its unread articles, search the
-    registries, read the registries for whatever matches are already approved, have the
-    stored trial records read into record readings, then propose the claim's subject
-    terms, kind and drug record, which its background cards come from."""
-    return [
-        # An outlet the page reader has stopped is not asked: the article is left for
-        # later (`--unless-held`), and the claim's other steps still run.
-        *(
-            ["extract", "article", plan.slug, "--article-url", url, "--unless-held"]
-            for url in plan.unread_articles
-        ),
-        ["resolve", plan.slug],
-        ["fetch", plan.slug],
-        ["readings", plan.slug],
-        ["terms", plan.slug],
-    ]
-
-
-# A claim's background cards describe its terms and are not evidence: a claim whose
-# terms could not be proposed is still decided once the other steps have succeeded.
-NOT_NEEDED_TO_DECIDE = {"terms"}
 
 
 def decide_prepared_lead_claim(session: Session, slug: str, *, now: datetime) -> ReviewState | None:

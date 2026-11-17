@@ -22,7 +22,7 @@ from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim, claim_by_slug
 from thenwhat.cli import app
 from thenwhat.cli.resolve import Research, make_brands
-from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EntitySubstance
+from thenwhat.db.models import Claim, DecisionLog, EntityMatch, EntitySubstance, RegistrySearch
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import ClaimStatus, Decider, EvidenceStage, ReviewState
 from thenwhat.llm.client import Llm, LlmSettings
@@ -88,6 +88,15 @@ class Nothing:
         return None
 
     def organisations(self, name: str) -> list[SourceRecord]:
+        return []
+
+
+class NoPapers(Papers):
+    """A literature index that finds no paper."""
+
+    def search_papers(
+        self, terms: list[str], condition: str, limit: int = 20
+    ) -> list[SourceRecord]:
         return []
 
 
@@ -168,7 +177,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("MATCH_REJECT_BELOW", raising=False)
     monkeypatch.setattr("thenwhat.cli.resolve.make_registries", lambda s: (Trials(), Dois()))
     monkeypatch.setattr("thenwhat.cli.resolve.make_backend", lambda s: Backend())
-    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research())
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(NoPapers()))
     monkeypatch.setattr("thenwhat.cli.resolve.make_substances", lambda s: Substances())
     monkeypatch.setattr("thenwhat.cli.resolve.make_brands", lambda s: Brands())
     add_claim(
@@ -506,8 +515,9 @@ def test_resolve_approves_a_confident_candidate_by_rule_by_default(
 
     assert result.exit_code == 0, result.output
     assert "1 approved by rule" in result.output
-    # A search that was due after a merge or a rename, and succeeded, is due no more.
-    assert claim.registry_search_due_at is None
+    # The search leaves a record of what it sent.
+    [searched] = session.scalars(select(RegistrySearch)).all()
+    assert (searched.term, searched.kept) == ("EX-1 antibody", 1)
     [match] = session.scalars(select(EntityMatch)).all()
     assert match.reviewed_by is Decider.RULE
 
@@ -547,14 +557,6 @@ def test_resolve_says_what_the_paper_search_sent_and_what_is_left(
 def test_resolve_says_plainly_when_the_paper_search_found_nothing(
     run, session: Session, monkeypatch: pytest.MonkeyPatch
 ):
-    class NoPapers(Papers):
-        def search_papers(
-            self, terms: list[str], condition: str, limit: int = 20
-        ) -> list[SourceRecord]:
-            return []
-
-    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(NoPapers()))
-
     result = run("resolve", SLUG)
 
     assert result.exit_code == 0, result.output
@@ -588,26 +590,26 @@ def test_resolve_keeps_its_trial_candidates_when_the_paper_search_breaks(
             raise KeyError("results")
 
     monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(BrokenPapers()))
-    due = datetime(2026, 11, 16, tzinfo=UTC)
-    claim = session.scalars(select(Claim).where(Claim.slug == SLUG)).one()
-    claim.registry_search_due_at = due
-    session.flush()
 
     result = run("resolve", SLUG)
 
-    assert result.exit_code == 0, result.output
-    # A step failed, so a search that was due after a merge or a rename stays due.
-    assert claim.registry_search_due_at == due
-    assert "The registry search stays due" in result.output
-    assert "Papers were not searched for" in result.output
+    # The papers failed apart from the registry search, which stands.
+    assert result.exit_code == 1
+    assert "claim_papers failed: KeyError" in result.output
     assert session.scalars(select(EntityMatch)).one().source_name == "clinicaltrials.gov"
+    assert session.scalars(select(RegistrySearch)).all() != []
 
 
-def test_resolve_without_the_literature_key_says_paper_search_is_off(run, session: Session):
+def test_resolve_without_the_literature_key_says_paper_search_is_off(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research())
+
     result = run("resolve", SLUG)
 
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 1
     assert "Paper search is off: OPENALEX_API_KEY is not set." in result.output
+    assert "claim_papers needs a fix: paper search is off" in " ".join(result.output.split())
     assert session.scalars(select(EntityMatch)).one().source_name == "clinicaltrials.gov"
 
 
@@ -669,7 +671,8 @@ def test_resolve_with_a_failing_backend_keeps_the_failure_on_record(run, session
     result = run("resolve", SLUG, broken_backend=True)
 
     assert result.exit_code == 1
-    assert "No candidates were stored" in result.output
+    assert "claim_trials failed" in result.output
+    # The unscored candidates are withdrawn; the failed decision stays on record.
     assert session.scalars(select(EntityMatch)).all() == []
     assert [entry.error is not None for entry in session.scalars(select(DecisionLog))] == [True]
 
@@ -678,8 +681,8 @@ def test_resolve_failing_after_the_search_keeps_and_reports_what_it_stored(run, 
     result = run("resolve", SLUG, broken_backend="evidence_stage")
 
     assert result.exit_code == 1
-    assert "1 candidate match(es) were stored before the failure" in result.output
-    assert "No candidates were stored" not in result.output
+    assert "claim_trials failed" in result.output
+    # The scored candidate stays; the search is made again for the evidence stage.
     assert len(session.scalars(select(EntityMatch)).all()) == 1
     assert any(entry.error is not None for entry in session.scalars(select(DecisionLog)))
 
