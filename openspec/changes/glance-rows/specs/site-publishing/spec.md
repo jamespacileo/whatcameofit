@@ -14,11 +14,11 @@ On a claim page each term of "At a glance" SHALL be drawn as one line holding it
 - **THEN** that term's row is open and in view
 
 ### Requirement: A term's score is said where its row opens, unless it is below the high band
-A term's score in the high band, and how a term was found where it has no percentage, SHALL be shown where the row opens, beside the label "Match", as the page's score chip. A term's score below the high band SHALL be shown on the closed row, in sight with nothing to press. This is an exception, for term matches in "At a glance" only, to the requirement that every score is in sight.
+A term's score in the high band, and how a term was found where it has no percentage, SHALL be shown where the row opens, as the page's score chip at the head of that term's "Why it matched", ahead of the reasons. A term's score below the high band SHALL be shown on the closed row, in sight with nothing to press. This is an exception, for term matches in "At a glance" only, to the requirement that every score is in sight.
 
 #### Scenario: A strong match
 - **WHEN** a condition is matched to a vocabulary term at 0.98
-- **THEN** the closed row shows the label and the value only, and the opened row shows "Match" with a chip reading "High, 98%"
+- **THEN** the closed row shows the label and the value only, and the opened row shows a chip reading "High, 98%" under "Why it matched", followed by the reasons
 
 #### Scenario: A weaker match
 - **WHEN** a condition is matched to a vocabulary term at 0.62
@@ -32,8 +32,8 @@ Where a row opens to a source's words, the words SHALL be shown without a label,
 - **THEN** the definition is followed by a pill reading "MeSH", and pressing it opens the term's page at the vocabulary in a new tab
 
 ### Requirement: An opened row is marked and its parts are labelled
-An opened row SHALL be marked as open across the list's width. After the source's words, each part SHALL carry its own label: the match, where the term is filed, the term as its source names it with its credit, and why it matched. The source's words SHALL be the most prominent part and the credit the least.
+An opened row SHALL be marked as open across the list's width. After the source's words, each part SHALL carry its own label: where the term is filed, naming the source; the term as its source names it with its credit; and why it matched. What the row's value already says SHALL NOT be repeated in the opened row. The source's words SHALL be the most prominent part and the credit the least.
 
 #### Scenario: Reading an opened term
 - **WHEN** a reader opens "Claimed for"
-- **THEN** the row is tinted, the definition is the largest text under it, and "Match", "Filed there as", the term with its credit and "Why it matched" follow, each smaller and each with its label
+- **THEN** the row is tinted, the definition is the largest text under it, and "Filed in MeSH as", the term with its credit and "Why it matched" follow, each smaller and each with its label

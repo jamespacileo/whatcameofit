@@ -7,6 +7,7 @@
 - [x] 4a The operator's notes of 2026-11-17: label and value on one baseline at the top of the row; the score and the source quiet; an opened row on the panel tone as labelled parts in three weights. Verify: 1400px closed and opened (a drug row, a condition row); 375px dark, opened.
 - [x] 4b Two groups named at the left, "The claim" and "On record", on the columns of "The record in brief". Verify: 1400px, the two sections' labels and values at the same x; a row opened; 375px.
 - [x] 4c The operator's second notes: no group names; the score and the source's name where the row opens; the source's words unlabelled, ending in a pill that opens the source in a new tab. A score below the high band stays on the row. Verify: 1400px, a term with words and a drug's record opened; 375px opened; the four pills' addresses and `target`.
+- [x] 4e A pass to distill, clarify and polish. The score stands at the head of its card's "Why it matched"; a drug's facts box is not repeated in the opened row; the section's bottom note opens from the heading's info mark; the lead, the press's name and "Filed in MeSH as" are reworded; the section's styles are one block. Verify: 1400px every row opened; 375px dark; site tests.
 - [ ] 4d A term matched below the high band, looked at in the browser: the published export has none on the pages checked.
 - [ ] 5 Paper: every row open. Written, not yet looked at in a print preview.
 - [ ] 6 A claim with two terms and no card, and a drug row with a second chip, looked at in the browser.

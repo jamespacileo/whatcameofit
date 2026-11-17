@@ -3,8 +3,8 @@
 // is and a gene, one row each, then the claim's own facts (passed in as rows) as rows of
 // the same list. A row taken from a background card is one line: its label and its value.
 // The line opens to the source's definition in quotation marks with a pill naming whose
-// words they are, the term's match, the claim's words beside the source's term when they
-// differ, and the card's credit and reasons (openspec glance-rows). Before the
+// words they are, the claim's words beside the source's term when they differ, and each
+// card's credit, then its score with the reasons for it (openspec glance-rows). Before the
 // record in brief, never inside the status panel: a card describes a term, not the
 // evidence. Openspec site-publishing: "Background cards on the claim page".
 import ArrowRight from "@lucide/astro/icons/arrow-right";
@@ -78,7 +78,18 @@ const rows: Row[] = [
 
 <section class="glance" data-pagefind-ignore>
   <FoldHead id={GLANCE_ID}>
-    {cards.length > 0 && <p slot="about">{GLANCE_LEAD}</p>}
+    {
+      /* What the section holds, and what its notes are and are not, said once from the
+         mark beside the heading. */
+      cards.length > 0 && (
+        <Fragment slot="about">
+          <p>{GLANCE_LEAD}</p>
+          <p class="glance-note">
+            {BACKGROUND_NOTE} <a href="/how-it-works#background-on-a-claims-terms">How these terms are chosen</a>
+          </p>
+        </Fragment>
+      )
+    }
     {GLANCE_TITLE}
   </FoldHead>
   <dl class="glance-rows">
@@ -149,7 +160,7 @@ const rows: Row[] = [
                   aria-expanded="true"
                   aria-controls={`${rowId(row)}-more`}
                 >
-                  <span class="glance-more-words">{short || !words ? "Why this term" : "Full definition and why this term"}</span>
+                  <span class="glance-more-words">{words ? "Definition and why it matched" : "Why it matched"}</span>
                   <span class="visually-hidden"> for {value}.</span>
                   <span class="chev" aria-hidden="true">
                     <ChevronDown size={16} stroke-width={2} />
@@ -176,23 +187,11 @@ const rows: Row[] = [
                       <span class="visually-hidden"> (opens in a new tab)</span>
                     </a>
                   </div>
-                  {opened.length > 0 && (
-                    <p class="glance-match">
-                      <span class="glance-part-label" aria-hidden="true">Match</span>
-                      <span class="glance-match-scores">
-                        {opened.map((score) => (
-                          <Score about={score.about} words={score.words} shown={score.shown}>
-                            <span>{TERM_SCORE_MEANING}</span>
-                          </Score>
-                        ))}
-                      </span>
-                    </p>
-                  )}
                   {filed && (
                     <p class="glance-filed">
                       {/* The label is for the eye; the words between the two terms say the
                           same to a screen reader. */}
-                      <span class="glance-filed-label" aria-hidden="true">Filed there as</span>
+                      <span class="glance-filed-label" aria-hidden="true">Filed in {sourceName(sourceOf(card.source)!)} as</span>
                       <span class="glance-filed-words">
                         {claimWords}
                         <ArrowRight size={13} stroke-width={2} aria-hidden="true" />
@@ -208,7 +207,16 @@ const rows: Row[] = [
                       label={each.kind === "drug" ? drugName(each) : each.label}
                       wordsInRow={index === 0 && words !== null}
                       drugAs={found.drug ? drugName(found.drug) : undefined}
-                    />
+                    >
+                      {/* Each card's own score, unless it is in sight on the row. */}
+                      {scores[index] && opened.includes(scores[index]) && (
+                        <p slot="score" class="match-score">
+                          <Score about={scores[index].about} words={scores[index].words} shown={scores[index].shown}>
+                            <span>{TERM_SCORE_MEANING}</span>
+                          </Score>
+                        </p>
+                      )}
+                    </TermCard>
                   ))}
                 </div>
               )}
@@ -221,11 +229,4 @@ const rows: Row[] = [
   <dl class="glance-facts">
     <slot />
   </dl>
-  {
-    cards.length > 0 && (
-      <p class="glance-note" data-clamp="1">
-        {BACKGROUND_NOTE} <a href="/how-it-works#background-on-a-claims-terms">How these terms are chosen</a>
-      </p>
-    )
-  }
 </section>

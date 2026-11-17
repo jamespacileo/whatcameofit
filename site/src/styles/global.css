@@ -7546,31 +7546,6 @@ body.framed {
   }
 }
 
-/* At a glance in two columns on a wide screen (openspec band-tones): each term is a cell,
-   its label over its value. A cell whose card is open takes the full width, so the
-   source's words keep their measure. */
-@media (min-width: 60rem) {
-  .glance-rows {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 2.5rem;
-  }
-
-  .glance-rows > div {
-    grid-template-columns: minmax(0, 1fr);
-    align-content: start;
-  }
-
-  .glance-rows > div:has(details[open]) {
-    grid-column: 1 / -1;
-  }
-
-  /* An odd last cell has no neighbour: its rule still runs the full width. */
-  .glance-rows > div:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
-}
-
 /* The quiet sheet (openspec quiet-sheet). Clamped text: a claim's summary and a section's
    note are held to a few lines where a script can offer the rest (scripts/clamps.ts adds
    "More" only when there is more). With no script, and on paper, the text is whole. */
@@ -7967,24 +7942,11 @@ body.framed {
 
 /* A section's opening note is one muted line; "More" gives the rest (scripts/clamps.ts).
    The same for every section, so the eye lands on the heading and then on the rows. */
-.sheet .glance-lead,
 .sheet .take-why {
   max-width: var(--measure);
   margin-bottom: 0.7rem;
   font-size: var(--note-size);
   color: var(--muted);
-}
-
-/* At a glance: a term is its label, its value and its score. The source's words keep
-   to two lines, and the line under them says whose words they are; where the claim's
-   term is filed shows once the row is open. */
-.glance-rows .glance-words,
-.glance-rows .glance-words-long {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
 }
 
 
@@ -8009,8 +7971,6 @@ body.framed {
 }
 
 @media print {
-  .glance-rows .glance-words,
-  .glance-rows .glance-words-long,
   .trial-row .trial-measure-words {
     display: block;
     overflow: visible;
@@ -8203,23 +8163,32 @@ body.framed {
   text-decoration-color: currentColor;
 }
 
-/* "At a glance" as rows that open (openspec glance-rows, chosen by the operator on
-   2026-11-17 from three mocks in .impeccable/mocks/glance-variants/, "A"): the pattern of
-   "The record in brief". A term is one line, its label, its value, its score and whose
-   term it is, and opens to the source's words and why it matched. The claim's own facts
-   are rows of the same list. */
+/* "At a glance": rows that open (openspec glance-rows; the operator chose "A" from the
+   mocks in .impeccable/mocks/glance-variants/ on 2026-11-17 and shaped it in notes the
+   same day). One list in the pattern of "The record in brief".
+   A closed row is its label and its value on one baseline, the value's other names
+   under it, and a chevron. The line is the press, as a trial's row is.
+   An opened row stands on the panel tone and, under a hairline, starts under the row's
+   label: the source's words in the value's column, ending in a pill that names the
+   source; then labelled parts, a grey label in the label's column and what it names
+   under the value. The claim's own facts are rows of the same list. */
 .sheet .glance-rows {
   display: block;
 }
 
-.sheet .glance-rows > div {
-  position: relative;
+.sheet .glance-rows > div,
+.sheet .glance-facts > div {
   display: grid;
   grid-template-columns: var(--label-col) minmax(0, 1fr);
-  column-gap: 1.25rem;
-  align-items: start;
+  /* The value starts where "The record in brief" starts its questions. */
+  column-gap: 1.5rem;
+  align-items: baseline;
   padding: var(--row-pad) 0;
   border-bottom: 1px solid var(--row-rule);
+}
+
+.sheet .glance-rows > div {
+  position: relative;
 }
 
 .sheet .glance-rows dt,
@@ -8232,7 +8201,7 @@ body.framed {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   column-gap: 1.25rem;
-  align-items: start;
+  align-items: baseline;
   margin: 0;
 }
 
@@ -8246,10 +8215,12 @@ body.framed {
 }
 
 .sheet .glance-rows .aka {
-  grid-column: 1;
+  grid-column: 1 / -1;
 }
 
-/* The score stands over the row's press, so it opens its own panel. */
+/* A score below the high band stays on the closed row. It stands over the row's press,
+   so it opens its own panel. It is grey at rest, like everything on the row but the
+   label and the value; a lower-band reading keeps its ink. */
 .sheet .glance-rows .glance-scores {
   position: relative;
   z-index: 1;
@@ -8259,20 +8230,43 @@ body.framed {
   margin: 0;
 }
 
+/* The scores of this section are grey at rest, on the row and where it opens. */
+.sheet .glance-rows .pop-trigger.score:not(.low):not(.said) {
+  border-color: var(--rule-soft);
+  background: none;
+}
+
+.sheet .glance-rows .score:not(.low) .score-figure {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sheet .glance-rows .pop-trigger.score.said {
+  text-decoration-color: var(--rule);
+}
+
+.sheet .glance-rows .pop-trigger.score.said .score-words {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.sheet .glance-rows .pop-trigger.score:not(.low):not(.said):hover,
+.sheet .glance-rows .pop-trigger.score:not(.low):not(.said):has(+ .pop:popover-open) {
+  border-color: var(--ring);
+}
+
+/* The press: a chevron in the grey of the brief's, at the end of the value's line. */
 .glance-open {
   grid-column: 3;
   grid-row: 1;
   display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
   min-height: 1.6rem;
   padding: 0;
   border: 0;
   background: none;
   color: var(--muted);
   font: inherit;
-  font-size: var(--text-s);
-  text-align: left;
   cursor: pointer;
 }
 
@@ -8298,7 +8292,7 @@ body.framed {
   transform: rotate(180deg);
 }
 
-/* The whole line is the press, as a trial's row is; what the row opens to is not. */
+/* The whole line is the press; what the row opens to is not. */
 .js .glance-open::after {
   content: "";
   position: absolute;
@@ -8306,172 +8300,8 @@ body.framed {
   height: 3.1rem;
 }
 
-.js .glance-rows > div:has(.glance-open):not([data-open]):hover {
-  background: var(--panel);
-}
-
-.glance-rows .glance-more {
-  grid-column: 1 / -1;
-  max-width: 44rem;
-  padding: 0.7rem 0 0.3rem;
-}
-
-.js .glance-rows > div:not([data-open]) .glance-more {
-  display: none;
-}
-
-.glance-by {
-  margin: 0;
-  font-size: var(--note-size);
-  color: var(--muted);
-}
-
-/* Opened, the source's words are whole. */
-.glance-rows .glance-more .glance-words,
-.glance-rows .glance-more .glance-words-long {
-  display: block;
-  overflow: visible;
-  margin: 0.2rem 0 0;
-}
-
-.glance-more .glance-filed {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  margin: 0.45rem 0 0;
-  font-size: var(--note-size);
-  color: var(--muted);
-}
-
-.glance-rows .glance-more .term-card {
-  margin-top: 0.7rem;
-}
-
-/* The claim's own facts: rows of the same list. */
-.sheet .glance-facts {
-  display: block;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.sheet .glance-facts > div {
-  display: grid;
-  grid-template-columns: var(--label-col) minmax(0, 1fr);
-  column-gap: 1.25rem;
-  align-items: baseline;
-  padding: var(--row-pad) 0;
-  border-bottom: 1px solid var(--row-rule);
-}
-
-.sheet .glance-facts > div:last-child {
-  border-bottom-color: var(--rule);
-}
-
-.sheet .glance-facts dd {
-  margin: 0;
-  font-weight: 700;
-}
-
-@media (max-width: 40rem) {
-  /* The label, the value, then the score beside whose term it is. */
-  .sheet .glance-rows > div,
-  .sheet .glance-facts > div {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.1rem;
-  }
-
-  .sheet .glance-rows dd {
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 0.8rem;
-    row-gap: 0.15rem;
-    align-items: center;
-  }
-
-  .sheet .glance-rows .glance-value {
-    grid-column: 1 / -1;
-    order: 0;
-  }
-
-  .sheet .glance-rows .aka {
-    grid-column: 1 / -1;
-    order: 1;
-  }
-
-  .sheet .glance-rows .glance-scores {
-    grid-column: 1;
-    grid-row: auto;
-    order: 2;
-    justify-content: flex-start;
-  }
-
-  .glance-open {
-    grid-column: 2;
-    grid-row: auto;
-    order: 3;
-    min-height: 2.75rem;
-  }
-
-  .glance-rows .glance-more {
-    order: 4;
-  }
-
-  .js .glance-open::after {
-    height: 3.6rem;
-  }
-}
-
-@media print {
-  .js .glance-rows > div:not([data-open]) .glance-more {
-    display: block;
-  }
-
-  .glance-open .chev {
-    display: none;
-  }
-}
-
-/* "At a glance", after the operator's notes of 2026-11-17 (openspec glance-rows):
-   a row is read label to value, on one line at the top of the row; everything else on
-   the row is quiet; an opened row is a set of labelled parts in three weights. */
-
-/* 1. The label and the value share a baseline. */
-.sheet .glance-rows > div,
-.sheet .glance-facts > div,
-.sheet .glance-rows dd {
-  align-items: baseline;
-}
-
-/* 2. Only the label and the value carry weight. The score and how a term was found are
-   grey at rest; a lower-band reading keeps its ink, since its words are what it must
-   say. */
-.sheet .glance-rows .pop-trigger.score:not(.low):not(.said) {
-  border-color: var(--rule-soft);
-  background: none;
-}
-
-.sheet .glance-rows .score:not(.low) .score-figure {
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.sheet .glance-rows .pop-trigger.score.said {
-  text-decoration-color: var(--rule);
-}
-
-.sheet .glance-rows .pop-trigger.score.said .score-words {
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.sheet .glance-rows .pop-trigger.score:not(.low):not(.said):hover,
-.sheet .glance-rows .pop-trigger.score:not(.low):not(.said):has(+ .pop:popover-open) {
-  border-color: var(--ring);
-}
-
-/* 3. An opened row stands on the panel tone from edge to edge of the list, and what it
-   opens to is parted from its line by a hairline. */
+/* A row under the pointer, and an opened row, stand on the panel tone from edge to edge
+   of the list. */
 .js .glance-rows > div:has(.glance-open):not([data-open]):hover,
 .js .glance-rows > div[data-open] {
   background: var(--panel);
@@ -8480,195 +8310,26 @@ body.framed {
     0.85rem 0 0 var(--panel);
 }
 
-/* The parts: a grey label at the left, what it names at the right. First the source's
-   words, in the page's size and ink; then where the term is filed and why it matched,
-   a step smaller; last the credit and the notes, smallest and grey. */
+/* What a row opens to. */
 .glance-rows .glance-more {
   --part: 2;
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: 8.5rem minmax(0, 1fr);
-  column-gap: 1.25rem;
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
+  column-gap: 1.5rem;
   row-gap: 0.5rem;
   align-items: baseline;
-  max-width: 47rem;
-  margin-top: 0.8rem;
+  margin: 0.8rem 0 0 calc(-1 * (var(--label-col) + 1.5rem));
   padding: 0.85rem 0 0.35rem;
   border-top: 1px solid var(--rule);
 }
 
-.glance-more .glance-by,
-.glance-more .glance-filed-label,
-.glance-more .card-kind,
-.glance-more .term-card .match-why-head {
-  grid-column: 1;
-  margin: 0;
-  font-size: var(--label-size);
-  font-weight: 500;
-  color: var(--muted);
+.js .glance-rows > div:not([data-open]) .glance-more {
+  display: none;
 }
 
-/* A term with no words of the source's (a drug's record): the line says where it is
-   from, across the row. */
-.glance-more .glance-by:not(:has(+ .glance-words)) {
-  grid-column: 1 / -1;
-}
-
-.glance-rows .glance-more .glance-words,
-.glance-rows .glance-more .glance-words-long {
-  grid-column: var(--part);
-  margin: 0;
-  font-size: var(--text-body);
-  line-height: 1.5;
-}
-
-.glance-more .glance-filed,
-.glance-more .term-card,
-.glance-more .card-head,
-.glance-more .term-card .match-why {
-  display: contents;
-}
-
-.glance-more .glance-filed-words {
-  grid-column: var(--part);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: var(--text-m);
-  color: var(--ink);
-}
-
-.glance-more .card-label,
-.glance-more .card-head .entry-note,
-.glance-more .card-facts,
-.glance-more .card-words,
-.glance-more .term-card > .entry-note,
-.glance-more .term-credit,
-.glance-more .term-note,
-.glance-more .term-card .match-why p:not(.match-why-head) {
-  grid-column: var(--part);
-  margin: 0;
-}
-
-.glance-more .card-label {
-  justify-self: start;
-  font-size: var(--text-m);
-}
-
-.glance-more .term-card .match-why p:not(.match-why-head) {
-  font-size: var(--text-m);
-  color: var(--ink);
-}
-
-/* A new part starts a little lower than a line of the same part. */
-.glance-more .card-kind,
-.glance-more .card-label,
-.glance-more .term-card .match-why-head,
-.glance-more .term-card .match-why-head + p,
-.glance-more .glance-filed-label,
-.glance-more .glance-filed-words {
-  margin-top: 0.45rem;
-}
-
-.glance-more .card-facts {
-  background: var(--paper);
-}
-
-@media (max-width: 40rem) {
-  /* The label beside its value on a phone too. */
-  .sheet .glance-rows > div,
-  .sheet .glance-facts > div {
-    grid-template-columns: 7.25rem minmax(0, 1fr);
-    column-gap: 0.9rem;
-  }
-
-  .sheet .glance-rows dd {
-    align-items: center;
-  }
-
-  .sheet .glance-rows .glance-value {
-    align-self: baseline;
-  }
-
-  /* Opened, a part's label stands over what it names, and the parts take the row's
-     full width, under the label too. */
-  .glance-rows .glance-more {
-    --part: 1;
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.25rem;
-    margin-left: calc(-7.25rem - 0.9rem);
-  }
-
-  .glance-more .card-label,
-  .glance-more .term-card .match-why-head + p,
-  .glance-more .glance-filed-words {
-    margin-top: 0;
-  }
-}
-
-@media print {
-  .js .glance-rows > div[data-open] {
-    background: none;
-    box-shadow: none;
-  }
-}
-
-/* "At a glance", the operator's notes of 2026-11-17, second round (openspec glance-rows):
-   no group names; a closed row is its label, its value and a chevron; the score and
-   the source are said where the row opens; the source's words carry no label, and end
-   in a quiet pill that names the source and opens it in a new tab. */
-
-/* The value starts where "The record in brief" starts its questions. */
-@media (min-width: 40.01rem) {
-  .sheet .glance-rows > div,
-  .sheet .glance-facts > div {
-    column-gap: 1.5rem;
-  }
-}
-
-/* On a phone the chevron stands at the end of the value's line. */
-@media (max-width: 40rem) {
-  .sheet .glance-rows .glance-value {
-    grid-column: 1;
-  }
-
-  .sheet .glance-rows .glance-open {
-    grid-column: 2;
-    grid-row: 1;
-    order: 0;
-    min-height: 1.6rem;
-  }
-
-  .sheet .glance-rows .glance-scores {
-    grid-column: 1 / -1;
-  }
-}
-
-.sheet .glance-rows dd {
-  grid-template-columns: minmax(0, 1fr) auto auto;
-}
-
-.sheet .glance-rows .aka {
-  grid-column: 1 / -1;
-}
-
-.glance-open {
-  color: var(--ink);
-}
-
-/* What a row opens to starts under the row's label; a part's label takes the label's
-   column, so what it names stands under the value. */
-@media (min-width: 40.01rem) {
-  .glance-rows .glance-more {
-    grid-template-columns: var(--label-col) minmax(0, 1fr);
-    column-gap: 1.5rem;
-    max-width: none;
-    margin-left: calc(-1 * (var(--label-col) + 1.5rem));
-  }
-}
-
-/* The source's words stand in the value's column, under the value, with the label's
-   cell left empty: every part of an opened row starts on the same line down the page. */
+/* The source's words, whole, in the value's column with the label's cell left empty,
+   in the page's size and ink: the first thing read. */
 .glance-more .glance-said {
   grid-column: var(--part);
   max-width: var(--measure);
@@ -8676,28 +8337,14 @@ body.framed {
   line-height: 1.55;
 }
 
-.glance-rows .glance-more .glance-said .glance-words,
-.glance-rows .glance-more .glance-said .glance-words-long {
+.glance-rows .glance-more .glance-words,
+.glance-rows .glance-more .glance-words-long {
   display: inline;
   margin: 0;
 }
 
-/* With no words of the source's to follow, the pill is a part of its own: "Source". */
-.glance-more .glance-said:not(:has(.glance-words)) {
-  display: contents;
-}
-
-.glance-more .glance-said:not(:has(.glance-words)) .source-pill {
-  grid-column: var(--part);
-  justify-self: start;
-  margin: 0;
-}
-
-.glance-more .glance-said:not(:has(.glance-words)) .glance-part-label {
-  margin-top: 0;
-}
-
-/* The pill: the source's name, grey, small; a link, so it darkens under the pointer. */
+/* The source pill: the source's name, grey and small, at the end of its words. A link:
+   it darkens under the pointer and opens the source in a new tab. */
 .source-pill {
   display: inline-flex;
   align-items: center;
@@ -8720,33 +8367,179 @@ body.framed {
   color: var(--ink);
 }
 
-.glance-more .glance-match {
+/* With no words of the source's to follow, the pill is a part of its own: "Source". */
+.glance-more .glance-said:not(:has(.glance-words)) {
   display: contents;
 }
 
-.glance-more .glance-part-label {
+.glance-more .glance-said:not(:has(.glance-words)) .source-pill {
+  grid-column: var(--part);
+  justify-self: start;
+  margin: 0;
+}
+
+/* The parts. A part's label: grey, the label's size, in the label's column. */
+.glance-more .glance-part-label,
+.glance-more .glance-filed-label,
+.glance-more .card-kind,
+.glance-more .term-card .match-why-head {
   grid-column: 1;
-  margin-top: 0.45rem;
+  margin: 0;
   font-size: var(--label-size);
   font-weight: 500;
   color: var(--muted);
 }
 
-.glance-more .glance-match-scores {
+/* The card is not a box of its own here: its pieces are parts of the row. */
+.glance-more .glance-filed,
+.glance-more .term-card,
+.glance-more .card-head,
+.glance-more .term-card .match-why {
+  display: contents;
+}
+
+/* What a part names: in ink a step smaller than the words; the credit and the notes
+   keep their own small grey. */
+.glance-more .glance-filed-words,
+.glance-more .card-label,
+.glance-more .card-head .entry-note,
+.glance-more .card-facts,
+.glance-more .card-words,
+.glance-more .term-card > .entry-note,
+.glance-more .term-credit,
+.glance-more .term-note,
+.glance-more .match-score,
+.glance-more .term-card .match-why p:not(.match-why-head) {
   grid-column: var(--part);
+  margin: 0;
+}
+
+.glance-more .glance-filed-words {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.35rem 0.6rem;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--text-m);
+  color: var(--ink);
+}
+
+.glance-more .card-label {
+  justify-self: start;
+  font-size: var(--text-m);
+}
+
+.glance-more .term-card .match-why p:not(.match-why-head):not(.match-score) {
+  font-size: var(--text-m);
+  color: var(--ink);
+}
+
+/* A drug's facts are its row's value and other names: said once, on the row. The box
+   stays where it says something the row does not (no mechanism on record). */
+.glance-more .card-facts:not(:has(.entry-note)) {
+  display: none;
+}
+
+.glance-more .card-facts {
+  background: var(--paper);
+}
+
+/* A new part starts a little lower than a line of the same part. */
+.glance-more .card-kind,
+.glance-more .card-label,
+.glance-more .glance-filed-label,
+.glance-more .glance-filed-words,
+.glance-more .term-card .match-why-head,
+.glance-more .term-card .match-why-head + * {
   margin-top: 0.45rem;
 }
 
+.glance-more .glance-said:not(:has(.glance-words)) .glance-part-label {
+  margin-top: 0;
+}
+
+/* The claim's own facts: rows of the same list. */
+.sheet .glance-facts {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sheet .glance-facts > div:last-child {
+  border-bottom-color: var(--rule);
+}
+
+.sheet .glance-facts dd {
+  margin: 0;
+  font-weight: 700;
+}
+
 @media (max-width: 40rem) {
-  .glance-more .glance-match-scores {
+  /* The label beside its value on a phone too, the chevron at the end of the value's
+     line; a score that stays in sight goes under the other names. */
+  .sheet .glance-rows > div,
+  .sheet .glance-facts > div {
+    grid-template-columns: 7.25rem minmax(0, 1fr);
+    column-gap: 0.9rem;
+  }
+
+  .sheet .glance-rows dd {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0.8rem;
+    row-gap: 0.15rem;
+  }
+
+  .sheet .glance-rows .glance-open {
+    grid-column: 2;
+  }
+
+  .sheet .glance-rows .aka {
+    order: 1;
+  }
+
+  .sheet .glance-rows .glance-scores {
+    grid-column: 1 / -1;
+    grid-row: auto;
+    order: 2;
+    justify-content: flex-start;
+  }
+
+  .js .glance-open::after {
+    height: 3.6rem;
+  }
+
+  /* Opened, a part's label stands over what it names, and the parts take the row's
+     full width, under the label too. */
+  .glance-rows .glance-more {
+    --part: 1;
+    order: 3;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.25rem;
+    margin-left: calc(-7.25rem - 0.9rem);
+  }
+
+  .glance-more .card-label,
+  .glance-more .glance-filed-words,
+  .glance-more .term-card .match-why-head + * {
     margin-top: 0;
   }
 }
 
+/* On paper every row is open, with no tint and no chevron. */
 @media print {
+  .js .glance-rows > div:not([data-open]) .glance-more {
+    display: grid;
+  }
+
+  .js .glance-rows > div[data-open] {
+    background: none;
+    box-shadow: none;
+  }
+
+  .glance-open .chev {
+    display: none;
+  }
+
   .source-pill {
     padding: 0;
     border: 0;

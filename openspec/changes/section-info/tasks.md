@@ -6,4 +6,5 @@
 - [x] 4 `DESIGN.md`, with the motion.
 - [ ] 5 Hover with a real pointer: the opening on `mouseenter` was exercised by event, since the test browser's hover did not raise one.
 - [ ] 6 A print preview: the note under its heading.
-- [ ] 7 The operator's decision on the bottom note of "At a glance" and on the topic page's sections.
+- [x] 7a The bottom note of "At a glance" opens from the section's mark, after the lead, with its link.
+- [ ] 7 The operator's decision on the topic page's sections.

@@ -132,6 +132,8 @@ const day = (stamp: string) =>
   </p>
   <div class="match-why">
     <p class="match-why-head">{MATCH_WHY_HEAD}</p>
+    {/* The card's score, where a row gives it: ahead of the reasons it is the sum of. */}
+    <slot name="score" />
     {reasons.map((reason) => <p>{reason}</p>)}
     {card.reasons.length === 0 && <p>{NO_REASON}</p>}
   </div>

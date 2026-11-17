@@ -1172,10 +1172,10 @@ test("Scenario: Claim with a condition card only", () => {
   // gives the definition, unchanged and in quotation marks, with a pill after it that
   // names whose words they are and opens that source in a new tab; then the score and
   // the card. A short definition is not repeated in the card.
-  assert.match(section, /<button type="button" class="glance-open" aria-expanded="true" aria-controls="glance-condition-more">\s*<span class="glance-more-words">Why this term<\/span>\s*<span class="visually-hidden"> for example condition\.<\/span>/);
+  assert.match(section, /<button type="button" class="glance-open" aria-expanded="true" aria-controls="glance-condition-more">\s*<span class="glance-more-words">Definition and why it matched<\/span>\s*<span class="visually-hidden"> for example condition\.<\/span>/);
   assert.match(section, /<div class="glance-more" id="glance-condition-more">\s*<div class="glance-said">\s*<blockquote class="glance-words" cite="https:\/\/vocabulary\.example\/D900003">A synthetic definition of the example condition\.<\/blockquote>\s*<a class="source-pill" href="https:\/\/vocabulary\.example\/D900003" target="_blank" rel="noopener">\s*<span class="visually-hidden">In MeSH’s words: <\/span>\s*MeSH\s*<span class="visually-hidden"> \(opens in a new tab\)<\/span>/);
   // A line under the heading says what a term match is, where it is first met.
-  assert.match(section, /<div popover id="about-glance" class="pop" role="note"[^>]*>\s*<p>Each term is shown in an outside source’s words\. A term match is how well that source’s term fits this claim; it says nothing about the treatment\.<\/p>/);
+  assert.match(section, /<div popover id="about-glance" class="pop" role="note"[^>]*>\s*<p>Each term opens to its definition in an outside source’s words\. A term match is how well that source’s term fits this claim; it says nothing about the treatment\.<\/p>/);
   // The score is in sight on the row, so the card heads its reasons without repeating it.
   assert.match(section, /<p class="match-why-head">Why it matched<\/p>/);
   assert.ok(!section.includes('class="card-words"'));
@@ -1404,7 +1404,7 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   // opened; the card does not repeat it.
   const geneRow = section.split('id="glance-target"')[1];
   assert.match(geneRow, /<blockquote class="glance-words glance-words-long"/);
-  assert.match(geneRow, /<span class="glance-more-words">Full definition and why this term<\/span>/);
+  assert.match(geneRow, /<span class="glance-more-words">Definition and why it matched<\/span>/);
   assert.ok(!geneRow.split('id="glance-condition"')[0].includes('class="card-words"'));
   assert.match(section, /<blockquote[^>]*>\[Isoform 1\]: A synthetic description of what the product does \(PubMed:1\)\.( A further synthetic sentence about the product\.){5}<\/blockquote>/);
   // Both sources are credited on the card: the citation asked for, and whose words.
@@ -1833,7 +1833,8 @@ test("Scenario: Topic among ten", () => {
 test("Scenario: summary and notes are clamped, utility sections start folded, the band has its drawing", () => {
   const html = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
   assert.match(html, /<p class="lede" data-clamp="3"/);
-  assert.match(html, /<p class="glance-note" data-clamp="1"/);
+  // The note on what the terms are and are not opens from the mark beside the heading.
+  assert.match(html, /<div popover id="about-glance" class="pop" role="note"[^>]*>[\s\S]*?<p class="glance-note">/);
   // The notes that say "not advice" are never cut.
   assert.doesNotMatch(sectionOf(html, "brief"), /data-clamp/);
   for (const id of ["pass-on", "check-again"]) {
