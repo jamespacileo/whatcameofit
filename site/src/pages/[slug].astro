@@ -32,8 +32,8 @@ import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
-import { BRIEF_TITLE, digestBridge, recordBrief } from "../lib/record-brief";
-import { UNCHECKED_NOTE } from "../lib/notices";
+import { BRIEF_TITLE, digestApproval, digestBridge, recordBrief } from "../lib/record-brief";
+import { UNCHECKED_BYLINE } from "../lib/notices";
 import { statementsHeading } from "../lib/statements";
 import {
   EVIDENCE_STAGES,
@@ -132,6 +132,9 @@ const kinds: RecordKind[] = [
 const explaining = timetable.sources.filter(({ event }) =>
   claim.status.explained_by.includes(event.id),
 );
+const latestExplaining = [...explaining]
+  .sort((a, b) => (b.event.event_date ?? "").localeCompare(a.event.event_date ?? ""))
+  .slice(0, 3);
 const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
 const imageAlt = cardAlt(cardFor(claim));
 // In a browser tab and a search result there is room for what and for what, not for
@@ -204,6 +207,9 @@ for (const group of trialGroups) {
 const matchOf = (trialId: string) =>
   registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
 const bridge = digestBridge(claim);
+const approvalNote = digestApproval(claim);
+// The popover names the latest records the status rests on; the timetable marks all.
+const WHY_SHOWN = latestExplaining.length;
 // Who a report or a trial record says is behind the claim (openspec organisations), and
 // the organisation, if any, on whose website a report is.
 const organisations = claim.organisations ?? [];
@@ -470,6 +476,21 @@ const sections = [
               : "these news reports"}. <a href="/how-it-works">How a status is set</a>
         </p>
 
+        {/* Who and when, where a reader looks for a byline: the day the registries were
+            last read and, for a claim no person checked, that software put the page
+            together. Said once, here (openspec mobile-claim-page). */}
+        <p class="byline" data-pagefind-ignore>
+          {
+            !claim.checked_by_person && (
+              <>
+                {UNCHECKED_BYLINE[0]}{" "}
+                <a href="/guide/checked-by-a-person">{UNCHECKED_BYLINE[1]}</a>.{" "}
+              </>
+            )
+          }
+          {data.last_checked_at && <>Registries last checked {formatDate(data.last_checked_at)}.</>}
+        </p>
+
         {
           shownReports.length > 0 && (
             <section class="reported band-reported" data-pagefind-ignore>
@@ -516,7 +537,7 @@ const sections = [
         <div class="standing">
           <div class="label-row">
             <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
-            <Pop id="why" label="Why this status" class="info">
+            <Pop id="why" label="Why this status" class="info" close>
               <Info slot="trigger" size={20} stroke-width={1.9} aria-hidden="true" />
               {
                 explaining.length > 0 ? (
@@ -525,13 +546,19 @@ const sections = [
                       <BasisMark label={false} /> The status rests on these records
                     </p>
                     <ul class="pop-list">
-                      {explaining.map(({ mark, event }) => (
+                      {latestExplaining.map(({ mark, event }) => (
                         <li>
                           <a href={`#record-${mark}`}>{eventLabel(event)}</a>,{" "}
                           {formatDate(event.event_date)}
                         </li>
                       ))}
                     </ul>
+                    {explaining.length > WHY_SHOWN && (
+                      <p class="pop-note">
+                        The {WHY_SHOWN} latest of {explaining.length}.{" "}
+                        <a href="#timetable">All are marked on the timetable</a>
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p>No trial, approval or retraction record is attached to this claim.</p>
@@ -574,7 +601,7 @@ const sections = [
           {
             overlay && (
               <div>
-                <Pop id="quiet" class="overlay">
+                <Pop id="quiet" class="overlay" close>
                   <Fragment slot="trigger">
                     <Clock size={15} stroke-width={1.9} aria-hidden="true" />
                     {overlay}
@@ -641,6 +668,11 @@ const sections = [
         <div class="says">
           {/* What the status means, in a sentence, beside the label it explains. */}
           <p class="means">{STATUS_MEANINGS[claim.status.code]}</p>
+          {
+            /* Under a Phase 3 status with no approval listed: the site reads no
+               regulator's records, said beside the status and not only in the brief. */
+            approvalNote && <p class="bridge">{approvalNote}</p>
+          }
           {
             /* Trials on record with no phase: said here, so the status is not read as
                contradicting the trials the page lists. No link in it: on a phone it is drawn
@@ -719,14 +751,6 @@ const sections = [
       You follow this claim. It is listed on <a href="/#following">the home page</a>, with a
       note when its status changes. Kept in this browser only.
     </p>
-
-    {
-      !claim.checked_by_person && (
-        <p class="unchecked">
-          {UNCHECKED_NOTE} <a href="/guide/checked-by-a-person">What “checked by a person” means</a>
-        </p>
-      )
-    }
 
     {/* What the treatment and the condition are, then the claim's own facts: before
         the record in brief, so a reader knows what the records are about. */}

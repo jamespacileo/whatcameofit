@@ -583,6 +583,22 @@ export function digestBridge(claim: ExportedClaim): string | null {
   return `${are}${done}.${phase}`;
 }
 
+/** Said in the status card of a claim whose status is the last place before approval and
+ * that lists no approval: the site reads no regulator's records, so a report of an
+ * approval above a "Phase 3 trial" status is not read as the site contradicting it
+ * (critique of 2026-11-17, openspec mobile-claim-page). Decided by the status code and
+ * the records alone, never by a headline's wording. */
+export const APPROVALS_NOT_READ =
+  "No approval is listed here. This site does not read regulators' records, so one can exist and not be listed.";
+
+export function digestApproval(claim: ExportedClaim): string | null {
+  if (claim.status.code !== "phase_3") return null;
+  const approved = claim.events.some(
+    (event) => event.type === "regulatory_decision" && event.regulatory_outcome === "approved",
+  );
+  return approved ? null : APPROVALS_NOT_READ;
+}
+
 /** The trials' states as the status card counts them, in a fixed order. */
 const STATE_COUNT_WORDS: [string, string][] = [
   ["under_way", "under way"],

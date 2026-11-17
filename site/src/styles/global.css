@@ -853,6 +853,16 @@ a.share {
   margin: 0.6rem 0 0;
 }
 
+/* Under that: when the registries were last read and who put the page together, where
+   a reader looks for a byline. */
+.byline {
+  color: var(--muted);
+  font-size: var(--text-s);
+  margin: 0.25rem 0 0;
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
 /* The headline a reader followed here, named before anything is said about it. */
 .reported {
   margin-top: 0.7rem;
@@ -927,6 +937,13 @@ a.share {
   .digest .changed a,
   .reported > .entry-note a {
     padding-block: 0.8rem;
+  }
+
+  /* The two links under a claim's title each sit in a sentence: padding enlarges what a
+     thumb can hit without moving the line. */
+  .what-this-is a,
+  .byline a {
+    padding-block: 0.75rem;
   }
 
   .embed-how summary {
@@ -2929,6 +2946,43 @@ span.pop > span + span {
 .pop .pop-note {
   color: var(--muted);
   font-size: var(--text-s);
+}
+
+/* The way out of a panel that holds links: a text control as tall as a fingertip, at
+   the panel's foot. Not drawn where the browser has no popover: the panel is then
+   plain content and has nothing to close. */
+.pop-close {
+  display: none;
+}
+
+@supports selector(:popover-open) {
+  .pop-close {
+    /* Held at the panel's foot while a long panel scrolls, so it is always in reach. */
+    position: sticky;
+    bottom: -0.8rem;
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    margin: 0.4rem 0 -0.8rem;
+    padding: 0;
+    border: 0;
+    border-top: 1px solid var(--rule);
+    background: var(--paper);
+    text-align: right;
+    font: inherit;
+    font-size: var(--text-s);
+    font-weight: 600;
+    color: var(--blue);
+    text-decoration: underline;
+    text-underline-offset: 0.22em;
+    cursor: pointer;
+  }
+}
+
+@media print {
+  .pop-close {
+    display: none;
+  }
 }
 
 @media (max-width: 40rem) {
@@ -6361,6 +6415,7 @@ body.framed {
 }
 
 .band.record .what-this-is,
+.band.record .byline,
 .band.record .entry-note,
 .band.record .approach {
   color: var(--navy-soft);
@@ -6966,6 +7021,7 @@ body.framed {
   }
 
   .band.record .what-this-is,
+  .band.record .byline,
   .band.record .entry-note,
   .band.record .approach {
     color: var(--muted);

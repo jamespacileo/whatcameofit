@@ -9,7 +9,9 @@ import {
   DEFINITIONS,
   NONE,
   NO_APPROVAL,
+  APPROVALS_NOT_READ,
   briefNote,
+  digestApproval,
   digestBridge,
   recordBrief,
   sourceWords,
@@ -352,6 +354,20 @@ test("Scenario: Three trials with no phase", () => {
   const partly = structuredClone(device);
   partly.trials[2].state = "under_way";
   assert.equal(digestBridge(partly), "3 trials are on record and 2 have finished. The registry gives none a phase.");
+});
+
+test("Scenario: Phase 3 status with no approval listed", () => {
+  // The last place before approval: the card says the site reads no regulator's records.
+  const phased = structuredClone(device);
+  phased.status.code = "phase_3";
+  assert.equal(digestApproval(phased), APPROVALS_NOT_READ);
+  assertNeutral([APPROVALS_NOT_READ]);
+  // An earlier place says nothing of approvals; nor does a claim that lists one.
+  phased.status.code = "phase_2";
+  assert.equal(digestApproval(phased), null);
+  phased.status.code = "phase_3";
+  phased.events.push(event("regulatory_decision", { regulatory_outcome: "approved", source_name: "FDA" }));
+  assert.equal(digestApproval(phased), null);
 });
 
 test("Scenario: A status that names a phase counts the trials' states beside it", () => {

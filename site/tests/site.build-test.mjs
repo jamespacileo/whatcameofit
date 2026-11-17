@@ -330,10 +330,14 @@ test("Scenario: Counts on the path", () => {
 test("Scenario: Anniversaries on the home page", () => {
   const html = page("index.html");
   const block = html.slice(html.indexOf("data-on-this-day"), html.indexOf('id="topics"'));
-  // Out of sight until the reader's date picks a day; every day with a report is there.
-  assert.match(html, /<section class="[^"]*\bon-this-day"[^>]*hidden/);
-  for (const day of ["05-01", "05-03", "05-04"]) assert.ok(block.includes(`data-day="${day}"`), day);
-  assert.match(block, /data-year="2019"/);
+  // Out of sight until the reader's date picks a day. The page holds which days have a
+  // report and in which years; each day's reports are a file the page fetches (openspec
+  // landing-rows-on-demand).
+  assert.match(html, /<section\s+class="[^"]*\bon-this-day"[^>]*hidden/);
+  const years = JSON.parse(block.match(/data-years="([^"]+)"/)[1].replaceAll("&quot;", '"'));
+  assert.deepEqual(Object.entries(years).map(([day]) => day), ["05-01", "05-03", "05-04"]);
+  assert.ok(!block.includes("data-day="), "a day's reports are in the page as built");
+  assert.match(page("rows/on-this-day/05-03.txt"), /<li class="day" data-day="05-03"[^>]*>[^]*data-year="2019"/);
   assert.match(block, /href="\/anniversaries"/);
 });
 
@@ -460,7 +464,7 @@ test("Scenario: No approved claims", () => {
 test("Scenario: Preview build", () => {
   // A normal build carries no preview wording and may be indexed.
   for (const file of ["index.html", "phase-claim/index.html"]) {
-    assert.doesNotMatch(page(file), /class="preview-note"|not yet been checked by a person|noindex/);
+    assert.doesNotMatch(page(file), /class="preview-note"|not yet (been )?checked by a person|noindex/);
   }
   assert.equal(JSON.parse(page("lookup.json")).claims["phase-claim"].unchecked, null);
 
@@ -479,11 +483,15 @@ test("Scenario: Preview build", () => {
     assert.match(built(file), /class="preview-note"/, file);
     assert.match(built(file), /<meta name="robots" content="noindex"/, file);
   }
-  assert.match(built("phase-claim/index.html"), /has not yet been checked by a person/);
-  // The answer comes first: the notice sits under the status panel, not above it.
+  // Said once, in the line under the title, where a reader looks for who wrote the page.
   const claimPage = built("phase-claim/index.html");
-  assert.ok(claimPage.indexOf('class="digest"') < claimPage.indexOf('class="unchecked"'));
-  assert.doesNotMatch(built("quiet-claim/index.html"), /has not yet been checked by a person/);
+  const byline = claimPage.match(/<p class="byline"[\s\S]*?<\/p>/)[0];
+  assert.match(byline, /not yet checked by a person/);
+  assert.match(byline, /Registries last checked/);
+  assert.ok(claimPage.indexOf("</h1>") < claimPage.indexOf('class="byline"'));
+  assert.ok(claimPage.indexOf('class="byline"') < claimPage.indexOf('class="digest"'));
+  assert.equal(claimPage.split("not yet checked by a person").length - 1, 1);
+  assert.doesNotMatch(built("quiet-claim/index.html"), /not yet checked by a person/);
   const lookup = JSON.parse(built("lookup.json"));
   assert.equal(lookup.preview, true);
   assert.match(lookup.claims["phase-claim"].unchecked, /not yet been checked by a person/);
@@ -725,7 +733,9 @@ test("Scenario: Summary of a topic with ended trials", () => {
 });
 
 test("Scenario: Reader follows a headline from the home page", () => {
-  const home = page("index.html");
+  // The home page's rows are those in the page as built and those it fetches when a
+  // reader asks for earlier headings (openspec landing-rows-on-demand).
+  const home = page("index.html") + page("rows/latest.txt");
   // Each headline on the home page is named, and its claim page gives the same name
   // to the same headline, shown before the status.
   const named = [...home.matchAll(/class="followed" href="\/([^"]+)" style="view-transition-name: ([^";]+)/g)];

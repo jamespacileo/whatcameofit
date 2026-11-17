@@ -8,9 +8,12 @@ interface Props {
   class?: string;
   /** A panel that may stand inside a paragraph: a span, holding spans. */
   inline?: boolean;
+  /** A panel that holds links gets a control that closes it, for a reader who cannot
+      press Escape or reach outside the panel. Only where a script-free press works. */
+  close?: boolean;
 }
 
-const { id, label, class: className, inline = false } = Astro.props;
+const { id, label, class: className, inline = false, close = false } = Astro.props;
 const Panel = inline ? "span" : "div";
 ---
 
@@ -23,6 +26,13 @@ const Panel = inline ? "span" : "div";
 >
 <Panel popover id={id} class="pop" role="note" style={`position-anchor: --${id}`}>
   <slot />
+  {
+    close && (
+      <button type="button" class="pop-close" popovertarget={id} popovertargetaction="hide">
+        Close
+      </button>
+    )
+  }
 </Panel>
 
 <script>
