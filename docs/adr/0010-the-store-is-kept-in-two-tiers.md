@@ -11,13 +11,18 @@ Date: 2026-11-17. Status: accepted. Change: `openspec/changes/cloudflare-source-
 Decided by the operator on 2026-11-17.
 
 - **The hot tier is D1.** It holds every table that the export of the site from the store, the ingest service's routes, the merge of a hot run or a reader's lookup reads. The list, with the reason for each table, is `store-tables.md`. The code that splits a build is `pipeline/src/thenwhat/store/tiers.py`.
-- **The bulk tier is one SQLite file in R2.** It has the same schema and holds every other table: registry trials, article leads, link leads with their shares, links, labels and readings, substances, the registry route's ledger, model spend and the measurements. It is not loaded into D1. Restoring it is downloading it.
+- **The bulk tier is one SQLite file in R2.** It has the same schema and holds every other table: registry trials, article leads, link leads with their shares, links, labels and readings, the registry route's ledger, model spend and the measurements. It is not loaded into D1. Restoring it is downloading it.
 - **A hot row never references a bulk row.** Foreign keys run from bulk to hot only. A hot record names a bulk one by its natural key as text: an event names its trial by registry and identifier. A test holds this against the schema.
 - **Payloads go with what points at them.** A payload that rows of both tiers point at is kept in both.
 - **A load is verified by checksum.** Each table gets one statement of aggregates, run alike on the file and on D1. D1 answers it in one row from one scan. The rows are not fetched back.
-- **The day's changes go through the merge, as before.** They cover the hot kinds only. The bulk tier is brought up to date by building it again.
+- **After the cut-over, the bulk file is the truth for bulk kinds.** The daily job is its one writer: it merges the day's bulk records into the file by the same `store/merge.sql`. It keeps the day as a delta object beside the last bulk build, a few megabytes against 1.9 GB. A restore replays the deltas onto the downloaded build. The day's hot records go through the ingest service to D1, as before.
+- **A lookup's bulk records wait in D1.** Leads, shares, trials and readings that a reader's lookup creates go into D1's otherwise empty copies of those tables. The daily job folds them into the bulk file and clears them.
+- **A hot row that needs a fact of a trial or a lead carries it itself.**
 
 ## Consequences
+
+- **This gives up part of `0008`'s one source of truth.** The tracker's records now live in two places: D1 for the hot tables, and the bulk file with its deltas for the rest. The bulk file has one writer, and no Worker can query leads or stored trials. Going back is one full load: `thenwhat store build --tier all`, dumped and loaded. That loaded the whole store into the preview D1 in about 9 minutes on 2026-11-17.
+- **A lookup does not see the bulk file.** A lookup's lead or trial is not matched against the bulk file until the daily fold. A lookup's share or reading whose lead is only in the bulk file does not resolve: its run is undone, and the reader still gets the answer.
 
 - **The bulk tier cannot be queried from a Worker.** Serving a trial's page from the store (phase 5) first moves `registry_trial` and its search to the hot tier.
 - **D1's lead tables hold only lookups' leads after the cut.** A reader's lookup still stages leads, shares and readings into D1, so D1's `link_lead`, `link_share` and `lead_reading` hold only what lookups add. The bulk file holds the history. A lookup of an article whose lead is only in the bulk file is answered as for a new lead.

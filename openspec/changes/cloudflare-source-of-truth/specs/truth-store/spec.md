@@ -73,7 +73,11 @@ The store SHALL be kept as a hot tier in D1, holding every table something on Cl
 
 #### Scenario: The day's changes
 - **WHEN** the day's changes are pushed to the store
-- **THEN** only records of hot kinds and their payloads are handed over, and the records of bulk kinds are counted as left for the next bulk file
+- **THEN** records of hot kinds and their payloads go through the ingest service to D1, and records of bulk kinds are merged into the bulk file by its one writer and kept as the day's delta beside the last bulk build
+
+#### Scenario: The bulk tier restored
+- **WHEN** the bulk file is downloaded and its deltas are replayed in order
+- **THEN** each table's checksum equals that of the file the daily job merged in place
 
 ### Requirement: Every record says where it came from
 Every record the store holds SHALL carry the run that first added it and the run that last changed it. A run SHALL record the kind of writer, the device or the class of reader request, the code's commit and the time.
