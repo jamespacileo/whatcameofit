@@ -51,7 +51,7 @@ A term that is not fit SHALL stay in the fingerprint, SHALL be used only to conf
 - **THEN** it is searched for by its registry number only, in the sources that search by number
 
 ### Requirement: Which trials are looked for
-Coverage SHALL be looked for only for trials in a set the operator names. The sets SHALL be: `active-since-2025`, trials not started or under way in phase 2 or 3 whose registry record changed on or after 1 January 2025; and `completed-with-results-since-2025`, trials the registry lists as completed, with an actual completion date on or after 1 January 2025, whose record holds posted results. A set's date SHALL be part of its name, so that a later date is a new set and no set changes its meaning. A route that yields news SHALL NOT be asked for a trial that a published claim cites. A route that yields papers SHALL be asked for every trial of the set, cited or not.
+Coverage SHALL be looked for only for trials in a named set. Since 2026-11-17 the target is `active-or-ended-this-year` (see "The trial target set rolls with the year"); the two dated sets it replaced as the target SHALL remain: `active-since-2025`, trials not started or under way in phase 2 or 3 whose registry record changed on or after 1 January 2025; and `completed-with-results-since-2025`, trials the registry lists as completed, with an actual completion date on or after 1 January 2025, whose record holds posted results. A set's date SHALL be part of its name, so that a later date is a new set and no set changes its meaning. A route that yields news SHALL NOT be asked for a trial that a published claim cites. A route that yields papers SHALL be asked for every trial of the set, cited or not.
 
 #### Scenario: A trial a claim already cites
 - **WHEN** a trial in the named set is cited by a published claim
@@ -60,6 +60,51 @@ Coverage SHALL be looked for only for trials in a set the operator names. The se
 #### Scenario: A trial completed in 2024 whose results were posted in 2026
 - **WHEN** a stored trial's actual completion date is in 2024 and its results were first posted in 2026
 - **THEN** it is not in `completed-with-results-since-2025`
+
+### Requirement: The trial target set rolls with the year
+The set that coverage is looked for SHALL be `active-or-ended-this-year`: every stored trial the registry lists as not yet recruiting, recruiting, enrolling by invitation or active and not recruiting, in any phase and whenever its record was last updated; and every stored trial the registry lists as completed, terminated, withdrawn or suspended whose completion date is in the current calendar year. The year SHALL be given to the rule by the command that runs, which reads it from the clock; the rule itself SHALL read no clock. The two dated sets SHALL keep their names and their rules, and everything that names one SHALL go on working. Every trial of `active-since-2025` SHALL be in the target set.
+
+#### Scenario: A trial under way in phase 1
+- **WHEN** a stored trial is recruiting in phase 1 and its record was last updated in 2019
+- **THEN** it is in `active-or-ended-this-year` and in neither dated set
+
+#### Scenario: A trial that ended this year
+- **WHEN** a stored trial is listed as terminated with a completion date of February of the current year
+- **THEN** it is in `active-or-ended-this-year`
+
+#### Scenario: A trial that ended last year
+- **WHEN** a stored trial is listed as completed with a completion date of December of last year
+- **THEN** it is not in `active-or-ended-this-year`
+
+#### Scenario: The year turns
+- **WHEN** the same stored trials are chosen in the following year
+- **THEN** the trials that ended in the earlier year are no longer in the set, and nothing stored for them is removed
+
+#### Scenario: A set named before the change
+- **WHEN** a command or a setting names `active-since-2025`
+- **THEN** it selects the trials it selected before the target set was added
+
+#### Scenario: The rolling set without a year
+- **WHEN** the rule of `active-or-ended-this-year` is asked for with no year
+- **THEN** it is refused, and no clock is read in its place
+
+### Requirement: The paper index is asked for the target set, ended and resulted trials first
+The step that asks the paper index SHALL ask for every trial of `active-or-ended-this-year` whose number is the registry's the index names, and for the trials of the two dated sets, so that no trial once in scope leaves it. Trials that ended in the year and trials with results posted SHALL be asked first. The step's rules for the index SHALL be unchanged: its allowance, its off-peak hours for a large job, and stopping when the index fails.
+
+#### Scenario: A trial under way in phase 1 is asked
+- **WHEN** the step runs and a trial under way in phase 1 has not been asked for
+- **THEN** it is asked for, after the trials that ended this year and the trials with results posted
+
+### Requirement: A coverage report counts what is held for the set
+A command SHALL count, for the trials of `active-or-ended-this-year` under way, those completed in the year and those terminated, withdrawn or suspended in the year, and for all of them: the trials, those with results posted, those whose registry record lists a paper as a result or links one, those with a paper found by number, those a published claim cites, and those whose record the registry has not updated since before last year. It SHALL print counts only, name no trial, send no request and change nothing. A count SHALL say what is held and nothing of how any trial turned out. It SHALL also print how many trials in scope the paper index has not been asked about, about how many requests that needs, how long at the configured interval, how many off-peak nights under the allowance, and what a key would allow and which settings the operator would set to use one; it SHALL NOT set or need a key.
+
+#### Scenario: A coverage report for the set
+- **WHEN** the operator asks for the coverage of the set
+- **THEN** each group and the whole set are printed with their six counts, and no source is asked
+
+#### Scenario: An estimate before the paper index is asked
+- **WHEN** 76,000 trials in scope have not been asked about, fifty go in one search and requests are half a second apart under an allowance of 5,000 a day
+- **THEN** the report says about 3,040 requests, about 25 minutes and one off-peak night, and that a key would allow ten requests a second
 
 ### Requirement: A coverage set says which trials, and is refused when it cannot be chosen
 A set SHALL say only which trials are looked for and nothing of how any trial turned out. Both sets SHALL be refused while stored trials carry no date of last change. A name the command does not know SHALL be refused with the list of sets.

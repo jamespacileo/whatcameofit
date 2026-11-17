@@ -65,11 +65,19 @@ from thenwhat.backfill.steps import (
     model_spend_of,
 )
 from thenwhat.backfill.topics import TOPICS
+from thenwhat.backfill.trial_coverage import coverage_of
 from thenwhat.backfill.trial_links import CLAIMS_A_READ, at_least, plan_of
+from thenwhat.backfill.trial_papers import (
+    PER_SECOND_WITH_KEY,
+    PER_SECOND_WITHOUT_KEY,
+    TrialPapers,
+    estimate_for,
+)
 from thenwhat.backfill.trial_references import count_references
 from thenwhat.backfill.trial_sets import (
+    NAMES,
     NO_WIDER_RECORD,
-    SETS,
+    ROLLING,
     count_sets,
     require_wider_record,
     rule_of,
@@ -115,8 +123,14 @@ def refusals() -> Generator[None]:
         raise typer.Exit(code=1) from None
 
 
+def this_year() -> int:
+    """The calendar year, in UTC: the year the rolling set of trials is chosen in. Read
+    here, at the command, so the rules that take it read no clock."""
+    return datetime.now(UTC).year
+
+
 def steps_for(settings: Settings) -> list[Step]:
-    steps = registered_steps(settings)
+    steps = registered_steps(settings, year=this_year())
     by_name(steps)  # refuses two steps with one name before anything runs
     return steps
 
@@ -644,6 +658,10 @@ SET_WORDS = {
     "completed-with-results-since-2025": (
         "completed on or after 2025-01-01 (actual date), results posted"
     ),
+    ROLLING: (
+        "under way now in any phase, or completed, terminated, withdrawn or suspended "
+        "with a completion date this year"
+    ),
 }
 
 
@@ -668,13 +686,16 @@ def trial_sets_command() -> None:
     active-since-2025: phase 2 or 3, recruiting or about to, enrolling by invitation, or
     active and no longer recruiting, with a record the registry updated on or after
     1 January 2025. completed-with-results-since-2025: completed, with an actual
-    completion date on or after 1 January 2025 and results posted. A set says which
-    trials are in it and nothing of how they turned out. Sends no request and changes
-    nothing.
+    completion date on or after 1 January 2025 and results posted.
+    active-or-ended-this-year, the trial target set: under way now in any phase, or
+    listed as completed, terminated, withdrawn or suspended with a completion date in
+    the current calendar year; it holds every trial of active-since-2025. A set says
+    which trials are in it and nothing of how they turned out. Sends no request and
+    changes nothing.
     """
     settings_or_exit()
     with refusals(), open_session() as session:
-        report = count_sets(session)
+        report = count_sets(session, year=this_year())
     if report.stored == report.without_wider_record:
         err.print(NO_WIDER_RECORD)
         raise typer.Exit(code=1)
@@ -704,7 +725,7 @@ def trial_sets_command() -> None:
 def trial_references_command(
     trial_set: Annotated[
         str | None,
-        typer.Option("--set", help="A named set of stored trials. Both sets when not given."),
+        typer.Option("--set", help="A named set of stored trials. Every set when not given."),
     ] = None,
     domains: Annotated[
         int, typer.Option(min=0, help="How many of the most linked domains to list.")
@@ -720,11 +741,12 @@ def trial_references_command(
     """
     settings_or_exit()
     with refusals(), open_session() as session:
-        names = [trial_set] if trial_set else list(SETS)
+        year = this_year()
+        names = [trial_set] if trial_set else list(NAMES)
         for name in names:
-            rule_of(name)
+            rule_of(name, year)
         require_wider_record(session)
-        counts = [count_references(session, name) for name in names]
+        counts = [count_references(session, name, year) for name in names]
     for counted in counts:
         out.print(f"{counted.name}: {counted.trials:,} trials", markup=False)
         out.print(
@@ -749,6 +771,76 @@ def trial_references_command(
         )
         for domain, number in counted.domains.most_common(domains):
             out.print(f"    {domain}: {number:,}", markup=False)
+
+
+@backfill_app.command("trial-coverage")
+def trial_coverage_command() -> None:
+    """Count what is held for the trial target set, by group, and what the paper index
+    has still to be asked.
+
+    The set is active-or-ended-this-year. For the trials under way, those completed this
+    year and those terminated, withdrawn or suspended this year: how many there are, how
+    many have results posted, a paper the registry record lists, a paper found in PubMed
+    by the trial's number, a published claim that cites them, and a record the registry
+    has not updated since before last year. Counts only: no trial is named, and a count
+    says nothing of how any trial turned out. Then how many trials PubMed has not been
+    asked about, the requests that needs and the off-peak nights, with no key and with
+    one. Sends no request and changes nothing.
+    """
+    settings = settings_or_exit()
+    with refusals():
+        year = this_year()
+        step = TrialPapers(trials_per_request=settings.pubmed_trials_per_request, year=year)
+        allowance = make_allowances(settings).of(step.source)
+        with open_session() as session:
+            require_wider_record(session)
+            coverage = coverage_of(session, year)
+            due = count(session, step, settings.backfill_attempt_limit).due
+        estimate = estimate_for(step, due, allowance)
+    out.print(f"{ROLLING}, chosen in {year}", markup=False)
+    for group in (*coverage.groups, coverage.total):
+        out.print(f"{group.name}: {group.trials:,} trials", markup=False)
+        out.print(f"  results posted: {group.with_results:,}", markup=False)
+        out.print(f"  a paper the registry record lists: {group.with_listed_paper:,}", markup=False)
+        out.print(f"  a paper found in PubMed by number: {group.with_pubmed_paper:,}", markup=False)
+        out.print(f"  cited by a published claim: {group.cited_by_published_claim:,}", markup=False)
+        out.print(
+            f"  record not updated since before {year - 1}: "
+            f"{group.not_updated_since_before_last_year:,}",
+            markup=False,
+        )
+    out.print(
+        f"PubMed has not been asked about {estimate.trials:,} trials in scope: about "
+        f"{estimate.requests:,} requests, {step.batch_size} trials to a search",
+        markup=False,
+    )
+    out.print(
+        f"  without a key (NCBI allows {PER_SECOND_WITHOUT_KEY} a second; requests here are "
+        f"{allowance.interval_seconds:g} s apart): about {_minutes(estimate.minutes)}, "
+        f"{estimate.nights:,} off-peak "
+        f"{'night' if estimate.nights == 1 else 'nights'} under the allowance of "
+        f"{allowance.requests:,} in {allowance.period_hours:g} hours",
+        markup=False,
+    )
+    out.print(
+        f"  with a key (NCBI allows {PER_SECOND_WITH_KEY} a second): about "
+        f"{_minutes(estimate.minutes_with_key)} at that rate. To use one, set "
+        "PUBMED_API_KEY and a shorter interval for pubmed in SOURCE_ALLOWANCES; the "
+        "allowance, not the rate, is what limits a night",
+        markup=False,
+    )
+    out.print(
+        "  the step runs off-peak only (weekends, or 21:00 to 05:00 US Eastern): "
+        "`thenwhat backfill run pubmed_papers`",
+        markup=False,
+    )
+
+
+def _minutes(minutes: float) -> str:
+    if minutes < 1:
+        return "under a minute"
+    whole = round(minutes)
+    return f"{whole:,} minute" + ("" if whole == 1 else "s")
 
 
 def _cost_of_a_read(session: Session, settings: Settings, step: LinkRead) -> tuple[Decimal, str]:

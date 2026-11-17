@@ -19,7 +19,7 @@ from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.errors import SourcePaused, SourceStop
 from thenwhat.backfill.ledger import count
 from thenwhat.backfill.runner import run_step
-from thenwhat.backfill.trial_papers import TrialPapers
+from thenwhat.backfill.trial_papers import TrialPapers, estimate_for
 from thenwhat.config import SourceAllowance
 from thenwhat.db.models import RegistryTrial, TrialPaper
 from thenwhat.sources.base import MissingContact
@@ -444,3 +444,35 @@ def test_the_step_makes_papers_of_trials_and_nothing_else(session: Session):
 
     for model in (Claim, EntityMatch, EvidenceEvent, PaperRecord):
         assert session.scalars(select(model)).first() is None
+
+
+def test_the_rolling_set_is_asked_for_and_ended_or_with_results_first(session: Session):
+    """Scenarios: A trial under way in phase 1 is asked, Trials that ended this year go
+    first"""
+    trials(session, "NCT00000001", phases=["PHASE1"])  # under way, no results
+    trials(session, "NCT00000002", phases=["PHASE1"], has_results=True)
+    trials(session, "NCT00000003", overall_status="TERMINATED", completion_date="2026-02")
+    trials(session, "NCT00000004", overall_status="COMPLETED", completion_date="2026-05-01")
+    trials(session, "NCT00000005", overall_status="COMPLETED", completion_date="2024-05")
+    trials(session, "ISRCTN12345678", registry_name="isrctn")
+    client = Papers([])
+
+    work(session, TrialPapers(trials_per_request=3, year=2026), client)
+
+    assert client.asked == [["NCT00000002", "NCT00000003", "NCT00000004"], ["NCT00000001"]]
+
+
+def test_the_estimate_counts_requests_minutes_and_off_peak_nights():
+    """Scenario: An estimate before the paper index is asked"""
+    step = TrialPapers(trials_per_request=50, year=2026)
+    a_day = SourceAllowance(requests=5000, period_hours=24, interval_seconds=0.5)
+
+    one_night = estimate_for(step, 76_000, a_day)
+    assert (one_night.trials, one_night.requests, one_night.nights) == (76_000, 3040, 1)
+    assert round(one_night.minutes) == 25 and round(one_night.minutes_with_key) == 5
+
+    # The day's allowance, not the rate, is what a night is limited by.
+    assert estimate_for(step, 400_000, a_day).nights == 4
+    slow = SourceAllowance(requests=5000, period_hours=24, interval_seconds=30)
+    assert estimate_for(step, 76_000, slow).nights == 4
+    assert estimate_for(step, 0, a_day).nights == 0
