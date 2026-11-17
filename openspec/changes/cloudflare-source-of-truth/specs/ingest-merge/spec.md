@@ -32,6 +32,32 @@ The merge SHALL match a claim by its slug, a source article by claim and address
 - **WHEN** a device's run and a reader's lookup both hold the same article for the same claim
 - **THEN** the store holds one source article and one link lead, with each share once
 
+### Requirement: Every writer writes a record in one form
+A writer SHALL give each record its natural key and its fields in the one form the store compares, so that two writers, or one writer twice, produce the same store from the same rows. A source article's and an article lead's address key SHALL be the site's address comparison (`site/src/lib/article-key.mjs`, `pipeline/src/thenwhat/backfill/address.py`). A time SHALL be ISO-8601 in UTC to the microsecond with its offset, always the same width, because the merge orders times as text. A payload's checksum SHALL be the SHA-256 of its JSON text with keys sorted, no spaces and characters unescaped, in UTF-8, and its size the bytes of that text. An evidence event's content checksum SHALL be of its type, date, trial state, trial phases as a set, regulatory outcome and source identifier. A field with no value SHALL be left out of the record, never sent as a JSON null.
+
+#### Scenario: Two devices write one article
+- **WHEN** two devices hold the same article under addresses that differ only by tracking parameters
+- **THEN** both records carry the same address key, and the store holds one source article
+
+#### Scenario: A payload fetched as the same JSON
+- **WHEN** two fetches give a payload with the same keys and values in another order
+- **THEN** both records name the payload by the same checksum
+
+#### Scenario: A registry lists phases in another order
+- **WHEN** a later fetch lists an event's trial phases in another order and says nothing else new
+- **THEN** the event's content checksum is the same, and the event is not kept apart as differing
+
+### Requirement: A snapshot of the tracker can be pushed twice
+Records gathered from a whole database, as the migration and a nightly comparison gather them, SHALL leave the store as it was when pushed a second time. A snapshot SHALL NOT carry, under a merged claim's slug, what that claim keeps for itself (its intervention, matches, terms, events, failure flags and measurements) nor an archive of it, because the store reads a merged claim's slug as the claim it was merged into; the merge itself archives the claim. A snapshot SHALL NOT carry a rename, which names the claim by a slug the store never held. Decisions, spend and measurements SHALL be pushed once, by the run that made them, since a merge keeps each run's and adds measurements to the day's totals.
+
+#### Scenario: The same snapshot pushed again
+- **WHEN** a snapshot is merged and then the same records are merged as another run
+- **THEN** no claim, article, entity, match, event, trial or lead is added or changed, and only the second run's decisions and spend are kept beside the first's
+
+#### Scenario: A merged claim in the snapshot
+- **WHEN** a snapshot holds a claim merged into another
+- **THEN** it carries the claim, its publication and its merge, and the claim that stayed gains none of its intervention, matches or events
+
 ### Requirement: A merge is whole or not at all, and safe to repeat
 A run's merge SHALL apply all of its records or none. Merging a run already merged SHALL add and change nothing and SHALL say when it was first merged.
 
