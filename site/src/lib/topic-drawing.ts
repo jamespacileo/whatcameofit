@@ -1,6 +1,6 @@
 // Which drawing a topic is shown with. A topic takes the drawing of its group, or its
 // own when it has no group; one with no drawing gets a plain ring. The chip
-// (components/TopicChip.astro) draws the same list, and a test holds the two together.
+// (components/TopicDrawing.astro) draws the same list, and a test holds the two together.
 import type { ExportedVertical } from "./export";
 
 /** Icons from the set the rest of the site draws with, by name in `@lucide/astro`. */
