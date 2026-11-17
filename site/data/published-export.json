@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-11-17T08:15:01.550995Z",
+  "generated_at": "2026-11-17T23:05:12.682849Z",
   "last_checked_at": "2026-11-17T08:13:09.235818Z",
   "preview": false,
   "sources": [
@@ -528057,6 +528057,8 @@
       "summary": "A large trial found lecanemab slowed decline in people with early Alzheimer’s over 18 months, but the measured benefit was small and brain swelling and bleeding were reported. The drug is intended for early disease, while the article notes that wider use would require earlier diagnosis and more testing.",
       "vertical": "dementia",
       "approach": null,
+      "approach_basis": null,
+      "clinical_categories": null,
       "intervention": {
         "name": "Lecanemab",
         "synonyms": []
@@ -528215,6 +528217,14 @@
           "outlet": "CTV News",
           "title": "This treatment is said to slow Alzheimer’s by 30%",
           "published_date": "2026-01-10",
+          "archive_url": null,
+          "published_by": null
+        },
+        {
+          "url": "https://www.prnewswire.com/news-releases/five-year-data-of-continuous-leqembi-treatment-show-increasing-benefit-over-time-302941332.html",
+          "outlet": "PR Newswire",
+          "title": "Five-year data of continuous Leqembi® treatment show increasing benefit over time",
+          "published_date": "2026-11-17",
           "archive_url": null,
           "published_by": null
         }
@@ -530999,6 +531009,46 @@
           "confidence": 0.92,
           "article_url": "https://www.ctvnews.ca/health/article/alzheimers-fighting-infusion-delivered-in-canada-for-the-first-time/",
           "read_on": "2026-11-16"
+        },
+        {
+          "text": "Continuous treatment was associated with a widening difference in cognitive and functional decline versus historical comparison data over five years.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.81,
+          "article_url": "https://www.prnewswire.com/news-releases/five-year-data-of-continuous-leqembi-treatment-show-increasing-benefit-over-time-302941332.html",
+          "read_on": "2026-11-17"
+        },
+        {
+          "text": "Among patients with low tau, 62% showed improved cognitive function and daily activities after five years of continuous treatment.",
+          "kind": "effect",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 0.95,
+          "article_url": "https://www.prnewswire.com/news-releases/five-year-data-of-continuous-leqembi-treatment-show-increasing-benefit-over-time-302941332.html",
+          "read_on": "2026-11-17"
+        },
+        {
+          "text": "ARIA-E was most common during the initial six months, with incidence declining in later treatment years.",
+          "kind": "safety",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "people",
+          "confidence": 1,
+          "article_url": "https://www.prnewswire.com/news-releases/five-year-data-of-continuous-leqembi-treatment-show-increasing-benefit-over-time-302941332.html",
+          "read_on": "2026-11-17"
+        },
+        {
+          "text": "The treatment targets both amyloid protofibrils and amyloid plaques.",
+          "kind": "how_it_works",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.8,
+          "article_url": "https://www.prnewswire.com/news-releases/five-year-data-of-continuous-leqembi-treatment-show-increasing-benefit-over-time-302941332.html",
+          "read_on": "2026-11-17"
         }
       ]
     },
@@ -1052207,6 +1052257,503 @@
           "confidence": 0.96,
           "article_url": "https://www.biospace.com/drug-development/adc-therapeutics-nosedives-on-27-deaths-in-confirmatory-trial-for-lymphoma-drug",
           "read_on": "2026-11-16"
+        }
+      ]
+    },
+    {
+      "slug": "flostent-system-benign-prostatic-hyperplasia",
+      "headline": "Rivermark completes enrollment in pivotal FloStent study",
+      "summary": "Rivermark Medical says it has completed enrollment of 216 men in RAPID III, a randomized, double-blind study of the FloStent System for urinary symptoms caused by BPH. The company plans follow-up and data collection toward an FDA premarket approval submission, and announced two additions to its leadership team.",
+      "vertical": "kidneys-and-bladder",
+      "approach": "device",
+      "approach_basis": {
+        "type": "DEVICE",
+        "trials": 1
+      },
+      "clinical_categories": [
+        {
+          "identifier": "D059411",
+          "sources": [
+            {
+              "kind": "trial",
+              "identifier": "NCT06849258",
+              "score": null
+            }
+          ]
+        },
+        {
+          "identifier": "D011470",
+          "sources": [
+            {
+              "kind": "term",
+              "identifier": "D011470",
+              "score": 1
+            },
+            {
+              "kind": "trial",
+              "identifier": "NCT06849258",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "intervention": {
+        "name": "FloStent System",
+        "synonyms": [
+          "FloStent"
+        ]
+      },
+      "indication": "Benign prostatic hyperplasia",
+      "first_reported_date": "2026-11-17",
+      "evidence_stage": "late_human",
+      "evidence_stage_reading": null,
+      "checked_by_person": false,
+      "status": {
+        "code": "trial_registered",
+        "overlay_years": null,
+        "updated_at": "2026-11-17T23:04:31.954843Z",
+        "explained_by": [
+          35737
+        ],
+        "history": [
+          {
+            "on": "2025-02-10",
+            "code": "trial_registered"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html",
+          "outlet": "PR Newswire",
+          "title": "RIVERMARK MEDICAL COMPLETES ENROLLMENT IN RAPID III PIVOTAL STUDY OF THE FLOSTENT™ SYSTEM AND STRENGTHENS LEADERSHIP WITH TWO KEY APPOINTMENTS",
+          "published_date": "2026-11-17",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 35738,
+          "type": "trial_status_change",
+          "event_date": "2025-02-10",
+          "date_basis": "start date",
+          "summary": "Trial NCT06849258 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06849258",
+          "trial_id": "NCT06849258",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35737,
+          "type": "trial_registered",
+          "event_date": "2025-02-27",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06849258 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06849258",
+          "trial_id": "NCT06849258",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06849258",
+          "url": "https://clinicaltrials.gov/study/NCT06849258",
+          "score": 0.99,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Clinical Study to Evaluate the Safety and Efficacy of the FloStent in Men With Benign Prostatic Hyperplasia Symptoms. For: Benign Prostatic Hyperplasia. Tests: FloStent, Sham (Control). No phase, active not recruiting.",
+          "record": {
+            "title": "A Clinical Study to Evaluate the Safety and Efficacy of the FloStent in Men With Benign Prostatic Hyperplasia Symptoms",
+            "conditions": [
+              "Benign Prostatic Hyperplasia"
+            ],
+            "interventions": [
+              "FloStent",
+              "Sham (Control)"
+            ],
+            "phases": [
+              "not_applicable"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT06849258",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06849258",
+          "title": "A Clinical Study to Evaluate the Safety and Efficacy of the FloStent in Men With Benign Prostatic Hyperplasia Symptoms",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-17T23:04:32.127458Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 215,
+              "basis": "planned"
+            },
+            "allocation": "randomised",
+            "masking": "quadruple",
+            "comparators": [
+              "sham"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Rivermark Medical",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Change in International Prostate Symptom Score (IPSS)",
+                "time_frame": "12 months"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null,
+            "arms": [
+              {
+                "label": "Treatment - FloStent",
+                "kind": "experimental",
+                "interventions": [
+                  "FloStent"
+                ]
+              },
+              {
+                "label": "Sham Control",
+                "kind": "sham_comparator",
+                "interventions": [
+                  "Sham (Control)"
+                ]
+              }
+            ]
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "12 months",
+              "number": 12,
+              "unit": "months",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:04:32.127458Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "International Prostate Symptom Score (IPSS)",
+              "number": null,
+              "unit": null,
+              "code": "symptom_score",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:04:32.127458Z"
+            }
+          ],
+          "claim_arm": "experimental"
+        }
+      ],
+      "papers": [],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "exact",
+          "label": "Prostatic Hyperplasia",
+          "name": null,
+          "definition": "Increase in constituent cells in the PROSTATE, leading to enlargement of the organ (hypertrophy) and adverse impact on the lower urinary tract function. This can be caused by increased rate of cell proliferation, reduced rate of cell death, or both.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D011470",
+          "source": "mesh",
+          "external_id": "D011470",
+          "version": "2026",
+          "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 1,
+              "of": 1,
+              "name": null,
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            },
+            {
+              "code": "entry_term_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Benign prostatic hyperplasia",
+              "entry_term": "Benign Prostatic Hyperplasia",
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-17T23:04:46.665633Z"
+        },
+        {
+          "kind": "intervention",
+          "fit": "kind",
+          "label": "Equipment and Supplies",
+          "name": null,
+          "definition": "Expendable and nonexpendable equipment, supplies, apparatus, and instruments that are used in diagnostic, surgical, therapeutic, scientific, and experimental procedures.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D004864",
+          "source": "mesh",
+          "external_id": "D004864",
+          "version": "2026",
+          "score": 0.92,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "kind_chosen",
+              "trials": null,
+              "of": null,
+              "name": null,
+              "entry_term": null,
+              "kind": "device",
+              "type": null,
+              "word": null,
+              "sources": null
+            },
+            {
+              "code": "registry_lists_type",
+              "trials": 1,
+              "of": null,
+              "name": null,
+              "entry_term": null,
+              "kind": null,
+              "type": "DEVICE",
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T20:52:33.428187Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "American Medical Systems",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Axonics, Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Boston Scientific Japan K.K. (Japan)",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "03kjsjz16",
+            "url": "https://ror.org/03kjsjz16",
+            "name": "Boston Scientific Japan K.K. (Japan)",
+            "kinds": [
+              "company",
+              "funder"
+            ],
+            "country": "Japan",
+            "website": "https://www.bostonscientific.com/home.html",
+            "score": 1,
+            "read_at": "2026-11-17T23:04:29.922011Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Cardiac Science",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Coloplast",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Rivermark Medical",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06849258"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "United States Food and Drug Administration",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "034xvzb47",
+            "url": "https://ror.org/034xvzb47",
+            "name": "United States Food and Drug Administration",
+            "kinds": [
+              "funder",
+              "government"
+            ],
+            "country": "United States",
+            "website": "https://www.fda.gov/",
+            "score": 1,
+            "read_at": "2026-11-17T23:04:31.440662Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Vessix Vascular",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html"
+              ],
+              "trial_ids": []
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "It is designed to rapidly relieve urinary symptoms caused by BPH without altering tissue.",
+          "kind": "effect",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.95,
+          "article_url": "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html",
+          "read_on": "2026-11-17"
+        },
+        {
+          "text": "It is designed to be placed during routine outpatient cystoscopy using a standard flexible cystoscope, without additional capital equipment.",
+          "kind": "how_it_works",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.98,
+          "article_url": "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html",
+          "read_on": "2026-11-17"
+        },
+        {
+          "text": "It is designed to be adjusted or retrieved with standard urological tools, preserving future treatment options.",
+          "kind": "how_it_works",
+          "firmness": "possibility",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.99,
+          "article_url": "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html",
+          "read_on": "2026-11-17"
+        },
+        {
+          "text": "It uses familiar instruments and techniques, which may ease its introduction into clinical practice.",
+          "kind": "who_it_could_help",
+          "firmness": "possibility",
+          "speaker": "other_expert",
+          "basis": "not_said",
+          "confidence": 0.86,
+          "article_url": "https://www.prnewswire.com/news-releases/rivermark-medical-completes-enrollment-in-rapid-iii-pivotal-study-of-the-flostent-system-and-strengthens-leadership-with-two-key-appointments-302942240.html",
+          "read_on": "2026-11-17"
         }
       ]
     }
