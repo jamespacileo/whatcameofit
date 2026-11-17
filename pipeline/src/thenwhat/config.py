@@ -28,6 +28,9 @@ DEFAULT_ALLOWANCES = {
     # ceiling on how hard the pipeline drives it; how often each site is asked is the
     # reader's to decide.
     "reader": SourceAllowance(requests=3000, period_hours=24, interval_seconds=1),
+    # NCBI allows three requests a second without a key; this is two (docs/sources.md).
+    # Its off-peak rule for large jobs is the client's to keep, not a count.
+    "pubmed": SourceAllowance(requests=5000, period_hours=24, interval_seconds=0.5),
 }
 
 
@@ -125,6 +128,14 @@ class Settings(BaseSettings):
     mediacloud_source_ids: str = ""
     # At most this many article leads are kept for one trial.
     leads_per_trial: int = 20
+    # PubMed, through NCBI's E-utilities (docs/sources.md). The name every request gives
+    # for this software, with no spaces, and the key the operator made in an NCBI
+    # account. A step that asks PubMed refuses while the tool name or CONTACT_EMAIL is
+    # empty; the key is optional and only raises NCBI's own limit.
+    pubmed_tool: str = "thenwhat"
+    pubmed_api_key: str | None = None
+    # How many trials' numbers one PubMed search carries.
+    pubmed_trials_per_request: int = Field(default=50, ge=1, le=200)
 
     # Link leads (openspec link-leads). The Reddit communities whose submissions are
     # loaded, separated by commas, without "r/". A Reddit load refuses while it is empty.

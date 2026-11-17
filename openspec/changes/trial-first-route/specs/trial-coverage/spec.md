@@ -157,8 +157,26 @@ A paper whose index record carries a trial's registry number in the field its pu
 - **WHEN** a paper's record carries twelve registry numbers
 - **THEN** it is attached to none of them
 
+### Requirement: The paper index is asked as its usage policy asks
+Every request to the paper index SHALL name the software and give its developer's contact address, and no request SHALL be sent while either is not configured. A key SHALL be sent when one is configured and SHALL NOT be required. Requests SHALL stay under the index's limit for a client with no key. A run that has sent the number of requests the index calls a large job SHALL stop, with its trials still due, during the hours the index asks large jobs to avoid.
+
+#### Scenario: No contact address
+- **WHEN** the step is run and no contact address is configured
+- **THEN** no request is sent and the command names the missing setting
+
+#### Scenario: A large job at midday
+- **WHEN** a run has sent a hundred requests and it is a weekday morning in the index's time zone
+- **THEN** the run stops, says when to run again, and the trials not yet asked stay due
+
+### Requirement: What is stored of a paper found by number
+A paper found for a trial SHALL be stored with the trial, the source's name, the paper's index number, the paper's record as reduced, and the time it was fetched. The reduced record SHALL hold no abstract and no author. Storing it SHALL create no claim, match, evidence event or paper record.
+
+#### Scenario: A paper is found
+- **WHEN** the index returns a paper whose record carries a due trial's number
+- **THEN** one row ties the trial to the paper with the source, the reduced record and the fetch time, and nothing else is created
+
 ### Requirement: Nothing found is an answer
-"No paper found" for a trial SHALL be stored as an answer and SHALL NOT be asked again before the configured age.
+"No paper found" for a trial SHALL be stored as an answer in the work ledger and SHALL NOT be asked again before the configured age. Until an age is configured, a trial that has been asked SHALL NOT be asked again at the step's version.
 
 #### Scenario: Asked last week, nothing found
 - **WHEN** the paper index returned nothing for a trial last week and the configured age is thirty days

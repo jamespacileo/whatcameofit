@@ -32,6 +32,7 @@ from thenwhat.db.models import (
 )
 from thenwhat.domain import Decider, OutletKind
 from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.pubmed import Paper
 
 
 class Index:
@@ -981,3 +982,36 @@ def test_trial_references_refuses_a_set_it_does_not_know(run):
 
     assert result.exit_code == 1
     assert "No set of stored trials is named 'successful'" in result.output
+
+
+def test_the_paper_step_runs_through_the_command(run, session: Session, monkeypatch):
+    trials = add_trials(session, 2, registry=ClinicalTrials.name)
+    for number, stored in enumerate(trials, start=1):
+        stored.external_id = f"NCT0000000{number}"
+        stored.overall_status = "RECRUITING"
+        stored.last_update_posted = date(2026, 3, 1)
+    session.flush()
+
+    class Papers:
+        name = "pubmed"
+        requests_made = 0
+
+        def papers_carrying(self, numbers):
+            self.requests_made += 1
+            return [Paper("11", ("NCT00000001",), {"pmid": "11"})], NOW
+
+    monkeypatch.setattr("thenwhat.cli.backfill.make_client", lambda step, settings, a: Papers())
+
+    result = run("run", "pubmed_papers")
+
+    assert result.exit_code == 0, result.output
+    assert "pubmed_papers: 1 done, 1 found nothing, 0 failed; 0 still due." in result.output
+
+
+def test_the_paper_step_is_refused_without_a_tool_name(run, session: Session, monkeypatch):
+    monkeypatch.setenv("PUBMED_TOOL", "then what")
+
+    result = run("run", "pubmed_papers")
+
+    assert result.exit_code == 1
+    assert "PUBMED_TOOL is not set" in result.output

@@ -75,6 +75,7 @@ from thenwhat.domain import Decider, LeadVerdict, OutletKind
 from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.pubmed import PubMed
 
 backfill_app = typer.Typer(
     help="Work through many records: load trials, see what is due, run a step.",
@@ -160,6 +161,15 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
         )
         client.check_ready()
         return client
+    if step.source == PubMed.name:
+        papers = PubMed(
+            contact_email=settings.contact_email,
+            tool=settings.pubmed_tool,
+            api_key=settings.pubmed_api_key,
+            allowances=allowances,
+        )
+        papers.check_ready()
+        return papers
     raise BackfillError(f"No client is set up for the source '{step.source}'.")
 
 
