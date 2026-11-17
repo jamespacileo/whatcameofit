@@ -140,6 +140,12 @@ def name_under_test(interventions: list[dict[str, Any]]) -> str | None:
     return None
 
 
+def name_alone(written: str) -> str | None:
+    """One registry entry as a name alone, without dose, form or route, or None when it
+    is a control or a description."""
+    return _name_alone(written)
+
+
 def _name_alone(written: str) -> str | None:
     if NOT_UNDER_TEST.search(written):
         return None
