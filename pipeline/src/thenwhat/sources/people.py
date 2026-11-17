@@ -128,6 +128,7 @@ FIELDS = (
     "overallOfficials",
     "location contacts",
     "investigator name, title or affiliation",
+    "responsible party beyond its type",
     "person lead sponsor's name",
     "person collaborator's name",
     "results point of contact",
@@ -155,9 +156,12 @@ def people_in(study: Any) -> set[str]:
     sponsors = protocol.get("sponsorCollaboratorsModule") or {}
     if isinstance(sponsors, dict):
         party = sponsors.get("responsibleParty") or {}
-        # The allow-list's proof: anything of a responsible party but its type.
-        if isinstance(party, dict) and set(party) - PARTY_KEPT:
+        if isinstance(party, dict) and any(party.get(k) for k in INVESTIGATOR_FIELDS):
             found.add("investigator name, title or affiliation")
+        # The allow-list's proof: anything else of a responsible party but its type. Named
+        # as the ingest service's door names it (store/ingest/src/people.mjs).
+        if isinstance(party, dict) and set(party) - PARTY_KEPT - set(INVESTIGATOR_FIELDS):
+            found.add("responsible party beyond its type")
         lead = sponsors.get("leadSponsor") or {}
         if isinstance(lead, dict) and lead.get("name") and sponsored_by_a_person(sponsors):
             found.add("person lead sponsor's name")
@@ -242,7 +246,29 @@ def payload_without_people(payload: Any) -> Any:
 
 
 # An email address written in a text, as a paper's affiliation can carry its author's.
-EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+# The domain ends in a name of letters that nothing follows but punctuation or space, so
+# chemistry (`Fe3O4@SiO2.NH2`) is not taken for one; a word that is a link (`://`, or a
+# handle after a slash) is left alone. `name [at] domain [dot] org` is taken too, and
+# `name (at) domain.org`, but only with the dot spelled out or tight against the name:
+# prose such as `measured (at) baseline. The` loses no word.
+EMAIL = re.compile(
+    r"(?<![\w/:.@-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w-])"
+)
+SPELLED_EMAIL = re.compile(
+    r"\b[\w.+-]+\s*[\[(]at[\])]\s*[\w-]+(?:\s*[\[(]dot[\])]\s*[A-Za-z]{2,}|\.[A-Za-z]{2,})+\b",
+    re.IGNORECASE,
+)
+
+
+def _emails(text: str) -> list[str]:
+    """The email addresses in a text, outside any link."""
+    found = []
+    for word in text.split():
+        if "://" in word or word.lower().startswith("www."):
+            continue
+        found += [match.group(0) for match in EMAIL.finditer(word)]
+    found += [match.group(0) for match in SPELLED_EMAIL.finditer(text)]
+    return found
 
 
 def without_email_text(value: Any) -> Any:
@@ -252,8 +278,12 @@ def without_email_text(value: Any) -> Any:
         return {k: without_email_text(v) for k, v in value.items()}
     if isinstance(value, list):
         return [without_email_text(item) for item in value]
-    if isinstance(value, str) and "@" in value:
-        return EMAIL.sub("", value)
+    if isinstance(value, str) and (
+        "@" in value or "[at]" in value.lower() or "(at)" in value.lower()
+    ):
+        for address in _emails(value):
+            value = value.replace(address, "")
+        return value
     return value
 
 
@@ -263,7 +293,7 @@ def emails_in_text(value: Any) -> int:
         return sum(emails_in_text(v) for v in value.values())
     if isinstance(value, list):
         return sum(emails_in_text(item) for item in value)
-    return int(isinstance(value, str) and EMAIL.search(value) is not None)
+    return int(isinstance(value, str) and bool(_emails(value)))
 
 
 def keys_found(value: Any, keys: frozenset[str]) -> set[str]:

@@ -17,10 +17,13 @@
 //    2 config        the remote configuration, with the database's id looked up by name
 //    3 bookmark      D1's Time Travel bookmark, written outside the repository, before
 //                    anything is changed: a migration that fails has a point to go back to
-//    4 migrations    refused when the database applied a migration under a name the files
-//                    no longer have in that place
-//    5 empty         the store must hold no row; with --replace a preview store is emptied
-//                    (or replaced, over 200,000 rows); production is never emptied here
+//    4 empty         the store must hold no row; with --replace a preview store is emptied
+//                    (or replaced, over 200,000 rows); production is never emptied here.
+//                    Before the migrations: a loaded store never meets one that makes a
+//                    table again
+//    5 migrations    refused when the database applied a migration under a name the files
+//                    no longer have in that place, or when one that makes a table again
+//                    is pending and the store holds rows
 //    6 dump          the hot file as SQL, and that SQL replayed strictly on this machine
 //    7 import
 //    8 checksum      every hot table in D1 against the build's checks
@@ -66,7 +69,9 @@ const payloads = value("--payloads") ? [value("--payloads")] : ["hot", "bulk"].m
 const checks = join(dir, "checks.json");
 const out = join(dir, "cutover");
 const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
-const work = remote ? out : join(tmpdir(), `thenwhat-rehearsal-${stamp}`);
+// On this machine the engine's state is made anew each time; `--work <dir>` keeps it, to
+// rehearse against a store that is already loaded.
+const work = remote ? out : value("--work") ? resolve(value("--work")) : join(tmpdir(), `thenwhat-rehearsal-${stamp}`);
 const sql = join(work, `sql-${env}`), state = join(work, "state");
 const config = remote ? here(`../wrangler.${env}.jsonc`) : here("../wrangler.jsonc");
 const wrangler = here("../node_modules/.bin/wrangler");
@@ -112,6 +117,18 @@ const query = async (statement) => json(await must([wrangler, ["d1", "execute", 
 const result = { env, database, bucket, build: null, bulk_build: null, started: new Date().toISOString(), stages: [], rows_written: null, rows: null, payload_objects: null, passed: false };
 const buildOf = (path) => { const db = new DatabaseSync(path, { readOnly: true }); try { return db.prepare("SELECT substr(id, 7, 16) AS build FROM run WHERE id LIKE 'build-%' ORDER BY id LIMIT 1").get()?.build || null; } finally { db.close(); } };
 
+// How many rows the store's tables hold, whichever of them this database has yet.
+async function rows() {
+  const tables = (await query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%' AND name NOT LIKE '%_fts%'")).map((row) => row.name);
+  let held = 0;
+  // Ninety counts a statement: D1 answers at most 100 columns.
+  for (let at = 0; at < tables.length; at += 90) {
+    const [counted] = await query(`SELECT ${tables.slice(at, at + 90).map((table) => `(SELECT count(*) FROM "${table}")`).join(" + ")} AS rows`);
+    held += counted.rows;
+  }
+  return held;
+}
+
 async function writeConfig() {
   // The committed configuration with this environment's names and the database's id, which
   // is looked up by name and goes nowhere but this git-ignored file.
@@ -152,31 +169,40 @@ const stages = [
     result.bookmark_file = file;
     say(`bookmark written to ${file}: restore with \`wrangler d1 time-travel restore ${database} --bookmark <it>\``);
   }],
-  ["migrations", "the schema and the service's tables", async () => {
-    // What this database has applied must be the first of the files, in their order: a
-    // migration it applied under a name the files no longer have cannot be reconciled.
-    const files = readdirSync(here("../migrations")).filter((name) => name.endsWith(".sql")).sort();
-    const has = (await query("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'd1_migrations'"))[0].n;
-    const applied = has ? (await query("SELECT name FROM d1_migrations ORDER BY id")).map((row) => row.name) : [];
-    say(`applied ${applied.length} of ${files.length}: ${applied.join(", ") || "none"}`);
-    const strange = applied.findIndex((name, at) => files[at] !== name);
-    if (strange >= 0) throw new Failed(`${database} applied ${applied[strange]} as its migration ${strange + 1}, where the files have ${files[strange] ?? "nothing"}: the migrations were renumbered since. Replace this database:\n  ${replaceCommands.join("\n  ")}`);
-    await must([wrangler, ["d1", "migrations", "apply", "STORE", ...d1Wrangler]]);
-  }],
   ["empty", "the store holds no row", async () => {
-    const tables = (await query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%' AND name NOT LIKE '%_fts%'")).map((row) => row.name);
-    const [counted] = await query(`SELECT ${tables.map((table) => `(SELECT count(*) FROM "${table}")`).join(" + ")} AS rows`);
-    if (!counted.rows) return say("the store is empty");
-    if (!has("--replace")) throw new Failed(`${database} already holds ${counted.rows} rows: pass --replace to clear a preview store first, or look at what is there`);
-    if (production) throw new Failed(`${database} holds ${counted.rows} rows, and production is never emptied by this command. If it is to be replaced, the operator runs:\n  ${replaceCommands.join("\n  ")}`);
-    if (!remote || counted.rows <= 200_000) return void (await must(node("empty-store", "--empty", database, ...d1)));
+    // Before the migrations: a store that holds rows must never meet a migration that
+    // makes a table again (0007 did, on the loaded preview, and D1 stopped it for its
+    // CPU time after 38 s on 17 November 2026).
+    const held = await rows();
+    if (!held) return say("the store is empty");
+    if (!has("--replace")) throw new Failed(`${database} already holds ${held} rows: pass --replace to clear a preview store first, or look at what is there`);
+    if (production) throw new Failed(`${database} holds ${held} rows, and production is never emptied by this command. If it is to be replaced, the operator runs:\n  ${replaceCommands.join("\n  ")}`);
+    if (!remote || held <= 200_000) return void (await must(node("empty-store", "--empty", database, ...d1)));
     // A large preview store is replaced, not emptied (docs/deploy.md): seconds, and no billed write.
-    say(`${database} holds ${counted.rows} rows: replacing the preview database`);
+    say(`${database} holds ${held} rows: replacing the preview database`);
     await must([wrangler, ["d1", "delete", database, "--skip-confirmation"]], "the preview database could not be deleted");
     await must([wrangler, ["d1", "create", database, "--jurisdiction", "eu"]], "the preview database could not be created again", { quiet: true });
     await writeConfig();
     const info = json(await must([wrangler, ["d1", "info", database, "--json"]], "the new database could not be read", { quiet: true }));
     if (info.jurisdiction !== "eu") throw new Failed("the new database does not read back as eu");
+  }],
+  ["migrations", "the schema and the service's tables", async () => {
+    // What this database has applied must be the first of the files, in their order: a
+    // migration it applied under a name the files no longer have cannot be reconciled.
+    const files = readdirSync(here("../migrations")).filter((name) => name.endsWith(".sql")).sort();
+    const known = (await query("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'd1_migrations'"))[0].n;
+    const applied = known ? (await query("SELECT name FROM d1_migrations ORDER BY id")).map((row) => row.name) : [];
+    say(`applied ${applied.length} of ${files.length}: ${applied.join(", ") || "none"}`);
+    const strange = applied.findIndex((name, at) => files[at] !== name);
+    if (strange >= 0) throw new Failed(`${database} applied ${applied[strange]} as its migration ${strange + 1}, where the files have ${files[strange] ?? "nothing"}: the migrations were renumbered since. Replace this database:\n  ${replaceCommands.join("\n  ")}`);
+    // A migration that makes a table again (it says so: `-- rebuilds: <table>`, or it drops
+    // a table) copies every row of it in one transaction, which D1 does not finish on a
+    // loaded store. It is applied to an empty store only.
+    const rebuilding = files.slice(applied.length).filter((name) => /^-- rebuilds:|\bDROP TABLE\b/m.test(readFileSync(here(`../migrations/${name}`), "utf8")));
+    if (rebuilding.length) {
+      const held = await rows();
+      if (held) throw new Failed(`${rebuilding.join(", ")} makes a table again and ${database} holds ${held} rows: apply to an empty store. Replace this database:\n  ${replaceCommands.join("\n  ")}`);
+    }
     await must([wrangler, ["d1", "migrations", "apply", "STORE", ...d1Wrangler]]);
   }],
   ["dump", "the hot file as SQL, replayed strictly here", async () => {
@@ -286,6 +312,6 @@ const left = result.stages.filter((stage) => stage.skipped).map((stage) => stage
 say(failed ? `\nFAILED at ${failed}; result in ${file}` : `\nthe cut-over of ${env} passed${left.length ? ` (not run: ${left.join(", ")})` : ""}; result in ${file}`);
 // Production's configuration holds its database's id: it does not outlive the run.
 if (production) rmSync(config, { force: true });
-if (!remote) rmSync(work, { recursive: true, force: true });
+if (!remote && !value("--work")) rmSync(work, { recursive: true, force: true });
 await new Promise((done) => log.end(done));
 process.exit(failed ? 1 : 0);

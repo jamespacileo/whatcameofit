@@ -522,6 +522,10 @@ class Index(Literature):
         self.asked.append(pubmed_id)
         return self.by_pubmed_id.get(pubmed_id)
 
+    def papers_by_pubmed_ids(self, pubmed_ids: list[str]) -> dict[str, SourceRecord | None]:
+        self.asked.append(",".join(pubmed_ids))
+        return {number: self.by_pubmed_id.get(number) for number in pubmed_ids}
+
 
 def with_results_paper(study: dict[str, Any]) -> dict[str, Any]:
     """The recorded trial, with a results paper its sponsor listed and one it listed as
@@ -665,3 +669,21 @@ def test_stored_paper_records_are_refreshed_after_thirty_days_by_default(monkeyp
     monkeypatch.delenv("PAPER_RECORD_MAX_AGE_DAYS", raising=False)
 
     assert Settings(database_url="postgresql://example").paper_record_max_age_days == 30
+
+
+def test_many_papers_are_kept_in_one_request_and_young_ones_are_not_asked(
+    session: Session, fixture_json
+):
+    """A slice's listed papers are asked for together, not one request each; a stored
+    record young enough is not asked for, and a paper the index lacks is kept as not held."""
+    from thenwhat.events.paper_records import keep_papers_by_pubmed_id
+
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+    age = timedelta(days=30)
+    due = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID, "111"], now=NOW, max_age=age)
+    assert due == 2 and index.asked == [f"{RESULTS_PMID},111"]
+    held = {row.pubmed_id: row.payload is not None for row in paper_records(session)}
+    assert held == {RESULTS_PMID: True, "111": False}
+    later = NOW + timedelta(days=7)
+    again = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID, "111"], now=later, max_age=age)
+    assert again == 0 and len(index.asked) == 1

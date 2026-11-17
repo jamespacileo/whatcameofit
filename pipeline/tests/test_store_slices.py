@@ -216,6 +216,7 @@ class _Store:
     def __init__(self, short: int = 0) -> None:
         self.short = short
         self.staged: dict[str, list[dict]] = {}
+        self.progress: dict = {}
 
     def __call__(self, request):
         import json as _json
@@ -223,6 +224,8 @@ class _Store:
         import httpx
 
         path = request.url.path
+        if path == "/progress":
+            return httpx.Response(200, json=self.progress)
         if path == "/runs":
             run = _json.loads(request.content)["id"]
             self.staged.setdefault(run, [])
@@ -286,7 +289,7 @@ def test_a_slice_is_in_the_store_only_when_the_store_took_every_trial(
     assert "in_store" in one.done and one.counts["in_store"] == 1
 
 
-def test_a_slice_sends_its_trials_every_time_and_everything_again_with_again(
+def test_a_slice_in_the_store_sends_only_what_changed_and_everything_with_again(
     session: Session, tmp_path: Path, monkeypatch
 ):
     store = _Store()
@@ -295,11 +298,9 @@ def test_a_slice_sends_its_trials_every_time_and_everything_again_with_again(
     assert "in_store" in one.done and one.store.endswith("@prod.test")
     assert {"registry_trial", "payload", "trial_slice"} <= set(store.kinds_sent())
     store.staged.clear()
-    # Again, as a slice is after its PubMed stage: its trials go again, so the merge says
-    # the store holds them; its payloads, held already, do not.
+    # A pass over a slice in the store: no trial goes again, nor anything unchanged.
     cli_slices._push_slice(session, one, made, state, "http://prod.test", "t")
-    assert "registry_trial" in store.kinds_sent() and "payload" not in store.kinds_sent()
-    store.staged.clear()
+    assert store.kinds_sent() == [] and "in_store" in one.done
     cli_slices._push_slice(session, one, made, state, "http://prod.test", "t", again=True)
     assert {"registry_trial", "payload"} <= set(store.kinds_sent())
 
@@ -328,3 +329,383 @@ def test_a_state_pushed_to_one_store_is_refused_for_another(
         app, ["store", "fresh-state", str(file), "--url", "http://prod.test", "--out", str(fresh)]
     )
     assert refused.exit_code == 1 and "exists" in refused.output
+
+
+def test_a_store_loaded_again_or_from_another_build_is_refused_before_a_push(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from thenwhat.store.push import PushFailed, StoreOfOtherBuild, read_state
+
+    store = _Store()
+    cli_slices, made, one, state, file = _pushed_slice(session, tmp_path, monkeypatch, store)
+    url = "http://prod.test"
+    where = cli_slices.store_of(state, url)
+    # A store that gives no build id or slices: nothing to compare, the push goes on.
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    cli_slices._push_slice(session, one, made, state, url, "t")
+    # The store is loaded again: it holds no slice of the set, the plan says one was sent.
+    store.progress = {"sets": [], "build_id": read_state(state)["\tbuild"]}
+    with pytest.raises(PushFailed, match="fresh-state .* --again"):
+        cli_slices._check_store(made, state, where, url, "t", again=False)
+    cli_slices._check_store(made, state, where, url, "t", again=True)
+    store.progress = {"sets": [{"rule": made.rule, "year": made.year, "total_slices": 1}]}
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    # Loaded from another build.
+    store.progress["build_id"] = "another"
+    with pytest.raises(StoreOfOtherBuild, match="another"):
+        cli_slices._check_store(made, state, where, url, "t", again=True)
+    # So is a new state from this build for it.
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    args = ["store", "fresh-state", str(file), "--url", url, "--out", str(tmp_path / "n.json")]
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "another" in refused.output
+    store.progress["build_id"] = read_state(state)["\tbuild"]
+    assert CliRunner().invoke(app, args).exit_code == 0
+
+
+def test_a_store_whose_database_was_created_again_is_refused(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from thenwhat.store.push import PushFailed, read_state
+
+    store = _Store()
+    cli_slices, made, _, state, _ = _pushed_slice(session, tmp_path, monkeypatch, store)
+    url = "http://prod.test"
+    where = cli_slices.store_of(state, url)
+    store.progress = {"database_since": "2026-11-17 13:05:22"}
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    assert read_state(state)["\tdatabase since"] == "2026-11-17 13:05:22"
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    store.progress = {"database_since": "2026-11-18 09:00:00"}
+    with pytest.raises(PushFailed, match="created again.*fresh-state"):
+        cli_slices._check_store(made, state, where, url, "t", again=True)
+
+
+def test_the_plan_and_a_slice_merge_into_the_real_store_as_run_push_forms_them(
+    session: Session, tmp_path: Path
+):
+    """What `run --push` sends, merged through store/schema.sql and store/merge.sql into
+    the hot file the store is loaded from: every planned slice's state before any stage,
+    then one slice end to end, with its in_store state after. The store is loaded from a
+    hot-only build, and the slice's records are those `_push_slice` sends against that
+    build's state: two of its trials list one paper, whose payload goes once."""
+    import sqlite3
+
+    from thenwhat.store.build import merge_into
+    from thenwhat.store.slices import registry_papers_stage, state_record
+    from thenwhat.store.tiers import HOT, split_build
+
+    _world(session)
+    for trial in session.scalars(select(RegistryTrial).where(RULE)):
+        session.add(
+            TrialPaper(
+                registry_trial_id=trial.id,
+                source_name="pubmed",
+                pubmed_id="77",
+                raw_payload={"pmid": "77", "authorString": "A B.", "abstract": "Text."},
+                fetched_at=NOW,
+            )
+        )
+    session.flush()
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(session, file, payloads=payloads, store_sql=STORE, now=NOW, hot_only=True)
+    (hot,) = split_build(file, payloads, HOT, hot_only=True)
+    made = plan(session, RULE, name="test-set", year=2025, today=TODAY)
+    # One slice holding both trials, as a slice of 2,000 holds trials that share papers.
+    one = made.slices[0]
+    one.trials = sorted(trial for each in made.slices for trial in each.trials)
+    made.slices = [one]
+    planned = [state_record(each, rule=made.rule, year=made.year) for each in made.slices]
+    merge_into(hot, [("plan", planned)], store_sql=STORE, now=NOW)
+
+    record_stage(session, one, NOW)
+    registry_papers_stage(session, one, NOW, lambda number: None)
+    records, _ = slice_records(session, one, rule=made.rule, year=made.year)
+    assert len({r.key for r in records if r.kind == "payload"}) < sum(
+        r.kind == "payload" for r in records
+    )
+    held_state = {
+        key: body
+        for key, body in report.hot_state.items()
+        if not key.startswith("registry_trial\t")
+    }
+    sent = increment(records, held_state, actions=False).records
+    assert sum(r.kind == "trial_paper" for r in sent) == 2
+    merge_into(hot, [("slice", sent)], store_sql=STORE, now=NOW)
+    one.counts["in_store"] = len(one.trials)
+    one.done["in_store"] = NOW.isoformat(timespec="microseconds")
+    merge_into(
+        hot,
+        [("state", [state_record(one, rule=made.rule, year=made.year)])],
+        store_sql=STORE,
+        now=NOW,
+    )
+
+    db = sqlite3.connect(hot)
+    # Every column the store requires and fills no other way is in a planned slice's record.
+    required = {
+        name
+        for _, name, _, notnull, default, _ in db.execute("PRAGMA table_info(trial_slice)")
+        if notnull and default is None
+    }
+    assert required - {"changed_run"} <= set(planned[0].body)
+    rows = db.execute(
+        "SELECT number, trials, with_results, in_store, record_at IS NOT NULL,"
+        " in_store_at IS NOT NULL FROM trial_slice ORDER BY number"
+    ).fetchall()
+    held = db.execute("SELECT count(*) FROM registry_trial").fetchone()[0]
+    db.close()
+    assert len(rows) == len(made.slices)
+    first = rows[0]
+    assert first[1] == len(one.trials) and first[3] == len(one.trials) and first[4] and first[5]
+    assert all(row[2] >= 0 and row[3] == 0 and not row[4] for row in rows[1:])
+    assert held >= len(one.trials)
+
+
+def test_a_slice_the_store_no_longer_shows_in_it_goes_again_whole(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from thenwhat.store.push import slices_in_store
+
+    store = _Store()
+    cli_slices, made, one, state, _ = _pushed_slice(session, tmp_path, monkeypatch, store)
+    url = "http://prod.test"
+    cli_slices._push_slice(session, one, made, state, url, "t")
+    where = cli_slices.store_of(state, url)
+    assert one.store == where
+    # The store shows it in: nothing is forgotten.
+    shown_in = {
+        "sets": [
+            {
+                "rule": made.rule,
+                "year": made.year,
+                "slices": [{"number": one.number, "in_store_at": "2026-11-18T00:00:00"}],
+            }
+        ]
+    }
+    assert slices_in_store(shown_in, made.rule, made.year) == {one.number}
+    assert cli_slices.forget_lost(made, where, {one.number}, again=False) == set()
+    assert "in_store" in one.done
+    # A restore took it back: it is due again and its next push sends everything.
+    shown_out = {
+        "sets": [
+            {
+                "rule": made.rule,
+                "year": made.year,
+                "slices": [{"number": one.number, "in_store_at": None}],
+            }
+        ]
+    }
+    shown = slices_in_store(shown_out, made.rule, made.year)
+    assert cli_slices.forget_lost(made, where, shown, again=False) == {one.number}
+    assert "in_store" not in one.done and one.whole
+    store.staged.clear()
+    cli_slices._push_slice(session, one, made, state, url, "t")
+    assert {"registry_trial", "payload"} <= set(store.kinds_sent()) and not one.whole
+
+
+def _three_slices(session, tmp_path, monkeypatch, store: "_Store"):
+    """A store loaded from a build, three trials in three slices, and `slices run` set to
+    push to a fake service on the test's own session, committed slice by slice."""
+    from contextlib import contextmanager
+    from functools import partial
+
+    import httpx
+
+    from thenwhat.cli import slices as cli_slices
+    from thenwhat.cli.store import base_state_path, state_path
+    from thenwhat.store.push import write_state
+
+    world = _world(session)
+    third = RegistryTrial(
+        registry_name="clinicaltrials.gov",
+        external_id="NCT07654322",
+        title="A third",
+        conditions=[],
+        interventions=[],
+        phases=[],
+        raw_payload={"protocolSection": {}},
+        fetched_at=NOW,
+    )
+    session.add(third)
+    session.flush()
+    del world
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(session, file, payloads=payloads, store_sql=STORE, now=NOW, hot_only=True)
+    state = state_path(file)
+    write_state(state, {**report.hot_state, "\tbuild": report.build_id})
+    write_state(base_state_path(file), {**report.hot_state, "\tbuild": report.build_id})
+
+    real = httpx.Client
+
+    def client(**given):
+        given["transport"] = httpx.MockTransport(store)
+        return real(**given)
+
+    @contextmanager
+    def working_session():
+        yield session
+
+    three = RegistryTrial.external_id.in_(["NCT01234567", "NCT07654321", "NCT07654322"])
+    monkeypatch.setattr(httpx, "Client", client)
+    monkeypatch.setattr(cli_slices, "_commit", lambda: "abc1234")
+    monkeypatch.setattr(cli_slices, "_working_session", working_session)
+    monkeypatch.setattr(cli_slices, "target_rule", lambda name: (three, "test-set:2025"))
+    monkeypatch.setattr(cli_slices, "plan", partial(plan, size=1))
+    monkeypatch.setattr("thenwhat.events.paper_records.keep_papers_by_pubmed_id", lambda *a, **k: 0)
+    monkeypatch.setenv("CONTACT_EMAIL", "ops@thenwhat.test")
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    # Read by the settings only: the command works on the test's session above.
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test@127.0.0.1:5434/unused")
+    plan_file = tmp_path / "slices.json"
+    args = ["backfill", "slices", "run", "--plan", str(plan_file), "--push"]
+    args += ["--state", str(state), "--url", "http://prod.test"]
+    return args, plan_file
+
+
+def test_slices_run_works_two_then_three_slices_in_one_command(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+
+    store = _Store()
+    args, plan_file = _three_slices(session, tmp_path, monkeypatch, store)
+    two = CliRunner().invoke(app, [*args, "--slices", "2"])
+    assert two.exit_code == 0, two.output
+    # Each slice says what its stages and its push cost.
+    assert "registry papers:" in two.output and "s waiting on 429" in two.output
+    made = Plan.read(plan_file)
+    assert made is not None and len(made.slices) == 3
+    assert [("in_store" in one.done) for one in made.slices] == [True, True, False]
+    # The next pass takes the third: the first two wait on PubMed's off-peak step only.
+    store.staged.clear()
+    three = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert three.exit_code == 0, three.output
+    made = Plan.read(plan_file)
+    assert made is not None and all("in_store" in one.done for one in made.slices)
+    assert "Slice 1 " not in three.output and "Slice 3 " in three.output
+    # Nothing is due now: no slice is pushed again, no trial sent.
+    store.staged.clear()
+    idle = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert idle.exit_code == 0 and "No slice has work" in idle.output
+    assert "registry_trial" not in store.kinds_sent()
+    # --only names a slice, whatever is due: in the store, it sends no trial again.
+    named = CliRunner().invoke(app, [*args, "--only", "2"])
+    assert named.exit_code == 0, named.output
+    assert "Slice 2 " in named.output and "registry_trial" not in store.kinds_sent()
+    unknown = CliRunner().invoke(app, [*args, "--only", "2,9"])
+    assert unknown.exit_code == 0 and "No slice of the plan is numbered 9" in unknown.output
+    # A trial fetched from the registry again makes its slice due; only it goes.
+    from datetime import timedelta
+
+    trial = session.scalars(
+        select(RegistryTrial).where(RegistryTrial.external_id == "NCT07654322")
+    ).one()
+    trial.fetched_at = trial.fetched_at + timedelta(days=1)
+    trial.title = "A third, updated"
+    session.commit()
+    store.staged.clear()
+    updated = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert updated.exit_code == 0, updated.output
+    assert "Slice 3 " in updated.output and "Slice 2 " not in updated.output
+    assert store.kinds_sent().count("registry_trial") == 1
+    store.staged.clear()
+    settled = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert "No slice has work" in settled.output
+
+
+def test_a_slice_waiting_on_pubmed_is_due_only_when_its_ledger_moved(session: Session):
+    from thenwhat.store.slices import due_slices, registry_papers_stage
+
+    _world(session)
+    made = plan(session, RULE, name="test-set", year=2025, today=TODAY)
+    for one in made.slices:
+        record_stage(session, one, NOW)
+        registry_papers_stage(session, one, NOW, lambda number: None)
+        pubmed_stage(session, one, NOW)
+    assert due_slices(session, made, None, store=None) == []
+    # The off-peak step moved on the first slice's trials (its counts are not what it saw).
+    made.slices[0].counts["pubmed_asked"] = -1
+    assert due_slices(session, made, None, store=None) == [made.slices[0]]
+
+
+def test_a_failed_push_keeps_the_papers_and_a_lost_paper_runs_the_stage_again(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    """The registry papers stage's records are kept before the push: a push that fails
+    rolls back none of them, and the next run sends them. A paper the plan says was kept
+    and the database does not hold makes the stage run again."""
+    from sqlalchemy import delete, select
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+    from thenwhat.cli import slices as cli_slices
+    from thenwhat.db.models import PaperRecord
+    from thenwhat.events import paper_records
+    from thenwhat.store.push import PushFailed
+
+    store = _Store()
+    real_keep = paper_records.keep_papers_by_pubmed_id
+    args, plan_file = _three_slices(session, tmp_path, monkeypatch, store)
+    monkeypatch.setattr(paper_records, "keep_papers_by_pubmed_id", real_keep)
+
+    class Index:
+        def __init__(self, *_: object, **__: object) -> None:
+            pass
+
+        def papers_by_pubmed_ids(self, numbers: list[str]) -> dict[str, None]:
+            return dict.fromkeys(numbers)
+
+    monkeypatch.setattr("thenwhat.sources.europepmc.EuropePmc", Index)
+    third = session.scalars(
+        select(RegistryTrial).where(RegistryTrial.external_id == "NCT07654322")
+    ).one()
+    third.raw_payload = {
+        "protocolSection": {
+            "referencesModule": {"references": [{"pmid": "88123", "type": "RESULT"}]}
+        }
+    }
+    session.flush()
+    real_push, failed = cli_slices._push_slice, []
+
+    def push_once_failing(*given, **named):
+        if not failed:
+            failed.append(True)
+            raise PushFailed("The service refused a chunk: 503.")
+        return real_push(*given, **named)
+
+    monkeypatch.setattr(cli_slices, "_push_slice", push_once_failing)
+
+    def papers_sent() -> list[str]:
+        return [
+            record["body"].get("pubmed_id")
+            for run in store.staged.values()
+            for record in run
+            if record["kind"] == "source_record"
+        ]
+
+    refused = CliRunner().invoke(app, [*args, "--only", "3"])
+    assert refused.exit_code == 1 and "503" in refused.output
+    assert "88123" in session.scalars(select(PaperRecord.pubmed_id)).all()
+    made = Plan.read(plan_file)
+    assert made is not None and "registry_papers" in made.slices[2].done
+    assert "in_store" not in made.slices[2].done
+    store.staged.clear()
+    resumed = CliRunner().invoke(app, [*args, "--only", "3"])
+    assert resumed.exit_code == 0, resumed.output
+    assert papers_sent() == ["88123"]
+    # Lost since: the stage runs again and the paper goes again.
+    session.execute(delete(PaperRecord).where(PaperRecord.pubmed_id == "88123"))
+    session.commit()
+    store.staged.clear()
+    again = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert again.exit_code == 0, again.output
+    assert "1 of its registry papers are not held" in again.output
+    assert "88123" in session.scalars(select(PaperRecord.pubmed_id)).all()
+    assert papers_sent() == ["88123"]

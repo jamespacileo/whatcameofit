@@ -24,7 +24,7 @@ def test_only_what_changed_is_handed_over():
     changed = Record("claim", "drug-x", {"slug": "drug-x", "headline": "B"})
     redone = Record("decision", "7", {"seq": 7, "step": "entity_match", "confidence": 1})
     new = Record("claim", "drug-y", {"slug": "drug-y", "headline": "C"})
-    chosen = increment([changed, redone, new, ACTION, DECISION], state, actions=False)
+    chosen = increment([changed, redone, new, ACTION], state, actions=False)
     assert chosen.records == [changed, new]
     assert sum(chosen.left_out.values()) == 2
     assert increment([ACTION], state, actions=True).records == [ACTION]
@@ -412,7 +412,11 @@ def test_a_merged_pending_run_settles_without_its_large_payloads(tmp_path):
 def test_a_busy_service_is_waited_for_and_asked_again():
     from thenwhat.store.push import RetryOnBusy
 
-    answers = [httpx.Response(429, headers={"Retry-After": "7"}), httpx.Response(200, json={})]
+    answers = [
+        httpx.Response(429, headers={"Retry-After": "7"}),
+        httpx.Response(200, json={}),
+        httpx.Response(200, json={}),
+    ]
     asked: list[str] = []
 
     def service(request: httpx.Request) -> httpx.Response:
@@ -423,7 +427,11 @@ def test_a_busy_service_is_waited_for_and_asked_again():
     transport = RetryOnBusy(httpx.MockTransport(service), sleep=waited.append)
     with httpx.Client(base_url="http://s.test", transport=transport) as client:
         assert client.post("/runs/x/merge").status_code == 200
-    assert asked == ["/runs/x/merge", "/runs/x/merge"] and waited == [7.0]
+        assert client.post("/runs/x/records", content=b"[1,2]").status_code == 200
+    assert asked[:2] == ["/runs/x/merge", "/runs/x/merge"] and waited == [7.0]
+    counted = transport.traffic
+    assert (counted.requests, counted.chunks, counted.retries, counted.waited) == (2, 1, 1, 7.0)
+    assert counted.sent == 5 and "7 s waiting on 429, 1 retries" in counted.said()
 
 
 def test_the_inline_payload_limit_is_the_schema_s_own():
@@ -438,3 +446,120 @@ def test_the_inline_payload_limit_is_the_schema_s_own():
     assert payload_of({"x": "y" * (INLINE_PAYLOAD_LIMIT - 20)}).inline
     assert not payload_of({"x": "y" * INLINE_PAYLOAD_LIMIT}).inline
     assert schema_inline_limit(Path("/no/such/schema.sql")) == 16384
+
+
+def test_backfill_push_refuses_a_store_of_another_build_or_database(monkeypatch, tmp_path):
+    from thenwhat.store.push import read_state, write_state
+
+    progress = {"build_id": "another", "database_since": "2026-11-17 13:05:22"}
+    asked: list[str] = []
+
+    def service(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.path)
+        return httpx.Response(200, json=progress)
+
+    real = httpx.Client
+
+    def client(**given):
+        given["transport"] = httpx.MockTransport(service)
+        return real(**given)
+
+    monkeypatch.setattr(httpx, "Client", client)
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    state = tmp_path / "s.json"
+    write_state(state, {"\tbuild": "0123456789abcdef", "\tdatabase since": "2026-11-16 08:00:00"})
+    args = ["backfill", "push", "--state", str(state), "--url", "http://store.test"]
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "build another" in refused.output
+    progress["build_id"] = "0123456789abcdef"
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "created again" in refused.output
+    assert set(asked) == {"/progress"}
+    assert read_state(state)["\tdatabase since"] == "2026-11-16 08:00:00"
+
+
+def test_a_run_undone_for_a_constraint_is_marked_and_set_aside_only_then(monkeypatch, tmp_path):
+    from thenwhat.store.push import RunUndone, pending_path, read_pending, write_state
+
+    class Undoes(Service):
+        def __init__(self) -> None:
+            super().__init__(status="undone")
+            self.held: str | None = None
+            self.writers = ["daily"]
+
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/progress":
+                return httpx.Response(200, json={"writers": self.writers})
+            if request.method == "GET" and request.url.path.startswith("/runs/"):
+                if self.held is None:
+                    return httpx.Response(404, json={"error": "no_such_run"})
+                return httpx.Response(200, json={"status": self.held})
+            if request.url.path.endswith("/merge"):
+                super().__call__(request)
+                return httpx.Response(
+                    409,
+                    json={
+                        "status": "undone",
+                        "reason": "constraint",
+                        "detail": "NOT NULL constraint failed: trial_slice.with_results",
+                    },
+                )
+            return super().__call__(request)
+
+    state_file = tmp_path / "s.pushed.json"
+    write_state(state_file, {})
+    pending = pending_path(state_file)
+    service = Undoes()
+    with (
+        httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c,
+        pytest.raises(RunUndone, match=r"never merge.*drop-pending --state"),
+    ):
+        push(
+            c,
+            [CLAIM],
+            {},
+            writer="daily",
+            commit="abc1234",
+            payload_text={}.get,
+            pending=pending,
+        )
+    assert read_pending(pending) is not None
+
+    real = httpx.Client
+
+    def client(**given):
+        given["transport"] = httpx.MockTransport(service)
+        return real(**given)
+
+    monkeypatch.setattr(httpx, "Client", client)
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    args = ["store", "drop-pending", "--state", str(state_file), "--url", "http://s.test"]
+    # A token that may not write daily runs: its "no such run" says nothing.
+    service.writers = ["operator", "migration"]
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "daily writer" in refused.output and pending.is_file()
+    service.writers = ["daily"]
+    service.held = "merged"
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "merged" in refused.output and pending.is_file()
+    service.held = None
+    dropped = CliRunner().invoke(app, args)
+    assert dropped.exit_code == 0, dropped.output
+    assert not pending.exists() and list(tmp_path.glob("s.pushed.json.pending.json.set-aside-*"))
+    # A pending run no constraint undid is not set aside: a push settles it.
+    write_state(state_file, {})
+    from thenwhat.store.push import write_pending
+
+    write_pending(pending, "daily-x", [CLAIM])
+    kept = CliRunner().invoke(app, args)
+    assert kept.exit_code == 1 and "push again" in kept.output and pending.is_file()
+
+
+def test_a_record_given_twice_goes_once_and_two_bodies_under_one_key_are_refused():
+    other = Record("claim", "drug-x", {"slug": "drug-x", "headline": "Other"})
+    assert increment([CLAIM, CLAIM], {}, actions=False).records == [CLAIM]
+    with pytest.raises(PushFailed, match="Two different claim"):
+        increment([CLAIM, other], {}, actions=False)
+    # So are they when the state holds one of them.
+    with pytest.raises(PushFailed, match="Two different claim"):
+        increment([CLAIM, other], state_of([CLAIM]), actions=False)

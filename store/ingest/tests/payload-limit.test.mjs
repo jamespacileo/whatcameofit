@@ -4,6 +4,12 @@
 // Wrangler as a migration is applied: every payload is there afterwards as it was, every
 // row that referenced one still does, and the new bound holds in bytes.
 //
+// What it does not show, and the remote database did on 2026-11-17: D1 stops a transaction
+// that runs too long, and this migration over the loaded preview ran 38 seconds and was
+// reset, with nothing lost. The local engine has no such limit. So the migration is for an
+// empty store, the cut-over refuses it otherwise, and this test holds only that the
+// statements are right.
+//
 // It is the test the migration was written against: two other ways of making the table
 // again were refused by the engine once rows referenced it.
 import assert from "node:assert/strict";
