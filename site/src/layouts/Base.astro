@@ -99,8 +99,8 @@ const topicLink =
     <link rel="manifest" href={brandAsset("/manifest.webmanifest")} />
     <meta name="theme-color" content={THEME_COLOR} />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
-    {/* The heading face: only a framed page (a claim, a topic) sets its title in it. */}
-    {framed && <link rel="preload" as="font" type="font/woff2" href={displayUrl} crossorigin />}
+    {/* The heading face: a framed page (a claim, a topic) and the home page set their title in it. */}
+    {(framed || current === "home") && <link rel="preload" as="font" type="font/woff2" href={displayUrl} crossorigin />}
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     {Astro.props.noindex && <meta name="robots" content="noindex, follow" />}

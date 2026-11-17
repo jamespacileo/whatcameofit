@@ -8214,3 +8214,184 @@ body.framed {
   text-decoration-style: solid;
   text-decoration-color: currentColor;
 }
+
+/* The home page's opening (openspec home-then-now, the operator's choice of "A" on
+   2026-11-17 from three mocks in .impeccable/mocks/home-variants/): the title and the
+   section headings in the heading face, as a claim page has them, and under the box one
+   published claim drawn as the site's idea: what an outlet reported, then where it
+   stands on the records. */
+.band.home .title {
+  font-family: var(--display);
+  font-weight: 500;
+  font-size: clamp(2.3rem, 5.6vw, 3.9rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+body:has(.band.home) .bar,
+.days-title {
+  font-family: var(--display);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.then-now {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 19rem);
+  align-items: center;
+  column-gap: 1.75rem;
+  max-width: 54rem;
+  margin: 2.4rem auto 0;
+  padding: 1.25rem 1.25rem 1.25rem 1.75rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 160ms var(--ease-out);
+}
+
+.then-now:hover {
+  border-color: var(--ring);
+}
+
+.then-now p {
+  margin: 0;
+}
+
+.then-when {
+  font-size: var(--text-s);
+  color: var(--muted);
+}
+
+/* The outlet's own words, in the heading face: a quotation, never the site's title. */
+.then-now .then-quote {
+  margin-top: 0.35rem;
+  font-family: var(--display);
+  font-size: clamp(1.4rem, 3vw, 1.75rem);
+  font-weight: 500;
+  line-height: 1.16;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+}
+
+.then-now:hover .then-quote {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+
+.then-gap {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: var(--text-s);
+  white-space: nowrap;
+}
+
+/* The status as a claim page draws it: a well of the record band's dark tone, its
+   heading a tab on its top edge. The same in both themes, as the band's tones are. */
+.now-well {
+  --ink: var(--on-navy-ink);
+  --blue: var(--on-navy);
+  --muted: var(--navy-soft);
+  --ring: #9db4d2;
+  --paper: var(--band-card);
+  position: relative;
+  margin-top: 1.9rem;
+  padding: 0.85rem 1.1rem 0.95rem;
+  border-radius: 0 var(--radius-s) var(--radius-s) var(--radius-s);
+  background: var(--band-card);
+  color: var(--on-navy-ink);
+}
+
+.now-tab {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  display: flex;
+  align-items: center;
+  height: 1.9rem;
+  padding: 0 0.95rem;
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+  background: var(--band-card);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.now-label {
+  font-size: var(--text-status);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--on-navy);
+}
+
+.then-now .now-gloss,
+.then-now .now-latest,
+.then-now .now-note {
+  margin-top: 0.25rem;
+  font-size: var(--text-s);
+  color: var(--navy-soft);
+}
+
+.then-now .now-note {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--on-navy-ink);
+  font-weight: 600;
+}
+
+.now-well .track {
+  margin-top: 0.6rem;
+}
+
+@media (max-width: 52rem) {
+  .then-now {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.9rem;
+    padding: 1.1rem;
+  }
+
+  .then-gap {
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: 0.5rem;
+  }
+
+  .then-gap svg {
+    transform: rotate(90deg);
+  }
+}
+
+/* On a phone the band keeps to the title and the box, so a row of the list starts on
+   the first screen, as the words under the box are not drawn there either. */
+@media (max-width: 40rem) {
+  .then-now {
+    display: none;
+  }
+}
+
+@media print {
+  .then-now {
+    border: 0;
+    padding: 0;
+  }
+
+  .now-well {
+    margin-top: 0;
+    padding: 0;
+    background: none;
+    color: inherit;
+  }
+
+  .now-tab {
+    position: static;
+    height: auto;
+    padding: 0;
+    background: none;
+  }
+}
