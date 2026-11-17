@@ -1,4 +1,4 @@
-// The two kinds the progressive load of trials adds (migration 0006): `trial_paper`, a
+// The two kinds the progressive load of trials adds (migration 0007): `trial_paper`, a
 // paper a literature index lists under a trial's number, and `trial_slice`, how far a
 // slice of trials has come. Each through the service's routes on D1's local engine, with
 // the report without applying held to the merge's own report every time.

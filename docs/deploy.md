@@ -204,7 +204,7 @@ cd store/ingest
 npx wrangler d1 migrations apply STORE --remote --config wrangler.preview.jsonc
 ```
 
-Applied to the preview on 17 November 2026: `0001_store_schema.sql` (which was `store/schema.sql`, byte for byte, that day; since then the schema is the sum of the migrations, and `0006` adds the tables of the progressive trial load) and `0002_ingest_service.sql`.
+Applied to the preview on 17 November 2026: `0001_store_schema.sql` (which was `store/schema.sql`, byte for byte, that day; since then the schema is the sum of the migrations, and `0007` adds the tables of the progressive trial load) and `0002_ingest_service.sql`.
 
 ### Two tiers (decided by the operator on 17 November 2026)
 
