@@ -173,11 +173,32 @@ def people_in(study: Any) -> set[str]:
 #
 # Paper authors are not removed. Decided by the operator on 2026-11-17 (docs/adr/0011):
 # a paper's authors are its published byline, so `authorString`, `authorList`,
-# `authorships` and the like stay in a stored literature record. Nor is a paper's
-# abstract removed from an event's payload: the written rule (openspec paper-facts, "The
-# stored record holds no abstract and no author") covers the record a paper's facts are
-# read from (`paper_record`, reduced by `events/paper_facts.reduced`), not an event's.
-# Do not "fix" either without a new decision.
+# `authorships`, author identifiers and affiliations stay in a stored literature record.
+# Do not "fix" that without a new decision.
+#
+# A paper's abstract is removed from every stored record and payload, whatever table
+# holds it (docs/adr/0011, amended the same day): the sources' terms allow titles and
+# links, not abstracts (docs/sources.md: Europe PMC "titles and links only, no
+# abstracts", Crossref "no abstracts"), and the abstract is the publisher's text. The
+# links (`fullTextUrlList`, `fullTextIdList`) are links and stay.
+
+# The keys that hold a paper's abstract or body text, in each index's record.
+ABSTRACT_KEYS = frozenset(
+    {
+        "abstractText",  # Europe PMC
+        "abstract_inverted_index",  # OpenAlex
+        "abstract",  # Crossref, PubMed
+        "AbstractText",  # PubMed's XML, as JSON
+        "fullText",  # a full text, if an index ever gives one
+    }
+)
+
+
+def without_abstract(record: Any) -> Any:
+    """A literature record without its abstract or body text, at any depth; its byline,
+    title, journal, year, identifiers and links as they are."""
+    return _without_keys(record, ABSTRACT_KEYS)
+
 
 # A registry's person keys, wherever they appear: a guard for a record that is not shaped
 # as a whole study (`protocolSection`) but carries part of one.
@@ -205,11 +226,11 @@ def _without_keys(value: Any, keys: frozenset[str]) -> Any:
 
 def payload_without_people(payload: Any) -> Any:
     """Any stored payload without a registry's people: a registry study by
-    `without_people`; any other payload without a registry's person keys and any email or
-    phone, wherever they are. A paper's byline and abstract are kept (see above)."""
+    `without_people`; any other payload without a registry's person keys, any email or
+    phone and a paper's abstract, wherever they are. A paper's byline is kept (see above)."""
     if is_study(payload):
         return without_people(payload)
-    return _without_keys(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS)
+    return _without_keys(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS | ABSTRACT_KEYS)
 
 
 def keys_found(value: Any, keys: frozenset[str]) -> set[str]:

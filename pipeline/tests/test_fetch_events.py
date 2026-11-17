@@ -29,7 +29,7 @@ from thenwhat.events.manual import DuplicateEvent, add_manual_event
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.crossref import Notice
-from thenwhat.sources.people import without_people
+from thenwhat.sources.people import without_abstract, without_people
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 ORIGIN_DOI = "10.1000/origin"
@@ -242,7 +242,8 @@ def test_citing_paper_from_the_same_group_is_a_follow_up(session: Session):
     assert (event.external_id, event.summary) == ("10.1000/later", "Further tooth results")
     assert (event.event_date, event.source_name) == (date(2020, 5, 1), "europepmc")
     assert event.source_url == "https://europepmc.org/article/MED/later"
-    assert event.raw_payload == citing.payload
+    # Kept without its abstract; its byline stays (docs/adr/0011).
+    assert event.raw_payload == without_abstract(citing.payload)
 
 
 def test_independent_paper_naming_the_intervention_is_a_follow_up(session: Session):

@@ -19,14 +19,16 @@ from typing import Any
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import EvidenceEvent, RegistryTrial
+from thenwhat.db.models import EvidenceEvent, PaperRecord, RegistryTrial, TrialPaper
 from thenwhat.sources.people import (
+    ABSTRACT_KEYS,
     CONTACT_KEYS,
     FIELDS,
     REGISTRY_PERSON_KEYS,
     is_study,
     keys_found,
     people_in,
+    without_abstract,
     without_people,
 )
 
@@ -86,6 +88,66 @@ def strip(
     return report
 
 
+# Tables that hold a literature record, with its column.
+PAPER_TABLES = (
+    (EvidenceEvent, "raw_payload"),
+    (PaperRecord, "payload"),
+    (TrialPaper, "raw_payload"),
+)
+
+
+@dataclass
+class AbstractsStripped:
+    """By table and source: records read and records holding an abstract; by key, the
+    records holding it before and after."""
+
+    rows: Counter[tuple[str, str]] = field(default_factory=Counter)
+    changed: Counter[tuple[str, str]] = field(default_factory=Counter)
+    before: Counter[tuple[str, str, str]] = field(default_factory=Counter)
+    after: Counter[tuple[str, str, str]] = field(default_factory=Counter)
+
+
+def strip_abstracts(session: Session, *, apply: bool) -> AbstractsStripped:
+    """Count the papers' abstracts in every stored payload that is not a registry study (a
+    follow-up paper's record, a retraction notice, a paper's or a trial paper's record)
+    and, with `apply`, write each without its abstract, a page at a time. The byline stays
+    (docs/adr/0011). Running it again finds none."""
+    report = AbstractsStripped()
+    for model, column in PAPER_TABLES:
+        name = model.__tablename__
+        value = getattr(model, column)
+        last = 0
+        while True:
+            page = session.execute(
+                select(model.id, model.source_name, value)
+                .where(model.id > last)
+                .order_by(model.id)
+                .limit(PAGE)
+            ).all()
+            if not page:
+                break
+            for row_id, source, payload in page:
+                last = row_id
+                if payload is None or is_study(payload):
+                    continue
+                report.rows[(name, source)] += 1
+                found = keys_found(payload, ABSTRACT_KEYS)
+                report.before.update((name, source, key) for key in found)
+                if not found:
+                    continue
+                kept = without_abstract(payload)
+                report.after.update((name, source, k) for k in keys_found(kept, ABSTRACT_KEYS))
+                report.changed[(name, source)] += 1
+                if apply:
+                    session.execute(update(model).where(model.id == row_id).values({column: kept}))
+            if apply:
+                session.commit()
+    return report
+
+
+ABSTRACTS_PROOF_SQL = Path(__file__).with_name("no_abstracts.sql")
+
+
 # The proof over Postgres: every count is 0 once the records are stripped.
 PROOF_SQL = Path(__file__).with_name("no_people.sql")
 
@@ -120,11 +182,12 @@ def prove_file_objects(payloads: Path) -> Counter[str]:
 
 
 def _people(payload: Any) -> set[str]:
-    """What a payload names a person in: a study's fields, else a registry's person keys
-    or an email or phone. A paper's byline is not a person field (docs/adr/0011)."""
+    """What a payload names a person in, or a paper's abstract: a study's fields, else a
+    registry's person keys, an email or phone, or an abstract. A paper's byline is not a
+    person field (docs/adr/0011)."""
     if is_study(payload):
         return people_in(payload)
-    return keys_found(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS)
+    return keys_found(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS | ABSTRACT_KEYS)
 
 
 def _json(text: str) -> Any:
@@ -134,4 +197,14 @@ def _json(text: str) -> Any:
         return None
 
 
-__all__ = ["FIELDS", "PROOF_SQL", "Stripped", "prove_file", "prove_file_objects", "strip"]
+__all__ = [
+    "ABSTRACTS_PROOF_SQL",
+    "FIELDS",
+    "PROOF_SQL",
+    "AbstractsStripped",
+    "Stripped",
+    "prove_file",
+    "prove_file_objects",
+    "strip",
+    "strip_abstracts",
+]

@@ -32,7 +32,15 @@ from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
 from thenwhat.store.inbox import InboxFailed, clear, fold, record_fold
-from thenwhat.store.people import FIELDS, PROOF_SQL, prove_file, prove_file_objects, strip
+from thenwhat.store.people import (
+    ABSTRACTS_PROOF_SQL,
+    FIELDS,
+    PROOF_SQL,
+    prove_file,
+    prove_file_objects,
+    strip,
+    strip_abstracts,
+)
 from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
@@ -644,8 +652,9 @@ def prove_no_people_command(
         typer.Option("--payloads", help="Folders of payload objects to read too."),
     ] = None,
 ) -> None:
-    """Count the people the payloads of store files and their objects on disk name. Exits
-    with 1 when any is found."""
+    """Count the people the payloads of store files and their objects on disk name, and
+    the papers' abstracts they hold (docs/adr/0011; a paper's byline is not counted).
+    Exits with 1 when any is found."""
     found: Counter[str] = Counter()
     for file in files:
         if not file.is_file():
@@ -658,4 +667,35 @@ def prove_no_people_command(
         err.print(f"{name}: {count:,}", markup=False)
     if found:
         raise typer.Exit(code=1)
-    out.print("No person is named in these files.", markup=False)
+    out.print("No person is named and no abstract is held in these files.", markup=False)
+
+
+@backfill_app.command("strip-paper-abstracts")
+def strip_paper_abstracts_command(
+    apply: Annotated[
+        bool, typer.Option("--apply", help="Write the records without them; else only count.")
+    ] = False,
+) -> None:
+    """Count the papers' abstracts in every stored payload that is not a registry study (a
+    follow-up paper's record, a retraction notice, a paper's or a trial paper's record)
+    and, with --apply, store each without its abstract. The byline stays (docs/adr/0011).
+    Running it again changes nothing."""
+    engine = make_engine(settings_or_exit().database_url)
+    with Session(engine) as session:
+        if not apply:
+            read_only(session)
+        report = strip_abstracts(session, apply=apply)
+        session.rollback()
+    for table, source in sorted(report.rows):
+        out.print(
+            f"{table} {source}: {report.rows[(table, source)]:,} records,"
+            f" {report.changed[(table, source)]:,} holding an abstract"
+            + (" (written without)" if apply else " (counted only; --apply writes)"),
+            markup=False,
+        )
+        for (t, s, key), count in sorted(report.before.items()):
+            if (t, s) == (table, source):
+                out.print(
+                    f"  {key}: {count:,} before, {report.after[(t, s, key)]:,} after", markup=False
+                )
+    out.print(f'Prove it: psql "$DATABASE_URL" -f {ABSTRACTS_PROOF_SQL}', markup=False)
