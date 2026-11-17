@@ -67,7 +67,13 @@ from thenwhat.backfill.steps import (
 from thenwhat.backfill.topics import TOPICS
 from thenwhat.backfill.trial_links import CLAIMS_A_READ, at_least, plan_of
 from thenwhat.backfill.trial_references import count_references
-from thenwhat.backfill.trial_sets import SETS, count_sets
+from thenwhat.backfill.trial_sets import (
+    NO_WIDER_RECORD,
+    SETS,
+    count_sets,
+    require_wider_record,
+    rule_of,
+)
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
@@ -250,14 +256,35 @@ def _spend_line(
     return f"{line}, which covers {covered:,} of the {due:,} due records"
 
 
+def _requests_for(step: Any, due: int) -> int:
+    """The requests this many due records need: a step that asks for many records in
+    one request says so itself; any other needs its fixed number a record."""
+    if hasattr(step, "requests_for"):
+        return step.requests_for(due)
+    return due * step.requests_per_record
+
+
+def _records_for(step: Any, requests: int) -> int:
+    """The due records this many requests cover."""
+    if hasattr(step, "records_for"):
+        return step.records_for(requests)
+    return requests // step.requests_per_record
+
+
 @backfill_app.command("steps")
 def steps_command() -> None:
     """List the steps a backfill can run."""
     with refusals():
         for step in steps_for(settings_or_exit()):
+            batch = getattr(step, "batch_size", 0)
+            asked = (
+                f"requests: about {_requests_for(step, batch)} for each {batch} records"
+                if hasattr(step, "requests_for")
+                else f"requests per record: {step.requests_per_record}"
+            )
             out.print(
                 f"{step.name}  version {step.version}  records: {step.record_kind}  "
-                f"source: {step.source}  requests per record: {step.requests_per_record}",
+                f"source: {step.source}  {asked}",
                 markup=False,
             )
 
@@ -285,15 +312,17 @@ def plan_command() -> None:
                 if asks_a_source(step):
                     allowance = allowances.of(step.source)
                     status = allowances.status(session, step.source)
-                    requests = counts.due * step.requests_per_record
+                    requests = _requests_for(step, counts.due)
+                    batched = " in batches" if hasattr(step, "requests_for") else ""
                     out.print(
-                        f"  the due records need {requests:,} requests, "
+                        f"  the due records need {'about ' if batched else ''}{requests:,} "
+                        f"requests{batched}, "
                         f"{_hours(requests, allowance)} at the source's rate",
                         markup=False,
                     )
                     out.print(_allowance_line(step.source, allowance, status), markup=False)
                     if requests > status.left:
-                        covered = status.left // step.requests_per_record
+                        covered = _records_for(step, status.left)
                         periods = -(-(requests - status.left) // allowance.requests)
                         out.print(
                             f"  the allowance left covers {covered:,} of the {counts.due:,} due "
@@ -647,10 +676,7 @@ def trial_sets_command() -> None:
     with refusals(), open_session() as session:
         report = count_sets(session)
     if report.stored == report.without_wider_record:
-        err.print(
-            "No stored trial has the activity and results fields yet. Load the trials "
-            "again in full: `thenwhat backfill load-trials --trials interventional`."
-        )
+        err.print(NO_WIDER_RECORD)
         raise typer.Exit(code=1)
     for counted in report.sets:
         loaded = (
@@ -694,7 +720,11 @@ def trial_references_command(
     """
     settings_or_exit()
     with refusals(), open_session() as session:
-        counts = [count_references(session, name) for name in ([trial_set] if trial_set else SETS)]
+        names = [trial_set] if trial_set else list(SETS)
+        for name in names:
+            rule_of(name)
+        require_wider_record(session)
+        counts = [count_references(session, name) for name in names]
     for counted in counts:
         out.print(f"{counted.name}: {counted.trials:,} trials", markup=False)
         out.print(

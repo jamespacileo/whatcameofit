@@ -38,12 +38,23 @@ class TrialPapers:
     record_kind = "registry_trial"
     model = RegistryTrial
     source = PubMed.name
-    # A search carries many trials, so a trial costs far less than this: one search and
-    # at most a few fetches for each `batch_size` trials. The plan's figure is a ceiling.
+    # Kept for the step protocol. A search carries many trials: what the due trials
+    # need is `requests_for`, which the plan shows instead.
     requests_per_record = 1
+    # One search for each batch of trials and, in the sample of 2026-11-17, one fetch of
+    # the papers it found: a fetch holds 200 papers and a batch of 25 trials found 12.
+    REQUESTS_PER_BATCH = 2
 
     def __init__(self, trials_per_request: int = 50) -> None:
         self.batch_size = trials_per_request
+
+    def requests_for(self, due: int) -> int:
+        """About how many requests this many due trials need, asked in batches."""
+        return -(-due // self.batch_size) * self.REQUESTS_PER_BATCH
+
+    def records_for(self, requests: int) -> int:
+        """About how many due trials this many requests cover."""
+        return requests // self.REQUESTS_PER_BATCH * self.batch_size
 
     def scope(self) -> ColumnElement[bool]:
         """The trials of the named sets, cited by a claim or not: a paper belongs on a

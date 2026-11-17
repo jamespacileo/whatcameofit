@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from backfill_support import NOW, same_session
 from thenwhat.backfill.allowance import Allowances
-from thenwhat.backfill.errors import SourcePaused
+from thenwhat.backfill.errors import SourcePaused, SourceStop
 from thenwhat.backfill.ledger import count
 from thenwhat.backfill.runner import run_step
 from thenwhat.backfill.trial_papers import TrialPapers
@@ -24,17 +24,23 @@ from thenwhat.config import SourceAllowance
 from thenwhat.db.models import RegistryTrial, TrialPaper
 from thenwhat.sources.base import MissingContact
 from thenwhat.sources.pubmed import (
+    PEAK_HOURS,
+    IndexUnavailable,
     MissingTool,
     Paper,
     PeakHours,
     PubMed,
+    TooManyPapers,
     is_off_peak,
     read_papers,
     search_term,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pubmed"
-ALLOWED = {"pubmed": SourceAllowance(requests=1000, period_hours=24, interval_seconds=0.5)}
+ALLOWED = {
+    "pubmed": SourceAllowance(requests=1000, period_hours=24, interval_seconds=0.5),
+    PEAK_HOURS: SourceAllowance(requests=100, period_hours=24, interval_seconds=0),
+}
 # Trials of the recorded sample: two with a paper each, one with two, one with none.
 WITH_ONE, WITH_TWO, WITH_NONE = "NCT04992299", "NCT02788227", "NCT05032820"
 # The one paper of the sample whose record carries three numbers.
@@ -44,8 +50,10 @@ THREE_NUMBERS = "NCT01547741"
 class Service:
     """NCBI as recorded: a search answers with PubMed numbers, a fetch with records."""
 
-    def __init__(self, status: int = 200) -> None:
+    def __init__(self, status: int = 200, search: dict | str | None = None) -> None:
         self.status = status
+        # What a search answers instead of the recording: a body, or text that is not one.
+        self.search = search
         self.requests: list[httpx.Request] = []
 
     def fields(self, place: int) -> dict[str, str]:
@@ -56,6 +64,10 @@ class Service:
         self.requests.append(request)
         if self.status != 200:
             return httpx.Response(self.status, json={"error": "API rate limit exceeded"})
+        if request.url.path.endswith("esearch.fcgi") and self.search is not None:
+            if isinstance(self.search, str):
+                return httpx.Response(200, text=self.search)
+            return httpx.Response(200, json=self.search)
         if request.url.path.endswith("esearch.fcgi"):
             return httpx.Response(
                 200, json=json.loads((FIXTURES / "esearch_completed_sample.json").read_text())
@@ -176,21 +188,80 @@ def test_too_many_requests_pauses_the_source_for_every_process(session: Session,
 
 
 def test_a_large_job_stops_at_peak_hours_and_goes_on_off_peak(session: Session, fake_time):
-    """NCBI asks that more than 100 requests run at the weekend or at night, Eastern."""
+    """NCBI asks that more than 100 requests run at the weekend or at night, Eastern.
+    The count is shared: workers and a restarted run are one job."""
     service = Service()
-    client = pubmed(session, fake_time, service)
     # Thursday 1 January 2026, 12:00 UTC: seven in the morning in New York.
     assert not is_off_peak(fake_time.now())
-    client.requests_made = 100
+    for _ in range(50):
+        # Each run has its own client, as each worker and each restart does.
+        pubmed(session, fake_time, service).papers_carrying([WITH_ONE])
+    assert len(service.requests) == 100
 
     with pytest.raises(PeakHours, match="more than 100 requests"):
-        client.papers_carrying([WITH_ONE])
-    assert service.requests == []
+        pubmed(session, fake_time, service).papers_carrying([WITH_ONE])
+    assert len(service.requests) == 100
 
     fake_time.advance(timedelta(days=2))  # Saturday
     assert is_off_peak(fake_time.now())
-    client.papers_carrying([WITH_ONE])
-    assert len(service.requests) == 2
+    pubmed(session, fake_time, service).papers_carrying([WITH_ONE])
+    assert len(service.requests) == 102
+
+
+def test_requests_sent_off_peak_are_not_counted_as_peak_requests(session: Session, fake_time):
+    service = Service()
+    fake_time.advance(timedelta(days=2))  # Saturday
+    for _ in range(60):
+        pubmed(session, fake_time, service).papers_carrying([WITH_ONE])
+
+    fake_time.advance(timedelta(days=3, hours=1))  # Tuesday, in peak hours
+    assert not is_off_peak(fake_time.now())
+    pubmed(session, fake_time, service).papers_carrying([WITH_ONE])
+
+    assert len(service.requests) == 122
+
+
+@pytest.mark.parametrize(
+    ("service", "refusal", "says"),
+    [
+        (Service(status=503), IndexUnavailable, "status 503"),
+        (Service(status=404), IndexUnavailable, "status 404"),
+        (Service(search="<html>busy</html>"), IndexUnavailable, "a form this client"),
+        (Service(search={"esearchresult": {"ERROR": "busy"}}), IndexUnavailable, "a form this"),
+        (
+            Service(search={"esearchresult": {"count": "20000", "idlist": ["1"]}}),
+            TooManyPapers,
+            "PUBMED_TRIALS_PER_REQUEST",
+        ),
+    ],
+)
+def test_an_outage_or_an_answer_not_understood_stops_the_run(
+    session: Session, fake_time, service, refusal, says
+):
+    """Scenario: The index is down"""
+    trials(session, *(f"NCT0000000{number}" for number in range(1, 6)))
+    step = TrialPapers(trials_per_request=5)
+
+    report = run_step(
+        same_session(session),
+        step,
+        pubmed(session, fake_time, service),
+        now=lambda: NOW,
+        attempt_limit=3,
+    )
+
+    # One request, not one for each trial of the batch, and nothing counted against them.
+    assert len(service.requests) == 1
+    assert issubclass(refusal, SourceStop) and says in (report.stopped or "")
+    assert (report.failed, report.remaining_due) == (0, 5)
+    assert count(session, step, 3).due == 5
+
+
+def test_the_plan_counts_requests_by_the_batch():
+    step = TrialPapers(trials_per_request=50)
+
+    assert (step.requests_for(26_469), step.requests_for(1), step.requests_for(0)) == (1060, 2, 0)
+    assert step.records_for(100) == 2500
 
 
 def test_off_peak_is_the_weekend_or_nine_at_night_to_five_in_the_morning_eastern():
