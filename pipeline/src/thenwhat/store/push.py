@@ -132,6 +132,35 @@ class PushReport:
     left_out: Counter[str] = field(default_factory=Counter)
 
 
+class RunRefused(PushFailed):
+    """The service refused a run: an older step version, or a record it will not take."""
+
+
+def pending_path(state_file: Path) -> Path:
+    """Where a push keeps the run it has sent and not yet seen merged."""
+    return state_file.with_name(state_file.name + ".pending.json")
+
+
+def write_pending(path: Path, run: str, records: list[Record]) -> None:
+    """The run about to be sent, written whole before anything is sent."""
+    temporary = path.with_name(path.name + ".part")
+    temporary.write_text(
+        json.dumps({"run": run, "records": [r.staged() for r in records]}, ensure_ascii=False)
+    )
+    temporary.replace(path)
+
+
+def read_pending(path: Path) -> tuple[str, list[Record]] | None:
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text())
+    return value["run"], [Record(**record) for record in value["records"]]
+
+
+def clear_pending(path: Path) -> None:
+    path.unlink(missing_ok=True)
+
+
 def push(
     client: httpx.Client,
     records: list[Record],
@@ -143,93 +172,137 @@ def push(
     actions: bool = False,
     report_only: bool = False,
     on_merged: Callable[[dict[str, str]], None] = lambda _: None,
+    pending: Path | None = None,
 ) -> PushReport:
     """Hand over what changed since `state`, one run at a time. After each merged run,
     `state` holds its records and `on_merged` is given it, so a push stopped part way
     hands over only the rest next time. `payload_text` gives a large payload's text by
-    checksum."""
+    checksum.
+
+    With `pending`, each run is written there, id and records, before it is sent, and
+    cleared once its merge is seen and the state written. A push that finds a run pending
+    settles it first, by its id and with the same records: merged at the service, its
+    records are taken as handed over; still open, it is sent again, as the same run;
+    refused, the push stops. Only then is what is left worked out, so records a lost
+    answer left unconfirmed are never sent again under another run."""
     report = PushReport()
+    if pending is not None and not report_only:
+        held = read_pending(pending)
+        if held is not None:
+            run, records_of_run = held
+            _send(client, run, records_of_run, writer, commit, payload_text, report, False)
+            state.update(state_of(records_of_run))
+            on_merged(state)
+            clear_pending(pending)
     chosen = increment(records, state, actions=actions)
     report.left_out = chosen.left_out
     for records_of_run in runs_of(chosen.records):
-        for record in records_of_run:
-            if record.kind == "payload" and "r2_key" in record.body:
-                text = payload_text(record.key)
-                if text is None:
-                    raise PushFailed(f"The payload {record.key} is not at hand to put.")
-                assert payload_of(json.loads(text)).sha256 == record.key
-                answer = client.put(
-                    f"/payloads/{record.key}",
-                    content=text.encode(),
-                    headers={"Content-Type": "application/octet-stream"},
-                )
-                _ok(answer, f"payload {record.key}")
-                report.payloads_put += 1
         chunks = chunks_of(records_of_run)
-        counts = Counter(record.kind for record in records_of_run)
         # Named by what it holds: a run sent again after a lost answer is the same run,
         # which the service registers and merges once.
         run = f"{writer}-{run_checksum(chunks)[:40]}"
-        registered = client.post(
-            "/runs",
-            json={
-                "id": run,
-                "writer": writer,
-                "commit": commit,
-                "steps": {},
-                "counts": dict(counts),
-                "checksum": run_checksum(chunks),
-            },
-        )
-        _ok(registered, f"run {run}")
-        status = _json(registered).get("status")
-        if status == "merged" and not report_only:
-            # Merged before, and the answer was lost: the service holds it; take its
-            # report and go on, sending nothing again.
-            known = _json(client.get(f"/runs/{run}"))
-            for kind, numbers in (known.get("report") or {}).items():
-                if isinstance(numbers, dict):
-                    report.added[kind] += int(numbers.get("added", 0))
-            report.handed.update(counts)
-            report.runs += 1
-            state.update(state_of(records_of_run))
-            on_merged(state)
-            continue
-        if status not in (None, "registered"):
-            raise PushFailed(
-                f"Run {run} is {status} at the service: {json.dumps(_json(registered))[:300]}"
-            )
-        for chunk in chunks:
-            _ok(
-                client.post(
-                    f"/runs/{run}/records",
-                    content=chunk.data,
-                    headers={"Content-Type": "application/json", "X-Content-SHA256": chunk.sha256},
-                ),
-                f"a chunk of run {run}",
-            )
-        answer = client.post(f"/runs/{run}/{'preview' if report_only else 'merge'}")
-        result = _json(answer)
+        if pending is not None and not report_only:
+            write_pending(pending, run, records_of_run)
+        _send(client, run, records_of_run, writer, commit, payload_text, report, report_only)
         if report_only:
-            _ok(answer, f"the report of run {run}")
-            for kind, numbers in (result.get("report") or {}).items():
-                if isinstance(numbers, dict):
-                    report.added[kind] += int(numbers.get("added", 0))
-            report.handed.update(counts)
-            report.runs += 1
             continue
-        if result.get("status") != "merged":
-            if result.get("status") in ("undone", "not_merged"):
-                client.delete(f"/runs/{run}")
-            raise PushFailed(f"Run {run} was not merged: {json.dumps(result)[:500]}")
-        for kind, numbers in (result.get("report") or {}).items():
-            if isinstance(numbers, dict):
-                report.added[kind] += int(numbers.get("added", 0))
-        report.handed.update(counts)
-        report.runs += 1
         state.update(state_of(records_of_run))
         on_merged(state)
+        if pending is not None:
+            clear_pending(pending)
     return report
+
+
+def _send(
+    client: httpx.Client,
+    run: str,
+    records_of_run: list[Record],
+    writer: str,
+    commit: str,
+    payload_text: Callable[[str], str | None],
+    report: PushReport,
+    report_only: bool,
+) -> None:
+    """Put a run's large payloads, register it, stage it and merge it, or find it merged
+    already; raise unless it ends merged (or reported, with `report_only`)."""
+    for record in records_of_run:
+        if record.kind == "payload" and "r2_key" in record.body:
+            text = payload_text(record.key)
+            if text is None:
+                raise PushFailed(f"The payload {record.key} is not at hand to put.")
+            assert payload_of(json.loads(text)).sha256 == record.key
+            answer = client.put(
+                f"/payloads/{record.key}",
+                content=text.encode(),
+                headers={"Content-Type": "application/octet-stream"},
+            )
+            _ok(answer, f"payload {record.key}")
+            report.payloads_put += 1
+    chunks = chunks_of(records_of_run)
+    counts = Counter(record.kind for record in records_of_run)
+    registered = client.post(
+        "/runs",
+        json={
+            "id": run,
+            "writer": writer,
+            "commit": commit,
+            "steps": {},
+            "counts": dict(counts),
+            "checksum": run_checksum(chunks),
+        },
+    )
+    _ok(registered, f"run {run}")
+    status = _json(registered).get("status")
+    if status == "merged" and not report_only:
+        # Merged before, and the answer was lost: take its report, send nothing again.
+        _count(report, _json(client.get(f"/runs/{run}")), counts)
+        return
+    if status == "refused":
+        raise RunRefused(
+            f"Run {run} was refused by the service: {json.dumps(_json(registered))[:300]}."
+            " Nothing more is pushed until it is settled: read why with GET /runs/<id>,"
+            " fix what it names (an older step version: update this checkout), then delete"
+            f" {PENDING_HINT} and push again."
+        )
+    if status not in (None, "registered"):
+        raise PushFailed(f"Run {run} is {status} at the service.")
+    for chunk in chunks:
+        _ok(
+            client.post(
+                f"/runs/{run}/records",
+                content=chunk.data,
+                headers={"Content-Type": "application/json", "X-Content-SHA256": chunk.sha256},
+            ),
+            f"a chunk of run {run}",
+        )
+    answer = client.post(f"/runs/{run}/{'preview' if report_only else 'merge'}")
+    result = _json(answer)
+    if report_only:
+        _ok(answer, f"the report of run {run}")
+        _count(report, result, counts)
+        return
+    if result.get("status") == "refused":
+        raise RunRefused(
+            f"Run {run} was refused by the service: {json.dumps(result)[:300]}. Fix what"
+            f" it names (an older step version: update this checkout), delete {PENDING_HINT}"
+            " and push again."
+        )
+    if result.get("status") != "merged":
+        if result.get("status") in ("undone", "not_merged"):
+            client.delete(f"/runs/{run}")
+        raise PushFailed(f"Run {run} was not merged: {json.dumps(result)[:500]}")
+    _count(report, result, counts)
+
+
+PENDING_HINT = "the state file's .pending.json"
+
+
+def _count(report: PushReport, result: dict[str, Any], counts: Counter[str]) -> None:
+    for kind, numbers in (result.get("report") or {}).items():
+        if isinstance(numbers, dict):
+            report.added[kind] += int(numbers.get("added", 0))
+    report.handed.update(counts)
+    report.runs += 1
 
 
 def _json(answer: httpx.Response) -> dict[str, Any]:

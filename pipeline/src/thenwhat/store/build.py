@@ -438,20 +438,48 @@ def merge_day(
     delta: Path,
     store_sql: Path,
     now: datetime,
+    save_state: Callable[[dict[str, str]], None] = lambda _: None,
 ) -> tuple[Any, Counter[str]]:
     """The daily job's merge into the bulk file: the records new or changed since `state`,
-    as one run, written as the day's delta; `state` is brought up to date in place.
+    as one run, written as the day's delta; `state` is brought up to date and saved.
 
-    The run is named by the state before and the records chosen: run again after a crash
-    before the state was written, it is the same run, which the file already holds; a day
-    whose records are those of an earlier day (a record going A, then B, then A again) is
-    a run of its own, since the state before it differs."""
-    from thenwhat.store.push import increment, state_of
+    The run is named by the state before and the records chosen, and written to
+    `<file>.pending.json` with its records before it is merged. A merge that finds a run
+    pending settles it first: merged in the file already, its records are taken as merged;
+    not, the same run is merged; either way it goes into this day's delta too, and the
+    state is saved, before what is left is worked out. So a crash after a merge and before
+    the state was saved never merges those records again under another name, even when
+    records have arrived since."""
+    from thenwhat.store.push import (
+        clear_pending,
+        increment,
+        pending_path,
+        read_pending,
+        state_of,
+        write_pending,
+    )
 
+    pending = pending_path(file)
+    runs: list[tuple[str, list[Record]]] = []
+    added: Counter[str] = Counter()
+    held = read_pending(pending)
+    if held is not None:
+        name, settled = held
+        more, _ = merge_into(file, [(name, settled)], store_sql=store_sql, now=now)
+        added.update(more)
+        runs.append((name, settled))
+        state.update(state_of(settled))
+        save_state(state)
+        clear_pending(pending)
     chosen = increment(records, state, actions=True)
     content = sorted(f"{k}={v}" for k, v in state_of(chosen.records).items())
-    runs = [(run_name("bulk", state_digest(state), *content), chosen.records)]
-    added, _ = merge_into(file, runs, store_sql=store_sql, now=now)
+    name = run_name("bulk", state_digest(state), *content)
+    write_pending(pending, name, chosen.records)
+    more, _ = merge_into(file, [(name, chosen.records)], store_sql=store_sql, now=now)
+    added.update(more)
+    runs.append((name, chosen.records))
     write_delta(delta, runs, base=base_of(file, runs))
     state.update(state_of(chosen.records))
+    save_state(state)
+    clear_pending(pending)
     return chosen, added

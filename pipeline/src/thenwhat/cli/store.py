@@ -36,6 +36,7 @@ from thenwhat.store.people import FIELDS, PROOF_SQL, prove_file, prove_file_obje
 from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
+    pending_path,
     push,
     read_state,
     write_state,
@@ -408,6 +409,7 @@ def push_command(
                 actions=actions,
                 report_only=report_only,
                 on_merged=lambda now: write_state(state, now),
+                pending=pending_path(state),
             )
         except PushFailed as fault:
             err.print(str(fault), markup=False)
@@ -466,7 +468,13 @@ def merge_bulk_command(
         records, _ = bulk_records(stream(session, Gathered(records=[]), keep_payload=keep_payload))
     try:
         chosen, added = merge_day(
-            file, records, held, delta=delta, store_sql=store_sql, now=datetime.now(UTC)
+            file,
+            records,
+            held,
+            delta=delta,
+            store_sql=store_sql,
+            now=datetime.now(UTC),
+            save_state=lambda now: write_state(state, now),
         )
     except BuildFailed as fault:
         err.print(str(fault), markup=False)

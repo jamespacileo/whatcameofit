@@ -509,3 +509,43 @@ def test_a_record_going_a_b_a_is_merged_each_day_and_replays(session: Session, t
     assert [c.sha256 for c in checksums(restored, BULK)] == [
         c.sha256 for c in checksums(bulk, BULK)
     ]
+
+
+def test_a_crash_after_a_merge_then_new_records_merge_each_once(session: Session, tmp_path: Path):
+    from thenwhat.store.build import merge_day, merge_into
+    from thenwhat.store.gather import Gathered, stream
+    from thenwhat.store.push import pending_path, write_pending
+    from thenwhat.store.tiers import bulk_records
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    records, _ = bulk_records(stream(session, Gathered(records=[])))
+    (day,) = [r for r in records if r.kind == "measure_daily"][:1]
+    monday = Record("measure_daily", "2026-11-18", {**day.body, "day": "2026-11-18"})
+    tuesday = Record("measure_daily", "2026-11-19", {**day.body, "day": "2026-11-19"})
+    state = dict(report.state)
+    when = datetime(2026, 11, 19, tzinfo=UTC)
+    # Monday: written as pending and merged, then the job stops before the state is saved.
+    write_pending(pending_path(bulk), "bulk-monday", [monday])
+    merge_into(bulk, [("bulk-monday", [monday])], store_sql=STORE, now=when)
+    saved: list[dict] = []
+    merge_day(
+        bulk,
+        [monday, tuesday],
+        state,
+        delta=tmp_path / "d.jsonl.gz",
+        store_sql=STORE,
+        now=when,
+        save_state=lambda now: saved.append(dict(now)),
+    )
+    db = sqlite3.connect(bulk)
+    # A merge adds a run's totals to the day's: merged twice, Monday's would be doubled.
+    totals = dict(db.execute("SELECT day, sum(records) FROM measure_daily GROUP BY day").fetchall())
+    assert totals["2026-11-18"] == monday.body["records"] == totals["2026-11-19"]
+    runs = {r for (r,) in db.execute("SELECT id FROM run WHERE id LIKE 'bulk-%'")}
+    assert len(runs) == 2 and not pending_path(bulk).exists()
+    assert saved and saved[-1]["measure_daily\t2026-11-18"]

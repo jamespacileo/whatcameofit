@@ -252,3 +252,95 @@ def test_a_push_whose_merge_answer_was_lost_finishes_without_sending_again():
     assert service.staged_after_merge == 0
     assert report.runs == 1 and report.added["claim"] == 1
     assert state == state_of([CLAIM]) and saved == [state_of([CLAIM])]
+
+
+def test_a_lost_answer_then_new_records_send_each_record_once(tmp_path):
+    """Monday's merge answer is lost; Tuesday's push carries Monday's records and its own.
+    Monday's run is settled by its id first, so each decision reaches the store once."""
+    from thenwhat.store.push import pending_path
+
+    class Store(Service):
+        def __init__(self) -> None:
+            super().__init__()
+            self.runs: dict[str, list[dict]] = {}
+            self.merged: list[str] = []
+            self.lose_next = True
+
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            path = request.url.path
+            if path == "/runs":
+                run = json.loads(request.content)["id"]
+                status = "merged" if run in self.merged else "registered"
+                self.runs.setdefault(run, [])
+                return httpx.Response(200, json={"id": run, "status": status})
+            run = path.split("/")[2] if path.startswith("/runs/") else ""
+            if path.endswith("/records"):
+                if run in self.merged:
+                    return httpx.Response(409, json={"error": "run_closed"})
+                self.runs[run] += json.loads(request.content)
+                return httpx.Response(200, json={})
+            if path.endswith("/merge"):
+                self.merged.append(run)
+                if self.lose_next:
+                    self.lose_next = False
+                    return httpx.Response(504, json={})
+                return httpx.Response(200, json={"status": "merged", "report": {}})
+            if request.method == "GET":
+                return httpx.Response(200, json={"status": "merged", "report": {}})
+            return httpx.Response(200, json={})
+
+    monday = Record("decision", "1", {"seq": 1, "step": "entity_match"})
+    tuesday = Record("decision", "2", {"seq": 2, "step": "entity_match"})
+    store, state = Store(), {}
+    pending = pending_path(tmp_path / "state.json")
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(store)) as c:
+        with pytest.raises(PushFailed):
+            push(
+                c,
+                [monday],
+                state,
+                writer="daily",
+                commit="abc1234",
+                payload_text={}.get,
+                pending=pending,
+            )
+        assert pending.is_file() and state == {}
+        push(
+            c,
+            [monday, tuesday],
+            state,
+            writer="daily",
+            commit="abc1234",
+            payload_text={}.get,
+            pending=pending,
+        )
+    staged = [record["key"] for run in store.merged for record in store.runs[run]]
+    assert sorted(staged) == ["1", "2"] and len(store.merged) == 2
+    assert state == state_of([monday, tuesday]) and not pending.exists()
+
+
+def test_a_refused_run_stops_the_push_and_says_what_to_do(tmp_path):
+    from thenwhat.store.push import RunRefused, pending_path
+
+    class Refuses(Service):
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/runs":
+                return httpx.Response(200, json={"status": "refused", "refusal": "step_version"})
+            return super().__call__(request)
+
+    pending = pending_path(tmp_path / "state.json")
+    transport = httpx.MockTransport(Refuses())
+    with (
+        httpx.Client(base_url="http://s.test", transport=transport) as c,
+        pytest.raises(RunRefused, match="pending.json"),
+    ):
+        push(
+            c,
+            [CLAIM],
+            {},
+            writer="daily",
+            commit="abc1234",
+            payload_text={}.get,
+            pending=pending,
+        )
+    assert pending.is_file()
