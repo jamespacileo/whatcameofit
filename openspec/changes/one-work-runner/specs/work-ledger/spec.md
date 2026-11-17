@@ -24,7 +24,7 @@ The ledger SHALL hold at most one entry per record, step and step version. An en
 #### Scenario: A manually attached historical lead is upgraded
 
 - **WHEN** a lead was manually attached to a claim after an earlier unresolved read and migration 0037 sees added_to_claim beside a nothing_found work entry
-- **THEN** the upgrade succeeds and keeps the successful attachment with a completed read. Genuinely unmapped legacy states are still reported
+- **THEN** the upgrade keeps the claim, article and audit detail on the lead. The earlier read stays terminal with outcome `nothing_found` and reason `already_tracked`. Genuinely unmapped legacy states are still reported
 
 ### Requirement: Due work
 A record SHALL be due for a step when it is in the step's scope and has no ledger entry for that step at its current version with the outcome done, nothing found or needs a fix. A record whose input fingerprint differs from the one in its entry SHALL also be due. A record whose entry holds the outcome later SHALL be due once the time it records has passed, and not before.

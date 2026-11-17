@@ -48,6 +48,8 @@ BY_OUTCOME = (
     ("not_one_treatment", "not_one_treatment", "nothing_found"),
     ("business_news", "business_news", "nothing_found"),
     ("identity_unresolved", "identity_unresolved", "nothing_found"),
+    # Audit attached the article after the read had finished and kept its ledger entry.
+    ("added_to_claim", "already_tracked", "nothing_found"),
     ("needs_vertical", "needs_vertical", "needs_fix"),
 )
 
@@ -57,15 +59,6 @@ def _status() -> str:
 
 
 def upgrade() -> None:
-    # Audit could attach an unresolved lead after its unsuccessful read was recorded.
-    # Its successful attachment takes precedence over the earlier ledger outcome.
-    op.execute(
-        f"""
-        UPDATE work_entry e SET outcome = 'done', stale = false
-        FROM link_lead l
-        WHERE l.id = e.record_id AND {READ} AND l.read_outcome = 'added_to_claim'
-        """
-    )
     # A site's answer: gone is final, a refusal needs a fix, anything else is put off.
     op.execute(
         f"""
