@@ -104,6 +104,10 @@ WranglerConfig = Annotated[
 ]
 
 
+def _fetched_table(table: str, rows: int, seconds: float) -> None:
+    out.print(f"  {table}: {rows} rows in {seconds:.0f} s", markup=False)
+
+
 def _export_from_store(store: Path, payloads: Path | None, out_path: Path) -> None:
     settings = settings_or_exit()
     try:
@@ -168,6 +172,7 @@ def export_command(
                 payloads=payloads,
                 bucket=r2_bucket,
                 remote=not d1_local,
+                on_table=_fetched_table,
             )
         except FetchFailed as fault:
             err.print(str(fault), markup=False)
@@ -270,6 +275,7 @@ def export_compare_command(
                     payloads=payloads,
                     bucket=r2_bucket,
                     remote=not d1_local,
+                    on_table=_fetched_table,
                 )
                 out.print(
                     f"Fetched {sum(fetched.rows.values())} rows of {d1} in {fetched.queries}"

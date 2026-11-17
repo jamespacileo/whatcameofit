@@ -6,6 +6,7 @@ test database through `store/merge.sql`, with a folder standing in for the objec
 
 import json
 import sqlite3
+import subprocess
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
@@ -34,6 +35,7 @@ from test_export import (
 from thenwhat.claims.corrections import merge_claims, rename_intervention
 from thenwhat.claims.entry import add_article, archive_claim, clear_audit
 from thenwhat.cli import app
+from thenwhat.db.models import OutletIcon
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
@@ -623,9 +625,25 @@ def test_compare_command_reads_the_stores_export_from_the_database_itself(
     add_event(session)
     twin = new_claim(session, "second-claim")
     archive_claim(session, twin.slug, reason="entered twice", now=NOW)
+    # One icon held and one asked for and not held: an empty BLOB must stay empty.
+    session.add_all(
+        [
+            OutletIcon(
+                domain="news.example.org",
+                icon_url="https://news.example.org/favicon.ico",
+                media_type="image/x-icon",
+                content=b"\x00\x01icon",
+                fetched_at=NOW,
+            ),
+            OutletIcon(domain="other.example.org", fetched_at=NOW),
+        ]
+    )
     held = tmp_path / "held"
     store_of(session, held, NOW)[0].close()
     asked: list[list[str]] = []
+    # Pages of at most two rows, so every table with more is read in several.
+    monkeypatch.setattr("thenwhat.export.store_fetch.PAGE_ROWS", 1)
+    monkeypatch.setattr("thenwhat.export.store_fetch.MOST_ROWS", 2)
     monkeypatch.setattr(
         "thenwhat.cli.export.wrangler_in",
         lambda folder, config: answering_from(held / "store.db", asked),
@@ -639,6 +657,8 @@ def test_compare_command_reads_the_stores_export_from_the_database_itself(
     assert "The two exports are the same: 1 claims, byte for byte." in result.output
     assert all("--remote" in arguments and "SELECT" in arguments[-1] for arguments in asked)
     assert not any(word in arguments[-1] for arguments in asked for word in ("INSERT", "UPDATE"))
+    assert "  claim: 2 rows in " in result.output and "  outlet_icon: 2 rows in " in result.output
+    assert not any(" OFFSET " in arguments[-1] for arguments in asked)
     # Only the tables an export reads are asked for: none of the bulk tier.
     read = {arguments[-1].split(" FROM ")[1].split()[0] for arguments in asked}
     assert read == set(TABLES_READ)
@@ -655,14 +675,27 @@ def test_compare_command_refuses_a_store_it_cannot_read(
     """Scenario: Comparing against the store itself"""
     new_claim(session)
     session.flush()
-    monkeypatch.setattr(
-        "thenwhat.cli.export.wrangler_in", lambda folder, config: lambda arguments: "not json"
-    )
+    ran: list[list[str]] = []
+
+    def failing(command, **_):
+        ran.append(command)
+        # As wrangler prints a failure with --json: the reason is inside, the last line is "}".
+        printed = json.dumps(
+            {"error": {"text": "D1_ERROR: response too large", "notes": [{"text": "code 7500"}]}},
+            indent=2,
+        )
+        return subprocess.CompletedProcess(command, 1, stdout=printed, stderr="")
+
+    monkeypatch.setattr("thenwhat.export.store_fetch.subprocess.run", failing)
 
     result = invoke("export-compare", "--d1", "thenwhat-store-preview")
 
     assert result.exit_code == 1
-    assert "did not answer" in result.output
+    said = " ".join(result.output.split())
+    assert "Reading claim after 0 rows, one row a page" in said
+    assert "D1_ERROR: response too large code 7500" in said
+    # The page was halved down to one row before giving up.
+    assert ran[-1][-1].endswith("LIMIT 1")
 
 
 def test_export_command_reads_the_d1_store_and_fetches_the_objects_it_lacks(

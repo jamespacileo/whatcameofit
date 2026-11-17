@@ -4,8 +4,8 @@ into a SQLite file of the store's schema. Reading only. Behavior: openspec truth
 
 D1 cannot export a database that has virtual tables, and the store has its search
 tables (Cloudflare's "Import and export data", known limitations, read 2026-11-17). So
-the rows are read with `wrangler d1 execute --remote --json`, one page of one table at a
-time, in the order of the table's key. Only the tables an export reads are fetched.
+the rows are read with `wrangler d1 execute --remote --json`, one bounded page of one table at
+a time, each page starting after the last row's key. Only the tables an export reads are fetched.
 
 A payload kept as an object is not in the database. One the local folder lacks is
 fetched from the bucket by its key; every payload's bytes are checked against the
@@ -19,18 +19,31 @@ file and never run it.
 import json
 import sqlite3
 import subprocess
+import time
 from collections.abc import Callable, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from thenwhat.decide.steps import ENTITY_MATCH, EVIDENCE_STAGE, PAPER_MATCH
 from thenwhat.export.store_records import TABLES_READ
 
-# Rows asked for at once, by table: a page's JSON has to stay well inside what one
-# answer may carry, and a payload's row can hold 16 KB.
-PAGE_ROWS = 2000
-PAGE_ROWS_OF = {"payload": 100, "source_record": 500, "trial_read": 500, "decision_log": 1000}
+# Rows asked for in a table's first page. After each answer the page is sized again so
+# that the next is about `PAGE_BYTES`; a page that fails is asked again at half the rows.
+PAGE_ROWS = 200
+# The size of answer a page aims for: far inside what one D1 answer may carry, whatever
+# a table's rows weigh (a payload's row can hold 16 KB, a match's a few hundred bytes).
+PAGE_BYTES = 1_000_000
+MOST_ROWS = 5000
+
+# The rows of a table an export reads, where it does not read them all: a store that
+# also holds the bulk tier has payloads, records and decisions no export asks for.
+ROWS_READ = {
+    "payload": "sha256 IN (SELECT payload_sha256 FROM evidence_event)",
+    "source_record": "kind IN ('term', 'organisation', 'paper')",
+    "decision_log": f"step IN ('{ENTITY_MATCH}', '{PAPER_MATCH}', '{EVIDENCE_STAGE}')",
+}
 
 # Payload objects fetched at the same time.
 OBJECTS_AT_ONCE = 8
@@ -47,6 +60,8 @@ class FetchFailed(Exception):
 class FetchReport:
     # Rows fetched, by table.
     rows: dict[str, int] = field(default_factory=dict)
+    # Seconds a table took, by table.
+    seconds: dict[str, float] = field(default_factory=dict)
     queries: int = 0
     objects_fetched: int = 0
 
@@ -64,12 +79,28 @@ def wrangler_in(folder: Path, config: Path | None = None) -> Wrangler:
         except OSError as error:
             raise FetchFailed(f"Could not run wrangler in {folder}: {error}") from error
         if done.returncode != 0:
-            said = (done.stderr or done.stdout).strip().splitlines()
-            last = said[-1] if said else "no output"
-            raise FetchFailed(f"wrangler {arguments[0]} {arguments[1]} failed: {last}")
+            raise FetchFailed(f"wrangler {arguments[0]} {arguments[1]} failed: {_said(done)}")
         return done.stdout
 
     return run
+
+
+def _said(done: subprocess.CompletedProcess[str]) -> str:
+    """Why wrangler failed, in its own words: with `--json` it prints the error as JSON,
+    whose last line alone says nothing."""
+    try:
+        error = json.loads(done.stdout)["error"]
+        notes = [note["text"] for note in error.get("notes", []) if note.get("text")]
+        return " ".join([str(error["text"]), *notes])[:600]
+    except (ValueError, LookupError, TypeError, AttributeError):
+        text = " ".join((done.stderr or done.stdout).split())
+        return text[-600:] if text else f"no output (exit {done.returncode})"
+
+
+def _literal(value: Any) -> str:
+    if isinstance(value, int | float):
+        return str(value)
+    return "'" + str(value).replace("'", "''") + "'"
 
 
 def _results(printed: str) -> list[dict[str, Any]]:
@@ -93,11 +124,13 @@ def fetch_store(
     payloads: Path | None = None,
     bucket: str | None = None,
     remote: bool = True,
+    on_table: Callable[[str, int, float], None] = lambda *_: None,
 ) -> FetchReport:
     """Make `path` a store file holding the rows of `database` an export reads. `schema`
     is the store's `schema.sql`. With `bucket`, each payload object the folder `payloads`
     lacks is fetched into it. Any file already at `path` is replaced. With `remote`
-    false, the database and bucket are the ones Wrangler keeps on this machine."""
+    false, the database and bucket are the ones Wrangler keeps on this machine. `on_table`
+    is told each table's rows and seconds as it is done."""
     where = "--remote" if remote else "--local"
     report = FetchReport()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -107,36 +140,52 @@ def fetch_store(
         db.executescript(schema.read_text())
         db.execute("PRAGMA foreign_keys = OFF")  # tables arrive whole, in no parent order
         for table in TABLES_READ:
-            # A generated column is never written; a BLOB travels as hex. Pages follow
+            # A generated column is never written; a BLOB travels as hex (and an empty one
+            # as NULL: `hex(NULL)` is the empty text). Pages follow
             # the primary key, which every table read has, or the row id.
             described = [row for row in db.execute(f"PRAGMA table_xinfo({table})") if row[6] == 0]
             columns = [(row[1], str(row[2]).upper() == "BLOB") for row in described]
             key = [row[1] for row in sorted(described, key=lambda row: row[5]) if row[5] > 0]
             order = ", ".join(f'"{name}"' for name in key) or "rowid"
             asked = ", ".join(
-                f'hex("{name}") AS "{name}"' if blob else f'"{name}"' for name, blob in columns
+                f'CASE WHEN "{name}" IS NULL THEN NULL ELSE hex("{name}") END AS "{name}"'
+                if blob
+                else f'"{name}"'
+                for name, blob in columns
             )
             put = (
                 f"INSERT INTO {table} ({', '.join(f'"{name}"' for name, _ in columns)})"
                 f" VALUES ({', '.join('?' for _ in columns)})"
             )
-            page = PAGE_ROWS_OF.get(table, PAGE_ROWS)
-            fetched = 0
+            # Each page starts after the last row's key, so a table is read once
+            # through however long it is.
+            names = key or ["_rowid"]
+            marker = "rowid AS _rowid, " if not key else ""
+            only = ROWS_READ.get(table)
+            page, fetched, after, began = PAGE_ROWS, 0, None, time.monotonic()
             while True:
-                rows = _results(
-                    wrangler(
-                        [
-                            "d1",
-                            "execute",
-                            database,
-                            where,
-                            "--json",
-                            "--command",
-                            f"SELECT {asked} FROM {table} ORDER BY {order}"
-                            f" LIMIT {page} OFFSET {fetched}",
-                        ]
-                    )
+                conditions = [only] if only else []
+                if after is not None:
+                    left = ", ".join("rowid" if n == "_rowid" else f'"{n}"' for n in names)
+                    right = ", ".join(_literal(value) for value in after)
+                    conditions.append(f"({left}) > ({right})")
+                statement = (
+                    f"SELECT {marker}{asked} FROM {table}"
+                    + (f" WHERE {' AND '.join(conditions)}" if conditions else "")
+                    + f" ORDER BY {order} LIMIT {page}"
                 )
+                try:
+                    printed = wrangler(
+                        ["d1", "execute", database, where, "--json", "--command", statement]
+                    )
+                    rows = _results(printed)
+                except FetchFailed as fault:
+                    if page > 1:
+                        page = max(1, page // 2)
+                        continue
+                    raise FetchFailed(
+                        f"Reading {table} after {fetched} rows, one row a page: {fault}"
+                    ) from fault
                 report.queries += 1
                 db.execute("BEGIN")
                 db.executemany(
@@ -155,6 +204,10 @@ def fetch_store(
                 fetched += len(rows)
                 if len(rows) < page:
                     break
+                after = tuple(rows[-1][name] for name in names)
+                page = max(1, min(MOST_ROWS, int(page * PAGE_BYTES / max(len(printed), 1))))
+            report.seconds[table] = time.monotonic() - began
+            on_table(table, fetched, report.seconds[table])
             report.rows[table] = fetched
         if bucket is not None and payloads is not None:
             lacking = [
