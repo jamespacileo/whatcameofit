@@ -43,13 +43,13 @@
 - [ ] 5.1 Split reading into the existing extraction and a stage that writes one line a read; verify tests for a read that drafts a claim, one that joins a tracked claim, a business-news outcome, and an article that cannot be read on three attempts
 - [ ] 5.2 Leave out leads the reference file gives a read outcome for, read held topic leads, never read a rejected lead; verify a test of each
 - [ ] 5.3 Verify with a test that no file of a run holds article text after a batch of reads, including after a failure part way through one
-- [ ] 5.4 Write the prepare stage that turns reads into results in the merge's natural-key form, with drafted claims marked awaiting audit; verify a test round-trips each kind against the form `cloudflare-source-of-truth` defines
+- [ ] 5.4 Write the prepare stage that turns reads into results in the merge's natural-key form (`store/README.md` lists each kind's keys), with drafted claims pending; it searches no registry and approves nothing, which the store's side does; verify a test round-trips each kind against the form `cloudflare-source-of-truth` defines
 - [ ] 5.5 Read one batch of 200 and compare with the session-based read on the same leads; show the operator the funnel and the claims drafted before any further reading
 
 ## 6. Push
 
 - [ ] 6.1 Add `INGEST_URL`, `INGEST_TOKEN` and `WORK_DEVICE_NAME` to the configuration and `.env.example`; verify push refuses and names the setting while one is empty
-- [ ] 6.2 Write `backfill push`: register, hand over in parts with counts and checksums, merge, print the report, mark the run pushed; verify against a fake ingest address a first push, a second push answered as already merged, and a part that fails its checksum
+- [ ] 6.2 Write `backfill push`: put payloads over 16 KB, split into store runs of the set size with parents first, and for each register, hand over in parts with counts and checksums, merge and print the report; mark the folder pushed after the last; verify against a fake ingest address a first push, a second push answered as already merged, a part that fails its checksum, and a push stopped between two store runs and finished by pushing again
 - [ ] 6.3 Add `--report-only`; verify the fake store holds nothing new after it
 - [ ] 6.4 Verify with a test that nothing on an unlisted outlet and no tally row is handed over
 - [ ] 6.5 When `cloudflare-source-of-truth` has its merge in preview, push the batch of 5.5 with `--report-only`, then for real; record the report here
