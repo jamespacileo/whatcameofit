@@ -82,6 +82,8 @@ import {
   measureGlosses,
   phaseGroups,
   withResults,
+  PLAIN_STATE,
+  phaseText,
 } from "../lib/trial-facts";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
 import { claimPageData } from "../lib/structured";
@@ -167,6 +169,21 @@ const trials = orderTrials(claim.trials ?? []);
 const trialIds = new Set(trials.map((trial) => trial.trial_id));
 // The trials by furthest phase, furthest first; each phase shows its first ten.
 const trialGroups = phaseGroups(trials);
+// The trials spread by phase: a mark for each under its phase, drawn over the table
+// once there are enough to make a pattern. The phases in order, no phase last.
+const NO_PHASE = "No phase given";
+const trialSpread = (() => {
+  const columns = new Map<string, typeof trials>();
+  for (const trial of trials) {
+    const name = phaseText(trial.phases.filter((code) => code !== "not_applicable")) ?? NO_PHASE;
+    columns.set(name, [...(columns.get(name) ?? []), trial]);
+  }
+  return [...columns].sort(([a], [b]) =>
+    a === NO_PHASE ? 1 : b === NO_PHASE ? -1 : a.localeCompare(b, "en", { numeric: true }),
+  );
+})();
+// The largest size a trial states, against which each trial's size is drawn.
+const largestSize = Math.max(0, ...trials.map((trial) => trial.facts?.participants?.count ?? 0));
 // Each abbreviation in a main measure is said plainly once, on the first row that uses it.
 const glossSeen = new Set<string>();
 const trialGlosses = new Map<string, string[]>();
@@ -1036,6 +1053,43 @@ const sections = [
             <p slot="about">{TRIALS_NOTE}</p>
             Trials on record
           </FoldHead>
+          {/* How the trials are spread: a mark a trial, under its phase, in the shape of
+              its state. For the eye; the table under it says the same in words, and a
+              mark leads to its trial. */}
+          {
+            trials.length >= 4 && (
+              <>
+                <div class="trial-matrix" aria-hidden="true">
+                  {trialSpread.map(([name, list]) => (
+                    <div class="trial-matrix-col">
+                      <p>
+                        <b>{name}</b> <span class="entry-note">{list.length}</span>
+                      </p>
+                      <div class="trial-dots">
+                        {list.map((trial) => (
+                          <a
+                            href={`#trial-${trial.trial_id}`}
+                            tabindex="-1"
+                            title={`${trial.trial_id}: ${PLAIN_STATE[trial.state] ?? "State not given"}${trial.facts?.results ? ", results posted" : ""}`}
+                          >
+                            <span class:list={["state-mark", { posted: Boolean(trial.facts?.results) }]} data-state={trial.state} />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p class="said-key trial-key" aria-hidden="true">
+                  <span><span class="state-mark" data-state="not_started" />Not started</span>
+                  <span><span class="state-mark" data-state="under_way" />Under way</span>
+                  <span><span class="state-mark" data-state="completed" />Finished</span>
+                  <span><span class="state-mark" data-state="terminated" />Halted</span>
+                  <span><span class="state-mark" data-state="unknown" />Not given</span>
+                  <span><span class="state-mark posted" data-state="completed" />Ringed: results posted</span>
+                </p>
+              </>
+            )
+          }
           {/* The columns, named once over every group and kept in sight while the groups
               scroll. For the eye only: each group's table keeps its own column names for a
               screen reader. */}
@@ -1063,6 +1117,7 @@ const sections = [
                     showPhase={group.mixed}
                     glosses={trialGlosses.get(trial.trial_id) ?? []}
                     treatment={claim.intervention.name}
+                    largest={largestSize}
                   />
                 ))}
               </div>
