@@ -1891,19 +1891,17 @@ def test_the_funnel_counts_each_outcome_and_the_cost_of_reading(session: Session
 # --- what the page names ---------------------------------------------------------------
 
 
-def test_a_trial_the_page_names_becomes_a_scored_candidate_and_is_not_approved_by_it(
+def test_what_the_page_names_is_kept_with_its_article_and_asked_for_by_no_read(
     session: Session, fake_time
 ):
-    """Scenario: An article that links its trial"""
-    from types import SimpleNamespace
-
-    from test_related_research import Registry
-    from thenwhat.db.models import Entity, EntityMatch
+    """Scenarios: An article that links its trial (openspec lead-reading); Two reads at
+    once (change one-work-runner): a read asks no registry, so a second read never
+    waits on its lookups while the first holds the turn that settles the claim."""
+    from claim_support import Registry, Sources, prepare, trial
+    from thenwhat.db.models import Entity, EntityMatch, SourceArticle
     from thenwhat.resolve.reasons import NAMED_IN_ARTICLE
 
     reader = Reader(session, fake_time)
-    registry = Registry()
-    reader.client.make_research = lambda at: SimpleNamespace(registry=registry, papers=None)
     linked = page().replace(
         "</main>",
         '<a href="https://clinicaltrials.gov/study/NCT04184622">the trial</a>'
@@ -1914,16 +1912,26 @@ def test_a_trial_the_page_names_becomes_a_scored_candidate_and_is_not_approved_b
     reader.read()
 
     assert (lead.read_outcome, lead.read_detail) == (ReadOutcome.NEW_CLAIM, None)
+    article = session.get(SourceArticle, lead.source_article_id)
+    assert article is not None
+    assert (article.named_registry_numbers, article.named_dois) == (
+        ["NCT04184622"],
+        ["10.1000/named"],
+    )
+
+    # The step of its own looks the trial up, scores it, and approves nothing by it.
+    registry = Registry([trial("NCT04184622")])
+    prepare(session, Sources(registry), names=("claim_named_records",), match_accept_above=0.0)
+
     [match] = session.scalars(
         select(EntityMatch)
         .join(Entity, Entity.id == EntityMatch.entity_id)
         .where(Entity.claim_id == lead.claim_id)
     )
     assert (match.external_id, match.reasons) == ("NCT04184622", [NAMED_IN_ARTICLE])
-    # Scored like any candidate; with no accept rule set it stays pending.
-    assert match.score == pytest.approx(0.9) and match.review_state is ReviewState.PENDING
+    assert match.review_state is ReviewState.PENDING
     # No literature source is configured, so the paper is left unrecorded.
-    assert registry.fetched == ["NCT04184622"]
+    assert registry.asked == ["NCT04184622"]
 
 
 # --- measured ------------------------------------------------------------------------
