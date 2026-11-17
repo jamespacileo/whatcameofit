@@ -10,6 +10,7 @@ from thenwhat.cli import backfill
 from thenwhat.cli.backfill import open_session, refusals
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.measure import events
 from thenwhat.work.ledger import requeue
 from thenwhat.work.outcome import ReasonClass, UndeclaredReason, declared
 from thenwhat.work.steps import find_step
@@ -107,6 +108,8 @@ def requeue_command(
             # A step may keep something of its own about a record it finished, which
             # must go when the record is to be worked on again.
             made_due(session, record_ids)
+    if not dry_run:
+        events.made_due(step.name, reason or events.FAILED, len(record_ids))
     narrowed = "".join(f", {key}={value}" for key, value in values.items())
     noun = "record" if len(record_ids) == 1 else "records"
     one = len(record_ids) == 1

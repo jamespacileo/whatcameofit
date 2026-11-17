@@ -41,6 +41,12 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# The benchmark is left out of an ordinary run: it takes minutes and guards one figure.
+# Run it with `make benchmark`, or `pytest -m benchmark`.
+addopts = "-m 'not benchmark'"
+markers = [
+    "benchmark: times work over many records; runs for minutes. Run with -m benchmark.",
+]
 
 [dependency-groups]
 dev = [

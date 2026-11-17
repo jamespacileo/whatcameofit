@@ -76,7 +76,7 @@ from thenwhat.work.allowance import Allowances, AllowanceStatus
 from thenwhat.work.errors import BackfillError, SourceStop
 from thenwhat.work.ledger import count, waiting
 from thenwhat.work.outcome import UndeclaredReason, declared
-from thenwhat.work.runner import RunReport, run_step
+from thenwhat.work.runner import RunReport, measured_run, run_step
 from thenwhat.work.spend import (
     PricesNotSet,
     ceiling_check,
@@ -485,25 +485,29 @@ def run_command(
         before_call = ceiling_check(settings, now) if calls_a_model else None
 
         tried: set[int] = set()
+        # One run for all the workers: its measurements and events name it.
+        with measured_run(step.name, limit=limit, workers=workers) as run:
 
-        def work(client: Any) -> RunReport:
-            return run_step(
-                open_session,
-                step,
-                client,
-                now=now,
-                attempt_limit=settings.backfill_attempt_limit,
-                limit=share,
-                before_call=before_call,
-                tried=tried,
-                put_off_span=timedelta(days=settings.work_put_off_days),
-            )
+            def work(client: Any) -> RunReport:
+                return run_step(
+                    open_session,
+                    step,
+                    client,
+                    now=now,
+                    attempt_limit=settings.backfill_attempt_limit,
+                    limit=share,
+                    before_call=before_call,
+                    tried=tried,
+                    put_off_span=timedelta(days=settings.work_put_off_days),
+                    run=run,
+                )
 
-        if workers == 1:
-            report = work(clients[0])
-        else:
-            with ThreadPoolExecutor(max_workers=workers) as pool:
-                report = _merge(list(pool.map(work, clients)))
+            if workers == 1:
+                report = work(clients[0])
+            else:
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    report = _merge(list(pool.map(work, clients)))
+        report.not_written = run.not_written
     out.print(
         f"{step.name}: {report.done:,} done, {report.nothing_found:,} found nothing, "
         f"{report.failed:,} failed"
@@ -517,6 +521,17 @@ def run_command(
         out.print(f"  failed: {error}", markup=False)
     if report.stopped:
         out.print(f"Stopped: {report.stopped}", markup=False)
+    _say_not_written(report)
+
+
+def _say_not_written(report: RunReport) -> None:
+    if report.not_written:
+        out.print(
+            f"{report.not_written:,} measurements of this run could not be written to"
+            " MEASURE_DIR. The work is not affected; `thenwhat measure` counts them once"
+            " writing works again.",
+            markup=False,
+        )
 
 
 @backfill_app.command("load-trials")
@@ -1035,6 +1050,7 @@ def read_set_command(
     )
     if report.stopped:
         out.print(f"Stopped: {report.stopped}", markup=False)
+    _say_not_written(report)
 
 
 @backfill_app.command("links")

@@ -2,7 +2,8 @@
 
 `report_of` is pure: it takes totals and what claims took and gives the figures.
 `gather` reads them: kept totals for days already added, and the span files for days
-that are not, today among them.
+that are not, today among them. Measurements that could not be written are counted from
+the events that said so, in the files still kept for the range.
 """
 
 from dataclasses import dataclass, field
@@ -15,7 +16,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import Claim, MeasureClaim, MeasureDaily, MeasureRolledDay
-from thenwhat.measure.files import days_held, read_day
+from thenwhat.measure.files import NOT_WRITTEN, days_held, read_day, read_events
+from thenwhat.measure.spans import Event
 from thenwhat.measure.totals import Key, Total, stored_totals, totals_of
 
 
@@ -59,6 +61,16 @@ class ClaimLine:
 
 
 @dataclass(frozen=True, slots=True)
+class NotWritten:
+    """Measurements a writer could not write, from when to when."""
+
+    measurements: int
+    lines: int
+    since: datetime
+    until: datetime
+
+
+@dataclass(frozen=True, slots=True)
 class Report:
     first: date
     last: date
@@ -70,13 +82,24 @@ class Report:
     total_cost_usd: Decimal = Decimal(0)
     total_ran_seconds: float = 0.0
     total_waited_seconds: float = 0.0
+    not_written: list[NotWritten] = field(default_factory=list)
+
+    @property
+    def measurements_not_written(self) -> int:
+        return sum(gap.measurements for gap in self.not_written)
 
     @property
     def empty(self) -> bool:
-        return not self.steps
+        return not self.steps and not self.not_written
 
 
-def report_of(first: date, last: date, totals: dict[Key, Total], claims: list[ClaimTook]) -> Report:
+def report_of(
+    first: date,
+    last: date,
+    totals: dict[Key, Total],
+    claims: list[ClaimTook],
+    not_written: list[NotWritten] | None = None,
+) -> Report:
     by_step: dict[tuple[str, str], Total] = {}
     outcomes: dict[tuple[str, str], dict[str, int]] = {}
     waited: dict[str, float] = {}
@@ -131,6 +154,7 @@ def report_of(first: date, last: date, totals: dict[Key, Total], claims: list[Cl
         total_cost_usd=all_cost,
         total_ran_seconds=sum(t.ran_seconds for t in by_step.values()),
         total_waited_seconds=sum(t.waited_seconds for t in by_step.values()),
+        not_written=sorted(not_written or [], key=lambda gap: gap.since),
     )
 
 
@@ -161,13 +185,29 @@ def gather(session: Session, folder: Path | None, first: date, last: date) -> Re
     """The report for a range of days: kept totals, plus the span files of days in the
     range that have not been added to the totals yet."""
     totals = stored_totals(session, first, last)
+    not_written: list[NotWritten] = []
     if folder is not None:
         rolled = set(session.scalars(select(MeasureRolledDay.day)))
         for day in days_held(folder):
-            if first <= day <= last and day not in rolled:
+            if not first <= day <= last:
+                continue
+            if day not in rolled:
                 for key, total in totals_of(read_day(folder, day)).items():
                     totals.setdefault(key, Total()).merge(total)
-    return report_of(first, last, totals, claims_published(session, first, last))
+            not_written += [
+                not_written_of(event) for event in read_events(folder, day, [NOT_WRITTEN])
+            ]
+    return report_of(first, last, totals, claims_published(session, first, last), not_written)
+
+
+def not_written_of(event: Event) -> NotWritten:
+    values = event.values
+    return NotWritten(
+        measurements=int(values.get("not_written", 0)),
+        lines=int(values.get("lines", 0)),
+        since=datetime.fromisoformat(values["since"]),
+        until=datetime.fromisoformat(values["until"]),
+    )
 
 
 # How many days of measurements a step needs before its measured cost is used in a

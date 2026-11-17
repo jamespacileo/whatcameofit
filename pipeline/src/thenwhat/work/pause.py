@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.config import SourceAllowance
 from thenwhat.db.models import SourceAllowanceUse
+from thenwhat.measure import events
 from thenwhat.work.clock import when
 from thenwhat.work.errors import AllowanceUsedUp, SourcePaused
 
@@ -79,10 +80,15 @@ def keep(session: Session, name: str, until: datetime, now: datetime) -> datetim
     pause already kept that ends later stands. Returns when the pause ends."""
     use = locked(session, name, now)
     kept = use.paused_until
+    longer = kept is None or kept < until
     if kept is None or kept < until:
         use.paused_until = kept = until
         use.refusals += 1
     session.flush()
+    if longer:
+        # Recorded as it happens, for whoever watches the run (openspec
+        # processing-metrics, "What happens to a run is recorded as it happens").
+        events.source_paused(name, kept)
     return kept
 
 

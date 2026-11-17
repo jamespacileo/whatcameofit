@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check lint types db-up test-db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check lint types db-up test-db-up test benchmark scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -30,6 +30,11 @@ test: test-db-up site/node_modules
 	uv run --directory pipeline pytest -q
 
 # The daily job's script, against a stand-in for the pipeline: no database, no network.
+# What measuring costs a step that asks no source: at most a twentieth of its time
+# (openspec processing-metrics). Minutes long, so not part of `make check`.
+benchmark: test-db-up
+	uv run --directory pipeline pytest -m benchmark
+
 scripts-test:
 	sh -n scripts/daily-run.sh
 	sh -n scripts/worktree-setup.sh

@@ -1,7 +1,9 @@
 """Measurements: what one step records, how they are kept and added up.
 Behavior: openspec processing-metrics."""
 
+import itertools
 import json
+import threading
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -12,13 +14,14 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backfill_support import Client, DemoStep, add_trials, same_session
+from measure_support import Kept, write
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.db.models import MeasureClaim, MeasureDaily, MeasureRolledDay
 from thenwhat.llm.ledger import record_usage
 from thenwhat.measure import spans as measure
-from thenwhat.measure.files import LOOKUP, FileSink, days_held, read_day, remove_old
+from thenwhat.measure.files import LOOKUP, FileWriter, days_held, read_day, remove_old
 from thenwhat.measure.report import ClaimTook, measured_cost_of_a_record, report_of
-from thenwhat.measure.spans import Span, span_from
+from thenwhat.measure.spans import WRITER_WAIT, Span, span_from
 from thenwhat.measure.totals import roll, totals_of
 from thenwhat.work.runner import run_step
 
@@ -44,9 +47,9 @@ def ticks() -> Ticks:
 @pytest.fixture
 def recorded(ticks: Ticks):
     """Record spans into a list for the length of a test."""
-    kept: list[Span] = []
-    measure.use(measure.Recorder(sink=kept.append, writer="test", clock=ticks, now=lambda: AT))
-    yield kept
+    kept = Kept()
+    measure.use(measure.Recorder(out=kept, writer="test", clock=ticks, now=lambda: AT))
+    yield kept.spans
     measure.use(None)
 
 
@@ -176,9 +179,19 @@ def test_each_record_a_step_runs_is_measured_with_its_outcome(session: Session, 
 
 
 def test_spans_are_kept_by_day_and_read_back(tmp_path: Path):
-    sink = FileSink(tmp_path)
-    sink(span(cost_usd=Decimal("0.5"), waited={"reader": 1.5}, requests={"reader": 2}))
-    sink(span(writer=LOOKUP, started_at=AT + timedelta(days=1)))
+    write(
+        tmp_path,
+        span(
+            cost_usd=Decimal("0.5"),
+            waited={"reader": 1.5},
+            requests={"reader": 2},
+            run="a-run",
+            outcome="later",
+            outcome_class="later",
+            reason="site_busy",
+        ),
+        span(writer=LOOKUP, started_at=AT + timedelta(days=1)),
+    )
 
     assert days_held(tmp_path) == [DAY, DAY + timedelta(days=1)]
     [made] = read_day(tmp_path, DAY)
@@ -187,16 +200,47 @@ def test_spans_are_kept_by_day_and_read_back(tmp_path: Path):
         {"reader": 1.5},
         {"reader": 2},
     )
+    assert (made.run, made.outcome_class, made.reason) == ("a-run", "later", "site_busy")
+
+
+def test_a_burst_of_finished_records_is_written_whole(tmp_path: Path):
+    """Scenario: A burst of finished records. Records finish far faster than a writer
+    that holds only eight lines writes them, in two processes at once: the work waits
+    for them, the wait is measured, and every one is written, whole."""
+    steps = itertools.count()
+
+    def clock() -> float:
+        return float(next(steps))
+
+    writers = [
+        FileWriter(tmp_path, writer="mini", capacity=8, every=3600.0, clock=clock) for _ in range(2)
+    ]
+
+    def finish(writer: FileWriter, worker: int) -> None:
+        for number in range(500):
+            writer.finished(span(trace=f"example.org/{worker}/{number}"))
+
+    workers = [
+        threading.Thread(target=finish, args=(writers[worker % 2], worker)) for worker in range(4)
+    ]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join()
+    for writer in writers:
+        writer.close()
+
+    made = list(read_day(tmp_path, DAY))
+    assert len({made.trace for made in made}) == len(made) == 2000
+    assert any(WRITER_WAIT in made.waited for made in made)
 
 
 def test_single_measurements_are_removed_after_their_days(tmp_path: Path):
     """Scenario: Looking into yesterday, and a lookup's shorter time"""
-    sink = FileSink(tmp_path)
     today = DAY + timedelta(days=40)
     for age in (1, 8, 31):
         started = datetime.combine(today - timedelta(days=age), AT.time(), tzinfo=UTC)
-        sink(span(started_at=started))
-        sink(span(writer=LOOKUP, started_at=started))
+        write(tmp_path, span(started_at=started), span(writer=LOOKUP, started_at=started))
 
     removed = remove_old(tmp_path, today=today, keep_days=30, lookup_keep_days=7)
 
@@ -251,9 +295,9 @@ def claim_with_article(session: Session):
 def test_a_finished_day_is_added_once_and_today_is_left(session: Session, tmp_path: Path):
     """Scenarios: A million leads in a month, Asking about one published claim"""
     claim = claim_with_article(session)
-    sink = FileSink(tmp_path)
-    # A triage call for twenty leads, one of them the claim's article.
-    sink(
+    write(
+        tmp_path,
+        # A triage call for twenty leads, one of them the claim's article.
         span(
             step="link_triage",
             trace=None,
@@ -261,12 +305,12 @@ def test_a_finished_day_is_added_once_and_today_is_left(session: Session, tmp_pa
             traces=["news.example.org/2021/teeth", "other.example/b"],
             ran_seconds=4.0,
             cost_usd=Decimal("0.02"),
-        )
+        ),
+        span(trace="news.example.org/2021/teeth", ran_seconds=6.0, waited={"reader": 30.0}),
+        span(step="registry_search", trace=f"claim:{claim.slug}", cost_usd=Decimal("0.003")),
+        span(trace="unrelated.example/x"),
+        span(started_at=AT + timedelta(days=1)),
     )
-    sink(span(trace="news.example.org/2021/teeth", ran_seconds=6.0, waited={"reader": 30.0}))
-    sink(span(step="registry_search", trace=f"claim:{claim.slug}", cost_usd=Decimal("0.003")))
-    sink(span(trace="unrelated.example/x"))
-    sink(span(started_at=AT + timedelta(days=1)))
     today = DAY + timedelta(days=1)
 
     first = roll(session, tmp_path, today=today, now=AT)

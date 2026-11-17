@@ -10,11 +10,19 @@ from pathlib import Path
 
 import httpx
 import pytest
-from sqlalchemy import select
+from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
-from backfill_support import NOW, ModelStep, QuietStep, add_trials, same_session
+from backfill_support import (
+    NOW,
+    ModelStep,
+    QuietStep,
+    add_trials,
+    committed_sessions,
+    remove_committed,
+    same_session,
+)
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
 from thenwhat.backfill.registry_load import condition_of
@@ -32,6 +40,9 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import Decider, OutletKind, ScreenOutcome
+from thenwhat.measure import spans as measure
+from thenwhat.measure.events import RUN_ENDED, RUN_STARTED
+from thenwhat.measure.files import days_held, read_day, read_events
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import Paper
 from thenwhat.work.allowance import Allowances
@@ -147,6 +158,36 @@ def test_a_step_that_asks_no_source_is_planned_and_run_without_an_allowance(
     assert "hours" not in plan.output and "allowance" not in plan.output
     assert ran.exit_code == 0, ran.output
     assert "quiet: 5 done, 0 found nothing, 0 failed; 0 still due." in ran.output
+
+
+def test_a_run_of_several_workers_is_one_run(
+    run, engine: Engine, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """What happens to a run is recorded as it happens: a command's workers make one
+    run, which starts with its limit and its workers and ends with why and its counts,
+    and every record's measurement names it."""
+    step = QuietStep("quiet-workers", registry="workers-registry")
+    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings, **_: [step])
+    # Each worker in a transaction of its own, as in a real run.
+    monkeypatch.setattr("thenwhat.cli.session.open_session", committed_sessions(engine))
+    monkeypatch.setenv("MEASURE_DIR", str(tmp_path))
+    monkeypatch.setenv("MEASURE_KEEP_DAYS", "30")
+    monkeypatch.setenv("MEASURE_LOOKUP_KEEP_DAYS", "7")
+    with Session(engine) as session, session.begin():
+        add_trials(session, 4, registry="workers-registry")
+
+    try:
+        ran = run("run", "quiet-workers", "--workers", "2")
+    finally:
+        measure.use(None)
+        remove_committed(engine, registry="workers-registry", step=step.name, source=step.source)
+
+    assert ran.exit_code == 0, ran.output
+    [day] = days_held(tmp_path)
+    started, ended = read_events(tmp_path, day, [RUN_STARTED, RUN_ENDED])
+    assert (started.values["limit"], started.values["workers"]) == (None, 2)
+    assert (ended.values["why"], ended.values["counts"]["done"]) == ("nothing_due", 4)
+    assert {span.run for span in read_day(tmp_path, day)} == {started.values["run"]}
 
 
 def model_step(monkeypatch: pytest.MonkeyPatch, usd_per_mtok: str | None) -> ModelStep:
