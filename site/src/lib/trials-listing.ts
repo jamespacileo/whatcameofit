@@ -3,6 +3,7 @@
 // data/published-export.json has data/published-trials-listing.json. A build with no
 // listing beside its export has no listed trials, and no page opens for an uncited one.
 // Behaviour: openspec trial-pages, "A trial listing built into the site".
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -90,7 +91,11 @@ export interface ListingPart {
 
 // No single file a reader fetches holds the whole listing: it is cut, in registry-number
 // order, into parts of about a mebibyte. A registry number is found in one part.
-export const parts: ListingPart[] = splitListing(listing.trials, PART_BYTES) as ListingPart[];
+export const parts = (splitListing(listing.trials, PART_BYTES) as ListingPart[]).map((part) => {
+  // Hash exactly what the part serves, including its columns and registry snapshot.
+  const hash = createHash("sha256").update(JSON.stringify({ ...listing, trials: part.trials })).digest("hex");
+  return { ...part, name: `${part.name}-${hash}` };
+});
 
 /** What a reader's search fetches first: which part holds which registry numbers. */
 export const manifest = {

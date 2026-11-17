@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { stripTypeScriptTypes } from "node:module";
@@ -86,11 +87,15 @@ let listingRequests = 0;
 // How large a part of the listing is in a test, the parts asked for, and whether they answer.
 let PART_SIZE = PART_BYTES;
 let PARTS_UNREADABLE = false;
+let retainedParts = {};
 let partRequests = [];
 function listingFiles() {
   const cut = splitListing(LISTING.trials, PART_SIZE);
-  const file = (part) => `/trials-listing/${part.name}.json`;
   const { trials, ...head } = LISTING;
+  const file = (part) => {
+    const hash = createHash("sha256").update(JSON.stringify({ ...head, trials: part.trials })).digest("hex");
+    return `/trials-listing/${part.name}-${hash}.json`;
+  };
   return {
     manifest: { ...head, total: trials.length, parts: cut.map((part) => ({ file: file(part), first: part.first, last: part.last, trials: part.trials.length })) },
     parts: Object.fromEntries(cut.map((part) => [file(part), { ...head, trials: part.trials }])),
@@ -171,7 +176,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE, initia
       }
       if (url.startsWith("/trials-listing/")) {
         partRequests.push(url);
-        const part = LISTING && !PARTS_UNREADABLE ? listingFiles().parts[url] : null;
+        const part = LISTING && !PARTS_UNREADABLE ? (listingFiles().parts[url] ?? retainedParts[url]) : null;
         return Promise.resolve(part ? { ok: true, json: async () => part } : { ok: false, status: 404 });
       }
       return Promise.resolve({ json: async () => SEARCH_LOOKUP });
@@ -924,6 +929,7 @@ function large() {
   assert.ok(listingFiles().manifest.parts.length > PARTS_SEARCHED_AT_ONCE);
 }
 function small() {
+  retainedParts = {};
   LISTING = null;
   PART_SIZE = PART_BYTES;
   PARTS_UNREADABLE = false;
@@ -1021,3 +1027,43 @@ test("the listing is cut in registry-number order into parts no larger than aske
   assert.equal(splitListing([["NCT00000001", "x".repeat(50)], ["NCT00000002", "y"]], 10).length, 2);
 });
 
+
+
+test("an open page follows a trial across deployments and searches one whole generation", async (t) => {
+  const first = "NCT00000001", target = "NCT00000003";
+  const row = (id, generation) => [id, `Zetamab ${generation} ${id}`, null, [], "under_way", null, [], [], null];
+  const old = { ...FIXTURE_LISTING, trials: [row(first, "older"), row(target, "older")] };
+  const newer = { ...FIXTURE_LISTING, trials: ["NCT00000000", first, target].map((id) => row(id, "newer")) };
+  // This fixture's target is a listed trial without a published claim.
+  const owner = SEARCH_DETAIL.claims.antibody;
+  const cited = owner.trials;
+  owner.trials = [];
+  t.after(() => { owner.trials = cited; small(); });
+  for (const keep of [false, true]) {
+    PART_SIZE = 1;
+    LISTING = old;
+    retainedParts = keep ? listingFiles().parts : {};
+    const byId = setup(null, HOME), byWords = setup(null, HOME);
+    const oldFile = partFor(listingFiles().manifest, target).file;
+    // Read one old part into each tab before changing what the server returns.
+    for (const page of [byId, byWords]) {
+      assert.match((await searched(page, first)).textContent, /Zetamab older NCT00000001/);
+    }
+    LISTING = newer;
+    assert.match(oldFile, /\/01-/);
+    assert.match(partFor(listingFiles().manifest, target).file, /\/02-/);
+    const version = keep ? "older" : "newer";
+    const result = (await searched(byId, target)).textContent;
+    assert.ok(result.includes(`Zetamab ${version} ${target}`), result);
+    const answer = await searched(byWords, "zetamab");
+    const group = answer.querySelector(".listed-trials") ?? byWords.results.querySelector(".listed-trials");
+    if (!keep) {
+      // The replacement listing is large. Reading it still requires a press.
+      assert.equal(group.querySelectorAll(".listed-trial").length, 0);
+      group.querySelector(".listed-ask").dispatchEvent(new byWords.window.Event("click"));
+      await settle();
+    }
+    const titles = [...group.querySelectorAll(".listed-trial .listed-title")].map((a) => a.textContent);
+    assert.deepEqual(titles.sort(), (keep ? old : newer).trials.map((r) => r[1]).sort());
+  }
+});
