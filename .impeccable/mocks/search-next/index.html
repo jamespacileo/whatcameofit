@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Search, next: options</title>
+<!--
+  Options for the operator, after the second critique of the home page's search
+  (openspec search-answer-in-step, task 6). Each frame is the built site itself, with
+  the real published claims, changed in place by the script at the foot of this page.
+  It must be served from the built site's own address, so the frames can be reached:
+
+    cp .impeccable/mocks/search-next/index.html site/dist/mock-search-next.html
+    open http://localhost:4363/mock-search-next.html   (launch config site-search-fix-built)
+-->
+<style>
+  :root {
+    color-scheme: light dark;
+    --ground: #f3f5f8; --ink: #101a2b; --muted: #55637a; --rule: #d5dce7; --card: #fff; --mark: #14427f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ground: #0d1218; --ink: #e4eaf3; --muted: #a3b0c2; --rule: #2b3546; --card: #151c27; --mark: #8ec1f5; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 2rem clamp(1rem, 3vw, 2.5rem) 4rem; background: var(--ground); color: var(--ink);
+    font: 16px/1.5 Figtree, system-ui, sans-serif; }
+  h1 { font-size: 1.7rem; line-height: 1.2; margin: 0 0 0.4rem; }
+  h2 { font-size: 1.25rem; margin: 3rem 0 0.3rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+  p { margin: 0 0 0.6rem; max-width: 68ch; color: var(--muted); }
+  .frames { display: flex; gap: 1.5rem; overflow-x: auto; padding: 1rem 0 1.25rem; align-items: flex-start; }
+  figure { margin: 0; flex: none; }
+  figcaption { margin-bottom: 0.6rem; max-width: var(--w); }
+  figcaption strong { display: block; font-size: 1.05rem; color: var(--ink); }
+  figcaption span { color: var(--muted); font-size: 0.92rem; }
+  figcaption .tag { display: inline-block; font-size: 0.78rem; font-weight: 700; color: var(--mark); border: 1px solid var(--mark);
+    border-radius: 999px; padding: 0 0.5rem; margin-right: 0.4rem; vertical-align: 0.1em; }
+  iframe { display: block; border: 1px solid var(--rule); border-radius: 14px; background: var(--card); }
+  .phone { --w: 375px; }
+  .phone iframe { width: 375px; height: 700px; }
+  .wide { --w: 820px; }
+  .wide iframe { width: 820px; height: 470px; }
+</style>
+</head>
+<body>
+<h1>Search, next: three choices</h1>
+<p>Every frame is the built site with the published claims, searched for “cancer” (157 claims found, 20 drawn). Scroll inside a frame to see more of it. Pick one letter in each section.</p>
+
+<h2>1. A result on a phone</h2>
+<p>Today a result gives its headline, the treatment, the topic, up to three report headlines, and only then where the claim stands. The first result is about 700px tall, and twenty of them are eleven screens.</p>
+<div class="frames">
+  <figure class="phone"><figcaption><strong><span class="tag">Now</span>Status last</strong><span>As built today.</span></figcaption><iframe data-row="now" title="Now"></iframe></figure>
+  <figure class="phone"><figcaption><strong><span class="tag">A</span>Status under the headline</strong><span>The status in its panel, right after the headline; one report, the rest counted.</span></figcaption><iframe data-row="a" title="A"></iframe></figure>
+  <figure class="phone"><figcaption><strong><span class="tag">B</span>Status before the headline</strong><span>The status as one plain line over the headline; one report, the rest counted.</span></figcaption><iframe data-row="b" title="B"></iframe></figure>
+  <figure class="phone"><figcaption><strong><span class="tag">C</span>Shorter, order kept</strong><span>Status stays last; one report, the rest counted.</span></figcaption><iframe data-row="c" title="C"></iframe></figure>
+</div>
+
+<h2>2. The end of a list that is cut at twenty</h2>
+<p>The count now says “First 20 of 157 tracked claims”. This is what stands after the twentieth.</p>
+<div class="frames">
+  <figure class="phone"><figcaption><strong><span class="tag">D</span>One line, no control</strong><span>As built today: how many are not shown, and that a word more narrows them.</span></figcaption><iframe data-end="d" title="D"></iframe></figure>
+  <figure class="phone"><figcaption><strong><span class="tag">E</span>“Show 20 more”</strong><span>A button that draws the next twenty under these; the line then counts what is left.</span></figcaption><iframe data-end="e" title="E"></iframe></figure>
+</div>
+
+<h2>3. Suggestions: which rows leave the page</h2>
+<p>A topic, a treatment and a report open a page. A condition and a trial search here. Today nothing says which. Typed: “lung”.</p>
+<div class="frames">
+  <figure class="wide"><figcaption><strong><span class="tag">F</span>No mark</strong><span>As built today.</span></figcaption><iframe data-rows="f" title="F"></iframe></figure>
+  <figure class="wide"><figcaption><strong><span class="tag">G</span>An arrow on rows that open a page</strong><span>After the grey words at the right. Rows that search have none.</span></figcaption><iframe data-rows="g" title="G"></iframe></figure>
+  <figure class="wide"><figcaption><strong><span class="tag">H</span>Each kind says what a press does</strong><span>In the kind's own name: “opens its page”, “searches here”.</span></figcaption><iframe data-rows="h" title="H"></iframe></figure>
+</div>
+
+<script>
+  const style = (doc, text) => { const node = doc.createElement("style"); node.textContent = text; doc.head.append(node); };
+  // Wait for something the site's own script draws.
+  const drawn = (doc, selector) => new Promise((resolve) => {
+    const look = () => (doc.querySelector(selector) ? resolve() : setTimeout(look, 150));
+    look();
+  });
+  const quiet = "html { scroll-behavior: auto !important; }";
+  // Scroll a frame to one of its own elements without moving this page.
+  const bring = (frame, node, gap = 12) =>
+    frame.contentWindow.scrollTo(0, frame.contentWindow.scrollY + node.getBoundingClientRect().top - gap);
+
+  // One report under a result; the others counted with those the site already counts.
+  function oneReport(doc) {
+    for (const list of doc.querySelectorAll(".match-reasons")) {
+      const items = [...list.querySelectorAll(".match-reason")];
+      let more = list.querySelector(".match-more");
+      const left = items.length - 1 + (more ? Number(more.textContent.match(/\d+/)?.[0] ?? 0) : 0);
+      items.slice(1).forEach((item) => item.remove());
+      if (left < 1) continue;
+      if (!more) { more = doc.createElement("li"); more.className = "match-more"; list.append(more); }
+      more.textContent = `And ${left} more on the claim's page`;
+    }
+  }
+
+  const ROW = {
+    now: "",
+    a: `.hit-row { display: flex; flex-direction: column; }
+        .hit-main { display: contents; }
+        .hit-heading { order: 0; }
+        .hit-now { order: 1; margin: 0.5rem 0 0.15rem; padding: 0.45rem 0.7rem; gap: 0.2rem 0.7rem; }
+        .hit-now .row-label { flex-basis: auto; }
+        .hit-meta { order: 2; }
+        .match-reasons { order: 3; }`,
+    b: `.hit-row { display: flex; flex-direction: column; }
+        .hit-main { display: contents; }
+        .hit-now { order: -1; margin: 0 0 0.35rem; padding: 0; background: none; gap: 0.2rem 0.7rem; }
+        .hit-now .row-label { flex-basis: auto; }
+        .hit-now .status-name { font-size: var(--text-body); }`,
+    c: "",
+  };
+
+  for (const frame of document.querySelectorAll("iframe[data-row]")) {
+    frame.addEventListener("load", async () => {
+      const doc = frame.contentDocument;
+      style(doc, quiet + ROW[frame.dataset.row]);
+      await drawn(doc, ".hit-row");
+      if (frame.dataset.row !== "now") oneReport(doc);
+      bring(frame, doc.querySelector("#search-answer-title"));
+      scrollTo(0, 0);
+    });
+    frame.src = "/?q=cancer";
+  }
+
+  for (const frame of document.querySelectorAll("iframe[data-end]")) {
+    frame.addEventListener("load", async () => {
+      const doc = frame.contentDocument;
+      style(doc, quiet + ".show-more { margin: 1rem 0 0.4rem; } .show-more + .match-more { padding-left: 0; }");
+      await drawn(doc, ".search-results > .match-more");
+      const line = doc.querySelector(".search-results > .match-more");
+      if (frame.dataset.end === "e") {
+        const button = doc.createElement("button");
+        button.type = "button";
+        button.className = "share show-more";
+        button.textContent = "Show 20 more";
+        line.before(button);
+        line.textContent = "137 more tracked claims hold these words.";
+      }
+      setTimeout(() => bring(frame, line, 380), 600);
+    });
+    frame.src = "/?q=cancer";
+  }
+
+  const ARROW = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14'/%3E%3Cpath d='m12 5 7 7-7 7'/%3E%3C/svg%3E\")";
+  const ROWS = {
+    f: "",
+    g: `.suggest-row:not([data-query]) .suggest-meta::after { content: ""; display: inline-block; width: 0.95em; height: 0.95em;
+          margin-left: 0.5em; vertical-align: -0.12em; background: var(--blue); mask: ${ARROW} center / contain no-repeat; }
+        .suggest-row[data-query] .suggest-meta { padding-right: 1.45em; }`,
+    h: ".suggest-label .does { font-weight: 400; }",
+  };
+  const DOES = { Topics: "opens its page", Treatments: "opens its claim", Conditions: "searches here", Reports: "opens its claim", "Trials on record": "searches here" };
+
+  for (const frame of document.querySelectorAll("iframe[data-rows]")) {
+    frame.addEventListener("load", async () => {
+      const doc = frame.contentDocument;
+      style(doc, quiet + ROWS[frame.dataset.rows]);
+      const field = doc.querySelector("#query");
+      const mark = () => {
+        if (frame.dataset.rows !== "h") return;
+        for (const label of doc.querySelectorAll(".suggest-label")) {
+          const does = DOES[label.textContent];
+          if (!does) continue;
+          const said = doc.createElement("span");
+          said.className = "does";
+          said.textContent = ` · ${does}`;
+          label.append(said);
+        }
+      };
+      // The rows are drawn again when the search detail arrives: mark each drawing.
+      new frame.contentWindow.MutationObserver(mark).observe(doc.querySelector("#search"), { childList: true, subtree: true });
+      field.focus({ preventScroll: true });
+      field.value = "lung";
+      field.dispatchEvent(new frame.contentWindow.Event("input", { bubbles: true }));
+      await drawn(doc, ".suggest-row");
+      bring(frame, doc.querySelector("#search"));
+      scrollTo(0, 0);
+    });
+    frame.src = "/";
+  }
+</script>
+</body>
+</html>
