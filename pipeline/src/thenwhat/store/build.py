@@ -25,6 +25,7 @@ from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -412,3 +413,38 @@ def apply_delta(path: Path, delta: Path, *, store_sql: Path, now: datetime) -> l
             " before it first, in order."
         )
     return merge_into(path, runs, store_sql=store_sql, now=now)[1]
+
+
+def state_digest(state: dict[str, str]) -> str:
+    """One checksum of a state: what the bulk file held before a day's merge."""
+    digest = hashlib.sha256()
+    for key in sorted(state):
+        digest.update(f"{key}={state[key]}\n".encode())
+    return digest.hexdigest()
+
+
+def merge_day(
+    file: Path,
+    records: list[Record],
+    state: dict[str, str],
+    *,
+    delta: Path,
+    store_sql: Path,
+    now: datetime,
+) -> tuple[Any, Counter[str]]:
+    """The daily job's merge into the bulk file: the records new or changed since `state`,
+    as one run, written as the day's delta; `state` is brought up to date in place.
+
+    The run is named by the state before and the records chosen: run again after a crash
+    before the state was written, it is the same run, which the file already holds; a day
+    whose records are those of an earlier day (a record going A, then B, then A again) is
+    a run of its own, since the state before it differs."""
+    from thenwhat.store.push import increment, state_of
+
+    chosen = increment(records, state, actions=True)
+    content = sorted(f"{k}={v}" for k, v in state_of(chosen.records).items())
+    runs = [(run_name("bulk", state_digest(state), *content), chosen.records)]
+    added, _ = merge_into(file, runs, store_sql=store_sql, now=now)
+    write_delta(delta, runs, base=base_of(file, runs))
+    state.update(state_of(chosen.records))
+    return chosen, added

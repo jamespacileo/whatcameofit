@@ -473,3 +473,39 @@ def test_clear_inbox_records_the_fold_before_clearing(monkeypatch):
         ("/inbox/folded", {"through": 7, "object": key}),
         ("/inbox/clear", {"through": 7}),
     ]
+
+
+def test_a_record_going_a_b_a_is_merged_each_day_and_replays(session: Session, tmp_path: Path):
+    from thenwhat.store.build import apply_delta, merge_day
+    from thenwhat.store.gather import Gathered, stream
+    from thenwhat.store.tiers import bulk_records
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    restored = tmp_path / "restored.sqlite"
+    shutil.copyfile(bulk, restored)
+    records, _ = bulk_records(stream(session, Gathered(records=[])))
+    (lead,) = [r for r in records if r.kind == "link_lead"]
+    state = dict(report.state)
+    when = datetime(2026, 11, 18, tzinfo=UTC)
+    deltas = []
+    for day, score in enumerate((0.9, 0.5, 0.9)):
+        changed = Record(
+            "link_lead", lead.key, {**lead.body, "triage_score": score, "triage_version": 4 + day}
+        )
+        deltas.append(tmp_path / f"d{day}.jsonl.gz")
+        chosen, _ = merge_day(bulk, [changed], state, delta=deltas[-1], store_sql=STORE, now=when)
+        assert chosen.records == [changed], day
+    held = {
+        r for (r,) in sqlite3.connect(bulk).execute("SELECT id FROM run WHERE id LIKE 'bulk-%'")
+    }
+    assert len(held) == 3
+    for delta in deltas:
+        assert apply_delta(restored, delta, store_sql=STORE, now=when), delta.name
+    assert [c.sha256 for c in checksums(restored, BULK)] == [
+        c.sha256 for c in checksums(bulk, BULK)
+    ]

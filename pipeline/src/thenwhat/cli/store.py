@@ -24,8 +24,7 @@ from thenwhat.store.build import (
     apply_delta,
     base_of,
     build,
-    merge_into,
-    run_name,
+    merge_day,
     write_delta,
 )
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
@@ -36,10 +35,8 @@ from thenwhat.store.people import FIELDS, PROOF_SQL, prove_file, prove_file_obje
 from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
-    increment,
     push,
     read_state,
-    state_of,
     write_state,
 )
 from thenwhat.store.tiers import (
@@ -420,18 +417,13 @@ def merge_bulk_command(
 
     with reading_session() as session:
         records, _ = bulk_records(stream(session, Gathered(records=[]), keep_payload=keep_payload))
-    chosen = increment(records, held, actions=True)
-    # Named by the records it merges, which the state chose: run again after a crash
-    # before the state was written, it is the same run, which the file already holds.
-    name = run_name("bulk", *sorted(f"{k}={v}" for k, v in state_of(chosen.records).items()))
-    runs = [(name, chosen.records)]
     try:
-        added, _ = merge_into(file, runs, store_sql=store_sql, now=datetime.now(UTC))
+        chosen, added = merge_day(
+            file, records, held, delta=delta, store_sql=store_sql, now=datetime.now(UTC)
+        )
     except BuildFailed as fault:
         err.print(str(fault), markup=False)
         raise typer.Exit(code=1) from None
-    write_delta(delta, runs, base=base_of(file, runs))
-    held.update(state_of(chosen.records))
     write_state(state, held)
     out.print(
         f"Merged {len(chosen.records):,} records into {file}; the delta is {delta}"
