@@ -216,7 +216,7 @@ The store is in two tiers. Which table is in which is stated in `store/store-tab
 `thenwhat store build` writes a hot file and a bulk file. The migrations still create every table in D1, so the bulk tables are there and empty. What that means for the ingest service today:
 
 - None of its own routes reads a bulk table. `/work/*` reads `work_item`, `/slices/*` reads `work_slice`, and the audit-hold check reads `claim`.
-- A record of a bulk kind that a merged run hands over is also kept in the service's `inbox`, for the daily job to fold into the bulk file and clear (`GET /inbox`, `POST /inbox/clear`). The migrations now include `0003_inbox.sql` and `0004_inbox_folded.sql`: apply them before the service is deployed.
+- A record of a bulk kind that a merged run hands over is also kept in the service's `inbox`, for the daily job to fold into the bulk file and clear (`GET /inbox`, `POST /inbox/clear`). The migrations now include `0003_inbox.sql`, `0004_inbox_folded.sql` and `0005_inbox_fold.sql`: apply them before the service is deployed.
 - The merge still writes whatever kind it is handed. A reader's lead or a found trial is added to D1's copy of the table and is not matched against the bulk file, so a lead the bulk file already has is added again in D1.
 - A record whose parent is only in the bulk file is not resolved: a share, label or reading of a lead, or an article lead of a trial, that the run does not also carry. The run's counts then do not reconcile and the merge is undone. A run must carry such a parent itself until the merge is taught the tiers.
 
@@ -262,6 +262,33 @@ If a step fails, restore to the bookmark, or empty the store, before loading aga
   node store/ingest/scripts/download-bulk.mjs <build id> <out.sqlite> --remote
   ```
 - **Payload objects** are never overwritten, each being stored under its own checksum; upload the folder again and only the missing ones are sent (`--check-first` when the notes of the earlier upload are gone).
+
+### The daily fold, in order
+
+A lookup's bulk records wait in D1's inbox until they are safe in R2. The order is held by the service, not by care:
+
+1. `thenwhat store fold-inbox <bulk.sqlite> --delta <file>` reads the inbox and merges it into the bulk file. It prints the last record folded.
+2. `node store/ingest/scripts/upload-delta.mjs <file> --build <id> --through <seq> --remote` puts the delta beside its build and adds it to `bulk/<build id>/deltas.json`. It prints the object's key.
+3. `POST /inbox/folded {through, object}` records the fold. The service looks for the object in the bucket and refuses without it.
+4. `POST /inbox/clear {through}` (`thenwhat store clear-inbox`) is refused past the furthest fold recorded.
+
+A restore of the bulk tier is `download-bulk.mjs`, then `download-deltas.mjs <build id> <folder>`, then `thenwhat store apply-delta` for each delta in the list's order.
+
+### Which database a script acts on
+
+`import-folder.mjs`, `checksum-d1.mjs` and `empty-store.mjs` act on the database named by the Wrangler configuration in use (`--config`, else the preview's) and print its name first. A name not ending in `-preview` is production: loading or checking it needs `--production <that name>`, and emptying it is refused whatever is passed. The bucket scripts write to the preview bucket unless `--remote --production <bucket>` names production's.
+
+### Removing payload objects
+
+When payload objects must go (on 17 November 2026: trial payloads were found to carry people's names, emails and phone numbers from the registry, so every object uploaded that day is removed and the build corrected):
+
+```bash
+node store/ingest/scripts/remove-payloads.mjs --all-noted --remote --verify-empty        # every object the upload noted
+node store/ingest/scripts/remove-payloads.mjs --not-in <payload folder> --remote         # those a rebuilt folder no longer holds
+node store/ingest/scripts/remove-payloads.mjs --bulk-build <build id> --remote --verify-empty
+```
+
+Four at a time, with a longer wait after a 429. It removes and checks only the objects the upload's notes name (`store/ingest/.upload-state/`), because Wrangler 4.161.0 cannot list a bucket's objects. For proof that nothing is left, search the prefixes `payload/` and `bulk/` in the dashboard (R2, the bucket, Objects); `wrangler r2 bucket info <bucket> --jurisdiction eu` gives the object count, some minutes late. The notes are on the machine that uploaded: run it there. The same objects in a database's Time Travel history and in any downloaded copy are not touched by this.
 
 ### Bulk load: what the steps do, and what was measured
 

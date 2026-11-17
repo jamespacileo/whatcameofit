@@ -130,6 +130,20 @@ const CLEAR = [
   "DELETE FROM inbox_folded WHERE run_id NOT IN (SELECT added_run FROM link_lead)",
 ];
 
+// How far the inbox may be cleared: the furthest fold recorded.
+export async function foldedThrough(db) {
+  return (await db.prepare("SELECT coalesce(max(through), 0) AS n FROM inbox_fold").first()).n;
+}
+
+// A fold is recorded once, by its delta object. `through` may not pass the last record
+// the inbox ever gave. Null when it does.
+export async function recordFold(db, object, through, bytes) {
+  const given = (await db.prepare("SELECT coalesce((SELECT seq FROM sqlite_sequence WHERE name = 'inbox'), 0) AS n").first()).n;
+  if (through > given) return null;
+  await db.prepare("INSERT INTO inbox_fold (object, through, bytes, recorded_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT DO NOTHING").bind(object, through, bytes, now()).run();
+  return { folded_through: await foldedThrough(db) };
+}
+
 // Once the daily job has folded the records up to `through` into the bulk file: they
 // leave the inbox, and the rows their runs added leave D1's copies of the bulk tables,
 // but for a lead still waiting to be processed. One batch, so all of it or none.

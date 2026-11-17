@@ -28,7 +28,7 @@ const argv = process.argv.slice(2);
 const value = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
 const file = value("--file"), given = value("--checks");
 if ((!file && !given) || (!argv.includes("--remote") && !value("--persist-to"))) { console.error("usage: checksum-d1.mjs (--file <store.sqlite> | --checks <checks.json>) (--remote | --persist-to <dir>)"); process.exit(2); }
-const LEFT_OUT = /^(sqlite_|_cf_|d1_migrations$|stg$|merging$|ingest_chunk$|inbox$|inbox_folded$)/;
+const LEFT_OUT = /^(sqlite_|_cf_|d1_migrations$|stg$|merging$|ingest_chunk$|inbox$|inbox_folded$|inbox_fold$)/;
 const quote = (name) => `"${name.replaceAll('"', '""')}"`;
 
 const db = file ? new DatabaseSync(file, { readOnly: true }) : null;

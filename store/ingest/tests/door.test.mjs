@@ -465,6 +465,21 @@ test("bulk records a run hands over wait in the inbox, and leave D1 once the dai
     const counts = () => box.all("SELECT (SELECT count(*) FROM link_lead), (SELECT count(*) FROM link_share), (SELECT count(*) FROM registry_trial), (SELECT count(*) FROM registry_trial_fts), (SELECT count(*) FROM inbox)");
     assert.deepEqual(await counts(), [[2, 2, 1, 1, 6]]);
     assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: {} })).status, 400);
+    // Nothing is cleared before a fold is recorded, and a fold is recorded only with its
+    // delta in the bucket, no further than the inbox has given.
+    const early = await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } });
+    assert.deepEqual([early.status, early.body.error, early.body.detail.folded_through], [409, "not_folded", 0]);
+    const fold = (as, through, object) => box.ask("POST", "/inbox/folded", { as, body: { through, object } });
+    assert.equal((await fold("lookup", page.through, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).status, 403);
+    assert.equal((await fold("daily", page.through, "payload/abc")).status, 400);
+    assert.equal((await fold("daily", page.through, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).body.error, "delta_not_uploaded");
+    const r2 = await box.mf.getR2Bucket("PAYLOADS");
+    await r2.put("bulk/b1/delta-2026-11-17-1.jsonl.gz", "the day's records");
+    await r2.put("bulk/b1/delta-2026-11-17-2.jsonl.gz", "the rest");
+    assert.equal((await fold("daily", 9999, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).body.error, "beyond_inbox");
+    assert.deepEqual((await fold("daily", page.through, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).body, { recorded: page.through, folded_through: page.through });
+    assert.equal(await counts().then((rows) => rows[0][4]), 6, "recording a fold clears nothing");
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through + 1 } })).status, 409);
     const cleared = (await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } })).body;
     assert.deepEqual([cleared.cleared, cleared.left, cleared.leads_held], [5, 1, 1]);
     // The trial is gone. The lead is a reader's, and the consumer has not processed it yet:
@@ -479,6 +494,7 @@ test("bulk records a run hands over wait in the inbox, and leave D1 once the dai
     assert.equal(await box.one("SELECT url_key FROM link_lead"), "inbox.example/two");
     // The second run, cleared while its lead still waits, then after its work failed for good.
     const rest = (await box.ask("GET", `/inbox?after=${page.through}`, { as: "daily" })).body;
+    assert.equal((await fold("operator", rest.through, "bulk/b1/delta-2026-11-17-2.jsonl.gz")).body.folded_through, rest.through);
     assert.deepEqual((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: rest.through } })).body.leads_held, 1);
     assert.equal(await box.one("SELECT count(*) FROM inbox_folded"), 1);
     await box.ask("POST", "/work/lease", { as: "consumer", body: { step: "lead_process" } });

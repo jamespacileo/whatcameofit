@@ -10,7 +10,8 @@
 //   GET    /runs/<id>             what the merge did
 //   DELETE /runs/<id>             drop a run that was not merged
 //   GET    /inbox?after=&limit=   records of the bulk tier that runs handed over, oldest first
-//   POST   /inbox/clear           once they are folded into the bulk file: {through}
+//   POST   /inbox/folded          a fold is recorded, with its delta object in the bucket: {through, object}
+//   POST   /inbox/clear           no further than the furthest fold recorded: {through}
 //   POST   /work/lease|finish|fail    the consumer's queue of due work
 //   POST   /slices/take|release       a device's work slices
 import { principal } from "./auth.mjs";
@@ -184,10 +185,21 @@ async function slice(request, env, who, verb) {
 async function inbox(request, env, who, url, verb) {
   if (!who.may.includes("inbox")) refuse(403, "outside_scope", `a ${who.role} token may not read or clear the inbox`);
   const whole = (text) => (/^\d{1,15}$/.test(text ?? "") ? Number(text) : null);
-  if (verb === "clear") {
+  if (verb !== "read") {
     const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
     const through = Number.isInteger(value?.through) && value.through >= 0 ? value.through : null;
     if (through === null) refuse(400, "bad_request", "through is the last record folded, as the inbox gave it");
+    if (verb === "folded") {
+      // The delta that holds what was folded must already be in the bucket, beside its build.
+      if (!/^bulk\/[A-Za-z0-9._-]{1,64}\/delta-[A-Za-z0-9._-]{1,80}$/.test(value.object || "")) refuse(400, "bad_request", "object is the delta's key: bulk/<build id>/delta-...");
+      const held = await env.PAYLOADS.head(value.object);
+      if (!held || !held.size) refuse(409, "delta_not_uploaded", "no such delta object is in the bucket: upload it first");
+      const recorded = await store.recordFold(env.STORE, value.object, through, held.size);
+      if (!recorded) refuse(409, "beyond_inbox", "through is past the last record the inbox has given");
+      return json(200, { recorded: through, ...recorded });
+    }
+    const folded = await store.foldedThrough(env.STORE);
+    if (through > folded) refuse(409, "not_folded", "the inbox is cleared no further than the furthest fold recorded: record the fold first", { folded_through: folded });
     return json(200, await store.clearInbox(env.STORE, through));
   }
   const after = whole(url.searchParams.get("after") ?? "0"), limit = whole(url.searchParams.get("limit") ?? "500");
@@ -223,7 +235,7 @@ async function route(request, env, ctx) {
       return json(200, { run: parts[1], dropped: true });
     }
     case "GET /inbox": return inbox(request, env, who, new URL(request.url), "read");
-    case "POST /inbox/*": if (parts[1] === "clear") return inbox(request, env, who, new URL(request.url), "clear"); break;
+    case "POST /inbox/*": if (parts[1] === "folded") return inbox(request, env, who, new URL(request.url), "folded"); if (parts[1] === "clear") return inbox(request, env, who, new URL(request.url), "clear"); break;
     case "POST /work/*": if (["lease", "finish", "fail"].includes(parts[1])) return work(request, env, who, parts[1]); break;
     case "POST /slices/*": if (["take", "release"].includes(parts[1])) return slice(request, env, who, parts[1]); break;
   }

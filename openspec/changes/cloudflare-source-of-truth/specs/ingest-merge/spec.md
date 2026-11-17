@@ -204,11 +204,15 @@ The ingest service SHALL stage the value it checked, written out again, and neve
 - **THEN** it is refused and the run's steps and counts are as they were
 
 ### Requirement: Bulk records wait in an inbox
-When a run that is merged hands over a record of a bulk kind, the ingest service SHALL keep that record as it was staged, with the payload records it names, until the daily job has read it and said it is folded into the bulk file. A run that is refused or undone SHALL leave none. Only the daily job's token and the operator's SHALL read or clear the inbox. Clearing SHALL remove the records up to the one named and, for each run folded whole, the rows that run added to D1's copies of the bulk tables, all or none, except a lead whose processing is still due, which is held until it is not.
+When a run that is merged hands over a record of a bulk kind, the ingest service SHALL keep that record as it was staged, with the payload records it names, until the daily job has read it and said it is folded into the bulk file. A run that is refused or undone SHALL leave none. Only the daily job's token and the operator's SHALL read or clear the inbox. A fold SHALL be recorded only when the delta object that holds it is in the bucket, and the inbox SHALL be cleared no further than the furthest fold recorded. Clearing SHALL remove the records up to the one named and, for each run folded whole, the rows that run added to D1's copies of the bulk tables, all or none, except a lead whose processing is still due, which is held until it is not.
 
 #### Scenario: A lookup's lead and share
 - **WHEN** a reader's lookup is merged with a lead and its share
 - **THEN** the inbox gives both records as they were staged, and after the daily job clears them D1 holds neither the records nor the lead and share rows
+
+#### Scenario: Clearing before the delta is uploaded
+- **WHEN** the daily job asks to clear the inbox past the furthest fold recorded, or records a fold whose delta object is not in the bucket
+- **THEN** it is refused and nothing leaves D1
 
 #### Scenario: A lead the consumer has not processed
 - **WHEN** the inbox is cleared and a reader's lead of a folded run still has its processing due
