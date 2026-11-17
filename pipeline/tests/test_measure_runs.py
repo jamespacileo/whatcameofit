@@ -23,7 +23,8 @@ from thenwhat.db.models import RegistryTrial
 from thenwhat.domain import WorkOutcome
 from thenwhat.measure import spans as measure
 from thenwhat.measure.events import RUN_ENDED, RUN_STARTED, SOURCE_PAUSED
-from thenwhat.measure.files import FileWriter, read_day
+from thenwhat.measure.files import FileWriter, Follower, read_day
+from thenwhat.measure.live import view_of
 from thenwhat.measure.report import gather
 from thenwhat.measure.spans import FIELDS
 from thenwhat.work.allowance import Allowances
@@ -167,6 +168,14 @@ def test_measurements_that_cannot_be_written_are_counted_and_said(session: Sessi
     assert (report.done, report.not_written) == (3, 3)
     assert list(read_day(folder, NOW.date())) == []
     assert gather(session, folder, NOW.date(), NOW.date()).measurements_not_written == 3
+    view = view_of(
+        Follower(folder).read([NOW.date()]),
+        NOW,
+        paused={},
+        spent_usd=Decimal(0),
+        ceiling_usd=Decimal(13),
+    )
+    assert [gap.measurements for gap in view.not_written] == [3]
     assert said == [], "it was said in the files, so nothing is left to say on stderr"
 
 
