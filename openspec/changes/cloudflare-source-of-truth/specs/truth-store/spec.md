@@ -136,6 +136,14 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 - **WHEN** the comparison is given the name of the D1 database (`--d1`)
 - **THEN** the rows an export reads are fetched with read-only queries into a store file, a payload object the local folder lacks is fetched from the bucket named, every payload is checked against its checksum, and the comparison is of that file
 
+#### Scenario: A store that holds only the hot tier
+- **WHEN** the store file or database holds only the tables an export reads (no registry trial, lead, share, ledger entry, usage or measure)
+- **THEN** the export is the same as from a store that holds every table, a trial's facts on a claim's page coming from the raw payload of the claim's own evidence event, and a comparison against the database reads no other table
+
+#### Scenario: A store missing what an export reads
+- **WHEN** the store lacks a table or a column the export reads
+- **THEN** the export is refused before anything is read, naming each missing table and column
+
 ### Requirement: A deployment can rehearse taking its export from the store
 Until the cut-over, CI SHALL be able to take an export from the store, hold it to the schema the site reads and to the checks a published snapshot must pass, and report how its claims compare with the committed snapshot. The rehearsal SHALL be off unless a repository setting turns it on, SHALL only read the store, and SHALL change nothing the site is built or deployed from: the committed snapshot remains the source.
 

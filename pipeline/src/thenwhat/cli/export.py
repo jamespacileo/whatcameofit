@@ -85,6 +85,13 @@ R2Bucket = Annotated[
         " this bucket.",
     ),
 ]
+D1Local = Annotated[
+    bool,
+    typer.Option(
+        "--d1-local",
+        help="With --d1: read the database Wrangler keeps on this machine, not Cloudflare's.",
+    ),
+]
 WranglerDir = Annotated[
     Path, typer.Option(help="With --d1: the folder wrangler is installed and run in.")
 ]
@@ -137,6 +144,7 @@ def export_command(
     r2_bucket: R2Bucket = None,
     wrangler_dir: WranglerDir = STORE_SQL / "ingest",
     wrangler_config: WranglerConfig = None,
+    d1_local: D1Local = False,
 ) -> None:
     """Write the JSON file the site is built from: approved, unarchived claims and events.
     A claim awaiting audit is left out and counted.
@@ -159,6 +167,7 @@ def export_command(
                 wrangler=wrangler_in(wrangler_dir, wrangler_config),
                 payloads=payloads,
                 bucket=r2_bucket,
+                remote=not d1_local,
             )
         except FetchFailed as fault:
             err.print(str(fault), markup=False)
@@ -220,6 +229,7 @@ def export_compare_command(
     r2_bucket: R2Bucket = None,
     wrangler_dir: WranglerDir = STORE_SQL / "ingest",
     wrangler_config: WranglerConfig = None,
+    d1_local: D1Local = False,
     allow_named: Annotated[
         bool,
         typer.Option(
@@ -259,6 +269,7 @@ def export_compare_command(
                     wrangler=wrangler_in(wrangler_dir, wrangler_config),
                     payloads=payloads,
                     bucket=r2_bucket,
+                    remote=not d1_local,
                 )
                 out.print(
                     f"Fetched {sum(fetched.rows.values())} rows of {d1} in {fetched.queries}"

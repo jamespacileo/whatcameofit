@@ -639,6 +639,14 @@ def test_compare_command_reads_the_stores_export_from_the_database_itself(
     assert "The two exports are the same: 1 claims, byte for byte." in result.output
     assert all("--remote" in arguments and "SELECT" in arguments[-1] for arguments in asked)
     assert not any(word in arguments[-1] for arguments in asked for word in ("INSERT", "UPDATE"))
+    # Only the tables an export reads are asked for: none of the bulk tier.
+    read = {arguments[-1].split(" FROM ")[1].split()[0] for arguments in asked}
+    assert read == set(TABLES_READ)
+
+    asked.clear()
+    local = invoke("export-compare", "--d1", "STORE", "--d1-local", "--store-sql", str(STORE_SQL))
+    assert local.exit_code == 0, local.output
+    assert asked and all("--local" in arguments for arguments in asked)
 
 
 def test_compare_command_refuses_a_store_it_cannot_read(

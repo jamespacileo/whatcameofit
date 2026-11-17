@@ -92,10 +92,13 @@ def fetch_store(
     wrangler: Wrangler,
     payloads: Path | None = None,
     bucket: str | None = None,
+    remote: bool = True,
 ) -> FetchReport:
     """Make `path` a store file holding the rows of `database` an export reads. `schema`
     is the store's `schema.sql`. With `bucket`, each payload object the folder `payloads`
-    lacks is fetched into it. Any file already at `path` is replaced."""
+    lacks is fetched into it. Any file already at `path` is replaced. With `remote`
+    false, the database and bucket are the ones Wrangler keeps on this machine."""
+    where = "--remote" if remote else "--local"
     report = FetchReport()
     path.parent.mkdir(parents=True, exist_ok=True)
     path.unlink(missing_ok=True)
@@ -126,7 +129,7 @@ def fetch_store(
                             "d1",
                             "execute",
                             database,
-                            "--remote",
+                            where,
                             "--json",
                             "--command",
                             f"SELECT {asked} FROM {table} ORDER BY {order}"
@@ -165,9 +168,7 @@ def fetch_store(
             def get(key: str) -> None:
                 held = payloads / key
                 held.parent.mkdir(parents=True, exist_ok=True)
-                wrangler(
-                    ["r2", "object", "get", f"{bucket}/{key}", "--remote", "--file", str(held)]
-                )
+                wrangler(["r2", "object", "get", f"{bucket}/{key}", where, "--file", str(held)])
 
             # One request an object, so several at once: a store holds thousands.
             with ThreadPoolExecutor(max_workers=OBJECTS_AT_ONCE) as pool:

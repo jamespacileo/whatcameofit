@@ -21,6 +21,10 @@ To compare with a store that exists:
 
 `--d1` fetches the rows an export reads with `wrangler d1 execute --remote --json`, a page of a table at a time. `wrangler d1 export` is not used: D1 cannot export a database that has virtual tables, and the store has its search tables. Wrangler runs in `store/ingest` as whoever is signed in, or with `CLOUDFLARE_API_TOKEN`; `--wrangler-config` names a configuration when the database is not found by name. A payload kept as an object is taken from `--payloads` when it is there and from `--r2-bucket` otherwise, one request an object (thousands for the whole store, so point `--payloads` at the folder the store was built from when you have it). Every payload is checked against the checksum the store names, wherever it came from.
 
+`--d1-local` reads the database Wrangler keeps on this machine (`make store-dev`) instead of Cloudflare's.
+
+What an export reads of the store is 16 tables, listed with their columns as `COLUMNS_READ` in `pipeline/src/thenwhat/export/store_records.py`. That is the store's hot tier as far as the export goes: no registry trial, lead, share, ledger entry, usage or measure is read, and a trial's facts on a claim's page come from the raw payload of the claim's own evidence event. A store file or database with only those tables gives the same export; one missing a table or a column is refused by name.
+
 The command exits with 1 when the exports differ and names each claim and the places in it. Where it can, it names the cause:
 
 - **the data**: the database holds two source articles of one claim at one address key. The store holds one and gives it the statements of both. Fold the pair in the database.
