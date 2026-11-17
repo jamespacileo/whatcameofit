@@ -979,10 +979,38 @@ def test_trial_references_counts_what_the_stored_records_list(run, session: Sess
 
 
 def test_trial_references_refuses_a_set_it_does_not_know(run):
-    result = run("trial-references", "--set", "successful")
+    result = run("trial-references", "--set", "elsewhere")
 
     assert result.exit_code == 1
-    assert "No set of stored trials is named 'successful'" in result.output
+    assert "No set of stored trials is named 'elsewhere'" in result.output
+
+
+def test_trial_references_refuses_before_the_wider_load(run, session: Session):
+    """Zeros would read as "no trial lists a paper" when no trial could be chosen."""
+    add_trials(session, 2)
+
+    result = run("trial-references")
+
+    assert result.exit_code == 1
+    assert "No stored trial has the activity and results fields yet." in result.output
+    assert "0 trials" not in result.output
+
+
+def test_the_plan_shows_what_a_batched_step_needs(run, session: Session):
+    trials = add_trials(session, 120, registry=ClinicalTrials.name)
+    for number, stored in enumerate(trials):
+        stored.external_id = f"NCT{number:08d}"
+        stored.overall_status = "RECRUITING"
+        stored.last_update_posted = date(2026, 3, 1)
+    session.flush()
+
+    result = run("plan")
+
+    assert result.exit_code == 0, result.output
+    papers = result.output.split("pubmed_papers (version 1)")[1].split(" (version ")[0]
+    # 120 trials, 50 to a search, a search and a fetch for each batch.
+    assert "the due records need about 6 requests in batches" in papers
+    assert "requests: about 2 for each 50 records" in run("steps").output
 
 
 def test_the_paper_step_runs_through_the_command(run, session: Session, monkeypatch):
@@ -1093,9 +1121,9 @@ def test_read_set_reads_nothing_when_the_cost_passes_the_routes_share(
 
 def test_read_set_refuses_a_set_or_a_strength_it_does_not_know(run):
     """Scenario: A set the command does not know"""
-    unknown_set = run("read-set", "successful")
+    unknown_set = run("read-set", "elsewhere")
     unknown_strength = run("read-set", "active-since-2025", "--strength", "certain")
 
     assert (unknown_set.exit_code, unknown_strength.exit_code) == (1, 1)
-    assert "No set of stored trials is named 'successful'" in unknown_set.output
+    assert "No set of stored trials is named 'elsewhere'" in unknown_set.output
     assert "No strength of link is named 'certain'" in unknown_strength.output

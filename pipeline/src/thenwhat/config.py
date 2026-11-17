@@ -29,8 +29,11 @@ DEFAULT_ALLOWANCES = {
     # reader's to decide.
     "reader": SourceAllowance(requests=3000, period_hours=24, interval_seconds=1),
     # NCBI allows three requests a second without a key; this is two (docs/sources.md).
-    # Its off-peak rule for large jobs is the client's to keep, not a count.
     "pubmed": SourceAllowance(requests=5000, period_hours=24, interval_seconds=0.5),
+    # NCBI asks that a job of more than 100 requests runs off-peak. Requests sent in its
+    # peak hours are counted here as well, across processes and runs; the client stops
+    # at the hundredth until the hours pass or the day's count is restored.
+    "pubmed-peak-hours": SourceAllowance(requests=100, period_hours=24, interval_seconds=0),
 }
 
 
