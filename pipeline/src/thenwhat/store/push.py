@@ -211,6 +211,49 @@ def check_target(state: dict[str, str], url: str, state_file: Path | None = None
     state[TARGET_KEY] = target_of(url)
 
 
+class StoreOfOtherBuild(PushFailed):
+    """The store was loaded from another build than the one the push state is of."""
+
+
+def store_build(progress: Any) -> str | None:
+    """The build a store was loaded from, as its `GET /progress` gives it (`build_id`);
+    None while the service gives none."""
+    value = progress.get("build_id") if isinstance(progress, dict) else None
+    return value if isinstance(value, str) and value else None
+
+
+def check_build(state: dict[str, str], held: str | None) -> None:
+    """Refuse a push state of another build than the one the store was loaded from: what
+    it says was sent is that build's, not what this store holds. Nothing to compare while
+    the store gives no build id, or the state names none."""
+    build = state.get(BUILD_KEY)
+    if held and build and held != build:
+        raise StoreOfOtherBuild(
+            f"The store was loaded from build {held}; the push state is of build {build}."
+            " Push with a state of the build the store holds: thenwhat store fresh-state"
+            " <that build's store file> --url <this store's address> --out <new state file>."
+        )
+
+
+RELOADED = (
+    "The store holds no slice of this set, but this device's push state or plan says some"
+    " were sent: the store was loaded again. After any reload or restore: thenwhat store"
+    " fresh-state <store file> --url <address> --out <new state file>, then thenwhat backfill"
+    " slices run --push --again --state <new state file>."
+)
+
+
+def slices_held(progress: Any, rule: str, year: int) -> int | None:
+    """How many slices of a set the store holds, by its `GET /progress`; None when the
+    answer is not one to read that from."""
+    if not isinstance(progress, dict) or not isinstance(progress.get("sets"), list):
+        return None
+    for one in progress["sets"]:
+        if isinstance(one, dict) and (one.get("rule"), one.get("year")) == (rule, year):
+            return int(one.get("total_slices") or 0)
+    return 0
+
+
 class PendingStale(PushFailed):
     """A run left pending belongs to another build or another store than this one."""
 

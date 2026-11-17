@@ -216,6 +216,7 @@ class _Store:
     def __init__(self, short: int = 0) -> None:
         self.short = short
         self.staged: dict[str, list[dict]] = {}
+        self.progress: dict = {}
 
     def __call__(self, request):
         import json as _json
@@ -223,6 +224,8 @@ class _Store:
         import httpx
 
         path = request.url.path
+        if path == "/progress":
+            return httpx.Response(200, json=self.progress)
         if path == "/runs":
             run = _json.loads(request.content)["id"]
             self.staged.setdefault(run, [])
@@ -328,3 +331,39 @@ def test_a_state_pushed_to_one_store_is_refused_for_another(
         app, ["store", "fresh-state", str(file), "--url", "http://prod.test", "--out", str(fresh)]
     )
     assert refused.exit_code == 1 and "exists" in refused.output
+
+
+def test_a_store_loaded_again_or_from_another_build_is_refused_before_a_push(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from thenwhat.store.push import PushFailed, StoreOfOtherBuild, read_state
+
+    store = _Store()
+    cli_slices, made, one, state, file = _pushed_slice(session, tmp_path, monkeypatch, store)
+    url = "http://prod.test"
+    where = cli_slices.store_of(state, url)
+    # A store that gives no build id or slices: nothing to compare, the push goes on.
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    cli_slices._push_slice(session, one, made, state, url, "t")
+    # The store is loaded again: it holds no slice of the set, the plan says one was sent.
+    store.progress = {"sets": [], "build_id": read_state(state)["\tbuild"]}
+    with pytest.raises(PushFailed, match="fresh-state .* --again"):
+        cli_slices._check_store(made, state, where, url, "t", again=False)
+    cli_slices._check_store(made, state, where, url, "t", again=True)
+    store.progress = {"sets": [{"rule": made.rule, "year": made.year, "total_slices": 1}]}
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    # Loaded from another build.
+    store.progress["build_id"] = "another"
+    with pytest.raises(StoreOfOtherBuild, match="another"):
+        cli_slices._check_store(made, state, where, url, "t", again=True)
+    # So is a new state from this build for it.
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    args = ["store", "fresh-state", str(file), "--url", url, "--out", str(tmp_path / "n.json")]
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "another" in refused.output
+    store.progress["build_id"] = read_state(state)["\tbuild"]
+    assert CliRunner().invoke(app, args).exit_code == 0

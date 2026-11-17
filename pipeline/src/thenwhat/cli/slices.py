@@ -16,12 +16,16 @@ from thenwhat.cli.session import open_session, settings_or_exit
 from thenwhat.cli.store import TARGET_SET, _commit, target_rule
 from thenwhat.store.push import (
     BUILD_KEY,
+    RELOADED,
     USER_AGENT,
     PushFailed,
     RetryOnBusy,
+    check_build,
     pending_path,
     push,
     read_state,
+    slices_held,
+    store_build,
     target_of,
     write_state,
 )
@@ -144,7 +148,9 @@ def run_command(
     With --push, every planned slice's state goes first, then each slice worked is pushed
     with its trials, papers and state. A slice is in the store of the build the push state
     names: a push state from another build (a store loaded afresh) makes every slice due
-    to be pushed again, as --again does."""
+    to be pushed again, as --again does. A store loaded from another build is refused,
+    and so is one loaded again (it holds no slice of the set while this device says some
+    were sent), until fresh-state and --again."""
     from thenwhat.events.paper_records import keep_paper
     from thenwhat.sources.europepmc import EuropePmc
 
@@ -160,6 +166,11 @@ def run_command(
         made, path = _plan(session, trial_set, plan_file)
         if do_push and state is not None:
             store = store_of(state, url)
+            try:
+                _check_store(made, state, store, url, token, again=again)
+            except PushFailed as fault:
+                err.print(str(fault), markup=False)
+                raise typer.Exit(code=1) from None
             for one in made.slices:
                 if again or one.store != store:
                     one.forget_store()
@@ -256,6 +267,30 @@ def _push_plan(made: Plan, state: Path, url: str, token: str) -> None:
         " over; the rest the store held already.",
         markup=False,
     )
+
+
+def _progress(url: str, token: str) -> Any:
+    """The store's `GET /progress`, or None when it does not give it."""
+    with _client(url, token) as client:
+        answer = client.get("/progress")
+    return answer.json() if answer.status_code == 200 else None
+
+
+def _check_store(made: Plan, state: Path, store: str, url: str, token: str, *, again: bool):
+    """Before a push: refuse a store loaded from another build than the state's, and a
+    store loaded again (it holds no slice of the set) while this device's state or plan
+    says slices were sent, unless every slice is to go again."""
+    progress = _progress(url, token)
+    if progress is None:
+        out.print("The store gave no progress; its build and slices are not compared.")
+        return
+    held = read_state(state)
+    check_build(held, store_build(progress))
+    sent = any(key.startswith("trial_slice\t") for key in held) or any(
+        one.store == store for one in made.slices
+    )
+    if not again and sent and slices_held(progress, made.rule, made.year) == 0:
+        raise PushFailed(RELOADED)
 
 
 def store_of(state: Path, url: str) -> str:

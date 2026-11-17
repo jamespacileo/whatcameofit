@@ -48,9 +48,11 @@ from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
     RetryOnBusy,
+    check_build,
     pending_path,
     push,
     read_state,
+    store_build,
     target_of,
     write_state,
 )
@@ -694,7 +696,8 @@ def fresh_state_command(
 ) -> None:
     """Start the push state of a store loaded from this build: what its hot file holds,
     named for that store. A push state names one store and is refused for any other, so
-    preview and production, or a store loaded again, each get their own."""
+    preview and production, or a store loaded again, each get their own. With
+    INGEST_TOKEN set, a store that says it was loaded from another build is refused."""
     base = base_state_path(file)
     if not base.is_file():
         err.print(f"No {base}: build the store again, which writes it.")
@@ -703,6 +706,25 @@ def fresh_state_command(
         err.print(f"{out_file} exists: name another file, or delete it if it is stale.")
         raise typer.Exit(code=1)
     state = read_state(base)
+    token = os.environ.get("INGEST_TOKEN", "")
+    if token:
+        with httpx.Client(
+            transport=RetryOnBusy(),
+            base_url=url,
+            headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
+            timeout=120,
+        ) as client:
+            answer = client.get("/progress")
+        held = store_build(answer.json()) if answer.status_code == 200 else None
+        try:
+            check_build(state, held)
+        except PushFailed as fault:
+            err.print(str(fault), markup=False)
+            raise typer.Exit(code=1) from None
+        if held is None:
+            out.print("The store gives no build id: the build is not compared.", markup=False)
+    else:
+        out.print("INGEST_TOKEN is not set: the store's build is not compared.", markup=False)
     state[TARGET_KEY] = target_of(url)
     write_state(out_file, state)
     out.print(
