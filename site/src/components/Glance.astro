@@ -1,9 +1,9 @@
 ---
 // "At a glance": the claim's treatment and condition, what kind of thing the treatment
 // is and a gene, one row each, then the claim's own facts (passed in as rows) as rows of
-// the same list. A row taken from a background card is one line: its label, its value,
-// its score and whose term it is. The line opens to the source's definition in quotation
-// marks, whose words they are, the claim's words beside the source's term when they
+// the same list. A row taken from a background card is one line: its label and its value.
+// The line opens to the source's definition in quotation marks with a pill naming whose
+// words they are, the term's match, the claim's words beside the source's term when they
 // differ, and the card's credit and reasons (openspec glance-rows). Before the
 // record in brief, never inside the status panel: a card describes a term, not the
 // evidence. Openspec site-publishing: "Background cards on the claim page".
@@ -14,7 +14,6 @@ import Score from "./Score.astro";
 import TermCard from "./TermCard.astro";
 import { BACKGROUND_NOTE, GLANCE_LEAD, type ExportedCard, type ExportedCardSource } from "../lib/background";
 import {
-  GLANCE_GROUPS,
   GLANCE_ID,
   GLANCE_TITLE,
   SHORT_DEFINITION,
@@ -80,10 +79,6 @@ const rows: Row[] = [
 <section class="glance" data-pagefind-ignore>
   <FoldHead id={GLANCE_ID}>{GLANCE_TITLE}</FoldHead>
   {cards.length > 0 && <p class="glance-lead" data-clamp="1">{GLANCE_LEAD}</p>}
-  {/* Two groups, each named at the left of its rows, as "The record in brief" is laid
-      out: the claim's terms, then what is on record of it. */}
-  <div class="glance-group">
-  <h3>{GLANCE_GROUPS.terms}</h3>
   <dl class="glance-rows">
     {
       rows.map(({ row, value, detail, cards: rowCards }) => {
@@ -99,6 +94,17 @@ const rows: Row[] = [
           card?.reasons.find((reason) => reason.name)?.name ??
           (row === "condition" ? indication : intervention.name);
         const filed = card && filedAs(row, card, claimWords);
+        // A row is its label and its value. A score in the high band, and how a term was
+        // found, are said where the row opens; a score below the high band stays in sight
+        // on the row, so a weaker match is never one press away from being seen.
+        const scores = rowScores(rowCards);
+        const inSight = scores.filter((score) => /^(medium|low), \d+%$/.test(score.words));
+        const opened = scores.filter((score) => !inSight.includes(score));
+        // Whose words the row gives, and the address a reader can check them at: the
+        // term's own page at its source, or the source itself where the words or the
+        // facts are another source's.
+        const by = card ? (words ? wordsBy! : sourceOf(card.facts_source ?? card.source)!) : null;
+        const byUrl = card && by ? ((words ? card.definition_source : card.facts_source) ? by.url : card.url) : null;
         return (
           // Reached from the band's links: the row takes focus and is marked.
           <div id={rowId(row)} tabindex="-1">
@@ -106,9 +112,9 @@ const rows: Row[] = [
             <dd>
               <span class="glance-head">
                 <span class="glance-value">{value}</span>
-                {rowCards.length > 0 && (
+                {inSight.length > 0 && (
                   <span class="glance-scores">
-                    {rowScores(rowCards).map((score) => (
+                    {inSight.map((score) => (
                       <Score about={score.about} words={score.words} shown={score.shown}>
                         <span>{TERM_SCORE_MEANING}</span>
                       </Score>
@@ -132,20 +138,15 @@ const rows: Row[] = [
                 </span>
               )}
               {card && (
-                // The row's one press: whose term it is, in sight, and the chevron. The
-                // words that say what it opens are read out, not drawn. With no script
-                // the row is simply open (scripts/folds.ts).
+                // The row's one press: a chevron. The words that say what it opens are
+                // read out, not drawn. With no script the row is simply open
+                // (scripts/folds.ts).
                 <button
                   type="button"
                   class="glance-open"
                   aria-expanded="true"
                   aria-controls={`${rowId(row)}-more`}
                 >
-                  <span class="glance-source">
-                    {sourceName(words ? wordsBy! : sourceOf(card.facts_source ?? card.source)!)}
-                  </span>
-                  {/* A space is written out, so the name read out does not run two parts together. */}
-                  {" "}
                   <span class="glance-more-words">{short || !words ? "Why this term" : "Full definition and why this term"}</span>
                   <span class="visually-hidden"> for {value}.</span>
                   <span class="chev" aria-hidden="true">
@@ -153,17 +154,37 @@ const rows: Row[] = [
                   </span>
                 </button>
               )}
-              {card && (
+              {card && by && (
                 <div class="glance-more" id={`${rowId(row)}-more`}>
-                  {/* Whose words they are, the words, where the claim's term is filed, then
-                      the card's credit and reasons. */}
-                  <p class="glance-by">
-                    {wordsLine(card, words ? wordsBy! : sourceOf(card.facts_source ?? card.source)!, words !== null)}
-                  </p>
-                  {words && (
-                    <blockquote class:list={["glance-words", { "glance-words-long": !short }]} cite={card.url}>
-                      {words}
-                    </blockquote>
+                  {/* The source's words as they stand, then a quiet pill naming whose they
+                      are, which opens that source in a new tab. A drug's record has no
+                      words of its own, so its pill stands alone. */}
+                  <div class="glance-said">
+                    {words && (
+                      <blockquote class:list={["glance-words", { "glance-words-long": !short }]} cite={card.url}>
+                        {words}
+                      </blockquote>
+                    )}{" "}
+                    {!words && (
+                      <span class="glance-part-label" aria-hidden="true">Source</span>
+                    )}
+                    <a class="source-pill" href={byUrl} target="_blank" rel="noopener">
+                      <span class="visually-hidden">{wordsLine(card, by, words !== null)}: </span>
+                      {sourceName(by)}
+                      <span class="visually-hidden"> (opens in a new tab)</span>
+                    </a>
+                  </div>
+                  {opened.length > 0 && (
+                    <p class="glance-match">
+                      <span class="glance-part-label" aria-hidden="true">Match</span>
+                      <span class="glance-match-scores">
+                        {opened.map((score) => (
+                          <Score about={score.about} words={score.words} shown={score.shown}>
+                            <span>{TERM_SCORE_MEANING}</span>
+                          </Score>
+                        ))}
+                      </span>
+                    </p>
                   )}
                   {filed && (
                     <p class="glance-filed">
@@ -195,17 +216,9 @@ const rows: Row[] = [
       })
     }
   </dl>
-  </div>
-  {
-    Astro.slots.has("default") && (
-      <div class="glance-group">
-        <h3>{GLANCE_GROUPS.facts}</h3>
-        <dl class="glance-facts">
-          <slot />
-        </dl>
-      </div>
-    )
-  }
+  <dl class="glance-facts">
+    <slot />
+  </dl>
   {
     cards.length > 0 && (
       <p class="glance-note" data-clamp="1">

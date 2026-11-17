@@ -16,10 +16,6 @@ import { matchWords } from "./confidence";
 
 export const GLANCE_TITLE = "At a glance";
 
-/** The section's two groups, named at the left of their rows as "The record in brief"
- * names its groups: the claim's terms, then the claim's own facts. */
-export const GLANCE_GROUPS = { terms: "The claim", facts: "On record" } as const;
-
 /** The section's anchor, and each row's, so the band can point at a row. */
 export const GLANCE_ID = "glance";
 export const rowId = (row: GlanceRow) => `glance-${row}`;

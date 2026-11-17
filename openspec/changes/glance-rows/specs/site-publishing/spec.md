@@ -3,31 +3,37 @@
 ## ADDED Requirements
 
 ### Requirement: A term in "At a glance" is one line that opens
-On a claim page each term of "At a glance" SHALL be drawn as one line holding its label, its value, its score or how it was found, and the name of the source whose term it is. The line SHALL open, on a press and from the keyboard, to whose words they are, the source's definition whole, where the claim's term is filed when it differs, and the card's credit and reasons. The source's name SHALL be in sight while the row is closed. With no script, and on paper, every row SHALL be open. A link to a term from elsewhere on the page SHALL open it. The claim's own facts SHALL be rows of the same list.
+On a claim page each term of "At a glance" SHALL be drawn as one line holding its label and its value, on one baseline at the top of the row at every width, with the value's other names under it. The line SHALL open, on a press and from the keyboard, to the source's definition whole and in quotation marks, the term's match, where the claim's term is filed when it differs, and the card's credit and reasons. With no script, and on paper, every row SHALL be open. A link to a term from elsewhere on the page SHALL open it. The claim's own facts SHALL be rows of the same list.
 
 #### Scenario: Reading the list
 - **WHEN** a reader opens a claim with four terms at 1400 pixels wide
-- **THEN** each term is one line with its value, its score and its source's name, and the three facts follow as rows of the same list
-
-#### Scenario: Opening a term
-- **WHEN** the reader presses a term's line
-- **THEN** the source's definition is shown whole with whose words they are and why the term matched, and pressing the score opens the score's own panel and not the row
+- **THEN** each term is one line with its label and its value, and the three facts follow as rows of the same list
 
 #### Scenario: From the band
 - **WHEN** the reader follows "Kind of molecule" from the band
 - **THEN** that term's row is open and in view
 
-### Requirement: A row of "At a glance" is read label to value, and opens to labelled parts
-The label and the value of a row SHALL share a line at the top of the row, at every width. The score, how a term was found and the source's name SHALL be drawn quieter than the label and the value, and a lower-band reading SHALL keep its words in the page's ink. An opened row SHALL be marked as open across the list's width, and what it opens to SHALL be a set of parts, each with its own label: the source's words, where the term is filed, the term as its source names it with its credit, and why it matched. The source's words SHALL be the most prominent part and the credit the least.
+### Requirement: A term's score is said where its row opens, unless it is below the high band
+A term's score in the high band, and how a term was found where it has no percentage, SHALL be shown where the row opens, beside the label "Match", as the page's score chip. A term's score below the high band SHALL be shown on the closed row, in sight with nothing to press. This is an exception, for term matches in "At a glance" only, to the requirement that every score is in sight.
+
+#### Scenario: A strong match
+- **WHEN** a condition is matched to a vocabulary term at 0.98
+- **THEN** the closed row shows the label and the value only, and the opened row shows "Match" with a chip reading "High, 98%"
+
+#### Scenario: A weaker match
+- **WHEN** a condition is matched to a vocabulary term at 0.62
+- **THEN** the closed row shows a chip reading "Medium, 62%" beside the value
+
+### Requirement: The source's words end in a pill that opens the source
+Where a row opens to a source's words, the words SHALL be shown without a label, and SHALL be followed by a pill that names the source and is a link to the term's page at that source, or to the source itself where the words are another source's. The link SHALL open in a new tab and SHALL say so to a screen reader, with whose words they are. A term with no words of its source's SHALL show the pill beside the label "Source".
+
+#### Scenario: A definition from a vocabulary
+- **WHEN** a reader opens "Claimed for"
+- **THEN** the definition is followed by a pill reading "MeSH", and pressing it opens the term's page at the vocabulary in a new tab
+
+### Requirement: An opened row is marked and its parts are labelled
+An opened row SHALL be marked as open across the list's width. After the source's words, each part SHALL carry its own label: the match, where the term is filed, the term as its source names it with its credit, and why it matched. The source's words SHALL be the most prominent part and the credit the least.
 
 #### Scenario: Reading an opened term
 - **WHEN** a reader opens "Claimed for"
-- **THEN** the row is tinted, the definition is the largest text under it beside "In MeSH’s words", and "Why it matched" and the credit follow, each smaller and each with its label
-
-### Requirement: "At a glance" is in two named groups
-The terms of "At a glance" SHALL stand in a group named "The claim" and the claim's own facts in a group named "On record", each name beside its rows on a wide screen and over them on a phone. On a wide screen the labels and the values of "At a glance" SHALL stand in the same columns as the questions and the answers of "The record in brief".
-
-#### Scenario: The two sections together
-- **WHEN** a reader looks at "At a glance" above "The record in brief" at 1400 pixels wide
-- **THEN** each has its group names in the left column, and the values of the first stand directly over the answers of the second
-
+- **THEN** the row is tinted, the definition is the largest text under it, and "Match", "Filed there as", the term with its credit and "Why it matched" follow, each smaller and each with its label
