@@ -407,12 +407,12 @@ def test_agreement_counts_only_evidence_in_the_filed_group(session, trial_term, 
 def test_prepare_places_a_new_condition_term_before_first_export(
     session, tmp_path, parent_available
 ):
-    from claim_support import Sources, prepare
+    from claim_support import Sources, Vocabulary, prepare
     from store_support import assert_same_export
     from thenwhat.sources.base import SourceError
     from thenwhat.sources.mesh import LabelledTerm
 
-    class MeshWithCondition(FakeMesh):
+    class MeshWithCondition(FakeMesh, Vocabulary):
         vocabulary_year = "2026"
 
         def terms_labelled(self, name):
@@ -435,7 +435,7 @@ def test_prepare_places_a_new_condition_term_before_first_export(
                     "mesh", identifier, f"{YEAR}/{identifier}", {"term": broader}, NOW
                 )
             record = super().term(identifier, force=force)
-            if identifier == "D011565":
+            if record is not None and identifier == "D011565":
                 record.payload["term"]["broaderDescriptor"] = f"{YEAR}/D900001"
             return record
 
