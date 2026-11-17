@@ -42,7 +42,10 @@ const first = async (sql) => (await execute(to, "--command", sql))[0].results;
 try {
   // The tables the migrations create, last first, and of those the ones this database has.
   const created = readdirSync(here("../migrations")).sort().flatMap((file) =>
-    [...readFileSync(here(`../migrations/${file}`), "utf8").matchAll(/^CREATE TABLE (?:IF NOT EXISTS )?"?(\w+)"?/gm)].map(([, table]) => table)).reverse();
+    [...readFileSync(here(`../migrations/${file}`), "utf8").matchAll(/^CREATE TABLE (?:IF NOT EXISTS )?"?(\w+)"?/gm)].map(([, table]) => table))
+    // A table a later migration makes again keeps the place it first had, among its
+    // parents and children: the first time it was made is where it belongs.
+    .filter((table, at, all) => all.indexOf(table) === at).reverse();
   const there = new Set((await first("SELECT name FROM sqlite_master WHERE type = 'table'")).map((row) => row.name));
   const tables = created.filter((table) => there.has(table));
   const absent = created.filter((table) => !there.has(table));
