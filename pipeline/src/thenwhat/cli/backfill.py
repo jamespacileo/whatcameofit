@@ -358,7 +358,13 @@ def plan_command() -> None:
             # and the ledger is left as it was.
             notice_changes(session, claim_steps_of(steps))
             for step in steps:
-                counts = count(session, step, settings.backfill_attempt_limit)
+                changed_inputs = getattr(step, "changed_inputs", None)
+                counts = count(
+                    session,
+                    step,
+                    settings.backfill_attempt_limit,
+                    changed_inputs=changed_inputs(session) if changed_inputs else None,
+                )
                 total = session.scalar(select(func.count()).select_from(step.model)) or 0
                 out.print(f"{step.name} (version {step.version})", markup=False)
                 out.print(

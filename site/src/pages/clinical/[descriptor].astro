@@ -38,7 +38,7 @@ const claims = data.claims
 
 <Base
   title={`${node.label} (MeSH)`}
-  description={`Tracked claims whose trials or papers are indexed under the MeSH category ${node.label}, and where each stands now.`}
+  description={`Tracked claims filed under the MeSH category ${node.label}, and where each stands now.`}
   current="topics"
   breadcrumbs={[
     { name: "Clinical categories", path: "/clinical" },
@@ -69,7 +69,7 @@ const claims = data.claims
   <p class="what-this-is">
     {`MeSH category ${node.identifier}${node.tree_numbers.length > 0 ? `, tree ${node.tree_numbers.join(", ")}` : ""}.`}
     {broader.length === 0 && " It is at the top of its tree."}
-    {" A category says what a claim's trials and papers are about. It is not a diagnosis and not advice."}
+    {" A condition can be listed in a trial record, indexed as a major subject on a paper, or identified by an approved model reading of the claim’s stated condition. Each claim page names its sources. A category is not a diagnosis and not advice."}
   </p>
 
   {

@@ -20,12 +20,13 @@ const filed = new Set([...tree.claims.values()].flatMap((slugs) => [...slugs])).
 >
   <h1 class="title">Clinical categories</h1>
   <p class="lede">
-    {`${filed} ${filed === 1 ? "claim" : "claims"}`} filed by the conditions their trials and papers
-    are indexed under, in MeSH's own names and hierarchy. A claim can sit under more than one category.
+    {`${filed} ${filed === 1 ? "claim" : "claims"}`} filed by condition using MeSH, the National Library of Medicine’s
+    vocabulary. A claim can sit under more than one category.
   </p>
   <p class="what-this-is">
-    A category says what a claim's registered trials and published papers are about. It is not
-    a diagnosis and not advice. The same claims in everyday names are on the{" "}
+    Categories come from conditions listed in trial records, major subject headings on papers,
+    or an approved model reading of the claim’s stated condition. Each claim page shows which
+    source supports each category. A category is not a diagnosis and not advice. The same claims in everyday names are on the{" "}
     <a href="/topics">topics page</a>.
   </p>
 

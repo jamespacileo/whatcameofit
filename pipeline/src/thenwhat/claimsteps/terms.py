@@ -9,6 +9,7 @@ back, which asks again only for what is still unscored.
 from dataclasses import dataclass
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claimsteps.inputs import Inputs
@@ -20,8 +21,11 @@ from thenwhat.claimsteps.reasons import (
     run_parts,
 )
 from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
-from thenwhat.db.models import Claim
-from thenwhat.domain import WorkOutcome
+from thenwhat.clinical.service import read_tree, stored_vocabulary
+from thenwhat.db.models import Claim, ClaimTerm
+from thenwhat.domain import ReviewState, TermFit, TermRole, WorkOutcome
+from thenwhat.export.records import PostgresRecords
+from thenwhat.sources.base import MissingContact, SourceError
 from thenwhat.terms.service import (
     DrugRun,
     KindRun,
@@ -45,6 +49,7 @@ class TermsFound:
     kind: KindRun | KindTermMissing | None = None
     targets: TargetsRun | None = None
     drug: DrugRun | None = None
+    tree_error: SourceError | None = None
 
     @property
     def unscored(self) -> int:
@@ -107,6 +112,29 @@ class ClaimTerms(ClaimStep):
                 reject_below=self.reject_below,
             )
 
+        def ancestry() -> None:
+            approved = list(
+                session.scalars(
+                    select(ClaimTerm.external_id).where(
+                        ClaimTerm.claim_id == claim.id,
+                        ClaimTerm.source_name == "mesh",
+                        ClaimTerm.review_state == ReviewState.APPROVED,
+                        ClaimTerm.role == TermRole.CONDITION,
+                        ClaimTerm.fit == TermFit.EXACT,
+                    )
+                )
+            )
+            if approved and stored_vocabulary(PostgresRecords(session)).missing(approved):
+                try:
+                    read_tree(session, sources.make_mesh(session), [claim], mapping={})
+                except MissingContact as error:
+                    # The optional ancestry lookup has no configured contact. Keep the
+                    # completed term decisions and report the pending tree to the operator.
+                    found.tree_error = error
+                except SourceError as error:
+                    found.tree_error = error
+                    raise
+
         def kind() -> None:
             try:
                 found.kind = link_kind(
@@ -136,7 +164,7 @@ class ClaimTerms(ClaimStep):
         def drug() -> None:
             found.drug = link_drug(session, claim, drugs=sources.make_drugs(session), now=now)
 
-        unfinished = run_parts(session, (terms, kind, targets, drug), now)
+        unfinished = run_parts(session, (terms, kind, targets, drug, ancestry), now)
         if unfinished is not None:
             return unfinished
         if found.unscored:

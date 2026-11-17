@@ -581,6 +581,27 @@ def test_a_registry_that_is_paused_stops_the_search_and_counts_nothing_against_t
     assert claim.review_state is ReviewState.PENDING
 
 
+def test_an_added_paper_doi_reopens_only_the_paper_lookup_once(session):
+    claim = new_claim(session)
+    sources = Sources(papers=Nothing())
+    calls = []
+
+    def lookup(doi):
+        calls.append(doi)
+        return None
+
+    sources.registry.work = lookup
+    prepare(session, sources, names=(*SEARCH, PAPERS))
+    assert entry(session, PAPERS, claim).outcome is WorkOutcome.DONE and not calls
+    searched = list(sources.registry.asked)
+    session.add(Entity(claim_id=claim.id, type=EntityType.PAPER, name="A paper", doi="10.1000/new"))
+    results = by_step(prepare(session, sources, names=(*SEARCH, PAPERS), at=LATER))
+    assert results[TRIALS].report.processed == 0 and results[PAPERS].report.processed == 1
+    unchanged = by_step(prepare(session, sources, names=(*SEARCH, PAPERS), at=LATER))
+    assert unchanged[PAPERS].report.processed == 0
+    assert calls == ["10.1000/new"] and sources.registry.asked == searched
+
+
 def test_ready_draft_can_be_decided_at_the_model_ceiling(session: Session, monkeypatch):
     from decimal import Decimal
 

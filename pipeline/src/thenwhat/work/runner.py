@@ -398,7 +398,7 @@ def process_batch(
         except SourceStop:
             raise
         except Exception as failure:  # the call failed as a whole
-            span.ended(measure.FAILED, outcome_class=measure.FAILED)
+            span.ended(measure.BATCH_RETRY)
             span.span.error_kind = type(failure).__name__
             answers = None
         if answers is not None:

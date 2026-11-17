@@ -90,4 +90,4 @@
 
 ## 9. Stored trial eligibility and alias corroboration (P2)
 
-- [ ] 9.1 <a id="task-f10"></a>Count distinct registry IDs across drug forms. Verify lookup and scoring in the one-NCT and two-NCT cases, preserving the development-code exception. [F10](../../../docs/reviews/2026-11-17-code-review.md#finding-f10) · [Acceptance scenario](specs/entity-resolution/spec.md#scenario-one-trial-lists-two-forms-under-one-brand)
+- [x] 9.1 <a id="task-f10"></a>Count distinct registry IDs across drug forms. Verify lookup and scoring in the one-NCT and two-NCT cases, preserving the development-code exception. [F10](../../../docs/reviews/2026-11-17-code-review.md#finding-f10) · [Acceptance scenario](specs/entity-resolution/spec.md#scenario-one-trial-lists-two-forms-under-one-brand)

@@ -63,7 +63,9 @@ def tree_command(
 
     For each category a claim's approved trials and papers give it, each descriptor the
     topic mapping names, and every descriptor broader than those, the record is read
-    from NLM's MeSH service and stored. A record already stored is not asked for again.
+    from NLM's MeSH service and stored. A record already stored is not asked for again
+    within the year's vocabulary; in a new year each one in use is read again, and one
+    the year no longer holds keeps its last record and says the year it was read from.
     """
     with entry_session() as session:
         claims = (
@@ -88,9 +90,15 @@ def tree_command(
             for heading in run.unknown_headings:
                 out.print(f"  {heading}", markup=False)
         if run.retired:
+            listed = ", ".join(
+                f"{one} (last read from MeSH {run.retired_years[one]})"
+                if one in run.retired_years
+                else one
+                for one in run.retired
+            )
             out.print(
                 f"{_count(len(run.retired), 'descriptor')} the vocabulary no longer holds:"
-                f" {', '.join(run.retired)}",
+                f" {listed}",
                 markup=False,
             )
         for problem in configuration_problems(vocabulary):

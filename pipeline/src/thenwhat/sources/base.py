@@ -27,7 +27,7 @@ from thenwhat.work.calls import CallRules, Calls, NotAnswered, Passing, passes, 
 from thenwhat.work.clock import SystemTime, Time
 from thenwhat.work.errors import AllowanceUsedUp as AllowanceSpent
 from thenwhat.work.errors import CannotAsk, SourcePaused
-from thenwhat.work.pause import apart, let_in, pause, refuse_if_paused
+from thenwhat.work.pause import apart, finish_wait, let_in, pause
 
 # The clock is the work package's; it is named here too for the source clients.
 __all__ = ["SystemTime", "Time"]
@@ -406,5 +406,10 @@ class Source:
             self._pacer.wait(self._time, self._interval)
         measure.add_wait(self.name, self._time.monotonic() - began)
         if wait > 0 or self._pacer is not None:
-            with apart(self._session) as own:
-                refuse_if_paused(own, self.name, self._time.now())
+            finish_wait(
+                lambda: apart(self._session),
+                self.name,
+                reserved_at=now,
+                now=self._time.now(),
+                counted=self._allowance is not None,
+            )

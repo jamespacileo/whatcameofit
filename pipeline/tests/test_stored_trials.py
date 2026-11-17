@@ -555,3 +555,26 @@ def test_rescore_leaves_a_rejection_a_person_made(session: Session):
 
     assert again == []
     assert trial_matches(session)["NCT00000001"].reviewed_by is Decider.HUMAN
+
+
+def test_two_forms_in_one_trial_supply_only_one_vote_for_a_brand(session):
+    claim = zentalimab_claim(session)
+    brand = "Zentalimab"
+    generic = "Marivol"
+    forms = [entry(generic, brand), entry("Marivol hydrochloride", brand)]
+    unrelated = "NCT00000002"
+    studies = {"NCT00000001": forms, unrelated: [entry(generic)]}
+
+    def add(number, entries):
+        store(session, number, *entries)
+        return payload(number, "In full", ["Tooth Agenesis"], entries)
+
+    full = {number: add(number, entries) for number, entries in studies.items()}
+    registry = FakeTrials({}, full)
+    assert unrelated not in found(session, brand)
+    resolve(session, claim, registry, ReadsTheRecord())
+    assert unrelated not in trial_matches(session)
+    full["NCT00000003"] = add("NCT00000003", [entry("Marivol hydrochloride", brand)])
+    assert unrelated in found(session, brand)
+    resolve(session, claim, registry, ReadsTheRecord())
+    assert unrelated in trial_matches(session)

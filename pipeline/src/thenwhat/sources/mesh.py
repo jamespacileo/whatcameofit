@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from thenwhat.sources.base import Source, SourceRecord, SourceUnavailable
+from thenwhat.sources.base import Source, SourceError, SourceRecord, SourceUnavailable
 
 BASE = "https://id.nlm.nih.gov/mesh"
 # Where a record says it lives. NLM writes these with http.
@@ -122,20 +122,32 @@ def describe(record: SourceRecord) -> Term:
     )
 
 
+class UnexpectedAnswer(SourceError):
+    """The lookup answered something other than a list of matches, so nothing is known
+    of whether a descriptor has the label: it is no "none found" and is asked again."""
+
+
 class Mesh(Source):
     name = "mesh"
     default_rate_per_second = 2.0
+
+    @property
+    def vocabulary_year(self) -> str:
+        """The year of the vocabulary every request names, from the request clock."""
+        return str(self._time.now().year)
 
     def term(self, identifier: str, *, force: bool = False) -> SourceRecord | None:
         """The term's record with its preferred concept's, which holds the definition.
         None for an identifier the vocabulary does not hold."""
         if not IDENTIFIER.match(identifier):
             return None
-        year = self._time.now().year
+        year = self.vocabulary_year
         fetched = self._get(f"{BASE}/{year}/{identifier}.json", force=force)
         # An unknown identifier answers with an empty object, not with not-found.
-        if fetched is None or not isinstance(fetched.payload, dict) or not fetched.payload:
+        if fetched is None or fetched.payload == {}:
             return None
+        if not isinstance(fetched.payload, dict):
+            raise UnexpectedAnswer(f"MeSH {year} returned no descriptor record for {identifier}.")
         concept: dict[str, Any] | None = None
         preferred = RESOURCE.match(str(fetched.payload.get("preferredConcept") or ""))
         if preferred is not None:
@@ -152,14 +164,18 @@ class Mesh(Source):
 
     def descriptor_labelled(self, label: str) -> str | None:
         """The identifier of the descriptor whose own label equals this one, whatever its
-        case. None when no descriptor's label does. An entry term is not a label: a
-        paper's subject heading is given by its descriptor's label, so nothing looser is
-        tried."""
+        case. None when the year's vocabulary answered that no descriptor's label does.
+        An answer that is not a list of matches raises `UnexpectedAnswer`, and a request
+        that fails raises too, so neither is ever taken for none found. An entry term is
+        not a label: a paper's subject heading is given by its descriptor's label, so
+        nothing looser is tried."""
         label = " ".join(label.split())
         if not label:
             return None
         found = [
-            identifier for identifier, own in self._equal(label, "descriptor") if _same(own, label)
+            identifier
+            for identifier, own in self._equal(label, "descriptor", strict=True)
+            if _same(own, label)
         ]
         return found[0] if found else None
 
@@ -197,27 +213,38 @@ class Mesh(Source):
                 )
         return _Lookup(tuple(found.values()), tuple(unresolved))
 
-    def _equal(self, name: str, kind: str) -> list[tuple[str, str]]:
+    def _equal(self, name: str, kind: str, *, strict: bool = False) -> list[tuple[str, str]]:
         """What the exact lookup of `kind` ("descriptor" or "term") answers for the
-        name, as identifier and label, compared here as well."""
+        name, as identifier and label, compared here as well. `strict` raises for an
+        answer that is not a list, rather than taking it for no match."""
         fetched = self._get(
             f"{BASE}/lookup/{kind}",
             {
                 "label": name,
                 "match": "exact",
                 "limit": str(MAX_LABELLED),
-                "year": str(self._time.now().year),
+                "year": self.vocabulary_year,
             },
         )
         if fetched is None or not isinstance(fetched.payload, list):
+            if strict:
+                raise UnexpectedAnswer(
+                    f"MeSH {self.vocabulary_year} {kind} lookup of {name!r} gave no list"
+                )
             return []
         found: list[tuple[str, str]] = []
         for item in fetched.payload:
-            if not isinstance(item, dict):
+            address = (
+                RESOURCE.match(str(item.get("resource") or "")) if isinstance(item, dict) else None
+            )
+            label = item.get("label") if isinstance(item, dict) else None
+            if address is None or not isinstance(label, str):
+                if strict:
+                    raise UnexpectedAnswer(
+                        f"MeSH {self.vocabulary_year} returned a malformed {kind} match."
+                    )
                 continue
-            address = RESOURCE.match(str(item.get("resource") or ""))
-            label = item.get("label")
-            if address is None or not isinstance(label, str) or not _same(label, name):
+            if not _same(label, name):
                 continue
             # A descriptor lookup answers descriptors (D), a term lookup terms (T).
             if address.group(2).startswith("T" if kind == "term" else "D"):
@@ -238,7 +265,7 @@ class Mesh(Source):
                 {
                     "query": query,
                     "format": "JSON",
-                    "year": str(self._time.now().year),
+                    "year": self.vocabulary_year,
                     "inference": "false",
                 },
             )

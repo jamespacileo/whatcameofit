@@ -220,8 +220,8 @@ def _titled(session: Session, keys: Sequence[str], indication: str | None) -> li
         )
 
 
-def filed_names(trials: Sequence[StoredTrial], key: str) -> dict[str, tuple[str, int]]:
-    """Each name the stored trials file this name under, with how many trials do: an
+def _filings(trials: Sequence[StoredTrial], key: str) -> dict[str, tuple[str, set[str]]]:
+    """Each name the stored trials file this name under, with the IDs of the trials that do. An
     entry that lists the name among its other names is filed under the entry's own
     name, a dose, form or route aside. An entry that joins several products, or whose
     own name is a description, says nothing."""
@@ -240,7 +240,7 @@ def filed_names(trials: Sequence[StoredTrial], key: str) -> dict[str, tuple[str,
             alone = name_alone(written)
             if alone is not None:
                 found.setdefault(name_key(alone), (alone, set()))[1].add(trial.external_id)
-    return {filed: (name, len(ids)) for filed, (name, ids) in found.items()}
+    return found
 
 
 def filed_under(trials: Sequence[StoredTrial], key: str) -> str | None:
@@ -254,12 +254,15 @@ def filed_under(trials: Sequence[StoredTrial], key: str) -> str | None:
     in it: a single entry can list anything ("growth factor" as another name of one
     product), and a code is filed with its generic name by the one trial of a new drug.
     """
-    found = filed_names(trials, key)
-    filing = sum(count for _, count in found.values())
+    return _unambiguous_name(_filings(trials, key))
+
+
+def _unambiguous_name(found: dict[str, tuple[str, set[str]]]) -> str | None:
+    filing = {trial for _, ids in found.values() for trial in ids}
     for base, (name, _) in found.items():
         if all(other == base or other.startswith((f"{base} ", f"{base}-")) for other in found):
             is_a_code = bool(re.search(r"\d", base))
-            return name if filing >= MIN_TRIALS_FILING or is_a_code else None
+            return name if len(filing) >= MIN_TRIALS_FILING or is_a_code else None
     return None
 
 
@@ -333,11 +336,11 @@ def stored_trials(
     also: dict[str, list[str]] = {}
     for key in asked:
         listing = [trial for trial in mentioning if trial.lists([key])]
-        names_filed = filed_names(listing, key)
+        names_filed = _filings(listing, key)
         also[key] = [
-            other for other, (_, trials) in names_filed.items() if trials >= MIN_TRIALS_FILING
+            other for other, (_, trials) in names_filed.items() if len(trials) >= MIN_TRIALS_FILING
         ]
-        one = filed_under(listing, key)
+        one = _unambiguous_name(names_filed)
         if one is not None:
             also[key].append(claim_key(one))
             if claim_key(one) not in asked:

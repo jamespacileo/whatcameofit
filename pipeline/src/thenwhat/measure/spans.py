@@ -33,6 +33,7 @@ from typing import Any, Protocol
 
 # Outcomes a step's own code does not give.
 FAILED = "failed"
+BATCH_RETRY = "batch_retry"
 DONE = "done"
 
 # What a span may hold. Anything else handed in is refused, so a field that could carry
@@ -126,6 +127,8 @@ class Span:
         return self.started_at + timedelta(seconds=self.ran_seconds + self.waited_seconds)
 
     def records_by_outcome(self) -> dict[str, int]:
+        if self.outcome == BATCH_RETRY:
+            return {}
         return dict(self.outcomes) if self.outcomes else {self.outcome: self.batch}
 
     def as_record(self) -> dict[str, Any]:
