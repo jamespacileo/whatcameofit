@@ -21,6 +21,7 @@ from thenwhat.domain import ReviewState
 from thenwhat.export.build import write_export, write_schema
 from thenwhat.export.parallel import compare_with_store, read_only
 from thenwhat.export.store_copy import CopyFailed
+from thenwhat.export.store_fetch import FetchFailed, fetch_store, wrangler_in
 from thenwhat.export.store_records import StoreFault, StoreRecords
 
 # Where the store's schema and merge are in a checkout.
@@ -160,6 +161,31 @@ def export_compare_command(
     report: Annotated[
         Path | None, typer.Option(help="Also write the comparison to this file, as JSON.")
     ] = None,
+    d1: Annotated[
+        str | None,
+        typer.Option(
+            "--d1",
+            envvar="STORE_D1",
+            help="Read the store's export from this D1 database itself: its rows are first"
+            " fetched into a store file with `wrangler d1 execute --remote`. Only reads.",
+        ),
+    ] = None,
+    r2_bucket: Annotated[
+        str | None,
+        typer.Option(
+            envvar="STORE_R2_BUCKET",
+            help="With --d1 and --payloads: fetch each payload object the folder lacks from"
+            " this bucket.",
+        ),
+    ] = None,
+    wrangler_dir: Annotated[
+        Path,
+        typer.Option(help="With --d1: the folder wrangler is installed and run in."),
+    ] = STORE_SQL / "ingest",
+    wrangler_config: Annotated[
+        Path | None,
+        typer.Option(help="With --d1: the Wrangler configuration that names the database."),
+    ] = None,
     allow_named: Annotated[
         bool,
         typer.Option(
@@ -175,17 +201,36 @@ def export_compare_command(
     what the store cannot, or the store's merge reorders a list). With --allow-named
     only a difference without a cause fails the comparison.
 
-    With --store, the store's export is read from that file. Without it, a store file is
-    first made from the database through the store's own merge, which shows whether the
-    store can hold the records, not whether it does.
+    With --store, the store's export is read from that file, whoever built it. With
+    --d1, from the D1 database itself. With neither, a store file is first made from the
+    database through the store's own merge, which shows whether the store can hold the
+    records, not whether it does.
 
     Nothing is written to the database or to the store file given."""
     settings = settings_or_exit()
+    if store is not None and d1 is not None:
+        err.print("Give --store or --d1, not both.")
+        raise typer.Exit(code=1)
     if store is None and not (store_sql / "merge.sql").is_file():
         err.print(f"No merge.sql in {store_sql}. Name the store's folder with --store-sql.")
         raise typer.Exit(code=1)
     with tempfile.TemporaryDirectory() as scratch, reading_session() as session:
         try:
+            if d1 is not None:
+                store = (keep or Path(scratch)) / "store.db"
+                fetched = fetch_store(
+                    d1,
+                    store,
+                    schema=store_sql / "schema.sql",
+                    wrangler=wrangler_in(wrangler_dir, wrangler_config),
+                    payloads=payloads,
+                    bucket=r2_bucket,
+                )
+                out.print(
+                    f"Fetched {sum(fetched.rows.values())} rows of {d1} in {fetched.queries}"
+                    f" queries ({fetched.objects_fetched} payload objects).",
+                    markup=False,
+                )
             result = compare_with_store(
                 session,
                 now=datetime.now(UTC),
@@ -196,7 +241,7 @@ def export_compare_command(
                 every=every,
                 **_thresholds(settings),
             )
-        except (StoreFault, CopyFailed) as fault:
+        except (StoreFault, CopyFailed, FetchFailed) as fault:
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None
     if result.copy is not None:

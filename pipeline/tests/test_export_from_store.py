@@ -567,3 +567,62 @@ def test_names_in_another_order_are_the_merges_and_anything_more_is_unexplained(
     assert order_only.cause is not None and "store/merge.sql" in order_only.cause
     assert [d.cause for d in comparison.differences] == [None]
     assert comparison.unexplained == comparison.differences
+
+
+def answering_from(path: Path, asked: list[list[str]]):
+    """A stand-in for `wrangler`: answers a `d1 execute` from a local store file in the
+    form wrangler prints, and copies an object for an `r2 object get`."""
+
+    def wrangler(arguments):
+        asked.append(list(arguments))
+        if arguments[:2] == ["d1", "execute"]:
+            db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            db.row_factory = sqlite3.Row
+            rows = [dict(row) for row in db.execute(arguments[arguments.index("--command") + 1])]
+            db.close()
+            return json.dumps([{"results": rows, "success": True, "meta": {}}])
+        raise AssertionError(f"not expected: {arguments}")
+
+    return wrangler
+
+
+def test_compare_command_reads_the_stores_export_from_the_database_itself(
+    session: Session, tmp_path: Path, invoke, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Comparing against the store itself"""
+    new_claim(session)
+    add_event(session)
+    twin = new_claim(session, "second-claim")
+    archive_claim(session, twin.slug, reason="entered twice", now=NOW)
+    held = tmp_path / "held"
+    store_of(session, held, NOW)[0].close()
+    asked: list[list[str]] = []
+    monkeypatch.setattr(
+        "thenwhat.cli.export.wrangler_in",
+        lambda folder, config: answering_from(held / "store.db", asked),
+    )
+
+    result = invoke(
+        "export-compare", "--d1", "thenwhat-store-preview", "--store-sql", str(STORE_SQL)
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "The two exports are the same: 1 claims, byte for byte." in result.output
+    assert all("--remote" in arguments and "SELECT" in arguments[-1] for arguments in asked)
+    assert not any(word in arguments[-1] for arguments in asked for word in ("INSERT", "UPDATE"))
+
+
+def test_compare_command_refuses_a_store_it_cannot_read(
+    session: Session, tmp_path: Path, invoke, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Comparing against the store itself"""
+    new_claim(session)
+    session.flush()
+    monkeypatch.setattr(
+        "thenwhat.cli.export.wrangler_in", lambda folder, config: lambda arguments: "not json"
+    )
+
+    result = invoke("export-compare", "--d1", "thenwhat-store-preview")
+
+    assert result.exit_code == 1
+    assert "did not answer" in result.output
