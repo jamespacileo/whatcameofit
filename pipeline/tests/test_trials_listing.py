@@ -13,6 +13,7 @@ import pytest
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
+from thenwhat.backfill.trial_sets import ROLLING
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim, archive_claim
 from thenwhat.cli import app
@@ -22,6 +23,7 @@ from thenwhat.events.manual import add_manual_event
 from thenwhat.export.trials_listing import (
     COLUMNS,
     UnknownSet,
+    YearNotGiven,
     build_listing,
     listing_json_schema,
     write_listing,
@@ -184,6 +186,26 @@ def test_a_trial_cited_through_an_approved_match_names_its_claim(session: Sessio
     assert listed["NCT00000063"]["claim"] is None
 
 
+def test_the_rolling_set_lists_any_phase_under_way_and_what_ended_in_the_year(session: Session):
+    """The rule is `backfill.trial_sets`'; the listing only reads it by name and year."""
+    trial(session, "NCT00000071", phases=["PHASE1"], last_update_posted=date(2019, 4, 2))
+    trial(session, "NCT00000072", overall_status="COMPLETED", completion_date="2026-03")
+    trial(session, "NCT00000073", overall_status="TERMINATED", completion_date="2026-05-01")
+    trial(session, "NCT00000074", overall_status="COMPLETED", completion_date="2025-12")
+
+    listing = json.loads(build_listing(session, ROLLING, 2026).model_dump_json())
+    listed = {row[0]: dict(zip(COLUMNS, row, strict=True)) for row in listing["trials"]}
+
+    assert listing["set"] == ROLLING
+    assert sorted(listed) == ["NCT00000071", "NCT00000072", "NCT00000073"]
+    # Under way by the registry's word, and not changed since 2019: the day is listed.
+    assert listed["NCT00000071"]["state"] == "under_way"
+    assert listed["NCT00000071"]["updated"] == "2019-04-02"
+    assert listed["NCT00000073"]["state"] == "terminated"
+    with pytest.raises(YearNotGiven):
+        build_listing(session, ROLLING)
+
+
 def test_an_unknown_set_is_refused_with_the_list(session: Session):
     with pytest.raises(UnknownSet, match="active-since-2025"):
         build_listing(session, "every-trial")
@@ -238,7 +260,7 @@ def test_the_command_writes_the_listing_and_says_what_it_holds(
 
     assert result.exit_code == 0, result.output
     said = " ".join(result.output.split())
-    assert "Listed 2 trials of active-since-2025" in said
+    assert "Listed 2 trials of active-or-ended-this-year" in said
     assert "1 cited by a published claim" in said
     assert [row[0] for row in json.loads(target.read_text())["trials"]] == [
         "NCT00000051",
@@ -252,5 +274,5 @@ def test_the_command_refuses_an_unknown_set_and_writes_nothing(run, tmp_path: Pa
     result = run("--out", str(target), "--set", "every-trial")
 
     assert result.exit_code == 1
-    assert 'No set of trials is named "every-trial"' in " ".join(result.output.split())
+    assert "No set of stored trials is named 'every-trial'" in " ".join(result.output.split())
     assert not target.exists()

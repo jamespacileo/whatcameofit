@@ -1,5 +1,5 @@
 // What must be true of a trial listing before it is staged or deployed: it matches its
-// schema, is small enough to be the one file a search fetches, and names no claim the
+// schema, is small enough to be built and searched, and names no claim the
 // export it stands beside does not publish. Used by stage-trials-listing.mjs, deploy.mjs
 // and pr-preview.mjs, so a listing that could not be staged cannot be deployed either.
 import fs from "node:fs";
@@ -7,9 +7,11 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 
-// Past this the listing is to be split by a rule the page can follow (openspec
-// trial-pages); Cloudflare refuses a file over 25 MiB outright.
-export const LISTING_LIMIT_BYTES = 8 * 1024 * 1024;
+// The site's build cuts the listing into parts of about a mebibyte, so no file a reader
+// fetches holds all of it (src/lib/trial-listing-parts.mjs). This bounds the whole: the
+// build reads it into memory, and a reader who searches it by words fetches every part.
+// 29 MiB held 102,877 trials on 2026-11-17.
+export const LISTING_LIMIT_BYTES = 64 * 1024 * 1024;
 
 const SCHEMA_FILE = path.resolve(import.meta.dirname, "../trials-listing.schema.json");
 
@@ -48,7 +50,7 @@ export function listingProblems({ text, data, allowEmpty = false }) {
   const compact = `${JSON.stringify(listing)}\n`;
   const size = Buffer.byteLength(compact);
   if (size > LISTING_LIMIT_BYTES) {
-    problems.push(`The trial listing is ${size.toLocaleString("en")} bytes, over the ${LISTING_LIMIT_BYTES.toLocaleString("en")} a single file may be. List a smaller set, or split it.`);
+    problems.push(`The trial listing is ${size.toLocaleString("en")} bytes, over the ${LISTING_LIMIT_BYTES.toLocaleString("en")} a listing may be. List a smaller set.`);
   }
   // Stale check: a listing written before or after another export names claims that
   // export does not publish. Write both again, together.

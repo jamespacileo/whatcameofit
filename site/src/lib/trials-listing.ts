@@ -8,6 +8,7 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { LISTED_TRIAL_PAGES } from "../../site.config.mjs";
+import { PART_BYTES, splitListing } from "./trial-listing-parts.mjs";
 
 export type ListedRow = [
   id: string,
@@ -77,3 +78,32 @@ function load(): TrialsListing {
 }
 
 export const listing: TrialsListing = load();
+
+export interface ListingPart {
+  /** The part's name in its address: /trials-listing/<name>.json. */
+  name: string;
+  /** The first and last registry numbers it holds; parts are in registry-number order. */
+  first: string;
+  last: string;
+  trials: ListedRow[];
+}
+
+// No single file a reader fetches holds the whole listing: it is cut, in registry-number
+// order, into parts of about a mebibyte. A registry number is found in one part.
+export const parts: ListingPart[] = splitListing(listing.trials, PART_BYTES) as ListingPart[];
+
+/** What a reader's search fetches first: which part holds which registry numbers. */
+export const manifest = {
+  schema_version: listing.schema_version,
+  set: listing.set,
+  registry: listing.registry,
+  records_read: listing.records_read,
+  columns: listing.columns,
+  total: listing.trials.length,
+  parts: parts.map((part) => ({
+    file: `/trials-listing/${part.name}.json`,
+    first: part.first,
+    last: part.last,
+    trials: part.trials.length,
+  })),
+};
