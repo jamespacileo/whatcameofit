@@ -45,7 +45,7 @@ const NAMES = {
 
 // ---- what a deployed service must answer -----------------------------------------------
 const ROUTES = [["GET", "/"], ["POST", "/runs"], ["GET", "/runs/x"], ["DELETE", "/runs/x"], ["POST", "/runs/x/records"], ["POST", "/runs/x/merge"], ["POST", "/runs/x/preview"],
-  ["PUT", `/payloads/${"0".repeat(64)}`], ["GET", "/inbox"], ["POST", "/inbox/folded"], ["POST", "/inbox/clear"], ["GET", "/progress"], ["PUT", "/progress/slices"],
+  ["PUT", `/payloads/${"0".repeat(64)}`], ["GET", "/inbox"], ["POST", "/inbox/folded"], ["POST", "/inbox/clear"], ["GET", "/progress"],
   ["POST", "/work/lease"], ["POST", "/slices/take"], ["POST", "/progress/page"], ["GET", "/sql"]];
 export async function smoke(address, say = console.log) {
   const at = address.replace(/\/$/, "");
@@ -85,7 +85,14 @@ export async function smoke(address, say = console.log) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  if (value("--smoke")) process.exit((await smoke(value("--smoke"))) ? 0 : 1);
+  // Only this service is asked, at an address of its own Worker's name: the operator's
+  // token is sent there, so it is sent nowhere else.
+  if (has("--smoke")) {
+    const address = value("--smoke") || "";
+    const names = Object.values(NAMES).map((one) => one.worker).sort((a, b) => b.length - a.length);
+    if (!new RegExp(`^https://(${names.join("|")})\\.[a-z0-9-]+\\.workers\\.dev/?$`).test(address)) stop(`--smoke takes the address a deploy printed: https://<${names.join(" or ")}>.<subdomain>.workers.dev`);
+    process.exit((await smoke(address)) ? 0 : 1);
+  }
   const env = value("--env");
   if (!NAMES[env]) stop("usage: deploy.mjs --env preview|production [--confirm <worker name>] --tokens-file <path> [--skip-secret] [--dry-run] | --smoke <address>");
   const { worker, database, bucket, limits } = NAMES[env];
@@ -148,6 +155,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
   mkdirSync(folder, { recursive: true });
   log = createWriteStream(join(folder, `${env}-${stamp}.log`));
+  // The configuration holds the database's id: it goes even when the run is stopped by hand.
+  for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => { rmSync(config, { force: true }); console.error(`\nstopped by ${signal}; the deploy configuration was removed`); process.exit(130); });
   say(`deploy of ${env}: Worker ${worker}, database ${database}, bucket ${bucket}`);
   let address = null;
   const stages = [

@@ -224,7 +224,7 @@ cd store/ingest
 npx wrangler d1 migrations apply STORE --remote --config wrangler.preview.jsonc
 ```
 
-Applied to the preview on 17 November 2026: `0001_store_schema.sql` (which is `store/schema.sql`, byte for byte) and `0002_ingest_service.sql`.
+Applied to the preview on 17 November 2026: `0001_store_schema.sql` (which was `store/schema.sql`, byte for byte, that day; since then the schema is the sum of the migrations, and `0006` adds the tables of the progressive trial load) and `0002_ingest_service.sql`.
 
 ### Two tiers (decided by the operator on 17 November 2026)
 
@@ -258,9 +258,9 @@ A build's folder is what `thenwhat store build` leaves: `store.hot.sqlite`, `sto
 | 0 | privacy | `thenwhat store prove-no-people` on both files and both payload folders. If it fails or cannot be run, nothing is sent. |
 | 1 | jurisdiction | The database's jurisdiction is read back and must be `eu`; the bucket must be found in `eu`. |
 | 2 | config | The configuration for the environment, with the database's id looked up by name, in a git-ignored file. Production's is removed at the end. |
-| 3 | migrations | All of `store/ingest/migrations/`. |
-| 4 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. |
-| 5 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`. |
+| 3 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`, before anything is changed, so a migration that fails has a point to go back to. |
+| 4 | migrations | All of `store/ingest/migrations/`. Refused when the database applied a migration under a name the files no longer have in that place (they were renumbered on 17 November 2026): such a database is replaced. |
+| 5 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. |
 | 6 | dump | The hot file as SQL (`dump-for-import.mjs`), and that SQL replayed strictly on this machine (`check-dump.mjs`). |
 | 7 | import | The files, in order, counted against the manifest (`import-folder.mjs`). |
 | 8 | checksum | Every hot table in D1 against the build's checks (`checksum-d1.mjs --checks`). No row is fetched back. |
@@ -387,22 +387,18 @@ A restore overwrites the database in place and cancels requests in flight. It pr
 When Time Travel cannot help (the history has run out, or the database is gone), the store is filled again by the same bulk path as the first fill, never row by row through the ingest service.
 
 1. From a Postgres dump: restore it into a scratch Postgres database and point `DATABASE_URL` at it. From a kept store file, skip to step 3.
-2. Build the store file. The database is only read; every record goes through `store/merge.sql`; each payload over 16 KB is written once under `payload/<sha256>`; `<store.sqlite>.pushed.json` is written beside the file.
+2. Build the store file. The database is only read; every record goes through `store/merge.sql`; each payload over the bound a row may hold (524,288 bytes; `store/schema.sql`, the CHECK on `payload.body`) is written once under `payload/<sha256>`; `<store.sqlite>.pushed.json` is written beside the file.
    ```bash
    uv run thenwhat store build <store.sqlite> --payloads <folder>
    ```
-3. Write the SQL: rows only, parents first, no transactions or schema, statements under 90 KB, files cut at 50 MB, with `manifest.json`. The last three files rebuild the search tables.
+3. Run the cut-over on the build's folder. It is the same command as the first fill, and does the dump, the strict replay, the load, the checksums, the payload objects and the bulk file in order (above, "Cut-over: one command"):
    ```bash
-   uv run thenwhat store dump <store.sqlite> <sql-folder> --payloads <folder>
+   make store-cutover ENV=preview STORE_DIR=<the build's folder>
    ```
-4. Into an empty database with the migrations applied and its jurisdiction read back: upload the payload folder to R2 under the same keys, then load and count.
-   ```bash
-   node store/ingest/scripts/import-folder.mjs <sql-folder> --remote
-   ```
-   After a load by hand, `uv run thenwhat store check <manifest.json> <counts.json>` does the count.
-5. Keep `<store.sqlite>.pushed.json` with the file: `thenwhat backfill push --state <it>` then hands over only what changed since the build.
+   By hand, for the hot file alone: `node store/ingest/scripts/dump-for-import.mjs <store.hot.sqlite> <sql-folder>/store.sql --rows-a-file 60000`, then `check-dump.mjs <sql-folder>`, then `import-folder.mjs <sql-folder> --remote`, which counts every table against the dump's manifest, then `checksum-d1.mjs`. The pipeline's own `store dump` and `store check` are retired.
+4. Keep `<store.sqlite>.pushed.json` with the file: `thenwhat backfill push --state <it>` then hands over only what changed since the build.
 
-Not tested: whether rebuilding `link_lead_fts` on D1 fits its 30 seconds for a query. The schema's triggers have already filled that table as the rows arrived, so if that file fails it can be left out; the load stops there, and the count is then run by hand.
+The search tables are filled by the schema's triggers as the rows arrive; the dump holds no statement that rebuilds them.
 
 ### Deploying the ingest service
 
@@ -429,7 +425,7 @@ Queues. `wrangler queues create` has a `--jurisdiction` flag, but Cloudflare's d
 
 ### Watching a backfill
 
-The pipeline reports each slice of a set of trials to `PUT /progress/slices`: how many of its trials have reached each of five stages (record fetched, registry papers, PubMed papers, in the store, page built). `GET /progress` answers counts only, to the operator's and the daily job's tokens: each set with totals by stage and every slice, the last merged run of each writer, and the rows of each table. `<address>/progress/page` shows the same as bars and a grid of slices. The page itself holds nothing; it asks for a token once, keeps it for that browser tab only, and sends it as a header, never in an address. `node store/ingest/scripts/progress-preview.mjs` shows the page on this machine with made-up counts.
+A slice of trials is a record of the store, kind `trial_slice`, handed over and merged like any other: which group of trials it is, how many it holds, and a count and a time for each of five stages (record fetched, registry papers looked for, PubMed asked, in the store, page built). A set is a rule and the year it was chosen in; the pipeline hands every planned slice over at the start, so a set's totals are its slices'; the merge never lets a stage go back. `GET /progress` answers counts only, to the operator's and the daily job's tokens: each set with totals by stage and every slice, the last merged run of each writer, and the rows of each table. `<address>/progress/page` shows the same as bars and a grid of slices. The page itself holds nothing; it asks for a token once, keeps it for that browser tab only, and sends it as a header, never in an address. `node store/ingest/scripts/progress-preview.mjs` shows the page on this machine with made-up counts.
 
 ## Removing saved copies from KV
 

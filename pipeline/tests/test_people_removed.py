@@ -168,3 +168,24 @@ def test_a_store_file_naming_a_person_is_found(tmp_path: Path):
     found = prove_file(path)
     assert found["payload row: overallOfficials"] == 1
     assert set(found) == {f"payload row: {name}" for name in FIELDS}
+
+
+def test_a_responsible_party_keeps_its_type_and_nothing_else():
+    study = _study()
+    party = study["protocolSection"]["sponsorCollaboratorsModule"]["responsibleParty"]
+    party["investigatorNewField"] = "G Person"  # a field the registry might add one day
+    kept = without_people(study)
+    assert kept["protocolSection"]["sponsorCollaboratorsModule"]["responsibleParty"] == {
+        "type": "SPONSOR_INVESTIGATOR"
+    }
+
+
+def test_the_proof_flags_any_responsible_party_field_but_its_type():
+    from thenwhat.sources.people import people_in
+
+    study = without_people(_study())
+    assert people_in(study) == set()
+    study["protocolSection"]["sponsorCollaboratorsModule"]["responsibleParty"][
+        "oldOrganization"
+    ] = "A made-up department"
+    assert people_in(study) == {"investigator name, title or affiliation"}

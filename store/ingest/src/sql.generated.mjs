@@ -32,6 +32,9 @@ export const MERGE = [
  "INSERT INTO merge_report (run_id, kind, resolved, added)\nSELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM registry_load x WHERE x.registry_name = s.body ->> 'registry_name'\n                                             AND x.condition = s.body ->> 'condition'))\nFROM staged s WHERE s.kind = 'registry_load'\nGROUP BY s.run_id, s.kind",
  "INSERT INTO registry_load (registry_name, condition, loaded_from, completed_at, changed_run)\nSELECT s.body ->> 'registry_name', s.body ->> 'condition', s.body ->> 'loaded_from',\n       s.body ->> 'completed_at', s.run_id\nFROM staged s WHERE s.kind = 'registry_load'\nON CONFLICT (registry_name, condition) DO UPDATE SET\n  loaded_from = excluded.loaded_from, completed_at = excluded.completed_at, changed_run = excluded.changed_run\nWHERE excluded.completed_at > registry_load.completed_at",
  "INSERT INTO article_lead (registry_trial_id, url_key, url, outlet, title, published_date, outlet_kind,\n                          source_name, search_query, fetched_at, added_run)\nSELECT s.trial_id, s.body ->> 'url_key', s.body ->> 'url', s.body ->> 'outlet', s.body ->> 'title',\n       s.body ->> 'published_date', s.body ->> 'outlet_kind', s.body ->> 'source_name',\n       s.body ->> 'search_query', s.body ->> 'fetched_at', s.run_id\nFROM staged_of_trial s WHERE s.kind = 'article_lead'\nON CONFLICT (registry_trial_id, url_key) DO NOTHING",
+ "INSERT INTO trial_paper (trial_id, source_name, pubmed_id, payload_sha256, fetched_at, added_run, changed_run)\nSELECT s.trial_id, s.body ->> 'source_name', s.body ->> 'pubmed_id', s.body ->> 'payload_sha256',\n       s.body ->> 'fetched_at', s.run_id, s.run_id\nFROM staged_of_trial s WHERE s.kind = 'trial_paper'\nON CONFLICT (trial_id, source_name, pubmed_id) DO UPDATE SET\n  payload_sha256 = excluded.payload_sha256, fetched_at = excluded.fetched_at, changed_run = excluded.changed_run\nWHERE excluded.fetched_at > trial_paper.fetched_at",
+ "INSERT INTO merge_report (run_id, kind, resolved, added)\nSELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM trial_slice x WHERE x.rule = s.body ->> 'rule'\n                                             AND x.year = s.body ->> 'year' AND x.number = s.body ->> 'number'))\nFROM staged s WHERE s.kind = 'trial_slice'\nGROUP BY s.run_id, s.kind",
+ "INSERT INTO trial_slice (rule, year, number, grp, trials, with_results, registry_papers, pubmed_asked,\n                         pubmed_found, in_store, record_at, registry_papers_at, pubmed_papers_at,\n                         in_store_at, page_at, changed_run)\nSELECT s.body ->> 'rule', s.body ->> 'year', s.body ->> 'number', s.body ->> 'grp', s.body ->> 'trials',\n       s.body ->> 'with_results', s.body ->> 'registry_papers', s.body ->> 'pubmed_asked',\n       s.body ->> 'pubmed_found', coalesce(s.body ->> 'in_store', 0), s.body ->> 'record_at',\n       s.body ->> 'registry_papers_at', s.body ->> 'pubmed_papers_at', s.body ->> 'in_store_at',\n       s.body ->> 'page_at', s.run_id\nFROM staged s WHERE s.kind = 'trial_slice'\nON CONFLICT (rule, year, number) DO UPDATE SET\n  grp = CASE WHEN coalesce(excluded.record_at, '') >= coalesce(trial_slice.record_at, '')\n             THEN excluded.grp ELSE trial_slice.grp END,\n  trials = max(trial_slice.trials, excluded.trials),\n  with_results = max(trial_slice.with_results, excluded.with_results),\n  registry_papers = max(coalesce(trial_slice.registry_papers, excluded.registry_papers),\n                        coalesce(excluded.registry_papers, trial_slice.registry_papers)),\n  pubmed_asked = max(coalesce(trial_slice.pubmed_asked, excluded.pubmed_asked),\n                     coalesce(excluded.pubmed_asked, trial_slice.pubmed_asked)),\n  pubmed_found = max(coalesce(trial_slice.pubmed_found, excluded.pubmed_found),\n                     coalesce(excluded.pubmed_found, trial_slice.pubmed_found)),\n  in_store = max(trial_slice.in_store, excluded.in_store),\n  record_at = max(coalesce(trial_slice.record_at, excluded.record_at),\n                  coalesce(excluded.record_at, trial_slice.record_at)),\n  registry_papers_at = max(coalesce(trial_slice.registry_papers_at, excluded.registry_papers_at),\n                           coalesce(excluded.registry_papers_at, trial_slice.registry_papers_at)),\n  pubmed_papers_at = max(coalesce(trial_slice.pubmed_papers_at, excluded.pubmed_papers_at),\n                         coalesce(excluded.pubmed_papers_at, trial_slice.pubmed_papers_at)),\n  in_store_at = max(coalesce(trial_slice.in_store_at, excluded.in_store_at),\n                    coalesce(excluded.in_store_at, trial_slice.in_store_at)),\n  page_at = max(coalesce(trial_slice.page_at, excluded.page_at),\n                coalesce(excluded.page_at, trial_slice.page_at)),\n  changed_run = excluded.changed_run",
  "INSERT INTO link_lead (url_key, url_key_version, url, outlet, outlet_kind, title, first_shared_at,\n                       origin, names_topic, screen_outcome, triage_score, triage_version,\n                       read_outcome, read_detail, added_run, changed_run)\nSELECT s.body ->> 'url_key', s.body ->> 'url_key_version', s.body ->> 'url', s.body ->> 'outlet',\n       s.body ->> 'outlet_kind', s.body ->> 'title', s.body ->> 'first_shared_at', s.body ->> 'origin',\n       coalesce(s.body ->> 'names_topic', 0), s.body ->> 'screen_outcome', s.body ->> 'triage_score',\n       s.body ->> 'triage_version', s.body ->> 'read_outcome', s.body ->> 'read_detail', s.run_id, s.run_id\nFROM staged s WHERE s.kind = 'link_lead'\nON CONFLICT (url_key) DO UPDATE SET\n  triage_score = excluded.triage_score, triage_version = excluded.triage_version,\n  changed_run = excluded.changed_run\nWHERE excluded.triage_version > coalesce(link_lead.triage_version, 0)",
  "UPDATE link_lead SET first_shared_at = s.body ->> 'first_shared_at'\nFROM staged s\nWHERE s.kind = 'link_lead' AND link_lead.url_key = s.body ->> 'url_key'\n  AND s.body ->> 'first_shared_at' < link_lead.first_shared_at",
  "UPDATE link_lead SET read_outcome = s.body ->> 'read_outcome', read_detail = s.body ->> 'read_detail',\n                     changed_run = s.run_id\nFROM staged s\nWHERE s.kind = 'link_lead' AND link_lead.url_key = s.body ->> 'url_key'\n  AND link_lead.read_outcome IS NULL AND s.body ->> 'read_outcome' IS NOT NULL",
@@ -92,8 +95,8 @@ export const MERGE = [
  "INSERT INTO merge_report (run_id, kind, resolved, added)\nSELECT run_id, kind, count(*), 0 FROM staged_of_article\nWHERE kind IN ('promise', 'reported_statement') GROUP BY kind",
  "INSERT INTO merge_report (run_id, kind, resolved, added)\nSELECT run_id, kind, count(*), 0 FROM staged_of_entity\nWHERE kind IN ('entity_match', 'entity_substance') GROUP BY kind",
  "INSERT INTO merge_report (run_id, kind, resolved, added)\nSELECT run_id, kind, count(*), 0 FROM staged_of_lead\nWHERE kind IN ('link_share', 'link_lead_link', 'lead_reading') GROUP BY kind",
- "INSERT INTO merge_report (run_id, kind, resolved, added)\nSELECT run_id, kind, count(*), 0 FROM staged_of_trial WHERE kind = 'article_lead' GROUP BY kind",
- "UPDATE merge_report SET added = min(resolved, CASE kind\n  WHEN 'payload'            THEN (SELECT count(*) FROM payload            WHERE added_run = merge_report.run_id)\n  WHEN 'claim'              THEN (SELECT count(*) FROM claim              WHERE added_run = merge_report.run_id)\n  WHEN 'source_article'     THEN (SELECT count(*) FROM source_article     WHERE added_run = merge_report.run_id)\n  WHEN 'promise'            THEN (SELECT count(*) FROM promise            WHERE added_run = merge_report.run_id)\n  WHEN 'reported_statement' THEN (SELECT count(*) FROM reported_statement WHERE added_run = merge_report.run_id)\n  WHEN 'entity'             THEN (SELECT count(*) FROM entity             WHERE added_run = merge_report.run_id)\n  WHEN 'entity_match'       THEN (SELECT count(*) FROM entity_match       WHERE added_run = merge_report.run_id)\n  WHEN 'entity_substance'   THEN (SELECT count(*) FROM entity_substance   WHERE added_run = merge_report.run_id)\n  WHEN 'claim_term'         THEN (SELECT count(*) FROM claim_term         WHERE added_run = merge_report.run_id)\n  WHEN 'source_record'      THEN (SELECT count(*) FROM source_record      WHERE added_run = merge_report.run_id)\n  WHEN 'evidence_event'     THEN (SELECT count(*) FROM evidence_event     WHERE added_run = merge_report.run_id)\n  WHEN 'failure_flag'       THEN (SELECT count(*) FROM failure_flag       WHERE added_run = merge_report.run_id)\n  WHEN 'trial_read'         THEN (SELECT count(*) FROM trial_read         WHERE added_run = merge_report.run_id)\n  WHEN 'registry_trial'     THEN (SELECT count(*) FROM registry_trial     WHERE added_run = merge_report.run_id)\n  WHEN 'article_lead'       THEN (SELECT count(*) FROM article_lead       WHERE added_run = merge_report.run_id)\n  WHEN 'link_lead'          THEN (SELECT count(*) FROM link_lead          WHERE added_run = merge_report.run_id)\n  WHEN 'link_share'         THEN (SELECT count(*) FROM link_share         WHERE added_run = merge_report.run_id)\n  WHEN 'link_lead_link'     THEN (SELECT count(*) FROM link_lead_link     WHERE added_run = merge_report.run_id)\n  WHEN 'lead_reading'       THEN (SELECT count(*) FROM lead_reading       WHERE added_run = merge_report.run_id)\n  WHEN 'decision'           THEN (SELECT count(*) FROM decision_log       WHERE run_id = merge_report.run_id)\n  WHEN 'usage'              THEN (SELECT count(*) FROM llm_usage          WHERE run_id = merge_report.run_id)\n  WHEN 'action'             THEN (SELECT count(*) FROM claim_action       WHERE run_id = merge_report.run_id AND action <> 'audit_hold')\n  ELSE added END)\nWHERE run_id = (SELECT run_id FROM merging)",
+ "INSERT INTO merge_report (run_id, kind, resolved, added)\nSELECT run_id, kind, count(*), 0 FROM staged_of_trial WHERE kind IN ('article_lead', 'trial_paper') GROUP BY kind",
+ "UPDATE merge_report SET added = min(resolved, CASE kind\n  WHEN 'payload'            THEN (SELECT count(*) FROM payload            WHERE added_run = merge_report.run_id)\n  WHEN 'claim'              THEN (SELECT count(*) FROM claim              WHERE added_run = merge_report.run_id)\n  WHEN 'source_article'     THEN (SELECT count(*) FROM source_article     WHERE added_run = merge_report.run_id)\n  WHEN 'promise'            THEN (SELECT count(*) FROM promise            WHERE added_run = merge_report.run_id)\n  WHEN 'reported_statement' THEN (SELECT count(*) FROM reported_statement WHERE added_run = merge_report.run_id)\n  WHEN 'entity'             THEN (SELECT count(*) FROM entity             WHERE added_run = merge_report.run_id)\n  WHEN 'entity_match'       THEN (SELECT count(*) FROM entity_match       WHERE added_run = merge_report.run_id)\n  WHEN 'entity_substance'   THEN (SELECT count(*) FROM entity_substance   WHERE added_run = merge_report.run_id)\n  WHEN 'claim_term'         THEN (SELECT count(*) FROM claim_term         WHERE added_run = merge_report.run_id)\n  WHEN 'source_record'      THEN (SELECT count(*) FROM source_record      WHERE added_run = merge_report.run_id)\n  WHEN 'evidence_event'     THEN (SELECT count(*) FROM evidence_event     WHERE added_run = merge_report.run_id)\n  WHEN 'failure_flag'       THEN (SELECT count(*) FROM failure_flag       WHERE added_run = merge_report.run_id)\n  WHEN 'trial_read'         THEN (SELECT count(*) FROM trial_read         WHERE added_run = merge_report.run_id)\n  WHEN 'registry_trial'     THEN (SELECT count(*) FROM registry_trial     WHERE added_run = merge_report.run_id)\n  WHEN 'article_lead'       THEN (SELECT count(*) FROM article_lead       WHERE added_run = merge_report.run_id)\n  WHEN 'trial_paper'        THEN (SELECT count(*) FROM trial_paper        WHERE added_run = merge_report.run_id)\n  WHEN 'link_lead'          THEN (SELECT count(*) FROM link_lead          WHERE added_run = merge_report.run_id)\n  WHEN 'link_share'         THEN (SELECT count(*) FROM link_share         WHERE added_run = merge_report.run_id)\n  WHEN 'link_lead_link'     THEN (SELECT count(*) FROM link_lead_link     WHERE added_run = merge_report.run_id)\n  WHEN 'lead_reading'       THEN (SELECT count(*) FROM lead_reading       WHERE added_run = merge_report.run_id)\n  WHEN 'decision'           THEN (SELECT count(*) FROM decision_log       WHERE run_id = merge_report.run_id)\n  WHEN 'usage'              THEN (SELECT count(*) FROM llm_usage          WHERE run_id = merge_report.run_id)\n  WHEN 'action'             THEN (SELECT count(*) FROM claim_action       WHERE run_id = merge_report.run_id AND action <> 'audit_hold')\n  ELSE added END)\nWHERE run_id = (SELECT run_id FROM merging)",
  "UPDATE merge_report SET\n  conflicts = (SELECT count(*) FROM staged_of_claim s\n               JOIN evidence_event e ON e.claim_id = s.claim_id AND e.dedupe_key = s.body ->> 'dedupe_key'\n               WHERE s.kind = 'evidence_event' AND e.review_state = 'approved'\n                 AND e.content_sha256 <> s.body ->> 'content_sha256')\nWHERE run_id = (SELECT run_id FROM merging) AND kind = 'evidence_event'",
  "INSERT INTO merge_guard (run_id, reconciled)\nSELECT m.run_id,\n       NOT EXISTS (SELECT 1 FROM run_stated t\n                   LEFT JOIN merge_report r ON r.run_id = t.run_id AND r.kind = t.kind\n                   WHERE t.run_id = m.run_id AND t.records <> coalesce(r.resolved, 0))\n   AND (SELECT count(*) FROM staged) = (SELECT coalesce(sum(records), 0) FROM run_stated WHERE run_id = m.run_id)\nFROM merging m",
  "DELETE FROM stg WHERE run_id = (SELECT run_id FROM merging)",
@@ -103,13 +106,13 @@ export const MERGE = [
 export const PREVIEW = [
  "INSERT INTO merging (id, run_id)\nSELECT 1, id FROM run\nWHERE id = ?1 AND status = 'registered'\n  AND NOT EXISTS (SELECT 1 FROM run_step rs JOIN store_step ss ON ss.step = rs.step\n                  WHERE rs.run_id = run.id AND rs.version < ss.version)",
  "SELECT r.status,\n       (SELECT 'step ' || rs.step || ' is at version ' || rs.version || ', the store accepts ' || ss.version\n        FROM run_step rs JOIN store_step ss ON ss.step = rs.step\n        WHERE rs.run_id = r.id AND rs.version < ss.version LIMIT 1) AS refusal\nFROM run r WHERE r.id = ?1",
- "SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind\n  WHEN 'payload'        THEN NOT EXISTS (SELECT 1 FROM payload p WHERE p.sha256 = s.body ->> 'sha256')\n  WHEN 'claim'          THEN NOT EXISTS (SELECT 1 FROM claim_key k WHERE k.slug = s.body ->> 'slug')\n  WHEN 'source_record'  THEN NOT EXISTS (SELECT 1 FROM source_record r WHERE r.kind = s.body ->> 'kind'\n                               AND r.source_name = s.body ->> 'source_name' AND r.external_id = s.body ->> 'external_id')\n  WHEN 'trial_read'     THEN NOT EXISTS (SELECT 1 FROM trial_read r WHERE r.source_name = s.body ->> 'source_name'\n                               AND r.trial_id = s.body ->> 'trial_id')\n  WHEN 'registry_trial' THEN NOT EXISTS (SELECT 1 FROM registry_trial t WHERE t.registry_name = s.body ->> 'registry_name'\n                               AND t.external_id = s.body ->> 'external_id')\n  WHEN 'link_lead'      THEN NOT EXISTS (SELECT 1 FROM link_lead l WHERE l.url_key = s.body ->> 'url_key')\n  WHEN 'decision'       THEN 1\n  WHEN 'usage'          THEN 1\n  WHEN 'registry_load'  THEN NOT EXISTS (SELECT 1 FROM registry_load x WHERE x.registry_name = s.body ->> 'registry_name'\n                               AND x.condition = s.body ->> 'condition')\n  WHEN 'unlisted_domain' THEN NOT EXISTS (SELECT 1 FROM unlisted_domain_count x WHERE x.domain = s.body ->> 'domain'\n                               AND x.day = s.body ->> 'day')\n  WHEN 'measure_daily'  THEN NOT EXISTS (SELECT 1 FROM measure_daily x WHERE x.day = s.body ->> 'day'\n                               AND x.step = s.body ->> 'step' AND x.step_version = s.body ->> 'step_version'\n                               AND x.writer = s.body ->> 'writer' AND x.outcome = s.body ->> 'outcome')\n  WHEN 'work_entry'     THEN NOT EXISTS (SELECT 1 FROM work_entry x WHERE x.record_kind = s.body ->> 'record_kind'\n                               AND x.record_key = s.body ->> 'record_key' AND x.step = s.body ->> 'step'\n                               AND x.step_version = s.body ->> 'step_version')\n  WHEN 'outlet_icon'    THEN NOT EXISTS (SELECT 1 FROM outlet_icon x WHERE x.domain = s.body ->> 'domain')\n  WHEN 'work_slice'     THEN NOT EXISTS (SELECT 1 FROM work_slice x WHERE x.platform = s.body ->> 'platform'\n                               AND x.community = s.body ->> 'community' AND x.month = s.body ->> 'month')\n  ELSE 0 END) AS added\nFROM staged s\nWHERE s.kind IN ('payload', 'claim', 'source_record', 'trial_read', 'registry_trial', 'registry_load',\n                 'link_lead', 'unlisted_domain', 'decision', 'usage', 'measure_daily', 'work_entry',\n                 'outlet_icon', 'work_slice')\nGROUP BY s.kind",
+ "SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind\n  WHEN 'payload'        THEN NOT EXISTS (SELECT 1 FROM payload p WHERE p.sha256 = s.body ->> 'sha256')\n  WHEN 'claim'          THEN NOT EXISTS (SELECT 1 FROM claim_key k WHERE k.slug = s.body ->> 'slug')\n  WHEN 'source_record'  THEN NOT EXISTS (SELECT 1 FROM source_record r WHERE r.kind = s.body ->> 'kind'\n                               AND r.source_name = s.body ->> 'source_name' AND r.external_id = s.body ->> 'external_id')\n  WHEN 'trial_read'     THEN NOT EXISTS (SELECT 1 FROM trial_read r WHERE r.source_name = s.body ->> 'source_name'\n                               AND r.trial_id = s.body ->> 'trial_id')\n  WHEN 'registry_trial' THEN NOT EXISTS (SELECT 1 FROM registry_trial t WHERE t.registry_name = s.body ->> 'registry_name'\n                               AND t.external_id = s.body ->> 'external_id')\n  WHEN 'link_lead'      THEN NOT EXISTS (SELECT 1 FROM link_lead l WHERE l.url_key = s.body ->> 'url_key')\n  WHEN 'decision'       THEN 1\n  WHEN 'usage'          THEN 1\n  WHEN 'registry_load'  THEN NOT EXISTS (SELECT 1 FROM registry_load x WHERE x.registry_name = s.body ->> 'registry_name'\n                               AND x.condition = s.body ->> 'condition')\n  WHEN 'unlisted_domain' THEN NOT EXISTS (SELECT 1 FROM unlisted_domain_count x WHERE x.domain = s.body ->> 'domain'\n                               AND x.day = s.body ->> 'day')\n  WHEN 'measure_daily'  THEN NOT EXISTS (SELECT 1 FROM measure_daily x WHERE x.day = s.body ->> 'day'\n                               AND x.step = s.body ->> 'step' AND x.step_version = s.body ->> 'step_version'\n                               AND x.writer = s.body ->> 'writer' AND x.outcome = s.body ->> 'outcome')\n  WHEN 'work_entry'     THEN NOT EXISTS (SELECT 1 FROM work_entry x WHERE x.record_kind = s.body ->> 'record_kind'\n                               AND x.record_key = s.body ->> 'record_key' AND x.step = s.body ->> 'step'\n                               AND x.step_version = s.body ->> 'step_version')\n  WHEN 'outlet_icon'    THEN NOT EXISTS (SELECT 1 FROM outlet_icon x WHERE x.domain = s.body ->> 'domain')\n  WHEN 'trial_slice'    THEN NOT EXISTS (SELECT 1 FROM trial_slice x WHERE x.rule = s.body ->> 'rule'\n                               AND x.year = s.body ->> 'year' AND x.number = s.body ->> 'number')\n  WHEN 'work_slice'     THEN NOT EXISTS (SELECT 1 FROM work_slice x WHERE x.platform = s.body ->> 'platform'\n                               AND x.community = s.body ->> 'community' AND x.month = s.body ->> 'month')\n  ELSE 0 END) AS added\nFROM staged s\nWHERE s.kind IN ('payload', 'claim', 'source_record', 'trial_read', 'registry_trial', 'registry_load',\n                 'link_lead', 'unlisted_domain', 'decision', 'usage', 'measure_daily', 'work_entry',\n                 'outlet_icon', 'work_slice', 'trial_slice')\nGROUP BY s.kind",
  "SELECT s.kind, count(*) AS resolved,\n  sum(s.kind = 'evidence_event' AND EXISTS (SELECT 1 FROM preview_conflict x WHERE x.key = s.key)) AS conflicts,\n  sum(CASE s.kind\n  WHEN 'source_article' THEN NOT EXISTS (SELECT 1 FROM source_article a WHERE a.claim_id = s.claim_id\n                               AND a.url_key = s.body ->> 'url_key')\n  WHEN 'entity'         THEN NOT EXISTS (SELECT 1 FROM entity e WHERE e.claim_id = s.claim_id\n                               AND e.type = s.body ->> 'type' AND e.name = s.body ->> 'name')\n  WHEN 'claim_term'     THEN NOT EXISTS (SELECT 1 FROM claim_term t WHERE t.claim_id = s.claim_id\n                               AND t.role = s.body ->> 'role' AND t.source_name = s.body ->> 'source_name'\n                               AND t.external_id = s.body ->> 'external_id')\n  WHEN 'evidence_event' THEN NOT EXISTS (SELECT 1 FROM evidence_event e WHERE e.claim_id = s.claim_id\n                               AND e.dedupe_key = s.body ->> 'dedupe_key')\n  WHEN 'failure_flag'   THEN NOT EXISTS (SELECT 1 FROM failure_flag f WHERE f.claim_id = s.claim_id\n                               AND f.trial_external_id = s.body ->> 'trial_external_id')\n  WHEN 'measure_claim'  THEN NOT EXISTS (SELECT 1 FROM measure_claim x WHERE x.claim_id = s.claim_id)\n  ELSE 0 END) AS added\nFROM preview_of_claim s\nWHERE s.kind IN ('source_article', 'entity', 'claim_term', 'evidence_event', 'failure_flag', 'measure_claim')\nGROUP BY s.kind",
  "SELECT 'action' AS kind, count(*) AS resolved, 0 AS conflicts, sum(CASE a.action\n  WHEN 'audit_clear' THEN a.held AND NOT a.conflicted\n  WHEN 'publish'     THEN NOT a.published AND a.approved AND NOT a.archived\n                          AND (NOT a.held OR (NOT a.conflicted AND EXISTS (\n                                 SELECT 1 FROM stg c WHERE c.run_id = a.run_id AND c.kind = 'action'\n                                   AND c.body ->> 'action' = 'audit_clear' AND c.body ->> 'slug' = a.body ->> 'slug')))\n  WHEN 'archive'     THEN NOT a.archived\n  WHEN 'unarchive'   THEN a.archived AND NOT a.merged\n  WHEN 'rename'      THEN ((a.own_id IS NOT NULL AND a.own_merged_into IS NULL) OR a.claim_id IS NULL)\n                          AND (a.body ->> 'slug' <> a.body ->> 'new_slug' OR a.body ->> 'new_name' IS NOT NULL)\n  WHEN 'merge'       THEN ((a.own_id IS NOT NULL AND a.own_merged_into IS NULL) OR a.claim_id IS NULL)\n                          AND EXISTS (SELECT 1 FROM claim_key k WHERE k.slug = a.body ->> 'into_slug'\n                                        AND k.claim_id IS NOT a.own_id)\n  ELSE EXISTS (SELECT 1 FROM evidence_conflict x WHERE x.claim_id = a.claim_id AND x.state = 'open'\n                 AND x.dedupe_key = a.body ->> 'dedupe_key' AND x.content_sha256 = a.body ->> 'content_sha256')\n  END) AS added\nFROM preview_action a\nHAVING count(*) > 0",
  "SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind\n  WHEN 'promise' THEN NOT EXISTS (SELECT 1 FROM promise p WHERE p.source_article_id = s.source_article_id\n                        AND p.description = s.body ->> 'description')\n  ELSE NOT EXISTS (SELECT 1 FROM reported_statement r WHERE r.source_article_id = s.source_article_id\n                        AND r.text_key = s.body ->> 'text_key') END) AS added\nFROM preview_of_article s\nWHERE s.kind IN ('promise', 'reported_statement')\nGROUP BY s.kind",
  "SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind\n  WHEN 'entity_match'     THEN NOT EXISTS (SELECT 1 FROM entity_match m WHERE m.entity_id = s.entity_id\n                                 AND m.source_name = s.body ->> 'source_name' AND m.external_id = s.body ->> 'external_id')\n  WHEN 'entity_substance' THEN NOT EXISTS (SELECT 1 FROM entity_substance x WHERE x.entity_id = s.entity_id)\n  -- A link: its article is in the store or comes with the run, and the entity is not yet linked to it.\n  ELSE (EXISTS (SELECT 1 FROM source_article a WHERE a.claim_id = s.claim_id AND a.url_key = s.body ->> 'url_key')\n        OR EXISTS (SELECT 1 FROM stg n WHERE n.run_id = s.run_id AND n.kind = 'source_article'\n                     AND n.key = (s.body ->> 'slug') || '|' || (s.body ->> 'url_key')))\n       AND NOT EXISTS (SELECT 1 FROM entity_article x JOIN source_article a ON a.id = x.source_article_id\n                       WHERE x.entity_id = s.entity_id AND a.claim_id = s.claim_id AND a.url_key = s.body ->> 'url_key')\n  END) AS added\nFROM preview_of_entity s\nWHERE s.kind IN ('entity_match', 'entity_substance', 'entity_article')\nGROUP BY s.kind",
  "SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind\n  WHEN 'link_share'     THEN NOT EXISTS (SELECT 1 FROM link_share x WHERE x.link_lead_id = s.link_lead_id\n                               AND x.platform = s.body ->> 'platform' AND x.community = s.body ->> 'community'\n                               AND x.shared_at = s.body ->> 'shared_at')\n  WHEN 'link_lead_link' THEN NOT EXISTS (SELECT 1 FROM link_lead_link x WHERE x.link_lead_id = s.link_lead_id\n                               AND x.record_kind = s.body ->> 'record_kind' AND x.record_key = s.body ->> 'record_key'\n                               AND x.reason = s.body ->> 'reason')\n  WHEN 'lead_reading'   THEN NOT EXISTS (SELECT 1 FROM lead_reading x WHERE x.link_lead_id = s.link_lead_id)\n  ELSE NOT EXISTS (SELECT 1 FROM link_lead_label x WHERE x.link_lead_id = s.link_lead_id\n                     AND x.labelled_by = s.body ->> 'labelled_by')\n  END) AS added\nFROM preview_of_lead s\nWHERE s.kind IN ('link_share', 'link_lead_link', 'link_lead_label', 'lead_reading')\nGROUP BY s.kind",
- "SELECT s.kind, count(*) AS resolved, 0 AS conflicts,\n       sum(NOT EXISTS (SELECT 1 FROM article_lead a WHERE a.registry_trial_id = s.trial_id\n                         AND a.url_key = s.body ->> 'url_key')) AS added\nFROM preview_of_trial s\nWHERE s.kind = 'article_lead'\nGROUP BY s.kind",
+ "SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind\n  WHEN 'article_lead' THEN NOT EXISTS (SELECT 1 FROM article_lead a WHERE a.registry_trial_id = s.trial_id\n                             AND a.url_key = s.body ->> 'url_key')\n  ELSE NOT EXISTS (SELECT 1 FROM trial_paper p WHERE p.trial_id = s.trial_id\n                     AND p.source_name = s.body ->> 'source_name' AND p.pubmed_id = s.body ->> 'pubmed_id')\n  END) AS added\nFROM preview_of_trial s\nWHERE s.kind IN ('article_lead', 'trial_paper')\nGROUP BY s.kind",
  "SELECT t.kind, t.records AS stated,\n       (SELECT count(*) FROM staged s WHERE s.kind = t.kind) AS staged\nFROM run_stated t JOIN merging m ON m.run_id = t.run_id",
  "DELETE FROM merging"
 ];
@@ -145,12 +148,14 @@ export const FIELDS_OF = {
   "kind",
   "lead_url_key",
   "month",
+  "number",
   "outcome",
   "platform",
   "r2_key",
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -158,7 +163,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "claim": [
   "action",
@@ -188,6 +194,7 @@ export const FIELDS_OF = {
   "name",
   "new_name",
   "new_slug",
+  "number",
   "origin",
   "outcome",
   "overlay_years",
@@ -199,6 +206,7 @@ export const FIELDS_OF = {
   "reviewed_at",
   "reviewed_by",
   "role",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -212,7 +220,8 @@ export const FIELDS_OF = {
   "type",
   "url_key",
   "vertical",
-  "writer"
+  "writer",
+  "year"
  ],
  "source_article": [
   "archive_url",
@@ -377,6 +386,7 @@ export const FIELDS_OF = {
   "kind",
   "lead_url_key",
   "month",
+  "number",
   "outcome",
   "payload_sha256",
   "platform",
@@ -384,6 +394,7 @@ export const FIELDS_OF = {
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -392,7 +403,8 @@ export const FIELDS_OF = {
   "trial_id",
   "url",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "evidence_event": [
   "action",
@@ -467,6 +479,7 @@ export const FIELDS_OF = {
   "lead_url_key",
   "model",
   "month",
+  "number",
   "outcome",
   "platform",
   "provider",
@@ -476,6 +489,7 @@ export const FIELDS_OF = {
   "record_kind",
   "refusals",
   "registry_name",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -483,7 +497,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "registry_trial": [
   "acronym",
@@ -506,6 +521,7 @@ export const FIELDS_OF = {
   "lead_sponsor_name",
   "lead_url_key",
   "month",
+  "number",
   "outcome",
   "overall_status",
   "payload_sha256",
@@ -513,10 +529,12 @@ export const FIELDS_OF = {
   "platform",
   "primary_completion_date",
   "primary_completion_date_type",
+  "pubmed_id",
   "record_key",
   "record_kind",
   "registry_name",
   "results_first_posted",
+  "rule",
   "search_indication",
   "search_name",
   "sha256",
@@ -531,7 +549,8 @@ export const FIELDS_OF = {
   "title",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "registry_load": [
   "community",
@@ -546,11 +565,13 @@ export const FIELDS_OF = {
   "lead_url_key",
   "loaded_from",
   "month",
+  "number",
   "outcome",
   "platform",
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -558,7 +579,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "article_lead": [
   "entity_name",
@@ -568,6 +590,7 @@ export const FIELDS_OF = {
   "outlet",
   "outlet_kind",
   "published_date",
+  "pubmed_id",
   "registry_name",
   "search_query",
   "slug",
@@ -592,6 +615,7 @@ export const FIELDS_OF = {
   "lead_url_key",
   "month",
   "names_topic",
+  "number",
   "origin",
   "outcome",
   "outlet",
@@ -603,6 +627,7 @@ export const FIELDS_OF = {
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "screen_outcome",
   "sha256",
   "shared_at",
@@ -617,7 +642,8 @@ export const FIELDS_OF = {
   "url",
   "url_key",
   "url_key_version",
-  "writer"
+  "writer",
+  "year"
  ],
  "link_share": [
   "community",
@@ -712,6 +738,7 @@ export const FIELDS_OF = {
   "lead_url_key",
   "model",
   "month",
+  "number",
   "options",
   "outcome",
   "output",
@@ -719,6 +746,7 @@ export const FIELDS_OF = {
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "seq",
   "sha256",
   "slug",
@@ -727,7 +755,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "usage": [
   "community",
@@ -744,6 +773,7 @@ export const FIELDS_OF = {
   "lead_url_key",
   "model",
   "month",
+  "number",
   "outcome",
   "output_tokens",
   "platform",
@@ -751,6 +781,7 @@ export const FIELDS_OF = {
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "seq",
   "sha256",
   "slug",
@@ -759,7 +790,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "measure_daily": [
   "community",
@@ -774,6 +806,7 @@ export const FIELDS_OF = {
   "kind",
   "lead_url_key",
   "month",
+  "number",
   "outcome",
   "platform",
   "ran_seconds",
@@ -784,6 +817,7 @@ export const FIELDS_OF = {
   "requests_by_source",
   "reused",
   "rows_written",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -796,7 +830,8 @@ export const FIELDS_OF = {
   "url_key",
   "waited_by_cause",
   "waited_seconds",
-  "writer"
+  "writer",
+  "year"
  ],
  "measure_claim": [
   "content_sha256",
@@ -836,12 +871,14 @@ export const FIELDS_OF = {
   "last_attempt_at",
   "lead_url_key",
   "month",
+  "number",
   "outcome",
   "platform",
   "record_key",
   "record_kind",
   "registry_name",
   "requests_used",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -850,7 +887,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "outlet_icon": [
   "community",
@@ -867,11 +905,13 @@ export const FIELDS_OF = {
   "lead_url_key",
   "media_type",
   "month",
+  "number",
   "outcome",
   "platform",
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -879,7 +919,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "work_slice": [
   "community",
@@ -892,11 +933,13 @@ export const FIELDS_OF = {
   "kind",
   "lead_url_key",
   "month",
+  "number",
   "outcome",
   "platform",
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -904,7 +947,8 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
  ],
  "unlisted_domain": [
   "asked",
@@ -918,11 +962,13 @@ export const FIELDS_OF = {
   "kind",
   "lead_url_key",
   "month",
+  "number",
   "outcome",
   "platform",
   "record_key",
   "record_kind",
   "registry_name",
+  "rule",
   "sha256",
   "slug",
   "source_name",
@@ -930,7 +976,61 @@ export const FIELDS_OF = {
   "step_version",
   "trial_id",
   "url_key",
-  "writer"
+  "writer",
+  "year"
+ ],
+ "trial_paper": [
+  "entity_name",
+  "entity_type",
+  "fetched_at",
+  "lead_url_key",
+  "payload_sha256",
+  "pubmed_id",
+  "registry_name",
+  "slug",
+  "source_name",
+  "trial_id",
+  "url_key"
+ ],
+ "trial_slice": [
+  "community",
+  "condition",
+  "day",
+  "domain",
+  "entity_name",
+  "entity_type",
+  "external_id",
+  "grp",
+  "in_store",
+  "in_store_at",
+  "kind",
+  "lead_url_key",
+  "month",
+  "number",
+  "outcome",
+  "page_at",
+  "platform",
+  "pubmed_asked",
+  "pubmed_found",
+  "pubmed_papers_at",
+  "record_at",
+  "record_key",
+  "record_kind",
+  "registry_name",
+  "registry_papers",
+  "registry_papers_at",
+  "rule",
+  "sha256",
+  "slug",
+  "source_name",
+  "step",
+  "step_version",
+  "trial_id",
+  "trials",
+  "url_key",
+  "with_results",
+  "writer",
+  "year"
  ],
  "action": [
   "action",
@@ -957,3 +1057,5 @@ export const FIELDS_OF = {
   "url_key"
  ]
 };
+// The longest payload kept in its row, from the schema's CHECK on payload.body.
+export const INLINE_PAYLOAD_BYTES = 524288;

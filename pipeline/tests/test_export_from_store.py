@@ -300,10 +300,20 @@ def test_quiet_claims_overlay_is_derived_the_same_at_the_exports_date(
 # --- what the reader does with the store's own shape ----------------------------------
 
 
+def small_inline_bound(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The store keeps a payload of up to 524,288 bytes in its row, larger than any
+    recorded study; for a test of a payload kept as an object, a recorded study must be
+    one, so the bound the store file is built with is lowered to the old 16,384."""
+    from thenwhat.store import form
+
+    monkeypatch.setattr(form, "INLINE_PAYLOAD_LIMIT", 16384)
+
+
 def test_registry_record_kept_as_an_object_gives_the_same_trial_facts(
-    session: Session, tmp_path: Path, fixture_json
+    session: Session, tmp_path: Path, fixture_json, monkeypatch: pytest.MonkeyPatch
 ):
     """Scenario: A payload kept as an object"""
+    small_inline_bound(monkeypatch)
     claim = new_claim(session)
     add_registry_events(session, claim, study(fixture_json, "study_NCT03491397_rows"))
 
@@ -316,9 +326,10 @@ def test_registry_record_kept_as_an_object_gives_the_same_trial_facts(
 
 
 def test_export_refuses_a_payload_that_is_not_the_one_its_checksum_names(
-    session: Session, tmp_path: Path, fixture_json
+    session: Session, tmp_path: Path, fixture_json, monkeypatch: pytest.MonkeyPatch
 ):
     """Scenario: A payload that is missing or altered"""
+    small_inline_bound(monkeypatch)
     claim = new_claim(session)
     add_registry_events(session, claim, study(fixture_json, "study_NCT03491397_rows"))
     records, _ = store_of(session, tmp_path, NOW)
@@ -702,6 +713,7 @@ def test_export_command_reads_the_d1_store_and_fetches_the_objects_it_lacks(
     session: Session, tmp_path: Path, invoke, monkeypatch: pytest.MonkeyPatch, fixture_json
 ):
     """Scenario: Comparing against the store itself"""
+    small_inline_bound(monkeypatch)
     claim = new_claim(session)
     add_registry_events(session, claim, study(fixture_json, "study_NCT03491397_rows"))
     held = tmp_path / "held"

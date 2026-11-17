@@ -18,7 +18,7 @@ make store-dev                                    # http://localhost:8787, after
 
 | Path | What it is |
 | --- | --- |
-| `migrations/0001_store_schema.sql` | `store/schema.sql`, byte for byte. Written by `pnpm run generate`; a test fails when the two differ |
+| `migrations/*.sql` | Applied in order, they make `store/schema.sql`; a test and `pnpm run generate -- --check` fail when they do not. `0001` is the schema as first applied and is never rewritten: a change to `store/schema.sql` is a new migration |
 | `migrations/0002_ingest_service.sql` | The service's own bookkeeping: one row for each chunk a run handed over. Not a record of the tracker |
 | `src/sql.generated.mjs` | The statements of `merge.sql`, `preview.sql` and `ingest.sql`, and every field a statement reads. Generated; the same test covers it |
 | `src/store.mjs` | Register, stage, merge, report, report without applying, as functions of the D1 binding. The site's Worker can call these in-process for a lookup |
@@ -33,7 +33,7 @@ After changing `store/schema.sql`, `store/merge.sql`, `store/preview.sql` or `st
 
 Every request carries `Authorization: Bearer <token>`. Without a token nothing answers.
 
-1. `PUT /payloads/<sha256>` for each payload over 16 KB (`application/octet-stream`). The body is hashed; one that is not what its checksum says is refused and nothing is stored. A payload already held is not stored again.
+1. `PUT /payloads/<sha256>` for each payload too large for its row (`application/octet-stream`; the bound is the schema's CHECK on `payload.body`, 524,288 bytes). A payload between 16,384 bytes and that bound normally travels in its record, and may be put here instead when its record would pass the record's bound once the payload is written as a JSON string. The body is hashed; one that is not what its checksum says is refused and nothing is stored. A payload already held is not stored again.
 2. `POST /runs` with `{id, writer, commit, steps, counts, checksum}` (and `request_class` for a lookup). The service sets the time, a day only for a lookup. Registering a run again writes nothing: it answers 200 when the run is the one registered (same writer, device, checksum, steps and counts) and 409 otherwise. The device is the token's.
 3. `POST /runs/<id>/records`, once a chunk: a JSON list of `{kind, key, body}` with the header `X-Content-SHA256`, the SHA-256 of the body sent.
 4. `POST /runs/<id>/merge`. The answer's `status` is `merged` (with the report: resolved, added, conflicts and matched for each kind), `refused` (an older step version, with the reason), `undone` (a statement failed and D1 rolled the batch back; the run still waits and can be dropped) or `not_merged` (the chunks that arrived are not the ones stated).
@@ -66,18 +66,18 @@ A person's or an assistant's decision (`reviewed_by`, `decided_by`, `labelled_by
 
 ## The inbox of the bulk tier
 
-The bulk kinds (registry trials, leads and what hangs from them, usage, measures) are not kept in D1: their truth is the bulk file in R2, which only the daily job writes (`design.md` decision 20). When a run hands such a record over, usually a reader's lookup, the service keeps it as it was staged, with the payload records it names, in its own table `inbox`, in the same batch as the merge. A run the merge refuses or undoes leaves nothing there.
+The bulk kinds (registry trials, leads and what hangs from them, usage, measures) have their truth in the bulk file in R2, which only the daily job writes (`design.md` decision 20). The inbox is for what a reader's lookup and the store-side consumer create: when a `lookup` or `consumer` run hands such a record over, the service keeps it as it was staged, with the payload records it names, in its own table `inbox`, in the same batch as the merge. A run the merge refuses or undoes leaves nothing there.
 
 - `GET /inbox?after=<seq>&limit=<n>` gives `{records: [{seq, run, kind, key, body}], through, more}`, oldest first, at most 2,000 records or about 4 MB. A record is exactly what a writer stages, so `thenwhat store merge-bulk` takes it as it is.
 - `POST /inbox/folded` with `{object}` records a fold. `object` is the key of the delta that holds what was folded, `bulk/<build id>/delta-...`. It must be in the bucket and listed in its build's `deltas.json`, where `scripts/upload-delta.mjs --through <seq>` wrote how far it folded: the service reads `through` from that list, not from the caller. A `through` sent as well must agree (409 `through_differs`). The answer is what is recorded for that object, `{recorded, recorded_at, again, folded_through}`; recording an object again changes nothing.
-- `POST /inbox/clear` with `{through}` removes the records up to there, and is refused (409 `not_folded`) for a `through` past the furthest fold recorded. So no record leaves D1 before its delta is in R2. For each run folded whole it also removes the rows that run added to D1's copies of the bulk tables, in one batch. A reader's lead the store-side consumer has not yet processed (its `lead_process` work is still due) is held back with its shares and reading, and the answer counts it in `leads_held`; a later clearing removes it once that work is done or has failed for good. Clearing twice changes nothing else.
+- `POST /inbox/clear` with `{through}` removes the records up to there, and is refused (409 `not_folded`) for a `through` past the furthest fold recorded. So no record leaves D1 before its delta is in R2. For each run folded whole it also removes the rows that run added to D1's copies of the bulk tables, in one batch. A reader's lead the store-side consumer has not yet processed (its `lead_process` work is still due) is held back with its shares and reading, and the answer counts it in `leads_held`; a later clearing removes it once that work is done or has failed for good. Clearing twice changes nothing else. A device's, the daily job's and the operator's runs are not kept in the inbox: a slice of trials pushed on purpose stays in D1. A trial is never removed from D1 by a clearing: the trials of the set being loaded live there, and one a lookup found stays beside the copy folded into the bulk file.
 
-A payload over 16 KB that an inbox record names is in the bucket under `payload/<sha256>`; the service has no route that serves it.
+A payload too large for a row that an inbox record names is in the bucket under `payload/<sha256>`; the service has no route that serves it.
 
 ## Progress of a backfill
 
-- `PUT /progress/slices` (operator, daily, device) takes `{set, total_trials?, total_slices?, slices: [{slice, position, trials, stages: {record, registry_papers, pubmed_papers, in_store, page}, started_at?, updated_at?}]}`: at most 200 slices a call, added or brought up to date by `(set, slice)`; a stage left out keeps its count. Counts and a slice's own id only.
-- `GET /progress` (operator, daily) answers `{stages, sets: [{set, total_trials, total_slices, slices_reported, trials_reported, totals, slices, updated_at}], runs, rows, at}`: counts, slice ids and times, nothing of a record.
+- A slice's state is a record of the store, kind `trial_slice`, written only by the merge (`store/merge.sql`): a rule, the year it was chosen in, the slice's number, its group, how many trials it holds, and a count and a time for each stage. The pipeline hands every planned slice over, and again as each stage is reached; the merge keeps the larger count and the later time. The service has no route of its own that writes progress.
+- `GET /progress` (operator, daily) reads it and answers `{stages, groups, sets: [{rule, year, total_slices, total_trials, stages: {<stage>: {slices, trials}}, counts, groups, slices, changed_at}], runs, rows, at}`: a set's totals are its slices'. Counts, group names and times, nothing of a record.
 - `GET /progress/page` is a self-contained page of the same. It is served without a token and holds no count; it asks `/progress` with a token typed into it, kept for the tab only and sent as a header.
 
 ## Asked too often
@@ -98,7 +98,8 @@ Every time in a record (`at`, and any field ending `_at`) is `YYYY-MM-DDTHH:MM:S
 - A record of an unknown kind, without its natural key, or with a field that no statement reading that kind of record reads.
 - A string longer than 2,000 characters (200 for a reported statement, as the schema says), anywhere in a record but the fields that hold a source's structured record on the one kind they belong to. A trial's `intervention_names`, its arms' names joined, may hold 20,000. The store keeps no article text, and a refusal never repeats what was sent.
 - A payload whose body is not what its checksum and size say, or whose R2 object was never put.
-- A ClinicalTrials.gov record that still names a person, in a `payload` record, a `source_record` or an object put to `/payloads`: officials, contacts, a site's contacts, an investigator's name, a sponsor or collaborator who is a person, the results' point of contact, any `email` or `phone`. The refusal names the kinds of field (`people`), never who. A writer removes them first (`pipeline/src/thenwhat/sources/people.py`); `src/people.mjs` is the same test and the two must agree. Other sources' records are not examined.
+- A source's record that still names a person, in a `payload` record, a `source_record` or an object put to `/payloads` (422 `personal_data`): in a ClinicalTrials.gov study its officials, contacts, a site's contacts, anything of the responsible party but its `type`, a sponsor or collaborator who is a person, the results' point of contact, any `email` or `phone`; in any other record a registry's person keys, an `email` or a `phone` anywhere. A paper's byline stays.
+- A paper's record that still holds its abstract or text (422 `article_text`): the keys `abstractText`, `abstract_inverted_index`, `abstract`, `AbstractText`, `fullText`, anywhere. Both refusals name the kinds of field, never what they held. A writer removes these first (`pipeline/src/thenwhat/sources/people.py`); `src/people.mjs` holds the same lists, and a test fails when the two differ.
 
 Nothing is logged: not a token, not a record, not a payload.
 

@@ -126,3 +126,30 @@ def test_stored_abstracts_are_stripped_once_and_counted(session):
     held = session.scalars(select(EvidenceEvent.raw_payload)).one()
     assert "abstractText" not in held and held["authorString"]
     assert not strip_abstracts(session, apply=True).changed
+
+
+def test_a_paper_loses_an_email_in_its_affiliation_and_keeps_its_byline(tmp_path: Path):
+    from thenwhat.sources.people import emails_in_text
+
+    paper = {
+        "pmid": "9",
+        "authorString": "A B, C D.",
+        "affiliation": "Example University, Leeds. Electronic address: a.b@example.org.",
+    }
+    kept = payload_without_people(paper)
+    assert kept["authorString"] == "A B, C D."
+    assert "Example University, Leeds" in kept["affiliation"] and not emails_in_text(kept)
+    path = tmp_path / "s.sqlite"
+    db = sqlite3.connect(path)
+    db.executescript((STORE / "schema.sql").read_text())
+    db.execute(
+        "INSERT INTO run (id, writer, device, commit_sha, registered_at)"
+        " VALUES ('r', 'migration', 'd', 'abc1234', '2026-11-17T00:00:00.000000+00:00')"
+    )
+    body = json.dumps(paper)
+    db.execute(
+        "INSERT INTO payload (sha256, bytes, body, added_run) VALUES (?, ?, ?, 'r')",
+        ("c" * 64, len(body), body),
+    )
+    db.commit()
+    assert prove_file(path) == {"payload row: email in a text": 1}

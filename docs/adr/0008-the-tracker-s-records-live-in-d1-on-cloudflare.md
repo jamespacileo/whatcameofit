@@ -68,3 +68,12 @@ Decided by the operator the same day, after the schema was drafted against the r
 - A raw payload of 16 KB or less is kept in the D1 database, in the `payload` table, once for each distinct payload, under its checksum. Only a larger payload is an R2 object. This replaces "A raw payload is kept in R2" in the Decision above; the rest of that line stands: the record that uses a payload holds its checksum and the fetch time.
 - Why: the registry corpus grew to 467,064 trials, each with a listing record of 642 bytes on average and 12 KB at most. In R2 that is half a million tiny objects to upload before the first merge, and a trial's plain page would need a second service to show its record. In the store they are 292 MB of a database projected at 1.20 GB, against the limit of 10 GB.
 - What does not change: the payloads that forced R2, the registry records with posted results of up to 2.4 MB, are still objects. A payload that does not match its checksum is still reported and never used.
+
+## Amended on 2026-11-17: the bound is 524,288 bytes
+
+Decided by the operator after the first cut-over to the preview (`openspec/changes/cloudflare-source-of-truth/design.md`, decision 2).
+
+- A raw payload of 524,288 bytes (512 KiB) or less is kept in the D1 database; only a larger one is an R2 object. This replaces "16 KB" in the amendment above; the rest of it stands.
+- Why: at 16 KB, 3,211 payloads of the hot tier were R2 objects, and putting them one at a time took 659 of the cut-over's 810 seconds. At 512 KiB about 37 are.
+- The bound is counted in bytes, as D1's limit of 2,000,000 a row is, and is stated once, in the CHECK on `payload.body` in `store/schema.sql`.
+

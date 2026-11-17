@@ -1,55 +1,22 @@
-// How far the backfill has come: what the pipeline reports of each slice of a set of
-// trials, and what the store itself can count. Counts only.
-import { Refusal } from "./check.mjs";
+// How far the load of trials has come, read from the store: `trial_slice`, the one record
+// of each slice's state, written only by the merge, and what the store itself can count.
+// Counts, a group's name and times only; nothing of a record, no trial.
 import { now } from "./store.mjs";
 
+// A stage is reached when its time is set.
 export const STAGES = ["record", "registry_papers", "pubmed_papers", "in_store", "page"];
-const NAME = /^[A-Za-z0-9._-]{1,64}$/;
-const TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}\+00:00$/;
-const whole = (value) => Number.isInteger(value) && value >= 0 && value <= 100_000_000;
-const bad = (message, detail) => { throw new Refusal(400, "bad_progress", message, detail); };
+export const GROUPS = ["ended with results", "ended", "active with results", "active updated", "active not updated"];
+const COUNTS = ["with_results", "registry_papers", "pubmed_asked", "pubmed_found", "in_store"];
+const TIMES = STAGES.map((stage) => `${stage}_at`);
 
-// A report of some slices of one set. A slice is added or brought up to date; a stage a
-// report leaves out keeps the count it had.
-export async function reportSlices(db, body) {
-  if (!body || typeof body !== "object" || !NAME.test(body.set || "")) bad("set names the set of trials: letters, digits, ., - or _");
-  if (!Array.isArray(body.slices) || body.slices.length > 200) bad("slices is a list of at most 200");
-  for (const name of ["total_trials", "total_slices"]) if (body[name] != null && !whole(body[name])) bad(`${name} is a whole number`);
-  const rows = body.slices.map((slice, at) => {
-    const where = { slice: at };
-    if (!slice || typeof slice !== "object" || !NAME.test(slice.slice || "")) bad("a slice has its own id: letters, digits, ., - or _", where);
-    if (!whole(slice.position) || !whole(slice.trials)) bad("a slice has a position and how many trials it holds", where);
-    const stages = slice.stages ?? {};
-    if (typeof stages !== "object" || Array.isArray(stages)) bad("stages is an object of stage to count", where);
-    for (const [stage, count] of Object.entries(stages)) {
-      if (!STAGES.includes(stage)) bad(`a stage is one of ${STAGES.join(", ")}`, { ...where, stage: String(stage).slice(0, 40) });
-      if (!whole(count) || count > slice.trials) bad("a stage's count is a whole number, at most the slice's trials", { ...where, stage });
-    }
-    for (const name of ["started_at", "updated_at"]) if (slice[name] != null && !TIME.test(slice[name])) bad(`${name} is a time as the store keeps it`, where);
-    return [slice.slice, slice.position, slice.trials, ...STAGES.map((stage) => stages[stage] ?? null), slice.started_at ?? null, slice.updated_at ?? now()];
-  });
-  const upsert = `INSERT INTO progress_slice (set_name, slice, position, trials, ${STAGES.join(", ")}, started_at, updated_at)
-    VALUES (?1, ?2, ?3, ?4, ${STAGES.map((_, n) => `coalesce(?${n + 5}, 0)`).join(", ")}, ?10, ?11)
-    ON CONFLICT (set_name, slice) DO UPDATE SET position = excluded.position, trials = excluded.trials,
-      ${STAGES.map((stage, n) => `${stage} = coalesce(?${n + 5}, progress_slice.${stage})`).join(", ")},
-      started_at = coalesce(excluded.started_at, progress_slice.started_at), updated_at = excluded.updated_at`;
-  await db.batch([
-    db.prepare(`INSERT INTO progress_set (name, total_trials, total_slices, updated_at) VALUES (?1, ?2, ?3, ?4)
-      ON CONFLICT (name) DO UPDATE SET total_trials = coalesce(excluded.total_trials, progress_set.total_trials),
-        total_slices = coalesce(excluded.total_slices, progress_set.total_slices), updated_at = excluded.updated_at`).bind(body.set, body.total_trials ?? null, body.total_slices ?? null, now()),
-    ...rows.map((row) => db.prepare(upsert).bind(body.set, ...row)),
-  ]);
-  const held = await db.prepare("SELECT count(*) AS n FROM progress_slice WHERE set_name = ?1").bind(body.set).first();
-  return { set: body.set, slices: held.n };
-}
-
-// Everything the progress view shows: each set with its slices and totals by stage, the
-// last merged run of each kind of writer, and how many rows each table of the store
-// holds. Counts, slice ids and times; nothing of a record.
+// Everything the progress view shows: each set (a rule and the year it was chosen in)
+// with its slices, how many slices and trials have reached each stage, the same by group,
+// the last merged run of each kind of writer, and the rows each table of the store holds.
+// A set's totals are its slices': the pipeline hands every planned slice over, reached or not.
 export async function progress(db) {
-  const [sets, slices, runs, tables] = await db.batch([
-    db.prepare("SELECT name, total_trials, total_slices, updated_at FROM progress_set ORDER BY name"),
-    db.prepare(`SELECT set_name, slice, position, trials, ${STAGES.join(", ")}, started_at, updated_at FROM progress_slice ORDER BY set_name, position, slice`),
+  const [slices, runs, tables] = await db.batch([
+    db.prepare(`SELECT s.rule, s.year, s.number, s.grp, s.trials, ${COUNTS.map((name) => `s.${name}`).join(", ")}, ${TIMES.map((name) => `s.${name}`).join(", ")}, r.merged_at AS changed_at
+      FROM trial_slice s LEFT JOIN run r ON r.id = s.changed_run ORDER BY s.year DESC, s.rule, s.number`),
     db.prepare("SELECT writer, count(*) AS runs, max(merged_at) AS last_merged_at FROM run WHERE status = 'merged' GROUP BY writer ORDER BY writer"),
     db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%' AND name NOT LIKE '%_fts%' ORDER BY name"),
   ]);
@@ -60,17 +27,26 @@ export async function progress(db) {
     const part = names.slice(at, at + 90);
     Object.assign(rows, await db.prepare(`SELECT ${part.map((name) => `(SELECT count(*) FROM "${name}") AS "${name}"`).join(", ")}`).first());
   }
+  const sum = (list, name) => list.reduce((total, one) => total + (one[name] ?? 0), 0);
+  const sets = new Map();
+  for (const slice of slices.results) {
+    const key = `${slice.rule}\n${slice.year}`;
+    if (!sets.has(key)) sets.set(key, []);
+    sets.get(key).push(slice);
+  }
   return {
     stages: STAGES,
-    sets: sets.results.map((set) => {
-      const own = slices.results.filter((slice) => slice.set_name === set.name);
-      const trials = own.reduce((sum, slice) => sum + slice.trials, 0);
+    groups: GROUPS,
+    sets: [...sets.values()].map((own) => {
+      const reached = (stage) => own.filter((slice) => slice[`${stage}_at`] != null);
       return {
-        set: set.name, total_trials: set.total_trials, total_slices: set.total_slices, updated_at: set.updated_at,
-        slices_reported: own.length, trials_reported: trials,
-        totals: Object.fromEntries(STAGES.map((stage) => [stage, own.reduce((sum, slice) => sum + slice[stage], 0)])),
-        slices: own.map((slice) => ({ slice: slice.slice, position: slice.position, trials: slice.trials,
-          stages: Object.fromEntries(STAGES.map((stage) => [stage, slice[stage]])), started_at: slice.started_at, updated_at: slice.updated_at })),
+        rule: own[0].rule, year: own[0].year, total_slices: own.length, total_trials: sum(own, "trials"),
+        changed_at: own.map((slice) => slice.changed_at).filter(Boolean).sort().at(-1) ?? null,
+        // For each stage: the slices that have reached it and the trials those slices hold.
+        stages: Object.fromEntries(STAGES.map((stage) => [stage, { slices: reached(stage).length, trials: sum(reached(stage), "trials") }])),
+        counts: Object.fromEntries(COUNTS.map((name) => [name, sum(own, name)])),
+        groups: GROUPS.map((grp) => { const list = own.filter((slice) => slice.grp === grp); return { grp, slices: list.length, trials: sum(list, "trials"), in_store: sum(list, "in_store") }; }).filter((group) => group.slices),
+        slices: own.map(({ rule, year, ...slice }) => slice),
       };
     }),
     runs: runs.results,
