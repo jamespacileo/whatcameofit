@@ -8667,9 +8667,10 @@ body.framed {
   }
 }
 
-/* The source's words, across the row, in the reading measure. */
+/* The source's words stand in the value's column, under the value, with the label's
+   cell left empty: every part of an opened row starts on the same line down the page. */
 .glance-more .glance-said {
-  grid-column: 1 / -1;
+  grid-column: var(--part);
   max-width: var(--measure);
   font-size: var(--text-body);
   line-height: 1.55;
