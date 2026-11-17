@@ -322,7 +322,7 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** the claim is approved by rule, is marked awaiting audit, and is published, with the status its approved evidence gives, by the first export after its audit is cleared
 
 ### Requirement: A prepared batch waits for its audit
-Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. It SHALL then list each lead left identity unresolved because its treatment and condition overlap a claim that is now archived, with that claim and the lead's address, so the claim can be fixed and unarchived and the lead read again. It SHALL then list, apart, each lead left identity unresolved naming a claim that is not archived, with that claim, its review state and the lead's address: such a read is never tried again, so the operator attaches the article to the claim or leaves it. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
+Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. It SHALL then list each lead left identity unresolved because its treatment and condition overlap a claim that is now archived, with that claim and the lead's address, so the claim can be fixed and unarchived and the lead read again. It SHALL then list, apart, each lead left identity unresolved naming a claim that is not archived, with that claim, its review state and the lead's address: such a read is never tried again, so the operator or an assistant attaches the article to the claim (`thenwhat audit attach`), says it is no report of the claim (`thenwhat audit dismiss`), or leaves it. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
 
 #### Scenario: Held until audited
 - **WHEN** an export runs while an approved, unarchived claim awaits audit
@@ -375,6 +375,33 @@ Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give
 #### Scenario: A claim the operator entered
 - **WHEN** `thenwhat prepare` runs for a claim that awaits review and that no read drafted
 - **THEN** it is prepared and left awaiting the operator, as before
+
+### Requirement: An overlapping read is settled by the operator or an assistant
+`thenwhat audit attach <lead>...` SHALL attach the article of each named lead that was left identity unresolved naming a claim that is not archived to that claim, as the read would have had the decision said the article reports it. Nothing of the first read's page is kept, so the page reader SHALL be asked for the page again, under the rules of any read: the outlet's hold and turn, the gap between two of an outlet's pages, an outlet that refuses the reader, and the reader's allowance. No page SHALL be fetched another way, and the page's text SHALL be stored nowhere. The article's title SHALL be the page's headline and its date the page's publication date, never the title the link was shared under nor the time it was shared; a page that gives no date or no headline SHALL attach nothing. The article SHALL get the outlet's display name, the hash of its text, its reported statements and the records its page names, as any read's article does.
+
+The article SHALL be attached only to a claim that is approved and not archived. When the claim already has the lead's address, the lead SHALL be pointed at that article and the reader SHALL NOT be asked. A lead that is attached SHALL point at the claim and the article, be recorded as added to the claim, and say in its detail whether the operator or an assistant decided it and on what day; with `--as-assistant` the decision is the assistant's and is never recorded as the operator's. Attaching SHALL NOT change the claim's review state nor put it on an audit hold, and the claim's first reported date SHALL move when the article is earlier, as for any article added. A lead that cannot be attached SHALL be said so with the reason, SHALL be left as it was, still listed, and the command SHALL carry on with the other leads and exit as refused; a lead whose outlet may not be asked for now is left for later.
+
+`thenwhat audit dismiss <lead>... --reason` SHALL record that the article of each such lead is no report of the claim it overlaps: the lead keeps its identity unresolved outcome, points at no claim, says in its detail who decided it, on what day and why, is never read again and is no longer listed. The reason is private. A lead that is not such a read SHALL be refused by number.
+
+#### Scenario: An overlapping read is attached to its claim
+- **WHEN** `thenwhat audit attach` names a lead left identity unresolved naming an approved claim that is not archived, and the page reader gives its page
+- **THEN** the claim has the article under the page's own headline and publication date, the lead points at the claim and the article and is no longer listed, the claim's review state and audit hold are unchanged, and nothing of the page's text is stored
+
+#### Scenario: An overlapping read of a claim that is not published is refused
+- **WHEN** `thenwhat audit attach` names a lead whose overlapped claim is pending, rejected or archived
+- **THEN** nothing is attached, the reader is not asked, the lead is left as it was, and the other leads named are still attached
+
+#### Scenario: The claim already has the overlapping read's address
+- **WHEN** `thenwhat audit attach` names a lead whose address the overlapped claim already has as a source article
+- **THEN** the lead points at that article, no second article is added and the reader is not asked
+
+#### Scenario: An overlapping read whose outlet is held, or whose page has no date
+- **WHEN** `thenwhat audit attach` names a lead whose outlet the page reader has stopped, and later one whose page gives no publication date
+- **THEN** the first is left for later without a request, the second attaches nothing, and both stay listed
+
+#### Scenario: An overlapping read is dismissed
+- **WHEN** `thenwhat audit dismiss` names a lead left identity unresolved naming a claim that is not archived, with a reason
+- **THEN** the lead keeps its outcome, points at no claim, records who decided and why, and is no longer listed
 
 ### Requirement: Registry numbers and papers the page gives
 Registry numbers and paper DOIs that the article's own page gives SHALL be recorded for the claim as candidates, with the reason that the article names them, without a search. Each SHALL be scored and decided as any candidate is, for the claim's indication. A paper the page gives only by its PubMed number SHALL NOT be recorded. When what the page names cannot be read or scored, the claim and its article SHALL stand, and the lead SHALL say that they were not recorded.

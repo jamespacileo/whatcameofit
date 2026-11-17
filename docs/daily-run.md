@@ -68,6 +68,8 @@ This part is done on purpose, by the operator or by an assistant the operator as
 thenwhat audit list                 # what is held
 thenwhat archive <slug> …           # what is wrong
 thenwhat audit clear <slug> …       # the rest
+thenwhat audit attach <lead> …      # a listed read that reports the claim it overlaps
+thenwhat audit dismiss <lead> … --reason "…"   # one that does not
 make publish-data                   # then review, commit, open a pull request, merge
 ```
 
