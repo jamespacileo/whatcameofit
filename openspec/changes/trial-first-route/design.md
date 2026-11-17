@@ -562,20 +562,13 @@ Each step can stop there. Rollback of 1 to 3 is to leave the new columns unread;
 
 Decisions for the operator. Each has the assistant's recommendation first.
 
-1. **Before the store exists, may a trial with no claim open the page that reads the registry on request?**
-   - *Yes, for the listed set only (recommended).* The page exists, costs no model and no build, and the wording gets tested on 26,000 trials before 467,000.
-   - *No, wait for the store.* What was decided on 2026-11-16, when the existing page had not been considered. Nothing uncited is visible until then.
-   - *Yes, for any stored identifier.* Every trial at once, each first view a request to the registry.
-2. **What the static listing holds.**
-   - *Trials under way in phase 2 or 3, 25,898, one file of about 4.8 MB (recommended).*
-   - *Phase 3 of any state, 50,238, about 8 MB by proportion.*
-   - *Every trial, as 468 files by identifier:* answers an identifier, no search by word.
-   - *Nothing until the store.*
+1. **Before the store exists, may a trial with no claim open the page that reads the registry on request?** Decided by the operator on 2026-11-17: yes, for the listed set only. Built in the same days: the Worker opens the plain page for an identifier in the listing that no claim cites; `LISTED_TRIAL_PAGES=0` at build time turns it off.
+2. **What the static listing holds.** Decided by the operator on 2026-11-17: trials under way in phase 2 or 3, one static listing. Settled by the build: the set is `active-since-2025`, which is that choice less the 2,570 trials whose record the registry has not changed since 1 January 2025, 23,328 trials on the working database on 2026-11-17, in one file of 7,009,433 bytes (1.18 MB with Brotli). The command takes `--set`, so the wider choice is one word away. Each row also holds the acronym, conditions and intervention names, which is why it is 7.0 MB and not the 4.8 MB estimated above for five fields.
 3. **Which fields the load gains.** Those of decision 2's first table and decision 12's list are needed: 1,273 bytes a trial. Open is only whether planned primary outcomes are stored too, at 1,588 bytes. Recommended now: store them, because the reload is being done once, tonight, and storing a field decides nothing about showing it. Before, the recommendation was to leave them out, at 909 bytes against 1,224, so an uncited page can name what the trial set out to measure.
 4. **Does a claim drafted on this route wait for its audit?** Recommended: yes, as every backfill batch does (`docs/adr/0007`). The alternative, publishing by rule when the article's page names a registry number that preparation then approves, is what `docs/adr/0009` allows a reader's lead, and would remove the audit as the limit on this route.
 5. **Is a held lead read on a strong link?** Recommended: yes, for the set being worked. Otherwise only passed leads are read and the route changes order alone.
-6. **May search engines index a trial page with no claim?** Recommended: no, until the wording has been read on real pages; the page restates a public record. The alternative is the largest change to the site's size the project has considered.
-7. **The fixed phrases of decision 2**, especially "completed", "unknown" and the no-report line. The operator's to approve or reword.
+6. **May search engines index a trial page with no claim?** Decided by the operator on 2026-11-17: not until the wording has been read on real pages.
+7. **The fixed phrases of decision 2.** Accepted as written by the operator on 2026-11-17. They are held in `site/src/lib/trial-page.mjs`. The build added three the decision did not have, for the operator to read with the rest (task 5.9): a state the mapping lacks ("The registry gives this study a state this page has no words for. The registry's own record shows it."), results posted with no date ("The registry record holds posted results."), and no phase ("The registry gives no phase for this study.", the wording `specs/trial-pages` already gave).
 8. **The share of the ceiling for this route.** Recommended: 15 dollars a month, checked before each batch like any other.
 9. **How recent is "recently completed".** Recommended: primary completion in the last two years.
 10. **Papers on a trial page** (decision 15). Now in this change. Open is which papers:

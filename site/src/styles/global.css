@@ -1964,6 +1964,42 @@ main nav.contents ul li + li {
   color: var(--muted);
 }
 
+/* Listed trials found by a search: registry facts, after any claim. */
+.listed-trials {
+  margin-top: 1.6rem;
+}
+
+.listed-trials h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.listed-trial {
+  padding-block: 0.8rem;
+  border-top: 1px solid var(--rule);
+  max-width: var(--measure);
+}
+
+.listed-trial .listed-title,
+.listed-trial .match-source {
+  display: block;
+}
+
+.listed-trial .listed-title {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.listed-trial p {
+  margin: 0.25rem 0 0;
+  font-size: 0.88rem;
+}
+
+.listed-trial .match-source,
+.listed-trial .listed-says {
+  color: var(--muted);
+}
+
 .results .trial-title,
 .trial-title {
   margin: 0.3rem 0 0;
