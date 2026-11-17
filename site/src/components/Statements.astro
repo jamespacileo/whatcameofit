@@ -3,11 +3,12 @@
 // own words, framed as the report's and grouped under the report. Openspec
 // site-publishing: "Reported statements on the claim page". Between the summary and
 // the records, and never compared with a record.
-// Under its report a statement stands in a group: by who said it, or by what kind of
-// statement it is, as the reader chooses (scripts/folds.ts; with no script, by who).
-// A row is the statement with a mark for how firmly it was put. It opens to what the
-// report gave as its basis; how sure the reading is stands a press further in, and in
-// sight on the row only when the check is less than very sure. Chosen by the operator
+// Every statement stands in a group named in the label's column: by who the report had
+// saying it, by what kind of statement it is, or by its report, as the reader chooses
+// (scripts/folds.ts; with no script, by who). A row is the statement with a mark for
+// how firmly it was put, then the other two of the three. It opens to its report by
+// title, and what the report gave as its basis; how sure the reading is stands a press
+// further in, and in sight on the row only when the check is less than very sure. Chosen by the operator
 // from .impeccable/mocks/sections-rebuild/ on 2026-11-17 (variant B, with A's order as
 // a choice).
 import Activity from "@lucide/astro/icons/activity";
@@ -49,14 +50,10 @@ interface Props {
 }
 
 const { statements, articles } = Astro.props;
-// Report by report, in the order the claim lists its reports; a report with no
-// approved statement is not listed.
-const groups = articles
-  .map((article) => ({
-    article,
-    statements: statements.filter((statement) => statement.article_url === article.url),
-  }))
-  .filter((group) => group.statements.length > 0);
+// A statement is listed with the report it was read from; one whose report the claim
+// does not list is left out.
+const reportOf = (statement: ExportedStatement) => articles.find((article) => article.url === statement.article_url);
+const listed = statements.filter((statement) => reportOf(statement));
 
 // One drawing per kind of statement and per kind of speaker.
 const KIND_ICONS: Record<string, typeof Activity> = {
@@ -74,20 +71,25 @@ const SPEAKER_ICONS: Record<string, typeof Activity> = {
   patient: User,
   other_expert: GraduationCap,
 };
-const VIEWS = ["who", "kind"] as const;
+// Three orders, each a grouping of every statement: by who the report had saying it,
+// by what kind of statement it is, by the report. A group is named in the label's
+// column; a row then says the other two.
+const VIEWS = ["who", "kind", "report"] as const;
 type View = (typeof VIEWS)[number];
-const nameOf = (view: View, statement: ExportedStatement) => (view === "who" ? statement.speaker : statement.kind);
-// A statement's groups under one report: in the order their first statement stands.
-const arranged = (view: View, list: ExportedStatement[]) =>
-  [...new Set(list.map((statement) => nameOf(view, statement)))].map((name) => ({
-    name,
-    statements: list.filter((statement) => nameOf(view, statement) === name),
-  }));
-// The choice of order is offered only where it changes something.
-const choice =
-  statements.length > 2 &&
-  new Set(statements.map((statement) => statement.speaker)).size > 1 &&
-  new Set(statements.map((statement) => statement.kind)).size > 1;
+const VIEW_WORDS: Record<View, string> = { who: "By who said it", kind: "By kind", report: "By report" };
+const SPEAKER_ORDER = ["article", "company", "researcher", "patient", "other_expert"];
+const KIND_ORDER = Object.getOwnPropertyNames(KIND_WORDS);
+const groupOf = (view: View, statement: ExportedStatement) =>
+  view === "who" ? statement.speaker : view === "kind" ? statement.kind : statement.article_url;
+const orderOf = (view: View) =>
+  view === "who" ? SPEAKER_ORDER : view === "kind" ? KIND_ORDER : articles.map((article) => article.url);
+const arranged = (view: View) =>
+  orderOf(view)
+    .map((name) => ({ name, statements: listed.filter((statement) => groupOf(view, statement) === name) }))
+    .filter((group) => group.statements.length > 0);
+// An order is offered where it makes more than one group; the first is always drawn.
+const views = VIEWS.filter((view) => view === "who" || arranged(view).length > 1);
+const reports = arranged("report").length;
 // A figure in a statement is set in bold, so the eye finds it.
 const figures = (text: string) => text.split(/(\d+(?:[.,]\d+)*%?)/);
 let serial = 0;
@@ -97,9 +99,9 @@ let serial = 0;
   <FoldHead id="reported-statements" phone="folded">
     {/* What a statement is and is not, from the mark beside the heading. */}
     <p slot="about">
-      {statementsNote(groups.length)} <a href="/how-it-works#what-a-report-said">How statements are found</a>
+      {statementsNote(reports)} <a href="/how-it-works#what-a-report-said">How statements are found</a>
     </p>
-    {statementsHeading(groups.length)}
+    {statementsHeading(reports)}
   </FoldHead>
   <div class="said-tools">
     {/* What the mark before a statement says, once. */}
@@ -108,95 +110,119 @@ let serial = 0;
       <span><span class="firm-mark maybe" aria-hidden="true" />{FIRMNESS_KEY.possibility}</span>
     </p>
     {
-      choice && (
+      views.length > 1 && (
         // Shown by the script: with none, the statements stand by who said them.
         <div class="kind-tabs said-order" role="group" aria-label="Arrange the statements" hidden data-said-order>
-          <button type="button" class="kind-tab" data-said-view="who" aria-pressed="true">By who said it</button>
-          <button type="button" class="kind-tab" data-said-view="kind" aria-pressed="false">By kind</button>
+          {views.map((view) => (
+            <button type="button" class="kind-tab" data-said-view={view} aria-pressed={view === "who" ? "true" : "false"}>
+              {VIEW_WORDS[view]}
+            </button>
+          ))}
         </div>
       )
     }
   </div>
   {
-    groups.map((group) => (
-      <>
-        <h3 class="matched-group statement-report">
-          <a class="statement-source" href={group.article.url} rel="noopener">
-            “{group.article.title}”
-            <ExternalLink class="out" size={14} stroke-width={1.9} aria-hidden="true" />
-          </a>
-          <span class="entry-note">
-            <Outlet url={group.article.url} outlet={group.article.outlet} link={false} />{" "}
-            <span class="unbroken">{formatDate(group.article.published_date)}</span>
-          </span>
-        </h3>
-        {VIEWS.filter((view) => view === "who" || choice).map((view) => (
-          <div class="said-view" data-said-body={view} hidden={view === "kind"}>
-            {arranged(view, group.statements).map(({ name, statements: list }) => {
-              const GroupIcon = view === "who" ? SPEAKER_ICONS[name] : KIND_ICONS[name];
-              return (
-                <div class="said-group">
-                  <h4 class="said-by">
-                    {/* The report is named over its statements, so here it is "The report". */}
+    views.map((view) => (
+      <div class="said-view" data-said-body={view} hidden={view !== "who"}>
+        {arranged(view).map(({ name, statements: list }) => {
+          const GroupIcon = view === "who" ? SPEAKER_ICONS[name] : KIND_ICONS[name];
+          const report = view === "report" ? articles.find((article) => article.url === name)! : null;
+          return (
+            <div class="said-group">
+              <h3 class="said-by">
+                {report ? (
+                  // A report is named by its outlet, which is the link to it, and its day.
+                  <>
+                    <Outlet url={report.url} outlet={report.outlet} />
+                    <small class="unbroken">{formatDate(report.published_date)}</small>
+                  </>
+                ) : (
+                  <>
                     <span class="said-name">
                       {GroupIcon && <GroupIcon size={16} stroke-width={1.7} aria-hidden="true" />}
                       {view === "who" ? speakerText(name) : KIND_WORDS[name]}
                     </span>
-                  </h4>
-                  <ul class="plain entry-rows statement-rows">
-                    {list.map((statement) => {
-                      const TagIcon = view === "who" ? KIND_ICONS[statement.kind] : SPEAKER_ICONS[statement.speaker];
-                      const sure = statement.confidence >= SURE_READING;
-                      return (
-                        <Entry
-                          id={`statement-${view}-${++serial}`}
-                          name="this statement"
-                          opens="What it rests on and how sure the reading is"
-                        >
-                          <p class="statement">
-                            <span class:list={["firm-mark", { maybe: statement.firmness !== "fact" }]} aria-hidden="true" />
-                            <span class="statement-text">
-                              <span class="visually-hidden statement-said">{attributionText(statement)}</span>{" "}
-                              {figures(statement.text).map((part, index) => (index % 2 === 1 ? <b>{part}</b> : part))}
-                            </span>
+                    {list.length > 1 && <small>{list.length} statements</small>}
+                  </>
+                )}
+              </h3>
+              <ul class="plain entry-rows statement-rows">
+                {list.map((statement) => {
+                  const from = reportOf(statement)!;
+                  const TagIcon = view === "kind" ? SPEAKER_ICONS[statement.speaker] : KIND_ICONS[statement.kind];
+                  const WhoIcon = SPEAKER_ICONS[statement.speaker];
+                  const sure = statement.confidence >= SURE_READING;
+                  return (
+                    <Entry
+                      id={`statement-${view}-${++serial}`}
+                      name="this statement"
+                      opens="Its report, what it rests on and how sure the reading is"
+                    >
+                      <p class="statement">
+                        <span class:list={["firm-mark", { maybe: statement.firmness !== "fact" }]} aria-hidden="true" />
+                        <span class="statement-text">
+                          <span class="visually-hidden statement-said">{attributionText(statement)}</span>{" "}
+                          {figures(statement.text).map((part, index) => (index % 2 === 1 ? <b>{part}</b> : part))}
+                        </span>
+                      </p>
+                      <Fragment slot="ties">
+                        {/* What the group is not named by: its kind, or who said it; then
+                            the third of the three as a drawing alone, named for a screen
+                            reader and under the pointer. */}
+                        <span class="said-tag">
+                          {TagIcon && <TagIcon size={15} stroke-width={1.8} aria-hidden="true" />}
+                          {view === "kind" ? speakerText(statement.speaker) : KIND_WORDS[statement.kind]}
+                        </span>
+                        {view === "report" ? (
+                          <span class="said-source" title={speakerText(statement.speaker)}>
+                            {WhoIcon && <WhoIcon size={15} stroke-width={1.8} aria-hidden="true" />}
+                            <span class="visually-hidden">{speakerText(statement.speaker)}</span>
+                          </span>
+                        ) : (
+                          <span class="said-source" title={`${from.outlet ?? "The report"}, ${formatDate(from.published_date)}`}>
+                            <Outlet url={from.url} outlet={from.outlet} link={false} />
+                          </span>
+                        )}
+                        {!sure && (
+                          <Score words={statementConfidenceLabel(statement.confidence)}>
+                            <span>{confidenceMeaning(formatDate(statement.read_on))}</span>
+                          </Score>
+                        )}
+                      </Fragment>
+                      <div slot="more" class="said-more">
+                        <p class="said-from">
+                          <a class="statement-source" href={from.url} rel="noopener">
+                            “{from.title}”
+                            <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />
+                          </a>
+                          <span class="entry-note">
+                            <Outlet url={from.url} outlet={from.outlet} link={false} />{" "}
+                            <span class="unbroken">{formatDate(from.published_date)}</span>
+                          </span>
+                        </p>
+                        <p>{BASIS_WORDS[statement.basis]}</p>
+                        <details class="match-why">
+                          <summary class="match-why-head">
+                            How sure this reading is
+                            <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                          </summary>
+                          <p class="match-score">
+                            <Score words={statementConfidenceLabel(statement.confidence)}>
+                              <span>{confidenceMeaning(formatDate(statement.read_on))}</span>
+                            </Score>
                           </p>
-                          <Fragment slot="ties">
-                            {/* What the group is not named by: the kind, or who said it. */}
-                            <span class="said-tag">
-                              {TagIcon && <TagIcon size={15} stroke-width={1.8} aria-hidden="true" />}
-                              {view === "who" ? KIND_WORDS[statement.kind] : speakerText(statement.speaker)}
-                            </span>
-                            {!sure && (
-                              <Score words={statementConfidenceLabel(statement.confidence)}>
-                                <span>{confidenceMeaning(formatDate(statement.read_on))}</span>
-                              </Score>
-                            )}
-                          </Fragment>
-                          <div slot="more" class="said-more">
-                            <p>{BASIS_WORDS[statement.basis]}</p>
-                            <details class="match-why">
-                              <summary class="match-why-head">
-                                How sure this reading is
-                                <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-                              </summary>
-                              <p class="match-score">
-                                <Score words={statementConfidenceLabel(statement.confidence)}>
-                                  <span>{confidenceMeaning(formatDate(statement.read_on))}</span>
-                                </Score>
-                              </p>
-                              <p>{confidenceMeaning(formatDate(statement.read_on))}</p>
-                            </details>
-                          </div>
-                        </Entry>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </>
+                          <p>{confidenceMeaning(formatDate(statement.read_on))}</p>
+                        </details>
+                      </div>
+                    </Entry>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
     ))
   }
 </section>

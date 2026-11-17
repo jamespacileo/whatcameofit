@@ -1659,7 +1659,8 @@ test("Scenario: Claim with three statements from one report", () => {
   assert.ok(section, "no statements section");
   assert.match(section, /<h2 class="bar" id="reported-statements">[\s\S]*?What the report said\s*<\/span><\/button><\/h2>/);
   // One report, named by its title, outlet and date, with the three statements under it.
-  assert.equal(count(section, 'class="matched-group statement-report"'), 1);
+  // One report, so there is no order by report; its title is the link where a row opens.
+  assert.ok(!section.includes('data-said-body="report"'));
   assert.match(section, /href="https:\/\/uk\.news\.example\.org\/3"[^>]*>\s*“Example report 3”/);
   assert.match(plainText(section), /Example Outlet 3 uk\.news\.example\.org 3 May 2019/);
   // The three stand twice in the page, by who said them and by kind; the second order
@@ -1704,8 +1705,11 @@ test("Scenario: Effect reported from a mouse study, on a claim with several repo
   const section = statementsOf(page("quiet-claim/index.html"));
   assert.match(section, /What the reports said/);
   assert.match(section, /What the news reports said about the treatment/);
-  assert.equal(count(section, 'class="matched-group statement-report"'), 2);
-  assert.match(plainText(section), /“Example report 1”.*regrew tissue in mice.*“Example report 2”.*no harm was seen/);
+  // Two reports: the statements can also stand by report, each named by its outlet.
+  const byReport = section.split('data-said-body="report"')[1];
+  assert.equal(count(byReport, 'class="said-group"'), 2);
+  // A statement, then where its row opens the report it was read from, by title.
+  assert.match(plainText(section), /regrew tissue in mice.*“Example report 1”.*no harm was seen.*“Example report 2”/);
   assert.match(plainText(section), /The report gave a study in animals as its basis\./);
 });
 
