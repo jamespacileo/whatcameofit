@@ -162,10 +162,15 @@ const rows: Row[] = [
                   )}
                   {filed && (
                     <p class="glance-filed">
-                      {claimWords}
-                      <ArrowRight size={13} stroke-width={2} aria-hidden="true" />
-                      <span class="visually-hidden"> is filed there as </span>
-                      {filed}
+                      {/* The label is for the eye; the words between the two terms say the
+                          same to a screen reader. */}
+                      <span class="glance-filed-label" aria-hidden="true">Filed there as</span>
+                      <span class="glance-filed-words">
+                        {claimWords}
+                        <ArrowRight size={13} stroke-width={2} aria-hidden="true" />
+                        <span class="visually-hidden"> is filed there as </span>
+                        {filed}
+                      </span>
                     </p>
                   )}
                   {rowCards.map((each, index) => (

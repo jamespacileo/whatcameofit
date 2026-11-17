@@ -16,3 +16,11 @@ On a claim page each term of "At a glance" SHALL be drawn as one line holding it
 #### Scenario: From the band
 - **WHEN** the reader follows "Kind of molecule" from the band
 - **THEN** that term's row is open and in view
+
+### Requirement: A row of "At a glance" is read label to value, and opens to labelled parts
+The label and the value of a row SHALL share a line at the top of the row, at every width. The score, how a term was found and the source's name SHALL be drawn quieter than the label and the value, and a lower-band reading SHALL keep its words in the page's ink. An opened row SHALL be marked as open across the list's width, and what it opens to SHALL be a set of parts, each with its own label: the source's words, where the term is filed, the term as its source names it with its credit, and why it matched. The source's words SHALL be the most prominent part and the credit the least.
+
+#### Scenario: Reading an opened term
+- **WHEN** a reader opens "Claimed for"
+- **THEN** the row is tinted, the definition is the largest text under it beside "In MeSH’s words", and "Why it matched" and the credit follow, each smaller and each with its label
+

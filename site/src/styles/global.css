@@ -8431,3 +8431,184 @@ body.framed {
     display: none;
   }
 }
+
+/* "At a glance", after the operator's notes of 2026-11-17 (openspec glance-rows):
+   a row is read label to value, on one line at the top of the row; everything else on
+   the row is quiet; an opened row is a set of labelled parts in three weights. */
+
+/* 1. The label and the value share a baseline. */
+.sheet .glance-rows > div,
+.sheet .glance-facts > div,
+.sheet .glance-rows dd {
+  align-items: baseline;
+}
+
+/* 2. Only the label and the value carry weight. The score and how a term was found are
+   grey at rest; a lower-band reading keeps its ink, since its words are what it must
+   say. */
+.sheet .glance-rows .pop-trigger.score:not(.low):not(.said) {
+  border-color: var(--rule-soft);
+  background: none;
+}
+
+.sheet .glance-rows .score:not(.low) .score-figure {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.sheet .glance-rows .pop-trigger.score.said {
+  text-decoration-color: var(--rule);
+}
+
+.sheet .glance-rows .pop-trigger.score.said .score-words {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.sheet .glance-rows .pop-trigger.score:not(.low):not(.said):hover,
+.sheet .glance-rows .pop-trigger.score:not(.low):not(.said):has(+ .pop:popover-open) {
+  border-color: var(--ring);
+}
+
+/* 3. An opened row stands on the panel tone from edge to edge of the list, and what it
+   opens to is parted from its line by a hairline. */
+.js .glance-rows > div:has(.glance-open):not([data-open]):hover,
+.js .glance-rows > div[data-open] {
+  background: var(--panel);
+  box-shadow:
+    -0.85rem 0 0 var(--panel),
+    0.85rem 0 0 var(--panel);
+}
+
+/* The parts: a grey label at the left, what it names at the right. First the source's
+   words, in the page's size and ink; then where the term is filed and why it matched,
+   a step smaller; last the credit and the notes, smallest and grey. */
+.glance-rows .glance-more {
+  --part: 2;
+  display: grid;
+  grid-template-columns: 8.5rem minmax(0, 1fr);
+  column-gap: 1.25rem;
+  row-gap: 0.5rem;
+  align-items: baseline;
+  max-width: 47rem;
+  margin-top: 0.8rem;
+  padding: 0.85rem 0 0.35rem;
+  border-top: 1px solid var(--rule);
+}
+
+.glance-more .glance-by,
+.glance-more .glance-filed-label,
+.glance-more .card-kind,
+.glance-more .term-card .match-why-head {
+  grid-column: 1;
+  margin: 0;
+  font-size: var(--label-size);
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* A term with no words of the source's (a drug's record): the line says where it is
+   from, across the row. */
+.glance-more .glance-by:not(:has(+ .glance-words)) {
+  grid-column: 1 / -1;
+}
+
+.glance-rows .glance-more .glance-words,
+.glance-rows .glance-more .glance-words-long {
+  grid-column: var(--part);
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.5;
+}
+
+.glance-more .glance-filed,
+.glance-more .term-card,
+.glance-more .card-head,
+.glance-more .term-card .match-why {
+  display: contents;
+}
+
+.glance-more .glance-filed-words {
+  grid-column: var(--part);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--text-m);
+  color: var(--ink);
+}
+
+.glance-more .card-label,
+.glance-more .card-head .entry-note,
+.glance-more .card-facts,
+.glance-more .card-words,
+.glance-more .term-card > .entry-note,
+.glance-more .term-credit,
+.glance-more .term-note,
+.glance-more .term-card .match-why p:not(.match-why-head) {
+  grid-column: var(--part);
+  margin: 0;
+}
+
+.glance-more .card-label {
+  justify-self: start;
+  font-size: var(--text-m);
+}
+
+.glance-more .term-card .match-why p:not(.match-why-head) {
+  font-size: var(--text-m);
+  color: var(--ink);
+}
+
+/* A new part starts a little lower than a line of the same part. */
+.glance-more .card-kind,
+.glance-more .card-label,
+.glance-more .term-card .match-why-head,
+.glance-more .term-card .match-why-head + p,
+.glance-more .glance-filed-label,
+.glance-more .glance-filed-words {
+  margin-top: 0.45rem;
+}
+
+.glance-more .card-facts {
+  background: var(--paper);
+}
+
+@media (max-width: 40rem) {
+  /* The label beside its value on a phone too. */
+  .sheet .glance-rows > div,
+  .sheet .glance-facts > div {
+    grid-template-columns: 7.25rem minmax(0, 1fr);
+    column-gap: 0.9rem;
+  }
+
+  .sheet .glance-rows dd {
+    align-items: center;
+  }
+
+  .sheet .glance-rows .glance-value {
+    align-self: baseline;
+  }
+
+  /* Opened, a part's label stands over what it names, and the parts take the row's
+     full width, under the label too. */
+  .glance-rows .glance-more {
+    --part: 1;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.25rem;
+    margin-left: calc(-7.25rem - 0.9rem);
+  }
+
+  .glance-more .card-label,
+  .glance-more .term-card .match-why-head + p,
+  .glance-more .glance-filed-words {
+    margin-top: 0;
+  }
+}
+
+@media print {
+  .js .glance-rows > div[data-open] {
+    background: none;
+    box-shadow: none;
+  }
+}
