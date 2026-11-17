@@ -982,6 +982,76 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     color: var(--muted);
   }
 
+  /* A registry row is the record. What was recorded leads in the text face, under its
+     kind in words; the heading face is kept for an outlet's own words. */
+  .row-kind {
+    font-weight: 600;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .row-kind .kind {
+    display: inline;
+    width: 0.95rem;
+    height: 0.95rem;
+    margin-right: 0.35rem;
+    vertical-align: -0.16em;
+    color: var(--muted);
+  }
+
+  .record-row .row-title {
+    font-family: var(--face);
+    font-size: clamp(1.12rem, 3vw, 1.25rem);
+    font-weight: 650;
+    line-height: 1.3;
+    letter-spacing: -0.005em;
+  }
+
+  /* The report a record belongs to hangs under it on a hairline: related, smaller, and
+     not the row's own headline. */
+  .row-about {
+    max-width: var(--measure);
+    margin: 0.85rem 0 0;
+    padding: 0.05rem 0 0.1rem 0.9rem;
+    border-left: 1px solid var(--ring);
+  }
+
+  .row-about-source {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.1rem 0.6rem;
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+
+  .row-about-source .domain {
+    display: none;
+  }
+
+  .row-about-source .when {
+    white-space: nowrap;
+  }
+
+  .row-about-label {
+    font-weight: 600;
+  }
+
+  .row-about .row-age {
+    font-weight: 400;
+    color: inherit;
+  }
+
+  .row-about-title {
+    margin: 0.2rem 0 0;
+    font-family: var(--display);
+    font-size: var(--text-l);
+    font-weight: 400;
+    line-height: 1.3;
+    text-wrap: pretty;
+  }
+
   /* The row's detail, under it at the width of both columns. Open without the script
      and on paper; with the script, closed until the status is pressed. */
   .row-more {
@@ -1323,6 +1393,13 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
     .row-title {
       margin-top: 0;
+    }
+
+    /* A record's one line is 44 pixels to press without the room a headline is given. */
+    .record-row .row-title a {
+      min-height: 0;
+      padding-block: 0.6rem;
+      margin-block: -0.6rem;
     }
 
     /* Rows are parted by their rule and the space under it. */

@@ -67,3 +67,19 @@ The head of the home page's day-by-day list SHALL be one line on a wide screen: 
 #### Scenario: What the column says
 - **WHEN** a reader presses or points at the mark beside "Latest"
 - **THEN** a panel says "With each report and record: where its claim stands on record now. Press it for why."
+
+### Requirement: A registry row leads with what was recorded
+In the home page's day-by-day list, a registry record's row SHALL lead with the record: its kind in words and its date, then what was recorded, in the record's own words, as the row's title leading to the claim page, then the claim and the record's identifier leading to the record at its source. The claim's newest news report SHALL follow these, set smaller than the row's title and joined to the row as what the record belongs to: named "Newest report", with its outlet and date, how long ago the claim was first reported when that is a year or more, and its title quoted. A registry row SHALL NOT set a news report's title as its own title.
+
+#### Scenario: A trial registered last week
+- **WHEN** a trial for a published claim was registered on 2 November 2026
+- **THEN** the row's title reads "Trial registered", and the claim's newest report is quoted under it, smaller, after "Newest report"
+
+#### Scenario: A report and a record of one claim on one day
+- **WHEN** a claim was reported and a trial for it was registered on the same day
+- **THEN** the report's row has the outlet's title as its title, and the record's row has "Trial registered" as its title
+
+#### Scenario: Read aloud
+- **WHEN** a screen reader lists the page's links
+- **THEN** a registry row's title is read with its treatment, as "Trial registered: " and the treatment's name
+
