@@ -154,3 +154,56 @@ CREATE TABLE job (name TEXT PRIMARY KEY) STRICT;`;
   assert.deepEqual(said.files.at(-1).tables, ["a", "b"]);
   assert.match(readFileSync(join(out, said.files.at(-1).name), "utf8"), /^PRAGMA defer_foreign_keys = true;/);
 });
+
+// A store shaped like the real one, made through store/merge.sql, holding what stopped
+// the first loads: a merged claim that points at a later claim, an icon of 93 KB, two
+// articles of one claim at one address, and tables cut across files.
+test("the faults of the first real loads, in one store of the real schema", async () => {
+  const { INGEST, MERGE } = await import("../src/sql.generated.mjs");
+  const path = join(dir, "real.sqlite");
+  const db = new DatabaseSync(path);
+  db.exec(readFileSync(here("../../schema.sql"), "utf8"));
+  const T = "2026-11-01T00:00:00.000000+00:00";
+  const run = (id, records) => {
+    const counts = {};
+    for (const [kind] of records) counts[kind] = (counts[kind] || 0) + 1;
+    db.prepare(INGEST.register_run).run(id, "migration", null, null, "abc1234", T, "0".repeat(64), null);
+    db.prepare(INGEST.state_counts).run(id, JSON.stringify(counts));
+    db.prepare(INGEST.stage).run(id, JSON.stringify(records.map(([kind, key, body]) => ({ kind, key, body }))));
+    db.exec("BEGIN");
+    for (const sql of MERGE) { const s = db.prepare(sql); if (sql.includes("?1")) s.run(id); else s.run(); }
+    db.exec("COMMIT");
+    assert.equal(db.prepare("SELECT status FROM run WHERE id = ?").get(id).status, "merged", id);
+  };
+  const claim = (slug) => ["claim", slug, { slug, headline: `Report on ${slug}`, summary: "s", vertical: "metabolic", indication: "obesity", origin: "backfill", created_at: T,
+    review_state: "approved", reviewed_by: "rule", reviewed_at: T }];
+  const article = (slug, key) => ["source_article", `${slug}|${key}`, { slug, url_key: key, url: "https://outlet.example/story?ref=1", outlet: "outlet.example", title: "t", published_date: "2026-10-01" }];
+  const icon = Buffer.from(bytes(93_062, 7)).toString("hex");
+  run("r1", [claim("first-gone"), claim("second-kept"), ...Array.from({ length: 9 }, (_, i) => claim(`other-${i}`)),
+    article("second-kept", "outlet.example/story"), article("second-kept", "outlet.example/story-amp"),
+    ["outlet_icon", "outlet.example", { domain: "outlet.example", icon_url: "https://outlet.example/i.png", media_type: "image/png", content_hex: icon, fetched_at: T }]]);
+  run("r2", [["action", "merge|first-gone", { action: "merge", slug: "first-gone", into_slug: "second-kept", decided_by: "human", at: T }]]);
+  db.exec("DELETE FROM stg");
+  const merged = db.prepare("SELECT id, merged_into FROM claim WHERE slug = 'first-gone'").get();
+  assert.ok(merged.merged_into > merged.id, "the merged claim points at a later claim");
+  assert.equal(db.prepare("SELECT length(content) AS n FROM outlet_icon").get().n, 93_062);
+  assert.equal(db.prepare("SELECT count(*) AS n FROM source_article").get().n, 2);
+
+  const out = join(dir, "real");
+  const done = dump(path, join(out, "store.sql"), "--rows-a-file", "3");
+  assert.equal(done.status, 0, done.stderr);
+  const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
+  assert.ok(manifest.files.filter((file) => file.tables.includes("claim")).length >= 3, "the claims are cut across files");
+  assert.equal(manifest.rows_written_in_parts, 1);
+  assert.equal(manifest.tables.claim, 11);
+  // The strict replay against the real migrations: each statement alone, checks at once.
+  const scratch = join(dir, "real-scratch.sqlite");
+  const checked = spawnSync(process.execPath, [here("../scripts/check-dump.mjs"), out, "--scratch", scratch], { encoding: "utf8" });
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  assert.match(checked.stdout, /no foreign key broken/);
+  const loaded = new DatabaseSync(scratch, { readOnly: true });
+  for (const sql of ["SELECT slug, merged_into FROM claim ORDER BY id", "SELECT claim_id, url_key, url FROM source_article ORDER BY id",
+    "SELECT domain, hex(content) FROM outlet_icon", "SELECT action, decided_by FROM claim_action ORDER BY id"]) {
+    assert.deepEqual(loaded.prepare(sql).all(), db.prepare(sql).all(), sql);
+  }
+});

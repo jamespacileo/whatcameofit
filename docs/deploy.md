@@ -206,9 +206,65 @@ npx wrangler d1 migrations apply STORE --remote --config wrangler.preview.jsonc
 
 Applied to the preview on 17 November 2026: `0001_store_schema.sql` (which is `store/schema.sql`, byte for byte) and `0002_ingest_service.sql`.
 
-### Bulk load
+### Two tiers (decided by the operator on 17 November 2026)
 
-The first load of the tracker does not go through the merge. The whole store is built on a device as a SQLite file with `store/schema.sql`, written out as SQL, and loaded with Wrangler.
+The store is in two tiers. Which table is in which is stated in `store/store-tables.md`, not here.
+
+- **Hot:** what the site's export, the lookup service and the extension read. It is loaded into D1.
+- **Bulk:** registry trials, leads, shares, link tables, work entries, usage, measures and their payload rows. It ships as one SQLite file in R2 under `bulk/<build id>/` and is not loaded into D1.
+
+`thenwhat store build` writes a hot file and a bulk file. The migrations still create every table in D1, so the bulk tables are there and empty. What that means for the ingest service today:
+
+- None of its own routes reads a bulk table. `/work/*` reads `work_item`, `/slices/*` reads `work_slice`, and the audit-hold check reads `claim`.
+- The merge still writes whatever kind it is handed. A reader's lead or a found trial is added to D1's copy of the table and is not matched against the bulk file, so a lead the bulk file already has is added again in D1.
+- A record whose parent is only in the bulk file is not resolved: a share, label or reading of a lead, or an article lead of a trial, that the run does not also carry. The run's counts then do not reconcile and the merge is undone. A run must carry such a parent itself until the merge is taught the tiers.
+
+### Cut-over, in order
+
+Rehearse first, on this machine, with nothing sent anywhere. It runs every step below against Wrangler's local engine, times each, and exits 1 on any failure or difference:
+
+```bash
+make store-rehearsal STORE_HOT=<hot.sqlite> STORE_BULK=<bulk.sqlite> PAYLOADS=<payload folder>
+```
+
+Then, against the real resources (`--remote`; production also needs `--production <bucket>` for the bucket scripts):
+
+1. Read the jurisdiction back (above), apply the migrations, and note the restore bookmark (below).
+2. Dump the hot file and try the dump here.
+   ```bash
+   node store/ingest/scripts/dump-for-import.mjs <hot.sqlite> <folder>/store.sql --rows-a-file 60000
+   node store/ingest/scripts/check-dump.mjs <folder>
+   ```
+3. Load it, and hold D1 to the file by checksum. No row is fetched back: one statement a table is run on both and the answers compared. With `--checks`, the statements and expected answers are the ones `thenwhat store checksum` writes.
+   ```bash
+   node store/ingest/scripts/import-folder.mjs <folder> --remote
+   node store/ingest/scripts/checksum-d1.mjs --file <hot.sqlite> --remote
+   ```
+4. Put the payload objects in the bucket.
+   ```bash
+   node store/ingest/scripts/upload-payloads.mjs <payload folder> --remote
+   ```
+5. Put the bulk file in the bucket. It is compressed, cut into parts of 200 MB (Wrangler's `r2 object put` takes 300 MiB at most, read from Wrangler 4.161.0's source), and its manifest, with the SHA-256 of each part and of the whole file, is written last.
+   ```bash
+   node store/ingest/scripts/upload-bulk.mjs <bulk.sqlite> --remote
+   ```
+6. Compare the exports: `make export-compare` with `STORE_FILE` and `STORE_PAYLOADS`.
+
+If a step fails, restore to the bookmark, or empty the store, before loading again.
+
+### Restore, in two tiers
+
+- **Hot, within Time Travel's history:** restore D1 to a bookmark (below).
+- **Hot, otherwise:** build the hot file again (from a Postgres dump or a kept file, below), then steps 2 and 3 into an emptied database.
+- **Bulk:** fetch it by its build id. Each part and the whole file are checked against the manifest, and the file takes its name only when it is proved.
+  ```bash
+  node store/ingest/scripts/download-bulk.mjs <build id> <out.sqlite> --remote
+  ```
+- **Payload objects** are never overwritten, each being stored under its own checksum; upload the folder again and only the missing ones are sent (`--check-first` when the notes of the earlier upload are gone).
+
+### Bulk load: what the steps do, and what was measured
+
+The first load of the tracker does not go through the merge. The hot tier is built on a device as a SQLite file with `store/schema.sql`, written out as SQL, and loaded with Wrangler. The figures below are from loads of the whole store, before the tiers were decided.
 
 1. Note the restore bookmark (below).
 2. Write the SQL, in a folder of its own. It also writes `manifest.json`, each table's rows.
