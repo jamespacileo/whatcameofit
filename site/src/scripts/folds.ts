@@ -32,6 +32,18 @@ for (const row of rows) {
   row.addEventListener("click", () => openRow(row, row.getAttribute("aria-expanded") !== "true"));
 }
 
+// A term in "At a glance" opens to its source's words and why it matched. The stylesheet
+// draws it closed from the first paint; with no script it is simply open.
+const terms = [...document.querySelectorAll<HTMLButtonElement>(".glance-open")];
+const openTerm = (term: HTMLButtonElement, open: boolean) => {
+  term.setAttribute("aria-expanded", String(open));
+  term.closest<HTMLElement>(".glance-rows > div")!.toggleAttribute("data-open", open);
+};
+for (const term of terms) {
+  openTerm(term, false);
+  term.addEventListener("click", () => openTerm(term, term.getAttribute("aria-expanded") !== "true"));
+}
+
 // A link to a folded section, or to something inside one, opens it.
 const reveal = (hash: string) => {
   if (hash.length < 2) return;
@@ -41,6 +53,9 @@ const reveal = (hash: string) => {
   const group = target.closest<HTMLElement>(".trial-group");
   const row = group?.querySelector<HTMLButtonElement>(".trial-open");
   if (row) openRow(row, true);
+  // A link to a term in "At a glance" opens it.
+  const term = target.closest<HTMLElement>(".glance-rows > div")?.querySelector<HTMLButtonElement>(".glance-open");
+  if (term) openTerm(term, true);
   const rest = target.closest<HTMLDetailsElement>("details");
   if (rest) rest.open = true;
   const head =

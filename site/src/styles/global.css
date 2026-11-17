@@ -7987,14 +7987,6 @@ body.framed {
   overflow: hidden;
 }
 
-.glance-more:not([open]) .glance-filed {
-  display: none;
-}
-
-/* No mark is left dangling after the last part in sight. */
-.glance-more:not([open]) summary > span:has(+ .glance-filed)::after {
-  content: none;
-}
 
 /* Trials: a row keeps to what tells one trial from the next. The measure is held to two
    lines and who runs it to one; the row opens to the rest. People are set as figures. */
@@ -8026,10 +8018,6 @@ body.framed {
 
   .trial-row .trial-measure .trial-by {
     white-space: normal;
-  }
-
-  .glance-more:not([open]) .glance-filed {
-    display: inline;
   }
 }
 
@@ -8213,4 +8201,233 @@ body.framed {
   background: none;
   text-decoration-style: solid;
   text-decoration-color: currentColor;
+}
+
+/* "At a glance" as rows that open (openspec glance-rows, chosen by the operator on
+   2026-11-17 from three mocks in .impeccable/mocks/glance-variants/, "A"): the pattern of
+   "The record in brief". A term is one line, its label, its value, its score and whose
+   term it is, and opens to the source's words and why it matched. The claim's own facts
+   are rows of the same list. */
+.sheet .glance-rows {
+  display: block;
+}
+
+.sheet .glance-rows > div {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
+  column-gap: 1.25rem;
+  align-items: start;
+  padding: var(--row-pad) 0;
+  border-bottom: 1px solid var(--row-rule);
+}
+
+.sheet .glance-rows dt,
+.sheet .glance-facts dt {
+  font-size: var(--text-m);
+  color: var(--muted);
+}
+
+.sheet .glance-rows dd {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  column-gap: 1.25rem;
+  align-items: start;
+  margin: 0;
+}
+
+.sheet .glance-rows .glance-head {
+  display: contents;
+}
+
+.sheet .glance-rows .glance-value {
+  grid-column: 1;
+  font-weight: 700;
+}
+
+.sheet .glance-rows .aka {
+  grid-column: 1;
+}
+
+/* The score stands over the row's press, so it opens its own panel. */
+.sheet .glance-rows .glance-scores {
+  position: relative;
+  z-index: 1;
+  grid-column: 2;
+  grid-row: 1;
+  justify-content: flex-end;
+  margin: 0;
+}
+
+.glance-open {
+  grid-column: 3;
+  grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 1.6rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-s);
+  text-align: left;
+  cursor: pointer;
+}
+
+.glance-open .glance-more-words {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.glance-open .chev {
+  display: grid;
+  place-items: center;
+}
+
+.glance-open .chev svg {
+  transition: transform 160ms var(--ease-out);
+}
+
+.glance-open[aria-expanded="true"] .chev svg {
+  transform: rotate(180deg);
+}
+
+/* The whole line is the press, as a trial's row is; what the row opens to is not. */
+.js .glance-open::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3.1rem;
+}
+
+.js .glance-rows > div:has(.glance-open):not([data-open]):hover {
+  background: var(--panel);
+}
+
+.glance-rows .glance-more {
+  grid-column: 1 / -1;
+  max-width: 44rem;
+  padding: 0.7rem 0 0.3rem;
+}
+
+.js .glance-rows > div:not([data-open]) .glance-more {
+  display: none;
+}
+
+.glance-by {
+  margin: 0;
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+
+/* Opened, the source's words are whole. */
+.glance-rows .glance-more .glance-words,
+.glance-rows .glance-more .glance-words-long {
+  display: block;
+  overflow: visible;
+  margin: 0.2rem 0 0;
+}
+
+.glance-more .glance-filed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.45rem 0 0;
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+
+.glance-rows .glance-more .term-card {
+  margin-top: 0.7rem;
+}
+
+/* The claim's own facts: rows of the same list. */
+.sheet .glance-facts {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sheet .glance-facts > div {
+  display: grid;
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
+  column-gap: 1.25rem;
+  align-items: baseline;
+  padding: var(--row-pad) 0;
+  border-bottom: 1px solid var(--row-rule);
+}
+
+.sheet .glance-facts > div:last-child {
+  border-bottom-color: var(--rule);
+}
+
+.sheet .glance-facts dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+@media (max-width: 40rem) {
+  /* The label, the value, then the score beside whose term it is. */
+  .sheet .glance-rows > div,
+  .sheet .glance-facts > div {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.1rem;
+  }
+
+  .sheet .glance-rows dd {
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 0.8rem;
+    row-gap: 0.15rem;
+    align-items: center;
+  }
+
+  .sheet .glance-rows .glance-value {
+    grid-column: 1 / -1;
+    order: 0;
+  }
+
+  .sheet .glance-rows .aka {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+
+  .sheet .glance-rows .glance-scores {
+    grid-column: 1;
+    grid-row: auto;
+    order: 2;
+    justify-content: flex-start;
+  }
+
+  .glance-open {
+    grid-column: 2;
+    grid-row: auto;
+    order: 3;
+    min-height: 2.75rem;
+  }
+
+  .glance-rows .glance-more {
+    order: 4;
+  }
+
+  .js .glance-open::after {
+    height: 3.6rem;
+  }
+}
+
+@media print {
+  .js .glance-rows > div:not([data-open]) .glance-more {
+    display: block;
+  }
+
+  .glance-open .chev {
+    display: none;
+  }
 }
