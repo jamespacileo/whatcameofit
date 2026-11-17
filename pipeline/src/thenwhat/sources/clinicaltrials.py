@@ -42,6 +42,10 @@ LIST_FIELDS = (
     ",LeadSponsorName,CollaboratorName,CollaboratorClass,EnrollmentCount,EnrollmentType"
     ",ReferencePMID,ReferenceType,SeeAlsoLinkURL,SeeAlsoLinkLabel"
     ",PrimaryOutcomeMeasure,PrimaryOutcomeTimeFrame"
+    # Only the type: it says when the lead sponsor is a sponsor-investigator, a person
+    # whose name is then not kept. The investigator's name, title and affiliation in the
+    # same module are never asked for.
+    ",ResponsiblePartyType"
 )
 # The most trials the registry returns in one page.
 LIST_PAGE_SIZE = 1000
