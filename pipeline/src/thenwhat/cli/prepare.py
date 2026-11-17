@@ -11,10 +11,10 @@ import typer
 
 from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
 from thenwhat.claims.entry import find_claim
-from thenwhat.claims.mesh_areas import suggestion_line
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.clinical.service import suggestion_line
 from thenwhat.domain import ReviewState
 from thenwhat.measure import spans as measure
 from thenwhat.prepare import (
