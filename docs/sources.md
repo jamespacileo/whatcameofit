@@ -483,3 +483,11 @@ Read on 2026-11-17 from `developers.cloudflare.com`, for `store/ingest`. The fig
 - **Queues** (`queues/platform/limits`): a message is at most 128 KB; 100 messages a batch; kept up to 14 days.
 - **D1 migrations** (`d1/reference/migrations`): `wrangler d1 migrations apply` reads the top-level `.sql` files of `migrations_dir` in order and records them in `d1_migrations`. The page does not say whether a migration file is one transaction.
 - **Authentication:** none of these is reached with a key from the pipeline. The service is reached with its own tokens; the bindings need none.
+
+### D1 import, billing and Time Travel (read 17 November 2026)
+
+- Import (`developers.cloudflare.com/d1/best-practices/import-export-data`): `wrangler d1 execute --file` takes a file of at most 5 GiB; `BEGIN TRANSACTION` and `COMMIT` must be removed; a statement is at most 100,000 bytes; `PRAGMA defer_foreign_keys = true` is the documented way past foreign-key order. The page does not say whether the database is unavailable during an import or whether a failed one is undone.
+- Billing (`developers.cloudflare.com/d1/platform/pricing`, `.../limits`): imported rows count as rows written. Free: 100,000 rows written a day, 500 MB a database, queries refused once the day's limit is reached, reset at 00:00 UTC. Workers Paid: 50 million rows written a month included, then $1.00 a million; 10 GB a database; storage 5 GB included, then $0.75 a GB-month.
+- Time Travel (`developers.cloudflare.com/d1/reference/time-travel`): history kept 30 days on paid, 7 on free; a restore overwrites in place, cancels requests in flight, can be undone by restoring to the bookmark it prints; 10 restores in 10 minutes a database; no charge.
+- Queues (`developers.cloudflare.com/workers/wrangler/commands/queues`, `developers.cloudflare.com/queues/platform/limits`): `queues create` has a `--jurisdiction` flag with no values listed; a message is at most 128 KB; retention 4 days by default, up to 14 on paid, 24 hours on free.
+

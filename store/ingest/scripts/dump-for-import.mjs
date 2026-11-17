@@ -8,11 +8,14 @@
 //   - no BEGIN TRANSACTION or COMMIT in the file;
 //   - a statement is at most 100,000 bytes, so rows are grouped into INSERTs under 90,000;
 //   - a file is at most 5 GiB; `--rows-a-file` splits the output into out.0001.sql, ...
+// Beside the output it writes manifest.json, each table's rows, so put the output in a
+// folder of its own.
 // And what the schema needs: a generated column is never written, so every INSERT names
 // its columns; the search tables are filled by the schema's triggers as the rows arrive,
 // so they and their shadow tables are left out; so are staged records and the tables
 // Wrangler and D1 keep for themselves.
-import { createWriteStream } from "node:fs";
+import { createWriteStream, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { once } from "node:events";
 import { DatabaseSync } from "node:sqlite";
 
@@ -77,4 +80,7 @@ for (const table of tables) {
 }
 stream.end();
 await once(stream, "finish");
+// What each table should hold after the load, for scripts/import-folder.mjs to count.
+const held = Object.fromEntries(Object.entries(counts).filter(([, n]) => n));
+writeFileSync(join(dirname(out), "manifest.json"), JSON.stringify({ rows: total, statements, tables: held }, null, 1) + "\n");
 console.log(JSON.stringify({ files: file, rows: total, statements, longest_statement_bytes: longest, tables: Object.fromEntries(Object.entries(counts).filter(([, n]) => n)) }));

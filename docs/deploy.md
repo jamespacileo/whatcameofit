@@ -161,3 +161,94 @@ To disable paper enrichment, remove `OPENALEX_API_KEY` from the Worker (and loca
 Timing events contain numeric durations/completion offsets only, with no article text or identifiers. Ordinary completed responses expose timing fields through `Server-Timing`. No request logging or telemetry service is introduced. Cache version 2 excludes older results and permits completed independently public non-treatment identifications; unfinished streams and answers with unchecked papers remain ineligible. The extension reuses complete local answers for unchanged content, keeps shared hits locally, and avoids automatic screenshots of substantial ordinary text articles while retaining image-dependent fallback and the explicit Screenshot action.
 
 `read_ms`, `papers_ms`, `score_ms`, and `research_ms` measure each stage from its own start. `registry_ms` sums active registry calls, excluding time waiting in the lookup queue. Stages overlap, so their durations must not be added to estimate latency. `core_ms` and `total_ms` are elapsed milestones from lookup start, not stage durations.
+
+## The store on D1 (preview)
+
+The store is a D1 database, an R2 bucket and a Queue, reached only through the ingest service in `store/ingest/` (`store/ingest/README.md`). Nothing below touches the site. The repository carries the resources' names only. A database's id is written by `node store/ingest/scripts/preview-config.mjs` into `store/ingest/wrangler.preview.jsonc`, which is git-ignored, and is never printed.
+
+### How the resources were created
+
+Created by the operator on 17 November 2026 with Wrangler 4:
+
+| Resource | Preview | Production | Jurisdiction |
+| --- | --- | --- | --- |
+| D1 database | `thenwhat-store-preview` | `thenwhat-store` | `eu`, set at creation and not changeable afterwards |
+| R2 bucket | `thenwhat-payloads-preview` | `thenwhat-payloads` | `eu`, set at creation |
+| Queue | `thenwhat-work-preview` | `thenwhat-work` | created without the flag (see below) |
+
+The commands that create the preview's three, as Wrangler 4.161.0 takes them (the operator's own commands were not recorded here):
+
+```bash
+wrangler d1 create thenwhat-store-preview --jurisdiction eu
+wrangler r2 bucket create thenwhat-payloads-preview --jurisdiction eu
+wrangler queues create thenwhat-work-preview
+```
+
+**Queues and jurisdiction.** `wrangler queues create` has a `--jurisdiction` flag, but Cloudflare's documentation, read on 17 November 2026, lists no values for it and says nothing of the European Union for Queues. The two Queues were created without it. A message on the Queue names a step with work due and nothing else (no record, no address, no time), so no data of the tracker rests in a Queue. Whether to recreate them with the flag is the operator's decision once Cloudflare documents its values.
+
+### The deployment check: read the jurisdiction back
+
+Before any record is written to a database, read its jurisdiction and stop unless it is `eu`:
+
+```bash
+cd store/ingest && node scripts/preview-config.mjs
+npx wrangler d1 info thenwhat-store-preview --json
+```
+
+The answer's `jurisdiction` must be `eu`. Read back on 17 November 2026 for `thenwhat-store-preview`: `eu`. Cloudflare's documentation does not promise that `d1 info` shows the field, so if a later Wrangler leaves it out, treat that as a failed check.
+
+### Schema
+
+```bash
+cd store/ingest
+npx wrangler d1 migrations apply STORE --remote --config wrangler.preview.jsonc
+```
+
+Applied to the preview on 17 November 2026: `0001_store_schema.sql` (which is `store/schema.sql`, byte for byte) and `0002_ingest_service.sql`.
+
+### Bulk load
+
+The first load of the tracker does not go through the merge. The whole store is built on a device as a SQLite file with `store/schema.sql`, written out as SQL, and loaded with Wrangler.
+
+1. Note the restore bookmark (below).
+2. Write the SQL, in a folder of its own. It also writes `manifest.json`, each table's rows.
+   ```bash
+   node store/ingest/scripts/dump-for-import.mjs <store.sqlite> <folder>/store.sql --rows-a-file 500000
+   ```
+3. Load the folder. Files go in the order of their names; the first failure stops the load; each table is then counted against the manifest.
+   ```bash
+   node store/ingest/scripts/import-folder.mjs <folder> --remote
+   ```
+4. If the counts differ, or a file failed, restore to the bookmark rather than loading again over what is there.
+
+What the SQL must be, from Cloudflare's import documentation read on 17 November 2026 (`docs/sources.md`): no `BEGIN TRANSACTION` or `COMMIT`; each statement at most 100,000 bytes; a file at most 5 GiB. And from the schema: every `INSERT` names its columns, because a generated column (`review_rank`) cannot be written; the search tables are filled by the schema's triggers and are not in the dump; parents come before children, with `PRAGMA defer_foreign_keys = true` at the head of each file.
+
+**Tried on the preview on 17 November 2026**, with a made-up store of 49,999 records (`scripts/sample-store.mjs`): 66,687 table rows in 176 statements, 14.9 MB of SQL, loaded in 2.8 s (6 s with Wrangler's own start). D1 reported 135,572 changes and 250,037 rows written, and the database was 19.0 MB afterwards. Nothing failed.
+
+- **D1 bills about 3.75 rows written for each table row** of this sample, because indexes and the search tables are written too. A load of 2 million table rows is then about 7.5 million rows written.
+- **The plan.** The free plan allows 100,000 rows written a day and then refuses every query until midnight UTC. The trial wrote 250,037 in one day and a later write succeeded, which only the Workers Paid plan allows (50 million a month included). No Wrangler command shows the plan; the dashboard does, under Workers & Pages, Plans.
+- **Not known:** Cloudflare's documentation does not say whether the database refuses other requests while a file is loading, nor whether a file that fails is undone. Load when nothing reads the store, and restore after a failure.
+
+To clear trial rows before the real load (the schema and the record of migrations stay):
+
+```bash
+node store/ingest/scripts/empty-store.mjs --empty thenwhat-store-preview --remote
+```
+
+It takes only the preview database, by name. There is no such command for production.
+
+### Restore
+
+D1 keeps the database's history for 30 days on the paid plan (7 on the free). A bookmark names a moment.
+
+```bash
+npx wrangler d1 time-travel info thenwhat-store-preview        # the bookmark now: note it before a load
+npx wrangler d1 time-travel restore thenwhat-store-preview --bookmark <bookmark>
+```
+
+A restore overwrites the database in place and cancels requests in flight. It prints the bookmark of the moment before it, and restoring to that undoes it. At most 10 restores in 10 minutes for a database. R2 is not restored with it: payloads are stored under their checksums and are never overwritten, so an object a restored store no longer names is only unused. A restore of the preview has not been run yet (task 3.8).
+
+### The ingest service is not deployed
+
+`store/ingest/wrangler.jsonc` has `workers_dev: false` and no route, so a deployed service would have no address. The bulk load does not need it. Never deploy it by hand before its address is decided.
+
