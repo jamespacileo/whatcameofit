@@ -22,5 +22,5 @@
 - [x] 4.2 Verified in the browser at 375 pixels wide on the development server: 5,278 elements on arrival; "Next" shows rows 11 to 20; a status narrows every list across all its rows; a tab is switched; a span is widened; a file that answers 503 is said, and "Try again" brings the rows.
 - [x] 4.3 `make site-test` passes (789 tests). `EXPORT_FILE=data/published-export.json make site-build` passes with 970 claims: the home page is 367 kB with 5,241 elements; the files of rows are 10.6 MB between them, the day-by-day list's 6.2 MB (512 kB compressed); 332 files of rows among 11,000 files of the 18,000 a build may hold.
 - [ ] 4.3a `make check` in full (the pipeline's lint, types and tests were not run for this change: nothing of theirs is touched).
-- [ ] 4.4 Operator confirms that the home page may show its lists' first rows only with scripting off and on paper (proposal, "Decision to confirm").
+- [x] 4.4 Operator confirms that the home page may show its lists' first rows only with scripting off and on paper (proposal, "Decision to confirm"). Confirmed by the operator on 2026-11-17.
 - [ ] 4.5 Checked on the deployed site: a file of rows is served, with the header that asks search engines not to index it.
