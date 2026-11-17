@@ -25,7 +25,7 @@ from thenwhat.clinical.service import read_tree, stored_vocabulary
 from thenwhat.db.models import Claim, ClaimTerm
 from thenwhat.domain import ReviewState, TermFit, TermRole, WorkOutcome
 from thenwhat.export.records import PostgresRecords
-from thenwhat.sources.base import SourceError
+from thenwhat.sources.base import MissingContact, SourceError
 from thenwhat.terms.service import (
     DrugRun,
     KindRun,
@@ -127,6 +127,10 @@ class ClaimTerms(ClaimStep):
             if approved and stored_vocabulary(PostgresRecords(session)).missing(approved):
                 try:
                     read_tree(session, sources.make_mesh(session), [claim], mapping={})
+                except MissingContact as error:
+                    # The optional ancestry lookup has no configured contact. Keep the
+                    # completed term decisions and report the pending tree to the operator.
+                    found.tree_error = error
                 except SourceError as error:
                     found.tree_error = error
                     raise
