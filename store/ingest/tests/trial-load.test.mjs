@@ -116,3 +116,32 @@ test("a slice in a group the schema does not know is refused whole", { skip }, a
   assert.notEqual(refused.status, "merged");
   assert.equal(await s.one("SELECT count(*) FROM trial_slice"), held);
 });
+
+test("a pushed trial and its papers stay in D1; the consumer's go to the inbox, and clearing never deletes a trial from under a paper", { skip }, async () => {
+  // The fault this guards: a paper merged into D1 but kept out of the inbox never reached
+  // the bulk file, and clearing then tried to delete its trial from under it.
+  const { clearInbox } = await import("../src/store.mjs");
+  const held = (number) => s.one("SELECT count(*) FROM trial_paper p JOIN registry_trial t ON t.id = p.trial_id WHERE t.external_id = ?", number);
+
+  // A push made on purpose (a device's slice of trials) is not for the inbox.
+  const pushed = '{"pmid":"444"}';
+  assert.equal(await s.hand("pushed", [payload('{"nctId":"NCT8"}'), trial("NCT8"), payload(pushed), paper("NCT8", "444", pushed, at("05"))]), null);
+  assert.equal((await s.merge("pushed")).body.status, "merged");
+  assert.equal(await s.one("SELECT count(*) FROM inbox WHERE run_id = 'pushed'"), 0);
+  assert.equal(await held("NCT8"), 1);
+
+  // What the store-side consumer creates is: a trial with a paper, and one with none.
+  const record = '{"pmid":"555"}';
+  const records = [payload('{"nctId":"NCT9"}'), trial("NCT9"), payload(record), paper("NCT9", "555", record, at("05")),
+    payload('{"nctId":"NCT10"}'), trial("NCT10")];
+  assert.equal(await s.hand("inboxed", records, { as: "consumer" }), null);
+  assert.equal((await s.merge("inboxed", "consumer")).body.status, "merged");
+  const kept = (await s.all("SELECT kind FROM inbox WHERE run_id = 'inboxed' ORDER BY kind")).map(([kind]) => kind);
+  assert.ok(kept.includes("registry_trial") && kept.includes("trial_paper"), `the inbox keeps the trial and its paper: ${kept}`);
+
+  const cleared = await clearInbox(s.db, await s.one("SELECT max(seq) FROM inbox"));
+  assert.equal(cleared.left, 0, "the clearing went through: no row was deleted from under another");
+  assert.equal(await s.one("SELECT count(*) FROM registry_trial WHERE external_id = 'NCT10'"), 0, "a trial with no paper is in the bulk file now, not in D1");
+  assert.equal(await held("NCT9"), 1, "a trial a paper is stored for stays, with its paper");
+  assert.equal(await held("NCT8"), 1, "and the pushed one was never the inbox's to clear");
+});

@@ -102,6 +102,7 @@ BULK_KINDS = frozenset(
         "registry_trial",
         "registry_load",
         "article_lead",
+        "trial_paper",
         "link_lead",
         "link_share",
         "link_lead_link",
@@ -146,8 +147,14 @@ HOT_KINDS = frozenset(
         "outlet_icon",
         "unlisted_domain",
         "entity_substance",
+        "work_slice",
+        "trial_slice",
     }
 )
+
+
+# The one kind with no tier of its own: a payload goes with the rows that point at it.
+FOLLOWING_KINDS = frozenset({"payload"})
 
 
 def tier_of(table: str) -> str:
