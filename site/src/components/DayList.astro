@@ -6,11 +6,12 @@
 import type { DayList } from "../lib/day-list";
 import { countKinds, countsText, dayName, earlierText, headingTitle, toComeText } from "../lib/day-list";
 import { formatDate } from "../lib/timetable";
-import ChevronDown from "@lucide/astro/icons/chevron-down";
-import SlidersHorizontal from "@lucide/astro/icons/sliders-horizontal";
+import Info from "@lucide/astro/icons/info";
 import DayPromise from "./DayPromise.astro";
 import DayRecord from "./DayRecord.astro";
 import DayReport from "./DayReport.astro";
+import FilterMenu from "./FilterMenu.astro";
+import Pop from "./Pop.astro";
 
 interface Props {
   list: DayList;
@@ -82,59 +83,44 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       {/* Where a search typed in the box above answers, in place of the list while the
           answer stands. The lookup fills it; without scripting it is never shown. */}
       <div class="search-answer" hidden data-search-answer></div>
+      {/* The head, on one line: what the list is, a mark that says what the column at
+          each row's right is, the day the list is dated by, and the one control that
+          narrows it. The kind and the span are the script's: without it there is nothing
+          to pick. */}
       <div class="days-head">
-        <div class="days-name">
-          <h2 class="days-title" id="days-title">Latest</h2>
-          <p class="checked-on">
-            Registries last checked{" "}
-            {/* A phone has the short date. Read without its styles it is the long date, once. */}
-            <span class="unbroken">
-              <span class="on-wide">{checkedDay.weekday} </span>{checkedDay.day} {checkedDay.month.slice(0, 3)}<span class="on-wide">{checkedDay.month.slice(3)}</span> {list.checked.slice(0, 4)}
-            </span>
-          </p>
-        </div>
-
-        {/* One control at the head's right: it opens every choice, each a field that names
-            what it shows, and says in words what narrows the list. The control, the kind
-            and the span are the script's: without it there is nothing to pick. */}
-        <div class="filters" role="group" aria-label="Narrow this list">
-          <button
-            type="button"
-            class="narrow-open"
-            hidden
-            data-narrow-open
-            popovertarget="narrow"
-            aria-expanded="false"
-            style="anchor-name: --narrow"
-          >
-            <SlidersHorizontal size={16} aria-hidden="true" />
-            <span data-narrow-says>Filter</span>
-            <ChevronDown class="opens" size={16} aria-hidden="true" />
-          </button>
-          <div popover id="narrow" class="pop narrow" style="position-anchor: --narrow" data-narrow>
-            <label class="pick" hidden data-kinds>
-              <span class="pick-name">Show</span>
-              <select id="feed-kind">
-                <option value="all">Everything</option>
-                {
-                  KINDS.filter(({ kind }) => totals[kind] > 0).map(({ kind, name }) => (
-                    <option value={kind}>{name}</option>
-                  ))
-                }
-              </select>
-            </label>
-            <label class="pick" hidden data-spans>
-              <span class="pick-name">Dated in</span>
-              <select id="feed-span">
-                {SPANS.map(({ span, name }) => <option value={span}>{name}</option>)}
-              </select>
-            </label>
-            <slot name="narrow" />
-            <button type="button" class="text-control narrow-clear" hidden data-narrow-clear>Clear filters</button>
-          </div>
-        </div>
+        <h2 class="days-title" id="days-title">Latest</h2>
+        <Pop id="days-key" label="About this list" class="info">
+          <Info slot="trigger" size={17} stroke-width={1.9} aria-hidden="true" />
+          <p class="list-key">With each report and record: where its claim stands on record now. Press it for why.</p>
+        </Pop>
+        <p class="checked-on">
+          Registries last checked{" "}
+          {/* The head has the short date. Read without its styles it is the long date, once. */}
+          <span class="unbroken">
+            <span class="on-wide">{checkedDay.weekday} </span>{checkedDay.day} {checkedDay.month.slice(0, 3)}<span class="on-wide">{checkedDay.month.slice(3)}</span> {list.checked.slice(0, 4)}
+          </span>
+        </p>
+        <FilterMenu id="days-filter" group="Narrow this list">
+          <label class="pick" hidden data-kinds>
+            <span class="pick-name">Show</span>
+            <select id="feed-kind">
+              <option value="all">Everything</option>
+              {
+                KINDS.filter(({ kind }) => totals[kind] > 0).map(({ kind, name }) => (
+                  <option value={kind}>{name}</option>
+                ))
+              }
+            </select>
+          </label>
+          <label class="pick" hidden data-spans>
+            <span class="pick-name">Dated in</span>
+            <select id="feed-span">
+              {SPANS.map(({ span, name }) => <option value={span}>{name}</option>)}
+            </select>
+          </label>
+          <slot name="narrow" />
+        </FilterMenu>
       </div>
-      <p class="list-key">With each report and record: where its claim stands on record now. Press it for why.</p>
 
 
       <div class="day-list" data-day-list>
@@ -242,40 +228,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     // Each filter marks the rows it leaves out, as on the tables further down the page.
     const out = (row: Element) => row.getAttributeNames().some((name) => name.startsWith("data-out"));
 
-    // The one control over the list: it opens every field, and wherever a field narrows
-    // the list it says so in that field's own words, so a narrowed list is never unexplained.
-    const narrowOpen = root.querySelector<HTMLButtonElement>("[data-narrow-open]")!;
-    const narrowSays = narrowOpen.querySelector<HTMLElement>("[data-narrow-says]")!;
-    const narrowPanel = root.querySelector<HTMLElement>("[data-narrow]")!;
-    const narrowClear = narrowPanel.querySelector<HTMLButtonElement>("[data-narrow-clear]")!;
-    const narrowFields = [...narrowPanel.querySelectorAll<HTMLSelectElement>("select")];
-    const sayNarrowed = () => {
-      const picks = narrowFields
-        .filter((field) => field.selectedIndex > 0)
-        .map((field) => {
-          const option = field.selectedOptions[0];
-          // A status or a topic is named without its count.
-          return option.dataset.label ?? option.textContent!.replace(/\s*\(\d+\)\s*$/, "").trim();
-        });
-      const said = picks.join(" · ");
-      narrowSays.textContent = said || "Filter";
-      if (said) narrowOpen.setAttribute("aria-label", `Filter: ${said}`);
-      else narrowOpen.removeAttribute("aria-label");
-      narrowOpen.toggleAttribute("data-narrowed", picks.length > 0);
-      narrowClear.hidden = picks.length === 0;
-    };
-    narrowClear.addEventListener("click", () => {
-      for (const field of narrowFields) {
-        if (field.selectedIndex === 0) continue;
-        field.selectedIndex = 0;
-        field.dispatchEvent(new Event("change"));
-      }
-      narrowOpen.focus();
-    });
-    narrowPanel.addEventListener("toggle", () => {
-      narrowOpen.setAttribute("aria-expanded", String(narrowPanel.matches(":popover-open")));
-    });
-    narrowOpen.hidden = false;
+    // The control over the list is its own (FilterMenu); it is told when a field is set here.
+    const filterMenu = root.querySelector<HTMLElement>("[data-filter-menu]");
     const kindsOf = (rows: HTMLElement[]) => countKinds(rows.map((row) => ({ kind: row.dataset.kind as RowKind })));
     // The older claim under the list is not dated by it.
     const picked = list.querySelector<HTMLElement>("[data-picked]");
@@ -403,7 +357,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
         control.hidden = later === 0;
         control.querySelector("[data-earlier-left]")!.textContent = earlierText(later);
       }
-      sayNarrowed();
+      filterMenu?.dispatchEvent(new Event("filter:say"));
       drawLastVisit();
     };
     spanWider.addEventListener("click", () => {
@@ -546,23 +500,14 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     margin-top: clamp(1.5rem, 5vw, 2.25rem);
   }
 
-  /* The head: what the list is and, in grey under it, the day it is dated by. At its
-     right, the one control that narrows the list. */
+  /* The head, one line: what the list is, the mark that says what a row's right column
+     is, then at the right the day the list is dated by, in grey, and the control that
+     narrows it. */
   .days-head {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.2rem 1rem;
-  }
-
-  /* The title shares its line with the control; the date has the line under both. */
-  .days-name {
-    display: contents;
-  }
-
-  .days-head .checked-on {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    column-gap: 0.75rem;
   }
 
   .days-title {
@@ -571,110 +516,37 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     margin: 0;
   }
 
+  .days-head .pop-trigger.info {
+    margin-left: -0.45rem;
+    color: var(--muted);
+  }
+
+  .days-head .pop-trigger.info:hover {
+    color: var(--blue);
+  }
+
   .checked-on {
     margin: 0;
     font-size: var(--text-s);
     color: var(--muted);
   }
 
-  /* The choices: one control, which opens every field and says what narrows the list. */
-  .filters {
+  /* The short date, kept to its line: a long pick in the control is what gives way. */
+  .days-head .checked-on {
     justify-self: end;
     min-width: 0;
     max-width: 100%;
-  }
-
-  .narrow-open {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    max-width: 100%;
-    min-height: 2.25rem;
-    padding: 0 0.7rem 0 0.85rem;
-    border: 1px solid var(--ring);
-    border-radius: 999px;
-    background: var(--paper);
-    color: var(--ink);
-    font: inherit;
-    font-size: var(--text-m);
-    font-weight: 600;
-    cursor: pointer;
-    transition:
-      border-color 120ms,
-      background-color 120ms;
-  }
-
-  .narrow-open[hidden] {
-    display: none;
-  }
-
-  .narrow-open:hover,
-  .narrow-open[aria-expanded="true"] {
-    border-color: var(--blue);
-  }
-
-  /* A narrowed list says so on the tint, in the words of the fields that narrow it. */
-  .narrow-open[data-narrowed] {
-    background: var(--tint);
-    border-color: var(--tint);
-  }
-
-  .narrow-open [data-narrow-says] {
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .narrow-open svg {
-    flex: none;
-    color: var(--muted);
-  }
-
-  .narrow-open .opens {
-    transition: transform 160ms var(--ease-out);
-  }
-
-  .narrow-open[aria-expanded="true"] .opens {
-    transform: rotate(180deg);
-  }
-
-  /* The panel: each field on a line, its name before it. */
-  .pop.narrow {
-    position-area: bottom span-left;
-    width: min(20rem, calc(100vw - 2rem));
-    padding: 0.95rem 1rem 1rem;
-  }
-
-  .narrow:popover-open {
-    display: grid;
-    gap: 0.6rem;
-  }
-
-  .narrow .pick {
-    display: grid;
-    grid-template-columns: 5.2rem minmax(0, 1fr);
-    align-items: center;
-    gap: 0.75rem;
-  }
-
-  .narrow .pick[hidden] {
+  .days-head .on-wide {
     display: none;
   }
 
-  .pick-name {
-    font-size: var(--text-s);
-    color: var(--muted);
-  }
-
-  .narrow .pick select {
-    width: 100%;
-    border-radius: var(--radius-s);
-  }
-
-  .narrow-clear {
-    justify-self: start;
-    margin-top: 0.15rem;
+  .days-head .filter-menu {
+    max-width: 16rem;
   }
 
   .days-body {
@@ -802,23 +674,28 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     scroll-margin-top: 0.5rem;
   }
 
+  /* A day's heading is a quiet label over its rows, so that a row's headline is what
+     is read first. */
   .day-head {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.1rem 0.7rem;
-    padding: 1.6rem 0 0.45rem;
+    gap: 0.1rem 0.6rem;
+    padding: 1.7rem 0 0.5rem;
     border-bottom: 1px solid var(--rule);
   }
 
   .day-head h3 {
-    font-size: 1rem;
-    font-weight: 700;
+    font-family: var(--face);
+    font-size: var(--text-s);
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--muted);
     margin: 0;
   }
 
   .day-head span {
-    font-size: 0.85rem;
+    font-size: var(--text-s);
     color: var(--muted);
   }
 
@@ -851,8 +728,13 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   /* Rows. What was reported is on white, what is on record on the panel blue, what
      was promised on pale amber. Each row also says its kind in words. */
   .day-row {
-    padding: 1.2rem 0 1.15rem;
+    padding: 1.3rem 0 1.25rem;
     border-bottom: 1px solid var(--rule-soft);
+  }
+
+  /* The next day's heading parts a day's last row from it; a second rule would not. */
+  .day-group .day-row:last-child {
+    border-bottom: 0;
   }
 
   .row-source {
@@ -861,7 +743,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     align-items: baseline;
     gap: 0.2rem 0.75rem;
     margin: 0;
-    font-size: 0.85rem;
+    font-size: var(--text-s);
     color: var(--muted);
   }
 
@@ -874,11 +756,11 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     display: none;
   }
 
-  /* Named once above the list: what the column at the right of each row says. */
+  /* Named once, behind the mark beside the list's name: what the column at the right
+     of each row says. */
   .list-key {
-    margin: 0.4rem 0 0;
-    font-size: 0.85rem;
-    color: var(--muted);
+    margin: 0;
+    max-width: 30ch;
   }
 
   .row-label {
@@ -897,14 +779,15 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     color: var(--ink);
   }
 
-  /* A headline is in the heading face, as the card above the list quotes one. */
+  /* A headline is in the heading face, as the card above the list quotes one, and is
+     the largest thing in its row. */
   .row-title {
     font-family: var(--display);
-    font-size: clamp(1.22rem, 3.4vw, 1.4rem);
+    font-size: clamp(1.25rem, 3.5vw, 1.45rem);
     font-weight: 500;
-    line-height: 1.22;
-    letter-spacing: -0.008em;
-    margin: 0.3rem 0 0.3rem;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0.3rem 0 0.35rem;
     text-wrap: balance;
   }
 
@@ -915,7 +798,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
   .row-title a:hover {
     text-decoration: underline;
-    text-decoration-thickness: 2px;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
   }
 
   .row-claim {
@@ -1376,10 +1260,23 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       font-size: 1.4rem;
     }
 
-    /* The control and each field it opens are 44 pixels to press. */
-    .narrow-open,
-    .narrow .pick select {
-      min-height: 2.75rem;
+    /* The name, its mark and the control on one line; the date on the line under them. */
+    .days-head {
+      grid-template-columns: auto auto minmax(0, 1fr);
+      row-gap: 0.15rem;
+    }
+
+    .days-head .filter-menu {
+      grid-column: 3;
+      grid-row: 1;
+      justify-self: end;
+      max-width: 100%;
+    }
+
+    .days-head .checked-on {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      justify-self: start;
     }
 
     .row-source a {
@@ -1448,7 +1345,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
      the "on record" cell an edge. */
   @media (forced-colors: active) {
     .side-pick[aria-pressed="true"],
-    .narrow-open[data-narrowed],
+    .filter-open[data-narrowed],
     .pick select:has(option:not(:first-child):checked) {
       outline: 2px solid CanvasText;
       outline-offset: -2px;
@@ -1468,7 +1365,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   }
 
   @media print {
-    .filters,
+    .filter-menu,
     .earlier,
     .days-side,
     .days-rail {

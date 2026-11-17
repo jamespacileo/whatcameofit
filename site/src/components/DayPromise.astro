@@ -3,6 +3,7 @@
 // the claim's status now. Nothing here says whether the date has passed.
 import type { PromiseRow } from "../lib/day-list";
 import { formatDate } from "../lib/timetable";
+import Quoted from "./Quoted.astro";
 import Outlet from "./Outlet.astro";
 import PromiseText from "./PromiseText.astro";
 import StatusCell from "./StatusCell.astro";
@@ -37,7 +38,7 @@ const report = claim.articles.find((article) => article.url === promise.article_
     }
   </p>
   <h4 class="row-title">
-    <a href={`/${claim.slug}`}>{report ? <>“{report.title}”</> : claim.headline}</a>
+    <a href={`/${claim.slug}`}>{report ? <Quoted>{report.title}</Quoted> : claim.headline}</a>
   </h4>
   <p class="row-promise">
     <PromiseText promise={promise} />

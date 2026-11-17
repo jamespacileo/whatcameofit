@@ -299,7 +299,9 @@ const topicLink =
   }
 
   if (matchMedia("(hover: hover)").matches) {
-    for (const trigger of document.querySelectorAll<HTMLButtonElement>("[popovertarget]")) {
+    // A panel of fields opens by a press only: a field's own list opens outside the
+    // panel, where a pointer leaving would close it.
+    for (const trigger of document.querySelectorAll<HTMLButtonElement>("[popovertarget]:not([data-press-only])")) {
       const panel = document.getElementById(trigger.getAttribute("popovertarget")!)!;
       let timer: number | undefined;
       let pinned = false;

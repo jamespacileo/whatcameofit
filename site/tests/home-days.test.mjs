@@ -99,7 +99,7 @@ test("Scenario: A kind read aloud", () => {
 
 test("Scenario: A report of an animal study, and what the records add", () => {
   const row = group(dated, "d-2025-09-08");
-  assert.match(row, /<a class="followed" href="\/phase-claim"[^>]*>\s*“Example report 5”\s*<\/a>/);
+  assert.match(row, /<a class="followed" href="\/phase-claim"[^>]*>\s*<span class="quote-mark open">“<\/span>Example report 5<span class="quote-mark">”<\/span>\s*<\/a>/);
   // The headline and the claim lead; the status is the column after them, a button
   // that opens the detail under the row (openspec latest-rows).
   assert.ok(row.indexOf("row-title") < row.indexOf('class="row-now"'));
@@ -131,7 +131,7 @@ test("Scenario: An approval that changed the status, and a record that changed n
   // A registry row leads with the report it belongs to, and says how long ago the claim
   // was first reported; what was recorded is one dated item.
   assert.match(paper, /<span class="row-age">First reported 6 years ago<\/span>/);
-  assert.match(paper, /<h4 class="row-title"><a href="\/phase-claim">“Example report 5”<\/a><\/h4>/);
+  assert.match(paper, /<h4 class="row-title"><a href="\/phase-claim"><span class="quote-mark open">“<\/span>Example report 5<span class="quote-mark">”<\/span>\s*<\/a><\/h4>/);
   assert.match(paper, /<li class="row-item is-record"><a href="https:\/\/registry\.example\/record\/4">[^<]+<\/a><span>Follow-up paper<\/span><span class="when">5 Sep 2025<\/span><\/li>/);
 });
 
@@ -167,21 +167,31 @@ test("Scenario: The spans a reader can keep to", () => {
 });
 
 test("Scenario: Every choice behind one control", () => {
-  const from = dated.indexOf('class="filters"');
-  const choices = dated.slice(from, dated.indexOf('class="list-key"'));
-  // The control is the script's: as built it is not shown, and says "Filter".
-  assert.match(choices, /<button type="button" class="narrow-open" hidden data-narrow-open popovertarget="narrow" aria-expanded="false"/);
-  assert.match(choices, /<span data-narrow-says>Filter<\/span>/);
+  const head = dated.slice(dated.indexOf('class="days-head"'), dated.indexOf('class="day-list"'));
+  // The control is the script's: as built it is not shown, and says "Filter". It opens
+  // by a press only, since a field's own list opens outside the panel.
+  assert.match(head, /<button type="button" class="share filter-open" hidden data-filter-open data-press-only popovertarget="days-filter" aria-expanded="false"/);
+  assert.match(head, /<span data-filter-says>Filter<\/span>/);
   // It opens one panel, which holds every field with its name drawn before it. This
   // export lists one topic, so there is no topic to choose.
-  assert.match(choices, /<div popover(="")? id="narrow" class="pop narrow"/);
+  assert.match(head, /<div popover(="")? id="days-filter" class="pop filter-panel"/);
   assert.deepEqual(
-    [...choices.matchAll(/<span class="pick-name">([^<]+)<\/span>\s*<select id="([a-z-]+)"/g)].map(([, name, id]) => `${id}: ${name}`),
+    [...head.matchAll(/<span class="pick-name">([^<]+)<\/span>\s*<select id="([a-z-]+)"/g)].map(([, name, id]) => `${id}: ${name}`),
     ["feed-kind: Show", "feed-span: Dated in", "feed-status: Status now"],
   );
-  assert.match(choices, /<button type="button" class="text-control narrow-clear" hidden data-narrow-clear>Clear filters<\/button>/);
-  // The control shares the head's line with the list's name.
-  assert.ok(dated.indexOf('id="days-title"') < from && from < dated.indexOf('class="day-list"'));
+  assert.match(head, /<button type="button" class="text-control filter-clear" hidden data-filter-clear>Clear filters<\/button>/);
+});
+
+test("Scenario: The head of the list is one line", () => {
+  const head = dated.slice(dated.indexOf('class="days-head"'), dated.indexOf('class="day-list"'));
+  // The name, then what a row's right column says behind a mark, then the day checked,
+  // then the control.
+  const at = (text) => head.indexOf(text);
+  assert.ok(at('id="days-title"') < at('popovertarget="days-key"'));
+  assert.ok(at('popovertarget="days-key"') < at('class="checked-on"'));
+  assert.ok(at('class="checked-on"') < at("data-filter-menu"));
+  assert.match(head, /<button type="button" class="pop-trigger info" popovertarget="days-key" aria-label="About this list"/);
+  assert.match(head, /<div popover(="")? id="days-key" class="pop" role="note"[^>]*>\s*<p class="list-key">With each report and record: where its claim stands on record now\. Press it for why\.<\/p>/);
 });
 
 test("Scenario: Scripting off", () => {

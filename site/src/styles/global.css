@@ -3585,8 +3585,120 @@ body:has(.band.home) .table-frame {
 }
 
 /* The home page's choices: fields drawn as pills, each saying what it shows. */
-.filters .scoreboard {
+.filter-panel .scoreboard {
   display: contents;
+}
+
+/* Filter menu: one pill that opens every field that narrows a list (FilterMenu.astro).
+   The pill is the site's own, in ink; a narrowed list says so on the tint, in the words
+   of the fields that narrow it. */
+.filter-menu {
+  min-width: 0;
+}
+
+.share.filter-open {
+  gap: 0.45rem;
+  max-width: 100%;
+  min-height: 2.25rem;
+  padding: 0 0.7rem 0 0.85rem;
+  font-size: var(--text-m);
+  color: var(--ink);
+  background: var(--paper);
+  transition:
+    border-color 120ms,
+    background-color 120ms;
+}
+
+.filter-open[hidden] {
+  display: none;
+}
+
+.share.filter-open:hover,
+.share.filter-open[aria-expanded="true"] {
+  background: var(--paper);
+  border-color: var(--blue);
+}
+
+.share.filter-open[data-narrowed] {
+  background: var(--tint);
+  border-color: var(--tint);
+}
+
+.filter-open [data-filter-says] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-open svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.filter-open .opens {
+  transition: transform 160ms var(--ease-out);
+}
+
+.filter-open[aria-expanded="true"] .opens {
+  transform: rotate(180deg);
+}
+
+/* The panel: each field on a line, its name before it. */
+.pop.filter-panel {
+  position-area: bottom span-left;
+  width: min(20rem, calc(100vw - 2rem));
+  padding: 0.95rem 1rem 1rem;
+}
+
+.filter-panel:popover-open {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.filter-panel .pick {
+  display: grid;
+  grid-template-columns: 5.2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-panel .pick[hidden] {
+  display: none;
+}
+
+.pick-name {
+  font-size: var(--text-s);
+  color: var(--muted);
+}
+
+.filter-panel .pick select {
+  width: 100%;
+  border-radius: var(--radius-s);
+}
+
+.filter-clear {
+  justify-self: start;
+  margin-top: 0.15rem;
+}
+
+/* On a phone the pill and each field it opens are 44 pixels to press. */
+@media (max-width: 40rem) {
+  .share.filter-open,
+  .filter-panel .pick select {
+    min-height: 2.75rem;
+  }
+}
+
+/* A quotation's marks (Quoted.astro): softer than the words they hold, and the opening
+   one hung in the margin, so the words start on the edge of their column. */
+.quote-mark {
+  color: color-mix(in srgb, currentColor 55%, transparent);
+}
+
+.quote-mark.open {
+  position: absolute;
+  transform: translateX(-100%);
 }
 
 .pick select {

@@ -9,6 +9,7 @@ import { followedReports } from "../lib/reports";
 import { eventLabel, sourceName } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import Outlet from "./Outlet.astro";
+import Quoted from "./Quoted.astro";
 import RowStanding from "./RowStanding.astro";
 
 interface Props {
@@ -49,7 +50,7 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
     <h4 class="row-title">
       {
         report ? (
-          <a href={`/${claim.slug}`}>“{report.title}”</a>
+          <a href={`/${claim.slug}`}><Quoted>{report.title}</Quoted></a>
         ) : (
           <a href={`/${claim.slug}`}>{claim.intervention.name}</a>
         )
