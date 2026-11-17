@@ -63,3 +63,4 @@ store/ingest/wrangler.production.jsonc
 *.pending.json.part
 *.jsonl.gz
 *.jsonl.gz.part
+store/ingest/wrangler.deploy-*.jsonc

@@ -120,6 +120,19 @@ store-cutover: store/ingest/node_modules
 	@test "$(ENV)" != "local" || { echo "For this machine use make store-rehearsal."; exit 1; }
 	node store/ingest/scripts/cutover.mjs --env $(ENV) --store-dir $(STORE_DIR) $(if $(CONFIRM),--confirm $(CONFIRM)) $(ARGS)
 
+# Deploys the ingest service, the only way it is deployed (store/ingest/scripts/deploy.mjs,
+# docs/deploy.md): writes the configuration for the environment, refuses unless the
+# jurisdiction reads eu and no migration is left to apply, deploys to a workers.dev
+# address, sets the secret INGEST_TOKENS from the file TOKENS names (checksums of tokens;
+# never printed), then asks the deployed service: 401 without a token on every route, 200
+# for the operator's token, read from STORE_TOKEN_OPERATOR.
+#   make store-deploy ENV=preview TOKENS=/path/ingest-tokens-preview.json     ARGS="--dry-run" prints the plan
+#   make store-deploy ENV=production CONFIRM=thenwhat-store-ingest TOKENS=/path/ingest-tokens.json
+.PHONY: store-deploy
+store-deploy: store/ingest/node_modules
+	@test -n "$(ENV)" || { echo "Name ENV: preview or production."; exit 1; }
+	node store/ingest/scripts/deploy.mjs --env $(ENV) $(if $(CONFIRM),--confirm $(CONFIRM)) $(if $(TOKENS),--tokens-file "$(TOKENS)") $(ARGS)
+
 # A rehearsal of taking the site's export from the truth store (task 6.2). It reads the D1
 # database and the bucket named, writes an export under STORE_REHEARSAL, holds it to the
 # schema the site reads and to the checks a published snapshot must pass, and says how it

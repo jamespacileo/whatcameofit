@@ -259,6 +259,28 @@ The ingest service SHALL refuse a ClinicalTrials.gov record that names a person,
 - **WHEN** the record is handed over with those fields removed
 - **THEN** it is taken
 
+### Requirement: The progress of a backfill is shown as counts
+The ingest service SHALL take the pipeline's report of how many trials of each slice of a set have reached each stage, and SHALL give it back, with the rows of each table and the last merged run of each kind of writer, to the operator's and the daily job's tokens only. Neither the report nor the answer SHALL hold a trial's identifier or anything of a record. The page that shows it SHALL hold no count until a token is typed into it, SHALL keep that token for the browser tab only and SHALL never put it in an address, and SHALL load nothing from another origin.
+
+#### Scenario: A slice moves on
+- **WHEN** the pipeline reports a slice again with one stage's count
+- **THEN** that count changes and the slice's other stages keep theirs
+
+#### Scenario: The page without a token
+- **WHEN** anyone asks for the progress page
+- **THEN** the same empty page is answered, with no count in it
+
+#### Scenario: A report that carries text
+- **WHEN** a report names a stage the service does not know, or a slice by anything but an identifier of letters, digits and marks
+- **THEN** it is refused and nothing is stored
+
+### Requirement: The service is deployed one way and answers no stranger
+The ingest service SHALL be deployed only by its deploy command, which SHALL refuse unless the database's jurisdiction reads back as the European Union and no migration is left to apply, SHALL set the tokens' secret without printing or logging it, and SHALL then ask the deployed service and fail unless every route answers 401 without a known token. The deployed service SHALL bound how often one address without a token, and one token, may ask.
+
+#### Scenario: A migration is not applied
+- **WHEN** the deploy command finds a migration the database does not have
+- **THEN** nothing is deployed
+
 ### Requirement: A report without applying leaves no run
 When a writer asks for a run's report without applying, the service SHALL return the report with what it cannot see (what only a constraint of the store refuses; and a run that names one claim by two slugs for one record or whose actions depend on one another beyond a clear before a publication), and SHALL then drop the run and what it staged.
 

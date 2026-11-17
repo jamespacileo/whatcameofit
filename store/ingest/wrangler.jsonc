@@ -5,7 +5,9 @@
 // bucket (both in the European Union jurisdiction, which cannot be set afterwards) and the
 // Queue, and their ids are given at deployment, not committed. Nothing in this file
 // creates or names a real Cloudflare resource; locally Wrangler stands each binding up on
-// this machine. Never deploy from here by hand: there is no deploy target yet.
+// this machine. Deploy only through `make store-deploy` (scripts/deploy.mjs), which writes
+// the configuration that is deployed from this one: the environment's names, the
+// database's id, a workers.dev address, and no Queue until something consumes it.
 {
   "name": "thenwhat-store-ingest",
   "main": "./src/index.mjs",
@@ -20,6 +22,14 @@
   ],
   "r2_buckets": [
     { "binding": "PAYLOADS", "bucket_name": "thenwhat-payloads-preview" }
+  ],
+  // How often the service may be asked, counted for a minute in each Cloudflare location
+  // (developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit, read 2026-11-17;
+  // a period is 10 or 60 seconds). A caller with no known token: 60 a minute an address (the deploy's own check asks about 40).
+  // A token: 600 a minute. The namespace ids are this service's own; production's differ.
+  "ratelimits": [
+    { "name": "LIMIT_UNKNOWN", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } },
+    { "name": "LIMIT_TOKEN", "namespace_id": "1002", "simple": { "limit": 600, "period": 60 } }
   ],
   "queues": {
     "producers": [{ "binding": "WORK", "queue": "thenwhat-work-preview" }]

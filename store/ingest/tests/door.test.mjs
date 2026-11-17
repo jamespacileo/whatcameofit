@@ -642,6 +642,46 @@ test("progress is reported and read as counts only, by the tokens that may", { s
   } finally { await box.close(); }
 });
 
+test("a caller that asks too often is told so, counted by address without a token and by token with one", { skip }, async () => {
+  // The Worker itself with stand-ins for the platform's rate-limit bindings, which do not
+  // exist on this machine. A refusal comes before the store is touched.
+  const { default: worker } = await import("../src/index.mjs");
+  const seen = [];
+  const limiter = (name, allow) => ({ limit: async ({ key }) => { seen.push([name, key]); return { success: allow }; } });
+  const ask = (env, headers = {}) => worker.fetch(new Request("https://ingest.test/progress", { headers: { "cf-connecting-ip": "203.0.113.7", ...headers } }),
+    { INGEST_TOKENS: JSON.stringify(ENTRIES), ...env }, { waitUntil() {} });
+  const bearer = { authorization: `Bearer ${TOKENS.daily}` };
+  assert.equal((await ask({ LIMIT_UNKNOWN: limiter("unknown", true), LIMIT_TOKEN: limiter("token", true) })).status, 401);
+  const refused = await ask({ LIMIT_UNKNOWN: limiter("unknown", false), LIMIT_TOKEN: limiter("token", true) });
+  assert.deepEqual([refused.status, await refused.json()], [429, { error: "too_many_requests" }]);
+  assert.equal((await ask({ LIMIT_UNKNOWN: limiter("unknown", true), LIMIT_TOKEN: limiter("token", false) }, bearer)).status, 429);
+  assert.deepEqual(seen, [["unknown", "203.0.113.7"], ["unknown", "203.0.113.7"], ["token", "daily"]], "a known token is not counted by address");
+  const shell = await worker.fetch(new Request("https://ingest.test/progress/page", { headers: { "cf-connecting-ip": "203.0.113.7" } }), { LIMIT_UNKNOWN: limiter("unknown", false) }, {});
+  assert.equal(shell.status, 429);
+  // The committed configuration binds both, with a period the platform takes.
+  const config = readFileSync(here("../wrangler.jsonc"), "utf8");
+  assert.match(config, /"LIMIT_UNKNOWN"[^}]*"simple": \{ "limit": \d+, "period": (10|60) \}/);
+  assert.match(config, /"LIMIT_TOKEN"[^}]*"simple": \{ "limit": \d+, "period": (10|60) \}/);
+});
+
+test("the deploy's check of a deployed service passes on this one, and fails without the operator's token", { skip }, async () => {
+  const { smoke } = await import("../scripts/deploy.mjs");
+  const address = String(await s.mf.ready);
+  const said = [];
+  const before = process.env.STORE_TOKEN_OPERATOR;
+  try {
+    process.env.STORE_TOKEN_OPERATOR = TOKENS.operator;
+    assert.equal(await smoke(address, (line) => said.push(line)), true, said.join("\n"));
+    assert.ok(said.some((line) => /routes: 401 with no token and with a wrong one$/.test(line)));
+    assert.ok(!said.join("\n").includes(TOKENS.operator), "the token is never said");
+    // A token that may not read the progress is not the operator's: the check fails.
+    process.env.STORE_TOKEN_OPERATOR = TOKENS.lookup;
+    assert.equal(await smoke(address, () => {}), false);
+    delete process.env.STORE_TOKEN_OPERATOR;
+    assert.equal(await smoke(address, () => {}), false);
+  } finally { if (before === undefined) delete process.env.STORE_TOKEN_OPERATOR; else process.env.STORE_TOKEN_OPERATOR = before; }
+});
+
 test("a merge wakes the consumer once for each step with work due, saying nothing else", { skip }, async () => {
   const day = new Date().toISOString().slice(0, 10);
   const done = await push([["link_lead", "wake.com/1", { url_key: "wake.com/1", url_key_version: 2, url: "https://wake.com/1", outlet: "wake.com", outlet_kind: "general_news",

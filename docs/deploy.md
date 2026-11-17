@@ -384,7 +384,30 @@ When Time Travel cannot help (the history has run out, or the database is gone),
 
 Not tested: whether rebuilding `link_lead_fts` on D1 fits its 30 seconds for a query. The schema's triggers have already filled that table as the rows arrived, so if that file fails it can be left out; the load stops there, and the count is then run by hand.
 
-### The ingest service is not deployed
+### Deploying the ingest service
 
-`store/ingest/wrangler.jsonc` has `workers_dev: false` and no route, so a deployed service would have no address. The bulk load does not need it. Never deploy it by hand before its address is decided.
+Decided by the operator on 17 November 2026: the ingest service is deployed on a `workers.dev` address and answers only to tokens. It is deployed by one command and no other way:
+
+```bash
+make store-deploy ENV=preview TOKENS=<file of token checksums> ARGS="--dry-run"    # the plan and the configuration, nothing run
+STORE_TOKEN_OPERATOR=... make store-deploy ENV=preview TOKENS=<file of token checksums>
+STORE_TOKEN_OPERATOR=... make store-deploy ENV=production CONFIRM=thenwhat-store-ingest TOKENS=<file of token checksums>
+```
+
+Set `STORE_TOKEN_OPERATOR` in the shell from the tokens' own file (`set -a; . <file>; set +a`), never on the command line. The stages, in order:
+
+1. **config.** The configuration that is deployed is written from the committed `wrangler.jsonc`: the Worker's name for the environment (`thenwhat-store-ingest-preview`, `thenwhat-store-ingest`), the database with its id looked up by name, the bucket in `eu`, `workers_dev` true, `preview_urls` false, logs off, the two rate limits, and no Queue. The file is git-ignored and removed at the end.
+2. **jurisdiction.** The database reads back `eu` and the bucket is found in `eu`, or nothing is deployed.
+3. **migrations.** None may be left to apply.
+4. **deploy.**
+5. **secret.** `INGEST_TOKENS` is set by `wrangler secret put`, which reads the file on its standard input. The value is never an argument and never printed or logged; the script says only how many tokens the file lists and its size, and refuses a file that is not a list of checksums.
+6. **smoke.** Every route answers 401 with no token and with a wrong one; the progress page answers only its empty shell; the operator's token gets 200 from `GET /progress`. Then the address is printed.
+
+What a `workers.dev` address exposes. Anyone can reach it. Without a known token every route answers `401 {"error":"unauthorized"}` and nothing else, whatever was asked, so a caller learns only that a service is there; `GET /progress/page` answers a static page with no count in it. Cloudflare applies its Browser Integrity Check to `workers.dev` and nothing else that is ours to configure: a zone's WAF and rate-limit rules do not apply there. So the service limits itself with the platform's rate-limit bindings: 60 requests a minute from one address with no known token, 600 a minute a token, each counted separately in each Cloudflare location and approximately. An address is used as the counting key and is not stored or logged. Cloudflare Access can be put in front of a `workers.dev` address if a second lock is wanted; every writer would then send its headers too.
+
+Queues. `wrangler queues create` has a `--jurisdiction` flag, but Cloudflare's documentation gives it no values and says nothing of where a Queue's data rests. The service's only use of a Queue is to wake a consumer with a step's name, and nothing consumes one yet, so the deployed configuration binds none and the service sends nothing. When a consumer exists, the binding returns and the jurisdiction question is settled then.
+
+### Watching a backfill
+
+The pipeline reports each slice of a set of trials to `PUT /progress/slices`: how many of its trials have reached each of five stages (record fetched, registry papers, PubMed papers, in the store, page built). `GET /progress` answers counts only, to the operator's and the daily job's tokens: each set with totals by stage and every slice, the last merged run of each writer, and the rows of each table. `<address>/progress/page` shows the same as bars and a grid of slices. The page itself holds nothing; it asks for a token once, keeps it for that browser tab only, and sends it as a header, never in an address. `node store/ingest/scripts/progress-preview.mjs` shows the page on this machine with made-up counts.
 

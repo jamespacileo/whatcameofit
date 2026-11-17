@@ -74,6 +74,16 @@ The bulk kinds (registry trials, leads and what hangs from them, usage, measures
 
 A payload over 16 KB that an inbox record names is in the bucket under `payload/<sha256>`; the service has no route that serves it.
 
+## Progress of a backfill
+
+- `PUT /progress/slices` (operator, daily, device) takes `{set, total_trials?, total_slices?, slices: [{slice, position, trials, stages: {record, registry_papers, pubmed_papers, in_store, page}, started_at?, updated_at?}]}`: at most 200 slices a call, added or brought up to date by `(set, slice)`; a stage left out keeps its count. Counts and a slice's own id only.
+- `GET /progress` (operator, daily) answers `{stages, sets: [{set, total_trials, total_slices, slices_reported, trials_reported, totals, slices, updated_at}], runs, rows, at}`: counts, slice ids and times, nothing of a record.
+- `GET /progress/page` is a self-contained page of the same. It is served without a token and holds no count; it asks `/progress` with a token typed into it, kept for the tab only and sent as a header.
+
+## Asked too often
+
+Where the platform's rate-limit bindings are bound (`wrangler.jsonc`), a caller with no known token is answered 429 past 60 requests a minute from one address, and a token past 600 a minute. The counts are approximate and kept in each Cloudflare location on its own. On this machine there are none.
+
 ## One reading of a record
 
 What is staged is the checked value written out again, never the bytes that arrived. JavaScript reads the last of a key given twice and SQLite the first, so the bytes could say one thing to the door and another to the store. A body that is not UTF-8, and a string holding half a character or a NUL, are refused for the same reason.

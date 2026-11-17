@@ -233,11 +233,20 @@ const page = () => new Response(PAGE, { status: 200, headers: {
   "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
 } });
 
+// Asked too often. The platform's rate-limit bindings count for a minute in each
+// Cloudflare location; they are approximate, and absent on this machine. A caller without
+// a known token is counted by its address, which is used as the key and is neither stored
+// nor logged; a caller with one, by the token's name.
+const tooOften = async (limiter, key) => Boolean(limiter) && !(await limiter.limit({ key })).success;
+const slowDown = () => json(429, { error: "too_many_requests" });
+
 async function route(request, env, ctx) {
-  if (request.method === "GET" && new URL(request.url).pathname === "/progress/page") return page();
+  const from = request.headers.get("cf-connecting-ip") || "unknown";
+  if (request.method === "GET" && new URL(request.url).pathname === "/progress/page") return (await tooOften(env.LIMIT_UNKNOWN, from)) ? slowDown() : page();
   const who = await principal(request, env);
   // Without a token nothing answers, whatever was asked for.
-  if (!who) return json(401, { error: "unauthorized" });
+  if (!who) return (await tooOften(env.LIMIT_UNKNOWN, from)) ? slowDown() : json(401, { error: "unauthorized" });
+  if (await tooOften(env.LIMIT_TOKEN, who.name)) return slowDown();
   const { pathname } = new URL(request.url);
   const parts = pathname.split("/").filter(Boolean);
   const at = `${request.method} /${parts[0] || ""}${parts.length > 1 ? "/*" : ""}${parts[2] ? `/${parts[2]}` : ""}`;
