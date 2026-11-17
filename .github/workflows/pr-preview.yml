@@ -23,25 +23,35 @@ env:
 jobs:
   publish:
     name: Publish preview
-    # A fork's or Dependabot's pull request is given no Cloudflare token, so it gets no preview.
+    # Only same-repository branches use the preview account.
     if: >-
       github.event.action != 'closed' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      vars.CLOUDFLARE_PREVIEW_ACCOUNT_ID != '' &&
       github.actor != 'dependabot[bot]'
+    environment: preview
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
       pull-requests: write
-    # The settings a copy is built with. The token is given only to the two steps that ask Cloudflare.
+    # The preview account's token is given only to the steps that ask Cloudflare.
     env:
-      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_PREVIEW_ACCOUNT_ID }}
+      PRODUCTION_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
       SUGGEST_URL: ${{ vars.SUGGEST_URL }}
       CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
       CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
       SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
       CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
     steps:
+      - name: Require a separate preview account
+        run: |
+          if [ "$CLOUDFLARE_ACCOUNT_ID" = "$PRODUCTION_ACCOUNT_ID" ]; then
+            echo "::error::The preview account must differ from the production account."
+            exit 1
+          fi
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
@@ -51,9 +61,11 @@ jobs:
       # the copy says what it was made from, and that is compared with this commit.
       - name: See whether the copy is already this commit's
         id: state
-        run: make pr-preview-state
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_PREVIEW_API_TOKEN in the preview environment}"
+          make pr-preview-state
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_API_TOKEN }}
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         if: steps.state.outputs.published != 'true'
         with:
@@ -88,7 +100,7 @@ jobs:
           if [ -d site/node_modules ]; then touch site/node_modules; fi
           make pr-preview
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_API_TOKEN }}
       # One comment, edited in place on every run and re-run, whether the build passed or not.
       - name: Update the pull request's comment
         if: ${{ !cancelled() }}
@@ -127,7 +139,10 @@ jobs:
     name: Remove preview
     if: >-
       github.event.action == 'closed' &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.user.login != 'dependabot[bot]' &&
+      vars.CLOUDFLARE_PREVIEW_ACCOUNT_ID != ''
+    environment: preview
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -136,9 +151,15 @@ jobs:
       # No checkout: nothing from the pull request runs with the token here.
       - name: Delete the Worker
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PREVIEW_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_PREVIEW_ACCOUNT_ID }}
+          PRODUCTION_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          : "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_PREVIEW_API_TOKEN in the preview environment}"
+          if [ "$CLOUDFLARE_ACCOUNT_ID" = "$PRODUCTION_ACCOUNT_ID" ]; then
+            echo "::error::The preview account must differ from the production account."
+            exit 1
+          fi
           worker="thenwhat-pr-$PR_NUMBER"
           status=$(curl --silent --show-error --output response.json --write-out '%{http_code}' \
             --request DELETE \

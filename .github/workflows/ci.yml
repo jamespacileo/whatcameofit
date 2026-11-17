@@ -9,21 +9,63 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  ASTRO_TELEMETRY_DISABLED: "1"
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  check:
-    name: Tests and build
+  tests:
+    name: ${{ matrix.suite.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - { name: Pipeline tests, target: check-pipeline, lockfile: site/pnpm-lock.yaml }
+          - { name: Store tests, target: check-store, lockfile: store/ingest/pnpm-lock.yaml }
+          - { name: Site build tests, target: check-site-build, lockfile: site/pnpm-lock.yaml }
     env:
       UV_LOCKED: "1"
-      ASTRO_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        if: matrix.suite.target == 'check-pipeline'
         with:
           version: "0.11.20"
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: site/package.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: ${{ matrix.suite.lockfile }}
+      - name: Run suite
+        env:
+          TARGET: ${{ matrix.suite.target }}
+        run: make "$TARGET"
+
+  site:
+    name: Site tests and release build
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    outputs:
+      build_digest: ${{ steps.archive.outputs.digest }}
+      build_artifact: ${{ steps.archive.outputs.name }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           package_json_file: site/package.json
@@ -48,7 +90,8 @@ jobs:
           path: site/node_modules
           key: site-deps-${{ runner.os }}-node26-${{ hashFiles('site/pnpm-lock.yaml') }}
           lookup-only: true
-      - run: make check
+      - name: Run site, extension and shell checks
+        run: make site-test extension-test extension scripts-test
       - name: Save production extension package
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
@@ -59,6 +102,7 @@ jobs:
       - name: Rehearse production build
         run: make deploy-ci-check
         env:
+          BUILD_REVISION: ${{ github.sha }}
           SUGGEST_URL: ${{ vars.SUGGEST_URL }}
           CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
           CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
@@ -66,6 +110,24 @@ jobs:
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
+      - name: Archive the checked site
+        id: archive
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: |
+          archive="$RUNNER_TEMP/production-site.tar.gz"
+          tar -C site -cf - dist | gzip -1 > "$archive"
+          digest=$(sha256sum "$archive")
+          echo "digest=${digest%% *}" >> "$GITHUB_OUTPUT"
+          echo "name=production-site-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+      - name: Save the checked site
+        if: steps.archive.outcome == 'success'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: ${{ steps.archive.outputs.name }}
+          path: ${{ runner.temp }}/production-site.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 3
       - name: Keep dependencies
         if: steps.deps.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -82,6 +144,21 @@ jobs:
           path: site/.cache/cards
           key: ${{ steps.cards.outputs.cache-primary-key }}
 
+  check:
+    name: Tests and build
+    needs: [tests, site]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Require every suite to pass
+        env:
+          TESTS: ${{ needs.tests.result }}
+          SITE: ${{ needs.site.result }}
+        run: |
+          printf 'Test suites: %s\nSite tests and release build: %s\n' "$TESTS" "$SITE"
+          test "$TESTS" = success && test "$SITE" = success
+
   # A rehearsal of task 6.2 of `cloudflare-source-of-truth`: take the export from the truth
   # store, hold it to the schema and the checks a published snapshot passes, and report how
   # it compares with the committed snapshot. Off unless the repository variable
@@ -89,7 +166,8 @@ jobs:
   # snapshot stays the site's source, and the deploy job does not wait for this one.
   store-export:
     name: Export from the store (rehearsal)
-    if: vars.EXPORT_FROM_STORE == 'true' && github.event_name != 'pull_request'
+    if: vars.EXPORT_FROM_STORE == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    environment: store-rehearsal
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -113,7 +191,7 @@ jobs:
         run: make store-export-rehearsal
         env:
           # A token that can only read the store's database and bucket.
-          CLOUDFLARE_API_TOKEN: ${{ secrets.STORE_READ_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_STORE_READ_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           STORE_D1: ${{ vars.STORE_D1 }}
           STORE_R2_BUCKET: ${{ vars.STORE_R2_BUCKET }}
@@ -126,7 +204,7 @@ jobs:
 
   deploy:
     name: Deploy production
-    needs: check
+    needs: [check, site]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -136,6 +214,9 @@ jobs:
     concurrency:
       group: cloudflare-production
       cancel-in-progress: false
+      queue: max
+    env:
+      BUILD_REVISION: ${{ github.sha }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -149,11 +230,19 @@ jobs:
           cache: pnpm
           cache-dependency-path: site/pnpm-lock.yaml
       - run: pnpm --dir site install --frozen-lockfile
-      - name: Verify Cloudflare authentication
-        run: node site/node_modules/wrangler/bin/wrangler.js whoami
+      - name: Download the checked site from this run
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ${{ needs.site.outputs.build_artifact }}
+          path: ${{ runner.temp }}/checked-production-site
+      - name: Verify and unpack the checked site
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          BUILD_DIGEST: ${{ needs.site.outputs.build_digest }}
+        run: |
+          [[ "$BUILD_DIGEST" =~ ^[a-f0-9]{64}$ ]]
+          archive="$RUNNER_TEMP/checked-production-site/production-site.tar.gz"
+          printf '%s  %s\n' "$BUILD_DIGEST" "$archive" | sha256sum --check -
+          tar --no-same-owner --no-same-permissions -xzf "$archive" -C site
       - name: Check this is still the latest main revision
         id: current
         env:
@@ -167,14 +256,14 @@ jobs:
           fi
       - name: Deploy reviewed public snapshot
         if: steps.current.outputs.deploy == 'true'
-        run: make deploy-ci
+        run: |
+          : "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_PRODUCTION_API_TOKEN in the production environment}"
+          : "${CLOUDFLARE_ACCOUNT_ID:?Set the CLOUDFLARE_ACCOUNT_ID repository variable}"
+          make deploy-ci
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          DEPLOY_REUSE_BUILD: "1"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PRODUCTION_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          SUGGEST_URL: ${{ vars.SUGGEST_URL }}
-          CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
-          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
-          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
