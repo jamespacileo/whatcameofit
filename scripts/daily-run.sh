@@ -112,6 +112,7 @@ read_limit=$(setting DAILY_RUN_READ_LIMIT 40)
 triage_limit=$(setting DAILY_RUN_TRIAGE_LIMIT 2000)
 refresh_limit=$(setting DAILY_RUN_REFRESH_LIMIT 150)
 read_workers=$(setting DAILY_RUN_READ_WORKERS 2)
+fetch_days=$(setting DAILY_RUN_FETCH_DAYS 3)
 keep_days=$(setting DAILY_RUN_KEEP_DAYS 30)
 margin=$(setting DAILY_RUN_SPEND_MARGIN_USD 1)
 day_budget=$(setting DAILY_RUN_DAY_BUDGET_USD "")
@@ -139,6 +140,7 @@ whole_number DAILY_RUN_READ_LIMIT "$read_limit"
 whole_number DAILY_RUN_TRIAGE_LIMIT "$triage_limit"
 whole_number DAILY_RUN_REFRESH_LIMIT "$refresh_limit"
 whole_number DAILY_RUN_READ_WORKERS "$read_workers"
+whole_number DAILY_RUN_FETCH_DAYS "$fetch_days"
 whole_number DAILY_RUN_KEEP_DAYS "$keep_days"
 amount DAILY_RUN_SPEND_MARGIN_USD "$margin"
 [ -n "$day_budget" ] && amount DAILY_RUN_DAY_BUDGET_USD "$day_budget"
@@ -147,13 +149,22 @@ if [ "$read_limit" -lt 1 ] || [ "$triage_limit" -lt 1 ]; then
   echo "DAILY_RUN_READ_LIMIT and DAILY_RUN_TRIAGE_LIMIT must be 1 or more." >&2
   exit 2
 fi
+if [ "$fetch_days" -lt 1 ] || [ "$fetch_days" -gt 28 ]; then
+  echo "DAILY_RUN_FETCH_DAYS must be 1 to 28: the window may touch two months at most." >&2
+  exit 2
+fi
 if [ "$read_workers" -lt 1 ] || [ "$read_workers" -gt 4 ]; then
   echo "DAILY_RUN_READ_WORKERS must be 1 to 4: the page reader takes at most 4 at once." >&2
   exit 2
 fi
 
 today=$(date '+%Y-%m-%d')
-month=$(date '+%Y-%m')
+# The months the link window touches, in UTC as the fetch counts them: the month of the
+# window's first day and, when it differs, this month. `date -v` on macOS, `-d` elsewhere.
+window_first=$(date -u -v-"$fetch_days"d '+%Y-%m' 2>/dev/null || date -u -d "$fetch_days days ago" '+%Y-%m')
+window_last=$(date -u '+%Y-%m')
+window_months=$window_first
+[ "$window_first" != "$window_last" ] && window_months="$window_first $window_last"
 log="$logs/$today.log"
 summary="$state/summary-$today.md"
 work=""
@@ -343,8 +354,10 @@ write_summary() {
     echo
     echo "## What ran"
     echo
-    echo "- Link files: $(report_of fetch-links 'hackernews' 'no report')"
-    echo "- Loaded: $(report_of load-links '^Read ' 'nothing loaded')"
+    echo "- Link files: $(report_of fetch-links '^Months written' 'no report')"
+    for window_month in $window_months; do
+      echo "- Loaded $window_month: $(report_of "load-links $window_month" '^Read ' 'nothing loaded')"
+    done
     echo "- Screened: $(report_of screen '^link_screen:' 'did not run')"
     echo "- Scored: $(report_of score '^link_triage:' 'did not run')"
     echo "- Read: $(report_of read '^link_read:' 'did not run')"
@@ -471,25 +484,29 @@ elif [ -z "$stopped" ] && before=$(figures counts 2>>"$log"); then
   published_before=$1 pending_before=$2 audit_before=$3
 fi
 
-# 1. The newest link files: the current month only. Sends requests to the two public
-#    copies of Hacker News data (docs/sources.md); spends nothing.
-hn_file="$link_files/hackernews/$month.parquet"
+# 1. The newest link files: the Hacker News stories of the last DAILY_RUN_FETCH_DAYS days,
+#    merged into each month's file the window touches. One or two queries to the public
+#    ClickHouse copy of Hacker News (docs/sources.md); spends nothing.
 if [ -f "$root/scripts/fetch_link_files.py" ] || [ "$dry" = 1 ]; then
   [ -f "$root/scripts/fetch_link_files.py" ] || say "note: scripts/fetch_link_files.py is not in this checkout; a run would skip this step"
   run_step fetch-links uv run --env-file "$env_file" --directory "$root/pipeline" \
-    python "$root/scripts/fetch_link_files.py" hackernews "$month" "$month" || true
+    python "$root/scripts/fetch_link_files.py" hackernews --since-days "$fetch_days" || true
 elif [ -z "$stopped" ]; then
   say "skip fetch-links: scripts/fetch_link_files.py is not in this checkout"
   notes="$notes- The link files were not fetched: scripts/fetch_link_files.py is not in this checkout.\\n"
 fi
 
-# 2. Load them. Sends no request. Loading a file again adds nothing.
-if [ -f "$hn_file" ] || [ "$dry" = 1 ]; then
-  pipeline_step load-links backfill load-links hackernews "$hn_file" || true
-elif [ -z "$stopped" ]; then
-  say "skip load-links: $hn_file is not there"
-  notes="$notes- Nothing was loaded: there is no link file for $month.\\n"
-fi
+# 2. Load each month's file the window touched. Sends no request. Loading a link again
+#    adds nothing.
+for window_month in $window_months; do
+  hn_file="$link_files/hackernews/$window_month.parquet"
+  if [ -f "$hn_file" ] || [ "$dry" = 1 ]; then
+    pipeline_step "load-links $window_month" backfill load-links hackernews "$hn_file" || true
+  elif [ -z "$stopped" ]; then
+    say "skip load-links $window_month: $hn_file is not there"
+    notes="$notes- Nothing was loaded for $window_month: there is no link file for it.\\n"
+  fi
+done
 
 # 3. Screen: link each lead to what the database already holds. No source, no model.
 pipeline_step screen backfill run link_screen || true

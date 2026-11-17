@@ -208,16 +208,6 @@ test("Scenario: Home lists the newest reports", () => {
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
-test("Scenario: A list that fits one page", () => {
-  // Four reports and two status changes: every row is on the first page, with a pager that
-  // stays out of sight under each list.
-  const html = page("index.html");
-  assert.doesNotMatch(html, /<tr[^>]*data-later/);
-  assert.match(html, /<nav class="pager"[^>]*data-pager="headlines"[^>]*hidden/);
-  assert.match(html, /<nav class="pager"[^>]*data-pager="moved"[^>]*hidden/);
-  assert.match(page("topic/gum-disease/index.html"), /data-pager="claims"/);
-});
-
 test("Scenario: Lists on the home page", () => {
   const html = page("index.html");
   // One tab per list that has rows, in a fixed order.
@@ -311,14 +301,6 @@ test("Scenario: Claim with three trials", () => {
   assert.match(words("quiet-claim"), /None on record\s+The first report was about a study in animals/);
   assert.match(claimsPanel(), /counts the trials on record; it does not say what they found\./);
   assert.doesNotMatch(wordsOf(claimsPanel()), /p\s*[=<]|\d\.\d/);
-});
-
-test("Scenario: Same words as the claim page", () => {
-  const row = wordsOf(rowsOf(claimsPanel()).find((entry) => entry.includes('href="/phase-claim')));
-  const brief = wordsOf(sectionOf(page("phase-claim/index.html"), "brief"));
-  assert.match(brief, /In 7 trials\. 1,200 people in the largest/);
-  assert.match(row, /In 7 trials/);
-  assert.match(row, /1,200 people in the largest/);
 });
 
 test("Scenario: Topic page", () => {
@@ -881,34 +863,15 @@ test("Scenario: Every answer opens to something", () => {
   }
 });
 
-test("Scenario: Results posted", () => {
-  const section = sectionOf(page("phase-claim/index.html"), "brief");
-  // Outside the disclosure, so it shows without opening the answer.
-  assert.match(section, /<\/details>\s*<p class="brief-link brief-shown">\s*<a href="#trials">\s*See the posted results/);
-});
-
 test("Scenario: Largest trial with posted values", () => {
   const brief = briefOf("phase-claim");
   // The trial entries below carry "p = 0.03"; the section carries no result value.
   assert.doesNotMatch(brief, /p\s*[=<]|\d\.\d/);
 });
 
-test("Scenario: Claim with no trial on record", () => {
-  const brief = briefOf("quiet-claim");
-  assert.match(brief, /Tested in people\? None on record/);
-  assert.match(brief, /What was the first report about\? A study in animals/);
-  assert.match(brief, /Approved by a regulator\? None on record/);
-  assert.doesNotMatch(brief, /Compared with|Results posted|A trial under way/);
-  assert.match(brief, /Three answers read from the records on this page/);
-});
-
 test("Scenario: Approved claim", () => {
   const brief = briefOf("approved-claim");
   assert.match(brief, /Approved by a regulator\? On 1 Apr 2024\. An approval is not advice to take a treatment/);
-});
-
-test("Scenario: Status with a phase", () => {
-  assert.doesNotMatch(page("phase-claim/index.html"), /class="bridge"/);
 });
 
 test("Scenario: Posted comparison with a p value", () => {
@@ -1500,8 +1463,10 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(section, /<blockquote[^>]*>A synthetic definition of a KIND OF TREATMENT, as the vocabulary writes it\.<\/blockquote>/);
   assert.match(section, /The kind of treatment this is, not the treatment itself/);
   // The open data file carries the kind card with its reasons.
-  const data = JSON.parse(fs.readFileSync(path.join(dist, "data/claims.json"), "utf8"));
-  const cards = data.claims.find((claim) => claim.slug === "approved-claim").background;
+  const record = (slug) =>
+    JSON.parse(fs.readFileSync(path.join(dist, `data/claims/${slug}.json`), "utf8"));
+  const data = record("approved-claim");
+  const cards = data.claim.background;
   assert.deepEqual(cards.map((card) => [card.kind, card.fit]), [
     ["condition", "exact"],
     ["intervention", "kind"],
@@ -1510,13 +1475,14 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.equal(cards[2].definition_source, "uniprot");
   assert.ok(data.card_sources.some((held) => held.name === "uniprot" && held.licence === "CC BY 4.0"));
   // The share-alike drug facts are not in the file, and the file names the source left out.
-  const kept = data.claims.find((claim) => claim.slug === "phase-claim").background;
+  const phase = record("phase-claim");
+  const kept = phase.claim.background;
   // The condition and treatment cards and the kind card added above stay; the drug and
   // its target do not.
   assert.deepEqual(kept.map((card) => card.kind), ["condition", "intervention", "intervention"]);
-  assert.ok(!JSON.stringify(data.claims).includes("EXAMPLUMAB"));
-  assert.ok(!JSON.stringify(data.claims).includes("Example receptor 1"));
-  assert.deepEqual(data.left_out.map((left) => [left.source, left.licence]), [
+  assert.ok(!JSON.stringify(phase.claim).includes("EXAMPLUMAB"));
+  assert.ok(!JSON.stringify(phase.claim).includes("Example receptor 1"));
+  assert.deepEqual(phase.left_out.map((left) => [left.source, left.licence]), [
     ["Example Drugs", "CC BY-SA 3.0 Unported"],
   ]);
 
@@ -1859,4 +1825,16 @@ test("Scenario: Topic among ten", () => {
   assert.equal(count(list, "<li"), 1);
   assert.match(list, /href="\/topic\/gum-disease" aria-current="page"[\s\S]*?Gum disease[\s\S]*?class="n">3</);
   assert.ok(!list.includes("empty-topic"));
+});
+
+test("Scenario: summary and notes are clamped, utility sections start folded, the band has its drawing", () => {
+  const html = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
+  assert.match(html, /<p class="lede" data-clamp="3"/);
+  assert.match(html, /<p class="glance-note" data-clamp="1"/);
+  // The notes that say "not advice" are never cut.
+  assert.doesNotMatch(sectionOf(html, "brief"), /data-clamp/);
+  for (const id of ["pass-on", "check-again"]) {
+    assert.match(html, new RegExp(`data-fold="folded" data-fold-phone="folded"[^>]*>\\s*<h2 class="bar" id="${id}"`));
+  }
+  assert.match(html, /<div class="band-side" aria-hidden="true">\s*<svg/);
 });

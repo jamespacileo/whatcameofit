@@ -41,7 +41,7 @@ const EMPTY: TrialsListing = {
 
 /** Where the listing is: named outright, or beside the export under the export's name
  * with "export" replaced by "trials-listing". */
-export function listingPath(): string {
+export function listingPath(): string | null {
   const configured = process.env.TRIALS_LISTING_FILE;
   if (configured) return path.resolve(configured);
   const live = path.resolve("data/export.json");
@@ -50,14 +50,17 @@ export function listingPath(): string {
     : fs.existsSync(live)
       ? live
       : path.resolve("data/seed-export.json");
-  return path.join(path.dirname(exported), path.basename(exported).replace(/export(?=\.json$)/, "trials-listing"));
+  const name = path.basename(exported);
+  const beside = name.replace(/export(?=\.json$)/, "trials-listing");
+  // An export under another name has no listing beside it: never the export itself.
+  return beside === name ? null : path.join(path.dirname(exported), beside);
 }
 
 function load(): TrialsListing {
   // The operator's switch: off, the site is built as if there were no listing.
   if (!LISTED_TRIAL_PAGES) return EMPTY;
   const file = listingPath();
-  if (!fs.existsSync(file)) {
+  if (!file || !fs.existsSync(file)) {
     if (process.env.TRIALS_LISTING_FILE) throw new Error(`No trial listing at ${file}.`);
     return EMPTY;
   }

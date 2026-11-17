@@ -18,7 +18,7 @@ Defines a backfill from bulk files as a run that lives in a folder of files on a
 - **THEN** the stage stops and names the file
 
 ### Requirement: Stages run in order and say what they did
-A run's stages SHALL be load, screen, triage, read and prepare. A stage SHALL refuse to run before the stage it depends on has completed. Each stage SHALL report how many rows or leads it took, how many went on and how many were left out for each reason, and SHALL fail when those do not sum.
+A run's stages SHALL be load, screen, triage, read and prepare. The prepare stage SHALL only write the run's results in the form the merge takes; it SHALL NOT search a registry or approve a claim, a match or an event, which the truth store's side does after the push. A stage SHALL refuse to run before the stage it depends on has completed. Each stage SHALL report how many rows or leads it took, how many went on and how many were left out for each reason, and SHALL fail when those do not sum.
 
 #### Scenario: Triage before screening
 - **WHEN** triage is asked to run in a folder where screening has not completed
@@ -100,6 +100,13 @@ Where leads are due, a stage SHALL take first those whose title names a topic wo
 #### Scenario: No ingest address configured
 - **WHEN** `INGEST_URL` or `INGEST_TOKEN` is empty
 - **THEN** push refuses and names the setting
+
+### Requirement: A large push is several store runs
+A push SHALL hand a run's records over as one or more store runs, none larger than the size the store sets, and a record SHALL be in the same store run as the record it refers to or in a later one. Each store run SHALL be registered, merged and reported on its own. A push that stopped after some store runs were merged SHALL be finished by pushing again, and SHALL add nothing twice.
+
+#### Scenario: A push stopped part way
+- **WHEN** a push of three store runs stops after the first is merged, and the run is pushed again
+- **THEN** the first is answered as merged before, the other two are merged, and the store holds each record once
 
 ### Requirement: A pushed run can be deleted
 After a push the run SHALL be marked pushed, and deleting its folder SHALL lose nothing the truth store needs.

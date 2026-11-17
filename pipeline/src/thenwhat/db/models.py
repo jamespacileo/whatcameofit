@@ -784,6 +784,31 @@ class RegistryTrial(Base):
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
+class TrialPaper(Base):
+    """A paper a paper index returned for a stored trial's registry number, with the
+    paper's own record as kept: no abstract and no author. Attached by the number the
+    record carries, with no score. Not a match, not an evidence event, and never a
+    results paper unless the registry record names it as one.
+    Behavior: openspec trial-coverage, "Papers that carry the trial's number"."""
+
+    __tablename__ = "trial_paper"
+    __table_args__ = (
+        UniqueConstraint(
+            "registry_trial_id",
+            "source_name",
+            "pubmed_id",
+            name="uq_trial_paper_trial_source_paper",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    registry_trial_id: Mapped[int] = mapped_column(ForeignKey("registry_trial.id"), index=True)
+    source_name: Mapped[str] = mapped_column(Text)
+    pubmed_id: Mapped[str] = mapped_column(Text, index=True)
+    raw_payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
 class RegistryLoad(Base):
     """When trials matching a condition were last loaded in full, so that the next load
     can ask only for what changed since."""

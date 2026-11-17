@@ -32,6 +32,7 @@ from thenwhat.db.models import (
 )
 from thenwhat.domain import Decider, OutletKind
 from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.pubmed import Paper
 
 
 class Index:
@@ -949,3 +950,68 @@ def test_trial_sets_is_refused_until_trials_have_the_wider_record(run, session: 
 
     assert result.exit_code == 1
     assert "No stored trial has the activity and results fields yet." in result.output
+
+
+def test_trial_references_counts_what_the_stored_records_list(run, session: Session):
+    trials = add_trials(session, 2)
+    for stored in trials:
+        stored.overall_status = "RECRUITING"
+        stored.last_update_posted = date(2026, 3, 1)
+    trials[0].raw_payload = {
+        "protocolSection": {
+            "referencesModule": {
+                "references": [{"pmid": "1", "type": "RESULT"}, {"pmid": "2", "type": "DERIVED"}],
+                "seeAlsoLinks": [{"url": "https://sponsor.example/study"}],
+            }
+        }
+    }
+    session.flush()
+
+    result = run("trial-references", "--set", "active-since-2025")
+
+    assert result.exit_code == 0, result.output
+    assert "active-since-2025: 2 trials" in result.output
+    assert "list a paper as reporting results (sponsor): 1 trials, 1 papers" in result.output
+    assert "linked by the registry from PubMed: 1 trials, 1 more papers" in result.output
+    assert "give a link: 1 trials, 1 links; on a listed outlet: 0 trials, 0 links" in result.output
+    assert "    sponsor.example: 1" in result.output
+
+
+def test_trial_references_refuses_a_set_it_does_not_know(run):
+    result = run("trial-references", "--set", "successful")
+
+    assert result.exit_code == 1
+    assert "No set of stored trials is named 'successful'" in result.output
+
+
+def test_the_paper_step_runs_through_the_command(run, session: Session, monkeypatch):
+    trials = add_trials(session, 2, registry=ClinicalTrials.name)
+    for number, stored in enumerate(trials, start=1):
+        stored.external_id = f"NCT0000000{number}"
+        stored.overall_status = "RECRUITING"
+        stored.last_update_posted = date(2026, 3, 1)
+    session.flush()
+
+    class Papers:
+        name = "pubmed"
+        requests_made = 0
+
+        def papers_carrying(self, numbers):
+            self.requests_made += 1
+            return [Paper("11", ("NCT00000001",), {"pmid": "11"})], NOW
+
+    monkeypatch.setattr("thenwhat.cli.backfill.make_client", lambda step, settings, a: Papers())
+
+    result = run("run", "pubmed_papers")
+
+    assert result.exit_code == 0, result.output
+    assert "pubmed_papers: 1 done, 1 found nothing, 0 failed; 0 still due." in result.output
+
+
+def test_the_paper_step_is_refused_without_a_tool_name(run, session: Session, monkeypatch):
+    monkeypatch.setenv("PUBMED_TOOL", "then what")
+
+    result = run("run", "pubmed_papers")
+
+    assert result.exit_code == 1
+    assert "PUBMED_TOOL is not set" in result.output

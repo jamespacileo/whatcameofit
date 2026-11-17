@@ -1,19 +1,11 @@
-// The open data file: every published claim, with its licence and sources inside.
+// The open data index: the licence, credit and sources, and a short entry per published
+// claim with the address of its full record (/data/claims/<slug>.json).
 import type { APIRoute } from "astro";
 import { SITE } from "../../../site.config.mjs";
-import { data } from "../../lib/export";
-import { DATA_LICENCE, dataCredit, openData } from "../../lib/open-data";
+import { openDataIndex } from "../../lib/open-data";
+import { siteOpenData } from "../../lib/site-open-data";
 
-export const GET: APIRoute = () => {
-  const body = openData(
-    data,
-    DATA_LICENCE,
-    dataCredit(SITE.name, SITE.url),
-    SITE.url + "/how-it-works",
-  );
-  // Written without indentation: indented, the file passed the 25 MiB a host allows one
-  // file at 966 claims. A reader's tool formats it; the content is the same.
-  return new Response(JSON.stringify(body), {
+export const GET: APIRoute = () =>
+  new Response(JSON.stringify(openDataIndex(siteOpenData(), SITE.url), null, 2), {
     headers: { "Content-Type": "application/json; charset=utf-8" },
   });
-};

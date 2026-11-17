@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check lint types db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -7,7 +7,7 @@ export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(D
 
 # Everything CI runs. Needs Docker for the database; no internet access is
 # needed once dependencies and the Postgres image are present.
-check: lint types test scripts-test site-test site-build extension-test
+check: lint types test scripts-test store-test site-test site-build extension-test
 
 lint:
 	uv run --directory pipeline ruff check .
@@ -29,6 +29,21 @@ scripts-test:
 	sh -n scripts/worktree-setup.sh
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
 	sh scripts/tests/daily-run.test.sh
+
+# The store's ingest service (store/ingest), driven over HTTP on D1's local engine: no
+# Cloudflare account, no network, nothing deployed. The proof's scenarios, each token's
+# scope, checksums, a replayed batch and the limits. Where the local engine cannot start,
+# the tests are skipped and say why; in CI that is a failure, not a skip.
+store/ingest/node_modules: store/ingest/pnpm-lock.yaml
+	sh scripts/worktree-setup.sh store/ingest
+
+store-test: store/ingest/node_modules
+	pnpm --dir store/ingest test
+
+# The ingest service on this machine only: http://localhost:8787. Tokens come from
+# store/ingest/.dev.vars (see .dev.vars.example); the store is a file under .wrangler/.
+store-dev: store/ingest/node_modules
+	cd store/ingest && pnpm exec wrangler d1 migrations apply STORE --local && pnpm exec wrangler dev --local
 
 # Linked from pnpm's shared store: seconds in a new worktree. See scripts/worktree-setup.sh.
 site/node_modules: site/pnpm-lock.yaml

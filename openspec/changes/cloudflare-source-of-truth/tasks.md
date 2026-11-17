@@ -6,7 +6,6 @@
 - [x] 1.2 Ask the operator whether a lookup makes drafts only (`design.md` decision 6); verify the answer replaces the open question and, if it differs, that `specs/on-demand-records` is revised before any task in section 6 Answered 2026-11-16: no. A claim a reader's lookup starts is published by rule with no audit hold; the audit hold stays for backfill batches. `docs/adr/0009`, `design.md` decision 6 and `specs/on-demand-records` are revised
 - [x] 1.3 Ask the operator whether on-demand processing must finish while the reader waits; verify the answer is in `design.md` decision 7 Answered 2026-11-16: queued, within minutes
 - [x] 1.4 Ask the operator to confirm or change the 3 GB criterion and whether the store is placed in the European Union jurisdiction; verify both are in `design.md` decision 1 Answered 2026-11-16: European Union jurisdiction for D1 and R2; the 3 GB criterion was met at 504 MB
-- [ ] 1.5 Read the current terms and limits of D1, R2, Hyperdrive, Queues and Workflows and write an entry for each in `docs/sources.md` with the date; verify each states its limits and price as read
 
 ## 2. Spike
 
@@ -17,48 +16,88 @@
 - [x] 2.5 Deploy a Python Worker to a preview that reads and writes a D1 database, and a Python Workflow that runs two steps; verify what worked and what did not is recorded here Run locally on 2026-11-16, not deployed: with `pywrangler dev --local`, a Python Worker created the schema, staged records and ran the 18-statement merge on the local D1 engine as one batch, with the same results as on SQLite for a new claim, a repeat, differing evidence, a refused run and a failed reconciliation (the batch was undone); a batch of 481 inserts was accepted; a Python Workflow of two steps wrote a row in the first and read it in the second. Three things found: D1 takes numbered parameters (`?1`), not named ones; the Python SDK wraps a prepared statement in a way that cannot be handed back in an array, so a batch has to be built on the binding underneath (`_binding`, a private name), which is fragile; `pywrangler` 1.17.9 needs `uv` 0.13.4 or later and the Mac mini has 0.12.19, so a newer one was installed inside the spike's own folder. Deployed the same day, with the operator's yes, to the Palladio account as a Worker, a D1 database and a Workflow all named for the spike, answering only with a token, and deleted afterwards. On Cloudflare: the first request, cold start included, took 1.66 seconds; the five merge cases gave the same results as locally; a merge took 0.6 to 0.7 seconds from the Mac mini; staging went in batches of 1,000 statements; a merge of 2,000 new claims and 20,000 articles in one batch took 0.63 seconds, far inside the 30-second limit; the two-step Python Workflow completed. Not tested: the migration's real size in one run (about 1.3 million rows), several writers at once, and the real schema
 - [x] 2.6 Write `docs/adr/0008` with the store chosen against the five criteria, the figures of 2.2 to 2.5 and the operator's decision; verify the ADR names what it supersedes in `CLAUDE.md` Done 2026-11-16: the operator chose D1 after seeing the five criteria met; `docs/adr/0008-the-tracker-s-records-live-in-d1-on-cloudflare.md` records it and names the three lines of `CLAUDE.md` it supersedes. `CLAUDE.md` itself is revised in task 7.2
 
-## 3. The store
+Sections 3 to 9 were regrouped on 2026-11-16 into phases that each ship on their own. **[operator]** marks a task only the operator can do: an account, a jurisdiction, a secret, a decision. **[parallel]** marks a task another session can take at the same time as the others so marked in its phase; tasks without it follow the one above. What was section 3 to 7 is all here; nothing was dropped.
 
-- [ ] 3.1 Create the store and its payload bucket in a preview environment, both with the European Union jurisdiction, which cannot be set afterwards; verify `docs/deploy.md` says how, and that nothing is reachable without a binding or a token
-- [ ] 3.2 Write the schema and its migrations for the chosen store; verify they apply to an empty store and that every table of `db/models.py` but the HTTP cache has its counterpart
-- [ ] 3.3 Store and read back a raw payload with its checksum and fetch time; verify one test of a round trip and one of a payload that fails its checksum
-- [ ] 3.4 Add run registration and the added-by and changed-by run on every record; verify a test that asks which records one run added
-- [ ] 3.5 Record a restore point with a run above the set size, and restore a preview store to it; verify the steps are in `docs/deploy.md` and were run once
+## 3. Phase 1: the store in preview
 
-## 4. The merge
+Ships: a store in a preview environment that takes a run through the merge and gives back its report. Nothing reads it yet. Tasks 3.2 to 3.4 and all of section 4 can run at the same time.
 
-- [ ] 4.1 Write the natural-key form of each record kind; verify a test round-trips each kind through it
-- [ ] 4.2 Write the merge for every kind; verify tests for each scenario of `specs/ingest-merge`: absent and present keys, whole or nothing, the same run twice, each refusal, archived stays archived, a person's decision stands, differing evidence goes pending and holds the claim, the audit mark is carried
-- [ ] 4.3 Verify with a test that two runs touching one claim give the same store in either order, and that a large merge does not delay an unrelated small one past its limit
-- [ ] 4.4 Add the report, the reconciliation and the report-without-applying; verify a tampered count applies nothing
-- [ ] 4.5 Add the ingest address with per-device tokens; verify tests that a token cannot do anything outside its scope and that revoking one leaves the others working
-- [ ] 4.6 Store usage by writer and show the month's plan by device and by lookups; verify a test with two devices and a day of lookups
+- [x] 3.1 Draft the schema, the merge and a local proof for review; verify the proof passes and its figures are in `design.md` decision 10. Done 2026-11-16: `store/schema.sql`, `store/merge.sql` (85 statements), `store/ingest.sql`; `store/proof/proof.py` passes 55 scenarios (62 since 2026-11-17, when the projection became 1.67 GB with the wider trial record), the spike's 14 among them, loads a sample of 51,155 records exported read-only from the working database, and projects 1.20 GB at full data; the schema and one merge run on D1's local engine. `store-tables.md` says where each Postgres table goes
+- [x] 3.2 **[operator]** Answer the decisions listed at the top of the pull request; verify each answer is written into `design.md` in place of "drafted" or "proposed", and `docs/adr/0008` is amended if payloads of 16 KB or less stay in rows. Answered 2026-11-16: the recommendation was taken on all eight; they are `design.md` decision 16, and `docs/adr/0008` carries the amendment
+- [ ] 3.3 **[operator]** Create the D1 database and the R2 bucket for preview, both with the European Union jurisdiction, which cannot be set afterwards, and a Queue; verify `docs/deploy.md` says how, and that the deployment check reads the jurisdiction back before any record is written. The operator chose on 2026-11-17 to run these themself; flags checked that day against `wrangler 4.161.0 --help` and Cloudflare's pages. Answer no if wrangler offers to change a config file:
+  - `wrangler d1 create thenwhat-store-preview --jurisdiction=eu`
+  - `wrangler r2 bucket create thenwhat-payloads-preview --jurisdiction=eu`
+  - `wrangler queues create thenwhat-work-preview --jurisdiction=eu`
+  - then, to show each exists: `wrangler d1 info thenwhat-store-preview --json`, `wrangler r2 bucket info thenwhat-payloads-preview --jurisdiction=eu --json`, `wrangler queues info thenwhat-work-preview`
+- [ ] 3.4 **[parallel]** Read the current terms and limits of D1, R2, Queues, Workflows and Python Workers and write an entry for each in `docs/sources.md` with the date (was 1.5; the figures read on 2026-11-16 are in `design.md` decision 15); verify each states its limits and price as read Begun 2026-11-17: the limits of D1, Workers, R2 and Queues that the ingest service is built inside are in `docs/sources.md` with that date; Workflows, Python Workers and prices are not yet there
+- [ ] 3.5 Turn `store/schema.sql` into the first migration and build the ingest service: register a run, put a payload and check its checksum, stage, merge, report; verify the proof's scenarios pass against D1 in the preview, with a merge of 20,000 records timed and the run size set from it Local part done 2026-11-17, with no account: `store/ingest/` is the Worker (JavaScript, bindings `STORE`, `PAYLOADS`, `WORK`, named by binding only); `migrations/0001_store_schema.sql` is `store/schema.sql` byte for byte and is applied with `wrangler d1 migrations apply --local`; the routes register a run, put a payload under its checksum, stage, merge, report, and report without applying. All 62 of the proof's scenarios pass through the HTTP routes on D1's local engine (`make store-test`, part of `make check` and so of CI), each merge first reported without applying by a twin run, and every report was the same. Still to do, against D1 in the preview: run the same tests there, time a merge of 20,000 records, and set `MAX_RUN_RECORDS` from it (it is 20,000 until then)
+- [x] 3.6 Write the statements that report without applying, since a D1 batch cannot be rolled back on request; verify a test that a report-only run leaves the store unchanged and reports what the merge then does. Done 2026-11-16, unattended: `store/preview.sql` and `discard_run`; the proof compares the preview with the merge's report for every merge it runs (60 in the scenarios, 3 runs of the sample, all the same) and scenario 17b checks every table's row count is as before. It also runs on D1's local engine. Its two stated limits are in `design.md` decision 10
+- [x] 3.7 Add per-device tokens to the ingest service, the operator's token and the export's; verify tests that a token cannot do anything outside its scope and that revoking one leaves the others working Done 2026-11-17, locally: six kinds of token (device, daily, lookup, consumer, export, operator), known to the service by SHA-256 from the secret `INGEST_TOKENS`; `store/ingest/tests/door.test.mjs` holds each to its scope (a backfill cannot state an action, a lookup cannot archive or make a claim, the export states a publication by rule and nothing else, one device cannot reach another's run) and shows a revoked token refused while the others work. The export's snapshot read itself is not built here (task 4.3)
+- [ ] 3.8 Record D1's restore bookmark with a run above the set size, and restore the preview store to it; verify the steps are in `docs/deploy.md` and were run once
+- [ ] 3.9 Verify with a test that two runs touching one claim give the same store in either order, and that a merge of the set size does not delay a small one past its limit The first half passes through the service on the local engine (scenario 14, 2026-11-17); the second needs D1 itself
 
-## 5. Migration
+## 4. Phase 2: the pipeline speaks natural keys
 
-- [ ] 5.1 Stop the writers on the MacBook Pro, take a final dump, and load it into the store as one run through the merge, leaving out what `design.md` decision 9 names; verify the report's counts equal the dump's row counts by kind less those left out, and that the count left out is stated
-- [ ] 5.2 Compare an export from the old database with one from the store; verify they hold the same claims, events and codes, and record any difference here
-- [ ] 5.3 Point `thenwhat export` at the store; verify `make check` passes and the site builds from that export
-- [ ] 5.4 Change CI to take its export from the store, validate it, record its checksum, time and counts, and stop when it cannot be taken; verify a rehearsal run in the `production` environment's dry-run mode
-- [ ] 5.5 Start a deployment when claims are cleared from audit and on a schedule, never two at once; verify by clearing one claim in preview
-- [ ] 5.6 Stop committing `site/data/published-export.json`, keep the topic publication history, and make the old database read-only; verify `docs/deploy.md` describes the new route and the rollback of `design.md` decision 9
+Ships: `thenwhat` can write any record in natural-key form, push it, and export from the store. It can run against the preview while Postgres is still the source. Runs at the same time as phase 1; each task here can be its own session.
 
-## 6. Records from lookups
+- [x] 4.1 **[parallel]** Write the natural-key form of each kind, one mapping function a kind, with the address key and the content checksum the proof's export stands in for; verify a test round-trips each kind Done 2026-11-17: `pipeline/src/thenwhat/store/` (`records.py` to the store, `rows.py` and `place.py` back, `gather.py` for a whole database); `tests/test_store_records.py` round-trips 28 kinds through the test database, holds every field to `store/schema.sql` and `store/merge.sql`, and merges the gathered records through the proof's store twice. What the mapping settles is `specs/ingest-merge`, "Every writer writes a record in one form" and "A snapshot of the tracker can be pushed twice"; the mismatches with `store/` it found are in its pull request
+- [ ] 4.2 **[parallel]** `thenwhat backfill push`: payloads, runs of the set size with parents first, staging, merge, report, `--report-only`; verify tests of a push, a push twice, a push stopped between two runs and finished, and no ingest address configured
+- [ ] 4.3 **[parallel]** `thenwhat export` from a snapshot of the store loaded into a SQLite file of the store's schema; verify the same fixtures give the same export as from Postgres, with no network
+- [ ] 4.4 **[parallel]** `audit clear`, archive, unarchive, and the claim merge and rename commands state actions and push them; verify one test a command against the store's schema, and that the session adding merge and rename has agreed what a merge does with the claim that goes (`design.md`, open questions)
+- [ ] 4.7 Undo a merge in the store, as `claim unmerge` does in Postgres: record what a merge moved in natural-key form on its action, and write the statements that put exactly those back; verify a test that a merge then an unmerge leaves both claims as they were
+- [ ] 4.5 Store usage by writer and show the month's plan by device and by lookups from `spend_by_writer`; verify a test with two devices and a day of lookups
+- [ ] 4.6 The reference file and work slices from the store, as `file-based-backfill` asks; verify its scenarios for a slice two devices want and a lead another device scored
 
-- [ ] 6.1 Add the setting that turns records from lookups on, off by default, to the Worker's configuration and `docs/deploy.md`; verify a test that a lookup writes nothing while it is off
-- [ ] 6.2 Leave a link lead with a reader share for an untracked article on a listed outlet, and count unlisted domains without storing a lead; verify tests for a listed outlet, the same article twice and an unlisted outlet
-- [ ] 6.3 Store the registry trials a lookup retrieved with payload and fetch time; verify a test that none becomes an evidence event
-- [ ] 6.4 Store the lookup's reading with the lead as awaiting the rules; verify a test that claims, approved events and approved matches are unchanged
-- [ ] 6.5 Verify with a test that a reader share holds a date and no time, and that no record or log holds an address of the reader, a user agent, pasted text or an image
-- [ ] 6.6 Verify with a test that a request refused by the rate limit writes nothing
-- [ ] 6.7 Word the offer to say what is kept; verify the site build passes its wording checks and the extension shows the same words
-- [ ] 6.8 Answer a tracked address from the store, never for a claim that is held, pending or archived; verify tests for a claim published after the last build and for a held claim
-- [ ] 6.9 Queue a reader's lead when it is stored and process it with a Python consumer through the steps a file's lead goes through, without the audit mark; verify one lead goes from a lookup in preview to an approved claim in the next export within minutes, and that a failed one is retried and then left with its error
-- [ ] 6.10 Add the list of claims published from readers' leads by day, each with its article, its matches and their scores, which the operator accepted on 2026-11-16; verify a test of a day with two and of a day with none
+## 5. Phase 3: migration and the parallel run
 
-## 7. Records and guardrails
+Ships: the store holds every record, checked each night against Postgres, which is still the source. Needs phases 1 and 2.
 
-- [x] 7.1 Write the ADRs `design.md` names: the database is no longer private, lookups leave records (amending `0001`, `0005` and `0007`); verify each says what it supersedes. Done 2026-11-16: `docs/adr/0008` and `docs/adr/0009`
-- [ ] 7.2 Revise `CLAUDE.md`'s conventions and layout to the new shape; verify no line still says the site's only input is a committed export or that the database is on the home network
-- [ ] 7.3 Add truth store, run, merge and reader share to `GLOSSARY.md`; verify the terms match the specs
-- [x] 7.4 Withdraw `openspec/changes/portable-backfill-promotion`; verify it is removed or marked superseded by this change and `file-based-backfill`. Removed on 2026-11-16: it was never committed
+- [ ] 5.1 **[operator]** Create the production D1 database, bucket and Queue in the European Union jurisdiction and set the ingest service's secrets; verify the deployment check passes
+- [ ] 5.2 Stop the writers on the MacBook Pro, take a final dump, and push it through the merge as the migration's runs, leaving out what `store-tables.md` names; verify the reports' counts equal the dump's row counts by kind less those left out, and that the count left out is stated
+- [ ] 5.3 Make every device push and the daily job also push to the store; verify a day's runs appear in both
+- [ ] 5.4 Compare each night an export from Postgres with one from the store, the counts by kind, and 1,000 trials field by field, and count the evidence kept apart that day; verify the comparison's result is recorded each night and any difference is explained here
+
+## 6. Phase 4: the build reads the store
+
+Ships: the site is built from the store, and the committed snapshot is no longer the source. Needs 7 nights of phase 3 with no difference.
+
+- [ ] 6.1 **[operator]** Say the cut-over can go ahead, after reading the nightly comparisons; verify the date is recorded here
+- [ ] 6.2 Change CI to take its export from the store, validate it, keep it in R2 under its checksum, record its checksum, time and counts in `deployment`, and stop when it cannot be taken; verify a rehearsal run in the `production` environment's dry-run mode
+- [ ] 6.3 Start a deployment when claims are cleared from audit and on a schedule, never two at once; verify by clearing one claim in preview
+- [ ] 6.4 Stop committing `site/data/published-export.json`, keep the topic publication history, and make the old database read-only; verify `docs/deploy.md` describes the new route and each rollback of `design.md` decision 14, and that deploying the previous export again was tried once
+
+## 7. Phase 5: trials served on request
+
+Ships: a plain page for each of the 467,064 trials, and trial search. Needs phase 3; does not need phase 4, and can run beside it. What the page says belongs to `trial-first-route`.
+
+- [ ] 7.1 **[parallel]** Give the site's Worker the D1 binding and serve a trial's page from one keyed read, with the public claims that name it, cached a day; verify tests for a trial with a published claim, a trial whose only claim is held, and a number the store does not have
+- [ ] 7.2 **[parallel]** Trial search over `registry_trial_fts` behind the existing rate limit, cached an hour; verify a test that a held claim is never in a result
+- [ ] 7.3 Make the daily job push only the trials the registry changed; verify a day's rows written in D1's metrics are in the thousands, not the hundreds of thousands
+
+## 8. Phase 6: records from lookups, and the consumer
+
+Ships: a reader's lookup leaves records and its lead is processed within minutes. Needs phase 4. Each setting is off until the operator turns it on.
+
+- [ ] 8.1 Add the setting that turns records from lookups on, off by default, to the Worker's configuration and `docs/deploy.md`; verify a test that a lookup writes nothing while it is off
+- [ ] 8.2 Leave a link lead with a reader share for an untracked article on a listed outlet, and count unlisted domains without storing a lead; verify tests for a listed outlet, the same article twice and an unlisted outlet
+- [ ] 8.3 Store the registry trials a lookup retrieved with payload and fetch time; verify a test that none becomes an evidence event
+- [ ] 8.4 Store the lookup's reading with the lead as awaiting the rules; verify a test that claims, approved events and approved matches are unchanged
+- [ ] 8.5 Verify with a test that a reader share holds a date and no time, that the lookup's run and queue entry hold a date and no time, and that no record or log holds an address of the reader, a user agent, pasted text or an image
+- [ ] 8.6 Verify with a test that a request refused by the rate limit writes nothing
+- [ ] 8.7 Word the offer to say what is kept; verify the site build passes its wording checks and the extension shows the same words
+- [ ] 8.8 Answer a tracked address from the store, never for a claim that is held, pending or archived; verify tests for a claim published after the last build and for a held claim
+- [ ] 8.9 Try the pipeline's packages in a Python Workflow in preview, with one article read through the page reader and one model call; verify what loaded and what did not is recorded here, and the consumer's place is chosen from it (`design.md` decision 12)
+- [ ] 8.10 The consumer: lease due work, read a reader's lead, draft or join a claim, run `prepare` store-side for every pending claim, stop at the store-side share of the ceiling; verify one lead goes from a lookup in preview to an approved claim in the next export within minutes, that a claim from a backfill's batch is approved with the audit mark, and that a failed lead is retried and then left with its error
+- [ ] 8.11 **[operator]** Turn records from lookups on in production, then the consumer; verify the first day's list of claims published from readers' leads was read
+- [ ] 8.12 Add the list of claims published from readers' leads by day, each with its article, its matches and their scores; verify a test of a day with two and of a day with none
+
+## 9. Records and guardrails
+
+Each ships with the phase it describes.
+
+- [x] 9.1 Write the ADRs `design.md` names: the database is no longer private, lookups leave records (amending `0001`, `0005` and `0007`); verify each says what it supersedes. Done 2026-11-16: `docs/adr/0008` and `docs/adr/0009`
+- [ ] 9.2 Revise `CLAUDE.md`'s conventions and layout to the new shape, `store/` included, with phase 4; verify no line still says the site's only input is a committed export or that the database is on the home network
+- [ ] 9.3 **[parallel]** Add truth store, run, merge, reader share, payload and action to `GLOSSARY.md`; verify the terms match the specs and `store/schema.sql`
+- [x] 9.6 **[operator]** Answer the five decisions at the top of pull request 273. Answered 2026-11-17: `design.md` decision 17; the order of deciders is now in `specs/ingest-merge`
+- [x] 9.4 Withdraw `openspec/changes/portable-backfill-promotion`; verify it is removed or marked superseded by this change and `file-based-backfill`. Removed on 2026-11-16: it was never committed
+- [x] 9.5 Bring `file-based-backfill` into line: its `prepare` stage runs store-side, and a folder's push is several store runs; verify its design and tasks say so. Done 2026-11-16: it already had `prepare` store-side (its decision 9); its design, tasks 5.4 and 6.2 and `specs/backfill-run-files` now say that the device's stage of that name only writes the records to push, that a push is several store runs with payloads over 16 KB put first, and that a push stopped part way is finished by pushing again

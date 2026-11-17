@@ -25,6 +25,7 @@ import SectionList from "../components/SectionList.astro";
 import SharePill from "../components/SharePill.astro";
 import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
+import TopicDrawing from "../components/TopicDrawing.astro";
 import TopicChip from "../components/TopicChip.astro";
 import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
@@ -288,6 +289,11 @@ const sections = [
   {/* The band: what was reported and, level with it, where it stands. */}
   <section class="band record" slot="band" data-pagefind-body aria-label="The claim and where it stands">
     <div class="wrap band-grid">
+      {/* The side column on a wide screen: the topic's drawing, large. Decoration only:
+          the chip beside it names the topic. */}
+      <div class="band-side" aria-hidden="true">
+        <TopicDrawing vertical={claim.vertical} />
+      </div>
       <div class="band-main">
         <div class="above-title">
           <div class="filed">
@@ -559,7 +565,7 @@ const sections = [
       )
     }
 
-    <p class="lede" data-pagefind-meta="summary">{claim.summary}</p>
+    <p class="lede" data-clamp="3" data-pagefind-meta="summary">{claim.summary}</p>
 
     {/* For a reader who follows this claim and last saw it at another status: filled in
         by the script, so a change noted on the home page is confirmed where they land. */}
@@ -891,7 +897,7 @@ const sections = [
       trials.length > 0 && (
         <section class="trials" data-pagefind-ignore>
           <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
-          <p class="take-why">{TRIALS_NOTE}</p>
+          <p class="take-why" data-clamp="1">{TRIALS_NOTE}</p>
           {trialGroups.map((group) => {
             const shown = group.trials.slice(0, TRIALS_PER_PHASE);
             const rest = group.trials.slice(TRIALS_PER_PHASE);
@@ -947,10 +953,10 @@ const sections = [
          is no trial at all, the section says the registries were searched. */
       claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
         <section class="matched" data-pagefind-ignore>
-          <FoldHead id="matched" phone="folded" note={matchedNote}>
+          <FoldHead id="matched" start={untried.length > 0 ? "open" : "folded"} phone="folded" note={matchedNote}>
             {matchedHeading}
           </FoldHead>
-          <p class="take-why">
+          <p class="take-why" data-clamp="1">
             {untried.length > 0
               ? `Trial registry records found for this treatment and condition, with how sure each match is.${scoreNote}`
               : candidates.length > 0
@@ -977,7 +983,7 @@ const sections = [
       paperGroups.length > 0 && (
         <section class="papers" data-pagefind-ignore>
           <FoldHead id="papers" start="folded" note={papersNote}>Papers on record</FoldHead>
-          <p class="take-why">{PAPERS_NOTE}</p>
+          <p class="take-why" data-clamp="1">{PAPERS_NOTE}</p>
           {paperGroups.map((group) => (
             <>
               <h3 class="matched-group">{group.heading}</h3>
@@ -1049,7 +1055,7 @@ const sections = [
     }
 
     <section class="take" data-pagefind-ignore>
-      <FoldHead id="pass-on" phone="folded">Pass it on</FoldHead>
+      <FoldHead id="pass-on" start="folded">Pass it on</FoldHead>
       {/* Says "Copied" to a screen reader; the button's own label changes for the eye. */}
       <p class="visually-hidden" role="status" data-said></p>
       <p class="take-why">Seen this headline shared again? Reply with the record.</p>
@@ -1172,7 +1178,7 @@ const sections = [
       data-first={claim.first_reported_date}
       hidden
     >
-      <FoldHead id="check-again" phone="folded">Check again later</FoldHead>
+      <FoldHead id="check-again" start="folded">Check again later</FoldHead>
       <p class="take-why">
         Save a date to your calendar to look at this record again. The file is made on this
         device; nothing is sent to us.

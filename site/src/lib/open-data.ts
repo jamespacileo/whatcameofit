@@ -276,3 +276,63 @@ export function openData(
     })),
   };
 }
+
+// --- the index and one file per claim ---------------------------------------------------
+// One file of every full record outgrew what a host serves as one file (25 MiB at about
+// 1,300 claims), so the download is an index with a short entry per claim and each claim's
+// full record in a file of its own. Openspec open-data: "Index and one file per claim".
+
+/** A claim's full record as the open data holds it. */
+export type OpenClaim = OpenData["claims"][number];
+
+/** The short entry the index holds for a claim. */
+export interface OpenDataIndexEntry {
+  slug: string;
+  headline: string;
+  intervention: { name: string; synonyms: string[] };
+  indication: string;
+  status: { code: string };
+  first_reported_date: string | null;
+  last_checked_at: string | null;
+  /** The address of the claim's full record. */
+  record: string;
+}
+
+export interface OpenDataIndex extends OpenDataHeader {
+  claims: OpenDataIndexEntry[];
+}
+
+/** One claim's full record, with the licence, credit and sources, so the file stands alone. */
+export interface OpenDataRecord extends OpenDataHeader {
+  claim: OpenClaim;
+}
+
+/** Where a claim's full record is served, from the site's root. */
+export function recordPath(slug: string): string {
+  return `/data/claims/${slug}.json`;
+}
+
+function header(file: OpenData): OpenDataHeader {
+  const { claims: _claims, ...rest } = file;
+  return rest;
+}
+
+export function openDataIndex(file: OpenData, siteUrl: string): OpenDataIndex {
+  return {
+    ...header(file),
+    claims: file.claims.map((claim) => ({
+      slug: claim.slug,
+      headline: claim.headline,
+      intervention: { name: claim.intervention.name, synonyms: [...claim.intervention.synonyms] },
+      indication: claim.indication,
+      status: { code: claim.status.code },
+      first_reported_date: claim.first_reported_date,
+      last_checked_at: file.last_checked_at,
+      record: siteUrl + recordPath(claim.slug),
+    })),
+  };
+}
+
+export function openDataRecord(file: OpenData, claim: OpenClaim): OpenDataRecord {
+  return { ...header(file), claim };
+}

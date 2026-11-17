@@ -269,3 +269,13 @@ test("the method page says how a trial comes to have a page, only in a build wit
   assert.match(html, /Most registered trials are never the subject of a news report/);
   assert.ok(!fs.readFileSync(path.join(off, "how-it-works/index.html"), "utf8").includes("a-trial-with-no-report"));
 });
+
+test("an export under a name of its own has no listing beside it, and still builds", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-listing-named-"));
+  const file = path.join(directory, "dated.json");
+  fs.copyFileSync("tests/fixture-export.json", file);
+  const out = path.join(directory, "dist");
+  const result = build(out, { EXPORT_FILE: file });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(out, "trials-listing.json"), "utf8")).trials, []);
+});

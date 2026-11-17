@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { openData } from "../src/lib/open-data.ts";
+import { openData, openDataIndex, openDataRecord, recordPath } from "../src/lib/open-data.ts";
 
 const LICENCE = "Creative Commons Attribution 4.0 International (CC BY 4.0)";
 const CREDIT = "Example credit line";
@@ -223,6 +223,32 @@ test("an export made before paper facts gives a file with no papers", () => {
   assert.deepEqual(openData(before, LICENCE, CREDIT, METHOD).claims[0].papers, []);
 });
 
+test("Scenario: Index and one file per claim", () => {
+  const full = openData(exported(), LICENCE, CREDIT, METHOD);
+  const index = openDataIndex(full, "https://example.test");
+  assert.deepEqual(index.claims[0], {
+    slug: "one",
+    headline: "Headline one",
+    intervention: { name: "Thing", synonyms: ["Other"] },
+    indication: "A condition",
+    status: { code: "phase_1" },
+    first_reported_date: "2020-01-01",
+    last_checked_at: full.last_checked_at,
+    record: "https://example.test/data/claims/one.json",
+  });
+  const { claims: _full, ...head } = full;
+  const { claims: _short, ...indexHead } = index;
+  assert.deepEqual(indexHead, head);
+
+  // A record file is exactly the claim's full record, with the licence and credit beside it.
+  const record = openDataRecord(full, full.claims[1]);
+  assert.deepEqual(record.claim, full.claims[1]);
+  assert.equal(record.licence, LICENCE);
+  assert.equal(record.credit, CREDIT);
+  assert.equal(record.method, METHOD);
+  assert.ok(!("claims" in record));
+});
+
 test("a preview export gives a preview file", () => {
   assert.equal(openData(exported(true), LICENCE, CREDIT, METHOD).preview, true);
 });
@@ -245,8 +271,19 @@ test("the built file and page", () => {
   assert.match(file.licence, /CC BY 4\.0/);
   assert.equal(file.preview, false);
   assert.ok(!everyString(file).some((text) => text.startsWith("data:")));
+  // Each entry's record is a built file holding that claim's full record, licence and credit.
+  for (const entry of file.claims) {
+    assert.ok(entry.record.endsWith(recordPath(entry.slug)), entry.record);
+    const record = JSON.parse(fs.readFileSync(path.join(dist, recordPath(entry.slug)), "utf8"));
+    assert.equal(record.claim.slug, entry.slug);
+    assert.equal(record.licence, file.licence);
+    assert.equal(record.credit, file.credit);
+    assert.ok(!everyString(record).some((text) => text.startsWith("data:")));
+  }
   const page = fs.readFileSync(path.join(dist, "data/index.html"), "utf8");
   assert.match(page, /href="\/data\/claims\.json"/);
+  assert.match(page, /href="\/data\/claims\/[^"]+\.json"/);
+  assert.match(page, /download the index, then each address in its <code>record<\/code> fields/);
 
   // A preview export gives a preview file.
   fixture.preview = true;

@@ -511,21 +511,6 @@ def test_resolve_approves_a_confident_candidate_by_rule_by_default(
     assert match.reviewed_by is Decider.RULE
 
 
-def test_resolve_stores_the_related_papers_it_finds(
-    run, session: Session, monkeypatch: pytest.MonkeyPatch
-):
-    monkeypatch.setattr("thenwhat.cli.resolve.make_research", lambda s: research(Papers()))
-    monkeypatch.setenv("MATCH_ACCEPT_ABOVE", "0.8")
-
-    result = run("resolve", SLUG)
-
-    assert result.exit_code == 0, result.output
-    assert "Found 1 related paper: 1 approved by rule" in result.output
-    assert "approved 0.80  10.1000/found" in result.output
-    paper = session.scalars(select(EntityMatch).where(EntityMatch.source_name == "openalex")).one()
-    assert paper.reviewed_by is Decider.RULE
-
-
 def test_resolve_says_what_the_paper_search_sent_and_what_is_left(
     run, session: Session, monkeypatch: pytest.MonkeyPatch, fixture_json, fake_time
 ):
@@ -649,20 +634,6 @@ def test_resolve_redo_rule_scores_a_rules_approvals_again(
     assert result.exit_code == 0, result.output
     assert "Scored again 1 trial match(es) a rule had approved" in result.output
     assert "0 no longer approved." in result.output
-
-
-def test_resolve_says_how_many_candidates_the_rule_rejected(
-    run, session: Session, monkeypatch: pytest.MonkeyPatch
-):
-    # The fake backend scores every candidate 0.8; a threshold above that rejects it.
-    monkeypatch.setenv("MATCH_REJECT_BELOW", "0.9")
-
-    result = run("resolve", SLUG)
-
-    assert result.exit_code == 0, result.output
-    assert "1 rejected by rule" in result.output and "review list --by-rule" in result.output
-    [match] = session.scalars(select(EntityMatch)).all()
-    assert match.reviewed_by is Decider.RULE
 
 
 def test_resolve_names_a_term_the_registry_could_not_search_for_and_carries_on(

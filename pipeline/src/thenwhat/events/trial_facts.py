@@ -322,6 +322,12 @@ def _results_papers(protocol: dict[str, Any]) -> tuple[ResultsPaper, ...]:
     return tuple(ResultsPaper(pubmed_id, listed) for pubmed_id, listed in found.items())
 
 
+def results_papers_of(study: dict[str, Any]) -> tuple[ResultsPaper, ...]:
+    """The papers a registry record names as its trial's, by the one rule: for a trial a
+    claim cites and for a stored trial no claim cites alike."""
+    return _results_papers(_object(study, "protocolSection"))
+
+
 def reported_state(state: TrialState | None) -> TrialStateCode:
     """The state of a trial with no registry record, from the state its newest
     status-change event reports; one with no status change has not started."""

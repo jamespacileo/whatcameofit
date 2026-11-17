@@ -110,6 +110,7 @@ export function datasetData(options: {
       "@type": "DataDownload",
       encodingFormat: "application/json",
       contentUrl: canonicalAddress("/data/claims.json"),
+      description: "An index of every claim. Each entry gives the address of the claim's full record, one file per claim.",
     },
   };
 }
