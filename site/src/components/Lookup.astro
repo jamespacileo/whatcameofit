@@ -1849,6 +1849,7 @@ const sentenceJson = sentences
   let detailHeld: SearchDetail | null = null;
   let detailAsked = false;
   let drawing = 0;
+  let wantsSuggestions = false;
 
   const choose = (at: number) => {
     chosen = at;
@@ -1868,14 +1869,19 @@ const sentenceJson = sentences
     else if (row.top < panel.top) suggestions.scrollTop -= panel.top - row.top + 6;
   };
 
-  const closeSuggestions = () => {
-    drawing += 1;
+  const hideSuggestions = () => {
     suggestions.hidden = true;
     suggestions.replaceChildren();
     choices = [];
     chosen = -1;
     input.setAttribute("aria-expanded", "false");
     input.removeAttribute("aria-activedescendant");
+  };
+
+  const closeSuggestions = () => {
+    wantsSuggestions = false;
+    drawing += 1;
+    hideSuggestions();
   };
 
   // The typed words in bold where they start a word. Built as nodes.
@@ -1891,6 +1897,7 @@ const sentenceJson = sentences
     link.setAttribute("aria-selected", "false");
     link.tabIndex = -1;
     link.href = item.href ?? `?q=${encodeURIComponent(item.query!)}`;
+    link.dataset.key = JSON.stringify([item.kind, item.text, link.href]);
     if (item.query !== undefined) link.dataset.query = item.query;
     const main = element("span", undefined, "suggest-main");
     // An outlet's title keeps its marks; a trial is named by its identifier.
@@ -1918,16 +1925,18 @@ const sentenceJson = sentences
     return link;
   }
 
-  async function drawSuggestions() {
+  async function drawSuggestions(refresh = false) {
     const typed = input.value.trim();
     const turn = ++drawing;
     if (suggestWords(typed).length === 0 || readAddress(typed).kind !== "none") return closeSuggestions();
+    wantsSuggestions = true;
     let index: Lookup;
     try {
       index = await loadLookup();
     } catch {
       // Nothing to offer; sending the search says what is wrong.
-      return closeSuggestions();
+      if (turn === drawing) closeSuggestions();
+      return;
     }
     if (turn !== drawing) return;
     // Reports and trials come with the search detail, asked for once, the first time
@@ -1937,14 +1946,15 @@ const sentenceJson = sentences
       loadDetail()
         .then((detail) => {
           detailHeld = detail;
-          if (!suggestions.hidden) void drawSuggestions();
+          if (wantsSuggestions) void drawSuggestions(true);
         })
         .catch(() => {
           detailAsked = false;
         });
     }
     const groups = suggest(typed, index, detailHeld);
-    if (groups.length === 0) return closeSuggestions();
+    if (groups.length === 0) return hideSuggestions();
+    const selected = refresh ? choices[chosen]?.dataset.key : undefined;
     suggestions.replaceChildren();
     for (const group of groups) {
       const section = element("div", undefined, "suggest-group");
@@ -1964,15 +1974,15 @@ const sentenceJson = sentences
     all.tabIndex = -1;
     all.href = `?q=${encodeURIComponent(typed)}`;
     all.dataset.query = "";
+    all.dataset.key = "search-all";
     all.append(suggestDrawing("search"), element("span", `Search everything for “${typed}”`, "suggest-main"));
     suggestions.append(all);
     choices = [...suggestions.querySelectorAll<HTMLElement>('[role="option"]')];
     choices.forEach((choice, index) => {
       choice.id = `suggestion-${index}`;
     });
-    chosen = -1;
-    input.removeAttribute("aria-activedescendant");
     suggestions.hidden = false;
+    choose(selected ? choices.findIndex((choice) => choice.dataset.key === selected) : -1);
     input.setAttribute("aria-expanded", "true");
     sizeSuggestions();
   }
@@ -1997,8 +2007,7 @@ const sentenceJson = sentences
   input.addEventListener("input", () => void drawSuggestions());
   input.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      if (suggestions.hidden) return;
-      event.preventDefault();
+      if (!suggestions.hidden) event.preventDefault();
       closeSuggestions();
     } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       if (suggestions.hidden) {
@@ -2028,6 +2037,8 @@ const sentenceJson = sentences
     form.requestSubmit();
   });
   input.addEventListener("blur", () => {
+    wantsSuggestions = false;
+    drawing += 1;
     setTimeout(() => {
       if (document.activeElement !== input) closeSuggestions();
     }, 150);

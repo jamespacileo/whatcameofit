@@ -11,7 +11,7 @@ import ThenNow from "../components/ThenNow.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
-import { data, listedTopics } from "../lib/export";
+import { exportVersion, data, listedTopics } from "../lib/export";
 import { exampleClaim } from "../lib/extension-page";
 import { statusCountsByTopic } from "../lib/feed";
 import {
@@ -144,7 +144,7 @@ const example = exampleClaim(data.claims);
     <p class="visually-hidden" role="status" data-following-said></p>
   </section>
 
-  <div class="feed" data-feed>
+  <div class="feed" data-feed data-export-version={exportVersion}>
   {/* Everything dated, day by day, with the counts and the topic choice that narrow it
       and the four lists under it. With no day of last check in the export there is no
       such list: the page is not dated by any other day. */}

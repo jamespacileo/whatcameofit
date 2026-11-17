@@ -45,6 +45,18 @@ async function fetchRest(holder: HTMLElement) {
     const parts = await Promise.all(
       holder.dataset.rest!.split(" ").map(async (address) => {
         const response = await fetch(address);
+        // A deployment may have removed this page's edition of the rows. Only restart
+        // when the current home page confirms a newer export; outages stay retryable.
+        if (response.status === 404 || response.headers.get("content-type")?.includes("text/html")) {
+          const home = await fetch("/", { cache: "no-cache" });
+          if (home.ok) {
+            const current = new DOMParser().parseFromString(await home.text(), "text/html");
+            const version = current.querySelector<HTMLElement>("[data-export-version]")?.dataset.exportVersion;
+            const held = document.querySelector<HTMLElement>("[data-export-version]")?.dataset.exportVersion;
+            if (held && version && version !== held) location.reload();
+          }
+          throw new Error(`No rows at ${address}`);
+        }
         if (!response.ok) throw new Error(`${address} answered ${response.status}`);
         return response.text();
       }),

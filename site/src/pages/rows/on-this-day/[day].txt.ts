@@ -5,10 +5,11 @@
 import type { APIRoute } from "astro";
 import AnniversaryDay from "../../../components/AnniversaryDay.astro";
 import { calendarDays } from "../../../lib/home-lists";
+import { exportVersion } from "../../../lib/export";
 import { rowFile } from "../../../lib/row-file";
 
 export function getStaticPaths() {
-  return calendarDays.map((day) => ({ params: { day: day.id }, props: { day } }));
+  return calendarDays.map((day) => ({ params: { day: `${day.id}.${exportVersion}` }, props: { day } }));
 }
 
 export const GET: APIRoute = ({ props }) => rowFile(AnniversaryDay, { day: props.day });

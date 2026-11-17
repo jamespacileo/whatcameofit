@@ -116,7 +116,7 @@ const SEARCH_DETAIL = {
   },
 };
 
-function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE, initial = "https://example.test/") {
+function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE, initial = "https://example.test/", detailReady = Promise.resolve()) {
   const location = { href: initial, origin: "https://example.test" };
   const entries = [{ state: null, url: initial }];
   let position = 0;
@@ -162,7 +162,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE, initia
       requests++;
       if (url === "/api/lookup") return Promise.resolve({ status: 200, json: async () => liveAnswer });
       if (!searching) return pending;
-      if (url === "/search-detail.json") return Promise.resolve({ ok: true, json: async () => SEARCH_DETAIL });
+      if (url === "/search-detail.json") return detailReady.then(() => ({ ok: true, json: async () => SEARCH_DETAIL }));
       if (url === "/trial-index.json") return Promise.resolve(TRIAL_INDEX ? { ok: true, json: async () => TRIAL_INDEX } : { ok: false, status: 404 });
       // The listing as the build serves it: a manifest, and the parts it names.
       if (url === "/trials-listing.json") {
@@ -559,6 +559,47 @@ test("the suggestions stand in the form, after its hint, and each row says what 
   assert.match(row("treatment"), /Opens its page\.$/);
   assert.match(row("condition"), /Searches here\.$/);
   assert.match(panel.querySelector(".suggest-all").textContent, /^Search everything for “tooth”$/);
+});
+
+test("delayed trial details show the current query and respect dismissal", async () => {
+  for (const action of ["keep", "replace", "dismiss"]) {
+    const detail = Promise.withResolvers();
+    const page = setup(null, HOME, true, undefined, detail.promise);
+    const input = page.document.querySelector("#query");
+    const panel = page.document.querySelector("#suggestions");
+    const type = (value) => { input.value = value; input.dispatchEvent(new page.window.Event("input")); };
+    type("NCT00000003");
+    await settle();
+    assert.equal(panel.hidden, true);
+    if (action === "replace") type("tooth");
+    if (action === "dismiss") {
+      input.dispatchEvent(Object.assign(new page.window.Event("keydown"), { key: "Escape" }));
+    }
+    detail.resolve();
+    await settle();
+    assert.equal(panel.hidden, action === "dismiss");
+    if (action === "keep") assert.match(panel.querySelector(".is-trial").textContent, /NCT00000003/);
+    if (action === "replace") assert.ok(panel.querySelector(".is-treatment"));
+  }
+});
+
+test("an option keeps its keyboard selection when detailed rows move its position", async () => {
+  const detail = Promise.withResolvers();
+  const page = setup(null, HOME, true, undefined, detail.promise);
+  const input = page.document.querySelector("#query");
+  input.value = "teeth";
+  input.dispatchEvent(new page.window.Event("input"));
+  await settle();
+  const key = (key) => input.dispatchEvent(Object.assign(new page.window.Event("keydown"), { key }));
+  key("ArrowUp"); // From the box, the last option searches for the typed words.
+  const old = input.getAttribute("aria-activedescendant");
+  assert.ok(page.document.getElementById(old).classList.contains("suggest-all"));
+  detail.resolve();
+  await settle();
+  const current = input.getAttribute("aria-activedescendant");
+  assert.notEqual(current, old);
+  assert.equal(page.document.getElementById(current).getAttribute("aria-selected"), "true");
+  assert.ok(page.document.getElementById(current).classList.contains("suggest-all"));
 });
 
 test("a topic picked is kept in the page's address and cleared with the search", async () => {
