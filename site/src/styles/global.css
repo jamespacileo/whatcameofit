@@ -8609,6 +8609,101 @@ body.framed {
   }
 }
 
+/* The rows pass, continued: the timetable's records and the registry's records on the
+   same lines as an entry row. */
+@media (min-width: 52rem) {
+  /* A record of the timetable is one line: its drawing, its day, what happened, and at
+     the end of the line where to check it. */
+  .sheet .timetable .record {
+    grid-template-columns: 1.15rem 3.6rem minmax(0, 1fr) minmax(0, auto);
+  }
+
+  .sheet .timetable .record .origin {
+    grid-column: 4;
+    grid-row: 1;
+    max-width: 24rem;
+    text-align: right;
+  }
+
+  /* A registry record: its title and what its record says at the left edge, where to
+     read it from the second stop, its match at the end of the line. */
+  .sheet .record-row {
+    display: grid;
+    /* The links keep their line; the title gives way before they do. */
+    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(min-content, 1fr) auto;
+    column-gap: 2.5rem;
+    align-items: baseline;
+  }
+
+  .sheet .record-row .record-head {
+    display: contents;
+  }
+
+  .sheet .record-row .record-title,
+  .sheet .record-row .record-meta,
+  .sheet .record-row .record-unread {
+    grid-column: 1;
+  }
+
+  .sheet .record-row .record-head > .pop-trigger {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .sheet .record-row .record-links {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: grid;
+    justify-items: start;
+    gap: 0.1rem;
+  }
+
+  .sheet .record-row .record-source {
+    white-space: nowrap;
+  }
+
+  .sheet .record-row .record-fields {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The state mark: a shape for where a trial is, beside the words that say it. A ring
+   has not started, half is under way, full is finished; a square is one that was
+   halted, filled where it was stopped early. Grey at every state. */
+.trial-state {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.state-mark {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+  translate: 0 0.02rem;
+}
+
+.state-mark[data-state="under_way"] {
+  background: linear-gradient(to right, var(--muted) 50%, transparent 50%);
+}
+
+.state-mark[data-state="completed"],
+.state-mark[data-state="terminated"] {
+  background: var(--muted);
+}
+
+.state-mark[data-state="suspended"],
+.state-mark[data-state="terminated"],
+.state-mark[data-state="withdrawn"] {
+  border-radius: 1px;
+}
+
+.state-mark[data-state="unknown"] {
+  border-style: dotted;
+}
+
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
    info mark beside a section's heading opens what the section holds in a small panel,
    on hover, on a press and from the keyboard, in place of a paragraph under the

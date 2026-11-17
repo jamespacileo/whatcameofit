@@ -45,3 +45,37 @@ An answer of "The record in brief" SHALL open as a fact row does: by its whole l
 - **WHEN** a reader opens "Tested in people?"
 - **THEN** the line is tinted, its mark points up, and the sentences under it stand on the page's ground with no panel around them
 
+### Requirement: Lists of things on a record page share one row
+On a record page a paper, an organisation and a registry record SHALL each be drawn as one row of the same parts: what the thing is at the section's left edge, with at most one grey line under it; how it is tied to the claim, from the second column stop, in one line; and what ends its line (a score, the mark that opens it) at the section's right edge. A score SHALL stay in sight on the row. Where a record came from, when it was read, and the sentences a mark stands for SHALL be shown where the row opens, and SHALL be shown without a press when the page has no script and on paper.
+
+#### Scenario: A paper tied to two trials
+- **WHEN** a paper is listed by one trial's sponsor and linked by the registry to another
+- **THEN** its row shows its title, its kind, journal and year, and the two trials' numbers each beside a mark, and opening it gives each tie as a sentence and when the index record was read
+
+#### Scenario: A sponsor
+- **WHEN** an organisation sponsors two of the claim's trials
+- **THEN** its row shows its name and "Sponsor of 2 trials" beside the drawing of a registry record, and opening it names the two trials
+
+### Requirement: Marks say a kind or a state, with words, and never a verdict
+A mark that stands for how a paper came to be listed SHALL be explained in words once over its list and again, as a sentence, where its row opens. A mark for a trial's state SHALL stand beside the words that say the state. Every such mark SHALL be grey in every state, and SHALL NOT differ by colour between states: it says what kind of tie or which state, never whether a result is for or against a treatment.
+
+#### Scenario: A column of trial states
+- **WHEN** a reader looks down the State column of the trials table
+- **THEN** each state's words are preceded by a grey shape, a full circle for a finished trial, a half for one under way, a ring for one not started and a square for one that was halted
+
+### Requirement: A record of the timetable is one line
+On a wide screen a record of the timetable SHALL be one line: the drawing of its kind, its day, what happened, and at the end of the line the link to where it can be checked.
+
+#### Scenario: A trial registered
+- **WHEN** a reader looks at "29 Oct, Trial registered"
+- **THEN** the registry's name and the trial's number are a link at the right end of the same line
+
+## MODIFIED Requirements
+
+### Requirement: An unidentified organisation is listed plainly
+An organisation that is not identified SHALL be shown by the name it was given with its roles, and SHALL say, where its row opens, that it was not matched to a registry record. It SHALL show no kind, country or website.
+
+#### Scenario: Start-up the registry does not know
+- **WHEN** a claim names a company with no approved match
+- **THEN** its row shows the report's name and role, and opening it says no registry record was matched
+
