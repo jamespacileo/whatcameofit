@@ -17,7 +17,7 @@ History: a first direction (a printed timetable in yellow and black) was built u
 
 THESIS: Answer the reader's question in the first panel, then let them check it: what was promised beside what was recorded. Refused: grades, scores, meters and verdict badges, which the reference class often uses and this product must not. One exception, approved by the operator on 2026-11-11: a stage track that marks a status's position on the path from preclinical to approved, always beside the status in words, never filled like a progress bar.
 
-OWN-WORLD: White page, one clinical blue accent (the operator asked for blue in the NHS-blue family; never the NHS identity), a pale blue summary panel, pale amber for anything promised, one friendly sans (Figtree), rounded frames, a small drawn mark per topic.
+OWN-WORLD: White page, one clinical blue accent (the operator asked for blue in the NHS-blue family; never the NHS identity), a pale blue summary panel, pale amber for anything promised, one friendly sans (Figtree) and, since 2026-11-17, a news serif (Newsreader) for a record page's title and section headings only, rounded frames, a small drawn mark per topic.
 
 STORY: The reader sees the topic, the headline, where it stands and the latest record date, reads two sentences, then runs down the years: promise on amber, record on white, gaps left as gaps. Each record has a footnote to its source.
 

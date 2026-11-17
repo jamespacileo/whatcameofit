@@ -167,6 +167,18 @@ def test_specific_name_is_searched_without_the_condition(session: Session, fake_
     assert all("query.cond" not in request.url.params for request in replay.requests)
 
 
+def test_search_asks_for_the_other_names_of_each_intervention(
+    session: Session, fake_time, fixture_json
+):
+    """A trial filed under a development code lists the generic name there, and whoever
+    scores the candidate has to see it."""
+    source, replay = trials(session, fake_time, search_pages(fixture_json))
+
+    source.search_trials("tideglusib")
+
+    assert "InterventionOtherName" in replay.requests[0].url.params["fields"].split(",")
+
+
 @pytest.mark.parametrize("by_name", [False, True])
 def test_search_preserves_arm_roles_and_study_type_without_detail_requests(
     session: Session, fake_time, by_name: bool

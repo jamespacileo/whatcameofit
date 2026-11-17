@@ -49,6 +49,12 @@ export const LISTED_WORDS: Record<string, string> = {
   linked_by_registry: "Linked by the registry from PubMed to",
 };
 
+/** What the mark beside a trial's number says, once, over a list of papers. */
+export const TIE_KEY: Record<string, string> = {
+  listed_by_sponsor: "Listed by the trial’s sponsor as reporting its results",
+  linked_by_registry: "Linked by the registry from PubMed, which says it may or may not be about the study",
+};
+
 /** A second role a paper plays, said on its entry in the group of its first. */
 export const ALSO_WORDS: Record<string, string> = {
   follow_up: "Also a follow-up paper",

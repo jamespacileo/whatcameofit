@@ -2,6 +2,37 @@
 // "The timetable can be narrowed to one kind of entry"). The controls are shown by this
 // script, so with none every entry is simply there. Counts are read from the entries
 // shown, promises and records apart, and never added together.
+// A long record's older years are folded (openspec sheet-cohesion). While the table is
+// narrowed to one kind, and on paper, the folded years are opened so that what is left
+// is in sight; afterwards the years this script opened fold again.
+const yearFolds = [...document.querySelectorAll<HTMLDetailsElement>("details.year-rest")];
+const opened = new Set<HTMLDetailsElement>();
+let printing = false;
+let kindShown = "all";
+const syncYears = () => {
+  if (printing || kindShown !== "all") {
+    for (const year of yearFolds) {
+      if (!year.open) {
+        opened.add(year);
+        year.open = true;
+      }
+    }
+  } else {
+    for (const year of opened) year.open = false;
+    opened.clear();
+  }
+};
+if (yearFolds.length > 0) {
+  addEventListener("beforeprint", () => {
+    printing = true;
+    syncYears();
+  });
+  addEventListener("afterprint", () => {
+    printing = false;
+    syncYears();
+  });
+}
+
 const controls = document.querySelector<HTMLElement>("[data-kinds]");
 const table = document.querySelector<HTMLElement>(".timetable");
 if (controls && table) {
@@ -42,6 +73,8 @@ if (controls && table) {
       ...(records > 0 ? [plural(records, "record")] : []),
     ];
     if (said) said.textContent = `Showing ${parts.join(" and ")}.`;
+    kindShown = kind;
+    syncYears();
   };
 
   for (const tab of tabs) tab.addEventListener("click", () => show(tab.dataset.kind!));

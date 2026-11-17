@@ -117,10 +117,15 @@ const mainMeasure = planned[0]?.measure ?? null;
       <span class="lbl">Main measure</span>
       <span class="trial-measure-words">{mainMeasure ?? "Not stated in the record"}</span>
       {glosses.length > 0 && <span class="trial-gloss">{glosses.join(" · ")}</span>}
-      {sponsor && <span class="trial-by">Run by {sponsor}</span>}
     </div>
     <div class="trial-cell" role="cell">
-      <span class="lbl">State</span>{columns.state ?? "Not stated in the record"}
+      <span class="lbl">State</span>
+      {/* A shape for the state, beside its words: a column of them is read at a glance.
+          Grey, and never alone: it says where a trial is, not how it turned out. */}
+      <span class="trial-state">
+        <span class="state-mark" data-state={trial.state} aria-hidden="true" />
+        {columns.state ?? "Not stated in the record"}
+      </span>
       {results && <span class="trial-posted">{RESULTS_POSTED}{columns.results.replace(/^Posted/, "")}</span>}
     </div>
     <div class="trial-cell trial-id" role="cell">
@@ -146,7 +151,7 @@ const mainMeasure = planned[0]?.measure ?? null;
     {
       match && (
         <span>
-          <Score about="Match to this claim" words={matchWords(match.score)} shown>
+          <Score about="Match to this claim" words={matchWords(match.score)}>
             <span>{MATCH_MEANING}</span>
           </Score>{" "}
           {readingOf(match.reading)}
@@ -178,6 +183,14 @@ const mainMeasure = planned[0]?.measure ?? null;
     }
   </p>
     <dl class="trial-facts">
+      {
+        sponsor && (
+          <div>
+            <dt>Run by</dt>
+            <dd>{sponsor}</dd>
+          </div>
+        )
+      }
       {
         studied && (
           <div>

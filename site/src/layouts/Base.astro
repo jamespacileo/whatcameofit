@@ -2,6 +2,7 @@
 import "../styles/global.css";
 // Preloaded so the first paint is already in the site's face and headings do not reflow.
 import faceUrl from "@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2?url";
+import displayUrl from "@fontsource-variable/newsreader/files/newsreader-latin-opsz-normal.woff2?url";
 import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import Mark from "../components/Mark.astro";
 import { CARD_NOTICE } from "../lib/card";
@@ -98,6 +99,8 @@ const topicLink =
     <link rel="manifest" href={brandAsset("/manifest.webmanifest")} />
     <meta name="theme-color" content={THEME_COLOR} />
     <link rel="preload" as="font" type="font/woff2" href={faceUrl} crossorigin />
+    {/* The heading face: a framed page (a claim, a topic) and the home page set their title in it. */}
+    {(framed || current === "home") && <link rel="preload" as="font" type="font/woff2" href={displayUrl} crossorigin />}
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
     {Astro.props.noindex && <meta name="robots" content="noindex, follow" />}
@@ -296,7 +299,9 @@ const topicLink =
   }
 
   if (matchMedia("(hover: hover)").matches) {
-    for (const trigger of document.querySelectorAll<HTMLButtonElement>("[popovertarget]")) {
+    // A panel of fields opens by a press only: a field's own list opens outside the
+    // panel, where a pointer leaving would close it.
+    for (const trigger of document.querySelectorAll<HTMLButtonElement>("[popovertarget]:not([data-press-only])")) {
       const panel = document.getElementById(trigger.getAttribute("popovertarget")!)!;
       let timer: number | undefined;
       let pinned = false;

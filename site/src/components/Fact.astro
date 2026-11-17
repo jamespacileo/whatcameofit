@@ -1,0 +1,67 @@
+---
+// One row of a fact sheet (components/FactSheet.astro): a label and its value on one
+// baseline.
+//
+//   <Fact label="First reported">1 Oct 2016</Fact>
+//
+// Slots:
+//   default  the value, where it is more than the `value` text (a link, a chip);
+//   under    grey lines under the value (`<span slot="under" class="aka">`);
+//   aside    what must stay in sight at the end of the value's line, such as a score
+//            below the high band; it lies over the row's press and keeps its own;
+//   more     what the row opens to. Its children lie on the row's two columns: a
+//            part's label in the label's column (`grid-column: 1`) and what it names
+//            under the value (`grid-column: var(--part)`).
+//
+// A row with `opens` and a filled "more" slot opens: its press is the round fold mark
+// at the end of the value's line and the whole of the row's head. The stylesheet draws
+// it closed from the first paint; with no script, and on paper, it is simply open
+// (scripts/folds.ts). A link to the row's `id`, or to anything inside it, opens it.
+import ChevronDown from "@lucide/astro/icons/chevron-down";
+
+interface Props {
+  label: string;
+  /** The value as plain text. Read out with `opens`; drawn unless the default slot is filled. */
+  value?: string;
+  /** The row's address: a link to it marks the row and opens it. Needed by a row that opens. */
+  id?: string;
+  /** What the row opens to, in a few words that are read out, not drawn: "Definition and source". */
+  opens?: string;
+}
+
+const { label, value, id, opens } = Astro.props;
+const filled = async (name: string) =>
+  Astro.slots.has(name) ? (await Astro.slots.render(name)).trim() : "";
+const aside = await filled("aside");
+const more = opens ? await filled("more") : "";
+if (more && !(id && value)) throw new Error(`The fact “${label}” opens, so it needs an id and a value.`);
+---
+
+<div id={id} tabindex={id ? -1 : undefined}>
+  <dt>{label}</dt>
+  <dd>
+    <span class="fact-head">
+      <span class="fact-value"><slot>{value}</slot></span>
+      {aside && <span class="fact-aside"><Fragment set:html={aside} /></span>}
+    </span>
+    <slot name="under" />
+    {
+      more && (
+        <button type="button" class="fact-open" aria-expanded="true" aria-controls={`${id}-more`}>
+          <span class="fact-open-words">{opens}</span>
+          <span class="visually-hidden"> for {value}.</span>
+          <span class="chev" aria-hidden="true">
+            <ChevronDown size={16} stroke-width={2} />
+          </span>
+        </button>
+      )
+    }
+    {
+      more && (
+        <div class="fact-more" id={`${id}-more`}>
+          <Fragment set:html={more} />
+        </div>
+      )
+    }
+  </dd>
+</div>

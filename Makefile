@@ -1,11 +1,13 @@
-.PHONY: setup smoke-research check lint types db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check lint types db-up test-db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
-DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
-# Tests drop and recreate this database, so its name must end in _test.
-export TEST_DATABASE_URL ?= postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:$(DB_PORT)/thenwhat_test
+# Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
+# database's server. They drop and recreate one database there, named after this checkout
+# so that two checkouts do not collide (pipeline/tests/conftest.py); set
+# TEST_DATABASE_URL to name another, on that server, ending in _test.
+export TEST_DB_PORT ?= 5434
 
-# Everything CI runs. Needs Docker for the database; no internet access is
+# Everything CI runs. Needs Docker for the test database; no internet access is
 # needed once dependencies and the Postgres image are present.
 check: lint types test scripts-test store-test site-test site-build extension-test
 
@@ -19,8 +21,11 @@ types:
 db-up:
 	docker compose up -d --wait db
 
+test-db-up:
+	docker compose up -d --wait test-db
+
 # The round-trip test builds the site, so the site's dependencies must be installed.
-test: db-up site/node_modules
+test: test-db-up site/node_modules
 	uv run --directory pipeline pytest -q
 
 # The daily job's script, against a stand-in for the pipeline: no database, no network.

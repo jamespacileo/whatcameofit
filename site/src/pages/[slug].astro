@@ -1,9 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
+import Calendar from "@lucide/astro/icons/calendar";
 import ChevronDown from "@lucide/astro/icons/chevron-down";
+import ChevronRight from "@lucide/astro/icons/chevron-right";
 import Clock from "@lucide/astro/icons/clock";
 import Copy from "@lucide/astro/icons/copy";
 import ExternalLink from "@lucide/astro/icons/external-link";
+import FileText from "@lucide/astro/icons/file-text";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Bookmark from "@lucide/astro/icons/bookmark";
@@ -26,7 +29,6 @@ import SharePill from "../components/SharePill.astro";
 import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicDrawing from "../components/TopicDrawing.astro";
-import TopicChip from "../components/TopicChip.astro";
 import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
@@ -54,6 +56,7 @@ import { embedSnippet, shareLinks } from "../lib/share";
 import { LOW_READING_MEANING, MATCH_MEANING, matchWords, stageReading } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
 import RegistryRecords from "../components/RegistryRecords.astro";
+import Fact from "../components/Fact.astro";
 import Glance from "../components/Glance.astro";
 import GlanceBand from "../components/GlanceBand.astro";
 import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
@@ -64,6 +67,8 @@ import Trial from "../components/Trial.astro";
 import {
   PAPERS_NOTE,
   PAPERS_SHOWN,
+  TIE_KEY,
+  trialRoles,
   countRecords,
   groupPapers,
   recordCountText,
@@ -223,6 +228,33 @@ const timetableNote = [
   plural(counts.records, "record"),
   "newest first",
 ].join(" · ");
+// A long record folds by year (openspec sheet-cohesion). This year and last stay open,
+// with any year a promise names; an older year is one line that says how many records
+// it holds and of what kinds, marks a record the status rests on, and opens to them.
+// A link to a record inside a folded year opens the year (scripts/folds.ts).
+const FOLD_OVER = 20;
+const yearFolds = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }>) =>
+  counts.records > FOLD_OVER &&
+  row.year < thisYear - 1 &&
+  row.promised.length === 0;
+const yearSaid = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }>) => {
+  const tally = new Map<string, number>();
+  for (const entry of row.recorded) {
+    const label = entry.kind === "report" ? "News report" : eventLabel(entry.event);
+    tally.set(label, (tally.get(label) ?? 0) + 1);
+  }
+  const kindsSaid = [...tally].sort((a, b) => b[1] - a[1]);
+  const shown = kindsSaid.slice(0, 3);
+  const others = kindsSaid.slice(3).reduce((n, [, count]) => n + count, 0);
+  return {
+    basis: row.recorded.some((entry) => entry.kind === "event" && entry.explains),
+    total: plural(row.recorded.length, "record"),
+    kinds: [
+      ...shown.map(([label, n]) => `${label.toLowerCase()} ${n}`),
+      ...(others > 0 ? [`other ${others}`] : []),
+    ],
+  };
+};
 // The trials table's columns, named over every group's table.
 const TRIAL_COLUMNS = ["People", "Compared with", "Main measure", "State", "Trial"];
 const posted = withResults(trials);
@@ -297,7 +329,13 @@ const sections = [
       <div class="band-main">
         <div class="above-title">
           <div class="filed">
-            <TopicChip vertical={claim.vertical} />
+            {/* Where the page sits: the topics, then this claim's topic. The drawing in the
+                side column shows the topic; these words name it. */}
+            <nav class="crumbs" aria-label="Where this page sits">
+              <a href="/topics">Topics</a>
+              <ChevronRight size={14} stroke-width={2} aria-hidden="true" />
+              <a href={`/topic/${claim.vertical}`}>{verticalTitle(claim.vertical)}</a>
+            </nav>
             {
               claim.approach && (
                 <span class="approach">
@@ -308,7 +346,12 @@ const sections = [
             }
           </div>
         </div>
-        <h1 class:list={["title", { long: claim.headline.length > 70 }]}>
+        <h1
+          class:list={[
+            "title",
+            { long: claim.headline.length > 70, longer: claim.headline.length > 110 },
+          ]}
+        >
           {
             /* A name such as "USAG-1" must not break at its hyphen. */
             claim.headline.split(" ").map((word, index) => (
@@ -319,6 +362,11 @@ const sections = [
             ))
           }
         </h1>
+
+        {/* The summary, straight under the title where the band has room for it. On a
+            phone the band keeps to the title and the status, and the sheet opens with the
+            same words instead: one of the two is drawn, never both. */}
+        <p class="band-lede" data-clamp="5" data-pagefind-ignore>{claim.summary}</p>
 
         {
           /* What kind of thing the treatment is and a gene, straight under the headline:
@@ -379,8 +427,9 @@ const sections = [
 
       </div>
       <div class="digest">
+        {/* The card's heading, in sight as a tab on the card's top edge. */}
+        <h2 class="card-tab">Where it stands</h2>
         <div class="standing">
-          <h2 class="visually-hidden">Where it stands</h2>
           <div class="label-row">
             <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
             <Pop id="why" label="Why this status" class="info">
@@ -468,32 +517,41 @@ const sections = [
             )
           }
           <p class="changed" data-pagefind-ignore>
-            {latestMark ? (
-              <>
-                Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
-              </>
-            ) : (
-              "No record yet"
-            )}
+            <Calendar size={15} stroke-width={1.9} aria-hidden="true" />
+            <span>
+              {latestMark ? (
+                <>
+                  Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
+                </>
+              ) : (
+                "No record yet"
+              )}
+            </span>
           </p>
           {
             claim.matches && (
               <p class="changed" data-pagefind-ignore>
-                <a href={trials.length > 0 ? "#trials" : "#matched"}>
-                  {registryMatches.length === 0
-                    ? "No registry record matched"
-                    : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
-                </a>
-                {possible > 0 && (
-                  <>
-                    , <a href="#matched">{possible} possible</a>
-                  </>
-                )}
+                <FileText size={15} stroke-width={1.9} aria-hidden="true" />
+                <span>
+                  <a href={trials.length > 0 ? "#trials" : "#matched"}>
+                    {registryMatches.length === 0
+                      ? "No registry record matched"
+                      : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
+                  </a>
+                  {possible > 0 && (
+                    <>
+                      , <a href="#matched">{possible} possible</a>
+                    </>
+                  )}
+                </span>
               </p>
             )
           }
           <p class="changed" data-pagefind-ignore hidden data-remind-link>
-            <a href="#check-again">Check again later</a>
+            <Clock size={15} stroke-width={1.9} aria-hidden="true" />
+            <span>
+              <a href="#check-again">Check again later</a>
+            </span>
           </p>
         </div>
         <div class="says">
@@ -570,7 +628,13 @@ const sections = [
     {/* For a reader who follows this claim and last saw it at another status: filled in
         by the script, so a change noted on the home page is confirmed where they land. */}
     <p class="was-note" hidden data-follow-was data-pagefind-ignore></p>
-    <FollowOffer claim={claim} />
+    {/* Follow is offered once in the band, as one word, and once with its words, beside
+        the reminders. When a reader follows, this line says so under the band: where the
+        list is, and that it stays in this browser. Shown by the script, on the press. */}
+    <p class="entry-note follow-confirm" hidden data-follow-confirm data-pagefind-ignore>
+      You follow this claim. It is listed on <a href="/#following">the home page</a>, with a
+      note when its status changes. Kept in this browser only.
+    </p>
 
     {
       !claim.checked_by_person && (
@@ -590,50 +654,39 @@ const sections = [
     >
       {
         claim.first_reported_date && (
-          <div>
-            <dt>First reported</dt>
-            <dd>
-              <a href={`/year/${claim.first_reported_date.slice(0, 4)}`}>
-                {formatDate(claim.first_reported_date)}
-              </a>
-            </dd>
-          </div>
+          <Fact label="First reported">
+            <a href={`/year/${claim.first_reported_date.slice(0, 4)}`}>
+              {formatDate(claim.first_reported_date)}
+            </a>
+          </Fact>
         )
       }
       {
         claim.evidence_stage && (
-          <div>
-            <dt>Evidence when first reported</dt>
-            <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
-          </div>
+          <Fact
+            label="Evidence when first reported"
+            value={EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}
+          />
         )
       }
       {
         /* A reading that was not sure enough to confirm the stage: shown with its score,
            never used for the status (openspec review, "Lower-band stage reading"). */
         !claim.evidence_stage && claim.evidence_stage_reading && (
-          <div>
-            <dt>Evidence when first reported</dt>
-            <dd>
-              {EVIDENCE_STAGES[claim.evidence_stage_reading.stage] ?? claim.evidence_stage_reading.stage}{" "}
-              <Score words={stageRead!.chip} low>
-                {stageRead!.also && <span>{stageRead!.also}</span>}
-                <span>{LOW_READING_MEANING}</span>
-              </Score>
-              <span class="aka">{stageRead!.note}</span>
-            </dd>
-          </div>
+          <Fact label="Evidence when first reported">
+            {EVIDENCE_STAGES[claim.evidence_stage_reading.stage] ?? claim.evidence_stage_reading.stage}{" "}
+            <Score words={stageRead!.chip} low>
+              {stageRead!.also && <span>{stageRead!.also}</span>}
+              <span>{LOW_READING_MEANING}</span>
+            </Score>
+            <span slot="under" class="aka">{stageRead!.note}</span>
+          </Fact>
         )
       }
       {
         /* A paper and its trial record remain distinct records. */
         recordCount && (
-          <div>
-            <dt>Records listed</dt>
-            <dd>
-              {recordCount}
-            </dd>
-          </div>
+          <Fact label="Records listed" value={recordCount} />
         )
       }
     </Glance>
@@ -662,6 +715,22 @@ const sections = [
           </div>
         )
       }
+    {!hasDatedPromise && <p class="absent">No dated promise on record.</p>}
+    {/* Over the timetable: its filter at the left, its key at the right. */}
+    <div class="table-tools">
+    {
+      /* Shown by the script: with none, every entry is there. */
+      kindCounts.length > 1 && (
+        <div class="kind-tabs" role="group" aria-label="Show entries of one kind" hidden data-kinds>
+          <button type="button" class="kind-tab" data-kind="all" aria-pressed="true">All</button>
+          {kindCounts.map(({ kind, name, n }) => (
+            <button type="button" class="kind-tab" data-kind={kind} aria-pressed="false">
+              {name} <span class="n">{n}</span>
+            </button>
+          ))}
+        </div>
+      )
+    }
       <ul class="legend" aria-label="Key">
         {
           hasPromise && (
@@ -685,20 +754,7 @@ const sections = [
           )
         }
       </ul>
-    {!hasDatedPromise && <p class="absent">No dated promise on record.</p>}
-    {
-      /* Shown by the script: with none, every entry is there. */
-      kindCounts.length > 1 && (
-        <div class="kind-tabs" role="group" aria-label="Show entries of one kind" hidden data-kinds>
-          <button type="button" class="kind-tab" data-kind="all" aria-pressed="true">All</button>
-          {kindCounts.map(({ kind, name, n }) => (
-            <button type="button" class="kind-tab" data-kind={kind} aria-pressed="false">
-              {name} <span class="n">{n}</span>
-            </button>
-          ))}
-        </div>
-      )
-    }
+    </div>
     <p class="visually-hidden" role="status" data-kinds-said></p>
     <div class="table-frame">
     <table role="table" class="timetable" aria-labelledby="timetable">
@@ -767,6 +823,25 @@ const sections = [
                             : "Not yet reached"}
                       </span>
                     ) : (
+                      ((entries) =>
+                        yearFolds(row) ? (
+                          <details class="year-rest">
+                            <summary>
+                              <span class="year-total">{yearSaid(row).total}</span>
+                              <span class="year-kinds">{yearSaid(row).kinds.join(" · ")}</span>
+                              {yearSaid(row).basis && (
+                                <span class="year-basis">
+                                  <BasisMark label={false} />
+                                  <span class="visually-hidden">Holds a record the status rests on.</span>
+                                </span>
+                              )}
+                              <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                            </summary>
+                            {entries}
+                          </details>
+                        ) : (
+                          entries
+                        ))(
                       <ul class="entries">
                         {recordedLines(row.recorded).map((line) =>
                           line.kind === "report" ? (
@@ -858,7 +933,8 @@ const sections = [
                             </li>
                           ),
                         )}
-                      </ul>
+                      </ul>,
+                      )
                     )
                   }
                 </td>
@@ -896,8 +972,18 @@ const sections = [
     {
       trials.length > 0 && (
         <section class="trials" data-pagefind-ignore>
-          <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
-          <p class="take-why" data-clamp="1">{TRIALS_NOTE}</p>
+          <FoldHead id="trials" phone="folded" note={trialsNote}>
+            <p slot="about">{TRIALS_NOTE}</p>
+            Trials on record
+          </FoldHead>
+          {/* The columns, named once over every group and kept in sight while the groups
+              scroll. For the eye only: each group's table keeps its own column names for a
+              screen reader. */}
+          <div class="trial-row trial-columns trial-columns-top" aria-hidden="true">
+            {TRIAL_COLUMNS.map((name) => (
+              <span>{name}</span>
+            ))}
+          </div>
           {trialGroups.map((group) => {
             const shown = group.trials.slice(0, TRIALS_PER_PHASE);
             const rest = group.trials.slice(TRIALS_PER_PHASE);
@@ -954,15 +1040,15 @@ const sections = [
       claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
         <section class="matched" data-pagefind-ignore>
           <FoldHead id="matched" start={untried.length > 0 ? "open" : "folded"} phone="folded" note={matchedNote}>
+            <p slot="about">
+              {untried.length > 0
+                ? `Trial registry records found for this treatment and condition, with how sure each match is.${scoreNote}`
+                : candidates.length > 0
+                  ? `Trial registry records that may be about this treatment and condition, with how sure each match is.${scoreNote}`
+                  : "The trial registries were searched for this treatment and condition. No record matched."}
+            </p>
             {matchedHeading}
           </FoldHead>
-          <p class="take-why" data-clamp="1">
-            {untried.length > 0
-              ? `Trial registry records found for this treatment and condition, with how sure each match is.${scoreNote}`
-              : candidates.length > 0
-                ? `Trial registry records that may be about this treatment and condition, with how sure each match is.${scoreNote}`
-                : "The trial registries were searched for this treatment and condition. No record matched."}
-          </p>
           {untried.length > 0 && <RegistryRecords matches={untried} />}
           {untried.length > 0 && candidates.length > 0 && (
             <h3 class="matched-group">Possible records</h3>
@@ -982,13 +1068,29 @@ const sections = [
     {
       paperGroups.length > 0 && (
         <section class="papers" data-pagefind-ignore>
-          <FoldHead id="papers" start="folded" note={papersNote}>Papers on record</FoldHead>
-          <p class="take-why" data-clamp="1">{PAPERS_NOTE}</p>
+          <FoldHead id="papers" start="folded" note={papersNote}>
+            <p slot="about">{PAPERS_NOTE}</p>
+            Papers on record
+          </FoldHead>
           {paperGroups.map((group) => (
             <>
               <h3 class="matched-group">{group.heading}</h3>
-              <p class="entry-note paper-group-note">{group.note}</p>
-              <ul class="plain paper-list">
+              {group.papers.some((paper) => trialRoles(paper).length > 0) ? (
+                // What the two marks beside a trial's number say, once, over the list.
+                <p class="entry-note tie-key">
+                  <span class="tie">
+                    <span class="tie-mark listed" aria-hidden="true" />
+                    {TIE_KEY.listed_by_sponsor}
+                  </span>
+                  <span class="tie">
+                    <span class="tie-mark" aria-hidden="true" />
+                    {TIE_KEY.linked_by_registry}
+                  </span>
+                </p>
+              ) : (
+                <p class="entry-note paper-group-note">{group.note}</p>
+              )}
+              <ul class="plain entry-rows">
                 {group.papers.slice(0, PAPERS_SHOWN).map((paper) => (
                   <Paper paper={paper} trialIds={trialIds} />
                 ))}
@@ -999,7 +1101,7 @@ const sections = [
                     The other {group.papers.length - PAPERS_SHOWN} of {group.papers.length} papers
                     <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
                   </summary>
-                  <ul class="plain paper-list">
+                  <ul class="plain entry-rows">
                     {group.papers.slice(PAPERS_SHOWN).map((paper) => (
                       <Paper paper={paper} trialIds={trialIds} />
                     ))}
@@ -1092,7 +1194,10 @@ const sections = [
         <span id="page-address" hidden>{address}</span>
       </div>
       <details class="post-to">
-        <summary id="post-to">Post it to a network</summary>
+        <summary id="post-to">
+          Post it to a network
+          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+        </summary>
         <ul class="post-links" aria-labelledby="post-to">
           {
             posts.map((post) => (
@@ -1152,7 +1257,10 @@ const sections = [
         </div>
       </div>
       <details class="embed-how">
-        <summary>Writing about this? Show the status on your own page</summary>
+        <summary>
+          Writing about this? Show the status on your own page
+          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+        </summary>
         <p class="entry-note">
           Paste this where the status should appear. It shows the current status and links back
           here; it loads nothing else and stores nothing.
@@ -1406,6 +1514,7 @@ const sections = [
           words.hidden = (words.dataset.followWhen === "on") !== on;
         }
       };
+      const confirmed = document.querySelector<HTMLElement>("[data-follow-confirm]");
       const followed = readFollowed(kept.getItem(FOLLOWING_ENTRY));
       const before = followed[slug];
       if (before) {
@@ -1438,6 +1547,7 @@ const sections = [
           }
           write(now);
           show(on);
+          if (confirmed) confirmed.hidden = !on;
           // The bookmark lands in the pill that was pressed, not when a followed page is opened.
           for (const other of follows) other.classList.toggle("landed", on && other === button);
           if (said) {

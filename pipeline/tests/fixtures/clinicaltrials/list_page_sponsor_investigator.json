@@ -1,0 +1,90 @@
+{
+  "studies": [
+    {
+      "protocolSection": {
+        "identificationModule": {
+          "nctId": "NCT07753863",
+          "orgStudyIdInfo": {
+            "id": "3"
+          },
+          "briefTitle": "Use of a Silicone Sensor to Protect Fragile Neonatal Skin in Moderately Preterm Infants Needing Continuous Monitoring",
+          "officialTitle": "Use of a Silicone Sensor to Protect Fragile Neonatal Skin in Moderately Preterm Infants Needing Continuous Monitoring: the PRO-NEO-SKIN (Protect Neonatal Skin) Pilot Study",
+          "acronym": "PRO-NEO-SKIN"
+        },
+        "statusModule": {
+          "overallStatus": "NOT_YET_RECRUITING",
+          "startDateStruct": {
+            "date": "2026-12-01",
+            "type": "ESTIMATED"
+          },
+          "primaryCompletionDateStruct": {
+            "date": "2027-11-30",
+            "type": "ESTIMATED"
+          },
+          "completionDateStruct": {
+            "date": "2027-11-30",
+            "type": "ESTIMATED"
+          },
+          "studyFirstPostDateStruct": {
+            "date": "2026-08-10"
+          },
+          "lastUpdatePostDateStruct": {
+            "date": "2026-08-11"
+          }
+        },
+        "sponsorCollaboratorsModule": {
+          "responsibleParty": {
+            "type": "SPONSOR_INVESTIGATOR"
+          },
+          "leadSponsor": {
+            "name": "A made-up person",
+            "class": "OTHER"
+          }
+        },
+        "conditionsModule": {
+          "conditions": [
+            "Preterm Newborns, Skin Integrity"
+          ]
+        },
+        "designModule": {
+          "phases": [
+            "NA"
+          ],
+          "enrollmentInfo": {
+            "count": 20,
+            "type": "ESTIMATED"
+          }
+        },
+        "armsInterventionsModule": {
+          "interventions": [
+            {
+              "type": "DEVICE",
+              "name": "Nellcor\u2122 OxySoft\u2122"
+            },
+            {
+              "type": "DEVICE",
+              "name": "MasimoRD SET NeoPt-500"
+            }
+          ]
+        },
+        "outcomesModule": {
+          "primaryOutcomes": [
+            {
+              "measure": "skin integrity",
+              "timeFrame": "14 days"
+            },
+            {
+              "measure": "skin integrity",
+              "timeFrame": "14 days"
+            },
+            {
+              "measure": "skin integrity",
+              "timeFrame": "14 days"
+            }
+          ]
+        }
+      },
+      "hasResults": false
+    }
+  ]
+}

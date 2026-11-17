@@ -28,8 +28,8 @@ test("the scale is defined once", () => {
 });
 
 test("rows take their padding and their rule from the scale", () => {
-  uses(".glance-rows > div", "padding", "row-pad");
-  uses(".glance-rows > div", "border-bottom", "row-rule");
+  uses(".fact-sheet > div", "padding", "row-pad");
+  uses(".fact-sheet > div", "border-bottom", "row-rule");
   uses(".record-row", "padding", "row-pad");
   uses(".record-row", "border-bottom", "row-rule");
   uses(".trial-row", "padding", "row-pad");
@@ -39,7 +39,8 @@ test("rows take their padding and their rule from the scale", () => {
 });
 
 test("labels and column heads are one size, notes another", () => {
-  uses(".glance-rows dt,\n.glance-facts dt", "font-size", "label-size");
+  // A fact sheet's label is read with its value, on one baseline: a step larger.
+  uses(".fact-sheet dt", "font-size", "text-m");
   uses(".record-fields dt", "font-size", "label-size");
   uses(".trial-facts dt", "font-size", "label-size");
   uses(".timetable thead th,\n.index thead th", "font-size", "label-size");
@@ -47,7 +48,7 @@ test("labels and column heads are one size, notes another", () => {
   uses(".entry-note", "font-size", "note-size");
   uses(".record .origin", "font-size", "note-size");
   uses(".glance-note", "font-size", "note-size");
-  uses(".glance-more summary", "font-size", "note-size");
+  uses(".fact-more .term-card .match-why-head", "font-size", "label-size");
 });
 
 test("every table has the same quiet head", () => {
@@ -56,7 +57,9 @@ test("every table has the same quiet head", () => {
 });
 
 test("panels share their padding and their corners", () => {
-  for (const panel of [".trial-facts", ".brief-open", ".card-facts", ".term-card"]) {
+  // What a brief answer or a fact row opens to is not a panel: it lies on the page's
+  // ground under its tinted line.
+  for (const panel of [".trial-facts", ".card-facts", ".term-card"]) {
     uses(panel, "padding", "panel-pad");
     uses(panel, "border-radius", "radius-s");
   }
@@ -64,6 +67,23 @@ test("panels share their padding and their corners", () => {
 });
 
 test("label columns are one width", () => {
-  uses(".glance-rows > div", "grid-template-columns", "label-col");
+  uses(".fact-sheet > div", "grid-template-columns", "label-col");
   uses(".brief-group", "grid-template-columns", "label-col");
+});
+
+// The type scale (openspec type-scale): seven steps for running text and three named
+// roles, defined once. No rule writes a size of its own; a title's size is a clamp, and
+// the two sizes below are not rem sizes at all.
+test("every font size is a step of the type scale", () => {
+  const steps = ["micro", "xs", "s", "m", "body", "l", "xl", "wordmark", "heading", "status"];
+  for (const step of steps) {
+    assert.equal(css.split(`\n  --text-${step}:`).length - 1, 1, `--text-${step} is defined once`);
+  }
+  const allowed = new RegExp(
+    `^(var\\(--text-(${steps.join("|")})\\)|var\\(--(label|note)-size\\)|clamp\\(.+\\)|inherit|0\\.85em|106\\.25%)$`,
+  );
+  const strays = [...css.matchAll(/font-size:\s*([^;]+);/g)]
+    .map((found) => found[1].trim())
+    .filter((value) => !allowed.test(value));
+  assert.deepEqual(strays, [], "a font-size outside the scale");
 });

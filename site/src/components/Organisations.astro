@@ -1,9 +1,12 @@
 ---
+import Entry from "./Entry.astro";
 import FoldHead from "./FoldHead.astro";
+import KindIcon from "./KindIcon.astro";
 // The organisations a claim names: who a report or a trial record says is behind it,
 // in what role, and what an open registry's record says each one is. Openspec
 // site-publishing: "Organisations on the claim page". Stated, never judged: no rank,
-// no count of other claims, no description of standing.
+// no count of other claims, no description of standing. Each is an entry row
+// (components/Entry.astro): its name and its part in sight, the rest where it opens.
 import {
   NOT_IDENTIFIED,
   ORGANISATIONS_NOTE,
@@ -36,51 +39,75 @@ const day = (stamp: string) =>
 
 <section class="matched organisations" data-pagefind-ignore>
   <FoldHead id="organisations" start="folded" note={`${organisations.length} named`}>
+    <p slot="about">{ORGANISATIONS_NOTE}</p>
     Organisations named
   </FoldHead>
-  <p class="take-why" data-clamp="1">{ORGANISATIONS_NOTE}</p>
-  <ul class="plain match-list organisation-list">
+  <ul class="plain entry-rows">
     {
-      orderOrganisations(organisations).map((organisation) => (
-        <li>
-          <div class="match-record">
-            <span class="organisation-name">{organisation.name}</span>
-            {organisation.record && (
-              <span class="entry-note organisation-facts">
-                {[kindsText(organisation.record.kinds), organisation.record.country]
-                  .filter(Boolean)
-                  .join(" · ")}
-                {organisation.record.website && (
-                  <>
-                    {organisation.record.kinds.length > 0 || organisation.record.country
-                      ? " · "
-                      : ""}
-                    <a href={organisation.record.website} rel="noopener">
-                      {websiteHost(organisation.record.website)}
-                    </a>
-                  </>
-                )}
+      orderOrganisations(organisations).map((organisation, index) => (
+        // A row is the name and the part its sources give it. Which trials, and whether
+        // an open registry knows the name, are what the row opens to.
+        <Entry id={`organisation-${index + 1}`} name={organisation.name} opens="Trials and registry record">
+          <span class="entry-name organisation-name">{organisation.name}</span>
+          {organisation.record && (
+            <span class="entry-note organisation-facts">
+              {[kindsText(organisation.record.kinds), organisation.record.country]
+                .filter(Boolean)
+                .join(" · ")}
+              {organisation.record.website && (
+                <>
+                  {organisation.record.kinds.length > 0 || organisation.record.country
+                    ? " · "
+                    : ""}
+                  <a href={organisation.record.website} rel="noopener">
+                    {websiteHost(organisation.record.website)}
+                  </a>
+                </>
+              )}
+            </span>
+          )}
+          <Fragment slot="ties">
+            {organisation.roles.map((role) => (
+              // The drawing says which kind of source names it, as in the timetable.
+              <span class="tie">
+                <KindIcon kind={role.role === "named_in_report" ? "report" : "trial"} />
+                {roleText(role)}
               </span>
-            )}
-            <ul class="plain organisation-roles">
+            ))}
+          </Fragment>
+          <Fragment slot="more">
+            <p class="entry-note entry-more-lead">
+              {organisation.record ? (
+                <>
+                  {identifiedText(organisation.record)}{" "}
+                  <a href={organisation.record.url} rel="noopener">
+                    Its registry record
+                  </a>
+                  , read {day(organisation.record.read_at)}.
+                </>
+              ) : (
+                NOT_IDENTIFIED
+              )}
+            </p>
+            <ul class="plain entry-more-ties organisation-roles">
               {organisation.roles.map((role) => (
                 <li>
                   {roleText(role)}
                   {/* With one report on the page, "the report" needs no title. */}
                   {role.role === "named_in_report" &&
                     articles.length > 1 &&
-                    role.article_urls.map((url, index) => (
+                    role.article_urls.map((url, at) => (
                       <>
-                        {index === 0 ? ": " : ", "}
+                        {at === 0 ? ": " : ", "}
                         <a href={url} rel="noopener">
                           “{reportOf(url)?.title ?? url}”
                         </a>
                       </>
                     ))}
                   {role.role === "sponsor" &&
-                    role.trial_ids.map((trialId, index) => (
+                    role.trial_ids.map((trialId, at) => (
                       <>
-                        {index === 0 ? ": " : ", "}
+                        {at === 0 ? ": " : ", "}
                         {trialIds.has(trialId) ? (
                           <a href={`#trial-${trialId}`}>{trialId}</a>
                         ) : (
@@ -91,19 +118,8 @@ const day = (stamp: string) =>
                 </li>
               ))}
             </ul>
-            {organisation.record ? (
-              <span class="entry-note">
-                {identifiedText(organisation.record)}{" "}
-                <a href={organisation.record.url} rel="noopener">
-                  Its registry record
-                </a>
-                , read {day(organisation.record.read_at)}.
-              </span>
-            ) : (
-              <span class="entry-note">{NOT_IDENTIFIED}</span>
-            )}
-          </div>
-        </li>
+          </Fragment>
+        </Entry>
       ))
     }
   </ul>
