@@ -40,6 +40,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "benchmark: times work over many records; runs for minutes. Leave out with -m 'not benchmark'.",
+]
 
 [dependency-groups]
 dev = [
