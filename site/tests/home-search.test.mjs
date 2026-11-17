@@ -42,6 +42,8 @@ const SEARCH_LOOKUP = {
 let SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
 // The trial listing a build carries: synthetic. None unless a test sets it.
 let LISTING = null;
+// Which claims cite which trials, as the build's trial index has it.
+let TRIAL_INDEX = { trials: {} };
 let listingRequests = 0;
 const FIXTURE_LISTING = JSON.parse(fs.readFileSync(new URL("./fixture-trials-listing.json", import.meta.url), "utf8"));
 
@@ -89,6 +91,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
       if (url === "/api/lookup") return Promise.resolve({ status: 200, json: async () => liveAnswer });
       if (!searching) return pending;
       if (url === "/search-detail.json") return Promise.resolve({ ok: true, json: async () => SEARCH_DETAIL });
+      if (url === "/trial-index.json") return Promise.resolve(TRIAL_INDEX ? { ok: true, json: async () => TRIAL_INDEX } : { ok: false, status: 404 });
       if (url === "/trials-listing.json") {
         listingRequests++;
         return Promise.resolve(LISTING ? { ok: true, json: async () => LISTING } : { ok: false, status: 404 });
@@ -377,5 +380,38 @@ test("words no claim holds are still answered with listed trials; none found add
   for (let turn = 0; turn < 6; turn++) await settle();
   assert.equal(page.results.querySelector(".listed-trials"), null);
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  LISTING = null;
+});
+
+test("a listed trial a claim cites through an approved match leads to that claim", async () => {
+  // The listing names no claim for it: its column knows only trials cited by an event.
+  LISTING = structuredClone(FIXTURE_LISTING);
+  LISTING.trials[1][8] = null;
+  TRIAL_INDEX = { trials: {
+    NCT09000001: [{ slug: "sheet", headline: "x", possible: true }, { slug: "germ", headline: "x" }],
+    // Only a possible match: counted for nothing, so still no report linked.
+    NCT09000003: [{ slug: "antibody", headline: "x", possible: true }],
+  } };
+  const page = setup(null, HOME);
+  const answer = await searched(page, "zetamab");
+  for (let turn = 0; turn < 4; turn++) await settle();
+  const rows = [...answer.querySelectorAll(".listed-trial")];
+  const matched = rows.find((row) => /NCT09000001/.test(row.textContent));
+  assert.equal(matched.querySelector("a.listed-title").getAttribute("href"), "/germ");
+  assert.match(matched.textContent, /See the tracked claim: Tooth germs were reported to grow teeth/);
+  assert.doesNotMatch(matched.textContent, /No news report/);
+  const possible = rows.find((row) => /NCT09000003/.test(row.textContent));
+  assert.equal(possible.querySelector("a.listed-title").getAttribute("href"), "/trials/NCT09000003");
+  assert.match(possible.textContent, /No news report is linked to this record yet\./);
+  // By its number too.
+  const byNumber = await searched(setup(null, HOME), "NCT09000001");
+  assert.equal(byNumber.querySelector(".listed-trial a.listed-title").getAttribute("href"), "/germ");
+  // Without the index of cited trials, no listed trial is shown at all.
+  TRIAL_INDEX = null;
+  const blind = setup(null, HOME);
+  const unsure = await searched(blind, "zetamab");
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(unsure.querySelector(".listed-trial"), null);
+  TRIAL_INDEX = { trials: {} };
   LISTING = null;
 });

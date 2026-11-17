@@ -13,9 +13,10 @@ import pytest
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
+from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim, archive_claim
 from thenwhat.cli import app
-from thenwhat.db.models import Claim, RegistryTrial
+from thenwhat.db.models import Claim, EntityMatch, RegistryTrial
 from thenwhat.domain import EventType, ReviewState, TrialPhase
 from thenwhat.events.manual import add_manual_event
 from thenwhat.export.trials_listing import (
@@ -151,6 +152,36 @@ def test_only_a_published_claim_is_named_as_citing(session: Session):
     assert listed["NCT00000031"]["claim"] == "published-a"
     for uncited in ("NCT00000032", "NCT00000033", "NCT00000034", "NCT00000035"):
         assert listed[uncited]["claim"] is None
+
+
+def test_a_trial_cited_through_an_approved_match_names_its_claim(session: Session):
+    """A claim cites a trial through an approved match as well as through an event; a
+    candidate match counts for nothing."""
+    for number in (1, 2, 3):
+        trial(session, f"NCT0000006{number}")
+    claim = claim_citing(session, "by-match", "NCT00000069")
+    intervention = entities_of(session, claim)[0]
+    for external_id, state in (
+        ("NCT00000061", ReviewState.APPROVED),
+        ("NCT00000062", ReviewState.PENDING),
+    ):
+        match = EntityMatch(
+            entity_id=intervention.id,
+            source_name="clinicaltrials.gov",
+            external_id=external_id,
+            score=0.9,
+            record_summary=f"{external_id}: a synthetic trial",
+        )
+        session.add(match)
+        session.flush()
+        if state is not ReviewState.PENDING:
+            decide_item(session, "match", match.id, state, now=EARLIER)
+
+    listed = rows(session)
+
+    assert listed["NCT00000061"]["claim"] == "by-match"
+    assert listed["NCT00000062"]["claim"] is None
+    assert listed["NCT00000063"]["claim"] is None
 
 
 def test_an_unknown_set_is_refused_with_the_list(session: Session):

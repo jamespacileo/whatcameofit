@@ -4,6 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { besideProblems, listingBeside } from "../scripts/listing-checks.mjs";
 
 const fixture = JSON.parse(fs.readFileSync("tests/fixture-trials-listing.json", "utf8"));
 
@@ -32,7 +33,7 @@ test("only a listing that matches its schema and its export replaces the staged 
     // Stale: written against another export.
     const stale = structuredClone(fixture);
     stale.trials[1][8] = "a-claim-since-archived";
-    refused(stale, /names 1 claim\(s\) the staged export does not publish \(a-claim-since-archived\)/);
+    refused(stale, /names 1 claim\(s\) the export does not publish \(a-claim-since-archived\)/);
     // Too large to be the one file a search fetches.
     const large = structuredClone(fixture);
     const title = "Synthetic ".repeat(40);
@@ -46,6 +47,34 @@ test("only a listing that matches its schema and its export replaces the staged 
     const staged = fs.readFileSync(target, "utf8");
     assert.deepEqual(JSON.parse(staged), fixture);
     assert.equal(staged.trimEnd().includes("\n"), false, "the staged listing is one line");
+  } finally {
+    fs.rmSync(temporary, { recursive: true, force: true });
+  }
+});
+
+test("a deployment holds the listing beside its export to the staging checks", () => {
+  const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-deploy-listing-"));
+  try {
+    const exported = path.join(temporary, "public-export.json");
+    const beside = path.join(temporary, "public-trials-listing.json");
+    assert.equal(listingBeside(exported), beside);
+    assert.equal(listingBeside(path.join(temporary, "dated.json")), null);
+    const data = { claims: [{ slug: "phase-claim" }] };
+    // No listing: nothing to check, and no page opens for an uncited trial.
+    assert.deepEqual(besideProblems(exported, data), []);
+    fs.writeFileSync(beside, JSON.stringify(fixture));
+    assert.deepEqual(besideProblems(exported, data), []);
+    // Only published claims: the export no longer holds the claim the listing names.
+    assert.match(besideProblems(exported, { claims: [] })[0], /names 1 claim\(s\) the export does not publish \(phase-claim\)/);
+    const large = structuredClone(fixture);
+    large.trials = Array.from({ length: 21000 }, (_, at) => [`NCT${String(10000000 + at)}`, "Synthetic ".repeat(40), null, ["phase_3"], "under_way", "2026-01-01", [], [], null]);
+    fs.writeFileSync(beside, JSON.stringify(large));
+    assert.match(besideProblems(exported, data)[0], /over the 8,388,608 a single file may be/);
+    fs.writeFileSync(beside, "{}");
+    assert.match(besideProblems(exported, data)[0], /does not match trials-listing\.schema\.json/);
+    // An empty listing may be deployed: it opens nothing.
+    fs.writeFileSync(beside, JSON.stringify({ ...fixture, trials: [] }));
+    assert.deepEqual(besideProblems(exported, data), []);
   } finally {
     fs.rmSync(temporary, { recursive: true, force: true });
   }

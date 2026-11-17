@@ -145,6 +145,24 @@ export const FIXED_WORDING = [
 ];
 assertPlainWording(FIXED_WORDING);
 
+/**
+ * Whether a record's lead sponsor is a person, by the pipeline's own rule
+ * (events/trial_facts.py, `_sponsor`): the registry classes it as an individual, which
+ * its API writes "INDIV", or the responsible party is a sponsor-investigator, whom the
+ * registry often classes as "other". A person's name is never shown.
+ * @param {object | undefined} module the record's sponsorCollaboratorsModule
+ */
+export function sponsorIsPerson(module) {
+  const kind = module?.leadSponsor?.class;
+  return kind === "INDIV" || kind === "INDIVIDUAL" || module?.responsibleParty?.type === "SPONSOR_INVESTIGATOR";
+}
+
+/** The lead sponsor's name as a page may show it: null for a person, or for no name. */
+export function sponsorName(module) {
+  const name = module?.leadSponsor?.name;
+  return sponsorIsPerson(module) || typeof name !== "string" || !name.trim() ? null : name.trim();
+}
+
 /** The site's state for a registry status code; null for a code the mapping lacks. */
 export const stateOf = (status) => REGISTRY_STATES[status] ?? null;
 

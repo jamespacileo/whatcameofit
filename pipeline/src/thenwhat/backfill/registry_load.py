@@ -103,7 +103,8 @@ def trial_fields(study: dict[str, Any]) -> dict[str, Any]:
     registry leaves out is stored empty: nothing is worked out from other fields."""
     protocol = study["protocolSection"]
     status = protocol.get("statusModule", {})
-    lead_sponsor = protocol.get("sponsorCollaboratorsModule", {}).get("leadSponsor", {})
+    sponsors = protocol.get("sponsorCollaboratorsModule", {})
+    lead_sponsor = sponsors.get("leadSponsor", {})
     interventions = [
         {
             "type": intervention.get("type"),
@@ -138,34 +139,56 @@ def trial_fields(study: dict[str, Any]) -> dict[str, Any]:
         "acronym": protocol["identificationModule"].get("acronym"),
         # A sponsor who is a person is not named in a column.
         "lead_sponsor_name": (
-            None if lead_sponsor.get("class") == INDIVIDUAL else lead_sponsor.get("name")
+            None if sponsored_by_a_person(sponsors) else lead_sponsor.get("name")
         ),
     }
 
 
-INDIVIDUAL = "INDIVIDUAL"
+# The registry's API writes the class of a person as INDIV; INDIVIDUAL is its name for the
+# same class elsewhere and is treated alike.
+PERSON_CLASSES = frozenset({"INDIV", "INDIVIDUAL"})
+SPONSOR_INVESTIGATOR = "SPONSOR_INVESTIGATOR"
+
+
+def sponsored_by_a_person(sponsors: dict[str, Any]) -> bool:
+    """Whether a record's lead sponsor is a person, by the rule the trial facts use
+    (`events/trial_facts.py`, `_sponsor`): the registry classes it as an individual, or
+    the responsible party is a sponsor-investigator, whom the registry often classes as
+    "other"."""
+    lead = sponsors.get("leadSponsor")
+    party = sponsors.get("responsibleParty")
+    return (isinstance(lead, dict) and lead.get("class") in PERSON_CLASSES) or (
+        isinstance(party, dict) and party.get("type") == SPONSOR_INVESTIGATOR
+    )
 
 
 def without_people(study: dict[str, Any]) -> dict[str, Any]:
     """The registry's record as stored: exactly as the registry gave it, except that the
-    name of a lead sponsor or collaborator whose class is INDIVIDUAL is removed. That is
-    the one thing removed, because the project keeps no personal data beyond subscriber
-    emails and such a name is a person's. The class is kept, so the record still says a
-    person sponsors or collaborates on the trial. The record given is not changed."""
+    name of a lead sponsor or collaborator who is a person is removed, and with it the
+    name a sponsor-investigator is given as responsible party. Nothing else is removed.
+    The project keeps no personal data beyond subscriber emails and such a name is a
+    person's. The class is kept, so the record still says a person sponsors or
+    collaborates on the trial. The record given is not changed."""
     sponsors = study.get("protocolSection", {}).get("sponsorCollaboratorsModule")
     if not sponsors:
         return study
 
-    def unnamed(party: dict[str, Any]) -> dict[str, Any]:
-        if party.get("class") != INDIVIDUAL:
+    def unnamed(party: dict[str, Any], person: bool) -> dict[str, Any]:
+        if not person and party.get("class") not in PERSON_CLASSES:
             return party
         return {key: value for key, value in party.items() if key != "name"}
 
     kept = dict(sponsors)
+    person = sponsored_by_a_person(sponsors)
     if isinstance(sponsors.get("leadSponsor"), dict):
-        kept["leadSponsor"] = unnamed(sponsors["leadSponsor"])
+        kept["leadSponsor"] = unnamed(sponsors["leadSponsor"], person)
     if isinstance(sponsors.get("collaborators"), list):
-        kept["collaborators"] = [unnamed(party) for party in sponsors["collaborators"]]
+        kept["collaborators"] = [unnamed(party, False) for party in sponsors["collaborators"]]
+    party = sponsors.get("responsibleParty")
+    if isinstance(party, dict) and party.get("type") == SPONSOR_INVESTIGATOR:
+        kept["responsibleParty"] = {
+            key: value for key, value in party.items() if key != "investigatorFullName"
+        }
     protocol = {**study["protocolSection"], "sponsorCollaboratorsModule": kept}
     return {**study, "protocolSection": protocol}
 

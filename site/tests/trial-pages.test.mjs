@@ -279,3 +279,37 @@ test("an export under a name of its own has no listing beside it, and still buil
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(out, "trials-listing.json"), "utf8")).trials, []);
 });
+
+test("a sponsor who is a person is never named, on either kind of trial page", async () => {
+  // The registry's API writes the class "INDIV"; a sponsor-investigator is a person
+  // whatever the class, and the registry often classes one as "OTHER".
+  const people = {
+    "class INDIV": { leadSponsor: { name: "PLANTED-PERSON", class: "INDIV" } },
+    "class INDIVIDUAL": { leadSponsor: { name: "PLANTED-PERSON", class: "INDIVIDUAL" } },
+    "a sponsor-investigator classed OTHER": {
+      leadSponsor: { name: "PLANTED-PERSON", class: "OTHER" },
+      responsibleParty: { type: "SPONSOR_INVESTIGATOR", investigatorFullName: "PLANTED-PERSON", investigatorAffiliation: "PLANTED-AFFILIATION" },
+    },
+  };
+  for (const [which, sponsor] of Object.entries(people)) {
+    for (const id of [UNCITED, CITED]) {
+      const response = await site(dist, record(id, { sponsor })).open(id);
+      const html = await response.text();
+      assert.equal(response.status, 200, which);
+      assert.ok(!html.includes("PLANTED-PERSON") && !html.includes("PLANTED-AFFILIATION"), `${which}, ${id}: a person is named`);
+      assert.ok(!html.includes("Lead sponsor"), `${which}, ${id}: a sponsor row is shown`);
+    }
+  }
+  // An organisation is still named, with a principal investigator as responsible party.
+  const named = { leadSponsor: { name: "Synthetic Sponsor Ltd", class: "OTHER" }, responsibleParty: { type: "PRINCIPAL_INVESTIGATOR" } };
+  for (const id of [UNCITED, CITED]) {
+    assert.ok((await (await site(dist, record(id, { sponsor: named })).open(id)).text()).includes("Synthetic Sponsor Ltd"), id);
+  }
+});
+
+test("the listing files are served marked not to be indexed", () => {
+  const headers = fs.readFileSync(path.join(dist, "_headers"), "utf8");
+  for (const file of ["/trials-listing.json", "/trial-listed.txt"]) {
+    assert.match(headers, new RegExp(`^${file.replace(".", "\\.")}\\n  X-Robots-Tag: noindex$`, "m"), file);
+  }
+});
