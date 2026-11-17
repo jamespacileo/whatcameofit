@@ -44,8 +44,23 @@ for (const term of terms) {
   term.addEventListener("click", () => openTerm(term, term.getAttribute("aria-expanded") !== "true"));
 }
 
+// "What the report said" stands by who said it, or by kind of statement: both orders
+// are in the page and one is shown. With no script it is by who said it.
+for (const order of document.querySelectorAll<HTMLElement>("[data-said-order]")) {
+  const section = order.closest("section")!;
+  const choices = [...order.querySelectorAll<HTMLButtonElement>("[data-said-view]")];
+  const arrange = (view: string) => {
+    for (const choice of choices) choice.setAttribute("aria-pressed", String(choice.dataset.saidView === view));
+    for (const body of section.querySelectorAll<HTMLElement>("[data-said-body]")) {
+      body.hidden = body.dataset.saidBody !== view;
+    }
+  };
+  for (const choice of choices) choice.addEventListener("click", () => arrange(choice.dataset.saidView!));
+  order.hidden = false;
+}
+
 // Paper has no press: why each term matched prints open, then goes back as it was.
-const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why")];
+const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why, .entry-more .match-why")];
 addEventListener("beforeprint", () => {
   for (const why of whys) {
     why.toggleAttribute("data-was-open", why.open);

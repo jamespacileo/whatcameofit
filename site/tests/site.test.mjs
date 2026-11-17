@@ -1657,8 +1657,18 @@ test("Scenario: Claim with three statements from one report", () => {
   assert.equal(count(section, 'class="matched-group statement-report"'), 1);
   assert.match(section, /href="https:\/\/uk\.news\.example\.org\/3"[^>]*>\s*“Example report 3”/);
   assert.match(plainText(section), /Example Outlet 3 uk\.news\.example\.org 3 May 2019/);
-  assert.equal(count(section, 'class="statement"'), 3);
-  // Each with its kind and how sure the check is, as a word and a percentage.
+  // The three stand twice in the page, by who said them and by kind; the second order
+  // is hidden until a reader asks for it.
+  const byWho = section.split('data-said-body="kind"')[0];
+  assert.equal(count(byWho, 'class="statement"'), 3);
+  assert.equal(count(section, 'class="statement"'), 6);
+  assert.match(section, /<div class="said-view" data-said-body="kind" hidden>/);
+  assert.match(section, /<div class="kind-tabs said-order" role="group" aria-label="Arrange the statements" hidden data-said-order>/);
+  // A statement carries a mark for how firmly it was put, named once over the list.
+  assert.match(section, /<span class="firm-mark" aria-hidden="true"><\/span>Said as a fact/);
+  assert.ok(count(byWho, 'class="firm-mark maybe"') >= 1);
+  // Each with its kind and how sure the check is, as a word and a percentage: where the
+  // check is very sure, the score stands where the row opens.
   assert.match(plainText(section), /Effect The report said: Synthetic statement: examplumab eased/);
   for (const label of ["Very likely in the report · 93%", "Very likely in the report · 88%", "Very likely in the report · 81%"]) {
     // The percentage is marked apart inside the chip; the words read are the same.
