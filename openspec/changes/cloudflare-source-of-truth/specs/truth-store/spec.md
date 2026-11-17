@@ -79,6 +79,14 @@ The store SHALL be kept as a hot tier in D1, holding every table something on Cl
 - **WHEN** the bulk file is downloaded and its deltas are replayed in order
 - **THEN** each table's checksum equals that of the file the daily job merged in place
 
+#### Scenario: The daily bulk merge runs twice
+- **WHEN** the job runs again with the same day's delta path
+- **THEN** that delta still contains every change since the day's starting point, including changes written before a restart
+
+#### Scenario: A restore stops between batches
+- **WHEN** a restore commits the first batch of a delta and stops
+- **THEN** replaying the delta applies all remaining batches once
+
 ### Requirement: Every record says where it came from
 Every record the store holds SHALL carry the run that first added it and the run that last changed it. A run SHALL record the kind of writer, the device or the class of reader request, the code's commit and the time.
 
@@ -143,6 +151,10 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 - **WHEN** the comparison is run against the working database
 - **THEN** the database is read in a read-only transaction that is rolled back, nothing is written to it, and the store file it makes is removed unless it is asked to be kept
 
+#### Scenario: An article discrepancy and another change on one claim
+- **WHEN** the store kept the first of two source articles at a shared address key and the same claim also has an unexpected status or a changed title on a retained article
+- **THEN** the comparison identifies the remaining change and exits with an error even with `--allow-named`
+
 #### Scenario: A difference the comparison can explain
 - **WHEN** a claim differs because the database holds two of its source articles at one address key, or only in the order of its intervention's other names
 - **THEN** the claim is listed with that cause, the comparison still exits with an error, and with `--allow-named` it exits successfully only when every difference has a named cause
@@ -154,6 +166,10 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 #### Scenario: Comparing against the store itself
 - **WHEN** the comparison is given the name of the D1 database (`--d1`)
 - **THEN** the rows an export reads are fetched with read-only queries into a store file, a payload object the local folder lacks is fetched from the bucket named, every payload is checked against its checksum, and the comparison is of that file
+
+#### Scenario: D1 changes while its pages are being copied
+- **WHEN** a transaction commits on D1 between the first and last page of the copy
+- **THEN** the export reports that the copy must be retried and preserves the previous local snapshot
 
 #### Scenario: A store that holds only the hot tier
 - **WHEN** the store file or database holds only the tables an export reads (no registry trial, lead, share, ledger entry, usage or measure)

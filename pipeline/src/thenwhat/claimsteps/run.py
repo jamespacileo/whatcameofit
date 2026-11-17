@@ -25,7 +25,7 @@ from thenwhat.db.models import Claim, RegistrySearch, WorkEntry
 from thenwhat.domain import WorkOutcome
 from thenwhat.work.ledger import due_records
 from thenwhat.work.outcome import UndeclaredReason, declared
-from thenwhat.work.runner import RunReport, run_step
+from thenwhat.work.runner import RunReport, measured_run, run_step
 
 SUBSTANCE = ClaimSubstance.name
 TRIALS = ClaimTrials.name
@@ -45,7 +45,9 @@ def claim_steps(
     a step only while drafts are decided by rule. `rescore`, `redo_rule` and
     `rescore_pending` are the per-claim commands' options."""
     reject_below, accept_above = settings.match_reject_below, settings.match_accept_above
-    articles = ClaimArticles(claims=claims, clock=clock)
+    articles = ClaimArticles(
+        site_retry_wait=timedelta(hours=settings.lead_site_retry_hours), claims=claims, clock=clock
+    )
     substance = ClaimSubstance(claims=claims, clock=clock)
     trials = ClaimTrials(
         reject_below=reject_below,
@@ -60,6 +62,7 @@ def claim_steps(
     )
     trials.after = (substance,)
     papers = ClaimPapers(
+        papers_enabled=bool(settings.openalex_api_key),
         reject_below=reject_below,
         accept_above=accept_above,
         rescore=rescore,
@@ -68,7 +71,11 @@ def claim_steps(
     )
     papers.after = (trials,)
     named = ClaimNamedRecords(
-        reject_below=reject_below, accept_above=accept_above, claims=claims, clock=clock
+        reject_below=reject_below,
+        accept_above=accept_above,
+        papers_enabled=bool(settings.openalex_api_key),
+        claims=claims,
+        clock=clock,
     )
     fetch = ClaimFetch(
         threshold=settings.review_confidence_threshold,
@@ -120,6 +127,7 @@ def merged(reports: Sequence[RunReport]) -> RunReport:
         together.nothing_found += report.nothing_found
         together.failed += report.failed
         together.later += report.later
+        together.before_work += report.before_work
         together.needs_fix += report.needs_fix
         together.stopped = together.stopped or report.stopped
         together.errors = (together.errors or []) + (report.errors or [])
@@ -136,7 +144,6 @@ def run_claim_steps(
     put_off_span: timedelta,
     now: Callable[[], datetime],
     workers: int = 1,
-    before_call: Callable[[Session], None] | None = None,
 ) -> list[StepRun]:
     """Run each step over its due claims in turn, `workers` claims at a time. Before each
     step the claims whose input changed are made due again, so a part an earlier step
@@ -155,16 +162,18 @@ def run_claim_steps(
             step,
             now=now,
             attempt_limit=attempt_limit,
-            before_call=before_call,
             tried=tried,
             put_off_span=put_off_span,
         )
         clients = [make_sources() for _ in range(workers)]
-        if workers == 1:
-            report = work(clients[0])
-        else:
-            with ThreadPoolExecutor(max_workers=workers) as pool:
-                report = merged(list(pool.map(work, clients)))
+        with measured_run(step.name, limit=None, workers=workers) as run:
+            work = partial(work, run=run)
+            if workers == 1:
+                report = work(clients[0])
+            else:
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    report = merged(list(pool.map(work, clients)))
+        report.not_written = run.not_written
         runs.append(StepRun(step, report, time.monotonic() - started))
     return runs
 

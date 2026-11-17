@@ -132,6 +132,37 @@ A defect seen in two batches gets a regression test before the third.
 2. Leads already passed and not yet read. They cost no triage.
 3. Then by month, oldest first: an older report has had longer for a trial to follow.
 
+## Recheck an older PubMed batch
+
+Before the client checked each fetch against the PMIDs returned by its search, a PubMed error document could leave a trial recorded as `nothing_found` with reason `no_papers`. A genuine empty search has the same entry. These entries have no expiry. To investigate a known incident, use its UTC start and end as the `incident_from` and `incident_until` variables in this read-only PostgreSQL query in `psql`.
+
+```sql
+SELECT t.external_id, e.last_attempt_at
+FROM work_entry AS e
+JOIN registry_trial AS t ON t.id = e.record_id
+WHERE e.record_kind = 'registry_trial' AND e.step = 'pubmed_papers'
+  AND e.step_version = 1 AND e.outcome = 'nothing_found' AND e.reason = 'no_papers'
+  AND NOT e.stale
+  AND e.last_attempt_at >= :'incident_from'::timestamptz
+  AND e.last_attempt_at < :'incident_until'::timestamptz
+ORDER BY e.last_attempt_at, t.external_id;
+```
+
+The list identifies candidates for a recheck. The old ledger does not retain the upstream XML or PMIDs for those searches. To make one selected result due, set the `nct` and `checked_at` variables to its exact registry number and timestamp from the query. On the private PostgreSQL writer, apply the same stale mark the work ledger uses when retrying a finished record.
+
+```sql
+UPDATE work_entry AS e SET stale = true, attempts = 0
+FROM registry_trial AS t
+WHERE e.record_kind = 'registry_trial' AND e.record_id = t.id
+  AND t.registry_name = 'clinicaltrials.gov' AND t.external_id = :'nct'
+  AND e.step = 'pubmed_papers' AND e.step_version = 1
+  AND e.outcome = 'nothing_found' AND e.reason = 'no_papers' AND NOT e.stale
+  AND e.last_attempt_at = :'checked_at'::timestamptz
+RETURNING t.external_id;
+```
+
+Use `thenwhat backfill run pubmed_papers --limit 25` for a bounded off-peak batch. It selects up to 25 trials from the ordinary due queue, which may include other trials with higher priority. Check `work_entry.last_attempt_at` and `stale` on the selected trials to see which the batch reached.
+
 ## What the loop does not decide
 
 - What is published: rules approve, the audit releases, the operator archives (`docs/adr/0001`, `docs/adr/0007`).

@@ -9,11 +9,13 @@ from typing import Any
 from sqlalchemy import ColumnElement, select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.link_reasons import SITE_BUSY, reason_for_status
 from thenwhat.backfill.outlet_hold import OutletHeld, retrieve_unless_held
 from thenwhat.claimsteps.inputs import Inputs, names_a_record
 from thenwhat.claimsteps.reasons import (
     ARTICLE_UNREADABLE,
     OUTLET_HELD,
+    PAPERS_OFF,
     SOURCE_FAILED,
     SOURCE_RETRY,
     SourceNotSetUp,
@@ -25,7 +27,7 @@ from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
 from thenwhat.db.models import Claim, SourceArticle
 from thenwhat.decide.core import DecisionFailed
 from thenwhat.domain import ReviewState, WorkOutcome
-from thenwhat.extract.retrieve import NotNow, PasteNeeded
+from thenwhat.extract.retrieve import NotNow, NotServed, PasteNeeded
 from thenwhat.llm.errors import LlmError
 from thenwhat.resolve.named import candidates_named_in_article
 from thenwhat.sources.base import SourceError
@@ -45,7 +47,12 @@ class ClaimArticles(ClaimStep):
     are read. The article's text is used for the read only and never stored."""
 
     name = "claim_articles"
-    reasons = (OUTLET_HELD, ARTICLE_UNREADABLE)
+    version = 2
+    reasons = (OUTLET_HELD, ARTICLE_UNREADABLE, SITE_BUSY, SOURCE_FAILED)
+
+    def __init__(self, *, site_retry_wait: timedelta, **step: Any) -> None:
+        super().__init__(**step)
+        self.site_retry_wait = site_retry_wait
 
     def condition(self) -> ColumnElement[bool]:
         # A decided claim is never redrafted.
@@ -87,7 +94,12 @@ class ClaimArticles(ClaimStep):
                 left.append(Later(OUTLET_HELD, now + wait, {"outlet": article.outlet}))
                 continue
             except PasteNeeded as needed:
-                left.append(NeedsFix(ARTICLE_UNREADABLE, {"said": str(needed)}))
+                if isinstance(needed, NotServed) and reason_for_status(needed.status) == SITE_BUSY:
+                    left.append(
+                        Later(SITE_BUSY, now + self.site_retry_wait, {"status": needed.status})
+                    )
+                else:
+                    left.append(NeedsFix(ARTICLE_UNREADABLE, {"said": str(needed)}))
                 continue
             read = attempt(
                 session,
@@ -124,18 +136,21 @@ class ClaimNamedRecords(ClaimStep):
     the claim as they are, and the claim comes back for this step."""
 
     name = "claim_named_records"
-    reasons = (SOURCE_FAILED,)
+    reasons = (SOURCE_FAILED, PAPERS_OFF)
 
-    def __init__(self, *, reject_below: float, accept_above: float, **step: Any) -> None:
+    def __init__(
+        self, *, reject_below: float, accept_above: float, papers_enabled: bool, **step: Any
+    ) -> None:
         super().__init__(**step)
         self.reject_below = reject_below
         self.accept_above = accept_above
+        self.papers_enabled = papers_enabled
 
     def condition(self) -> ColumnElement[bool]:
         return names_a_record()
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return {"named": inputs.named.get(claim_id, [])}
+        return {"named": inputs.named.get(claim_id, []), "papers_enabled": self.papers_enabled}
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
@@ -172,4 +187,6 @@ class ClaimNamedRecords(ClaimStep):
         if isinstance(added, DecisionFailed | LlmError):
             return model_failed(added)
         self.results[claim.id] = added
+        if dois and research.papers is None:
+            return NeedsFix(PAPERS_OFF)
         return WorkOutcome.DONE

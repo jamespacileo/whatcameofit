@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from test_store_records import STORE, _world
-from thenwhat.db.models import Claim, LinkShare
+from thenwhat.db.models import Claim, LinkShare, RegistryTrial, TrialPaper
 from thenwhat.store.build import build
 from thenwhat.store.gather import Gathered, stream
 from thenwhat.store.tiers import BULK_KINDS, HOT, split_build, tier_path
@@ -65,6 +65,30 @@ def test_watermarks_move_with_any_write_and_the_id_with_the_data(session: Sessio
     assert bulk_unchanged({"sql": digest, "marks": after_share}, after_claim, digest)
     # Other SQL is another build.
     assert not bulk_unchanged({"sql": "other", "marks": after_claim}, after_claim, digest)
+
+
+def test_adding_or_correcting_a_trial_paper_invalidates_bulk_reuse(session: Session):
+    _world(session)
+    tables = HOT_SOURCES + BULK_SOURCES
+    before = watermarks(session, tables)
+    trial_id = session.scalars(select(RegistryTrial.id)).first()
+    paper = TrialPaper(
+        registry_trial_id=trial_id,
+        source_name="pubmed",
+        pubmed_id="123",
+        raw_payload={"title": "Original title"},
+        fetched_at=datetime(2026, 11, 17, tzinfo=UTC),
+    )
+    session.add(paper)
+    session.flush()
+    added = watermarks(session, tables)
+    assert not bulk_unchanged({"sql": "same", "marks": before}, added, "same")
+
+    # PostgreSQL assigns a new xmin to an update in a later subtransaction.
+    with session.begin_nested():
+        paper.raw_payload = {"title": "Corrected title"}
+    corrected = watermarks(session, tables)
+    assert not bulk_unchanged({"sql": "same", "marks": added}, corrected, "same")
 
 
 def test_a_hot_build_is_moved_into_place_with_its_objects(session: Session, tmp_path: Path):

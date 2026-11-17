@@ -93,7 +93,22 @@ def test_a_record_to_be_tried_later_holds_its_reason_and_its_time(session: Sessi
     assert (entry.reason, entry.reason_values) == ("site_busy", {"status": 503})
     assert entry.not_before == until and entry.first_put_off_at == NOW
     assert entry.attempts == 0 and entry.error is None
-    assert (report.later, report.processed, report.remaining_due) == (1, 0, 0)
+    assert (report.later, report.processed, report.remaining_due) == (1, 1, 0)
+
+
+def test_a_handled_record_put_off_counts_towards_the_run_limit(session: Session):
+    trials = add_trials(session, 4)
+    step = ReasonedStep()
+    for trial in trials:
+        step.answers[trial.external_id] = lambda: Later(
+            SITE_BUSY, NOW + timedelta(hours=1), {"status": 503}
+        )
+
+    report = run(session, step, limit=1)
+
+    assert (report.later, report.processed, report.remaining_due) == (1, 1, 3)
+    assert step.ran == [trials[0].external_id]
+    assert entry_of(session, step, trials[0]).attempts == 0
 
 
 def test_nothing_found_can_say_why(session: Session):

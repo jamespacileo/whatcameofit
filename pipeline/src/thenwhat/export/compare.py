@@ -20,9 +20,12 @@ date or score order all still show.
 """
 
 import json
+from collections.abc import Mapping
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
+from thenwhat.backfill.address import article_key
 from thenwhat.export.build import PAPER_ROLES
 from thenwhat.export.organisations import ORGANISATION_ROLES
 
@@ -186,7 +189,9 @@ def _only_synonym_order(ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
     one, other = ours.get("intervention"), theirs.get("intervention")
     if not isinstance(one, dict) or not isinstance(other, dict):
         return False
-    if sorted(one.get("synonyms", [])) != sorted(other.get("synonyms", [])):
+    if "synonyms" not in one or "synonyms" not in other:
+        return False
+    if sorted(one["synonyms"]) != sorted(other["synonyms"]):
         return False
     return {**ours, "intervention": {**one, "synonyms": []}} == {
         **theirs,
@@ -194,15 +199,95 @@ def _only_synonym_order(ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
     }
 
 
+def _fold_articles(
+    ours: dict[str, Any], theirs: dict[str, Any], duplicates: dict[str, str]
+) -> dict[str, Any] | None:
+    """Apply just the known article merges to the first export, retaining all other data."""
+    source = {article["url"] for article in ours["articles"]}
+    stored = {article["url"] for article in theirs["articles"]}
+    for removed, kept in duplicates.items():
+        if (
+            removed not in source
+            or kept not in source
+            or removed in stored
+            or kept not in stored
+            or not article_key(kept)
+            or article_key(removed) != article_key(kept)
+        ):
+            return None
+    folded = deepcopy(ours)
+    folded["articles"] = [
+        article for article in folded["articles"] if article["url"] not in duplicates
+    ]
+    for field in ("promises", "reported_statements"):
+        if field not in folded:
+            continue
+        children = []
+        origins: dict[str, set[str]] = {}
+        for row in folded[field]:
+            url = row["article_url"]
+            row["article_url"] = duplicates.get(url, url)
+            if row["article_url"] in duplicates.values():
+                # Equal children from different articles become one store record. If
+                # rows of the same article already collide, the cause is ambiguous.
+                urls = origins.setdefault(_said(row), set())
+                if url in urls:
+                    return None
+                urls.add(url)
+                if len(urls) > 1:
+                    continue
+            children.append(row)
+        folded[field] = children
+    for organisation in folded.get("organisations", []):
+        for role in organisation["roles"]:
+            if "article_urls" in role:
+                if len(set(role["article_urls"])) != len(role["article_urls"]):
+                    return None
+                role["article_urls"] = list(
+                    dict.fromkeys(duplicates.get(url, url) for url in role["article_urls"])
+                )
+    return _claim(folded)
+
+
+def _cause(
+    one: dict[str, Any],
+    other: dict[str, Any],
+    aliases: dict[str, str] | str | None,
+    places: list[str],
+) -> str | None:
+    if _only_synonym_order(one, other):
+        return SYNONYM_ORDER
+    if not isinstance(aliases, dict) or not aliases:
+        return None
+    folded = _fold_articles(one, other, aliases)
+    if folded is None:
+        return None
+    kept = ", ".join(sorted(set(aliases.values())))
+    cause = (
+        "the database holds two source articles of this claim at one"
+        f" address key. The store keeps the first ({kept})."
+    )
+    if folded == other:
+        return cause
+    if _only_synonym_order(folded, other):
+        return f"{cause} {SYNONYM_ORDER}"
+    # A length difference hides a change to a retained row in the original report.
+    # Show what still differs after folding.
+    places.extend(p for p in _places(folded, other, "claim") if p not in places)
+    return None
+
+
 def compare(
-    first: dict[str, Any], second: dict[str, Any], *, known: dict[str, str] | None = None
+    first: dict[str, Any],
+    second: dict[str, Any],
+    *,
+    known: Mapping[str, dict[str, str] | str] | None = None,
 ) -> Comparison:
     """Compare two exports, each as parsed JSON. They are the same exactly when their
     canonical bytes are.
 
-    `known` names, by slug, a cause the caller knows a claim may differ for (something
-    the first export's records hold that the second's store cannot). It is given to a
-    claim that does differ and has no cause the comparison names itself."""
+    `known` gives, by slug, each duplicate article URL and the URL the store keeps.
+    A legacy text explanation alone is insufficient to attribute a difference."""
     known = known or {}
     ours, theirs = canonical(first), canonical(second)
     differences: list[Difference] = []
@@ -217,13 +302,10 @@ def compare(
             where = "the first" if slug in our_claims else "the second"
             differences.append(Difference(slug, True, [f"only in {where}"]))
             continue
-        places = _places(our_claims[slug], their_claims[slug], "claim")
+        one, other = our_claims[slug], their_claims[slug]
+        places = _places(one, other, "claim")
         if places:
-            cause = (
-                SYNONYM_ORDER
-                if _only_synonym_order(our_claims[slug], their_claims[slug])
-                else known.get(slug)
-            )
+            cause = _cause(one, other, known.get(slug), places)
             differences.append(Difference(slug, True, places, cause))
     assert bool(differences) == (canonical_bytes(first) != canonical_bytes(second))
     return Comparison(len(our_claims), len(their_claims), differences)

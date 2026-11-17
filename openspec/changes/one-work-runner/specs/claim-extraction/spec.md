@@ -17,6 +17,26 @@ An operator SHALL be able to have unread articles read, registries searched and 
 - **WHEN** a registry cannot be asked during a run
 - **THEN** the claims waiting for it stay due for that step, the steps that need other sources still run, and the report says how many wait and for what
 
+#### Scenario: A publisher is temporarily unavailable
+- **WHEN** the page reader reports a temporary site response (including 202, 429 or 503) for an unread source article
+- **THEN** the article step is put off for the configured site wait and the next due run tries it again
+
+#### Scenario: The ceiling is reached with free work still due
+- **WHEN** the month's model spend has reached its ceiling
+- **THEN** source-only work and a decision by rule can still finish, and each step requiring a model stops when it needs the paid call
+
+#### Scenario: The model refuses its key during trial readings
+- **WHEN** the model cannot be asked while reading trials
+- **THEN** the step stops with its current and remaining claims due, keeps completed readings, and reports the provider's cause
+
+#### Scenario: A source pauses after a paid part
+- **WHEN** a claim's completed classifications are followed by a failed drug lookup which pauses its source
+- **THEN** the step stops with the claim due and a later run reuses its completed classifications
+
+#### Scenario: MeSH cannot resolve an entry term
+- **WHEN** the vocabulary returns an entry term without the record that identifies its descriptor
+- **THEN** the terms step reports the unresolved name and schedules another attempt
+
 ## ADDED Requirements
 
 ### Requirement: What a decision waits for
@@ -34,6 +54,10 @@ A claim a read drafted SHALL be decided by the rule for drafts only when its sub
 - **WHEN** a claim's search and fetch finished and reading one of its trial records failed
 - **THEN** the claim is decided, and that reading is due on the next run
 
+#### Scenario: The DOI registry cannot answer about an article's paper
+- **WHEN** the claim's trial search finished but the DOI registry cannot identify a paper entity
+- **THEN** the trial search keeps its receipts, the paper lookup stays due, and the decision can proceed once its required steps finish
+
 ### Requirement: Unfinished parts of a published claim are completed
 A run that prepares claims SHALL take, beside the claims awaiting review, every approved claim that is not archived and is due for a part of its preparation, so that a part left unfinished when the claim was decided is finished later without being asked for by name.
 
@@ -44,3 +68,11 @@ A run that prepares claims SHALL take, beside the claims awaiting review, every 
 #### Scenario: A trial approved after the claim was published
 - **WHEN** a trial match of a published claim is approved and its record has not been read
 - **THEN** the next run reads it
+
+#### Scenario: A paper approved after the claim was searched
+- **WHEN** a related paper is approved after the last paper search
+- **THEN** the next prepare looks up its stated trial numbers and considers it for origin paper
+
+#### Scenario: The paper index is enabled after a page named a DOI
+- **WHEN** the index was off when a claim was prepared and its article named a DOI
+- **THEN** the unfinished lookup is reported and enabling the index makes the claim due for those identifiers

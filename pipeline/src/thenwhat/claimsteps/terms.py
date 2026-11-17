@@ -14,17 +14,14 @@ from sqlalchemy.orm import Session
 from thenwhat.claimsteps.inputs import Inputs
 from thenwhat.claimsteps.reasons import (
     KIND_TERM_MISSING,
+    MESH_UNRESOLVED,
     SOURCE_FAILED,
-    attempt,
-    model_failed,
-    put_off,
+    SOURCE_RETRY,
+    run_parts,
 )
 from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
 from thenwhat.db.models import Claim
-from thenwhat.decide.core import DecisionFailed
 from thenwhat.domain import WorkOutcome
-from thenwhat.llm.errors import LlmError
-from thenwhat.sources.base import SourceError
 from thenwhat.terms.service import (
     DrugRun,
     KindRun,
@@ -36,7 +33,7 @@ from thenwhat.terms.service import (
     link_targets,
     link_terms,
 )
-from thenwhat.work.outcome import NeedsFix
+from thenwhat.work.outcome import Later, NeedsFix
 from thenwhat.work.steps import Failed
 
 
@@ -65,7 +62,8 @@ class ClaimTerms(ClaimStep):
     scored near zero; the rest wait for review. Nothing here changes a status."""
 
     name = "claim_terms"
-    reasons = (SOURCE_FAILED, KIND_TERM_MISSING)
+    version = 2
+    reasons = (SOURCE_FAILED, KIND_TERM_MISSING, MESH_UNRESOLVED)
 
     def __init__(
         self,
@@ -138,14 +136,15 @@ class ClaimTerms(ClaimStep):
         def drug() -> None:
             found.drug = link_drug(session, claim, drugs=sources.make_drugs(session), now=now)
 
-        for part in (terms, kind, targets, drug):
-            answer = attempt(session, part)
-            if isinstance(answer, SourceError):
-                return put_off(answer, now)
-            if isinstance(answer, DecisionFailed | LlmError):
-                return model_failed(answer)
+        unfinished = run_parts(session, (terms, kind, targets, drug), now)
+        if unfinished is not None:
+            return unfinished
         if found.unscored:
             return Failed(f"{found.unscored} could not be scored and stay without a score")
+        if found.terms and found.terms.unresolved:
+            return Later(
+                MESH_UNRESOLVED, now + SOURCE_RETRY, {"names": ", ".join(found.terms.unresolved)}
+            )
         if isinstance(found.kind, KindTermMissing):
             return NeedsFix(KIND_TERM_MISSING, {"said": str(found.kind)})
         return WorkOutcome.DONE

@@ -30,6 +30,7 @@ the text and the post's id (used only to tell one page from the next) reach no f
 
 import io
 import json
+import os
 import sys
 import time
 from datetime import UTC, date, datetime, timedelta
@@ -270,8 +271,13 @@ def fetch_hacker_news_window(start: datetime, end: datetime | None, now: datetim
             f"{end:%Y-%m-%d %H:%M:%S}" if end else None,
         )
     new = 0
+    # The daily job owns this directory under its run lock. Mark a file before
+    # replacing it or moving the fetch cursor. The importer clears the mark on success.
+    pending = os.environ.get("THENWHAT_PENDING_LINK_LOADS")
     for month in touched:
         in_month = [row for row in rows if f"{row['time']:%Y-%m}" == month]
+        if pending:
+            (Path(pending) / month).touch()
         added = merge_into(folder / f"{month}.parquet", in_month)
         new += added
         say(f"hackernews {month}: {len(in_month)} stories with a link, {added} new to the file")

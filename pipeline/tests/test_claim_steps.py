@@ -32,6 +32,7 @@ from claim_support import (
 from test_cli_extract import DRAFT, Checks, FakeRetriever
 from test_record_readings import ANSWER, OUTCOMES, Scripted, llm, reads, study_with
 from thenwhat.claims.corrections import rename_intervention
+from thenwhat.claims.entities import add_entity
 from thenwhat.claimsteps.inputs import notice_changes
 from thenwhat.claimsteps.run import claim_steps, never_searched
 from thenwhat.claimsteps.step import named
@@ -45,10 +46,11 @@ from thenwhat.db.models import (
     SourceArticle,
 )
 from thenwhat.decide.steps import INTERVENTION_KIND
-from thenwhat.domain import ClaimStatus, Decider, ReviewState, WorkOutcome
-from thenwhat.extract.retrieve import NotNow, PasteNeeded, Retrieved
+from thenwhat.domain import ClaimStatus, Decider, EntityType, ReviewState, WorkOutcome
+from thenwhat.extract.retrieve import NotNow, NotServed, PasteNeeded, Retrieved
+from thenwhat.llm.errors import ModelCannotBeAsked
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceCannotBeAsked, SourceRecord
 from thenwhat.statements.service import StatementChecker
 from thenwhat.work.ledger import due_records
 
@@ -427,7 +429,7 @@ def test_the_fetch_step_records_events_and_is_put_off_when_the_registry_fails(
     assert fetched.current_status is not None
 
 
-def test_the_readings_step_reads_and_is_put_off_at_the_spend_ceiling(
+def test_the_readings_step_stops_with_the_claim_due_at_the_spend_ceiling(
     session: Session, fixture_json
 ):
     """Task 7.3: claim_readings, finished and put off"""
@@ -436,10 +438,10 @@ def test_the_readings_step_reads_and_is_put_off_at_the_spend_ceiling(
     claim = new_claim(session)
     sources = Sources(Registry([readable_trial(fixture_json)]))
     sources.make_llm = lambda at: llm(at, Scripted(ANSWER), monthly_budget_usd=Decimal(0))
-    prepare(session, sources)
+    runs = by_step(prepare(session, sources))
 
-    put_off = entry(session, "claim_readings", claim)
-    assert (put_off.outcome, put_off.reason) == (WorkOutcome.LATER, "spend_ceiling")
+    assert runs["claim_readings"].report.stopped is not None
+    assert entry_or_none(session, "claim_readings", claim) is None
 
     sources.make_llm = lambda at: llm(at, Scripted(ANSWER))
     prepare(session, sources, at=LATER)
@@ -510,3 +512,180 @@ def test_a_registry_that_is_paused_stops_the_search_and_counts_nothing_against_t
     # The claim has no entry for the search: it is simply still due, and is not decided.
     assert entry_or_none(session, TRIALS, claim) is None
     assert claim.review_state is ReviewState.PENDING
+
+
+def test_ready_draft_can_be_decided_at_the_model_ceiling(session: Session, monkeypatch):
+    from decimal import Decimal
+
+    from backfill_support import same_session
+    from thenwhat.cli import claim_steps as cli
+
+    claim = new_claim(session)
+    drafted_by_a_read(session, claim.slug)
+    sources = Sources()
+    prepare(session, sources, names=("claim_articles", *SEARCH, "claim_fetch"))
+    config = settings(llm_monthly_budget_usd=Decimal(0))
+    monkeypatch.setattr(cli, "settings_or_exit", lambda: config)
+    monkeypatch.setattr(cli, "open_session", same_session(session))
+    monkeypatch.setattr(cli, "claim_sources", sources.claim_sources)
+
+    decide = next(step for step in claim_steps(config) if step.name == "claim_decide")
+    [run] = cli.run_steps([decide])
+    assert run.report.done == 1
+    assert claim.review_state is ReviewState.APPROVED
+
+
+def test_publisher_failure_automatically_retries_the_drafts_article(session: Session):
+    url = "https://news.example.org/temporary"
+    claim = new_claim(session, SLUG, url)
+    drafted_by_a_read(session, claim.slug)
+    sources = Sources(retriever=FakeRetriever(NotServed(url, 503)))
+
+    prepare(session, sources, names=("claim_articles",))
+    waiting = entry(session, "claim_articles", claim)
+    assert waiting.outcome is WorkOutcome.LATER
+    assert waiting.attempts == 0
+    assert waiting.not_before == NOW + timedelta(hours=6)
+
+    # A new, distinct answer proves the page was actually requested on the next run.
+    sources.retriever = FakeRetriever(NotNow(url, "brief wait", 60))
+    prepare(session, sources, names=("claim_articles",), at=NOW + timedelta(hours=6))
+    assert entry(session, "claim_articles", claim).reason == "outlet_held"
+
+
+def test_paper_approved_after_prepare_is_checked_for_trial_numbers_and_origin(session: Session):
+    from test_related_research import paper as indexed_paper
+
+    class Papers(Nothing):
+        def paper(self, external_id):
+            return indexed_paper(external_id, published="2017-01-01")
+
+    class Numbers(Nothing):
+        def trial_numbers(self, *, doi=None, pubmed_id=None):
+            assert doi == "10.1000/review"
+            return ["NCT00000001"]
+
+    claim = new_claim(session)
+    claim.first_reported_date = NOW.date()
+    sources = Sources(papers=Papers(), literature=Numbers())
+    prepare(session, sources, names=(*SEARCH, PAPERS))
+    entity = session.scalars(select(Entity).where(Entity.type == EntityType.INTERVENTION)).one()
+    paper = EntityMatch(
+        entity_id=entity.id,
+        source_name="openalex",
+        external_id="10.1000/review",
+        score=0.9,
+        record_summary="Trial paper",
+    )
+    session.add(paper)
+    record_decision(paper, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    sources.registry.trials = [trial("NCT00000001")]
+
+    rerun = by_step(prepare(session, sources, names=(*SEARCH, PAPERS)))
+    assert rerun[TRIALS].report.done == 0
+    assert rerun[PAPERS].report.done == 1
+    assert (
+        session.scalar(
+            select(EntityMatch.id).where(
+                EntityMatch.entity_id == entity.id, EntityMatch.external_id == "NCT00000001"
+            )
+        )
+        is not None
+    )
+    assert (
+        session.scalar(
+            select(Entity.doi).where(Entity.claim_id == claim.id, Entity.is_origin_paper.is_(True))
+        )
+        == "10.1000/review"
+    )
+    assert entry(session, PAPERS, claim).outcome is WorkOutcome.DONE
+
+
+def test_model_outage_stops_trial_readings_without_deferring_individual_claims(
+    session: Session, fixture_json
+):
+    class Offline:
+        calls = 0
+
+        def run_many(self, *args, **kwargs):
+            self.calls += 1
+            raise ModelCannotBeAsked("key refused")
+
+    claims = [new_claim(session, slug) for slug in ("study-a", "study-b")]
+    model = Offline()
+    sources = Sources(Registry([readable_trial(fixture_json)]), make_llm=lambda _: model)
+    runs = by_step(prepare(session, sources))
+    assert runs["claim_readings"].report.stopped == "key refused"
+    assert model.calls == 1
+    assert all(entry_or_none(session, "claim_readings", claim) is None for claim in claims)
+
+
+def test_crossref_outage_does_not_block_trial_receipt_or_decision(session: Session):
+    class UnavailableDoi(Registry):
+        def work(self, doi: str) -> SourceRecord | None:
+            raise SourceCannotBeAsked("Crossref is down")
+
+    claim = new_claim(session)
+    drafted_by_a_read(session, claim.slug)
+    add_entity(session, claim.slug, type=EntityType.PAPER, name="A paper", doi="10.1000/named")
+    runs = by_step(prepare(session, Sources(registry=UnavailableDoi())))
+    assert searches(session, claim)
+    assert runs[PAPERS].report.stopped == "Crossref is down"
+    assert claim.review_state is ReviewState.APPROVED
+
+
+def test_last_source_pause_keeps_earlier_paid_term_decisions(session: Session):
+    class UnavailableDrug(Targets):
+        def drugs_named(self, name: str) -> list[SourceRecord]:
+            raise SourceCannotBeAsked("Open Targets retry limit reached")
+
+    claim = new_claim(session)
+    sources = Sources(targets=UnavailableDrug())
+    [first] = prepare(session, sources, names=("claim_terms",))
+    assert first.report.stopped == "Open Targets retry limit reached"
+    assert entry_or_none(session, "claim_terms", claim) is None
+    assert session.scalar(select(DecisionLog.id).where(DecisionLog.step == INTERVENTION_KIND))
+    paid = sources.backend.calls
+    sources.targets = Targets()
+    [second] = prepare(session, sources, names=("claim_terms",))
+    assert second.report.done == 1
+    assert sources.backend.calls == paid
+
+
+def test_article_named_doi_is_picked_up_when_paper_index_is_enabled(session: Session):
+    class Papers(Nothing):
+        def __init__(self):
+            super().__init__()
+            self.asked = []
+
+        def paper(self, external_id):
+            self.asked.append(external_id)
+            return None
+
+    claim = new_claim(session, SLUG, "https://news.example.org/one")
+    article = session.scalars(select(SourceArticle)).one()
+    article.named_dois = ["10.1000/named"]
+    sources = Sources()
+    prepare(session, sources, names=("claim_named_records",))
+    assert entry(session, "claim_named_records", claim).outcome is WorkOutcome.NEEDS_FIX
+    papers = Papers()
+    sources.papers = papers
+    [rerun] = prepare(session, sources, names=("claim_named_records",))
+    assert rerun.report.done == 1
+    assert papers.asked == ["10.1000/named"]
+
+
+def test_unresolved_mesh_entries_are_retried(session: Session):
+    class Unresolved(Vocabulary):
+        def unresolved_entry_terms(self, name: str) -> list[str]:
+            return [name]
+
+    claim = new_claim(session)
+    sources = Sources(vocabulary=Unresolved())
+    prepare(session, sources, names=("claim_terms",))
+    waiting = entry(session, "claim_terms", claim)
+    assert waiting.outcome is WorkOutcome.LATER
+    assert waiting.not_before is not None
+    sources.vocabulary = Vocabulary()
+    [rerun] = prepare(session, sources, names=("claim_terms",), at=waiting.not_before)
+    assert rerun.report.done == 1

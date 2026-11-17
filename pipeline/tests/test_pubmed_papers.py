@@ -264,6 +264,28 @@ def test_the_plan_counts_requests_by_the_batch():
     assert step.records_for(100) == 2500
 
 
+def test_a_fetch_that_loses_a_searched_pmid_leaves_the_trials_due(session: Session, fake_time):
+    class ErrorDocument(Service):
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("efetch.fcgi"):
+                return httpx.Response(200, text="<eFetchResult><ERROR>busy</ERROR></eFetchResult>")
+            return super().__call__(request)
+
+    trials(session, WITH_ONE)
+    step = TrialPapers(trials_per_request=1)
+    service = ErrorDocument(search={"esearchresult": {"count": "1", "idlist": ["123"]}})
+    report = run_step(
+        same_session(session),
+        step,
+        pubmed(session, fake_time, service),
+        now=lambda: NOW,
+        attempt_limit=3,
+    )
+
+    assert report.stopped and "did not return the requested papers" in report.stopped
+    assert (report.nothing_found, report.failed, report.remaining_due) == (0, 0, 1)
+
+
 def test_off_peak_is_the_weekend_or_nine_at_night_to_five_in_the_morning_eastern():
     def utc(day: int, hour: int) -> datetime:
         return datetime(2026, 11, day, hour, tzinfo=NOW.tzinfo)

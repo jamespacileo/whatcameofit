@@ -24,6 +24,10 @@ When a source cannot be asked until a time, that time SHALL be kept where every 
 - **WHEN** the time a source was paused until has passed
 - **THEN** the next command asks it as usual
 
+#### Scenario: A paper search is rolled back after its allowance runs out
+- **WHEN** OpenAlex refuses a search because its free allowance is exhausted and the current claim transaction is rolled back
+- **THEN** another process that searches before reset reads the stored pause and sends no search
+
 ### Requirement: Every command's requests count against the source's allowance
 Requests to a source SHALL be counted against that source's allowance whichever command sends them. A command SHALL send no request to a source whose allowance for the period is used up.
 
@@ -37,3 +41,11 @@ A fetch that ends because the source could not be asked, was paused, or failed o
 #### Scenario: A search while the registry is down
 - **WHEN** a registry fails on every allowed attempt of a search
 - **THEN** the caller is told the search did not run, and nothing records that the search found no trial
+
+#### Scenario: A registry refuses access
+- **WHEN** a registry returns 401 or 403 for a request
+- **THEN** the caller is told that the registry cannot be asked and stops the step with the record still due
+
+#### Scenario: A paper fetch omits a searched PubMed number
+- **WHEN** a search returns PubMed numbers and a fetch fails to return their records
+- **THEN** the batch stays due and the caller reports that the records could not be fetched

@@ -4,6 +4,7 @@ is assembled once, from either store"). No network: the store file is filled fro
 test database through `store/merge.sql`, with a folder standing in for the object store.
 """
 
+import hashlib
 import json
 import sqlite3
 import subprocess
@@ -50,6 +51,7 @@ from thenwhat.export.build import build_export
 from thenwhat.export.compare import canonical_bytes, compare
 from thenwhat.export.parallel import compare_with_store
 from thenwhat.export.rehearsal import against, problems
+from thenwhat.export.store_fetch import FetchFailed, fetch_store
 from thenwhat.export.store_records import TABLES_READ, StoreFault, StoreRecords
 from thenwhat.review.queue import confirm_stage, flag_failure
 from thenwhat.seed.load import load_seed
@@ -611,6 +613,27 @@ def answering_from(path: Path, asked: list[list[str]]):
 
     def wrangler(arguments):
         asked.append(list(arguments))
+        if arguments[:3] == ["d1", "time-travel", "info"]:
+            return json.dumps({"bookmark": hashlib.sha256(path.read_bytes()).hexdigest()})
+        if arguments[:2] == ["d1", "export"]:
+            assert "--local" in arguments
+            tables = [arguments[i + 1] for i, arg in enumerate(arguments) if arg == "--table"]
+            assert set(tables) == set(TABLES_READ)
+            with sqlite3.connect(path) as db:
+                statements = [
+                    ddl + ";"
+                    for name, ddl in db.execute(
+                        "SELECT name, sql FROM sqlite_schema WHERE type='table'"
+                    )
+                    if name in tables
+                ]
+                statements.extend(
+                    line
+                    for line in db.iterdump()
+                    if any(line.startswith(f'INSERT INTO "{table}" ') for table in tables)
+                )
+            Path(arguments[arguments.index("--output") + 1]).write_text("\n".join(statements))
+            return ""
         if arguments[:2] == ["d1", "execute"]:
             db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
             db.row_factory = sqlite3.Row
@@ -666,12 +689,13 @@ def test_compare_command_reads_the_stores_export_from_the_database_itself(
 
     assert result.exit_code == 0, result.output
     assert "The two exports are the same: 1 claims, byte for byte." in result.output
-    assert all("--remote" in arguments and "SELECT" in arguments[-1] for arguments in asked)
+    queries = [arguments for arguments in asked if arguments[:2] == ["d1", "execute"]]
+    assert all("--remote" in arguments and "SELECT" in arguments[-1] for arguments in queries)
     assert not any(word in arguments[-1] for arguments in asked for word in ("INSERT", "UPDATE"))
     assert "  claim: 2 rows in " in result.output and "  outlet_icon: 2 rows in " in result.output
     assert not any(" OFFSET " in arguments[-1] for arguments in asked)
     # Only the tables an export reads are asked for: none of the bulk tier.
-    read = {arguments[-1].split(" FROM ")[1].split()[0] for arguments in asked}
+    read = {arguments[-1].split(" FROM ")[1].split()[0] for arguments in queries}
     assert read == set(TABLES_READ)
 
     asked.clear()
@@ -690,6 +714,8 @@ def test_compare_command_refuses_a_store_it_cannot_read(
 
     def failing(command, **_):
         ran.append(command)
+        if "time-travel" in command:
+            return subprocess.CompletedProcess(command, 0, stdout='{"bookmark":"first"}', stderr="")
         # As wrangler prints a failure with --json: the reason is inside, the last line is "}".
         printed = json.dumps(
             {"error": {"text": "D1_ERROR: response too large", "notes": [{"text": "code 7500"}]}},
@@ -707,6 +733,52 @@ def test_compare_command_refuses_a_store_it_cannot_read(
     assert "D1_ERROR: response too large code 7500" in said
     # The page was halved down to one row before giving up.
     assert ran[-1][-1].endswith("LIMIT 1")
+
+
+def test_d1_copy_discards_mixed_versions_and_preserves_last_good_export(session, tmp_path):
+    new_claim(session)
+    held = tmp_path / "source"
+    store_of(session, held, NOW)[0].close()
+    source = held / "store.db"
+    destination = tmp_path / "last-good.db"
+    schema, wrangler = STORE_SQL / "schema.sql", answering_from(source, [])
+    fetch_store("STORE", destination, schema=schema, wrangler=wrangler)
+    previous = destination.read_bytes()
+
+    def publish(table, count, seconds):
+        if table == "claim":
+            with sqlite3.connect(source) as db:
+                db.execute("UPDATE claim SET headline='Corrected claim'")
+                db.execute("UPDATE source_article SET title='Corrected article'")
+
+    with pytest.raises(FetchFailed, match="changed during the export"):
+        fetch_store("STORE", destination, schema=schema, wrangler=wrangler, on_table=publish)
+    assert destination.read_bytes() == previous
+    fetch_store("STORE", destination, schema=schema, wrangler=wrangler)
+    with sqlite3.connect(destination) as db:
+        assert db.execute(
+            "SELECT headline, title FROM claim JOIN source_article"
+            " ON claim.id=source_article.claim_id"
+        ).fetchone() == ("Corrected claim", "Corrected article")
+
+
+def test_local_d1_copy_refuses_a_missing_table_even_when_it_would_have_no_rows(session, tmp_path):
+    new_claim(session)
+    held = tmp_path / "source"
+    store_of(session, held, NOW)[0].close()
+    source = held / "store.db"
+    with sqlite3.connect(source) as db:
+        db.execute("DROP TABLE outlet_icon")
+    copy = tmp_path / "copy.db"
+    with pytest.raises(FetchFailed, match="outlet_icon"):
+        fetch_store(
+            "STORE",
+            copy,
+            schema=STORE_SQL / "schema.sql",
+            wrangler=answering_from(source, []),
+            remote=False,
+        )
+    assert not copy.exists()
 
 
 def test_export_command_reads_the_d1_store_and_fetches_the_objects_it_lacks(

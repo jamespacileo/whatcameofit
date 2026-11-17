@@ -425,6 +425,7 @@ def _merge(reports: list[RunReport]) -> RunReport:
         merged.nothing_found += report.nothing_found
         merged.failed += report.failed
         merged.later += report.later
+        merged.before_work += report.before_work
         merged.needs_fix += report.needs_fix
         merged.stopped = merged.stopped or report.stopped
         merged.errors = (merged.errors or []) + (report.errors or [])
@@ -472,22 +473,26 @@ def run_command(
         allowances = make_allowances(settings)
         if under_an_allowance(step):
             allowances.of(step.source)
+        shares: list[int | None] = [None] * workers
+        if limit is not None:
+            workers = min(workers, limit)
+            whole, extra = divmod(limit, workers)
+            shares = [whole + (i < extra) for i in range(workers)]
         clients = [make_client(step, settings, allowances) for _ in range(workers)]
-        share = None if limit is None else -(-limit // workers)
 
         def now() -> datetime:
             return datetime.now(UTC)
 
-        # A step that calls a model stops when the month's ceiling is reached. Most of a
-        # claim's preparation does.
-        calls_a_model = model_spend_of(step) is not None or step.record_kind == CLAIM
+        # Claim steps can finish without a model. Their backends enforce the ceiling
+        # at the point a paid call is actually needed.
+        calls_a_model = model_spend_of(step) is not None
         before_call = ceiling_check(settings, now) if calls_a_model else None
 
         tried: set[int] = set()
         # One run for all the workers: its measurements and events name it.
         with measured_run(step.name, limit=limit, workers=workers) as run:
 
-            def work(client: Any) -> RunReport:
+            def work(client: Any, share: int | None) -> RunReport:
                 return run_step(
                     open_session,
                     step,
@@ -502,10 +507,10 @@ def run_command(
                 )
 
             if workers == 1:
-                report = work(clients[0])
+                report = work(clients[0], shares[0])
             else:
                 with ThreadPoolExecutor(max_workers=workers) as pool:
-                    report = _merge(list(pool.map(work, clients)))
+                    report = _merge(list(pool.map(work, clients, shares)))
         report.not_written = run.not_written
     out.print(
         f"{step.name}: {report.done:,} done, {report.nothing_found:,} found nothing, "

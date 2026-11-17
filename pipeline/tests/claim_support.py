@@ -320,6 +320,9 @@ def prepare(
 ) -> list[StepRun]:
     """One run of the claim steps over every claim awaiting review and every approved
     claim not archived, at the time given, on the test session."""
+    # The real source factory enables the paper index from this setting. Keep its
+    # substitute and the input the ledger observes in agreement.
+    overrides.setdefault("openalex_api_key", "test" if sources.papers is not None else None)
     steps = claim_steps(settings(**overrides), clock=lambda: at)
     if names is not None:
         steps = [step for step in steps if step.name in names]

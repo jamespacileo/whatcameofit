@@ -30,7 +30,7 @@ const DECIDERS = ["reviewed_by", "decided_by", "labelled_by"];
 // UTC to the microsecond with its offset, as pipeline/src/thenwhat/store/form.py writes
 // it. A reader's lookup leaves only the day.
 const TIME = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}\.\d{6}\+00:00)?$/;
-const isTime = (field) => field === "at" || field.endsWith("_at");
+const isTime = (field) => field === "at" || field === "not_before" || field.endsWith("_at");
 
 // A source's record is refused when it still names a person, or holds a paper's abstract.
 function held({ people, text }, bad) {

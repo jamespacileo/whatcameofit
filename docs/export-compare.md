@@ -34,7 +34,7 @@ The command exits with 1 when the exports differ and names each claim and the pl
 - **the data**: the database holds two source articles of one claim at one address key. The store holds one and gives it the statements of both. Fold the pair in the database.
 - **the store's merge**: the intervention holds the same names in another order.
 
-`--allow-named` exits with 0 when every difference has a named cause. `--report file.json` writes the comparison, with `unexplained` as the count that needs a person.
+`--allow-named` exits with 0 when every difference has a named cause. For duplicate articles it checks the exact URLs, the article the store kept and the promises, statements and organisation links reassigned to it. A change to the retained article or the claim's status still fails the comparison. `--report file.json` writes the comparison, with `unexplained` as the count that needs a person.
 
 Canonical form looks past only the time the export was made, the ids each store gives its own events, and the order of entries that tie.
 

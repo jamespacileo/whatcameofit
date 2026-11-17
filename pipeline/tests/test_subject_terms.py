@@ -1559,7 +1559,8 @@ def test_terms_reports_a_name_whose_entry_term_could_not_be_resolved(
 
     result = run("terms", SLUG)
 
-    assert result.exit_code == 0, result.output
+    assert result.exit_code == 1, result.output
+    assert "claim_terms put off until" in result.output
     assert "'EX-1' equals an entry term whose record the vocabulary did not give." in result.output
 
 

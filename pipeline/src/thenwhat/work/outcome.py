@@ -87,6 +87,9 @@ class Later:
     reason: Reason
     not_before: datetime
     values: Mapping[str, Any] = field(default_factory=dict)
+    # A pre-existing hold can be found before any work on this record starts. Such a
+    # record is listed as put off, but leaves the run's limit for other records.
+    before_work: bool = field(default=False, kw_only=True)
 
     def __post_init__(self) -> None:
         _check(self.reason, ReasonClass.LATER, self.values)

@@ -830,6 +830,10 @@ def work_entry_record(entry: WorkEntry, *, record_key: str) -> Record:
             stale=flag(entry.stale),
             error=entry.error,
             last_attempt_at=when(entry.last_attempt_at),
+            reason=entry.reason,
+            reason_values=entry.reason_values,
+            not_before=when(entry.not_before),
+            first_put_off_at=when(entry.first_put_off_at),
         ),
     )
 

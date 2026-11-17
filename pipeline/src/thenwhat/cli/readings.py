@@ -51,7 +51,11 @@ def readings_command(
         for claim_id, slug in named.items():
             if unfinished(session, [step], claim_id):
                 left = True
-                err.print(outcome_line(session, step, claim_id, slug) or slug, markup=False)
+                found = step.results.get(claim_id)
+                if found is not None and found.unread:
+                    err.print(f"{slug}: Not read: {', '.join(found.unread)}.", markup=False)
+                else:
+                    err.print(outcome_line(session, step, claim_id, slug) or slug, markup=False)
     if left:
         raise typer.Exit(code=1)
 

@@ -17,6 +17,10 @@ The ledger SHALL hold at most one entry per record, step and step version. An en
 - **WHEN** a step answers that a record cannot be worked on before a time, for a reason
 - **THEN** its entry holds the outcome later, that reason's code and that time
 
+#### Scenario: A waiting claim is backed up and restored
+- **WHEN** the bulk store is built or updated with a claim whose step is put off or needs a fix
+- **THEN** the stored entry retains its outcome, reason and reason values, the first time it was put off and its retry time where present, so restoring it preserves when and why the claim is due
+
 #### Scenario: A reason the step did not declare
 - **WHEN** a step answers with a reason code it has not declared
 - **THEN** the run fails for that record with an error naming the code, and no entry holds it
@@ -62,6 +66,14 @@ A failure on one record SHALL be recorded in its entry and SHALL NOT stop the ru
 #### Scenario: A record at the limit is made due
 - **WHEN** the operator makes due a record that reached the attempt limit
 - **THEN** it is due, and it may fail as many times again as the limit allows
+
+#### Scenario: A limited run puts a record off
+- **WHEN** a run limited to one record works on a record and receives a temporary refusal
+- **THEN** that record is put off with zero attempts and the run ends at its limit, across all workers
+
+#### Scenario: A hold is known before a read starts
+- **WHEN** a limited read finds an existing outlet hold before asking for a lead
+- **THEN** it puts that lead off and can use its remaining limit on another lead
 
 ## ADDED Requirements
 
