@@ -12,7 +12,6 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backfill_support import Client, DemoStep, add_trials, same_session
-from thenwhat.backfill.runner import run_step
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.db.models import MeasureClaim, MeasureDaily, MeasureRolledDay
 from thenwhat.llm.ledger import record_usage
@@ -21,6 +20,7 @@ from thenwhat.measure.files import LOOKUP, FileSink, days_held, read_day, remove
 from thenwhat.measure.report import ClaimTook, measured_cost_of_a_record, report_of
 from thenwhat.measure.spans import Span, span_from
 from thenwhat.measure.totals import roll, totals_of
+from thenwhat.work.runner import run_step
 
 DAY = date(2026, 11, 19)
 AT = datetime(2026, 11, 19, 9, 0, tzinfo=UTC)

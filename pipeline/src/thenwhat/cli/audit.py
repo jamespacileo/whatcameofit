@@ -7,7 +7,6 @@ from typing import Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import BackfillError
 from thenwhat.backfill.link_read import (
     Attached,
     LinkRead,
@@ -26,6 +25,7 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import Decider
+from thenwhat.work.errors import BackfillError
 
 audit_app = typer.Typer(no_args_is_help=True, help="Claims held off the site until audited.")
 

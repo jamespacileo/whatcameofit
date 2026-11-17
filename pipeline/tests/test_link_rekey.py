@@ -10,14 +10,12 @@ from sqlalchemy.orm import Session
 from backfill_support import Client, same_session
 from test_link_triage import Clock, Headlines
 from thenwhat.backfill.address import KEY_VERSION
-from thenwhat.backfill.errors import KeysOutOfDate, WorkInProgress
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_readers import HACKER_NEWS, SharedLink
 from thenwhat.backfill.link_rekey import refuse_while_steps_run, rekey_links, survey
 from thenwhat.backfill.link_screen import LinkScreen
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage
 from thenwhat.backfill.outlet_kinds import kind_of
-from thenwhat.backfill.runner import run_step
 from thenwhat.db.models import (
     Claim,
     LinkLead,
@@ -28,6 +26,8 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import Decider, LeadVerdict, ReadOutcome, ScreenOutcome
+from thenwhat.work.errors import KeysOutOfDate, WorkInProgress
+from thenwhat.work.runner import run_step
 
 NOW = datetime(2026, 11, 20, 9, 0, tzinfo=UTC)
 WHEN = datetime(2019, 5, 4, 10, 30, tzinfo=UTC)

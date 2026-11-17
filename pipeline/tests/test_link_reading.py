@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 
 from backfill_support import same_session
 from reader_support import SyntheticReader, retriever
-from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_read import (
     CLAIM_IDENTITY_LOCK,
@@ -42,7 +41,6 @@ from thenwhat.backfill.link_screen import (
     TITLE_NAMES_CLAIM,
 )
 from thenwhat.backfill.outlet_hold import OUTLET_HOLD, OUTLET_TURN_LOCK
-from thenwhat.backfill.runner import RunReport, run_step
 from thenwhat.backfill.trial_links import SetPlan, UnknownStrength, at_least, plan_of
 from thenwhat.claims.entry import (
     add_article,
@@ -86,6 +84,8 @@ from thenwhat.extract.retrieve import READER
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.review.decisions import record_decision
 from thenwhat.statements.service import StatementChecker
+from thenwhat.work.allowance import Allowances
+from thenwhat.work.runner import RunReport, run_step
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 WHEN = datetime(2019, 5, 6, 10, 30, tzinfo=UTC)

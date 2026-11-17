@@ -19,7 +19,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key
-from thenwhat.backfill.allowance import Allowances, held_until
 from thenwhat.extract.retrieve import (
     NOT_NOW,
     WAIT_MOST,
@@ -29,6 +28,7 @@ from thenwhat.extract.retrieve import (
     Probe,
     Retrieved,
 )
+from thenwhat.work.allowance import Allowances, held_until
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 

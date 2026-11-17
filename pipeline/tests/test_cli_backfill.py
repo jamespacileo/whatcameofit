@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
 from backfill_support import NOW, ModelStep, QuietStep, add_trials, same_session
-from thenwhat.backfill.allowance import Allowances
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
 from thenwhat.backfill.registry_load import condition_of
@@ -35,6 +34,7 @@ from thenwhat.db.models import (
 from thenwhat.domain import Decider, OutletKind, ScreenOutcome
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import Paper
+from thenwhat.work.allowance import Allowances
 
 
 class Index:

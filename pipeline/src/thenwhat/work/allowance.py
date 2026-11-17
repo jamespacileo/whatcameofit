@@ -10,10 +10,10 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import AllowanceUsedUp, NoAllowance, SourcePaused
 from thenwhat.config import SourceAllowance
 from thenwhat.db.models import SourceAllowanceUse
 from thenwhat.sources.base import SystemTime, Time
+from thenwhat.work.errors import AllowanceUsedUp, NoAllowance, SourcePaused
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 

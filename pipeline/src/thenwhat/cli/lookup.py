@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING, Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
 from thenwhat.extract.retrieve import PasteNeeded
+from thenwhat.work.errors import ReaderUnavailable
 
 if TYPE_CHECKING:
     from thenwhat.decide.core import Backend

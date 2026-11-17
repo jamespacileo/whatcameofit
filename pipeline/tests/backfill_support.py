@@ -11,7 +11,6 @@ from typing import Any
 from sqlalchemy import ColumnElement, Engine, delete
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.steps import MODEL, NO_SOURCE, ModelSpend
 from thenwhat.db.models import (
     ArticleLead,
     LlmUsage,
@@ -20,6 +19,7 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import OutletKind, WorkOutcome
+from thenwhat.work.steps import MODEL, NO_SOURCE, ModelSpend
 
 NOW = datetime(2026, 11, 20, 9, 0, tzinfo=UTC)
 

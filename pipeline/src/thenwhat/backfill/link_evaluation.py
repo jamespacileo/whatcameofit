@@ -17,9 +17,9 @@ from sqlalchemy import ColumnElement, Select, and_, case, exists, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session, aliased
 
-from thenwhat.backfill.errors import BackfillError
 from thenwhat.db.models import LinkLead, LinkLeadLabel, LinkShare
 from thenwhat.domain import Decider, LeadVerdict, ScreenOutcome
+from thenwhat.work.errors import BackfillError
 
 TENTHS = 10
 THRESHOLDS = tuple(tenth / TENTHS for tenth in range(1, TENTHS))

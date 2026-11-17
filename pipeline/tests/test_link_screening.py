@@ -28,7 +28,6 @@ from thenwhat.backfill.link_screen import (
     TITLE_NAMES_TRIAL,
     LinkScreen,
 )
-from thenwhat.backfill.runner import run_step
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.db.models import (
     ArticleLead,
@@ -41,6 +40,7 @@ from thenwhat.db.models import (
     RegistryTrial,
 )
 from thenwhat.domain import EntityType, OutletKind, ScreenOutcome
+from thenwhat.work.runner import run_step
 
 WHEN = datetime(2019, 5, 4, 10, 30, tzinfo=UTC)
 

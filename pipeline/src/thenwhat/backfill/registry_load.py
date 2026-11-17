@@ -10,14 +10,14 @@ from typing import Any, Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import SourceStop
-from thenwhat.backfill.ledger import mark_changed
-from thenwhat.backfill.steps import Step
 from thenwhat.backfill.trial_names import indication_words, name_under_test
 from thenwhat.db.models import RegistryLoad, RegistryTrial
 from thenwhat.sources.base import SourceThrottled
 from thenwhat.sources.clinicaltrials import TrialPage
 from thenwhat.sources.people import sponsored_by_a_person, without_people
+from thenwhat.work.errors import SourceStop
+from thenwhat.work.ledger import mark_changed
+from thenwhat.work.steps import Step
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 

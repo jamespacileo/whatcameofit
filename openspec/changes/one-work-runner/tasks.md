@@ -7,7 +7,7 @@
 
 ## 2. The `work` package, with no behaviour change
 
-- [ ] 2.1 Move `backfill/ledger.py`, `runner.py`, `steps.py`, `allowance.py` and `outlet_hold.py` into `thenwhat/work/` in one commit that changes imports only; verify `make check` passes and the tests of 1.1 and 1.2 pass unchanged
+- [x] 2.1 Move `backfill/ledger.py`, `runner.py`, `steps.py`, `allowance.py`, `errors.py` and `spend.py` into `thenwhat/work/` in one commit that changes imports only (`outlet_hold.py` stays in `backfill/`: it reads an address's outlet, which is about leads); verify lint, types and the pipeline's tests pass unchanged (2,187 passed on 2026-11-17)
 - [ ] 2.2 Add an `import-linter` contract: `work/` imports nothing from `backfill/`, `cli/` or any step's package, and `status/` stays pure; verify it runs in `make check` and fails on a deliberate bad import
 
 ## 3. Outcomes and reasons

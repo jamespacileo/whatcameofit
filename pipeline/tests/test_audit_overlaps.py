@@ -31,12 +31,12 @@ from thenwhat.backfill.link_read import (
     reads_naming_live_claims,
 )
 from thenwhat.backfill.outlet_kinds import name_of
-from thenwhat.backfill.steps import Deferred
 from thenwhat.claims.entry import add_article, archive_claim, articles_of
 from thenwhat.cli import app
 from thenwhat.db.models import Claim, LinkLead
 from thenwhat.domain import Decider, ReadOutcome, ReviewState
 from thenwhat.review.decisions import record_decision
+from thenwhat.work.steps import Deferred
 
 URL = "https://www.theguardian.com/science/2019/may/04/synthetic-teeth"
 

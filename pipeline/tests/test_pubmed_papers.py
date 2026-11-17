@@ -15,10 +15,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backfill_support import NOW, same_session
-from thenwhat.backfill.allowance import Allowances
-from thenwhat.backfill.errors import SourcePaused, SourceStop
-from thenwhat.backfill.ledger import count
-from thenwhat.backfill.runner import run_step
 from thenwhat.backfill.trial_papers import TrialPapers, estimate_for
 from thenwhat.config import SourceAllowance
 from thenwhat.db.models import RegistryTrial, TrialPaper
@@ -35,6 +31,10 @@ from thenwhat.sources.pubmed import (
     read_papers,
     search_term,
 )
+from thenwhat.work.allowance import Allowances
+from thenwhat.work.errors import SourcePaused, SourceStop
+from thenwhat.work.ledger import count
+from thenwhat.work.runner import run_step
 
 FIXTURES = Path(__file__).parent / "fixtures" / "pubmed"
 ALLOWED = {

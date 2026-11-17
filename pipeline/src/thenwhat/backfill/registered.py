@@ -6,10 +6,10 @@ from thenwhat.backfill.link_read import LinkRead
 from thenwhat.backfill.link_screen import LinkScreen
 from thenwhat.backfill.link_triage import LinkTriage
 from thenwhat.backfill.news_search import NewsSearch
-from thenwhat.backfill.steps import Step
 from thenwhat.backfill.topics import terms_of
 from thenwhat.backfill.trial_papers import TrialPapers
 from thenwhat.config import Settings
+from thenwhat.work.steps import Step
 
 
 def link_read_step(settings: Settings, triage_version: int, **options: Any) -> LinkRead:

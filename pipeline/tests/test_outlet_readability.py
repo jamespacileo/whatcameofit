@@ -16,7 +16,6 @@ from typer.testing import CliRunner
 
 from reader_support import SyntheticReader
 from reader_support import retriever as reader_retriever
-from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_article, add_claim
 from thenwhat.cli import app
@@ -26,6 +25,7 @@ from thenwhat.extract.page import Page
 from thenwhat.extract.retrieve import ArticleRetriever
 from thenwhat.outlets.readability import Measured, Outlet, check_outlets, report
 from thenwhat.review.decisions import record_decision
+from thenwhat.work.errors import ReaderUnavailable
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 SLUG = "tooth-regrowth-ex1"

@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER, OutletHeld, retrieve_unless_held
 from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import err, out
@@ -21,6 +20,7 @@ from thenwhat.extract.retrieve import (
     Retrieved,
     reader_turns,
 )
+from thenwhat.work.errors import ReaderUnavailable
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm

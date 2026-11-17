@@ -19,15 +19,15 @@ from backfill_support import (
     remove_committed,
     same_session,
 )
-from thenwhat.backfill import runner
-from thenwhat.backfill.errors import DuplicateStep, UnknownStep
-from thenwhat.backfill.ledger import count, mark_changed
-from thenwhat.backfill.runner import run_step
-from thenwhat.backfill.spend import ceiling_check
-from thenwhat.backfill.steps import asks_a_source, by_name, find_step
 from thenwhat.config import Settings
 from thenwhat.db.models import ArticleLead, WorkEntry
 from thenwhat.domain import WorkOutcome
+from thenwhat.work import runner
+from thenwhat.work.errors import DuplicateStep, UnknownStep
+from thenwhat.work.ledger import count, mark_changed
+from thenwhat.work.runner import run_step
+from thenwhat.work.spend import ceiling_check
+from thenwhat.work.steps import asks_a_source, by_name, find_step
 
 LIMIT = 3
 
@@ -381,7 +381,7 @@ def test_a_run_remembers_only_the_records_that_failed(session: Session, monkeypa
 
 
 def test_deferred_records_are_shared_between_workers_in_one_run(session: Session):
-    from thenwhat.backfill.steps import Deferred
+    from thenwhat.work.steps import Deferred
 
     add_trials(session, 1)
     step = DemoStep()

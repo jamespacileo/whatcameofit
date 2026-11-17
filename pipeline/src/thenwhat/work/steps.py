@@ -8,8 +8,8 @@ from typing import Any, Protocol
 from sqlalchemy import ColumnElement
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import DuplicateStep, UnknownStep
 from thenwhat.domain import WorkOutcome
+from thenwhat.work.errors import DuplicateStep, UnknownStep
 
 # What a step gives as its source when it asks none: it reads the database only.
 NO_SOURCE = "none"

@@ -9,10 +9,10 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import BackfillError, SpendCeilingReached
-from thenwhat.backfill.steps import DECISION_DOOR, ModelSpend
 from thenwhat.config import Settings
 from thenwhat.llm.ledger import spent_this_month
+from thenwhat.work.errors import BackfillError, SpendCeilingReached
+from thenwhat.work.steps import DECISION_DOOR, ModelSpend
 
 MILLION = Decimal(1_000_000)
 OPENAI_DECISIONS = "openai-decisions"

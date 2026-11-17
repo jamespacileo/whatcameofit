@@ -11,9 +11,9 @@ from typing import Any
 from sqlalchemy import ColumnElement, Select, and_, func, not_, or_, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.steps import Step
 from thenwhat.db.models import WorkEntry
 from thenwhat.domain import WorkOutcome
+from thenwhat.work.steps import Step
 
 FINISHED = (WorkOutcome.DONE, WorkOutcome.NOTHING_FOUND)
 

@@ -17,7 +17,6 @@ from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key
 from thenwhat.backfill.outlet_kinds import kind_of
-from thenwhat.backfill.steps import NO_SOURCE
 from thenwhat.backfill.trial_terms import (
     CODE,
     NOT_A_CODE,
@@ -38,6 +37,7 @@ from thenwhat.db.models import (
     SourceArticle,
 )
 from thenwhat.domain import EntityType, OutletKind, ScreenOutcome, WorkOutcome
+from thenwhat.work.steps import NO_SOURCE
 
 CLAIM = "claim"
 REGISTRY_TRIAL = "registry_trial"
