@@ -250,3 +250,83 @@ def test_every_kind_gather_gives_is_of_one_tier():
 
     assert not HOT_KINDS & BULK_KINDS
     assert set(KINDS) - {"payload"} <= HOT_KINDS | BULK_KINDS
+
+
+def test_the_inbox_folds_into_the_bulk_file_once_and_is_cleared_after(
+    session: Session, tmp_path: Path
+):
+    import httpx
+
+    from thenwhat.store.inbox import clear, fold
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    _, bulk = split_build(file, payloads, "both")
+    day = "2026-11-18"
+    lead = {
+        "url_key": "news.example.com/new",
+        "url_key_version": 2,
+        "url": "https://news.example.com/new",
+        "outlet": "news.example.com",
+        "outlet_kind": "general_news",
+        "title": "New",
+        "first_shared_at": f"{day}T00:00:00.000000+00:00",
+        "origin": "reader",
+        "screen_outcome": "in_scope",
+    }
+    asked = {"platform": "reader", "community": "reader", "shared_at": day, "score": 0}
+    share = {"lead_url_key": "news.example.com/new", **asked}
+    old = {"lead_url_key": "news.example.com/drug-x", **asked}
+    inbox = [
+        {"seq": 1, "run": "r1", "kind": "link_lead", "key": lead["url_key"], "body": lead},
+        {
+            "seq": 2,
+            "run": "r1",
+            "kind": "link_share",
+            "key": "news.example.com/new|reader",
+            "body": share,
+        },
+        {
+            "seq": 3,
+            "run": "r2",
+            "kind": "link_share",
+            "key": "news.example.com/drug-x|reader",
+            "body": old,
+        },
+    ]
+    cleared: list[int] = []
+
+    def service(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/inbox":
+            after = int(request.url.params["after"])
+            records = [r for r in inbox if r["seq"] > after]
+            return httpx.Response(200, json={"records": records, "through": 3, "more": False})
+        cleared.append(json.loads(request.content)["through"])
+        return httpx.Response(200, json={"cleared": 3, "rows_removed": 3, "left": 0})
+
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c:
+        folded = fold(c, bulk, store_sql=STORE, now=datetime(2026, 11, 19, tzinfo=UTC))
+        again = fold(c, bulk, store_sql=STORE, now=datetime(2026, 11, 19, tzinfo=UTC))
+        clear(c, folded.through)
+    assert (folded.runs, folded.through, len(folded.records)) == (2, 3, 3)
+    assert again.runs == 0 and len(again.records) == 3
+    db = sqlite3.connect(bulk)
+    assert db.execute(
+        "SELECT count(*) FROM link_lead WHERE url_key = 'news.example.com/new'"
+    ).fetchone() == (1,)
+    assert db.execute("SELECT count(*) FROM link_share WHERE platform = 'reader'").fetchone() == (
+        2,
+    )
+    assert cleared == [3]
+
+
+def test_fold_inbox_refuses_without_the_service(monkeypatch, tmp_path: Path):
+    monkeypatch.delenv("INGEST_TOKEN", raising=False)
+    monkeypatch.delenv("INGEST_URL", raising=False)
+    bulk = tmp_path / "b.sqlite"
+    sqlite3.connect(bulk).close()
+    result = CliRunner().invoke(
+        app, ["store", "fold-inbox", str(bulk), "--delta", str(tmp_path / "d.jsonl.gz")]
+    )
+    assert result.exit_code == 1 and "INGEST_TOKEN" in result.output

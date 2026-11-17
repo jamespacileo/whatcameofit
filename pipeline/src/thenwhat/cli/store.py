@@ -19,6 +19,7 @@ from thenwhat.store.build import BuildFailed, build, merge_into, read_delta, wri
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
+from thenwhat.store.inbox import InboxFailed, clear, fold
 from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
@@ -453,3 +454,69 @@ def apply_delta_command(
             err.print(f"{delta}: {fault}", markup=False)
             raise typer.Exit(code=1) from None
         out.print(f"Applied {delta}: {len(records):,} records.", markup=False)
+
+
+def _service(url: str) -> httpx.Client:
+    token = os.environ.get("INGEST_TOKEN", "")
+    if not url or not token:
+        err.print("Set INGEST_URL (or --url) and INGEST_TOKEN, the daily or operator token.")
+        raise typer.Exit(code=1)
+    return httpx.Client(
+        base_url=url,
+        headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
+        timeout=120,
+    )
+
+
+@store_app.command("fold-inbox")
+def fold_inbox_command(
+    file: Annotated[Path, typer.Argument(help="The bulk file the daily job keeps.")],
+    delta: Annotated[
+        Path, typer.Option(help="Write the folded records here, gzipped JSON lines, for R2.")
+    ],
+    url: Annotated[
+        str, typer.Option("--url", envvar="INGEST_URL", help="The ingest service's address.")
+    ] = "",
+    after: Annotated[int, typer.Option(help="Fold only the inbox after this seq.")] = 0,
+    store_sql: StoreSql = STORE_SQL,
+) -> None:
+    """Merge the bulk records lookups handed to D1 into the bulk file, and write them as a
+    delta. Nothing is cleared: once the delta is kept in R2, run `thenwhat store
+    clear-inbox --through` with the seq this prints."""
+    if not file.is_file():
+        err.print(f"No bulk file at {file}.")
+        raise typer.Exit(code=1)
+    with _service(url) as client:
+        try:
+            folded = fold(client, file, store_sql=store_sql, now=datetime.now(UTC), after=after)
+        except InboxFailed as fault:
+            err.print(str(fault), markup=False)
+            raise typer.Exit(code=1) from None
+    write_delta(delta, folded.records)
+    out.print(
+        f"Folded {len(folded.records):,} records of {folded.runs} runs into {file};"
+        f" the delta is {delta}. Through seq {folded.through}.",
+        markup=False,
+    )
+
+
+@store_app.command("clear-inbox")
+def clear_inbox_command(
+    through: Annotated[int, typer.Option(help="The last seq folded, as fold-inbox printed it.")],
+    url: Annotated[
+        str, typer.Option("--url", envvar="INGEST_URL", help="The ingest service's address.")
+    ] = "",
+) -> None:
+    """Have the service clear the inbox up to a seq, and the rows those runs added to D1,
+    once their delta is kept in R2."""
+    with _service(url) as client:
+        try:
+            answer = clear(client, through)
+        except InboxFailed as fault:
+            err.print(str(fault), markup=False)
+            raise typer.Exit(code=1) from None
+    out.print(
+        f"Cleared {answer.get('cleared', 0):,} inbox records and {answer.get('rows_removed', 0):,}"
+        f" rows of D1; {answer.get('left', 0):,} left.",
+        markup=False,
+    )

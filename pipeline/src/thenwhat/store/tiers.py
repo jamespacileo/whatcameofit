@@ -102,6 +102,7 @@ BULK_KINDS = frozenset(
         "link_share",
         "link_lead_link",
         "link_lead_label",
+        "lead_reading",
         "work_entry",
         "usage",
         "measure_daily",
