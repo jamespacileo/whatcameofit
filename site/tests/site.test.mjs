@@ -849,7 +849,7 @@ test("Scenario: Claim with trials", () => {
   // rows, how it was tested before where the records stand now, with no group names.
   assert.match(
     brief.replace(/\s+/g, " ").replace(/ ([.,])/g, "$1"),
-    /Tested in 7 trials, the largest planned for 1,200 people\. One record names a placebo\. 1 of 7 has posted results, on 1 Sep 2025\. One is under way\. No approval by a regulator is on record\./,
+    /Tested in 7 trials, the largest planned for 1,200 people\. One record names a placebo\. 1 of 7 has posted results, on 1 Sep 2025\. One is under way\. No approval is listed, and regulators' records are not read\./,
   );
   assert.ok(brief.indexOf("Compared with a placebo?") < brief.indexOf("Results posted to the registry?"));
   assert.doesNotMatch(brief, /How it was tested|Where the records stand now/);
@@ -860,7 +860,8 @@ test("Scenario: Claim with trials", () => {
   assert.match(brief, /Compared with a placebo\? One record names a placebo/);
   assert.match(brief, /Results posted to the registry\? By 1 of 7 trials\. Posted on 1 Sep 2025/);
   assert.match(brief, /A trial under way\? One under way/);
-  assert.match(brief, /Approved by a regulator\? None on record/);
+  // No approval is said by what the site reads, not as "none on record".
+  assert.match(brief, /Approved by a regulator\? None listed\. Regulators' records are not read/);
   // The largest trial states no main measure, so that question has nothing to ask.
   assert.doesNotMatch(brief, /What did the largest trial measure/);
 });
@@ -1194,7 +1195,7 @@ test("Scenario: Claim with a condition card only", () => {
   // names whose words they are and opens that source in a new tab; then the score and
   // the card. A short definition is not repeated in the card.
   assert.match(section, /<button type="button" class="fact-open" aria-expanded="true" aria-controls="glance-condition-more">\s*<span class="fact-open-words">Definition and source<\/span>\s*<span class="visually-hidden"> for example condition\.<\/span>/);
-  assert.match(section, /<div class="fact-more" id="glance-condition-more">\s*<div class="glance-said">\s*<blockquote class="glance-words" cite="https:\/\/vocabulary\.example\/D900003">A synthetic definition of the example condition\.<\/blockquote>\s*<a class="source-pill" href="https:\/\/vocabulary\.example\/D900003" target="_blank" rel="noopener">\s*<span class="visually-hidden">In MeSH’s words: <\/span>\s*MeSH\s*<span class="visually-hidden"> \(opens in a new tab\)<\/span>/);
+  assert.match(section, /<dd class="fact-more" id="glance-condition-more">\s*<div class="glance-said">\s*<blockquote class="glance-words" cite="https:\/\/vocabulary\.example\/D900003">A synthetic definition of the example condition\.<\/blockquote>\s*<a class="source-pill" href="https:\/\/vocabulary\.example\/D900003" target="_blank" rel="noopener">\s*<span class="visually-hidden">In MeSH’s words: <\/span>\s*MeSH\s*<span class="visually-hidden"> \(opens in a new tab\)<\/span>/);
   // A line under the heading says what a term match is, where it is first met.
   assert.match(section, /<div popover id="about-glance" class="pop" role="note"[^>]*>\s*<p>Each term opens to its definition in an outside source’s words\. A term match is how well that source’s term fits this claim; it says nothing about the treatment\.<\/p>/);
   // The score is in sight on the row, so the card heads its reasons without repeating it.

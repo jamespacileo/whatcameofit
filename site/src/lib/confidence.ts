@@ -95,12 +95,15 @@ export function stageReading(
 ): { chip: string; note: string; also: string | null } {
   const also = reading.also.map((share) => `${stageName(share.stage).toLowerCase()}, ${percent(share.score)}%`);
   return {
-    chip: `Low confidence · ${percent(reading.score)}%`,
-    note: "Not confirmed, so it does not decide the status.",
+    // The chip says what the reading is, not how sure: "Low confidence · 95%" sat a
+    // section above "High, 89%" and read as a contradiction (critique of 2026-11-17).
+    // The band keeps its name where the chip opens (LOW_READING_MEANING).
+    chip: `Not confirmed · read at ${percent(reading.score)}%`,
+    note: "It does not decide the status.",
     also: also.length ? `Also read as: ${also.join("; ")}.` : null,
   };
 }
 
 /** What a lower-band reading is, in the panel its chip opens. */
 export const LOW_READING_MEANING =
-  "A reading that was not sure enough to confirm. It is shown with its score and never sets a status.";
+  "A low-confidence reading: one that neither a person nor a rule has confirmed. It is shown with its score and never sets a status.";

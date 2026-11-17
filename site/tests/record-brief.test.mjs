@@ -8,6 +8,7 @@ import { assertNeutral } from "../src/lib/status.ts";
 import {
   DEFINITIONS,
   NONE,
+  NO_APPROVAL,
   briefNote,
   digestBridge,
   recordBrief,
@@ -286,7 +287,9 @@ test("Scenario: Approval entered by hand", () => {
 
 test("Scenario: Claim that is not approved", () => {
   const row = rowOf(recordBrief(device, "2026-11-14T08:00:00Z"), "approved");
-  assert.equal(row.answer, NONE);
+  // Said by what the site reads: it reads no regulator's records.
+  assert.equal(row.answer, NO_APPROVAL);
+  assert.match(row.opened.join(" "), /does not read regulators' own records/);
   assert.equal(row.source.onLabel, "Registries last checked");
 });
 
@@ -310,7 +313,7 @@ test("Scenario: Claim with no trial on record", () => {
     [
       ["Tested in people?", NONE],
       ["What was the first report about?", "A study in animals"],
-      ["Approved by a regulator?", NONE],
+      ["Approved by a regulator?", NO_APPROVAL],
     ],
   );
   assert.equal(briefNote(groups).startsWith("Three answers read from the records on this page."), true);
@@ -351,10 +354,31 @@ test("Scenario: Three trials with no phase", () => {
   assert.equal(digestBridge(partly), "3 trials are on record and 2 have finished. The registry gives none a phase.");
 });
 
+test("Scenario: A status that names a phase counts the trials' states beside it", () => {
+  const phased = structuredClone(device);
+  phased.status.code = "phase_3";
+  phased.trials[0].state = "terminated";
+  phased.trials[1].state = "under_way";
+  assert.equal(digestBridge(phased), "3 trials on record: 1 under way, 1 finished, 1 stopped early.");
+  // A Phase 4 trial has no place on the path, so their number is said.
+  phased.trials[2].phases = ["phase_4"];
+  assert.match(digestBridge(phased), /stopped early\. 1 is a Phase 4 trial; the path counts phases up to Phase 3\.$/);
+  // Suspended, withdrawn and unstated trials are counted together.
+  phased.trials[0].state = "withdrawn";
+  assert.match(digestBridge(phased), /^3 trials on record: 1 under way, 1 finished, 1 in another state\./);
+  // One trial is said without a count; no trial, nothing.
+  phased.trials = [phased.trials[1]];
+  assert.equal(digestBridge(phased), "1 trial on record: under way.");
+  phased.trials = [];
+  assert.equal(digestBridge(phased), null);
+  assert.doesNotMatch(digestBridge(structuredClone({ ...device, status: { ...device.status, code: "phase_2" } })), /dead|abandon|fail/i);
+});
+
 test("Scenario: Status with a phase", () => {
   const phased = structuredClone(device);
   phased.status.code = "phase_2";
-  assert.equal(digestBridge(phased), null);
+  // No word about a missing phase; the trials' states are counted instead.
+  assert.equal(digestBridge(phased), "3 trials on record: 3 finished.");
   assert.equal(digestBridge(claim()), null);
 });
 

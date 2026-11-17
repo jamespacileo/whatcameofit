@@ -84,6 +84,7 @@ import {
   phaseGroups,
   withResults,
   PLAIN_STATE,
+  RESULTS_POSTED,
   phaseText,
 } from "../lib/trial-facts";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
@@ -324,6 +325,20 @@ const yearMarks = (row: Extract<(typeof timetable.rows)[number], { kind: "year" 
             : "completed",
   );
 const anyYearFolds = timetable.rows.some((row) => row.kind === "year" && row.recorded.length > 0 && yearFolds(row));
+// A key names only the marks its list draws (critique of 2026-11-17: a key listed states
+// the claim did not have, and one state went by two names).
+const yearKeyMarks = new Set(
+  timetable.rows.flatMap((row) => (row.kind === "year" && row.recorded.length > 0 && yearFolds(row) ? yearMarks(row) : [])),
+);
+const YEAR_KEY: [string, string, string][] = [
+  ["not_started", "state-mark", "Registered"],
+  ["under_way", "state-mark", "Started"],
+  ["completed", "state-mark", "Finished"],
+  ["terminated", "state-mark", PLAIN_STATE.terminated],
+];
+const TRIAL_KEY_ORDER = ["not_started", "under_way", "completed", "terminated", "suspended", "withdrawn", "unknown"];
+const stateOf = (trial: (typeof trials)[number]) => (TRIAL_KEY_ORDER.includes(trial.state) ? trial.state : "unknown");
+const trialKeyStates = TRIAL_KEY_ORDER.filter((state) => trials.some((trial) => stateOf(trial) === state));
 // The trials table's columns, named over every group's table.
 const TRIAL_COLUMNS = ["People", "Phase", "State", "Results posted", "Trial"];
 const posted = withResults(trials);
@@ -630,7 +645,7 @@ const sections = [
             /* Trials on record with no phase: said here, so the status is not read as
                contradicting the trials the page lists. No link in it: on a phone it is drawn
                ahead of the path, and nothing drawn out of order may be pressed. */
-            bridge && <p class="bridge">{bridge}</p>
+            bridge && <p class:list={["bridge", { counts: claim.status.code !== "trial_registered" }]}>{bridge}</p>
           }
         </div>
       </div>
@@ -852,12 +867,15 @@ const sections = [
       anyYearFolds && (
         // What the shapes in a folded year's row stand for, once.
         <p class="said-key year-key" aria-hidden="true">
-          <span><span class="state-mark" data-state="not_started" />Registered</span>
-          <span><span class="state-mark" data-state="under_way" />Started</span>
-          <span><span class="state-mark" data-state="completed" />Finished</span>
-          <span><span class="state-mark" data-state="terminated" />Stopped early</span>
-          <span><span class="state-mark posted" data-state="completed" />Results posted</span>
-          <span><span class="ev-report" />News report</span>
+          {YEAR_KEY.filter(([mark]) => yearKeyMarks.has(mark)).map(([mark, , words]) => (
+            <span><span class="state-mark" data-state={mark} />{words}</span>
+          ))}
+          {yearKeyMarks.has("results") && (
+            <span><span class="state-mark posted" data-state="completed" />{RESULTS_POSTED}</span>
+          )}
+          {yearKeyMarks.has("report") && (
+            <span><span class="ev-report" />News report</span>
+          )}
         </p>
       )
     }
@@ -1122,12 +1140,13 @@ const sections = [
                   ))}
                 </div>
                 <p class="said-key trial-key" aria-hidden="true">
-                  <span><span class="state-mark" data-state="not_started" />Not started</span>
-                  <span><span class="state-mark" data-state="under_way" />Under way</span>
-                  <span><span class="state-mark" data-state="completed" />Finished</span>
-                  <span><span class="state-mark" data-state="terminated" />Halted</span>
-                  <span><span class="state-mark" data-state="unknown" />Not given</span>
-                  <span><span class="state-mark posted" data-state="completed" />Ringed: results posted</span>
+                  {/* The states these trials have, in the rows' own words. */}
+                  {trialKeyStates.map((state) => (
+                    <span><span class="state-mark" data-state={state} />{PLAIN_STATE[state]}</span>
+                  ))}
+                  {posted > 0 && (
+                    <span><span class="state-mark posted" data-state="completed" />{RESULTS_POSTED}</span>
+                  )}
                 </p>
               </>
             )

@@ -63,6 +63,10 @@ export const GROUP_NAMES: Record<BriefGroup["code"], string> = {
 };
 
 export const NONE = "None on record";
+/** No approval listed. Said by what the site reads: it reads no regulator's records
+ * (docs/sources.md), so "none on record" alone read as "not approved" beside a report of
+ * an approval (critique of 2026-11-17). */
+export const NO_APPROVAL = "None listed. Regulators' records are not read";
 
 /** What a list says of a claim's trials, and what its column is called and counts. */
 export const TESTED_WORDS = {
@@ -98,7 +102,8 @@ export const DEFINITIONS = {
   approval: "An approval is not advice to take a treatment",
   approval_scope: "Its approval covers the uses it names, in the place it governs.",
   no_trial: "No trial in people for this treatment and condition is among the records this site holds.",
-  no_approval: "No approval of this treatment for this condition is among the records this site holds.",
+  no_approval:
+    "No approval of this treatment for this condition is among the records this site holds. The site does not read regulators' own records, such as the FDA's or the EMA's: an approval is listed only where one was entered by hand, so one can exist and not be listed here.",
   registry_words: "These are the registry's words. No plainer wording is given for this measure.",
 } as const;
 
@@ -490,8 +495,8 @@ function approvedRow(claim: ExportedClaim, lastChecked: string | null): BriefRow
     return row({
       code: "approved",
       question: QUESTIONS.approved,
-      answer: NONE,
-      said: "[[No approval]] by a regulator is on record",
+      answer: NO_APPROVAL,
+      said: "[[No approval]] is listed, and regulators' records are not read",
       opened: [DEFINITIONS.regulator, DEFINITIONS.no_approval],
       source: checked(lastChecked),
     });
@@ -560,7 +565,8 @@ export function sourceWords(source: BriefSource): { before: string; after: strin
  * site-publishing: "The digest says when trials state no phase". */
 export function digestBridge(claim: ExportedClaim): string | null {
   const trials = claim.trials ?? [];
-  if (claim.status.code !== "trial_registered" || trials.length === 0) return null;
+  if (trials.length === 0) return null;
+  if (claim.status.code !== "trial_registered") return digestStates(trials);
   const finished = trials.filter((trial) => trial.state === "completed").length;
   const are = trials.length === 1 ? "1 trial is on record" : `${digits(trials.length)} trials are on record`;
   const done =
@@ -577,10 +583,42 @@ export function digestBridge(claim: ExportedClaim): string | null {
   return `${are}${done}.${phase}`;
 }
 
+/** The trials' states as the status card counts them, in a fixed order. */
+const STATE_COUNT_WORDS: [string, string][] = [
+  ["under_way", "under way"],
+  ["not_started", "not started"],
+  ["completed", "finished"],
+  ["terminated", "stopped early"],
+];
+/** Every other state (suspended, withdrawn, none given), counted together: the card says
+ * where most trials stand, and the trials' list says each one's state. */
+const OTHER_STATES = "in another state";
+
+/** For a claim whose status names a phase: how many trials are on record and where each
+ * stands, so the status is not read alone ("Phase 3 trial" said the same of a claim with
+ * five trials under way and of one with five stopped early; critique of 2026-11-17). A
+ * count of records, never a reading of them. A Phase 4 trial has no place on the path,
+ * so their number is said too. */
+function digestStates(trials: ExportedTrial[]): string {
+  const count = (state: string) => trials.filter((trial) => trial.state === state).length;
+  const named = STATE_COUNT_WORDS.map(([state, words]) => [count(state), words] as const);
+  const other = trials.length - named.reduce((sum, [n]) => sum + n, 0);
+  const parts = [...named, [other, OTHER_STATES] as const]
+    .filter(([n]) => n > 0)
+    .map(([n, words]) => (trials.length === 1 ? words : `${digits(n)} ${words}`));
+  const phase4 = trials.filter((trial) => trial.phases.includes("phase_4")).length;
+  const later =
+    phase4 === 0
+      ? ""
+      : ` ${digits(phase4)} ${plural(phase4, "is a Phase 4 trial", "are Phase 4 trials")}; the path counts phases up to Phase 3.`;
+  return `${digits(trials.length)} ${plural(trials.length, "trial", "trials")} on record: ${parts.join(", ")}.${later}`;
+}
+
 // A build fails rather than publish a verdict in a question, an answer or a group name.
 assertNeutral([
   BRIEF_TITLE,
   NONE,
+  NO_APPROVAL,
   ...Object.values(GROUP_NAMES),
   ...Object.values(TESTED_WORDS),
   ...Object.values(QUESTIONS),
@@ -588,4 +626,6 @@ assertNeutral([
   ...Object.values(FIRST_REPORT).flatMap((stage) => [stage.answer, stage.opened]),
   ...Object.values(DUMMY).flatMap((dummy) => [dummy.noun, dummy.plural]),
   ...Object.values(COMPARATOR_WORDS),
+  ...STATE_COUNT_WORDS.map(([, words]) => words),
+  OTHER_STATES,
 ]);

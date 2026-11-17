@@ -91,3 +91,63 @@ Each section of a claim page SHALL start in the same way: more room over its hea
 #### Scenario: Folded sections in a row
 - **WHEN** several sections one after another are folded
 - **THEN** their headings stand close together as a list, with no rule between them
+
+### Requirement: What a fact row opens to starts under its label and value
+What a row of a fact sheet opens to SHALL start under the taller of the row's label and its value, across the row's full width, at every width.
+
+#### Scenario: A label of two lines
+- **WHEN** a reader opens the row "Compared with a placebo?" at a width where that label takes two lines
+- **THEN** the whole label is in sight and what the row opens to starts under it
+
+### Requirement: A paper's title can be read whole
+On a closed row a paper's title SHALL be shown on at most two lines. On an opened row, with no script, and on paper, the title SHALL be shown whole.
+
+#### Scenario: A title of 196 characters
+- **WHEN** a reader opens the row of a paper whose title is 196 characters long
+- **THEN** the whole title is in sight
+
+### Requirement: The digest counts the trials' states under a status that names a phase
+When a claim's status is not Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record and how many are under way, not started, finished and stopped early, leaving out a state no trial has and counting every other state together. Where any trial on record is a Phase 4 trial, the digest SHALL say how many and that the path counts phases up to Phase 3. The sentence SHALL be a count of records and SHALL NOT say what the counts mean.
+
+#### Scenario: Most trials stopped early
+- **WHEN** a reader opens a claim whose status is Phase 3 trial and which has 9 trials on record, 3 finished and 6 stopped early
+- **THEN** the digest says "9 trials on record: 3 finished, 6 stopped early."
+
+#### Scenario: Phase 4 trials on record
+- **WHEN** a claim whose status is Phase 3 trial has 47 trials on record, 24 of them Phase 4
+- **THEN** the digest says that 24 are Phase 4 trials and that the path counts phases up to Phase 3
+
+### Requirement: No approval is said by what the site reads
+Where no approval is among a claim's records, the answer to "Approved by a regulator?" SHALL say that none is listed and that regulators' records are not read, and what the row opens to SHALL say that an approval can exist and not be listed.
+
+#### Scenario: A claim with a report of an approval and no approval record
+- **WHEN** a claim lists a news report of an approval and holds no record of one
+- **THEN** the answer reads "None listed. Regulators' records are not read", and never "None on record"
+
+### Requirement: An unconfirmed stage reading's chip says what it is
+The chip beside an evidence stage that was read but not confirmed SHALL say that the reading is not confirmed and the score it was read at. The panel the chip opens SHALL name the low-confidence band.
+
+#### Scenario: A reading at 95%
+- **WHEN** a claim's evidence stage was read at 95% and not confirmed
+- **THEN** the chip reads "Not confirmed · read at 95%" and the line beside it says that it does not decide the status
+
+### Requirement: A key names only the marks its list draws
+A key over the trials' table or the folded years SHALL list only the marks drawn under it, each in the words the rows use for it.
+
+#### Scenario: A claim with no trial stopped early
+- **WHEN** none of a claim's trials was stopped early
+- **THEN** the trials' key has no mark for "Stopped early"
+
+## MODIFIED Requirements
+
+### Requirement: The digest says when trials state no phase
+When a claim's status is Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record, how many of them have finished, and that the registry gives none a phase.
+
+#### Scenario: Three trials with no phase
+- **WHEN** a reader opens a claim whose status is Trial registered and which has 3 trials on record, none stating a phase
+- **THEN** the digest says 3 trials are on record and all have finished, and that the registry gives none a phase
+
+#### Scenario: Status with a phase
+- **WHEN** a reader opens a claim whose status is Phase 2 trial
+- **THEN** the digest has no sentence about a missing phase, and counts the trials' states instead
+

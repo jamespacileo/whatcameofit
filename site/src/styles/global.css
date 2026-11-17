@@ -5915,7 +5915,8 @@ main ul:not([class]) li + li {
 /* The sentence: read first, in the page's larger size. A figure is bold and dotted
    under: it leads to its row. */
 .brief-said {
-  max-width: 46rem;
+  /* About 75 characters a line at this size (46rem ran to 91). */
+  max-width: 37rem;
   margin: 0.7rem 0 0;
   /* A step under the section's heading: it sums the rows up, it does not head them. */
   font-size: var(--text-l);
@@ -6376,6 +6377,12 @@ body.framed {
 .band.record .digest .bridge {
   margin: 0.35rem 0 0;
   font-weight: 600;
+}
+
+/* The trials' states, counted, under a status that names a phase: the status's sentence
+   is the answer and stays the heavier; the count supports it. */
+.band.record .digest .bridge.counts {
+  font-weight: 400;
 }
 
 .frame {
@@ -8308,7 +8315,8 @@ body.framed {
   column-gap: 1.5rem;
   row-gap: 0.5rem;
   align-items: baseline;
-  margin: var(--row-pad) 0 calc(-1 * var(--row-pad)) calc(-1 * (var(--label-col) + 1.5rem));
+  /* A row of the fact's grid under its label and value, across both columns. */
+  margin: var(--row-pad) 0 calc(-1 * var(--row-pad));
   padding: 0.95rem 0 1.1rem;
   background: var(--paper);
   box-shadow:
@@ -8536,10 +8544,8 @@ body.framed {
      full width, under the label too. */
   .fact-sheet .fact-more {
     --part: 1;
-    order: 3;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 0.25rem;
-    margin-left: calc(-7.25rem - 0.9rem);
   }
 
   .fact-more .card-label,
@@ -9240,7 +9246,7 @@ body.framed {
 @media (min-width: 52rem) {
   /* The same width on every row, so the titles end on one edge. */
   .paper-rows .entry-ties {
-    min-width: 17rem;
+    min-width: 14.5rem;
   }
 }
 
@@ -9249,18 +9255,28 @@ body.framed {
 }
 
 @media (min-width: 52rem) {
-  /* A paper is one line: its title, cut to the line, then its kind and its ties. */
+  /* A paper is its title, then its kind and its ties. */
   .sheet .paper-rows > li,
   .sheet .paper-rows .entry-more {
     grid-template-columns: minmax(0, 1fr) auto auto;
     column-gap: 1.25rem;
   }
+}
 
-  .paper-rows .paper-name {
+/* A long title is cut to two lines while its row is closed, so the list stays a list;
+   the opened row shows it whole (2026-11-17: cut to one line, a title of 196 characters
+   could be read nowhere). With no script, and on paper, a title is always whole. */
+@media screen {
+  .js .paper-rows > li:not([data-open]) .paper-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
+}
+
+@media (min-width: 52rem) {
 
   .sheet .paper-rows .entry-more-lead,
   .sheet .paper-rows .entry-more-ties {
