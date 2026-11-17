@@ -87,16 +87,24 @@ In the home page's day-by-day list, a registry record's row SHALL lead with the 
 - **WHEN** a screen reader lists the page's links
 - **THEN** a registry row's title is read with its treatment, as what was recorded, a colon and the treatment's name
 
-### Requirement: A registry row tells the record from the claim's status
-A registry row SHALL name the status in its right column "Status now", so that it is not read as what the record says, unless the row says the status changed that day. The phase in the row's title is the trial's; the status is the claim's.
+### Requirement: A row's status stands in a named panel
+In the home page's day-by-day list, a report's and a registry record's row SHALL show the claim's status in a panel at the row's right: named "Status now" on its first line, so that it is not read as what the report or the record beside it says, then the status, its place on the path, a no-signal note where there is one, and the counts. A row for a record dated on a day the claim's status changed SHALL say "Changed" and the status before in place of "Status now". The panel SHALL be the control that opens the row's detail, and while the detail is open the two SHALL be drawn as one shape. The phase in a registry row's title is the trial's; the status in the panel is the claim's.
 
 #### Scenario: An early trial of a claim that is further on
 - **WHEN** a phase 2 trial is registered for a claim that stands at phase 3
-- **THEN** the row's title reads "Phase 2 trial registered" and its right column reads "Status now" over "Phase 3 trial"
+- **THEN** the row's title reads "Phase 2 trial registered" and its panel reads "Status now" over "Phase 3 trial"
+
+#### Scenario: A report
+- **WHEN** a news report's row is drawn
+- **THEN** its panel reads "Status now" over the claim's status
 
 #### Scenario: A record that changed the status
 - **WHEN** a record dated today moved a claim from phase 2 to phase 3
-- **THEN** the right column says "Changed" and the status before, and does not say "Status now"
+- **THEN** the panel says "Changed" and the status before, and does not say "Status now"
+
+#### Scenario: Opened
+- **WHEN** a reader presses a row's panel
+- **THEN** the detail opens under the row with nothing between it and the panel, on the same ground
 
 ### Requirement: A record's mark is coloured by which way the record moved
 A registry row SHALL carry one mark for what its record did, hidden from a screen reader. The mark's colour SHALL say which way the record moved and nothing else: one colour where something began or a regulator approved (a trial registered, a trial started, a regulatory approval), another where something was halted, taken back or refused (a trial suspended, terminated or withdrawn, a regulatory refusal, a retraction), and the site's blue for every other record. A completed trial and posted results SHALL keep the blue. No mark SHALL be a tick or a cross, and colour SHALL never be the only thing that tells two marks apart: each has its own drawing and the row says what happened in words. No status and no place on the path SHALL take these colours.

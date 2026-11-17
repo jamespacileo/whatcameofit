@@ -106,7 +106,7 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   // that opens the detail under the row (openspec latest-rows).
   assert.ok(row.indexOf("row-title") < row.indexOf('class="row-now"'));
   // Its name is short: the status and what it opens. The counts and sentences describe it.
-  assert.match(row, /<button type="button" class="row-now" aria-expanded="false" aria-controls="more-phase-claim-2025-09-08" aria-label="Phase 3 trial\. More on phase-claim agent" aria-describedby="more-phase-claim-2025-09-08-said" data-row-open>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  assert.match(row, /<button type="button" class="row-now" aria-expanded="false" aria-controls="more-phase-claim-2025-09-08" aria-label="Phase 3 trial\. More on phase-claim agent" aria-describedby="more-phase-claim-2025-09-08-said" data-row-open>\s*<span class="row-change">\s*<span class="row-was">Status now<\/span>\s*<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
   // What the column says is named once, above the list.
   assert.equal(count(dated, 'class="list-key"'), 1);
   assert.match(row, /<div class="row-more" id="more-phase-claim-2025-09-08" role="region" aria-label="More on phase-claim agent" data-row-more>/);
@@ -114,7 +114,7 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   assert.match(row, /Large late-stage trial in people/);
   // What the records add is said in words: the counts in sight, the row's sentences
   // for a screen reader only. The records by date are drawn on the claim page.
-  assert.match(row, /<span class="row-counts" id="more-phase-claim-2025-09-08-said">\d+ trials?( · \d+ with results posted)?<span class="visually-hidden"> [^<]*trials on record[^<]*<\/span><\/span>/);
+  assert.match(row, /<span class="row-counts" id="more-phase-claim-2025-09-08-said">\s*<span class="count">\d+ trials?<\/span>(<span class="count-sep"> · <\/span><span class="count">\d+ with results posted<\/span>)?\s*<span class="visually-hidden"> [^<]*trials on record[^<]*<\/span><\/span>/);
   assert.ok(!row.includes("record-strip"));
   assert.ok(!row.includes("row-adds"));
 });

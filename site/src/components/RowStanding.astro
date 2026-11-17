@@ -1,7 +1,7 @@
 ---
-// Where a row's claim stands, in the row's right-hand column (openspec latest-rows): the
-// status in words, its place on the path, a change or a no-signal note, and the counts.
-// The column is one button. It opens the row's detail under the row: what the evidence
+// Where a row's claim stands, in the row's right-hand column (openspec latest-rows): a
+// panel named "Status now" holding the status in words, its place on the path, a change
+// or a no-signal note, and the counts. The panel is one button. It opens the row's detail under the row: what the evidence
 // was when first reported, what the status means, the path with each place named, why
 // the claim stands there, its latest promise and the links. Without scripting, and on
 // paper, the detail is open.
@@ -33,12 +33,9 @@ interface Props {
   id: string;
   /** Set where the row stands for a change of the claim's status that day. */
   change?: { code: StatusCode; before: StatusCode } | null;
-  /** On a registry row: the status is named "Status now", so that it is not read as
-   * what the record beside it says. */
-  named?: boolean;
 }
 
-const { claim, date, id, change = null, named = false } = Astro.props;
+const { claim, date, id, change = null } = Astro.props;
 const code = change?.code ?? claim.status.code;
 const label = STATUS_LABELS[code];
 const nowLabel = STATUS_LABELS[claim.status.code];
@@ -77,7 +74,9 @@ const trialCount = claim.trials?.length ?? 0;
     )
   }
   {
-    named && !change && (
+    /* Every panel is named, so the status is not read as what the report or the record
+       beside it says: "Status now", unless it says the status changed that day. */
+    !change && (
       <span class="row-change">
         <span class="row-was">Status now</span>
       </span>
@@ -96,7 +95,13 @@ const trialCount = claim.trials?.length ?? 0;
   {
     (counts || sentences.length > 0) && (
       <span class="row-counts" id={descId}>
-        {counts}
+        {counts &&
+          counts.split(" · ").map((part, index) => (
+            <>
+              {index > 0 && <span class="count-sep"> · </span>}
+              <span class="count">{part}</span>
+            </>
+          ))}
         {sentences.length > 0 && <span class="visually-hidden"> {sentences.join(" ")}</span>}
       </span>
     )

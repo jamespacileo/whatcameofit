@@ -4,7 +4,7 @@
 // happened, "Registry record" and the record at its source. Then what was recorded,
 // in the text face, with the trial's phase; then the claim. The claim's newest report
 // hangs under these, smaller, on a hairline at its left: what the record belongs to,
-// not what the row is. The claim's status now is the column on the right, named so,
+// not what the row is. The claim's status now is the panel on the right, named so,
 // since a record and a status side by side are easily read as one.
 import type { RecordRow } from "../lib/day-list";
 import { confidenceLabel } from "../lib/confidence";
@@ -78,5 +78,5 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
       )
     }
   </div>
-  <RowStanding claim={claim} date={row.date} id={moreId} change={change} named />
+  <RowStanding claim={claim} date={row.date} id={moreId} change={change} />
 </li>
