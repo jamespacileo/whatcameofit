@@ -30,7 +30,7 @@ The operator decided on 2026-11-17 (in chat):
 **Approach by rule**
 
 - A claim with no approach gets one by rule when its approved trials list its intervention, by an equal name, under one registry intervention type that a checked-in table maps to an approach.
-- A claim's approach records who set it and on what basis. A rule never overwrites an approach set by a person, the seed or an assistant. The export carries the basis and the claim page states it.
+- A claim's approach records who set it and on what basis. A rule never overwrites an approach set by a person, the seed or an assistant. The claim page states what the registry lists whenever that supports the claim's approach, whoever set it.
 - When the registry types do not agree, or the one type has no approach in the table, the approach stays empty and the claim is listed with the reason.
 
 ### Not in this change
@@ -54,8 +54,9 @@ The operator decided on 2026-11-17 (in chat):
 
 ## Impact
 
-- **Pipeline**: a new `clinical/` package (categories, tree, topic mapping, comparison); `claims/mesh_areas.py` (its label table is replaced by the mapping); `claims/` for the approach rule; `terms/kinds.py` (`registry_types` reused); `sources/mesh.py` (one more read: a descriptor's tree numbers); `prepare.py`, the daily trial refresh, `cli/`, `export/build.py`; `db/models.py` with one new migration (a table of claim categories, two columns on the claim).
+- **Pipeline**: a new `clinical/` package (categories, tree, topic mapping, comparison); `claims/mesh_areas.py` (its label table is replaced by the mapping); `claims/` for the approach rule; `terms/kinds.py` (`registry_types` reused); `sources/mesh.py` (one more read: a descriptor's tree numbers); `prepare.py`, the daily trial refresh, `cli/`, `export/build.py`; `db/models.py` with one new migration (two columns on the claim). Clinical categories are derived from stored records and add no table.
 - **Sources**: no new source. NLM's MeSH service is asked for one record per distinct category and broader category, within the limit in `docs/sources.md`. Republishing a paper's subject headings is a field beyond what `docs/sources.md` now allows for Europe PMC records; the terms are read again and the note updated before any paper heading is published.
+- **Truth store (D1)**: no schema change. Categories and the approach basis are derived when the export is built, from records both stores hold.
 - **Export**: per claim, its clinical categories with sources and its approach basis; once per export, the part of the MeSH tree the claims use, with the MeSH year. `site/export.schema.json` and `site/data/seed-export.json` are regenerated.
 - **Site**: new pages under `/clinical`, a section on the claim page, links from `/for/clinicians` and the topics page, sitemap entries, the NLM credit.
 - **Operations**: the migration and the first runs are write steps, so they run on the writer (the Mac mini) only, each after a dry run whose numbers are recorded in `design.md`.

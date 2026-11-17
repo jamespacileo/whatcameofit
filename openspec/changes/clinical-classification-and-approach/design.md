@@ -28,13 +28,15 @@ See `proposal.md` for the motivation and the operator's decisions of 2026-11-17.
 
 ## Decisions
 
-### 1. A claim's categories are the direct terms; broader ones come from the tree
+### 1. Categories are derived from stored records, never stored themselves
 
-`claim_category` holds one row per claim and descriptor: the descriptor identifier, and the list of records that gave it (source name and external identifier). Only the direct terms are stored: a trial's `meshes`, never its `ancestors`. Everything broader is computed from tree numbers.
+A claim's clinical categories are a pure function of records both stores already hold: the registry records of its approved trials and the index records of its approved papers. They are computed when the export and the reports are built. There is no `claim_category` table.
 
-*Why:* the registry's ancestor list is flat, with no parent links, so it cannot draw a tree. Storing it as well would give two answers to "what is above this term". One source of structure, NLM's, is enough.
+*Why (decided by the operator on 2026-11-17, during apply):* the first design stored a row per claim and descriptor. It missed the truth store: the export is assembled once from either Postgres or the D1 store, and tests hold the two equal, so every stored field needs a D1 migration, merge statements, proof scenarios and push and pull code. A derived value needs none of that, cannot go stale when a match is rejected or a claim merged, and needs no recompute hooks.
 
-The rows are derived state. One session function recomputes a claim's rows from its approved trial and paper records and is called wherever matches change: `prepare`, the daily trial refresh, an archive, a merge.
+Only the direct terms count: a trial's `meshes`, never its `ancestors`. The registry's ancestor list is flat, with no parent links, so it cannot draw a tree; everything broader comes from NLM's tree numbers (Decision 3).
+
+The derivation reads through the export's `Records` interface, so it gives the same answer from either store.
 
 ### 2. From papers: major topics in the disease trees only
 
@@ -48,7 +50,7 @@ Trials are not filtered this way: the registry has already said the term is the 
 
 ### 3. The tree is read once per descriptor, through the existing client
 
-`sources/mesh.py` gains the reading of `treeNumber` and `broaderDescriptor` from the record it already fetches. For every descriptor in `claim_category`, and each broader descriptor up to a tree's top, the record is stored in `term_record` as now. A descriptor's ancestors are found by tree-number prefix (`C18.654.726` is above `C18.654.726.750`), and the descriptor holding each prefix is known from the stored records.
+`sources/mesh.py` gains the reading of `treeNumber` and `broaderDescriptor` from the record it already fetches. For every descriptor some claim has as a category, and each broader descriptor up to a tree's top, the record is stored in `term_record` as now. A descriptor's ancestors are found by tree-number prefix (`C18.654.726` is above `C18.654.726.750`), and the descriptor holding each prefix is known from the stored records.
 
 Expected volume: a few thousand records for 970 claims, read once and refreshed with the MeSH year. At the client's 2 a second that is under an hour, well inside NLM's stated limit.
 
@@ -102,6 +104,8 @@ Unchanged from the first version of this change:
 
 `BIOLOGICAL`, `BEHAVIORAL`, `RADIATION`, `COMBINATION_PRODUCT`, `DIAGNOSTIC_TEST` and `OTHER` map to nothing: each covers more than one approach or none. The rule answers only when `registry_types` returns exactly one type and the table maps it. Two columns on the claim, `approach_decided_by` and `approach_basis`; existing rows keep the first empty, which the rule reads as "not mine". `claims/approach_rule.py` holds the table and one pure function; a session function enforces "never overwrite" and is called from `prepare`, the daily refresh and `thenwhat claim approaches` (`--dry-run`, `--unset`).
 
+**The basis shown on the site is derived too.** The export states the registry's type and trial count whenever the registry's one type maps to the claim's approach, whoever set the approach: it is a fact about the registry, true of a person's approach as much as of a rule's. So the export needs neither column, and neither goes to the D1 store. The columns stay in Postgres only, where they decide what the rule may overwrite. Decided by the operator on 2026-11-17, during apply.
+
 *Alternative considered:* the majority type. Rejected: a majority of mis-typed records would set a wrong approach with a confident-looking basis.
 
 ### 9. Measure before each first write
@@ -109,14 +113,17 @@ Unchanged from the first version of this change:
 On the writer, before anything is published:
 
 - `thenwhat claim approaches --dry-run`: how many claims the rule would fill, and its agreement with the 90 approaches set by hand or seed. A type that agrees poorly leaves the table.
-- `thenwhat clinical categories --dry-run`: how many claims get a category from trials, how many only from papers, how many none.
+- `thenwhat clinical categories`: how many claims have a category from trials, how many only from papers, how many none. It only reads.
 - `thenwhat clinical compare`: the numbers in Decision 6.
 
 Each is recorded in this file under "Measured".
 
 ## Risks / Trade-offs
 
-- **The change is large**: two migrations' worth of state, a new source field, new site pages → Tasks are grouped so the approach rule (groups 1 and 2) and the clinical data (3 to 5) each land and pass `make check` alone, and the site (6) reads only the export.
+- **The D1 store never updates a claim's approach after its first push.** `store/merge.sql` inserts a claim's own fields once and afterwards updates only its review, status, dates and audit marks; the same holds today for an edited vertical or headline. The site's export is still built from Postgres, so nothing is lost now. Before the cut-over to the store, a rule-set approach on an existing claim must be carried, or it will not be published. That belongs to `cloudflare-source-of-truth`; it is recorded here so it is not found late.
+- **A database restored from the store loses who set each approach**, since the column is Postgres only → Every approach then reads as "not the rule's" and is kept. The rule stops updating them; it does not overwrite anything.
+- **Deriving categories costs export time** → Measured in the export task and reported; the tree lookup is in memory.
+- **The change is large**: a new source field, derivations, new site pages → Tasks are grouped so the approach rule (groups 1 and 2) and the clinical data (3 to 5) each land and pass `make check` alone, and the site (6) reads only the export.
 - **A paper is about more than the claim's indication** (a results paper indexed under a comorbidity as a major topic) → Each category names its records on the claim page, so a wrong one is traceable. The dry run reports how many claims are filed by papers alone; the operator can look at those first.
 - **Europe PMC's terms may not allow republishing headings** → Decision 2: then papers are not used. Coverage falls to claims with an approved trial.
 - **MeSH changes every year**: labels reworded, terms moved or retired → Identifiers are the key; the year is stored and shown; a retired descriptor is kept and listed, not dropped silently.
@@ -128,11 +135,11 @@ Each is recorded in this file under "Measured".
 ## Migration Plan
 
 1. Land groups 1 and 2 (approach). On the writer: migrate, dry run, record, run, export.
-2. Land groups 3 to 5 (clinical data, mapping, comparison). On the writer: migrate, read the MeSH records, dry run, record, run. Nothing public changes yet except the export's new fields.
+2. Land groups 3 to 5 (clinical data, mapping, comparison). On the writer: read the MeSH records, run the reports, record. Nothing public changes yet except the export's new fields.
 3. Land group 6 (site). Deploy through the usual pull request and its preview.
 4. Paste the disagreement rows into the fault tab. Record the comparison's numbers under "Measured". The switch-over is proposed, or not, from them.
 
-Rollback: the site pages are removed by reverting the site commit. `claim_category` can be emptied and recomputed at any time. Rule-set approaches are cleared where `approach_decided_by` is `rule`.
+Rollback: the site pages are removed by reverting the site commit. Clinical categories hold no state of their own. Rule-set approaches are cleared where `approach_decided_by` is `rule`.
 
 ## Measured
 

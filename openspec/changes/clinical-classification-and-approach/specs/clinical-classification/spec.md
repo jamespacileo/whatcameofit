@@ -7,15 +7,15 @@ Gives every claim its clinical categories in a standard medical hierarchy (MeSH)
 ## ADDED Requirements
 
 ### Requirement: Clinical categories from approved trials
-A claim's clinical categories SHALL include every MeSH descriptor that an approved trial of the claim lists as a condition term in its registry record. Broader terms the registry lists as ancestors SHALL NOT be stored as the claim's own categories. A trial whose match is not approved SHALL give none. No model SHALL take part.
+A claim's clinical categories SHALL include every MeSH descriptor that an approved trial of the claim lists as a condition term in its registry record. Broader terms the registry lists as ancestors SHALL NOT count as the claim's own categories. A trial whose match is not approved SHALL give none. No model SHALL take part.
 
 #### Scenario: Trial with a condition term
 - **WHEN** a claim's approved trial lists the MeSH condition term "Alzheimer Disease"
 - **THEN** "Alzheimer Disease" is one of the claim's clinical categories
 
-#### Scenario: Ancestor not stored
+#### Scenario: Ancestor is not a category
 - **WHEN** the same record lists "Dementia" only as an ancestor
-- **THEN** "Dementia" is not stored as the claim's own category
+- **THEN** "Dementia" is not one of the claim's own categories
 
 #### Scenario: Candidate trial
 - **WHEN** a trial is matched to the claim as a candidate and not approved
@@ -37,7 +37,7 @@ A claim's clinical categories SHALL also include each MeSH descriptor that an ap
 - **THEN** it does not become a clinical category
 
 ### Requirement: Each category names the records that gave it
-A claim's clinical category SHALL record every approved trial and approved paper that gave it. When the last such record is no longer approved, the category SHALL be removed. A category SHALL NOT be entered by hand.
+A claim's clinical category SHALL record every approved trial and approved paper that gave it. The categories SHALL be derived from the stored records each time they are read, and SHALL be the same whichever store they are read from. A category SHALL NOT be entered by hand.
 
 #### Scenario: Two sources
 - **WHEN** a trial and a paper of the claim both give "Psoriasis"
