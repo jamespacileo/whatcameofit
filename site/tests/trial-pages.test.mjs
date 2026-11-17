@@ -106,7 +106,8 @@ test("Scenario: An uncited trial", async () => {
   const response = await served.open(UNCITED);
   const html = await response.text();
   assert.equal(response.status, 200);
-  assert.deepEqual(served.calls, [`https://clinicaltrials.gov/api/v2/studies/${UNCITED}`]);
+  assert.equal(served.calls.length, 1);
+  assert.ok(served.calls[0].startsWith(`https://clinicaltrials.gov/api/v2/studies/${UNCITED}?fields=NCTId%2C`));
   for (const said of [
     "A synthetic study of zetamab in synthetic lung condition", UNCITED, "ClinicalTrials.gov",
     STATE_PHRASES.under_way, NO_REPORT, "Phase 3", "Synthetic lung condition", "Biological: Zetamab", "Drug: Placebo",

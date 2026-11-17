@@ -2,6 +2,7 @@
 // A trial a published claim cites gets the record's selected text and leads to the claim.
 // A listed trial no claim cites gets the plain page: registry facts in the site's fixed
 // phrases, and the line that no news report is linked yet (openspec trial-pages).
+import { peopleIn, withoutPeople } from "./people.mjs";
 import { makeRegistry } from "./registry.mjs";
 import { SITE } from "../site.config.mjs";
 import {
@@ -13,7 +14,20 @@ const DAY = 86400000;
 // A record read within the day is reused, with its retrieval date. An older one is never shown:
 // when the registry cannot be read, the page says so (no lower-quality fallbacks).
 const FRESH = DAY;
+// The key is unchanged since the first saved copies, so that a newer copy replaces an
+// older one where it lies; `VERSION` is what a copy is refused by.
 const PREFIX = "trial-record:v1:";
+// Version 2: the copy holds only the fields the pages show, and no person. A copy of
+// version 1 was the registry's whole record, contacts included, and is never read.
+const VERSION = 2;
+// All the registry is asked for: what the two pages show. Its officials, contacts and
+// sites are never received. The lead sponsor's class and the responsible party's type
+// are asked for only to tell that a sponsor is a person, who is then not named.
+const PAGE_FIELDS = [
+  "NCTId", "BriefTitle", "OfficialTitle", "StatusModule", "Phase", "StudyType", "EnrollmentInfo",
+  "Condition", "LeadSponsorName", "LeadSponsorClass", "ResponsiblePartyType", "InterventionName",
+  "InterventionType", "InterventionDescription", "PrimaryOutcome", "BriefSummary", "HasResults",
+].join(",");
 const text = value => typeof value === "string" ? value : "";
 const strings = value => Array.isArray(value) ? value.filter(item => typeof item === "string") : [];
 const escape = value => String(value ?? "").replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[ch]);
@@ -25,8 +39,8 @@ function validRecord(record, id) {
 }
 
 function validCopy(copy, id, now) {
-  return copy?.version === 1 && Number.isFinite(copy.at) && copy.at <= now &&
-    now - copy.at < FRESH && validRecord(copy.record, id);
+  return copy?.version === VERSION && Number.isFinite(copy.at) && copy.at <= now &&
+    now - copy.at < FRESH && validRecord(copy.record, id) && peopleIn(copy.record).length === 0;
 }
 
 // Registry dates can be a year, a month or a full date; never invent missing precision.
@@ -232,10 +246,11 @@ export async function handleTrial(request, env, {fetch: get=globalThis.fetch, no
       return failure(request,env,id,claims,503,"The registry reader is busy. Please try again in a minute.");
     }
     const registry = makeRegistry({contact:env.CONTACT_EMAIL, fetch:(url,options={})=>get(url,{...options,signal:AbortSignal.timeout(8000)})});
-    const record = await registry.fetch(id);
+    // People are removed whatever the registry sends: the field list is not relied on.
+    const record = withoutPeople(await registry.fetch(id, {fields:PAGE_FIELDS}));
     if (!record) return failure(request,env,id,claims,404,"ClinicalTrials.gov has no record at this identifier.");
     if (!validRecord(record,id)) throw Error("invalid registry record");
-    const saved = {version:1,at:now(),record};
+    const saved = {version:VERSION,at:now(),record};
     try { await env.LOOKUP_RESULTS?.put(key,JSON.stringify(saved),{expirationTtl:FRESH/1000}); } catch { /* Saving a public copy is optional. */ }
     return render(saved);
   } catch { return unavailable(); }
