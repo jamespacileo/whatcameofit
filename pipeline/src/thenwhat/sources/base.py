@@ -354,6 +354,10 @@ class Source:
                 return None
             if response.is_success:
                 return response
+            if response.status_code in (401, 403):
+                raise SourceCannotBeAsked(
+                    f"{self.name} refused access (status {response.status_code})."
+                )
             if passes(response.status_code):
                 raise Passing(
                     f"{self.name} answered with status {response.status_code}.",

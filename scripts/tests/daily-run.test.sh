@@ -49,7 +49,9 @@ case "$*" in
   *"fetch_link_files.py"*)
     [ -n "${FAKE_MONTHS:-}" ] && echo "Months written: $FAKE_MONTHS (2,000 stories with a link from 2026-09-25 00:00 UTC, 1,500 new to the files; still behind, the next run goes on from 2026-10-15)"
     true ;;
-  *"load-links"*) echo "Read 900 posts from file: 31 new link leads, 2 more shares, 867 already stored." ;;
+  *"load-links"*)
+    case "$*" in *"/${FAKE_FAILED_MONTH:-no-month}.parquet") exit 3 ;; esac
+    echo "Read 900 posts from file: 31 new link leads, 2 more shares, 867 already stored." ;;
   *"link_read"*) echo "link_read: 40 done, 0 found nothing, 1 failed; 300 still due." ;;
   *"load-trials --trials interventional --changes-only")
     echo "Loaded 1,240 trials updated since 2026-11-16 in 2 requests: 85 new, 1,155 already stored."
@@ -137,6 +139,29 @@ fresh
 grep -q '^- Link files: Months written: 2026-09 2026-10 .*still behind' "$state/latest.md" ||
   fail "gap: the summary does not say the fetch is still behind"
 
+# A failed import survives a later fetch that no longer touches that month. A dry run
+# leaves the pending import intact, and a completed month leaves the queue.
+fresh
+for owed in 2026-09 2026-10 2026-11; do
+  : >"$root/data/link-files/hackernews/$owed.parquet"
+done
+# shellcheck disable=SC2030,SC2031 # each simulated night has its own provider state
+(export FAKE_MONTHS="2026-09 2026-10" FAKE_FAILED_MONTH="2026-09" FAKE_SPEND="30 0" && job) &&
+  fail "pending imports: a failed import reported success"
+[ -f "$state/pending-link-loads/2026-09" ] && [ ! -e "$state/pending-link-loads/2026-10" ] ||
+  fail "pending imports: only the unsuccessful month should remain"
+: >"$calls"
+job --dry-run >"$tmp/case/dry"
+grep -q 'load-links hackernews .*2026-09.parquet$' "$tmp/case/dry" &&
+  [ ! -s "$calls" ] && [ -f "$state/pending-link-loads/2026-09" ] ||
+  fail "pending imports: dry run lost the pending September import or started a command"
+# shellcheck disable=SC2030,SC2031
+(export FAKE_MONTHS="2026-10 2026-11" FAKE_SPEND="30 0" && job) ||
+  fail "pending imports: retry failed"
+[ "$(sed -n 's|.* backfill load-links hackernews .*/||p' "$calls" | tr '\n' ',')" = "2026-09.parquet,2026-10.parquet,2026-11.parquet," ] ||
+  fail "pending imports: the retry missed a month, loaded twice or ran out of order"
+[ -z "$(ls -A "$state/pending-link-loads")" ] || fail "pending imports: success was not cleared"
+
 # 1d. A window that is not 1 to 28 days is refused before anything starts.
 fresh
 # shellcheck disable=SC2030,SC2031 # each case sets the window in its own subshell
@@ -169,6 +194,7 @@ grep -q '2 of 3 published claims: 2 new events, 1 claims failed' "$summary" || f
 
 # 3. At the ceiling nothing that spends starts; what spends nothing still runs.
 fresh
+# shellcheck disable=SC2031 # this case sets its own spend
 (export FAKE_SPEND="29.2000 1.0000" && job) || fail "ceiling: exit $? for a stop that was meant"
 [ "$(steps_called)" = "db-check,load-links hackernews,run link_screen,measure," ] ||
   fail "ceiling: steps were $(steps_called)"

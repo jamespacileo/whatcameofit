@@ -160,6 +160,21 @@ def test_a_window_after_a_gap_does_not_move_the_record(fetch: Script) -> None:
     assert last_fetch(fetch) == "2026-11-01T04:30:00+00:00"
 
 
+def test_months_are_pending_before_the_fetch_cursor_moves(fetch: Script, tmp_path, monkeypatch):
+    pending = tmp_path / "pending-link-loads"
+    pending.mkdir()
+    monkeypatch.setenv("THENWHAT_PENDING_LINK_LOADS", str(pending))
+
+    def interrupted(folder, through):
+        assert sorted(marker.name for marker in pending.iterdir()) == ["2026-10", "2026-11"]
+        raise InterruptedError
+
+    monkeypatch.setattr(fetch.module, "write_last_fetch", interrupted)
+    with pytest.raises(InterruptedError):
+        fetch.module.main(["hackernews", "--since-last-fetch", "3"], now=at("2026-11-02 04:30"))
+    assert last_fetch(fetch) is None
+
+
 def test_month_form_with_merge_fills_a_past_month(fetch: Script) -> None:
     write_month(fetch, "2026-10", [story(1, "2026-10-02")])
     fetch.held = [story(1, "2026-10-02", 7), story(2, "2026-10-20")]

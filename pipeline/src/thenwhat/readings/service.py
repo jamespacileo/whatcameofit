@@ -131,10 +131,13 @@ class ReadingsRun:
     refused: Counter[Refusal] = field(default_factory=Counter)
     # Trials whose call failed, with what the failure said. They keep what they had.
     failed: list[tuple[str, str]] = field(default_factory=list)
-    # Said when the monthly spend ceiling stopped the run.
-    stopped: str | None = None
+    stop: BudgetExceeded | ModelCannotBeAsked | None = None
     # Trials the run stopped before. They have no new reading.
     unread: list[str] = field(default_factory=list)
+
+    @property
+    def stopped(self) -> str | None:
+        return str(self.stop) if self.stop is not None else None
 
 
 def outcomes_of(payload: dict) -> tuple[Outcome, ...]:
@@ -395,7 +398,7 @@ def read_trials(
                 output_type=ReadingsAnswer,
             )
         except (BudgetExceeded, ModelCannotBeAsked) as error:
-            run.stopped = str(error)
+            run.stop = error
             run.unread = [later.trial_id for later in todo[start:]]
             break
         for trial, answer in zip(group, answers, strict=True):

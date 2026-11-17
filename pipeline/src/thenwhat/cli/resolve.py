@@ -539,8 +539,20 @@ def _say_trials(
         out.print(f"Suggested evidence stage: {found.stage.choice}. Confirm it in review.")
 
 
-def _say_research(found: PapersFound, *, accept_above: float, reject_below: float) -> None:
+def _say_research(
+    slug: str, found: PapersFound, *, accept_above: float, reject_below: float
+) -> None:
     """What the search for organisations and papers found."""
+    if found.by_doi:
+        _say_matches(
+            slug,
+            found.by_doi,
+            [],
+            {},
+            rescore=False,
+            accept_above=accept_above,
+            reject_below=reject_below,
+        )
     if found.organisations:
         chosen = sum(match.review_state is ReviewState.APPROVED for match in found.organisations)
         out.print(
@@ -635,7 +647,7 @@ def resolve_command(
                 _say_redone(claim, found.redone)
         research = papers.results.get(claim_id)
         if research is not None:
-            _say_research(research, accept_above=accept_above, reject_below=reject_below)
+            _say_research(slug, research, accept_above=accept_above, reject_below=reject_below)
         for step in steps:
             line = outcome_line(session, step, claim_id, slug)
             if line is not None:

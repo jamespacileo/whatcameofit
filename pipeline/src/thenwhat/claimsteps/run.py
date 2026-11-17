@@ -45,7 +45,9 @@ def claim_steps(
     a step only while drafts are decided by rule. `rescore`, `redo_rule` and
     `rescore_pending` are the per-claim commands' options."""
     reject_below, accept_above = settings.match_reject_below, settings.match_accept_above
-    articles = ClaimArticles(claims=claims, clock=clock)
+    articles = ClaimArticles(
+        site_retry_wait=timedelta(hours=settings.lead_site_retry_hours), claims=claims, clock=clock
+    )
     substance = ClaimSubstance(claims=claims, clock=clock)
     trials = ClaimTrials(
         reject_below=reject_below,
@@ -60,6 +62,7 @@ def claim_steps(
     )
     trials.after = (substance,)
     papers = ClaimPapers(
+        papers_enabled=bool(settings.openalex_api_key),
         reject_below=reject_below,
         accept_above=accept_above,
         rescore=rescore,
@@ -68,7 +71,11 @@ def claim_steps(
     )
     papers.after = (trials,)
     named = ClaimNamedRecords(
-        reject_below=reject_below, accept_above=accept_above, claims=claims, clock=clock
+        reject_below=reject_below,
+        accept_above=accept_above,
+        papers_enabled=bool(settings.openalex_api_key),
+        claims=claims,
+        clock=clock,
     )
     fetch = ClaimFetch(
         threshold=settings.review_confidence_threshold,
@@ -120,6 +127,7 @@ def merged(reports: Sequence[RunReport]) -> RunReport:
         together.nothing_found += report.nothing_found
         together.failed += report.failed
         together.later += report.later
+        together.before_work += report.before_work
         together.needs_fix += report.needs_fix
         together.stopped = together.stopped or report.stopped
         together.errors = (together.errors or []) + (report.errors or [])
