@@ -892,7 +892,7 @@ def test_load_trials_records_a_too_many_requests_and_stops_cleanly(
     assert again.exit_code == 0, again.output
     assert asked == []
     assert "Loaded 0 trials in 0 requests" in again.output
-    assert "Stopped: clinicaltrials.gov said it was asked too often." in again.output
+    assert "Stopped: clinicaltrials.gov is paused until" in again.output
 
 
 def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):

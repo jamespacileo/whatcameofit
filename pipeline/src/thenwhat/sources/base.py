@@ -1,25 +1,36 @@
 """What every registry client shares: the record contract, cache, rate limit,
-client identification and retry. Behavior: openspec source-clients."""
+client identification and retry. Behavior: openspec source-clients.
+
+Every request goes through the one call policy (`work/calls.py`): retried for causes that
+pass, within a ceiling on any wait, and refused while the source is paused or its
+allowance is used up (`work/pause.py`), whichever command sends it."""
 
 import hashlib
 import json
-import math
 import threading
-import time as system_time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Any, Protocol, cast
 
 import httpx
-from sqlalchemy import CursorResult, delete, select
+from sqlalchemy import CursorResult, delete
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from thenwhat import __version__
-from thenwhat.db.models import HttpCache, SourceAllowanceUse
+from thenwhat.config import load_call_settings
+from thenwhat.db.models import HttpCache
 from thenwhat.measure import spans as measure
 from thenwhat.sources.terms import SOURCES
+from thenwhat.work.calls import CallRules, Calls, NotAnswered, Passing, passes, stated_wait
+from thenwhat.work.clock import SystemTime, Time
+from thenwhat.work.errors import AllowanceUsedUp as AllowanceSpent
+from thenwhat.work.errors import CannotAsk, SourcePaused
+from thenwhat.work.pause import apart, let_in, pause
+
+# The clock is the work package's; it is named here too for the source clients.
+__all__ = ["SystemTime", "Time"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,12 +81,26 @@ class SourceUnavailable(SourceError):
     """The registry kept failing after every allowed attempt."""
 
 
-class SourceThrottled(SourceUnavailable):
-    """The registry's last answer, after every allowed attempt, was "too many requests".
-    `retry_after` is the wait it stated in seconds, or None when it stated none."""
+class SourceCannotBeAsked(SourceUnavailable, CannotAsk):
+    """The registry cannot be asked now: it failed on every allowed attempt, it asked for
+    a wait above the ceiling, it is paused, or its allowance is used up. Nothing was
+    found or not found, and nothing is stored as an answer. A run that meets it stops;
+    `until` is when it may be asked again, where that is known."""
 
-    def __init__(self, message: str, retry_after: float | None) -> None:
+    def __init__(self, message: str, *, until: datetime | None = None) -> None:
         super().__init__(message)
+        self.until = until
+
+
+class SourceThrottled(SourceCannotBeAsked):
+    """The registry's last answer was "too many requests", after every allowed attempt or
+    with a wait above the ceiling. `retry_after` is the wait it stated in seconds, or
+    None when it stated none."""
+
+    def __init__(
+        self, message: str, retry_after: float | None, *, until: datetime | None = None
+    ) -> None:
+        super().__init__(message, until=until)
         self.retry_after = retry_after
 
 
@@ -137,76 +162,16 @@ def forget_expired(session: Session, now: datetime) -> int:
     return deleted.rowcount
 
 
-class Time(Protocol):
-    def now(self) -> datetime: ...
-    def monotonic(self) -> float: ...
-    def sleep(self, seconds: float) -> None: ...
-
-
-class SystemTime:
-    def now(self) -> datetime:
-        return datetime.now(UTC)
-
-    def monotonic(self) -> float:
-        return system_time.monotonic()
-
-    def sleep(self, seconds: float) -> None:
-        system_time.sleep(seconds)
-
-
 class Turns(Protocol):
     """Whose turn it is to ask a source."""
 
     def wait(self, time: Time, interval: float) -> None: ...
 
 
-class SharedTurns:
-    """Whose turn it is to ask a source, for every client of it in every process.
-
-    The source's row in the allowance table holds the time of the latest turn given out.
-    A client takes the next free time, one interval after that or now if that is later,
-    writes it in a short transaction of its own, apart from the work it is doing, and
-    then waits for that time with nothing held. Turns are therefore never closer than
-    the interval, whichever process takes them. A request can still leave a little
-    after its turn, by as long as the database took to answer, so two requests can be
-    closer than the interval by that much; the rate over any longer stretch holds.
-
-    Only the time is written here. Counting requests against an allowance is the
-    allowance's own business (openspec source-allowances), and a step that claims one
-    shares this row and waits out the same times.
-    """
-
-    def __init__(self, session: Session, source: str) -> None:
-        self._bind = session.get_bind()
-        self._source = source
-
-    def wait(self, time: Time, interval: float) -> None:
-        with Session(self._bind, join_transaction_mode="create_savepoint") as turn, turn.begin():
-            turn.execute(
-                insert(SourceAllowanceUse)
-                .values(source_name=self._source, period_start=time.now(), requests_used=0)
-                .on_conflict_do_nothing(index_elements=[SourceAllowanceUse.source_name])
-            )
-            use = turn.scalars(
-                select(SourceAllowanceUse)
-                .where(SourceAllowanceUse.source_name == self._source)
-                .with_for_update()
-            ).one()
-            mine = time.now()
-            if use.last_request_at is not None:
-                # Rounded up to the clock's own step, so a turn is never early.
-                apart = timedelta(microseconds=math.ceil(interval * 1_000_000))
-                mine = max(mine, use.last_request_at + apart)
-            use.last_request_at = mine
-        wait = (mine - time.now()).total_seconds()
-        if wait > 0:
-            time.sleep(wait)
-
-
 class Pacer:
     """Whose turn it is among the clients that hold this one pacer, whatever thread each
-    is on. It knows nothing of other processes: a source's clients take turns through
-    `SharedTurns` unless they are handed a pacer."""
+    is on. It knows nothing of other processes: a source's clients take turns in the
+    source's row of the allowance table unless they are handed a pacer."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
@@ -231,7 +196,15 @@ class Fetched:
 class Source:
     """Base for registry clients. Subclasses set `name` and `default_rate_per_second`
     and build their lookups on `_get`, or on `_post` for a source that is asked with a
-    request body."""
+    request body.
+
+    Every client of a source, in every process, takes turns in the source's row of the
+    allowance table: the row holds the time of the latest turn given out, a client takes
+    the next free time in a short transaction of its own and waits for it with nothing
+    held, so turns are never closer than the interval whichever process takes them. The
+    same transaction refuses the request while the source is paused and counts it
+    against the source's allowance when one is configured. A client handed a pacer
+    takes its turns there instead, and is still refused and counted."""
 
     name: str
     default_rate_per_second: float
@@ -258,7 +231,27 @@ class Source:
         self._max_attempts = self.default_max_attempts if max_attempts is None else max_attempts
         # Every client of this source, in every process, takes turns with this one,
         # unless it is handed a pacer of its own.
-        self._pacer: Turns = pacer or SharedTurns(session, self.name)
+        self._pacer = pacer
+        configured = load_call_settings()
+        self._allowance = configured.allowances().get(self.name)
+        if self._allowance is not None:
+            self._interval = max(self._interval, self._allowance.interval_seconds)
+        self._calls = Calls(
+            self.name,
+            rules=CallRules(
+                attempts=self._max_attempts,
+                wait_ceiling_seconds=configured.call_wait_ceiling_seconds,
+                throttled_pause=(
+                    timedelta(minutes=self._allowance.pause_minutes)
+                    if self._allowance is not None
+                    else None
+                ),
+            ),
+            now=self._time.now,
+            sleep=self._time.sleep,
+            admit=self._wait_for_turn,
+            keep_pause=lambda until: pause(self._session, self.name, until, self._time.now()),
+        )
         self._client = httpx.Client(
             transport=transport, timeout=self.request_timeout, follow_redirects=True
         )
@@ -340,45 +333,45 @@ class Source:
     def _request(
         self, url: str, params: dict[str, str] | None, *, body: dict[str, Any] | None = None
     ) -> httpx.Response | None:
-        """One GET, or one POST of `body` as JSON, with bounded retries. None means the
-        registry said not-found."""
+        """One GET, or one POST of `body` as JSON, under the call policy. None means the
+        registry said not-found. A registry that cannot be asked raises
+        `SourceCannotBeAsked`, never an empty answer."""
         headers = {"User-Agent": user_agent(self._contact)} | self._extra_headers()
-        throttled: float | None = None  # the stated wait, when the last answer was a 429
-        for attempt in range(self._max_attempts):
-            throttled = None
-            self._wait_for_turn()
+
+        def attempt() -> httpx.Response | None:
             measure.add_request(self.name)
-            stated_delay = 0.0
             try:
                 if body is None:
                     response = self._client.get(url, params=params, headers=headers)
                 else:
                     response = self._client.post(url, json=body, headers=headers)
-            except httpx.TransportError:
-                response = None
-            if response is not None:
-                self._heed(response)
-                if response.status_code == 404:
-                    return None
-                if response.is_success:
-                    return response
-                if response.status_code != 429 and response.status_code < 500:
-                    raise SourceError(
-                        f"{self.name} refused the request with status {response.status_code}."
-                    )
-                stated_delay = _retry_after(response)
-                if response.status_code == 429:
-                    throttled = stated_delay
-            if attempt + 1 < self._max_attempts:
-                delay = max(2.0**attempt, stated_delay)
-                self._time.sleep(delay)
-                measure.add_wait(self.name, delay)
-        if throttled is not None:
-            raise SourceThrottled(
-                f"{self.name} said it was asked too often, {self._max_attempts} times running.",
-                throttled or None,
+            except httpx.TransportError as error:
+                raise Passing(
+                    f"{self.name} could not be reached ({type(error).__name__})."
+                ) from error
+            self._heed(response)
+            if response.status_code == 404:
+                return None
+            if response.is_success:
+                return response
+            if passes(response.status_code):
+                raise Passing(
+                    f"{self.name} answered with status {response.status_code}.",
+                    status=response.status_code,
+                    wait=stated_wait(response, self._time.now()),
+                )
+            raise SourceError(
+                f"{self.name} refused the request with status {response.status_code}."
             )
-        raise SourceUnavailable(f"{self.name} did not answer after {self._max_attempts} attempts.")
+
+        try:
+            return self._calls.send(attempt)
+        except NotAnswered as stop:
+            if stop.last.throttled:
+                raise SourceThrottled(str(stop), stop.last.wait, until=stop.until) from None
+            raise SourceCannotBeAsked(str(stop), until=stop.until) from None
+        except (SourcePaused, AllowanceSpent) as refused:
+            raise SourceCannotBeAsked(str(refused), until=refused.until) from None
 
     def _extra_headers(self) -> dict[str, str]:
         """Headers a source adds to every request, such as its key. They are never part
@@ -390,13 +383,21 @@ class Source:
         reads it here and raises when nothing is left, which also ends the retries."""
 
     def _wait_for_turn(self) -> None:
+        """Let one request in (work/pause.py) and wait for its turn. Raises, sending
+        nothing, while the source is paused or its allowance is used up."""
         began = self._time.monotonic()
-        self._pacer.wait(self._time, self._interval)
+        now = self._time.now()
+        with apart(self._session) as own:
+            turn = let_in(
+                own,
+                self.name,
+                now=now,
+                allowance=self._allowance,
+                interval=self._interval if self._pacer is None else None,
+            )
+        wait = (turn - self._time.now()).total_seconds()
+        if wait > 0:
+            self._time.sleep(wait)
+        if self._pacer is not None:
+            self._pacer.wait(self._time, self._interval)
         measure.add_wait(self.name, self._time.monotonic() - began)
-
-
-def _retry_after(response: httpx.Response) -> float:
-    try:
-        return float(response.headers.get("Retry-After", "0"))
-    except ValueError:  # an HTTP date; fall back to our own backoff
-        return 0.0
