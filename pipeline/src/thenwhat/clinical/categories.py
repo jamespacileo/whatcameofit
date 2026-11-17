@@ -13,7 +13,7 @@ descriptor with that label; until then it is reported as not yet read.
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from thenwhat.clinical.vocabulary import Vocabulary
 from thenwhat.sources.mesh import IDENTIFIER
@@ -21,8 +21,8 @@ from thenwhat.sources.mesh import IDENTIFIER
 
 @dataclass(frozen=True, slots=True, order=True)
 class Source:
-    # "trial" or "paper": the site words each.
-    kind: str
+    # The site words each.
+    kind: Literal["trial", "paper"]
     identifier: str
 
 

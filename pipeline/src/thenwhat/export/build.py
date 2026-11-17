@@ -27,6 +27,9 @@ from thenwhat.claims.entities import intervention_components
 from thenwhat.claims.entry import name_key
 from thenwhat.claims.status import evidence_of, flags_of, keep_status
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
+from thenwhat.clinical.categories import Category
+from thenwhat.clinical.categories import derive as derive_categories
+from thenwhat.clinical.vocabulary import Vocabulary
 from thenwhat.db.models import (
     Claim,
     ClaimTerm,
@@ -597,6 +600,43 @@ class ExportedStageReading(Strict):
     also: list[ExportedStageShare]
 
 
+class ExportedCategorySource(Strict):
+    """A record that gave a claim one of its clinical categories."""
+
+    kind: Literal["trial", "paper"]
+    # The trial's registry identifier, or the paper's identifier as in `papers`.
+    identifier: str
+
+
+class ExportedClinicalCategory(Strict):
+    """A MeSH descriptor the claim's approved trials list for their conditions, or its
+    approved papers are indexed under as a major topic (openspec clinical-classification).
+    Its name and place in the tree are in the export's `clinical.nodes`."""
+
+    identifier: str
+    sources: list[ExportedCategorySource]
+
+
+class ExportedMeshNode(Strict):
+    """A MeSH descriptor a claim has as a category, or one broader than such a one."""
+
+    identifier: str
+    # NLM's own label. The site shows it as it is.
+    label: str
+    tree_numbers: list[str]
+    # The descriptors directly broader. Empty at the top of a tree.
+    broader: list[str]
+
+
+class ExportedClinical(Strict):
+    # Each MeSH year the nodes were read from, oldest first: NLM asks that it be stated.
+    mesh_years: list[str]
+    nodes: list[ExportedMeshNode]
+    # Published claims whose categories are left out because a MeSH record they need
+    # has not been read. `thenwhat clinical tree` reads them.
+    claims_not_read: int = 0
+
+
 class ExportedApproachBasis(Strict):
     """What the registry lists the claim's intervention as, when that is the claim's
     approach: the registry's own type code and how many of the claim's trials list it
@@ -615,6 +655,10 @@ class ExportedClaim(Strict):
     approach: str | None
     # Absent from an export written before it was added, which the site still reads.
     approach_basis: ExportedApproachBasis | None = None
+    # The claim's clinical categories. Empty when its records give none. None when they
+    # give some and a MeSH record needed to place them has not been read yet, and in an
+    # export written before the field was added: the site then shows none.
+    clinical_categories: list[ExportedClinicalCategory] | None = None
     intervention: ExportedIntervention
     indication: str
     first_reported_date: date | None
@@ -682,6 +726,9 @@ class Export(Strict):
     # say what a possible record lacks (openspec registry-record-rows). None when the
     # rule is off and only a person approves a match.
     match_accept_above: float | None = None
+    # The part of the MeSH tree the claims' clinical categories sit in. None in an export
+    # written before it was added.
+    clinical: ExportedClinical | None = None
 
 
 def _group_of(vertical: str) -> ExportedGroup | None:
@@ -754,6 +801,8 @@ class _Papers:
     def __init__(self, records: Records) -> None:
         self.records = records
         self.found: dict[str, ExportedPaper] = {}
+        # Each found paper's stored index record, where the index holds it.
+        self.payloads: dict[str, dict[str, Any]] = {}
 
     def add(
         self,
@@ -772,6 +821,8 @@ class _Papers:
             return None
         if key not in self.found:
             held = row is not None and row.payload is not None
+            if row is not None and row.payload is not None:
+                self.payloads[key] = row.payload
             self.found[key] = ExportedPaper(
                 identifier=key,
                 url=_paper_url(key, url),
@@ -1188,6 +1239,67 @@ def _unconfirmed_stage_reading(
     )
 
 
+def _clinical_categories(
+    events: list[EvidenceEvent], papers: _Papers, vocabulary: Vocabulary
+) -> list[Category] | None:
+    """The claim's clinical categories from its approved trial records and the index
+    records of its papers, or None while a MeSH record needed to place them is not read:
+    a paper heading whose descriptor is not stored, or a descriptor above a category."""
+    derived = derive_categories(
+        [
+            (event.external_id, event.raw_payload)
+            for event in events
+            if event.source_name == ClinicalTrials.name and event.type in TRIAL_EVENT_TYPES
+        ],
+        papers.payloads.items(),
+        vocabulary,
+    )
+    needed = [category.identifier for category in derived.categories]
+    if derived.unread_headings or vocabulary.missing(needed):
+        return None
+    return list(derived.categories)
+
+
+def claim_clinical_records(
+    records: Records, claim: Claim
+) -> tuple[list[tuple[str, dict[str, Any]]], list[tuple[str, dict[str, Any]]]]:
+    """The claim's approved trial records and its papers' index records, as the export
+    gathers them: what its clinical categories are derived from, for the reports."""
+    events = records.events(claim)
+    entities = records.entities(claim)
+    papers = _Papers(records)
+    _collect_papers(records, entities, events, papers)
+    intervention = next((e for e in entities if e.type is EntityType.INTERVENTION), None)
+    names = [intervention.name, *intervention.synonyms] if intervention else []
+    # Results papers are found as each trial is read.
+    _trials(records, events, papers, intervention_names=names)
+    trials = [
+        (event.external_id, event.raw_payload)
+        for event in events
+        if event.source_name == ClinicalTrials.name and event.type in TRIAL_EVENT_TYPES
+    ]
+    return trials, list(papers.payloads.items())
+
+
+def _clinical(used: set[str], vocabulary: Vocabulary, not_read: int) -> ExportedClinical:
+    """The tree the exported categories sit in: each with every descriptor above it."""
+    nodes = sorted({above for one in used for above in vocabulary.at_or_above(one)})
+    held = [node for node in (vocabulary.get(one) for one in nodes) if node is not None]
+    return ExportedClinical(
+        mesh_years=sorted({node.year for node in held if node.year}),
+        nodes=[
+            ExportedMeshNode(
+                identifier=node.identifier,
+                label=node.label,
+                tree_numbers=list(node.tree_numbers),
+                broader=list(node.broader),
+            )
+            for node in held
+        ],
+        claims_not_read=not_read,
+    )
+
+
 def _approach_basis(
     claim: Claim, events: list[EvidenceEvent], names: list[str]
 ) -> ExportedApproachBasis | None:
@@ -1235,6 +1347,12 @@ def build_export(
     records = _from(source)
     claims: list[ExportedClaim] = []
     last_checked: datetime | None = None
+    # The stored MeSH descriptors, read once: every claim's categories are placed in it.
+    vocabulary = Vocabulary(
+        (record.external_id, record.payload) for record in records.mesh_records()
+    )
+    categories_used: set[str] = set()
+    categories_not_read = 0
     # By slug, character by character: the same order whichever store hands them over,
     # where each store's own ordering of text would differ.
     for claim in sorted(records.published_claims(), key=lambda claim: claim.slug):
@@ -1284,6 +1402,11 @@ def build_export(
             reading_accept_above,
             [intervention.name, *intervention.synonyms],
         )
+        categories = _clinical_categories(events, papers, vocabulary)
+        if categories is None:
+            categories_not_read += 1
+        else:
+            categories_used.update(category.identifier for category in categories)
         organisations = organisations_of(
             records,
             entities,
@@ -1304,6 +1427,18 @@ def build_export(
                 approach_basis=_approach_basis(
                     claim, events, [intervention.name, *intervention.synonyms]
                 ),
+                clinical_categories=None
+                if categories is None
+                else [
+                    ExportedClinicalCategory(
+                        identifier=category.identifier,
+                        sources=[
+                            ExportedCategorySource(kind=source.kind, identifier=source.identifier)
+                            for source in category.sources
+                        ],
+                    )
+                    for category in categories
+                ],
                 intervention=ExportedIntervention(
                     name=intervention.name, synonyms=list(intervention.synonyms)
                 ),
@@ -1399,6 +1534,7 @@ def build_export(
         generated_at=now,
         last_checked_at=last_checked,
         match_accept_above=match_accept_above if match_accept_above > 0 else None,
+        clinical=_clinical(categories_used, vocabulary, categories_not_read),
         sources=[
             ExportedSource(name=name, url=url)
             for name, url in [

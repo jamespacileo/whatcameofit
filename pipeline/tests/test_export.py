@@ -1962,3 +1962,98 @@ def test_no_registry_type_is_exported_for_a_claim_with_no_approach(session: Sess
     claim_with_a_drug_trial(session, fixture_json, "")
 
     assert claim_in(exported(session))["approach_basis"] is None
+
+
+# --- clinical categories (openspec clinical-classification) -------------------------
+
+
+def store_descriptor(
+    session: Session, identifier: str, label: str, tree: str, broader: str | None = None
+) -> None:
+    year = "http://id.nlm.nih.gov/mesh/2026"
+    term: dict[str, Any] = {
+        "@id": f"{year}/{identifier}",
+        "label": {"@language": "en", "@value": label},
+        "treeNumber": f"{year}/{tree}",
+    }
+    if broader:
+        term["broaderDescriptor"] = f"{year}/{broader}"
+    session.add(
+        TermRecord(
+            source_name="mesh",
+            external_id=identifier,
+            url=f"https://id.nlm.nih.gov/mesh/{identifier}",
+            payload={"term": term, "concept": None},
+            fetched_at=EARLIER,
+        )
+    )
+    session.flush()
+
+
+def autism_tree(session: Session) -> None:
+    """The descriptors the recorded trial's two condition terms need, to the tree's top."""
+    store_descriptor(session, "D001523", "Mental Disorders", "F03")
+    store_descriptor(session, "D065886", "Neurodevelopmental Disorders", "F03.625", "D001523")
+    store_descriptor(
+        session, "D002659", "Child Development Disorders, Pervasive", "F03.625.164", "D065886"
+    )
+    store_descriptor(
+        session, "D000067877", "Autism Spectrum Disorder", "F03.625.164.113", "D002659"
+    )
+    store_descriptor(session, "D001321", "Autistic Disorder", "F03.625.164.113.500", "D000067877")
+
+
+def test_a_claims_clinical_categories_are_exported_with_the_tree_above_them(
+    session: Session, fixture_json
+):
+    """Scenarios: Trial with a condition term; Ancestor is not a category"""
+    claim = new_claim(session)
+    add_registry_events(session, claim, fixture_json("clinicaltrials/study_NCT02586935.json"))
+    autism_tree(session)
+
+    export = exported(session)
+
+    assert claim_in(export)["clinical_categories"] == [
+        {"identifier": "D000067877", "sources": [{"kind": "trial", "identifier": "NCT02586935"}]},
+        {"identifier": "D001321", "sources": [{"kind": "trial", "identifier": "NCT02586935"}]},
+    ]
+    clinical = export["clinical"]
+    assert (clinical["mesh_years"], clinical["claims_not_read"]) == (["2026"], 0)
+    assert [node["identifier"] for node in clinical["nodes"]] == [
+        "D000067877",
+        "D001321",
+        "D001523",
+        "D002659",
+        "D065886",
+    ]
+    top = next(node for node in clinical["nodes"] if node["identifier"] == "D001523")
+    assert top == {
+        "identifier": "D001523",
+        "label": "Mental Disorders",
+        "tree_numbers": ["F03"],
+        "broader": [],
+    }
+
+
+def test_categories_are_left_out_and_counted_while_a_mesh_record_is_not_read(
+    session: Session, fixture_json
+):
+    """Scenario: Record not yet read"""
+    claim = new_claim(session)
+    add_registry_events(session, claim, fixture_json("clinicaltrials/study_NCT02586935.json"))
+    store_descriptor(session, "D001321", "Autistic Disorder", "F03.625.164.113.500", "D000067877")
+
+    export = exported(session)
+
+    assert claim_in(export)["clinical_categories"] is None
+    assert export["clinical"] == {"mesh_years": [], "nodes": [], "claims_not_read": 1}
+
+
+def test_a_claim_whose_records_give_no_category_exports_an_empty_list(session: Session):
+    """Scenario: Claim with no approved trial or paper"""
+    new_claim(session)
+
+    export = exported(session)
+
+    assert claim_in(export)["clinical_categories"] == []
+    assert export["clinical"]["claims_not_read"] == 0

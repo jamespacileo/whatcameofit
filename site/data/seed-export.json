@@ -208,6 +208,7 @@
       "vertical": "mouth-and-teeth",
       "approach": "drug",
       "approach_basis": null,
+      "clinical_categories": [],
       "intervention": {
         "name": "Anti-USAG-1 antibody",
         "synonyms": [

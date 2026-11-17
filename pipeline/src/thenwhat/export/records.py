@@ -48,6 +48,7 @@ from thenwhat.decide.steps import latest_scoring, latest_stage_suggestion
 from thenwhat.domain import Decider, ReviewState
 from thenwhat.events.paper_records import stored_paper
 from thenwhat.readings.service import readings_of, stored_read
+from thenwhat.sources.mesh import Mesh
 
 
 class Records(Protocol):
@@ -122,6 +123,11 @@ class Records(Protocol):
         ...
 
     def term_record(self, source_name: str, external_id: str) -> TermRecord | None: ...
+
+    def mesh_records(self) -> list[TermRecord]:
+        """Every stored MeSH term record, by identifier: the vocabulary a claim's clinical
+        categories are placed in (openspec clinical-classification)."""
+        ...
 
     def organisation_record(
         self, source_name: str, external_id: str
@@ -298,6 +304,15 @@ class PostgresRecords:
 
     def term_record(self, source_name: str, external_id: str) -> TermRecord | None:
         return self.session.get(TermRecord, (source_name, external_id))
+
+    def mesh_records(self) -> list[TermRecord]:
+        return list(
+            self.session.scalars(
+                select(TermRecord)
+                .where(TermRecord.source_name == Mesh.name)
+                .order_by(TermRecord.external_id)
+            )
+        )
 
     def organisation_record(self, source_name: str, external_id: str) -> OrganisationRecord | None:
         return self.session.get(OrganisationRecord, (source_name, external_id))

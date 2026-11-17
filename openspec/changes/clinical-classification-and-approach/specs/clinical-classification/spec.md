@@ -67,7 +67,7 @@ For every clinical category in use, the pipeline SHALL hold NLM's record of the 
 
 #### Scenario: Record not yet read
 - **WHEN** a claim has a category whose record or a broader record has not been read
-- **THEN** the pipeline names the missing records, and the export is not built until they are read
+- **THEN** the pipeline names the missing records, and the export carries that claim's categories as not yet read, shows none of them, counts the claim, and publishes everything else
 
 #### Scenario: Descriptor the vocabulary no longer holds
 - **WHEN** NLM answers that a descriptor does not exist in the current year

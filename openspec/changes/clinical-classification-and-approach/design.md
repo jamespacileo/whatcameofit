@@ -54,7 +54,7 @@ Trials are not filtered this way: the registry has already said the term is the 
 
 Expected volume: a few thousand records for 970 claims, read once and refreshed with the MeSH year. At the client's 2 a second that is under an hour, well inside NLM's stated limit.
 
-The export is refused while any needed record is missing. An incomplete tree would silently drop claims from category pages.
+While a record a claim's categories need is missing, the export carries that claim's categories as an explicit "not yet read" (null, never an empty list), shows none of them, and counts such claims in `clinical.claims_not_read`; everything else publishes. Decided by the operator on 2026-11-17, during apply: refusing the whole export would hold back a day's site update for one new MeSH term or an NLM outage. A claim is never shown with part of its categories. The daily run reads the tree before it exports.
 
 ### 4. The topic mapping replaces `MESH_GROUPS`
 
