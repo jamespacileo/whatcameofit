@@ -60,6 +60,25 @@ The store SHALL be restorable to its state at a chosen time within the last 30 d
 - **WHEN** a run is found to have merged wrong records
 - **THEN** the operator can restore the store to the point recorded before that run
 
+### Requirement: The store is kept in two tiers
+The store SHALL be kept as a hot tier in D1, holding every table something on Cloudflare reads, and a bulk tier kept as one SQLite file of the same schema in R2, holding the rest. No row of the hot tier SHALL reference a row of the bulk tier; a hot record that names a bulk one SHALL name it by its natural key as text. A payload SHALL be kept in each tier whose rows point at it. A load of either tier SHALL be verified by one checksum a table, computed by the same single statement on the store file and on the loaded store, without reading the rows back.
+
+#### Scenario: A build in two tiers
+- **WHEN** the whole tracker is built from Postgres
+- **THEN** a hot file and a bulk file are written, each with the schema whole and only its own tier's rows, and the hot file names no row it does not hold
+
+#### Scenario: A load checked
+- **WHEN** the hot file is loaded into D1 and each table's checksum statement is run there
+- **THEN** each table's checksum from D1 equals the one from the file, and a table loaded short is named
+
+#### Scenario: The day's changes
+- **WHEN** the day's changes are pushed to the store
+- **THEN** records of hot kinds and their payloads go through the ingest service to D1, and records of bulk kinds are merged into the bulk file by its one writer and kept as the day's delta beside the last bulk build
+
+#### Scenario: The bulk tier restored
+- **WHEN** the bulk file is downloaded and its deltas are replayed in order
+- **THEN** each table's checksum equals that of the file the daily job merged in place
+
 ### Requirement: Every record says where it came from
 Every record the store holds SHALL carry the run that first added it and the run that last changed it. A run SHALL record the kind of writer, the device or the class of reader request, the code's commit and the time.
 
@@ -123,3 +142,34 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 #### Scenario: Comparing changes neither store
 - **WHEN** the comparison is run against the working database
 - **THEN** the database is read in a read-only transaction that is rolled back, nothing is written to it, and the store file it makes is removed unless it is asked to be kept
+
+#### Scenario: A difference the comparison can explain
+- **WHEN** a claim differs because the database holds two of its source articles at one address key, or only in the order of its intervention's other names
+- **THEN** the claim is listed with that cause, the comparison still exits with an error, and with `--allow-named` it exits successfully only when every difference has a named cause
+
+#### Scenario: Comparing against a store file built elsewhere
+- **WHEN** the comparison is given a store file and its folder of payload objects (`--store`, `--payloads`)
+- **THEN** the store's export is read from that file, the database's export is of every claim, and no store file is made
+
+#### Scenario: Comparing against the store itself
+- **WHEN** the comparison is given the name of the D1 database (`--d1`)
+- **THEN** the rows an export reads are fetched with read-only queries into a store file, a payload object the local folder lacks is fetched from the bucket named, every payload is checked against its checksum, and the comparison is of that file
+
+#### Scenario: A store that holds only the hot tier
+- **WHEN** the store file or database holds only the tables an export reads (no registry trial, lead, share, ledger entry, usage or measure)
+- **THEN** the export is the same as from a store that holds every table, a trial's facts on a claim's page coming from the raw payload of the claim's own evidence event, and a comparison against the database reads no other table
+
+#### Scenario: A store missing what an export reads
+- **WHEN** the store lacks a table or a column the export reads
+- **THEN** the export is refused before anything is read, naming each missing table and column
+
+### Requirement: A deployment can rehearse taking its export from the store
+Until the cut-over, CI SHALL be able to take an export from the store, hold it to the schema the site reads and to the checks a published snapshot must pass, and report how its claims compare with the committed snapshot. The rehearsal SHALL be off unless a repository setting turns it on, SHALL only read the store, and SHALL change nothing the site is built or deployed from: the committed snapshot remains the source.
+
+#### Scenario: A rehearsal
+- **WHEN** the setting is on and a run on `main` starts
+- **THEN** a separate job writes the store's export to its own workspace, fails when the export breaks the schema, holds no claim or fails a deployment check, and the deploy job neither waits for it nor reads what it wrote
+
+#### Scenario: The setting is off
+- **WHEN** the setting is absent or not `true`
+- **THEN** the job does not run and no request reaches the store

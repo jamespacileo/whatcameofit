@@ -5,6 +5,7 @@
 // in-process for a reader's lookup; the HTTP routes in index.mjs are for everyone else.
 import { INGEST, MERGE, PREVIEW } from "./sql.generated.mjs";
 import { runChecksum } from "./hash.mjs";
+import { INBOX_KINDS } from "./kinds.mjs";
 
 const run1 = (db, sql, run) => db.prepare(sql).bind(...(sql.includes("?1") ? [run] : []));
 
@@ -78,6 +79,82 @@ export async function report(db, id) {
   return { status: results[0].status, refusal: results[0].refusal, merged_at: results[0].merged_at, report: kinds };
 }
 
+// The inbox of the bulk tier (migrations/0003_inbox.sql). A run's records of a bulk kind,
+// and the payloads those records name, are copied as they were staged, in the batch of
+// the merge and before it (the merge empties the staging table); a run the merge refused
+// leaves none, and a batch that is undone leaves none either.
+const BULK = INBOX_KINDS.map((kind) => `'${kind}'`).join(", ");
+const KEEP = `INSERT INTO inbox (run_id, kind, key, body)
+  SELECT s.run_id, s.kind, s.key, s.body FROM stg s
+  WHERE s.run_id = ?1 AND (s.kind IN (${BULK}) OR (s.kind = 'payload' AND s.body ->> 'sha256' IN (
+    SELECT b.body ->> 'payload_sha256' FROM stg b WHERE b.run_id = ?1 AND b.kind IN (${BULK}))))
+  ORDER BY s.kind = 'payload' DESC, s.rowid`;
+const UNKEEP = "DELETE FROM inbox WHERE run_id = ?1 AND (SELECT status FROM run WHERE id = ?1) <> 'merged'";
+
+// Up to `limit` records after `after`, oldest first, and no more than about 4 MB of them.
+export async function inbox(db, after, limit) {
+  const { results } = await db.prepare("SELECT seq, run_id AS run, kind, key, body FROM inbox WHERE seq > ?1 ORDER BY seq LIMIT ?2").bind(after, limit + 1).all();
+  const records = [];
+  let bytes = 0;
+  for (const row of results.slice(0, limit)) {
+    bytes += row.body.length;
+    if (records.length && bytes > 4_000_000) break;
+    records.push({ ...row, body: JSON.parse(row.body) });
+  }
+  return { records, through: records.at(-1)?.seq ?? after, more: results.length > records.length };
+}
+
+// A run is folded whole when its every inbox record is at or before ?1. It is noted in
+// `inbox_folded` and stays there while a lead it added is still in D1.
+const FOLDED = "(SELECT run_id FROM inbox_folded)";
+// A folded run's leads, but not one the store-side consumer has yet to process: its
+// work is read from D1, so it stays, with its shares and reading, until that is done.
+const LEADS = `(SELECT l.id FROM link_lead l WHERE l.added_run IN ${FOLDED} AND NOT EXISTS (
+  SELECT 1 FROM work_item w WHERE w.record_kind = 'link_lead' AND w.record_key = l.url_key AND w.step = 'lead_process' AND w.state = 'due'))`;
+const TRIALS = `(SELECT id FROM registry_trial WHERE added_run IN ${FOLDED})`;
+// What folded runs left in D1's copies of the bulk tables, children first. A lead's
+// shares, links, labels and reading go with it whichever run added them: a later run's
+// are still in the inbox as records, and are folded from there.
+const CLEAR = [
+  "INSERT OR IGNORE INTO inbox_folded SELECT run_id FROM inbox WHERE seq <= ?1 EXCEPT SELECT run_id FROM inbox WHERE seq > ?1",
+  "DELETE FROM inbox WHERE seq <= ?1",
+  `DELETE FROM lead_reading WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_lead_label WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_lead_link WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_share WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_lead WHERE id IN ${LEADS}`,
+  `DELETE FROM article_lead WHERE registry_trial_id IN ${TRIALS} OR added_run IN ${FOLDED}`,
+  `DELETE FROM registry_trial_status WHERE trial_id IN ${TRIALS} OR run_id IN ${FOLDED}`,
+  `DELETE FROM registry_trial WHERE added_run IN ${FOLDED}`,
+  `DELETE FROM llm_usage WHERE run_id IN ${FOLDED}`,
+  "DELETE FROM inbox_folded WHERE run_id NOT IN (SELECT added_run FROM link_lead)",
+];
+
+// How far the inbox may be cleared: the furthest fold recorded.
+export async function foldedThrough(db) {
+  return (await db.prepare("SELECT coalesce(max(through), 0) AS n FROM inbox_fold").first()).n;
+}
+
+// A fold is recorded once, by its delta object. `through` may not pass the last record
+// the inbox ever gave: null when it does. The answer is what is recorded for the object,
+// which for one recorded before is what was recorded then.
+export async function recordFold(db, object, through, bytes) {
+  const given = (await db.prepare("SELECT coalesce((SELECT seq FROM sqlite_sequence WHERE name = 'inbox'), 0) AS n").first()).n;
+  if (through > given) return null;
+  const done = await db.prepare("INSERT INTO inbox_fold (object, through, bytes, recorded_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT DO NOTHING").bind(object, through, bytes, now()).run();
+  const row = await db.prepare("SELECT through, recorded_at FROM inbox_fold WHERE object = ?1").bind(object).first();
+  return { recorded: row.through, recorded_at: row.recorded_at, again: (done.meta.changes ?? 0) === 0, folded_through: await foldedThrough(db) };
+}
+
+// Once the daily job has folded the records up to `through` into the bulk file: they
+// leave the inbox, and the rows their runs added leave D1's copies of the bulk tables,
+// but for a lead still waiting to be processed. One batch, so all of it or none.
+export async function clearInbox(db, through) {
+  const results = await db.batch(CLEAR.map((sql) => (sql.includes("?1") ? db.prepare(sql).bind(through) : db.prepare(sql))));
+  const after = await db.prepare(`SELECT (SELECT count(*) FROM inbox) AS left, (SELECT count(*) FROM link_lead WHERE added_run IN ${FOLDED}) AS held`).first();
+  return { cleared: results[1].meta.changes ?? 0, rows_removed: results.slice(2, -1).reduce((sum, result) => sum + (result.meta.changes ?? 0), 0), left: after.left, leads_held: after.held };
+}
+
 const forget = (db, id) => db.prepare("DELETE FROM ingest_chunk WHERE run_id = ?1").bind(id);
 
 // The merge: every statement of store/merge.sql, in order, as one batch. All of it or none.
@@ -94,7 +171,7 @@ export async function merge(db, id) {
       return { status: "not_merged", reason: "checksum_mismatch", detail: "the records that arrived are not the ones the run stated", report: {} };
     }
     try {
-      await db.batch(MERGE.map((sql) => run1(db, sql, id)));
+      await db.batch([db.prepare(KEEP).bind(id), ...MERGE.map((sql) => run1(db, sql, id)), db.prepare(UNKEEP).bind(id)]);
     } catch (error) {
       return { status: "undone", ...why(error), report: {} };
     }

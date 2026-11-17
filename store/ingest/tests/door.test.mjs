@@ -48,10 +48,10 @@ test("the first migration is store/schema.sql unchanged, and the bundled stateme
   execFileSync(process.execPath, [here("../scripts/generate.mjs"), "--check"], { stdio: "pipe" });
 });
 
-test("every bundled statement is inside D1's limits for a statement, and the merge is the store's 89", { skip }, async () => {
+test("every bundled statement is inside D1's limits for a statement, and the merge is the store's 98", { skip }, async () => {
   const { MERGE, PREVIEW, INGEST } = await import("../src/sql.generated.mjs");
   const { D1 } = await import("../src/limits.mjs");
-  assert.equal(MERGE.length, 89);
+  assert.equal(MERGE.length, 98);
   for (const sql of [...MERGE, ...PREVIEW, ...Object.values(INGEST)]) {
     assert.ok(Buffer.byteLength(sql) < D1.statementBytes);
     assert.ok(new Set(sql.match(/\?\d+/g) || []).size <= D1.boundParameters);
@@ -419,6 +419,267 @@ test("registering a run again writes nothing, before its merge or after", { skip
   assert.deepEqual((await s.ask("POST", "/runs", { as: "device-mini", body: stated })).body.status, "merged");
   assert.equal(await s.one("SELECT count(*) FROM run_step WHERE run_id = ?1", merged.run), 1);
   assert.equal(await s.one("SELECT count(*) FROM run_stated WHERE run_id = ?1", merged.run), 1);
+});
+
+test("bulk records a run hands over wait in the inbox, and leave D1 once the daily job has folded them", { skip }, async () => {
+  const box = await Service.open();
+  try {
+    await box.db.prepare("INSERT INTO store_step VALUES ('link_triage', 3)").run();
+    const day = new Date().toISOString().slice(0, 10);
+    const raw = JSON.stringify({ nctId: "NCT500" });
+    const lead = (key) => ["link_lead", key, { url_key: key, url_key_version: 2, url: `https://${key}`, outlet: key.split("/")[0], outlet_kind: "general_news", title: "A report",
+      first_shared_at: day, origin: "reader", screen_outcome: "in_scope" }];
+    const share = (key) => ["link_share", `${key}|reader|${day}`, { lead_url_key: key, platform: "reader", community: "reader", shared_at: day, score: 0 }];
+    const first = [["payload", sha(raw), { sha256: sha(raw), bytes: raw.length, body: raw }],
+      ["registry_trial", "clinicaltrials.gov|NCT500", { registry_name: "clinicaltrials.gov", external_id: "NCT500", title: "A trial", conditions: ["Obesity"], interventions: [],
+        intervention_names: "x", phases: [], overall_status: "RECRUITING", payload_sha256: sha(raw), fetched_at: `${day}T00:00:00.000000+00:00` }],
+      lead("inbox.example/one"), share("inbox.example/one")];
+    assert.equal(await box.hand("look-1", first, { as: "lookup", writer: "lookup" }), null);
+    assert.equal((await box.merge("look-1", "lookup")).body.status, "merged");
+    assert.equal(await box.hand("look-2", [lead("inbox.example/two"), share("inbox.example/two")], { as: "lookup", writer: "lookup" }), null);
+    assert.equal((await box.merge("look-2", "lookup")).body.status, "merged");
+    // A hot kind is not kept, nor a run the merge undid.
+    assert.equal(await box.hand("hot-1", [claim("inbox-claim")]), null);
+    assert.equal((await box.merge("hot-1")).body.status, "merged");
+    assert.equal(await box.hand("undone-1", [share("inbox.example/never")], { as: "lookup", writer: "lookup" }), null);
+    assert.equal((await box.merge("undone-1", "lookup")).body.status, "undone");
+    await box.drop("undone-1", "lookup");
+
+    for (const as of ["device-mini", "lookup", "consumer", "export"]) {
+      assert.equal((await box.ask("GET", "/inbox", { as })).status, 403, as);
+      assert.equal((await box.ask("POST", "/inbox/clear", { as, body: { through: 99 } })).status, 403, as);
+    }
+    const all = (await box.ask("GET", "/inbox", { as: "daily" })).body;
+    assert.deepEqual(all.records.map((record) => [record.run, record.kind]), [["look-1", "payload"], ["look-1", "registry_trial"], ["look-1", "link_lead"], ["look-1", "link_share"],
+      ["look-2", "link_lead"], ["look-2", "link_share"]]);
+    assert.deepEqual(all.records[2], { seq: all.records[2].seq, run: "look-1", kind: "link_lead", key: "inbox.example/one", body: first[2][2] }, "a record is as it was staged");
+    assert.equal(all.more, false);
+    // Read in pages, by the cursor the service gives.
+    const page = (await box.ask("GET", "/inbox?limit=5", { as: "daily" })).body;
+    assert.deepEqual([page.records.length, page.more, page.through], [5, true, all.records[4].seq]);
+    assert.equal((await box.ask("GET", `/inbox?after=${page.through}`, { as: "daily" })).body.records.length, 1);
+    assert.equal((await box.ask("GET", "/inbox?after=x", { as: "daily" })).status, 400);
+
+    // Cleared through the first page: look-1 is folded whole and leaves D1; look-2 is cut
+    // by the page, so its rows stay until the rest of it is folded.
+    const counts = () => box.all("SELECT (SELECT count(*) FROM link_lead), (SELECT count(*) FROM link_share), (SELECT count(*) FROM registry_trial), (SELECT count(*) FROM registry_trial_fts), (SELECT count(*) FROM inbox)");
+    assert.deepEqual(await counts(), [[2, 2, 1, 1, 6]]);
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: {} })).status, 400);
+    // Nothing is cleared before a fold is recorded, and a fold is recorded only with its
+    // delta in the bucket, no further than the inbox has given.
+    const early = await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } });
+    assert.deepEqual([early.status, early.body.error, early.body.detail.folded_through], [409, "not_folded", 0]);
+    const fold = (as, through, object) => box.ask("POST", "/inbox/folded", { as, body: { through, object } });
+    assert.equal((await fold("lookup", page.through, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).status, 403);
+    assert.equal((await fold("daily", page.through, "payload/abc")).status, 400);
+    assert.equal((await fold("daily", page.through, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).body.error, "delta_not_uploaded");
+    const r2 = await box.mf.getR2Bucket("PAYLOADS");
+    const one = "bulk/b1/delta-2026-11-17-1.jsonl.gz", two = "bulk/b1/delta-2026-11-17-2.jsonl.gz";
+    const list = (deltas) => r2.put("bulk/b1/deltas.json", JSON.stringify({ build: "b1", deltas }));
+    const delta = (name, text, through) => ({ name, date: "2026-11-17", bytes: text.length, sha256: sha(text), through });
+    await r2.put(one, "the day's records");
+    await r2.put(two, "the rest");
+    // How far a delta folded is the build's list's word, not the caller's.
+    assert.equal((await fold("daily", page.through, one)).body.error, "delta_not_listed");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", null)]);
+    assert.equal((await fold("daily", page.through, one)).body.error, "delta_has_no_through");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "another size", page.through)]);
+    assert.equal((await fold("daily", page.through, one)).body.error, "delta_differs");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", 9999)]);
+    assert.equal((await fold("daily", undefined, one)).body.error, "beyond_inbox");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", page.through), delta("delta-2026-11-17-2.jsonl.gz", "the rest", all.through)]);
+    const other = await fold("daily", all.through, one);
+    assert.deepEqual([other.status, other.body.error, other.body.detail.listed_through], [409, "through_differs", page.through]);
+    const recorded = (await fold("daily", undefined, one)).body;
+    assert.deepEqual([recorded.recorded, recorded.again, recorded.folded_through], [page.through, false, page.through]);
+    // Recorded again, even after its list changed: the answer is what was recorded then.
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", page.through - 1), delta("delta-2026-11-17-2.jsonl.gz", "the rest", all.through)]);
+    const twice = (await fold("daily", undefined, one)).body;
+    assert.deepEqual([twice.recorded, twice.again, twice.recorded_at, twice.folded_through], [page.through, true, recorded.recorded_at, page.through]);
+    assert.equal(await counts().then((rows) => rows[0][4]), 6, "recording a fold clears nothing");
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through + 1 } })).status, 409);
+    const cleared = (await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } })).body;
+    assert.deepEqual([cleared.cleared, cleared.left, cleared.leads_held], [5, 1, 1]);
+    // The trial is gone. The lead is a reader's, and the consumer has not processed it yet:
+    // it is held, with its share, though its records have left the inbox.
+    assert.deepEqual(await counts(), [[2, 2, 0, 0, 1]]);
+    assert.equal(await box.one("SELECT state FROM work_item WHERE record_key = 'inbox.example/one' AND step = 'lead_process'"), "due");
+    const work = { kind: "link_lead", key: "inbox.example/one", step: "lead_process" };
+    assert.equal((await box.ask("POST", "/work/finish", { as: "consumer", body: work })).body.state, "done");
+    const again = (await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } })).body;
+    assert.deepEqual([again.cleared, again.left, again.leads_held], [0, 1, 0]);
+    assert.deepEqual(await counts(), [[1, 1, 0, 0, 1]]);
+    assert.equal(await box.one("SELECT url_key FROM link_lead"), "inbox.example/two");
+    // The second run, cleared while its lead still waits, then after its work failed for good.
+    const rest = (await box.ask("GET", `/inbox?after=${page.through}`, { as: "daily" })).body;
+    assert.equal((await fold("operator", rest.through, two)).body.folded_through, rest.through);
+    assert.deepEqual((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: rest.through } })).body.leads_held, 1);
+    assert.equal(await box.one("SELECT count(*) FROM inbox_folded"), 1);
+    await box.ask("POST", "/work/lease", { as: "consumer", body: { step: "lead_process" } });
+    assert.equal((await box.ask("POST", "/work/fail", { as: "consumer", body: { ...work, key: "inbox.example/two", error: "reader_refused", max_attempts: 1 } })).body.state, "failed");
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: rest.through } })).body.leads_held, 0);
+    assert.deepEqual(await counts(), [[0, 0, 0, 0, 0]]);
+    assert.equal(await box.one("SELECT count(*) FROM inbox_folded"), 0);
+    // Clearing again, or with nothing there, changes nothing; the claim was never touched.
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "operator", body: { through: rest.through } })).body.cleared, 0);
+    assert.equal(await box.one("SELECT count(*) FROM claim"), 1);
+  } finally { await box.close(); }
+});
+
+test("the inbox keeps every kind the pipeline calls bulk", { skip }, async () => {
+  const { INBOX_KINDS } = await import("../src/kinds.mjs");
+  const tiers = readFileSync(here("../../../pipeline/src/thenwhat/store/tiers.py"), "utf8");
+  const bulk = [.../BULK_KINDS = frozenset\(\s*\{([^}]*)\}/.exec(tiers)[1].matchAll(/"([a-z_]+)"/g)].map(([, kind]) => kind);
+  assert.ok(bulk.length > 5);
+  assert.deepEqual(bulk.filter((kind) => !INBOX_KINDS.includes(kind)), []);
+});
+
+test("a registry record that names a person is refused, in a record and in the bucket", { skip }, async () => {
+  const { peopleIn } = await import("../src/people.mjs");
+  const clean = { protocolSection: { identificationModule: { nctId: "NCT900", briefTitle: "A trial" },
+    contactsLocationsModule: { locations: [{ facility: "A hospital", city: "Leeds", country: "United Kingdom" }] },
+    sponsorCollaboratorsModule: { leadSponsor: { name: "A university", class: "OTHER" }, responsibleParty: { type: "SPONSOR" }, collaborators: [{ name: "A company", class: "INDUSTRY" }] } },
+    resultsSection: { moreInfoModule: { certainAgreement: { piSponsorEmployee: false } } } };
+  assert.deepEqual(peopleIn(clean), []);
+  assert.deepEqual(peopleIn({ nctId: "NCT1", email: "not a study" }), []);
+  const each = {
+    centralContacts: (s) => { s.protocolSection.contactsLocationsModule.centralContacts = [{ name: "A Person", role: "CONTACT" }]; },
+    overallOfficials: (s) => { s.protocolSection.contactsLocationsModule.overallOfficials = [{ name: "A Person" }]; },
+    "location contacts": (s) => { s.protocolSection.contactsLocationsModule.locations[0].contacts = [{ name: "A Person" }]; },
+    "investigator name, title or affiliation": (s) => { s.protocolSection.sponsorCollaboratorsModule.responsibleParty.investigatorFullName = "A Person"; },
+    "person lead sponsor's name": (s) => { s.protocolSection.sponsorCollaboratorsModule.responsibleParty.type = "SPONSOR_INVESTIGATOR"; },
+    "person collaborator's name": (s) => { s.protocolSection.sponsorCollaboratorsModule.collaborators.push({ name: "A Person", class: "INDIV" }); },
+    "results point of contact": (s) => { s.resultsSection.moreInfoModule.pointOfContact = { title: "A Person", organization: "A university" }; },
+    email: (s) => { s.resultsSection.moreInfoModule.certainAgreement.email = "person@example.org"; },
+    phone: (s) => { s.resultsSection.moreInfoModule.certainAgreement.phoneExt = "12"; },
+  };
+  for (const [field, add] of Object.entries(each)) {
+    const study = structuredClone(clean);
+    add(study);
+    assert.deepEqual(peopleIn(study), [field], field);
+    const text = JSON.stringify(study);
+    const answer = await stageOne("lookup", "lookup", ["payload", sha(text), { sha256: sha(text), bytes: Buffer.byteLength(text), body: text }]);
+    assert.deepEqual([answer?.status, answer?.body.error, answer?.body.detail.people], [422, "personal_data", [field]], field);
+    assert.ok(!answer.text.includes("A Person") && !answer.text.includes("person@example.org"), "the refusal does not repeat who");
+  }
+  // The same record without people goes through, and so does a payload that is no registry record.
+  const text = JSON.stringify(clean);
+  assert.equal(await stageOne("lookup", "lookup", ["payload", sha(text), { sha256: sha(text), bytes: Buffer.byteLength(text), body: text }]), null);
+  // Over 16 KB the record goes to the bucket, and is held to the same.
+  const large = structuredClone(clean);
+  large.protocolSection.descriptionModule = { detailedDescription: "d".repeat(17_000) };
+  const kept = JSON.stringify(large);
+  large.protocolSection.contactsLocationsModule.overallOfficials = [{ name: "A Person", affiliation: "A university" }];
+  const named = JSON.stringify(large);
+  const put = (body) => s.ask("PUT", `/payloads/${sha(body)}`, { as: "lookup", body, type: "application/octet-stream" });
+  const refused = await put(named);
+  assert.deepEqual([refused.status, refused.body.error, refused.body.detail.people], [422, "personal_data", ["overallOfficials"]]);
+  const bucket = await s.mf.getR2Bucket("PAYLOADS");
+  assert.equal(await bucket.head(`payload/${sha(named)}`), null, "nothing is stored for it");
+  assert.equal((await put(kept)).status, 201);
+});
+
+test("progress is reported and read as counts only, by the tokens that may", { skip }, async () => {
+  const box = await Service.open();
+  try {
+    const at = "2026-11-17T10:00:00.000000+00:00";
+    const slice = (n, stages, more = {}) => ({ slice: `s${String(n).padStart(3, "0")}`, position: n, trials: 2000, stages, updated_at: at, ...more });
+    const report = (as, body) => box.ask("PUT", "/progress/slices", { as, body });
+    const set = "active-or-ended-this-year";
+    // Who may report, and who may read.
+    for (const as of ["lookup", "consumer", "export"]) assert.equal((await report(as, { set, slices: [] })).status, 403, as);
+    for (const as of ["device-mini", "lookup", "consumer", "export"]) assert.equal((await box.ask("GET", "/progress", { as })).status, 403, as);
+    assert.equal((await box.ask("GET", "/progress", { token: null })).status, 401);
+    assert.equal((await box.ask("PUT", "/progress/slices", { token: null, body: { set, slices: [] } })).status, 401);
+    const first = await report("device-mini", { set, total_trials: 102679, total_slices: 52, slices: [
+      slice(1, { record: 2000, registry_papers: 2000, pubmed_papers: 2000, in_store: 2000, page: 2000 }, { started_at: at }),
+      slice(2, { record: 2000, registry_papers: 1500 }), slice(3, {})] });
+    assert.deepEqual([first.status, first.body], [200, { set, slices: 3 }]);
+    // A later report of one slice: a stage left out keeps its count; the totals stay.
+    assert.equal((await report("daily", { set, slices: [slice(2, { pubmed_papers: 700 })] })).body.slices, 3);
+    // What is refused: a stage the service does not know, a count over the slice, text, a trial's id as a field.
+    for (const [why, body] of [
+      ["an unknown stage", { set, slices: [slice(4, { loaded: 1 })] }], ["a count over the slice", { set, slices: [slice(4, { record: 2001 })] }],
+      ["a slice id with a space", { set, slices: [{ ...slice(4, {}), slice: "NCT1 and NCT2" }] }], ["a set name with text", { set: "a set of trials", slices: [] }],
+      ["a time in another form", { set, slices: [slice(4, {}, { updated_at: "2026-11-17T10:00:00Z" })] }], ["too many slices", { set, slices: Array.from({ length: 201 }, (_, n) => slice(n + 10, {})) }]]) {
+      const answer = await report("operator", body);
+      assert.deepEqual([answer.status, answer.body.error], [400, "bad_progress"], why);
+    }
+    assert.equal(await box.one("SELECT count(*) FROM progress_slice"), 3);
+
+    const { status, body } = await box.ask("GET", "/progress", { as: "daily" });
+    assert.equal(status, 200);
+    assert.deepEqual(Object.keys(body).sort(), ["at", "rows", "runs", "sets", "stages"]);
+    assert.deepEqual(body.stages, ["record", "registry_papers", "pubmed_papers", "in_store", "page"]);
+    const [shown] = body.sets;
+    assert.deepEqual(Object.keys(shown).sort(), ["set", "slices", "slices_reported", "total_slices", "total_trials", "totals", "trials_reported", "updated_at"]);
+    assert.deepEqual([shown.set, shown.total_trials, shown.total_slices, shown.slices_reported, shown.trials_reported], [set, 102679, 52, 3, 6000]);
+    assert.deepEqual(shown.totals, { record: 4000, registry_papers: 3500, pubmed_papers: 2700, in_store: 2000, page: 2000 });
+    assert.deepEqual(shown.slices.map((one) => one.position), [1, 2, 3]);
+    assert.deepEqual(shown.slices[1], { slice: "s002", position: 2, trials: 2000, stages: { record: 2000, registry_papers: 1500, pubmed_papers: 700, in_store: 0, page: 0 }, started_at: null, updated_at: at });
+    // The store's own counts: every table by name, a whole number each; runs by writer.
+    assert.ok(Object.keys(body.rows).includes("claim") && Object.keys(body.rows).includes("registry_trial"));
+    assert.ok(Object.values(body.rows).every((n) => Number.isInteger(n)));
+    assert.equal(body.rows.progress_slice, 3);
+    assert.deepEqual(body.runs, []);
+    assert.equal(await box.hand("hot-1", [claim("progress-claim")]), null);
+    assert.equal((await box.merge("hot-1")).body.status, "merged");
+    const after = (await box.ask("GET", "/progress", { as: "operator" })).body;
+    assert.deepEqual(after.runs.map((run) => [run.writer, run.runs]), [["device", 1]]);
+    assert.equal(after.rows.claim, 1);
+    // Nothing of a record is in the answer: not the claim's slug, nor its headline.
+    assert.ok(!JSON.stringify(after).includes("progress-claim"));
+
+    // The page: the same shell with or without a token, no count in it, nothing from elsewhere.
+    const shell = await box.ask("GET", "/progress/page", { token: null });
+    assert.equal(shell.status, 200);
+    assert.equal((await box.ask("GET", "/progress/page", { as: "operator" })).text, shell.text);
+    assert.ok(!shell.text.includes("102679") && !shell.text.includes("s002") && !shell.text.includes(set));
+    assert.ok(!/(src|href)\s*=\s*["']?(https?:)?\/\//i.test(shell.text) && !/@import|url\(/i.test(shell.text), "the page loads nothing from anywhere");
+    assert.ok(!/[?&]token=|location\.(search|hash)/.test(shell.text), "the token is never read from or put in an address");
+    assert.equal((await box.ask("POST", "/progress/page", { token: null })).status, 401);
+    assert.equal((await box.ask("GET", "/progress/page/x", { token: null })).status, 401);
+  } finally { await box.close(); }
+});
+
+test("a caller that asks too often is told so, counted by address without a token and by token with one", { skip }, async () => {
+  // The Worker itself with stand-ins for the platform's rate-limit bindings, which do not
+  // exist on this machine. A refusal comes before the store is touched.
+  const { default: worker } = await import("../src/index.mjs");
+  const seen = [];
+  const limiter = (name, allow) => ({ limit: async ({ key }) => { seen.push([name, key]); return { success: allow }; } });
+  const ask = (env, headers = {}) => worker.fetch(new Request("https://ingest.test/progress", { headers: { "cf-connecting-ip": "203.0.113.7", ...headers } }),
+    { INGEST_TOKENS: JSON.stringify(ENTRIES), ...env }, { waitUntil() {} });
+  const bearer = { authorization: `Bearer ${TOKENS.daily}` };
+  assert.equal((await ask({ LIMIT_UNKNOWN: limiter("unknown", true), LIMIT_TOKEN: limiter("token", true) })).status, 401);
+  const refused = await ask({ LIMIT_UNKNOWN: limiter("unknown", false), LIMIT_TOKEN: limiter("token", true) });
+  assert.deepEqual([refused.status, await refused.json()], [429, { error: "too_many_requests" }]);
+  assert.equal((await ask({ LIMIT_UNKNOWN: limiter("unknown", true), LIMIT_TOKEN: limiter("token", false) }, bearer)).status, 429);
+  assert.deepEqual(seen, [["unknown", "203.0.113.7"], ["unknown", "203.0.113.7"], ["token", "daily"]], "a known token is not counted by address");
+  const shell = await worker.fetch(new Request("https://ingest.test/progress/page", { headers: { "cf-connecting-ip": "203.0.113.7" } }), { LIMIT_UNKNOWN: limiter("unknown", false) }, {});
+  assert.equal(shell.status, 429);
+  // The committed configuration binds both, with a period the platform takes.
+  const config = readFileSync(here("../wrangler.jsonc"), "utf8");
+  assert.match(config, /"LIMIT_UNKNOWN"[^}]*"simple": \{ "limit": \d+, "period": (10|60) \}/);
+  assert.match(config, /"LIMIT_TOKEN"[^}]*"simple": \{ "limit": \d+, "period": (10|60) \}/);
+});
+
+test("the deploy's check of a deployed service passes on this one, and fails without the operator's token", { skip }, async () => {
+  const { smoke } = await import("../scripts/deploy.mjs");
+  const address = String(await s.mf.ready);
+  const said = [];
+  const before = process.env.STORE_TOKEN_OPERATOR;
+  try {
+    process.env.STORE_TOKEN_OPERATOR = TOKENS.operator;
+    assert.equal(await smoke(address, (line) => said.push(line)), true, said.join("\n"));
+    assert.ok(said.some((line) => /routes: 401 with no token and with a wrong one$/.test(line)));
+    assert.ok(!said.join("\n").includes(TOKENS.operator), "the token is never said");
+    // A token that may not read the progress is not the operator's: the check fails.
+    process.env.STORE_TOKEN_OPERATOR = TOKENS.lookup;
+    assert.equal(await smoke(address, () => {}), false);
+    delete process.env.STORE_TOKEN_OPERATOR;
+    assert.equal(await smoke(address, () => {}), false);
+  } finally { if (before === undefined) delete process.env.STORE_TOKEN_OPERATOR; else process.env.STORE_TOKEN_OPERATOR = before; }
 });
 
 test("a merge wakes the consumer once for each step with work due, saying nothing else", { skip }, async () => {

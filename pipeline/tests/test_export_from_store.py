@@ -6,6 +6,7 @@ test database through `store/merge.sql`, with a folder standing in for the objec
 
 import json
 import sqlite3
+import subprocess
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
@@ -34,6 +35,7 @@ from test_export import (
 from thenwhat.claims.corrections import merge_claims, rename_intervention
 from thenwhat.claims.entry import add_article, archive_claim, clear_audit
 from thenwhat.cli import app
+from thenwhat.db.models import OutletIcon
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
@@ -47,7 +49,8 @@ from thenwhat.domain import (
 from thenwhat.export.build import build_export
 from thenwhat.export.compare import canonical_bytes, compare
 from thenwhat.export.parallel import compare_with_store
-from thenwhat.export.store_records import StoreFault, StoreRecords
+from thenwhat.export.rehearsal import against, problems
+from thenwhat.export.store_records import TABLES_READ, StoreFault, StoreRecords
 from thenwhat.review.queue import confirm_stage, flag_failure
 from thenwhat.seed.load import load_seed
 
@@ -113,6 +116,28 @@ def test_merged_claims_address_moves_the_same(session: Session, tmp_path: Path):
     export = assert_same_export(session, tmp_path / "b", NOW)
     assert export["moved"] == []
     assert [entry["slug"] for entry in export["archived"]] == [SLUG, "tooth-regrowth-twin"]
+
+
+def test_merged_claim_that_was_never_public_moves_from_neither(session: Session, tmp_path: Path):
+    """Scenario: Archived, merged and held claims"""
+    new_claim(session)
+    build_export(session, now=EARLIER)
+    # Entered after the last export and merged before the next: its address was never public.
+    new_claim(session, "tooth-regrowth-twin")
+    merge_claims(
+        session,
+        "tooth-regrowth-twin",
+        SLUG,
+        reason="one antibody",
+        by=Decider.HUMAN,
+        now=NOW,
+        same_treatment_accepted=True,
+    )
+
+    export = assert_same_export(session, tmp_path, NOW)
+
+    assert export["moved"] == []
+    assert [claim["slug"] for claim in export["claims"]] == [SLUG]
 
 
 def test_renamed_claims_old_address_moves_the_same(session: Session, tmp_path: Path):
@@ -520,3 +545,264 @@ def test_compare_of_every_nth_claim_keeps_both_ends_of_a_merge(session: Session,
     with sqlite3.connect(tmp_path / "store.db") as db:
         slugs = {slug for (slug,) in db.execute("SELECT slug FROM claim")}
     assert {SLUG, twin.slug} <= slugs
+
+
+def test_a_claim_with_two_articles_at_one_address_key_differs_with_its_cause_named(
+    session: Session, tmp_path: Path, invoke
+):
+    """Scenario: A difference the comparison can explain"""
+    new_claim(session)
+    add_event(session)
+    add_article(
+        session,
+        SLUG,
+        url=ARTICLE + "?utm_source=newsletter",
+        outlet="Example News",
+        title="Mice again",
+        published_date=date(2018, 3, 10),
+    )
+    session.flush()
+
+    strict = invoke("export-compare", "--store-sql", str(STORE_SQL))
+    allowed = invoke("export-compare", "--store-sql", str(STORE_SQL), "--allow-named")
+
+    assert strict.exit_code == 1, strict.output
+    assert "1 have a named cause, 0 do not." in strict.output
+    assert "two source articles of this claim at one" in " ".join(strict.output.split())
+    assert allowed.exit_code == 0, allowed.output
+    assert "The two exports differ: 1 of 1 claims" in allowed.output
+
+
+def test_names_in_another_order_are_the_merges_and_anything_more_is_unexplained(
+    session: Session, tmp_path: Path
+):
+    """Scenario: A difference the comparison can explain"""
+    new_claim(session)
+    add_event(session)
+    export = json.loads(build_export(session, now=NOW).model_dump_json())
+    reordered = json.loads(json.dumps(export))
+    claim_in(reordered)["intervention"]["synonyms"] = ["b", "a"]
+    claim_in(export)["intervention"]["synonyms"] = ["a", "b"]
+    changed = json.loads(json.dumps(reordered))
+    claim_in(changed)["headline"] = "Another headline"
+
+    [order_only] = compare(export, reordered).differences
+    comparison = compare(export, changed)
+
+    assert order_only.cause is not None and "store/merge.sql" in order_only.cause
+    assert [d.cause for d in comparison.differences] == [None]
+    assert comparison.unexplained == comparison.differences
+
+
+def answering_from(path: Path, asked: list[list[str]]):
+    """A stand-in for `wrangler`: answers a `d1 execute` from a local store file in the
+    form wrangler prints, and copies an object for an `r2 object get`."""
+
+    def wrangler(arguments):
+        asked.append(list(arguments))
+        if arguments[:2] == ["d1", "execute"]:
+            db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+            db.row_factory = sqlite3.Row
+            rows = [dict(row) for row in db.execute(arguments[arguments.index("--command") + 1])]
+            db.close()
+            return json.dumps([{"results": rows, "success": True, "meta": {}}])
+        if arguments[:3] == ["r2", "object", "get"]:
+            key = arguments[3].split("/", 1)[1]
+            Path(arguments[arguments.index("--file") + 1]).write_bytes(
+                (path.parent / "objects" / key).read_bytes()
+            )
+            return ""
+        raise AssertionError(f"not expected: {arguments}")
+
+    return wrangler
+
+
+def test_compare_command_reads_the_stores_export_from_the_database_itself(
+    session: Session, tmp_path: Path, invoke, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Comparing against the store itself"""
+    new_claim(session)
+    add_event(session)
+    twin = new_claim(session, "second-claim")
+    archive_claim(session, twin.slug, reason="entered twice", now=NOW)
+    # One icon held and one asked for and not held: an empty BLOB must stay empty.
+    session.add_all(
+        [
+            OutletIcon(
+                domain="news.example.org",
+                icon_url="https://news.example.org/favicon.ico",
+                media_type="image/x-icon",
+                content=b"\x00\x01icon",
+                fetched_at=NOW,
+            ),
+            OutletIcon(domain="other.example.org", fetched_at=NOW),
+        ]
+    )
+    held = tmp_path / "held"
+    store_of(session, held, NOW)[0].close()
+    asked: list[list[str]] = []
+    # Pages of at most two rows, so every table with more is read in several.
+    monkeypatch.setattr("thenwhat.export.store_fetch.PAGE_ROWS", 1)
+    monkeypatch.setattr("thenwhat.export.store_fetch.MOST_ROWS", 2)
+    monkeypatch.setattr(
+        "thenwhat.cli.export.wrangler_in",
+        lambda folder, config: answering_from(held / "store.db", asked),
+    )
+
+    result = invoke(
+        "export-compare", "--d1", "thenwhat-store-preview", "--store-sql", str(STORE_SQL)
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "The two exports are the same: 1 claims, byte for byte." in result.output
+    assert all("--remote" in arguments and "SELECT" in arguments[-1] for arguments in asked)
+    assert not any(word in arguments[-1] for arguments in asked for word in ("INSERT", "UPDATE"))
+    assert "  claim: 2 rows in " in result.output and "  outlet_icon: 2 rows in " in result.output
+    assert not any(" OFFSET " in arguments[-1] for arguments in asked)
+    # Only the tables an export reads are asked for: none of the bulk tier.
+    read = {arguments[-1].split(" FROM ")[1].split()[0] for arguments in asked}
+    assert read == set(TABLES_READ)
+
+    asked.clear()
+    local = invoke("export-compare", "--d1", "STORE", "--d1-local", "--store-sql", str(STORE_SQL))
+    assert local.exit_code == 0, local.output
+    assert asked and all("--local" in arguments for arguments in asked)
+
+
+def test_compare_command_refuses_a_store_it_cannot_read(
+    session: Session, tmp_path: Path, invoke, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: Comparing against the store itself"""
+    new_claim(session)
+    session.flush()
+    ran: list[list[str]] = []
+
+    def failing(command, **_):
+        ran.append(command)
+        # As wrangler prints a failure with --json: the reason is inside, the last line is "}".
+        printed = json.dumps(
+            {"error": {"text": "D1_ERROR: response too large", "notes": [{"text": "code 7500"}]}},
+            indent=2,
+        )
+        return subprocess.CompletedProcess(command, 1, stdout=printed, stderr="")
+
+    monkeypatch.setattr("thenwhat.export.store_fetch.subprocess.run", failing)
+
+    result = invoke("export-compare", "--d1", "thenwhat-store-preview")
+
+    assert result.exit_code == 1
+    said = " ".join(result.output.split())
+    assert "Reading claim after 0 rows, one row a page" in said
+    assert "D1_ERROR: response too large code 7500" in said
+    # The page was halved down to one row before giving up.
+    assert ran[-1][-1].endswith("LIMIT 1")
+
+
+def test_export_command_reads_the_d1_store_and_fetches_the_objects_it_lacks(
+    session: Session, tmp_path: Path, invoke, monkeypatch: pytest.MonkeyPatch, fixture_json
+):
+    """Scenario: Comparing against the store itself"""
+    claim = new_claim(session)
+    add_registry_events(session, claim, study(fixture_json, "study_NCT03491397_rows"))
+    held = tmp_path / "held"
+    store_of(session, held, NOW)[0].close()
+    asked: list[list[str]] = []
+    monkeypatch.setattr(
+        "thenwhat.cli.export.wrangler_in",
+        lambda folder, config: answering_from(held / "store.db", asked),
+    )
+    target = tmp_path / "export.json"
+
+    result = invoke(
+        "export",
+        "--d1",
+        "thenwhat-store-preview",
+        "--store",
+        str(tmp_path / "fetched.db"),
+        "--payloads",
+        str(tmp_path / "objects"),
+        "--r2-bucket",
+        "thenwhat-payloads-preview",
+        "--out",
+        str(target),
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "(1 payload objects)" in result.output
+    assert [claim["slug"] for claim in json.loads(target.read_text())["claims"]] == [SLUG]
+    assert sum(arguments[0] == "r2" for arguments in asked) == 1
+
+
+def test_rehearsal_passes_an_export_from_the_store_and_refuses_one_the_site_cannot_read(
+    session: Session, tmp_path: Path
+):
+    """Scenario: A rehearsal"""
+    new_claim(session)
+    add_event(session)
+    records, _ = store_of(session, tmp_path, NOW)
+    export = json.loads(build_export(records, now=NOW).model_dump_json())
+    records.close()
+    schema = json.loads(CHECKED_IN_SCHEMA.read_text())
+    broken = json.loads(json.dumps(export))
+    del claim_in(broken)["status"]
+
+    assert problems(export, schema) == []
+    assert against(export, {"claims": [{"slug": "another"}]})[0].startswith(
+        "1 claims from the store, 1 in the published snapshot, 0 in both."
+    )
+    assert any("status" in problem for problem in problems(broken, schema))
+    assert problems({**export, "claims": []}, schema)[-1] == "The export holds no claim."
+
+
+def test_a_store_file_of_only_the_tables_an_export_reads_gives_the_same_export(
+    session: Session, tmp_path: Path, fixture_json
+):
+    """Scenario: A store that holds only the hot tier"""
+    claim = new_claim(session)
+    add_registry_events(session, claim, study(fixture_json, "study_NCT03491397_rows"))
+    add_match(session, claim, "NCT09999999", 0.7, ReviewState.PENDING)
+    twin = new_claim(session, "second-claim")
+    archive_claim(session, twin.slug, reason="entered twice", now=NOW)
+    records, _ = store_of(session, tmp_path, NOW)
+    whole = json.loads(build_export(records, now=NOW).model_dump_json())
+    records.close()
+    with sqlite3.connect(tmp_path / "store.db") as db:
+        db.execute("PRAGMA foreign_keys = OFF")
+        for (view,) in db.execute("SELECT name FROM sqlite_master WHERE type = 'view'").fetchall():
+            db.execute(f"DROP VIEW {view}")
+        tables = [
+            name
+            for (name,) in db.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+            )
+        ]
+        dropped = [table for table in tables if table not in TABLES_READ]
+        for table in dropped:
+            # A search table takes its shadow tables with it.
+            db.execute(f"DROP TABLE IF EXISTS {table}")
+    assert {"registry_trial", "link_lead", "work_entry", "llm_usage"} <= set(dropped)
+
+    hot = StoreRecords(tmp_path / "store.db", payloads=tmp_path / "objects")
+    export = json.loads(build_export(hot, now=NOW).model_dump_json())
+    hot.close()
+
+    assert canonical_bytes(export) == canonical_bytes(whole)
+    assert claim_in(export)["trials"]
+
+
+def test_export_refuses_a_store_missing_a_column_it_reads_and_names_it(
+    session: Session, tmp_path: Path
+):
+    """Scenario: Not a store file"""
+    new_claim(session)
+    store_of(session, tmp_path, NOW)[0].close()
+    with sqlite3.connect(tmp_path / "store.db") as db:
+        db.execute("ALTER TABLE promise RENAME COLUMN parsed_date TO parsed")
+        db.execute("PRAGMA foreign_keys = OFF")
+        db.execute("DROP TABLE outlet_icon")
+
+    with pytest.raises(StoreFault) as refused:
+        StoreRecords(tmp_path / "store.db")
+
+    assert "it has no table outlet_icon" in str(refused.value)
+    assert "it has no column promise.parsed_date" in str(refused.value)

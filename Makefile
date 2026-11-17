@@ -100,6 +100,57 @@ extension-safari: extension
 export-compare:
 	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
 
+# The cut-over of the store, one command and one order (store/ingest/scripts/cutover.mjs,
+# docs/deploy.md): the build proved free of people, the jurisdiction read back, migrations,
+# the store found empty, the bookmark noted, the hot file dumped, replayed here, loaded
+# and held to its checks, the payload objects and the bulk file put in the bucket and the
+# manifest read back. It stops at the first stage that fails and names it; each stage is
+# timed; everything goes to a log in the build's folder.
+#   make store-rehearsal STORE_DIR=/path/build                 the same on this machine, nothing sent
+#   make store-cutover ENV=preview STORE_DIR=/path/build       ARGS="--dry-run" prints the plan
+#   make store-cutover ENV=production STORE_DIR=/path/build CONFIRM=thenwhat-store
+# ARGS: --replace (clear a preview store that is not empty), --skip-export (rehearsal only).
+.PHONY: store-rehearsal store-cutover
+store-rehearsal: store/ingest/node_modules
+	@test -n "$(STORE_DIR)" || { echo "Name the build's folder with STORE_DIR."; exit 1; }
+	node store/ingest/scripts/cutover.mjs --env local --store-dir $(STORE_DIR) $(ARGS)
+
+store-cutover: store/ingest/node_modules
+	@test -n "$(ENV)" -a -n "$(STORE_DIR)" || { echo "Name ENV (preview or production) and STORE_DIR."; exit 1; }
+	@test "$(ENV)" != "local" || { echo "For this machine use make store-rehearsal."; exit 1; }
+	node store/ingest/scripts/cutover.mjs --env $(ENV) --store-dir $(STORE_DIR) $(if $(CONFIRM),--confirm $(CONFIRM)) $(ARGS)
+
+# Deploys the ingest service, the only way it is deployed (store/ingest/scripts/deploy.mjs,
+# docs/deploy.md): writes the configuration for the environment, refuses unless the
+# jurisdiction reads eu and no migration is left to apply, deploys to a workers.dev
+# address, sets the secret INGEST_TOKENS from the file TOKENS names (checksums of tokens;
+# never printed), then asks the deployed service: 401 without a token on every route, 200
+# for the operator's token, read from STORE_TOKEN_OPERATOR.
+#   make store-deploy ENV=preview TOKENS=/path/ingest-tokens-preview.json     ARGS="--dry-run" prints the plan
+#   make store-deploy ENV=production CONFIRM=thenwhat-store-ingest TOKENS=/path/ingest-tokens.json
+.PHONY: store-deploy
+store-deploy: store/ingest/node_modules
+	@test -n "$(ENV)" || { echo "Name ENV: preview or production."; exit 1; }
+	node store/ingest/scripts/deploy.mjs --env $(ENV) $(if $(CONFIRM),--confirm $(CONFIRM)) $(if $(TOKENS),--tokens-file "$(TOKENS)") $(ARGS)
+
+# A rehearsal of taking the site's export from the truth store (task 6.2). It reads the D1
+# database and the bucket named, writes an export under STORE_REHEARSAL, holds it to the
+# schema the site reads and to the checks a published snapshot must pass, and says how it
+# compares with the committed snapshot. It changes nothing the site is built from.
+#   STORE_D1=thenwhat-store-preview STORE_R2_BUCKET=thenwhat-payloads-preview make store-export-rehearsal
+# Wrangler must be signed in (or CLOUDFLARE_API_TOKEN set) with read access to both.
+STORE_REHEARSAL ?= $(CURDIR)/.store-rehearsal
+.PHONY: store-export-rehearsal
+store-export-rehearsal: store/ingest/node_modules
+	@test -n "$(STORE_D1)" || { echo "Name the D1 database with STORE_D1."; exit 1; }
+	mkdir -p $(STORE_REHEARSAL)
+	uv run --directory pipeline thenwhat export --d1 $(STORE_D1) \
+	  --store $(STORE_REHEARSAL)/store.db --payloads $(STORE_REHEARSAL)/objects \
+	  --out $(STORE_REHEARSAL)/export.json
+	uv run --directory pipeline python -m thenwhat.export.rehearsal \
+	  $(STORE_REHEARSAL)/export.json $(CURDIR)/site/export.schema.json $(CURDIR)/site/data/published-export.json
+	node site/scripts/stage-public-export.mjs $(STORE_REHEARSAL)/export.json $(STORE_REHEARSAL)/published-export.json
+
 PUBLIC_EXPORT := site/data/public-export.json
 
 # A normal export from the running pipeline: every approved, unarchived claim.

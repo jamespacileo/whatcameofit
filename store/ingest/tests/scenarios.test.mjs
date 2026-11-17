@@ -1,4 +1,4 @@
-// The proof's 62 scenarios (store/proof/proof.py), driven through the service's HTTP
+// The proof's 63 scenarios (store/proof/proof.py), driven through the service's HTTP
 // routes on D1's local engine. Every write is a request with a writer's token: register a
 // run, put its payloads, stage, merge. What the store then holds is read through the
 // binding. The numbering and the wording are the proof's, so the two can be read side by
@@ -402,11 +402,15 @@ async function scenarios() {
   r = await s.run([action("merge", "dup", "human", { into_slug: SLUG, gains: ["Ozempic", "Wegovy"] })], { writer: "operator" });
   const stays = await s.one("SELECT id FROM claim WHERE slug = ?", SLUG);
   check("61 a merge moves what an article named and the names listed; a name both hold is not doubled", r.ok
-    && ['["Wegovy","semaglutide","Ozempic"]', '["Ozempic","Wegovy","semaglutide"]'].includes(await s.one("SELECT synonyms FROM entity WHERE claim_id = ? AND type = 'intervention'", stays))
+    && await s.one("SELECT synonyms FROM entity WHERE claim_id = ? AND type = 'intervention'", stays) === '["Wegovy","semaglutide","Ozempic"]'
     && await s.one("SELECT claim_id FROM entity WHERE name = 'STEP 1'") === stays
     && await s.one("SELECT count(*) FROM entity WHERE name = 'Novo Nordisk' AND claim_id = ?", stays) === 1);
   check("62 what a registry said does not move with a merge: the match stays with the claim that went", await s.one(
     "SELECT c.slug FROM entity_match m JOIN entity e ON e.id = m.entity_id JOIN claim c ON c.id = e.claim_id WHERE m.external_id = 'NCT4'") === "dup");
+  await s.run([claim("dup2", { held: null }), entity("Zepbound", "dup2")], { writer: "operator" });
+  r = await s.run([action("merge", "dup2", "human", { into_slug: SLUG, gains: ["Zepbound", "Ozempic", "Alpha"] })], { writer: "operator" });
+  check("63 a merge keeps the names in their order and adds the gained ones after them, unsorted", r.ok
+    && await s.one("SELECT synonyms FROM entity WHERE claim_id = ? AND type = 'intervention'", stays) === '["Wegovy","semaglutide","Ozempic","Zepbound","Alpha"]');
 
   check(`57 the report without applying said what the merge then said, for every merge above (${previews.same})`,
     !previews.differ.length && !previews.missed.length && previews.same >= 50);
@@ -417,9 +421,9 @@ before(async () => { if (!skip) await scenarios(); });
 after(async () => { for (const service of open) await service.close(); });
 
 // Each of the proof's scenarios is its own test, so a failure names the scenario.
-const SCENARIOS = 62;
+const SCENARIOS = 63;
 test("the proof's scenarios pass through the service's HTTP routes", { skip: skip ?? false }, async (t) => {
-  assert.equal(results.length, SCENARIOS, "the proof has 62 scenarios (its numbering skips 31 and has 17b)");
+  assert.equal(results.length, SCENARIOS, "the proof has 63 scenarios (its numbering skips 31 and has 17b)");
   for (const [name, ok] of results) await t.test(name, () => assert.ok(ok, name));
   if (previews.differ.length) console.error("reports that differed:", JSON.stringify(previews.differ));
 });

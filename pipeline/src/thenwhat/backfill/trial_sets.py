@@ -6,7 +6,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 
-from sqlalchemy import ColumnElement, and_, func, select
+from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.errors import BackfillError
@@ -52,6 +52,47 @@ SETS = {
     "completed-with-results-since-2025": completed_with_results_since_2025,
 }
 
+# The trial target set, decided by the operator on 2026-11-17: every trial under way
+# now, whatever its phase, and every trial that ended in the current calendar year. It
+# rolls with the year, so its rule takes the year and no clock is read here: a command
+# gives the year it runs in. The two sets above keep their names and their rules. Every
+# trial of `active-since-2025` is in this set; `completed-with-results-since-2025` is
+# in it only for the trials completed in the year given.
+ROLLING = "active-or-ended-this-year"
+ENDED = ("COMPLETED", "TERMINATED", "WITHDRAWN", "SUSPENDED")
+NOT_COMPLETED = ("TERMINATED", "WITHDRAWN", "SUSPENDED")
+NAMES = (*SETS, ROLLING)
+
+
+def under_way() -> ColumnElement[bool]:
+    """Under way now, in any phase, whenever the registry last updated the record."""
+    return RegistryTrial.overall_status.in_(UNDER_WAY)
+
+
+def ended_in(year: int, statuses: tuple[str, ...] = ENDED) -> ColumnElement[bool]:
+    """Listed as completed, terminated, withdrawn or suspended, with a completion date
+    in the year. The date is text, a year and month with or without a day, so it is in
+    the year when it begins with it. Says nothing of how the trial turned out."""
+    return and_(
+        RegistryTrial.overall_status.in_(statuses),
+        RegistryTrial.completion_date.startswith(f"{year:04d}", autoescape=True),
+    )
+
+
+def active_or_ended_in(year: int) -> ColumnElement[bool]:
+    return or_(under_way(), ended_in(year))
+
+
+def groups_of(year: int) -> dict[str, ColumnElement[bool]]:
+    """The rolling set in three groups that share no trial, named in the registry's own
+    words for a trial's state."""
+    return {
+        "under way": under_way(),
+        f"completed in {year}": ended_in(year, ("COMPLETED",)),
+        f"terminated, withdrawn or suspended in {year}": ended_in(year, NOT_COMPLETED),
+    }
+
+
 NO_WIDER_RECORD = (
     "No stored trial has the activity and results fields yet. Load the trials "
     "again in full: `thenwhat backfill load-trials --trials interventional`."
@@ -66,11 +107,20 @@ class NoWiderRecord(BackfillError):
     """No stored trial holds the fields the sets are chosen by."""
 
 
-def rule_of(name: str) -> Callable[[], ColumnElement[bool]]:
+class YearNotGiven(BackfillError):
+    """The rolling set was asked for without the year it is chosen in."""
+
+
+def rule_of(name: str, year: int | None = None) -> Callable[[], ColumnElement[bool]]:
     """The rule of a named set of stored trials. Refuses a name it does not know with
-    the list of sets."""
+    the list of sets. The rolling set needs the year it is chosen in, which the command
+    reads from the clock; the two dated sets ignore it."""
+    if name == ROLLING:
+        if year is None:
+            raise YearNotGiven(f"The set '{ROLLING}' is chosen by the year, and none was given.")
+        return lambda: active_or_ended_in(year)
     if name not in SETS:
-        raise UnknownSet(f"No set of stored trials is named '{name}'. Sets: {', '.join(SETS)}.")
+        raise UnknownSet(f"No set of stored trials is named '{name}'. Sets: {', '.join(NAMES)}.")
     return SETS[name]
 
 
@@ -104,9 +154,11 @@ class SetsReport:
     stored: int
 
 
-def count_sets(session: Session) -> SetsReport:
+def count_sets(session: Session, year: int | None = None) -> SetsReport:
+    """Count the dated sets, and the rolling set too when its year is given."""
     counts: list[SetCount] = []
-    for name, rule in SETS.items():
+    rules = dict(SETS) | ({ROLLING: rule_of(ROLLING, year)} if year is not None else {})
+    for name, rule in rules.items():
         counted = SetCount(name)
         rows = session.execute(
             select(

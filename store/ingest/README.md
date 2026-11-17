@@ -58,9 +58,31 @@ The secret `INGEST_TOKENS` is a JSON list of `{name, role, device?, sha256}`. Th
 | `export` | `export` runs | The action `publish`, by rule | Nothing |
 | `operator` | `operator` and `migration` runs | Everything, every action | All of the above |
 
+The `daily` and `operator` tokens may also read and clear the inbox.
+
 A token reaches only runs it could have registered; any other run answers as if it did not exist.
 
 A person's or an assistant's decision (`reviewed_by`, `decided_by`, `labelled_by` of `human` or `assistant`, and a `human_label`) travels only with the operator's token. A device runs scripts, and a script's decision is never recorded as a person's.
+
+## The inbox of the bulk tier
+
+The bulk kinds (registry trials, leads and what hangs from them, usage, measures) are not kept in D1: their truth is the bulk file in R2, which only the daily job writes (`design.md` decision 20). When a run hands such a record over, usually a reader's lookup, the service keeps it as it was staged, with the payload records it names, in its own table `inbox`, in the same batch as the merge. A run the merge refuses or undoes leaves nothing there.
+
+- `GET /inbox?after=<seq>&limit=<n>` gives `{records: [{seq, run, kind, key, body}], through, more}`, oldest first, at most 2,000 records or about 4 MB. A record is exactly what a writer stages, so `thenwhat store merge-bulk` takes it as it is.
+- `POST /inbox/folded` with `{object}` records a fold. `object` is the key of the delta that holds what was folded, `bulk/<build id>/delta-...`. It must be in the bucket and listed in its build's `deltas.json`, where `scripts/upload-delta.mjs --through <seq>` wrote how far it folded: the service reads `through` from that list, not from the caller. A `through` sent as well must agree (409 `through_differs`). The answer is what is recorded for that object, `{recorded, recorded_at, again, folded_through}`; recording an object again changes nothing.
+- `POST /inbox/clear` with `{through}` removes the records up to there, and is refused (409 `not_folded`) for a `through` past the furthest fold recorded. So no record leaves D1 before its delta is in R2. For each run folded whole it also removes the rows that run added to D1's copies of the bulk tables, in one batch. A reader's lead the store-side consumer has not yet processed (its `lead_process` work is still due) is held back with its shares and reading, and the answer counts it in `leads_held`; a later clearing removes it once that work is done or has failed for good. Clearing twice changes nothing else.
+
+A payload over 16 KB that an inbox record names is in the bucket under `payload/<sha256>`; the service has no route that serves it.
+
+## Progress of a backfill
+
+- `PUT /progress/slices` (operator, daily, device) takes `{set, total_trials?, total_slices?, slices: [{slice, position, trials, stages: {record, registry_papers, pubmed_papers, in_store, page}, started_at?, updated_at?}]}`: at most 200 slices a call, added or brought up to date by `(set, slice)`; a stage left out keeps its count. Counts and a slice's own id only.
+- `GET /progress` (operator, daily) answers `{stages, sets: [{set, total_trials, total_slices, slices_reported, trials_reported, totals, slices, updated_at}], runs, rows, at}`: counts, slice ids and times, nothing of a record.
+- `GET /progress/page` is a self-contained page of the same. It is served without a token and holds no count; it asks `/progress` with a token typed into it, kept for the tab only and sent as a header.
+
+## Asked too often
+
+Where the platform's rate-limit bindings are bound (`wrangler.jsonc`), a caller with no known token is answered 429 past 60 requests a minute from one address, and a token past 600 a minute. The counts are approximate and kept in each Cloudflare location on its own. On this machine there are none.
 
 ## One reading of a record
 
@@ -76,6 +98,7 @@ Every time in a record (`at`, and any field ending `_at`) is `YYYY-MM-DDTHH:MM:S
 - A record of an unknown kind, without its natural key, or with a field that no statement reading that kind of record reads.
 - A string longer than 2,000 characters (200 for a reported statement, as the schema says), anywhere in a record but the fields that hold a source's structured record on the one kind they belong to. A trial's `intervention_names`, its arms' names joined, may hold 20,000. The store keeps no article text, and a refusal never repeats what was sent.
 - A payload whose body is not what its checksum and size say, or whose R2 object was never put.
+- A ClinicalTrials.gov record that still names a person, in a `payload` record, a `source_record` or an object put to `/payloads`: officials, contacts, a site's contacts, an investigator's name, a sponsor or collaborator who is a person, the results' point of contact, any `email` or `phone`. The refusal names the kinds of field (`people`), never who. A writer removes them first (`pipeline/src/thenwhat/sources/people.py`); `src/people.mjs` is the same test and the two must agree. Other sources' records are not examined.
 
 Nothing is logged: not a token, not a record, not a payload.
 
