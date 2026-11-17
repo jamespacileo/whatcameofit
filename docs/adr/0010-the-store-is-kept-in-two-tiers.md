@@ -29,3 +29,14 @@ Decided by the operator on 2026-11-17.
 - **A claim merge in D1 moves only the leads D1 holds.** The next bulk build carries the merge from Postgres.
 - **A full load stays one command away.** `thenwhat store build --tier all` writes the whole store as one file. A table is moved between tiers by changing its line in `TIER`; the test then checks the references still run one way.
 - **The checksum shows that a load arrived whole, and nothing more.** It is not cryptographic. It does not catch two rows swapping values, or a change inside a value that keeps its length and its first, middle and last characters.
+
+## Amended 2026-11-17: the trial target set is hot
+
+Decided by the operator later the same day: the trials of interest go to production, loaded progressively, with their states and papers. The set of interest is one rolling rule, `active-or-ended-this-year`: a trial under way now, or completed, terminated, withdrawn or suspended with a completion date in the current year. Its definition is `backfill/trial_sets.rule_of`, from pull request 315.
+
+- **The set's trials are hot.** The set's trials, their states and the payloads they point at go to the hot tier (`TARGET` in `store/tiers.py`). Every other stored trial stays bulk only.
+- **The bulk file keeps every trial**, the set's included, so what hangs from a trial there still finds it: an article lead, which stays bulk.
+- **The one-way rule holds.** No hot row references a bulk row: a trial's state and payload go with it.
+- **What it costs:** measured on the working database the same day, 102,877 trials of the set moved the hot file from 328 MB to 695 MB. The trials' payloads, kept in their rows, make up about half of that.
+- **A trial that leaves the set**, next year or by a change of status, keeps its rows in D1. No step deletes a fact the store has been given. A store loaded afresh from a later build holds that year's set in its hot tier, and the bulk file holds every trial, so nothing is lost either way.
+- **Papers found by a trial's number (`trial_paper`) are to go hot with their trial.** They are not in the store's schema yet; the schema session has been asked for the table.

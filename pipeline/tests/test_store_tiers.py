@@ -572,3 +572,38 @@ def test_a_bulk_merge_pending_for_another_build_is_refused(session: Session, tmp
             store_sql=STORE,
             now=datetime(2026, 11, 18, tzinfo=UTC),
         )
+
+
+def test_the_target_set_s_trials_go_to_the_hot_tier_and_every_trial_stays_bulk(
+    session: Session, tmp_path: Path
+):
+    from thenwhat.db.models import RegistryTrial
+    from thenwhat.store.gather import Gathered, stream
+
+    _world(session)
+    rule = RegistryTrial.external_id == "NCT01234567"
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    hot, bulk = split_build(
+        file, payloads, "both", hot_trials=[("clinicaltrials.gov", "NCT01234567")]
+    )
+    hot_db, bulk_db = sqlite3.connect(hot), sqlite3.connect(bulk)
+    trials = "SELECT external_id FROM registry_trial ORDER BY 1"
+    assert hot_db.execute(trials).fetchall() == [("NCT01234567",)]
+    assert len(bulk_db.execute(trials).fetchall()) == 2
+    assert hot_db.execute("SELECT count(*) FROM registry_trial_status").fetchone() == (1,)
+    # The trial's payload goes with it; nothing in the hot file points at a row it lacks.
+    assert hot_db.execute(
+        "SELECT count(*) FROM payload p JOIN registry_trial t ON t.payload_sha256 = p.sha256"
+    ).fetchone() == (1,)
+    assert hot_db.execute("PRAGMA foreign_key_check").fetchall() == []
+    assert hot_db.execute(
+        "SELECT count(*) FROM registry_trial_fts WHERE registry_trial_fts MATCH 'trial'"
+    ).fetchone() == (1,)
+    # A hot-only build reads the target set's trials and no other.
+    kinds = [
+        (r.kind, r.key)
+        for r in stream(session, Gathered(records=[]), hot_only=True, trials=rule)
+        if r.kind == "registry_trial"
+    ]
+    assert kinds == [("registry_trial", "clinicaltrials.gov|NCT01234567")]

@@ -100,6 +100,7 @@ def gather(
     *,
     keep_payload: Callable[[Payload], None] | None = None,
     hot_only: bool = False,
+    trials: Any = None,
 ) -> Gathered:
     """Every record the store keeps of what Postgres holds now, parents before children,
     each natural key once, with counts of what was left out. `keep_payload` is given each
@@ -116,15 +117,21 @@ def stream(
     *,
     keep_payload: Callable[[Payload], None] | None = None,
     hot_only: bool = False,
+    trials: Any = None,
 ) -> Iterator[Record]:
     """`gather`'s records one at a time, in the same order, each natural key once; what
     is left out is counted into `counts`. With `hot_only`, only the hot tier's records,
-    and no bulk table is read but the leads' addresses and claims (tiers.py)."""
+    and no bulk table is read but the leads' addresses and claims (tiers.py) and, with
+    `trials`, a rule over `RegistryTrial` (the trial target set), the trials it selects."""
     # Each key once, by its hash: two keys that are not one share a 64-bit hash about
     # once in 10^12 pairs, and the set stays small for millions of records.
     seen: set[int] = set()
     for record in _gather(
-        session, counts.unnamed, keep_payload or (lambda _: None), hot_only=hot_only
+        session,
+        counts.unnamed,
+        keep_payload or (lambda _: None),
+        hot_only=hot_only,
+        trial_rule=trials,
     ):
         held = hash((record.kind, record.key))
         if held in seen:
@@ -144,6 +151,7 @@ def _gather(
     keep_payload: Callable[[Payload], None],
     *,
     hot_only: bool = False,
+    trial_rule: Any = None,
 ) -> Iterator[Record]:
     def payload_record(value: Any) -> tuple[Record, str]:
         payload = payload_of(value)
@@ -334,6 +342,13 @@ def _gather(
     for icon in session.scalars(select(OutletIcon).order_by(OutletIcon.domain)):
         yield r.outlet_icon_record(icon)
     if hot_only:
+        # The trials of the target set are hot: read them alone.
+        if trial_rule is not None:
+            chosen = select(RegistryTrial).where(trial_rule).order_by(RegistryTrial.id)
+            for trial in _pages(session, chosen):
+                record, sha256 = payload_record(r.registry_payload(trial))
+                yield record
+                yield r.registry_trial_record(trial, payload_sha256=sha256)
         return
 
     for trial in _pages(session, select(RegistryTrial).order_by(RegistryTrial.id)):
