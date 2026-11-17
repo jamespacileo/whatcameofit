@@ -51,7 +51,7 @@ In the home page's day-by-day list, the list's name and each row's reported head
 - **THEN** the day and "2 reports" are in grey at the size of a label, and each report's headline is larger than both
 
 ### Requirement: An outlet's title keeps its marks, drawn softer and hung
-Wherever the home page's day-by-day list or its card quotes an outlet's title, the title SHALL stand between quotation marks that are part of the text. The marks SHALL be drawn softer than the words, and the opening mark SHALL hang outside the column so that the title's first letter stands on the same edge as the lines above and below it.
+Wherever the home page's day-by-day list, its card or a search's answer quotes an outlet's title on a line of its own, the title SHALL stand between quotation marks that are part of the text. The marks SHALL be drawn softer than the words, and the opening mark SHALL hang outside the column so that the title's first letter stands on the same edge as the lines above and below it.
 
 #### Scenario: Aligned with its row
 - **WHEN** a report row is drawn with the outlet above its headline and the claim below
