@@ -190,12 +190,6 @@ class ClinicalTrials(Source):
         """The trials whose interventions match the term, as `name_search` takes them."""
         return self.name_search(intervention, condition).records
 
-    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
-        """The trials a search phrase finds within the condition, as `phrase_search`
-        takes them."""
-        found = self.phrase_search(phrase, condition)
-        return found.records if isinstance(found, Searched) else []
-
     def name_search(self, intervention: str, condition: str | None = None) -> Searched:
         """The trials whose interventions match the term, with what the registry reported.
 

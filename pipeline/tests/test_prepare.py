@@ -44,6 +44,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch, sources: Sources):
         session.flush()
 
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
+    monkeypatch.setattr("thenwhat.cli.session.open_session", test_session)
     monkeypatch.setattr("thenwhat.cli.claim_steps.claim_sources", sources.claim_sources)
     sources.open_session = same_session(session)
     runner = CliRunner()
@@ -162,6 +163,28 @@ def test_a_claim_never_searched_is_reported_by_prepare_and_the_audit_list(
         said(prepared)
     )
     assert "unsearched never searched" in said(listed)
+
+
+def test_the_claim_steps_are_planned_run_and_made_due_like_any_step(
+    run, session: Session, sources: Sources
+):
+    """The claim steps under `thenwhat backfill` and `thenwhat work requeue`"""
+    new_claim(session, "one")
+    sources.registry.down = True
+
+    looked_up = run("backfill", "run", "claim_substance")
+    searched = run("backfill", "run", "claim_trials")
+    planned = run("backfill", "plan")
+    requeued = run("work", "requeue", "claim_trials", "--reason", "source_failed", "--dry-run")
+    refused = run("work", "requeue", "claim_trials", "--reason", "no_such_reason")
+
+    assert looked_up.exit_code == searched.exit_code == planned.exit_code == 0, planned.output
+    assert "claim_trials: 0 done, 0 found nothing, 0 failed, 1 put off" in said(searched)
+    assert "claim_trials (version 1)" in said(planned)
+    assert "put off: 1 for 'source_failed'" in said(planned)
+    assert requeued.exit_code == 0, requeued.output
+    assert "1" in said(requeued)
+    assert refused.exit_code == 1 and "source_failed" in said(refused)
 
 
 # --- the rule for drafts and the audit -----------------------------------------------------
