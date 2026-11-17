@@ -112,6 +112,21 @@ The papers a trial's registry record lists as reporting its results, or that the
 - **WHEN** a trial's record lists one paper of the kind result and four of the kind background
 - **THEN** one results paper is attached to the trial and the four are not
 
+### Requirement: A listed paper is named by one rule and kept in one store
+The papers of a stored trial SHALL be read from its record by the same rule that reads them for a trial a claim cites: one for each PubMed number, the sponsor's listing kept when a paper is listed both ways, a reference with no PubMed number left out. A paper so named SHALL become a paper record only through the one store of paper records, which asks the paper index once for a paper and keeps "not held" as an answer. It SHALL NOT be a match, SHALL carry no score, SHALL NOT be an evidence event, and SHALL NOT be a related paper of any claim. Reading what a record lists SHALL send no request.
+
+#### Scenario: A trial a claim comes to cite
+- **WHEN** a stored trial's listed paper already has a paper record and a claim later cites the trial
+- **THEN** the claim's refresh finds that record and stores no second one
+
+#### Scenario: A paper listed both ways
+- **WHEN** a record lists one paper as a result and the registry also links it from the paper index
+- **THEN** it is named once, as listed by the sponsor
+
+#### Scenario: Counting a set
+- **WHEN** the operator counts what the records of a set list
+- **THEN** the trials with a paper of each kind, the papers and the links by domain are printed, and no request is sent
+
 ### Requirement: Links the registry record gives
 A link a trial's registry record gives to an article on a listed outlet SHALL become a link lead with the reason that the registry record gives the address. Any other link SHALL be counted by domain and not kept.
 

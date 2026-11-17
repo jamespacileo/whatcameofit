@@ -87,9 +87,23 @@ The first phase built: routes 1 to 3 of `design.md`, decision 13. No spend, no n
 
 Route 1, the registry's own references (pull request 2; part of 8.5):
 
-- [ ] 9.1 Read from each stored record the papers it lists, result and derived kept apart from background, and the links it gives; verify tests for a record with each kind, a paper listed twice, a number that is not a number, and a record with no references
-- [ ] 9.2 Count, for each of the two sets, the trials with a result paper, with a derived paper, with either, the papers, and the links by domain and by whether the domain is a listed outlet, from stored records and with no request (`thenwhat backfill trial-references`); verify one test of the figures and one that an unknown set is refused with the list
-- [ ] 9.3 Record how a listed paper becomes a paper record: by the one rule and the one store a claim's results papers already use, and by no other path; verify a test that the papers read for a stored trial are those the claim path reads for the same record. Storing a link on a listed outlet as a link lead (the rest of 8.5) waits for the counts of 9.2
+- [x] 9.1 Read from each stored record the papers it lists, result and derived kept apart from background, and the links it gives; verify tests for a record with each kind, a paper listed twice, a number that is not a number, and a record with no references
+- [x] 9.2 Count, for each of the two sets, the trials with a result paper, with a derived paper, with either, the papers, and the links by domain and by whether the domain is a listed outlet, from stored records and with no request (`thenwhat backfill trial-references`); verify one test of the figures and one that an unknown set is refused with the list
+- [x] 9.3 Record how a listed paper becomes a paper record: by the one rule and the one store a claim's results papers already use, and by no other path; verify a test that the papers read for a stored trial are those the claim path reads for the same record. Storing a link on a listed outlet as a link lead (the rest of 8.5) waits for the counts of 9.2
+
+Counted on the working database on 2026-11-17, read-only, from stored records:
+
+| | `active-since-2025` | `completed-with-results-since-2025` |
+| --- | --- | --- |
+| Trials | 23,328 | 3,141 |
+| List a paper as reporting results (sponsor) | 597 (2.6%) | 190 (6.0%) |
+| Have a paper the registry linked from PubMed | 2,845 (12.2%) | 1,083 (34.5%) |
+| Either | 3,350 (14.4%) | 1,206 (38.4%) |
+| Background papers only | 1,652 | 259 |
+| Distinct papers: sponsor's, registry's (a paper both ways counted in each) | 3,424, 4,447 | 532, 2,070 |
+| Give a link | 3,402 trials, 4,522 links | 639 trials, 861 links |
+
+The fifteen most linked domains across both sets are sponsors' trial sites, hospitals and file hosts (mdanderson.org 502, mskcc.org 323, a sponsors' file host 288, merckclinicaltrials.com 262, clinicalstudies.info.nih.gov 240, pubmed.ncbi.nlm.nih.gov 213). None is a listed outlet. So no link becomes a link lead in phase 1: the rest of 8.5 stays open until `thenwhat backfill trial-references` shows a listed outlet among them.
 
 Route 2, papers by trial number (pull request 3; does 8.7):
 
