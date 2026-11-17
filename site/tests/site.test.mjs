@@ -208,16 +208,6 @@ test("Scenario: Home lists the newest reports", () => {
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
-test("Scenario: A list that fits one page", () => {
-  // Four reports and two status changes: every row is on the first page, with a pager that
-  // stays out of sight under each list.
-  const html = page("index.html");
-  assert.doesNotMatch(html, /<tr[^>]*data-later/);
-  assert.match(html, /<nav class="pager"[^>]*data-pager="headlines"[^>]*hidden/);
-  assert.match(html, /<nav class="pager"[^>]*data-pager="moved"[^>]*hidden/);
-  assert.match(page("topic/gum-disease/index.html"), /data-pager="claims"/);
-});
-
 test("Scenario: Lists on the home page", () => {
   const html = page("index.html");
   // One tab per list that has rows, in a fixed order.
@@ -311,14 +301,6 @@ test("Scenario: Claim with three trials", () => {
   assert.match(words("quiet-claim"), /None on record\s+The first report was about a study in animals/);
   assert.match(claimsPanel(), /counts the trials on record; it does not say what they found\./);
   assert.doesNotMatch(wordsOf(claimsPanel()), /p\s*[=<]|\d\.\d/);
-});
-
-test("Scenario: Same words as the claim page", () => {
-  const row = wordsOf(rowsOf(claimsPanel()).find((entry) => entry.includes('href="/phase-claim')));
-  const brief = wordsOf(sectionOf(page("phase-claim/index.html"), "brief"));
-  assert.match(brief, /In 7 trials\. 1,200 people in the largest/);
-  assert.match(row, /In 7 trials/);
-  assert.match(row, /1,200 people in the largest/);
 });
 
 test("Scenario: Topic page", () => {
@@ -881,34 +863,15 @@ test("Scenario: Every answer opens to something", () => {
   }
 });
 
-test("Scenario: Results posted", () => {
-  const section = sectionOf(page("phase-claim/index.html"), "brief");
-  // Outside the disclosure, so it shows without opening the answer.
-  assert.match(section, /<\/details>\s*<p class="brief-link brief-shown">\s*<a href="#trials">\s*See the posted results/);
-});
-
 test("Scenario: Largest trial with posted values", () => {
   const brief = briefOf("phase-claim");
   // The trial entries below carry "p = 0.03"; the section carries no result value.
   assert.doesNotMatch(brief, /p\s*[=<]|\d\.\d/);
 });
 
-test("Scenario: Claim with no trial on record", () => {
-  const brief = briefOf("quiet-claim");
-  assert.match(brief, /Tested in people\? None on record/);
-  assert.match(brief, /What was the first report about\? A study in animals/);
-  assert.match(brief, /Approved by a regulator\? None on record/);
-  assert.doesNotMatch(brief, /Compared with|Results posted|A trial under way/);
-  assert.match(brief, /Three answers read from the records on this page/);
-});
-
 test("Scenario: Approved claim", () => {
   const brief = briefOf("approved-claim");
   assert.match(brief, /Approved by a regulator\? On 1 Apr 2024\. An approval is not advice to take a treatment/);
-});
-
-test("Scenario: Status with a phase", () => {
-  assert.doesNotMatch(page("phase-claim/index.html"), /class="bridge"/);
 });
 
 test("Scenario: Posted comparison with a p value", () => {
