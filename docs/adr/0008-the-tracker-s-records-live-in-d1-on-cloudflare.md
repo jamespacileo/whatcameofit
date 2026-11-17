@@ -60,3 +60,11 @@ Cost, read from the providers' pages that day: on the paid Workers plan the oper
 - The store can be restored to any minute of the last 30 days, which the laptop database could not.
 - The operator's data is on Cloudflare, under Cloudflare's terms, which are to be noted in `docs/sources.md` before the store is created. The operator chose the European Union jurisdiction for the database and the bucket later the same day; it is set at creation and cannot be changed afterwards.
 - The laptop database is kept, read-only, for 30 days after the migration. A dump of it taken on 2026-11-16 is held on two machines.
+
+## Amended on 2026-11-16: small payloads stay in the store
+
+Decided by the operator the same day, after the schema was drafted against the real data (`openspec/changes/cloudflare-source-of-truth/design.md`, decisions 2 and 16).
+
+- A raw payload of 16 KB or less is kept in the D1 database, in the `payload` table, once for each distinct payload, under its checksum. Only a larger payload is an R2 object. This replaces "A raw payload is kept in R2" in the Decision above; the rest of that line stands: the record that uses a payload holds its checksum and the fetch time.
+- Why: the registry corpus grew to 467,064 trials, each with a listing record of 642 bytes on average and 12 KB at most. In R2 that is half a million tiny objects to upload before the first merge, and a trial's plain page would need a second service to show its record. In the store they are 292 MB of a database projected at 1.20 GB, against the limit of 10 GB.
+- What does not change: the payloads that forced R2, the registry records with posted results of up to 2.4 MB, are still objects. A payload that does not match its checksum is still reported and never used.

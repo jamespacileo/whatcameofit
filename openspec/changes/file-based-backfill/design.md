@@ -125,12 +125,14 @@ Two devices working at once can together pass a ceiling each respects alone. The
 
 `thenwhat backfill push <run>`:
 
-1. Registers the run with the store from `run.json`.
-2. Hands over `results/*.jsonl` and `usage.jsonl` in parts, with counts and a checksum for each.
-3. Asks for the merge and prints its report: added, matched, conflicts by kind; claims held for audit; slices marked done.
-4. Marks the run pushed in `run.json`.
+1. Puts each raw payload over 16 KB to the ingest address, which checks its checksum and keeps it once. A smaller payload travels with the records.
+2. Splits `results/*.jsonl` and `usage.jsonl` into store runs of the size the store sets (about 20,000 records), parents before what refers to them, and names each from the folder's run and its place.
+3. For each store run in turn: registers it from `run.json` with its counts and step versions, hands its records over in parts with a checksum for each, asks for the merge, and prints the merge's report: added, matched, conflicts by kind; claims held for audit; slices marked done.
+4. Marks the folder's run pushed in `run.json` when the last store run is merged.
 
-`--report-only` stops after the merge's dry-run report. Pushing a pushed run is refused by the store as already merged, which is the retry.
+Revised on 2026-11-16 to the store's design (`cloudflare-source-of-truth`, `design.md` decision 12): a folder's push is several store runs, not one, because the store merges a run as one batch with a time limit, and a bounded run is also what keeps a large push from delaying a reader's lookup. Each store run is whole or not at all. A push that stops between two leaves complete records in the store and is finished by pushing again.
+
+`--report-only` prints each store run's report and applies none. Because nothing is applied, a later store run's report counts as missing the parents an earlier one would have added; the report says so. Pushing a pushed run is answered by the store as already merged, which is the retry.
 
 What is pushed for a lead that was not read: its address key, shares, screening outcome, triage score and version. That is how the next device knows not to score it again. **Confirmed by the operator on 2026-11-16:** every scored lead is pushed, rejected ones included, so triage can still be measured against its rejections; a lead that was screened and never scored is not. What is not pushed: anything on an unlisted outlet, and the tally, which stays with the files.
 
@@ -139,6 +141,8 @@ What is pushed for a lead that was not read: its address key, shares, screening 
 **Confirmed by the operator on 2026-11-16:** prepare runs store-side, in the same Python consumer that processes readers' leads, and the audit hold stays for claims drafted from a backfill's reads (it does not apply to claims a reader's lookup starts: `docs/adr/0009`).
 
 A read drafts a claim; `prepare` searches registries for it and approves by rule; the audit then releases it. Under this change a run's `results` carry drafted claims with their reads' records, marked awaiting audit. Registry search and approval by rule run as they do today, against the store, after the push: they need the store's whole view of a claim (its other articles, its existing matches), which a run folder does not have.
+
+Two things are called prepare, and only one of them is on the device. The run's `prepare` stage (decision 2's table) only writes the records to push, in the merge's natural-key form: it searches no registry and approves nothing. `thenwhat prepare`, the registry search and the approval by rule, runs store-side. A merge leaves each pending claim it added due for it, and the consumer takes it from there; a claim drafted from a backfill's read arrives pending, is approved by rule with the audit mark, and waits for `audit clear` (`cloudflare-source-of-truth`, `design.md` decisions 12 and 16).
 
 So a device does the wide, cheap, discardable work and the reads; the store's side does what must see everything. The audit is where it is today: `thenwhat audit list` and `audit clear` against the store.
 

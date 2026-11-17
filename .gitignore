@@ -32,5 +32,10 @@ extension/safari/
 # bulk link files fetched for the social-link backfill
 data/link-files/
 
+# store proof: the sample exported from the working database, and the SQLite file built from it
+store/proof/sample/
+store/proof/out/
+store/proof/.wrangler/
+
 # drawn card images kept between builds
 site/.cache/
