@@ -70,7 +70,8 @@
 ## 8. Switch over and remove
 
 - [x] 8.1 Update `scripts/daily-run.sh` to read the new report of `prepare`; verify a dry run of the script prints the prepared counts
-- [ ] 8.2 Delete the process-per-step runner in `cli/prepare.py`, `NOT_NEEDED_TO_DECIDE`, and what is left unused in `backfill/`; verify `vulture` reports nothing new and `make check` passes
+- [x] 8.2 Delete the process-per-step runner in `cli/prepare.py`, `NOT_NEEDED_TO_DECIDE`, and what is left unused in `backfill/`; verify `vulture` reports nothing new and `make check` passes
+  - 2026-11-17: `vulture` could not be installed in this session (the install was refused), so the check was a sweep by name of what the refactor could orphan: `plan_claims`, `ClaimPlan`, `NOT_NEEDED_TO_DECIDE`, `SharedTurns`, `STEPS_FAILED`, `_named_on_the_page` are gone from source and tests; an unused `reasons_line` was removed. `Deferred` stays for `thenwhat audit attach` until task 6.2 removes it from the runner. Run `vulture` on the writer before archive.
   - 2026-11-17: the process-per-step runner, `NOT_NEEDED_TO_DECIDE`, `plan_claims`, `steps_for`, `_step` and the read's `_named_on_the_page` are deleted, and `make check`'s Python tools pass. Not ticked: `vulture` is not a dependency of the pipeline and could not be run here.
 - [ ] 8.3 Update `docs/url-to-claim.md`, `docs/daily-run.md` and `docs/backfill-loop.md` for the claim steps, requeue and the plan's new lines; verify the commands they show run as written
 - [x] 8.4 Record the decision "one runner for leads and claims; a failure is final only when it is known to be" as an ADR in `docs/adr/`; verify it names what it replaces

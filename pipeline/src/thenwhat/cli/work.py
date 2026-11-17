@@ -11,7 +11,7 @@ from thenwhat.cli.backfill import open_session, refusals
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.work.ledger import requeue
-from thenwhat.work.outcome import ReasonClass, UndeclaredReason, declared, reasons_of
+from thenwhat.work.outcome import ReasonClass, UndeclaredReason, declared
 from thenwhat.work.steps import find_step
 
 work_app = typer.Typer(
@@ -123,9 +123,3 @@ def requeue_command(
         f" Run `thenwhat backfill run {step.name}`.",
         markup=False,
     )
-
-
-def reasons_line(step: Any) -> str:
-    """The reasons a step has declared, for the list of steps."""
-    codes = ", ".join(sorted(reason.code for reason in reasons_of(step)))
-    return codes or "none"
