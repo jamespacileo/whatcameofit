@@ -273,26 +273,26 @@ class FileWriter:
 
     def _write(self, batch: list[Span | Event]) -> None:
         """Write a batch, file by file, with `_writing` held."""
-        by_path: dict[Path, list[str]] = {}
-        spans: dict[Path, int] = {}
+        # Lines by their file's day and writer; each file's path is made once.
+        by_file: dict[tuple[date, str], list[str]] = {}
+        spans: dict[tuple[date, str], int] = {}
         for item in batch:
-            if isinstance(item, Span):
-                path = path_for(self._folder, item.started_at.date(), item.writer)
-            else:
-                path = path_for(self._folder, item.at.date(), item.writer)
+            is_span = isinstance(item, Span)
+            moment = item.started_at if isinstance(item, Span) else item.at
+            key = (moment.date(), item.writer)
             try:
                 line = json.dumps(item.as_record(), separators=(",", ":"))
             except (TypeError, ValueError) as failure:
-                self._count_lost(int(isinstance(item, Span)), 1, failure)
+                self._count_lost(int(is_span), 1, failure)
                 continue
-            by_path.setdefault(path, []).append(line + "\n")
-            if isinstance(item, Span):
-                spans[path] = spans.get(path, 0) + 1
-        for path, lines in by_path.items():
+            by_file.setdefault(key, []).append(line + "\n")
+            if is_span:
+                spans[key] = spans.get(key, 0) + 1
+        for (day, writer), lines in by_file.items():
             try:
-                self._append(path, "".join(lines))
+                self._append(path_for(self._folder, day, writer), "".join(lines))
             except OSError as failure:
-                self._count_lost(spans.get(path, 0), len(lines), failure)
+                self._count_lost(spans.get((day, writer), 0), len(lines), failure)
                 continue
             if self._unsaid is not None:
                 self._say_unsaid()
