@@ -1121,9 +1121,9 @@ def test_read_set_reads_nothing_when_the_cost_passes_the_routes_share(
 
 def test_read_set_refuses_a_set_or_a_strength_it_does_not_know(run):
     """Scenario: A set the command does not know"""
-    unknown_set = run("read-set", "successful")
+    unknown_set = run("read-set", "elsewhere")
     unknown_strength = run("read-set", "active-since-2025", "--strength", "certain")
 
     assert (unknown_set.exit_code, unknown_strength.exit_code) == (1, 1)
-    assert "No set of stored trials is named 'successful'" in unknown_set.output
+    assert "No set of stored trials is named 'elsewhere'" in unknown_set.output
     assert "No strength of link is named 'certain'" in unknown_strength.output

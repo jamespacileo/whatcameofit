@@ -23,7 +23,7 @@ from thenwhat.backfill.link_screen import (
     STRENGTH_TO_READ,
     STRONG,
 )
-from thenwhat.backfill.trial_references import rule_of
+from thenwhat.backfill.trial_sets import rule_of
 from thenwhat.db.models import LinkLead, LinkLeadLink, RegistryTrial, WorkEntry
 from thenwhat.domain import ScreenOutcome
 
