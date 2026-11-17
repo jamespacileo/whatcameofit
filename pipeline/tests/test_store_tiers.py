@@ -353,3 +353,15 @@ def test_no_check_asks_d1_for_more_columns_than_it_answers():
         widest = max(widest, len(numbers))
     # The schema has tables wide enough to need more than one statement.
     assert widest > MAX_COLUMNS
+
+
+def test_a_payload_an_event_and_a_trial_share_reaches_both_tiers():
+    from thenwhat.store.tiers import bulk_records
+
+    shared = Record("payload", "s" * 64, {"sha256": "s" * 64})
+    event = Record("evidence_event", "x|k", {"payload_sha256": "s" * 64})
+    trial = Record("registry_trial", "ct|1", {"payload_sha256": "s" * 64})
+    # The stream gives the payload once, before the event that first points at it.
+    stream = [shared, event, trial]
+    assert hot_records(stream)[0] == [shared, event]
+    assert bulk_records(stream)[0] == [shared, trial]

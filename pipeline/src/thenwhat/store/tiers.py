@@ -368,10 +368,13 @@ def split_build(file: Path, payloads: Path, tier: str) -> list[Path]:
 
 def records_of(records: Iterable[Any], kinds: frozenset[str]) -> tuple[list[Any], int]:
     """The records of these kinds, and the payloads they point at; how many were left
-    out. Read as a stream: `gather` gives a payload just before the record that points at
-    it, and an earlier record's payload once, so a payload is kept when the record after
-    it is kept and points at it."""
+    out. Read as a stream: `gather` gives a payload just before the first record that
+    points at it, and the hot kinds before the bulk ones. A payload left out with a hot
+    record is held, so a later kept record that points at the same payload (a trial whose
+    record an event already carried) is given it first: that is never silently lost."""
     chosen: list[Any] = []
+    given: set[str] = set()
+    held_back: dict[str, Any] = {}
     left_out = 0
     held: Any = None
     for record in records:
@@ -383,10 +386,18 @@ def records_of(records: Iterable[Any], kinds: frozenset[str]) -> tuple[list[Any]
         if held is not None:
             if record.kind in kinds and record.body.get("payload_sha256") == held.key:
                 chosen.append(held)
+                given.add(held.key)
             else:
+                if record.kind in HOT_KINDS:
+                    held_back[held.key] = held
                 left_out += 1
             held = None
         if record.kind in kinds:
+            sha = record.body.get("payload_sha256")
+            if sha and sha not in given and sha in held_back:
+                chosen.append(held_back.pop(sha))
+                given.add(sha)
+                left_out -= 1
             chosen.append(record)
         else:
             left_out += 1
