@@ -13,11 +13,12 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
+from measure_support import write
 from thenwhat.cli import app
 from thenwhat.cli.measure import start_measuring
 from thenwhat.db.models import MeasureDaily
 from thenwhat.measure import spans as measure
-from thenwhat.measure.files import LOOKUP, FileSink
+from thenwhat.measure.files import LOOKUP
 from thenwhat.measure.spans import Span
 
 
@@ -60,11 +61,13 @@ def made(days_ago: int, **changes) -> Span:
 
 def test_measure_reports_time_waiting_and_cost_by_step(run, session: Session, tmp_path: Path):
     """Scenario: A week's report"""
-    sink = FileSink(tmp_path)
-    sink(made(1))
-    sink(made(1, step="link_triage", batch=20, waited={}, requests={}, cost_usd=Decimal("0.012")))
-    sink(made(0, outcome="failed", ran_seconds=1.0))
-    sink(made(12, writer=LOOKUP))
+    write(
+        tmp_path,
+        made(1),
+        made(1, step="link_triage", batch=20, waited={}, requests={}, cost_usd=Decimal("0.012")),
+        made(0, outcome="failed", ran_seconds=1.0),
+        made(12, writer=LOOKUP),
+    )
 
     result = run("--days", "3")
 

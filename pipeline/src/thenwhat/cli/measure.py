@@ -11,7 +11,7 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.session import open_session, settings_or_exit
 from thenwhat.config import Settings, load_settings
 from thenwhat.measure import spans
-from thenwhat.measure.files import FileSink, remove_old
+from thenwhat.measure.files import FileWriter, remove_old
 from thenwhat.measure.report import Report, gather
 from thenwhat.measure.totals import roll
 
@@ -43,7 +43,8 @@ def start_measuring() -> None:
         err.print(KEEP_NOT_SET)
         spans.use(None)
         return
-    spans.use(spans.Recorder(sink=FileSink(settings.measure_dir), writer=settings.measure_writer))
+    writer = settings.measure_writer
+    spans.use(spans.Recorder(out=FileWriter(settings.measure_dir, writer=writer), writer=writer))
 
 
 def _duration(seconds: float) -> str:
@@ -78,6 +79,13 @@ def _lines(report: Report) -> list[str]:
     if report.requests:
         lines += ["", "Requests sent:"]
         lines += [f"  {source}: {count}" for source, count in report.requests]
+    if report.not_written:
+        lines += ["", "Measurements that could not be written:"]
+        lines += [
+            f"  {gap.measurements:,} from {gap.since:%Y-%m-%d %H:%M} to {gap.until:%H:%M} UTC"
+            f" ({gap.lines:,} lines in all)"
+            for gap in report.not_written
+        ]
     lines.append("")
     if report.claims is None:
         lines.append("No claim published in this range has measurements.")
