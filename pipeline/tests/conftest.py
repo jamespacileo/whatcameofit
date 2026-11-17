@@ -60,6 +60,38 @@ def session(engine: Engine) -> Iterator[Session]:
         transaction.rollback()
 
 
+# --- the same export from the truth store -----------------------------------------
+
+# Test modules whose every test also holds, when it is over, that the export taken from a
+# SQLite file of the truth store's schema is the one the test database gives (openspec
+# truth-store, "The export is assembled once, from either store"). They are the modules
+# that test the export through `build_export`, so each scenario of theirs is one more
+# set of records the two readers must agree on.
+EXPORT_MODULES = {
+    "test_export",
+    "test_organisations",
+    "test_outlet_icons",
+    "test_record_readings",
+    "test_related_research",
+    "test_seed",
+}
+EXPORTED_AT = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
+
+
+@pytest.fixture(autouse=True)
+def same_export_from_the_store(
+    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
+) -> Iterator[None]:
+    swept = request.module.__name__ in EXPORT_MODULES and "session" in request.fixturenames
+    # Asked for before the test runs, so that it is still open when the test is over.
+    session = request.getfixturevalue("session") if swept else None
+    yield
+    if session is not None:
+        from store_support import assert_same_export
+
+        assert_same_export(session, tmp_path_factory.mktemp("store"), EXPORTED_AT)
+
+
 # --- no internet ---------------------------------------------------------------
 
 

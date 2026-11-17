@@ -73,3 +73,53 @@ Every record the store holds SHALL carry the run that first added it and the run
 #### Scenario: After migration
 - **WHEN** the same records are exported from the database used before this change and from the store
 - **THEN** the two exports hold the same claims, events and codes
+
+### Requirement: The export is assembled once, from either store
+The export SHALL be assembled by one piece of code that asks a reader for records and never a table. There SHALL be two readers, one over the database used before this change and one over a SQLite file that has the store's schema, and both SHALL hand over the same kinds of record in the same stated order. What a claim's entry contains, how its lists are ordered and how its status is derived SHALL be the assembly's alone, so that two exports can differ only in what a reader hands over. `thenwhat export --store <file>` SHALL read such a file, with `--payloads <folder>` naming where the payloads kept as objects are found.
+
+#### Scenario: Same records, same export
+- **WHEN** the same records are held by the database and by a store file, and each is exported at the same time
+- **THEN** the two exports are the same byte for byte once both are put in the comparison's canonical order, in every part: claims, `archived`, `moved`, outlets, verticals, statements, promises, papers, trials and organisations
+
+#### Scenario: Archived, merged and held claims
+- **WHEN** the records include an archived claim that was published, a claim merged into another, a claim whose slug a rename replaced, and a claim awaiting audit
+- **THEN** both exports list the archived claim under `archived`, the merged claim's slug and the former slug under `moved`, and neither publishes the claim awaiting audit
+
+#### Scenario: Every status
+- **WHEN** the records hold one claim for each rule that derives a status
+- **THEN** both exports give each claim the same status and name the same events as its cause
+
+#### Scenario: A payload kept as an object
+- **WHEN** an event's raw payload is larger than the store keeps in its own table
+- **THEN** the reader takes it from the folder or bucket by the key the store names, and the export is the same as from the database
+
+#### Scenario: A payload that is missing or altered
+- **WHEN** a payload the export needs is absent, or its bytes do not have the checksum it is named by
+- **THEN** the export is refused, naming the payload, and no file is written
+
+#### Scenario: Reading only
+- **WHEN** an export is taken from a store file
+- **THEN** the file is opened for reading only and is unchanged afterwards: a status the assembly derives and a first published time are not written back, and the claims published for the first time are reported for the writer that states publications
+
+#### Scenario: Not a store file
+- **WHEN** the file named does not have the tables the export reads
+- **THEN** the export is refused, naming the tables that are missing
+
+### Requirement: The two exports are compared
+`thenwhat export-compare` (`make export-compare`) SHALL take the export from the database and the export from a store file, compare them in canonical form, and exit with an error when they differ. Canonical form SHALL leave out only what cannot be equal by construction: the time the export was made, the numbers each store gives its own rows (an event's id, and every reference to it, is renumbered by the event's content), and the order of entries that tie on everything but a row's number. Until the store gives a snapshot, the command SHALL make the store file itself, from the database's records in the natural-key form the pipeline writes and through the store's own merge.
+
+#### Scenario: The nightly comparison
+- **WHEN** the daily job runs the comparison and the two exports are the same
+- **THEN** the command exits successfully and reports how many claims were compared, which the cut-over rule counts towards its seven nights
+
+#### Scenario: A difference is named
+- **WHEN** one claim's entry differs between the two exports
+- **THEN** the command exits with an error and names the claim and the places in its entry that differ
+
+#### Scenario: What the comparison looks past
+- **WHEN** two exports differ only in the time they were made, in the ids of events, or in the order of entries that tie
+- **THEN** they compare as the same
+
+#### Scenario: Comparing changes neither store
+- **WHEN** the comparison is run against the working database
+- **THEN** the database is read in a read-only transaction that is rolled back, nothing is written to it, and the store file it makes is removed unless it is asked to be kept

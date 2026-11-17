@@ -1,5 +1,6 @@
 """Stores a claim's derived status. The rules themselves live in `thenwhat.status`."""
 
+from collections.abc import Iterable
 from datetime import date, datetime
 
 from sqlalchemy import select
@@ -34,13 +35,18 @@ def refresh_status(
         no_signal_years=no_signal_years,
         evidence_stage=claim.evidence_stage,
     )
+    keep_status(claim, derivation, now=now)
+    return derivation
 
+
+def keep_status(claim: Claim, derivation: Derivation, *, now: datetime) -> None:
+    """Put a derived status on the claim. The status and its updated-at time change only
+    when the derived status or overlay differs from what the claim holds."""
     stored = (claim.current_status, claim.overlay_years)
     if (derivation.status, derivation.overlay_years) != stored:
         claim.current_status = derivation.status
         claim.overlay_years = derivation.overlay_years
         claim.status_updated_at = now
-    return derivation
 
 
 def status_history(session: Session, claim: Claim) -> list[StatusChange]:
@@ -55,12 +61,18 @@ def status_history(session: Session, claim: Claim) -> list[StatusChange]:
 
 
 def _approved_evidence(session: Session, claim: Claim) -> list[Evidence]:
-    rows = session.scalars(
-        select(EvidenceEvent).where(
-            EvidenceEvent.claim_id == claim.id,
-            EvidenceEvent.review_state == ReviewState.APPROVED,
+    return evidence_of(
+        session.scalars(
+            select(EvidenceEvent).where(
+                EvidenceEvent.claim_id == claim.id,
+                EvidenceEvent.review_state == ReviewState.APPROVED,
+            )
         )
     )
+
+
+def evidence_of(rows: Iterable[EvidenceEvent]) -> list[Evidence]:
+    """Evidence events as the rules read them."""
     return [
         Evidence(
             id=row.id,
@@ -77,7 +89,11 @@ def _approved_evidence(session: Session, claim: Claim) -> list[Evidence]:
 
 
 def _flags(session: Session, claim: Claim) -> list[Flag]:
-    rows = session.scalars(select(FailureFlag).where(FailureFlag.claim_id == claim.id))
+    return flags_of(session.scalars(select(FailureFlag).where(FailureFlag.claim_id == claim.id)))
+
+
+def flags_of(rows: Iterable[FailureFlag]) -> list[Flag]:
+    """Failure flags as the rules read them."""
     return [Flag(row.trial_external_id, row.evidence_event_id) for row in rows]
 
 

@@ -8,14 +8,28 @@ import { runChecksum } from "./hash.mjs";
 
 const run1 = (db, sql, run) => db.prepare(sql).bind(...(sql.includes("?1") ? [run] : []));
 
-// The whole second, in UTC; a reader's lookup leaves only the day.
-export const now = (lookup = false) => new Date().toISOString().slice(0, lookup ? 10 : 19) + (lookup ? "" : "Z");
+// A time as the store keeps it, the one form every writer uses, because the merge
+// compares times as text: UTC to the microsecond with its offset. A reader's lookup
+// leaves only the day.
+export const stamp = (date) => date.toISOString().slice(0, 23) + "000+00:00";
+export const now = (lookup = false) => (lookup ? new Date().toISOString().slice(0, 10) : stamp(new Date()));
 
 export async function getRun(db, id) {
   return db.prepare("SELECT id, writer, device, request_class, commit_sha, registered_at, stated_checksum, status, refusal, merged_at FROM run WHERE id = ?1").bind(id).first();
 }
 
-// A run is registered once; registering it again changes nothing.
+// What a run stated when it was registered: its steps and its counts.
+export async function stated(db, id) {
+  const [steps, counts] = await db.batch([
+    db.prepare("SELECT step AS name, version AS n FROM run_step WHERE run_id = ?1").bind(id),
+    db.prepare("SELECT kind AS name, records AS n FROM run_stated WHERE run_id = ?1").bind(id),
+  ]);
+  const object = ({ results }) => Object.fromEntries(results.map((row) => [row.name, row.n]));
+  return { steps: object(steps), counts: object(counts) };
+}
+
+// A run is registered once, with its steps and counts. The caller has seen that no run
+// has this id; one that is already there is not written to again (index.mjs).
 export async function registerRun(db, run) {
   const lookup = run.writer === "lookup";
   await db.batch([
@@ -26,8 +40,18 @@ export async function registerRun(db, run) {
   return getRun(db, run.id);
 }
 
+// Which of these claims the store already holds approved and released from audit.
+export async function released(db, slugs) {
+  const { results } = await db.prepare(
+    "SELECT DISTINCT j.value AS slug FROM json_each(?1) j JOIN claim_key k ON k.slug = j.value JOIN claim c ON c.id = k.claim_id "
+    + "WHERE c.review_state = 'approved' AND c.awaiting_audit_at IS NULL").bind(JSON.stringify(slugs)).all();
+  return new Set(results.map((row) => row.slug));
+}
+
 // One chunk: its records and the note of its checksum, together or not at all. `text` is
-// the JSON list as it arrived, bound as one string. False when the run is not waiting for
+// the JSON list written out again from the value the door checked, never the bytes that
+// arrived: SQLite and JavaScript read a repeated key differently, so the bytes could say
+// one thing to the door and another to the store. It is bound as one string. False when the run is not waiting for
 // records: the statement stores nothing for a run never registered, merged or refused.
 export async function stageChunk(db, run, text, checksum, records) {
   const [staged, noted] = await db.batch([

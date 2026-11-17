@@ -2,7 +2,7 @@
 // SHA-256, read from the secret INGEST_TOKENS: a JSON list of {name, role, device?, sha256}.
 // Revoking one is removing its entry; the others are untouched. A token is never logged,
 // echoed or stored, and nothing here says why a token was not accepted.
-import { ACTIONS, KINDS } from "./check.mjs";
+import { ACTIONS, KINDS } from "./kinds.mjs";
 import { sha256 } from "./hash.mjs";
 
 const RECORDS = KINDS.filter((kind) => kind !== "action");
@@ -12,16 +12,22 @@ const RECORDS = KINDS.filter((kind) => kind !== "action");
 //   kinds     the kinds of record it may stage
 //   actions   the operator's commands it may state (an `action` record)
 //   deciders  whose decision a record it stages may carry (reviewed_by, decided_by, labelled_by)
+//   withheld  fields of a record it may not send
+//   holds     whether a claim it hands over as approved must carry its audit hold
 //   may       what else it may ask for
 export const ROLES = {
   // A device's backfill: records, payloads, work slices. No action: it cannot clear an
-  // audit, archive, publish, merge or rename. A person's review made on the device travels.
-  device: { writers: ["device"], kinds: RECORDS, actions: [], deciders: ["human", "assistant", "rule", "seed"], may: ["payload", "slice"] },
+  // audit, archive, publish, merge or rename. A device runs scripts, and a script's
+  // decision is never recorded as a person's or an assistant's: those travel only with the
+  // operator's token. A claim it hands over as approved carries its audit hold, unless
+  // the store already holds that claim approved and released.
+  device: { writers: ["device"], kinds: RECORDS, actions: [], deciders: ["rule", "seed"], holds: true, may: ["payload", "slice"] },
   // The daily job: a schedule has no person in it, so no person's or assistant's decision.
   daily: { writers: ["daily"], kinds: RECORDS, actions: [], deciders: ["rule", "seed"], may: ["payload"] },
   // A reader's lookup: the lead, its reader share, the trials found, its reading, its spend.
-  // No claim, no event, no match, no decision of anyone's, no action.
-  lookup: { writers: ["lookup"], kinds: ["link_lead", "link_share", "payload", "registry_trial", "lead_reading", "usage", "unlisted_domain"], actions: [], deciders: [], may: ["payload"] },
+  // No claim, no event, no match, no decision of anyone's, no action, and no tie from a
+  // lead to a claim.
+  lookup: { writers: ["lookup"], kinds: ["link_lead", "link_share", "payload", "registry_trial", "lead_reading", "usage", "unlisted_domain"], actions: [], deciders: [], withheld: ["claim_slug"], may: ["payload"] },
   // The store-side consumer: what processing a lead and `prepare` produce, by rule.
   consumer: { writers: ["consumer"], kinds: RECORDS, actions: [], deciders: ["rule"], may: ["payload", "work"] },
   // The export: sets a published time, by rule, and nothing else.
@@ -50,5 +56,5 @@ export async function principal(request, env) {
     if (entry && typeof entry.sha256 === "string" && same(digest, entry.sha256.toLowerCase()) && ROLES[entry.role]) found = entry;
   }
   if (!found || (found.role === "device" && !found.device)) return null;
-  return { name: String(found.name || found.role), role: found.role, device: found.device || null, ...ROLES[found.role] };
+  return { name: String(found.name || found.role), role: found.role, device: found.device || null, withheld: [], holds: false, ...ROLES[found.role] };
 }

@@ -8,11 +8,14 @@ store names that claim's slug as the claim it was merged into (`claim_key`), so 
 push would give those records to the claim that stayed (the pull request lists this).
 Nor is a rename: see below.
 
-Two rows that come to one natural key give one record: the first, by row id.
+Two rows that come to one natural key give one record: the first, by row id. Each row
+left out that way, and each ledger entry or lead link naming a kind the store does not
+name records by, is counted, so a caller can show what a snapshot did not carry.
 """
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Iterable, Iterator
+from dataclasses import dataclass, field
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -56,11 +59,27 @@ from thenwhat.store.form import Record, key_of, payload_record, url_key
 LOCAL_DECISION_STEPS = frozenset({"lead_triage"})
 
 
-def distinct(records: Iterable[Record]) -> list[Record]:
-    """One record per kind and key, the first given: a run may stage each key once."""
+@dataclass
+class Gathered:
+    """A snapshot's records, and what it left out by kind: `repeated`, rows whose natural
+    key an earlier row already gave; `unnamed`, ledger entries and lead links naming a
+    record the store does not name by key."""
+
+    records: list[Record]
+    repeated: Counter[str] = field(default_factory=Counter)
+    unnamed: Counter[str] = field(default_factory=Counter)
+
+
+def distinct(records: Iterable[Record], repeated: Counter[str] | None = None) -> list[Record]:
+    """One record per kind and key, the first given: a run may stage each key once. Each
+    later record with a key already given is counted in `repeated`, by kind."""
     seen: dict[tuple[str, str], Record] = {}
     for record in records:
-        seen.setdefault((record.kind, record.key), record)
+        if (record.kind, record.key) in seen:
+            if repeated is not None:
+                repeated[record.kind] += 1
+            continue
+        seen[(record.kind, record.key)] = record
     return list(seen.values())
 
 
@@ -69,13 +88,15 @@ def _all[T](session: Session, model: type[T]) -> list[T]:
     return list(session.scalars(select(model).order_by(text("id"))))
 
 
-def gather(session: Session) -> list[Record]:
+def gather(session: Session) -> Gathered:
     """Every record the store keeps of what Postgres holds now, parents before children,
-    each natural key once."""
-    return distinct(_gather(session))
+    each natural key once, with counts of what was left out."""
+    gathered = Gathered(records=[])
+    gathered.records = distinct(_gather(session, gathered.unnamed), gathered.repeated)
+    return gathered
 
 
-def _gather(session: Session) -> Iterator[Record]:
+def _gather(session: Session, unnamed: Counter[str]) -> Iterator[Record]:
     claims = {claim.id: claim for claim in _all(session, Claim)}
     slugs = {claim_id: claim.slug for claim_id, claim in claims.items()}
     merged = {claim_id for claim_id, claim in claims.items() if claim.merged_into_id}
@@ -123,11 +144,8 @@ def _gather(session: Session) -> Iterator[Record]:
             claim, origin=r.claim_origin(claim, from_link_lead=claim.id in tied_to_lead)
         )
     for claim in claims.values():
+        # A merged claim's publication and archive are left out (`claim_actions`).
         actions = r.claim_actions(claim, changes[claim.id], slugs)
-        if claim.id in merged:
-            # The archive comes with the merge: an archive named by the merged slug
-            # would, pushed again, archive the claim that stayed.
-            actions = [a for a in actions if a.body["action"] != "archive"]
         # A rename names the claim by the slug it had, which a store that learns the
         # claim from this snapshot never holds: the run's counts would not reconcile and
         # the whole run would be refused. A rename reaches the store when it is made.
@@ -242,8 +260,12 @@ def _gather(session: Session) -> Iterator[Record]:
         return None
 
     for link in _all(session, LinkLeadLink):
+        if link.link_lead_id not in kept_leads:
+            continue
         named = record_key(link.record_kind, link.record_id)
-        if link.link_lead_id in kept_leads and named is not None:
+        if named is None:
+            unnamed["link_lead_link"] += 1
+        else:
             yield r.link_lead_link_record(
                 link, lead_url_key=kept_leads[link.link_lead_id].url_key, record_key=named
             )
@@ -264,8 +286,12 @@ def _gather(session: Session) -> Iterator[Record]:
         if measured.claim_id not in merged:
             yield r.measure_claim_record(measured, slug=slugs[measured.claim_id])
     for entry in _all(session, WorkEntry):
+        if entry.record_kind == "link_lead":
+            continue  # The link steps' ledger stays on the device (store-tables.md).
         named = record_key(entry.record_kind, entry.record_id)
-        if entry.record_kind != "link_lead" and named is not None:
+        if named is None:
+            unnamed["work_entry"] += 1
+        else:
             yield r.work_entry_record(entry, record_key=named)
     for icon in session.scalars(select(OutletIcon).order_by(OutletIcon.domain)):
         yield r.outlet_icon_record(icon)

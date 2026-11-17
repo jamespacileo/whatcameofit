@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from thenwhat.backfill.address import KEY_VERSION
 from thenwhat.db.models import (
     ArticleLead,
     Claim,
@@ -113,7 +114,12 @@ def claim_origin(claim: Claim, *, from_link_lead: bool) -> str:
 
 def claim_record(claim: Claim, *, origin: str) -> Record:
     """A claim's own fields. Its publication, archive and merge are actions
-    (`claim_actions`); its search being due again is not kept (store-tables.md)."""
+    (`claim_actions`); its search being due again is not kept (store-tables.md).
+
+    A merged claim carries no status time and no audit mark: once the store holds its
+    merge, its slug names the claim it went into (`claim_key`), so a second push would
+    give that claim the merged one's later status and its hold."""
+    merged = claim.merged_into_id is not None
     return Record(
         "claim",
         claim.slug,
@@ -128,12 +134,12 @@ def claim_record(claim: Claim, *, origin: str) -> Record:
             evidence_stage=_text(claim.evidence_stage),
             current_status=_text(claim.current_status),
             overlay_years=claim.overlay_years,
-            status_updated_at=when(claim.status_updated_at),
+            status_updated_at=None if merged else when(claim.status_updated_at),
             origin=origin,
             review_state=_text(claim.review_state),
             reviewed_at=when(claim.reviewed_at),
             reviewed_by=_text(claim.reviewed_by),
-            awaiting_audit_at=when(claim.awaiting_audit_at),
+            awaiting_audit_at=None if merged else when(claim.awaiting_audit_at),
             created_at=when(claim.created_at),
         ),
     )
@@ -144,9 +150,14 @@ def claim_actions(
 ) -> list[Record]:
     """What the operator and the export did to a claim, as the store's actions: its
     publication, its archive, a merge into another claim that was not undone, and each
-    rename. `slugs` names the claim a merge went into."""
+    rename. `slugs` names the claim a merge went into.
+
+    A merged claim's publication and archive are left out: its slug comes to name the
+    claim it went into, which a second push would publish or archive. The merge archives
+    it in the store."""
+    merged = claim.merged_into_id is not None
     actions: list[Record] = []
-    if claim.published_at is not None:
+    if claim.published_at is not None and not merged:
         actions.append(
             Record(
                 "action",
@@ -154,8 +165,10 @@ def claim_actions(
                 body(action="publish", slug=claim.slug, at=when(claim.published_at)),
             )
         )
-    if claim.archived_at is not None:
-        # Postgres does not record who archived a claim; only a person does.
+    if claim.archived_at is not None and not merged:
+        # Postgres does not record who archived a claim, and an assistant's audit
+        # archives the same way a person does; a decision no one recorded as a person's
+        # is never stored as one.
         actions.append(
             Record(
                 "action",
@@ -164,7 +177,7 @@ def claim_actions(
                     action="archive",
                     slug=claim.slug,
                     reason=claim.archive_reason,
-                    decided_by="human",
+                    decided_by="assistant",
                     at=when(claim.archived_at),
                 ),
             )
@@ -612,6 +625,11 @@ def link_lead_record(lead: LinkLead, *, claim_slug: str | None) -> Record:
     title names a topic word is the store's index to find, and starts as no."""
     if not stored_lead(lead):
         raise ValueError(f"A lead on an unlisted outlet is never stored: {lead.url_key}")
+    if lead.url_key_version != KEY_VERSION:
+        raise ValueError(
+            f"The lead {lead.url_key} has an address key of version {lead.url_key_version}, "
+            f"not {KEY_VERSION}: run `thenwhat backfill rekey-links` first."
+        )
     return Record(
         "link_lead",
         lead.url_key,

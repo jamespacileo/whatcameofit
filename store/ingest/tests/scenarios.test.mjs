@@ -15,7 +15,7 @@ const skip = await engineUnavailable();
 if (skip && process.env.CI) throw new Error(skip);
 
 const SLUG = "semaglutide-obesity";
-const T = "2026-11-01T00:00:00Z";
+const T = "2026-11-01T00:00:00.000000+00:00";
 const today = () => new Date().toISOString().slice(0, 10);
 const previews = { same: 0, differ: [], seen: 0, missed: [] };
 const open = [];
@@ -54,7 +54,7 @@ const entity = (name = "semaglutide", slug = SLUG) => ["entity", `${slug}|interv
 const match = (trialId, state, by, { score = 0.9, name = "semaglutide", slug = SLUG, at = T } = {}) => ["entity_match", `${slug}|${name}|${trialId}`,
   { slug, entity_type: "intervention", entity_name: name, source_name: "clinicaltrials.gov", external_id: trialId, score, review_state: state, reviewed_by: by, reviewed_at: at, created_at: T }];
 
-function event({ trial: id = "NCT1", content: said = "c1", pay = 1, fetched = "2026-11-01T00:00:00Z", state = "approved", by = "rule", slug = SLUG } = {}) {
+function event({ trial: id = "NCT1", content: said = "c1", pay = 1, fetched = "2026-11-01T00:00:00.000000+00:00", state = "approved", by = "rule", slug = SLUG } = {}) {
   const key = `clinicaltrials.gov|${id}|trial_registered|`;
   const body = { slug, dedupe_key: key, type: "trial_registered", event_date: "2020-01-01", source_name: "clinicaltrials.gov",
     source_url: `https://clinicaltrials.gov/study/${id}`, external_id: id, summary: "registered", confidence: 1, content_sha256: said,
@@ -63,24 +63,25 @@ function event({ trial: id = "NCT1", content: said = "c1", pay = 1, fetched = "2
   return ["evidence_event", `${slug}|${key}`, body];
 }
 
-const trial = ({ number = "NCT1", status = "RECRUITING", pay = 10, fetched = "2026-11-01T00:00:00Z", title = "Semaglutide in obesity" } = {}) => ["registry_trial", `clinicaltrials.gov|${number}`,
+const trial = ({ number = "NCT1", status = "RECRUITING", pay = 10, fetched = "2026-11-01T00:00:00.000000+00:00", title = "Semaglutide in obesity" } = {}) => ["registry_trial", `clinicaltrials.gov|${number}`,
   { registry_name: "clinicaltrials.gov", external_id: number, title, conditions: ["Obesity"], interventions: [{ type: "DRUG", name: "Semaglutide" }],
     intervention_names: "Semaglutide", phases: ["PHASE3"], overall_status: status, payload_sha256: digest(pay), fetched_at: fetched }];
 
-function lead(key = "bbc.com/a", { score = 0.8, version = 3, origin = "file", shared = "2026-10-01T09:00:00Z", ...more } = {}) {
+function lead(key = "bbc.com/a", { score = 0.8, version = 3, origin = "file", shared = "2026-10-01T09:00:00.000000+00:00", ...more } = {}) {
   const body = { url_key: key, url_key_version: 2, url: `https://${key}`, outlet: key.split("/")[0], outlet_kind: "general_news",
     title: "New obesity drug shows promise", first_shared_at: shared, origin, screen_outcome: "in_scope" };
   if (score !== null) Object.assign(body, { triage_score: score, triage_version: version });
   return ["link_lead", key, { ...body, ...more }];
 }
 
-const share = (key = "bbc.com/a", platform = "hackernews", at = "2026-10-01T09:00:00Z", score = 12) => ["link_share", `${key}|${platform}|${at}`,
+const share = (key = "bbc.com/a", platform = "hackernews", at = "2026-10-01T09:00:00.000000+00:00", score = 12) => ["link_share", `${key}|${platform}|${at}`,
   { lead_url_key: key, platform, community: platform, shared_at: at, score }];
 
-const action = (kind, slug = SLUG, by = "human", more = {}) => ["action", `${kind}|${slug}`, { action: kind, slug, decided_by: by, at: "2026-11-16T12:00:00Z", ...more }];
+const action = (kind, slug = SLUG, by = "human", more = {}) => ["action", `${kind}|${slug}`, { action: kind, slug, decided_by: by, at: "2026-11-16T12:00:00.000000+00:00", ...more }];
 
 // ---- a store, and a run through the service -----------------------------------------------
 
+const personal = ([, , body]) => ["human", "assistant"].includes(body.reviewed_by ?? body.labelled_by ?? body.decided_by);
 const AS = { device: "device-mini", daily: "daily", lookup: "lookup", consumer: "consumer", export: "export", operator: "operator" };
 
 class Store {
@@ -99,7 +100,9 @@ class Store {
 
   // Hand a run over and merge it. Before the merge, the same records are handed over as a
   // twin run and reported without applying; afterwards the two reports are compared.
-  async run(records, { writer = "device", as = AS[writer], name, ...more } = {}) {
+  // A record that carries a person's or an assistant's decision travels with the
+  // operator's token: a device's token records a rule's or the seed's only.
+  async run(records, { writer = records.some(personal) ? "operator" : "device", as = AS[writer], name, ...more } = {}) {
     this.runs += 1;
     const id = name || `r${this.runs}`;
     const twin = `${id}-twin`;
@@ -165,8 +168,10 @@ async function scenarios() {
 
   await s.run([action("audit_clear"), action("archive", SLUG, "human", { reason: "not one treatment" })], { writer: "operator" });
   // The proof set a person's rejection with an UPDATE; here a person's decision is pushed.
-  await s.run([claim(SLUG, { state: "rejected", by: "human", held: null, reviewed_at: "2026-11-02T00:00:00Z" })]);
-  r = await s.run([claim(SLUG, { held: null }), article("stat.com/c")]);
+  await s.run([claim(SLUG, { state: "rejected", by: "human", held: null, reviewed_at: "2026-11-02T00:00:00.000000+00:00" })]);
+  // The proof hands these approved claims over with no audit hold. A device's token may
+  // not (src/auth.mjs), so here, and twice below, they travel with the operator's.
+  r = await s.run([claim(SLUG, { held: null }), article("stat.com/c")], { writer: "operator" });
   check("6 archived stays archived, a person's decision kept, article stored", r.ok
     && eq(await s.all("SELECT archived_at IS NOT NULL, review_state, reviewed_by FROM claim"), [[1, "rejected", "human"]])
     && await s.one("SELECT count(*) FROM source_article") === 3);
@@ -176,7 +181,7 @@ async function scenarios() {
 
   [s] = await base();
   await s.run([match("NCT9", "rejected", "human", { score: 0.4 })]);
-  await s.run([match("NCT9", "approved", "rule", { score: 0.97, at: "2026-12-01T00:00:00Z" }), match("NCT8", "approved", "rule", { score: 0.99 })]);
+  await s.run([match("NCT9", "approved", "rule", { score: 0.97, at: "2026-12-01T00:00:00.000000+00:00" }), match("NCT8", "approved", "rule", { score: 0.99 })]);
   check("9 a person's rejection of a match stands; a new match is added",
     eq(await s.all("SELECT review_state, reviewed_by FROM entity_match WHERE external_id = 'NCT9'"), [["rejected", "human"]])
     && await s.one("SELECT count(*) FROM entity_match") === 2);
@@ -185,7 +190,7 @@ async function scenarios() {
 
   [s] = await base();
   await s.run([action("audit_clear")], { writer: "operator" });
-  r = await s.run([payload(2), event({ content: "c2", pay: 2, fetched: "2026-11-10T00:00:00Z" })], { writer: "daily" });
+  r = await s.run([payload(2), event({ content: "c2", pay: 2, fetched: "2026-11-10T00:00:00.000000+00:00" })], { writer: "daily" });
   check("11 differing evidence: stored kept, new kept apart with reason, claim held, one conflict", r.ok
     && await s.one("SELECT content_sha256 FROM evidence_event") === "c1"
     && eq(await s.all("SELECT content_sha256, reason, state FROM evidence_conflict"), [["c2", "differs from the approved event stored", "open"]])
@@ -237,12 +242,12 @@ async function scenarios() {
   // -- evidence: a refetch that says the same is not a conflict --
   [s] = await base();
   await s.run([action("audit_clear")], { writer: "operator" });
-  r = await s.run([payload(3), event({ content: "c1", pay: 3, fetched: "2026-11-12T00:00:00Z" })], { writer: "daily" });
+  r = await s.run([payload(3), event({ content: "c1", pay: 3, fetched: "2026-11-12T00:00:00.000000+00:00" })], { writer: "daily" });
   check("20 a later fetch that says the same: no conflict, no hold, newest payload kept", r.ok
     && await s.one("SELECT count(*) FROM evidence_conflict") === 0 && await s.one("SELECT awaiting_audit_at FROM claim") === null
     && await s.one("SELECT payload_sha256 FROM evidence_event") === digest(3) && eq(r.report.evidence_event, counts(1, 0, 0, 1)));
-  await s.run([payload(4), event({ content: "c9", pay: 4, fetched: "2026-11-13T00:00:00Z" })], { writer: "daily" });
-  await s.run([payload(4), event({ content: "c9", pay: 4, fetched: "2026-11-13T00:00:00Z" })], { writer: "device" });
+  await s.run([payload(4), event({ content: "c9", pay: 4, fetched: "2026-11-13T00:00:00.000000+00:00" })], { writer: "daily" });
+  await s.run([payload(4), event({ content: "c9", pay: 4, fetched: "2026-11-13T00:00:00.000000+00:00" })], { writer: "device" });
   check("21 the same difference from two runs is kept apart once", await s.one("SELECT count(*) FROM evidence_conflict") === 1);
   r = await s.run([action("audit_clear")], { writer: "operator" });
   check("22 a claim is not cleared while its evidence is still kept apart", r.ok && await s.one("SELECT awaiting_audit_at FROM claim") !== null);
@@ -253,7 +258,7 @@ async function scenarios() {
     && await s.one("SELECT state FROM evidence_conflict") === "accepted" && await s.one("SELECT awaiting_audit_at FROM claim") === null);
   const [s2] = await base();
   await s2.run([payload(5), event({ trial: "NCT7", content: "p1", pay: 5, state: "pending" })]);
-  await s2.run([payload(6), event({ trial: "NCT7", content: "p2", pay: 6, fetched: "2026-11-20T00:00:00Z" })]);
+  await s2.run([payload(6), event({ trial: "NCT7", content: "p2", pay: 6, fetched: "2026-11-20T00:00:00.000000+00:00" })]);
   check("24 a pending event is replaced by a later fetch and takes its decision",
     eq(await s2.all("SELECT content_sha256, review_state FROM evidence_event WHERE external_id = 'NCT7'"), [["p2", "approved"]]));
 
@@ -262,14 +267,14 @@ async function scenarios() {
   r = await s.run([payload(10, { nctId: "NCT1" }), trial()], { writer: "daily" });
   check("25 a trial absent: added with its payload and first state", r.ok && eq(r.report.registry_trial, counts(1, 1, 0, 0))
     && eq(await s.all("SELECT overall_status FROM registry_trial_status"), [["RECRUITING"]]));
-  r = await s.run([trial({ fetched: "2026-11-05T00:00:00Z" })], { writer: "daily" });
+  r = await s.run([trial({ fetched: "2026-11-05T00:00:00.000000+00:00" })], { writer: "daily" });
   check("26 a trial fetched again unchanged: matched, checked time moves, payload time does not", r.ok
     && eq(r.report.registry_trial, counts(1, 0, 0, 1))
-    && eq(await s.all("SELECT fetched_at, checked_at FROM registry_trial"), [["2026-11-01T00:00:00Z", "2026-11-05T00:00:00Z"]]));
-  await s.run([payload(11, { nctId: "NCT1", v: 2 }), trial({ status: "COMPLETED", pay: 11, fetched: "2026-11-09T00:00:00Z" })], { writer: "daily" });
+    && eq(await s.all("SELECT fetched_at, checked_at FROM registry_trial"), [["2026-11-01T00:00:00.000000+00:00", "2026-11-05T00:00:00.000000+00:00"]]));
+  await s.run([payload(11, { nctId: "NCT1", v: 2 }), trial({ status: "COMPLETED", pay: 11, fetched: "2026-11-09T00:00:00.000000+00:00" })], { writer: "daily" });
   check("27 a trial that changed: replaced whole, and its history has both states", await s.one("SELECT overall_status FROM registry_trial") === "COMPLETED"
     && eq((await s.all("SELECT overall_status FROM registry_trial_status ORDER BY seen_at")).map((x) => x[0]), ["RECRUITING", "COMPLETED"]));
-  await s.run([payload(12, { old: 1 }), trial({ status: "RECRUITING", pay: 12, fetched: "2026-10-01T00:00:00Z" })], { writer: "device" });
+  await s.run([payload(12, { old: 1 }), trial({ status: "RECRUITING", pay: 12, fetched: "2026-10-01T00:00:00.000000+00:00" })], { writer: "device" });
   check("28 an older fetch never replaces a newer record", await s.one("SELECT overall_status FROM registry_trial") === "COMPLETED");
   check("29 trial search finds it by condition and by intervention",
     await s.one("SELECT count(*) FROM registry_trial_fts WHERE registry_trial_fts MATCH 'obesity'") === 1
@@ -302,7 +307,7 @@ async function scenarios() {
     UNION ALL SELECT 1 FROM work_item WHERE record_key = 'stat.com/new' AND length(due_since) > 10`);
   check("35 nothing a lookup leaves holds a time finer than the day", eq(fine, []) && await s.one("SELECT count(*) FROM run WHERE writer = 'lookup'") >= 2);
   check("36 a reader's lead is due for processing once", eq(await s.all("SELECT state, attempts FROM work_item WHERE step = 'lead_process'"), [["due", 0]]));
-  r = await s.run([reader("stat.com/new", "2026-11-17T08:01:02Z")], { writer: "lookup" });
+  r = await s.run([reader("stat.com/new", "2026-11-17T08:01:02.000000+00:00")], { writer: "lookup" });
   check("37 a reader share with a time of day cannot be stored", r.status === "undone");
   r = await s.run([lead("blog.example/x", { outlet_kind: "unknown" })]);
   check("38 a lead on an unlisted outlet cannot be stored", r.status === "undone");
@@ -324,7 +329,7 @@ async function scenarios() {
   r = await s.run([action("publish", "from-backfill", "rule"), action("publish", "from-reader", "rule")], { writer: "export" });
   check("41 a reader's claim is published by rule; a backfill's waits for its audit", r.ok && eq(await s.all("SELECT slug FROM claim_public"), [["from-reader"]]));
   const first = await s.one("SELECT published_at FROM claim WHERE slug = 'from-reader'");
-  await s.run([["action", "again", { action: "publish", slug: "from-reader", at: "2027-01-01T00:00:00Z" }]], { writer: "export" });
+  await s.run([["action", "again", { action: "publish", slug: "from-reader", at: "2027-01-01T00:00:00.000000+00:00" }]], { writer: "export" });
   check("42 a published time is never changed", await s.one("SELECT published_at FROM claim WHERE slug = 'from-reader'") === first);
   const listed = await s.all(`SELECT c.slug FROM claim_action a JOIN claim c ON c.id = a.claim_id
     WHERE a.action = 'publish' AND c.origin = 'lookup' AND substr(a.at, 1, 10) = '2026-11-16'`);
@@ -343,7 +348,7 @@ async function scenarios() {
   let r2 = await s.run([article("late.com/1")], { writer: "device" });
   check("46 a renamed claim answers to both slugs: a device's late push still lands", r.ok && r2.ok
     && eq(await s.all("SELECT slug FROM claim"), [["semaglutide-weight"]]) && await s.one("SELECT count(*) FROM source_article") === 2);
-  await s.run([claim("other-claim", { held: null })]);
+  await s.run([claim("other-claim", { held: null })], { writer: "operator" });
   r = await s.run([action("rename", "other-claim", "human", { new_slug: "semaglutide-weight" })], { writer: "operator" });
   check("47 a rename onto a slug another claim holds is undone", r.status === "undone" && await s.one("SELECT count(*) FROM claim WHERE slug = 'other-claim'") === 1);
 
@@ -393,7 +398,7 @@ async function scenarios() {
   check("60 a claim has one intervention, never two", r.status === "undone" && await s.one("SELECT count(*) FROM entity") === 1);
   const company = (slug) => ["entity", `${slug}|company|Novo Nordisk`, { slug, type: "company", name: "Novo Nordisk" }];
   const paper = ["entity", "dup|paper|STEP 1", { slug: "dup", type: "paper", name: "STEP 1" }];
-  await s.run([company(SLUG), claim("dup", { held: null }), entity("Ozempic", "dup"), company("dup"), paper, match("NCT4", "approved", "rule", { name: "Ozempic", slug: "dup" })]);
+  await s.run([company(SLUG), claim("dup", { held: null }), entity("Ozempic", "dup"), company("dup"), paper, match("NCT4", "approved", "rule", { name: "Ozempic", slug: "dup" })], { writer: "operator" });
   r = await s.run([action("merge", "dup", "human", { into_slug: SLUG, gains: ["Ozempic", "Wegovy"] })], { writer: "operator" });
   const stays = await s.one("SELECT id FROM claim WHERE slug = ?", SLUG);
   check("61 a merge moves what an article named and the names listed; a name both hold is not doubled", r.ok

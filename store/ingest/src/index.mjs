@@ -14,7 +14,7 @@
 import { principal } from "./auth.mjs";
 import { Refusal, checkRecords } from "./check.mjs";
 import { sha256 } from "./hash.mjs";
-import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_REGISTRATION_BYTES, limits } from "./limits.mjs";
+import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
 import { INGEST } from "./sql.generated.mjs";
 import * as store from "./store.mjs";
 
@@ -36,8 +36,7 @@ async function body(request, types, most) {
 
 async function jsonBody(request, most) {
   const bytes = await body(request, ["application/json"], most);
-  const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-  try { return { bytes, text, value: JSON.parse(text) }; } catch { return refuse(400, "not_json", "the body is not JSON"); }
+  try { return { bytes, value: JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)) }; } catch { return refuse(400, "not_json", "the body is not JSON in UTF-8"); }
 }
 
 const RUN_ID = /^[A-Za-z0-9_-]{1,64}$/;
@@ -70,9 +69,17 @@ async function register(request, env, who) {
   const most = limits(env).MAX_RUN_RECORDS;
   if (Object.values(counts).reduce((a, b) => a + b, 0) > most) refuse(413, "run_too_large", `a run is at most ${most} records: split it, parents first`);
   const before = await store.getRun(env.STORE, id);
-  if (before && (before.writer !== writer || before.device !== device || before.stated_checksum !== checksum)) refuse(409, "run_exists", "this run was registered differently");
+  if (before) {
+    // Registering again writes nothing, whatever the run has become; it only answers
+    // whether this is the run that was registered.
+    const was = await store.stated(env.STORE, id);
+    const same = (a, b) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
+    if (before.writer !== writer || before.device !== device || before.stated_checksum !== checksum || (before.request_class ?? null) !== (request_class ?? null)
+      || !same(was.steps, steps) || !same(was.counts, counts)) refuse(409, "run_exists", "this run was registered differently");
+    return json(200, { id, status: before.status, registered_at: before.registered_at, again: true });
+  }
   const run = await store.registerRun(env.STORE, { id, writer, device, request_class, commit, steps, counts, checksum });
-  return json(before ? 200 : 201, { id, status: run.status, registered_at: run.registered_at, again: Boolean(before) });
+  return json(201, { id, status: run.status, registered_at: run.registered_at, again: false });
 }
 
 async function putPayload(request, env, who, checksum) {
@@ -91,11 +98,20 @@ async function stage(request, env, who, id) {
   const run = await ownRun(env, who, id);
   if (run.status !== "registered") refuse(409, "run_closed", `this run is ${run.status} and takes no more records`);
   const bounds = limits(env);
-  const { bytes, text, value } = await jsonBody(request, bounds.MAX_CHUNK_BYTES);
+  const { bytes, value } = await jsonBody(request, bounds.MAX_CHUNK_BYTES);
   const checksum = request.headers.get("x-content-sha256") || "";
   if (!SHA.test(checksum) || (await sha256(bytes)) !== checksum) refuse(422, "checksum_mismatch", "the chunk is not what its X-Content-SHA256 says; nothing was staged");
   if (Array.isArray(value) && value.length > bounds.MAX_CHUNK_RECORDS) refuse(413, "chunk_too_large", `a chunk is at most ${bounds.MAX_CHUNK_RECORDS} records`);
-  const { r2 } = await checkRecords(value, who, bytes.length);
+  const { r2, unheld } = await checkRecords(value, who);
+  // What is staged is the checked value written out again, not the bytes that arrived:
+  // a key given twice reads one way to JSON.parse and another to SQLite.
+  const text = JSON.stringify(value);
+  if (new TextEncoder().encode(text).length > D1.stringBytes - 50_000) refuse(413, "too_large", "the chunk is too large once written out");
+  if (unheld.length) {
+    const free = await store.released(env.STORE, unheld.map((claim) => claim.slug));
+    const first = unheld.find((claim) => !free.has(claim.slug));
+    if (first) refuse(403, "outside_scope", `a ${who.role} token hands over an approved claim only with its audit hold`, { record: first.at, kind: "claim", field: "awaiting_audit_at" });
+  }
   if (r2.length > MAX_R2_PAYLOADS_A_CHUNK) refuse(413, "chunk_too_large", `a chunk names at most ${MAX_R2_PAYLOADS_A_CHUNK} payloads kept in R2`);
   // A payload kept in R2 is looked for before its record is staged, five at a time.
   for (let i = 0; i < r2.length; i += 5) {
@@ -132,7 +148,7 @@ async function work(request, env, who, verb) {
     text("step");
     const count = Math.min(Math.max(Number(v.count) || 1, 1), MAX_LEASE);
     const seconds = Math.min(Math.max(Number(v.lease_seconds) || 600, 1), MAX_LEASE_SECONDS);
-    const until = new Date(Date.now() + seconds * 1000).toISOString().slice(0, 19) + "Z";
+    const until = store.stamp(new Date(Date.now() + seconds * 1000));
     const { results } = await db.prepare(INGEST.lease_work).bind(v.step, count, store.now(), until).all();
     return json(200, { leased: results, lease_until: until });
   }
@@ -157,7 +173,7 @@ async function slice(request, env, who, verb) {
     return json(200, { released: true });
   }
   const seconds = Math.min(Math.max(Number(v.lapse_seconds) || 86_400, 1), 7 * 86_400);
-  const lapses = new Date(Date.now() + seconds * 1000).toISOString().slice(0, 19) + "Z";
+  const lapses = store.stamp(new Date(Date.now() + seconds * 1000));
   const { results } = await env.STORE.prepare(INGEST.take_slice).bind(v.platform, v.community, v.month, device, store.now(), lapses).all();
   return json(results.length ? 200 : 409, { taken: results.length > 0, device: results[0]?.device ?? null, lapses_at: results.length ? lapses : null });
 }

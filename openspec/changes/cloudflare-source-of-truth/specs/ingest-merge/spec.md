@@ -33,7 +33,7 @@ The merge SHALL match a claim by its slug, a source article by claim and address
 - **THEN** the store holds one source article and one link lead, with each share once
 
 ### Requirement: Every writer writes a record in one form
-A writer SHALL give each record its natural key and its fields in the one form the store compares, so that two writers, or one writer twice, produce the same store from the same rows. A source article's and an article lead's address key SHALL be the site's address comparison (`site/src/lib/article-key.mjs`, `pipeline/src/thenwhat/backfill/address.py`). A time SHALL be ISO-8601 in UTC to the microsecond with its offset, always the same width, because the merge orders times as text. A payload's checksum SHALL be the SHA-256 of its JSON text with keys sorted, no spaces and characters unescaped, in UTF-8, and its size the bytes of that text. An evidence event's content checksum SHALL be of its type, date, trial state, trial phases as a set, regulatory outcome and source identifier. A field with no value SHALL be left out of the record, never sent as a JSON null.
+A writer SHALL give each record its natural key and its fields in the one form the store compares, so that two writers, or one writer twice, produce the same store from the same rows. A source article's and an article lead's address key SHALL be the site's address comparison (`site/src/lib/article-key.mjs`, `pipeline/src/thenwhat/backfill/address.py`). A time SHALL be ISO-8601 in UTC to the microsecond with its offset, always the same width, because the merge orders times as text. A payload's checksum SHALL be the SHA-256 of its JSON text with keys sorted, no spaces and characters unescaped, in UTF-8, and its size the bytes of that text. An evidence event's content checksum SHALL be of its type, date, trial state, trial phases as a set, regulatory outcome and source identifier. A field with no value SHALL be left out of the record, never sent as a JSON null. A key of several parts SHALL join them with `|`, escaping a `|` or `\` inside a part with `\`, so two sets of parts never give one key. A decision whose decider was not recorded SHALL NOT be written as a person's. A link lead SHALL carry an address key of the current version, and one of an older version SHALL be refused until it is keyed again.
 
 #### Scenario: Two devices write one article
 - **WHEN** two devices hold the same article under addresses that differ only by tracking parameters
@@ -48,7 +48,7 @@ A writer SHALL give each record its natural key and its fields in the one form t
 - **THEN** the event's content checksum is the same, and the event is not kept apart as differing
 
 ### Requirement: A snapshot of the tracker can be pushed twice
-Records gathered from a whole database, as the migration and a nightly comparison gather them, SHALL leave the store as it was when pushed a second time. A snapshot SHALL NOT carry, under a merged claim's slug, what that claim keeps for itself (its intervention, matches, terms, events, failure flags and measurements) nor an archive of it, because the store reads a merged claim's slug as the claim it was merged into; the merge itself archives the claim. A snapshot SHALL NOT carry a rename, which names the claim by a slug the store never held. Decisions, spend and measurements SHALL be pushed once, by the run that made them, since a merge keeps each run's and adds measurements to the day's totals.
+Records gathered from a whole database, as the migration and a nightly comparison gather them, SHALL leave the store as it was when pushed a second time. A snapshot SHALL NOT carry, under a merged claim's slug, what that claim keeps for itself (its intervention, matches, terms, events, failure flags and measurements), its status time, its audit mark, its publication or its archive, because the store reads a merged claim's slug as the claim it was merged into; the merge itself archives the claim. A snapshot SHALL NOT carry a rename, which names the claim by a slug the store never held. Decisions, spend and measurements SHALL be pushed once, by the run that made them, since a merge keeps each run's and adds measurements to the day's totals.
 
 #### Scenario: The same snapshot pushed again
 - **WHEN** a snapshot is merged and then the same records are merged as another run
@@ -56,7 +56,11 @@ Records gathered from a whole database, as the migration and a nightly compariso
 
 #### Scenario: A merged claim in the snapshot
 - **WHEN** a snapshot holds a claim merged into another
-- **THEN** it carries the claim, its publication and its merge, and the claim that stayed gains none of its intervention, matches or events
+- **THEN** it carries the claim and its merge, and the claim that stayed gains none of its intervention, matches, events, status, audit mark or publication
+
+#### Scenario: A snapshot is taken back into a database
+- **WHEN** a snapshot's records are placed into a Postgres database that already holds rows in a table they fill
+- **THEN** nothing is written and the tables already holding rows are named, since placing has none of the merge's rules for a row already held
 
 ### Requirement: A merge is whole or not at all, and safe to repeat
 A run's merge SHALL apply all of its records or none. Merging a run already merged SHALL add and change nothing and SHALL say when it was first merged.
@@ -139,11 +143,19 @@ Model usage a run hands over SHALL be stored with the run's writer. The plan for
 - **THEN** the plan shows each device's spend, the lookups' spend, and the total
 
 ### Requirement: A writer is held to its scope
-The ingest service SHALL answer only a request that carries a token it knows, SHALL know a token only by its checksum, and SHALL never log or return one. Each token SHALL be of one kind, and a request outside that kind's scope SHALL be refused with nothing stored: a device's token registers runs for its own device and states no action; the daily job's states no action and records no decision by a person or an assistant; a lookup's stages only a link lead, its share, a payload, a registry trial, a reading, usage and a count of an unlisted domain; the consumer's records decisions by rule only; the export's states a publication by rule and nothing else; the operator's may state every action. A token SHALL reach only runs it could have registered.
+The ingest service SHALL answer only a request that carries a token it knows, SHALL know a token only by its checksum, and SHALL never log or return one. Each token SHALL be of one kind, and a request outside that kind's scope SHALL be refused with nothing stored: a device's token registers runs for its own device, states no action, records no decision by a person or an assistant, and hands over an approved claim only with its audit hold unless the store already holds that claim approved and released; the daily job's states no action and records no decision by a person or an assistant; a lookup's stages only a link lead, its share, a payload, a registry trial, a reading, usage and a count of an unlisted domain, and ties no lead to a claim; the consumer's records decisions by rule only; the export's states a publication by rule and nothing else; the operator's may state every action, and it alone records a decision by a person or an assistant. A token SHALL reach only runs it could have registered.
 
 #### Scenario: A backfill tries to clear an audit
 - **WHEN** a device's token stages an action that clears an audit, archives, publishes, merges or renames
 - **THEN** the chunk is refused, nothing is staged, and the claim is as it was
+
+#### Scenario: A device hands over a person's decision
+- **WHEN** a device's token stages a claim, a match or a label marked as decided by a person or an assistant
+- **THEN** the chunk is refused and nothing is staged
+
+#### Scenario: A device approves a claim without its hold
+- **WHEN** a device's token stages an approved claim with no audit hold, and the store does not already hold that claim approved and released
+- **THEN** the chunk is refused and nothing is staged
 
 #### Scenario: A lookup tries to archive
 - **WHEN** a lookup's token stages an archive action, a claim, an evidence event or a match
@@ -172,6 +184,25 @@ A raw payload larger than a row may hold SHALL be handed over under its SHA-256 
 - **WHEN** a writer sends the same chunk for the same run again
 - **THEN** nothing more is staged and the run's checksum is unchanged
 
+### Requirement: The store reads a record as the door read it
+The ingest service SHALL stage the value it checked, written out again, and never the bytes that arrived. It SHALL refuse a body that is not UTF-8 and a record holding a string that the store's engine and the service could read differently. Every time in a record SHALL be in one form, UTC to the microsecond with its offset, or a day alone, and a time in another form SHALL be refused. Registering a run again SHALL write nothing, and SHALL be refused when it states a different writer, device, checksum, steps or counts.
+
+#### Scenario: A key given twice
+- **WHEN** a record gives `action` as an audit clear and then as a publication, and `decided_by` as a person and then as a rule
+- **THEN** what is staged is a publication by rule, as the door checked it, and the claim stays held
+
+#### Scenario: A long text behind a short one
+- **WHEN** a record gives a title of several thousand characters and then a short one
+- **THEN** only the short one reaches the store
+
+#### Scenario: A time in another form
+- **WHEN** a record's time ends in `Z` or is given to the second
+- **THEN** the chunk is refused, naming the field
+
+#### Scenario: A merged run registered again
+- **WHEN** a run that was merged is registered again with more steps or counts
+- **THEN** it is refused and the run's steps and counts are as they were
+
 ### Requirement: The door holds a run to stated bounds
 The ingest service SHALL refuse, before storing anything, a body that does not state its length or its content type, a chunk, a run or a payload larger than the bound set for it, and a record of a kind the store does not have. Each bound SHALL be below the platform's documented limit for what it protects, and the documentation page SHALL be named beside it.
 
@@ -184,7 +215,7 @@ The ingest service SHALL refuse, before storing anything, a body that does not s
 - **THEN** it is refused whole and nothing of it is staged
 
 ### Requirement: No field carries an article's text
-The ingest service SHALL refuse a record that has a field no statement of the merge reads, and a record in which a string is longer than the store allows for it: 200 characters for a reported statement, as the schema states, and otherwise a bound far below an article's length. Only a field that holds a source's own structured record, on the one kind of record it belongs to, is bounded by the record's size instead. A refusal SHALL name the record's place and the field, and SHALL NOT repeat any value that was sent.
+The ingest service SHALL refuse a record that has a field no statement reading that kind of record reads, and a record in which a string is longer than the store allows for it: 200 characters for a reported statement, as the schema states, and otherwise a bound far below an article's length. Only a field that holds a source's own structured record, on the one kind of record it belongs to, is bounded by the record's size instead; a field a source's record can make long, such as a trial's joined arm names, has its own stated bound. A refusal SHALL name the record's place and the field, and SHALL NOT repeat any value that was sent.
 
 #### Scenario: A record with an extra field
 - **WHEN** a source article is staged with a field holding the article's text

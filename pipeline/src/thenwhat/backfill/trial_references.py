@@ -27,9 +27,8 @@ from typing import Any
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import BackfillError
 from thenwhat.backfill.outlet_kinds import kind_of, outlet_of
-from thenwhat.backfill.trial_sets import SETS
+from thenwhat.backfill.trial_sets import rule_of
 from thenwhat.db.models import RegistryTrial
 from thenwhat.domain import OutletKind
 from thenwhat.events.trial_facts import ResultsPaper, results_papers_of
@@ -37,18 +36,6 @@ from thenwhat.events.trial_facts import ResultsPaper, results_papers_of
 BACKGROUND = "BACKGROUND"
 LISTED_BY_SPONSOR = "listed_by_sponsor"
 LINKED_BY_REGISTRY = "linked_by_registry"
-
-
-class UnknownSet(BackfillError):
-    """No set of stored trials has the name given."""
-
-
-def rule_of(name: str) -> Any:
-    """The rule of a named set of stored trials. Refuses a name it does not know with
-    the list of sets."""
-    if name not in SETS:
-        raise UnknownSet(f"No set of stored trials is named '{name}'. Sets: {', '.join(SETS)}.")
-    return SETS[name]
 
 
 @dataclass(frozen=True, slots=True)

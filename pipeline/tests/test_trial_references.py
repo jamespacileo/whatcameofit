@@ -10,11 +10,11 @@ from sqlalchemy.orm import Session
 
 from backfill_support import NOW
 from thenwhat.backfill.trial_references import (
-    UnknownSet,
     count_references,
     references_in,
     references_of,
 )
+from thenwhat.backfill.trial_sets import UnknownSet
 from thenwhat.db.models import RegistryTrial
 from thenwhat.events.trial_facts import read_trial
 
@@ -168,4 +168,4 @@ def test_a_set_is_counted_from_stored_records(session: Session):
 def test_a_set_the_command_does_not_know_is_refused_with_the_list(session: Session):
     """Scenario: A set the command does not know"""
     with pytest.raises(UnknownSet, match=f"{ACTIVE}, {COMPLETED}"):
-        count_references(session, "successful")
+        count_references(session, "elsewhere")

@@ -317,7 +317,16 @@ Built on 2026-11-17 in `store/ingest/`, with no Cloudflare account: a JavaScript
 - **Bounds**, each under a limit read from Cloudflare's documentation that day (`docs/sources.md`): a chunk of 1.9 MB (D1 binds it as one string of at most 2 MB) or 5,000 records; a run of 20,000 records until timings on D1 set it; a payload of 8 MB; a record of 1 MB. The merge is one batch of 89 statements, the longest far under 100 KB, with one bound parameter; a batch counts as one query against the 30 seconds and against the 1,000 queries an invocation.
 - **After a merge the service sends the Queue one message for each step with work due.** The message names the step and nothing else.
 
-All 62 of the proof's scenarios pass through the HTTP routes on the local engine. Where the proof wrote SQL directly, the test asks the service: a person's rejection is pushed as a record, a run that was undone is dropped by its writer, and the queue's and a slice's times are the service's clock. What this does not show is what decision 10 already lists: timings on D1 itself and several writers at once.
+What a review of the build changed, on 2026-11-17:
+
+- **The store is given the value the door checked, written out again.** The first build bound the request's own text. JavaScript keeps the last of a key given twice and SQLite reads the first, so one body could pass the door as a rule's publication and be stored as a person's audit clear. The same hole let a long text, a mismatched payload and a person's review past. Bytes that are not UTF-8, half a character and a NUL are refused.
+- **A device's token records a rule's or the seed's decision only**, and hands over an approved claim only with its audit hold, unless the store already holds the claim approved and released. A script's decision is never recorded as a person's, so a person's or an assistant's travels with the operator's token alone. This closes the choice the first build left open.
+- **One form of time:** `YYYY-MM-DDTHH:MM:SS.ffffff+00:00`, the form the pipeline's records already have, or a day alone. The merge compares times as text. The door refuses any other form and the service writes its own times this way. `store/merge.sql` still writes `run.merged_at` to the second with `Z`; nothing compares it.
+- **A field is taken only on a kind whose statements read it.** The generator derives each kind's fields from the SQL. A lookup's token may not send a lead's `claim_slug`.
+- **Registering a run again writes nothing**, and is refused when it differs.
+- **A trial's joined arm names may hold 20,000 characters.** Other fields a source can make long are to be named from a measurement of the working database.
+
+All 62 of the proof's scenarios pass through the HTTP routes on the local engine. Where a scenario hands over a person's decision, or an approved claim with no hold, it travels with the operator's token. Where the proof wrote SQL directly, the test asks the service: a person's rejection is pushed as a record, a run that was undone is dropped by its writer, and the queue's and a slice's times are the service's clock. What this does not show is what decision 10 already lists: timings on D1 itself and several writers at once.
 
 ## Risks / Trade-offs
 

@@ -37,8 +37,33 @@ class Record:
         return {"kind": self.kind, "key": self.key, "body": self.body}
 
 
+KEY_ESCAPE = "\\"
+
+
 def key_of(*parts: object) -> str:
-    return KEY_JOIN.join(str(part) for part in parts)
+    """Parts joined into one key. A `|` or `\\` inside a part is escaped with `\\`, so
+    that two different sets of parts never give one key; parts without either (every
+    slug, every address key seen so far) are joined as they are, as `schema.sql` joins
+    them."""
+    return KEY_JOIN.join(
+        str(part).replace(KEY_ESCAPE, KEY_ESCAPE * 2).replace(KEY_JOIN, KEY_ESCAPE + KEY_JOIN)
+        for part in parts
+    )
+
+
+def key_parts(key: str) -> list[str]:
+    """`key_of` read the other way: a key back to its parts."""
+    parts, part, chars = [], [], iter(key)
+    for char in chars:
+        if char == KEY_ESCAPE:
+            part.append(next(chars, KEY_ESCAPE))
+        elif char == KEY_JOIN:
+            parts.append("".join(part))
+            part = []
+        else:
+            part.append(char)
+    parts.append("".join(part))
+    return parts
 
 
 def body(**fields: Any) -> dict[str, Any]:
@@ -163,6 +188,9 @@ def url_key(url: str) -> str:
     key = article_key(url)
     if key is None:
         raise ValueError(f"The address {url!r} has no address key, so the store cannot hold it.")
+    if KEY_JOIN in key or KEY_ESCAPE in key:
+        # `schema.sql` joins a slug and an address key with a bare `|` (`staged_of_article`).
+        raise ValueError(f"The address key {key!r} holds a `|` or `\\`; the store joins on them.")
     return key
 
 

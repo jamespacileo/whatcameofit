@@ -33,9 +33,17 @@ from thenwhat.backfill.link_read import (
     reads_naming_archived_claims,
     reads_naming_live_claims,
 )
-from thenwhat.backfill.link_screen import REGISTRY_TRIAL, TITLE_NAMES_CLAIM
+from thenwhat.backfill.link_screen import (
+    CANDIDATE,
+    EXACT,
+    NAMED,
+    REGISTRY_TRIAL,
+    STRONG,
+    TITLE_NAMES_CLAIM,
+)
 from thenwhat.backfill.outlet_hold import OUTLET_HOLD, OUTLET_TURN_LOCK
 from thenwhat.backfill.runner import RunReport, run_step
+from thenwhat.backfill.trial_links import SetPlan, UnknownStrength, at_least, plan_of
 from thenwhat.claims.entry import (
     add_article,
     add_claim,
@@ -52,6 +60,7 @@ from thenwhat.db.models import (
     LinkLeadLink,
     LinkShare,
     LlmUsage,
+    RegistryTrial,
     WorkEntry,
 )
 from thenwhat.decide.core import BackendAnswer
@@ -642,9 +651,22 @@ def test_two_leads_on_one_outlet_are_both_asked_of_the_reader(reader: Reader):
 # --- enough articles, and the order of reading -------------------------------------------
 
 
-def link(session: Session, lead: LinkLead, kind: str, record_id: int, reason: str) -> None:
+def link(
+    session: Session,
+    lead: LinkLead,
+    kind: str,
+    record_id: int,
+    reason: str,
+    strength: str | None = None,
+) -> None:
     session.add(
-        LinkLeadLink(link_lead_id=lead.id, record_kind=kind, record_id=record_id, reason=reason)
+        LinkLeadLink(
+            link_lead_id=lead.id,
+            record_kind=kind,
+            record_id=record_id,
+            reason=reason,
+            strength=strength,
+        )
     )
     session.flush()
 
@@ -681,6 +703,152 @@ def test_a_lead_linked_to_a_registry_trial_is_read_first(reader: Reader):
 
     assert reader.web.asked == ["www.bbc.com/news/health-1"]
     assert (linked.read_outcome, widely_shared.read_outcome) == (ReadOutcome.NEW_CLAIM, None)
+
+
+# --- a set of trials being worked (openspec trial-report-links) -------------------------
+
+
+def under_way(session: Session, phases: tuple[str, ...] = ("PHASE3",)) -> RegistryTrial:
+    """A stored trial in the set `active-since-2025`."""
+    number = session.scalar(select(func.count()).select_from(RegistryTrial)) or 0
+    record = RegistryTrial(
+        registry_name="demo-registry",
+        external_id=f"S{number:04d}",
+        title="A synthetic trial",
+        conditions=["synthetic condition"],
+        interventions=[],
+        phases=list(phases),
+        overall_status="RECRUITING",
+        last_update_posted=date(2026, 3, 1),
+        raw_payload={},
+        fetched_at=NOW,
+    )
+    session.add(record)
+    session.flush()
+    return record
+
+
+def test_a_held_lead_is_read_only_on_a_strong_link_to_the_set_being_worked(reader: Reader):
+    """Scenarios: A held lead with a strong link, A rejected lead with a strong link"""
+    reader.step = step(trial_set="active-since-2025")
+    in_the_set = under_way(reader.session)
+    held_strong = reader.lead("https://www.bbc.com/news/health-40", score=0.4)
+    held_exact = reader.lead("https://www.bbc.com/news/health-41", score=0.4)
+    held_named = reader.lead("https://www.bbc.com/news/health-42", score=0.4)
+    held_candidate = reader.lead("https://www.bbc.com/news/health-43", score=0.4)
+    rejected = reader.lead("https://www.bbc.com/news/health-44", score=0.1)
+    for lead, strength in (
+        (held_strong, STRONG),
+        (held_exact, EXACT),
+        (held_named, NAMED),
+        (held_candidate, CANDIDATE),
+        (rejected, STRONG),
+    ):
+        link(reader.session, lead, REGISTRY_TRIAL, in_the_set.id, "synthetic", strength)
+
+    reader.read()
+
+    assert held_strong.read_outcome is not None and held_exact.read_outcome is not None
+    assert (held_named.read_outcome, held_candidate.read_outcome) == (None, None)
+    assert rejected.read_outcome is None
+
+
+def test_a_held_lead_strongly_linked_to_a_trial_outside_the_set_is_not_read(reader: Reader):
+    reader.step = step(trial_set="active-since-2025")
+    outside = under_way(reader.session)
+    outside.overall_status = "COMPLETED"
+    held = reader.lead("https://www.bbc.com/news/health-45", score=0.4)
+    link(reader.session, held, REGISTRY_TRIAL, outside.id, "synthetic", STRONG)
+
+    reader.read()
+
+    assert held.read_outcome is None
+
+
+def test_leads_strongly_linked_to_the_sets_phase_3_trials_are_read_first(reader: Reader):
+    """Scenario: Two due leads"""
+    reader.step = step(trial_set="active-since-2025")
+    phase_3 = under_way(reader.session)
+    phase_2 = under_way(reader.session, ("PHASE2",))
+    most_shared = reader.lead("https://www.bbc.com/news/health-50", shares=5000)
+    candidate = reader.lead("https://www.bbc.com/news/health-51", shares=500)
+    to_phase_2 = reader.lead("https://www.bbc.com/news/health-52", shares=50)
+    to_phase_3 = reader.lead("https://www.bbc.com/news/health-53", shares=5)
+    link(reader.session, candidate, REGISTRY_TRIAL, phase_3.id, "synthetic", CANDIDATE)
+    link(reader.session, to_phase_2, REGISTRY_TRIAL, phase_2.id, "synthetic", STRONG)
+    link(reader.session, to_phase_3, REGISTRY_TRIAL, phase_3.id, "synthetic", STRONG)
+
+    for _ in range(4):
+        reader.read(limit=1)
+
+    assert reader.web.asked == [
+        "www.bbc.com/news/health-53",
+        "www.bbc.com/news/health-52",
+        "www.bbc.com/news/health-51",
+        "www.bbc.com/news/health-50",
+    ]
+    assert most_shared.read_outcome is not None
+
+
+def test_a_read_narrowed_to_a_set_reads_only_leads_linked_to_it(reader: Reader):
+    """Scenario: Reading the leads of a set"""
+    in_the_set = under_way(reader.session)
+    linked = reader.lead("https://www.bbc.com/news/health-60")
+    by_name = reader.lead("https://www.bbc.com/news/health-61")
+    unlinked = reader.lead("https://www.bbc.com/news/health-62", shares=5000)
+    link(reader.session, linked, REGISTRY_TRIAL, in_the_set.id, "synthetic", STRONG)
+    link(reader.session, by_name, REGISTRY_TRIAL, in_the_set.id, "synthetic", CANDIDATE)
+
+    reader.step = step(trial_set="active-since-2025", only_trial_set=True)
+    reader.read()
+    assert (linked.read_outcome is None, by_name.read_outcome, unlinked.read_outcome) == (
+        False,
+        None,
+        None,
+    )
+
+    reader.step = step(trial_set="active-since-2025", only_trial_set=True, least_strength=CANDIDATE)
+    reader.read()
+    assert by_name.read_outcome is not None and unlinked.read_outcome is None
+
+
+def test_the_plan_counts_the_leads_linked_to_a_set_by_where_triage_left_them(reader: Reader):
+    """Scenario: A plan for the first set"""
+    in_the_set = under_way(reader.session)
+    other = under_way(reader.session)
+    other.overall_status = "COMPLETED"
+    scores = (0.9, 0.9, 0.4, 0.1, None)
+    leads = [
+        reader.lead(f"https://www.bbc.com/news/health-7{number}", score=score)
+        for number, score in enumerate(scores)
+    ]
+    for lead in leads:
+        link(reader.session, lead, REGISTRY_TRIAL, in_the_set.id, "synthetic", STRONG)
+    weaker = reader.lead("https://www.bbc.com/news/health-80")
+    link(reader.session, weaker, REGISTRY_TRIAL, in_the_set.id, "synthetic", CANDIDATE)
+    elsewhere = reader.lead("https://www.bbc.com/news/health-81")
+    link(reader.session, elsewhere, REGISTRY_TRIAL, other.id, "synthetic", STRONG)
+    reader.step = step(trial_set="active-since-2025", only_trial_set=True)
+    reader.read(limit=1)
+
+    def plan(strength: str) -> SetPlan:
+        return plan_of(
+            reader.session,
+            "active-since-2025",
+            at_least(strength),
+            pass_above=0.7,
+            reject_below=0.2,
+            read_step="link_read",
+            now=NOW,
+        )
+
+    strong = plan(STRONG)
+    assert (strong.leads, strong.trials) == (5, 1)
+    assert (strong.passed, strong.held, strong.rejected, strong.not_scored) == (2, 1, 1, 1)
+    assert (strong.already_read, strong.read_this_month) == (1, 1)
+    assert plan(CANDIDATE).leads == 6
+    with pytest.raises(UnknownStrength, match="Strengths, strongest first: exact, strong"):
+        at_least("certain")
 
 
 # --- no claim --------------------------------------------------------------------------
