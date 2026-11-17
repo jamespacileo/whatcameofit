@@ -11,7 +11,7 @@ seed or an assistant is never touched, nor one stored before who set it was reco
 """
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 from sqlalchemy import select
@@ -99,3 +99,63 @@ def apply_rule(session: Session, claim: Claim) -> RuleAnswer:
         claim.approach_decided_by = Decider.RULE if answer.approach else None
         claim.approach_basis = answer.basis
     return answer
+
+
+@dataclass(frozen=True, slots=True)
+class Unset:
+    """A claim with approved trials that the rule gave no approach, and why."""
+
+    slug: str
+    reason: str
+    types: tuple[tuple[str, int], ...]
+
+
+@dataclass(slots=True)
+class RuleRun:
+    """What the rule did, or with `write=False` would do, over a set of claims."""
+
+    filled: int = 0
+    updated: int = 0
+    cleared: int = 0
+    unchanged: int = 0
+    # Approaches the rule may not write: how many the rule also answers for, and how
+    # many of those answers equal the stored approach. The only measure of the table.
+    kept: int = 0
+    kept_answered: int = 0
+    kept_agreeing: int = 0
+    # Stored approach, the rule's answer and the slug, for each that differs.
+    differing: list[tuple[str, str, str]] = field(default_factory=list)
+    unset: list[Unset] = field(default_factory=list)
+
+
+def run_rule(session: Session, claims: Sequence[Claim], *, write: bool) -> RuleRun:
+    """Apply the rule to each claim, or with `write=False` only count what it would do."""
+    run = RuleRun()
+    for claim in claims:
+        answer = answer_for(session, claim)
+        if not is_the_rules(claim):
+            run.kept += 1
+            if answer.approach is not None:
+                run.kept_answered += 1
+                if answer.approach == claim.approach:
+                    run.kept_agreeing += 1
+                else:
+                    run.differing.append((claim.approach or "", answer.approach, claim.slug))
+            continue
+        before = (claim.approach, claim.approach_basis)
+        after = (answer.approach, answer.basis)
+        if before == after:
+            run.unchanged += 1
+        elif before[0] is None:
+            run.filled += 1
+        elif after[0] is None:
+            run.cleared += 1
+        else:
+            run.updated += 1
+        if answer.approach is None and answer.reason != NOT_LISTED:
+            run.unset.append(Unset(claim.slug, answer.reason or "", answer.types))
+        elif answer.approach is None and approved_trial_payloads(session, claim):
+            run.unset.append(Unset(claim.slug, NOT_LISTED, ()))
+        if write:
+            apply_rule(session, claim)
+    return run

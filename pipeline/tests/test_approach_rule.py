@@ -4,6 +4,8 @@ set an approach on each way in, then the rule applied to a claim."""
 import csv
 import io
 import json
+from collections.abc import Generator
+from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -11,6 +13,7 @@ from typing import Any
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from typer.testing import CliRunner, Result
 
 from thenwhat.claims.approach_rule import (
     NOT_LISTED,
@@ -23,6 +26,7 @@ from thenwhat.claims.approach_rule import (
 from thenwhat.claims.csv_import import import_csv
 from thenwhat.claims.entry import add_claim, edit_claim
 from thenwhat.claims.verticals import APPROACHES
+from thenwhat.cli import app
 from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
 from thenwhat.domain import Decider, EventType, ReviewState
 from thenwhat.seed.load import load_seed
@@ -266,3 +270,75 @@ def test_a_basis_without_a_rule_is_refused(session: Session):
 
     with pytest.raises(Exception, match="approach_basis_is_a_rules"):
         session.flush()
+
+
+# --- the command ---------------------------------------------------------------------
+
+
+@pytest.fixture
+def run(session: Session, monkeypatch: pytest.MonkeyPatch):
+    @contextmanager
+    def test_session() -> Generator[Session]:
+        yield session
+        session.flush()
+
+    monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
+
+    def invoke(*arguments: str) -> Result:
+        return CliRunner().invoke(app, ["claim", "approaches", *arguments], env={"COLUMNS": "300"})
+
+    return invoke
+
+
+def test_the_command_sets_approaches_and_lists_what_it_left(run, session: Session):
+    filled = new_claim(session)
+    approve_trial(session, filled, trial("NCT00000001", ("DRUG", "EX-1")))
+    mixed = add_claim(
+        session,
+        slug="ex3-for-gout",
+        headline="Cells ease gout",
+        vertical="bones-joints-and-muscles",
+        intervention="EX-3",
+        indication="Gout",
+    )
+    approve_trial(session, mixed, trial("NCT00000005", ("BIOLOGICAL", "EX-3")))
+    kept = add_claim(
+        session,
+        slug="ex4-for-gout",
+        headline="Device eases gout",
+        vertical="bones-joints-and-muscles",
+        intervention="EX-4",
+        indication="Gout",
+        approach="drug",
+    )
+    approve_trial(session, kept, trial("NCT00000006", ("DEVICE", "EX-4")))
+
+    result = run("--unset")
+
+    assert result.exit_code == 0, result.output
+    assert "3 claims: 1 given an approach, 0 updated, 0 cleared, 1 unchanged." in result.output
+    assert "The rule answers for 1 of them and agrees with 0." in result.output
+    assert "ex4-for-gout: stored drug, the rule answers device" in result.output
+    assert (
+        "ex3-for-gout: the table maps this registry type to no approach (BIOLOGICAL in 1 trial)"
+        in result.output
+    )
+    assert (filled.approach, kept.approach, mixed.approach) == ("drug", "drug", None)
+
+
+def test_a_dry_run_writes_nothing(run, session: Session):
+    claim = new_claim(session)
+    approve_trial(session, claim, trial("NCT00000001", ("DRUG", "EX-1")))
+
+    result = run("--dry-run")
+
+    assert result.exit_code == 0, result.output
+    assert "1 claim: 1 would be given an approach" in result.output
+    assert (claim.approach, claim.approach_decided_by, claim.approach_basis) == (None, None, None)
+
+
+def test_the_command_refuses_an_unknown_claim(run):
+    result = run("no-such-claim")
+
+    assert result.exit_code == 1
+    assert "no-such-claim" in result.output

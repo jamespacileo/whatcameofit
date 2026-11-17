@@ -194,6 +194,24 @@ def test_fetch_updates_the_claims_status(session: Session, study):
     assert claim.status_updated_at == NOW
 
 
+def test_fetch_sets_the_approach_the_registry_types_give(session: Session, study):
+    """openspec health-areas, Scenario: One mapped type"""
+    claim = add_claim(
+        session,
+        slug="tideglusib-for-autism",
+        headline="Drug tested for autism",
+        vertical="mental-health",
+        intervention="Tideglusib",
+        indication="autism spectrum disorder",
+    )
+    with_trial(session, claim)
+
+    fetch(session, claim, trials=Trials({NCT: study}))
+
+    assert (claim.approach, claim.approach_decided_by) == ("drug", Decider.RULE)
+    assert claim.approach_basis == {"code": "registry_lists_type", "type": "DRUG", "trials": 1}
+
+
 def test_threshold_above_one_sends_every_event_to_review(session: Session, study):
     claim = new_claim(session)
     with_trial(session, claim)

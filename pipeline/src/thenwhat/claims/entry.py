@@ -559,6 +559,13 @@ def find_article(session: Session, claim: Claim, url: str) -> SourceArticle | No
     ).one_or_none()
 
 
+def unarchived_claims(session: Session) -> list[Claim]:
+    """Every claim not taken off the site, by slug."""
+    return list(
+        session.scalars(select(Claim).where(Claim.archived_at.is_(None)).order_by(Claim.slug))
+    )
+
+
 def check_new_claim(session: Session, slug: str, vertical: str) -> None:
     """Refuse a slug or vertical that `add_claim` would refuse, before any costly work."""
     _check_slug(slug)
