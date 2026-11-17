@@ -1,6 +1,6 @@
 # Code review of the November 17 merges
 
-The review covers the 26 PRs merged after #305 at 08:28 UTC through #333 at 19:02 UTC on November 17. The open PR queue was empty after #333 merged. There are **46 outstanding findings on main**. Of these, 18 are P1 and 28 are P2. P1 marks a risk to stored data, evidence presented to readers, or completion of ordinary work. P2 marks a narrower failure. Code links point to the revision checked. [Reviewed changes](https://github.com/jamespacileo/whatcameofit/compare/0272565afb8cb6ca1ada2d3500257a0b592135d9...2cf19122cc1f21add103cbb0328a6690a425e63c)
+The review covers the 26 PRs merged after #305 at 08:28 UTC through #333 at 19:02 UTC on November 17. The open PR queue was empty after #333 merged. The review recorded **46 findings at #333**. Of these, 18 are P1 and 28 are P2. The linked OpenSpec tasks track which fixes have been verified. P1 marks a risk to stored data, evidence presented to readers, or completion of ordinary work. P2 marks a narrower failure. Code links point to the revision checked. [Reviewed changes](https://github.com/jamespacileo/whatcameofit/compare/0272565afb8cb6ca1ada2d3500257a0b592135d9...2cf19122cc1f21add103cbb0328a6690a425e63c)
 
 | Area | P1 | P2 |
 |---|---:|---:|
