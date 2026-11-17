@@ -75,6 +75,7 @@ export const PAPER_REASON_WORDS: Record<string, string> = {
   named_institution: "From an institution the report names",
   published_before_report: "Published on or before the day of the first report",
   named_in_article: "Linked or named on the report's own page",
+  verified_in_article: "Matched to the research reported in the article",
 };
 
 export const RETRACTED_WORDS = "This paper has been retracted";

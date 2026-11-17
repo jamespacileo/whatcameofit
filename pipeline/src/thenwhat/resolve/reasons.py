@@ -13,6 +13,12 @@ PUBLISHED_BEFORE_REPORT = "published_before_report"
 # lead-reading). Set where the page is read, not by `paper_reasons`. It is a reason to
 # look at the record, never one to approve it.
 NAMED_IN_ARTICLE = "named_in_article"
+# An upstream verifier found the record's exact identifier as evidence for the article:
+# a trial's registry number, or a paper's DOI or PubMed number, matched exactly. Kept
+# apart from `NAMED_IN_ARTICLE`, and both are kept when both hold. Set where the
+# article's matches are handed on, not by `paper_reasons`. Like being named, it is a
+# reason to look at the record, never one to approve it.
+VERIFIED_IN_ARTICLE = "verified_in_article"
 # Every code, in the order they are given.
 REASON_CODES = (
     NAMED_IN_TITLE,
@@ -20,7 +26,11 @@ REASON_CODES = (
     NAMED_INSTITUTION,
     PUBLISHED_BEFORE_REPORT,
     NAMED_IN_ARTICLE,
+    VERIFIED_IN_ARTICLE,
 )
+# The codes that come from the article rather than from the paper's record: carried
+# over when a paper's reasons are found again.
+ARTICLE_REASON_CODES = (NAMED_IN_ARTICLE, VERIFIED_IN_ARTICLE)
 
 
 def _key(text: str) -> str:

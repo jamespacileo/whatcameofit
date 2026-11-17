@@ -103,6 +103,29 @@ def test_a_load_stores_every_trial_with_its_fields_payload_and_fetch_time(
     assert elismetrep.fetched_at == fake_time.now()
 
 
+def test_a_bulk_load_keeps_the_registered_design_and_arm_roles(
+    session: Session, fake_time, fixture_json
+):
+    registry = Registry(fixture_json)
+    protocol = registry.first["studies"][0]["protocolSection"]
+    design = {"allocation": "RANDOMIZED", "interventionModel": "PARALLEL"}
+    arms = [{"label": "Example comparator", "type": "ACTIVE_COMPARATOR"}]
+    protocol.setdefault("designModule", {})["designInfo"] = design
+    protocol.setdefault("armsInterventionsModule", {})["armGroups"] = arms
+    identifier = protocol["identificationModule"]["nctId"]
+
+    load(session, fake_time, registry)
+
+    assert {"DesignAllocation", "DesignInterventionModel", "ArmGroupLabel", "ArmGroupType"} <= set(
+        registry.asked[0]["fields"].split(",")
+    )
+    kept = next(
+        t.raw_payload["protocolSection"] for t in stored(session) if t.external_id == identifier
+    )
+    assert kept["designModule"]["designInfo"] == design
+    assert kept["armsInterventionsModule"]["armGroups"] == arms
+
+
 def test_a_repeat_load_updates_in_place(session: Session, fake_time, fixture_json):
     """Scenario: A trial is loaded again"""
     load(session, fake_time, Registry(fixture_json))

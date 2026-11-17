@@ -54,6 +54,7 @@ entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no
 
 
 def make_backend(session: Session) -> Backend:
+    from thenwhat.llm.cache import ModelCache
     from thenwhat.llm.decisions import Decisions, DecisionsSettings
 
     settings = settings_or_exit()
@@ -66,6 +67,7 @@ def make_backend(session: Session) -> Backend:
             monthly_budget_usd=settings.llm_monthly_budget_usd,
             input_usd_per_mtok=settings.decisions_input_usd_per_mtok,
         ),
+        cache=ModelCache(settings.llm_cache_dir) if settings.llm_cache_dir is not None else None,
     )
     try:
         return backend_named(settings.decision_backend, extract.make_llm(session), decisions)
@@ -178,7 +180,7 @@ def make_research(session: Session) -> Research:
     return Research(
         papers=(
             OpenAlex(session, contact_email=contact, api_key=settings.openalex_api_key)
-            if settings.openalex_api_key
+            if settings.research_papers_enabled and settings.openalex_api_key
             else None
         ),
         numbers=EuropePmc(session, contact_email=contact),

@@ -21,7 +21,7 @@ import time as system_time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, or_, select
 from sqlalchemy.orm import Session
@@ -103,10 +103,19 @@ from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SystemTime, Time
 from thenwhat.statements.service import StatementChecker, StatementsRun
 from thenwhat.work.allowance import Allowances, held_until, holds_under
-from thenwhat.work.errors import BackfillError, CannotAsk, SpendCeilingReached
+from thenwhat.work.errors import (
+    BackfillError,
+    CannotAsk,
+    SourceStop,
+    SpendCeilingReached,
+    StopAfterProgress,
+)
 from thenwhat.work.ledger import due_records, requeue
 from thenwhat.work.outcome import Later, NeedsFix, NothingFound, Reason, ReasonClass
 from thenwhat.work.steps import TEXT_DOOR, Failed, ModelSpend
+
+if TYPE_CHECKING:
+    from thenwhat.backfill.article_evidence import ArticleMatches
 
 NO_NAME = "its outlet has no display name"
 NO_DATE = "the page gives no publication date"
@@ -420,6 +429,7 @@ class ReadClient:
     make_checker: Callable[[Session], StatementChecker]
     make_backend: Callable[[Session], Backend]
     requests_made: int = 0
+    match_article: Callable[[Session, Retrieved, str, str, date], "ArticleMatches"] | None = None
 
 
 class LinkRead:
@@ -454,6 +464,9 @@ class LinkRead:
         outlet_gap_seconds: float = 0.0,
         site_retry_hours: float = 6.0,
         read_since: date | None = None,
+        window: tuple[date, date] | None = None,
+        batch_day: date | None = None,
+        use_current_triage_only: bool = False,
         trial_set: str | None = None,
         only_trial_set: bool = False,
         least_strength: str = STRONG,
@@ -491,6 +504,9 @@ class LinkRead:
         self._not_now: dict[str, int] = {}
         # Only leads first shared on or after this day are read; None reads any.
         self.read_since = read_since
+        self._window = window
+        self._share_window = (batch_day, batch_day) if batch_day is not None else window
+        self._use_current_triage_only = use_current_triage_only
         # The least time between two pages asked of one outlet in this run, and when
         # each outlet was last asked.
         self._outlet_gap = outlet_gap_seconds
@@ -538,13 +554,21 @@ class LinkRead:
                 readable, held_and_linked(self.trial_set, self.reject_below, year=self._year())
             )
         in_scope = and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
+        if self._use_current_triage_only:
+            in_scope = and_(in_scope, LinkLead.triage_version == self.triage_version)
         if self.only_trial_set:
             in_scope = and_(
                 in_scope, linked_to(self._set_strengths, self.trial_set, year=self._year())
             )
-        if self.read_since is not None:
-            since = datetime.combine(self.read_since, datetime.min.time(), tzinfo=UTC)
-            in_scope = and_(in_scope, LinkLead.first_shared_at >= since)
+        since = self.read_since
+        if self._share_window is not None:
+            first, last = self._share_window
+            since = max(first, since) if since is not None else first
+            through = datetime.combine(last, datetime.max.time(), tzinfo=UTC)
+            in_scope = and_(in_scope, LinkLead.first_shared_at <= through)
+        if since is not None:
+            beginning = datetime.combine(since, datetime.min.time(), tzinfo=UTC)
+            in_scope = and_(in_scope, LinkLead.first_shared_at >= beginning)
         return in_scope
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
@@ -922,6 +946,19 @@ class LinkRead:
         if isinstance(dated, _NoPage):
             return self._finish(record, ReadOutcome.CANNOT_BE_READ, reason=dated.reason)
         day, headline = dated
+        if self._window is not None:
+            first, last = self._window
+            if not first <= day <= last:
+                return self._finish(
+                    record,
+                    ReadOutcome.CANNOT_BE_READ,
+                    reason=why.OUTSIDE_PUBLICATION_WINDOW,
+                    values={
+                        "day": day.isoformat(),
+                        "first": first.isoformat(),
+                        "last": last.isoformat(),
+                    },
+                )
 
         # The one model read. From here a failure is returned, not raised, so that the
         # call's cost and any logged decision stay recorded.
@@ -1007,6 +1044,24 @@ class LinkRead:
             established = "an established treatment in the news"
         else:
             established = None
+
+        matches = None
+        if not business and client.match_article is not None:
+            try:
+                matches = client.match_article(session, retrieved, headline, outlet, day)
+            except BudgetExceeded as ceiling:
+                raise StopAfterProgress(SpendCeilingReached(str(ceiling))) from None
+            except SourceStop as stop:
+                raise StopAfterProgress(stop) from None
+            except DecisionFailed as failure:
+                try:
+                    stop_if_unreachable(failure)
+                except SourceStop as stop:
+                    raise StopAfterProgress(stop) from None
+                return Failed(str(failure))
+            except LlmError as failure:
+                return Failed(str(failure))
+
         address = without_tracking(record.url)
         # One read at a time from here to the end of its transaction: whichever claim
         # another read has just made for this story is found, not made again.
@@ -1019,7 +1074,11 @@ class LinkRead:
             existing, how = self._claim_it_reports(session, record, draft, client, now)
             if existing is not None:
                 claim = claim_by_slug(session, existing)
-                self._join(session, record, now, claim, draft, checker, retrieved, outlet, dated)
+                article, _ = self._join(
+                    session, record, now, claim, draft, checker, retrieved, outlet, dated
+                )
+                if matches is not None:
+                    keep_verified_records(article, matches)
                 detail = "; ".join(part for part in (established, how) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
@@ -1097,6 +1156,8 @@ class LinkRead:
         record.source_article_id = article.id if article else None
         if article is not None:
             keep_what_the_page_names(article, page)
+            if matches is not None:
+                keep_verified_records(article, matches)
         return self._finish(record, ReadOutcome.NEW_CLAIM, established)
 
     def _join(
@@ -1224,6 +1285,15 @@ def keep_what_the_page_names(article: SourceArticle, page: Page | None) -> None:
         {*article.named_registry_numbers, *(number.upper() for number in page.registry_numbers)}
     )
     article.named_dois = sorted({*article.named_dois, *(doi.lower() for doi in page.dois)})
+
+
+def keep_verified_records(article: SourceArticle, matches: "ArticleMatches") -> None:
+    """Store only the matcher-verified identities and preserve explicit citations."""
+    article.matched_registry_numbers = sorted(
+        {*article.matched_registry_numbers, *matches.registry_numbers}
+    )
+    article.matched_dois = sorted({*article.matched_dois, *matches.dois})
+    article.matched_pubmed_ids = sorted({*article.matched_pubmed_ids, *matches.pubmed_ids})
 
 
 def _date_and_headline(retrieved: Retrieved) -> tuple[date, str] | _NoPage:

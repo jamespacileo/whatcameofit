@@ -62,7 +62,7 @@ def claim_steps(
     )
     trials.after = (substance,)
     papers = ClaimPapers(
-        papers_enabled=bool(settings.openalex_api_key),
+        papers_enabled=settings.research_papers_enabled and bool(settings.openalex_api_key),
         reject_below=reject_below,
         accept_above=accept_above,
         rescore=rescore,
@@ -73,7 +73,7 @@ def claim_steps(
     named = ClaimNamedRecords(
         reject_below=reject_below,
         accept_above=accept_above,
-        papers_enabled=bool(settings.openalex_api_key),
+        papers_enabled=settings.research_papers_enabled and bool(settings.openalex_api_key),
         claims=claims,
         clock=clock,
     )
@@ -81,6 +81,7 @@ def claim_steps(
         threshold=settings.review_confidence_threshold,
         no_signal_years=settings.no_signal_years,
         paper_max_age=timedelta(days=settings.paper_record_max_age_days),
+        papers_enabled=settings.research_papers_enabled,
         claims=claims,
         clock=clock,
     )

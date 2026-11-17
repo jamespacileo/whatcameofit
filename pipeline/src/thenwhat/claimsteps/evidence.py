@@ -43,17 +43,22 @@ class ClaimFetch(ClaimStep):
         threshold: float,
         no_signal_years: int,
         paper_max_age: timedelta,
+        papers_enabled: bool = True,
         **step: Any,
     ) -> None:
         super().__init__(**step)
         self.threshold = threshold
         self.no_signal_years = no_signal_years
         self.paper_max_age = paper_max_age
+        self.papers_enabled = papers_enabled
         # What reading the MeSH tree gave for each claim fetched: the run, or why not.
         self.trees: dict[int, TreeRun | SourceError] = {}
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return {"approved": inputs.approved.get(claim_id, [])}
+        snapshot = {"approved": inputs.approved.get(claim_id, [])}
+        if not self.papers_enabled:
+            return {**snapshot, "papers_enabled": False}
+        return snapshot
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
@@ -64,7 +69,7 @@ class ClaimFetch(ClaimStep):
                 session,
                 claim,
                 trials=trials,
-                literature=literature,
+                literature=literature if self.papers_enabled else None,
                 notices=notices,
                 threshold=self.threshold,
                 no_signal_years=self.no_signal_years,

@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backfill_support import Client, same_session
+from thenwhat.backfill.headline_evidence import INTRO, OPTIONS, QUESTIONS
 from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_readers import HACKER_NEWS, SharedLink
 from thenwhat.backfill.link_screen import LinkScreen
@@ -19,6 +20,8 @@ from thenwhat.backfill.link_triage import (
     standing_of,
     standings,
 )
+from thenwhat.backfill.registered import make_triage
+from thenwhat.config import Settings
 from thenwhat.db.models import DecisionLog, LinkLead, LlmUsage, WorkEntry
 from thenwhat.decide.core import Backend, BackendAnswer
 from thenwhat.decide.steps import (
@@ -160,6 +163,29 @@ def test_the_decision_is_shown_the_title_the_outlet_and_the_year_only(session: S
     assert backend.calls == [["Headline: A trial result\nOutlet: bbc.com\nYear shared: 2019"]]
 
 
+def test_evidence_profile_runs_the_frozen_questions_and_stores_their_average(session: Session):
+    [lead] = add_leads(session, ["A treatment trial reports results"])
+    settings = Settings(database_url="postgresql://example", lead_evidence_triage=True)
+    step = make_triage(settings)
+    calls = []
+
+    class EvidenceBackend(Headlines):
+        def answer_many(self, step, intro, question, items, options):
+            assert (intro, items, tuple(options)) == (INTRO, [lead.title], OPTIONS)
+            assert question == QUESTIONS[step]
+            calls.append(step)
+            p = (0.7, 0.8, 0.9)[len(calls) - 1]
+            return [BackendAnswer("relevant", {"relevant": p, "review": 1 - p, "irrelevant": 0})]
+
+    report = triage(session, EvidenceBackend(session), step)
+
+    assert report.done == 1
+    assert calls == list(QUESTIONS)
+    assert lead.triage_score == pytest.approx(0.8)
+    assert lead.triage_version == 2
+    assert settings.lead_pass_above == settings.lead_reject_below == 0.7883
+
+
 def test_a_lead_out_of_scope_is_never_triaged(session: Session):
     """Scenario: A lead out of scope"""
     [unlisted] = add_leads(session, ["A trial result"], outlet="github.com")
@@ -183,6 +209,22 @@ def test_a_run_narrowed_to_a_period_scores_no_older_lead(session: Session):
 
     assert (narrowed.processed, backend.calls, lead.triage_score) == (0, [], None)
     assert triage(session, backend, LinkTriage(Clock(), since=WHEN.date())).done == 1
+
+
+def test_a_bounded_backfill_scores_the_last_day_and_leaves_later_leads_due(session: Session):
+    first, second = add_leads(session, ["A first trial result", "A second trial result"])
+    second.first_shared_at = WHEN + timedelta(days=1)
+    session.flush()
+    settings = Settings(
+        database_url="postgresql://example", lead_backfill_window=(WHEN.date(), WHEN.date())
+    )
+    backend = Headlines(session)
+
+    report = triage(session, backend, make_triage(settings))
+
+    assert report.done == 1
+    assert first.triage_score == pytest.approx(0.9)
+    assert second.triage_score is None
 
 
 def test_a_lead_the_backend_gives_no_answer_for_has_no_score(session: Session):

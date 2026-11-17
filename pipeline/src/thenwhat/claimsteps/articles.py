@@ -130,10 +130,10 @@ def _first_left(left: list[Unread]) -> Any:
 
 
 class ClaimNamedRecords(ClaimStep):
-    """Record the trials and papers the claim's articles' pages name as candidates of the
-    claim, read by their identifiers and decided by the resolver's own rules. Being named
-    approves nothing. A registry or a literature index that fails leaves the article and
-    the claim as they are, and the claim comes back for this step."""
+    """Record the trials and papers the claim's articles' pages name, and those matched
+    exactly to its articles, as candidates of the claim, read by their identifiers and
+    decided by the resolver's own rules. Being named or matched approves nothing.
+    A registry or literature error leaves the claim due again for this step."""
 
     name = "claim_named_records"
     reasons = (SOURCE_FAILED, PAPERS_OFF)
@@ -150,12 +150,23 @@ class ClaimNamedRecords(ClaimStep):
         return names_a_record()
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return {"named": inputs.named.get(claim_id, []), "papers_enabled": self.papers_enabled}
+        read: dict[str, Any] = {
+            "named": inputs.named.get(claim_id, []),
+            "papers_enabled": self.papers_enabled,
+        }
+        # Only a claim with matches reads them, so the input of one without is as before.
+        matched = inputs.matched.get(claim_id)
+        if matched:
+            read["matched"] = matched
+        return read
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
         numbers: list[str] = []
         dois: list[str] = []
+        matched_numbers: list[str] = []
+        matched_dois: list[str] = []
+        matched_pmids: list[str] = []
         for article in session.scalars(
             select(SourceArticle)
             .where(SourceArticle.claim_id == claim.id)
@@ -163,9 +174,13 @@ class ClaimNamedRecords(ClaimStep):
         ):
             numbers += article.named_registry_numbers
             dois += article.named_dois
+            matched_numbers += article.matched_registry_numbers
+            matched_dois += article.matched_dois
+            matched_pmids += article.matched_pubmed_ids
         research = sources.make_research(session)
         backend = sources.make_backend(session)
         unasked: list[str] = []
+        unasked_pmids: list[str] = []
         added = attempt(
             session,
             lambda: candidates_named_in_article(
@@ -173,7 +188,11 @@ class ClaimNamedRecords(ClaimStep):
                 claim,
                 registry_numbers=numbers,
                 dois=dois,
+                verified_registry_numbers=matched_numbers,
+                verified_dois=matched_dois,
+                verified_pmids=matched_pmids,
                 unasked_dois=unasked,
+                unasked_pmids=unasked_pmids,
                 registry=research.registry,
                 papers=research.papers,
                 backend=backend,
@@ -188,6 +207,9 @@ class ClaimNamedRecords(ClaimStep):
         if isinstance(added, DecisionFailed | LlmError):
             return model_failed(added)
         self.results[claim.id] = added
-        if unasked:
-            return NeedsFix(PAPERS_OFF, {"dois": unasked})
+        if unasked or unasked_pmids:
+            values = {"dois": unasked}
+            if unasked_pmids:
+                values["pmids"] = unasked_pmids
+            return NeedsFix(PAPERS_OFF, values)
         return WorkOutcome.DONE

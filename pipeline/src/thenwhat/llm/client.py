@@ -19,7 +19,7 @@ from decimal import Decimal  # noqa: E402
 
 import httpx  # noqa: E402
 from pydantic import BaseModel, ValidationError  # noqa: E402
-from pydantic_ai import Agent, capture_run_messages  # noqa: E402
+from pydantic_ai import Agent, NativeOutput, capture_run_messages  # noqa: E402
 
 # The library's own way onto the event loop for its synchronous calls. It is not part of
 # its public interface: `Agent.run_sync` is, but takes one prompt. Using the same door
@@ -35,13 +35,20 @@ from pydantic_ai.exceptions import (  # noqa: E402
     ModelUnavailableError,
     UnexpectedModelBehavior,
 )
-from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart  # noqa: E402
+from pydantic_ai.messages import (  # noqa: E402
+    ModelMessage,
+    ModelResponse,
+    ToolCallPart,
+)
 from pydantic_ai.models import Model, infer_model  # noqa: E402
+from pydantic_ai.models.openai import OpenAIResponsesModelSettings  # noqa: E402
+from pydantic_ai.run import AgentRunResult  # noqa: E402
 from pydantic_ai.settings import ModelSettings  # noqa: E402
 from pydantic_ai.usage import RunUsage  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from thenwhat.config import load_call_settings  # noqa: E402
+from thenwhat.llm.cache import ModelCache, request_key  # noqa: E402
 from thenwhat.llm.errors import (  # noqa: E402
     BudgetExceeded,
     LlmCallFailed,
@@ -87,6 +94,7 @@ class Llm:
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         build_model: Callable[[str], Model] = infer_model,
         time: Time | None = None,
+        cache: ModelCache | None = None,
     ) -> None:
         self._session = session
         self._settings = settings
@@ -95,6 +103,7 @@ class Llm:
         self._build_model = build_model
         # What a delay before another attempt is slept on.
         self._time = time or SystemTime()
+        self._cache = cache
 
     @property
     def model_name(self) -> str | None:
@@ -105,7 +114,8 @@ class Llm:
         """Whom the model is asked of: the provider named before the model's own name.
         A pause is kept under it, so every process stops asking it."""
         model = self._settings.model or ""
-        return model.split(":", 1)[0] if ":" in model else model
+        provider = model.partition(":")[0]
+        return "openai" if provider == "openai-responses" else provider
 
     def _calls(self) -> Calls:
         provider = self.provider
@@ -118,6 +128,41 @@ class Llm:
             keep_pause=lambda until: pause(self._session, provider, until, self._now()),
         )
 
+    def _key(
+        self,
+        instructions: str,
+        prompt: str,
+        output_type: type[BaseModel],
+        retries: int,
+        native_json: bool,
+    ) -> str:
+        return request_key(
+            "structured",
+            [
+                self.model_name,
+                self._model.model_name if self._model is not None else None,
+                os.environ.get("OPENAI_BASE_URL") if self.provider == "openai" else None,
+                instructions,
+                prompt,
+                output_type.model_json_schema(by_alias=True),
+                retries,
+                native_json,
+                (),
+            ],
+        )
+
+    def _cached_output[Output: BaseModel](
+        self, key: str, output_type: type[Output]
+    ) -> Output | None:
+        assert self._cache is not None
+        answer = self._cache.get(key)
+        if answer is None:
+            return None
+        try:
+            return output_type.model_validate_json(answer, by_name=True)
+        except ValidationError:
+            return None
+
     def run[Output: BaseModel](
         self,
         purpose: str,
@@ -126,12 +171,46 @@ class Llm:
         prompt: str,
         output_type: type[Output],
         retries: int = 2,
+        native_json: bool = False,
     ) -> Output:
         """Ask the configured model for output of the given shape and record what it cost.
 
         Refuses before calling when the model or its prices are not configured, or when
-        this month's recorded cost has reached the ceiling.
+        this month's recorded cost has reached the ceiling. With native_json, OpenAI
+        enforces the output model as a JSON schema on its Responses API.
         """
+
+        def ask() -> Output:
+            return self._ask(
+                purpose,
+                instructions=instructions,
+                prompt=prompt,
+                output_type=output_type,
+                retries=retries,
+                native_json=native_json,
+            ).output
+
+        if self._cache is None:
+            return ask()
+        key = self._key(instructions, prompt, output_type, retries, native_json)
+        with self._cache.locked([key]):
+            cached = self._cached_output(key, output_type)
+            if cached is not None:
+                return cached
+            answer = ask()
+            self._cache.put(key, answer.model_dump_json(by_alias=False, round_trip=True))
+            return answer
+
+    def _ask[Output: BaseModel](
+        self,
+        purpose: str,
+        *,
+        instructions: str,
+        prompt: str,
+        output_type: type[Output],
+        retries: int,
+        native_json: bool,
+    ) -> AgentRunResult[Output]:
         settings = self._settings
         for value, name in (
             (settings.model, "LLM_MODEL"),
@@ -143,15 +222,33 @@ class Llm:
         check_ceiling(self._session, self._now(), settings.monthly_budget_usd)
 
         assert settings.model is not None
-        model = self._model or self._build_model(settings.model)
-        agent = Agent(model, output_type=output_type, instructions=instructions, retries=retries)
+        name = settings.model
+        if native_json:
+            provider, _, model_name = name.partition(":")
+            if provider not in {"openai", "openai-responses"} or not model_name:
+                raise LlmNotConfigured("Native JSON output requires an OpenAI model in LLM_MODEL.")
+            name = f"openai-responses:{model_name}"
+        model = self._model or self._build_model(name)
+        agent = Agent(
+            model,
+            output_type=NativeOutput(output_type, strict=True) if native_json else output_type,
+            instructions=instructions,
+            retries=retries,
+        )
+        model_settings: ModelSettings = ONE_ATTEMPT
+        if native_json:
+            model_settings = OpenAIResponsesModelSettings(max_retries=0, openai_store=False)
 
-        def attempt() -> Output:
+        def attempt() -> AgentRunResult[Output]:
             usage = RunUsage()
             messages: list[ModelMessage] = []
             try:
                 with capture_run_messages() as messages:
-                    return agent.run_sync(prompt, usage=usage, model_settings=ONE_ATTEMPT).output
+                    return agent.run_sync(
+                        prompt,
+                        usage=usage,
+                        model_settings=model_settings,
+                    )
             except UnexpectedModelBehavior:
                 raise LlmOutputInvalid(_failing_fields(messages, output_type)) from None
             except Exception as error:
@@ -186,6 +283,46 @@ class Llm:
         has reached the ceiling. The ceiling is not looked at again between the calls of
         one group, so a group can pass it by what its own calls cost.
         """
+        if self._cache is None or not prompts:
+            return self._run_many(purpose, instructions, prompts, output_type, retries)
+        keys = [self._key(instructions, prompt, output_type, retries, False) for prompt in prompts]
+        unique = dict(zip(keys, prompts, strict=True))
+        with self._cache.locked(keys):
+            answers: dict[str, Output | LlmError] = {}
+            missing = {}
+            for key, prompt in unique.items():
+                cached = self._cached_output(key, output_type)
+                if cached is None:
+                    missing[key] = prompt
+                else:
+                    answers[key] = cached
+            if missing:
+                outputs = self._run_many(
+                    purpose,
+                    instructions,
+                    list(missing.values()),
+                    output_type,
+                    retries,
+                    cache_keys=list(missing),
+                )
+                answers.update(zip(missing, outputs, strict=True))
+            return [
+                answer.model_copy(deep=True)
+                if isinstance(answer := answers[key], BaseModel)
+                else answer
+                for key in keys
+            ]
+
+    def _run_many[Output: BaseModel](
+        self,
+        purpose: str,
+        instructions: str,
+        prompts: Sequence[str],
+        output_type: type[Output],
+        retries: int,
+        *,
+        cache_keys: Sequence[str] = (),
+    ) -> list[Output | LlmError]:
         settings = self._settings
         for value, name in (
             (settings.model, "LLM_MODEL"),
@@ -236,6 +373,10 @@ class Llm:
         for _, usages in answered:
             for usage in usages:
                 self._record(purpose, usage)
+        if self._cache is not None and cache_keys:
+            for key, (answer, _) in zip(cache_keys, answered, strict=True):
+                if isinstance(answer, BaseModel):
+                    self._cache.put(key, answer.model_dump_json(by_alias=False, round_trip=True))
         for answer, _ in answered:
             if isinstance(answer, ModelCannotBeAsked):
                 raise answer

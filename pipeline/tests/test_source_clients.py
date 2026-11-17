@@ -904,6 +904,28 @@ def test_one_paper_is_looked_up_by_its_doi(session: Session, fake_time, fixture_
     assert source.usage.searches_sent == 0
 
 
+def test_one_paper_can_be_looked_up_by_exact_pubmed_id_without_a_doi(
+    session: Session, fake_time, fixture_json
+):
+    work = fixture_json("openalex/work_704541.json")
+    work["doi"] = None
+    work["ids"] = {"pmid": "https://pubmed.ncbi.nlm.nih.gov/12345/"}
+    source, replay = papers(session, fake_time, lambda request: work)
+
+    record = source.paper("pmid:12345")
+
+    assert record is not None
+    assert record.external_id == work["id"].removeprefix(openalex.WORK_PREFIX)
+    assert openalex.describe(record).pubmed_id == "12345"
+    assert source.paper("pmid:54321") is None
+    assert source.paper("pmid:not-a-number") is None
+    assert [request.url.path for request in replay.requests] == [
+        "/works/pmid:12345",
+        "/works/pmid:54321",
+    ]
+    assert source.usage.searches_sent == 0
+
+
 def test_literature_search_without_a_key_sends_nothing_and_names_the_setting(
     session: Session, fake_time
 ):

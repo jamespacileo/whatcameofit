@@ -252,6 +252,19 @@ class SourceArticle(Base):
         ARRAY(Text), default=list, server_default="{}"
     )
     named_dois: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    # The trials and papers an upstream verifier matched exactly to the article, each
+    # kind apart: registry numbers (upper case), canonical paper DOIs (lower case) and
+    # PubMed numbers, the last kept for a paper even when it has no DOI. Identifiers
+    # only, never text. Kept apart from what the page names: the step
+    # `claim_named_records` hands both on, each with its own reason (openspec
+    # lead-reading). A row from before they were kept has none.
+    matched_registry_numbers: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
+    matched_dois: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
+    matched_pubmed_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
 
 
 class Promise(Base):
