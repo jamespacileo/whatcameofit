@@ -24,13 +24,14 @@ from thenwhat.db.models import (
     ArticleLead,
     LinkLead,
     LinkLeadLabel,
+    LinkLeadLink,
     LinkShare,
     LlmUsage,
     RegistryTrial,
     SourceAllowanceUse,
     WorkEntry,
 )
-from thenwhat.domain import Decider, OutletKind
+from thenwhat.domain import Decider, OutletKind, ScreenOutcome
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import Paper
 
@@ -1015,3 +1016,86 @@ def test_the_paper_step_is_refused_without_a_tool_name(run, session: Session, mo
 
     assert result.exit_code == 1
     assert "PUBMED_TOOL is not set" in result.output
+
+
+# --- read-set: the leads linked to a named set of trials ---------------------------------
+
+
+def linked_leads(session: Session, monkeypatch: pytest.MonkeyPatch, count: int) -> None:
+    """Passed leads in scope, each strongly linked to one trial of `active-since-2025`."""
+    monkeypatch.setenv("LEAD_PASS_ABOVE", "0.7")
+    monkeypatch.setenv("LEAD_REJECT_BELOW", "0.2")
+    monkeypatch.setenv("LLM_INPUT_USD_PER_MTOK", "1")
+    monkeypatch.setenv("LLM_OUTPUT_USD_PER_MTOK", "5")
+    [stored] = add_trials(session, 1)
+    stored.overall_status = "RECRUITING"
+    stored.last_update_posted = date(2026, 3, 1)
+    for number in range(count):
+        lead = LinkLead(
+            url=f"https://www.bbc.com/news/health-{number}",
+            url_key=f"bbc.com/news/health-{number}",
+            outlet="bbc.com",
+            outlet_kind=OutletKind.GENERAL_NEWS,
+            title="A synthetic headline",
+            first_shared_at=NOW,
+            screen_outcome=ScreenOutcome.IN_SCOPE,
+            triage_score=0.9,
+            triage_version=1,
+        )
+        session.add(lead)
+        session.flush()
+        session.add(
+            LinkLeadLink(
+                link_lead_id=lead.id,
+                record_kind="registry_trial",
+                record_id=stored.id,
+                reason="synthetic",
+                strength="strong",
+            )
+        )
+    session.flush()
+
+
+def test_read_set_prints_a_plan_and_reads_nothing_without_a_limit(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: A plan for the first set"""
+    linked_leads(session, monkeypatch, 3)
+
+    result = run("read-set", "active-since-2025")
+
+    assert result.exit_code == 0, result.output
+    assert "3 leads in scope are linked (exact or strong) to 1 trials of the set" in result.output
+    assert "triage: 3 passed, 0 held, 0 rejected, 0 not scored; 0 already read" in result.output
+    assert "would be read: 3, those linked to phase 3 trials first" in result.output
+    # 3,000 tokens in at $1 and 700 out at $5 a million is $0.0065 a read.
+    assert "expected cost: $0.02 at $0.0065 a read (estimated); about 1 claims" in result.output
+    assert "$0.00 of the route's $15.00 share; $15.00 left" in result.output
+    assert "Nothing was read. Give --limit to read." in result.output
+    assert session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == []
+
+
+def test_read_set_reads_nothing_when_the_cost_passes_the_routes_share(
+    run, session: Session, monkeypatch: pytest.MonkeyPatch
+):
+    """Scenario: The share would be passed"""
+    linked_leads(session, monkeypatch, 3)
+    monkeypatch.setenv("TRIAL_ROUTE_MONTHLY_USD", "0.01")
+
+    result = run("read-set", "active-since-2025", "--limit", "3")
+
+    assert result.exit_code == 1
+    assert "Nothing was read: the reads are expected to cost $0.02 and $0.01 is left" in (
+        result.output
+    )
+    assert session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == []
+
+
+def test_read_set_refuses_a_set_or_a_strength_it_does_not_know(run):
+    """Scenario: A set the command does not know"""
+    unknown_set = run("read-set", "successful")
+    unknown_strength = run("read-set", "active-since-2025", "--strength", "certain")
+
+    assert (unknown_set.exit_code, unknown_strength.exit_code) == (1, 1)
+    assert "No set of stored trials is named 'successful'" in unknown_set.output
+    assert "No strength of link is named 'certain'" in unknown_strength.output

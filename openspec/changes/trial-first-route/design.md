@@ -347,6 +347,8 @@ What else was weighed as a signal:
 
 Screening's present link is kept, unchanged and still a candidate. It is right about one thing: 34% of the leads it links pass triage, against 1.6% of all. It goes on ordering reads, as `lead-reading` says. It is not strong and is never called a report.
 
+**As built in phase 1 (2026-11-17, task 9.8 to 9.10).** Every link to a trial carries a reason and one of four strengths: `exact` (the registry number), `strong` (a development code beside a condition word), `named` (a code alone, or an acronym that carries a number beside a condition word), `candidate` (the present link, and another name of a drug or biological intervention beside a condition word). Only a development code is telling: the substance registry has not been asked, so a substance's or brand's name is a candidate and no more. An acronym with no number never links. The measurement and the forty links judged are in `tasks.md` under 9.9: a code beside its condition named the right treatment for the right condition in eight of eight, and it links 13 of 558,864 leads; another name beside a condition links 611. Only exact and strong are enough for a held lead to be read (`backfill/link_screen.py`, `STRENGTH_TO_READ`).
+
 ### 5. What a strong link changes, and what it never does
 
 It changes two things, both in what is read:
@@ -366,6 +368,8 @@ A set is a named choice of trials that says which strong links are read first. I
 2. **Under way, phase 2** (17,775).
 3. **Completed in the last two years, phase 2 or 3.** Needs the wider load, since no completion date is stored.
 4. Everything else, in no hurry.
+
+**As built in phase 1:** the sets worked are the two of decision 12, `active-since-2025` and `completed-with-results-since-2025`, and inside a set the leads linked to its phase 3 trials are read first. The set is named by `LEAD_READ_TRIAL_SET` for every read, or by `thenwhat backfill read-set <set>`, which prints the plan and reads only the set's linked leads within `TRIAL_ROUTE_MONTHLY_USD`.
 
 One set is worked at a time, by the operator's command. Finishing a set means its strong links have been read, prepared and audited; it does not mean its trials have reports.
 
