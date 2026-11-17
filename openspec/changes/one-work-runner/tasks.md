@@ -2,8 +2,8 @@
 
 ## 1. Pin down present behaviour
 
-- [ ] 1.1 Write characterisation tests against the present code, one record per outcome, for `link_read` (each `ReadOutcome` and each cannot-be-read cause), `link_triage`, `link_screen` and `news_search`, at the session seam with synthetic article fixtures; verify they pass on `main` unchanged
-- [ ] 1.2 Write characterisation tests for `thenwhat prepare` on a claim: all steps succeed, the registry fails, the substance lookup fails, terms fail; verify they pass on `main` and record in a comment which of them this change is meant to alter
+- [x] 1.1 Write characterisation tests against the present code, one record per outcome, for `link_read` (each `ReadOutcome` and each cannot-be-read cause), `link_triage`, `link_screen` and `news_search`, at the session seam with synthetic article fixtures; verify they pass on `main` unchanged
+- [x] 1.2 Write characterisation tests for `thenwhat prepare` on a claim: all steps succeed, the registry fails, the substance lookup fails, terms fail; verify they pass on `main` and record in a comment which of them this change is meant to alter
 
 ## 2. The `work` package, with no behaviour change
 
