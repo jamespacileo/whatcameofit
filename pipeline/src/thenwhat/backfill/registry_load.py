@@ -164,11 +164,12 @@ def sponsored_by_a_person(sponsors: dict[str, Any]) -> bool:
 
 def without_people(study: dict[str, Any]) -> dict[str, Any]:
     """The registry's record as stored: exactly as the registry gave it, except that the
-    name of a lead sponsor or collaborator who is a person is removed, and with it the
-    name a sponsor-investigator is given as responsible party. Nothing else is removed.
-    The project keeps no personal data beyond subscriber emails and such a name is a
-    person's. The class is kept, so the record still says a person sponsors or
-    collaborates on the trial. The record given is not changed."""
+    name of a lead sponsor or collaborator who is a person is removed, and that of the
+    responsible party only its type is kept, never an investigator's name, title or
+    affiliation. Nothing else is removed. The project keeps no personal data beyond
+    subscriber emails and such a name is a person's. The class and the type are kept, so
+    the record still says a person sponsors or collaborates on the trial. The record
+    given is not changed."""
     sponsors = study.get("protocolSection", {}).get("sponsorCollaboratorsModule")
     if not sponsors:
         return study
@@ -184,11 +185,11 @@ def without_people(study: dict[str, Any]) -> dict[str, Any]:
         kept["leadSponsor"] = unnamed(sponsors["leadSponsor"], person)
     if isinstance(sponsors.get("collaborators"), list):
         kept["collaborators"] = [unnamed(party, False) for party in sponsors["collaborators"]]
+    # Of the responsible party only its type is kept, whoever it is: the rest of that
+    # module is an investigator's name, title and affiliation.
     party = sponsors.get("responsibleParty")
-    if isinstance(party, dict) and party.get("type") == SPONSOR_INVESTIGATOR:
-        kept["responsibleParty"] = {
-            key: value for key, value in party.items() if key != "investigatorFullName"
-        }
+    if isinstance(party, dict):
+        kept["responsibleParty"] = {key: party[key] for key in ("type",) if key in party}
     protocol = {**study["protocolSection"], "sponsorCollaboratorsModule": kept}
     return {**study, "protocolSection": protocol}
 

@@ -20,7 +20,7 @@ from thenwhat.db.models import RegistryLoad, RegistryTrial, WorkEntry
 from thenwhat.domain import WorkOutcome
 from thenwhat.export.build import build_export
 from thenwhat.sources.base import MissingContact
-from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.clinicaltrials import LIST_FIELDS, ClinicalTrials
 
 CONDITION = "AREA[Phase]PHASE3 AND AREA[Condition]Migraine"
 REGISTRY = "clinicaltrials.gov"
@@ -280,6 +280,50 @@ def test_a_person_is_known_by_the_rule_the_trial_facts_use(fixture_json, sponsor
     assert study["protocolSection"]["sponsorCollaboratorsModule"] == sponsors
     kept = without_people(study)["protocolSection"]["sponsorCollaboratorsModule"]
     assert kept["leadSponsor"] == {"class": sponsors["leadSponsor"]["class"]}
+
+
+def test_a_recorded_sponsor_investigator_is_stored_without_a_name(
+    session: Session, fake_time, fixture_json
+):
+    """The list request asks for the responsible party's type, which is what says that a
+    lead sponsor the registry classes "OTHER" is a person. Recorded 2026-11-17 with a
+    generic client name; the sponsor's name was replaced before the file was written."""
+    page = fixture_json("clinicaltrials/list_page_sponsor_investigator.json")
+    module = page["studies"][0]["protocolSection"]["sponsorCollaboratorsModule"]
+    assert module == {
+        "responsibleParty": {"type": "SPONSOR_INVESTIGATOR"},
+        "leadSponsor": {"name": "A made-up person", "class": "OTHER"},
+    }
+    assert "ResponsiblePartyType" in LIST_FIELDS.split(",")
+
+    fields = trial_fields(page["studies"][0])
+    kept = without_people(page["studies"][0])["protocolSection"]["sponsorCollaboratorsModule"]
+
+    assert (fields["sponsor_class"], fields["lead_sponsor_name"]) == ("OTHER", None)
+    # The type is kept: it is not a name, and it is what says a person sponsors the trial.
+    assert kept == {
+        "responsibleParty": {"type": "SPONSOR_INVESTIGATOR"},
+        "leadSponsor": {"class": "OTHER"},
+    }
+
+
+def test_only_the_type_of_a_responsible_party_is_stored(fixture_json):
+    study = fixture_json("clinicaltrials/list_page_wide.json")["studies"][0]
+    sponsors = study["protocolSection"]["sponsorCollaboratorsModule"]
+    for kind in ("SPONSOR_INVESTIGATOR", "PRINCIPAL_INVESTIGATOR"):
+        sponsors["responsibleParty"] = {
+            "type": kind,
+            "investigatorFullName": "A made-up person",
+            "investigatorTitle": "A made-up title",
+            "investigatorAffiliation": "A made-up department",
+            "oldNameTitle": "A made-up person, MD",
+            "oldOrganization": "A made-up department",
+        }
+
+        kept = without_people(study)["protocolSection"]["sponsorCollaboratorsModule"]
+
+        assert kept["responsibleParty"] == {"type": kind}
+        assert "made-up" not in json.dumps(kept["responsibleParty"])
 
 
 def test_an_organisation_with_a_principal_investigator_is_still_named(fixture_json):

@@ -32,6 +32,9 @@
      }
     },
     "sponsorCollaboratorsModule": {
+     "responsibleParty": {
+      "type": "SPONSOR"
+     },
      "leadSponsor": {
       "name": "TriGemX Bio, Inc.",
       "class": "INDUSTRY"
@@ -122,6 +125,9 @@
      }
     },
     "sponsorCollaboratorsModule": {
+     "responsibleParty": {
+      "type": "PRINCIPAL_INVESTIGATOR"
+     },
      "leadSponsor": {
       "name": "Mclean Hospital",
       "class": "OTHER"
@@ -222,6 +228,9 @@
      }
     },
     "sponsorCollaboratorsModule": {
+     "responsibleParty": {
+      "type": "SPONSOR"
+     },
      "leadSponsor": {
       "name": "Holland Bloorview Kids Rehabilitation Hospital",
       "class": "OTHER"
