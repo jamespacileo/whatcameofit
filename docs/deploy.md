@@ -265,6 +265,17 @@ If a stage fails after the import began, restore to the bookmark, or for the pre
   ```
 - **Payload objects** are never overwritten, each being stored under its own checksum; upload the folder again and only the missing ones are sent (`--check-first` when the notes of the earlier upload are gone).
 
+### After a reload or a restore: start the push state again
+
+The push state does not notice a reload or a restore of the store, even one from the same build on the same host. What `backfill push` and `slices run --push` sent since the build stays in `<file>.pushed.json`, and those records would be skipped. After any reload or restore, start the state again and send every slice again:
+
+```bash
+thenwhat store fresh-state <store file> --url <address> --out <new state file>
+thenwhat backfill slices run --push --again --state <new state file>
+```
+
+`slices run --push` stops when the store holds no slice of the set but the state or the plan says some were sent. `GET /progress` gives `build_id`, the build the store was loaded from, read from the ids of the build's own runs; `fresh-state` and `slices run --push` refuse a store loaded from another build than the state's. It also gives `database_since`, when the database's first migration was applied: a database that was replaced shows a new time, one restored by Time Travel does not.
+
 ### The daily fold, in order
 
 A lookup's bulk records wait in D1's inbox until they are safe in R2. The order is held by the service, not by care:

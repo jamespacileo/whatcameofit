@@ -650,7 +650,14 @@ test("progress is read from the slices in the store, as counts only, by the toke
 
     const { status, body } = await box.ask("GET", "/progress", { as: "daily" });
     assert.equal(status, 200);
-    assert.deepEqual(Object.keys(body).sort(), ["at", "groups", "rows", "runs", "sets", "stages"]);
+    assert.deepEqual(Object.keys(body).sort(), ["at", "build_id", "database_since", "groups", "rows", "runs", "sets", "stages"]);
+    // No build's run is in this store, so no build is named; the database knows since when it is.
+    assert.equal(body.build_id, null);
+    assert.match(body.database_since, /^\d{4}-\d\d-\d\d/);
+    // A store loaded from a build holds the build's own runs, and its id is read from them.
+    await box.db.prepare("INSERT INTO run (id, writer, commit_sha, registered_at) VALUES ('build-0123456789abcdef-0', 'migration', 'abc1234', ?1)").bind(at).run();
+    assert.equal((await box.ask("GET", "/progress", { as: "daily" })).body.build_id, "0123456789abcdef");
+    await box.db.prepare("DELETE FROM run WHERE id LIKE 'build-%'").run();
     assert.deepEqual(body.stages, ["record", "registry_papers", "pubmed_papers", "in_store", "page"]);
     const [shown] = body.sets;
     assert.deepEqual(Object.keys(shown).sort(), ["changed_at", "counts", "groups", "rule", "slices", "stages", "total_slices", "total_trials", "year"]);
