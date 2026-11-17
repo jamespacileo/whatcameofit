@@ -117,7 +117,7 @@ const example = exampleClaim(data.claims);
             the site holds. Not drawn on a phone, where a row starts on the first screen. */}
         <div class="under-box">
           {topTopics.length > 0 && (
-            <p class="try" hidden data-try>
+            <p class="try" data-await data-try>
               <span>Try</span>
               {topTopics.slice(0, 3).map((topic) => (
                 <button type="button">{topic.title.toLowerCase()}</button>
@@ -244,7 +244,7 @@ const example = exampleClaim(data.claims);
       reader's last visit, or in the last thirty days on a first one. */}
   <p class="since" hidden data-since></p>
     {/* Shown by the script: without it the lists follow one another, each under its heading. */}
-    <div class="feed-tabs" role="tablist" aria-label="Lists of tracked claims" hidden>
+    <div class="feed-tabs" role="tablist" aria-label="Lists of tracked claims" data-await>
       {views.map((view, index) => (
         <button
           type="button"
@@ -651,7 +651,7 @@ const example = exampleClaim(data.claims);
         box.form!.requestSubmit();
       });
     }
-    tries.hidden = false;
+    tries.removeAttribute("data-await");
   }
 
   // The lists under the lookup: one is shown at a time, picked by its tab. The pick is
@@ -701,7 +701,7 @@ const example = exampleClaim(data.claims);
     const asked = new URL(location.href).searchParams.get("view");
     const wanted = tabs.find((tab) => tab.dataset.view === asked) ?? tabs[0];
     feed.classList.add("tabbed");
-    list.hidden = false;
+    list.removeAttribute("data-await");
     select(wanted.dataset.view!);
     // A link to a list picks its tab, then leads to the lists.
     for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-open-view]")) {

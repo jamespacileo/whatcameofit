@@ -101,7 +101,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
           </span>
         </p>
         <FilterMenu id="days-filter" group="Narrow this list">
-          <label class="pick" hidden data-kinds>
+          <label class="pick" data-await data-kinds>
             <span class="pick-name">Show</span>
             <select id="feed-kind">
               <option value="all">Everything</option>
@@ -112,7 +112,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
               }
             </select>
           </label>
-          <label class="pick" hidden data-spans>
+          <label class="pick" data-await data-spans>
             <span class="pick-name">Dated in</span>
             <select id="feed-span">
               {SPANS.map(({ span, name }) => <option value={span}>{name}</option>)}
@@ -476,7 +476,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       pick(kindField.value);
       remember("kind", kind, "all");
     });
-    root.querySelector<HTMLElement>("[data-kinds]")!.hidden = false;
+    root.querySelector<HTMLElement>("[data-kinds]")!.removeAttribute("data-await");
 
     // The span: rows dated before it are left out. A date still to come is in every span.
     const spanField = root.querySelector<HTMLSelectElement>("#feed-span")!;
@@ -498,7 +498,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       if (keep) remember("span", span, "week");
     };
     spanField.addEventListener("change", () => setSpan(spanField.value));
-    root.querySelector<HTMLElement>("[data-spans]")!.hidden = false;
+    root.querySelector<HTMLElement>("[data-spans]")!.removeAttribute("data-await");
 
     // The status path and the topic choice narrow these rows too, and say so here.
     list.addEventListener("paged:refresh", refresh);

@@ -2,6 +2,28 @@
 /* The heading face on a claim and a topic page (openspec band-structure). */
 @import "@fontsource-variable/newsreader/opsz.css";
 
+/* What a reader sees until each face arrives: a font already on the device, scaled
+   to the face's own widths and line height, so the text does not move when the face
+   takes over. Measured from the font files; a device without the local font skips
+   this and uses the next name in the list. */
+@font-face {
+  font-family: "Figtree Fallback";
+  src: local("Arial");
+  size-adjust: 100.07%;
+  ascent-override: 94.93%;
+  descent-override: 24.98%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback";
+  src: local("Georgia");
+  size-adjust: 91.49%;
+  ascent-override: 80.33%;
+  descent-override: 28.96%;
+  line-gap-override: 0%;
+}
+
 :root,
 .theme-light {
   --paper: #ffffff;
@@ -62,10 +84,10 @@
   --ring: #7f90a3;
   color-scheme: light;
 
-  --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
+  --face: "Figtree Variable", "Figtree Fallback", "Helvetica Neue", Arial, sans-serif;
   /* The heading face: a record page's title and its section headings. A news serif for
      what was reported; the status and everything recorded stay in the page's face. */
-  --display: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
+  --display: "Newsreader Variable", "Newsreader Fallback", "Iowan Old Style", Georgia, serif;
   --measure: 66ch;
   --page: 60rem;
   --gutter: clamp(1rem, 4vw, 2rem);
@@ -3134,6 +3156,21 @@ span.pop > span + span {
 @media (scripting: enabled) {
   .feed:not(.tabbed) .feed-panel ~ .feed-panel {
     display: none;
+  }
+}
+
+/* A control only a script can work. Without scripts it is left out. Where scripts
+   run it holds its place from the first paint, out of sight until its script is
+   ready, so nothing below it moves when it appears. */
+@media (scripting: none) {
+  [data-await] {
+    display: none;
+  }
+}
+
+@media (scripting: enabled) {
+  [data-await] {
+    visibility: hidden;
   }
 }
 
