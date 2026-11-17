@@ -707,6 +707,22 @@ const sections = [
           </div>
         )
       }
+    {!hasDatedPromise && <p class="absent">No dated promise on record.</p>}
+    {/* Over the timetable: its filter at the left, its key at the right. */}
+    <div class="table-tools">
+    {
+      /* Shown by the script: with none, every entry is there. */
+      kindCounts.length > 1 && (
+        <div class="kind-tabs" role="group" aria-label="Show entries of one kind" hidden data-kinds>
+          <button type="button" class="kind-tab" data-kind="all" aria-pressed="true">All</button>
+          {kindCounts.map(({ kind, name, n }) => (
+            <button type="button" class="kind-tab" data-kind={kind} aria-pressed="false">
+              {name} <span class="n">{n}</span>
+            </button>
+          ))}
+        </div>
+      )
+    }
       <ul class="legend" aria-label="Key">
         {
           hasPromise && (
@@ -730,20 +746,7 @@ const sections = [
           )
         }
       </ul>
-    {!hasDatedPromise && <p class="absent">No dated promise on record.</p>}
-    {
-      /* Shown by the script: with none, every entry is there. */
-      kindCounts.length > 1 && (
-        <div class="kind-tabs" role="group" aria-label="Show entries of one kind" hidden data-kinds>
-          <button type="button" class="kind-tab" data-kind="all" aria-pressed="true">All</button>
-          {kindCounts.map(({ kind, name, n }) => (
-            <button type="button" class="kind-tab" data-kind={kind} aria-pressed="false">
-              {name} <span class="n">{n}</span>
-            </button>
-          ))}
-        </div>
-      )
-    }
+    </div>
     <p class="visually-hidden" role="status" data-kinds-said></p>
     <div class="table-frame">
     <table role="table" class="timetable" aria-labelledby="timetable">
@@ -1169,7 +1172,10 @@ const sections = [
         <span id="page-address" hidden>{address}</span>
       </div>
       <details class="post-to">
-        <summary id="post-to">Post it to a network</summary>
+        <summary id="post-to">
+          Post it to a network
+          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+        </summary>
         <ul class="post-links" aria-labelledby="post-to">
           {
             posts.map((post) => (
@@ -1229,7 +1235,10 @@ const sections = [
         </div>
       </div>
       <details class="embed-how">
-        <summary>Writing about this? Show the status on your own page</summary>
+        <summary>
+          Writing about this? Show the status on your own page
+          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+        </summary>
         <p class="entry-note">
           Paste this where the status should appear. It shows the current status and links back
           here; it loads nothing else and stores nothing.

@@ -10,4 +10,6 @@
 - [x] 6b Papers and organisations in two columns from 40rem. Verify: 1400px, 88 papers and 18 organisations.
 - [ ] 7 A fixture claim with more than 20 records, and a site test for the folded years.
 - [ ] 8 A print preview of a folded timetable.
-- [ ] 9 Later: one format for score chips; the type scale; the two legends over the timetable; shared row and table components.
+- [x] 9 Done since: one format for score chips (`score-chip`); the type scale (`type-scale`); a shared row component (`Fact.astro`, change `glance-rows`). The timetable's key now shares a line with its filter (10). A shared table component is still open.
+- [x] 10 The layout pass of 2026-11-17: two column stops (`--stop-1`, `--stop-2`) for statements, the timetable's years (from 60rem), papers and organisations; one right edge for lists, the strip and fold lines; the brief's answers open as fact rows do and the brief ends on a hairline; one fold line in "Pass it on"; the timetable's filter and key on one line. Verify: 1400px light, every section open, the stops measured (581px and 887px) and every list's right edge (1280px); 820px; 375px dark; site tests.
+- [ ] 11 The "Follow" offer stands three times on a claim page. Left for the operator to decide.

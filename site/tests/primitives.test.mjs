@@ -57,7 +57,9 @@ test("every table has the same quiet head", () => {
 });
 
 test("panels share their padding and their corners", () => {
-  for (const panel of [".trial-facts", ".brief-open", ".card-facts", ".term-card"]) {
+  // What a brief answer or a fact row opens to is not a panel: it lies on the page's
+  // ground under its tinted line.
+  for (const panel of [".trial-facts", ".card-facts", ".term-card"]) {
     uses(panel, "padding", "panel-pad");
     uses(panel, "border-radius", "radius-s");
   }

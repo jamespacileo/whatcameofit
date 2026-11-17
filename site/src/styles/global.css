@@ -75,6 +75,12 @@
   --head-rule: color-mix(in oklab, var(--ink) 50%, var(--paper));
   /* The round mark of anything that folds: a section's heading, a fact's row. */
   --fold-mark: 1.6rem;
+  /* A record page's two column stops, measured from a section's left edge. A label, a
+     group's name or a year stands before the first, and what it names starts on it; a
+     second column (the brief's answers, a paper's ties, an organisation's parts) starts
+     on the second. Tables keep their own columns. */
+  --stop-1: calc(var(--label-col) + 1.5rem);
+  --stop-2: calc(var(--stop-1) + 18rem);
   /* The type scale (openspec type-scale): seven steps for running text and four named
      roles. Every font-size in this file is one of them, a title's clamp or inherit; a
      test holds the file to it (tests/primitives.test.mjs). Root is 17px. */
@@ -4525,7 +4531,9 @@ main ul:not([class]) li + li {
 .trial-more summary,
 /* Fold line: "the other N of M" under a list, the same wherever a list folds its rest. */
 .trials-rest > summary,
-.papers-rest > summary {
+.papers-rest > summary,
+.post-to > summary,
+.embed-how > summary {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -4617,10 +4625,14 @@ main ul:not([class]) li + li {
   max-width: var(--measure);
 }
 
+.post-to > summary::-webkit-details-marker,
+.embed-how > summary::-webkit-details-marker,
 .papers-rest > summary::-webkit-details-marker {
   display: none;
 }
 
+.post-to[open] > summary svg,
+.embed-how[open] > summary svg,
 .papers-rest[open] > summary svg {
   transform: rotate(180deg);
 }
@@ -5763,7 +5775,7 @@ main ul:not([class]) li + li {
 }
 
 .brief-group:last-child {
-  border-bottom: 2px solid var(--head-rule);
+  border-bottom: 1px solid var(--rule);
 }
 
 .brief-group h3 {
@@ -5800,21 +5812,19 @@ main ul:not([class]) li + li {
 }
 
 /* One chevron, turned when the answer is open. */
-.brief summary::after {
-  content: "";
-  align-self: center;
-  width: 0.5rem;
-  height: 0.5rem;
-  margin: 0 0.4rem 0.2rem 0;
-  border-right: 2px solid var(--muted);
-  border-bottom: 2px solid var(--muted);
-  transform: rotate(45deg);
-  transition: transform 120ms var(--ease-out);
+/* An answer's press is its whole line, tinted under the pointer and while it is open,
+   with the fold mark at its end: the same press as a fact row's. */
+.brief summary:hover,
+.brief details[open] > summary {
+  background: var(--panel);
+  box-shadow:
+    -0.85rem 0 0 var(--panel),
+    0.85rem 0 0 var(--panel);
 }
 
-.brief details[open] > summary::after {
-  margin-bottom: -0.25rem;
-  transform: rotate(-135deg);
+.brief summary .chev {
+  align-self: start;
+  margin: -0.05rem 0;
 }
 
 .brief-q {
@@ -5826,13 +5836,11 @@ main ul:not([class]) li + li {
   overflow-wrap: anywhere;
 }
 
+/* What an answer opens to: on the page's own ground under the tinted line. */
 .brief-open {
   display: grid;
   gap: 0.4rem;
-  margin: 0 0 0.85rem;
-  padding: var(--panel-pad);
-  border-radius: var(--radius-s);
-  background: var(--panel);
+  padding: 0.85rem 0 1rem;
 }
 
 .brief-open p {
@@ -5889,9 +5897,10 @@ main ul:not([class]) li + li {
     grid-column: 1;
   }
 
-  .brief summary::after {
+  .brief summary .chev {
     grid-column: 2;
     grid-row: 1 / span 2;
+    align-self: center;
   }
 
   .brief-shown {
@@ -5905,12 +5914,6 @@ main ul:not([class]) li + li {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .brief summary::after {
-    transition: none;
-  }
-}
-
 /* On paper every answer is printed open, with no chevron. */
 @media print {
   .brief details::details-content {
@@ -5919,8 +5922,13 @@ main ul:not([class]) li + li {
     content-visibility: visible;
   }
 
-  .brief summary::after {
+  .brief summary .chev {
     display: none;
+  }
+
+  .brief details[open] > summary {
+    background: none;
+    box-shadow: none;
   }
 }
 
@@ -6738,6 +6746,8 @@ body.framed {
   .fold .chev svg,
   .fact-open .chev,
   .fact-open .chev svg,
+  .brief summary .chev,
+  .brief summary .chev svg,
   .onpage a,
   .onpage::before,
   .onpage::after {
@@ -7903,15 +7913,75 @@ body.framed {
   margin: 0;
 }
 
+/* One right edge (openspec sheet-cohesion, the layout pass of 2026-11-17): every list,
+   strip and fold line of a section runs to the section's right edge, as its head rule
+   does. Running text inside keeps its reading measure. */
+.sheet .statement-list,
+.sheet .record-list,
+.sheet .papers-rest,
+.sheet .claim-strip {
+  max-width: none;
+}
+
+/* What stands over the timetable: its filter at the left, its key at the right. */
+.table-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  margin: 0.9rem 0 0.7rem;
+}
+
+.table-tools .kind-tabs {
+  margin: 0;
+}
+
+/* A year in the label's column, its records where a value starts: where the sheet is
+   wide enough that a folded year's summary still fits on its line. */
+@media (min-width: 60rem) {
+  .sheet .timetable .year {
+    width: calc(var(--stop-1) - 0.85rem);
+  }
+}
+
 /* Papers and organisations as rows of two columns: what it is at the left, how it is
-   tied to this claim at the right, in the note size. */
+   tied to this claim at the right, in the note size. The second column starts on the
+   sheet's second stop, where the brief's answers start. */
 @media (min-width: 40.01rem) {
   .sheet .paper-list {
     max-width: none;
   }
 
+  /* A report's statement on the sheet's first stop: what kind of statement in the
+     label's column, the statement where a value starts, how sure the reading is at the
+     end of its line. */
+  .sheet .statement-list > li {
+    grid-template-columns: var(--label-col) minmax(0, 1fr) auto;
+    column-gap: 1.5rem;
+    align-items: baseline;
+  }
+
+  .sheet .statement-list .match-record {
+    display: contents;
+  }
+
+  .sheet .statement-list .card-kind {
+    grid-column: 1;
+  }
+
+  .sheet .statement-list .statement,
+  .sheet .statement-list .match-record > .entry-note {
+    grid-column: 2;
+  }
+
+  .sheet .statement-list > li > .pop-trigger {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
   .sheet .paper {
-    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(14rem, 1fr);
     column-gap: 2.5rem;
     align-items: start;
   }
@@ -7926,7 +7996,7 @@ body.framed {
 
   .sheet .organisation-list .match-record {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(14rem, 1fr);
     grid-auto-flow: row dense;
     column-gap: 2.5rem;
     align-items: start;
@@ -8143,32 +8213,39 @@ body.framed {
   white-space: nowrap;
 }
 
-.fact-open .chev {
+.fact-open .chev,
+.brief summary .chev {
   display: grid;
   place-items: center;
   width: var(--fold-mark);
   height: var(--fold-mark);
   border-radius: 50%;
+  color: var(--muted);
   transition:
     background-color 120ms,
     color 120ms;
 }
 
-.fact-open .chev svg {
+.fact-open .chev svg,
+.brief summary .chev svg {
   transition: rotate 200ms var(--ease-out);
 }
 
-.fact-open[aria-expanded="true"] .chev svg {
+.fact-open[aria-expanded="true"] .chev svg,
+.brief details[open] > summary .chev svg {
   rotate: 180deg;
 }
 
 .js .fact-open:hover .chev,
-.js .fact-sheet > div[data-open] .fact-open .chev {
+.js .fact-sheet > div[data-open] .fact-open .chev,
+.brief summary:hover .chev,
+.brief details[open] > summary .chev {
   background: var(--tint);
   color: var(--blue);
 }
 
-.js .fact-sheet > div[data-open] .fact-open:hover .chev {
+.js .fact-sheet > div[data-open] .fact-open:hover .chev,
+.brief details[open] > summary:hover .chev {
   background: var(--tag);
 }
 
