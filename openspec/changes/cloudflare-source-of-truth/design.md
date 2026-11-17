@@ -349,6 +349,7 @@ What this costs, against decision 1's one source of truth:
 - **No Worker query over leads or stored trials** until a table is moved to hot.
 - **Going back is one full load.** `thenwhat store build --tier all`, dumped and loaded, put the whole store in the preview D1 on 2026-11-17 in about 9 minutes.
 
+- **The trial target set is hot (amended 2026-11-17).** The trials of `active-or-ended-this-year` (102,877 that day), their states and payloads are in the hot tier as well as the bulk file. The hot file grows from 328 to 695 MB. A trial that leaves the set keeps its rows in D1 (`docs/adr/0010`).
 - **The bulk tier cannot be queried from a Worker.** A trial's page served from the store (phase 5, tasks 7.1 to 7.3) needs `registry_trial` in D1; those tasks now begin by moving it to the hot tier, which the full load of 2026-11-17 showed fits.
 - **A reader's lookup still stages leads, shares and readings into D1.** After the cut, D1's `link_lead`, `link_share` and `lead_reading` hold only what lookups add, and the bulk file holds the history. A lookup of an article whose lead is only in the bulk file is answered as for a new lead. Promoting `link_lead` to hot reverses this.
 - **A claim merge in D1 moves the leads D1 holds**, not those in the bulk file; the next bulk build carries the change from Postgres.

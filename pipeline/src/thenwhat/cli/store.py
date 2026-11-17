@@ -1,6 +1,7 @@
 """The truth store filled in bulk: a store file built from the database, and the SQL files
 D1's import takes it in by."""
 
+import inspect
 import json
 import os
 import subprocess
@@ -8,16 +9,18 @@ import time
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 import typer
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.export import STORE_SQL, reading_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.db.models import RegistryTrial
 from thenwhat.db.session import make_engine
 from thenwhat.export.parallel import read_only
 from thenwhat.store.build import (
@@ -96,6 +99,48 @@ def bulk_state_path(file: Path) -> Path:
     return file.with_name(file.name + ".bulk.json")
 
 
+# The trial target set, decided by the operator on 2026-11-17.
+TARGET_SET = "active-or-ended-this-year"
+
+
+def target_rule(name: str) -> tuple[Any, str]:
+    """The rule over stored trials of the named target set, chosen in this year, and how it
+    is named in a build; no rule for 'none'. The rule is the registry corpus's own
+    (`backfill.trial_sets.rule_of`)."""
+    if name == "none":
+        return None, "none"
+    from thenwhat.backfill import trial_sets
+
+    year = datetime.now(UTC).year
+    rule_of: Any = getattr(trial_sets, "rule_of", None)
+    if rule_of is None or len(inspect.signature(rule_of).parameters) < 2:
+        if name == "auto":
+            err.print(
+                f"This checkout has no rule for {TARGET_SET} (pull request 315): every trial"
+                " stays bulk in this build."
+            )
+            return None, "none"
+        err.print(
+            "This checkout's `backfill.trial_sets.rule_of` takes no year: the rolling target"
+            " set comes with pull request 315. Build with --set none until it is merged."
+        )
+        raise typer.Exit(code=1)
+    name = TARGET_SET if name == "auto" else name
+    return rule_of(name, year)(), f"{name}:{year}"
+
+
+def target_trials(session: Any, rule: Any) -> list[tuple[str, str]] | None:
+    """The target set's trials, by registry and identifier; None without a rule."""
+    if rule is None:
+        return None
+    return [
+        (registry, external)
+        for registry, external in session.execute(
+            select(RegistryTrial.registry_name, RegistryTrial.external_id).where(rule)
+        )
+    ]
+
+
 def remove_pending(file: Path, *, bulk_too: bool) -> list[Path]:
     """The pending runs a build of `file` makes stale, removed: the hot push's, and the bulk
     merge's when the bulk file is built again. The build holds what they carried."""
@@ -135,6 +180,15 @@ def build_command(
             "--fresh", help="Build every tier again, even one whose sources have not changed."
         ),
     ] = False,
+    trial_set: Annotated[
+        str,
+        typer.Option(
+            "--set",
+            help="The trial target set whose trials also go to the hot tier (operator,"
+            " 2026-11-17), chosen in this year; 'none' keeps every trial bulk; 'auto' (the"
+            f" default) is {TARGET_SET} where this checkout has its rule, else none.",
+        ),
+    ] = "auto",
 ) -> None:
     """Build the store from the database, through the store's own merge, as the hot tier
     loaded into D1 and the bulk tier kept as one file in R2 (docs/adr/0010). The database
@@ -152,9 +206,15 @@ def build_command(
         raise typer.Exit(code=1)
     digest = sql_digest(store_sql)
     started = time.monotonic()
+    rule, chosen_in = target_rule(trial_set)
     with reading_session() as session:
-        # A hot build reads only the hot tier's sources, its watermarks included.
-        marks = watermarks(session, HOT_SOURCES if tier == HOT else HOT_SOURCES + BULK_SOURCES)
+        # A hot build reads only the hot tier's sources, its watermarks included; with a
+        # target set, the trials too.
+        sources = HOT_SOURCES if tier == HOT else HOT_SOURCES + BULK_SOURCES
+        if rule is not None:
+            sources = (*sources, "registry_trial")
+        marks = watermarks(session, sources)
+        hot_trials = target_trials(session, rule)
         before = {} if fresh else watermark_read(file)
         kept = (
             tier == BOTH
@@ -168,7 +228,7 @@ def build_command(
                 f" {tier_path(file, BULK)} is kept; building the hot tier only.",
                 markup=False,
             )
-        identity = build_id(marks, digest, tier)
+        identity = build_id(marks, digest, f"{tier}:{chosen_in}")
         try:
             report = build(
                 session,
@@ -178,6 +238,7 @@ def build_command(
                 now=datetime.now(UTC),
                 hot_only=effective == HOT,
                 build_id=identity,
+                trials=rule,
                 on_kind=lambda kind, count, seconds: out.print(
                     f"  {kind}: {count:,} read and merged in {seconds:,.1f} s", markup=False
                 ),
@@ -208,7 +269,14 @@ def build_command(
         out.print(f"{count:,} {kind} rows share a natural key with an earlier row.", markup=False)
     for kind, count in sorted(report.unnamed.items()):
         out.print(f"{count:,} {kind} rows name no record the store keeps.", markup=False)
-    for written in split_build(file, payloads, effective, hot_only=effective == HOT):
+    if hot_trials is not None:
+        out.print(
+            f"The trial target set {chosen_in}: {len(hot_trials):,} trials go to the hot tier too.",
+            markup=False,
+        )
+    for written in split_build(
+        file, payloads, effective, hot_only=effective == HOT, hot_trials=hot_trials
+    ):
         objects = payloads / written.stem.rsplit(".", 1)[-1]
         out.print(
             f"Wrote {written} ({_size(written.stat().st_size)})"
@@ -389,6 +457,12 @@ def push_command(
         bool,
         typer.Option("--report-only", help="Say what each run would do, apply nothing."),
     ] = False,
+    trial_set: Annotated[
+        str,
+        typer.Option(
+            "--set", help="The trial target set whose trials are hot, as for store build."
+        ),
+    ] = "auto",
 ) -> None:
     """Hand the day's changes to the ingest service: every record new or changed since
     the last push or the build. The token is read from INGEST_TOKEN. The database is
@@ -422,8 +496,16 @@ def push_command(
         if every_tier:
             records = gather(session, keep_payload=keep_payload).records
         else:
+            rule, _ = target_rule(trial_set)
             records, left_out = hot_records(
-                stream(session, Gathered(records=[]), keep_payload=keep_payload)
+                stream(
+                    session,
+                    Gathered(records=[]),
+                    keep_payload=keep_payload,
+                    hot_only=True,
+                    trials=rule,
+                ),
+                with_trials=rule is not None,
             )
     with httpx.Client(
         base_url=url,

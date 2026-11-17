@@ -152,6 +152,7 @@ def runs_of(
     report: BuildReport,
     on_kind: Callable[[str, int, float], None] = lambda *_: None,
     hot_only: bool = False,
+    trials: Any = None,
 ) -> Iterator[list[Record]]:
     """The build's runs in the order they are merged, as the records are read: every
     claim under its first slug, the renames, then everything else in runs of
@@ -182,7 +183,9 @@ def runs_of(
                 on_kind(kind, read[kind], time.monotonic() - at)
 
     in_claims = True
-    for record in stream(session, counts, keep_payload=keep_payload, hot_only=hot_only):
+    for record in stream(
+        session, counts, keep_payload=keep_payload, hot_only=hot_only, trials=trials
+    ):
         report.state[f"{record.kind}\t{record.key}"] = body_sha256(record)
         read[record.kind] += 1
         if record.kind not in began:
@@ -275,6 +278,7 @@ def build(
     on_kind: Callable[[str, int, float], None] = lambda *_: None,
     hot_only: bool = False,
     build_id: str | None = None,
+    trials: Any = None,
 ) -> BuildReport:
     """Make `path` a store file of everything the store keeps of what Postgres holds now.
     The session is only read. A file already at `path` is replaced."""
@@ -291,7 +295,7 @@ def build(
         db.execute("PRAGMA journal_mode = WAL")
         db.executescript((store_sql / "schema.sql").read_text())
         for number, records in enumerate(
-            runs_of(session, payloads, report, on_kind, hot_only=hot_only)
+            runs_of(session, payloads, report, on_kind, hot_only=hot_only, trials=trials)
         ):
             if not records:
                 continue
