@@ -9,14 +9,23 @@
 //   POST   /runs/<id>/preview     the report without applying; the run is then dropped
 //   GET    /runs/<id>             what the merge did
 //   DELETE /runs/<id>             drop a run that was not merged
+//   GET    /inbox?after=&limit=   records of the bulk tier that runs handed over, oldest first
+//   POST   /inbox/folded          a fold is recorded from its delta in the bucket and the build's list: {object}
+//   POST   /inbox/clear           no further than the furthest fold recorded: {through}
+//   PUT    /progress/slices       the pipeline reports how far slices of a set of trials have come
+//   GET    /progress              counts only: sets, slices by stage, last runs, rows by table
+//   GET    /progress/page         the same as a page; it holds nothing until a token is typed into it
 //   POST   /work/lease|finish|fail    the consumer's queue of due work
 //   POST   /slices/take|release       a device's work slices
 import { principal } from "./auth.mjs";
 import { Refusal, checkRecords } from "./check.mjs";
 import { sha256 } from "./hash.mjs";
-import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
+import { peopleInText } from "./people.mjs";
+import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_INBOX_RECORDS, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
 import { INGEST } from "./sql.generated.mjs";
 import * as store from "./store.mjs";
+import { progress, reportSlices } from "./progress.mjs";
+import { PAGE } from "./page.mjs";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 const refuse = (status, code, message, detail) => { throw new Refusal(status, code, message, detail); };
@@ -88,6 +97,9 @@ async function putPayload(request, env, who, checksum) {
   const bytes = await body(request, ["application/octet-stream", "application/json"], limits(env).MAX_PAYLOAD_BYTES);
   if (bytes.length <= INLINE_PAYLOAD_BYTES) refuse(422, "small_payload", `a payload of ${INLINE_PAYLOAD_BYTES} bytes or less is kept in its staged record, not here`);
   if ((await sha256(bytes)) !== checksum) refuse(422, "checksum_mismatch", "the body is not what its checksum says; nothing was stored");
+  // A registry record that still names people is not stored: the store keeps no personal data.
+  const people = peopleInText(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
+  if (people.length) refuse(422, "personal_data", "a registry record is handed over without the people it names; nothing was stored", { people });
   const key = `payload/${checksum}`;
   if (await env.PAYLOADS.head(key)) return json(200, { key, bytes: bytes.length, stored: false });
   await env.PAYLOADS.put(key, bytes, { sha256: checksum });
@@ -178,10 +190,63 @@ async function slice(request, env, who, verb) {
   return json(results.length ? 200 : 409, { taken: results.length > 0, device: results[0]?.device ?? null, lapses_at: results.length ? lapses : null });
 }
 
+// The inbox of the bulk tier, for the daily job, the bulk file's one writer.
+async function inbox(request, env, who, url, verb) {
+  if (!who.may.includes("inbox")) refuse(403, "outside_scope", `a ${who.role} token may not read or clear the inbox`);
+  const whole = (text) => (/^\d{1,15}$/.test(text ?? "") ? Number(text) : null);
+  if (verb !== "read") {
+    const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
+    const stated = Number.isInteger(value?.through) && value.through >= 0 ? value.through : null;
+    if (verb === "folded") {
+      // The delta that holds what was folded must already be in the bucket, beside its
+      // build, and listed in the build's deltas.json. How far it folded is read from that
+      // list, written when the delta was uploaded, never taken from the caller.
+      const key = /^(bulk\/[A-Za-z0-9._-]{1,64})\/(delta-[A-Za-z0-9._-]{1,80})$/.exec(value?.object || "");
+      if (!key) refuse(400, "bad_request", "object is the delta's key: bulk/<build id>/delta-...");
+      const [held, list] = await Promise.all([env.PAYLOADS.head(value.object), env.PAYLOADS.get(`${key[1]}/deltas.json`)]);
+      if (!held || !held.size) refuse(409, "delta_not_uploaded", "no such delta object is in the bucket: upload it first");
+      let listed = null;
+      try { listed = (await list?.json())?.deltas?.find((delta) => delta.name === key[2]) ?? null; } catch { listed = null; }
+      if (!listed) refuse(409, "delta_not_listed", "the build's deltas.json does not list this delta: upload it with scripts/upload-delta.mjs");
+      if (listed.bytes !== held.size) refuse(409, "delta_differs", "the object is not the size its build's list says");
+      if (!Number.isInteger(listed.through) || listed.through < 0) refuse(409, "delta_has_no_through", "the build's list does not say how far this delta folded the inbox: upload it with --through");
+      if (stated !== null && stated !== listed.through) refuse(409, "through_differs", "the delta's own list says another through", { listed_through: listed.through });
+      const recorded = await store.recordFold(env.STORE, value.object, listed.through, held.size);
+      if (!recorded) refuse(409, "beyond_inbox", "through is past the last record the inbox has given");
+      return json(200, recorded);
+    }
+    const through = stated;
+    if (through === null) refuse(400, "bad_request", "through is the last record folded, as the inbox gave it");
+    const folded = await store.foldedThrough(env.STORE);
+    if (through > folded) refuse(409, "not_folded", "the inbox is cleared no further than the furthest fold recorded: record the fold first", { folded_through: folded });
+    return json(200, await store.clearInbox(env.STORE, through));
+  }
+  const after = whole(url.searchParams.get("after") ?? "0"), limit = whole(url.searchParams.get("limit") ?? "500");
+  if (after === null || limit === null || limit < 1) refuse(400, "bad_request", "after and limit are whole numbers");
+  return json(200, await store.inbox(env.STORE, after, Math.min(limit, MAX_INBOX_RECORDS)));
+}
+
+// The progress page's shell: static, the same for everyone, with no count in it. It asks
+// /progress itself, with the token typed into it. It may load nothing from anywhere else.
+const page = () => new Response(PAGE, { status: 200, headers: {
+  "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer", "x-frame-options": "DENY", "x-content-type-options": "nosniff",
+  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+} });
+
+// Asked too often. The platform's rate-limit bindings count for a minute in each
+// Cloudflare location; they are approximate, and absent on this machine. A caller without
+// a known token is counted by its address, which is used as the key and is neither stored
+// nor logged; a caller with one, by the token's name.
+const tooOften = async (limiter, key) => Boolean(limiter) && !(await limiter.limit({ key })).success;
+const slowDown = () => json(429, { error: "too_many_requests" });
+
 async function route(request, env, ctx) {
+  const from = request.headers.get("cf-connecting-ip") || "unknown";
+  if (request.method === "GET" && new URL(request.url).pathname === "/progress/page") return (await tooOften(env.LIMIT_UNKNOWN, from)) ? slowDown() : page();
   const who = await principal(request, env);
   // Without a token nothing answers, whatever was asked for.
-  if (!who) return json(401, { error: "unauthorized" });
+  if (!who) return (await tooOften(env.LIMIT_UNKNOWN, from)) ? slowDown() : json(401, { error: "unauthorized" });
+  if (await tooOften(env.LIMIT_TOKEN, who.name)) return slowDown();
   const { pathname } = new URL(request.url);
   const parts = pathname.split("/").filter(Boolean);
   const at = `${request.method} /${parts[0] || ""}${parts.length > 1 ? "/*" : ""}${parts[2] ? `/${parts[2]}` : ""}`;
@@ -204,6 +269,17 @@ async function route(request, env, ctx) {
       if (run.status !== "registered") refuse(409, "run_closed", `a ${run.status} run is kept`);
       await store.discard(env.STORE, parts[1]);
       return json(200, { run: parts[1], dropped: true });
+    }
+    case "GET /inbox": return inbox(request, env, who, new URL(request.url), "read");
+    case "POST /inbox/*": if (parts[1] === "folded") return inbox(request, env, who, new URL(request.url), "folded"); if (parts[1] === "clear") return inbox(request, env, who, new URL(request.url), "clear"); break;
+    case "GET /progress":
+      if (!who.may.includes("progress")) refuse(403, "outside_scope", `a ${who.role} token may not read the progress`);
+      return json(200, await progress(env.STORE));
+    case "PUT /progress/*": {
+      if (parts[1] !== "slices") break;
+      if (!who.may.includes("report")) refuse(403, "outside_scope", `a ${who.role} token may not report progress`);
+      const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
+      return json(200, await reportSlices(env.STORE, value));
     }
     case "POST /work/*": if (["lease", "finish", "fail"].includes(parts[1])) return work(request, env, who, parts[1]); break;
     case "POST /slices/*": if (["take", "release"].includes(parts[1])) return slice(request, env, who, parts[1]); break;

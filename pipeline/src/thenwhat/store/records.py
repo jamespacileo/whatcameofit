@@ -9,7 +9,7 @@ payload by its checksum. Nothing here reads a database; `gather.py` does that.
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol
 
 from thenwhat.backfill.address import KEY_VERSION
 from thenwhat.db.models import (
@@ -45,6 +45,7 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import OutletKind, ScreenOutcome
+from thenwhat.sources.people import sponsored_by_a_person, without_people
 from thenwhat.store.form import (
     Record,
     body,
@@ -427,7 +428,11 @@ def entity_substance_record(substance: EntitySubstance, *, entity: Entity, slug:
 
 
 def evidence_event_record(
-    event: EvidenceEvent, *, slug: str, match: tuple[Entity, EntityMatch] | None
+    event: EvidenceEvent,
+    *,
+    slug: str,
+    match: tuple[Entity, EntityMatch] | None,
+    payload_sha256: str | None = None,
 ) -> Record:
     """An event, its payload named by checksum, and the match it came from named by its
     entity's type and name and the record's source and identifier."""
@@ -463,7 +468,7 @@ def evidence_event_record(
             summary=event.summary,
             confidence=event.confidence,
             content_sha256=content_sha256(**fields),
-            payload_sha256=payload_of(event.raw_payload).sha256,
+            payload_sha256=payload_sha256 or payload_of(event.raw_payload).sha256,
             fetched_at=when(event.fetched_at),
             review_state=_text(event.review_state),
             reviewed_at=when(event.reviewed_at),
@@ -539,9 +544,25 @@ def intervention_names(interventions: Sequence[Mapping[str, Any]]) -> str:
     return "; ".join(names)
 
 
-def registry_trial_record(trial: RegistryTrial) -> Record:
+def registry_payload(trial: RegistryTrial) -> Any:
+    """A trial's payload as the store keeps it: without a person's name, as the corpus
+    load keeps one since 2026-11-17 (`sources.people.without_people`). Rows
+    loaded before then still hold such names in Postgres."""
+    if not isinstance(trial.raw_payload, dict):
+        return trial.raw_payload
+    return without_people(trial.raw_payload)
+
+
+def registry_trial_record(trial: RegistryTrial, *, payload_sha256: str | None = None) -> Record:
     """A trial with every column Postgres holds, its payload named by checksum. When the
-    registry was last found to say the same (`checked_at`) is the store's to know."""
+    registry was last found to say the same (`checked_at`) is the store's to know. A
+    sponsor who is a person is not named."""
+    payload = registry_payload(trial) if payload_sha256 is None else trial.raw_payload
+    sponsors = (
+        payload.get("protocolSection", {}).get("sponsorCollaboratorsModule", {})
+        if isinstance(payload, dict)
+        else {}
+    )
     return Record(
         "registry_trial",
         key_of(trial.registry_name, trial.external_id),
@@ -568,8 +589,10 @@ def registry_trial_record(trial: RegistryTrial) -> Record:
             results_first_posted=day(trial.results_first_posted),
             has_results=flag(trial.has_results),
             acronym=trial.acronym,
-            lead_sponsor_name=trial.lead_sponsor_name,
-            payload_sha256=payload_of(trial.raw_payload).sha256,
+            lead_sponsor_name=(
+                None if sponsored_by_a_person(sponsors) else trial.lead_sponsor_name
+            ),
+            payload_sha256=payload_sha256 or payload_of(payload).sha256,
             fetched_at=when(trial.fetched_at),
         ),
     )
@@ -588,7 +611,14 @@ def registry_load_record(load: RegistryLoad) -> Record:
     )
 
 
-def article_lead_record(lead: ArticleLead, *, trial: RegistryTrial, url_key: str) -> Record:
+class TrialNamed(Protocol):
+    """What names a trial: its registry and its identifier there."""
+
+    registry_name: str
+    external_id: str
+
+
+def article_lead_record(lead: ArticleLead, *, trial: TrialNamed, url_key: str) -> Record:
     """A news article found for a trial. The search service's raw result is not kept: its
     fields are already the record's."""
     return Record(

@@ -1,0 +1,609 @@
+"""The store in two tiers: the hot one for D1, the bulk one kept as a file."""
+
+import json
+import shutil
+import sqlite3
+from collections import Counter
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+from sqlalchemy.orm import Session
+from typer.testing import CliRunner
+
+from test_store_records import STORE, _world
+from thenwhat.cli import app
+from thenwhat.store.build import build
+from thenwhat.store.form import Record, payload_of
+from thenwhat.store.tiers import (
+    BULK,
+    HOT,
+    MAX_COLUMNS,
+    REFERENCE,
+    TIER,
+    checksums,
+    fingerprint_parts,
+    hash_of,
+    hot_records,
+    in_tier,
+    references,
+    split_build,
+    tables,
+    tier_of,
+    tier_path,
+)
+
+
+def _schema() -> sqlite3.Connection:
+    db = sqlite3.connect(":memory:")
+    db.executescript((STORE / "schema.sql").read_text())
+    return db
+
+
+def test_every_table_has_a_tier_and_no_hot_table_references_a_bulk_one():
+    db = _schema()
+    assert set(tables(db)) == set(TIER)
+    for table, column, parent in references(db):
+        if in_tier(table, HOT):
+            assert in_tier(parent, HOT), f"{table}.{column} references {parent}, a bulk table"
+
+
+def test_a_build_splits_into_a_hot_and_a_bulk_file(session: Session, tmp_path: Path):
+    world = _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    hot, bulk = split_build(file, payloads, "both")
+    assert (hot, bulk) == (tier_path(file, HOT), tier_path(file, BULK)) and not file.exists()
+
+    hot_db, bulk_db = sqlite3.connect(hot), sqlite3.connect(bulk)
+    # Each holds its own tier's rows, the run tables in both.
+    for table in tables(hot_db):
+        if table.endswith("_fts") or table == "payload":
+            continue
+        rows_hot = hot_db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
+        rows_bulk = bulk_db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
+        if tier_of(table) == HOT and table not in REFERENCE:
+            assert rows_bulk == 0, table
+        elif tier_of(table) == BULK:
+            assert rows_hot == 0, table
+    assert hot_db.execute("SELECT count(*) FROM claim").fetchone()[0] == 4
+    assert bulk_db.execute("SELECT count(*) FROM registry_trial").fetchone()[0] == 2
+    assert (
+        hot_db.execute("SELECT count(*) FROM run").fetchone()
+        == bulk_db.execute("SELECT count(*) FROM run").fetchone()
+    )
+    # Neither file names a row it does not hold.
+    assert hot_db.execute("PRAGMA foreign_key_check").fetchall() == []
+    assert bulk_db.execute("PRAGMA foreign_key_check").fetchall() == []
+    # A payload goes with what points at it: the event's to the hot file, the trials' to
+    # the bulk one; the large object to the hot tier's folder.
+    big = payload_of(world["big_payload"])
+    hot_payloads = {sha for (sha,) in hot_db.execute("SELECT sha256 FROM payload")}
+    bulk_payloads = {sha for (sha,) in bulk_db.execute("SELECT sha256 FROM payload")}
+    assert big.sha256 in hot_payloads and big.sha256 not in bulk_payloads
+    trial_payloads = {s for (s,) in bulk_db.execute("SELECT payload_sha256 FROM registry_trial")}
+    assert trial_payloads <= bulk_payloads and not trial_payloads & hot_payloads
+    assert (payloads / HOT / big.r2_key).read_text() == big.text
+    assert not (payloads / "payload").exists()
+    # The search over trials answers in the bulk file.
+    assert (
+        bulk_db.execute(
+            "SELECT count(*) FROM registry_trial_fts WHERE registry_trial_fts MATCH 'trial'"
+        ).fetchone()[0]
+        > 0
+    )
+    assert hot_db.execute("SELECT count(*) FROM registry_trial_fts").fetchone()[0] == 0
+
+
+def test_a_checksum_is_the_same_from_the_file_and_from_d1s_answer(tmp_path: Path):
+    path = tmp_path / "s.sqlite"
+    db = sqlite3.connect(path)
+    db.executescript((STORE / "schema.sql").read_text())
+    db.execute(
+        "INSERT INTO run (id, writer, device, commit_sha, registered_at)"
+        " VALUES ('r', 'migration', 'd', 'abc1234', '2026-11-17T00:00:00.000000+00:00')"
+    )
+    db.execute(
+        "INSERT INTO outlet_icon VALUES ('a.example', 'https://a.example/i.png', 'image/png',"
+        " X'89504e47', '2026-11-17T00:00:00.000000+00:00', 'r')"
+    )
+    db.commit()
+    (icons,) = [c for c in checksums(path, HOT) if c.table == "outlet_icon"]
+    assert icons.rows == 1
+    # D1 answers a SELECT as JSON objects keyed by the column names.
+    (statement,) = fingerprint_parts(db, "outlet_icon")
+    cursor = db.execute(statement)
+    names = [d[0] for d in cursor.description]
+    answer = [{"results": [dict(zip(names, cursor.fetchone(), strict=True))], "success": True}]
+    from thenwhat.store.tiers import answer_row
+
+    assert hash_of([answer_row(answer)]) == icons.sha256
+    # A value changed in length, or at its first character, changes the checksum.
+    for change in ("domain = 'b.example'", "media_type = 'image/gif'", "content = X'89504e'"):
+        copy = tmp_path / "copy.sqlite"
+        shutil.copyfile(path, copy)
+        other = sqlite3.connect(copy)
+        other.execute(f"UPDATE outlet_icon SET {change}")
+        other.commit()
+        (changed,) = [c for c in checksums(copy, HOT) if c.table == "outlet_icon"]
+        assert changed.sha256 != icons.sha256, change
+
+
+def test_a_push_to_d1_hands_over_hot_kinds_and_their_payloads():
+    event_payload = Record("payload", "e" * 64, {"sha256": "e" * 64})
+    event = Record("evidence_event", "x|k", {"payload_sha256": "e" * 64})
+    trial_payload = Record("payload", "t" * 64, {"sha256": "t" * 64})
+    trial = Record("registry_trial", "ct|1", {"payload_sha256": "t" * 64})
+    lead = Record("link_lead", "a.example/x", {})
+    claim = Record("claim", "x", {})
+    hot, left_out = hot_records([claim, event_payload, event, trial_payload, trial, lead])
+    assert hot == [claim, event_payload, event] and left_out == 3
+
+
+def test_store_checksum_compares_with_d1_and_refuses_a_difference(tmp_path: Path):
+    path = tmp_path / "s.sqlite"
+    db = sqlite3.connect(path)
+    db.executescript((STORE / "schema.sql").read_text())
+    db.commit()
+    sql_file = tmp_path / "sql.json"
+    passed = CliRunner().invoke(
+        app, ["store", "checksum", str(path), "--tier", "hot", "--sql", str(sql_file)]
+    )
+    assert passed.exit_code == 0, passed.output
+    statements = json.loads(sql_file.read_text())
+    answers = {}
+    for table, parts in statements.items():
+        answers[table] = []
+        for sql in parts:
+            cursor = db.execute(sql)
+            names = [d[0] for d in cursor.description]
+            answers[table].append([{"results": [dict(zip(names, cursor.fetchone(), strict=True))]}])
+    (tmp_path / "d1.json").write_text(json.dumps(answers))
+    same = CliRunner().invoke(
+        app,
+        ["store", "checksum", str(path), "--tier", "hot", "--against", str(tmp_path / "d1.json")],
+    )
+    assert same.exit_code == 0 and "DIFFERS" not in same.output
+    answers["claim"][0][0]["results"][0]["c0"] = 1
+    (tmp_path / "d1.json").write_text(json.dumps(answers))
+    differs = CliRunner().invoke(
+        app,
+        ["store", "checksum", str(path), "--tier", "hot", "--against", str(tmp_path / "d1.json")],
+    )
+    assert differs.exit_code == 1 and "claim" in differs.output
+
+
+def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_delta(
+    session: Session, tmp_path: Path
+):
+    from sqlalchemy import select
+
+    from thenwhat.db.models import LinkLead, LinkShare
+    from thenwhat.store.build import BUILD_ID_SQL, apply_delta, base_of, merge_into, write_delta
+    from thenwhat.store.gather import Gathered, stream
+    from thenwhat.store.push import increment
+    from thenwhat.store.tiers import bulk_records, checks
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    kept_copy = tmp_path / "downloaded.sqlite"
+    shutil.copyfile(bulk, kept_copy)
+    # The bulk file holds the claims its leads hang from.
+    assert sqlite3.connect(bulk).execute("SELECT count(*) FROM claim").fetchone()[0] == 4
+    # The build is named in both files and in D1 by the same query.
+    assert sqlite3.connect(bulk).execute(BUILD_ID_SQL).fetchone() == (report.build_id,)
+    assert checks(tier_path(file, HOT), HOT)["build"] == report.build_id
+
+    # A day later: a new share of the stored lead.
+    lead = session.scalars(select(LinkLead).where(LinkLead.triage_score.is_not(None))).first()
+    assert lead is not None
+    session.add(
+        LinkShare(
+            link_lead_id=lead.id,
+            platform="reddit",
+            community="medicine",
+            shared_at=datetime(2026, 11, 18, tzinfo=UTC),
+            score=5,
+        )
+    )
+    session.flush()
+    records, _ = bulk_records(stream(session, Gathered(records=[])))
+    day = increment(records, report.state, actions=True).records
+    assert [r.kind for r in day] == ["link_share"]
+    runs = [("bulk-1", day)]
+    when = datetime(2026, 11, 18, tzinfo=UTC)
+    added, merged = merge_into(bulk, runs, store_sql=STORE, now=when)
+    assert merged == ["bulk-1-0"] and added["link_share"] == 1
+    shares = "SELECT count(*) FROM link_share"
+    assert sqlite3.connect(bulk).execute(shares).fetchone()[0] == 3
+    # The same run again, as after a crash before the state was written: nothing doubles.
+    assert merge_into(bulk, runs, store_sql=STORE, now=when) == (Counter(), [])
+    assert sqlite3.connect(bulk).execute(shares).fetchone()[0] == 3
+
+    # The bulk tier's restore: the kept file and the day's delta, once however often given.
+    delta = tmp_path / "delta.jsonl.gz"
+    write_delta(delta, runs, base=base_of(bulk, runs))
+    assert apply_delta(kept_copy, delta, store_sql=STORE, now=when) == ["bulk-1-0"]
+    assert apply_delta(kept_copy, delta, store_sql=STORE, now=when) == []
+    assert [c.sha256 for c in checksums(kept_copy, BULK)] == [
+        c.sha256 for c in checksums(bulk, BULK)
+    ]
+
+
+def test_a_delta_applies_only_in_its_order(session: Session, tmp_path: Path):
+    from thenwhat.store.build import BuildFailed, apply_delta, base_of, merge_into, write_delta
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    _, bulk = split_build(file, payloads, "both")
+    restored = tmp_path / "restored.sqlite"
+    shutil.copyfile(bulk, restored)
+    when = datetime(2026, 11, 18, tzinfo=UTC)
+    deltas = []
+    for day in (18, 19):
+        share = Record(
+            "link_share",
+            f"news.example.com/drug-x|reader|reader|2026-11-{day}",
+            {
+                "lead_url_key": "news.example.com/drug-x",
+                "platform": "reader",
+                "community": "reader",
+                "shared_at": f"2026-11-{day}",
+                "score": 0,
+            },
+        )
+        runs = [(f"bulk-{day}", [share])]
+        merge_into(bulk, runs, store_sql=STORE, now=when)
+        deltas.append(tmp_path / f"delta-{day}.jsonl.gz")
+        write_delta(deltas[-1], runs, base=base_of(bulk, runs))
+    with pytest.raises(BuildFailed, match="apply the deltas before it"):
+        apply_delta(restored, deltas[1], store_sql=STORE, now=when)
+    assert apply_delta(restored, deltas[0], store_sql=STORE, now=when) == ["bulk-18-0"]
+    assert apply_delta(restored, deltas[1], store_sql=STORE, now=when) == ["bulk-19-0"]
+    assert apply_delta(restored, deltas[0], store_sql=STORE, now=when) == []
+
+
+def test_the_checks_file_holds_each_table_s_sql_and_the_row_it_must_give(tmp_path: Path):
+    from thenwhat.store.tiers import checks
+
+    path = tmp_path / "s.sqlite"
+    db = sqlite3.connect(path)
+    db.executescript((STORE / "schema.sql").read_text())
+    db.commit()
+    found = checks(path, HOT)
+    assert found["build"] is None
+    for table, check in found["tables"].items():
+        for part in check["parts"]:
+            cursor = db.execute(part["sql"])
+            names = [d[0] for d in cursor.description]
+            assert dict(zip(names, cursor.fetchone(), strict=True)) == part["expected"], table
+            assert len(part["sql"].encode()) < 100_000
+    assert "registry_trial" not in found["tables"] and "claim" in found["tables"]
+
+
+def test_every_kind_gather_gives_is_of_one_tier():
+    from test_store_records import KINDS
+    from thenwhat.store.tiers import BULK_KINDS, HOT_KINDS
+
+    assert not HOT_KINDS & BULK_KINDS
+    assert set(KINDS) - {"payload"} <= HOT_KINDS | BULK_KINDS
+
+
+def test_the_inbox_folds_into_the_bulk_file_once_and_is_cleared_after(
+    session: Session, tmp_path: Path
+):
+    import httpx
+
+    from thenwhat.store.inbox import clear, fold
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    _, bulk = split_build(file, payloads, "both")
+    day = "2026-11-18"
+    lead = {
+        "url_key": "news.example.com/new",
+        "url_key_version": 2,
+        "url": "https://news.example.com/new",
+        "outlet": "news.example.com",
+        "outlet_kind": "general_news",
+        "title": "New",
+        "first_shared_at": f"{day}T00:00:00.000000+00:00",
+        "origin": "reader",
+        "screen_outcome": "in_scope",
+    }
+    asked = {"platform": "reader", "community": "reader", "shared_at": day, "score": 0}
+    share = {"lead_url_key": "news.example.com/new", **asked}
+    old = {"lead_url_key": "news.example.com/drug-x", **asked}
+    inbox = [
+        {"seq": 1, "run": "r1", "kind": "link_lead", "key": lead["url_key"], "body": lead},
+        {
+            "seq": 2,
+            "run": "r1",
+            "kind": "link_share",
+            "key": "news.example.com/new|reader",
+            "body": share,
+        },
+        {
+            "seq": 3,
+            "run": "r2",
+            "kind": "link_share",
+            "key": "news.example.com/drug-x|reader",
+            "body": old,
+        },
+    ]
+    cleared: list[int] = []
+
+    def service(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/inbox":
+            after = int(request.url.params["after"])
+            records = [r for r in inbox if int(str(r["seq"])) > after]
+            return httpx.Response(200, json={"records": records, "through": 3, "more": False})
+        cleared.append(json.loads(request.content)["through"])
+        return httpx.Response(200, json={"cleared": 3, "rows_removed": 3, "left": 0})
+
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c:
+        folded = fold(c, bulk, store_sql=STORE, now=datetime(2026, 11, 19, tzinfo=UTC))
+        again = fold(c, bulk, store_sql=STORE, now=datetime(2026, 11, 19, tzinfo=UTC))
+        clear(c, folded.through)
+    assert (folded.runs, folded.through, len(folded.records)) == (2, 3, 3)
+    assert again.runs == 0 and len(again.records) == 3
+    db = sqlite3.connect(bulk)
+    assert db.execute(
+        "SELECT count(*) FROM link_lead WHERE url_key = 'news.example.com/new'"
+    ).fetchone() == (1,)
+    assert db.execute("SELECT count(*) FROM link_share WHERE platform = 'reader'").fetchone() == (
+        2,
+    )
+    assert cleared == [3]
+
+
+def test_fold_inbox_refuses_without_the_service(monkeypatch, tmp_path: Path):
+    monkeypatch.delenv("INGEST_TOKEN", raising=False)
+    monkeypatch.delenv("INGEST_URL", raising=False)
+    bulk = tmp_path / "b.sqlite"
+    sqlite3.connect(bulk).close()
+    result = CliRunner().invoke(
+        app, ["store", "fold-inbox", str(bulk), "--delta", str(tmp_path / "d.jsonl.gz")]
+    )
+    assert result.exit_code == 1 and "INGEST_TOKEN" in result.output
+
+
+def test_no_check_asks_d1_for_more_columns_than_it_answers():
+    db = _schema()
+    widest = 0
+    for table in tables(db):
+        if table.endswith("_fts"):
+            continue
+        parts = fingerprint_parts(db, table)
+        numbers = []
+        for sql in parts:
+            columns = db.execute(sql).description
+            assert len(columns) <= MAX_COLUMNS, table
+            numbers += [int(column[0][1:]) for column in columns]
+        assert numbers == list(range(len(numbers))), table
+        widest = max(widest, len(numbers))
+    # The schema has tables wide enough to need more than one statement.
+    assert widest > MAX_COLUMNS
+
+
+def test_a_payload_an_event_and_a_trial_share_reaches_both_tiers():
+    from thenwhat.store.tiers import bulk_records
+
+    shared = Record("payload", "s" * 64, {"sha256": "s" * 64})
+    event = Record("evidence_event", "x|k", {"payload_sha256": "s" * 64})
+    trial = Record("registry_trial", "ct|1", {"payload_sha256": "s" * 64})
+    # The stream gives the payload once, before the event that first points at it.
+    stream = [shared, event, trial]
+    assert hot_records(stream)[0] == [shared, event]
+    assert bulk_records(stream)[0] == [shared, trial]
+
+
+def test_a_fold_that_failed_merges_or_fails_again_and_never_skips(session: Session, tmp_path: Path):
+    import httpx
+
+    from thenwhat.store.inbox import InboxFailed, fold
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    _, bulk = split_build(file, payloads, "both")
+    asked = {"platform": "reader", "community": "reader", "shared_at": "2026-11-18", "score": 0}
+    good = {"lead_url_key": "news.example.com/drug-x", **asked}
+    orphan = {"lead_url_key": "news.example.com/not-held", **asked}
+    # Two runs whose ids are the service's longest and differ only at the end.
+    first, second = "a" * 63 + "1", "a" * 63 + "2"
+    inbox = [
+        {"seq": 1, "run": first, "kind": "link_share", "key": "k1", "body": good},
+        {"seq": 2, "run": second, "kind": "link_share", "key": "k2", "body": orphan},
+    ]
+
+    def service(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"records": inbox, "through": 2, "more": False})
+
+    when = datetime(2026, 11, 19, tzinfo=UTC)
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c:
+        with pytest.raises(InboxFailed):
+            fold(c, bulk, store_sql=STORE, now=when)
+        runs = {r for (r,) in sqlite3.connect(bulk).execute("SELECT id FROM run")}
+        assert f"inbox-{first}-0" in runs and f"inbox-{second}-0" not in runs
+        # Again, still failing: the failed run is tried again, not taken as folded.
+        with pytest.raises(InboxFailed):
+            fold(c, bulk, store_sql=STORE, now=when)
+        # Once its lead is there, it merges; the run folded before is not merged twice.
+        inbox[1]["body"] = {"lead_url_key": "news.example.com/drug-x", **asked}
+        inbox[1]["body"]["shared_at"] = "2026-11-19"
+        folded = fold(c, bulk, store_sql=STORE, now=when)
+    assert folded.runs == 1 and [name for name, _ in folded.named] == [
+        f"inbox-{first}",
+        f"inbox-{second}",
+    ]
+    shares = "SELECT count(*) FROM link_share WHERE platform = 'reader'"
+    assert sqlite3.connect(bulk).execute(shares).fetchone() == (2,)
+
+
+def test_clear_inbox_records_the_fold_before_clearing(monkeypatch):
+    import httpx
+
+    calls: list[tuple[str, dict]] = []
+
+    def service(request: httpx.Request) -> httpx.Response:
+        calls.append((request.url.path, json.loads(request.content)))
+        if request.url.path == "/inbox/folded":
+            return httpx.Response(200, json={"recorded": True, "folded_through": 7})
+        return httpx.Response(200, json={"cleared": 7, "rows_removed": 3, "left": 0})
+
+    real = httpx.Client
+    monkeypatch.setattr(
+        httpx, "Client", lambda **kw: real(transport=httpx.MockTransport(service), **kw)
+    )
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    key = "bulk/0123456789abcdef/delta-2026-11-18-1.jsonl.gz"
+    result = CliRunner().invoke(
+        app,
+        ["store", "clear-inbox", "--through", "7", "--object", key, "--url", "http://s.test"],
+    )
+    assert result.exit_code == 0, result.output
+    assert calls == [
+        ("/inbox/folded", {"through": 7, "object": key}),
+        ("/inbox/clear", {"through": 7}),
+    ]
+
+
+def test_a_record_going_a_b_a_is_merged_each_day_and_replays(session: Session, tmp_path: Path):
+    from thenwhat.store.build import apply_delta, merge_day
+    from thenwhat.store.gather import Gathered, stream
+    from thenwhat.store.tiers import bulk_records
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    restored = tmp_path / "restored.sqlite"
+    shutil.copyfile(bulk, restored)
+    records, _ = bulk_records(stream(session, Gathered(records=[])))
+    (lead,) = [r for r in records if r.kind == "link_lead"]
+    state = dict(report.state)
+    when = datetime(2026, 11, 18, tzinfo=UTC)
+    deltas = []
+    # Day three's record is day one's, byte for byte.
+    for day, (score, version) in enumerate(((0.9, 4), (0.5, 5), (0.9, 4))):
+        body = {**lead.body, "triage_score": score, "triage_version": version}
+        changed = Record("link_lead", lead.key, body)
+        deltas.append(tmp_path / f"d{day}.jsonl.gz")
+        chosen, _ = merge_day(bulk, [changed], state, delta=deltas[-1], store_sql=STORE, now=when)
+        assert chosen.records == [changed], day
+    held = {
+        r for (r,) in sqlite3.connect(bulk).execute("SELECT id FROM run WHERE id LIKE 'bulk-%'")
+    }
+    assert len(held) == 3
+    for delta in deltas:
+        assert apply_delta(restored, delta, store_sql=STORE, now=when), delta.name
+    assert [c.sha256 for c in checksums(restored, BULK)] == [
+        c.sha256 for c in checksums(bulk, BULK)
+    ]
+
+
+def test_a_crash_after_a_merge_then_new_records_merge_each_once(session: Session, tmp_path: Path):
+    from thenwhat.store.build import build_id_of, merge_day, merge_into
+    from thenwhat.store.gather import Gathered, stream
+    from thenwhat.store.push import pending_path, write_pending
+    from thenwhat.store.tiers import bulk_records
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    records, _ = bulk_records(stream(session, Gathered(records=[])))
+    (day,) = [r for r in records if r.kind == "measure_daily"][:1]
+    monday = Record("measure_daily", "2026-11-18", {**day.body, "day": "2026-11-18"})
+    tuesday = Record("measure_daily", "2026-11-19", {**day.body, "day": "2026-11-19"})
+    state = dict(report.state)
+    when = datetime(2026, 11, 19, tzinfo=UTC)
+    # Monday: written as pending and merged, then the job stops before the state is saved.
+    write_pending(pending_path(bulk), "bulk-monday", [monday], {"build": build_id_of(bulk) or ""})
+    merge_into(bulk, [("bulk-monday", [monday])], store_sql=STORE, now=when)
+    saved: list[dict] = []
+    merge_day(
+        bulk,
+        [monday, tuesday],
+        state,
+        delta=tmp_path / "d.jsonl.gz",
+        store_sql=STORE,
+        now=when,
+        save_state=lambda now: saved.append(dict(now)),
+    )
+    db = sqlite3.connect(bulk)
+    # A merge adds a run's totals to the day's: merged twice, Monday's would be doubled.
+    totals = dict(db.execute("SELECT day, sum(records) FROM measure_daily GROUP BY day").fetchall())
+    assert totals["2026-11-18"] == monday.body["records"] == totals["2026-11-19"]
+    runs = {r for (r,) in db.execute("SELECT id FROM run WHERE id LIKE 'bulk-%'")}
+    assert len(runs) == 2 and not pending_path(bulk).exists()
+    assert saved and saved[-1]["measure_daily\t2026-11-18"]
+
+
+def test_a_bulk_merge_pending_for_another_build_is_refused(session: Session, tmp_path: Path):
+    from thenwhat.store.build import build_id_of, merge_day
+    from thenwhat.store.push import PendingStale, pending_path, write_pending
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    assert build_id_of(bulk) == report.build_id
+    write_pending(pending_path(bulk), "bulk-old", [], {"build": "0000000000000000"})
+    with pytest.raises(PendingStale):
+        merge_day(
+            bulk,
+            [],
+            dict(report.state),
+            delta=tmp_path / "d.jsonl.gz",
+            store_sql=STORE,
+            now=datetime(2026, 11, 18, tzinfo=UTC),
+        )
+
+
+def test_the_target_set_s_trials_go_to_the_hot_tier_and_every_trial_stays_bulk(
+    session: Session, tmp_path: Path
+):
+    from thenwhat.db.models import RegistryTrial
+    from thenwhat.store.gather import Gathered, stream
+
+    _world(session)
+    rule = RegistryTrial.external_id == "NCT01234567"
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    hot, bulk = split_build(
+        file, payloads, "both", hot_trials=[("clinicaltrials.gov", "NCT01234567")]
+    )
+    hot_db, bulk_db = sqlite3.connect(hot), sqlite3.connect(bulk)
+    trials = "SELECT external_id FROM registry_trial ORDER BY 1"
+    assert hot_db.execute(trials).fetchall() == [("NCT01234567",)]
+    assert len(bulk_db.execute(trials).fetchall()) == 2
+    assert hot_db.execute("SELECT count(*) FROM registry_trial_status").fetchone() == (1,)
+    # The trial's payload goes with it; nothing in the hot file points at a row it lacks.
+    assert hot_db.execute(
+        "SELECT count(*) FROM payload p JOIN registry_trial t ON t.payload_sha256 = p.sha256"
+    ).fetchone() == (1,)
+    assert hot_db.execute("PRAGMA foreign_key_check").fetchall() == []
+    assert hot_db.execute(
+        "SELECT count(*) FROM registry_trial_fts WHERE registry_trial_fts MATCH 'trial'"
+    ).fetchone() == (1,)
+    # A hot-only build reads the target set's trials and no other.
+    kinds = [
+        (r.kind, r.key)
+        for r in stream(session, Gathered(records=[]), hot_only=True, trials=rule)
+        if r.kind == "registry_trial"
+    ]
+    assert kinds == [("registry_trial", "clinicaltrials.gov|NCT01234567")]

@@ -44,6 +44,19 @@ SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind
   WHEN 'link_lead'      THEN NOT EXISTS (SELECT 1 FROM link_lead l WHERE l.url_key = s.body ->> 'url_key')
   WHEN 'decision'       THEN 1
   WHEN 'usage'          THEN 1
+  WHEN 'registry_load'  THEN NOT EXISTS (SELECT 1 FROM registry_load x WHERE x.registry_name = s.body ->> 'registry_name'
+                               AND x.condition = s.body ->> 'condition')
+  WHEN 'unlisted_domain' THEN NOT EXISTS (SELECT 1 FROM unlisted_domain_count x WHERE x.domain = s.body ->> 'domain'
+                               AND x.day = s.body ->> 'day')
+  WHEN 'measure_daily'  THEN NOT EXISTS (SELECT 1 FROM measure_daily x WHERE x.day = s.body ->> 'day'
+                               AND x.step = s.body ->> 'step' AND x.step_version = s.body ->> 'step_version'
+                               AND x.writer = s.body ->> 'writer' AND x.outcome = s.body ->> 'outcome')
+  WHEN 'work_entry'     THEN NOT EXISTS (SELECT 1 FROM work_entry x WHERE x.record_kind = s.body ->> 'record_kind'
+                               AND x.record_key = s.body ->> 'record_key' AND x.step = s.body ->> 'step'
+                               AND x.step_version = s.body ->> 'step_version')
+  WHEN 'outlet_icon'    THEN NOT EXISTS (SELECT 1 FROM outlet_icon x WHERE x.domain = s.body ->> 'domain')
+  WHEN 'work_slice'     THEN NOT EXISTS (SELECT 1 FROM work_slice x WHERE x.platform = s.body ->> 'platform'
+                               AND x.community = s.body ->> 'community' AND x.month = s.body ->> 'month')
   ELSE 0 END) AS added
 FROM staged s
 WHERE s.kind IN ('payload', 'claim', 'source_record', 'trial_read', 'registry_trial', 'registry_load',
@@ -66,6 +79,7 @@ SELECT s.kind, count(*) AS resolved,
                                AND e.dedupe_key = s.body ->> 'dedupe_key')
   WHEN 'failure_flag'   THEN NOT EXISTS (SELECT 1 FROM failure_flag f WHERE f.claim_id = s.claim_id
                                AND f.trial_external_id = s.body ->> 'trial_external_id')
+  WHEN 'measure_claim'  THEN NOT EXISTS (SELECT 1 FROM measure_claim x WHERE x.claim_id = s.claim_id)
   ELSE 0 END) AS added
 FROM preview_of_claim s
 WHERE s.kind IN ('source_article', 'entity', 'claim_term', 'evidence_event', 'failure_flag', 'measure_claim')
@@ -107,7 +121,13 @@ SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind
   WHEN 'entity_match'     THEN NOT EXISTS (SELECT 1 FROM entity_match m WHERE m.entity_id = s.entity_id
                                  AND m.source_name = s.body ->> 'source_name' AND m.external_id = s.body ->> 'external_id')
   WHEN 'entity_substance' THEN NOT EXISTS (SELECT 1 FROM entity_substance x WHERE x.entity_id = s.entity_id)
-  ELSE 0 END) AS added
+  -- A link: its article is in the store or comes with the run, and the entity is not yet linked to it.
+  ELSE (EXISTS (SELECT 1 FROM source_article a WHERE a.claim_id = s.claim_id AND a.url_key = s.body ->> 'url_key')
+        OR EXISTS (SELECT 1 FROM stg n WHERE n.run_id = s.run_id AND n.kind = 'source_article'
+                     AND n.key = (s.body ->> 'slug') || '|' || (s.body ->> 'url_key')))
+       AND NOT EXISTS (SELECT 1 FROM entity_article x JOIN source_article a ON a.id = x.source_article_id
+                       WHERE x.entity_id = s.entity_id AND a.claim_id = s.claim_id AND a.url_key = s.body ->> 'url_key')
+  END) AS added
 FROM preview_of_entity s
 WHERE s.kind IN ('entity_match', 'entity_substance', 'entity_article')
 GROUP BY s.kind
@@ -121,7 +141,9 @@ SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind
                                AND x.record_kind = s.body ->> 'record_kind' AND x.record_key = s.body ->> 'record_key'
                                AND x.reason = s.body ->> 'reason')
   WHEN 'lead_reading'   THEN NOT EXISTS (SELECT 1 FROM lead_reading x WHERE x.link_lead_id = s.link_lead_id)
-  ELSE 0 END) AS added
+  ELSE NOT EXISTS (SELECT 1 FROM link_lead_label x WHERE x.link_lead_id = s.link_lead_id
+                     AND x.labelled_by = s.body ->> 'labelled_by')
+  END) AS added
 FROM preview_of_lead s
 WHERE s.kind IN ('link_share', 'link_lead_link', 'link_lead_label', 'lead_reading')
 GROUP BY s.kind

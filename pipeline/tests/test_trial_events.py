@@ -13,6 +13,7 @@ import pytest
 from thenwhat.domain import EventType, TrialPhase, TrialState
 from thenwhat.events.trial import trial_events
 from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.people import without_people
 
 FETCHED = datetime(2026, 11, 11, 15, 0, tzinfo=UTC)
 
@@ -100,11 +101,12 @@ def test_every_event_carries_the_registry_identifier_phase_and_date_basis(study)
     ]
 
 
-def test_every_event_keeps_the_unmodified_record_and_its_fetch_time(study):
-    """Scenario: Event built from a registry record"""
+def test_every_event_keeps_the_record_without_its_people_and_its_fetch_time(study):
+    """Scenario: Event built from a registry record. The record is kept as the registry
+    gave it, but for the people it names (sources/people.py)."""
     events = trial_events(record(study))
 
-    assert all(event.raw_payload == study for event in events)
+    assert all(event.raw_payload == without_people(study) for event in events)
     assert all(event.fetched_at == FETCHED for event in events)
     assert all(
         event.source_url == "https://clinicaltrials.gov/study/NCT02586935" for event in events
