@@ -5,6 +5,7 @@ import vm from "node:vm";
 import { test } from "node:test";
 import { parseHTML } from "linkedom";
 import { readAddress, closestClaims } from "../src/lib/lookup-match.mjs";
+import { ranked, searchWords, wordPattern, wordsIn } from "../src/lib/search-order.ts";
 import { suggest, suggestParts, suggestWords } from "../src/lib/suggest.ts";
 import { SUGGEST_SUBJECT, contactLink } from "../src/lib/contact.mjs";
 import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../src/lib/live-lookup.mjs";
@@ -45,7 +46,38 @@ const SEARCH_LOOKUP = {
   },
 };
 let SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
-let readHit = async (url) => ({ url, meta: {} });
+// Words the search index does not hold whole, in a test; none unless a test names them.
+// As the real index does, it still answers for such a word alone, with a shorter one.
+let NOT_WHOLE = [];
+// The media queries that match, in a test: none, so a wide screen worked by a mouse.
+let MEDIA = [];
+// The pages the search index was asked to read, in the order asked.
+let pagesRead = [];
+// How a page found is read, in a test: at once unless a test holds it back or fails it.
+const readNow = async (url) => ({ url, meta: {}, content: SEARCH_LOOKUP.claims[url.replaceAll("/", "")]?.headline });
+let readHit = readNow;
+// What the index is asked before it answers, in a test: nothing held back unless a test
+// holds a search, as a slow network would.
+let beforeSearch = async () => {};
+// The search index as the built site's answers: every page found, each read only when
+// asked for, with how many of them each topic holds; narrowed to one topic on request.
+function searchIndex() {
+  const topicOf = (url) => SEARCH_LOOKUP.claims[url.replaceAll("/", "")]?.topic;
+  return {
+    filters: async () => ({}),
+    search: async (words, options) => {
+      await beforeSearch(words, options);
+      if (NOT_WHOLE.some((word) => words === `"${word}"`)) return { results: [], filters: {} };
+      const topic = {};
+      for (const url of SEARCH_HITS) if (topicOf(url)) topic[topicOf(url)] = (topic[topicOf(url)] ?? 0) + 1;
+      const found = SEARCH_HITS.filter((url) => !options?.filters || topicOf(url) === options.filters.topic);
+      return {
+        results: found.map((url) => ({ data: () => { pagesRead.push(url); return readHit(url); } })),
+        filters: { topic },
+      };
+    },
+  };
+}
 // The trial listing a build carries: synthetic. None unless a test sets it.
 let LISTING = null;
 // Which claims cite which trials, as the build's trial index has it.
@@ -107,7 +139,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE, initia
   };
   // What the script listens for on the window, by event name.
   const listeners = {};
-  const { document, window } = parseHTML(`<html><body>${body}</body></html>`);
+  const { document, window } = parseHTML(`<html><head><title>Example tracker</title></head><body>${body}</body></html>`);
   let resolveLookup, rejectLookup;
   const pending = new Promise((resolve, reject) => { resolveLookup = resolve; rejectLookup = reject; });
   let requests = 0;
@@ -116,17 +148,15 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE, initia
   results.scrollIntoView = () => {};
   const context = {
     document, URL, crypto, setTimeout, BRAND: { name: "Example tracker" }, readAddress, closestClaims,
-    suggest, suggestParts, suggestWords,
+    suggest, suggestParts, suggestWords, ranked, searchWords, wordPattern, wordsIn,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
     NOT_AN_OPTION, NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, changedShort, findListed, listingWords, registryDate,
     searchListing, setNote, PARTS_SEARCHED_AT_ONCE, partFor,
     location, history, addEventListener: (type, heard) => { listeners[type] = heard; },
-    innerHeight: 800, matchMedia: () => ({ matches: false }),
+    innerHeight: 800, matchMedia: (query) => ({ matches: MEDIA.includes(query) }),
     loadSearchIndex: async () => {
       searches++;
-      return {
-        search: async () => ({ results: SEARCH_HITS.map((url) => ({ data: () => readHit(url) })) }),
-      };
+      return searchIndex();
     },
     fetch: (url) => {
       requests++;
@@ -281,6 +311,7 @@ test("a search on the home page answers in the list's place: the closest match, 
   assert.deepEqual(picks.map((pick) => pick.textContent), ["All results 3", "Mouth and teeth 2", "Gum disease 1"]);
   assert.equal(answer.querySelectorAll(".search-topic-row button").length, 3);
   picks[2].dispatchEvent(new page.window.Event("click"));
+  await settle();
   assert.match(answer.querySelector(".search-count").textContent, /1 of 3 tracked claims, in Gum disease/);
   assert.equal(answer.querySelectorAll(".hit-row").length, 1);
   // Clearing brings the list back.
@@ -392,11 +423,150 @@ test("the count is of every claim found; the rest are drawn under the first at a
   assert.match(page.results.textContent, /^25 tracked claims for “tooth regrowth”, shown below\.$/);
 });
 
+test("topics count every claim found, and a topic picked shows its claims, reading those not yet read", async () => {
+  // The index finds 25 claims: 22 on teeth, 3 on gums. The first twenty read are all on
+  // teeth; the three on gums are among the five not read.
+  const lookup = structuredClone(SEARCH_LOOKUP);
+  const kept = SEARCH_LOOKUP.claims;
+  for (let at = 0; at < 22; at++) {
+    lookup.claims[`tooth-${at}`] = { ...kept.germ, headline: `Synthetic tooth claim ${at}`, page: `/tooth-${at}`, topic: "teeth" };
+  }
+  for (let at = 0; at < 3; at++) {
+    lookup.claims[`gum-${at}`] = { ...kept.sheet, headline: `Synthetic gum claim ${at}`, page: `/gum-${at}`, topic: "gums" };
+  }
+  SEARCH_LOOKUP.claims = lookup.claims;
+  const teeth = Array.from({ length: 22 }, (_, at) => `/tooth-${at}/`);
+  const gums = Array.from({ length: 3 }, (_, at) => `/gum-${at}/`);
+  SEARCH_HITS = [...teeth.slice(0, 20), ...gums, ...teeth.slice(20)];
+  pagesRead = [];
+  try {
+    const page = setup(null, HOME);
+    const answer = await searched(page, "synthetic");
+    assert.match(answer.querySelector(".search-count").textContent, /^First 20 of 25 tracked claims/);
+    // Each topic's count is of every claim found, not of the twenty read.
+    const picks = () => [...answer.querySelectorAll(".search-topic-row button")];
+    assert.deepEqual(picks().map((pick) => pick.textContent), ["All results 25", "Mouth and teeth 22", "Gum disease 3"]);
+    assert.equal(pagesRead.length, 20, "only the first twenty pages are read for the counts");
+
+    // Gum disease: none of its claims was among those read. They are read and shown.
+    picks()[2].dispatchEvent(new page.window.Event("click"));
+    for (let turn = 0; turn < 4; turn++) await settle();
+    assert.deepEqual([...answer.querySelectorAll("a.hit-title")].map((link) => link.getAttribute("href")), ["/gum-0", "/gum-1", "/gum-2"]);
+    assert.match(answer.querySelector(".search-count").textContent, /^3 of 25 tracked claims, in Gum disease/);
+    assert.equal(answer.querySelector("button.show-more"), null);
+    assert.deepEqual(pagesRead.slice(20), gums);
+    assert.equal(picks()[2].getAttribute("aria-pressed"), "true");
+
+    // Mouth and teeth holds more than are drawn at once: its count says so, and the
+    // rest of that topic's claims follow at a press.
+    picks()[1].dispatchEvent(new page.window.Event("click"));
+    for (let turn = 0; turn < 4; turn++) await settle();
+    assert.match(answer.querySelector(".search-count").textContent, /^First 20 of 22 in Mouth and teeth, of 25 tracked claims/);
+    assert.equal(answer.querySelectorAll(".hit-row").length, 20);
+    assert.match(answer.querySelector(".show-more-says").textContent, /^2 more tracked claims in Mouth and teeth hold these words\.$/);
+    answer.querySelector("button.show-more").dispatchEvent(new page.window.Event("click"));
+    for (let turn = 0; turn < 4; turn++) await settle();
+    assert.equal(answer.querySelectorAll(".hit-row").length, 22);
+    assert.match(answer.querySelector(".search-count").textContent, /^22 of 25 tracked claims, in Mouth and teeth/);
+    assert.equal(picks()[1].getAttribute("aria-pressed"), "true");
+
+    // Back on every claim, the first twenty stand as they did.
+    picks()[0].dispatchEvent(new page.window.Event("click"));
+    for (let turn = 0; turn < 4; turn++) await settle();
+    assert.match(answer.querySelector(".search-count").textContent, /^First 20 of 25 tracked claims/);
+    assert.equal(answer.querySelectorAll(".hit-row").length, 20);
+  } finally {
+    SEARCH_LOOKUP.claims = kept;
+    SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  }
+});
+
+test("a searched word no tracked claim holds is named; the start of a word that is held is not", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  // Neither is in the index whole. No page has a word starting "toothtooth"; "too" starts "tooth".
+  NOT_WHOLE = ["toothtooth", "too"];
+  try {
+    const answer = await searched(setup(null, HOME), "tooth toothtooth");
+    assert.equal(answer.querySelector(".search-unheld").textContent, "No tracked claim holds “toothtooth”. These claims were found without that word.");
+    assert.equal(answer.querySelectorAll(".hit-row").length, 3);
+    const started = await searched(setup(null, HOME), "too");
+    assert.equal(started.querySelector(".search-unheld"), null);
+    // Words that are all held say nothing of it.
+    const held = await searched(setup(null, HOME), "tooth regrowth");
+    assert.equal(held.querySelector(".search-unheld"), null);
+  } finally {
+    NOT_WHOLE = [];
+  }
+});
+
+test("a search is named in the page's title until it is cleared; a pasted link never is", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  const page = setup(null, HOME);
+  const answer = await searched(page, "tooth regrowth");
+  assert.equal(page.document.title, "“tooth regrowth” · Example tracker");
+  answer.querySelector("button.search-clear").dispatchEvent(new page.window.Event("click"));
+  assert.equal(page.document.title, "Example tracker");
+  page.submit("https://example.org/old-report");
+  assert.equal(page.document.title, "Example tracker");
+});
+
+test("on a narrow touch screen the line under the box is kept for a screen reader only, and a typed search puts the reader on the answer", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  MEDIA = ["(max-width: 34rem)", "(pointer: coarse)"];
+  try {
+    const page = setup(null, HOME);
+    const focused = [];
+    page.window.HTMLElement.prototype.focus = function () { focused.push(this.id || this.tagName); };
+    const field = page.document.querySelector("#query");
+    // The reader typed in the field and sent it: the field holds the focus.
+    Object.defineProperty(page.document, "activeElement", { get: () => field, configurable: true });
+    const answer = await searched(page, "tooth regrowth");
+    const note = page.results.querySelector(".search-note");
+    assert.ok(note.classList.contains("visually-hidden"));
+    assert.equal(note.textContent, "3 tracked claims for “tooth regrowth”, shown below.");
+    assert.equal(note.querySelector("a"), null, "a line that is not drawn holds no link");
+    assert.equal(answer.querySelector(".search-title").id, "search-answer-title");
+    assert.deepEqual(focused, ["search-answer-title"]);
+  } finally {
+    MEDIA = [];
+  }
+});
+
+test("a search typed with a mouse and keys leaves the reader in the field", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  const page = setup(null, HOME);
+  const focused = [];
+  page.window.HTMLElement.prototype.focus = function () { focused.push(this.id || this.tagName); };
+  const field = page.document.querySelector("#query");
+  Object.defineProperty(page.document, "activeElement", { get: () => field, configurable: true });
+  await searched(page, "tooth regrowth");
+  assert.deepEqual(focused, []);
+  assert.equal(page.results.querySelector(".search-note").classList.contains("visually-hidden"), false);
+});
+
+test("the suggestions stand in the form, after its hint, and each row says what taking it does", async () => {
+  const page = setup(null, HOME);
+  for (const node of page.document.querySelectorAll("*")) node.getBoundingClientRect = () => ({ top: 0 });
+  const field = page.document.querySelector("#query");
+  field.value = "tooth";
+  field.dispatchEvent(new page.window.Event("input"));
+  for (let turn = 0; turn < 4; turn++) await settle();
+  const panel = page.document.querySelector("#suggestions");
+  assert.equal(panel.hidden, false);
+  assert.equal(panel.parentElement.id, "search");
+  assert.equal(panel.nextElementSibling, null, "the rows come after everything else in the form");
+  const row = (kind) => panel.querySelector(`.suggest-row.is-${kind}`).textContent;
+  assert.match(row("treatment"), /Opens its page\.$/);
+  assert.match(row("condition"), /Searches here\.$/);
+  assert.match(panel.querySelector(".suggest-all").textContent, /^Search everything for “tooth”$/);
+});
+
 test("a topic picked is kept in the page's address and cleared with the search", async () => {
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
   const page = setup(null, HOME);
   const answer = await searched(page, "tooth regrowth");
   [...answer.querySelectorAll(".search-topic-row button")][2].dispatchEvent(new page.window.Event("click"));
+  await settle();
   assert.match(page.location.href, /[?&]topic=gums/);
   answer.querySelector("button.search-clear").dispatchEvent(new page.window.Event("click"));
   assert.doesNotMatch(page.location.href, /topic=|q=/);
@@ -408,7 +578,7 @@ function manyHits(t, count, topicAt) {
   t.after(() => {
     SEARCH_HITS = previous;
     SEARCH_LOOKUP.claims = claims;
-    readHit = async (url) => ({ url, meta: {} });
+    readHit = readNow;
   });
   SEARCH_LOOKUP.claims = { ...claims };
   SEARCH_HITS = Array.from({ length: count }, (_, at) => {
@@ -438,15 +608,21 @@ test("changing topic during Show more cannot advance the same batch twice", asyn
   assert.equal(reads.length, 20);
   const first = shownClaims(answer);
   click(page, answer.querySelector(".show-more"));
+  // The topic is picked while every claim's next batch is on its way. The topic has
+  // pages of its own; the batch already asked for is the only one in flight.
   click(page, answer.querySelector('button[data-topic="gums"]'));
   const during = answer.querySelector(".show-more");
   pending.resolve();
   assert.equal(during.disabled, true);
   click(page, during);
-  await settle();
-  assert.equal(reads.length, 40);
+  for (let turn = 0; turn < 4; turn++) await settle();
+  // Twenty of every claim, twenty more of them once, and the topic's own first twenty.
+  assert.equal(reads.length, 60);
   assert.equal(answer.querySelector('button[data-topic="gums"]').getAttribute("aria-pressed"), "true");
+  assert.equal(shownCount(answer), "First 20 of 31 in Gum disease, of 62 tracked claims");
   click(page, answer.querySelector('button[data-topic=""]'));
+  await settle();
+  assert.equal(reads.length, 60);
   assert.equal(shownCount(answer), "First 40 of 62 tracked claims");
   assert.deepEqual(shownClaims(answer).slice(0, 20), first);
   click(page, answer.querySelector(".show-more"));
@@ -506,6 +682,7 @@ test("Back and Forward restore loaded results and a topic first found on page tw
   click(page, answer.querySelector(".show-more"));
   await settle();
   click(page, answer.querySelector('button[data-topic="gums"]'));
+  await settle();
   click(page, answer.querySelector(".show-more"));
   await settle();
   const chosen = shownClaims(answer);
@@ -518,6 +695,45 @@ test("Back and Forward restore loaded results and a topic first found on page tw
   assert.deepEqual(shownClaims(answer), chosen);
   page.history.go(1);
   assert.equal(answer.hidden, true);
+});
+
+test("a late topic or batch never replaces a newer topic or search", async (t) => {
+  manyHits(t, 62, (at) => at % 2 ? "gums" : "teeth");
+  const gate = Promise.withResolvers();
+  beforeSearch = async (_, options) => {
+    if (options?.filters?.topic === "gums") await gate.promise;
+  };
+  t.after(() => { beforeSearch = async () => {}; });
+  const page = setup(null, HOME);
+  const answer = await searched(page, "tooth regrowth");
+  // Gum disease is asked for and held back; Mouth and teeth is asked for after it.
+  click(page, answer.querySelector('button[data-topic="gums"]'));
+  click(page, answer.querySelector('button[data-topic="teeth"]'));
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(shownCount(answer), "First 20 of 31 in Mouth and teeth, of 62 tracked claims");
+  gate.resolve();
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(answer.querySelector('button[data-topic="teeth"]').getAttribute("aria-pressed"), "true");
+  assert.equal(shownCount(answer), "First 20 of 31 in Mouth and teeth, of 62 tracked claims");
+  assert.match(page.location.href, /[?&]topic=teeth/);
+
+  // A batch asked for under one search arrives after the next search has answered.
+  const pending = Promise.withResolvers();
+  const held = SEARCH_HITS.slice(20, 40);
+  readHit = async (url) => {
+    if (held.includes(url)) await pending.promise;
+    return { url, meta: {} };
+  };
+  click(page, answer.querySelector('button[data-topic=""]'));
+  await settle();
+  click(page, answer.querySelector(".show-more"));
+  await searched(page, "gum regrowth");
+  pending.resolve();
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(answer.querySelector(".search-title").textContent, "Results for “gum regrowth”");
+  assert.equal(shownCount(answer), "First 20 of 62 tracked claims");
+  assert.equal(page.history.state.lookup.pages, undefined, "the new step keeps no depth from the old search");
+  assert.match(page.location.href, /[?&]q=gum\+regrowth/);
 });
 
 test("a shared search can open on a topic first found on page two", async (t) => {

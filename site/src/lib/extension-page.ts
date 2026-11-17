@@ -15,6 +15,11 @@ import { STAGE_PATH, STATUS_LABELS, latestPromise } from "./status.ts";
  * settles a tie, so a rebuild picks the same one.
  */
 export function exampleClaim(claims: readonly ExportedClaim[]): ExportedClaim | null {
+  return exampleClaims(claims)[0] ?? null;
+}
+
+/** Every claim with a news report, in the order `exampleClaim` prefers them. */
+export function exampleClaims(claims: readonly ExportedClaim[]): ExportedClaim[] {
   const rank = (claim: ExportedClaim) => [
     STAGE_PATH.includes(claim.status.code) ? 0 : 1,
     latestPromise(claim) ? 0 : 1,
@@ -23,14 +28,13 @@ export function exampleClaim(claims: readonly ExportedClaim[]): ExportedClaim | 
     -claim.articles.length,
   ];
   const reported = claims.filter((claim) => claim.articles.length > 0);
-  const ordered = [...reported].sort((a, b) => {
+  return [...reported].sort((a, b) => {
     const [ra, rb] = [rank(a), rank(b)];
     for (let index = 0; index < ra.length; index += 1) {
       if (ra[index] !== rb[index]) return ra[index] - rb[index];
     }
     return a.slug < b.slug ? -1 : 1;
   });
-  return ordered[0] ?? null;
 }
 
 /** The report a reader would have been reading: the claim's earliest, as the outlet titled it. */
