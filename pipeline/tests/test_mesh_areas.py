@@ -29,17 +29,21 @@ def fixture(name: str) -> dict[str, Any]:
 
 YEAR = "http://id.nlm.nih.gov/mesh/2026"
 # The recorded trial's two condition terms and the tops of the trees each sits in.
-DESCRIPTORS: dict[str, tuple[str, str, list[str]]] = {
-    "D007239": ("Infections", "C01", []),
-    "D004066": ("Digestive System Diseases", "C06", []),
-    "D007154": ("Immune System Diseases", "C20", []),
-    "D006509": ("Hepatitis B", "C01.925.440.435", ["D007239", "D004066"]),
-    "D000163": ("Acquired Immunodeficiency Syndrome", "C01.221.250", ["D007154", "D007239"]),
+DESCRIPTORS: dict[str, tuple[str, list[str], list[str]]] = {
+    "D007239": ("Infections", ["C01"], []),
+    "D004066": ("Digestive System Diseases", ["C06"], []),
+    "D007154": ("Immune System Diseases", ["C20"], []),
+    "D006509": ("Hepatitis B", ["C01.925.440.435", "C06.552.380.705.437"], ["D007239", "D004066"]),
+    "D000163": (
+        "Acquired Immunodeficiency Syndrome",
+        ["C01.221.250.875.040", "C20.673.480.040"],
+        ["D007154", "D007239"],
+    ),
 }
 
 
 def store_descriptors(session: Session) -> None:
-    for identifier, (label, tree, broader) in DESCRIPTORS.items():
+    for identifier, (label, trees, broader) in DESCRIPTORS.items():
         session.add(
             TermRecord(
                 source_name="mesh",
@@ -49,7 +53,7 @@ def store_descriptors(session: Session) -> None:
                     "term": {
                         "@id": f"{YEAR}/{identifier}",
                         "label": {"@language": "en", "@value": label},
-                        "treeNumber": f"{YEAR}/{tree}",
+                        "treeNumber": [f"{YEAR}/{tree}" for tree in trees],
                         "broaderDescriptor": [f"{YEAR}/{one}" for one in broader],
                     },
                     "concept": None,

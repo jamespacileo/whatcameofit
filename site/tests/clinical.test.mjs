@@ -65,8 +65,8 @@ test("an export is refused with categories and no year, or a category it places 
 
 test("Wolfram syndrome reaches diabetes only on its metabolic placement", () => {
   const nodes = [node("M", "Metabolic diseases", ["C18"]), node("I", "Immune diseases", ["C20"]),
-    node("T", "Type 1 diabetes", ["C18.100", "C20.100"], ["M", "I"]),
-    node("W", "Wolfram syndrome", ["C18.100.100"], ["T"])];
+    node("T", "Type 1 diabetes", ["C18.452.394.750.124", "C20.111.327"], ["M", "I"]),
+    node("W", "Wolfram syndrome", ["C18.452.394.750.124.960"], ["T"])];
   const filed = (slug, identifier) => ({slug, clinical_categories: [{identifier}]});
   const tree = buildTree({mesh_years:["2026"], nodes}, [filed("wolfram", "W"), filed("diabetes", "T")]);
   assert.deepEqual([...tree.claims.get("I")], ["diabetes"]);

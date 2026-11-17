@@ -1256,13 +1256,17 @@ def _clinical_records(
     """What the claim's clinical categories are derived from: its approved trial
     records, its papers' index records, and the approved readings of a MeSH descriptor as
     its own condition."""
+    approved_numbers = set(trial_matches.values())
     by_trial: dict[str, list[EvidenceEvent]] = {}
     for event in events:
         if (
             event.source_name == ClinicalTrials.name
             and event.type in TRIAL_EVENT_TYPES
-            and event.entity_match_id is not None
-            and trial_matches.get(event.entity_match_id) == event.external_id
+            and event.external_id in approved_numbers
+            and (
+                event.entity_match_id is None
+                or trial_matches.get(event.entity_match_id) == event.external_id
+            )
         ):
             by_trial.setdefault(event.external_id, []).append(event)
     return ClaimRecords(

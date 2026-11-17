@@ -242,7 +242,10 @@ def compare(
                 expected = _claim(expected)
                 places = _places(original, expected, "claim")
                 if places:
-                    cause = "the data: the database holds two source articles of this claim at one address key; the store keeps the first"
+                    cause = (
+                        "the data: the database holds two source articles of this claim at one"
+                        " address key; the store keeps the first"
+                    )
                     differences.append(Difference(slug, True, places, cause))
         residual = _places(expected, actual, "claim")
         if residual:

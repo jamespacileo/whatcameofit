@@ -90,14 +90,19 @@ def test_a_descriptor_in_two_places_is_below_both():
 def test_wolfram_does_not_inherit_the_unrelated_immune_placement_of_type_one_diabetes():
     vocab = Vocabulary(
         [
-            descriptor("D000001", "Metabolic diseases", ["C18"], []),
-            descriptor("D000002", "Immune diseases", ["C20"], []),
-            descriptor("D000003", "Type 1 diabetes", ["C18.100", "C20.100"], ["D000001", "D000002"]),
-            descriptor("D000004", "Wolfram syndrome", ["C18.100.100"], ["D000003"]),
+            descriptor("D009750", "Metabolic diseases", ["C18"], []),
+            descriptor("D007154", "Immune diseases", ["C20"], []),
+            descriptor(
+                "D003922",
+                "Type 1 diabetes",
+                ["C18.452.394.750.124", "C20.111.327"],
+                ["D009750", "D007154"],
+            ),
+            descriptor("D014929", "Wolfram syndrome", ["C18.452.394.750.124.960"], ["D003922"]),
         ]
     )
-    assert vocab.above("D000004") == {"D000003", "D000001"}
-    assert vocab.above("D000003") == {"D000001", "D000002"}
+    assert vocab.above("D014929") == {"D003922", "D009750"}
+    assert vocab.above("D003922") == {"D009750", "D007154"}
 
 
 def test_missing_names_each_record_the_tree_still_needs():
