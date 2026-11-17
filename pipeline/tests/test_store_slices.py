@@ -440,3 +440,45 @@ def test_the_plan_and_a_slice_merge_into_the_real_store_as_run_push_forms_them(
     assert first[1] == len(one.trials) and first[3] == len(one.trials) and first[4] and first[5]
     assert all(row[2] >= 0 and row[3] == 0 and not row[4] for row in rows[1:])
     assert held >= len(one.trials)
+
+
+def test_a_slice_the_store_no_longer_shows_in_it_goes_again_whole(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from thenwhat.store.push import slices_in_store
+
+    store = _Store()
+    cli_slices, made, one, state, _ = _pushed_slice(session, tmp_path, monkeypatch, store)
+    url = "http://prod.test"
+    cli_slices._push_slice(session, one, made, state, url, "t")
+    where = cli_slices.store_of(state, url)
+    assert one.store == where
+    # The store shows it in: nothing is forgotten.
+    shown_in = {
+        "sets": [
+            {
+                "rule": made.rule,
+                "year": made.year,
+                "slices": [{"number": one.number, "in_store_at": "2026-11-18T00:00:00"}],
+            }
+        ]
+    }
+    assert slices_in_store(shown_in, made.rule, made.year) == {one.number}
+    assert cli_slices.forget_lost(made, where, {one.number}, again=False) == set()
+    assert "in_store" in one.done
+    # A restore took it back: it is due again and its next push sends everything.
+    shown_out = {
+        "sets": [
+            {
+                "rule": made.rule,
+                "year": made.year,
+                "slices": [{"number": one.number, "in_store_at": None}],
+            }
+        ]
+    }
+    shown = slices_in_store(shown_out, made.rule, made.year)
+    assert cli_slices.forget_lost(made, where, shown, again=False) == {one.number}
+    assert "in_store" not in one.done and one.whole
+    store.staged.clear()
+    cli_slices._push_slice(session, one, made, state, url, "t")
+    assert {"registry_trial", "payload"} <= set(store.kinds_sent()) and not one.whole

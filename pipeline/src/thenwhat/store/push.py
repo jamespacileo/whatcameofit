@@ -279,6 +279,21 @@ def check_store(client: httpx.Client, state: dict[str, str]) -> tuple[Any, bool]
     return progress, check_since(state, progress)
 
 
+def slices_in_store(progress: Any, rule: str, year: int) -> set[int] | None:
+    """The numbers of a set's slices the store shows in it (`in_store_at` set), by its
+    `GET /progress`; None when the answer does not list them."""
+    if not isinstance(progress, dict) or not isinstance(progress.get("sets"), list):
+        return None
+    for one in progress["sets"]:
+        if isinstance(one, dict) and (one.get("rule"), one.get("year")) == (rule, year):
+            return {
+                int(each["number"])
+                for each in one.get("slices") or []
+                if isinstance(each, dict) and each.get("in_store_at")
+            }
+    return set()
+
+
 def slices_held(progress: Any, rule: str, year: int) -> int | None:
     """How many slices of a set the store holds, by its `GET /progress`; None when the
     answer is not one to read that from."""

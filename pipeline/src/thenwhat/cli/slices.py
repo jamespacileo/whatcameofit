@@ -25,6 +25,7 @@ from thenwhat.store.push import (
     push,
     read_state,
     slices_held,
+    slices_in_store,
     target_of,
     write_state,
 )
@@ -166,13 +167,17 @@ def run_command(
         if do_push and state is not None:
             store = store_of(state, url)
             try:
-                _check_store(made, state, store, url, token, again=again)
+                shown = _check_store(made, state, store, url, token, again=again)
             except PushFailed as fault:
                 err.print(str(fault), markup=False)
                 raise typer.Exit(code=1) from None
-            for one in made.slices:
-                if again or one.store != store:
-                    one.forget_store()
+            resend = forget_lost(made, store, shown, again=again)
+            if resend:
+                out.print(
+                    f"{len(resend)} slices this device had in the store are not in it now;"
+                    " they go again whole.",
+                    markup=False,
+                )
         made.write(path)
         if do_push and state is not None:
             try:
@@ -268,10 +273,32 @@ def _push_plan(made: Plan, state: Path, url: str, token: str) -> None:
     )
 
 
-def _check_store(made: Plan, state: Path, store: str, url: str, token: str, *, again: bool):
+def forget_lost(made: Plan, store: str, shown: set[int] | None, *, again: bool) -> set[int]:
+    """Take out of the store every slice not in it for this push: all with `again`, those
+    marked in another store, and those this device marks in this store that the store
+    does not show in it (`shown`, from its progress), which a restore took back. Those go
+    again whole: what the state says of their records is as stale as their mark. Their
+    numbers."""
+    lost = {
+        one.number
+        for one in made.slices
+        if one.store == store and shown is not None and one.number not in shown
+    }
+    for one in made.slices:
+        if again or one.store != store or one.number in lost:
+            one.forget_store()
+        if one.number in lost:
+            one.whole = True
+    return lost
+
+
+def _check_store(
+    made: Plan, state: Path, store: str, url: str, token: str, *, again: bool
+) -> set[int] | None:
     """Before a push: refuse a store loaded from another build than the state's, and a
     store loaded again (it holds no slice of the set) while this device's state or plan
-    says slices were sent, unless every slice is to go again."""
+    says slices were sent, unless every slice is to go again. The numbers of the set's
+    slices the store shows in it, or None when it does not say."""
     held = read_state(state)
     with _client(url, token) as client:
         progress, took_since = check_store(client, held)
@@ -279,12 +306,13 @@ def _check_store(made: Plan, state: Path, store: str, url: str, token: str, *, a
         write_state(state, held)
     if progress is None:
         out.print("The store gave no progress; its build and slices are not compared.")
-        return
+        return None
     sent = any(key.startswith("trial_slice\t") for key in held) or any(
         one.store == store for one in made.slices
     )
     if not again and sent and slices_held(progress, made.rule, made.year) == 0:
         raise PushFailed(RELOADED)
+    return slices_in_store(progress, made.rule, made.year)
 
 
 def store_of(state: Path, url: str) -> str:
@@ -303,12 +331,13 @@ def _push_slice(
     records, texts = slice_records(session, one, rule=made.rule, year=made.year)
     keys = {f"{r.kind}\t{r.key}" for r in records}
     trials = {f"{r.kind}\t{r.key}" for r in records if r.kind == "registry_trial"}
-    report = _push(records, texts, state, url, token, drop=keys if again else trials)
+    report = _push(records, texts, state, url, token, drop=keys if again or one.whole else trials)
     resolved = report.resolved["registry_trial"]
     one.counts["in_store"] = min(resolved, len(one.trials))
     if resolved >= len(one.trials):
         one.done["in_store"] = datetime.now(UTC).isoformat(timespec="microseconds")
         one.store = store_of(state, url)
+        one.whole = False
     else:
         one.done.pop("in_store", None)
         out.print(

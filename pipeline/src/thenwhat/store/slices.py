@@ -69,6 +69,9 @@ class Slice:
     # The build whose store its `in_store` is true of: a store loaded afresh from another
     # build holds none of the set's trials until the slices are pushed to it again.
     store: str = ""
+    # Its next push sends every record of it, whatever the push state says: the store
+    # lost it (a restore), so what the state says of its records is stale too.
+    whole: bool = False
 
     def forget_store(self) -> None:
         """Its `in_store` belongs to another store: not done for this one."""
