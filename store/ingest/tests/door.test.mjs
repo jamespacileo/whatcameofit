@@ -7,6 +7,7 @@ import { execFileSync } from "node:child_process";
 import http from "node:http";
 import { readFileSync } from "node:fs";
 import { after, before, test } from "node:test";
+import { INLINE_PAYLOAD_BYTES } from "../src/sql.generated.mjs";
 import { fileURLToPath } from "node:url";
 import { ENTRIES, PAYLOADS, Service, TOKENS, engineUnavailable, runChecksum, sha } from "./harness.mjs";
 
@@ -20,7 +21,7 @@ const claim = (slug, more = {}) => ["claim", slug, { slug, headline: `Report on 
   origin: "backfill", created_at: T, awaiting_audit_at: T, review_state: "approved", reviewed_by: "rule", reviewed_at: T, ...more }];
 const article = (slug, key) => ["source_article", `${slug}|${key}`, { slug, url_key: key, url: `https://${key}`, outlet: key.split("/")[0], title: "t", published_date: "2026-10-01" }];
 const action = (kind, slug, by = "human") => ["action", `${kind}|${slug}`, { action: kind, slug, decided_by: by, at: "2026-11-16T12:00:00.000000+00:00" }];
-const large = (n) => `payload ${n} ${"x".repeat(17_000)}`;
+const large = (n) => `payload ${n} ${"x".repeat(INLINE_PAYLOAD_BYTES + 600)}`;
 
 let s;
 let n = 0;
@@ -165,12 +166,12 @@ test("a payload is stored under its checksum, once, and a body that does not mat
   assert.deepEqual((await put(checksum, text)).body, { key: `payload/${checksum}`, bytes: Buffer.byteLength(text), stored: true });
   assert.equal((await put(checksum, text)).body.stored, false, "the same payload twice is kept once");
   assert.equal(await (await bucket.get(`payload/${checksum}`)).text(), text);
-  assert.equal((await put(sha("small"), "small")).status, 422, "a payload of 16 KB or less is not an R2 object");
+  assert.equal((await put(sha("small"), "small")).status, 422, "a payload that fits a row is not an R2 object");
   assert.equal((await put(checksum, text, { type: "text/html" })).status, 415);
   assert.equal((await put("NOT-A-CHECKSUM", text)).status, 400);
   // A record may not name a payload that was never put, nor carry a body its checksum does not fit.
   const absent = sha(large(101));
-  assert.equal((await stageOne("device-mini", "device", ["payload", absent, { sha256: absent, bytes: 17_012, r2_key: `payload/${absent}` }]))?.body.error, "payload_not_handed_over");
+  assert.equal((await stageOne("device-mini", "device", ["payload", absent, { sha256: absent, bytes: INLINE_PAYLOAD_BYTES + 612, r2_key: `payload/${absent}` }]))?.body.error, "payload_not_handed_over");
   assert.equal((await stageOne("device-mini", "device", ["payload", sha("a"), { sha256: sha("a"), bytes: 1, body: "b" }]))?.body.error, "checksum_mismatch");
   assert.equal((await stageOne("device-mini", "device", ["payload", checksum, { sha256: checksum, bytes: 5, r2_key: `payload/${checksum}` }]))?.body.error, "checksum_mismatch");
   assert.equal((await stageOne("device-mini", "device", ["payload", checksum, { sha256: checksum, bytes: 5, r2_key: "somewhere/else" }]))?.status, 422);
@@ -228,7 +229,7 @@ test("a replayed batch adds nothing: the same chunk, the same run, and the same 
 });
 
 test("a batch over the limits is refused whole: a run, a chunk, a record, a payload", { skip }, async () => {
-  const small = await Service.open({ vars: { MAX_RUN_RECORDS: "5", MAX_CHUNK_RECORDS: "3", MAX_CHUNK_BYTES: "4000", MAX_PAYLOAD_BYTES: "20000" } });
+  const small = await Service.open({ vars: { MAX_RUN_RECORDS: "5", MAX_CHUNK_RECORDS: "3", MAX_CHUNK_BYTES: "4000", MAX_PAYLOAD_BYTES: String(INLINE_PAYLOAD_BYTES + 4000) } });
   try {
     await small.db.prepare("INSERT INTO store_step VALUES ('link_triage', 3)").run();
     const many = (count) => [claim("limits"), ...Array.from({ length: count - 1 }, (_, i) => article("limits", `limit.com/${i}`))];
@@ -248,7 +249,7 @@ test("a batch over the limits is refused whole: a run, a chunk, a record, a payl
       request.end("]");
     });
     assert.equal(unstated, 411, "a body must say how long it is");
-    const big = "y".repeat(20_001);
+    const big = "y".repeat(INLINE_PAYLOAD_BYTES + 4001);
     assert.equal((await small.ask("PUT", `/payloads/${sha(big)}`, { as: "device-mini", body: big, type: "application/octet-stream" })).status, 413);
     assert.equal(await small.one("SELECT count(*) FROM stg"), 0);
     assert.equal(await small.one("SELECT count(*) FROM run WHERE id = 'over-run'"), 0);
@@ -256,7 +257,7 @@ test("a batch over the limits is refused whole: a run, a chunk, a record, a payl
     assert.equal(await small.hand("inside", many(5), { chunk: 3 }), null);
     assert.equal((await small.merge("inside")).body.status, "merged");
   } finally { await small.close(); }
-  // A payload over 16 KB cannot travel in its record: a row holds no more.
+  // A payload over the row's bound cannot travel in its record: a row holds no more.
   const text = large(200);
   const inline = await stageOne("device-mini", "device", ["payload", sha(text), { sha256: sha(text), bytes: Buffer.byteLength(text), body: text }]);
   assert.deepEqual([inline.status, inline.body.error], [413, "payload_too_large_for_a_row"]);
@@ -566,9 +567,9 @@ test("a registry record that names a person is refused, in a record and in the b
   // The same record without people goes through, and so does a payload that is no registry record.
   const text = JSON.stringify(clean);
   assert.equal(await stageOne("lookup", "lookup", ["payload", sha(text), { sha256: sha(text), bytes: Buffer.byteLength(text), body: text }]), null);
-  // Over 16 KB the record goes to the bucket, and is held to the same.
+  // Over the row's bound the record goes to the bucket, and is held to the same.
   const large = structuredClone(clean);
-  large.protocolSection.descriptionModule = { detailedDescription: "d".repeat(17_000) };
+  large.protocolSection.descriptionModule = { detailedDescription: "d".repeat(INLINE_PAYLOAD_BYTES + 600) };
   const kept = JSON.stringify(large);
   large.protocolSection.contactsLocationsModule.overallOfficials = [{ name: "A Person", affiliation: "A university" }];
   const named = JSON.stringify(large);
@@ -648,7 +649,7 @@ test("a caller that asks too often is told so, counted by address without a toke
   const bearer = { authorization: `Bearer ${TOKENS.daily}` };
   assert.equal((await ask({ LIMIT_UNKNOWN: limiter("unknown", true), LIMIT_TOKEN: limiter("token", true) })).status, 401);
   const refused = await ask({ LIMIT_UNKNOWN: limiter("unknown", false), LIMIT_TOKEN: limiter("token", true) });
-  assert.deepEqual([refused.status, await refused.json()], [429, { error: "too_many_requests" }]);
+  assert.deepEqual([refused.status, refused.headers.get("retry-after"), await refused.json()], [429, "60", { error: "too_many_requests" }]);
   assert.equal((await ask({ LIMIT_UNKNOWN: limiter("unknown", true), LIMIT_TOKEN: limiter("token", false) }, bearer)).status, 429);
   assert.deepEqual(seen, [["unknown", "203.0.113.7"], ["unknown", "203.0.113.7"], ["token", "daily"]], "a known token is not counted by address");
   const shell = await worker.fetch(new Request("https://ingest.test/progress/page", { headers: { "cf-connecting-ip": "203.0.113.7" } }), { LIMIT_UNKNOWN: limiter("unknown", false) }, {});

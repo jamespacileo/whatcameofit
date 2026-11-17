@@ -3,7 +3,7 @@
 // not a record, not a payload, not an address.
 //
 //   POST   /runs                  register a run: who, which device, what kind of writer
-//   PUT    /payloads/<sha256>     a raw payload over 16 KB, into R2 under its checksum
+//   PUT    /payloads/<sha256>     a raw payload too large for a row, into R2 under its checksum
 //   POST   /runs/<id>/records     stage one chunk of records in natural-key form
 //   POST   /runs/<id>/merge       the merge; the same run twice adds nothing
 //   POST   /runs/<id>/preview     the report without applying; the run is then dropped
@@ -237,7 +237,8 @@ const page = () => new Response(PAGE, { status: 200, headers: {
 // a known token is counted by its address, which is used as the key and is neither stored
 // nor logged; a caller with one, by the token's name.
 const tooOften = async (limiter, key) => Boolean(limiter) && !(await limiter.limit({ key })).success;
-const slowDown = () => json(429, { error: "too_many_requests" });
+// The limits count by the minute, so a caller is told to wait one.
+const slowDown = () => new Response(JSON.stringify({ error: "too_many_requests" }), { status: 429, headers: { "content-type": "application/json", "cache-control": "no-store", "retry-after": "60" } });
 
 async function route(request, env, ctx) {
   const from = request.headers.get("cf-connecting-ip") || "unknown";

@@ -99,6 +99,9 @@ function run([command, args], { quiet = false } = {}) {
   });
 }
 class Failed extends Error {}
+// A stage that does not apply says so, and is shown as skipped, never as passed.
+class Skipped extends Error {}
+const skip = (why) => { throw new Skipped(why); };
 const must = async (command, why, options) => { const done = await run(command, options); if (!done.ok) throw new Failed(why || "the step failed; see above"); return done.text; };
 const json = (text) => JSON.parse(text.slice(text.search(/[[{]/)));
 const query = async (statement) => json(await must([wrangler, ["d1", "execute", "STORE", ...d1Wrangler, "--yes", "--json", "--command", statement]], "D1 did not answer", { quiet: true }))[0].results;
@@ -127,7 +130,7 @@ const stages = [
       "the build is not proved free of people (or `thenwhat store prove-no-people` could not be run): nothing was sent");
   }],
   ["jurisdiction", "the database and the bucket read back as eu", async () => {
-    if (!remote) return say("local engine: there is no jurisdiction to read");
+    if (!remote) return skip("local engine: there is no jurisdiction to read");
     const info = json(await must([wrangler, ["d1", "info", database, "--json"]], `the database ${database} could not be read`, { quiet: true }));
     if (info.jurisdiction !== "eu") throw new Failed(`the database ${database} reads back jurisdiction ${JSON.stringify(info.jurisdiction ?? null)}, not "eu": nothing is written to it`);
     // A bucket is found under a jurisdiction only if it was created in it.
@@ -155,7 +158,7 @@ const stages = [
     await must([wrangler, ["d1", "migrations", "apply", "STORE", ...d1Wrangler]]);
   }],
   ["bookmark", "the Time Travel bookmark, kept outside the repository", async () => {
-    if (!remote) return say("local engine: no Time Travel");
+    if (!remote) return skip("local engine: no Time Travel");
     const text = await must([wrangler, ["d1", "time-travel", "info", database, "--json"]], "the bookmark could not be read", { quiet: true });
     const folder = join(homedir(), "Library", "Application Support", "thenwhat", "store", "bookmarks");
     mkdirSync(folder, { recursive: true });
@@ -209,8 +212,8 @@ const stages = [
     say(`the manifest in the bucket describes this bulk file: build ${manifest.build}, ${manifest.parts.length} part(s)`);
   }],
   ["export", "the export from the hot file against the working database", async () => {
-    if (remote) return say("not part of a remote cut-over: `make export-compare` is run on its own");
-    if (has("--skip-export")) return say("not run (--skip-export)");
+    if (remote) return skip("local only: not part of a remote cut-over; `make export-compare` is run on its own");
+    if (has("--skip-export")) return skip("--skip-export");
     await must(thenwhat("export-compare", "--store", hot, "--payloads", payloads[0] || dir, "--allow-named"));
   }],
 ];
@@ -229,6 +232,8 @@ if (has("--dry-run")) {
 }
 
 for (const [name, path] of [["the hot file", hot], ["the bulk file", bulk]]) if (!existsSync(path)) stop(`${name} is not at ${path}`);
+// Production's configuration holds its database's id: it goes even when the run is stopped by hand.
+for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => { if (production) rmSync(config, { force: true }); console.error(`\nstopped by ${signal}${production ? "; the production configuration was removed" : ""}`); process.exit(130); });
 mkdirSync(out, { recursive: true });
 mkdirSync(work, { recursive: true });
 log = createWriteStream(join(out, `${env}-${stamp}.log`));
@@ -250,21 +255,23 @@ for (const [n, [name, what, stage]] of stages.entries()) {
   say(`\n== ${n} ${name}: ${what}`);
   const started = Date.now();
   let error = null;
-  try { await stage(); } catch (caught) { error = caught; }
+  let skipped = null;
+  try { await stage(); } catch (caught) { if (caught instanceof Skipped) { skipped = caught.message; say(`skipped: ${skipped}`); } else error = caught; }
   const seconds = (Date.now() - started) / 1000;
-  result.stages.push({ stage: name, seconds: Number(seconds.toFixed(1)), ok: !error });
+  result.stages.push({ stage: name, seconds: Number(seconds.toFixed(1)), ok: !error, ...(skipped ? { skipped } : {}) });
   if (error) { failed = name; say(`\nFAILED at stage ${n}, ${name}: ${error instanceof Failed ? error.message : error.stack}`); break; }
 }
 result.seconds = Number(((Date.now() - began) / 1000).toFixed(1));
 result.passed = !failed;
 result.failed_at = failed;
 say("\n== times");
-for (const { stage, seconds, ok } of result.stages) say(`${stage.padEnd(13)} ${String(seconds.toFixed(1)).padStart(7)} s${ok ? "" : "   FAILED"}`);
+for (const { stage, seconds, ok, skipped } of result.stages) say(skipped ? `${stage.padEnd(13)} skipped (${skipped})` : `${stage.padEnd(13)} ${String(seconds.toFixed(1)).padStart(7)} s${ok ? "" : "   FAILED"}`);
 say(`${"total".padEnd(13)} ${String(result.seconds.toFixed(1)).padStart(7)} s`);
 say(`build ${result.build}${result.bulk_build === result.build ? "" : ` (bulk build ${result.bulk_build})`}; table rows ${result.rows ?? "?"}; rows D1 says were written ${result.rows_written ?? "not said"}; payload objects ${result.payload_objects ?? "?"}`);
 const file = join(out, `result-${env}-${stamp}.json`);
 writeFileSync(file, JSON.stringify(result, null, 1) + "\n");
-say(failed ? `\nFAILED at ${failed}; result in ${file}` : `\nthe cut-over of ${env} passed; result in ${file}`);
+const left = result.stages.filter((stage) => stage.skipped).map((stage) => stage.stage);
+say(failed ? `\nFAILED at ${failed}; result in ${file}` : `\nthe cut-over of ${env} passed${left.length ? ` (not run: ${left.join(", ")})` : ""}; result in ${file}`);
 // Production's configuration holds its database's id: it does not outlive the run.
 if (production) rmSync(config, { force: true });
 if (!remote) rmSync(work, { recursive: true, force: true });

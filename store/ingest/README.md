@@ -33,7 +33,7 @@ After changing `store/schema.sql`, `store/merge.sql`, `store/preview.sql` or `st
 
 Every request carries `Authorization: Bearer <token>`. Without a token nothing answers.
 
-1. `PUT /payloads/<sha256>` for each payload over 16 KB (`application/octet-stream`). The body is hashed; one that is not what its checksum says is refused and nothing is stored. A payload already held is not stored again.
+1. `PUT /payloads/<sha256>` for each payload too large for its row (`application/octet-stream`; the bound is the schema's CHECK on `payload.body`, 16,384 today). The body is hashed; one that is not what its checksum says is refused and nothing is stored. A payload already held is not stored again.
 2. `POST /runs` with `{id, writer, commit, steps, counts, checksum}` (and `request_class` for a lookup). The service sets the time, a day only for a lookup. Registering a run again writes nothing: it answers 200 when the run is the one registered (same writer, device, checksum, steps and counts) and 409 otherwise. The device is the token's.
 3. `POST /runs/<id>/records`, once a chunk: a JSON list of `{kind, key, body}` with the header `X-Content-SHA256`, the SHA-256 of the body sent.
 4. `POST /runs/<id>/merge`. The answer's `status` is `merged` (with the report: resolved, added, conflicts and matched for each kind), `refused` (an older step version, with the reason), `undone` (a statement failed and D1 rolled the batch back; the run still waits and can be dropped) or `not_merged` (the chunks that arrived are not the ones stated).
@@ -72,7 +72,7 @@ The bulk kinds (registry trials, leads and what hangs from them, usage, measures
 - `POST /inbox/folded` with `{object}` records a fold. `object` is the key of the delta that holds what was folded, `bulk/<build id>/delta-...`. It must be in the bucket and listed in its build's `deltas.json`, where `scripts/upload-delta.mjs --through <seq>` wrote how far it folded: the service reads `through` from that list, not from the caller. A `through` sent as well must agree (409 `through_differs`). The answer is what is recorded for that object, `{recorded, recorded_at, again, folded_through}`; recording an object again changes nothing.
 - `POST /inbox/clear` with `{through}` removes the records up to there, and is refused (409 `not_folded`) for a `through` past the furthest fold recorded. So no record leaves D1 before its delta is in R2. For each run folded whole it also removes the rows that run added to D1's copies of the bulk tables, in one batch. A reader's lead the store-side consumer has not yet processed (its `lead_process` work is still due) is held back with its shares and reading, and the answer counts it in `leads_held`; a later clearing removes it once that work is done or has failed for good. Clearing twice changes nothing else. A device's, the daily job's and the operator's runs are not kept in the inbox: a slice of trials pushed on purpose stays in D1. A trial a lookup added is also left in D1 once a paper has been stored for it.
 
-A payload over 16 KB that an inbox record names is in the bucket under `payload/<sha256>`; the service has no route that serves it.
+A payload too large for a row that an inbox record names is in the bucket under `payload/<sha256>`; the service has no route that serves it.
 
 ## Progress of a backfill
 
