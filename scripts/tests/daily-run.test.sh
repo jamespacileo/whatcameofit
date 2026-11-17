@@ -25,11 +25,14 @@ fresh() {
   home="$tmp/case/home"
   state="$home/Library/Application Support/thenwhat/daily-run"
   calls="$tmp/case/calls"
-  month=$(date '+%Y-%m')
+  # The link window's months, as the job counts them: UTC, three days back by default.
+  month=$(date -u '+%Y-%m')
+  window_first=$(date -u -v-3d '+%Y-%m' 2>/dev/null || date -u -d "3 days ago" '+%Y-%m')
   mkdir -p "$root/scripts" "$root/pipeline" "$root/data/link-files/hackernews" "$home" "$tmp/case/bin"
   cp "$here/daily-run.sh" "$here/com.thenwhat.daily-run.plist" "$root/scripts/"
   : >"$root/scripts/fetch_link_files.py"
   : >"$root/data/link-files/hackernews/$month.parquet"
+  : >"$root/data/link-files/hackernews/$window_first.parquet"
   : >"$calls"
   printf 'LLM_MONTHLY_BUDGET_USD=30\nDAILY_RUN_REFRESH_LIMIT=2\nDAILY_RUN_DATABASE_URL=postgresql+psycopg://thenwhat:pw@127.0.0.1:5433/thenwhat\n' >"$root/.env"
   cat >"$tmp/case/bin/uv" <<'EOF'
@@ -85,9 +88,46 @@ grep -q -- '+ uv run .* thenwhat backfill load-trials --trials interventional --
 grep -q '^# database address from DAILY_RUN_DATABASE_URL$' "$tmp/case/dry" ||
   fail "dry run: it does not say where the database address comes from"
 grep -q 'pw@' "$tmp/case/dry" && fail "dry run: the database address is printed"
-order=$(sed -n 's/^# start //p' "$tmp/case/dry" | tr '\n' ',')
+# One load step per month the window touches, named with its month.
+order=$(sed -n 's/^# start //p' "$tmp/case/dry" | sed 's/ [0-9][0-9-]*$//' | uniq | tr '\n' ',')
 [ "$order" = "database,fetch-links,load-links,screen,score,read,prepare,trials,refresh,measure," ] ||
   fail "dry run: steps out of order: $order"
+
+grep -q -- "+ uv run .* python $root/scripts/fetch_link_files.py hackernews --since-days 3\$" "$tmp/case/dry.cmds" ||
+  fail "dry run: the fetch is not the three-day window"
+grep -q -- "+ uv run .* thenwhat backfill load-links hackernews $root/data/link-files/hackernews/$month.parquet\$" "$tmp/case/dry.cmds" ||
+  fail "dry run: this month's file is not loaded"
+
+# 1b. A window that reaches back into last month fetches once and loads both months' files.
+fresh
+cat >"$tmp/case/bin/date" <<'EOF'
+#!/bin/sh
+case "$*" in
+  "-u -v-5d +%Y-%m" | "-u -d 5 days ago +%Y-%m") echo 2026-10 ;;
+  "-u +%Y-%m") echo 2026-11 ;;
+  *) exec /bin/date "$@" ;;
+esac
+EOF
+chmod +x "$tmp/case/bin/date"
+: >"$root/data/link-files/hackernews/2026-10.parquet"
+: >"$root/data/link-files/hackernews/2026-11.parquet"
+# shellcheck disable=SC2030,SC2031 # each case sets the window in its own subshell
+(export DAILY_RUN_FETCH_DAYS=5 && job --dry-run) >"$tmp/case/dry" || fail "two months: exit $?"
+[ "$(grep -c 'fetch_link_files.py hackernews --since-days 5$' "$tmp/case/dry")" = 1 ] ||
+  fail "two months: the window is not fetched once, five days back"
+[ "$(sed -n 's|^+.* backfill load-links hackernews .*/||p' "$tmp/case/dry" | tr '\n' ',')" = "2026-10.parquet,2026-11.parquet," ] ||
+  fail "two months: both months' files are not loaded, oldest first"
+# shellcheck disable=SC2030,SC2031 # each case sets the window in its own subshell
+(export DAILY_RUN_FETCH_DAYS=5 && job) || true
+[ "$(grep -c 'backfill load-links hackernews' "$calls")" = 2 ] || fail "two months: a run did not load both files"
+grep -q '^- Loaded 2026-10: Read 900 posts' "$state/latest.md" || fail "two months: the summary lacks last month's load"
+grep -q '^- Loaded 2026-11: Read 900 posts' "$state/latest.md" || fail "two months: the summary lacks this month's load"
+
+# 1c. A window that is not 1 to 28 days is refused before anything starts.
+fresh
+# shellcheck disable=SC2030,SC2031 # each case sets the window in its own subshell
+(export DAILY_RUN_FETCH_DAYS=40 && job --dry-run) >/dev/null 2>&1
+[ $? = 2 ] || fail "window: 40 days was not refused"
 
 # 2. A run starts every step in order, checks the spend before each one that spends,
 #    writes the summary and lets the lock go.

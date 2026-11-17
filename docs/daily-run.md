@@ -9,8 +9,8 @@ In this order, each step with its start, end and outcome in the day's log:
 | Step | Command | Spends |
 | --- | --- | --- |
 | database | `thenwhat db-check` | no |
-| fetch-links | `scripts/fetch_link_files.py hackernews <this month> <this month>` | no |
-| load-links | `thenwhat backfill load-links hackernews <this month's file>` | no |
+| fetch-links | `scripts/fetch_link_files.py hackernews --since-days DAILY_RUN_FETCH_DAYS` | no |
+| load-links | `thenwhat backfill load-links hackernews <month's file>`, once for each month the window touched, oldest first | no |
 | screen | `thenwhat backfill run link_screen` | no |
 | score | `thenwhat backfill run link_triage --limit DAILY_RUN_TRIAGE_LIMIT` | model |
 | read | `thenwhat backfill run link_read --limit DAILY_RUN_READ_LIMIT --workers DAILY_RUN_READ_WORKERS` | page reader, model |
@@ -19,6 +19,7 @@ In this order, each step with its start, end and outcome in the day's log:
 | refresh | `thenwhat fetch <slug>` for published claims, `DAILY_RUN_REFRESH_LIMIT` a run, in turn | registries, model |
 | measure | `thenwhat measure --days 1` | no |
 
+- **The link window.** The fetch asks the public ClickHouse copy of Hacker News (`docs/sources.md`) only for the stories with a link posted since midnight UTC `DAILY_RUN_FETCH_DAYS` days ago (default 3, 1 to 28), and merges them into each month's file the window touches: a story already in the file is replaced by its newer copy, and no other row is dropped. On 17 November 2026 three days came to 2,867 stories, one query of the 20 an hour the copy allows (a query answers at most 10,000 rows), where the whole month had taken 2 hours 34 minutes of waiting out that limit. A window that starts in the previous month loads both months' files; loading a link already stored adds nothing. A run missed for more days than the window leaves a gap: fetch those days by hand with `--since-days` set wider, or the month form (`scripts/fetch_link_files.py hackernews <month> <month>`).
 - **One at a time.** The run holds a lock, a folder under `~/Library/Application Support/thenwhat/daily-run/`. A second run that finds a live one does not start and says so in the log. A lock left by a run that died is taken over.
 - **Spend.** Before each step marked as spending, the run reads the month's recorded model cost from the database. It stops when that cost plus `DAILY_RUN_SPEND_MARGIN_USD` would reach `LLM_MONTHLY_BUDGET_USD`, or when today's cost has reached `DAILY_RUN_DAY_BUDGET_USD` if that is set. During the refresh it checks again before every 25th claim. A spend that cannot be read stops the run too. The pipeline's own refusal at the ceiling still holds underneath. `LLM_MONTHLY_BUDGET_USD` has to be set in the settings file: the run does not start on the pipeline's default.
 - **A failed step does not end the run.** It is recorded, and the next step starts. Every step takes up where it left off, so the next day's run takes what this one missed. A stop for spend, a missing drive or an unreachable database does end it.
@@ -144,7 +145,5 @@ What `uv run` asks in return: `uv` on the job's `PATH` (the property list gives 
 ## What is not covered yet
 
 - **Reddit links are not refreshed.** `scripts/fetch_link_files.py` keeps one file per community for the whole period asked and leaves a file that exists alone, so it cannot add a month to one. The daily run takes Hacker News only until the script can.
-- **The last days of a month.** The fetch replaces only the running month's file. Links shared after the last run of a month are picked up only if that month's file is fetched again by hand.
-- **`scripts/fetch_link_files.py` is not on `main` yet** (it is in pull request 222). Without it the run skips the fetch, says so in the summary, and loads the file already there.
 - **The first `trials` step after the 0027 migration.** It has been run only against a stand-in and recorded fixtures. Its first real run should be by hand, after the migration is applied: `uv run --env-file .env --directory pipeline thenwhat backfill load-trials --trials interventional --changes-only`, to see how many trials a day's changes come to.
 - **First real run.** The job has been run only against a stand-in. The first run on the Mac mini should be started by hand (`sh scripts/daily-run.sh`) and its summary read before the job is installed. macOS may ask once whether a background job may read the external drive.
