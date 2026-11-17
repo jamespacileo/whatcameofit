@@ -12,7 +12,10 @@ SELECT 'evidence_event' AS "table", 'location contacts' AS field, count(*) AS ro
   WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.contactsLocationsModule.locations[*].contacts'))
 UNION ALL
 SELECT 'evidence_event' AS "table", 'investigator name, title or affiliation' AS field, count(*) AS rows FROM evidence_event
-  WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.responsibleParty.keyvalue() ? (@.key != "type")'))
+  WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.responsibleParty ? (exists(@.investigatorFullName) || exists(@.investigatorTitle) || exists(@.investigatorAffiliation) || exists(@.oldNameTitle))'))
+UNION ALL
+SELECT 'evidence_event' AS "table", 'responsible party beyond its type' AS field, count(*) AS rows FROM evidence_event
+  WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.responsibleParty.keyvalue() ? (@.key != "type" && @.key != "investigatorFullName" && @.key != "investigatorTitle" && @.key != "investigatorAffiliation" && @.key != "oldNameTitle")'))
 UNION ALL
 SELECT 'evidence_event' AS "table", 'person lead sponsor''s name' AS field, count(*) AS rows FROM evidence_event
   WHERE raw_payload ? 'protocolSection' AND ((jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.leadSponsor ? ((@.class == "INDIV" || @.class == "INDIVIDUAL") && exists(@.name))') OR (raw_payload #>> '{protocolSection,sponsorCollaboratorsModule,responsibleParty,type}' = 'SPONSOR_INVESTIGATOR' AND raw_payload #> '{protocolSection,sponsorCollaboratorsModule,leadSponsor,name}' IS NOT NULL)))
@@ -39,7 +42,10 @@ SELECT 'registry_trial' AS "table", 'location contacts' AS field, count(*) AS ro
   WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.contactsLocationsModule.locations[*].contacts'))
 UNION ALL
 SELECT 'registry_trial' AS "table", 'investigator name, title or affiliation' AS field, count(*) AS rows FROM registry_trial
-  WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.responsibleParty.keyvalue() ? (@.key != "type")'))
+  WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.responsibleParty ? (exists(@.investigatorFullName) || exists(@.investigatorTitle) || exists(@.investigatorAffiliation) || exists(@.oldNameTitle))'))
+UNION ALL
+SELECT 'registry_trial' AS "table", 'responsible party beyond its type' AS field, count(*) AS rows FROM registry_trial
+  WHERE raw_payload ? 'protocolSection' AND (jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.responsibleParty.keyvalue() ? (@.key != "type" && @.key != "investigatorFullName" && @.key != "investigatorTitle" && @.key != "investigatorAffiliation" && @.key != "oldNameTitle")'))
 UNION ALL
 SELECT 'registry_trial' AS "table", 'person lead sponsor''s name' AS field, count(*) AS rows FROM registry_trial
   WHERE raw_payload ? 'protocolSection' AND ((jsonb_path_exists(raw_payload, '$.protocolSection.sponsorCollaboratorsModule.leadSponsor ? ((@.class == "INDIV" || @.class == "INDIVIDUAL") && exists(@.name))') OR (raw_payload #>> '{protocolSection,sponsorCollaboratorsModule,responsibleParty,type}' = 'SPONSOR_INVESTIGATOR' AND raw_payload #> '{protocolSection,sponsorCollaboratorsModule,leadSponsor,name}' IS NOT NULL)))

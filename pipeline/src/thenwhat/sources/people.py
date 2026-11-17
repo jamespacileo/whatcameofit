@@ -128,6 +128,7 @@ FIELDS = (
     "overallOfficials",
     "location contacts",
     "investigator name, title or affiliation",
+    "responsible party beyond its type",
     "person lead sponsor's name",
     "person collaborator's name",
     "results point of contact",
@@ -155,9 +156,12 @@ def people_in(study: Any) -> set[str]:
     sponsors = protocol.get("sponsorCollaboratorsModule") or {}
     if isinstance(sponsors, dict):
         party = sponsors.get("responsibleParty") or {}
-        # The allow-list's proof: anything of a responsible party but its type.
-        if isinstance(party, dict) and set(party) - PARTY_KEPT:
+        if isinstance(party, dict) and any(party.get(k) for k in INVESTIGATOR_FIELDS):
             found.add("investigator name, title or affiliation")
+        # The allow-list's proof: anything else of a responsible party but its type. Named
+        # as the ingest service's door names it (store/ingest/src/people.mjs).
+        if isinstance(party, dict) and set(party) - PARTY_KEPT - set(INVESTIGATOR_FIELDS):
+            found.add("responsible party beyond its type")
         lead = sponsors.get("leadSponsor") or {}
         if isinstance(lead, dict) and lead.get("name") and sponsored_by_a_person(sponsors):
             found.add("person lead sponsor's name")

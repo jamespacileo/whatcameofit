@@ -40,6 +40,7 @@ def _study() -> dict[str, Any]:
                     "investigatorFullName": "A Made-up Person",
                     "investigatorTitle": "Professor",
                     "investigatorAffiliation": "Example University",
+                    "oldOrganization": "Example University",
                 },
                 "collaborators": [
                     {"name": "Example Pharma", "class": "INDUSTRY"},
@@ -188,4 +189,4 @@ def test_the_proof_flags_any_responsible_party_field_but_its_type():
     study["protocolSection"]["sponsorCollaboratorsModule"]["responsibleParty"][
         "oldOrganization"
     ] = "A made-up department"
-    assert people_in(study) == {"investigator name, title or affiliation"}
+    assert people_in(study) == {"responsible party beyond its type"}
