@@ -90,14 +90,26 @@ def is_the_rules(claim: Claim) -> bool:
     return claim.approach is None or claim.approach_decided_by is Decider.RULE
 
 
+def _lock_approach(session: Session, claim: Claim) -> None:
+    # A fetch may have loaded the claim before an editor committed a decision.
+    session.refresh(
+        claim, ["approach", "approach_decided_by", "approach_basis"], with_for_update=True
+    )
+
+
+def _set_answer(claim: Claim, answer: RuleAnswer) -> None:
+    claim.approach = answer.approach
+    claim.approach_decided_by = Decider.RULE if answer.approach else None
+    claim.approach_basis = answer.basis
+
+
 def apply_rule(session: Session, claim: Claim) -> RuleAnswer:
     """Set, update or clear the claim's approach by rule, and return the rule's answer.
     An approach the rule did not set is left as it is."""
     answer = answer_for(session, claim)
+    _lock_approach(session, claim)
     if is_the_rules(claim):
-        claim.approach = answer.approach
-        claim.approach_decided_by = Decider.RULE if answer.approach else None
-        claim.approach_basis = answer.basis
+        _set_answer(claim, answer)
     return answer
 
 
@@ -133,6 +145,8 @@ def run_rule(session: Session, claims: Sequence[Claim], *, write: bool) -> RuleR
     run = RuleRun()
     for claim in claims:
         answer = answer_for(session, claim)
+        if write:
+            _lock_approach(session, claim)
         if not is_the_rules(claim):
             run.kept += 1
             if answer.approach is not None:
@@ -157,5 +171,5 @@ def run_rule(session: Session, claims: Sequence[Claim], *, write: bool) -> RuleR
         elif answer.approach is None and approved_trial_payloads(session, claim):
             run.unset.append(Unset(claim.slug, NOT_LISTED, ()))
         if write:
-            apply_rule(session, claim)
+            _set_answer(claim, answer)
     return run

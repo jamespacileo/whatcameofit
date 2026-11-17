@@ -2,7 +2,7 @@
 
 ## 0. Editorial ownership and clinical provenance (P1)
 
-- [ ] 0.1 <a id="task-f18"></a>Enforce ownership when writing. Test the two-session interleaving and verify a control where the rule may update its own value. [F18](../../../docs/reviews/2026-11-17-code-review.md#finding-f18) · [Acceptance scenario](specs/health-areas/spec.md#scenario-an-editor-commits-while-a-rule-is-fetching)
+- [x] 0.1 <a id="task-f18"></a>Enforce ownership when writing. Test the two-session interleaving and verify a control where the rule may update its own value. [F18](../../../docs/reviews/2026-11-17-code-review.md#finding-f18) · [Acceptance scenario](specs/health-areas/spec.md#scenario-an-editor-commits-while-a-rule-is-fetching)
 
 - [ ] 0.2 <a id="task-f19"></a>Check current trial-match approval when selecting evidence. Export before and after rejection with the old event retained and compare database and store results. [F19](../../../docs/reviews/2026-11-17-code-review.md#finding-f19) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-once-approved-trial-match-is-rejected)
 
