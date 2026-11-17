@@ -21,6 +21,7 @@ from thenwhat.claims.entry import (
     add_promise,
     archive_claim,
     clear_audit,
+    edit_claim,
 )
 from thenwhat.db.models import (
     Claim,
@@ -1926,3 +1927,38 @@ def test_a_stage_reading_is_not_exported_when_weak_or_when_the_stage_is_confirme
     confirm_stage(session, SLUG, EvidenceStage.ANIMAL, now=NOW)
     out = claim_in(exported(session))
     assert out["evidence_stage"] == "animal" and out["evidence_stage_reading"] is None
+
+
+# --- what the registry lists beside the approach (openspec site-publishing) ----------
+
+
+def claim_with_a_drug_trial(session: Session, fixture_json, approach: str) -> Claim:
+    claim = new_claim(session)
+    edit_claim(session, SLUG, approach=approach)
+    entity = session.scalars(select(Entity).where(Entity.claim_id == claim.id)).one()
+    entity.synonyms = ["tideglusib"]
+    add_registry_events(session, claim, fixture_json("clinicaltrials/study_NCT02586935.json"))
+    return claim
+
+
+def test_registry_type_is_exported_when_it_supports_the_approach(session: Session, fixture_json):
+    """Scenario: Registry supports the approach. A person set it; the registry agrees."""
+    claim_with_a_drug_trial(session, fixture_json, "drug")
+
+    assert claim_in(exported(session))["approach_basis"] == {"type": "DRUG", "trials": 1}
+
+
+def test_no_registry_type_is_exported_for_an_approach_it_does_not_support(
+    session: Session, fixture_json
+):
+    """Scenario: Approach the registry does not support"""
+    claim_with_a_drug_trial(session, fixture_json, "gene-therapy")
+
+    assert claim_in(exported(session))["approach_basis"] is None
+
+
+def test_no_registry_type_is_exported_for_a_claim_with_no_approach(session: Session, fixture_json):
+    """Scenario: Claim with no approach"""
+    claim_with_a_drug_trial(session, fixture_json, "")
+
+    assert claim_in(exported(session))["approach_basis"] is None

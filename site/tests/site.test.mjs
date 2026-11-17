@@ -612,6 +612,34 @@ test("Scenario: Claim with an approach", () => {
   assert.match(html, /<span class="approach"><span class="visually-hidden">Approach: <\/span>Gene therapy<\/span>/);
 });
 
+test("Scenario: Registry supports the approach", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(
+    html,
+    /<span class="approach-basis">The registry lists it as a genetic intervention in 2 trials\.<\/span>/,
+  );
+});
+
+test("Scenario: Approach the registry does not support, and a claim with no approach", () => {
+  // Every other claim of the fixture has no basis, with or without an approach.
+  const others = htmlFiles(dist).filter((file) => !file.endsWith(path.join("phase-claim", "index.html")));
+  assert.ok(others.length > 0);
+  for (const file of others) assert.ok(!fs.readFileSync(file, "utf8").includes('class="approach-basis"'), file);
+});
+
+test("Scenario: Registry type without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims.find((claim) => claim.slug === "phase-claim").approach_basis.type = "RADIATION";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-registry-type-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /registry intervention types the site has no words for: RADIATION/);
+});
+
 test("Scenario: Claim without an approach", () => {
   assert.ok(!page("quiet-claim/index.html").includes('class="approach"'));
 });

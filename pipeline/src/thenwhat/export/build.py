@@ -22,6 +22,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.approach_rule import approach_from_registry
 from thenwhat.claims.entities import intervention_components
 from thenwhat.claims.entry import name_key
 from thenwhat.claims.status import evidence_of, flags_of, keep_status
@@ -92,6 +93,7 @@ from thenwhat.readings.rules import Outcome
 from thenwhat.readings.service import readings_that_stand
 from thenwhat.sources import opentargets
 from thenwhat.sources.base import SourceRecord, record_url
+from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
@@ -99,7 +101,7 @@ from thenwhat.status.rules import derive, history
 from thenwhat.terms.candidates import REASON_CODES
 from thenwhat.terms.drugs import DRUG_REASON_CODES, DRUG_RECORD_NAMES_TARGET
 from thenwhat.terms.genes import TARGET_REASON_CODES
-from thenwhat.terms.kinds import KIND_REASON_CODES
+from thenwhat.terms.kinds import KIND_REASON_CODES, registry_types
 from thenwhat.terms.records import read_record
 
 # 2: claims awaiting audit are left out (ADR 0007). The site reads only this version, so
@@ -595,6 +597,15 @@ class ExportedStageReading(Strict):
     also: list[ExportedStageShare]
 
 
+class ExportedApproachBasis(Strict):
+    """What the registry lists the claim's intervention as, when that is the claim's
+    approach: the registry's own type code and how many of the claim's trials list it
+    (openspec site-publishing). Said whoever set the approach. The site owns the wording."""
+
+    type: str
+    trials: int
+
+
 class ExportedClaim(Strict):
     slug: str
     headline: str
@@ -602,6 +613,8 @@ class ExportedClaim(Strict):
     vertical: str
     # The kind of intervention, as a configured approach code. The site owns its wording.
     approach: str | None
+    # Absent from an export written before it was added, which the site still reads.
+    approach_basis: ExportedApproachBasis | None = None
     intervention: ExportedIntervention
     indication: str
     first_reported_date: date | None
@@ -1175,6 +1188,25 @@ def _unconfirmed_stage_reading(
     )
 
 
+def _approach_basis(
+    claim: Claim, events: list[EvidenceEvent], names: list[str]
+) -> ExportedApproachBasis | None:
+    """The registry's one type for the claim's intervention, when it maps to the claim's
+    approach. Derived from the claim's approved trial records, so it is the same from
+    either store and says nothing of who set the approach."""
+    if claim.approach is None:
+        return None
+    answer = approach_from_registry(
+        registry_types(
+            [event.raw_payload for event in events if event.source_name == ClinicalTrials.name],
+            names,
+        )
+    )
+    if answer.basis is None or answer.approach != claim.approach:
+        return None
+    return ExportedApproachBasis(type=answer.basis["type"], trials=answer.basis["trials"])
+
+
 def _from(source: Session | Records) -> Records:
     return PostgresRecords(source) if isinstance(source, Session) else source
 
@@ -1269,6 +1301,9 @@ def build_export(
                 summary=claim.summary,
                 vertical=claim.vertical,
                 approach=claim.approach,
+                approach_basis=_approach_basis(
+                    claim, events, [intervention.name, *intervention.synonyms]
+                ),
                 intervention=ExportedIntervention(
                     name=intervention.name, synonyms=list(intervention.synonyms)
                 ),

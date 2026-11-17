@@ -40,6 +40,26 @@
       "title": "EvidenceStage",
       "type": "string"
     },
+    "ExportedApproachBasis": {
+      "additionalProperties": false,
+      "description": "What the registry lists the claim's intervention as, when that is the claim's\napproach: the registry's own type code and how many of the claim's trials list it\n(openspec site-publishing). Said whoever set the approach. The site owns the wording.",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "trials": {
+          "title": "Trials",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "type",
+        "trials"
+      ],
+      "title": "ExportedApproachBasis",
+      "type": "object"
+    },
     "ExportedArchived": {
       "additionalProperties": false,
       "properties": {
@@ -492,6 +512,17 @@
             }
           ],
           "title": "Approach"
+        },
+        "approach_basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedApproachBasis"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "intervention": {
           "$ref": "#/$defs/ExportedIntervention"

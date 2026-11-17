@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { unlabelledApproaches } from "./approach";
+import { unlabelledApproaches, unwordedRegistryTypes } from "./approach";
 import { unlabelledPaperCodes } from "./paper-facts";
 import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
 import { unwordedStatementCodes, type ExportedStatement } from "./statements";
@@ -221,6 +221,8 @@ export interface ExportedClaim {
   vertical: string;
   /** The kind of intervention, as a code the site words; null when none is recorded. */
   approach: string | null;
+  /** What the registry lists the intervention as, when that is the approach. Codes. */
+  approach_basis?: { type: string; trials: number } | null;
   intervention: { name: string; synonyms: string[] };
   indication: string;
   first_reported_date: string | null;
@@ -360,6 +362,14 @@ function load(): Export {
   if (unlabelled.length > 0) {
     throw new Error(
       `The export at ${file} has approaches the site has no words for: ${unlabelled.join(", ")}. Add them to src/lib/approach.ts.`,
+    );
+  }
+  const unwordedTypes = unwordedRegistryTypes(
+    (content as Export).claims.map((claim) => claim.approach_basis?.type),
+  );
+  if (unwordedTypes.length > 0) {
+    throw new Error(
+      `The export at ${file} has registry intervention types the site has no words for: ${unwordedTypes.join(", ")}. Add them to src/lib/approach.ts.`,
     );
   }
   const unworded = unlabelledTrialCodes(

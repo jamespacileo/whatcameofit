@@ -29,7 +29,7 @@ import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicDrawing from "../components/TopicDrawing.astro";
 import TrialDetailsLink from "../components/TrialDetailsLink.astro";
-import { APPROACH_LABELS } from "../lib/approach";
+import { APPROACH_LABELS, approachBasisSentence } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
 import { BRIEF_TITLE, digestBridge, recordBrief } from "../lib/record-brief";
@@ -426,6 +426,11 @@ const sections = [
                   <span class="visually-hidden">Approach: </span>
                   {APPROACH_LABELS[claim.approach]}
                 </span>
+              )
+            }
+            {
+              claim.approach && claim.approach_basis && (
+                <span class="approach-basis">{approachBasisSentence(claim.approach_basis)}</span>
               )
             }
           </div>

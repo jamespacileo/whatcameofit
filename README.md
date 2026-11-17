@@ -212,6 +212,8 @@ After changing what the export contains, regenerate its schema: `thenwhat export
 
 Two claims for one intervention and indication are merged, not archived: `thenwhat claim merge <duplicate> <kept> --reason "why"` moves the duplicate's articles, promises, reported statements, names and named entities to the kept claim and archives the duplicate; `thenwhat claim unmerge <duplicate> --reason "why"` undoes it. Its registry matches and events are not moved; the kept claim's registries are searched again. A wrong intervention name is corrected with `thenwhat entity rename <slug> "<old name>" "<new name>"` (`--old-is-description` drops the old name, `--reslug` makes the slug again). After either, run `thenwhat prepare --due`, then export: the old address redirects to the claim's page.
 
+`thenwhat claim approaches` sets claims' approaches by rule from the registry's intervention types (the table is in `pipeline/src/thenwhat/claims/approach_rule.py`); `thenwhat fetch` does the same for the one claim it reads. An approach set by a person, the seed or an assistant is never changed. `--dry-run` reports what would change and how often the rule agrees with approaches it may not write, and changes nothing; `--unset` lists each claim with approved trials that the rule gave no approach, and why.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.

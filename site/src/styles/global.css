@@ -731,6 +731,11 @@ a.chip:hover {
   color: var(--muted);
 }
 
+.approach-basis {
+  font-size: var(--text-s);
+  color: var(--muted);
+}
+
 .share {
   display: inline-flex;
   align-items: center;

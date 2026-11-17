@@ -147,6 +147,7 @@
       "summary": "Synthetic test data for phase-claim. It describes no real treatment.",
       "vertical": "gum-disease",
       "approach": "gene-therapy",
+      "approach_basis": { "type": "GENETIC", "trials": 2 },
       "intervention": {
         "name": "phase-claim agent",
         "synonyms": []

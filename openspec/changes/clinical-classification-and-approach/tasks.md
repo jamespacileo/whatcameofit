@@ -11,8 +11,8 @@
 
 - [x] 2.1 Call the session function at the end of `fetch_claim`, once the registry records are stored: `thenwhat prepare` and the daily trial refresh both reach a claim's trials through `thenwhat fetch`. Verify with a fetch test that a claim with a drug trial naming its intervention ends with the approach drug and its basis.
 - [x] 2.2 Add `thenwhat claim approaches` with `--dry-run` and `--unset`; `--dry-run` also reports agreement with approaches not set by rule. Verify with one success and one refusal CLI test, and a test that `--dry-run` writes nothing.
-- [ ] 2.3 Export what the registry lists beside the approach (derived through `Records`, whoever set the approach), regenerate `site/export.schema.json` and `site/data/seed-export.json`, add site wording per registry type in `site/src/lib/approach.ts`, and state it beside the approach label. Verify with export tests (Postgres and store give the same) and site tests for a supported approach, an unsupported one, and an unworded type.
-- [ ] 2.4 Document the command, the table and the "never overwrite" rule in `GLOSSARY.md` (Approach) and the README's command list. Verify the documented commands run as written.
+- [x] 2.3 Export what the registry lists beside the approach (derived through `Records`, whoever set the approach), regenerate `site/export.schema.json` and `site/data/seed-export.json`, add site wording per registry type in `site/src/lib/approach.ts`, and state it beside the approach label. Verify with export tests (Postgres and store give the same) and site tests for a supported approach, an unsupported one, and an unworded type.
+- [x] 2.4 Document the command, the table and the "never overwrite" rule in `GLOSSARY.md` (Approach) and the README's command list. Verify the documented commands run as written.
 
 ## 3. Clinical categories
 
