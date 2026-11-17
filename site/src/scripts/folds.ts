@@ -32,7 +32,7 @@ for (const row of rows) {
   row.addEventListener("click", () => openRow(row, row.getAttribute("aria-expanded") !== "true"));
 }
 
-// A term in "At a glance" opens to its source's words and why it matched. The stylesheet
+// A term in "At a glance" opens to its source's words and its record. The stylesheet
 // draws it closed from the first paint; with no script it is simply open.
 const terms = [...document.querySelectorAll<HTMLButtonElement>(".glance-open")];
 const openTerm = (term: HTMLButtonElement, open: boolean) => {
@@ -43,6 +43,18 @@ for (const term of terms) {
   openTerm(term, false);
   term.addEventListener("click", () => openTerm(term, term.getAttribute("aria-expanded") !== "true"));
 }
+
+// Paper has no press: why each term matched prints open, then goes back as it was.
+const whys = [...document.querySelectorAll<HTMLDetailsElement>(".glance-more .match-why")];
+addEventListener("beforeprint", () => {
+  for (const why of whys) {
+    why.toggleAttribute("data-was-open", why.open);
+    why.open = true;
+  }
+});
+addEventListener("afterprint", () => {
+  for (const why of whys) why.open = why.hasAttribute("data-was-open");
+});
 
 // A link to a folded section, or to something inside one, opens it.
 const reveal = (hash: string) => {

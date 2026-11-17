@@ -1,8 +1,9 @@
 ---
 // One background card, inside its row's disclosure in "At a glance": what an open
-// vocabulary or drug source says of a term, as the source wrote it, then the credit,
-// the score and the reasons in the site's words. Openspec site-publishing: "Background
-// cards on the claim page".
+// vocabulary or drug source says of a term, as the source wrote it, then the credit
+// and, closed until asked for, the score and the reasons in the site's words. Openspec
+// site-publishing: "Background cards on the claim page".
+import ChevronDown from "@lucide/astro/icons/chevron-down";
 import {
   DEFINITION_LABEL,
   DRUG_NOTE,
@@ -130,12 +131,17 @@ const day = (stamp: string) =>
       )
     }
   </p>
-  <div class="match-why">
-    <p class="match-why-head">{MATCH_WHY_HEAD}</p>
-    {/* The card's score, where a row gives it: ahead of the reasons it is the sum of. */}
+  {note && <p class="term-note">{note}</p>}
+  {/* How the term was found, and how well it fits: how the site works, not what the
+      term is. Closed until asked for; the card's score, where its row gives it here,
+      heads the reasons it is the sum of. */}
+  <details class="match-why">
+    <summary class="match-why-head">
+      {MATCH_WHY_HEAD}
+      <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+    </summary>
     <slot name="score" />
     {reasons.map((reason) => <p>{reason}</p>)}
     {card.reasons.length === 0 && <p>{NO_REASON}</p>}
-  </div>
-  {note && <p class="term-note">{note}</p>}
+  </details>
 </div>

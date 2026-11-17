@@ -4,7 +4,8 @@
 // the same list. A row taken from a background card is one line: its label and its value.
 // The line opens to the source's definition in quotation marks with a pill naming whose
 // words they are, the claim's words beside the source's term when they differ, and each
-// card's credit, then its score with the reasons for it (openspec glance-rows). Before the
+// card's credit; why it matched, with its score, is closed under each card until asked
+// for (openspec glance-rows). Before the
 // record in brief, never inside the status panel: a card describes a term, not the
 // evidence. Openspec site-publishing: "Background cards on the claim page".
 import ArrowRight from "@lucide/astro/icons/arrow-right";
@@ -108,8 +109,9 @@ const rows: Row[] = [
           (row === "condition" ? indication : intervention.name);
         const filed = card && filedAs(row, card, claimWords);
         // A row is its label and its value. A score in the high band, and how a term was
-        // found, are said where the row opens; a score below the high band stays in sight
-        // on the row, so a weaker match is never one press away from being seen.
+        // found, are under "Why it matched" where the row opens; a score below the high
+        // band stays in sight on the row, so a weaker match is never a press away from
+        // being seen.
         const scores = rowScores(rowCards);
         const inSight = scores.filter((score) => /^(medium|low), \d+%$/.test(score.words));
         const opened = scores.filter((score) => !inSight.includes(score));
@@ -160,7 +162,7 @@ const rows: Row[] = [
                   aria-expanded="true"
                   aria-controls={`${rowId(row)}-more`}
                 >
-                  <span class="glance-more-words">{words ? "Definition and why it matched" : "Why it matched"}</span>
+                  <span class="glance-more-words">{words ? "Definition and source" : "Source"}</span>
                   <span class="visually-hidden"> for {value}.</span>
                   <span class="chev" aria-hidden="true">
                     <ChevronDown size={16} stroke-width={2} />

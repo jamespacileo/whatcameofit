@@ -8381,8 +8381,7 @@ body.framed {
 /* The parts. A part's label: grey, the label's size, in the label's column. */
 .glance-more .glance-part-label,
 .glance-more .glance-filed-label,
-.glance-more .card-kind,
-.glance-more .term-card .match-why-head {
+.glance-more .card-kind {
   grid-column: 1;
   margin: 0;
   font-size: var(--label-size);
@@ -8393,8 +8392,7 @@ body.framed {
 /* The card is not a box of its own here: its pieces are parts of the row. */
 .glance-more .glance-filed,
 .glance-more .term-card,
-.glance-more .card-head,
-.glance-more .term-card .match-why {
+.glance-more .card-head {
   display: contents;
 }
 
@@ -8408,8 +8406,7 @@ body.framed {
 .glance-more .term-card > .entry-note,
 .glance-more .term-credit,
 .glance-more .term-note,
-.glance-more .match-score,
-.glance-more .term-card .match-why p:not(.match-why-head) {
+.glance-more .term-card .match-why {
   grid-column: var(--part);
   margin: 0;
 }
@@ -8428,9 +8425,37 @@ body.framed {
   font-size: var(--text-m);
 }
 
-.glance-more .term-card .match-why p:not(.match-why-head):not(.match-score) {
+/* Why a term matched, and its score: how the site works, not what the term is. Closed
+   until asked for, last under the card it is about, in the value's column. The press is
+   grey and the label's size; opened, the reasons read in ink a step smaller than the
+   source's words. */
+.glance-more .term-card .match-why {
+  max-width: var(--measure);
+}
+
+.glance-more .term-card .match-why-head {
+  min-height: 1.75rem;
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: 500;
+}
+
+.glance-more .term-card .match-why-head:hover,
+.glance-more .term-card .match-why[open] .match-why-head {
+  color: var(--ink);
+}
+
+.glance-more .term-card .match-why-head + * {
+  margin-top: 0.2rem;
+}
+
+.glance-more .term-card .match-why p:not(.match-score) {
   font-size: var(--text-m);
   color: var(--ink);
+}
+
+.glance-more .term-card .match-why p + p {
+  margin-top: 0.35rem;
 }
 
 /* A drug's facts are its row's value and other names: said once, on the row. The box
@@ -8447,9 +8472,7 @@ body.framed {
 .glance-more .card-kind,
 .glance-more .card-label,
 .glance-more .glance-filed-label,
-.glance-more .glance-filed-words,
-.glance-more .term-card .match-why-head,
-.glance-more .term-card .match-why-head + * {
+.glance-more .glance-filed-words {
   margin-top: 0.45rem;
 }
 
@@ -8519,9 +8542,13 @@ body.framed {
   }
 
   .glance-more .card-label,
-  .glance-more .glance-filed-words,
-  .glance-more .term-card .match-why-head + * {
+  .glance-more .glance-filed-words {
     margin-top: 0;
+  }
+
+  /* A finger's size on a phone, as every other press here. */
+  .glance-more .term-card .match-why-head {
+    min-height: 2.75rem;
   }
 }
 
@@ -8536,7 +8563,8 @@ body.framed {
     box-shadow: none;
   }
 
-  .glance-open .chev {
+  .glance-open .chev,
+  .glance-more .match-why-head svg {
     display: none;
   }
 
