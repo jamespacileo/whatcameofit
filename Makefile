@@ -14,6 +14,7 @@ check: lint types test scripts-test store-test site-test site-build extension-te
 lint:
 	uv run --directory pipeline ruff check .
 	uv run --directory pipeline ruff format --check .
+	uv run --directory pipeline lint-imports
 
 types:
 	uv run --directory pipeline ty check
