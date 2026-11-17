@@ -13,12 +13,13 @@ const unavailable = await engineUnavailable();
 if (unavailable) { console.error(unavailable); process.exit(1); }
 const service = await Service.open({ entries: [{ name: "preview", role: "operator", sha256: createHash("sha256").update(TOKEN).digest("hex") }] });
 const at = "2026-11-17T10:00:00.000000+00:00";
+const groups = ["ended with results", "ended", "active with results", "active updated", "active not updated"];
 const slices = Array.from({ length: 52 }, (_, i) => {
-  const trials = i === 51 ? 679 : 2000, reached = (ahead) => Math.round(trials * Math.max(0, Math.min(1, (ahead - i) / 6)));
-  return { slice: `s${String(i + 1).padStart(3, "0")}`, position: i + 1, trials, updated_at: at,
-    stages: { record: reached(40), registry_papers: reached(30), pubmed_papers: reached(24), in_store: reached(14), page: reached(8) } };
+  const trials = i === 51 ? 679 : 2000, has = (ahead) => (i < ahead ? at : null);
+  return { number: i + 1, grp: groups[Math.floor(i / 11)], trials, with_results: i < 22 ? trials : 0, record_at: has(40), registry_papers_at: has(30), pubmed_papers_at: has(24), in_store_at: has(14), page_at: has(8),
+    registry_papers: i < 30 ? Math.round(trials * 0.4) : null, pubmed_asked: i < 24 ? trials : null, pubmed_found: i < 24 ? Math.round(trials * 0.3) : null, in_store: i < 14 ? trials : i === 14 ? 900 : 0 };
 });
-await service.ask("PUT", "/progress/slices", { token: TOKEN, body: { set: "active-or-ended-this-year", total_trials: 102679, total_slices: 52, slices } });
+await service.ask("PUT", "/progress/slices", { token: TOKEN, body: { rule: "active-or-ended-this-year", year: 2026, total_trials: 102679, total_slices: 52, slices } });
 // One origin for the page and its requests: every request is handed to the Worker.
 http.createServer(async (request, response) => {
   const chunks = [];

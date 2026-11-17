@@ -263,8 +263,12 @@ The ingest service SHALL refuse a ClinicalTrials.gov record that names a person,
 The ingest service SHALL take the pipeline's report of how many trials of each slice of a set have reached each stage, and SHALL give it back, with the rows of each table and the last merged run of each kind of writer, to the operator's and the daily job's tokens only. Neither the report nor the answer SHALL hold a trial's identifier or anything of a record. The page that shows it SHALL hold no count until a token is typed into it, SHALL keep that token for the browser tab only and SHALL never put it in an address, and SHALL load nothing from another origin.
 
 #### Scenario: A slice moves on
-- **WHEN** the pipeline reports a slice again with one stage's count
-- **THEN** that count changes and the slice's other stages keep theirs
+- **WHEN** the pipeline reports a slice again with one stage's count and time
+- **THEN** that stage changes and the slice's other stages keep theirs
+
+#### Scenario: A stale report
+- **WHEN** a report gives a stage a smaller count or an earlier time than the service holds
+- **THEN** the larger count and the later time are kept
 
 #### Scenario: The page without a token
 - **WHEN** anyone asks for the progress page

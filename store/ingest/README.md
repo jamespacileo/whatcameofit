@@ -76,8 +76,8 @@ A payload over 16 KB that an inbox record names is in the bucket under `payload/
 
 ## Progress of a backfill
 
-- `PUT /progress/slices` (operator, daily, device) takes `{set, total_trials?, total_slices?, slices: [{slice, position, trials, stages: {record, registry_papers, pubmed_papers, in_store, page}, started_at?, updated_at?}]}`: at most 200 slices a call, added or brought up to date by `(set, slice)`; a stage left out keeps its count. Counts and a slice's own id only.
-- `GET /progress` (operator, daily) answers `{stages, sets: [{set, total_trials, total_slices, slices_reported, trials_reported, totals, slices, updated_at}], runs, rows, at}`: counts, slice ids and times, nothing of a record.
+- `PUT /progress/slices` (operator, daily, device) takes `{rule, year, total_trials?, total_slices?, slices: [{number, grp, trials, with_results?, registry_papers?, pubmed_asked?, pubmed_found?, in_store?, record_at?, registry_papers_at?, pubmed_papers_at?, in_store_at?, page_at?}]}`: at most 200 slices a call, keyed `(rule, year, number)`. `grp` is one of `ended with results`, `ended`, `active with results`, `active updated`, `active not updated`. A stage is reached when its time is set, and never goes back: the larger count and the later time are kept, and what a report leaves out stays. A field that is not one of these is refused, so no trial's identifier can travel. Report a slice after its run has merged.
+- `GET /progress` (operator, daily) answers `{stages, groups, sets: [{rule, year, total_trials, total_slices, slices_reported, trials_reported, stages: {<stage>: {slices, trials}}, counts, groups, slices, updated_at}], runs, rows, at}`: counts, group names and times, nothing of a record.
 - `GET /progress/page` is a self-contained page of the same. It is served without a token and holds no count; it asks `/progress` with a token typed into it, kept for the tab only and sent as a header.
 
 ## Asked too often

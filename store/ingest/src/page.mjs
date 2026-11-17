@@ -85,7 +85,7 @@ export const PAGE = String.raw`<!doctype html>
 (function () {
   "use strict";
   var KEY = "thenwhat-store-token";
-  var LABELS = { record: "Record fetched", registry_papers: "Registry papers", pubmed_papers: "PubMed papers", in_store: "In the store", page: "Page built" };
+  var LABELS = { record: "Record fetched", registry_papers: "Registry papers looked for", pubmed_papers: "PubMed asked", in_store: "In the store", page: "Page built" };
   var $ = function (id) { return document.getElementById(id); };
   var el = function (tag, cls, text) { var node = document.createElement(tag); if (cls) node.className = cls; if (text !== undefined) node.textContent = text; return node; };
   var num = function (n) { return typeof n === "number" ? n.toLocaleString("en-GB") : "–"; };
@@ -100,11 +100,11 @@ export const PAGE = String.raw`<!doctype html>
     $("view").hidden = true; $("ask").hidden = false; $("said").textContent = message || ""; $("token").value = ""; $("token").focus();
   }
 
-  function bar(name, done, of) {
+  function bar(name, done, of, note) {
     var row = el("div", "bar");
     row.appendChild(el("span", "name", name));
     var track = el("div", "track"); var fill = el("i"); fill.style.width = share(done, of) + "%"; track.appendChild(fill); row.appendChild(track);
-    row.appendChild(el("span", "num", num(done) + " of " + num(of) + " trials (" + share(done, of).toFixed(1) + "%)"));
+    row.appendChild(el("span", "num", num(done) + " of " + num(of) + " trials (" + share(done, of).toFixed(1) + "%)" + (note ? ". " + note : "")));
     return row;
   }
 
@@ -113,20 +113,30 @@ export const PAGE = String.raw`<!doctype html>
     if (!data.sets.length) { var none = el("div", "card"); none.appendChild(el("p", "soft", "No slice has been reported yet.")); sets.appendChild(none); }
     data.sets.forEach(function (set) {
       var card = el("section", "card");
-      card.appendChild(el("h2", "", set.set));
+      card.appendChild(el("h2", "", set.rule + ", " + set.year));
       var of = set.total_trials || set.trials_reported;
       card.appendChild(el("p", "soft", num(set.slices_reported) + " of " + num(set.total_slices) + " slices reported, holding " + num(set.trials_reported) + " of " + num(set.total_trials) + " trials. Last report " + (set.updated_at || "–").slice(0, 19).replace("T", " ") + " UTC."));
-      card.appendChild(el("h3", "", "By stage"));
-      data.stages.forEach(function (stage) { card.appendChild(bar(LABELS[stage] || stage, set.totals[stage], of)); });
+      card.appendChild(el("h3", "", "By stage: trials in the slices that have reached it"));
+      var notes = {
+        registry_papers: num(set.counts.registry_papers) + " trials with a paper the registry lists",
+        pubmed_papers: num(set.counts.pubmed_asked) + " trials asked of PubMed, a paper found for " + num(set.counts.pubmed_found),
+        in_store: num(set.counts.in_store) + " trials merged into the store"
+      };
+      data.stages.forEach(function (stage) { card.appendChild(bar(LABELS[stage] || stage, stage === "in_store" ? set.counts.in_store : set.stages[stage].trials, of, stage === "in_store" ? "" : notes[stage])); });
+      if (set.groups.length) {
+        card.appendChild(el("h3", "", "By group, as the registry describes the trials"));
+        set.groups.forEach(function (group) { card.appendChild(bar(group.grp, group.in_store, group.trials, num(group.slices) + " slices; the bar is trials in the store")); });
+      }
       card.appendChild(el("h3", "", "By slice (one line a stage, in the order above)"));
       var grid = el("div", "grid");
       set.slices.forEach(function (slice) {
-        var whole = data.stages.every(function (stage) { return slice.trials > 0 && slice.stages[stage] >= slice.trials; });
+        var part = function (stage) { return stage === "in_store" ? share(slice.in_store, slice.trials) : (slice[stage + "_at"] ? 100 : 0); };
+        var whole = data.stages.every(function (stage) { return part(stage) >= 100; });
         var cell = el("div", "cell" + (whole ? " done" : ""));
-        cell.title = "Slice " + slice.position + ": " + data.stages.map(function (stage) { return (LABELS[stage] || stage) + " " + num(slice.stages[stage]) + " of " + num(slice.trials); }).join("; ");
+        cell.title = "Slice " + slice.number + " (" + slice.grp + "), " + num(slice.trials) + " trials: " + data.stages.map(function (stage) { return (LABELS[stage] || stage) + (stage === "in_store" ? " " + num(slice.in_store) : (slice[stage + "_at"] ? " reached" : " not yet")); }).join("; ");
         cell.setAttribute("aria-label", cell.title);
-        cell.appendChild(el("b", "", String(slice.position)));
-        data.stages.forEach(function (stage) { var line = el("i"); var part = el("u"); part.style.width = share(slice.stages[stage], slice.trials) + "%"; line.appendChild(part); cell.appendChild(line); });
+        cell.appendChild(el("b", "", String(slice.number)));
+        data.stages.forEach(function (stage) { var line = el("i"); var filled = el("u"); filled.style.width = part(stage) + "%"; line.appendChild(filled); cell.appendChild(line); });
         grid.appendChild(cell);
       });
       card.appendChild(grid);
