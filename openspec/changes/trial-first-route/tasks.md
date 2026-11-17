@@ -107,10 +107,19 @@ The fifteen most linked domains across both sets are sponsors' trial sites, hosp
 
 Route 2, papers by trial number (pull request 3; does 8.7):
 
-- [ ] 9.4 Write PubMed's entry in `docs/sources.md` from NCBI's current pages, with the date, the pages read, the key, the tool and email parameters, the limits and the off-peak rule, before the client; add the settings to `.env.example`
-- [ ] 9.5 Write the client: the numbers of many trials in one request, exact, in the field the publisher supplied; each paper's own record read back, and a paper given to a trial only when that record carries the trial's number; refuse to run without what the terms require; verify with recorded fixtures (generic client name, no abstract, no author) a paper for one trial, a paper naming more than three numbers, a trial with no paper, and the refusal
-- [ ] 9.6 Store each paper found for a trial with its source, identifier, reduced raw payload and fetch time, in a migration numbered after `main`'s head; make it a step of the work ledger over the two sets, so a run resumes and a trial already asked is not asked again, "nothing found" included; verify tests of a run, a second run that sends nothing, and a run stopped by the allowance
-- [ ] 9.7 Ask for a sample of at most 50 trials across the two sets, with the generic client name, and record here how many of each set's sample have a paper
+- [x] 9.4 Write PubMed's entry in `docs/sources.md` from NCBI's current pages, with the date, the pages read, the key, the tool and email parameters, the limits and the off-peak rule, before the client; add the settings to `.env.example`
+- [x] 9.5 Write the client: the numbers of many trials in one request, exact, in the field the publisher supplied; each paper's own record read back, and a paper given to a trial only when that record carries the trial's number; refuse to run without what the terms require; verify with recorded fixtures (generic client name, no abstract, no author) a paper for one trial, a paper naming more than three numbers, a trial with no paper, and the refusal
+- [x] 9.6 Store each paper found for a trial with its source, identifier, reduced raw payload and fetch time, in a migration numbered after `main`'s head; make it a step of the work ledger over the two sets, so a run resumes and a trial already asked is not asked again, "nothing found" included; verify tests of a run, a second run that sends nothing, and a run stopped by the allowance
+- [x] 9.7 Ask for a sample of at most 50 trials across the two sets, with the generic client name, and record here how many of each set's sample have a paper
+
+The sample of 9.7, asked on 2026-11-17 with a generic client name, no key, in 4 requests (2 searches, 2 fetches): 25 trials drawn by a seeded order from each set.
+
+| Set | Trials asked | With a paper that carries the number | Papers |
+| --- | --- | --- | --- |
+| `active-since-2025` | 25 | 4 (16%) | 6 |
+| `completed-with-results-since-2025` | 25 | 10 (40%) | 12 |
+
+One paper carried three numbers and none more, so the rule against papers of many trials removed nothing. Twenty-five trials is a small sample: the figures say the route is worth running, not what it will give. Still open of 8.7 and "Nothing found is an answer": asking a trial again after a configured age; today a trial asked is not asked again until the step's version is raised.
 
 Route 3, stored leads on more than the intervention's name (pull request 4; does 3.1 and 3.3, part of 3.5, 3.6, 3.7, 4.1 to 4.3 and 8.6):
 

@@ -28,6 +28,7 @@ EXPECTED_TABLES = {
     "work_entry",
     "source_allowance_use",
     "registry_trial",
+    "trial_paper",
     "registry_load",
     "article_lead",
     "entity_substance",
