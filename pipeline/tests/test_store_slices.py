@@ -146,3 +146,14 @@ def test_a_slice_pushed_after_the_base_load_sends_only_its_state(session: Sessio
     assert {record.kind for record in records} >= {"registry_trial", "payload", "trial_slice"}
     sent = increment(records, report.state, actions=False).records
     assert [record.kind for record in sent] == ["trial_slice"]
+
+
+def test_slices_commands_refuse_a_stage_they_do_not_work():
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+
+    run = CliRunner().invoke(app, ["backfill", "slices", "run", "--stage", "page"])
+    assert run.exit_code == 1 and "--stage is one of" in run.output
+    mark = CliRunner().invoke(app, ["backfill", "slices", "mark", "--stage", "record", "1"])
+    assert mark.exit_code == 1 and "Only the page stage" in mark.output
