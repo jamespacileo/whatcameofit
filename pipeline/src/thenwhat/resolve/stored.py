@@ -36,6 +36,8 @@ MIN_TITLE_NAME_LENGTH = 5
 # The most stored trials read for one claim. A name in more entries than this is a
 # class or a common substance; the registry's own search, which ranks, is left to it.
 MAX_ROWS_READ = 20000
+# A name with no more stored trials than this is one product's: all are candidates.
+SPECIFIC_NAME = 20
 # How many stored trials must file a name under another before that other name is used
 # to find candidates. One sponsor's entry can list anything among its other names.
 MIN_TRIALS_FILING = 2
@@ -163,15 +165,25 @@ def _mentioning(session: Session, keys: Sequence[str]) -> list[StoredTrial]:
 
 
 def _titled(session: Session, keys: Sequence[str]) -> list[StoredTrial]:
-    """The stored trials that carry one of the keys as a whole word in their title,
-    official title or acronym, or whose sponsor's study identifier starts with it:
-    "BNT211-01"."""
+    """The stored trials that carry one of the keys as a whole word in their title or
+    acronym, or, for a key with a digit in it, whose sponsor's study identifier starts
+    with it: "BNT211-01". Only a development code opens a study identifier, and reading
+    the identifier means reading every stored record whole."""
     keys = [key for key in dict.fromkeys(keys) if len(key) >= MIN_TITLE_NAME_LENGTH]
     if not keys:
         return []
     names = "|".join(re.escape(key) for key in keys)
     whole_word = rf"(^|[^a-z0-9])({names})([^a-z0-9]|$)"
-    identification = RegistryTrial.raw_payload["protocolSection"]["identificationModule"]
+    places = [
+        func.lower(RegistryTrial.title).op("~")(whole_word),
+        func.lower(func.coalesce(RegistryTrial.acronym, "")).op("~")(whole_word),
+    ]
+    codes = "|".join(re.escape(key) for key in keys if re.search(r"\d", key))
+    if codes:
+        study_id = RegistryTrial.raw_payload[
+            ("protocolSection", "identificationModule", "orgStudyIdInfo", "id")
+        ].astext
+        places.append(func.lower(func.coalesce(study_id, "")).op("~")(rf"^({codes})([^a-z0-9]|$)"))
     rows = session.execute(
         select(
             RegistryTrial.external_id,
@@ -179,19 +191,7 @@ def _titled(session: Session, keys: Sequence[str]) -> list[StoredTrial]:
             RegistryTrial.conditions,
             RegistryTrial.interventions,
         )
-        .where(
-            RegistryTrial.registry_name == ClinicalTrials.name,
-            or_(
-                func.lower(RegistryTrial.title).op("~")(whole_word),
-                func.lower(func.coalesce(RegistryTrial.acronym, "")).op("~")(whole_word),
-                func.lower(func.coalesce(identification["officialTitle"].astext, "")).op("~")(
-                    whole_word
-                ),
-                func.lower(func.coalesce(identification["orgStudyIdInfo"]["id"].astext, "")).op(
-                    "~"
-                )(rf"^({names})([^a-z0-9]|$)"),
-            ),
-        )
+        .where(RegistryTrial.registry_name == ClinicalTrials.name, or_(*places))
         .order_by(RegistryTrial.external_id)
         .limit(BROAD_NAME + 1)
     )
@@ -226,10 +226,14 @@ def filed_under(trials: Sequence[StoredTrial], key: str) -> str | None:
 
     Sasanlimab is filed under PF-06801591 and zanzalintinib under XL092. The name is
     taken only when every entry that lists it agrees on one name, or on one name and
-    its forms. A name sponsors file under two names gives none, as the registry of
-    substances gives no code for a name it lists under two substances.
+    its forms, and at least MIN_TRIALS_FILING trials do. A name sponsors file under two
+    names gives none, as the registry of substances gives no code for a name it lists
+    under two substances; one trial alone can list anything ("growth factor" as another
+    name of one product).
     """
     found = filed_names(trials, key)
+    if sum(count for _, count in found.values()) < MIN_TRIALS_FILING:
+        return None
     for base, (name, _) in found.items():
         if all(other == base or other.startswith((f"{base} ", f"{base}-")) for other in found):
             return name
@@ -245,9 +249,11 @@ def _telling(indication: str | None) -> set[str]:
 
 
 def _within(trials: list[StoredTrial], indication: str | None) -> list[StoredTrial]:
-    """At most BROAD_NAME trials: all of them, or those whose conditions or title share
-    a telling word with the indication, or none when the name is broad even there."""
-    if len(trials) <= BROAD_NAME:
+    """At most BROAD_NAME trials: all of them when they are few, else those whose
+    conditions or title share a telling word with the indication, or none when the name
+    is broad even there. Every trial kept is read from the registry and scored, and a
+    trial for another condition is no match for the claim."""
+    if len(trials) <= SPECIFIC_NAME:
         return trials
     telling = _telling(indication)
     narrowed = [
@@ -274,8 +280,8 @@ def stored_trials(
     chemotherapy") needs no entry. A name is also found under each name that two or
     more stored trials file it under.
 
-    More than BROAD_NAME trials are narrowed to the claim's indication, and given up
-    when still as many: the registry's own search handles a broad name.
+    More than SPECIFIC_NAME trials are narrowed to the claim's indication, and given up
+    when still more than BROAD_NAME: the registry's own search handles a broad name.
     """
     whole: list[str] = []
     combined: list[list[str]] = []

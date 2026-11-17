@@ -126,10 +126,16 @@ def test_a_name_filed_under_two_names_gives_none():
 def test_an_entry_that_joins_products_or_is_not_a_product_says_nothing_of_a_name():
     trials = [
         listing(entry("EX-900", "Zentalimab"), nct_id="NCT00000001"),
+        listing(entry("EX-900 tablets", "Zentalimab"), nct_id="NCT00000004"),
         listing(entry("docetaxel + EX-900", "zentalimab"), nct_id="NCT00000002"),
         listing(entry("Infusion pump", "zentalimab", kind="DEVICE"), nct_id="NCT00000003"),
     ]
     assert filed_under(trials, "zentalimab") == "EX-900"
+
+
+def test_a_name_one_trial_alone_files_under_another_gives_none():
+    trials = [listing(entry("Palifermin", "growth factor"))]
+    assert filed_under(trials, "growth factor") is None
 
 
 # --- Stored trials that list the intervention are candidates ---------------------
@@ -167,22 +173,36 @@ def test_trial_filed_under_the_code_alone_is_found_through_the_trials_that_list_
     """Zanzalintinib and XL092: one trial says they are one, another lists the code only."""
     store(session, "NCT00000001", entry("EX-900", "Zentalimab"))
     store(session, "NCT00000002", entry("EX-900"), entry("Regorafenib"))
+    store(session, "NCT00000003", entry("EX-900 80 mg", "zentalimab"))
 
     stored = stored_trials(session, ["zentalimab"], "tooth agenesis")
 
-    assert [record.external_id for record in stored.records] == ["NCT00000001", "NCT00000002"]
+    assert [record.external_id for record in stored.records] == [
+        "NCT00000001",
+        "NCT00000002",
+        "NCT00000003",
+    ]
     assert stored.other_names == ["EX-900"]
 
 
-def test_a_name_one_sponsor_alone_files_under_another_finds_nothing_more(session: Session):
+def test_a_name_filed_under_two_names_is_found_under_each_two_trials_file_it_under(
+    session: Session,
+):
+    """Nothing is told to whoever scores, but candidates are found: each is scored."""
     store(session, "NCT00000001", entry("EX-900", "Zentalimab"))
-    store(session, "NCT00000002", entry("Arm A chemotherapy", "zentalimab"))
-    store(session, "NCT00000003", entry("EX-900"))
-    store(session, "NCT00000004", entry("Arm A chemotherapy"))
+    store(session, "NCT00000002", entry("EX-900", "Zentalimab"))
+    store(session, "NCT00000003", entry("Arm A chemotherapy", "zentalimab"))
+    store(session, "NCT00000004", entry("EX-900"))
+    store(session, "NCT00000005", entry("Arm A chemotherapy"))
 
     stored = stored_trials(session, ["zentalimab"], "tooth agenesis")
 
-    assert [record.external_id for record in stored.records] == ["NCT00000001", "NCT00000002"]
+    assert [record.external_id for record in stored.records] == [
+        "NCT00000001",
+        "NCT00000002",
+        "NCT00000003",
+        "NCT00000004",
+    ]
     assert stored.other_names == []
 
 
@@ -190,6 +210,7 @@ def test_a_combination_finds_the_trials_with_an_entry_for_every_part(session: Se
     store(session, "NCT00000001", entry("EX-900"), entry("Atezolizumab", "Brandex®"))
     store(session, "NCT00000002", entry("EX-900", "zentalimab"))
     store(session, "NCT00000003", entry("Atezolizumab", "Brandex"))
+    store(session, "NCT00000004", entry("EX-900", "Zentalimab"))
 
     assert found(session, "zentalimab plus Brandex") == ["NCT00000001"]
 
@@ -205,6 +226,7 @@ def test_a_name_no_entry_lists_is_looked_for_in_titles_and_study_identifiers(ses
     store(session, "NCT00000001", entry("CLDN6 CAR-T"), study_id="EXB211-01")
     store(session, "NCT00000002", entry("EX-114"), title="A Study of EX-114 (Zentalimab) in Adults")
     store(session, "NCT00000003", entry("Other"), title="Zentalimabs of the world", study_id="X-1")
+    store(session, "NCT00000004", entry("Other"), study_id="zentalimab-01")
 
     assert found(session, "EXB211") == ["NCT00000001"]
     assert found(session, "zentalimab") == ["NCT00000002"]
@@ -226,6 +248,13 @@ def test_a_broad_name_is_narrowed_to_the_indication_and_given_up_when_still_broa
 
     assert found(session, "commonol") == ["NCT00000001"]
     assert found(session, "commonol", indication="hypertension") == []
+
+
+def test_a_name_with_few_stored_trials_keeps_those_for_other_conditions(session: Session):
+    """A basket trial names no one condition; whoever scores decides, not the wording."""
+    store(session, "NCT00000001", entry("Zentalimab"), conditions=("Solid Tumor",))
+
+    assert found(session, "zentalimab") == ["NCT00000001"]
 
 
 def test_with_no_stored_trial_nothing_is_found(session: Session):
@@ -347,11 +376,15 @@ def test_whoever_scores_is_told_the_other_names_and_sees_those_a_record_lists(se
     claim = zentalimab_claim(session)
     store(session, "NCT00000001", entry("EX-900", "Zentalimab"))
     store(session, "NCT00000002", entry("EX-900"))
+    store(session, "NCT00000003", entry("EX-900", "Zentalimab"))
     full = payload("NCT00000002", "Filed under the code", ["Tooth Agenesis"], [entry("EX-900")])
     listed = payload(
         "NCT00000001", "Lists both", ["Tooth Agenesis"], [entry("EX-900", "Zentalimab")]
     )
-    trials = FakeTrials({"zentalimab": [record("NCT00000001", listed)]}, {"NCT00000002": full})
+    trials = FakeTrials(
+        {"zentalimab": [record("NCT00000001", listed), record("NCT00000003", listed)]},
+        {"NCT00000002": full},
+    )
     backend = ReadsTheRecord()
 
     resolve(session, claim, trials, backend)
@@ -404,6 +437,7 @@ def test_a_combination_claim_gets_the_stored_trial_that_files_a_part_under_its_c
     )
     both = [entry("EX-900"), entry("Atezolizumab", "Brandex®")]
     store(session, "NCT00000001", entry("EX-900", "Zentalimab"))
+    store(session, "NCT00000003", entry("EX-900", "Zentalimab"))
     store(session, "NCT00000002", *both)
     trials = FakeTrials(
         {}, {"NCT00000002": payload("NCT00000002", "Both", ["Tooth Agenesis"], both)}
