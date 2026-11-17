@@ -5,10 +5,10 @@ of the truth store's schema, through the store's own merge. For the comparison o
 Until the store holds the records itself, this is how a store file is had to compare
 against: the records are read (never written) from the session, put in the natural-key
 form a writer hands over, staged, and merged by `store/merge.sql` as a D1 batch runs it.
-It stands in for two things that are being built elsewhere and replaces neither: the
-pipeline's mapping of each kind to its natural-key form (task 4.1), and the snapshot the
-ingest service gives (design, "The read side"). When the snapshot exists the comparison
-is given its file and this module is not used.
+Each record is put in that form by the pipeline's own mapping (`thenwhat.store`), so the
+file holds what the pipeline's writer would have put in the store. The copy stands in
+for the snapshot the ingest service gives (design, "The read side"): when that exists
+the comparison is given its file and this module is not used.
 
 Only the kinds an export reads are copied: no leads, no registry corpus, no spend.
 
@@ -16,14 +16,13 @@ Nothing here is article text: titles and addresses as stored, and the pipeline's
 wording of statements.
 """
 
-import hashlib
 import json
 import sqlite3
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -39,6 +38,7 @@ from thenwhat.db.models import (
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
+    LinkLead,
     OrganisationRecord,
     OutletIcon,
     PaperRecord,
@@ -50,19 +50,13 @@ from thenwhat.db.models import (
     TrialRead,
 )
 from thenwhat.decide.steps import ENTITY_MATCH, EVIDENCE_STAGE, PAPER_MATCH
-from thenwhat.decide.steps import match_ref as row_match_ref
-from thenwhat.domain import Decider
-from thenwhat.export.store_records import claim_ref, match_ref
+from thenwhat.store import records as r
+from thenwhat.store.form import Record, body, key_of, payload_of, payload_record, when
 
-# A payload this size or smaller is kept in the store's own `payload` table; a larger
-# one is an object (design, decision 2).
-INLINE_PAYLOAD_BYTES = 16384
 # Records to a run, as the proof loads its sample: parents first, each run whole.
 RUN_RECORDS = 20_000
 # Records to a staged chunk.
 CHUNK_RECORDS = 500
-
-Record = tuple[str, str, dict[str, Any]]
 
 
 class CopyFailed(Exception):
@@ -111,69 +105,33 @@ def _named(path: Path) -> dict[str, str]:
     return found
 
 
-def _text(value: datetime | date | None) -> str | None:
-    return None if value is None else value.isoformat()
-
-
-def _code(value: Any) -> Any:
-    """An enum as its code; anything else as it is."""
-    return getattr(value, "value", value)
-
-
-def payload_text(payload: Any) -> bytes:
-    """A payload as the bytes the store keeps and its checksum is of."""
-    return json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode()
-
-
-def _event_rows(session: Session, claim_ids: list[int]) -> Iterator[Any]:
+def _event_rows(session: Session, claim_ids: list[int]) -> Iterator[EvidenceEvent]:
+    """The claims' events as rows, not objects: a payload can be megabytes and none is
+    kept in memory. A row has an event's fields under the same names."""
     for start in range(0, len(claim_ids), 200):
-        yield from session.execute(
+        for row in session.execute(
             select(*EvidenceEvent.__table__.c)
             .where(EvidenceEvent.claim_id.in_(claim_ids[start : start + 200]))
             .order_by(EvidenceEvent.id)
-        )
+        ):
+            yield cast(EvidenceEvent, row)
 
 
-def content_checksum(event: Any) -> str:
-    """Of the fields a status is derived from (store-tables.md, the finding). A stand-in
-    for the pipeline's own, which task 4.1 writes."""
-    parts = (
-        _code(event.type),
-        event.event_date.isoformat(),
-        _code(event.trial_state) or "",
-        ",".join(event.trial_phases or []),
-        _code(event.regulatory_outcome) or "",
-        event.external_id,
-    )
-    return hashlib.sha256("|".join(parts).encode()).hexdigest()
-
-
-class _Copy:
-    def __init__(self, session: Session, payloads: Path, report: CopyReport) -> None:
-        self.session = session
-        self.payloads = payloads
-        self.report = report
-        self.seen_payloads: set[str] = set()
-
-    def keep_payload(self, payload: Any, records: list[Record]) -> str:
-        """Add the payload's record once and return its checksum. A large one is written
-        to the folder that stands in for the object store."""
-        raw = payload_text(payload)
-        sha = hashlib.sha256(raw).hexdigest()
-        if sha in self.seen_payloads:
-            return sha
-        self.seen_payloads.add(sha)
-        body: dict[str, Any] = {"sha256": sha, "bytes": len(raw)}
-        if len(raw) <= INLINE_PAYLOAD_BYTES:
-            body["body"] = raw.decode()
-        else:
-            body["r2_key"] = f"payload/{sha}"
-            held = self.payloads / "payload" / sha
-            held.parent.mkdir(parents=True, exist_ok=True)
-            held.write_bytes(raw)
-            self.report.payload_objects += 1
-        records.append(("payload", sha, body))
-        return sha
+def _keep_payload(
+    value: Any, records: list[Record], seen: set[str], payloads: Path, report: CopyReport
+) -> None:
+    """Add the payload's record once. A large one is written to the folder that stands
+    in for the object store, under the key its record names."""
+    record = payload_record(value)
+    if record.key in seen:
+        return
+    seen.add(record.key)
+    if "r2_key" in record.body:
+        held = payloads / record.body["r2_key"]
+        held.parent.mkdir(parents=True, exist_ok=True)
+        held.write_bytes(payload_of(value).text.encode())
+        report.payload_objects += 1
+    records.append(record)
 
 
 def _first_slugs(
@@ -183,8 +141,9 @@ def _first_slugs(
     the slug it has now, one run a rename so that each sees the one before it.
 
     The database keeps the slug a claim had before each rename that changed it. The
-    store learns a former slug only from a `rename` action, so a renamed claim is handed
-    over under its first slug and renamed again, in the order it was.
+    store learns a former slug only from a `rename` action, and refuses one that names a
+    slug it never held, so a renamed claim is handed over under its first slug and
+    renamed again, in the order it was.
     """
     ids = {claim.id for claim in claims}
     renames = [
@@ -213,16 +172,16 @@ def _first_slugs(
                 continue
             steps.append(
                 [
-                    (
+                    Record(
                         "action",
-                        f"rename|{change.former_slug}|{change.id}",
-                        {
-                            "action": "rename",
-                            "slug": change.former_slug,
-                            "new_slug": after,
-                            "decided_by": _code(change.decided_by),
-                            "at": _text(change.decided_at),
-                        },
+                        key_of("rename", change.former_slug, when(change.decided_at)),
+                        body(
+                            action="rename",
+                            slug=change.former_slug,
+                            new_slug=after,
+                            decided_by=change.decided_by.value,
+                            at=when(change.decided_at),
+                        ),
                     )
                 ]
             )
@@ -234,55 +193,38 @@ def records_of(
 ) -> list[list[Record]]:
     """The runs of a copy of these claims, in the order they are merged: the claims
     under their first slugs, their renames, then everything else with the actions that
-    archive, merge and publish."""
-    copy = _Copy(session, payloads, report)
+    archive, merge and publish. Each record is the pipeline's own natural-key form of
+    its row (`thenwhat.store.records`)."""
     first_slug, rename_runs = _first_slugs(session, claims)
     slug = {claim.id: claim.slug for claim in claims}
     ids = sorted(slug)
+    # What a merged claim keeps for itself is not handed over, nor its archive: the
+    # store reads its slug as the claim it was merged into (`store/gather.py`).
+    merged = {claim.id for claim in claims if claim.merged_into_id is not None}
+    own = [claim_id for claim_id in ids if claim_id not in merged]
 
-    def of_claims(model: Any, column: Any = None) -> Iterable[Any]:
-        column = model.claim_id if column is None else column
-        for start in range(0, len(ids), 1000):
+    def of_claims(model: Any, among: list[int] = ids) -> Iterable[Any]:
+        for start in range(0, len(among), 1000):
             yield from session.scalars(
-                select(model).where(column.in_(ids[start : start + 1000])).order_by(model.id)
+                select(model)
+                .where(model.claim_id.in_(among[start : start + 1000]))
+                .order_by(model.id)
             )
 
+    tied_to_lead = set(session.scalars(select(LinkLead.claim_id).where(LinkLead.claim_id.in_(ids))))
     claim_records: list[Record] = []
     for claim in sorted(claims, key=lambda claim: claim.id):
-        claim_records.append(
-            (
-                "claim",
-                first_slug[claim.id],
-                {
-                    "slug": first_slug[claim.id],
-                    "headline": claim.headline,
-                    "summary": claim.summary,
-                    "vertical": claim.vertical,
-                    "approach": claim.approach,
-                    "indication": claim.indication,
-                    "first_reported_date": _text(claim.first_reported_date),
-                    "evidence_stage": _code(claim.evidence_stage),
-                    "current_status": _code(claim.current_status),
-                    "overlay_years": claim.overlay_years,
-                    "status_updated_at": _text(claim.status_updated_at),
-                    # Not read by an export; the store asks for one.
-                    "origin": "entry",
-                    "review_state": _code(claim.review_state),
-                    "reviewed_at": _text(claim.reviewed_at),
-                    "reviewed_by": _code(claim.reviewed_by),
-                    "awaiting_audit_at": _text(claim.awaiting_audit_at),
-                    "created_at": _text(claim.created_at),
-                },
-            )
+        record = r.claim_record(
+            claim, origin=r.claim_origin(claim, from_link_lead=claim.id in tied_to_lead)
         )
+        first = first_slug[claim.id]
+        claim_records.append(Record("claim", first, record.body | {"slug": first}))
 
-    rest: list[Record] = []
-    payloads_first: list[Record] = []
-
-    # --- what was reported ----------------------------------------------------------
+    # --- the rows other rows name, read first ----------------------------------------
+    articles: list[SourceArticle] = list(of_claims(SourceArticle))
     url_key: dict[int, str] = {}
     held_keys: set[tuple[int, str]] = set()
-    for article in of_claims(SourceArticle):
+    for article in articles:
         key = article_key(article.url) or article.url
         if (article.claim_id, key) in held_keys:
             report.notes.append(
@@ -291,84 +233,7 @@ def records_of(
             )
         held_keys.add((article.claim_id, key))
         url_key[article.id] = key
-        rest.append(
-            (
-                "source_article",
-                f"{slug[article.claim_id]}|{key}",
-                {
-                    "slug": slug[article.claim_id],
-                    "url_key": key,
-                    "url": article.url,
-                    "outlet": article.outlet,
-                    "title": article.title,
-                    "published_date": _text(article.published_date),
-                    "content_hash": article.content_hash,
-                    "archive_url": article.archive_url,
-                },
-            )
-        )
-    for promise in of_claims(Promise):
-        key = url_key[promise.source_article_id]
-        digest = hashlib.md5(promise.description.encode(), usedforsecurity=False).hexdigest()
-        rest.append(
-            (
-                "promise",
-                f"{slug[promise.claim_id]}|{key}|{digest}",
-                {
-                    "slug": slug[promise.claim_id],
-                    "url_key": key,
-                    "description": promise.description,
-                    "parsed_date": _text(promise.parsed_date),
-                },
-            )
-        )
-    for statement in of_claims(ReportedStatement):
-        key = url_key[statement.source_article_id]
-        natural = f"{slug[statement.claim_id]}|{key}|{statement.text_key}"
-        rest.append(
-            (
-                "reported_statement",
-                natural,
-                {
-                    "slug": slug[statement.claim_id],
-                    "url_key": key,
-                    "text": statement.text,
-                    "text_key": statement.text_key,
-                    "kind": _code(statement.kind),
-                    "firmness": _code(statement.firmness),
-                    "speaker": _code(statement.speaker),
-                    "basis": _code(statement.basis),
-                    "confidence": statement.confidence,
-                    "decision_ref": f"statement:{natural}",
-                    "article_read_at": _text(statement.article_read_at),
-                    "review_state": _code(statement.review_state),
-                    "reviewed_at": _text(statement.reviewed_at),
-                    "reviewed_by": _code(statement.reviewed_by),
-                    "created_at": _text(statement.created_at),
-                },
-            )
-        )
-
-    # --- entities, matches, terms ---------------------------------------------------
-    entities: dict[int, Entity] = {}
-    for entity in of_claims(Entity):
-        entities[entity.id] = entity
-        rest.append(
-            (
-                "entity",
-                f"{slug[entity.claim_id]}|{_code(entity.type)}|{entity.name}",
-                {
-                    "slug": slug[entity.claim_id],
-                    "type": _code(entity.type),
-                    "name": entity.name,
-                    "synonyms": list(entity.synonyms),
-                    "search_phrases": list(entity.search_phrases),
-                    "is_origin_paper": int(entity.is_origin_paper),
-                    "doi": entity.doi,
-                    "named_by": sorted(_code(by) for by in entity.named_by),
-                },
-            )
-        )
+    entities: dict[int, Entity] = {entity.id: entity for entity in of_claims(Entity, own)}
     entity_ids = sorted(entities)
 
     def of_entities(model: Any) -> Iterable[Any]:
@@ -379,334 +244,150 @@ def records_of(
                 .order_by(*model.__table__.primary_key.columns)
             )
 
-    def entity_key(entity: Entity) -> dict[str, Any]:
-        return {
-            "slug": slug[entity.claim_id],
-            "entity_type": _code(entity.type),
-            "entity_name": entity.name,
-        }
+    matches: dict[int, EntityMatch] = {match.id: match for match in of_entities(EntityMatch)}
+    names = r.Names(
+        claims=slug,
+        articles={a.id: (slug[a.claim_id], url_key[a.id]) for a in articles},
+        matches={
+            match_id: (
+                slug[entities[m.entity_id].claim_id],
+                str(entities[m.entity_id].type.value),
+                entities[m.entity_id].name,
+                m.source_name,
+                m.external_id,
+            )
+            for match_id, m in matches.items()
+        },
+    )
 
+    rest: list[Record] = []
+    payloads_first: list[Record] = []
+    seen_payloads: set[str] = set()
+
+    # --- what was reported ----------------------------------------------------------
+    for article in articles:
+        rest.append(
+            r.source_article_record(
+                article, slug=slug[article.claim_id], url_key=url_key[article.id]
+            )
+        )
+    for promise in of_claims(Promise):
+        rest.append(
+            r.promise_record(
+                promise, slug=slug[promise.claim_id], url_key=url_key[promise.source_article_id]
+            )
+        )
+    for statement in of_claims(ReportedStatement):
+        rest.append(
+            r.reported_statement_record(
+                statement,
+                slug=slug[statement.claim_id],
+                url_key=url_key[statement.source_article_id],
+                names=names,
+            )
+        )
+
+    # --- entities, matches, terms ---------------------------------------------------
+    for entity in entities.values():
+        rest.append(r.entity_record(entity, slug=slug[entity.claim_id]))
     for link in of_entities(EntityArticle):
         entity = entities[link.entity_id]
-        if link.source_article_id not in url_key:
-            continue
-        key = url_key[link.source_article_id]
-        rest.append(
-            (
-                "entity_article",
-                f"{slug[entity.claim_id]}|{_code(entity.type)}|{entity.name}|{key}",
-                {**entity_key(entity), "url_key": key},
+        if link.source_article_id in url_key:
+            rest.append(
+                r.entity_article_record(
+                    link,
+                    entity=entity,
+                    slug=slug[entity.claim_id],
+                    url_key=url_key[link.source_article_id],
+                )
             )
-        )
-    matches: dict[int, EntityMatch] = {}
-    match_refs: dict[str, str] = {}
-    for match in of_entities(EntityMatch):
+    for match in matches.values():
         entity = entities[match.entity_id]
-        matches[match.id] = match
-        match_refs[row_match_ref(match.id)] = match_ref(
-            slug[entity.claim_id],
-            _code(entity.type),
-            entity.name,
-            match.source_name,
-            match.external_id,
-        )
-        rest.append(
-            (
-                "entity_match",
-                f"{slug[entity.claim_id]}|{_code(entity.type)}|{entity.name}"
-                f"|{match.source_name}|{match.external_id}",
-                {
-                    **entity_key(entity),
-                    "source_name": match.source_name,
-                    "external_id": match.external_id,
-                    "score": match.score,
-                    "record_summary": match.record_summary,
-                    "record_facts": match.record_facts,
-                    "reasons": list(match.reasons),
-                    "review_state": _code(match.review_state),
-                    "reviewed_at": _text(match.reviewed_at),
-                    "reviewed_by": _code(match.reviewed_by),
-                    "created_at": _text(match.created_at),
-                },
-            )
-        )
-    for term in of_claims(ClaimTerm):
-        rest.append(
-            (
-                "claim_term",
-                f"{slug[term.claim_id]}|{_code(term.role)}|{term.source_name}|{term.external_id}",
-                {
-                    "slug": slug[term.claim_id],
-                    "role": _code(term.role),
-                    "source_name": term.source_name,
-                    "external_id": term.external_id,
-                    "label": term.label,
-                    "score": term.score,
-                    "fit": _code(term.fit),
-                    "reasons": list(term.reasons),
-                    "review_state": _code(term.review_state),
-                    "reviewed_at": _text(term.reviewed_at),
-                    "reviewed_by": _code(term.reviewed_by),
-                    "created_at": _text(term.created_at),
-                },
-            )
-        )
+        rest.append(r.entity_match_record(match, entity=entity, slug=slug[entity.claim_id]))
+    for term in of_claims(ClaimTerm, own):
+        rest.append(r.claim_term_record(term, slug=slug[term.claim_id]))
 
     # --- the records of sources: small tables, copied whole --------------------------
-    for record in session.scalars(
+    for term_record in session.scalars(
         select(TermRecord).order_by(TermRecord.source_name, TermRecord.external_id)
     ):
-        rest.append(
-            (
-                "source_record",
-                f"term|{record.source_name}|{record.external_id}",
-                {
-                    "kind": "term",
-                    "source_name": record.source_name,
-                    "external_id": record.external_id,
-                    "url": record.url,
-                    "body": record.payload,
-                    "fetched_at": _text(record.fetched_at),
-                },
-            )
-        )
-    for record in session.scalars(
+        rest.append(r.term_source_record(term_record))
+    for organisation in session.scalars(
         select(OrganisationRecord).order_by(
             OrganisationRecord.source_name, OrganisationRecord.external_id
         )
     ):
-        rest.append(
-            (
-                "source_record",
-                f"organisation|{record.source_name}|{record.external_id}",
-                {
-                    "kind": "organisation",
-                    "source_name": record.source_name,
-                    "external_id": record.external_id,
-                    "url": record.url,
-                    "body": record.payload,
-                    "fetched_at": _text(record.fetched_at),
-                },
-            )
-        )
+        rest.append(r.organisation_source_record(organisation))
     for paper in session.scalars(select(PaperRecord).order_by(PaperRecord.id)):
-        rest.append(
-            (
-                "source_record",
-                f"paper|{paper.source_name}|{paper.identifier}",
-                {
-                    "kind": "paper",
-                    "source_name": paper.source_name,
-                    "external_id": paper.identifier,
-                    "pubmed_id": paper.pubmed_id,
-                    "body": paper.payload,
-                    "fetched_at": _text(paper.fetched_at),
-                },
-            )
-        )
+        rest.append(r.paper_source_record(paper))
 
     # --- evidence -------------------------------------------------------------------
     dedupe_key: dict[int, str] = {}
     trial_ids: set[tuple[str, str]] = set()
-    # Read as rows, not objects: a payload can be megabytes and none is kept in memory.
-    for event in _event_rows(session, ids):
+    for event in _event_rows(session, own):
         dedupe_key[event.id] = event.dedupe_key
         trial_ids.add((event.source_name, event.external_id))
-        body: dict[str, Any] = {
-            "slug": slug[event.claim_id],
-            "dedupe_key": event.dedupe_key,
-            "type": _code(event.type),
-            "event_date": _text(event.event_date),
-            "date_basis": event.date_basis,
-            "source_name": event.source_name,
-            "source_url": event.source_url,
-            "external_id": event.external_id,
-            "trial_phases": None if event.trial_phases is None else list(event.trial_phases),
-            "trial_state": _code(event.trial_state),
-            "regulatory_outcome": _code(event.regulatory_outcome),
-            "summary": event.summary,
-            "confidence": event.confidence,
-            "content_sha256": content_checksum(event),
-            "payload_sha256": copy.keep_payload(event.raw_payload, payloads_first),
-            "fetched_at": _text(event.fetched_at),
-            "review_state": _code(event.review_state),
-            "reviewed_at": _text(event.reviewed_at),
-            "reviewed_by": _code(event.reviewed_by),
-            "created_at": _text(event.created_at),
-        }
         matched = matches.get(event.entity_match_id) if event.entity_match_id else None
-        if matched is not None:
-            entity = entities[matched.entity_id]
-            body |= {
-                "match_entity_type": _code(entity.type),
-                "match_entity_name": entity.name,
-                "match_source_name": matched.source_name,
-                "match_external_id": matched.external_id,
-            }
-        rest.append(("evidence_event", f"{slug[event.claim_id]}|{event.dedupe_key}", body))
-    for flag in of_claims(FailureFlag):
+        _keep_payload(event.raw_payload, payloads_first, seen_payloads, payloads, report)
         rest.append(
-            (
-                "failure_flag",
-                f"{slug[flag.claim_id]}|{flag.trial_external_id}",
-                {
-                    "slug": slug[flag.claim_id],
-                    "trial_external_id": flag.trial_external_id,
-                    "dedupe_key": dedupe_key[flag.evidence_event_id],
-                    "source_url": flag.source_url,
-                    "created_at": _text(flag.created_at),
-                },
+            r.evidence_event_record(
+                event,
+                slug=slug[event.claim_id],
+                match=None if matched is None else (entities[matched.entity_id], matched),
+            )
+        )
+    for failure in of_claims(FailureFlag, own):
+        rest.append(
+            r.failure_flag_record(
+                failure,
+                slug=slug[failure.claim_id],
+                dedupe_key=dedupe_key[failure.evidence_event_id],
             )
         )
     for read in session.scalars(select(TrialRead).order_by(TrialRead.id)):
         if (read.source_name, read.trial_id) not in trial_ids:
             continue
-        readings = session.scalars(
-            select(Reading)
-            .where(Reading.trial_read_id == read.id)
-            .order_by(Reading.outcome, Reading.kind, Reading.id)
-        )
-        rest.append(
-            (
-                "trial_read",
-                f"{read.source_name}|{read.trial_id}",
-                {
-                    "source_name": read.source_name,
-                    "trial_id": read.trial_id,
-                    "input_hash": read.input_hash,
-                    "instructions_version": read.instructions_version,
-                    "provider": read.provider,
-                    "model": read.model,
-                    "refusals": list(read.refusals),
-                    "read_at": _text(read.read_at),
-                    "readings": [
-                        {
-                            "outcome": reading.outcome,
-                            "kind": _code(reading.kind),
-                            "field": _code(reading.field),
-                            "words": reading.words,
-                            "number": reading.number,
-                            "unit": _code(reading.unit),
-                            "code": _code(reading.code),
-                            "confidence": reading.confidence,
-                            "decided_by": _code(reading.decided_by),
-                        }
-                        for reading in readings
-                    ],
-                },
+        readings = list(
+            session.scalars(
+                select(Reading).where(Reading.trial_read_id == read.id).order_by(Reading.id)
             )
         )
+        rest.append(r.trial_read_record(read, readings=readings))
 
     # --- the decisions an export reads: a match's scoring, a claim's stage reading ---
-    refs = {f"claim:{claim_id}": claim_ref(slug[claim_id]) for claim_id in ids} | match_refs
     for decision in session.scalars(
         select(DecisionLog)
         .where(DecisionLog.step.in_([ENTITY_MATCH, PAPER_MATCH, EVIDENCE_STAGE]))
         .order_by(DecisionLog.id)
     ):
-        if decision.input_ref not in refs:
-            continue
-        rest.append(
-            (
-                "decision",
-                str(decision.id),
-                {
-                    "seq": decision.id,
-                    "step": decision.step,
-                    "input_ref": refs[decision.input_ref],
-                    "backend": decision.backend,
-                    "model": decision.model,
-                    "options": decision.options,
-                    "output": decision.output,
-                    "confidence": decision.confidence,
-                    "error": decision.error,
-                    "human_label": decision.human_label,
-                    "created_at": _text(decision.created_at),
-                },
-            )
-        )
+        # One that names no row of this copy keeps its row id, and is left out.
+        if r.natural_ref(decision.input_ref, names) != decision.input_ref:
+            rest.append(r.decision_record(decision, names=names))
 
     for icon in session.scalars(select(OutletIcon).order_by(OutletIcon.domain)):
-        held = icon.content is not None and icon.media_type is not None
-        rest.append(
-            (
-                "outlet_icon",
-                icon.domain,
-                {
-                    "domain": icon.domain,
-                    "icon_url": (icon.icon_url or "") if held else None,
-                    "media_type": icon.media_type if held else None,
-                    "content_hex": icon.content.hex() if held and icon.content else None,
-                    "fetched_at": _text(icon.fetched_at),
-                },
-            )
-        )
+        rest.append(r.outlet_icon_record(icon))
 
     # --- actions: a published time, an archive and a merge are not a claim's fields ---
-    by_id = {claim.id: claim for claim in claims}
-    merges = {
-        change.claim_id: change
-        for change in session.scalars(
-            select(ClaimChange)
-            .where(ClaimChange.kind == "merge", ClaimChange.undone_at.is_(None))
-            .order_by(ClaimChange.id)
-        )
-    }
+    changes: dict[int, list[ClaimChange]] = {}
+    for change in session.scalars(select(ClaimChange).order_by(ClaimChange.id)):
+        changes.setdefault(change.claim_id, []).append(change)
     for claim in sorted(claims, key=lambda claim: claim.id):
-        if claim.published_at is not None:
-            rest.append(
-                (
-                    "action",
-                    f"publish|{claim.slug}",
-                    {"action": "publish", "slug": claim.slug, "at": _text(claim.published_at)},
-                )
-            )
-        if claim.archived_at is not None:
-            rest.append(
-                (
-                    "action",
-                    f"archive|{claim.slug}",
-                    {
-                        "action": "archive",
-                        "slug": claim.slug,
-                        "reason": claim.archive_reason or "not recorded",
-                        "decided_by": "human",
-                        "at": _text(claim.archived_at),
-                    },
-                )
-            )
-        if claim.merged_into_id is not None:
-            kept = by_id.get(claim.merged_into_id)
-            if kept is None:
-                report.notes.append(
-                    f"{claim.slug} was merged into a claim that is not in the copy."
-                )
+        for action in r.claim_actions(claim, changes.get(claim.id, []), slug):
+            kind = action.body["action"]
+            # Renames went before, each in its own run.
+            if kind == "rename" or (kind == "archive" and claim.id in merged):
                 continue
-            change = merges.get(claim.id)
-            decided_by = change.decided_by if change else Decider.HUMAN
-            rest.append(
-                (
-                    "action",
-                    f"merge|{claim.slug}",
-                    {
-                        "action": "merge",
-                        "slug": claim.slug,
-                        "into_slug": kept.slug,
-                        "decided_by": _code(decided_by),
-                        "at": _text(change.decided_at if change else claim.archived_at),
-                    },
-                )
-            )
+            rest.append(action)
 
     # A record is staged under its kind and natural key, once. Where two rows of the
     # database have one key the store can hold only one: the first is handed over.
     everything: list[Record] = []
     handed: set[tuple[str, str]] = set()
     for record in [*payloads_first, *rest]:
-        if (record[0], record[1]) in handed:
-            report.folded[record[0]] = report.folded.get(record[0], 0) + 1
+        if (record.kind, record.key) in handed:
+            report.folded[record.kind] = report.folded.get(record.kind, 0) + 1
             continue
-        handed.add((record[0], record[1]))
+        handed.add((record.kind, record.key))
         everything.append(record)
     data_runs = [
         everything[start : start + RUN_RECORDS] for start in range(0, len(everything), RUN_RECORDS)
@@ -755,9 +436,9 @@ def copy_to_store(
                 continue
             run = f"copy-{number}"
             counts: dict[str, int] = {}
-            for kind, _, _ in records:
-                counts[kind] = counts.get(kind, 0) + 1
-                report.handed[kind] = report.handed.get(kind, 0) + 1
+            for record in records:
+                counts[record.kind] = counts.get(record.kind, 0) + 1
+                report.handed[record.kind] = report.handed.get(record.kind, 0) + 1
             db.execute(
                 ingest["register_run"],
                 (run, "migration", "copy", None, "copy", now.isoformat(), None, None),
@@ -765,10 +446,7 @@ def copy_to_store(
             db.execute(ingest["state_steps"], (run, "{}"))
             db.execute(ingest["state_counts"], (run, json.dumps(counts)))
             for start in range(0, len(records), CHUNK_RECORDS):
-                chunk = [
-                    {"kind": kind, "key": key, "body": body}
-                    for kind, key, body in records[start : start + CHUNK_RECORDS]
-                ]
+                chunk = [record.staged() for record in records[start : start + CHUNK_RECORDS]]
                 db.execute(ingest["stage"], (run, json.dumps(chunk)))
             # As a D1 batch: every statement or none, nothing read in between.
             db.execute("BEGIN")
