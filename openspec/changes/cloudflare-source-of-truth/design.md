@@ -89,6 +89,8 @@ A registry record with posted results can exceed 2 MB, which is what forces this
 
 **Decided by the operator on 2026-11-16** (decision 16, and the amendment at the end of `docs/adr/0008`): a payload of 16 KB or less is kept in the store itself, in the `payload` table, and only a larger one is an R2 object. That is every registry listing record (467,064 of them, 642 bytes on average, 12 KB at most) and none of the large records. Half a million tiny objects would otherwise have to be uploaded before the first merge, and a trial's page would need a second service to show its record. `docs/adr/0008` said R2 for every payload and is amended.
 
+**Raised on 2026-11-17 to 524,288 bytes (512 KiB), counted in bytes.** The first cut-over to the preview passed every stage, and 659 of its 810 seconds went on putting 3,211 payloads into R2 one object at a time; at this bound about 37 are objects. The bound is the CHECK on `payload.body` in `store/schema.sql`, which the service reads its own from and the pipeline is held to. It is in bytes because D1's 2,000,000 a row is, and a body's characters can each be four bytes; through the service a payload also travels inside its staged record, escaped, under 1 MB a record, which 512 KiB leaves room for. Migration `0007` makes the table again to change the CHECK (SQLite cannot alter one): the rows are copied aside, the table dropped and made again under its name, and the rows copied back, with foreign keys deferred, because that is the one way D1's local engine accepted on a table that rows reference.
+
 A payload is stored once, under its checksum, however many events point to it. The present database stores that record four times, once for each event read from it; 546 MB of event payloads as text will be less once each distinct payload is kept once. How much less is measured in task 2.2.
 
 ### 3. What the store holds, and what it never holds
@@ -219,7 +221,7 @@ Read replication is left off. The database is in the European Union; a reader el
 **How a device's run folder becomes a merge.** `thenwhat backfill push`:
 
 1. reads the run's files and writes each result as a record in natural-key form, by one mapping function a kind, each tested by a round trip;
-2. puts each payload over 16 KB to the ingest service, which checks its checksum and stores it in R2 once;
+2. puts each payload over the bound a row may hold (16 KB when this was written; 524,288 bytes since 2026-11-17, decision 2) to the ingest service, which checks its checksum and stores it in R2 once;
 3. splits the records into store runs of about 20,000, parents first, and for each registers the run with its counts and step versions, stages it in chunks of under 2 MB, and asks for the merge;
 4. prints each merge's report and marks the folder pushed when the last is merged.
 

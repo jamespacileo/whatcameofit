@@ -117,7 +117,7 @@ test("a slice in a group the schema does not know is refused whole", { skip }, a
   assert.equal(await s.one("SELECT count(*) FROM trial_slice"), held);
 });
 
-test("a pushed trial and its papers stay in D1; the consumer's go to the inbox, and clearing never deletes a trial from under a paper", { skip }, async () => {
+test("a pushed trial and its papers stay in D1; the consumer's also go to the inbox, and clearing never deletes a trial", { skip }, async () => {
   // The fault this guards: a paper merged into D1 but kept out of the inbox never reached
   // the bulk file, and clearing then tried to delete its trial from under it.
   const { clearInbox } = await import("../src/store.mjs");
@@ -141,7 +141,8 @@ test("a pushed trial and its papers stay in D1; the consumer's go to the inbox, 
 
   const cleared = await clearInbox(s.db, await s.one("SELECT max(seq) FROM inbox"));
   assert.equal(cleared.left, 0, "the clearing went through: no row was deleted from under another");
-  assert.equal(await s.one("SELECT count(*) FROM registry_trial WHERE external_id = 'NCT10'"), 0, "a trial with no paper is in the bulk file now, not in D1");
-  assert.equal(await held("NCT9"), 1, "a trial a paper is stored for stays, with its paper");
+  assert.equal(await s.one("SELECT count(*) FROM inbox"), 0, "the records are out of the inbox, for the bulk file");
+  assert.equal(await s.one("SELECT count(*) FROM registry_trial WHERE external_id IN ('NCT9', 'NCT10')"), 2, "no trial is ever removed from D1, with a paper or without");
+  assert.equal(await held("NCT9"), 1, "and a paper stays with its trial");
   assert.equal(await held("NCT8"), 1, "and the pushed one was never the inbox's to clear");
 });

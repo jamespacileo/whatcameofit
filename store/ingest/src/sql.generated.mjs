@@ -1058,4 +1058,4 @@ export const FIELDS_OF = {
  ]
 };
 // The longest payload kept in its row, from the schema's CHECK on payload.body.
-export const INLINE_PAYLOAD_BYTES = 16384;
+export const INLINE_PAYLOAD_BYTES = 524288;

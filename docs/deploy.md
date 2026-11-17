@@ -367,7 +367,7 @@ A restore overwrites the database in place and cancels requests in flight. It pr
 When Time Travel cannot help (the history has run out, or the database is gone), the store is filled again by the same bulk path as the first fill, never row by row through the ingest service.
 
 1. From a Postgres dump: restore it into a scratch Postgres database and point `DATABASE_URL` at it. From a kept store file, skip to step 3.
-2. Build the store file. The database is only read; every record goes through `store/merge.sql`; each payload over 16 KB is written once under `payload/<sha256>`; `<store.sqlite>.pushed.json` is written beside the file.
+2. Build the store file. The database is only read; every record goes through `store/merge.sql`; each payload over the bound a row may hold (524,288 bytes; `store/schema.sql`, the CHECK on `payload.body`) is written once under `payload/<sha256>`; `<store.sqlite>.pushed.json` is written beside the file.
    ```bash
    uv run thenwhat store build <store.sqlite> --payloads <folder>
    ```

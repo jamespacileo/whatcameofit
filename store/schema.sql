@@ -103,13 +103,15 @@ CREATE TABLE merge_guard (
 -- 2. Raw payloads, once per checksum
 -- ---------------------------------------------------------------------------------------
 
--- A payload as its source gave it. A small one (a registry listing record) is kept here;
+-- A payload as its source gave it. One of 524,288 bytes (512 KiB) or less is kept here;
 -- a larger one is an R2 object under `payload/<sha256>`. Either way the record that uses
--- it holds the checksum and its own fetch time.
+-- it holds the checksum and its own fetch time. The bound is in bytes, as D1's 2,000,000
+-- a row is: a body's characters can each be four. It is the one figure the service and
+-- the pipeline hold to: `scripts/generate.mjs` reads it from the line below.
 CREATE TABLE payload (
   sha256     TEXT PRIMARY KEY CHECK (length(sha256) = 64),
   bytes      INTEGER NOT NULL CHECK (bytes > 0),
-  body       TEXT CHECK (body IS NULL OR length(body) <= 16384),
+  body       TEXT CHECK (body IS NULL OR length(CAST(body AS BLOB)) <= 524288),
   r2_key     TEXT,
   added_run  TEXT NOT NULL REFERENCES run (id),
   CHECK ((body IS NULL) <> (r2_key IS NULL))

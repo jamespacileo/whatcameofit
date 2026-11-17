@@ -44,7 +44,7 @@ Optional, and offline: `store/proof/d1_local.sh` applies the schema, one preview
 
 For a report without applying, step 3 is the statements of `preview.sql` instead, followed by `discard_run`. A D1 batch cannot be undone on request, so the report is counted from the staged records and the store, not by running the merge and taking it back.
 
-A payload over 16 KB is put in R2 under `payload/<sha256>` before the merge; the staged `payload` record then carries `r2_key` and no `body`.
+A payload over 524,288 bytes (512 KiB) is put in R2 under `payload/<sha256>` before the merge; the staged `payload` record then carries `r2_key` and no `body`.
 
 ## Kinds and the keys their bodies carry
 
