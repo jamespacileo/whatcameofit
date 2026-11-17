@@ -18,6 +18,7 @@ from thenwhat.claimsteps.reasons import (
     put_off,
 )
 from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
+from thenwhat.clinical.service import TreeRun, read_tree
 from thenwhat.db.models import Claim
 from thenwhat.decide.core import DecisionFailed
 from thenwhat.domain import WorkOutcome
@@ -49,6 +50,8 @@ class ClaimFetch(ClaimStep):
         self.threshold = threshold
         self.no_signal_years = no_signal_years
         self.paper_max_age = paper_max_age
+        # What reading the MeSH tree gave for each claim fetched: the run, or why not.
+        self.trees: dict[int, TreeRun | SourceError] = {}
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
         return {"approved": inputs.approved.get(claim_id, [])}
@@ -75,6 +78,16 @@ class ClaimFetch(ClaimStep):
         if isinstance(created, DecisionFailed | LlmError):
             return model_failed(created)
         self.results[claim.id] = created
+        # The claim's clinical categories are derived from the records just stored, and
+        # placed in MeSH's tree by NLM's own records. Reading those here keeps a new term
+        # from leaving the claim's categories unread in the next export. NLM not
+        # answering, or being paused, is no failure of the fetch and does not stop the
+        # run: the records above are kept, and `thenwhat clinical tree` reads what is
+        # missing.
+        try:
+            self.trees[claim.id] = read_tree(session, sources.make_mesh(session), [claim])
+        except SourceError as error:
+            self.trees[claim.id] = error
         return WorkOutcome.DONE
 
 

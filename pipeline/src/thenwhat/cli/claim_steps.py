@@ -46,6 +46,7 @@ def claim_sources() -> ClaimSources:
         make_registries=lambda session: resolve.make_registries(session),
         make_research=lambda session: resolve.make_research(session),
         make_evidence=lambda session: events.make_evidence_sources(session),
+        make_mesh=lambda session: events.make_mesh(session),
         make_llm=lambda session: extract.make_llm(session),
         make_checker=lambda session: extract.make_checker(session),
         make_vocabulary=lambda session: terms.make_vocabulary(session),

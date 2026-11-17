@@ -129,6 +129,8 @@ def load_seed(session: Session, content: dict[str, Any], *, now: datetime) -> Cl
         summary=seed.claim.summary,
         approach=seed.claim.approach,
     )
+    if claim.approach is not None:
+        claim.approach_decided_by = Decider.SEED
     for synonym in seed.claim.synonyms:
         add_synonym(session, slug, seed.claim.intervention, synonym)
     for article in seed.articles:

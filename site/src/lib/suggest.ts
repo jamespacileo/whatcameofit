@@ -33,6 +33,8 @@ export interface Suggestion {
   kind: SuggestKind;
   /** What the row says first: a name, a title, an identifier. */
   text: string;
+  /** A treatment's other name, where that is the one the typed words are in. */
+  also?: string;
   /** Said after it in grey: what a treatment is for, a trial's title. */
   sub?: string;
   /** At the row's right: how much is behind it, or where its claim stands. */
@@ -101,7 +103,8 @@ export function suggest(text: string, index: SuggestIndex, detail: SuggestDetail
 
   const claims = Object.values(index.claims);
 
-  // One row for a claim: its treatment by its first name, even where a second name matched.
+  // One row for a claim: its treatment by its first name. Where the words are only in
+  // another of its names, that name follows, so the row says why it is offered.
   rows.treatment = claims
     .filter((claim) => claim.names.some((name) => has(name)))
     .sort(
@@ -111,7 +114,14 @@ export function suggest(text: string, index: SuggestIndex, detail: SuggestDetail
         a.names[0].localeCompare(b.names[0]) ||
         a.page.localeCompare(b.page),
     )
-    .map((claim) => ({ kind: "treatment", text: claim.names[0], sub: claim.indication, meta: claim.status, href: claim.page }));
+    .map((claim) => ({
+      kind: "treatment",
+      text: claim.names[0],
+      ...(has(claim.names[0]) ? {} : { also: claim.names.find((name) => has(name)) }),
+      sub: claim.indication,
+      meta: claim.status,
+      href: claim.page,
+    }));
 
   // One row for a condition as it is written, with how many claims are for it.
   const conditions = new Map<string, number>();

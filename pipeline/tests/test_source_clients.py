@@ -1141,6 +1141,10 @@ def test_label_that_only_contains_the_name_is_not_equal_to_it(
         "year": "2026",
     }
 
+    # A paper's subject heading is given by its descriptor's label alone.
+    assert source.descriptor_labelled("Obesity") == "D009765"
+    assert source.descriptor_labelled("  ") is None
+
     # Even if the service answered as its "contains" search does, with "Anti-Obesity
     # Agents" first, only the equal label is returned.
     containing = fixture_json("mesh/label_obesity_contains.json")

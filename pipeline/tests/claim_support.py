@@ -200,6 +200,9 @@ class Vocabulary:
     def term(self, identifier: str, *, force: bool = False) -> SourceRecord | None:
         return None
 
+    def descriptor_labelled(self, label: str) -> str | None:
+        return None
+
     def terms_labelled(self, name: str) -> list:
         if self.down:
             raise failing(self.name)
@@ -286,6 +289,7 @@ class Sources:
                 organisations=self.literature,
             ),
             make_evidence=lambda session: (self.registry, Index(), Index()),
+            make_mesh=lambda session: self.vocabulary,
             make_llm=self.make_llm,
             make_checker=self.make_checker or unchecked,
             make_vocabulary=lambda session: self.vocabulary,

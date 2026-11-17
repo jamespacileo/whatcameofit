@@ -209,6 +209,25 @@ class Left:
     not_before: datetime | None
 
 
+def handled_since(session: Session, steps: Sequence[ClaimStep], since: datetime) -> list[Claim]:
+    """The claims any of the steps was run for since `since`."""
+    return list(
+        session.scalars(
+            select(Claim)
+            .where(
+                Claim.id.in_(
+                    select(WorkEntry.record_id).where(
+                        WorkEntry.record_kind == CLAIM,
+                        WorkEntry.step.in_([step.name for step in steps]),
+                        WorkEntry.last_attempt_at >= since,
+                    )
+                )
+            )
+            .order_by(Claim.slug)
+        )
+    )
+
+
 def left_by(session: Session, steps: Sequence[ClaimStep], since: datetime) -> list[Left]:
     """Each part a run since `since` left failed, put off or needing a fix, by claim."""
     by_name = {step.name: step for step in steps}

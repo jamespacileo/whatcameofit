@@ -1,7 +1,7 @@
 """Let a ledger entry say a record is put off or needs a fix, and why.
 
-Revision ID: 0035
-Revises: 0034
+Revision ID: 0036
+Revises: 0035
 
 Adds four empty columns to `work_entry`, two outcomes to the ones it allows, and two
 checks: a record put off says until when, and one that waits says for what. No stored
@@ -15,8 +15,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision: str = "0035"
-down_revision: str | None = "0034"
+revision: str = "0036"
+down_revision: str | None = "0035"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

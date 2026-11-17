@@ -27,3 +27,8 @@
   X-Robots-Tag: noindex
 /trials-listing/*
   X-Robots-Tag: noindex
+
+# The rows the home page fetches when a reader asks for more of a list are parts of
+# that page, not pages: search engines are asked not to index them.
+/rows/*
+  X-Robots-Tag: noindex

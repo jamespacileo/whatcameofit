@@ -40,6 +40,26 @@
       "title": "EvidenceStage",
       "type": "string"
     },
+    "ExportedApproachBasis": {
+      "additionalProperties": false,
+      "description": "What the registry lists the claim's intervention as, when that is the claim's\napproach: the registry's own type code and how many of the claim's trials list it\n(openspec site-publishing). Said whoever set the approach. The site owns the wording.",
+      "properties": {
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "trials": {
+          "title": "Trials",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "type",
+        "trials"
+      ],
+      "title": "ExportedApproachBasis",
+      "type": "object"
+    },
     "ExportedArchived": {
       "additionalProperties": false,
       "properties": {
@@ -463,6 +483,43 @@
       "title": "ExportedCardSource",
       "type": "object"
     },
+    "ExportedCategorySource": {
+      "additionalProperties": false,
+      "description": "A record that gave a claim one of its clinical categories.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "trial",
+            "paper",
+            "term"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "identifier": {
+          "title": "Identifier",
+          "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        }
+      },
+      "required": [
+        "kind",
+        "identifier"
+      ],
+      "title": "ExportedCategorySource",
+      "type": "object"
+    },
     "ExportedClaim": {
       "additionalProperties": false,
       "properties": {
@@ -492,6 +549,32 @@
             }
           ],
           "title": "Approach"
+        },
+        "approach_basis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ExportedApproachBasis"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "clinical_categories": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/ExportedClinicalCategory"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Clinical Categories"
         },
         "intervention": {
           "$ref": "#/$defs/ExportedIntervention"
@@ -635,6 +718,59 @@
         "failure_flags"
       ],
       "title": "ExportedClaim",
+      "type": "object"
+    },
+    "ExportedClinical": {
+      "additionalProperties": false,
+      "properties": {
+        "mesh_years": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Mesh Years",
+          "type": "array"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/ExportedMeshNode"
+          },
+          "title": "Nodes",
+          "type": "array"
+        },
+        "claims_not_read": {
+          "default": 0,
+          "title": "Claims Not Read",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "mesh_years",
+        "nodes"
+      ],
+      "title": "ExportedClinical",
+      "type": "object"
+    },
+    "ExportedClinicalCategory": {
+      "additionalProperties": false,
+      "description": "A MeSH descriptor the claim's approved trials list for their conditions, or its\napproved papers are indexed under as a major topic (openspec clinical-classification).\nIts name and place in the tree are in the export's `clinical.nodes`.",
+      "properties": {
+        "identifier": {
+          "title": "Identifier",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ExportedCategorySource"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "identifier",
+        "sources"
+      ],
+      "title": "ExportedClinicalCategory",
       "type": "object"
     },
     "ExportedComparison": {
@@ -1036,6 +1172,42 @@
         "target"
       ],
       "title": "ExportedMechanism",
+      "type": "object"
+    },
+    "ExportedMeshNode": {
+      "additionalProperties": false,
+      "description": "A MeSH descriptor a claim has as a category, or one broader than such a one.",
+      "properties": {
+        "identifier": {
+          "title": "Identifier",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "tree_numbers": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tree Numbers",
+          "type": "array"
+        },
+        "broader": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Broader",
+          "type": "array"
+        }
+      },
+      "required": [
+        "identifier",
+        "label",
+        "tree_numbers",
+        "broader"
+      ],
+      "title": "ExportedMeshNode",
       "type": "object"
     },
     "ExportedMoved": {
@@ -2636,6 +2808,17 @@
       ],
       "default": null,
       "title": "Match Accept Above"
+    },
+    "clinical": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ExportedClinical"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

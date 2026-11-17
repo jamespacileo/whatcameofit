@@ -9,12 +9,12 @@ from sqlalchemy import ColumnElement, and_
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import claim_by_slug
-from thenwhat.claims.mesh_areas import suggestion_line
 from thenwhat.claimsteps.decide import ClaimDecide
 from thenwhat.claimsteps.inputs import notice_changes
 from thenwhat.claimsteps.run import (
     StepRun,
     claim_steps,
+    handled_since,
     left_by,
     never_searched,
     search_due,
@@ -24,6 +24,7 @@ from thenwhat.cli.claim_steps import run_steps
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.clinical.service import prepared_line, suggestion_line
 from thenwhat.db.models import Claim
 from thenwhat.domain import ReviewState, WorkOutcome
 from thenwhat.prepare import claim_sharing_its_substance
@@ -124,6 +125,9 @@ def prepare_command(
         for step in steps:
             if isinstance(step, ClaimDecide):
                 _say_decided(session, step)
+        handled = handled_since(session, steps, started)
+        if handled:
+            out.print(prepared_line(session, handled), markup=False)
         never = never_searched(session, claims)
         if never:
             out.print(

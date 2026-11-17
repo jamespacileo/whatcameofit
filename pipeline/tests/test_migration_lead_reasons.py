@@ -1,4 +1,4 @@
-"""Migration 0036 gives every link lead read before reasons were codes the code its stored
+"""Migration 0037 gives every link lead read before reasons were codes the code its stored
 words stand for, and refuses words it has no code for. Scenario names are from openspec
 lead-reading (change one-work-runner), "Every lead's reason is a code"."""
 
@@ -105,10 +105,10 @@ def add_lead(connection, name: str, outcome: str | None, detail: str | None, scr
 
 
 @pytest.fixture
-def at_0035(engine: Engine, alembic_config: Config) -> Iterator[dict[str, int]]:
+def at_0036(engine: Engine, alembic_config: Config) -> Iterator[dict[str, int]]:
     """Leads read before the codes: each with the words its detail held, and an entry
     that says nothing found and gives no reason."""
-    command.downgrade(alembic_config, "0035")
+    command.downgrade(alembic_config, "0036")
     ids: dict[str, int] = {}
     with engine.begin() as connection:
         for name, (outcome, detail, _) in LEADS.items():
@@ -142,26 +142,26 @@ def entries(engine: Engine) -> dict[int, tuple]:
 
 
 def test_every_lead_read_before_the_codes_is_given_its_code(
-    engine: Engine, alembic_config: Config, at_0035: dict[str, int]
+    engine: Engine, alembic_config: Config, at_0036: dict[str, int]
 ):
     """Scenario: A lead from an earlier run"""
-    command.upgrade(alembic_config, "0036")
+    command.upgrade(alembic_config, "0037")
 
     after = entries(engine)
     for name, (outcome, detail, (entry_outcome, code, attempts, still_said)) in LEADS.items():
         got_outcome, got_code, got_attempts, values, has_time, read_outcome, read_detail = after[
-            at_0035[name]
+            at_0036[name]
         ]
         assert (got_outcome, got_code, got_attempts) == (entry_outcome, code, attempts), name
         assert values["outlet"] == "news.example.org", name
         assert has_time == (entry_outcome == "later"), name
         # A lead put off is no longer said to be unreadable; every other keeps its words.
         assert (read_outcome, read_detail) == ((outcome, detail) if still_said else (None, None))
-    assert after[at_0035["refused"]][3]["status"] == 403
-    assert after[at_0035["busy"]][3]["status"] == 503
-    assert after[at_0035["outlet-refuses"]][3]["pages"] == 50
-    assert after[at_0035["not-allowed"]][3]["why"] == "robots.txt"
-    assert after[at_0035["tracked"]][:2] == ("nothing_found", "already_tracked")
+    assert after[at_0036["refused"]][3]["status"] == 403
+    assert after[at_0036["busy"]][3]["status"] == 503
+    assert after[at_0036["outlet-refuses"]][3]["pages"] == 50
+    assert after[at_0036["not-allowed"]][3]["why"] == "robots.txt"
+    assert after[at_0036["tracked"]][:2] == ("nothing_found", "already_tracked")
     with engine.connect() as connection:
         searched = connection.execute(
             text("SELECT reason FROM work_entry WHERE step = 'news_search'")
@@ -170,26 +170,26 @@ def test_every_lead_read_before_the_codes_is_given_its_code(
 
 
 def test_words_with_no_code_stop_the_migration_and_change_nothing(
-    engine: Engine, alembic_config: Config, at_0035: dict[str, int]
+    engine: Engine, alembic_config: Config, at_0036: dict[str, int]
 ):
     with engine.begin() as connection:
         add_lead(connection, "odd", "cannot_be_read", "words no rule knows", "in_scope")
 
     with pytest.raises(RuntimeError, match=r"1 x 'cannot_be_read: words no rule knows'"):
-        command.upgrade(alembic_config, "0036")
+        command.upgrade(alembic_config, "0037")
 
     assert {entry[:2] for entry in entries(engine).values()} == {("nothing_found", None)}
 
 
 def test_going_back_says_again_what_each_lead_was_said_to_be(
-    engine: Engine, alembic_config: Config, at_0035: dict[str, int]
+    engine: Engine, alembic_config: Config, at_0036: dict[str, int]
 ):
-    command.upgrade(alembic_config, "0036")
-    command.downgrade(alembic_config, "0035")
+    command.upgrade(alembic_config, "0037")
+    command.downgrade(alembic_config, "0036")
 
     after = entries(engine)
     for name, (outcome, detail, _) in LEADS.items():
-        got = after[at_0035[name]]
+        got = after[at_0036[name]]
         assert (got[0], got[1], got[2], got[5], got[6]) == (
             "nothing_found",
             None,

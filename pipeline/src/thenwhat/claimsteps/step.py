@@ -25,6 +25,7 @@ from thenwhat.work.outcome import Later, NeedsFix, NothingFound, Reason
 from thenwhat.work.steps import Failed
 
 if TYPE_CHECKING:
+    from thenwhat.clinical.service import MeshSource
     from thenwhat.extract.retrieve import ArticleRetriever
     from thenwhat.llm.client import Llm
     from thenwhat.statements.service import StatementChecker
@@ -98,6 +99,10 @@ class ClaimSources:
     )
     make_evidence: Callable[[Session], tuple[TrialRegistry, LiteratureIndex, NoticeRegistry]] = (
         field(default_factory=lambda: _not_given("source of evidence"))
+    )
+    # MeSH's own records, which place a claim's clinical categories in its tree.
+    make_mesh: Callable[[Session], "MeshSource"] = field(
+        default_factory=lambda: _not_given("MeSH records")
     )
     make_llm: Callable[[Session], "Llm"] = field(default_factory=lambda: _not_given("model"))
     make_checker: Callable[[Session], "StatementChecker"] = field(

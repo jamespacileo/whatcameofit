@@ -127,6 +127,14 @@ class Claim(Reviewed, Base):
             "merged_into_id IS NULL OR (archived_at IS NOT NULL AND merged_into_id <> id)",
             name="merged_is_archived",
         ),
+        CheckConstraint(
+            "approach IS NOT NULL OR (approach_decided_by IS NULL AND approach_basis IS NULL)",
+            name="approach_record_has_approach",
+        ),
+        CheckConstraint(
+            "approach_basis IS NULL OR approach_decided_by = 'rule'",
+            name="approach_basis_is_a_rules",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -136,6 +144,13 @@ class Claim(Reviewed, Base):
     vertical: Mapped[str] = mapped_column(Text)
     # One of the configured approaches, or none. Never part of status.
     approach: Mapped[str | None] = mapped_column(Text)
+    # Who set the approach, and for one a rule set, what the registry says that it was
+    # set on (openspec health-areas). Both empty with no approach; the first is also empty
+    # for an approach stored before it was recorded, which no rule may then change.
+    approach_decided_by: Mapped[Decider | None] = mapped_column(
+        _enum(Decider, "approach_decided_by")
+    )
+    approach_basis: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
     # The intervention half of a claim's identity is its intervention entity.
     indication: Mapped[str] = mapped_column(Text)
     first_reported_date: Mapped[date | None]

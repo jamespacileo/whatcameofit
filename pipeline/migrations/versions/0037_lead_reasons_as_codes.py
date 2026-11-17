@@ -1,7 +1,7 @@
 """Give every link lead read before reasons were codes the code its stored words stand for.
 
-Revision ID: 0036
-Revises: 0035
+Revision ID: 0037
+Revises: 0036
 
 Data only. A lead's ledger entry for the read gains the reason's code and the values it
 carries, worked out from the lead's stored outcome and detail. Two kinds of lead change
@@ -22,8 +22,8 @@ from collections.abc import Sequence
 
 from alembic import op
 
-revision: str = "0036"
-down_revision: str | None = "0035"
+revision: str = "0037"
+down_revision: str | None = "0036"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

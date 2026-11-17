@@ -1,7 +1,7 @@
 """Keep a record of each claim's registry search, and the identifiers an article's page names.
 
-Revision ID: 0037
-Revises: 0036
+Revision ID: 0038
+Revises: 0037
 
 Adds the table `registry_search`: one row for each term of a claim's latest finished
 search, with what came back or why the term was not sent. It starts empty, so every claim
@@ -19,8 +19,8 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 
-revision: str = "0037"
-down_revision: str | None = "0036"
+revision: str = "0038"
+down_revision: str | None = "0037"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

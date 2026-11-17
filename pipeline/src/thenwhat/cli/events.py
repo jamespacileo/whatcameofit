@@ -9,12 +9,14 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entry import claim_by_slug
 from thenwhat.claimsteps.evidence import ClaimFetch
 from thenwhat.cli.claim_steps import outcome_line, run_for_claims, unfinished
+from thenwhat.cli.clinical import make_mesh as make_mesh
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import EventType, RegulatoryOutcome, ReviewState, TrialPhase, TrialState
 from thenwhat.events.fetch import LiteratureIndex, NoticeRegistry, TrialRegistry
 from thenwhat.events.manual import MANUAL_SOURCE, add_manual_event
+from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
@@ -60,6 +62,16 @@ def fetch_command(
                     markup=False,
                 )
         out.print(f"Status: {claim_by_slug(session, slug).current_status.value}", markup=False)
+        tree = step.trees.get(claim_id) if isinstance(step, ClaimFetch) else None
+        if isinstance(tree, SourceError):
+            out.print(
+                f"MeSH records not read ({tree}): its clinical categories stay not yet read"
+                " until `thenwhat clinical tree` has run.",
+                markup=False,
+            )
+        elif tree is not None and tree.read:
+            noun = "record" if tree.read == 1 else "records"
+            out.print(f"Read {tree.read} MeSH {noun} for its clinical categories.")
         line = outcome_line(session, step, claim_id, slug)
         if line is not None:
             err.print(line, markup=False)

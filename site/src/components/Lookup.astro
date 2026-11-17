@@ -22,6 +22,11 @@ const {
   sentences = false,
 } = Astro.props;
 
+// Said under the field on every page: that it takes a link, and where the link goes.
+const hint = SITE.lookupUrl
+  ? "A pasted link is compared in your browser, and sent only if you ask for a registry search."
+  : "A pasted link is compared in your browser and sent nowhere.";
+
 // Keyed by the claim's page, as the lookup file names it. "<" is escaped so that no
 // text in the data can close the script element.
 const sentenceJson = sentences
@@ -55,9 +60,11 @@ const sentenceJson = sentences
       autocapitalize="off"
       spellcheck="false"
       placeholder="https://… or tooth regrowth"
+      aria-describedby="query-hint"
     />
     <button type="submit">Look up</button>
   </div>
+  <p class="box-hint" id="query-hint">{hint}</p>
 </form>
 {/* What a page sets under the box, ahead of the answer. */}
 <slot />
@@ -124,6 +131,9 @@ const sentenceJson = sentences
     url: string;
     meta: { title?: string; status?: string; summary?: string };
   }
+  interface IndexedHit {
+    data: () => Promise<Hit>;
+  }
   interface LookupClaim {
     headline: string;
     page: string;
@@ -186,20 +196,46 @@ const sentenceJson = sentences
   }
 
   // Where to go when the box has no answer: never a full stop.
-  function next() {
+  function listedByTopic() {
     const line = element("p", "Every tracked claim is listed by ", "entry-note");
     const topics = element("a", "topic") as HTMLAnchorElement;
     topics.href = "/topics";
-    line.append(topics, ". A treatment's name can also be typed in the box above.");
+    line.append(topics, ".");
     return line;
+  }
+
+  function next() {
+    const line = listedByTopic();
+    line.append(" A treatment's name can also be typed in the box above.");
+    return line;
+  }
+
+  // A lookup or a search that could not be read says so and offers the same question
+  // again. It never sends the reader back to type what has just failed.
+  function failed(message: string, asked: string) {
+    const line = element("p", `${message} `);
+    const again = element("button", "Try again", "text-control") as HTMLButtonElement;
+    again.type = "button";
+    again.addEventListener("click", () => {
+      input.value = asked;
+      input.focus();
+      answer(asked);
+    });
+    line.append(again);
+    results.replaceChildren(line, listedByTopic());
   }
 
   function show(...messages: string[]) {
     results.replaceChildren(...messages.map((message) => element("p", message)));
   }
 
+  // Under a list of claims none of which a person has checked, said once.
+  const LISTED_UNCHECKED =
+    "None of these pages has yet been checked by a person. Each was put together by software from the public records it links to.";
+
   function claimList(claims: LookupClaim[]) {
     const list = element("ul", undefined, "plain");
+    const once = claims.length > 1 && claims.every((claim) => claim.unchecked);
     for (const claim of claims) {
       const item = element("li");
       const link = element("a", claim.headline) as HTMLAnchorElement;
@@ -207,7 +243,7 @@ const sentenceJson = sentences
       const note = element("span", undefined, "entry-note");
       note.append(element("strong", claim.status));
       const rest = [
-        claim.no_signal,
+        claim.no_signal && `${claim.no_signal}.`,
         claim.meaning,
         claim.first_reported && `First reported ${claim.first_reported}.`,
       ]
@@ -215,10 +251,13 @@ const sentenceJson = sentences
         .join(" ");
       note.append(` ${rest}`);
       item.append(link, note);
-      if (claim.unchecked) item.append(element("span", claim.unchecked, "entry-note"));
+      if (claim.unchecked && !once) item.append(element("span", claim.unchecked, "entry-note"));
       list.append(item);
     }
-    return list;
+    if (!once) return list;
+    const fragment = document.createDocumentFragment();
+    fragment.append(list, element("p", LISTED_UNCHECKED, "entry-note"));
+    return fragment;
   }
 
   // The claim's sentence, as its page offers it: copied where the clipboard can be
@@ -566,7 +605,10 @@ const sentenceJson = sentences
     const button = element("button", post ? LIVE.postOffer : LIVE.offer, "live-offer") as HTMLButtonElement;
     button.type = "button";
     button.addEventListener("click", () => void askLive({ url: address }));
-    return [button, element("p", post ? LIVE.postDisclosure : LIVE.disclosure, "entry-note")];
+    const sends = element("p", post ? LIVE.postDisclosure : LIVE.disclosure, "entry-note");
+    sends.id = "live-sends";
+    button.setAttribute("aria-describedby", sends.id);
+    return [button, sends];
   }
 
   let lookup: Promise<Lookup> | undefined;
@@ -608,7 +650,7 @@ const sentenceJson = sentences
     } catch {
       lookup = undefined;
       if (asked !== latest) return;
-      results.replaceChildren(element("p", "The lookup is not available right now."), next());
+      failed("The lookup is not available right now.", address);
       return;
     }
     if (asked !== latest) return;
@@ -636,6 +678,7 @@ const sentenceJson = sentences
         claimList(close),
         ...liveOffer(address),
         ...suggestion(address),
+        ...later(address),
       );
       return;
     }
@@ -646,8 +689,16 @@ const sentenceJson = sentences
       ),
       ...liveOffer(address),
       ...suggestion(address),
+      ...later(address),
       next(),
     );
+  }
+
+  // A report the site does not track is offered a date to come back on. The file is
+  // made on the device, so it needs no registry search first.
+  function later(address: string) {
+    const section = remindLater(address);
+    return section ? [section] : [];
   }
 
   // A slow answer to an earlier question must not replace the answer to a later one.
@@ -785,6 +836,9 @@ const sentenceJson = sentences
     return list;
   }
 
+  // The width under which a result is one column.
+  const narrow = () => matchMedia("(max-width: 34rem)").matches;
+
   // One match: where it stands with when it was first reported, in a column of their
   // own so the dates line up; its headline as a heading that opens the claim; the
   // treatment, what it is claimed for and its topic; then what the words were found
@@ -804,7 +858,6 @@ const sentenceJson = sentences
     const track = stageTrack(claim.place, places);
     if (track) now.append(track);
     if (claim.first_reported) now.append(element("span", `First reported ${claim.first_reported}`, "hit-when"));
-    const main = element("div", undefined, "hit-main");
     const heading = element("h3", undefined, "hit-heading");
     const link = element("a", undefined, "hit-title") as HTMLAnchorElement;
     link.href = claim.page;
@@ -816,11 +869,12 @@ const sentenceJson = sentences
     meta.append(about);
     const topic = topics[claim.topic];
     if (topic) meta.append(element("span", topic.title, "row-topic"));
-    main.append(heading, meta);
+    // The headline is read first, as in the day list; where the claim stands follows
+    // it at once: beside it on a wide screen, under it on a narrow one, where one
+    // report is named and the rest are counted.
+    item.append(heading, now, meta);
     const found = foundIn(claim.page, words, detail);
-    if (found.length) main.append(foundList(found, words, closest ? 3 : 2));
-    // The headline is read first, as in the day list; where it stands follows it.
-    item.append(main, now);
+    if (found.length) item.append(foundList(found, words, narrow() ? 1 : closest ? 3 : 2));
     return item;
   }
 
@@ -856,6 +910,9 @@ const sentenceJson = sentences
 
   const claimsText = (count: number) => `${count} tracked ${count === 1 ? "claim" : "claims"}`;
 
+  // How many of the claims a search finds are read and drawn at a time.
+  const SHOWN_AT_ONCE = 20;
+
   function leaveSearch() {
     if (!answerSlot) return;
     answerSlot.replaceChildren();
@@ -867,26 +924,53 @@ const sentenceJson = sentences
     }
   }
 
-  function setAddress(change: (params: URLSearchParams) => void) {
+  interface SearchHistory {
+    articleKey?: string;
+    pages?: number;
+  }
+  const articleLookups = new Map<string, string>();
+  const searchHistory = (): SearchHistory => history.state?.lookup ?? {};
+
+  function setAddress(
+    change: (params: URLSearchParams) => void,
+    view = searchHistory(),
+    step = false,
+  ) {
     const url = new URL(location.href);
     change(url.searchParams);
-    history.replaceState(null, "", url);
+    const state = { ...history.state, lookup: view };
+    if (step) history.pushState(state, "", url);
+    else history.replaceState(state, "", url);
+  }
+
+  function startSearch(text: string) {
+    const view: SearchHistory = {};
+    if (text && readAddress(text).kind !== "none") {
+      // A pasted link stays in this page's memory. History carries only its key.
+      view.articleKey = crypto.randomUUID();
+      articleLookups.set(view.articleKey, text);
+    }
+    setAddress((params) => {
+      if (text && !view.articleKey) params.set("q", text);
+      else params.delete("q");
+      params.delete("topic");
+    }, view, true);
+    answer(text);
   }
 
   function clearSearch() {
     input.value = "";
-    setAddress((params) => {
-      params.delete("q");
-      params.delete("topic");
-    });
-    answer("");
+    startSearch("");
     input.focus();
   }
 
   // The one way out of an answer, beside its count, as tall as a fingertip.
   function searchHead(title: string, count: string) {
     const head = element("div", undefined, "search-head");
-    head.append(element("h2", title, "search-title"));
+    const heading = element("h2", title, "search-title");
+    heading.id = "search-answer-title";
+    heading.tabIndex = -1;
+    head.append(heading);
     const said = element("p", undefined, "search-count");
     said.append(element("span", count));
     const clear = element("button", "Clear search", "text-control search-clear") as HTMLButtonElement;
@@ -900,30 +984,63 @@ const sentenceJson = sentences
   // An answer goes in the list's place on the home page, with one line under the box
   // saying where it is; elsewhere it stands under the box. Either way a reader who
   // arrives with the words in the address is taken to it.
-  function place(block: HTMLElement, note: string) {
+  function place(block: HTMLElement, note: string, still = false) {
     const holder = answerSlot ?? results;
     if (answerSlot) {
       answerSlot.replaceChildren(block);
       answerSlot.hidden = false;
       days?.setAttribute("data-searching", "");
-      results.replaceChildren(element("p", note, "search-note"));
+      // The line under the box leads to the answer: pressed, it puts the reader on the
+      // answer's heading, past everything that stands between.
+      const said = element("p", `${note} `, "search-note");
+      const jump = element("a", "shown below") as HTMLAnchorElement;
+      jump.href = "#search-answer-title";
+      jump.addEventListener("click", (event) => {
+        const heading = answerSlot.querySelector<HTMLElement>("#search-answer-title");
+        if (!heading) return;
+        event.preventDefault();
+        heading.focus({ preventScroll: true });
+        heading.scrollIntoView({ block: "start" });
+      });
+      said.append(jump, ".");
+      results.replaceChildren(said);
     } else {
       results.replaceChildren(block);
     }
-    if (holder.getBoundingClientRect().top > innerHeight * 0.7) {
-      holder.scrollIntoView({
-        block: "start",
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      });
+    // An answer drawn again with more in it leaves the page and the reader where they are.
+    if (still) return;
+    // An answer low on the screen is brought up with the box above it, in one move: a
+    // glide is cut short by what is drawn after it, and leaves the answer under the fold.
+    if (holder.getBoundingClientRect().top > innerHeight * 0.5) {
+      form.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+    // A search asked from anywhere but the field (a word to try, the address, Back)
+    // puts the reader on the answer's heading; one typed leaves them in the field.
+    if (answerSlot && document.activeElement !== input) {
+      answerSlot.querySelector<HTMLElement>("#search-answer-title")?.focus({ preventScroll: true });
     }
   }
 
+  interface ExactHeadline {
+    claim: LookupClaim;
+    report: SearchReport;
+  }
+
   interface Shown {
-    picked?: string;
+    picked: string;
+    pick: (slug: string, from: "side" | "row") => void;
     /** Where the reader picked a topic, to keep their place on it when it is redrawn. */
     pickedIn?: "side" | "row";
     /** A report whose headline is the search itself: its claim leads, so labelled. */
-    exact?: SearchReport;
+    exact?: ExactHeadline;
+    /** How many claims the index found and this answer has not read yet. */
+    left: number;
+    /** Reads the next of them and draws the answer again; given where any are left. */
+    more?: () => Promise<void>;
+    reading: boolean;
+    unread: boolean;
+    /** The answer drawn again in its place, with more in it: the page is not moved. */
+    again?: boolean;
   }
 
   // The topics of the matches, each narrowing them, with how many each holds.
@@ -937,7 +1054,7 @@ const sentenceJson = sentences
         .map(([slug, n]): [string, string, number] => [slug, index.topics[slug].title, n])
         .sort((a, b) => b[2] - a[2] || a[1].localeCompare(b[1])),
     ];
-    if (picks.length < 3) return [];
+    if (picks.length < 3 && !picked) return [];
     return picks.map(([slug, title, n]) => {
       const button = element("button", `${title} `, "side-pick") as HTMLButtonElement;
       button.type = "button";
@@ -953,22 +1070,24 @@ const sentenceJson = sentences
   // the others under it; the site gives one claim the full digest only where it
   // knows: words that are a tracked report's whole headline. The answer ends with
   // the topics the matches belong to.
-  function searchAnswer(query: string, matches: LookupClaim[], index: Lookup, detail: SearchDetail, view: Shown = {}) {
-    const { picked = "", pickedIn, exact } = view;
+  function searchAnswer(query: string, matches: LookupClaim[], index: Lookup, detail: SearchDetail, view: Shown) {
+    const { picked, pick, pickedIn, exact, left, more, reading, unread, again = false } = view;
+    const total = matches.length + left;
+    const cut = left > 0;
     const words = searchWords(query);
     const shown = picked ? matches.filter((claim) => claim.topic === picked) : matches;
     const block = element("div", undefined, "search-results");
+    // The count is of every claim found. Where only the first are drawn it says so,
+    // and a topic's count is then of those drawn.
+    const counted = cut ? `First ${matches.length} of ${claimsText(total)}` : claimsText(matches.length);
+    const inTopic = `, in ${index.topics[picked]?.title ?? picked}`;
     block.append(
       searchHead(
         `Results for “${query}”`,
-        picked ? `${shown.length} of ${claimsText(matches.length)}, in ${index.topics[picked]?.title ?? picked}` : claimsText(matches.length),
+        !picked ? counted : cut ? `${shown.length} of the first ${matches.length}${inTopic}` : `${shown.length} of ${counted}${inTopic}`,
       ),
     );
 
-    const pick = (slug: string, from: "side" | "row") => {
-      setAddress((params) => (slug ? params.set("topic", slug) : params.delete("topic")));
-      searchAnswer(query, matches, index, detail, { picked: slug, pickedIn: from, exact });
-    };
     // On a narrow screen, and on a page with no side column, the topics stand here.
     const rowPicks = topicButtons(matches, index, picked, (slug) => pick(slug, "row"));
     if (rowPicks.length) {
@@ -979,14 +1098,14 @@ const sentenceJson = sentences
       block.append(row);
     }
 
-    const [best, ...others] = shown;
-    const leads = exact !== undefined && best === matches[0];
-    if (leads) {
+    if (exact && (!picked || exact.claim.topic === picked)) {
+      const { claim, report } = exact;
+      const others = shown.filter((match) => match !== claim);
       block.append(element("p", "A tracked report has this headline.", "exact-says"));
-      block.append(reportCard(exact, best, words, index.topics));
-      const found = foundIn(best.page, words, detail).filter((item) => item.kind !== "report" || item.report.url !== exact.url);
+      block.append(reportCard(report, claim, words, index.topics));
+      const found = foundIn(claim.page, words, detail).filter((item) => item.kind !== "report" || item.report.url !== report.url);
       const under = found.length ? [element("p", "Also found in", "matched-title"), foundList(found, words, 3)] : [];
-      block.append(standing(best, index.places, { lead: "Its claim · on record now", heading: "h3", words, under, compact: true }));
+      block.append(standing(claim, index.places, { lead: "Its claim · on record now", heading: "h3", words, under, compact: true }));
       if (others.length) {
         const jump = element("a", `${others.length} other ${others.length === 1 ? "claim" : "claims"} with these words`, "jump-others") as HTMLAnchorElement;
         jump.href = "#other-matches";
@@ -1000,6 +1119,7 @@ const sentenceJson = sentences
         block.append(head, list);
       }
     } else {
+      const [best, ...others] = shown;
       const first = element("ol", undefined, "plain hit-list");
       first.append(matchRow(best, index.places, words, index.topics, detail, true));
       block.append(first);
@@ -1012,6 +1132,27 @@ const sentenceJson = sentences
         list.append(...others.map((claim) => matchRow(claim, index.places, words, index.topics, detail)));
         block.append(head, list);
       }
+    }
+
+    if (cut) {
+      // The next of them are drawn under these at a press; the line counts what is left.
+      const message = reading ? "Reading…" : unread ? "The next claims could not be read right now."
+        : `${left} more tracked ${left === 1 ? "claim holds" : "claims hold"} these words.`;
+      const said = element("p", message, "match-more show-more-says");
+      said.setAttribute("role", "status");
+      if (more) {
+        const button = element("button", `Show ${Math.min(left, SHOWN_AT_ONCE)} more`, "share show-more") as HTMLButtonElement;
+        button.type = "button";
+        button.disabled = reading;
+        button.addEventListener("click", () => {
+          if (button.disabled) return;
+          button.disabled = true;
+          said.textContent = "Reading…";
+          void more();
+        });
+        block.append(button);
+      }
+      block.append(said);
     }
 
     const subjects = [...new Set(shown.map((claim) => claim.topic))].filter((slug) => index.topics[slug]);
@@ -1030,7 +1171,7 @@ const sentenceJson = sentences
     if (listedGroup) block.append(listedGroup);
     if (pickedIn && answerSlot) answerSlot.replaceChildren(block);
     else if (pickedIn) results.replaceChildren(block);
-    else place(block, `Results for “${query}” are shown below.`);
+    else place(block, cut ? `The first ${matches.length} of ${claimsText(total)} for “${query}” are` : `${claimsText(matches.length)} for “${query}”,`, again);
 
     if (searchTopics) {
       const sidePicks = topicButtons(matches, index, picked, (slug) => pick(slug, "side"));
@@ -1223,10 +1364,10 @@ const sentenceJson = sentences
     place();
   }
 
-  function searchFailed() {
+  function searchFailed(asked: string) {
     lookup = undefined;
     searchDetail = undefined;
-    results.replaceChildren(element("p", "Search is not available right now."), next());
+    failed("Search is not available right now.", asked);
   }
 
   // A trial registry's identifier, typed whole: answered with that trial, never with a
@@ -1253,7 +1394,7 @@ const sentenceJson = sentences
     try {
       [index, detail] = await Promise.all([loadLookup(), loadDetail()]);
     } catch {
-      if (asked === latest) searchFailed();
+      if (asked === latest) searchFailed(query);
       return;
     }
     if (asked !== latest) return;
@@ -1287,7 +1428,7 @@ const sentenceJson = sentences
         const list = element("ol", undefined, "plain listed-trials");
         list.append(listedRow(listed, index.claims, citedTrials));
         block.append(list, element("p", NOT_AN_OPTION, "trial-note"));
-        place(block, `${id} is a registered trial, shown below.`);
+        place(block, `${id} is a registered trial,`);
         return;
       }
       results.replaceChildren(
@@ -1297,7 +1438,8 @@ const sentenceJson = sentences
       const registry = REGISTRY_PAGES.find(([pattern]) => pattern.test(id));
       if (registry) {
         const line = element("p");
-        const link = element("a", `See ${id} on ${registry[1]}`) as HTMLAnchorElement;
+        // The registry may hold no such record: the link looks for it, and does not say it is there.
+        const link = element("a", `Look for ${id} on ${registry[1]}`) as HTMLAnchorElement;
         link.href = registry[2](id);
         link.rel = "noopener";
         line.append(link);
@@ -1325,70 +1467,161 @@ const sentenceJson = sentences
       const [report] = detail.claims[claim.page.slice(1)]?.reports ?? [];
       if (report) block.append(reportCard(report, claim, [], index.topics));
     }
-    place(block, `${trial.id} is on record for ${said}, shown below.`);
+    place(block, `${trial.id} is on record for ${said},`);
   }
 
   // The words a headline is compared by: letters and numbers, in lower case.
   const plain = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
-  // A topic named in the page's address when it was opened, applied to its search.
-  let addressTopic = new URL(location.href).searchParams.get("topic") ?? "";
-
-  async function search(query: string) {
+  async function search(query: string, topic: string, pagesToRestore: number) {
     const asked = latest;
     show("Searching…");
-    let matches: LookupClaim[];
     let index: Lookup;
     let detail: SearchDetail;
+    let hits: IndexedHit[];
     try {
       const indexUrl = "/pagefind/pagefind.js";
       const pagefind = await import(/* @vite-ignore */ indexUrl);
-      const [found, loaded, held] = await Promise.all([pagefind.search(query), loadLookup(), loadDetail()]);
+      const [searched, loaded, held] = await Promise.all([pagefind.search(query), loadLookup(), loadDetail()]);
+      hits = [...searched.results];
       index = loaded;
       detail = held;
-      const hits: Hit[] = await Promise.all(
-        found.results.slice(0, 20).map((result: { data: () => Promise<Hit> }) => result.data()),
-      );
-      // Only claim pages are in the search index; each is named by its page.
-      const pages = new Map(Object.values(index.claims).map((claim) => [claim.page, claim]));
-      matches = hits
-        .map((hit) => pages.get(new URL(hit.url, location.origin).pathname.replace(/(\/index\.html|\.html|\/)$/, "")))
-        .filter((claim): claim is LookupClaim => Boolean(claim));
     } catch {
-      if (asked === latest) searchFailed();
+      if (asked === latest) searchFailed(query);
       return;
     }
     if (asked !== latest) return;
-    matches = ranked(matches, searchWords(query), detail);
+    const words = searchWords(query);
+    const byPage = new Map(Object.values(index.claims).map((claim) => [claim.page, claim]));
+    const reads = new Map<IndexedHit, Promise<LookupClaim | undefined>>();
+    const readHits = (batch: IndexedHit[]) => Promise.all(batch.map((hit) => {
+      const pending = reads.get(hit);
+      if (pending) return pending;
+      const reading = hit.data().then(({ url }) => {
+        const page = new URL(url, location.origin).pathname.replace(/(\/index\.html|\.html|\/)$/, "");
+        return byPage.get(page);
+      }).catch((error) => {
+        reads.delete(hit);
+        throw error;
+      });
+      reads.set(hit, reading);
+      return reading;
+    }));
 
     // Words that are a tracked report's whole headline put its claim first.
-    let exact: SearchReport | undefined;
+    let exact: ExactHeadline | undefined;
     const asWords = plain(query);
     if (asWords.includes(" ")) {
       for (const [slug, held] of Object.entries(detail.claims)) {
         const report = held.reports.find((candidate) => plain(candidate.title) === asWords);
         const claim = index.claims[slug];
         if (!report || !claim) continue;
-        exact = report;
-        matches = [claim, ...matches.filter((other) => other !== claim)];
+        exact = { claim, report };
         break;
       }
     }
 
-    if (matches.length === 0) {
+    const matches: LookupClaim[] = [];
+    let read = 0;
+    let pagesShown = 0;
+    const nextBatch = async () => {
+      const seen = new Set(matches);
+      const fresh: LookupClaim[] = [];
+      let cursor = read;
+      while (cursor < hits.length && fresh.length < SHOWN_AT_ONCE) {
+        const batch = await readHits(hits.slice(cursor, cursor + SHOWN_AT_ONCE - fresh.length));
+        if (asked !== latest) return [];
+        cursor += batch.length;
+        for (const claim of batch) {
+          if (!claim || seen.has(claim)) continue;
+          seen.add(claim);
+          fresh.push(claim);
+        }
+      }
+      // A failed batch leaves the displayed rows and the cursor where they were.
+      read = cursor;
+      pagesShown += 1;
+      return ranked(fresh, words, detail);
+    };
+
+    let picked = Object.hasOwn(index.topics, topic) ? topic : "";
+    try {
+      // Promote an indexed headline before paging, so it occupies one result slot.
+      // A report found only in the report file still gets its digest above the hits.
+      if (exact) {
+        for (let start = 0; start < hits.length; start += SHOWN_AT_ONCE) {
+          const batch = await readHits(hits.slice(start, start + SHOWN_AT_ONCE));
+          if (asked !== latest) return;
+          const at = batch.indexOf(exact.claim);
+          if (at < 0) continue;
+          hits.unshift(...hits.splice(start + at, 1));
+          break;
+        }
+      }
+      do {
+        matches.push(...await nextBatch());
+        if (asked !== latest) return;
+      } while (read < hits.length &&
+        (pagesShown < pagesToRestore || (picked && !matches.some((claim) => claim.topic === picked))));
+    } catch {
+      if (asked === latest) searchFailed(query);
+      return;
+    }
+
+    if (picked && !matches.some((claim) => claim.topic === picked)) picked = "";
+    if (topic && !picked) setAddress((params) => params.delete("topic"));
+    if (matches.length === 0 && !exact) {
       show(
         `Nothing tracked here matches “${query}”.`,
         "This site covers only the claims it has tracked so far. To check a story, paste the article's link into the box above.",
       );
       const drawing = document.querySelector<HTMLTemplateElement>("#unfound");
       if (drawing) results.prepend(drawing.content.cloneNode(true));
-      results.append(next());
+      // Words were typed: the line on topics, without the one on typing.
+      results.append(listedByTopic());
       void showListed(query);
       return;
     }
-    const picked = matches.some((claim) => claim.topic === addressTopic) ? addressTopic : "";
-    addressTopic = "";
-    searchAnswer(query, matches, index, detail, { exact, picked });
+    let reading = false;
+    let unread = false;
+    const render = (again = false, pickedIn?: "side" | "row") => {
+      searchAnswer(query, matches, index, detail, {
+        picked, pick, pickedIn, exact, left: hits.length - read,
+        more: read < hits.length ? more : undefined, reading, unread, again,
+      });
+    };
+    const pick = (slug: string, from: "side" | "row") => {
+      picked = slug;
+      setAddress((params) => (slug ? params.set("topic", slug) : params.delete("topic")));
+      render(true, from);
+    };
+
+    const more = async () => {
+      if (reading || asked !== latest) return;
+      reading = true;
+      unread = false;
+      let fresh: LookupClaim[];
+      try {
+        fresh = await nextBatch();
+      } catch {
+        if (asked !== latest) return;
+        reading = false;
+        unread = true;
+        render(true);
+        (answerSlot ?? results).querySelector<HTMLButtonElement>(".show-more")?.focus({ preventScroll: true });
+        return;
+      }
+      if (asked !== latest) return;
+      reading = false;
+      matches.push(...fresh);
+      history.replaceState({ ...history.state, lookup: { pages: pagesShown } }, "");
+      render(true);
+      const holder = answerSlot ?? results;
+      const first = fresh.find((claim) => !picked || claim.topic === picked);
+      const link = first && [...holder.querySelectorAll<HTMLAnchorElement>("a.hit-title")].find((title) => title.getAttribute("href") === first.page);
+      (link ?? holder.querySelector<HTMLElement>("#search-answer-title"))?.focus({ preventScroll: true });
+    };
+    render();
     void showListed(query);
   }
 
@@ -1402,21 +1635,43 @@ const sentenceJson = sentences
     }
     const read = readAddress(text);
     if (read.kind !== "none") void lookUp(text, read);
-    else void (TRIAL_ID.test(text) ? trialSearch(text) : search(text));
+    else if (TRIAL_ID.test(text)) void trialSearch(text);
+    else {
+      const topic = new URL(location.href).searchParams.get("topic") ?? "";
+      void search(text, topic, searchHistory().pages ?? 1);
+    }
+  }
+
+  function clearAnsweredSearch() {
+    const answered = results.childElementCount > 0 || (answerSlot !== null && !answerSlot.hidden);
+    if (answered) clearSearch();
   }
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const text = input.value.trim();
-    const url = new URL(location.href);
-    // Only typed words go into the page's address. A pasted article address stays in
-    // the field: in the address it would reach the server on a reload or when shared.
-    if (text && readAddress(text).kind === "none") url.searchParams.set("q", text);
-    else url.searchParams.delete("q");
-    // A new search starts on every topic.
-    url.searchParams.delete("topic");
-    history.replaceState(null, "", url);
+    if (text) startSearch(text);
+    else clearAnsweredSearch();
+  });
+
+  // A field emptied by its cross, by Escape or by deleting leaves no answer behind it.
+  const emptied = () => {
+    if (!input.value) clearAnsweredSearch();
+  };
+  input.addEventListener("input", emptied);
+  input.addEventListener("search", emptied);
+
+  function restoreSearch() {
+    const params = new URL(location.href).searchParams;
+    const text = articleLookups.get(searchHistory().articleKey ?? "") ?? params.get("q") ?? "";
+    input.value = text;
     answer(text);
+  }
+
+  // Back and Forward move between the searches looked up, each drawn again.
+  addEventListener("popstate", () => {
+    closeSuggestions();
+    restoreSearch();
   });
 
   // A pasted link is answered at once; typed words wait for the button.
@@ -1497,13 +1752,22 @@ const sentenceJson = sentences
     const text = element("span", undefined, item.kind === "report" ? "suggest-quote" : item.kind === "trial" ? "suggest-id" : "suggest-text");
     if (item.kind === "report") text.append(element("span", "“", "quote-mark"), typedIn(item.text, typed), element("span", "”", "quote-mark"));
     else text.append(typedIn(item.text, typed));
+    if (item.also) text.append(" (", typedIn(item.also, typed), ")");
     main.append(text);
     if (item.sub) {
       const sub = element("span", undefined, "suggest-sub");
       sub.append(" · ", typedIn(item.sub, typed));
       main.append(sub);
     }
-    link.append(suggestDrawing(item.kind), main, element("span", item.meta, "suggest-meta"));
+    const meta = element("span", item.meta, "suggest-meta");
+    // A row that opens a page ends in an arrow; one that searches here has none.
+    if (item.href) {
+      const opens = element("span", undefined, "suggest-opens");
+      opens.setAttribute("aria-hidden", "true");
+      opens.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
+      meta.append(opens, element("span", " Opens its page.", "visually-hidden"));
+    }
+    link.append(suggestDrawing(item.kind), main, meta);
     return link;
   }
 
@@ -1608,11 +1872,7 @@ const sentenceJson = sentences
   });
   form.addEventListener("submit", closeSuggestions);
 
-  const initial = new URL(location.href).searchParams.get("q");
-  if (initial) {
-    input.value = initial;
-    answer(initial);
-  }
+  restoreSearch();
 
   // A reader sent here to look something up lands with the field ready.
   if (location.hash === "#search") document.querySelector<HTMLInputElement>("#query")?.focus();

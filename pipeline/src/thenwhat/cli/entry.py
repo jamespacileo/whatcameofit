@@ -9,6 +9,12 @@ from typing import Annotated
 import typer
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.approach_rule import (
+    NOT_LISTED,
+    TYPE_NOT_MAPPED,
+    TYPES_DISAGREE,
+    run_rule,
+)
 from thenwhat.claims.corrections import SAME_BY_DECISION, merge_claims, unmerge_claim
 from thenwhat.claims.csv_import import CsvErrors, import_csv
 from thenwhat.claims.entry import (
@@ -16,8 +22,10 @@ from thenwhat.claims.entry import (
     add_article,
     add_claim,
     add_promise,
+    claim_by_slug,
     edit_claim,
     rename_slug,
+    unarchived_claims,
 )
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import open_session
@@ -289,6 +297,72 @@ def claim_unmerge(
             " export and deploy.",
             markup=False,
         )
+
+
+UNSET_REASONS = {
+    NOT_LISTED: "no approved trial lists the intervention by an equal name",
+    TYPES_DISAGREE: "the registry's types do not agree",
+    TYPE_NOT_MAPPED: "the table maps this registry type to no approach",
+}
+
+
+@claim_app.command("approaches")
+def claim_approaches(
+    slugs: Annotated[
+        list[str] | None, typer.Argument(help="Slugs of the claims. Every claim if none.")
+    ] = None,
+    dry_run: Annotated[
+        bool, typer.Option("--dry-run", help="Report what the rule would do and change nothing.")
+    ] = False,
+    unset: Annotated[
+        bool,
+        typer.Option("--unset", help="List each claim with trials that the rule gave no approach."),
+    ] = False,
+) -> None:
+    """Set claims' approaches by rule from the registry's intervention types.
+
+    A claim gets an approach when its approved trials list its intervention, by an equal
+    name, under one registry type that the table maps. An approach set by a person, the
+    seed or an assistant is never changed; the report says how often the rule agrees
+    with those, which is the measure of the table.
+    """
+    with entry_session() as session:
+        claims = (
+            [claim_by_slug(session, slug) for slug in slugs]
+            if slugs
+            else unarchived_claims(session)
+        )
+        run = run_rule(session, claims, write=not dry_run)
+        would = "would be " if dry_run else ""
+        out.print(
+            f"{_count(len(claims), 'claim')}: {run.filled} {would}given an approach,"
+            f" {run.updated} {would}updated, {run.cleared} {would}cleared,"
+            f" {run.unchanged} unchanged.",
+            markup=False,
+        )
+        out.print(
+            f"{run.kept} set by a person, the seed or an assistant, left as they are."
+            f" The rule answers for {run.kept_answered} of them and agrees with"
+            f" {run.kept_agreeing}.",
+            markup=False,
+        )
+        for stored, answered, slug in run.differing:
+            out.print(f"  {slug}: stored {stored}, the rule answers {answered}", markup=False)
+        out.print(
+            f"{_count(len(run.unset), 'claim')} with approved trials {would}left with no"
+            " approach" + (":" if unset and run.unset else "; --unset lists them."),
+            markup=False,
+        )
+        if unset:
+            for left in run.unset:
+                types = ", ".join(
+                    f"{kind} in {_count(count, 'trial')}" for kind, count in left.types
+                )
+                out.print(
+                    f"  {left.slug}: {UNSET_REASONS[left.reason]}"
+                    + (f" ({types})" if types else ""),
+                    markup=False,
+                )
 
 
 @claim_app.command("import-csv")
