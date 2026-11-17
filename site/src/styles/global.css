@@ -9354,3 +9354,190 @@ body:has(.band.home) .bar {
   }
 }
 
+/* ---- Suggestions under the box (openspec search-suggestions; the operator's choice of
+   "A" on 2026-11-17 from four mocks in .impeccable/mocks/search-autocomplete/). While
+   words are typed, rows of five kinds stand under the box, each kind under its name in
+   a fixed order. A row is a drawing for its kind, what it names with the typed words in
+   bold, and in grey at its right how much is behind it or where its claim stands. An
+   outlet's title is in the heading face between its marks. The chosen row is on the
+   tint. The last row sends the words as they are. ---- */
+.search .row {
+  position: relative;
+}
+
+/* The box stands over what follows it on the page, so its rows are not drawn under. */
+.search {
+  position: relative;
+  z-index: 5;
+}
+
+/* A band is a layer of its own: while the rows are open it stands over the page under
+   it, a day's heading kept in view included. */
+.band:has(.suggest:not([hidden])) {
+  position: relative;
+  z-index: 6;
+}
+
+.search .row .suggest {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  right: 0;
+  max-width: none;
+  max-height: min(36rem, calc(100dvh - 5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.4rem;
+  border: 1px solid var(--rule);
+  border-radius: 0.8rem;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--text-m);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: left;
+  box-shadow:
+    0 16px 36px -14px rgb(15 31 56 / 0.3),
+    0 2px 6px -2px rgb(15 31 56 / 0.1);
+}
+
+.suggest[hidden] {
+  display: none;
+}
+
+.suggest-group + .suggest-group {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.suggest-label {
+  max-width: none;
+  margin: 0;
+  padding: 0.35rem 0.6rem 0.15rem;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.suggest-row {
+  display: grid;
+  grid-template-columns: 1.1rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 0.6rem;
+  padding: 0.42rem 0.6rem;
+  border-radius: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.suggest-row:hover,
+.suggest-row.is-active {
+  background: var(--tint);
+}
+
+.suggest-kind {
+  display: grid;
+  align-self: center;
+  color: var(--muted);
+}
+
+.suggest-row.is-active .suggest-kind {
+  color: var(--blue);
+}
+
+.suggest-main {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.suggest b {
+  font-weight: 700;
+}
+
+.suggest-sub,
+.suggest-meta {
+  color: var(--muted);
+}
+
+.suggest-meta {
+  font-size: var(--text-s);
+  white-space: nowrap;
+}
+
+.suggest-id {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* An outlet's words stay in the heading face, between their marks, which do not hang
+   in a row. */
+.suggest-quote {
+  font-family: var(--display);
+  font-size: var(--text-body);
+}
+
+.suggest-quote b {
+  font-weight: 650;
+}
+
+.suggest .quote-mark {
+  position: static;
+  transform: none;
+}
+
+/* The last row, parted from the kinds: the words as they are. */
+.suggest-all {
+  position: relative;
+  margin-top: 0.5rem;
+  font-weight: 600;
+  color: var(--blue);
+}
+
+.suggest-all::before {
+  content: "";
+  position: absolute;
+  inset: -0.26rem 0 auto;
+  border-top: 1px solid var(--rule-soft);
+}
+
+.suggest-all .suggest-kind {
+  color: inherit;
+}
+
+/* A phone: a row is 44 pixels to press, and what was at its right goes under it. */
+@media (max-width: 40rem) {
+  .suggest-row {
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+    align-items: center;
+    min-height: 2.75rem;
+  }
+
+  .suggest-row .suggest-meta {
+    grid-column: 2;
+  }
+
+  .suggest-main {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+  }
+}
+
+@media (forced-colors: active) {
+  .suggest-row.is-active {
+    outline: 2px solid CanvasText;
+    outline-offset: -2px;
+  }
+}
+
+@media print {
+  .suggest {
+    display: none;
+  }
+}
+

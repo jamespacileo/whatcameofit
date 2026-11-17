@@ -5,6 +5,7 @@ import vm from "node:vm";
 import { test } from "node:test";
 import { parseHTML } from "linkedom";
 import { readAddress, closestClaims } from "../src/lib/lookup-match.mjs";
+import { suggest, suggestParts, suggestWords } from "../src/lib/suggest.ts";
 import { SUGGEST_SUBJECT, contactLink } from "../src/lib/contact.mjs";
 import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../src/lib/live-lookup.mjs";
 import {
@@ -93,6 +94,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
   results.scrollIntoView = () => {};
   const context = {
     document, URL, setTimeout, BRAND: { name: "Example tracker" }, readAddress, closestClaims,
+    suggest, suggestParts, suggestWords,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
     NOT_AN_OPTION, NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, changedShort, findListed, listingWords, registryDate,
     searchListing, setNote, PARTS_SEARCHED_AT_ONCE, partFor,
