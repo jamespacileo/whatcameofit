@@ -79,14 +79,17 @@ export async function report(db, id) {
   return { status: results[0].status, refusal: results[0].refusal, merged_at: results[0].merged_at, report: kinds };
 }
 
-// The inbox of the bulk tier (migrations/0003_inbox.sql). A run's records of a bulk kind,
+// The inbox of the bulk tier (migrations/0003_inbox.sql). It is for what a reader's lookup
+// and the store-side consumer create (design.md decision 20): a device's, the daily job's
+// and the operator's runs are pushes made on purpose, a slice of trials among them, and
+// what they put in D1 stays there. A lookup's or the consumer's records of a bulk kind,
 // and the payloads those records name, are copied as they were staged, in the batch of
 // the merge and before it (the merge empties the staging table); a run the merge refused
 // leaves none, and a batch that is undone leaves none either.
 const BULK = INBOX_KINDS.map((kind) => `'${kind}'`).join(", ");
 const KEEP = `INSERT INTO inbox (run_id, kind, key, body)
   SELECT s.run_id, s.kind, s.key, s.body FROM stg s
-  WHERE s.run_id = ?1 AND (s.kind IN (${BULK}) OR (s.kind = 'payload' AND s.body ->> 'sha256' IN (
+  WHERE s.run_id = ?1 AND (SELECT writer FROM run WHERE id = ?1) IN ('lookup', 'consumer') AND (s.kind IN (${BULK}) OR (s.kind = 'payload' AND s.body ->> 'sha256' IN (
     SELECT b.body ->> 'payload_sha256' FROM stg b WHERE b.run_id = ?1 AND b.kind IN (${BULK}))))
   ORDER BY s.kind = 'payload' DESC, s.rowid`;
 const UNKEEP = "DELETE FROM inbox WHERE run_id = ?1 AND (SELECT status FROM run WHERE id = ?1) <> 'merged'";
@@ -111,7 +114,9 @@ const FOLDED = "(SELECT run_id FROM inbox_folded)";
 // work is read from D1, so it stays, with its shares and reading, until that is done.
 const LEADS = `(SELECT l.id FROM link_lead l WHERE l.added_run IN ${FOLDED} AND NOT EXISTS (
   SELECT 1 FROM work_item w WHERE w.record_kind = 'link_lead' AND w.record_key = l.url_key AND w.step = 'lead_process' AND w.state = 'due'))`;
-const TRIALS = `(SELECT id FROM registry_trial WHERE added_run IN ${FOLDED})`;
+// A folded run's trials, but not one a paper has since been stored for: that trial is
+// part of the load of trials now, and stays.
+const TRIALS = `(SELECT t.id FROM registry_trial t WHERE t.added_run IN ${FOLDED} AND NOT EXISTS (SELECT 1 FROM trial_paper p WHERE p.trial_id = t.id))`;
 // What folded runs left in D1's copies of the bulk tables, children first. A lead's
 // shares, links, labels and reading go with it whichever run added them: a later run's
 // are still in the inbox as records, and are folded from there.
@@ -123,9 +128,9 @@ const CLEAR = [
   `DELETE FROM link_lead_link WHERE link_lead_id IN ${LEADS}`,
   `DELETE FROM link_share WHERE link_lead_id IN ${LEADS}`,
   `DELETE FROM link_lead WHERE id IN ${LEADS}`,
-  `DELETE FROM article_lead WHERE registry_trial_id IN ${TRIALS} OR added_run IN ${FOLDED}`,
-  `DELETE FROM registry_trial_status WHERE trial_id IN ${TRIALS} OR run_id IN ${FOLDED}`,
-  `DELETE FROM registry_trial WHERE added_run IN ${FOLDED}`,
+  `DELETE FROM article_lead WHERE registry_trial_id IN ${TRIALS}`,
+  `DELETE FROM registry_trial_status WHERE trial_id IN ${TRIALS}`,
+  `DELETE FROM registry_trial WHERE id IN ${TRIALS}`,
   `DELETE FROM llm_usage WHERE run_id IN ${FOLDED}`,
   "DELETE FROM inbox_folded WHERE run_id NOT IN (SELECT added_run FROM link_lead)",
 ];

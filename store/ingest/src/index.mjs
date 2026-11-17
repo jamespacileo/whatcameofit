@@ -12,8 +12,7 @@
 //   GET    /inbox?after=&limit=   records of the bulk tier that runs handed over, oldest first
 //   POST   /inbox/folded          a fold is recorded from its delta in the bucket and the build's list: {object}
 //   POST   /inbox/clear           no further than the furthest fold recorded: {through}
-//   PUT    /progress/slices       the pipeline reports how far slices of a set of trials have come
-//   GET    /progress              counts only: sets, slices by stage, last runs, rows by table
+//   GET    /progress              counts only: each slice of trials by stage (trial_slice), last runs, rows by table
 //   GET    /progress/page         the same as a page; it holds nothing until a token is typed into it
 //   POST   /work/lease|finish|fail    the consumer's queue of due work
 //   POST   /slices/take|release       a device's work slices
@@ -24,7 +23,7 @@ import { peopleInText } from "./people.mjs";
 import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_INBOX_RECORDS, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
 import { INGEST } from "./sql.generated.mjs";
 import * as store from "./store.mjs";
-import { progress, reportSlices } from "./progress.mjs";
+import { progress } from "./progress.mjs";
 import { PAGE } from "./page.mjs";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -275,12 +274,6 @@ async function route(request, env, ctx) {
     case "GET /progress":
       if (!who.may.includes("progress")) refuse(403, "outside_scope", `a ${who.role} token may not read the progress`);
       return json(200, await progress(env.STORE));
-    case "PUT /progress/*": {
-      if (parts[1] !== "slices") break;
-      if (!who.may.includes("report")) refuse(403, "outside_scope", `a ${who.role} token may not report progress`);
-      const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
-      return json(200, await reportSlices(env.STORE, value));
-    }
     case "POST /work/*": if (["lease", "finish", "fail"].includes(parts[1])) return work(request, env, who, parts[1]); break;
     case "POST /slices/*": if (["take", "release"].includes(parts[1])) return slice(request, env, who, parts[1]); break;
   }

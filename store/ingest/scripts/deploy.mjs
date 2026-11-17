@@ -45,7 +45,7 @@ const NAMES = {
 
 // ---- what a deployed service must answer -----------------------------------------------
 const ROUTES = [["GET", "/"], ["POST", "/runs"], ["GET", "/runs/x"], ["DELETE", "/runs/x"], ["POST", "/runs/x/records"], ["POST", "/runs/x/merge"], ["POST", "/runs/x/preview"],
-  ["PUT", `/payloads/${"0".repeat(64)}`], ["GET", "/inbox"], ["POST", "/inbox/folded"], ["POST", "/inbox/clear"], ["GET", "/progress"], ["PUT", "/progress/slices"],
+  ["PUT", `/payloads/${"0".repeat(64)}`], ["GET", "/inbox"], ["POST", "/inbox/folded"], ["POST", "/inbox/clear"], ["GET", "/progress"],
   ["POST", "/work/lease"], ["POST", "/slices/take"], ["POST", "/progress/page"], ["GET", "/sql"]];
 export async function smoke(address, say = console.log) {
   const at = address.replace(/\/$/, "");

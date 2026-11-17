@@ -110,12 +110,12 @@ export const PAGE = String.raw`<!doctype html>
 
   function draw(data) {
     var sets = $("sets"); sets.textContent = "";
-    if (!data.sets.length) { var none = el("div", "card"); none.appendChild(el("p", "soft", "No slice has been reported yet.")); sets.appendChild(none); }
+    if (!data.sets.length) { var none = el("div", "card"); none.appendChild(el("p", "soft", "No slice of trials is in the store yet.")); sets.appendChild(none); }
     data.sets.forEach(function (set) {
       var card = el("section", "card");
       card.appendChild(el("h2", "", set.rule + ", " + set.year));
-      var of = set.total_trials || set.trials_reported;
-      card.appendChild(el("p", "soft", num(set.slices_reported) + " of " + num(set.total_slices) + " slices reported, holding " + num(set.trials_reported) + " of " + num(set.total_trials) + " trials. Last report " + (set.updated_at || "–").slice(0, 19).replace("T", " ") + " UTC."));
+      var of = set.total_trials;
+      card.appendChild(el("p", "soft", num(set.total_slices) + " slices planned, holding " + num(set.total_trials) + " trials; " + num(set.stages.record.slices) + " started. Last change " + (set.changed_at || "–").slice(0, 19).replace("T", " ") + " UTC."));
       card.appendChild(el("h3", "", "By stage: trials in the slices that have reached it"));
       var notes = {
         registry_papers: num(set.counts.registry_papers) + " trials with a paper the registry lists",

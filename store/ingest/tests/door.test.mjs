@@ -580,61 +580,49 @@ test("a registry record that names a person is refused, in a record and in the b
   assert.equal((await put(kept)).status, 201);
 });
 
-test("progress is reported and read as counts only, by the tokens that may", { skip }, async () => {
+test("progress is read from the slices in the store, as counts only, by the tokens that may", { skip }, async () => {
   const box = await Service.open();
   try {
     const at = "2026-11-17T10:00:00.000000+00:00", later = "2026-11-17T12:00:00.000000+00:00";
-    const slice = (number, more = {}) => ({ number, grp: "ended with results", trials: 2000, ...more });
     const rule = "active-or-ended-this-year", set = rule;
-    const report = (as, body) => box.ask("PUT", "/progress/slices", { as, body });
-    // Who may report, and who may read.
-    for (const as of ["lookup", "consumer", "export"]) assert.equal((await report(as, { rule, year: 2026, slices: [] })).status, 403, as);
+    const slice = (number, more = {}) => ["trial_slice", `${rule}|2026|${number}`, { rule, year: 2026, number, grp: "ended with results", trials: 2000, with_results: 0, ...more }];
+    const push = async (run, records) => { assert.equal(await box.hand(run, records, { steps: {} }), null); assert.equal((await box.merge(run)).body.status, "merged", run); };
+    // Who may read. Nothing reports progress but the merge of a slice's record.
     for (const as of ["device-mini", "lookup", "consumer", "export"]) assert.equal((await box.ask("GET", "/progress", { as })).status, 403, as);
     assert.equal((await box.ask("GET", "/progress", { token: null })).status, 401);
-    assert.equal((await box.ask("PUT", "/progress/slices", { token: null, body: { rule, year: 2026, slices: [] } })).status, 401);
-    const first = await report("device-mini", { rule, year: 2026, total_trials: 102679, total_slices: 52, slices: [
-      slice(1, { with_results: 2000, registry_papers: 1400, pubmed_asked: 2000, pubmed_found: 900, in_store: 2000, record_at: at, registry_papers_at: at, pubmed_papers_at: at, in_store_at: later, page_at: later }),
-      slice(2, { grp: "ended", with_results: 0, registry_papers: 500, record_at: later, registry_papers_at: later }), slice(3, { grp: "active updated" })] });
-    assert.deepEqual([first.status, first.body], [200, { rule, year: 2026, slices: 3 }]);
-    // A later report of one slice: what it leaves out stays, and no stage goes back.
-    assert.equal((await report("daily", { rule, year: 2026, slices: [slice(2, { grp: "ended", pubmed_asked: 2000, pubmed_found: 700, pubmed_papers_at: later, in_store: 300 })] })).body.slices, 3);
-    assert.equal((await report("daily", { rule, year: 2026, slices: [slice(2, { grp: "ended", registry_papers: 100, in_store: 0, record_at: at, pubmed_papers_at: null })] })).status, 200);
-    assert.deepEqual(await box.all("SELECT registry_papers, pubmed_found, in_store, record_at, pubmed_papers_at FROM progress_slice WHERE number = 2"), [[500, 700, 300, later, later]]);
-    // What is refused: a field the service does not know (a trial's id among them), a group it does not know, a count over the slice, text.
-    for (const [why, body] of [
-      ["a field that is not a count or a time", { rule, year: 2026, slices: [slice(4, { trial_ids: ["NCT1"] })] }], ["a group of another name", { rule, year: 2026, slices: [slice(4, { grp: "abandoned" })] }],
-      ["a count over the slice", { rule, year: 2026, slices: [slice(4, { in_store: 2001 })] }], ["a rule with text", { rule: "a set of trials", year: 2026, slices: [] }],
-      ["no year", { rule, slices: [] }], ["a time in another form", { rule, year: 2026, slices: [slice(4, { record_at: "2026-11-17T10:00:00Z" })] }],
-      ["a slice numbered nought", { rule, year: 2026, slices: [slice(0)] }], ["too many slices", { rule, year: 2026, slices: Array.from({ length: 201 }, (_, n) => slice(n + 10)) }]]) {
-      const answer = await report("operator", body);
-      assert.deepEqual([answer.status, answer.body.error], [400, "bad_progress"], why);
-    }
-    assert.equal(await box.one("SELECT count(*) FROM progress_slice"), 3);
+    assert.equal((await box.ask("PUT", "/progress/slices", { as: "operator", body: {} })).status, 404);
+    assert.deepEqual((await box.ask("GET", "/progress", { as: "daily" })).body.sets, [], "no slice yet");
+    // Every planned slice is handed over, reached or not; then stages as they are reached.
+    await push("plan", [slice(1, { with_results: 2000 }), slice(2, { grp: "ended" }), slice(3, { grp: "active updated" })]);
+    await push("stage-1", [slice(1, { with_results: 2000, registry_papers: 1400, pubmed_asked: 2000, pubmed_found: 900, in_store: 2000, record_at: at, registry_papers_at: at, pubmed_papers_at: at, in_store_at: later, page_at: later }),
+      slice(2, { grp: "ended", registry_papers: 500, in_store: 300, record_at: later, registry_papers_at: later })]);
 
     const { status, body } = await box.ask("GET", "/progress", { as: "daily" });
     assert.equal(status, 200);
     assert.deepEqual(Object.keys(body).sort(), ["at", "groups", "rows", "runs", "sets", "stages"]);
     assert.deepEqual(body.stages, ["record", "registry_papers", "pubmed_papers", "in_store", "page"]);
     const [shown] = body.sets;
-    assert.deepEqual(Object.keys(shown).sort(), ["counts", "groups", "rule", "slices", "slices_reported", "stages", "total_slices", "total_trials", "trials_reported", "updated_at", "year"]);
-    assert.deepEqual([shown.rule, shown.year, shown.total_trials, shown.total_slices, shown.slices_reported, shown.trials_reported], [rule, 2026, 102679, 52, 3, 6000]);
-    assert.deepEqual(shown.stages, { record: { slices: 2, trials: 4000 }, registry_papers: { slices: 2, trials: 4000 }, pubmed_papers: { slices: 2, trials: 4000 }, in_store: { slices: 1, trials: 2000 }, page: { slices: 1, trials: 2000 } });
-    assert.deepEqual(shown.counts, { with_results: 2000, registry_papers: 1900, pubmed_asked: 4000, pubmed_found: 1600, in_store: 2300 });
+    assert.deepEqual(Object.keys(shown).sort(), ["changed_at", "counts", "groups", "rule", "slices", "stages", "total_slices", "total_trials", "year"]);
+    assert.deepEqual([shown.rule, shown.year, shown.total_trials, shown.total_slices], [rule, 2026, 6000, 3]);
+    assert.deepEqual(shown.stages, { record: { slices: 2, trials: 4000 }, registry_papers: { slices: 2, trials: 4000 }, pubmed_papers: { slices: 1, trials: 2000 }, in_store: { slices: 1, trials: 2000 }, page: { slices: 1, trials: 2000 } });
+    assert.deepEqual(shown.counts, { with_results: 2000, registry_papers: 1900, pubmed_asked: 2000, pubmed_found: 900, in_store: 2300 });
     assert.deepEqual(shown.groups, [{ grp: "ended with results", slices: 1, trials: 2000, in_store: 2000 }, { grp: "ended", slices: 1, trials: 2000, in_store: 300 }, { grp: "active updated", slices: 1, trials: 2000, in_store: 0 }]);
     assert.deepEqual(shown.slices.map((one) => one.number), [1, 2, 3]);
-    assert.deepEqual(Object.keys(shown.slices[2]).sort(), ["grp", "in_store", "in_store_at", "number", "page_at", "pubmed_asked", "pubmed_found", "pubmed_papers_at", "record_at", "registry_papers", "registry_papers_at", "trials", "updated_at", "with_results"]);
+    assert.deepEqual(Object.keys(shown.slices[2]).sort(), ["changed_at", "grp", "in_store", "in_store_at", "number", "page_at", "pubmed_asked", "pubmed_found", "pubmed_papers_at", "record_at", "registry_papers", "registry_papers_at", "trials", "with_results"]);
+    assert.match(shown.changed_at, /^\d{4}-\d\d-\d\dT/);
     // The store's own counts: every table by name, a whole number each; runs by writer.
     assert.ok(Object.keys(body.rows).includes("claim") && Object.keys(body.rows).includes("registry_trial"));
     assert.ok(Object.values(body.rows).every((n) => Number.isInteger(n)));
-    assert.equal(body.rows.progress_slice, 3);
-    assert.deepEqual(body.runs, []);
+    assert.equal(body.rows.trial_slice, 3);
+    assert.deepEqual(body.runs.map((run) => [run.writer, run.runs]), [["device", 2]]);
     assert.equal(await box.hand("hot-1", [claim("progress-claim")]), null);
     assert.equal((await box.merge("hot-1")).body.status, "merged");
     const after = (await box.ask("GET", "/progress", { as: "operator" })).body;
-    assert.deepEqual(after.runs.map((run) => [run.writer, run.runs]), [["device", 1]]);
     assert.equal(after.rows.claim, 1);
     // Nothing of a record is in the answer: not the claim's slug, nor its headline.
     assert.ok(!JSON.stringify(after).includes("progress-claim"));
+    // A slice of trials a device pushes is no lookup's: it is not kept in the inbox, and stays in D1.
+    assert.equal(await box.one("SELECT count(*) FROM inbox"), 0);
 
     // The page: the same shell with or without a token, no count in it, nothing from elsewhere.
     const shell = await box.ask("GET", "/progress/page", { token: null });
@@ -643,6 +631,7 @@ test("progress is reported and read as counts only, by the tokens that may", { s
     assert.ok(!shell.text.includes("102679") && !shell.text.includes(set));
     assert.ok(!/(src|href)\s*=\s*["']?(https?:)?\/\//i.test(shell.text) && !/@import|url\(/i.test(shell.text), "the page loads nothing from anywhere");
     assert.ok(!/[?&]token=|location\.(search|hash)/.test(shell.text), "the token is never read from or put in an address");
+    assert.ok(!shell.text.includes("6000"));
     assert.equal((await box.ask("POST", "/progress/page", { token: null })).status, 401);
     assert.equal((await box.ask("GET", "/progress/page/x", { token: null })).status, 401);
   } finally { await box.close(); }

@@ -114,10 +114,10 @@ export class Service {
 
   // Register a run and hand over its records, [[kind, key, body], ...], in chunks. The
   // last answer that was not a success is returned, or null.
-  async hand(id, records, { as = "device-mini", writer = as.split("-")[0], stated, steps = { link_triage: 3 }, chunk = 2000, request_class } = {}) {
+  async hand(id, records, { as = "device-mini", token = TOKENS[as], writer = as.split("-")[0], stated, steps = { link_triage: 3 }, chunk = 2000, request_class } = {}) {
     for (const [kind, , body] of records) {
       if (kind === "payload" && body.r2_key && PAYLOADS.has(body.sha256) && !this.put.has(body.sha256)) {
-        const done = await this.ask("PUT", `/payloads/${body.sha256}`, { as, body: PAYLOADS.get(body.sha256), type: "application/octet-stream" });
+        const done = await this.ask("PUT", `/payloads/${body.sha256}`, { as, token, body: PAYLOADS.get(body.sha256), type: "application/octet-stream" });
         if (done.status > 201) return done;
         this.put.add(body.sha256);
       }
@@ -128,12 +128,12 @@ export class Service {
     for (let i = 0; i < records.length; i += chunk) {
       chunks.push(JSON.stringify(records.slice(i, i + chunk).map(([kind, key, body]) => ({ kind, key, body }))));
     }
-    const registered = await this.ask("POST", "/runs", { as, body: {
+    const registered = await this.ask("POST", "/runs", { as, token, body: {
       id, writer, commit: "abc1234", steps, counts: stated || counts, checksum: runChecksum(chunks.map(sha)),
       ...(writer === "lookup" ? { request_class: request_class || "extension" } : {}) } });
     if (registered.status > 201) return registered;
     for (const text of chunks) {
-      const staged = await this.ask("POST", `/runs/${id}/records`, { as, body: text, headers: { "x-content-sha256": sha(text) } });
+      const staged = await this.ask("POST", `/runs/${id}/records`, { as, token, body: text, headers: { "x-content-sha256": sha(text) } });
       if (staged.status !== 200) return staged;
     }
     return null;

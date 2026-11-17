@@ -204,7 +204,7 @@ The ingest service SHALL stage the value it checked, written out again, and neve
 - **THEN** it is refused and the run's steps and counts are as they were
 
 ### Requirement: Bulk records wait in an inbox
-When a run that is merged hands over a record of a bulk kind, the ingest service SHALL keep that record as it was staged, with the payload records it names, until the daily job has read it and said it is folded into the bulk file. A run that is refused or undone SHALL leave none. Only the daily job's token and the operator's SHALL read or clear the inbox. A fold SHALL be recorded only when the delta object that holds it is in the bucket and listed beside its build, how far it folded SHALL be read from that list and not from the caller, and the inbox SHALL be cleared no further than the furthest fold recorded. Clearing SHALL remove the records up to the one named and, for each run folded whole, the rows that run added to D1's copies of the bulk tables, all or none, except a lead whose processing is still due, which is held until it is not.
+When a reader's lookup's or the consumer's run that is merged hands over a record of a bulk kind, the ingest service SHALL keep that record as it was staged, with the payload records it names, until the daily job has read it and said it is folded into the bulk file. A run that is refused or undone SHALL leave none. Only the daily job's token and the operator's SHALL read or clear the inbox. A fold SHALL be recorded only when the delta object that holds it is in the bucket and listed beside its build, how far it folded SHALL be read from that list and not from the caller, and the inbox SHALL be cleared no further than the furthest fold recorded. Clearing SHALL remove the records up to the one named and, for each run folded whole, the rows that run added to D1's copies of the bulk tables, all or none, except a lead whose processing is still due, which is held until it is not.
 
 #### Scenario: A lookup's lead and share
 - **WHEN** a reader's lookup is merged with a lead and its share
@@ -259,24 +259,20 @@ The ingest service SHALL refuse a ClinicalTrials.gov record that names a person,
 - **WHEN** the record is handed over with those fields removed
 - **THEN** it is taken
 
-### Requirement: The progress of a backfill is shown as counts
-The ingest service SHALL take the pipeline's report of how many trials of each slice of a set have reached each stage, and SHALL give it back, with the rows of each table and the last merged run of each kind of writer, to the operator's and the daily job's tokens only. Neither the report nor the answer SHALL hold a trial's identifier or anything of a record. The page that shows it SHALL hold no count until a token is typed into it, SHALL keep that token for the browser tab only and SHALL never put it in an address, and SHALL load nothing from another origin.
+### Requirement: The progress of a load of trials is shown as counts
+The ingest service SHALL show how far the load of trials has come from the slices the store holds, which only the merge writes, with the rows of each table and the last merged run of each kind of writer, to the operator's and the daily job's tokens only. The answer SHALL hold counts, a slice's group and times, and SHALL NOT hold a trial's identifier or anything of a record. The service SHALL have no route of its own that writes progress. The page that shows it SHALL hold no count until a token is typed into it, SHALL keep that token for the browser tab only and SHALL never put it in an address, and SHALL load nothing from another origin.
 
 #### Scenario: A slice moves on
-- **WHEN** the pipeline reports a slice again with one stage's count and time
-- **THEN** that stage changes and the slice's other stages keep theirs
-
-#### Scenario: A stale report
-- **WHEN** a report gives a stage a smaller count or an earlier time than the service holds
-- **THEN** the larger count and the later time are kept
+- **WHEN** a run that states a slice's later stage is merged
+- **THEN** the progress shows that stage reached for the slice, and its other stages as they were
 
 #### Scenario: The page without a token
 - **WHEN** anyone asks for the progress page
 - **THEN** the same empty page is answered, with no count in it
 
-#### Scenario: A report that carries text
-- **WHEN** a report names a stage the service does not know, or a slice by anything but an identifier of letters, digits and marks
-- **THEN** it is refused and nothing is stored
+#### Scenario: A slice of trials is pushed
+- **WHEN** a device's run hands over the trials of a slice
+- **THEN** they are not kept in the inbox of the bulk tier and are not removed from D1 when the inbox is cleared
 
 ### Requirement: The service is deployed one way and answers no stranger
 The ingest service SHALL be deployed only by its deploy command, which SHALL refuse unless the database's jurisdiction reads back as the European Union and no migration is left to apply, SHALL set the tokens' secret without printing or logging it, and SHALL then ask the deployed service and fail unless every route answers 401 without a known token. The deployed service SHALL bound how often one address without a token, and one token, may ask.
