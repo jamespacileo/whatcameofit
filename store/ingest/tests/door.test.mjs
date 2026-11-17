@@ -43,15 +43,16 @@ before(async () => {
 });
 after(async () => { if (s) await s.close(); });
 
-test("the first migration is store/schema.sql unchanged, and the bundled statements are the store's", { skip }, () => {
-  assert.equal(readFileSync(here("../migrations/0001_store_schema.sql"), "utf8"), readFileSync(here("../../schema.sql"), "utf8"));
+test("the migrations in order make store/schema.sql, and the bundled statements are the store's", { skip }, async () => {
+  const { schemaDrift } = await import("../scripts/generate.mjs");
+  assert.deepEqual(await schemaDrift(), []);
   execFileSync(process.execPath, [here("../scripts/generate.mjs"), "--check"], { stdio: "pipe" });
 });
 
-test("every bundled statement is inside D1's limits for a statement, and the merge is the store's 98", { skip }, async () => {
+test("every bundled statement is inside D1's limits for a statement, and the merge is the store's 101", { skip }, async () => {
   const { MERGE, PREVIEW, INGEST } = await import("../src/sql.generated.mjs");
   const { D1 } = await import("../src/limits.mjs");
-  assert.equal(MERGE.length, 98);
+  assert.equal(MERGE.length, 101);
   for (const sql of [...MERGE, ...PREVIEW, ...Object.values(INGEST)]) {
     assert.ok(Buffer.byteLength(sql) < D1.statementBytes);
     assert.ok(new Set(sql.match(/\?\d+/g) || []).size <= D1.boundParameters);

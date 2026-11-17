@@ -18,7 +18,7 @@ make store-dev                                    # http://localhost:8787, after
 
 | Path | What it is |
 | --- | --- |
-| `migrations/0001_store_schema.sql` | `store/schema.sql`, byte for byte. Written by `pnpm run generate`; a test fails when the two differ |
+| `migrations/*.sql` | Applied in order, they make `store/schema.sql`; a test and `pnpm run generate -- --check` fail when they do not. `0001` is the schema as first applied and is never rewritten: a change to `store/schema.sql` is a new migration |
 | `migrations/0002_ingest_service.sql` | The service's own bookkeeping: one row for each chunk a run handed over. Not a record of the tracker |
 | `src/sql.generated.mjs` | The statements of `merge.sql`, `preview.sql` and `ingest.sql`, and every field a statement reads. Generated; the same test covers it |
 | `src/store.mjs` | Register, stage, merge, report, report without applying, as functions of the D1 binding. The site's Worker can call these in-process for a lookup |

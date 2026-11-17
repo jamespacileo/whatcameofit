@@ -1,12 +1,18 @@
 // Writes what the service is built from, out of the store's own SQL, which this script
-// never changes:
-//   migrations/0001_store_schema.sql   store/schema.sql, byte for byte
+// never changes, and holds the migrations to the store's schema:
 //   src/sql.generated.mjs              the statements of merge.sql, preview.sql and
 //                                      ingest.sql, and every field a statement reads
 //
-//   node scripts/generate.mjs           write both
-//   node scripts/generate.mjs --check   fail when either is not what the SQL gives
-import { readFileSync, writeFileSync } from "node:fs";
+//   migrations/*.sql                   never written here: a migration that was applied is
+//                                      not rewritten. Applied in order to an empty
+//                                      database they must make every table, index, view
+//                                      and trigger of store/schema.sql, as written there.
+//                                      A change to the schema is a new migration.
+//
+//   node scripts/generate.mjs           write src/sql.generated.mjs
+//   node scripts/generate.mjs --check   fail when it is stale, or the migrations and the
+//                                      schema have parted
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { KINDS } from "../src/kinds.mjs";
 
@@ -74,7 +80,31 @@ export function generated() {
     `export const FIELDS_OF = ${JSON.stringify(fieldsOf(KINDS, [schema, merge, preview]), null, 1)};`,
     "",
   ].join("\n");
-  return { "../migrations/0001_store_schema.sql": schema, "../src/sql.generated.mjs": sql };
+  return { "../src/sql.generated.mjs": sql };
+}
+
+// Where the migrations, applied in order, do not make what store/schema.sql says: each
+// object of the schema that is missing from them or defined otherwise. Compared as
+// SQLite keeps a definition, less comments, spacing and the quotes a rename adds. The
+// migrations may make more (the service's own tables); the schema may not.
+export async function schemaDrift() {
+  const { DatabaseSync } = await import("node:sqlite");
+  const objects = (texts) => {
+    const db = new DatabaseSync(":memory:");
+    for (const text of texts) db.exec(text);
+    const rows = db.prepare("SELECT type, name, sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%'").all();
+    db.close();
+    const plain = (sql) => sql.split("\n").map((line) => line.replace(/--.*$/, "")).join(" ").replace(/"/g, "").replace(/\s+/g, " ").trim();
+    return new Map(rows.map((row) => [`${row.type} ${row.name}`, plain(row.sql)]));
+  };
+  const names = readdirSync(here("../migrations")).filter((name) => name.endsWith(".sql")).sort();
+  const made = objects(names.map((name) => readFileSync(here(`../migrations/${name}`), "utf8")));
+  const drift = [];
+  for (const [name, sql] of objects([read("schema.sql")])) {
+    if (!made.has(name)) drift.push(`${name}: in store/schema.sql, made by no migration`);
+    else if (made.get(name) !== sql) drift.push(`${name}: the migrations make it otherwise than store/schema.sql says`);
+  }
+  return drift;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
@@ -86,5 +116,6 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (have !== text) { stale += 1; console.error(`${path} is not what the store's SQL gives: run \`pnpm run generate\``); }
     } else writeFileSync(here(path), text);
   }
+  for (const line of await schemaDrift()) { stale += 1; console.error(`${line}: add a migration, never change one that was applied`); }
   process.exit(stale ? 1 : 0);
 }
