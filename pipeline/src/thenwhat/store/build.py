@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 from thenwhat.db.models import Claim, ClaimChange
 from thenwhat.store.form import Record, body, key_of, payload_of, when
 from thenwhat.store.gather import gather
+from thenwhat.store.push import state_of
 
 # Records to a run. Each run is one merge, parents before children across runs.
 RUN_RECORDS = 20_000
@@ -51,6 +52,8 @@ class BuildReport:
     repeated: Counter[str] = field(default_factory=Counter)
     unnamed: Counter[str] = field(default_factory=Counter)
     size: int = 0
+    # Each record handed over, as `push` keeps it: what a later push starts from.
+    state: dict[str, str] = field(default_factory=dict)
 
 
 def statements(path: Path) -> list[str]:
@@ -148,6 +151,7 @@ def runs_of(session: Session, payloads: Path, report: BuildReport) -> Iterator[l
 
     gathered = gather(session, keep_payload=keep_payload)
     report.repeated, report.unnamed = gathered.repeated, gathered.unnamed
+    report.state = state_of(gathered.records)
     first, rename_runs = _renames(session)
     claims = [
         Record("claim", first.get(r.key, r.key), r.body | {"slug": first.get(r.key, r.key)})
