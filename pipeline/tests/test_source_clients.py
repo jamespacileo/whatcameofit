@@ -11,15 +11,16 @@ from typing import Any
 
 import httpx
 import pytest
-from sqlalchemy import select
+from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import HttpCache
+from thenwhat.db.models import HttpCache, SourceAllowanceUse
 from thenwhat.resolve.codes import one_substance
 from thenwhat.sources import mesh, openalex, opentargets, ror
 from thenwhat.sources.base import (
     AllowanceUsedUp,
     MissingKey,
+    SourceCannotBeAsked,
     SourceError,
     SourceUnavailable,
     UnsearchableTerm,
@@ -956,6 +957,44 @@ def test_used_up_allowance_stops_the_run_without_a_retry(session: Session, fake_
     assert len(replay.requests) == 1
     assert fake_time.slept == []
     assert "used up" in source.usage.line()
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_a_refused_openalex_key_stops_the_record_run(session: Session, fake_time, status):
+    source, replay = papers(session, fake_time, lambda request: httpx.Response(status))
+
+    with pytest.raises(SourceCannotBeAsked, match=f"openalex refused access .*{status}"):
+        source.search_papers(TERMS, CONDITION)
+
+    assert len(replay.requests) == 1
+
+
+@pytest.mark.parametrize("prepaid", [False, True])
+def test_openalex_quota_pause_survives_claim_rollback_and_restart(
+    engine: Engine, fake_time, fixture_json, prepaid
+):
+    answer = (
+        found_with(fixture_json, prepaid="5")
+        if prepaid
+        else httpx.Response(402, json={}, headers=allowance(remaining="0"))
+    )
+    try:
+        with Session(engine) as first:
+            source, replay = papers(first, fake_time, lambda request: answer)
+            with pytest.raises(AllowanceUsedUp), first.begin(), first.begin_nested():
+                source.search_papers(["first"], CONDITION)
+                source.search_papers(["second"], CONDITION)
+        with Session(engine) as restarted:
+            source, again = papers(restarted, fake_time, lambda request: answer)
+            with pytest.raises(AllowanceUsedUp):
+                source.search_papers(["next claim"], CONDITION)
+        assert (len(replay.requests), len(again.requests)) == (1, 0)
+    finally:
+        with Session(engine) as session, session.begin():
+            session.execute(delete(HttpCache).where(HttpCache.request_key == openalex.PAUSE_KEY))
+            session.execute(
+                delete(SourceAllowanceUse).where(SourceAllowanceUse.source_name == OpenAlex.name)
+            )
 
 
 def test_the_last_search_of_the_allowance_stops_every_client_until_it_resets(

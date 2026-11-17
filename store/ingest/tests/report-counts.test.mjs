@@ -93,3 +93,24 @@ for (const [kind, { table, as, records: [first, second] }] of Object.entries(KIN
     assert.equal(await rows(), held + 2);
   });
 }
+
+test("the latest attempt retains or clears its waiting reason and retry times", { skip }, async () => {
+  const at = (day) => `2026-11-${day}T00:00:00.000000+00:00`;
+  const key = `claim|${SLUG}|claim_terms|1`;
+  const attempt = (day, outcome, details = {}) => ["work_entry", key, {
+    record_kind: "claim", record_key: SLUG, step: "claim_terms", step_version: 1,
+    outcome, attempts: 0, requests_used: 1, fingerprint: "current", last_attempt_at: at(day), ...details,
+  }];
+  const stored = () => s.all("SELECT outcome, reason, json_extract(reason_values, '$.status'), not_before, first_put_off_at FROM work_entry WHERE step = 'claim_terms'");
+  const later = attempt("01", "later", { reason: "site_busy", reason_values: { status: 503 },
+    not_before: at("02"), first_put_off_at: at("01") });
+  await reported("terms-wait", [later], "operator");
+  assert.deepEqual(await stored(), [["later", "site_busy", 503, at("02"), at("01")]]);
+
+  await reported("terms-fix", [attempt("02", "needs_fix", { reason: "papers_off" })], "operator");
+  await reported("terms-older", [later], "operator");
+  assert.deepEqual(await stored(), [["needs_fix", "papers_off", null, null, null]]);
+
+  await reported("terms-done", [attempt("03", "done")], "operator");
+  assert.deepEqual(await stored(), [["done", null, null, null, null]]);
+});

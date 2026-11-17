@@ -20,9 +20,12 @@ date or score order all still show.
 """
 
 import json
+from collections.abc import Mapping
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
+from thenwhat.backfill.address import article_key
 from thenwhat.export.build import PAPER_ROLES
 from thenwhat.export.organisations import ORGANISATION_ROLES
 
@@ -187,7 +190,9 @@ def _only_synonym_order(ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
     one, other = ours.get("intervention"), theirs.get("intervention")
     if not isinstance(one, dict) or not isinstance(other, dict):
         return False
-    if sorted(one.get("synonyms", [])) != sorted(other.get("synonyms", [])):
+    if "synonyms" not in one or "synonyms" not in other:
+        return False
+    if sorted(one["synonyms"]) != sorted(other["synonyms"]):
         return False
     return {**ours, "intervention": {**one, "synonyms": []}} == {
         **theirs,
@@ -195,14 +200,94 @@ def _only_synonym_order(ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
     }
 
 
+def _fold_articles(ours: dict[str, Any], duplicates: Mapping[str, str]) -> dict[str, Any] | None:
+    """The first claim with just the known article merges applied and all else kept, or
+    None when the identified articles cannot be merged safely."""
+    source = {article["url"] for article in ours["articles"]}
+    for removed, kept in duplicates.items():
+        if (
+            not isinstance(removed, str)
+            or not isinstance(kept, str)
+            or removed not in source
+            or kept not in source
+            or not article_key(kept)
+            or article_key(removed) != article_key(kept)
+        ):
+            return None
+    folded = deepcopy(ours)
+    folded["articles"] = [
+        article for article in folded["articles"] if article["url"] not in duplicates
+    ]
+    kept_urls = set(duplicates.values())
+    for field in ("promises", "reported_statements"):
+        if field not in folded:
+            continue
+        children = []
+        origins: dict[str, set[str]] = {}
+        for row in folded[field]:
+            url = row["article_url"]
+            row["article_url"] = duplicates.get(url, url)
+            if row["article_url"] in kept_urls:
+                # Equal children from different articles become one store record. If
+                # rows of the same article already collide, the cause is ambiguous.
+                urls = origins.setdefault(_said(row), set())
+                if url in urls:
+                    return None
+                urls.add(url)
+                if len(urls) > 1:
+                    continue
+            children.append(row)
+        folded[field] = children
+    for organisation in folded.get("organisations", []):
+        for role in organisation["roles"]:
+            if "article_urls" in role:
+                if len(set(role["article_urls"])) != len(role["article_urls"]):
+                    return None
+                role["article_urls"] = list(
+                    dict.fromkeys(duplicates.get(url, url) for url in role["article_urls"])
+                )
+    return _claim(folded)
+
+
+def _claim_differences(
+    slug: str, one: dict[str, Any], other: dict[str, Any], aliases: Mapping[str, str] | str | None
+) -> list[Difference]:
+    """How one claim differs: first what the known article merges explain, then what
+    still differs after them, each as its own difference."""
+    differences = []
+    # A legacy text hint names no URLs, so it explains nothing.
+    if isinstance(aliases, Mapping) and aliases:
+        present = {article["url"] for article in other["articles"]}
+        removed = {
+            url: kept for url, kept in aliases.items() if url not in present and kept in present
+        }
+        if removed and (folded := _fold_articles(one, removed)) is not None:
+            kept = ", ".join(sorted(set(removed.values())))
+            cause = (
+                "the data: the database holds two source articles of this claim at one"
+                f" address key. The store keeps the first ({kept})."
+            )
+            differences.append(Difference(slug, True, _places(one, folded, "claim"), cause))
+            one = folded
+    residual = _places(one, other, "claim")
+    if residual:
+        cause = SYNONYM_ORDER if _only_synonym_order(one, other) else None
+        differences.append(Difference(slug, True, residual, cause))
+    return differences
+
+
 def compare(
-    first: dict[str, Any], second: dict[str, Any], *, known: dict[str, dict[str, str]] | None = None
+    first: dict[str, Any],
+    second: dict[str, Any],
+    *,
+    known: Mapping[str, Mapping[str, str] | str] | None = None,
 ) -> Comparison:
     """Compare two exports, each as parsed JSON. They are the same exactly when their
     canonical bytes are.
 
-    `known` maps discarded article URLs to their retained URLs by claim. Only the
-    differences that collapsing those specific articles produces are explained."""
+    `known` gives, by slug, each duplicate article URL and the URL the store keeps. Only
+    the differences that merging those articles produces are explained; what else differs
+    on the claim is reported apart. A legacy text hint alone explains nothing."""
     known = known or {}
     ours, theirs = canonical(first), canonical(second)
     differences: list[Difference] = []
@@ -216,40 +301,9 @@ def compare(
         if slug not in our_claims or slug not in their_claims:
             where = "the first" if slug in our_claims else "the second"
             differences.append(Difference(slug, True, [f"only in {where}"]))
-            continue
-        original, actual = our_claims[slug], their_claims[slug]
-        if original == actual:
-            continue
-        expected = original
-        if aliases := known.get(slug):
-            present = {article["url"] for article in actual["articles"]}
-            removed = {
-                url: kept for url, kept in aliases.items() if url not in present and kept in present
-            }
-            if removed:
-                # The store retains the first article and points its dependants at it.
-                expected = _claim(original)
-                expected["articles"] = [a for a in expected["articles"] if a["url"] not in removed]
-                for entry in [*expected["promises"], *expected.get("reported_statements", [])]:
-                    url = entry["article_url"]
-                    entry["article_url"] = removed.get(url, url)
-                for org in expected.get("organisations", []):
-                    for role in org["roles"]:
-                        if "article_urls" in role:
-                            role["article_urls"] = list(
-                                dict.fromkeys(removed.get(u, u) for u in role["article_urls"])
-                            )
-                expected = _claim(expected)
-                places = _places(original, expected, "claim")
-                if places:
-                    cause = (
-                        "the data: the database holds two source articles of this claim at one"
-                        " address key; the store keeps the first"
-                    )
-                    differences.append(Difference(slug, True, places, cause))
-        residual = _places(expected, actual, "claim")
-        if residual:
-            cause = SYNONYM_ORDER if _only_synonym_order(expected, actual) else None
-            differences.append(Difference(slug, True, residual, cause))
+        elif our_claims[slug] != their_claims[slug]:
+            differences += _claim_differences(
+                slug, our_claims[slug], their_claims[slug], known.get(slug)
+            )
     assert bool(differences) == (canonical_bytes(first) != canonical_bytes(second))
     return Comparison(len(our_claims), len(their_claims), differences)

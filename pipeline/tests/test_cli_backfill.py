@@ -160,8 +160,9 @@ def test_a_step_that_asks_no_source_is_planned_and_run_without_an_allowance(
     assert "quiet: 5 done, 0 found nothing, 0 failed; 0 still due." in ran.output
 
 
+@pytest.mark.parametrize(("limit", "done"), [(None, 4), (1, 1), (3, 3)])
 def test_a_run_of_several_workers_is_one_run(
-    run, engine: Engine, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    run, engine: Engine, monkeypatch: pytest.MonkeyPatch, tmp_path: Path, limit, done
 ):
     """What happens to a run is recorded as it happens: a command's workers make one
     run, which starts with its limit and its workers and ends with why and its counts,
@@ -177,7 +178,8 @@ def test_a_run_of_several_workers_is_one_run(
         add_trials(session, 4, registry="workers-registry")
 
     try:
-        ran = run("run", "quiet-workers", "--workers", "2")
+        options = ["--limit", str(limit)] if limit is not None else []
+        ran = run("run", "quiet-workers", "--workers", "2", *options)
     finally:
         measure.use(None)
         remove_committed(engine, registry="workers-registry", step=step.name, source=step.source)
@@ -185,8 +187,9 @@ def test_a_run_of_several_workers_is_one_run(
     assert ran.exit_code == 0, ran.output
     [day] = days_held(tmp_path)
     started, ended = read_events(tmp_path, day, [RUN_STARTED, RUN_ENDED])
-    assert (started.values["limit"], started.values["workers"]) == (None, 2)
-    assert (ended.values["why"], ended.values["counts"]["done"]) == ("nothing_due", 4)
+    assert (started.values["limit"], started.values["workers"]) == (limit, 1 if limit == 1 else 2)
+    assert ended.values["why"] == ("nothing_due" if limit is None else "limit")
+    assert ended.values["counts"]["done"] == done
     assert {span.run for span in read_day(tmp_path, day)} == {started.values["run"]}
 
 
@@ -1332,3 +1335,39 @@ def test_the_funnel_counts_why_leads_were_not_read_from_their_reason_codes(run, 
     assert "outlets whose pages gave no publication date:\n  news.example.org  1" in result.output
     assert "put off, to be asked for again: 1" in result.output
     assert "  the page could not be retrieved (the site answered 503): 1" in result.output
+
+
+def test_plan_counts_changed_outlets_before_each_bounded_screening_run(run, session, monkeypatch):
+    from backfill_support import Client
+    from test_link_screening import screen, share
+    from thenwhat.backfill.link_screen import LinkScreen
+    from thenwhat.db.models import LinkLead
+    from thenwhat.domain import OutletKind
+    from thenwhat.work.runner import run_step
+
+    step = LinkScreen()
+    for n in range(3):
+        share(session, f"https://health.example.org/news/story-{n}", item=n + 1)
+    screen(session, step)
+    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda *args, **kwargs: [step])
+    monkeypatch.setattr("thenwhat.backfill.link_screen.kind_of", lambda _: OutletKind.TRADE_PRESS)
+
+    def snapshot():
+        return list(
+            session.execute(select(LinkLead.id, LinkLead.outlet_kind).order_by(LinkLead.id))
+        ), list(
+            session.execute(
+                select(WorkEntry.id, WorkEntry.stale, WorkEntry.attempts).order_by(WorkEntry.id)
+            )
+        )
+
+    for due in (3, 1, 0):
+        before = snapshot()
+        result = run("plan")
+        assert result.exit_code == 0 and f"due: {due}" in result.output, result.output
+        assert snapshot() == before
+        step.check_ready(session)
+        report = run_step(
+            same_session(session), step, Client(), now=lambda: NOW, attempt_limit=3, limit=2
+        )
+        assert report.done == min(2, due)

@@ -201,15 +201,19 @@ class PubMed:
             )
         papers: list[Paper] = []
         for start in range(0, len(ids), FETCH_MAX):
-            fetched = self._post(
-                "efetch.fcgi", {"id": ",".join(ids[start : start + FETCH_MAX]), "retmode": "xml"}
-            )
+            asked = ids[start : start + FETCH_MAX]
+            fetched = self._post("efetch.fcgi", {"id": ",".join(asked), "retmode": "xml"})
             try:
-                papers += read_papers(fetched.text)
+                received = read_papers(fetched.text)
             except ElementTree.ParseError:
                 raise IndexUnavailable(
                     f"{self.name} answered a fetch in a form this client does not know."
                 ) from None
+            if {paper.pubmed_id for paper in received} != set(asked):
+                raise IndexUnavailable(
+                    f"{self.name} did not return the requested papers. Its trials stay due."
+                )
+            papers.extend(received)
         return papers, self._time.now()
 
     def _post(self, utility: str, fields: dict[str, str]) -> httpx.Response:

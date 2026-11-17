@@ -257,8 +257,8 @@ def resolve_claim(
     session: Session,
     claim: Claim,
     *,
-    trials: TrialSearch,
-    dois: DoiLookup,
+    trials: TrialSearch | None,
+    dois: DoiLookup | None,
     backend: Backend,
     now: datetime,
     rescore: bool = False,
@@ -271,6 +271,8 @@ def resolve_claim(
     """Search the registries for the claim's interventions and papers and store each new
     hit as a scored, pending candidate. Returns the candidates this run added. Each
     search of the trial registry, and each term not sent, is passed to `searched`.
+
+    Passing only one registry restricts the search to that registry.
 
     The stored trials that list the intervention are candidates too, each read in full
     through `records` when it is given.
@@ -301,7 +303,7 @@ def resolve_claim(
             found.append((entity, record))
 
     for entity in entities:
-        if entity.type is EntityType.INTERVENTION:
+        if trials is not None and entity.type is EntityType.INTERVENTION:
             candidates, also_named[entity.id] = candidates_of(
                 session,
                 trials,
@@ -316,7 +318,7 @@ def resolve_claim(
             )
             for record in candidates:
                 consider(entity, record)
-        elif entity.type is EntityType.PAPER and entity.doi:
+        elif dois is not None and entity.type is EntityType.PAPER and entity.doi:
             if any(key[0] == entity.id and key[2].lower() == entity.doi.lower() for key in seen):
                 continue  # Its DOI already has a match, such as an origin paper set by rule.
             record = dois.work(entity.doi)
@@ -357,7 +359,7 @@ def resolve_claim(
     reject_near_zero(added, reject_below, now)
     approve_confident(session, added, accept_above, now)
     session.flush()
-    if rescore:
+    if rescore and trials is not None:
         rescore_claim(
             session,
             claim,

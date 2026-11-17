@@ -12,11 +12,11 @@ no configured allowance is not counted, only given its turn.
 """
 
 import math
-from collections.abc import Generator
-from contextlib import contextmanager
+from collections.abc import Callable, Generator
+from contextlib import AbstractContextManager, contextmanager
 from datetime import datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -97,6 +97,32 @@ def pause(session: Session, name: str, until: datetime, now: datetime) -> dateti
     run, in a short transaction of its own. Returns when the pause ends."""
     with apart(session) as own:
         return keep(own, name, until, now)
+
+
+def finish_wait(
+    open_session: Callable[[], AbstractContextManager[Session]],
+    name: str,
+    *,
+    reserved_at: datetime,
+    now: datetime,
+    counted: bool,
+) -> None:
+    """Check a reserved turn immediately before sending, refunding a cancelled request."""
+    with open_session() as session:
+        until = paused_until(session, name, now)
+        if until is not None and counted:
+            # A reservation from a previous allowance period must not refund this one.
+            session.execute(
+                update(SourceAllowanceUse)
+                .where(
+                    SourceAllowanceUse.source_name == name,
+                    SourceAllowanceUse.period_start <= reserved_at,
+                    SourceAllowanceUse.requests_used > 0,
+                )
+                .values(requests_used=SourceAllowanceUse.requests_used - 1)
+            )
+    if until is not None:
+        raise paused(name, until)
 
 
 def let_in(

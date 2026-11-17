@@ -819,11 +819,16 @@ class LinkRead:
         # One request at a time for an outlet, in this process or any other, from the
         # look at its hold to the reader's answer: a worker never asks an outlet while
         # another's request may be about to stop it.
+        requests_before = client.requests_made
         with asking(session, record.outlet):
             page = self._ask_for_the_page(session, record, client, now)
         if isinstance(page, _NotYet):
-            # Nothing is said of the lead: it is not unreadable, it is not yet asked for.
-            return Later(page.reason, page.until, {"outlet": record.outlet})
+            return Later(
+                page.reason,
+                page.until,
+                {"outlet": record.outlet},
+                before_work=client.requests_made == requests_before,
+            )
         if isinstance(page, _NoPage):
             if page.reason.kind is ReasonClass.LATER:
                 # The site is busy, throttling or failing: asked again after its wait.

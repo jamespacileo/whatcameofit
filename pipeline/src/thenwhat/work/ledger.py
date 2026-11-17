@@ -182,11 +182,21 @@ class StepCounts:
 
 
 def count(
-    session: Session, step: Step, attempt_limit: int, *, now: datetime | None = None
+    session: Session,
+    step: Step,
+    attempt_limit: int,
+    *,
+    now: datetime | None = None,
+    changed_inputs: ColumnElement[bool] | None = None,
 ) -> StepCounts:
     """Where a step stands. Entries are counted through their record, so an entry whose
     record is gone or out of scope is never counted as work done."""
     current = and_(WorkEntry.id.is_not(None), WorkEntry.stale.is_(False))
+
+    due = _is_due(attempt_limit, now)
+    if changed_inputs is not None:
+        current = and_(current, not_(changed_inputs))
+        due = or_(due, changed_inputs)
 
     def tally(condition: ColumnElement[bool]) -> Any:
         return func.count().filter(condition)
@@ -197,7 +207,7 @@ def count(
             tally(and_(current, WorkEntry.outcome == WorkOutcome.DONE)),
             tally(and_(current, WorkEntry.outcome == WorkOutcome.NOTHING_FOUND)),
             tally(and_(current, WorkEntry.outcome == WorkOutcome.FAILED)),
-            tally(and_(_is_due(attempt_limit, now), *_earlier_finished(step))),
+            tally(and_(due, *_earlier_finished(step))),
             tally(
                 and_(
                     current,

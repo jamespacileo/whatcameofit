@@ -362,8 +362,8 @@ class LinkScreen:
             "kind": kind_of(record.outlet).value,
         }
 
-    def check_ready(self, session: Session) -> None:
-        """Before a run: make due the leads of every outlet whose listing has changed
+    def changed_inputs(self, session: Session) -> ColumnElement[bool] | None:
+        """Identify leads whose outlet classification has changed
         since they were screened, and no other lead (openspec lead-screening). The list
         is checked in, so nothing says when it changed: each outlet's stored kind is
         compared with the kind the list gives it now."""
@@ -374,7 +374,11 @@ class LinkScreen:
             )
             if kind_of(outlet) is not kind
         ]
-        if not changed:
+        return tuple_(LinkLead.outlet, LinkLead.outlet_kind).in_(changed) if changed else None
+
+    def check_ready(self, session: Session) -> None:
+        changed = self.changed_inputs(session)
+        if changed is None:
             return
         session.execute(
             update(WorkEntry)
@@ -382,11 +386,7 @@ class LinkScreen:
                 WorkEntry.record_kind == self.record_kind,
                 WorkEntry.step == self.name,
                 WorkEntry.step_version == self.version,
-                WorkEntry.record_id.in_(
-                    select(LinkLead.id).where(
-                        tuple_(LinkLead.outlet, LinkLead.outlet_kind).in_(changed)
-                    )
-                ),
+                WorkEntry.record_id.in_(select(LinkLead.id).where(changed)),
             )
             .values(stale=True)
         )
