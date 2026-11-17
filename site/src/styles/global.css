@@ -2056,6 +2056,11 @@ main nav.contents ul li + li {
   color: var(--muted);
 }
 
+/* The offer to search a large listing: one control under the group's note. */
+.listed-trials .listed-ask {
+  margin-top: 0.6rem;
+}
+
 .results .trial-title,
 .trial-title {
   margin: 0.3rem 0 0;

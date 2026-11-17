@@ -34,11 +34,16 @@ test("only a listing that matches its schema and its export replaces the staged 
     const stale = structuredClone(fixture);
     stale.trials[1][8] = "a-claim-since-archived";
     refused(stale, /names 1 claim\(s\) the export does not publish \(a-claim-since-archived\)/);
-    // Too large to be the one file a search fetches.
+    // Too large to be built and searched, whatever it is cut into.
     const large = structuredClone(fixture);
-    const title = "Synthetic ".repeat(40);
-    large.trials = Array.from({ length: 21000 }, (_, at) => [`NCT${String(10000000 + at)}`, title, null, ["phase_3"], "under_way", "2026-01-01", [], [], null]);
-    refused(large, /over the 8,388,608 a single file may be/);
+    const title = "S".repeat(1024 * 1024);
+    large.trials = Array.from({ length: 65 }, (_, at) => [`NCT${String(10000000 + at)}`, title, null, ["phase_3"], "under_way", "2026-01-01", [], [], null]);
+    refused(large, /over the 67,108,864 a listing may be/);
+    // The size of the earlier single file's limit and more is staged: the build cuts it into parts.
+    const many = structuredClone(fixture);
+    many.trials = Array.from({ length: 21000 }, (_, at) => [`NCT${String(10000000 + at)}`, "Synthetic ".repeat(40), null, ["phase_3"], "under_way", "2026-01-01", [], [], null]);
+    fs.writeFileSync(source, JSON.stringify(many));
+    assert.equal(run().status, 0, "a listing over 8 MiB is staged");
 
     fs.writeFileSync(source, JSON.stringify(fixture, null, 2));
     const result = run();
@@ -67,9 +72,9 @@ test("a deployment holds the listing beside its export to the staging checks", (
     // Only published claims: the export no longer holds the claim the listing names.
     assert.match(besideProblems(exported, { claims: [] })[0], /names 1 claim\(s\) the export does not publish \(phase-claim\)/);
     const large = structuredClone(fixture);
-    large.trials = Array.from({ length: 21000 }, (_, at) => [`NCT${String(10000000 + at)}`, "Synthetic ".repeat(40), null, ["phase_3"], "under_way", "2026-01-01", [], [], null]);
+    large.trials = Array.from({ length: 65 }, (_, at) => [`NCT${String(10000000 + at)}`, "S".repeat(1024 * 1024), null, ["phase_3"], "under_way", "2026-01-01", [], [], null]);
     fs.writeFileSync(beside, JSON.stringify(large));
-    assert.match(besideProblems(exported, data)[0], /over the 8,388,608 a single file may be/);
+    assert.match(besideProblems(exported, data)[0], /over the 67,108,864 a listing may be/);
     fs.writeFileSync(beside, "{}");
     assert.match(besideProblems(exported, data)[0], /does not match trials-listing\.schema\.json/);
     // An empty listing may be deployed: it opens nothing.
