@@ -503,6 +503,24 @@ def test_unknown_pubmed_number_is_not_found(session: Session, fake_time, fixture
     assert len(replay.requests) == 1
 
 
+def test_many_pubmed_numbers_are_asked_in_one_search(session: Session, fake_time, fixture_json):
+    paper = fixture_json("europepmc/pmid_35658024_trial_report.json")
+    source, replay = literature(session, fake_time, lambda request: paper)
+
+    found = source.papers_by_pubmed_ids(["35658024", "99999999999", "PMC1", "35658024"])
+
+    assert set(found) == {"35658024", "99999999999"} and found["99999999999"] is None
+    record = found["35658024"]
+    assert record is not None and record.url == "https://europepmc.org/article/MED/35658024"
+    [asked] = replay.requests
+    assert asked.url.params["query"] == "(EXT_ID:35658024 OR EXT_ID:99999999999) AND SRC:MED"
+    assert asked.url.params["pageSize"] == "100"
+    # A hundred numbers to a search.
+    source, replay = literature(session, fake_time, lambda request: EMPTY_SEARCH)
+    assert len(source.papers_by_pubmed_ids([str(n) for n in range(1, 151)])) == 150
+    assert len(replay.requests) == 2
+
+
 def test_malformed_pubmed_number_sends_no_request(session: Session, fake_time):
     """Scenario: Malformed number"""
     source, replay = literature(session, fake_time, lambda request: EMPTY_SEARCH)
