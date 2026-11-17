@@ -32,8 +32,26 @@ Where a row opens to a source's words, the words SHALL be shown without a label,
 - **THEN** the definition is followed by a pill reading "MeSH", and pressing it opens the term's page at the vocabulary in a new tab
 
 ### Requirement: An opened row is marked and its parts are labelled
-An opened row SHALL be marked as open across the list's width. After the source's words, each part SHALL carry its own label: where the term is filed, naming the source; the term as its source names it with its credit; and, last and closed until pressed, why it matched. What the row's value already says SHALL NOT be repeated in the opened row. The source's words SHALL be the most prominent part and the credit the least. A card's note that its record is not medical advice SHALL stay in sight, outside "Why it matched".
+The head of an opened row (its label, its value and what stands under the value) SHALL be tinted across the list's width and SHALL be the row's press, whole; what the row opens to SHALL lie under the head on the page's ground and SHALL NOT close the row when pressed. After the source's words, each part SHALL carry its own label: where the term is filed, naming the source; the term as its source names it with its credit; and, last and closed until pressed, why it matched. What the row's value already says SHALL NOT be repeated in the opened row. The source's words SHALL be the most prominent part and the credit the least. A card's note that its record is not medical advice SHALL stay in sight, outside "Why it matched".
 
 #### Scenario: Reading an opened term
 - **WHEN** a reader opens "Claimed for"
-- **THEN** the row is tinted, the definition is the largest text under it, and "Filed in MeSH as", the term with its credit and a closed "Why it matched" follow, each smaller and each named
+- **THEN** the row's head is tinted, the definition is the largest text under it, and "Filed in MeSH as", the term with its credit and a closed "Why it matched" follow, each smaller and each named
+
+#### Scenario: Pressing inside an opened row
+- **WHEN** a reader presses the definition, or selects its text, in an opened row
+- **THEN** the row stays open
+
+### Requirement: Every fold's mark stands at the end of its line
+A section's heading SHALL start at the section's left edge, where its rows start. The mark that folds a section and the mark that opens a fact row SHALL be the same round chevron, at the right edge of the line they belong to, and SHALL point up while open and down while shut. The rule a section's body starts under SHALL be softer than the ink of the text.
+
+#### Scenario: Reading down a section
+- **WHEN** a reader looks at "At a glance" on a wide screen
+- **THEN** the title and the rows' labels start at one left edge, and the section's mark and the rows' marks stand in one column at the right
+
+### Requirement: The claim's facts are rows of one fact sheet
+The terms of "At a glance" and the claim's own facts SHALL be rows of one list, built from one row component, with every value in one size and weight.
+
+#### Scenario: A term and a fact
+- **WHEN** a reader compares "Treatment" with "First reported"
+- **THEN** both rows have the same label column, value size and rule

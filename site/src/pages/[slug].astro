@@ -56,6 +56,7 @@ import { embedSnippet, shareLinks } from "../lib/share";
 import { LOW_READING_MEANING, MATCH_MEANING, matchWords, stageReading } from "../lib/confidence";
 import MatchList from "../components/MatchList.astro";
 import RegistryRecords from "../components/RegistryRecords.astro";
+import Fact from "../components/Fact.astro";
 import Glance from "../components/Glance.astro";
 import GlanceBand from "../components/GlanceBand.astro";
 import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
@@ -645,50 +646,39 @@ const sections = [
     >
       {
         claim.first_reported_date && (
-          <div>
-            <dt>First reported</dt>
-            <dd>
-              <a href={`/year/${claim.first_reported_date.slice(0, 4)}`}>
-                {formatDate(claim.first_reported_date)}
-              </a>
-            </dd>
-          </div>
+          <Fact label="First reported">
+            <a href={`/year/${claim.first_reported_date.slice(0, 4)}`}>
+              {formatDate(claim.first_reported_date)}
+            </a>
+          </Fact>
         )
       }
       {
         claim.evidence_stage && (
-          <div>
-            <dt>Evidence when first reported</dt>
-            <dd>{EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}</dd>
-          </div>
+          <Fact
+            label="Evidence when first reported"
+            value={EVIDENCE_STAGES[claim.evidence_stage] ?? claim.evidence_stage}
+          />
         )
       }
       {
         /* A reading that was not sure enough to confirm the stage: shown with its score,
            never used for the status (openspec review, "Lower-band stage reading"). */
         !claim.evidence_stage && claim.evidence_stage_reading && (
-          <div>
-            <dt>Evidence when first reported</dt>
-            <dd>
-              {EVIDENCE_STAGES[claim.evidence_stage_reading.stage] ?? claim.evidence_stage_reading.stage}{" "}
-              <Score words={stageRead!.chip} low>
-                {stageRead!.also && <span>{stageRead!.also}</span>}
-                <span>{LOW_READING_MEANING}</span>
-              </Score>
-              <span class="aka">{stageRead!.note}</span>
-            </dd>
-          </div>
+          <Fact label="Evidence when first reported">
+            {EVIDENCE_STAGES[claim.evidence_stage_reading.stage] ?? claim.evidence_stage_reading.stage}{" "}
+            <Score words={stageRead!.chip} low>
+              {stageRead!.also && <span>{stageRead!.also}</span>}
+              <span>{LOW_READING_MEANING}</span>
+            </Score>
+            <span slot="under" class="aka">{stageRead!.note}</span>
+          </Fact>
         )
       }
       {
         /* A paper and its trial record remain distinct records. */
         recordCount && (
-          <div>
-            <dt>Records listed</dt>
-            <dd>
-              {recordCount}
-            </dd>
-          </div>
+          <Fact label="Records listed" value={recordCount} />
         )
       }
     </Glance>

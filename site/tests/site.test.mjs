@@ -1172,8 +1172,8 @@ test("Scenario: Claim with a condition card only", () => {
   // gives the definition, unchanged and in quotation marks, with a pill after it that
   // names whose words they are and opens that source in a new tab; then the score and
   // the card. A short definition is not repeated in the card.
-  assert.match(section, /<button type="button" class="glance-open" aria-expanded="true" aria-controls="glance-condition-more">\s*<span class="glance-more-words">Definition and source<\/span>\s*<span class="visually-hidden"> for example condition\.<\/span>/);
-  assert.match(section, /<div class="glance-more" id="glance-condition-more">\s*<div class="glance-said">\s*<blockquote class="glance-words" cite="https:\/\/vocabulary\.example\/D900003">A synthetic definition of the example condition\.<\/blockquote>\s*<a class="source-pill" href="https:\/\/vocabulary\.example\/D900003" target="_blank" rel="noopener">\s*<span class="visually-hidden">In MeSH’s words: <\/span>\s*MeSH\s*<span class="visually-hidden"> \(opens in a new tab\)<\/span>/);
+  assert.match(section, /<button type="button" class="fact-open" aria-expanded="true" aria-controls="glance-condition-more">\s*<span class="fact-open-words">Definition and source<\/span>\s*<span class="visually-hidden"> for example condition\.<\/span>/);
+  assert.match(section, /<div class="fact-more" id="glance-condition-more">\s*<div class="glance-said">\s*<blockquote class="glance-words" cite="https:\/\/vocabulary\.example\/D900003">A synthetic definition of the example condition\.<\/blockquote>\s*<a class="source-pill" href="https:\/\/vocabulary\.example\/D900003" target="_blank" rel="noopener">\s*<span class="visually-hidden">In MeSH’s words: <\/span>\s*MeSH\s*<span class="visually-hidden"> \(opens in a new tab\)<\/span>/);
   // A line under the heading says what a term match is, where it is first met.
   assert.match(section, /<div popover id="about-glance" class="pop" role="note"[^>]*>\s*<p>Each term opens to its definition in an outside source’s words\. A term match is how well that source’s term fits this claim; it says nothing about the treatment\.<\/p>/);
   // The score is in sight on the row, so the card heads its reasons without repeating it.
@@ -1388,7 +1388,7 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(row, /href="#glance-kind">\s*<span class="glance-band-label">Kind of treatment<\/span>\s*<span class="glance-band-value">\s*Example stimulation therapy/);
   assert.match(row, /href="#glance-target">\s*<span class="glance-band-label">Gene named<\/span>\s*<span class="glance-band-value">\s*EXG1/);
   assert.doesNotMatch(row, /\d+%|Treatment<|Claimed for/);
-  assert.match(section, /<div id="glance-kind" tabindex="-1">\s*<dt>Kind of treatment<\/dt>\s*<dd>\s*<span class="glance-head">\s*<span class="glance-value">Example stimulation therapy<\/span>/);
+  assert.match(section, /<div id="glance-kind" tabindex="-1">\s*<dt>Kind of treatment<\/dt>\s*<dd>\s*<span class="fact-head">\s*<span class="fact-value">Example stimulation therapy<\/span>/);
   assert.match(section, /<div id="glance-target" tabindex="-1">\s*<dt>Gene named<\/dt>/);
   // Scenario: Target the report names.
   assert.match(section, /A gene named in the treatment’s name/);
@@ -1404,7 +1404,7 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   // opened; the card does not repeat it.
   const geneRow = section.split('id="glance-target"')[1];
   assert.match(geneRow, /<blockquote class="glance-words glance-words-long"/);
-  assert.match(geneRow, /<span class="glance-more-words">Definition and source<\/span>/);
+  assert.match(geneRow, /<span class="fact-open-words">Definition and source<\/span>/);
   assert.ok(!geneRow.split('id="glance-condition"')[0].includes('class="card-words"'));
   assert.match(section, /<blockquote[^>]*>\[Isoform 1\]: A synthetic description of what the product does \(PubMed:1\)\.( A further synthetic sentence about the product\.){5}<\/blockquote>/);
   // Both sources are credited on the card: the citation asked for, and whose words.
@@ -1433,7 +1433,7 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   assert.match(drugRow, /href="#glance-drug">\s*<span class="glance-band-label">Kind of molecule<\/span>\s*<span class="glance-band-value">\s*Antibody/);
   assert.match(drugRow, /<span class="glance-band-label">Acts on<\/span>/);
   // Its row: the kind of molecule, what the record says it acts on, and the rule in sight.
-  assert.match(drugs, /<div id="glance-drug" tabindex="-1">\s*<dt>Kind of molecule<\/dt>\s*<dd>\s*<span class="glance-head">\s*<span class="glance-value">Antibody<\/span>[\s\S]*?<\/span>\s*<span class="aka">Inhibitor of Example receptor 1<\/span>/);
+  assert.match(drugs, /<div id="glance-drug" tabindex="-1">\s*<dt>Kind of molecule<\/dt>\s*<dd>\s*<span class="fact-head">\s*<span class="fact-value">Antibody<\/span>[\s\S]*?<\/span>\s*<span class="aka">Inhibitor of Example receptor 1<\/span>/);
   // The drug row's score names what was matched, the drug's record, and the kind card in
   // the same row keeps its own score in sight.
   assert.match(drugs, /<span class="visually-hidden">From Example Drugs: <\/span>/);

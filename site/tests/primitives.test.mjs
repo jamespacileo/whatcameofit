@@ -28,8 +28,8 @@ test("the scale is defined once", () => {
 });
 
 test("rows take their padding and their rule from the scale", () => {
-  uses(".glance-rows > div", "padding", "row-pad");
-  uses(".glance-rows > div", "border-bottom", "row-rule");
+  uses(".fact-sheet > div", "padding", "row-pad");
+  uses(".fact-sheet > div", "border-bottom", "row-rule");
   uses(".record-row", "padding", "row-pad");
   uses(".record-row", "border-bottom", "row-rule");
   uses(".trial-row", "padding", "row-pad");
@@ -39,7 +39,8 @@ test("rows take their padding and their rule from the scale", () => {
 });
 
 test("labels and column heads are one size, notes another", () => {
-  uses(".glance-rows dt,\n.glance-facts dt", "font-size", "label-size");
+  // A fact sheet's label is read with its value, on one baseline: a step larger.
+  uses(".fact-sheet dt", "font-size", "text-m");
   uses(".record-fields dt", "font-size", "label-size");
   uses(".trial-facts dt", "font-size", "label-size");
   uses(".timetable thead th,\n.index thead th", "font-size", "label-size");
@@ -47,7 +48,7 @@ test("labels and column heads are one size, notes another", () => {
   uses(".entry-note", "font-size", "note-size");
   uses(".record .origin", "font-size", "note-size");
   uses(".glance-note", "font-size", "note-size");
-  uses(".glance-more summary", "font-size", "note-size");
+  uses(".fact-more .term-card .match-why-head", "font-size", "label-size");
 });
 
 test("every table has the same quiet head", () => {
@@ -64,7 +65,7 @@ test("panels share their padding and their corners", () => {
 });
 
 test("label columns are one width", () => {
-  uses(".glance-rows > div", "grid-template-columns", "label-col");
+  uses(".fact-sheet > div", "grid-template-columns", "label-col");
   uses(".brief-group", "grid-template-columns", "label-col");
 });
 

@@ -1,7 +1,7 @@
 ---
 // "At a glance": the claim's treatment and condition, what kind of thing the treatment
-// is and a gene, one row each, then the claim's own facts (passed in as rows) as rows of
-// the same list. A row taken from a background card is one line: its label and its value.
+// is and a gene, one row each, then the claim's own facts (passed in as Fact rows) as
+// rows of the same fact sheet (components/FactSheet.astro, Fact.astro). A row taken from a background card is one line: its label and its value.
 // The line opens to the source's definition in quotation marks with a pill naming whose
 // words they are, the claim's words beside the source's term when they differ, and each
 // card's credit; why it matched, with its score, is closed under each card until asked
@@ -9,7 +9,8 @@
 // record in brief, never inside the status panel: a card describes a term, not the
 // evidence. Openspec site-publishing: "Background cards on the claim page".
 import ArrowRight from "@lucide/astro/icons/arrow-right";
-import ChevronDown from "@lucide/astro/icons/chevron-down";
+import Fact from "./Fact.astro";
+import FactSheet from "./FactSheet.astro";
 import FoldHead from "./FoldHead.astro";
 import Score from "./Score.astro";
 import TermCard from "./TermCard.astro";
@@ -93,7 +94,7 @@ const rows: Row[] = [
     }
     {GLANCE_TITLE}
   </FoldHead>
-  <dl class="glance-rows">
+  <FactSheet>
     {
       rows.map(({ row, value, detail, cards: rowCards }) => {
         const card = rowCards[0];
@@ -121,22 +122,21 @@ const rows: Row[] = [
         const by = card ? (words ? wordsBy! : sourceOf(card.facts_source ?? card.source)!) : null;
         const byUrl = card && by ? ((words ? card.definition_source : card.facts_source) ? by.url : card.url) : null;
         return (
-          // Reached from the band's links: the row takes focus and is marked.
-          <div id={rowId(row)} tabindex="-1">
-            <dt>{rowLabel(row, card)}</dt>
-            <dd>
-              <span class="glance-head">
-                <span class="glance-value">{value}</span>
-                {inSight.length > 0 && (
-                  <span class="glance-scores">
-                    {inSight.map((score) => (
-                      <Score about={score.about} words={score.words} shown={score.shown}>
-                        <span>{TERM_SCORE_MEANING}</span>
-                      </Score>
-                    ))}
-                  </span>
-                )}
-              </span>
+          // Reached from the band's links: the row takes focus, is marked and opens.
+          <Fact
+            id={rowId(row)}
+            label={rowLabel(row, card)}
+            value={value}
+            opens={card ? (words ? "Definition and source" : "Source") : undefined}
+          >
+            <Fragment slot="aside">
+              {inSight.map((score) => (
+                <Score about={score.about} words={score.words} shown={score.shown}>
+                  <span>{TERM_SCORE_MEANING}</span>
+                </Score>
+              ))}
+            </Fragment>
+            <Fragment slot="under">
               {detail && <span class="aka">{detail}</span>}
               {row === "treatment" && intervention.synonyms.length > 0 && (
                 <span class="aka">
@@ -152,25 +152,10 @@ const rows: Row[] = [
                   }
                 </span>
               )}
-              {card && (
-                // The row's one press: a chevron. The words that say what it opens are
-                // read out, not drawn. With no script the row is simply open
-                // (scripts/folds.ts).
-                <button
-                  type="button"
-                  class="glance-open"
-                  aria-expanded="true"
-                  aria-controls={`${rowId(row)}-more`}
-                >
-                  <span class="glance-more-words">{words ? "Definition and source" : "Source"}</span>
-                  <span class="visually-hidden"> for {value}.</span>
-                  <span class="chev" aria-hidden="true">
-                    <ChevronDown size={16} stroke-width={2} />
-                  </span>
-                </button>
-              )}
+            </Fragment>
+            <Fragment slot="more">
               {card && by && (
-                <div class="glance-more" id={`${rowId(row)}-more`}>
+                <>
                   {/* The source's words as they stand, then a quiet pill naming whose they
                       are, which opens that source in a new tab. A drug's record has no
                       words of its own, so its pill stands alone. */}
@@ -220,15 +205,14 @@ const rows: Row[] = [
                       )}
                     </TermCard>
                   ))}
-                </div>
+                </>
               )}
-            </dd>
-          </div>
+            </Fragment>
+          </Fact>
         );
       })
     }
-  </dl>
-  <dl class="glance-facts">
+    {/* The claim's own facts, passed in as rows of the same sheet. */}
     <slot />
-  </dl>
+  </FactSheet>
 </section>
