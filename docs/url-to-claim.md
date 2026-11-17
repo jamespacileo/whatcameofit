@@ -27,6 +27,7 @@ flowchart TD
         a2["Screen<br/>rules and stored data only"]
         a3["Triage<br/>model scores the title"]
         a4["Read<br/>page reader, one model read,<br/>text hashed and dropped"]
+        w(["Waits, and comes back<br/>put off: site busy, outlet held<br/>needs a fix: refused, no date"])
         a1 --> a2 --> a3 --> a4
 
         subgraph ALLOC["Allocate to a claim (under one lock)"]
@@ -44,7 +45,7 @@ flowchart TD
         c2 -- yes --> j
         c3 -- no --> n
 
-        a5["Prepare<br/>resolve, fetch, readings, terms,<br/>then the rule for drafts"]
+        a5["Prepare<br/>ledger steps over the claim: substance,<br/>registry search, fetch, then the rule for drafts"]
         a6["Audit<br/>held until thenwhat audit clear"]
         a7(["Export<br/>published, status derived by rule"])
         n --> a5 --> a6 --> a7
@@ -52,12 +53,14 @@ flowchart TD
 
     x2(["Stops<br/>unlisted outlet, already tracked"])
     x3(["Not read<br/>rejected, or held and off topic"])
-    x4(["No claim<br/>no page, a class of treatments,<br/>not one treatment, business news"])
+    x4(["No claim<br/>page gone, a class of treatments,<br/>not one treatment, business news"])
     xc(["Left for the operator<br/>identity unresolved"])
     xv(["Left for the operator<br/>needs a vertical"])
     x5(["Rejected by rule<br/>a description, or a twin claim<br/>that takes its articles"])
     x6(["Archived<br/>wrong items removed at audit"])
 
+    a4 -. "by itself, or thenwhat work requeue" .-> w
+    w -.-> a4
     a2 -.-> x2
     a3 -.-> x3
     a4 -.-> x4
@@ -72,7 +75,9 @@ flowchart TD
     class x2,x3,x4,xc,xv,x5,x6 exit
 ```
 
-Solid arrows are the path to a published claim. Dashed arrows are where a lead leaves it.
+Solid arrows are the path to a published claim. Dashed arrows are where a lead leaves it, or waits and comes back.
+
+Every step runs through one runner (`pipeline/src/thenwhat/work`, `docs/adr/0012`). A step's answer says whether its record is finished, put off until a time, or waiting for a fix, with a reason code. `thenwhat backfill plan` counts what waits; `thenwhat work requeue <step> --reason <code>` brings back what was put right.
 
 ## Where each step lives
 
@@ -81,8 +86,8 @@ Solid arrows are the path to a published claim. Dashed arrows are where a lead l
 | Load links | `pipeline/src/thenwhat/backfill/link_load.py`, `link_readers.py`, `address.py` | Keeps address, community, time, score and title. Nothing about who posted. |
 | Screen | `backfill/link_screen.py` | No request, no model. Links to claims and trials are candidates only. |
 | Triage | `backfill/link_triage.py` | Stores a score. Passed, held or rejected comes from two operator thresholds each time it is asked. |
-| Read | `backfill/link_read.py` (`LinkRead.run`, `_read`) | Refused until triage has been measured. Reads passed leads, and held leads whose title names an operator topic. |
+| Read | `backfill/link_read.py` (`LinkRead.run`, `_read`), `backfill/link_reasons.py` | Refused until triage has been measured. Reads passed leads, and held leads whose title names an operator topic. |
 | Allocate | `backfill/link_read.py` (`_claim_it_reports`, `_join`), `extract/service.py` | With no candidate the decision is skipped. An unresolved read is never retried: the operator attaches or dismisses it. |
-| Prepare | `pipeline/src/thenwhat/prepare.py` | `thenwhat prepare --pending`. Approved when the intervention is a name and no other claim has its substance, form and condition. |
+| Prepare | `pipeline/src/thenwhat/claimsteps/`, `pipeline/src/thenwhat/prepare.py` | `thenwhat prepare --pending`. Nine steps of the ledger over the claim. Decided when its substance lookup, registry search and fetch finished: approved when the intervention is a name and no other claim has its substance, form and condition. Papers, readings and terms stay due until done. |
 | Audit, export | `cli/audit.py`, `export/build.py` | `adr/0007`: a backfill claim waits for `thenwhat audit clear`. |
 | Live lookup | `site/worker/lookup.mjs`, `pipeline/src/thenwhat/lookup/service.py`, `extract/post.py` | Two implementations kept in step. Posts are unwrapped on this route only. |

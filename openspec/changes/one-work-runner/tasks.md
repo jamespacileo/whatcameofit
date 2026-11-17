@@ -74,6 +74,7 @@
   - 2026-11-17: `vulture` could not be installed in this session (the install was refused), so the check was a sweep by name of what the refactor could orphan: `plan_claims`, `ClaimPlan`, `NOT_NEEDED_TO_DECIDE`, `SharedTurns`, `STEPS_FAILED`, `_named_on_the_page` are gone from source and tests; an unused `reasons_line` was removed. `Deferred` stays for `thenwhat audit attach` until task 6.2 removes it from the runner. Run `vulture` on the writer before archive.
   - 2026-11-17: the process-per-step runner, `NOT_NEEDED_TO_DECIDE`, `plan_claims`, `steps_for`, `_step` and the read's `_named_on_the_page` are deleted, and `make check`'s Python tools pass. Not ticked: `vulture` is not a dependency of the pipeline and could not be run here.
 - [ ] 8.3 Update `docs/url-to-claim.md`, `docs/daily-run.md` and `docs/backfill-loop.md` for the claim steps, requeue and the plan's new lines; verify the commands they show run as written
+  - 2026-11-17: the three documents are updated and the commands they show match the tested command lines. Not ticked: the edited Mermaid block of `docs/url-to-claim.md` was not rendered again (serving a local page for it was refused in this session). Render it once, on GitHub or locally, then tick.
 - [x] 8.4 Record the decision "one runner for leads and claims; a failure is final only when it is known to be" as an ADR in `docs/adr/`; verify it names what it replaces
 
 ## 9. Integration

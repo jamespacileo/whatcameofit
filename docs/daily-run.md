@@ -14,7 +14,7 @@ In this order, each step with its start, end and outcome in the day's log:
 | screen | `thenwhat backfill run link_screen` | no |
 | score | `thenwhat backfill run link_triage --limit DAILY_RUN_TRIAGE_LIMIT` | model |
 | read | `thenwhat backfill run link_read --limit DAILY_RUN_READ_LIMIT --workers DAILY_RUN_READ_WORKERS` | page reader, model |
-| prepare | `thenwhat prepare --pending` | registries, model |
+| prepare | `thenwhat prepare --pending`: every claim awaiting review, and every published claim with a part of its preparation still due | registries, model |
 | trials | `thenwhat backfill load-trials --trials interventional --changes-only` | registry |
 | refresh | `thenwhat fetch <slug>` for published claims, `DAILY_RUN_REFRESH_LIMIT` a run, in turn | registries, model |
 | measure | `thenwhat measure --days 1` | no |
