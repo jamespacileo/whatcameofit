@@ -165,6 +165,8 @@ def test_chemistry_and_links_keep_their_at_and_a_spelled_address_goes():
     ):
         assert without_email_text(kept) == kept and not emails_in_text(kept)
     assert without_email_text("write to a.b [at] example [dot] org now") == "write to  now"
+    prose = "Pain was measured (at) baseline. The dose [at] week 4. was kept."
+    assert without_email_text(prose) == prose and not emails_in_text(prose)
     assert emails_in_text({"affiliation": "Leeds; mail (at) uni.edu"})
 
 
@@ -181,6 +183,8 @@ def test_the_proof_sql_takes_the_same_addresses(session):
         "Fe3O4@SiO2.NH2 particles",
         "see https://user@host.example.com/x",
         "write to a.b [at] example [dot] org now",
+        "Pain was measured (at) baseline. The dose was kept.",
+        "mail (at) uni.edu",
         "Example University, Leeds",
     ]
     for case in cases:

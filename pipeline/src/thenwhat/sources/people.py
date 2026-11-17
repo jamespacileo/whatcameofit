@@ -248,12 +248,14 @@ def payload_without_people(payload: Any) -> Any:
 # An email address written in a text, as a paper's affiliation can carry its author's.
 # The domain ends in a name of letters that nothing follows but punctuation or space, so
 # chemistry (`Fe3O4@SiO2.NH2`) is not taken for one; a word that is a link (`://`, or a
-# handle after a slash) is left alone. `name [at] domain [dot] org` is taken too.
+# handle after a slash) is left alone. `name [at] domain [dot] org` is taken too, and
+# `name (at) domain.org`, but only with the dot spelled out or tight against the name:
+# prose such as `measured (at) baseline. The` loses no word.
 EMAIL = re.compile(
     r"(?<![\w/:.@-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w-])"
 )
 SPELLED_EMAIL = re.compile(
-    r"\b[\w.+-]+\s*[\[(]at[\])]\s*[\w-]+(?:\s*(?:[\[(]dot[\])]|\.)\s*[A-Za-z]{2,})+\b",
+    r"\b[\w.+-]+\s*[\[(]at[\])]\s*[\w-]+(?:\s*[\[(]dot[\])]\s*[A-Za-z]{2,}|\.[A-Za-z]{2,})+\b",
     re.IGNORECASE,
 )
 
