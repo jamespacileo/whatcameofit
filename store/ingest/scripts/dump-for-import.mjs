@@ -45,7 +45,7 @@ const rowsAFile = flag > 0 ? Number(process.argv[flag + 1]) : Infinity;
 if (!source || !out || out.startsWith("--")) { console.error("usage: dump-for-import.mjs <store.sqlite> <out.sql> [--rows-a-file N]"); process.exit(2); }
 
 const MAX_STATEMENT_BYTES = 90_000;
-const LEFT_OUT = /^(sqlite_|_cf_|d1_migrations$|stg$|merging$|ingest_chunk$)/;
+const LEFT_OUT = /^(sqlite_|_cf_|d1_migrations$|stg$|merging$|ingest_chunk$|inbox$)/;
 const quote = (name) => `"${name.replaceAll('"', '""')}"`;
 const size = (text) => Buffer.byteLength(text);
 

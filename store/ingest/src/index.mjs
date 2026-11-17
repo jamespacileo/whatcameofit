@@ -9,12 +9,14 @@
 //   POST   /runs/<id>/preview     the report without applying; the run is then dropped
 //   GET    /runs/<id>             what the merge did
 //   DELETE /runs/<id>             drop a run that was not merged
+//   GET    /inbox?after=&limit=   records of the bulk tier that runs handed over, oldest first
+//   POST   /inbox/clear           once they are folded into the bulk file: {through}
 //   POST   /work/lease|finish|fail    the consumer's queue of due work
 //   POST   /slices/take|release       a device's work slices
 import { principal } from "./auth.mjs";
 import { Refusal, checkRecords } from "./check.mjs";
 import { sha256 } from "./hash.mjs";
-import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
+import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_INBOX_RECORDS, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
 import { INGEST } from "./sql.generated.mjs";
 import * as store from "./store.mjs";
 
@@ -178,6 +180,21 @@ async function slice(request, env, who, verb) {
   return json(results.length ? 200 : 409, { taken: results.length > 0, device: results[0]?.device ?? null, lapses_at: results.length ? lapses : null });
 }
 
+// The inbox of the bulk tier, for the daily job, the bulk file's one writer.
+async function inbox(request, env, who, url, verb) {
+  if (!who.may.includes("inbox")) refuse(403, "outside_scope", `a ${who.role} token may not read or clear the inbox`);
+  const whole = (text) => (/^\d{1,15}$/.test(text ?? "") ? Number(text) : null);
+  if (verb === "clear") {
+    const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
+    const through = Number.isInteger(value?.through) && value.through >= 0 ? value.through : null;
+    if (through === null) refuse(400, "bad_request", "through is the last record folded, as the inbox gave it");
+    return json(200, await store.clearInbox(env.STORE, through));
+  }
+  const after = whole(url.searchParams.get("after") ?? "0"), limit = whole(url.searchParams.get("limit") ?? "500");
+  if (after === null || limit === null || limit < 1) refuse(400, "bad_request", "after and limit are whole numbers");
+  return json(200, await store.inbox(env.STORE, after, Math.min(limit, MAX_INBOX_RECORDS)));
+}
+
 async function route(request, env, ctx) {
   const who = await principal(request, env);
   // Without a token nothing answers, whatever was asked for.
@@ -205,6 +222,8 @@ async function route(request, env, ctx) {
       await store.discard(env.STORE, parts[1]);
       return json(200, { run: parts[1], dropped: true });
     }
+    case "GET /inbox": return inbox(request, env, who, new URL(request.url), "read");
+    case "POST /inbox/*": if (parts[1] === "clear") return inbox(request, env, who, new URL(request.url), "clear"); break;
     case "POST /work/*": if (["lease", "finish", "fail"].includes(parts[1])) return work(request, env, who, parts[1]); break;
     case "POST /slices/*": if (["take", "release"].includes(parts[1])) return slice(request, env, who, parts[1]); break;
   }

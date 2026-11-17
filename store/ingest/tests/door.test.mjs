@@ -421,6 +421,71 @@ test("registering a run again writes nothing, before its merge or after", { skip
   assert.equal(await s.one("SELECT count(*) FROM run_stated WHERE run_id = ?1", merged.run), 1);
 });
 
+test("bulk records a run hands over wait in the inbox, and leave D1 once the daily job has folded them", { skip }, async () => {
+  const box = await Service.open();
+  try {
+    await box.db.prepare("INSERT INTO store_step VALUES ('link_triage', 3)").run();
+    const day = new Date().toISOString().slice(0, 10);
+    const raw = JSON.stringify({ nctId: "NCT500" });
+    const lead = (key) => ["link_lead", key, { url_key: key, url_key_version: 2, url: `https://${key}`, outlet: key.split("/")[0], outlet_kind: "general_news", title: "A report",
+      first_shared_at: day, origin: "reader", screen_outcome: "in_scope" }];
+    const share = (key) => ["link_share", `${key}|reader|${day}`, { lead_url_key: key, platform: "reader", community: "reader", shared_at: day, score: 0 }];
+    const first = [["payload", sha(raw), { sha256: sha(raw), bytes: raw.length, body: raw }],
+      ["registry_trial", "clinicaltrials.gov|NCT500", { registry_name: "clinicaltrials.gov", external_id: "NCT500", title: "A trial", conditions: ["Obesity"], interventions: [],
+        intervention_names: "x", phases: [], overall_status: "RECRUITING", payload_sha256: sha(raw), fetched_at: `${day}T00:00:00.000000+00:00` }],
+      lead("inbox.example/one"), share("inbox.example/one")];
+    assert.equal(await box.hand("look-1", first, { as: "lookup", writer: "lookup" }), null);
+    assert.equal((await box.merge("look-1", "lookup")).body.status, "merged");
+    assert.equal(await box.hand("look-2", [lead("inbox.example/two"), share("inbox.example/two")], { as: "lookup", writer: "lookup" }), null);
+    assert.equal((await box.merge("look-2", "lookup")).body.status, "merged");
+    // A hot kind is not kept, nor a run the merge undid.
+    assert.equal(await box.hand("hot-1", [claim("inbox-claim")]), null);
+    assert.equal((await box.merge("hot-1")).body.status, "merged");
+    assert.equal(await box.hand("undone-1", [share("inbox.example/never")], { as: "lookup", writer: "lookup" }), null);
+    assert.equal((await box.merge("undone-1", "lookup")).body.status, "undone");
+    await box.drop("undone-1", "lookup");
+
+    for (const as of ["device-mini", "lookup", "consumer", "export"]) {
+      assert.equal((await box.ask("GET", "/inbox", { as })).status, 403, as);
+      assert.equal((await box.ask("POST", "/inbox/clear", { as, body: { through: 99 } })).status, 403, as);
+    }
+    const all = (await box.ask("GET", "/inbox", { as: "daily" })).body;
+    assert.deepEqual(all.records.map((record) => [record.run, record.kind]), [["look-1", "payload"], ["look-1", "registry_trial"], ["look-1", "link_lead"], ["look-1", "link_share"],
+      ["look-2", "link_lead"], ["look-2", "link_share"]]);
+    assert.deepEqual(all.records[2], { seq: all.records[2].seq, run: "look-1", kind: "link_lead", key: "inbox.example/one", body: first[2][2] }, "a record is as it was staged");
+    assert.equal(all.more, false);
+    // Read in pages, by the cursor the service gives.
+    const page = (await box.ask("GET", "/inbox?limit=5", { as: "daily" })).body;
+    assert.deepEqual([page.records.length, page.more, page.through], [5, true, all.records[4].seq]);
+    assert.equal((await box.ask("GET", `/inbox?after=${page.through}`, { as: "daily" })).body.records.length, 1);
+    assert.equal((await box.ask("GET", "/inbox?after=x", { as: "daily" })).status, 400);
+
+    // Cleared through the first page: look-1 is folded whole and leaves D1; look-2 is cut
+    // by the page, so its rows stay until the rest of it is folded.
+    const counts = () => box.all("SELECT (SELECT count(*) FROM link_lead), (SELECT count(*) FROM link_share), (SELECT count(*) FROM registry_trial), (SELECT count(*) FROM registry_trial_fts), (SELECT count(*) FROM inbox)");
+    assert.deepEqual(await counts(), [[2, 2, 1, 1, 6]]);
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: {} })).status, 400);
+    const cleared = (await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } })).body;
+    assert.deepEqual([cleared.cleared, cleared.left], [5, 1]);
+    assert.deepEqual(await counts(), [[1, 1, 0, 0, 1]]);
+    assert.equal(await box.one("SELECT url_key FROM link_lead"), "inbox.example/two");
+    const rest = (await box.ask("GET", `/inbox?after=${page.through}`, { as: "daily" })).body;
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: rest.through } })).body.left, 0);
+    assert.deepEqual(await counts(), [[0, 0, 0, 0, 0]]);
+    // Clearing again, or with nothing there, changes nothing; the claim was never touched.
+    assert.equal((await box.ask("POST", "/inbox/clear", { as: "operator", body: { through: rest.through } })).body.cleared, 0);
+    assert.equal(await box.one("SELECT count(*) FROM claim"), 1);
+  } finally { await box.close(); }
+});
+
+test("the inbox keeps every kind the pipeline calls bulk", { skip }, async () => {
+  const { INBOX_KINDS } = await import("../src/kinds.mjs");
+  const tiers = readFileSync(here("../../../pipeline/src/thenwhat/store/tiers.py"), "utf8");
+  const bulk = [.../BULK_KINDS = frozenset\(\s*\{([^}]*)\}/.exec(tiers)[1].matchAll(/"([a-z_]+)"/g)].map(([, kind]) => kind);
+  assert.ok(bulk.length > 5);
+  assert.deepEqual(bulk.filter((kind) => !INBOX_KINDS.includes(kind)), []);
+});
+
 test("a merge wakes the consumer once for each step with work due, saying nothing else", { skip }, async () => {
   const day = new Date().toISOString().slice(0, 10);
   const done = await push([["link_lead", "wake.com/1", { url_key: "wake.com/1", url_key_version: 2, url: "https://wake.com/1", outlet: "wake.com", outlet_kind: "general_news",

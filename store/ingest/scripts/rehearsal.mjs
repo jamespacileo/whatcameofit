@@ -33,7 +33,7 @@ const work = value("--work") || mkdtempSync(join(tmpdir(), "thenwhat-rehearsal-"
 const sql = join(work, "sql"), state = join(work, "state");
 const script = (name, ...args) => [process.execPath, [here(`./${name}.mjs`), ...args]];
 const env = { ...process.env, CI: "1", WRANGLER_SEND_METRICS: "false" };
-const build = (await sha256(bulk)).slice(0, 16);
+const build = "rehearsal";
 
 const stages = [
   ["dump", () => [script("dump-for-import", hot, join(sql, "store.sql"), "--rows-a-file", value("--rows-a-file") || "60000")]],
@@ -41,7 +41,7 @@ const stages = [
   ["load", () => [[here("../node_modules/.bin/wrangler"), ["d1", "migrations", "apply", "STORE", "--local", "--persist-to", state]], script("import-folder", sql, "--persist-to", state)]],
   ["checksum", () => [script("checksum-d1", "--file", hot, "--persist-to", state)]],
   ["payloads", () => [script("upload-payloads", payloads, "--persist-to", state, "--state", join(work, "payloads.json"))]],
-  ["bulk", () => [script("upload-bulk", bulk, "--persist-to", state, "--state", join(work, "bulk.json")), script("download-bulk", build, join(work, "bulk-back.sqlite"), "--persist-to", state)]],
+  ["bulk", () => [script("upload-bulk", bulk, "--persist-to", state, "--state", join(work, "bulk.json"), "--build", build), script("download-bulk", build, join(work, "bulk-back.sqlite"), "--persist-to", state)]],
   ["export", () => [["uv", ["run", "--directory", here("../../../pipeline"), "thenwhat", "export-compare", "--store", resolve(hot), "--payloads", resolve(payloads), "--allow-named"]]]],
 ];
 

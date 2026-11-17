@@ -8,7 +8,8 @@
 //   bulk/<build id>/manifest.json        build, date, the file's name, size and SHA-256, the
 //                                        compressed size and SHA-256, and each part's
 //
-// The build id is `--build`, else the first 16 hex of the file's SHA-256. The manifest is
+// The build id is `--build`, else the one in the file's run ids, else the first 16 hex of
+// the file's SHA-256. The manifest is
 // uploaded only when every part is, so a build with a manifest is whole. Resumable: the
 // parts are cut again (the same bytes each time) and a part noted as uploaded with the
 // same SHA-256 is skipped. `--part-mb N` sets the part size; `--work <dir>` where parts
@@ -17,6 +18,7 @@ import { createReadStream, createWriteStream, existsSync, mkdirSync, mkdtempSync
 import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import { createHash } from "node:crypto";
+import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { createZstdCompress } from "node:zlib";
 import { WRANGLER_PUT_LIMIT_BYTES, bucket, sha256 } from "./r2.mjs";
@@ -33,7 +35,17 @@ if (partBytes > WRANGLER_PUT_LIMIT_BYTES) { console.error("a part may not be ove
 
 const started = Date.now();
 const whole = await sha256(file);
-const build = value("--build") || whole.slice(0, 16);
+// The build's id is in the file's own run ids (`build-<16 hex>-...`), the same in the hot
+// file and in D1; a file without one is named by its checksum.
+function buildOf(path) {
+  try {
+    const db = new DatabaseSync(path, { readOnly: true });
+    const row = db.prepare("SELECT substr(id, 7, 16) AS build FROM run WHERE id LIKE 'build-%' ORDER BY id LIMIT 1").get();
+    db.close();
+    return row?.build || null;
+  } catch { return null; }
+}
+const build = value("--build") || buildOf(file) || whole.slice(0, 16);
 if (!/^[A-Za-z0-9._-]{1,64}$/.test(build)) { console.error("a build id is letters, digits, ., - or _"); process.exit(2); }
 const work = value("--work") || mkdtempSync(join(tmpdir(), "thenwhat-bulk-"));
 mkdirSync(work, { recursive: true });

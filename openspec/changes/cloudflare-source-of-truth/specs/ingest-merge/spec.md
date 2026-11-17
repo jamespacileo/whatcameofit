@@ -203,6 +203,21 @@ The ingest service SHALL stage the value it checked, written out again, and neve
 - **WHEN** a run that was merged is registered again with more steps or counts
 - **THEN** it is refused and the run's steps and counts are as they were
 
+### Requirement: Bulk records wait in an inbox
+When a run that is merged hands over a record of a bulk kind, the ingest service SHALL keep that record as it was staged, with the payload records it names, until the daily job has read it and said it is folded into the bulk file. A run that is refused or undone SHALL leave none. Only the daily job's token and the operator's SHALL read or clear the inbox. Clearing SHALL remove the records up to the one named and, for each run folded whole, the rows that run added to D1's copies of the bulk tables, all or none.
+
+#### Scenario: A lookup's lead and share
+- **WHEN** a reader's lookup is merged with a lead and its share
+- **THEN** the inbox gives both records as they were staged, and after the daily job clears them D1 holds neither the records nor the lead and share rows
+
+#### Scenario: A run cut by a page
+- **WHEN** the inbox is cleared up to a record in the middle of a run
+- **THEN** that run's earlier records leave the inbox and its rows stay in D1 until the rest are cleared
+
+#### Scenario: Another token asks
+- **WHEN** a device's, a lookup's, the consumer's or the export's token reads or clears the inbox
+- **THEN** it is refused
+
 ### Requirement: The door holds a run to stated bounds
 The ingest service SHALL refuse, before storing anything, a body that does not state its length or its content type, a chunk, a run or a payload larger than the bound set for it, and a record of a kind the store does not have. Each bound SHALL be below the platform's documented limit for what it protects, and the documentation page SHALL be named beside it.
 
