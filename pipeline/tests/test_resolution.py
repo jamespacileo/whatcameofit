@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from registry_support import ListedSearch
 from thenwhat.claims.entities import (
     EntityNotFound,
     add_entity,
@@ -53,7 +54,7 @@ def trial(nct_id: str, title: str = "A trial", condition: str = "Tooth Agenesis"
     )
 
 
-class FakeTrials:
+class FakeTrials(ListedSearch):
     """A trial registry that answers each search term from a table."""
 
     def __init__(self, results: dict[str, list[SourceRecord]]) -> None:

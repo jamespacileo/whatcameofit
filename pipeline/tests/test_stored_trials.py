@@ -11,6 +11,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from registry_support import ListedSearch
 from thenwhat.claims.entry import add_claim
 from thenwhat.db.models import Claim, EntityMatch, RegistryTrial
 from thenwhat.decide.core import BackendAnswer
@@ -273,7 +274,7 @@ def test_with_no_stored_trial_nothing_is_found(session: Session):
 # --- the same scoring and the same approval rule ---------------------------------
 
 
-class FakeTrials:
+class FakeTrials(ListedSearch):
     """A registry whose search returns what it is told to and that reads a trial in
     full by its identifier."""
 

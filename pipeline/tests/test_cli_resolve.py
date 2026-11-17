@@ -17,6 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
+from registry_support import ListedSearch
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim, claim_by_slug
 from thenwhat.cli import app
@@ -39,7 +40,7 @@ NOW = datetime(2026, 11, 20, tzinfo=UTC)
 SLUG = "tooth-regrowth-ex1"
 
 
-class Trials:
+class Trials(ListedSearch):
     def search_trials(self, intervention: str, condition: str | None = None) -> list[SourceRecord]:
         payload = {"protocolSection": {"identificationModule": {"nctId": "NCT00000001"}}}
         return [SourceRecord("clinicaltrials.gov", "NCT00000001", "https://x.test", payload, NOW)]

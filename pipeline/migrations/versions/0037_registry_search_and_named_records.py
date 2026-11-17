@@ -57,9 +57,7 @@ def upgrade() -> None:
     for column in ("named_registry_numbers", "named_dois"):
         op.add_column(
             "source_article",
-            sa.Column(
-                column, postgresql.ARRAY(sa.Text()), server_default="{}", nullable=False
-            ),
+            sa.Column(column, postgresql.ARRAY(sa.Text()), server_default="{}", nullable=False),
         )
 
 
