@@ -51,17 +51,21 @@ A term that is not fit SHALL stay in the fingerprint, SHALL be used only to conf
 - **THEN** it is searched for by its registry number only, in the sources that search by number
 
 ### Requirement: Which trials are looked for
-Coverage SHALL be looked for only for trials in a set the operator names and that no published claim cites. The sets SHALL be: `active-recent`, trials not started or under way in phase 2 or 3 whose registry record changed on or after the configured date; and `completed-with-results`, trials completed on or after the configured date whose record holds posted results.
+Coverage SHALL be looked for only for trials in a set the operator names. The sets SHALL be: `active-since-2025`, trials not started or under way in phase 2 or 3 whose registry record changed on or after 1 January 2025; and `completed-with-results-since-2025`, trials the registry lists as completed, with an actual completion date on or after 1 January 2025, whose record holds posted results. A set's date SHALL be part of its name, so that a later date is a new set and no set changes its meaning. A route that yields news SHALL NOT be asked for a trial that a published claim cites. A route that yields papers SHALL be asked for every trial of the set, cited or not.
 
 #### Scenario: A trial a claim already cites
 - **WHEN** a trial in the named set is cited by a published claim
-- **THEN** no source is asked for it
+- **THEN** no news source is asked for it, and the paper index is still asked for the papers that carry its number
+
+#### Scenario: A trial completed in 2024 whose results were posted in 2026
+- **WHEN** a stored trial's actual completion date is in 2024 and its results were first posted in 2026
+- **THEN** it is not in `completed-with-results-since-2025`
 
 ### Requirement: A coverage set says which trials, and is refused when it cannot be chosen
 A set SHALL say only which trials are looked for and nothing of how any trial turned out. Both sets SHALL be refused while stored trials carry no date of last change. A name the command does not know SHALL be refused with the list of sets.
 
 #### Scenario: Before the wider load
-- **WHEN** the operator names `active-recent` and no stored trial has a date of last change
+- **WHEN** the operator names `active-since-2025` and no stored trial has a date of last change
 - **THEN** the command refuses and says the wider load has not run
 
 #### Scenario: A set the command does not know
@@ -120,11 +124,15 @@ A link a trial's registry record gives to an article on a listed outlet SHALL be
 - **THEN** no lead is stored and the domain is counted
 
 ### Requirement: Papers that carry the trial's number
-A paper whose index record carries a trial's registry number in the field its publisher supplied for it SHALL be attached to the trial as a paper that gives the number, with no score. A paper that only mentions the number in its text SHALL NOT be attached. A paper whose record carries more than three registry numbers SHALL NOT be attached. A paper so attached SHALL NOT be called a results paper unless the registry record names it as one.
+A paper whose index record carries a trial's registry number in the field its publisher supplied for it SHALL be attached to the trial as a paper that gives the number, with no score. The index SHALL be asked for the numbers of many trials in one request, within its noted limits, and a paper SHALL be given to a trial only when the paper's own record, read back from the index, carries that trial's number exactly. A paper that only mentions the number in its text SHALL NOT be attached. A paper whose record carries more than three registry numbers SHALL NOT be attached. A paper so attached SHALL NOT be called a results paper unless the registry record names it as one.
 
 #### Scenario: A paper that gives one trial's number
 - **WHEN** the paper index returns a paper whose record carries a trial's number and no other
 - **THEN** the paper is attached to that trial as a paper that gives its number
+
+#### Scenario: Fifty trials in one request
+- **WHEN** fifty trials are due and the index answers one request with three papers
+- **THEN** each paper is given only to the trials whose numbers its own record carries, and the trials no paper names are recorded as asked with nothing found
 
 #### Scenario: A paper that cites the trial in passing
 - **WHEN** a full-text index finds a trial's number in the text of a paper whose own record does not carry it
@@ -237,7 +245,7 @@ No route SHALL create a claim, a source article, a match or an evidence event by
 Before a route is run for a set, the command SHALL print how many trials are due, how many requests each route would send against what is left of each source's allowance, and what reading the expected hits would cost against the route's share of the ceiling. It SHALL send nothing a source's allowance does not cover. No load and no daily run SHALL start a route.
 
 #### Scenario: A plan for the active set
-- **WHEN** the operator asks for the plan of `active-recent`
+- **WHEN** the operator asks for the plan of `active-since-2025`
 - **THEN** the counts of trials, requests by source, allowance left and expected cost are printed and no request is sent
 
 #### Scenario: A daily run
