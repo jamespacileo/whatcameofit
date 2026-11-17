@@ -378,7 +378,7 @@ def test_a_merged_pending_run_settles_without_its_large_payloads(tmp_path):
     from thenwhat.store.form import payload_record
     from thenwhat.store.push import pending_path, write_pending
 
-    big = payload_record({"x": "y" * 20_000})
+    big = payload_record({"x": "y" * (INLINE_PAYLOAD_LIMIT + 10)})
     assert "r2_key" in big.body
     pending = pending_path(tmp_path / "state.json")
     belongs = {"build": "b", "target": "http://s.test"}
