@@ -373,7 +373,9 @@ def requeue(
     # A worker could have finished while the record lock was being acquired.
     changed = session.scalars(
         update(WorkEntry)
-        .where(WorkEntry.id == any_(bindparam("entry_ids", entry_ids, type_=ARRAY(Integer))), *wanted)
+        .where(
+            WorkEntry.id == any_(bindparam("entry_ids", entry_ids, type_=ARRAY(Integer))), *wanted
+        )
         .values(stale=True, attempts=0)
         .returning(WorkEntry.record_id)
     )
