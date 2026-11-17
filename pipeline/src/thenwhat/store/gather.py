@@ -14,8 +14,9 @@ name records by, is counted, so a caller can show what a snapshot did not carry.
 """
 
 from collections import Counter, defaultdict
-from collections.abc import Iterable, Iterator
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
+from typing import Any
 
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
@@ -53,7 +54,8 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.store import records as r
-from thenwhat.store.form import Record, key_of, payload_record, url_key
+from thenwhat.store.form import Record, key_of, url_key
+from thenwhat.store.form import payload_record as form_payload_record
 
 # Decisions that stay on the device: the lead already holds its score and version.
 LOCAL_DECISION_STEPS = frozenset({"lead_triage"})
@@ -88,15 +90,24 @@ def _all[T](session: Session, model: type[T]) -> list[T]:
     return list(session.scalars(select(model).order_by(text("id"))))
 
 
-def gather(session: Session) -> Gathered:
+def gather(session: Session, *, keep_payload: Callable[[Any], None] | None = None) -> Gathered:
     """Every record the store keeps of what Postgres holds now, parents before children,
-    each natural key once, with counts of what was left out."""
+    each natural key once, with counts of what was left out. `keep_payload` is given each
+    raw payload as it is read, for a caller that keeps the large ones as objects."""
     gathered = Gathered(records=[])
-    gathered.records = distinct(_gather(session, gathered.unnamed), gathered.repeated)
+    gathered.records = distinct(
+        _gather(session, gathered.unnamed, keep_payload or (lambda _: None)), gathered.repeated
+    )
     return gathered
 
 
-def _gather(session: Session, unnamed: Counter[str]) -> Iterator[Record]:
+def _gather(
+    session: Session, unnamed: Counter[str], keep_payload: Callable[[Any], None]
+) -> Iterator[Record]:
+    def payload_record(value: Any) -> Record:
+        keep_payload(value)
+        return form_payload_record(value)
+
     claims = {claim.id: claim for claim in _all(session, Claim)}
     slugs = {claim_id: claim.slug for claim_id, claim in claims.items()}
     merged = {claim_id for claim_id, claim in claims.items() if claim.merged_into_id}
@@ -233,7 +244,7 @@ def _gather(session: Session, unnamed: Counter[str]) -> Iterator[Record]:
         yield r.trial_read_record(read, readings=readings[read.id])
 
     for trial in trials.values():
-        yield payload_record(trial.raw_payload)
+        yield payload_record(r.registry_payload(trial))
         yield r.registry_trial_record(trial)
     for load in session.scalars(
         select(RegistryLoad).order_by(RegistryLoad.registry_name, RegistryLoad.condition)

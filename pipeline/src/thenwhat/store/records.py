@@ -12,6 +12,7 @@ from enum import Enum
 from typing import Any
 
 from thenwhat.backfill.address import KEY_VERSION
+from thenwhat.backfill.registry_load import sponsored_by_a_person, without_people
 from thenwhat.db.models import (
     ArticleLead,
     Claim,
@@ -539,9 +540,25 @@ def intervention_names(interventions: Sequence[Mapping[str, Any]]) -> str:
     return "; ".join(names)
 
 
+def registry_payload(trial: RegistryTrial) -> Any:
+    """A trial's payload as the store keeps it: without a person's name, as the corpus
+    load keeps one since 2026-11-17 (`backfill.registry_load.without_people`). Rows
+    loaded before then still hold such names in Postgres."""
+    if not isinstance(trial.raw_payload, dict):
+        return trial.raw_payload
+    return without_people(trial.raw_payload)
+
+
 def registry_trial_record(trial: RegistryTrial) -> Record:
     """A trial with every column Postgres holds, its payload named by checksum. When the
-    registry was last found to say the same (`checked_at`) is the store's to know."""
+    registry was last found to say the same (`checked_at`) is the store's to know. A
+    sponsor who is a person is not named."""
+    payload = registry_payload(trial)
+    sponsors = (
+        payload.get("protocolSection", {}).get("sponsorCollaboratorsModule", {})
+        if isinstance(payload, dict)
+        else {}
+    )
     return Record(
         "registry_trial",
         key_of(trial.registry_name, trial.external_id),
@@ -568,8 +585,10 @@ def registry_trial_record(trial: RegistryTrial) -> Record:
             results_first_posted=day(trial.results_first_posted),
             has_results=flag(trial.has_results),
             acronym=trial.acronym,
-            lead_sponsor_name=trial.lead_sponsor_name,
-            payload_sha256=payload_of(trial.raw_payload).sha256,
+            lead_sponsor_name=(
+                None if sponsored_by_a_person(sponsors) else trial.lead_sponsor_name
+            ),
+            payload_sha256=payload_of(payload).sha256,
             fetched_at=when(trial.fetched_at),
         ),
     )
