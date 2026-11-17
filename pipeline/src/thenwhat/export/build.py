@@ -19,6 +19,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.corrections import moved_addresses
 from thenwhat.claims.entities import intervention_components
 from thenwhat.claims.entry import articles_of, name_key, promises_of
 from thenwhat.claims.status import refresh_status, status_history
@@ -638,6 +639,13 @@ class ExportedArchived(Strict):
     on: date
 
 
+class ExportedMoved(Strict):
+    # An address that was a claim's page and now leads to another claim's: the claim was
+    # merged into that one, or renamed. The reason stays private.
+    slug: str
+    to: str
+
+
 class Export(Strict):
     schema_version: int
     generated_at: datetime
@@ -654,6 +662,8 @@ class Export(Strict):
     outlets: list[ExportedOutlet]
     claims: list[ExportedClaim]
     archived: list[ExportedArchived] = []
+    # Addresses that lead to a published claim's page. Never also in `archived`.
+    moved: list[ExportedMoved] = []
     # The sources of the cards in `background`, each once.
     card_sources: list[ExportedCardSource] = []
     # The score at or above which a registry match is approved by rule, so the site can
@@ -1396,6 +1406,22 @@ def build_export(
         )
     session.flush()
     card_sources = _card_sources(claims)
+    # An address that was a claim's page leads to the claim it was merged into, or to its
+    # page under a new slug, when that claim is published here. Otherwise it answers
+    # gone, like any claim taken down.
+    public = {claim.slug for claim in claims}
+    elsewhere = moved_addresses(session)
+    leads_to = {slug: claim.slug for slug, claim in elsewhere if claim.slug in public}
+    gone = {
+        claim.slug: claim.archived_at.date()
+        for claim in session.scalars(
+            select(Claim).where(Claim.archived_at.is_not(None), Claim.published_at.is_not(None))
+        )
+        if claim.archived_at is not None and claim.slug not in leads_to
+    }
+    for slug, claim in elsewhere:
+        if slug not in leads_to and claim.archived_at is not None:
+            gone.setdefault(slug, claim.archived_at.date())
     return Export(
         schema_version=SCHEMA_VERSION,
         generated_at=now,
@@ -1429,15 +1455,8 @@ def build_export(
         ],
         outlets=_outlets(session, claims),
         claims=claims,
-        archived=[
-            ExportedArchived(slug=claim.slug, on=claim.archived_at.date())
-            for claim in session.scalars(
-                select(Claim)
-                .where(Claim.archived_at.is_not(None), Claim.published_at.is_not(None))
-                .order_by(Claim.slug)
-            )
-            if claim.archived_at is not None
-        ],
+        archived=[ExportedArchived(slug=slug, on=on) for slug, on in sorted(gone.items())],
+        moved=[ExportedMoved(slug=slug, to=to) for slug, to in leads_to.items()],
         card_sources=card_sources,
     )
 

@@ -58,12 +58,11 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `mesh/term_tirzepatide.json`, `mesh/owner_tirzepatide.json` | the term lookup and the owner query for "tirzepatide": the term belongs to a descriptor and to a withdrawn supplementary record labelled "[OBSOLETE] tirzepatide", whose own address answers an empty object (2026-11-14) |
 | `mesh/term_ketogenic_word.json` | the same lookup for "Ketogenic", a word contained in an entry term: `[]` (2026-11-14) |
 | `mesh/owner_ketogenic_diet.json`, `mesh/owner_orforglipron.json`, `mesh/owner_obesity.json` | `GET /mesh/sparql?query=…&format=JSON&year=2026&inference=false`, the query in `docs/sources.md` for one term each: the descriptor or supplementary record the term belongs to (2026-11-14) |
-| `mesh/owners_three_terms.json` | the same query for the three terms at once (2026-11-14) |
 | `mesh/owner_none.json` | the same query for a term identifier the vocabulary does not hold (`T999999999`): no row (2026-11-14) |
 | `mesh/supplementary_orforglipron.json` | `GET /mesh/2026/C000729680.json`: a supplementary record, with its `note` and the `source` it was taken from (2026-11-14) |
 | `mesh/concept_orforglipron.json` | `GET /mesh/2026/M000766720.json`, its preferred concept, which holds no definition (2026-11-14) |
 | `opentargets/search_cxcr3.json` | `POST api.platform.opentargets.org/api/v4/graphql` with the target search in `sources/opentargets.py` for the word "CXCR3": equal to an approved symbol (2026-11-14) |
-| `opentargets/search_usag_1.json`, `opentargets/search_apoe4.json` | the same for "USAG-1" and "APOE4": each equal to a listed synonym of one gene (2026-11-14) |
+| `opentargets/search_usag_1.json` | the same for "USAG-1": equal to a listed synonym of one gene (2026-11-14) |
 | `opentargets/search_tms.json` | the same for "TMS": a synonym of two genes, among eight genes whose symbols only start with it (2026-11-14) |
 | `opentargets/search_tmsb1.json` | the same for "TMSB1": seven hits, none with an equal symbol or synonym (2026-11-14) |
 | `opentargets/search_ctx310.json` | the same for "CTX310": no hit (2026-11-14) |

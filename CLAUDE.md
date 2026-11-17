@@ -7,7 +7,7 @@ worktrees via `wt`, archive via quarantine).
 
 - Run: `docker compose up --build -d`, then `docker compose run --rm pipeline thenwhat --help`
 - Test: `make check` (ruff, ty, pytest, site build)
-- New worktree: `make setup` clones `node_modules` from the main checkout (copy-on-write, seconds) when the lockfile is the same, else runs `npm ci`. Node comes from `.node-version` (24, as CI); any Node from 22.23.4 runs the site.
+- New clone or worktree: `make setup` (Node 26 from `.node-version`, pnpm 10). pnpm links packages from its shared store, so nothing is downloaded twice. Never `npm install`: the lock files are `pnpm-lock.yaml`.
 
 ## Where things are defined
 
@@ -47,6 +47,7 @@ worktrees via `wt`, archive via quarantine).
 - Prepare many claims with `thenwhat prepare`, not one command per step per claim.
 - A claim that a link lead's read drafts stays pending until `thenwhat prepare --pending` has searched its registries, then is approved by rule. Run it after every read run and before any export.
 - A claim `prepare` approves for a read is held awaiting audit, and no export publishes it until `thenwhat audit clear` releases it (`docs/adr/0007-a-read-batch-waits-for-its-audit.md`). The audit archives what is wrong and clears the rest.
+- Two claims for one intervention and indication are merged with `thenwhat claim merge`, never fixed by archiving one. A wrong intervention name is corrected with `thenwhat entity rename`, not `claim edit`: it checks the entry rules and marks the registry search due. After either, run `thenwhat prepare --due` before the export (change `claim-merge-and-rename`).
 - A review decision you make yourself is recorded with `--as-assistant`. The claim is published like any other, and the export marks it `checked_by_person: false`.
 
 ## Layout

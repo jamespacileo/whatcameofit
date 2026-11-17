@@ -16,19 +16,19 @@ Remotion project for explainer videos about the site and its browser extension. 
 
 ```sh
 cd video
-npm ci
+pnpm install --frozen-lockfile
 uv run --with edge-tts python3 scripts/narrate.py videos/what-came-of-it-explainer   # narration audio, not committed
 uv run --with numpy python3 scripts/music.py videos/what-came-of-it-explainer        # background track, not committed
-npm run studio                                                                        # preview at http://localhost:3123
+pnpm run studio                                                                        # preview at http://localhost:3123
 ```
 
 Render (add `--scale=0.5` for 1080p):
 
 ```sh
 V=videos/what-came-of-it-explainer
-npx remotion render src/remotion/index.ts WhatCameOfItExplainer $V/output.mp4 --public-dir $V/ --video-bitrate 16M
-npx remotion render src/remotion/index.ts WhatCameOfItExplainerVertical $V/output_vertical.mp4 --public-dir $V/ --video-bitrate 16M
-npx remotion still src/remotion/index.ts Thumbnail16x9 $V/thumbnail_remotion_16x9.png --public-dir $V/
+pnpm exec remotion render src/remotion/index.ts WhatCameOfItExplainer $V/output.mp4 --public-dir $V/ --video-bitrate 16M
+pnpm exec remotion render src/remotion/index.ts WhatCameOfItExplainerVertical $V/output_vertical.mp4 --public-dir $V/ --video-bitrate 16M
+pnpm exec remotion still src/remotion/index.ts Thumbnail16x9 $V/thumbnail_remotion_16x9.png --public-dir $V/
 ```
 
 The render carries narration only. Lay the music under it afterwards:
@@ -56,9 +56,9 @@ Four silent seconds, once: the site's own card put together, for the end of a vi
 | `StingVertical` | 1080 × 1920 | Tall posts |
 
 ```sh
-npx remotion render src/remotion/index.ts Sting out/sting.mp4
-npx remotion render src/remotion/index.ts StingSquare out/sting_square.mp4
-npx remotion render src/remotion/index.ts StingVertical out/sting_vertical.mp4
+pnpm exec remotion render src/remotion/index.ts Sting out/sting.mp4
+pnpm exec remotion render src/remotion/index.ts StingSquare out/sting_square.mp4
+pnpm exec remotion render src/remotion/index.ts StingVertical out/sting_vertical.mp4
 ```
 
 Rendered files are not committed (`out/` is ignored).

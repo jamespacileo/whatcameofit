@@ -30,20 +30,20 @@ scripts-test:
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
 	sh scripts/tests/daily-run.test.sh
 
-# Cloned from the main checkout where the lockfile is the same (a new worktree, in
-# seconds), else installed with npm ci. See scripts/worktree-setup.sh.
-site/node_modules: site/package-lock.json
+# Linked from pnpm's shared store: seconds in a new worktree. See scripts/worktree-setup.sh.
+site/node_modules: site/pnpm-lock.yaml
 	sh scripts/worktree-setup.sh site
 
 # Everything a new checkout or worktree needs before `make check`.
 setup:
 	sh scripts/worktree-setup.sh
+	uv sync --directory pipeline
 
 site-test: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site test
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site test
 
 site-build: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
 
 # Live: reads each article in site/tests/fixtures/research/cases, asks the model, OpenAlex
 # and ROR, and checks the report's paper is found. Costs a model call and up to five
@@ -114,5 +114,5 @@ deploy: site/node_modules public-export
 # Reads the model settings from .env and builds from site/data/export.json if there is one.
 lookup-dev: site/node_modules
 	node site/scripts/dev-vars.mjs
-	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
-	cd site && wrangler dev --port 8787
+	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
+	pnpm --dir site exec wrangler dev --port 8787

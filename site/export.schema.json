@@ -1038,6 +1038,25 @@
       "title": "ExportedMechanism",
       "type": "object"
     },
+    "ExportedMoved": {
+      "additionalProperties": false,
+      "properties": {
+        "slug": {
+          "title": "Slug",
+          "type": "string"
+        },
+        "to": {
+          "title": "To",
+          "type": "string"
+        }
+      },
+      "required": [
+        "slug",
+        "to"
+      ],
+      "title": "ExportedMoved",
+      "type": "object"
+    },
     "ExportedOrganisation": {
       "additionalProperties": false,
       "properties": {
@@ -2588,6 +2607,14 @@
         "$ref": "#/$defs/ExportedArchived"
       },
       "title": "Archived",
+      "type": "array"
+    },
+    "moved": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ExportedMoved"
+      },
+      "title": "Moved",
       "type": "array"
     },
     "card_sources": {
