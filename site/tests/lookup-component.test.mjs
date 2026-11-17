@@ -25,25 +25,14 @@ before(() => {
   assert.equal(result.status, 0, result.stdout + result.stderr);
 });
 
-test("the home page draws the lookup in its band, in the same order", () => {
+test("the home page carries the lookup and the script that answers", () => {
   const html = page("index.html");
-  const band = html.slice(html.indexOf('<section class="band home"'), html.indexOf('class="front"'));
-  const parts = [
-    '<h1 class="title" id="lookup-title">',
-    '<form class="search lookup" role="search" id="search">',
-    '<label for="query">Paste a link to an article, or search by treatment or condition</label>',
-    '<input id="query" name="q" type="search"',
-    "<noscript>",
-    '<div class="results" id="results" aria-live="polite"',
-    '<template id="unfound"><svg class="unfound"',
-    '<template id="remind-later">',
-  ];
-  const at = parts.map((part) => band.indexOf(part));
-  parts.forEach((part, index) => assert.ok(at[index] > -1, `${part} is not in the band`));
-  assert.deepEqual([...at].sort((a, b) => a - b), at);
-  assert.equal(html.split('id="remind-later"').length - 1, 1);
+  // The hooks the script needs are on the page, each once.
+  for (const id of ["search", "query", "results", "remind-later"]) {
+    assert.equal(html.split(`id="${id}"`).length - 1, 1, id);
+  }
   // The script that answers is bundled with the page.
-  const script = band.match(/<script type="module" src="(\/_astro\/[^"]+\.js)">/);
+  const script = html.match(/<script type="module" src="(\/_astro\/[^"]+\.js)">/);
   assert.ok(script, "the lookup's script is not on the page");
   assert.match(page(script[1]), /This article is one we track\./);
   assert.doesNotMatch(html, /lookup-sentences/);

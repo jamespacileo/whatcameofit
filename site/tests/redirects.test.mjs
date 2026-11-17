@@ -8,11 +8,12 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 
-function run({ retired = [], published = null, archived = undefined }) {
+function run({ retired = [], published = null, archived = undefined, moved = undefined }) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-redirects-"));
   const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
   fixture.retired_verticals = retired;
   if (archived) fixture.archived = archived;
+  if (moved) fixture.moved = moved;
   const exportFile = path.join(directory, "export.json");
   fs.writeFileSync(exportFile, JSON.stringify(fixture));
   const record = path.join(directory, "published-topics.json");
@@ -61,4 +62,13 @@ test("archived claims are listed for the Worker, and the list is written even wh
   assert.equal(archived.result.status, 0, archived.result.stdout + archived.result.stderr);
   assert.deepEqual(archived.gone, [{ slug: "quiet-claim", on: "2026-11-14" }]);
   assert.deepEqual(run({}).gone, []);
+});
+
+test("a merged or renamed claim's address is listed with the slug it leads to", () => {
+  const { result, gone } = run({
+    archived: [{ slug: "quiet-claim", on: "2026-11-14" }],
+    moved: [{ slug: "vsv-ebov", to: "ervebo" }],
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(gone, [{ slug: "quiet-claim", on: "2026-11-14" }, { slug: "vsv-ebov", to: "ervebo" }]);
 });

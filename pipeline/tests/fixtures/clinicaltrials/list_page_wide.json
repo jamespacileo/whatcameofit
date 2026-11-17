@@ -1,0 +1,287 @@
+{
+ "studies": [
+  {
+   "protocolSection": {
+    "identificationModule": {
+     "nctId": "NCT07816367",
+     "orgStudyIdInfo": {
+      "id": "K-304 P004"
+     },
+     "briefTitle": "A Study to Assess the Efficacy and Safety of Elismetrep (K-304) in the Acute Treatment of Migraine",
+     "officialTitle": "A Phase III, Multicenter, Randomized, Double-Blind, Placebo-Controlled Study of Elismetrep (K-304) in the Acute Treatment of Migraine"
+    },
+    "statusModule": {
+     "overallStatus": "RECRUITING",
+     "startDateStruct": {
+      "date": "2026-10-02",
+      "type": "ACTUAL"
+     },
+     "primaryCompletionDateStruct": {
+      "date": "2027-10",
+      "type": "ESTIMATED"
+     },
+     "completionDateStruct": {
+      "date": "2027-12",
+      "type": "ESTIMATED"
+     },
+     "studyFirstPostDateStruct": {
+      "date": "2026-09-11"
+     },
+     "lastUpdatePostDateStruct": {
+      "date": "2026-11-12"
+     }
+    },
+    "sponsorCollaboratorsModule": {
+     "leadSponsor": {
+      "name": "TriGemX Bio, Inc.",
+      "class": "INDUSTRY"
+     }
+    },
+    "conditionsModule": {
+     "conditions": [
+      "Migraine"
+     ]
+    },
+    "designModule": {
+     "phases": [
+      "PHASE3"
+     ],
+     "enrollmentInfo": {
+      "count": 1500,
+      "type": "ESTIMATED"
+     }
+    },
+    "armsInterventionsModule": {
+     "interventions": [
+      {
+       "type": "DRUG",
+       "name": "Elismetrep",
+       "otherNames": [
+        "K-304"
+       ]
+      },
+      {
+       "type": "DRUG",
+       "name": "Placebo"
+      }
+     ]
+    },
+    "outcomesModule": {
+     "primaryOutcomes": [
+      {
+       "measure": "Pain freedom at 2 hours post-dose",
+       "timeFrame": "Two hours post-dose"
+      },
+      {
+       "measure": "Freedom from most bothersome symptoms (MBS) at 2 hours post-dose",
+       "timeFrame": "Two hours post-dose"
+      }
+     ]
+    }
+   },
+   "hasResults": false
+  },
+  {
+   "protocolSection": {
+    "identificationModule": {
+     "nctId": "NCT01596231",
+     "orgStudyIdInfo": {
+      "id": "2010-P-001099"
+     },
+     "secondaryIdInfos": [
+      {
+       "id": "Grant # AA10536",
+       "type": "OTHER_GRANT"
+      }
+     ],
+     "briefTitle": "Kudzu Treatment for Alcohol Abuse",
+     "officialTitle": "Isoflavone (Kudzu) Extract Effects on Alcohol Drinking: Single Dose Pretreatment Study",
+     "acronym": "KUDZU"
+    },
+    "statusModule": {
+     "overallStatus": "COMPLETED",
+     "startDateStruct": {
+      "date": "2010-05"
+     },
+     "primaryCompletionDateStruct": {
+      "date": "2013-05",
+      "type": "ACTUAL"
+     },
+     "completionDateStruct": {
+      "date": "2014-07",
+      "type": "ACTUAL"
+     },
+     "studyFirstPostDateStruct": {
+      "date": "2012-05-10"
+     },
+     "resultsFirstPostDateStruct": {
+      "date": "2014-10-21"
+     },
+     "lastUpdatePostDateStruct": {
+      "date": "2014-10-21"
+     }
+    },
+    "sponsorCollaboratorsModule": {
+     "leadSponsor": {
+      "name": "Mclean Hospital",
+      "class": "OTHER"
+     },
+     "collaborators": [
+      {
+       "name": "National Institute on Alcohol Abuse and Alcoholism (NIAAA)",
+       "class": "NIH"
+      }
+     ]
+    },
+    "conditionsModule": {
+     "conditions": [
+      "Alcohol Consumption"
+     ]
+    },
+    "designModule": {
+     "phases": [
+      "PHASE2"
+     ],
+     "enrollmentInfo": {
+      "count": 20,
+      "type": "ACTUAL"
+     }
+    },
+    "armsInterventionsModule": {
+     "interventions": [
+      {
+       "type": "DIETARY_SUPPLEMENT",
+       "name": "Kudzu",
+       "otherNames": [
+        "Kudzu root extract (NPI-031)",
+        "Puerariae lobata",
+        "Alkontrol-Herbal®"
+       ]
+      },
+      {
+       "type": "DIETARY_SUPPLEMENT",
+       "name": "Placebo"
+      }
+     ]
+    },
+    "outcomesModule": {
+     "primaryOutcomes": [
+      {
+       "measure": "Drinking Behaviors",
+       "timeFrame": "Study end"
+      }
+     ]
+    },
+    "referencesModule": {
+     "references": [
+      {
+       "pmid": "26048637",
+       "type": "DERIVED"
+      }
+     ],
+     "seeAlsoLinks": [
+      {
+       "label": "Related Info",
+       "url": "http://www.mclean.harvard.edu/research/neuroimaging/bprl/kudzu.php"
+      }
+     ]
+    }
+   },
+   "hasResults": true
+  },
+  {
+   "protocolSection": {
+    "identificationModule": {
+     "nctId": "NCT02586935",
+     "orgStudyIdInfo": {
+      "id": "TIDE-06-2015"
+     },
+     "briefTitle": "Tideglusib vs. Placebo in the Treatment of Adolescents With Autism Spectrum Disorders",
+     "officialTitle": "A Randomized Placebo-controlled Trial of Tideglusib vs. Placebo in the Treatment of Adolescents With Autism Spectrum Disorders (ASD)",
+     "acronym": "TIDE"
+    },
+    "statusModule": {
+     "overallStatus": "COMPLETED",
+     "startDateStruct": {
+      "date": "2016-02-10",
+      "type": "ACTUAL"
+     },
+     "primaryCompletionDateStruct": {
+      "date": "2018-02-25",
+      "type": "ACTUAL"
+     },
+     "completionDateStruct": {
+      "date": "2018-02-25",
+      "type": "ACTUAL"
+     },
+     "studyFirstPostDateStruct": {
+      "date": "2015-10-27"
+     },
+     "lastUpdatePostDateStruct": {
+      "date": "2025-07-16"
+     }
+    },
+    "sponsorCollaboratorsModule": {
+     "leadSponsor": {
+      "name": "Holland Bloorview Kids Rehabilitation Hospital",
+      "class": "OTHER"
+     },
+     "collaborators": [
+      {
+       "name": "McMaster University",
+       "class": "OTHER"
+      },
+      {
+       "name": "Western University, Canada",
+       "class": "OTHER"
+      },
+      {
+       "name": "Unity Health Toronto",
+       "class": "OTHER"
+      },
+      {
+       "name": "University of Toronto",
+       "class": "OTHER"
+      }
+     ]
+    },
+    "conditionsModule": {
+     "conditions": [
+      "Autism Spectrum Disorders"
+     ]
+    },
+    "designModule": {
+     "phases": [
+      "PHASE2"
+     ],
+     "enrollmentInfo": {
+      "count": 83,
+      "type": "ACTUAL"
+     }
+    },
+    "armsInterventionsModule": {
+     "interventions": [
+      {
+       "type": "DRUG",
+       "name": "Tideglusib"
+      },
+      {
+       "type": "OTHER",
+       "name": "Placebo"
+      }
+     ]
+    },
+    "outcomesModule": {
+     "primaryOutcomes": [
+      {
+       "measure": "Effect of tideglusib vs. placebo on measures of social engagement/withdrawal",
+       "timeFrame": "12 weeks"
+      }
+     ]
+    }
+   },
+   "hasResults": false
+  }
+ ],
+ "nextPageToken": "ZVNj7o2Elu8o3lpyVoqu677umpOQJJxtZPml2vEckA"
+}

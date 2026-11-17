@@ -64,6 +64,7 @@ def lead(
     screen: ScreenOutcome | None = ScreenOutcome.IN_SCOPE,
     score: float | None = None,
     read: ReadOutcome | None = None,
+    claim_id: int | None = None,
 ) -> None:
     session.add(
         LinkLead(
@@ -77,6 +78,7 @@ def lead(
             triage_score=score,
             triage_version=1 if score is not None else None,
             read_outcome=read,
+            claim_id=claim_id,
         )
     )
     session.flush()
@@ -90,7 +92,23 @@ def test_coverage_counts_the_leads_that_name_the_topic_by_where_they_stand(sessi
     lead(session, 4, "What tirzepatide costs", score=0.05)
     lead(session, 5, "Semaglutide held by triage", score=0.4)
     lead(session, 6, "Semaglutide passed by triage", score=0.9)
-    lead(session, 7, "Retatrutide read already", score=0.9, read=ReadOutcome.NEW_CLAIM)
+    # A read that made a claim points at it. This one is of no topic, so it counts nowhere.
+    made = add_claim(
+        session,
+        slug="synthetic-claim",
+        headline="A synthetic headline",
+        vertical="diabetes-and-hormones",
+        intervention="examplumab",
+        indication="a synthetic condition",
+    )
+    lead(
+        session,
+        7,
+        "Retatrutide read already",
+        score=0.9,
+        read=ReadOutcome.NEW_CLAIM,
+        claim_id=made.id,
+    )
     lead(session, 8, "A synthetic story about statins", score=0.9)
 
     found = coverage(session, "glp-1", reject_below=0.1)

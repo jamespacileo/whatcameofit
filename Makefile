@@ -1,4 +1,4 @@
-.PHONY: smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview lookup-dev
+.PHONY: setup smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -26,18 +26,24 @@ test: db-up site/node_modules
 # The daily job's script, against a stand-in for the pipeline: no database, no network.
 scripts-test:
 	sh -n scripts/daily-run.sh
+	sh -n scripts/worktree-setup.sh
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
 	sh scripts/tests/daily-run.test.sh
 
-site/node_modules: site/package-lock.json
-	npm --prefix site ci
-	@touch site/node_modules
+# Linked from pnpm's shared store: seconds in a new worktree. See scripts/worktree-setup.sh.
+site/node_modules: site/pnpm-lock.yaml
+	sh scripts/worktree-setup.sh site
+
+# Everything a new checkout or worktree needs before `make check`.
+setup:
+	sh scripts/worktree-setup.sh
+	uv sync --directory pipeline
 
 site-test: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site test
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site test
 
 site-build: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
 
 # Live: reads each article in site/tests/fixtures/research/cases, asks the model, OpenAlex
 # and ROR, and checks the report's paper is found. Costs a model call and up to five
@@ -87,6 +93,10 @@ deploy-ci: site/node_modules
 pr-preview-check: site/node_modules
 	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs --dry-run
 
+# Whether the pull request's copy is already this commit's. Needs no dependencies.
+pr-preview-state:
+	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs --state
+
 pr-preview: site/node_modules
 	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs
 
@@ -104,5 +114,5 @@ deploy: site/node_modules public-export
 # Reads the model settings from .env and builds from site/data/export.json if there is one.
 lookup-dev: site/node_modules
 	node site/scripts/dev-vars.mjs
-	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 npm --prefix site run build
-	cd site && wrangler dev --port 8787
+	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
+	pnpm --dir site exec wrangler dev --port 8787

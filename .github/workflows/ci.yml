@@ -24,11 +24,30 @@ jobs:
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           version: "0.11.20"
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: site/package-lock.json
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      # Drawn card images, kept by what decides their pixels (site/src/lib/card-image.ts).
+      # A run on main keeps them where every pull request's preview can read them.
+      - name: Restore drawn cards
+        id: cards
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/cards
+          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/pnpm-lock.yaml') }}
+          restore-keys: site-cards-
+      - name: Look for kept dependencies
+        id: deps
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/node_modules
+          key: site-deps-${{ runner.os }}-node26-${{ hashFiles('site/pnpm-lock.yaml') }}
+          lookup-only: true
       - run: make check
       - name: Save production extension package
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -47,6 +66,21 @@ jobs:
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
+      - name: Keep dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/node_modules
+          key: ${{ steps.deps.outputs.cache-primary-key }}
+      - name: Drop cards no longer drawn
+        if: steps.cards.outputs.cache-hit != 'true'
+        run: find site/.cache/cards -type f -mmin +30 -delete
+      - name: Keep drawn cards
+        if: steps.cards.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/cards
+          key: ${{ steps.cards.outputs.cache-primary-key }}
 
   deploy:
     name: Deploy production
@@ -64,12 +98,15 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: site/package-lock.json
-      - run: npm --prefix site ci
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      - run: pnpm --dir site install --frozen-lockfile
       - name: Verify Cloudflare authentication
         run: node site/node_modules/wrangler/bin/wrangler.js whoami
         env:

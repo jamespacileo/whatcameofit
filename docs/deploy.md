@@ -28,6 +28,14 @@ Staging first asks the running pipeline for a normal export with preview mode di
 
 Decided by the operator on 16 November 2026 (change `pull-request-previews`). Every pull request from a branch of this repository gets its own copy of the site on its own Worker, `thenwhat-pr-<number>`, at `https://thenwhat-pr-<number>.<account subdomain>.workers.dev`. The `Pull request preview` workflow publishes it when the pull request opens, replaces it on every push, and deletes the Worker when the pull request is merged or closed. One comment on the pull request carries the address, links to the main pages and files, the claims the pull request adds, the commit, the build log and the Worker's dashboard page. Every run and re-run edits that same comment (`site/scripts/pr-preview-comment.mjs`); a failed build and the removal are written into it too. The workflow does not wait for the tests, so the address is usually ready before `Tests and build` finishes; a preview existing says nothing about whether the checks pass.
 
+How a preview is kept quick (change `fast-ci-and-deploy`, measured on pull request 267 on 16 November 2026):
+
+- **A copy says what it was made from.** `site/scripts/build-key.mjs` hashes every tracked file under `site/` except the tests and notes, with the settings the build and the Worker are given. The copy serves that key at `/build-key.txt`. The workflow's first step, `make pr-preview-state`, reads it back: when it equals this commit's key, nothing is installed, built or sent, and only the comment is edited. Such a run takes about 11 s. A setting the build newly reads must be added to `SETTINGS` in that file.
+- **Drawn card images are kept.** Drawing the three cards of every claim was 76 s of an 82 s build. `site/src/lib/card-image.ts` keeps each drawn card in `site/.cache/cards` under the hash of the description handed to the renderer, its size, the fonts and the renderers' versions, so a build draws only cards that changed. `CARD_STORE=off` draws everything; `CARD_STORE=<folder>` keeps them elsewhere. The built files are byte for byte the same with and without the store.
+- **GitHub keeps the cards and the installed dependencies between runs** (`site-cards-*` and `site-deps-*` in the repository's Actions caches). A pull request reads its own and those kept by runs on `main`; `CI and deploy` keeps them on `main`. Deleting them costs one slow run and nothing else.
+
+With all three, a push that changes the site republishes in about 50 s: 11 s to start the job and restore the stores, 20 s to build, 9 s for Wrangler to send, 2 s for the comment. Before, it was about 146 s.
+
 A preview differs from production in these ways, all set in `site/wrangler.preview.jsonc` and `site/scripts/pr-preview.mjs`:
 
 - It is built from the pull request's own `site/data/published-export.json`, as a public build for the production address, so canonical links, feeds and embed snippets name `whatcameofit.com`.
@@ -45,10 +53,11 @@ To publish or remove one by hand:
 ```sh
 PR_NUMBER=12 make pr-preview-check   # builds and rehearses; publishes nothing
 PR_NUMBER=12 make pr-preview
-npx --prefix site wrangler delete --name thenwhat-pr-12 --config site/wrangler.preview.jsonc
+PR_NUMBER=12 make pr-preview-state   # says whether the published copy is already this commit's
+pnpm --dir site exec wrangler delete --name thenwhat-pr-12 --config site/wrangler.preview.jsonc
 ```
 
-`npx --prefix site wrangler deployments list --name thenwhat-pr-12` shows what a preview is serving. A Worker named `thenwhat-pr-*` whose pull request is closed is a leftover and can be deleted.
+`pnpm --dir site exec wrangler deployments list --name thenwhat-pr-12` shows what a preview is serving. A Worker named `thenwhat-pr-*` whose pull request is closed is a leftover and can be deleted.
 
 ## GitHub configuration
 
@@ -79,7 +88,7 @@ make deploy-ci-check # rehearses the committed snapshot; needs no private databa
 make deploy-ci       # publishes that snapshot; needs Cloudflare authentication
 ```
 
-For local authentication, run `npx --prefix site wrangler login` and verify with `npx --prefix site wrangler whoami` before deployment. `make deploy-check` and `make deploy` remain available: both first export directly from the running local pipeline. `SITE_URL` defaults to https://whatcameofit.com and can be overridden explicitly.
+For local authentication, run `pnpm --dir site exec wrangler login` and verify with `pnpm --dir site exec wrangler whoami` before deployment. `make deploy-check` and `make deploy` remain available: both first export directly from the running local pipeline. `SITE_URL` defaults to https://whatcameofit.com and can be overridden explicitly.
 
 Never run raw `wrangler deploy`: it bypasses the public-data checks and could publish an old preview build. ("Preview build" here means a build of unreviewed data, not a pull request preview.) All supported deploy targets validate the export, build it afresh as a public site, and check its sitemap and preview flag before invoking Wrangler.
 
@@ -125,7 +134,7 @@ A published topic address must keep working. To rename or retire a vertical:
 
 1. In `pipeline/src/thenwhat/claims/verticals.py`, change or remove the vertical, and add its old slug to `RETIRED_VERTICALS` with the vertical that replaces it, for example `{"eyes-and-ears": "sight-and-hearing"}`. `make check` refuses a retired slug that is still configured, or one whose successor does not exist.
 2. Move the claims filed under the old slug with `thenwhat claim edit SLUG --vertical NEW`.
-3. Export again and build (`npm --prefix site run build`). The build writes `site/dist/_redirects` with a permanent redirect from `/topic/OLD` to `/topic/NEW`. It fails, naming the slug, when `published-topics.json` lists a topic that is neither current nor retired.
+3. Export again and build (`pnpm --dir site run build`). The build writes `site/dist/_redirects` with a permanent redirect from `/topic/OLD` to `/topic/NEW`. It fails, naming the slug, when `published-topics.json` lists a topic that is neither current nor retired.
 4. Run `make publish-data`, commit both publication files, and push to `main`.
 
 The initial publication history preserves all old topic addresses, including empty topics. `/topic/dental-regeneration` now redirects to `/topic/mouth-and-teeth`. The former transplant topic split across several organs, so its address redirects to the topic directory instead of one organ.
@@ -133,7 +142,7 @@ The initial publication history preserves all old topic addresses, including emp
 
 ## Rollback
 
-Revert the faulty source/data commit on `main` and push. GitHub tests and republishes the reverted version. For an immediate rollback, run `npx wrangler rollback` from `site/` after signing in, then revert the source commit so the next automatic deployment preserves the fix. Keep the previous committed public snapshot for data rollbacks. Do not delete the Worker to roll back.
+Revert the faulty source/data commit on `main` and push. GitHub tests and republishes the reverted version. For an immediate rollback, run `pnpm exec wrangler rollback` from `site/` after signing in, then revert the source commit so the next automatic deployment preserves the fix. Keep the previous committed public snapshot for data rollbacks. Do not delete the Worker to roll back.
 
 ## OpenAlex and ROR
 

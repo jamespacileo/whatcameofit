@@ -300,6 +300,8 @@ export interface Export {
   claims: ExportedClaim[];
   /** Claims the operator took down. Each address answers 410; the reason is never exported. */
   archived?: { slug: string; on: string }[];
+  /** Addresses that were a claim's page and now lead to another's: merged into it, or renamed. */
+  moved?: { slug: string; to: string }[];
   /** The sources of the claims' background cards, each once. */
   card_sources?: ExportedCardSource[];
   /** The score at or above which a registry match is approved by rule; null when only a

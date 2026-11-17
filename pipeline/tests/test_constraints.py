@@ -14,13 +14,17 @@ from thenwhat.db.models import (
     EntityMatch,
     EvidenceEvent,
     FailureFlag,
+    LinkLead,
     ReportedStatement,
     SourceArticle,
 )
 from thenwhat.domain import (
     EntityType,
     EventType,
+    OutletKind,
+    ReadOutcome,
     RegulatoryOutcome,
+    ScreenOutcome,
     StatementBasis,
     StatementFirmness,
     StatementKind,
@@ -460,3 +464,38 @@ def test_recorded_decision_is_accepted(
         ),
         {"decider": decider},
     )
+
+
+# --- link lead -----------------------------------------------------------
+
+
+def link_lead(**fields) -> LinkLead:
+    return LinkLead(
+        url="https://www.bbc.com/news/health-1",
+        url_key="bbc.com/news/health-1",
+        outlet="bbc.com",
+        outlet_kind=OutletKind.GENERAL_NEWS,
+        title="t",
+        first_shared_at=NOW,
+        **fields,
+    )
+
+
+def test_link_lead_with_an_article_and_no_claim_is_refused(session: Session):
+    claim = add_claim(session)
+    session.add(link_lead(source_article_id=add_article(session, claim).id))
+    assert_refused(session, "ck_link_lead_article_has_claim")
+
+
+@pytest.mark.parametrize("outcome", [ReadOutcome.NEW_CLAIM, ReadOutcome.ADDED_TO_CLAIM])
+def test_link_lead_that_made_something_and_has_no_claim_is_refused(
+    session: Session, outcome: ReadOutcome
+):
+    session.add(link_lead(read_outcome=outcome))
+    assert_refused(session, "ck_link_lead_made_outcome_has_claim")
+
+
+def test_link_lead_already_tracked_with_a_claim_and_no_article_is_accepted(session: Session):
+    claim = add_claim(session)
+    session.add(link_lead(screen_outcome=ScreenOutcome.ALREADY_TRACKED, claim_id=claim.id))
+    session.flush()

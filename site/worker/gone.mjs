@@ -2,6 +2,10 @@
 // short note, so readers and search engines learn it was removed on purpose. The build
 // writes the list to /gone.json from the export. The reason is never published.
 // Behaviour: openspec auto-publish, site-publishing "Archived addresses answer gone".
+//
+// The same list carries the addresses that moved: a claim merged into another, or given
+// a new slug by a rename. Each answers with a permanent redirect to the page it leads to
+// (site-publishing "Moved addresses lead to the claim").
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
@@ -41,12 +45,13 @@ a { color: #14427f; text-underline-offset: 2px; }
 
 let cached = null;
 
-/** Slug to date for every archived claim, read once per Worker instance. */
+/** Slug to its entry for every archived claim (`on`, a date) and every moved address
+ *  (`to`, a slug), read once per Worker instance. */
 export async function goneList(assets, origin) {
   if (cached) return cached;
   const response = await assets.fetch(new Request(new URL("/gone.json", origin))).catch(() => null);
   const list = response?.ok ? await response.json().catch(() => []) : [];
-  cached = new Map(list.map((entry) => [entry.slug, entry.on]));
+  cached = new Map(list.map((entry) => [entry.slug, entry]));
   return cached;
 }
 

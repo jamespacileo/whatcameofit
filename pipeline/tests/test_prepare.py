@@ -154,6 +154,25 @@ def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_
     assert "one" in result.output and "could not be read" in result.output
 
 
+def test_prepare_due_prepares_the_claims_whose_registry_search_is_due(run, session: Session):
+    """Scenario: Search due after a rename (openspec claims)"""
+    claim_with_articles(session, "not-due", "https://news.example.org/a")
+    due = find_claim(session, "not-due")
+    assert due is not None
+    record_decision(due, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    claim_with_articles(session, "renamed", "https://news.example.org/b")
+    renamed = find_claim(session, "renamed")
+    assert renamed is not None
+    record_decision(renamed, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    renamed.registry_search_due_at = NOW
+    session.flush()
+
+    result, ran = run("prepare", "--due")
+
+    assert result.exit_code == 0, result.output
+    assert {step[1] for step in ran if step[0] == "resolve"} == {"renamed"}
+
+
 def test_prepare_with_no_claims_named_explains_and_exits_1(run):
     result, ran = run("prepare")
 

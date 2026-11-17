@@ -8,7 +8,7 @@ command's job.
 from dataclasses import dataclass
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import (
@@ -43,13 +43,28 @@ class ClaimPlan:
     unread_articles: list[str]
 
 
-def plan_claims(session: Session, slugs: list[str] | None) -> list[ClaimPlan]:
-    """A plan for each named claim, or for every claim awaiting review when none is named."""
+def plan_claims(
+    session: Session, slugs: list[str] | None, *, pending: bool = True, due: bool = False
+) -> list[ClaimPlan]:
+    """A plan for each named claim. When none is named: for every claim awaiting review
+    (`pending`), and for every claim whose registry search is due again after a merge or
+    a rename (`due`). A claim merged into another is never one of them."""
     if slugs is None:
-        claims = list(
-            session.scalars(
-                select(Claim).where(Claim.review_state == ReviewState.PENDING).order_by(Claim.slug)
+        wanted = []
+        if pending:
+            wanted.append(Claim.review_state == ReviewState.PENDING)
+        if due:
+            wanted.append(Claim.registry_search_due_at.is_not(None))
+        claims = (
+            list(
+                session.scalars(
+                    select(Claim)
+                    .where(or_(*wanted), Claim.merged_into_id.is_(None))
+                    .order_by(Claim.slug)
+                )
             )
+            if wanted
+            else []
         )
     else:
         claims = [claim_by_slug(session, slug) for slug in slugs]
