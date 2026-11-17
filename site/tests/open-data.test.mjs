@@ -225,8 +225,12 @@ test("an export made before paper facts gives a file with no papers", () => {
 
 test("Scenario: Index and one file per claim", () => {
   const full = openData(exported(), LICENCE, CREDIT, METHOD);
-  const index = openDataIndex(full, "https://example.test");
-  assert.deepEqual(index.claims[0], {
+  const index = openDataIndex(full);
+  assert.equal(index.format, "claims-index");
+  assert.equal(index.format_version, 2);
+  // A tool written for format 1 read full records from `claims`: it finds none.
+  assert.ok(!("claims" in index));
+  assert.deepEqual(index.entries[0], {
     slug: "one",
     headline: "Headline one",
     intervention: { name: "Thing", synonyms: ["Other"] },
@@ -234,14 +238,17 @@ test("Scenario: Index and one file per claim", () => {
     status: { code: "phase_1" },
     first_reported_date: "2020-01-01",
     last_checked_at: full.last_checked_at,
-    record: "https://example.test/data/claims/one.json",
+    // From the root of whichever site served the index, a preview copy included.
+    record: "/data/claims/one.json",
   });
   const { claims: _full, ...head } = full;
-  const { claims: _short, ...indexHead } = index;
+  const { entries: _short, format: _f, format_version: _v, ...indexHead } = index;
   assert.deepEqual(indexHead, head);
 
   // A record file is exactly the claim's full record, with the licence and credit beside it.
   const record = openDataRecord(full, full.claims[1]);
+  assert.equal(record.format, "claim-record");
+  assert.equal(record.format_version, 2);
   assert.deepEqual(record.claim, full.claims[1]);
   assert.equal(record.licence, LICENCE);
   assert.equal(record.credit, CREDIT);
@@ -265,15 +272,16 @@ test("the built file and page", () => {
 
   const file = JSON.parse(fs.readFileSync(path.join(dist, "data/claims.json"), "utf8"));
   assert.deepEqual(
-    file.claims.map((c) => c.slug).sort(),
+    file.entries.map((c) => c.slug).sort(),
     fixture.claims.map((c) => c.slug).sort(),
   );
   assert.match(file.licence, /CC BY 4\.0/);
   assert.equal(file.preview, false);
   assert.ok(!everyString(file).some((text) => text.startsWith("data:")));
   // Each entry's record is a built file holding that claim's full record, licence and credit.
-  for (const entry of file.claims) {
-    assert.ok(entry.record.endsWith(recordPath(entry.slug)), entry.record);
+  assert.equal(file.format, "claims-index");
+  for (const entry of file.entries) {
+    assert.equal(entry.record, recordPath(entry.slug));
     const record = JSON.parse(fs.readFileSync(path.join(dist, recordPath(entry.slug)), "utf8"));
     assert.equal(record.claim.slug, entry.slug);
     assert.equal(record.licence, file.licence);

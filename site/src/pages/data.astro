@@ -47,14 +47,18 @@ const description =
     </li>
   </ul>
   <p>
-    The index lists every claim with its headline, treatment, condition, status code, the date it
-    was first reported and the day the registries were last checked. Each entry's
-    <code>record</code> is the address of that claim's full record, such as{" "}
+    The index's <code>entries</code> list every claim with its headline, treatment, condition,
+    status code, the date it was first reported and the day the registries were last checked.
+    Each entry's <code>record</code> is the address of that claim's full record on this site,
+    such as{" "}
     {example ? <a href={recordPath(example)}><code>{recordPath(example)}</code></a> : <code>/data/claims/&lt;slug&gt;.json</code>}.
     Each record file carries the licence and credit line too, so it can be used on its own.
   </p>
   <p>
     To get everything, download the index, then each address in its <code>record</code> fields.
+    Each file names its kind in <code>format</code> and <code>format_version</code>: version 2 is
+    this index and one file per claim. Version 1 was one file of every full record, and had
+    neither field.
   </p>
   <p>
     The files leave out article text, claims not approved in review, and outlet icons.

@@ -3,7 +3,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Published claims as a download
-The site SHALL offer, at a stable address (`/data/claims.json`), an index holding a short entry for every published claim: its slug, headline, intervention, indication, status code, first reported date, the date the registries were last checked, and the address of its full record. Each published claim's full record SHALL be offered as a file of its own at `/data/claims/<slug>.json`, holding the claim with its status, the events that produced the status, its source articles by outlet, title, date and address, its promises, and the date the registries were last checked. The files SHALL hold only what the claim pages already show. They SHALL NOT hold article text, any claim not approved in review, outlet icon images, or raw registry payloads. In a preview build the files SHALL say that they are a preview and SHALL mark each claim not checked by a person. The page that links to the index SHALL say how to fetch every record: the index, then each address it gives.
+The site SHALL offer, at a stable address (`/data/claims.json`), an index holding a short entry for every published claim, in a list named `entries`: its slug, headline, intervention, indication, status code, first reported date, the date the registries were last checked, and the address of its full record, given from the root of the site that serves the index, so a copy of the site (a pull request's preview) leads to its own records. The index and each record file SHALL name their kind and version (`format`, `format_version` 2), so a tool written for the single file of every full record, which had neither, fails at once. Each published claim's full record SHALL be offered as a file of its own at `/data/claims/<slug>.json`, holding the claim with its status, the events that produced the status, its source articles by outlet, title, date and address, its promises, and the date the registries were last checked. The files SHALL hold only what the claim pages already show. They SHALL NOT hold article text, any claim not approved in review, outlet icon images, or raw registry payloads. In a preview build the files SHALL say that they are a preview and SHALL mark each claim not checked by a person. The page that links to the index SHALL say how to fetch every record: the index, then each address it gives.
 
 #### Scenario: Reader downloads the data
 - **WHEN** a reader requests the index
@@ -12,6 +12,14 @@ The site SHALL offer, at a stable address (`/data/claims.json`), an index holdin
 #### Scenario: Reader fetches a claim's record
 - **WHEN** a reader requests the address an index entry gives
 - **THEN** they receive that claim's full record with its status, explaining events, articles, promises and the last-checked date
+
+#### Scenario: Index served by a preview copy
+- **WHEN** a reader follows an entry's record address in the index a pull request's preview serves
+- **THEN** it leads to that preview's record file, not production's
+
+#### Scenario: Tool written for the old file
+- **WHEN** a tool that reads full records from the old file's `claims` list reads the index
+- **THEN** it finds no `claims` list, and the index names itself `claims-index`, version 2
 
 #### Scenario: Unpublished claim
 - **WHEN** a claim has not been approved in review
@@ -40,3 +48,14 @@ Every build of the site SHALL fail when any single built file is larger than 20 
 #### Scenario: Every file under the limit
 - **WHEN** every built file is 20 MiB or smaller
 - **THEN** the size check passes and says so
+
+### Requirement: Built files counted against the host's limit
+Every build of the site SHALL count the files it built and say how many. It SHALL fail when there are more than 18,000, or more than a higher limit set for a plan that allows more, and SHALL give the count, the limit and the host's own limit. The host refuses a version of more than 20,000 files on its free plan.
+
+#### Scenario: Too many built files
+- **WHEN** a build produces 18,001 files and no higher limit is set
+- **THEN** the build fails, saying how many files it holds, the 18,000 it may hold and the host's 20,000, and nothing is deployed
+
+#### Scenario: A build under the limit
+- **WHEN** a build produces 14,223 files
+- **THEN** the check passes and says 14,223 files of the 18,000 a build may hold

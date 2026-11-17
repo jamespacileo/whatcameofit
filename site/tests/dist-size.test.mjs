@@ -6,7 +6,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { FILE_LIMIT, oversizedFiles } from "../scripts/dist-size.mjs";
+import { FILE_LIMIT, countFiles, oversizedFiles } from "../scripts/dist-size.mjs";
 import { NOTICES } from "../src/lib/notices.ts";
 
 const CHECK = path.resolve(import.meta.dirname, "../scripts/check-dist.mjs");
@@ -46,4 +46,24 @@ test("a build with every file under 20 MiB passes", () => {
   const result = spawnSync(process.execPath, [CHECK], { cwd: root, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /no file over 20 MiB/);
+});
+
+test("Scenario: Too many built files", () => {
+  const root = built({});
+  for (let index = 0; index < 30; index += 1) {
+    fs.writeFileSync(path.join(root, "dist/data/claims", `claim-${index}.json`), "{}");
+  }
+  assert.equal(countFiles(path.join(root, "dist")), 31);
+  const run = (limit) =>
+    spawnSync(process.execPath, [CHECK], {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env, DIST_FILE_LIMIT: String(limit) },
+    });
+  const over = run(20);
+  assert.notEqual(over.status, 0);
+  assert.match(over.stderr, /the build holds 31 files, over the 20 a build may hold/);
+  const under = run(40);
+  assert.equal(under.status, 0, under.stderr);
+  assert.match(under.stdout, /31 files of the 40 a build may hold/);
 });
