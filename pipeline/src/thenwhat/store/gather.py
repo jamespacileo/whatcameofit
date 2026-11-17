@@ -99,13 +99,14 @@ def gather(
     session: Session,
     *,
     keep_payload: Callable[[Payload], None] | None = None,
+    hot_only: bool = False,
 ) -> Gathered:
     """Every record the store keeps of what Postgres holds now, parents before children,
     each natural key once, with counts of what was left out. `keep_payload` is given each
     raw payload as it is read, for a caller that keeps the large ones as objects. For a
     whole database use `stream`, which holds no more than a page of rows."""
     gathered = Gathered(records=[])
-    gathered.records = list(stream(session, gathered, keep_payload=keep_payload))
+    gathered.records = list(stream(session, gathered, keep_payload=keep_payload, hot_only=hot_only))
     return gathered
 
 
@@ -114,13 +115,17 @@ def stream(
     counts: Gathered,
     *,
     keep_payload: Callable[[Payload], None] | None = None,
+    hot_only: bool = False,
 ) -> Iterator[Record]:
     """`gather`'s records one at a time, in the same order, each natural key once; what
-    is left out is counted into `counts`."""
+    is left out is counted into `counts`. With `hot_only`, only the hot tier's records,
+    and no bulk table is read but the leads' addresses and claims (tiers.py)."""
     # Each key once, by its hash: two keys that are not one share a 64-bit hash about
     # once in 10^12 pairs, and the set stays small for millions of records.
     seen: set[int] = set()
-    for record in _gather(session, counts.unnamed, keep_payload or (lambda _: None)):
+    for record in _gather(
+        session, counts.unnamed, keep_payload or (lambda _: None), hot_only=hot_only
+    ):
         held = hash((record.kind, record.key))
         if held in seen:
             counts.repeated[record.kind] += 1
@@ -134,7 +139,11 @@ def _pages(session: Session, statement: Any) -> Iterator[Any]:
 
 
 def _gather(
-    session: Session, unnamed: Counter[str], keep_payload: Callable[[Payload], None]
+    session: Session,
+    unnamed: Counter[str],
+    keep_payload: Callable[[Payload], None],
+    *,
+    hot_only: bool = False,
 ) -> Iterator[Record]:
     def payload_record(value: Any) -> tuple[Record, str]:
         payload = payload_of(value)
@@ -148,26 +157,45 @@ def _gather(
     keys = {article.id: url_key(article.url) for article in articles.values()}
     entities = {entity.id: entity for entity in _all(session, Entity)}
     matches = {match.id: match for match in _all(session, EntityMatch)}
-    trials: dict[int, tuple[str, str]] = {
-        trial_id: (registry, external)
-        for trial_id, registry, external in session.execute(
-            select(RegistryTrial.id, RegistryTrial.registry_name, RegistryTrial.external_id)
-        )
-    }
-    labelled = set(session.scalars(select(LinkLeadLabel.link_lead_id)))
+    trials: dict[int, tuple[str, str]] = (
+        {}
+        if hot_only
+        else {
+            trial_id: (registry, external)
+            for trial_id, registry, external in session.execute(
+                select(RegistryTrial.id, RegistryTrial.registry_name, RegistryTrial.external_id)
+            )
+        }
+    )
+    labelled = set() if hot_only else set(session.scalars(select(LinkLeadLabel.link_lead_id)))
     lead_keys: dict[int, str] = {}
     kept_leads: set[int] = set()
     tied_to_lead: set[int] = set()
-    for lead_id, key, claim_id, kind, screen, score, read in session.execute(
-        select(
-            LinkLead.id,
-            LinkLead.url_key,
-            LinkLead.claim_id,
-            LinkLead.outlet_kind,
-            LinkLead.screen_outcome,
-            LinkLead.triage_score,
-            LinkLead.read_outcome,
-        ).execution_options(yield_per=20_000)
+    if hot_only:
+        # A decision names a lead by its address, and a claim tied to a lead began in a
+        # backfill: two narrow reads of the leads, and nothing else of the bulk tables.
+        lead_keys = {i: key for i, key in session.execute(select(LinkLead.id, LinkLead.url_key))}
+        tied_to_lead = {
+            claim_id
+            for claim_id in session.scalars(
+                select(LinkLead.claim_id).where(LinkLead.claim_id.is_not(None)).distinct()
+            )
+            if claim_id is not None
+        }
+    for lead_id, key, claim_id, kind, screen, score, read in (
+        []
+        if hot_only
+        else session.execute(
+            select(
+                LinkLead.id,
+                LinkLead.url_key,
+                LinkLead.claim_id,
+                LinkLead.outlet_kind,
+                LinkLead.screen_outcome,
+                LinkLead.triage_score,
+                LinkLead.read_outcome,
+            ).execution_options(yield_per=20_000)
+        )
     ):
         lead_keys[lead_id] = key
         if claim_id is not None:
@@ -296,6 +324,18 @@ def _gather(
     for read in _all(session, TrialRead):
         yield r.trial_read_record(read, readings=readings[read.id])
 
+    for decision in _pages(
+        session,
+        select(DecisionLog)
+        .where(DecisionLog.step.not_in(LOCAL_DECISION_STEPS))
+        .order_by(DecisionLog.id),
+    ):
+        yield r.decision_record(decision, names=names)
+    for icon in session.scalars(select(OutletIcon).order_by(OutletIcon.domain)):
+        yield r.outlet_icon_record(icon)
+    if hot_only:
+        return
+
     for trial in _pages(session, select(RegistryTrial).order_by(RegistryTrial.id)):
         record, sha256 = payload_record(r.registry_payload(trial))
         yield record
@@ -340,13 +380,6 @@ def _gather(
         if label.link_lead_id in kept_leads:
             yield r.link_lead_label_record(label, lead_url_key=lead_keys[label.link_lead_id])
 
-    for decision in _pages(
-        session,
-        select(DecisionLog)
-        .where(DecisionLog.step.not_in(LOCAL_DECISION_STEPS))
-        .order_by(DecisionLog.id),
-    ):
-        yield r.decision_record(decision, names=names)
     for usage in _pages(session, select(LlmUsage).order_by(LlmUsage.id)):
         yield r.usage_record(usage)
     for measure in _all(session, MeasureDaily):
@@ -364,8 +397,6 @@ def _gather(
             unnamed["work_entry"] += 1
         else:
             yield r.work_entry_record(entry, record_key=named)
-    for icon in session.scalars(select(OutletIcon).order_by(OutletIcon.domain)):
-        yield r.outlet_icon_record(icon)
 
 
 @dataclass

@@ -4,6 +4,7 @@ D1's import takes it in by."""
 import json
 import os
 import subprocess
+import time
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
@@ -42,7 +43,9 @@ from thenwhat.store.push import (
 from thenwhat.store.tiers import (
     ALL,
     BOTH,
+    BULK,
     CHOICES,
+    HOT,
     answer_row,
     bulk_records,
     checks,
@@ -50,7 +53,18 @@ from thenwhat.store.tiers import (
     hash_of,
     hot_records,
     split_build,
+    tier_path,
 )
+from thenwhat.store.watermark import (
+    BULK_SOURCES,
+    HOT_SOURCES,
+    build_id,
+    bulk_unchanged,
+    sql_digest,
+    watermarks,
+)
+from thenwhat.store.watermark import read as watermark_read
+from thenwhat.store.watermark import write as watermark_write
 
 store_app = typer.Typer(help="Fill the truth store in bulk, and restore it.", no_args_is_help=True)
 
@@ -92,18 +106,46 @@ def build_command(
             " store.bulk.sqlite); hot or bulk: that one; all: the one whole file."
         ),
     ] = BOTH,
+    fresh: Annotated[
+        bool,
+        typer.Option(
+            "--fresh", help="Build every tier again, even one whose sources have not changed."
+        ),
+    ] = False,
 ) -> None:
     """Build the store from the database, through the store's own merge, as the hot tier
     loaded into D1 and the bulk tier kept as one file in R2 (docs/adr/0010). The database
     is only read. `<file>.pushed.json` records what the build holds, for
-    `thenwhat backfill push` to start from once it is loaded."""
+    `thenwhat backfill push` to start from once it is loaded.
+
+    A rebuild into the same folder leaves the bulk file as it is when none of its sources
+    has changed since the last build (`<file>.watermarks.json`; store/watermark.py) and
+    builds the hot tier only; --fresh builds both. `--tier hot` reads no bulk table."""
     if tier not in CHOICES:
         err.print(f"--tier is one of {', '.join(CHOICES)}.")
         raise typer.Exit(code=1)
     if not (store_sql / "merge.sql").is_file():
         err.print(f"No merge.sql in {store_sql}. Name the store's folder with --store-sql.")
         raise typer.Exit(code=1)
+    digest = sql_digest(store_sql)
+    started = time.monotonic()
     with reading_session() as session:
+        # A hot build reads only the hot tier's sources, its watermarks included.
+        marks = watermarks(session, HOT_SOURCES if tier == HOT else HOT_SOURCES + BULK_SOURCES)
+        before = {} if fresh else watermark_read(file)
+        kept = (
+            tier == BOTH
+            and tier_path(file, BULK).is_file()
+            and bulk_unchanged(before, marks, digest)
+        )
+        effective = HOT if kept else tier
+        if kept:
+            out.print(
+                f"The bulk tier's sources are as at build {before.get('build')}:"
+                f" {tier_path(file, BULK)} is kept; building the hot tier only.",
+                markup=False,
+            )
+        identity = build_id(marks, digest, tier)
         try:
             report = build(
                 session,
@@ -111,6 +153,8 @@ def build_command(
                 payloads=payloads,
                 store_sql=store_sql,
                 now=datetime.now(UTC),
+                hot_only=effective == HOT,
+                build_id=identity,
                 on_kind=lambda kind, count, seconds: out.print(
                     f"  {kind}: {count:,} read and merged in {seconds:,.1f} s", markup=False
                 ),
@@ -119,7 +163,8 @@ def build_command(
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None
     write_state(state_path(file), report.state)
-    write_state(bulk_state_path(file), report.state)
+    if effective != HOT:
+        write_state(bulk_state_path(file), report.state)
     out.print(f"Build {report.build_id}.", markup=False)
     out.print(f"Built the whole store ({_size(report.size)}) in {report.runs} runs.", markup=False)
     for kind in sorted(report.handed):
@@ -136,13 +181,15 @@ def build_command(
         out.print(f"{count:,} {kind} rows share a natural key with an earlier row.", markup=False)
     for kind, count in sorted(report.unnamed.items()):
         out.print(f"{count:,} {kind} rows name no record the store keeps.", markup=False)
-    for written in split_build(file, payloads, tier):
+    for written in split_build(file, payloads, effective, hot_only=effective == HOT):
         objects = payloads / written.stem.rsplit(".", 1)[-1]
         out.print(
             f"Wrote {written} ({_size(written.stat().st_size)})"
             + (f", its payload objects in {objects}." if tier != ALL else "."),
             markup=False,
         )
+    watermark_write(file, marks, digest, report.build_id)
+    out.print(f"Done in {time.monotonic() - started:,.0f} s.", markup=False)
 
 
 @store_app.command("checksum")

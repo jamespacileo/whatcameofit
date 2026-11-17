@@ -151,6 +151,7 @@ def runs_of(
     payloads: Path,
     report: BuildReport,
     on_kind: Callable[[str, int, float], None] = lambda *_: None,
+    hot_only: bool = False,
 ) -> Iterator[list[Record]]:
     """The build's runs in the order they are merged, as the records are read: every
     claim under its first slug, the renames, then everything else in runs of
@@ -181,7 +182,7 @@ def runs_of(
                 on_kind(kind, read[kind], time.monotonic() - at)
 
     in_claims = True
-    for record in stream(session, counts, keep_payload=keep_payload):
+    for record in stream(session, counts, keep_payload=keep_payload, hot_only=hot_only):
         report.state[f"{record.kind}\t{record.key}"] = body_sha256(record)
         read[record.kind] += 1
         if record.kind not in began:
@@ -272,10 +273,14 @@ def build(
     store_sql: Path,
     now: datetime,
     on_kind: Callable[[str, int, float], None] = lambda *_: None,
+    hot_only: bool = False,
+    build_id: str | None = None,
 ) -> BuildReport:
     """Make `path` a store file of everything the store keeps of what Postgres holds now.
     The session is only read. A file already at `path` is replaced."""
     report = BuildReport()
+    if build_id is not None:
+        report.build_id = build_id
     path.parent.mkdir(parents=True, exist_ok=True)
     path.unlink(missing_ok=True)
     merge = statements(store_sql / "merge.sql")
@@ -285,7 +290,9 @@ def build(
         db.execute("PRAGMA foreign_keys = ON")  # D1 enforces foreign keys
         db.execute("PRAGMA journal_mode = WAL")
         db.executescript((store_sql / "schema.sql").read_text())
-        for number, records in enumerate(runs_of(session, payloads, report, on_kind)):
+        for number, records in enumerate(
+            runs_of(session, payloads, report, on_kind, hot_only=hot_only)
+        ):
             if not records:
                 continue
             report.handed.update(record.kind for record in records)

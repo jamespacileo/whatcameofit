@@ -353,10 +353,20 @@ def tier_path(file: Path, tier: str) -> Path:
     return file.with_name(f"{file.stem}.{tier}{file.suffix}")
 
 
-def split_build(file: Path, payloads: Path, tier: str) -> list[Path]:
+def split_build(file: Path, payloads: Path, tier: str, *, hot_only: bool = False) -> list[Path]:
     """The tier files of a built store file, written beside it, with each tier's payload
     objects under `<payloads>/<tier>/`. For `all` the whole file is the one written; for
-    any other the whole file and its objects folder are removed once split."""
+    any other the whole file and its objects folder are removed once split. A build that
+    read only the hot tier (`hot_only`) is already its hot file: it is moved into place."""
+    if hot_only and tier == HOT:
+        target = tier_path(file, HOT)
+        file.replace(target)
+        objects, kept = payloads / "payload", payloads / HOT / "payload"
+        if objects.is_dir():
+            shutil.rmtree(kept, ignore_errors=True)
+            kept.parent.mkdir(parents=True, exist_ok=True)
+            objects.replace(kept)
+        return [target]
     if tier == ALL:
         return [file]
     wanted = [HOT, BULK] if tier == BOTH else [tier]
