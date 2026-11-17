@@ -300,7 +300,7 @@ def test_the_inbox_folds_into_the_bulk_file_once_and_is_cleared_after(
     def service(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/inbox":
             after = int(request.url.params["after"])
-            records = [r for r in inbox if r["seq"] > after]
+            records = [r for r in inbox if int(str(r["seq"])) > after]
             return httpx.Response(200, json={"records": records, "through": 3, "more": False})
         cleared.append(json.loads(request.content)["through"])
         return httpx.Response(200, json={"cleared": 3, "rows_removed": 3, "left": 0})
