@@ -34,7 +34,7 @@
 // beside it: each stage's seconds, the rows D1 says were written, the build's id.
 // `--dry-run` prints the plan and runs nothing.
 import { spawn } from "node:child_process";
-import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -75,6 +75,7 @@ const thenwhat = (...args) => ["uv", ["run", "--directory", pipeline, "thenwhat"
 const d1 = remote ? ["--remote", "--config", config, ...(production ? ["--production", database] : [])] : ["--persist-to", state];
 const r2 = remote ? ["--remote", ...(production ? ["--production", bucket] : [])] : ["--persist-to", state];
 const d1Wrangler = remote ? ["--remote", "--config", config] : ["--local", "--persist-to", state, "--config", config];
+const r2Wrangler = remote ? ["--remote", "--jurisdiction", "eu"] : ["--local", "--persist-to", state];
 const replaceCommands = [
   `npx wrangler d1 delete ${database}`,
   `npx wrangler d1 create ${database} --jurisdiction eu`,
@@ -103,7 +104,7 @@ const json = (text) => JSON.parse(text.slice(text.search(/[[{]/)));
 const query = async (statement) => json(await must([wrangler, ["d1", "execute", "STORE", ...d1Wrangler, "--yes", "--json", "--command", statement]], "D1 did not answer", { quiet: true }))[0].results;
 
 // ---- the stages ----
-const result = { env, database, bucket, build: null, started: new Date().toISOString(), stages: [], rows_written: null, rows: null, payload_objects: null, passed: false };
+const result = { env, database, bucket, build: null, bulk_build: null, started: new Date().toISOString(), stages: [], rows_written: null, rows: null, payload_objects: null, passed: false };
 const buildOf = (path) => { const db = new DatabaseSync(path, { readOnly: true }); try { return db.prepare("SELECT substr(id, 7, 16) AS build FROM run WHERE id LIKE 'build-%' ORDER BY id LIMIT 1").get()?.build || null; } finally { db.close(); } };
 
 async function writeConfig() {
@@ -186,19 +187,25 @@ const stages = [
     result.payload_objects = objects;
   }],
   ["bulk", "the bulk file, in parts, with its manifest", async () => {
-    await must(node("upload-bulk", bulk, ...r2, "--build", result.build, ...(remote ? [] : ["--state", join(work, "bulk.json")])));
+    // A rebuild may keep an unchanged bulk file, under the build that made it. If the
+    // bucket's manifest for that build already describes this very file, it is not sent again.
+    const back = join(work, `manifest-${env}-before.json`);
+    rmSync(back, { force: true });
+    const there = await run([wrangler, ["r2", "object", "get", `${bucket}/bulk/${result.bulk_build}/manifest.json`, "--file", back, ...r2Wrangler]], { quiet: true });
+    if (there.ok && existsSync(back) && JSON.parse(readFileSync(back, "utf8")).sha256 === (await sha256(bulk))) return say(`bulk build ${result.bulk_build} is already in the bucket, the same file: not sent again`);
+    await must(node("upload-bulk", bulk, ...r2, "--build", result.bulk_build, ...(remote ? [] : ["--state", join(work, "bulk.json")])));
   }],
   ["verify", "the bulk manifest read back and held to the file", async () => {
     if (!remote) {
       // On the local engine the whole file comes back and is compared.
-      await must(node("download-bulk", result.build, join(work, "bulk-back.sqlite"), ...r2));
+      await must(node("download-bulk", result.bulk_build, join(work, "bulk-back.sqlite"), ...r2));
       if ((await sha256(join(work, "bulk-back.sqlite"))) !== (await sha256(bulk))) throw new Failed("the bulk file that came back is not the one that went up");
       return say("the bulk file came back the same");
     }
     const file = join(work, `manifest-${env}-back.json`);
-    await must([wrangler, ["r2", "object", "get", `${bucket}/bulk/${result.build}/manifest.json`, "--file", file, "--remote", "--jurisdiction", "eu"]], "the bulk manifest could not be read back", { quiet: true });
+    await must([wrangler, ["r2", "object", "get", `${bucket}/bulk/${result.bulk_build}/manifest.json`, "--file", file, ...r2Wrangler]], "the bulk manifest could not be read back", { quiet: true });
     const manifest = JSON.parse(readFileSync(file, "utf8"));
-    if (manifest.sha256 !== (await sha256(bulk)) || manifest.build !== result.build) throw new Failed("the manifest in the bucket does not describe this bulk file");
+    if (manifest.sha256 !== (await sha256(bulk)) || manifest.build !== result.bulk_build) throw new Failed("the manifest in the bucket does not describe this bulk file");
     say(`the manifest in the bucket describes this bulk file: build ${manifest.build}, ${manifest.parts.length} part(s)`);
   }],
   ["export", "the export from the hot file against the working database", async () => {
@@ -225,8 +232,18 @@ for (const [name, path] of [["the hot file", hot], ["the bulk file", bulk]]) if 
 mkdirSync(out, { recursive: true });
 mkdirSync(work, { recursive: true });
 log = createWriteStream(join(out, `${env}-${stamp}.log`));
-result.build = buildOf(bulk) || buildOf(hot) || (await sha256(bulk)).slice(0, 16);
-say(`cut-over of ${env}: database ${database}, bucket ${bucket}, build ${result.build}`);
+// The hot file, and D1 after it, carry the build that made them. The bulk file carries
+// its own: a rebuild may keep an unchanged bulk file, and then the two differ. Where the
+// build left its note of both (`*.watermarks.json`), the files must agree with it.
+result.build = buildOf(hot) || (await sha256(hot)).slice(0, 16);
+result.bulk_build = buildOf(bulk) || (await sha256(bulk)).slice(0, 16);
+for (const name of readdirSync(dir).filter((one) => one.endsWith(".watermarks.json"))) {
+  const noted = JSON.parse(readFileSync(join(dir, name), "utf8"));
+  if ((noted.build && noted.build !== result.build) || (noted.bulk_build && noted.bulk_build !== result.bulk_build)) {
+    stop(`${name} says build ${noted.build} with bulk build ${noted.bulk_build}, but the files say ${result.build} and ${result.bulk_build}: this folder is not one build`);
+  }
+}
+say(`cut-over of ${env}: database ${database}, bucket ${bucket}, build ${result.build}${result.bulk_build === result.build ? "" : `, keeping bulk build ${result.bulk_build}`}`);
 const began = Date.now();
 let failed = null;
 for (const [n, [name, what, stage]] of stages.entries()) {
@@ -244,7 +261,7 @@ result.failed_at = failed;
 say("\n== times");
 for (const { stage, seconds, ok } of result.stages) say(`${stage.padEnd(13)} ${String(seconds.toFixed(1)).padStart(7)} s${ok ? "" : "   FAILED"}`);
 say(`${"total".padEnd(13)} ${String(result.seconds.toFixed(1)).padStart(7)} s`);
-say(`build ${result.build}; table rows ${result.rows ?? "?"}; rows D1 says were written ${result.rows_written ?? "not said"}; payload objects ${result.payload_objects ?? "?"}`);
+say(`build ${result.build}${result.bulk_build === result.build ? "" : ` (bulk build ${result.bulk_build})`}; table rows ${result.rows ?? "?"}; rows D1 says were written ${result.rows_written ?? "not said"}; payload objects ${result.payload_objects ?? "?"}`);
 const file = join(out, `result-${env}-${stamp}.json`);
 writeFileSync(file, JSON.stringify(result, null, 1) + "\n");
 say(failed ? `\nFAILED at ${failed}; result in ${file}` : `\nthe cut-over of ${env} passed; result in ${file}`);

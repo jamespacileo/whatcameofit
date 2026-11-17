@@ -249,6 +249,8 @@ A build's folder is what `thenwhat store build` leaves: `store.hot.sqlite`, `sto
 | 11 | verify | The bulk manifest read back and held to the file. On this machine the whole file comes back and is compared. |
 | 12 | export | On this machine only: `thenwhat export-compare` of the hot file against the working database (`ARGS="--skip-export"` leaves it out). |
 
+A rebuild may keep an unchanged bulk file. The hot file, and D1 after it, then carry the new build's id while the bulk file keeps the id of the build that made it; the bulk file is stored under its own id, and when the bucket's manifest for that id already describes the same file it is not sent again. Where the build left `<file>.watermarks.json`, the two files must agree with it or nothing is run.
+
 Production needs both `ENV=production` and `CONFIRM=thenwhat-store`, and every script it calls is given `--production` explicitly. Everything the steps print goes, as it arrives and unfiltered, to `<build's folder>/cutover/<env>-<time>.log`; the terminal shows the same with ids masked. `result-<env>-<time>.json` beside it has each stage's seconds, the rows D1 says were written, and the build's id. The log can hold a database's id: it stays in the build's folder and is not committed.
 
 If a stage fails after the import began, restore to the bookmark, or for the preview run again with `--replace`.
