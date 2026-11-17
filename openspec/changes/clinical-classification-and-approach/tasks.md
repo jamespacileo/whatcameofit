@@ -47,6 +47,13 @@
 - [x] 6.5 Link the clinical index from `/for/clinicians` and the topics page and add the pages to the sitemap. Verify with site tests for both links and the sitemap entries.
 - [x] 6.6 Record the new pages in `DESIGN.md`. Verify in a browser at phone width that the three new page kinds have no horizontal scroll.
 
+## 8. The checked condition term as a source
+
+- [x] 8.1 Derive a category from each approved reading of a MeSH descriptor as the claim's own condition, with its score, for every claim. Verify with session tests for: an approved exact reading, a broader one, one not approved, and a trial and a reading naming one category.
+- [x] 8.2 Export the source kind and score, regenerate the schema, and count term-only claims apart in `thenwhat clinical categories` and `thenwhat clinical compare`. Verify with an export test (Postgres and the store give the same) and the report tests.
+- [x] 8.3 Say on the claim page that the category is what the claim's own condition was read as, with the score. Verify with a site test.
+- [x] 8.4 Measure on the scratch copy how many claims gain a category and how often the reading equals a trial's own term; record both in `design.md`.
+
 ## 7. Integration
 
 - [x] 7.1 Run `make check` and verify ruff, ty, pytest and the site build pass.

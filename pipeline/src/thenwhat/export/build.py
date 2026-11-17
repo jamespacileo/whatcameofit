@@ -27,7 +27,7 @@ from thenwhat.claims.entities import intervention_components
 from thenwhat.claims.entry import name_key
 from thenwhat.claims.status import evidence_of, flags_of, keep_status
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
-from thenwhat.clinical.categories import Category
+from thenwhat.clinical.categories import Category, CheckedTerm, ClaimRecords
 from thenwhat.clinical.categories import derive as derive_categories
 from thenwhat.clinical.vocabulary import Vocabulary
 from thenwhat.db.models import (
@@ -97,6 +97,7 @@ from thenwhat.readings.service import readings_that_stand
 from thenwhat.sources import opentargets
 from thenwhat.sources.base import SourceRecord, record_url
 from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.mesh import Mesh
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
@@ -603,9 +604,12 @@ class ExportedStageReading(Strict):
 class ExportedCategorySource(Strict):
     """A record that gave a claim one of its clinical categories."""
 
-    kind: Literal["trial", "paper"]
-    # The trial's registry identifier, or the paper's identifier as in `papers`.
+    kind: Literal["trial", "paper", "term"]
+    # The trial's registry identifier, or the paper's identifier as in `papers`. For a
+    # term: the descriptor itself, read as the claim's own condition by the terms step.
     identifier: str
+    # The score of that reading, shown with it. None for a trial or a paper.
+    score: float | None = None
 
 
 class ExportedClinicalCategory(Strict):
@@ -1239,32 +1243,43 @@ def _unconfirmed_stage_reading(
     )
 
 
-def _clinical_categories(
-    events: list[EvidenceEvent], papers: _Papers, vocabulary: Vocabulary
-) -> list[Category] | None:
-    """The claim's clinical categories from its approved trial records and the index
-    records of its papers, or None while a MeSH record needed to place them is not read:
-    a paper heading whose descriptor is not stored, or a descriptor above a category."""
-    derived = derive_categories(
-        [
+def _clinical_records(
+    events: list[EvidenceEvent], papers: _Papers, terms: list[ClaimTerm]
+) -> ClaimRecords:
+    """What the claim's clinical categories are derived from: its approved trial
+    records, its papers' index records, and the approved readings of a MeSH descriptor as
+    its own condition."""
+    return ClaimRecords(
+        trials=tuple(
             (event.external_id, event.raw_payload)
             for event in events
             if event.source_name == ClinicalTrials.name and event.type in TRIAL_EVENT_TYPES
-        ],
-        papers.payloads.items(),
-        vocabulary,
+        ),
+        papers=tuple(papers.payloads.items()),
+        terms=tuple(
+            CheckedTerm(term.external_id, term.label, term.score)
+            for term in terms
+            if term.role is TermRole.CONDITION
+            and term.source_name == Mesh.name
+            and term.fit is TermFit.EXACT
+        ),
     )
+
+
+def _clinical_categories(given: ClaimRecords, vocabulary: Vocabulary) -> list[Category] | None:
+    """The claim's clinical categories, or None while a MeSH record needed to place them
+    is not read: a paper heading whose descriptor is not stored, or a descriptor above a
+    category."""
+    derived = derive_categories(given.trials, given.papers, vocabulary, given.terms)
     needed = [category.identifier for category in derived.categories]
     if derived.unread_headings or vocabulary.missing(needed):
         return None
     return list(derived.categories)
 
 
-def claim_clinical_records(
-    records: Records, claim: Claim
-) -> tuple[list[tuple[str, dict[str, Any]]], list[tuple[str, dict[str, Any]]]]:
-    """The claim's approved trial records and its papers' index records, as the export
-    gathers them: what its clinical categories are derived from, for the reports."""
+def claim_clinical_records(records: Records, claim: Claim) -> ClaimRecords:
+    """What the claim's clinical categories are derived from, as the export gathers it,
+    for the reports."""
     events = records.events(claim)
     entities = records.entities(claim)
     papers = _Papers(records)
@@ -1273,12 +1288,7 @@ def claim_clinical_records(
     names = [intervention.name, *intervention.synonyms] if intervention else []
     # Results papers are found as each trial is read.
     _trials(records, events, papers, intervention_names=names)
-    trials = [
-        (event.external_id, event.raw_payload)
-        for event in events
-        if event.source_name == ClinicalTrials.name and event.type in TRIAL_EVENT_TYPES
-    ]
-    return trials, list(papers.payloads.items())
+    return _clinical_records(events, papers, records.terms(claim))
 
 
 def _clinical(used: set[str], vocabulary: Vocabulary, not_read: int) -> ExportedClinical:
@@ -1402,7 +1412,7 @@ def build_export(
             reading_accept_above,
             [intervention.name, *intervention.synonyms],
         )
-        categories = _clinical_categories(events, papers, vocabulary)
+        categories = _clinical_categories(_clinical_records(events, papers, terms), vocabulary)
         if categories is None:
             categories_not_read += 1
         else:
@@ -1433,7 +1443,11 @@ def build_export(
                     ExportedClinicalCategory(
                         identifier=category.identifier,
                         sources=[
-                            ExportedCategorySource(kind=source.kind, identifier=source.identifier)
+                            ExportedCategorySource(
+                                kind=source.kind,
+                                identifier=source.identifier,
+                                score=None if source.score is None else round(source.score, 4),
+                            )
                             for source in category.sources
                         ],
                     )

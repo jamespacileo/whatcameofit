@@ -18,8 +18,21 @@ export interface Clinical {
 }
 
 export interface CategorySource {
-  kind: "trial" | "paper";
+  /**
+   * A trial or a paper that states the category itself, or "term": the claim's own
+   * condition, found in MeSH by its name and read as this category by the pipeline's
+   * term check. That reading is a model's, so its score is shown with it.
+   */
+  kind: "trial" | "paper" | "term";
   identifier: string;
+  score?: number | null;
+}
+
+/** How a category that rests on the reading of the claim's own condition says so. */
+export function termSourceSentence(score: number | null | undefined): string {
+  return score == null
+    ? "the claim's own condition, read as this category"
+    : `the claim's own condition, read as this category with a score of ${score.toFixed(2)}`;
 }
 
 export interface ClinicalCategory {

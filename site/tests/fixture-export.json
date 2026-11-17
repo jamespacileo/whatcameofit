@@ -1018,6 +1018,11 @@
             {
               "kind": "paper",
               "identifier": "pmid:90000009"
+            },
+            {
+              "kind": "term",
+              "identifier": "D010510",
+              "score": 0.9313
             }
           ]
         }

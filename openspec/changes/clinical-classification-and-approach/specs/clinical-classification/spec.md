@@ -36,8 +36,27 @@ A claim's clinical categories SHALL also include each MeSH descriptor that an ap
 - **WHEN** the paper lists "Diabetes Mellitus" as a heading that is not a major topic
 - **THEN** it does not become a clinical category
 
+### Requirement: Clinical categories from the claim's checked condition term
+A claim's clinical categories SHALL also include each MeSH descriptor that an approved term check read as the claim's own condition. The category SHALL carry the score of that reading. A term read as broader than the condition, and a reading that is not approved, SHALL NOT give a category. This SHALL apply to every claim alike, whether or not a trial or a paper gives it a category.
+
+#### Scenario: Claim with a checked condition term
+- **WHEN** a claim has no approved trial and its condition was read as "Psoriasis" with a score of 0.93 and approved by rule
+- **THEN** "Psoriasis" is one of the claim's clinical categories, from that reading, with the score 0.93
+
+#### Scenario: Term read as broader
+- **WHEN** the term check read "Skin Diseases" as broader than the claim's condition
+- **THEN** "Skin Diseases" is not one of the claim's own categories
+
+#### Scenario: Reading not approved
+- **WHEN** a reading of the claim's condition scored below the approval threshold and waits
+- **THEN** it gives the claim no clinical category
+
+#### Scenario: A trial and the reading agree
+- **WHEN** an approved trial lists "Psoriasis" and the claim's condition was also read as "Psoriasis"
+- **THEN** the claim has the one category "Psoriasis", naming both the trial and the reading
+
 ### Requirement: Each category names the records that gave it
-A claim's clinical category SHALL record every approved trial and approved paper that gave it. The categories SHALL be derived from the stored records each time they are read, and SHALL be the same whichever store they are read from. A category SHALL NOT be entered by hand.
+A claim's clinical category SHALL record every approved trial, approved paper and approved reading of its condition that gave it. The categories SHALL be derived from the stored records each time they are read, and SHALL be the same whichever store they are read from. A category SHALL NOT be entered by hand.
 
 #### Scenario: Two sources
 - **WHEN** a trial and a paper of the claim both give "Psoriasis"
@@ -100,7 +119,7 @@ Derived topics SHALL NOT change a claim's vertical and SHALL NOT be exported or 
 - **THEN** the claim stays under "Skin and hair" and its topic page is unchanged
 
 ### Requirement: Measured comparison of derived topics with filed verticals
-The pipeline SHALL report, on request, for all unarchived claims: how many have a derived topic in the group of their vertical (agrees), how many have derived topics and none in that group (disagrees), how many have none to compare and why, how many have more than one derived topic, and the count per topic. It SHALL read stored records only.
+The pipeline SHALL report, on request, for all unarchived claims: how many have a derived topic in the group of their vertical (agrees), how many of those rest only on the reading of the claim's own condition, how many have derived topics and none in that group (disagrees), how many have none to compare and why, how many have more than one derived topic, and the count per topic. It SHALL read stored records only.
 
 #### Scenario: Counts
 - **WHEN** an operator asks for the comparison over 970 claims

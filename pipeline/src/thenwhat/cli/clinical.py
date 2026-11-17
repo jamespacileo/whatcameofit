@@ -123,15 +123,23 @@ def categories_command(
                 return
             out.print(f"{claim.slug}: {_categories(len(placed.categories))}", markup=False)
             for category in placed.categories:
-                sources = ", ".join(f"{s.kind} {s.identifier}" for s in category.sources)
+                sources = ", ".join(
+                    f"its own condition, read at {s.score:.2f}"
+                    if s.kind == "term" and s.score is not None
+                    else "its own condition"
+                    if s.kind == "term"
+                    else f"{s.kind} {s.identifier}"
+                    for s in category.sources
+                )
                 out.print(f"  {category.label} ({category.identifier}): {sources}", markup=False)
             return
         claims = unarchived_claims(session)
         counted = coverage(records, claims, vocabulary)
         out.print(
             f"{_count(len(claims), 'claim')}: {counted.from_trials:,} with a category from a"
-            f" trial, {counted.from_papers_only:,} from papers only, {counted.none:,} with"
-            f" none, {counted.not_read:,} not yet read.",
+            f" trial, {counted.from_papers_only:,} from papers only,"
+            f" {counted.from_term_only:,} only from the reading of their own condition,"
+            f" {counted.none:,} with none, {counted.not_read:,} not yet read.",
             markup=False,
         )
         if counted.not_read:
@@ -184,7 +192,9 @@ def compare_command(
             markup=False,
         )
         out.print(
-            f"{result.several_topics:,} fall under more than one topic.",
+            f"{result.several_topics:,} fall under more than one topic."
+            f" {result.agrees_by_term_only:,} of those that agree rest only on the reading"
+            " of the claim's own condition.",
             markup=False,
         )
         for topic, title in VERTICALS.items():

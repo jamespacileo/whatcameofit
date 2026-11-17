@@ -1990,6 +1990,9 @@ def store_descriptor(
     session.flush()
 
 
+TRIAL_SOURCE = {"kind": "trial", "identifier": "NCT02586935", "score": None}
+
+
 def autism_tree(session: Session) -> None:
     """The descriptors the recorded trial's two condition terms need, to the tree's top."""
     store_descriptor(session, "D001523", "Mental Disorders", "F03")
@@ -2014,8 +2017,8 @@ def test_a_claims_clinical_categories_are_exported_with_the_tree_above_them(
     export = exported(session)
 
     assert claim_in(export)["clinical_categories"] == [
-        {"identifier": "D000067877", "sources": [{"kind": "trial", "identifier": "NCT02586935"}]},
-        {"identifier": "D001321", "sources": [{"kind": "trial", "identifier": "NCT02586935"}]},
+        {"identifier": "D000067877", "sources": [TRIAL_SOURCE]},
+        {"identifier": "D001321", "sources": [TRIAL_SOURCE]},
     ]
     clinical = export["clinical"]
     assert (clinical["mesh_years"], clinical["claims_not_read"]) == (["2026"], 0)
@@ -2057,3 +2060,31 @@ def test_a_claim_whose_records_give_no_category_exports_an_empty_list(session: S
 
     assert claim_in(export)["clinical_categories"] == []
     assert export["clinical"]["claims_not_read"] == 0
+
+
+def test_the_reading_of_a_claims_own_condition_is_exported_with_its_score(session: Session):
+    """Scenario: Claim with a checked condition term. No trial and no paper gives it."""
+    claim = new_claim(session)
+    autism_tree(session)
+    term = ClaimTerm(
+        claim_id=claim.id,
+        role=TermRole.CONDITION,
+        source_name="mesh",
+        external_id="D000067877",
+        label="Autism Spectrum Disorder",
+        score=0.93126,
+        fit=TermFit.EXACT,
+    )
+    session.add(term)
+    session.flush()
+    decide_item(session, "term", term.id, ReviewState.APPROVED, now=EARLIER)
+
+    export = exported(session)
+
+    assert claim_in(export)["clinical_categories"] == [
+        {
+            "identifier": "D000067877",
+            "sources": [{"kind": "term", "identifier": "D000067877", "score": 0.9313}],
+        }
+    ]
+    assert "D001523" in [node["identifier"] for node in export["clinical"]["nodes"]]

@@ -22,8 +22,15 @@ from thenwhat.clinical.service import (
     read_tree,
     stored_vocabulary,
 )
-from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, TermRecord
-from thenwhat.domain import Decider, EventType, ReviewState
+from thenwhat.db.models import (
+    Claim,
+    ClaimTerm,
+    Entity,
+    EntityMatch,
+    EvidenceEvent,
+    TermRecord,
+)
+from thenwhat.domain import Decider, EventType, ReviewState, TermFit, TermRole
 from thenwhat.export.records import PostgresRecords
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
@@ -264,6 +271,61 @@ def test_coverage_counts_claims_by_where_their_categories_come_from(session: Ses
     )
 
 
+def with_condition_term(
+    session: Session, claim: Claim, identifier: str, *, fit: TermFit, approved: bool = True
+) -> ClaimTerm:
+    """The terms step's reading of a MeSH descriptor as the claim's condition."""
+    term = ClaimTerm(
+        claim_id=claim.id,
+        role=TermRole.CONDITION,
+        source_name="mesh",
+        external_id=identifier,
+        label=TREE[identifier][0],
+        score=0.93 if approved else 0.55,
+        fit=fit,
+    )
+    session.add(term)
+    session.flush()
+    if approved:
+        record_decision(term, ReviewState.APPROVED, by=Decider.RULE, now=NOW)
+        session.flush()
+    return term
+
+
+def test_an_approved_reading_of_the_claims_own_condition_is_a_category(session: Session):
+    """Scenarios: Claim with a checked condition term; Term read as broader; Reading not
+    approved"""
+    store(session, *TREE)
+    claim = new_claim(session, "cream-a")
+    with_condition_term(session, claim, "D011565", fit=TermFit.EXACT)
+    with_condition_term(session, claim, "D012871", fit=TermFit.BROADER)
+    with_condition_term(session, claim, "D012878", fit=TermFit.EXACT, approved=False)
+    records = PostgresRecords(session)
+    vocabulary = stored_vocabulary(records)
+
+    placed = clinical_of(records, claim, vocabulary)
+
+    assert [(c.label, [(s.kind, s.score) for s in c.sources]) for c in placed.categories] == [
+        ("Psoriasis", [("term", 0.93)])
+    ]
+    assert coverage(records, [claim], vocabulary).from_term_only == 1
+    result = compare(session, [claim], vocabulary)
+    assert (result.agrees, result.agrees_by_term_only) == (1, 1)
+
+
+def test_a_trial_and_the_claims_own_condition_both_name_a_category(session: Session):
+    store(session, *TREE)
+    claim = new_claim(session, "cream-a")
+    with_trial(session, claim, "NCT00000001", "D011565")
+    with_condition_term(session, claim, "D011565", fit=TermFit.EXACT)
+    records = PostgresRecords(session)
+
+    placed = clinical_of(records, claim, stored_vocabulary(records))
+
+    assert [[s.kind for s in c.sources] for c in placed.categories] == [["term", "trial"]]
+    assert compare(session, [claim], stored_vocabulary(records)).agrees_by_term_only == 0
+
+
 def test_the_comparison_counts_every_claim_once(session: Session):
     """Scenarios: Counts; Suggested group differs; Nothing to compare"""
     claims = three_claims(session)
@@ -354,8 +416,9 @@ def test_categories_counts_every_claim_and_refuses_an_unknown_one(run, session: 
     counted = run("categories")
     refused = run("categories", "no-such-claim")
 
-    assert "3 claims: 2 with a category from a trial, 0 from papers only, 1 with none" in (
-        counted.output
+    assert (
+        "3 claims: 2 with a category from a trial, 0 from papers only, 0 only from the"
+        " reading of their own condition, 1 with none" in counted.output
     )
     assert refused.exit_code == 1 and "no-such-claim" in refused.output
 

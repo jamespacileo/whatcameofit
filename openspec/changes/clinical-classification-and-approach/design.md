@@ -108,6 +108,19 @@ Unchanged from the first version of this change:
 
 *Alternative considered:* the majority type. Rejected: a majority of mis-typed records would set a wrong approach with a confident-looking basis.
 
+### 10. The reading of a claim's own condition is a third source, with its score
+
+Asked by the operator on 2026-11-17: can the decision models attach MeSH codes where they are missing? Most of it existed. The terms step (openspec knowledge-cards) finds the MeSH descriptors whose label or entry term equals the claim's indication, and a decision reads each as the condition itself, broader, or something else, with a score; a reading at or above the threshold is approved by rule. An approved reading of "the condition itself" is now a category source of kind `term`.
+
+- **Every claim, not only bare ones.** The reading is applied wherever it exists, and is named as a source beside any trial or paper. Using it only when the records give nothing would be a second, weaker path that takes over silently; a labelled source applied alike is one path.
+- **The score goes with it.** A trial and a paper state their terms; this is a model's reading, so the export carries its score and the claim page shows it.
+- **Exact only.** A term read as broader is not the claim's category; the tree already places what is broader.
+- **Approved only.** A reading below the approval threshold gives no category. The lower band of ADR 0004 (shown, marked, counting for nothing) is not built for categories: 44 such readings exist on the copy, and showing them needs a second list on the claim page. Left for a later change, with that count.
+- **No store change.** Claim terms are already in both stores and already read by the export.
+- **Counted apart in the comparison.** A model read the condition and a model chose the vertical, so their agreeing is weaker evidence than a registry's. `clinical compare` says how many agreeing claims rest on the reading alone.
+
+*Not done:* having a model propose a descriptor from free text when no label matches. The model would then pick from an open vocabulary and not judge candidates a rule found. Held until the remaining bare claims are counted with the tree read.
+
 ### 9. Measure before each first write
 
 On the writer, before anything is published:
@@ -167,6 +180,12 @@ Not the writer's data. The MacBook's `thenwhat` was frozen on 2026-11-16 at migr
 - The disagreements are of the three kinds Decision 6 names. Mapping: hypercholesterolaemia and hyperaldosteronism sit in MeSH under metabolic and endocrine disease, and are filed here under heart and circulation. Filing: `varespladib-snakebite-envenoming` is filed under infections. Defensible: a GLP-1 drug for sleep apnoea, whose trials are indexed under obesity.
 
 **What this says about the switch-over.** Deriving the group agrees with today's filing almost always, so the mapping is sound enough to suggest a group. Showing a claim under every derived topic is another matter: two thirds of claims would appear under several, and some of those are noise from the pooled conditions of all a claim's trials (`flibanserin-lack-of-sexual-desire-in-women` reaches cancer through a trial in people with breast cancer; `biological-ageing-glp-1-drugs` reaches infections). Before claims are shown under several friendly topics, the derivation needs a narrower input than "every condition of every approved trial": for example only terms that a majority of the claim's trials share. That is a question for the switch-over change, with these numbers as its starting point.
+
+**The reading of the claim's own condition as a source** (same copy, 594 claims):
+
+- 227 claims have an approved reading of their condition as a MeSH descriptor.
+- Of the 251 claims with no trial term, 85 gain a category from it: 42 that had nothing at all and 43 that had only paper headings not yet filtered. Claims with nothing fall from 110 to 68.
+- Where a claim has both a trial term and a reading (142 claims), the reading is one of the trials' own terms in 136 (96%). That is the one check available of the term reading against an independent source, and it holds.
 
 ### Still to measure
 

@@ -490,7 +490,8 @@
         "kind": {
           "enum": [
             "trial",
-            "paper"
+            "paper",
+            "term"
           ],
           "title": "Kind",
           "type": "string"
@@ -498,6 +499,18 @@
         "identifier": {
           "title": "Identifier",
           "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
         }
       },
       "required": [

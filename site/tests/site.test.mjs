@@ -1975,6 +1975,14 @@ test("Scenario: Category from a trial and a paper, on the claim page", () => {
   assert.match(source, /paper\s*<a href="[^"]+">10\.5555\/synthetic\.results<\/a>/);
 });
 
+test("Scenario: Category from the reading of the claim's own condition shows its score", () => {
+  const html = page("approved-claim/index.html");
+  const row = html.slice(html.indexOf('href="/clinical/D010510">Periodontal Diseases'));
+  const source = row.slice(0, row.indexOf("</li>"));
+  assert.match(source, /paper\s*pmid:90000009/);
+  assert.match(source, /the claim&#39;s own condition, read as this category with a score of 0\.93/);
+});
+
 test("Scenario: Claim with no category, or whose categories are not yet read, shows none", () => {
   assert.ok(!page("quiet-claim/index.html").includes('class="clinical"'));
 });

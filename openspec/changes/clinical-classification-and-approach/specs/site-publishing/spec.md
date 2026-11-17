@@ -58,6 +58,10 @@ A claim page SHALL list the claim's clinical categories by their MeSH names, eac
 - **WHEN** a reader opens a claim whose category "Psoriasis" came from one trial and one paper
 - **THEN** the page shows "Psoriasis" linking to its category page, and names that trial and that paper as its source
 
+#### Scenario: Category from the reading of the claim's condition
+- **WHEN** a reader opens a claim whose category "Psoriasis" came from the reading of its own condition, scored 0.93
+- **THEN** the page says the category is what the claim's own condition was read as, and shows the score 0.93
+
 #### Scenario: Claim with no category
 - **WHEN** a reader opens a claim with no clinical category
 - **THEN** the page shows no clinical category list

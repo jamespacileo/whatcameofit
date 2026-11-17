@@ -7,13 +7,13 @@ way the export does and derives from them, so a report and the export always agr
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Protocol
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.verticals import GROUPS, VERTICAL_GROUPS, VERTICALS
-from thenwhat.clinical.categories import Category, Derived, derive
+from thenwhat.clinical.categories import Category, ClaimRecords, Derived, derive
 from thenwhat.clinical.topics import (
     TOPIC_DESCRIPTORS,
     DerivedTopic,
@@ -28,8 +28,6 @@ from thenwhat.domain import EntityType
 from thenwhat.export.build import claim_clinical_records
 from thenwhat.export.records import PostgresRecords, Records
 from thenwhat.sources.base import SourceRecord
-
-Payloads = list[tuple[str, dict[str, Any]]]
 
 
 class MeshSource(Protocol):
@@ -60,16 +58,15 @@ class ClaimClinical:
         return self.derived.categories
 
 
-def _placed(trials: Payloads, papers: Payloads, vocabulary: Vocabulary) -> ClaimClinical:
-    derived = derive(trials, papers, vocabulary)
+def _placed(given: ClaimRecords, vocabulary: Vocabulary) -> ClaimClinical:
+    derived = derive(given.trials, given.papers, vocabulary, given.terms)
     missing = vocabulary.missing(category.identifier for category in derived.categories)
     return ClaimClinical(derived, tuple(missing))
 
 
 def clinical_of(records: Records, claim: Claim, vocabulary: Vocabulary) -> ClaimClinical:
     """The claim's clinical categories now, and what is still to be read for them."""
-    trials, papers = claim_clinical_records(records, claim)
-    return _placed(trials, papers, vocabulary)
+    return _placed(claim_clinical_records(records, claim), vocabulary)
 
 
 # --- reading the tree ------------------------------------------------------------------
@@ -114,8 +111,8 @@ def read_tree(
         vocabulary = stored_vocabulary(records)
         wanted = set(mapped_descriptors(mapping))
         headings: set[str] = set()
-        for trials, papers in gathered:
-            placed = _placed(trials, papers, vocabulary)
+        for given in gathered:
+            placed = _placed(given, vocabulary)
             wanted.update(category.identifier for category in placed.categories)
             headings.update(placed.derived.unread_headings)
         waiting = [one for one in vocabulary.missing(wanted) if one not in asked]
@@ -149,8 +146,14 @@ class Coverage:
 
     from_trials: int = 0
     from_papers_only: int = 0
+    # Only from the reading of the claim's own condition: a model's, not a record's.
+    from_term_only: int = 0
     none: int = 0
     not_read: int = 0
+
+
+def _kinds(placed: ClaimClinical) -> set[str]:
+    return {source.kind for category in placed.categories for source in category.sources}
 
 
 def coverage(records: Records, claims: Sequence[Claim], vocabulary: Vocabulary) -> Coverage:
@@ -161,10 +164,12 @@ def coverage(records: Records, claims: Sequence[Claim], vocabulary: Vocabulary) 
             counted.not_read += 1
         elif not placed.categories:
             counted.none += 1
-        elif any(source.kind == "trial" for one in placed.categories for source in one.sources):
+        elif _kinds(placed) & {"trial"}:
             counted.from_trials += 1
-        else:
+        elif _kinds(placed) & {"paper"}:
             counted.from_papers_only += 1
+        else:
+            counted.from_term_only += 1
     return counted
 
 
@@ -183,6 +188,10 @@ class Comparison:
     """Derived topics against the vertical each claim is filed under."""
 
     agrees: int = 0
+    # Of those that agree, the ones whose categories rest on the reading of the claim's
+    # own condition alone. A model read the condition and a model chose the vertical, so
+    # their agreeing is weaker evidence than a registry's or an index's.
+    agrees_by_term_only: int = 0
     disagreeing: list[Disagreement] = field(default_factory=list)
     # Nothing to compare, by why.
     no_category: int = 0
@@ -239,6 +248,8 @@ def compare(session: Session, claims: Sequence[Claim], vocabulary: Vocabulary) -
             result.several_topics += 1
         if VERTICAL_GROUPS.get(claim.vertical) in {topic.group for topic in topics}:
             result.agrees += 1
+            if _kinds(placed) == {"term"}:
+                result.agrees_by_term_only += 1
         else:
             result.disagreeing.append(
                 Disagreement(
