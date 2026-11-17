@@ -1218,15 +1218,31 @@ const sentenceJson = sentences
   type ListingManifest = { set: string; records_read: string | null; columns: string[]; total: number; parts: ListingPart[] };
   let trialListing: Promise<ListingManifest> | undefined;
   const loadListing = () =>
-    (trialListing ??= fetch("/trials-listing.json").then((response) => {
+    (trialListing ??= fetch("/trials-listing.json", { cache: "no-cache" }).then((response) => {
       if (!response.ok) throw new Error(`trial listing ${response.status}`);
       return response.json();
     }));
+  class MissingListingPart extends Error {}
+  // An old part can disappear at deployment. Re-evaluate the entire operation against
+  // the new manifest once, including the ID range or the limit for automatic searches.
+  async function withListing<T>(manifest: ListingManifest, read: (current: ListingManifest) => Promise<T>): Promise<T> {
+    try {
+      return await read(manifest);
+    } catch (error) {
+      if (!(error instanceof MissingListingPart)) throw error;
+      const previous = trialListing;
+      if (await previous === manifest && trialListing === previous) trialListing = undefined;
+      return read(await loadListing());
+    }
+  }
   const listingParts = new Map<string, Promise<{ columns: string[]; trials: unknown[][] }>>();
   function loadPart(part: ListingPart) {
     let read = listingParts.get(part.file);
     if (!read) {
       read = fetch(part.file).then((response) => {
+        if (response.status === 404 || response.status === 410 || response.headers?.get("content-type")?.includes("text/html")) {
+          throw new MissingListingPart(part.file);
+        }
         if (!response.ok) throw new Error(`trial listing part ${response.status}`);
         return response.json();
       });
@@ -1238,16 +1254,20 @@ const sentenceJson = sentences
   }
   /** The listed trial with this registry number: the manifest, then the one part. */
   async function listedTrial(id: string) {
-    const part = partFor(await loadListing(), id) as ListingPart | null;
-    return part ? (findListed(await loadPart(part), id) as ListedTrial | null) : null;
+    return withListing(await loadListing(), async (manifest) => {
+      const part = partFor(manifest, id) as ListingPart | null;
+      return part ? (findListed(await loadPart(part), id) as ListedTrial | null) : null;
+    });
   }
   // Every part, as one listing. Kept once read, so a later search reads nothing.
-  let wholeListing: { columns: string[]; trials: unknown[][] } | undefined;
+  const wholeListings = new WeakMap<ListingManifest, { columns: string[]; trials: unknown[][] }>();
   async function loadWholeListing(manifest: ListingManifest) {
-    if (wholeListing) return wholeListing;
+    const cached = wholeListings.get(manifest);
+    if (cached) return cached;
     const read = await Promise.all(manifest.parts.map(loadPart));
-    wholeListing = { columns: manifest.columns, trials: read.flatMap((part) => part.trials) };
-    return wholeListing;
+    const listing = { columns: manifest.columns, trials: read.flatMap((part) => part.trials) };
+    wholeListings.set(manifest, listing);
+    return listing;
   }
   // Which published claims cite which trials, as the Worker reads it: built from the
   // export, so it counts a trial cited through an approved match as well as through an
@@ -1336,14 +1356,16 @@ const sentenceJson = sentences
       if (found.total > found.trials.length) group.append(element("p", SEARCH_WORDS.more(found.total - found.trials.length), "match-more"));
       return true;
     };
-    if (wholeListing || manifest.parts.length <= PARTS_SEARCHED_AT_ONCE) {
-      let listing: unknown;
-      try {
-        listing = await loadWholeListing(manifest);
-      } catch {
-        return;
-      }
-      if (asked === latest && fill(listing, false)) place();
+    async function searchParts(current: ListingManifest, asking: boolean) {
+      manifest = current;
+      if (!asking && !wholeListings.has(current) && current.parts.length > PARTS_SEARCHED_AT_ONCE) return false;
+      const listing = await loadWholeListing(current);
+      if (asked === latest && fill(listing, asking) && !asking) place();
+      return true;
+    }
+    try {
+      if (await withListing(manifest, (current) => searchParts(current, false)) || asked !== latest) return;
+    } catch {
       return;
     }
     const button = element("button", SEARCH_WORDS.ask(manifest.total), "text-control listed-ask") as HTMLButtonElement;
@@ -1354,7 +1376,7 @@ const sentenceJson = sentences
       button.disabled = true;
       status.textContent = SEARCH_WORDS.reading;
       try {
-        fill(await loadWholeListing(manifest), true);
+        await withListing(manifest, (current) => searchParts(current, true));
       } catch {
         button.disabled = false;
         status.textContent = SEARCH_WORDS.unread;

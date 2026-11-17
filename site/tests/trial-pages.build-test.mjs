@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 // The plain trial page and the trial listing, checked in a build of tests/fixture-export.json
 // with tests/fixture-trials-listing.json beside it. Every record is synthetic; the registry
 // is a stand-in and nothing is fetched. Scenario names are from openspec trial-pages.
@@ -235,6 +236,8 @@ test("the built listing is the pipeline's file, and a claim page does not fetch 
   assert.deepEqual(built.flatMap((part) => part.trials), [...listing.trials].sort((a, b) => a[0].localeCompare(b[0])));
   for (const [at, part] of built.entries()) {
     assert.deepEqual({ ...part, trials: [] }, { ...listing, trials: [] }, "a part is a listing in itself");
+    const hash = createHash("sha256").update(JSON.stringify(part)).digest("hex");
+    assert.ok(manifest.parts[at].file.endsWith(`-${hash}.json`), "a changed part must have a new address");
     assert.equal(manifest.parts[at].first, part.trials[0][0]);
     assert.equal(manifest.parts[at].last, part.trials.at(-1)[0]);
     assert.equal(manifest.parts[at].trials, part.trials.length);
