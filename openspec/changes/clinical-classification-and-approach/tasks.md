@@ -9,8 +9,8 @@
 
 ## 2. Running the approach rule
 
-- [ ] 2.1 Call the session function from `thenwhat prepare` for each claim it handles, after trial matches are decided, and from the daily trial refresh for each claim it changes. Verify with a `prepare` test that a drafted claim with unanimous drug trials ends with the approach drug and its basis.
-- [ ] 2.2 Add `thenwhat claim approaches` with `--dry-run` and `--unset`; `--dry-run` also reports agreement with approaches not set by rule. Verify with one success and one refusal CLI test, and a test that `--dry-run` writes nothing.
+- [x] 2.1 Call the session function at the end of `fetch_claim`, once the registry records are stored: `thenwhat prepare` and the daily trial refresh both reach a claim's trials through `thenwhat fetch`. Verify with a fetch test that a claim with a drug trial naming its intervention ends with the approach drug and its basis.
+- [x] 2.2 Add `thenwhat claim approaches` with `--dry-run` and `--unset`; `--dry-run` also reports agreement with approaches not set by rule. Verify with one success and one refusal CLI test, and a test that `--dry-run` writes nothing.
 - [ ] 2.3 Add the approach basis to the exported claim, regenerate `site/export.schema.json` and `site/data/seed-export.json`, add site wording per registry type in `site/src/lib/approach.ts`, and state the basis beside the approach label. Verify with export tests and site tests for a rule-set approach, an operator-set approach and an unworded type.
 - [ ] 2.4 Document the command, the table and the "never overwrite" rule in `GLOSSARY.md` (Approach) and the README's command list. Verify the documented commands run as written.
 
