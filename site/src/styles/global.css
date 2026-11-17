@@ -70,6 +70,11 @@
   --radius-s: 0.65rem;
   --row-pad: 0.8rem;
   --row-rule: var(--rule-soft);
+  /* The rule a section's body starts under: half the ink, so it heads the rows without
+     being the loudest line on the page. */
+  --head-rule: color-mix(in oklab, var(--ink) 50%, var(--paper));
+  /* The round mark of anything that folds: a section's heading, a fact's row. */
+  --fold-mark: 1.6rem;
   /* The type scale (openspec type-scale): seven steps for running text and four named
      roles. Every font-size in this file is one of them, a title's clamp or inherit; a
      test holds the file to it (tests/primitives.test.mjs). Root is 17px. */
@@ -2134,7 +2139,7 @@ main nav.contents ul li + li {
    claim's own facts as one line of three at the foot. */
 .glance-rows {
   margin: 0.7rem 0 0;
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--head-rule);
 }
 
 .glance-rows > div {
@@ -2284,7 +2289,7 @@ main nav.contents ul li + li {
   gap: 0.8rem 1.25rem;
   margin: 0;
   padding: 0.9rem 0 0.95rem;
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 2px solid var(--head-rule);
 }
 
 .glance-facts dd {
@@ -5907,7 +5912,7 @@ main ul:not([class]) li + li {
 
 .brief .take-why + .brief-group {
   margin-top: 1rem;
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--head-rule);
 }
 
 .brief-group + .brief-group {
@@ -5915,7 +5920,7 @@ main ul:not([class]) li + li {
 }
 
 .brief-group:last-child {
-  border-bottom: 2px solid var(--ink);
+  border-bottom: 2px solid var(--head-rule);
 }
 
 .brief-group h3 {
@@ -6537,13 +6542,19 @@ body.framed {
 }
 
 /* A heading that folds its section: the heading holds the button, and the button's
-   reach is the whole line. What follows the heading in its section is the body. */
+   reach is the whole line. What follows the heading in its section is the body.
+   The title starts at the section's left edge, where its rows start; the fold's mark
+   stands at the right edge, over the marks of the rows that open. */
 .fold-head {
   position: relative;
   display: flex;
   align-items: baseline;
   gap: 0.2rem 0.75rem;
   margin: clamp(2rem, 6vw, 2.75rem) 0 0;
+}
+
+.js .fold-head {
+  padding-right: calc(var(--fold-mark) + 0.75rem);
 }
 
 .fold-head .bar {
@@ -6580,12 +6591,16 @@ body.framed {
   inset: -0.5rem 0;
 }
 
+/* The fold mark: a round chevron at the end of the heading's first line. It points up
+   while the section is open and down while it is folded, as a row's does. */
 .js .fold .chev {
+  position: absolute;
+  top: calc((1lh - var(--fold-mark)) / 2);
+  right: 0;
   display: grid;
   place-items: center;
-  flex: none;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: var(--fold-mark);
+  height: var(--fold-mark);
   border-radius: 50%;
   background: var(--tint);
   color: var(--blue);
@@ -6597,11 +6612,12 @@ body.framed {
 }
 
 .fold .chev svg {
+  rotate: 180deg;
   transition: rotate 200ms var(--ease-out);
 }
 
 .fold[aria-expanded="false"] .chev svg {
-  rotate: -90deg;
+  rotate: 0deg;
 }
 
 .fold-note {
@@ -6896,13 +6912,15 @@ body.framed {
   .fold-note,
   .fold-head > a {
     flex-basis: 100%;
-    margin-left: 2.2rem;
+    margin-left: 0;
     text-align: left;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .fold .chev svg,
+  .glance-open .chev,
+  .glance-open .chev svg,
   .onpage a,
   .onpage::before,
   .onpage::after {
@@ -7921,7 +7939,7 @@ body.framed {
 .sheet .table-frame,
 .sheet .trial-table {
   border: 0;
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--head-rule);
   border-bottom: 1px solid var(--rule);
   border-radius: 0;
 }
@@ -7930,7 +7948,7 @@ body.framed {
 .sheet .paper-list,
 .sheet .record-list,
 .sheet .organisation-list {
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--head-rule);
 }
 
 .sheet .statement-list > li:first-child,
@@ -7997,7 +8015,7 @@ body.framed {
   position: sticky;
   top: var(--sticky-top, 0);
   z-index: 3;
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--head-rule);
 }
 
 /* A group's own column names: read out, not drawn. */
@@ -8255,15 +8273,18 @@ body.framed {
   border-color: var(--ring);
 }
 
-/* The press: a chevron in the grey of the brief's, at the end of the value's line. */
+/* The press: the fold mark, round, at the end of the value's line and under the
+   section's own. Grey and bare at rest; filled, in the link's blue, under the pointer
+   and while the row is open. */
 .glance-open {
   grid-column: 3;
   grid-row: 1;
+  align-self: start;
   display: inline-flex;
-  align-items: center;
-  min-height: 1.6rem;
+  margin: -0.05rem 0;
   padding: 0;
   border: 0;
+  border-radius: 50%;
   background: none;
   color: var(--muted);
   font: inherit;
@@ -8282,26 +8303,42 @@ body.framed {
 .glance-open .chev {
   display: grid;
   place-items: center;
+  width: var(--fold-mark);
+  height: var(--fold-mark);
+  border-radius: 50%;
+  transition:
+    background-color 120ms,
+    color 120ms;
 }
 
 .glance-open .chev svg {
-  transition: transform 160ms var(--ease-out);
+  transition: rotate 200ms var(--ease-out);
 }
 
 .glance-open[aria-expanded="true"] .chev svg {
-  transform: rotate(180deg);
+  rotate: 180deg;
 }
 
-/* The whole line is the press; what the row opens to is not. */
+.js .glance-open:hover .chev,
+.js .glance-rows > div[data-open] .glance-open .chev {
+  background: var(--tint);
+  color: var(--blue);
+}
+
+.js .glance-rows > div[data-open] .glance-open:hover .chev {
+  background: var(--tag);
+}
+
+/* The press is the row's head: its label, its value and whatever stands under the
+   value, whole. What the row opens to lies over the press and is not part of it. */
 .js .glance-open::after {
   content: "";
   position: absolute;
-  inset: 0 0 auto;
-  height: 3.1rem;
+  inset: 0;
 }
 
-/* A row under the pointer, and an opened row, stand on the panel tone from edge to edge
-   of the list. */
+/* The head of a row under the pointer, and of an opened row, stands on the panel tone
+   from edge to edge of the list: the tinted strip is what is pressed. */
 .js .glance-rows > div:has(.glance-open):not([data-open]):hover,
 .js .glance-rows > div[data-open] {
   background: var(--panel);
@@ -8310,18 +8347,25 @@ body.framed {
     0.85rem 0 0 var(--panel);
 }
 
-/* What a row opens to. */
+/* What a row opens to: on the page's own ground under the tinted head, to the row's
+   foot, so head and body are told apart at a glance. */
 .glance-rows .glance-more {
   --part: 2;
+  position: relative;
+  z-index: 1;
   grid-column: 1 / -1;
   display: grid;
   grid-template-columns: var(--label-col) minmax(0, 1fr);
   column-gap: 1.5rem;
   row-gap: 0.5rem;
   align-items: baseline;
-  margin: 0.8rem 0 0 calc(-1 * (var(--label-col) + 1.5rem));
-  padding: 0.85rem 0 0.35rem;
-  border-top: 1px solid var(--rule);
+  margin: var(--row-pad) 0 calc(-1 * var(--row-pad)) calc(-1 * (var(--label-col) + 1.5rem));
+  padding: 0.95rem 0 1.1rem;
+  background: var(--paper);
+  box-shadow:
+    -0.85rem 0 0 var(--paper),
+    0.85rem 0 0 var(--paper);
+  cursor: auto;
 }
 
 .js .glance-rows > div:not([data-open]) .glance-more {
@@ -8527,10 +8571,6 @@ body.framed {
     justify-content: flex-start;
   }
 
-  .js .glance-open::after {
-    height: 3.6rem;
-  }
-
   /* Opened, a part's label stands over what it names, and the parts take the row's
      full width, under the label too. */
   .glance-rows .glance-more {
@@ -8558,7 +8598,8 @@ body.framed {
     display: grid;
   }
 
-  .js .glance-rows > div[data-open] {
+  .js .glance-rows > div[data-open],
+  .glance-rows .glance-more {
     background: none;
     box-shadow: none;
   }
@@ -8583,7 +8624,10 @@ body.framed {
   align-self: center;
   width: 1.7rem;
   height: 1.7rem;
-  margin-left: -0.3rem;
+  /* The drawn mark stands half a rem after the title's last letter. */
+  margin-left: -0.65rem;
+  /* On the middle of the title's letters, not of its line box. */
+  translate: 0 -0.08rem;
   color: var(--muted);
 }
 
@@ -8629,9 +8673,11 @@ body.framed {
   }
 }
 
+/* A finger's size without a taller heading line: the press reaches past the line and
+   back over the title's last letter, and the drawn mark keeps its place. */
 @media (max-width: 40rem) {
   .pop-trigger.info.about {
-    margin-left: -0.6rem;
+    margin: -0.6rem -0.55rem -0.6rem -1.2rem;
   }
 }
 
