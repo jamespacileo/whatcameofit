@@ -48,5 +48,17 @@ export function bucket(argv) {
   async function get(key, path) {
     try { await wrangler("get", `${name}/${key}`, "--file", path); return true; } catch { return false; }
   }
-  return { name, remote, label: remote ? `${name} (remote, jurisdiction eu)` : `${name} (local engine)`, put, get };
+  // Removes one object; removing one that is not there is not a failure. A refusal for
+  // asking too fast (429) is waited out, longer each time.
+  async function remove(key, attempts = 6) {
+    for (let attempt = 1; ; attempt += 1) {
+      try { await wrangler("delete", `${name}/${key}`); return; } catch (error) {
+        const why = said(error);
+        if (/not found|does not exist|no such/i.test(why)) return;
+        if (attempt >= attempts) throw new Error(why);
+        await new Promise((resolve) => setTimeout(resolve, (/429|too many|rate/i.test(String(error.stderr || error.message)) ? 5000 : 1000) * 2 ** (attempt - 1)));
+      }
+    }
+  }
+  return { name, remote, remove, label: remote ? `${name} (remote, jurisdiction eu)` : `${name} (local engine)`, put, get };
 }
