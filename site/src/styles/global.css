@@ -1654,12 +1654,16 @@ main nav.contents ul li + li {
   font-size: var(--text-xs);
 }
 
+/* The title is in the heading face at the size of a row's headline in the list it
+   stands in place of. */
 .results .search-report-title,
 .search-report-title {
   margin: 0.35rem 0 0;
-  font-size: clamp(1.1rem, 2.6vw, 1.3rem);
-  font-weight: 700;
-  line-height: 1.3;
+  font-family: var(--display);
+  font-size: clamp(1.25rem, 3.5vw, 1.45rem);
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   text-wrap: balance;
 }
 
@@ -1670,6 +1674,8 @@ main nav.contents ul li + li {
 
 .search-report-title a:hover {
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
 }
 
 /* In an answer the digest's headline opens the claim, and keeps the headline's ink. */

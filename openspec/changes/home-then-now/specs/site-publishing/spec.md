@@ -40,7 +40,7 @@ Where scripts run, the head of the home page's day-by-day list SHALL carry one c
 - **THEN** the list's name and the control share one line, the control is 44 pixels tall, and the open panel stands inside the screen
 
 ### Requirement: A row's headline is set in the heading face and is read first
-In the home page's day-by-day list, the list's name and each row's reported headline SHALL be set in the site's heading face, and a row's headline SHALL be the largest text in the list after its name. A day's heading SHALL be drawn as a label smaller and quieter than a headline. A day's heading, a row's labels and its status SHALL stay in the text face.
+In the home page's day-by-day list, the list's name and each row's reported headline SHALL be set in the site's heading face, as SHALL a report's title in a search's answer, which stands in the list's place, and a row's headline SHALL be the largest text in the list after its name. A day's heading SHALL be drawn as a label smaller and quieter than a headline. A day's heading, a row's labels and its status SHALL stay in the text face.
 
 #### Scenario: A report row
 - **WHEN** a report row is drawn
