@@ -454,3 +454,14 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 ## Live lookup source reuse (14 November 2026)
 
 Successful public ClinicalTrials.gov responses and Europe PMC trial-number mappings may be reused for up to 24 hours under versioned hashed query keys. A paper with no indexed record is kept for one hour. Cache reads and writes are bounded and fall back to the source on failure; source failures and timeouts are never cached as successful empty answers. Paper abstracts, news text, images, credentials and reader identifiers are not retained. Concurrent identical requests within a source client share work without one caller’s cancellation cancelling another caller.
+
+## Cloudflare limits the ingest service is built inside (17 November 2026)
+
+Read on 2026-11-17 from `developers.cloudflare.com`, for `store/ingest`. The figures are also in `store/ingest/src/limits.mjs`, beside the bounds set from them. Prices and the remaining products are in `openspec/changes/cloudflare-source-of-truth/design.md`, decision 15, read the day before.
+
+- **D1** (`d1/platform/limits`, Workers Paid): a statement is at most 100,000 bytes, which holds for each statement of a batch; 100 bound parameters a query; a string, BLOB or row is at most 2,000,000 bytes; a query runs at most 30 seconds, and a batch counts as one query against that; 1,000 queries a Worker invocation, a batch counting as one; a result is at most 50 MB; 10 GB a database. The page states no limit on how many statements a batch holds, and does not say whether the 2,000,000 bytes also bound one parameter; the service assumes they do. `d1/worker-api/d1-database`: a batch is a transaction, and a failing statement rolls back the whole sequence.
+- **Workers** (`workers/platform/limits`): 128 MB of memory an isolate; 10,000 subrequests a request by default, calls to R2 and D1 included; six connections open at once; 30 seconds of CPU by default, 5 minutes at most; a variable or secret is at most 5 KB, 128 a Worker; a request body of 100 MB on the Free and Pro plans.
+- **R2** (`r2/platform/limits`): one upload is at most 5 GiB; a key is at most 1,024 bytes.
+- **Queues** (`queues/platform/limits`): a message is at most 128 KB; 100 messages a batch; kept up to 14 days.
+- **D1 migrations** (`d1/reference/migrations`): `wrangler d1 migrations apply` reads the top-level `.sql` files of `migrations_dir` in order and records them in `d1_migrations`. The page does not say whether a migration file is one transaction.
+- **Authentication:** none of these is reached with a key from the pipeline. The service is reached with its own tokens; the bindings need none.

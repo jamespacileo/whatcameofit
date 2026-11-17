@@ -9,6 +9,7 @@ The truth store's SQL: the D1 schema and the one merge path every writer uses. A
 | `preview.sql` | The report without the merge: what a run would add, match and put in conflict, counted and not tried |
 | `ingest.sql` | What surrounds a merge: registering a run, staging records, reading the report, dropping a previewed run, the work queue, slices |
 | `proof/` | A local proof in plain SQLite, and a check on D1's local engine |
+| `ingest/` | The ingest service: the Worker that runs these statements for a writer holding a token. Its own `README.md` says how to run it locally |
 
 Which Postgres table became what, and why: `openspec/changes/cloudflare-source-of-truth/store-tables.md`.
 
