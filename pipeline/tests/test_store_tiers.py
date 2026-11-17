@@ -185,7 +185,7 @@ def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_del
     from thenwhat.store.push import increment
     from thenwhat.store.tiers import bulk_records, checks
 
-    _world(session)
+    world = _world(session)
     file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
     report = build(
         session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
@@ -200,8 +200,7 @@ def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_del
     assert checks(tier_path(file, HOT), HOT)["build"] == report.build_id
 
     # A day later: a new share of the stored lead.
-    lead = session.scalars(select(LinkLead).where(LinkLead.triage_score.is_not(None))).first()
-    assert lead is not None
+    lead = session.scalars(select(LinkLead).where(LinkLead.claim_id == world["kept"].id)).one()
     session.add(
         LinkShare(
             link_lead_id=lead.id,
