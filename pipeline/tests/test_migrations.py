@@ -30,6 +30,7 @@ EXPECTED_TABLES = {
     "registry_trial",
     "trial_paper",
     "registry_load",
+    "registry_search",
     "article_lead",
     "entity_substance",
     "trial_read",

@@ -229,6 +229,13 @@ class SourceArticle(Base):
     published_date: Mapped[date]
     content_hash: Mapped[str | None] = mapped_column(Text)
     archive_url: Mapped[str | None] = mapped_column(Text)
+    # The registry numbers and paper DOIs the article's page names, as the page reader
+    # gave them: identifiers only, never the article's text. The step `claim_named_records`
+    # looks them up as candidates of the claim (openspec lead-reading).
+    named_registry_numbers: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
+    named_dois: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
 
 
 class Promise(Base):
@@ -629,6 +636,38 @@ class HttpCache(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB)
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+
+
+class RegistrySearch(Base):
+    """One term of a claim's latest finished registry search: what was sent, when, and
+    what came back, or why the term was not sent. The rows of a claim's search replace
+    those of the search before. A claim with none was never searched. Behavior: openspec
+    entity-resolution, "A registry search leaves a record"."""
+
+    __tablename__ = "registry_search"
+    __table_args__ = (
+        # A term sent says what came back; a term not sent says why, and nothing else.
+        CheckConstraint(
+            "(not_sent_reason IS NULL) = (reported IS NOT NULL)"
+            " AND (reported IS NULL) = (kept IS NULL)",
+            name="sent_or_why_not",
+        ),
+        CheckConstraint("reported >= 0 AND kept >= 0", name="counts_not_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    source_name: Mapped[str] = mapped_column(Text)
+    term: Mapped[str] = mapped_column(Text)
+    # The wording of the condition the search was narrowed by, if it was.
+    condition: Mapped[str | None] = mapped_column(Text)
+    ran_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # How many records the source said it holds for the search, and how many were taken.
+    reported: Mapped[int | None]
+    kept: Mapped[int | None]
+    # A limit left some of the reported records out.
+    cut: Mapped[bool] = mapped_column(default=False, server_default="false")
+    not_sent_reason: Mapped[str | None] = mapped_column(Text)
 
 
 class PaperRecord(Base):
