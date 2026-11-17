@@ -1,39 +1,41 @@
 ---
 import Rss from "@lucide/astro/icons/rss";
 import Base from "../layouts/Base.astro";
-import ClaimName from "../components/ClaimName.astro";
 import DayList from "../components/DayList.astro";
+import FeedRows from "../components/FeedRows.astro";
 import HomeNarrow from "../components/HomeNarrow.astro";
 import Lookup from "../components/Lookup.astro";
-import Outlet from "../components/Outlet.astro";
 import Pager from "../components/Pager.astro";
-import PromiseText from "../components/PromiseText.astro";
-import StageTrack from "../components/StageTrack.astro";
-import StatusCell from "../components/StatusCell.astro";
+import RestSaid from "../components/RestSaid.astro";
 import ThenNow from "../components/ThenNow.astro";
-import TestedCell from "../components/TestedCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
-import { calendarByMonth } from "../lib/anniversaries";
-import { dayList } from "../lib/day-list";
 import { data, listedTopics } from "../lib/export";
 import { exampleClaim } from "../lib/extension-page";
+import { statusCountsByTopic } from "../lib/feed";
 import {
-  longestWithoutSignal,
-  promisesByDate,
-  statusCountsByTopic,
-  statusMoves,
-} from "../lib/feed";
-import { followedNameFor, recentReports } from "../lib/reports";
+  PAGE_SIZE,
+  anniversaryRows,
+  anyClaimPromise,
+  anyPromise,
+  calendarDays,
+  days,
+  everyClaim,
+  feedDates,
+  moves,
+  promised,
+  quiet,
+  reports,
+  restOf,
+  topicChoices,
+} from "../lib/home-lists";
 import { siteData } from "../lib/structured";
 import { TESTED_WORDS } from "../lib/record-brief";
-import { STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
-// Every row of every list is on the page, read ten at a time.
-const PAGE_SIZE = 10;
-const reports = recentReports(data.claims, Infinity);
+// Each list's first rows are in the page; the rest are fetched when a reader asks for
+// them (openspec landing-rows-on-demand). The lists themselves are in lib/home-lists.
 // Drawn only when a suggestion address is configured. Nothing is carried from here;
 // the lookup's own answers carry a pasted article address.
 const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
@@ -56,26 +58,10 @@ for (const claim of data.claims) {
 }
 const years = Array.from(perYear).sort((a, b) => b[0].localeCompare(a[0]));
 
-// The headlines table sets the promise beside the status, as a claim page does. With no
-// dated promise among the reports there is no amber column.
-const anyPromise = reports.some((report) => latestPromise(report.claim) !== null);
 const approvals = data.claims.filter((claim) => claim.status.code === "approved").length;
 
 // The front page is one set of lists over the same claims, each in an order a reader
 // comes back for. A list with nothing in it is not offered.
-const moves = statusMoves(data.claims);
-const promised = promisesByDate(data.claims);
-const quiet = longestWithoutSignal(data.claims);
-// Every published claim once, by the day it was first reported, newest first; a claim
-// with no day comes last, by name. A date, never a rank.
-const everyClaim = [...data.claims].sort((a, b) => {
-  if (a.first_reported_date && b.first_reported_date && a.first_reported_date !== b.first_reported_date) {
-    return a.first_reported_date < b.first_reported_date ? 1 : -1;
-  }
-  if (a.first_reported_date !== b.first_reported_date) return a.first_reported_date ? -1 : 1;
-  return a.intervention.name.localeCompare(b.intervention.name);
-});
-const anyClaimPromise = everyClaim.some((claim) => latestPromise(claim) !== null);
 const views = [
   { id: "headlines", tab: "Headlines", count: reports.length },
   { id: "claims", tab: "Claims", count: everyClaim.length },
@@ -83,24 +69,12 @@ const views = [
   { id: "promised", tab: "Promises", count: promised.length },
   { id: "quiet", tab: "No signal", count: quiet.length },
 ].filter((view) => view.id === "headlines" || view.count > 0);
-// The lists can be narrowed to one topic; the counts on the path follow the topic.
-const topicChoices = listedTopics
-  .map((topic) => ({
-    ...topic,
-    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
-  }))
-  .sort((a, b) => a.title.localeCompare(b.title));
 const topicCounts = statusCountsByTopic(data.claims);
-// Every day of the calendar that has a first report. The reader's own today picks
-// which is shown, so the page is true whenever it is read.
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days);
-// Everything dated, under dated headings. Null when the export does not say when the
-// registries were last checked: then the four lists follow the lookup, as before.
-const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at) : null;
+// The calendar days that have a first report, each with the years of its reports: what
+// the reader's own today is compared with. The day it picks is fetched, not built in.
+const anniversaryYears = Object.fromEntries(
+  calendarDays.map((day) => [day.id, day.entries.map((entry) => entry.year)]),
+);
 // The one claim drawn under the box: the site's example, chosen by rule.
 const example = exampleClaim(data.claims);
 ---
@@ -176,7 +150,7 @@ const example = exampleClaim(data.claims);
       such list: the page is not dated by any other day. */}
   {
     days ? (
-      <DayList list={days} topics={topicChoices}>
+      <DayList list={days} topics={topicChoices} rest={restOf("latest")}>
         <HomeNarrow slot="narrow" named claims={data.claims} topics={topicChoices} counts={topicCounts} />
         {/* Beside the list at the right on a wide screen: how the page is made, in
             three short parts, each with one link. */}
@@ -261,7 +235,7 @@ const example = exampleClaim(data.claims);
       ))}
     </div>
 
-  <section class="feed-panel" id="feed-headlines" data-view="headlines">
+  <section class="feed-panel" id="feed-headlines" data-view="headlines" data-rest={restOf("headlines")} data-rest-for="narrowing" data-dates={feedDates.headlines!.join(" ")}>
   <h2 class="bar">Headlines reported most recently</h2>
   {
     reports.length === 0 ? (
@@ -280,55 +254,16 @@ const example = exampleClaim(data.claims);
             <th role="columnheader" scope="col">Status now</th>
           </tr>
         </thead>
-        <tbody role="rowgroup">
-          {reports.map((report, index) => (
-            <tr role="row" data-status={report.claim.status.code} data-topic={report.claim.vertical} data-on={report.publishedDate} data-later={index >= PAGE_SIZE ? "" : undefined}>
-              <td role="cell" class="claim">
-                {/* Named as on the claim page, so the headline pressed here is
-                    carried to its place there. With the day-by-day list above, the
-                    name is on that list's row: a name is on a page once. */}
-                <a
-                  class="followed"
-                  href={`/${report.claim.slug}`}
-                  style={
-                    !days && followedNameFor(report.claim, report.url)
-                      ? `view-transition-name: ${followedNameFor(report.claim, report.url)}`
-                      : undefined
-                  }
-                >
-                  “{report.title}”
-                </a>
-                <span class="entry-note">
-                  <Outlet url={report.url} outlet={report.outlet} />
-                </span>
-              </td>
-              <td role="cell" class="when" data-column="Reported">
-                {formatDate(report.publishedDate)}
-              </td>
-              {anyPromise && (
-                <td
-                  role="cell"
-                  class:list={["promise", { none: !latestPromise(report.claim) }]}
-                  data-column="Promised"
-                >
-                  {latestPromise(report.claim) ? (
-                    <>
-                      <PromiseText promise={latestPromise(report.claim)} />
-                    </>
-                  ) : (
-                    <span class="visually-hidden">None with a date</span>
-                  )}
-                </td>
-              )}
-              <td role="cell" class="status" data-column="Status now">
-                <StatusCell claim={report.claim} />
-              </td>
-            </tr>
-          ))}
+        <tbody role="rowgroup" data-rest-into>
+          <FeedRows view="headlines" to={PAGE_SIZE} />
         </tbody>
       </table>
       </div>
       <Pager name="headlines" total={reports.length} size={PAGE_SIZE} one="headline" many="headlines" />
+      <RestSaid when={restOf("headlines")}>
+        The first {PAGE_SIZE} of {reports.length} headlines are shown. Every claim is also listed under its topic:{" "}
+        <a href="/topics">all topics</a>.
+      </RestSaid>
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
     )
   }
@@ -336,7 +271,7 @@ const example = exampleClaim(data.claims);
 
   {
     everyClaim.length > 0 && (
-      <section class="feed-panel" id="feed-claims" data-view="claims">
+      <section class="feed-panel" id="feed-claims" data-view="claims" data-rest={restOf("claims")} data-rest-for="narrowing">
       <h2 class="bar">Every claim tracked</h2>
       <p class="entry-note tested-note">
         One row for each reported breakthrough, newest report first. {TESTED_WORDS.note}
@@ -355,39 +290,16 @@ const example = exampleClaim(data.claims);
             <th role="columnheader" scope="col">Status now</th>
           </tr>
         </thead>
-        <tbody role="rowgroup">
-          {everyClaim.map((claim, index) => {
-            const promise = latestPromise(claim);
-            return (
-              <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={claim.first_reported_date ?? undefined} data-later={index >= PAGE_SIZE ? "" : undefined}>
-                <td role="cell" class="claim">
-                  <ClaimName claim={claim} />
-                </td>
-                <td role="cell" class="when" data-column="First reported">
-                  {claim.first_reported_date ? (
-                    formatDate(claim.first_reported_date)
-                  ) : (
-                    <span class="visually-hidden">Not recorded</span>
-                  )}
-                </td>
-                <td role="cell" class="tested" data-column={TESTED_WORDS.column}>
-                  <TestedCell claim={claim} />
-                </td>
-                {anyClaimPromise && (
-                  <td role="cell" class:list={["promise", { none: !promise }]} data-column="Promised">
-                    {promise ? <PromiseText promise={promise} /> : <span class="visually-hidden">None with a date</span>}
-                  </td>
-                )}
-                <td role="cell" class="status" data-column="Status now">
-                  <StatusCell claim={claim} />
-                </td>
-              </tr>
-            );
-          })}
+        <tbody role="rowgroup" data-rest-into>
+          <FeedRows view="claims" to={PAGE_SIZE} />
         </tbody>
       </table>
       </div>
       <Pager name="claims" total={everyClaim.length} size={PAGE_SIZE} one="claim" many="claims" />
+      <RestSaid when={restOf("claims")}>
+        The first {PAGE_SIZE} of {everyClaim.length} claims are shown. Every claim is also listed under its topic:{" "}
+        <a href="/topics">all topics</a>.
+      </RestSaid>
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
@@ -395,7 +307,7 @@ const example = exampleClaim(data.claims);
 
   {
     moves.length > 0 && (
-      <section class="feed-panel" id="feed-moved" data-view="moved">
+      <section class="feed-panel" id="feed-moved" data-view="moved" data-rest={restOf("moved")} data-rest-for="narrowing" data-dates={feedDates.moved!.join(" ")}>
       <h2 class="bar">Statuses changed most recently</h2>
       <div class="table-frame">
       <table role="table" class="index">
@@ -409,28 +321,16 @@ const example = exampleClaim(data.claims);
             <th role="columnheader" scope="col">Status from then</th>
           </tr>
         </thead>
-        <tbody role="rowgroup">
-          {moves.map((move, index) => (
-            <tr role="row" data-status={move.claim.status.code} data-topic={move.claim.vertical} data-on={move.on} data-later={index >= PAGE_SIZE ? "" : undefined}>
-              <td role="cell" class="claim">
-                <ClaimName claim={move.claim} />
-              </td>
-              <td role="cell" class="when" data-column="Changed">
-                {formatDate(move.on)}
-              </td>
-              <td role="cell" class="status" data-column="Status from then">
-                <span class="status-line">
-                  <StageTrack code={move.code} />
-                  <strong class="status-name">{STATUS_LABELS[move.code]}</strong>
-                </span>
-                <span class="gloss">Was: {STATUS_LABELS[move.before!]}</span>
-              </td>
-            </tr>
-          ))}
+        <tbody role="rowgroup" data-rest-into>
+          <FeedRows view="moved" to={PAGE_SIZE} />
         </tbody>
       </table>
       </div>
       <Pager name="moved" total={moves.length} size={PAGE_SIZE} one="change" many="changes" />
+      <RestSaid when={restOf("moved")}>
+        The first {PAGE_SIZE} of {moves.length} status changes are shown. Every claim is also listed under its topic:{" "}
+        <a href="/topics">all topics</a>.
+      </RestSaid>
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
@@ -438,7 +338,7 @@ const example = exampleClaim(data.claims);
 
   {
     promised.length > 0 && (
-      <section class="feed-panel" id="feed-promised" data-view="promised">
+      <section class="feed-panel" id="feed-promised" data-view="promised" data-rest={restOf("promised")} data-rest-for="narrowing" data-dates={feedDates.promised!.join(" ")}>
       <h2 class="bar">Dated promises, earliest date first</h2>
       <div class="table-frame">
       <table role="table" class="index">
@@ -452,24 +352,16 @@ const example = exampleClaim(data.claims);
             <th role="columnheader" scope="col">Status now</th>
           </tr>
         </thead>
-        <tbody role="rowgroup">
-          {promised.map((claim, index) => (
-            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={latestPromise(claim)?.parsed_date} data-later={index >= PAGE_SIZE ? "" : undefined}>
-              <td role="cell" class="claim">
-                <ClaimName claim={claim} />
-              </td>
-              <td role="cell" class="promise" data-column="Promised">
-                <PromiseText promise={latestPromise(claim)} />
-              </td>
-              <td role="cell" class="status" data-column="Status now">
-                <StatusCell claim={claim} />
-              </td>
-            </tr>
-          ))}
+        <tbody role="rowgroup" data-rest-into>
+          <FeedRows view="promised" to={PAGE_SIZE} />
         </tbody>
       </table>
       </div>
       <Pager name="promised" total={promised.length} size={PAGE_SIZE} one="claim" many="claims" label="claims with a dated promise" />
+      <RestSaid when={restOf("promised")}>
+        The first {PAGE_SIZE} of {promised.length} claims with a dated promise are shown. Every claim is also listed under its topic:{" "}
+        <a href="/topics">all topics</a>.
+      </RestSaid>
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
@@ -477,7 +369,7 @@ const example = exampleClaim(data.claims);
 
   {
     quiet.length > 0 && (
-      <section class="feed-panel" id="feed-quiet" data-view="quiet">
+      <section class="feed-panel" id="feed-quiet" data-view="quiet" data-rest={restOf("quiet")} data-rest-for="narrowing">
       <h2 class="bar">Longest with no new record</h2>
       <div class="table-frame">
       <table role="table" class="index">
@@ -491,28 +383,16 @@ const example = exampleClaim(data.claims);
             <th role="columnheader" scope="col">Status now</th>
           </tr>
         </thead>
-        <tbody role="rowgroup">
-          {quiet.map((claim, index) => (
-            <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-later={index >= PAGE_SIZE ? "" : undefined}>
-              <td role="cell" class="claim">
-                <ClaimName claim={claim} />
-              </td>
-              <td role="cell" class="when" data-column="First reported">
-                {claim.first_reported_date ? (
-                  formatDate(claim.first_reported_date)
-                ) : (
-                  <span class="visually-hidden">Not recorded</span>
-                )}
-              </td>
-              <td role="cell" class="status" data-column="Status now">
-                <StatusCell claim={claim} />
-              </td>
-            </tr>
-          ))}
+        <tbody role="rowgroup" data-rest-into>
+          <FeedRows view="quiet" to={PAGE_SIZE} />
         </tbody>
       </table>
       </div>
       <Pager name="quiet" total={quiet.length} size={PAGE_SIZE} one="claim" many="claims" label="claims with no signal" />
+      <RestSaid when={restOf("quiet")}>
+        The first {PAGE_SIZE} of {quiet.length} claims with no signal are shown. Every claim is also listed under its topic:{" "}
+        <a href="/topics">all topics</a>.
+      </RestSaid>
       <p class="none" data-none hidden>Nothing in this list for that choice.</p>
       </section>
     )
@@ -540,34 +420,23 @@ const example = exampleClaim(data.claims);
   </section>
 
   {/* Shown by the script, which knows the reader's date: today's anniversaries of first
-      reports, or the next day that has one. */}
+      reports, or the next day that has one. The day's reports are fetched: no day is in
+      the page as built. */}
   {
     calendarDays.length > 0 && (
-      <section class="home-section on-this-day" hidden data-on-this-day>
+      <section
+        class="home-section on-this-day"
+        hidden
+        data-on-this-day
+        data-years={JSON.stringify(anniversaryYears)}
+        data-rows={anniversaryRows("DAY")}
+      >
         <div class="bar-row">
           <h2 class="bar" data-title>On this day</h2>
           <a href="/anniversaries">All anniversaries</a>
         </div>
-        <ul class="calendar">
-          {calendarDays.map((day) => (
-            <li class="day" hidden data-day={day.id} data-label={`${day.day} ${MONTH_NAMES[day.month - 1]}`}>
-              <strong class="when">
-                {day.day} {MONTH_NAMES[day.month - 1].slice(0, 3)}
-              </strong>
-              <ul>
-                {day.entries.map((entry) => (
-                  <li data-year={entry.year}>
-                    <span class="year"><span class="visually-hidden">First reported </span>{entry.year}</span>
-                    <a href={`/${entry.claim.slug}`}>{entry.claim.headline}</a>
-                    <span class="status">
-                      <StatusCell claim={entry.claim} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
+        <ul class="calendar" data-rest-into></ul>
+        <RestSaid failed="The anniversaries for this day did not load." />
       </section>
     )
   }
@@ -640,6 +509,7 @@ const example = exampleClaim(data.claims);
 
 <script>
   import { nextAnniversaryDay } from "../lib/anniversaries";
+  import { loadRest, onArrive, waiting } from "../lib/rest";
 
   // Words to try: pressing one looks it up, as typing it would.
   const tries = document.querySelector<HTMLElement>("[data-try]");
@@ -718,6 +588,7 @@ const example = exampleClaim(data.claims);
   // are left, and a list with none says so in place of an empty table.
   if (feed) {
     const lists = [...feed.querySelectorAll<HTMLElement>(".feed-panel")].map((panel) => ({
+      panel,
       table: panel.querySelector("table"),
       frame: panel.querySelector<HTMLElement>(".table-frame"),
       none: panel.querySelector<HTMLElement>("[data-none]"),
@@ -727,14 +598,18 @@ const example = exampleClaim(data.claims);
       !row.getAttributeNames().some((name) => name.startsWith("data-out"));
     for (const list of lists) {
       if (!list.table) continue;
-      const rows = [...list.table.tBodies[0].rows];
+      const body = list.table.tBodies[0];
       const recount = () => {
-        const total = rows.filter(left).length;
+        // While the rest of a list is not in the page its rows cannot be counted: the
+        // tab keeps the list's own number, and the list says it is not whole.
+        if (waiting(list.panel)) return;
+        const total = [...body.rows].filter(left).length;
         if (list.count) list.count.textContent = String(total);
         if (list.frame) list.frame.hidden = total === 0;
         if (list.none) list.none.hidden = total > 0;
       };
       list.table.addEventListener("paged:refresh", recount);
+      list.panel.addEventListener("rest:here", recount);
       // A status named in the address may have narrowed the lists already.
       recount();
     }
@@ -748,6 +623,8 @@ const example = exampleClaim(data.claims);
       const counts: Record<string, Record<string, number>> = JSON.parse(choice.dataset.counts!);
       const narrow = (topic: string) => {
         for (const list of lists) {
+          // One topic of a list is found among all its rows, not its first ones.
+          if (topic !== "" && list.panel.dataset.restFor === "narrowing") void loadRest(list.panel);
           if (!list.table) continue;
           for (const row of list.table.tBodies[0].rows) {
             row.toggleAttribute("data-out-topic", topic !== "" && row.dataset.topic !== topic);
@@ -768,6 +645,12 @@ const example = exampleClaim(data.claims);
         history.replaceState(history.state, "", url);
       });
       line.hidden = false;
+      // Rows that arrive later are narrowed as the rows in the page were.
+      onArrive(({ rows }) => {
+        for (const row of rows.querySelectorAll<HTMLElement>("tr[data-topic], [data-day-row]")) {
+          row.toggleAttribute("data-out-topic", choice.value !== "" && row.dataset.topic !== choice.value);
+        }
+      });
       const asked = new URL(location.href).searchParams.get("topic") ?? "";
       if (asked && asked in counts) {
         choice.value = asked;
@@ -778,29 +661,36 @@ const example = exampleClaim(data.claims);
 
   // Anniversaries of first reports, counted from the reader's own today: the ones that
   // fall today, or else the next day that has one. A report from this year has none yet.
+  // The page holds which days have a report and in which years; the day picked is fetched.
   const onThisDay = document.querySelector<HTMLElement>("[data-on-this-day]");
   if (onThisDay) {
     const now = new Date();
     const two = (value: number) => String(value).padStart(2, "0");
     const today = `${now.getFullYear()}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
-    const days = [...onThisDay.querySelectorAll<HTMLElement>("[data-day]")];
-    const reports = days.flatMap((day) =>
-      [...day.querySelectorAll<HTMLElement>("[data-year]")].map((entry) => ({
-        entry,
-        id: day.dataset.day!,
-        year: Number(entry.dataset.year),
-      })),
-    );
+    const years: Record<string, number[]> = JSON.parse(onThisDay.dataset.years!);
+    const reports = Object.entries(years).flatMap(([id, list]) => list.map((year) => ({ id, year })));
     const found = nextAnniversaryDay(reports, today);
     if (found) {
       const year = Number(found.date.slice(0, 4));
-      for (const day of days) day.hidden = !found.ids.includes(day.dataset.day!);
-      for (const report of reports) report.entry.hidden = report.year >= year;
-      if (!found.today) {
-        const label = days.find((day) => !day.hidden)!.dataset.label!;
-        onThisDay.querySelector("[data-title]")!.textContent = `Next anniversary: ${label}`;
-      }
-      onThisDay.hidden = false;
+      onThisDay.dataset.rest = found.ids
+        .filter((id) => id in years)
+        .map((id) => onThisDay.dataset.rows!.replace("DAY", id))
+        .join(" ");
+      onThisDay.addEventListener("rest:here", () => {
+        for (const entry of onThisDay.querySelectorAll<HTMLElement>("[data-year]")) {
+          entry.hidden = Number(entry.dataset.year) >= year;
+        }
+        if (!found.today) {
+          const label = onThisDay.querySelector<HTMLElement>("[data-day]")!.dataset.label!;
+          onThisDay.querySelector("[data-title]")!.textContent = `Next anniversary: ${label}`;
+        }
+        onThisDay.hidden = false;
+      });
+      // A day that did not arrive is said, under the heading, with a control to ask again.
+      onThisDay.addEventListener("rest:failed", () => {
+        onThisDay.hidden = false;
+      });
+      void loadRest(onThisDay);
     }
   }
 </script>
@@ -818,6 +708,7 @@ const example = exampleClaim(data.claims);
     readFollowed,
     sinceOf,
   } from "../lib/returning";
+  import { loadRest, onArrive } from "../lib/rest";
   import { formatDate } from "../lib/timetable";
 
   // Storage can be refused (a private window, a setting): then nothing is remembered
@@ -849,9 +740,14 @@ const example = exampleClaim(data.claims);
     ];
     const dated = (view: string) =>
       rowsOf(view).filter((row) => isSince(row.dataset.on!, since.from, today));
+    // Counted from each list's dates, which the page holds for every row: a list's rows
+    // past its first are fetched only when a reader asks for them.
+    const panelOf = (view: string) => feed.querySelector<HTMLElement>(`#feed-${view}`);
+    const datesOf = (view: string) => (panelOf(view)?.dataset.dates ?? "").split(" ").filter(Boolean);
+    const sinceOn = (view: string) => datesOf(view).filter((on) => isSince(on, since.from, today)).length;
     const parts = changedParts(
-      { reports: dated("headlines").length, moves: dated("moved").length, promises: dated("promised").length },
-      { reports: rowsOf("headlines").length, moves: rowsOf("moved").length, promises: rowsOf("promised").length },
+      { reports: sinceOn("headlines"), moves: sinceOn("moved"), promises: sinceOn("promised") },
+      { reports: datesOf("headlines").length, moves: datesOf("moved").length, promises: datesOf("promised").length },
     );
 
     // Pressing a count narrows its list to the rows dated in the span; pressing it
@@ -862,7 +758,12 @@ const example = exampleClaim(data.claims);
     showAll.className = "text-control";
     showAll.textContent = "Show all";
     showAll.hidden = true;
+    let narrowed: string | null = null;
     const narrow = (picked: string | null) => {
+      narrowed = picked;
+      // The rows dated in the span are found among all the list's rows.
+      const panel = picked === null ? null : panelOf(picked);
+      if (panel) void loadRest(panel);
       for (const view of views) {
         const keep = new Set(view === picked ? dated(view) : rowsOf(view));
         for (const row of rowsOf(view)) row.toggleAttribute("data-out-since", !keep.has(row));
@@ -911,14 +812,25 @@ const example = exampleClaim(data.claims);
 
     // A row dated since the last visit says so in a word. Not on a first visit: with
     // nothing to compare against, everything would be new.
+    const tagNew = (row: HTMLElement) => {
+      const tag = document.createElement("span");
+      tag.className = "new-tag";
+      tag.textContent = "New";
+      row.querySelector(".claim a")?.after(" ", tag);
+    };
     if (since.visited) {
-      for (const row of [...dated("headlines"), ...dated("moved")]) {
-        const tag = document.createElement("span");
-        tag.className = "new-tag";
-        tag.textContent = "New";
-        row.querySelector(".claim a")?.after(" ", tag);
-      }
+      for (const row of [...dated("headlines"), ...dated("moved")]) tagNew(row);
     }
+    // Rows that arrive later are narrowed and marked as the rows in the page were.
+    onArrive(({ holder, rows }) => {
+      const view = holder.dataset.view;
+      if (!views.some((name) => name === view)) return;
+      for (const row of rows.querySelectorAll<HTMLTableRowElement>("tr[data-on]")) {
+        const on = isSince(row.dataset.on!, since.from, today);
+        row.toggleAttribute("data-out-since", view === narrowed && !on);
+        if (on && since.visited && view !== "promised") tagNew(row);
+      }
+    });
   }
 
   // The claims this reader follows, with a note on any whose status has changed since

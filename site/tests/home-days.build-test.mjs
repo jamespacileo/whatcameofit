@@ -38,6 +38,9 @@ function group(html, id) {
 
 let dated;
 let undated;
+// The rows the dated page fetches when a reader asks for more than its day headings
+// (openspec landing-rows-on-demand): the earlier headings and the promises to come.
+let later;
 
 before(() => {
   dated = build("dated", (data) => {
@@ -58,6 +61,7 @@ before(() => {
     const paper = phase.events.find((event) => event.type === "followup_paper");
     phase.events.push({ ...paper, id: 9001, event_date: "2025-09-05", confidence: 0.6 });
   });
+  later = plain(fs.readFileSync(path.join(work, "dated", "rows/latest.txt"), "utf8"));
   undated = build("undated", (data) => {
     data.last_checked_at = null;
   });
@@ -90,7 +94,7 @@ test("Scenario: A kind read aloud", () => {
   // happened, which is not read aloud: the row's title says it.
   assert.match(record, /<span class="row-kind"><span class="event-mark" data-event="trial_results_posted" data-direction="neither" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Registry record<span class="visually-hidden">\. <\/span><\/span>/);
   assert.match(group(dated, "d-2025-09-08"), /<span class="visually-hidden">News report\. <\/span>/);
-  assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-kind"><span class="event-mark" data-direction="promised" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Promised date<\/span>/);
+  assert.match(later, /data-kind="promise"[\s\S]*?<span class="row-kind"><span class="event-mark" data-direction="promised" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Promised date<\/span>/);
   // The field that shows one kind is the script's, and names each kind in words.
   const field = dated.slice(dated.indexOf('id="feed-kind"'), dated.indexOf("</select>", dated.indexOf('id="feed-kind"')));
   assert.match(dated, /<label class="pick" data-await data-kinds>/);
@@ -154,7 +158,10 @@ test("Scenario: An approval that changed the status, and a record that changed n
 });
 
 test("Scenario: Promises still to come", () => {
-  const toCome = dated.slice(dated.indexOf("data-to-come"), dated.indexOf('<section class="day-group"'));
+  // Offered when a reader asks for promised dates: fetched then, first in the list.
+  assert.ok(!dated.includes("data-to-come"));
+  assert.match(later, /^<details class="to-come" data-to-come data-rest-first>/);
+  const toCome = later.slice(later.indexOf("data-to-come"), later.indexOf('<section class="day-group"'));
   assert.match(toCome, /1 promised date to come\./);
   assert.match(toCome, /Next: <span data-to-come-next>31 Dec 2025<\/span>/);
   assert.equal(count(toCome, 'data-kind="promise"'), 1);
@@ -213,15 +220,26 @@ test("Scenario: The head of the list is one line", () => {
 });
 
 test("Scenario: Scripting off", () => {
-  // Every row is in the page as built: five reports and the older claim, two records,
-  // one promise.
-  assert.equal(count(dated, 'data-kind="report"'), 6);
-  assert.equal(count(dated, 'data-kind="record"'), 2);
-  assert.equal(count(dated, 'data-kind="promise"'), 1);
-  // Earlier headings wait for the control only where scripts run; day headings never.
-  assert.match(dated, /<section class="day-group" id="y-2019"[^>]*data-earlier/);
-  assert.ok(!/<section class="day-group" id="d-[^>]*data-earlier/.test(dated));
+  // The rows under the day headings are in the page as built; the earlier headings and
+  // the promise to come are in the file the page fetches. Between them every row, once:
+  // five reports and the older claim, two records, one promise.
+  assert.equal(count(dated, 'data-kind="report"') + count(later, 'data-kind="report"'), 6);
+  assert.equal(count(dated, 'data-kind="record"') + count(later, 'data-kind="record"'), 2);
+  assert.equal(count(dated, 'data-kind="promise"') + count(later, 'data-kind="promise"'), 1);
+  // Day headings are in the page and never wait; earlier headings are in the file, and
+  // wait for the control where they arrive.
+  assert.match(dated, /<section class="day-group" id="d-2025-09-08"/);
+  assert.ok(!dated.includes("data-earlier="));
+  assert.match(later, /<section class="day-group" id="y-2019"[^>]*data-earlier/);
+  assert.ok(!/<section class="day-group" id="d-/.test(later));
   assert.match(dated, /<p class="earlier" hidden data-earlier-control>/);
+  // With scripting off the list says what it leaves out, and where every claim is listed.
+  const said = dated.slice(dated.indexOf('<p class="rest-first">'), dated.indexOf("data-older"));
+  assert.match(
+    said.replace(/<[^>]+>/g, " ").replace(/\s+/g, " "),
+    /Shown here: what is dated in the 14 days up to the last check\. \d+ earlier rows are not shown\. 1 promised date still to come is not shown\. Every claim is also listed under its topic: all topics \./,
+  );
+  assert.match(said, /<a href="\/topics">all topics<\/a>/);
 });
 
 test("A headline's name is on the page once", () => {

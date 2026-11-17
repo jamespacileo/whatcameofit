@@ -1,0 +1,74 @@
+---
+// Headings of the home page's day-by-day list with their rows, and the promised dates
+// still to come (openspec landing-rows-on-demand). The page draws the day headings; the
+// file it fetches for the rest draws the earlier headings and the dates to come, with
+// this same markup.
+import type { Heading, PromiseRow } from "../lib/day-list";
+import { countKinds, countsText, gatherRecords, headingTitle, toComeText } from "../lib/day-list";
+import { formatDate } from "../lib/timetable";
+import DayPromise from "./DayPromise.astro";
+import DayRecord from "./DayRecord.astro";
+import DayReport from "./DayReport.astro";
+
+interface Props {
+  headings: Heading[];
+  /** Promised dates after the day of the last check. They stand first in the list. */
+  toCome?: PromiseRow[];
+  /** Every listed topic, for a row's topic name. */
+  topics: { slug: string; title: string }[];
+}
+
+const { headings, toCome = [], topics } = Astro.props;
+const topicTitle = new Map(topics.map((topic) => [topic.slug, topic.title]));
+---
+
+{
+  toCome.length > 0 && (
+    <details class="to-come" data-to-come data-rest-first>
+      <summary>
+        <strong>Ahead.</strong> <span data-to-come-count>{toComeText(toCome.length)}</span>{" "}
+        Next: <span data-to-come-next>{formatDate(toCome[0].date)}</span>.{" "}
+        <span class="text-control">Show them</span>
+      </summary>
+      <p class="entry-note">
+        A promise is what a report said, not a record. Each is listed by the date it was promised for.
+      </p>
+      <ol>
+        {toCome.map((row) => <DayPromise row={row} />)}
+      </ol>
+    </details>
+  )
+}
+{
+  headings.map((heading) => (
+    <section
+      class="day-group"
+      id={heading.id}
+      data-group
+      data-span={heading.span}
+      data-date={heading.date}
+      data-earlier={heading.span === "day" ? undefined : ""}
+    >
+      <div class="day-head">
+        <h3 data-group-title>{headingTitle(heading)}</h3>
+        <span data-says>{countsText(countKinds(heading.rows))}</span>
+        <span class="day-col">Status now</span>
+      </div>
+      <ol>
+        {gatherRecords(heading.rows).map(({ row, follows }, index, all) =>
+          row.kind === "report" ? (
+            <DayReport row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
+          ) : row.kind === "record" ? (
+            <DayRecord row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} follows={follows} first={follows && !all[index - 1].follows} />
+          ) : (
+            <DayPromise row={row} />
+          ),
+        )}
+      </ol>
+      {/* The rest of a long day, where the list is narrow. The script's. */}
+      <p class="day-more" hidden data-day-more>
+        <button type="button" class="share"></button>
+      </p>
+    </section>
+  ))
+}
