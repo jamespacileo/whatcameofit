@@ -1,6 +1,9 @@
 """One interface for bounded classification choices. Behavior: openspec decision-steps.
 
 A decision is advisory: it suggests or scores, and never approves or publishes anything.
+A backend that cannot be asked (`CannotAsk`: its key refused, its quota or the month's
+spend used up, or no answer on any attempt) is not a failed decision: it reaches the
+caller as itself, and nothing is logged as decided.
 """
 
 from collections.abc import Sequence
@@ -13,6 +16,7 @@ from sqlalchemy.orm import Session
 from thenwhat.db.models import DecisionLog
 from thenwhat.llm.errors import LlmCallFailed, LlmError
 from thenwhat.measure import spans as measure
+from thenwhat.work.errors import CannotAsk, ModelUnreachable
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
@@ -83,6 +87,17 @@ class UnknownBackend(Exception):
     pass
 
 
+def stop_if_unreachable(failure: DecisionFailed) -> None:
+    """End the run when the call never reached the model or got no answer back: that
+    says nothing about the record it was asked about, so the record stays due and no
+    attempt is counted against it."""
+    if failure.unreachable:
+        raise ModelUnreachable(
+            f"The model could not be reached: {failure}. Nothing was decided by this call; "
+            "the record is still due. Run the step again."
+        )
+
+
 def decide(
     session: Session,
     backend: Backend,
@@ -130,6 +145,8 @@ def _decide(
         answer = backend.answer(step, state, offered)
         entry.model = answer.model
         problem = _problem(answer, offered)
+    except CannotAsk:
+        raise
     except LlmError as error:
         problem = str(error)
         unreachable = isinstance(error, LlmCallFailed)
@@ -189,6 +206,8 @@ def decide_many(
             # One call for the whole batch: measured once, inside the step that asked.
             with measure.measured(f"{DECISION}{step}", batch=len(batch)):
                 answers = answer_many(step, intro, question, [text for _, text in batch], offered)
+        except CannotAsk:
+            raise
         except LlmError as error:
             failure = str(error)
             unreachable = isinstance(error, LlmCallFailed)

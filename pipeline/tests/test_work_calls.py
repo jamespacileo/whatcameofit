@@ -1,20 +1,31 @@
 """The one call policy (work/calls.py), as a registry client meets it: a registry that
-asks for a wait, asks for too long a wait, or does not answer. Requests go to `respx`,
-and time is the fake clock. Scenario names are from openspec source-clients."""
+asks for a wait, asks for too long a wait, or does not answer; and as a run meets it,
+when the model cannot be asked part way. Requests go to `respx` or a scripted model, and
+time is the fake clock. Scenario names are from openspec source-clients and, for the
+runs, work-ledger."""
 
 from datetime import timedelta
+from decimal import Decimal
 from email.utils import format_datetime
 
 import httpx
 import pytest
 import respx
+from pydantic import BaseModel
+from pydantic_ai.messages import ModelMessage, ModelResponse, ToolCallPart
+from pydantic_ai.models.function import AgentInfo, FunctionModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import HttpCache
+from backfill_support import Client, DemoStep, add_trials, same_session
+from thenwhat.db.models import HttpCache, WorkEntry
+from thenwhat.decide.core import decide
+from thenwhat.decide.llm_backend import LlmBackend
+from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.sources.base import SourceThrottled, SourceUnavailable
 from thenwhat.sources.clinicaltrials import API, ClinicalTrials
 from thenwhat.work.errors import CannotAsk
+from thenwhat.work.runner import run_step
 
 CONTACT = "ops@thenwhat.test"
 NOTHING_FOUND = {"studies": []}
@@ -76,3 +87,85 @@ def test_a_search_while_the_registry_is_down_did_not_run(session: Session, fake_
     assert "did not answer" in str(stopped.value)
     # Nothing records that the search found no trial.
     assert session.scalars(select(HttpCache)).all() == []
+
+
+# --- a run that meets a model that cannot be asked (openspec work-ledger) ---------------
+
+
+class Said(BaseModel):
+    word: str
+
+
+def model_answering(calls: int) -> FunctionModel:
+    """A model that answers the first `calls` calls, then cannot be reached."""
+    made: list[int] = []
+
+    def respond(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        made.append(1)
+        if len(made) > calls:
+            raise httpx.ConnectError("synthetic outage")
+        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, {"word": "ok"})])
+
+    return FunctionModel(respond, model_name="scripted")
+
+
+def llm(session: Session, model: FunctionModel, fake_time, budget: str = "10") -> Llm:
+    settings = LlmSettings("test:scripted", Decimal(budget), Decimal("3"), Decimal("15"))
+    return Llm(session, settings, model=model, now=fake_time.now, time=fake_time)
+
+
+def entries(session: Session, step: DemoStep) -> list[WorkEntry]:
+    return list(session.scalars(select(WorkEntry).where(WorkEntry.step == step.name)))
+
+
+def test_the_model_going_away_part_way_stops_the_run(session: Session, fake_time):
+    """Scenario: The model goes away during a read"""
+    add_trials(session, 50)
+    model = model_answering(4)
+    step = DemoStep()
+
+    def read(record) -> None:
+        llm(session, model, fake_time).run(
+            "read", instructions="Read.", prompt=record.title, output_type=Said
+        )
+
+    step.before = read
+
+    report = run_step(same_session(session), step, Client(), now=fake_time.now, attempt_limit=3)
+
+    assert (report.done, report.failed, report.remaining_due) == (4, 0, 46)
+    assert (report.stopped or "").startswith("The language model cannot be asked")
+    # Only the four finished records have entries: no attempt counted for the others.
+    assert len(entries(session, step)) == 4
+
+
+def test_the_ceiling_reached_inside_a_decision_stops_the_run(session: Session, fake_time):
+    """Scenario: The ceiling is reached inside a decision"""
+    add_trials(session, 1)
+    step = DemoStep()
+    read: list[str] = []
+
+    def read_then_decide(record) -> None:
+        # The first call is allowed, and its cost reaches the month's ceiling.
+        asked = llm(session, model_answering(1), fake_time, budget="0.000001")
+        read.append(
+            asked.run("read", instructions="Read.", prompt=record.title, output_type=Said).word
+        )
+        decide(
+            session,
+            LlmBackend(asked),
+            step="kind",
+            state=record.title,
+            options=["drug", "device"],
+            input_ref=f"trial:{record.id}",
+            now=fake_time.now(),
+        )
+
+    step.before = read_then_decide
+
+    report = run_step(same_session(session), step, Client(), now=fake_time.now, attempt_limit=3)
+
+    assert read == ["ok"]
+    assert (report.processed, report.failed, report.remaining_due) == (0, 0, 1)
+    assert "monthly ceiling" in (report.stopped or "")
+    assert entries(session, step) == []

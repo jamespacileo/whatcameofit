@@ -20,7 +20,7 @@ from thenwhat.backfill.link_triage import (
     standings,
 )
 from thenwhat.db.models import DecisionLog, LinkLead, LlmUsage, WorkEntry
-from thenwhat.decide.core import BackendAnswer
+from thenwhat.decide.core import Backend, BackendAnswer
 from thenwhat.decide.steps import (
     HEALTH_OTHER,
     LEAD_TRIAGE,
@@ -115,7 +115,7 @@ def add_leads(
     return list(session.scalars(select(LinkLead).order_by(LinkLead.id)))
 
 
-def triage(session: Session, backend: Headlines, step: LinkTriage | None = None):
+def triage(session: Session, backend: Backend, step: LinkTriage | None = None):
     return run_step(
         same_session(session),
         step or LinkTriage(Clock()),

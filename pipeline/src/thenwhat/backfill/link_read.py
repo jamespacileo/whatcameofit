@@ -67,7 +67,7 @@ from thenwhat.db.models import (
     SourceArticle,
     WorkEntry,
 )
-from thenwhat.decide.core import Backend, DecisionFailed
+from thenwhat.decide.core import Backend, DecisionFailed, stop_if_unreachable
 from thenwhat.decide.steps import (
     ESTABLISHED_TREATMENT,
     choose_same_claim,
@@ -101,7 +101,7 @@ from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceError, SystemTime, Time
 from thenwhat.statements.service import StatementChecker, StatementsRun
 from thenwhat.work.allowance import Allowances, held_until, holds_under
-from thenwhat.work.errors import BackfillError, SpendCeilingReached
+from thenwhat.work.errors import BackfillError, CannotAsk, SpendCeilingReached
 from thenwhat.work.ledger import due_records
 from thenwhat.work.steps import TEXT_DOOR, Deferred, Failed, ModelSpend
 
@@ -663,6 +663,8 @@ class LinkRead:
                 accept_trial_above=self.match_accept_above,
                 accept_paper_above=self.match_accept_above,
             )
+        except CannotAsk:
+            raise
         except (DecisionFailed, SourceError) as failure:
             session.flush()
             return f"the records its page names were not recorded: {failure}"
@@ -868,6 +870,8 @@ class LinkRead:
             )
         except BudgetExceeded as ceiling:
             raise SpendCeilingReached(str(ceiling)) from None
+        except CannotAsk:
+            raise
         except LlmError as failure:
             return Failed(str(failure))
         # A class of treatments is every member of it, not one: "GLP-1 receptor agonists".
@@ -906,6 +910,7 @@ class LinkRead:
                 now=now,
             )
         except DecisionFailed as refused:
+            stop_if_unreachable(refused)
             session.flush()
             return Failed(str(refused))
         if report.one_treatment_probability < self.treatment_accept_above:
@@ -1019,6 +1024,8 @@ class LinkRead:
                 # `thenwhat prepare` has searched the registries and decides it.
                 record_decision(extracted.claim, ReviewState.REJECTED, by=Decider.RULE, now=now)
         except (EntryError, DecisionFailed) as refused:
+            if isinstance(refused, DecisionFailed):
+                stop_if_unreachable(refused)
             session.flush()
             return Failed(str(refused))
         article = find_article(session, extracted.claim, address)
@@ -1126,6 +1133,8 @@ class LinkRead:
             draft = read_article(client.make_llm(session), checker, page.text, purpose=LEAD_READING)
         except BudgetExceeded as ceiling:
             raise SpendCeilingReached(str(ceiling)) from None
+        except CannotAsk:
+            raise
         except LlmError as failure:
             return NotAttached(str(failure))
         try:

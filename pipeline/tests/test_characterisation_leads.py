@@ -28,10 +28,12 @@ link_read
     -> test_an_outlet_that_refuses_the_reader_finishes_the_lead
   reader says not now -> test_not_now_from_the_reader_is_deferred
   outlet held -> test_a_held_outlet_is_deferred
-  model read fails, outage -> test_a_model_outage_in_the_read_fails_the_lead
+  model read fails, outage -> test_a_model_outage_in_the_read_stops_the_run
   model read fails, invalid output -> test_an_invalid_read_fails_the_lead
   spend ceiling during the read -> test_the_spend_ceiling_in_the_read_stops_the_run
   treatment-kind decision fails -> test_a_failed_treatment_kind_decision_fails_the_lead
+  treatment-kind decision cannot reach the model
+    -> test_an_unreachable_treatment_kind_decision_stops_the_run
   reader itself down -> test_link_reading.py::
     test_the_reader_down_ends_the_run_with_leads_due_and_attempts_unchanged
 link_triage
@@ -55,7 +57,9 @@ news_search
 # test_not_now_from_the_reader_is_deferred: Deferred becomes a recorded "later" outcome.
 # test_a_held_outlet_is_deferred: Deferred becomes a recorded "later" outcome.
 # test_a_model_outage_in_the_read_fails_the_lead: the outage stops the run, no attempt.
+#   Changed by the call policy (task group 4): now test_a_model_outage_in_the_read_stops_the_run.
 # test_a_failed_treatment_kind_decision_fails_the_lead[unreachable]: stops the run.
+#   Changed by the call policy: now test_an_unreachable_treatment_kind_decision_stops_the_run.
 # test_a_news_index_that_fails_fails_the_trial: a source that is down may stop the run
 #   ("A provider that cannot be asked stops the run"), with no attempt counted.
 
@@ -94,7 +98,7 @@ from thenwhat.decide.core import BackendAnswer
 from thenwhat.decide.steps import BUSINESS_NEWS, NOT_ONE_TREATMENT, TREATMENT_KIND
 from thenwhat.domain import ReadOutcome, ScreenOutcome, WorkOutcome
 from thenwhat.llm.client import Llm, LlmSettings
-from thenwhat.llm.errors import LlmCallFailed
+from thenwhat.llm.errors import LlmCallFailed, ModelCannotBeAsked
 from thenwhat.work.ledger import due_records
 from thenwhat.work.runner import run_step
 from thenwhat.work.steps import Step
@@ -404,28 +408,24 @@ def test_a_held_outlet_is_deferred(reader: Reader):
 SETTINGS = LlmSettings("test:scripted", Decimal("10"), Decimal("3"), Decimal("15"))
 
 
-def test_a_model_outage_in_the_read_fails_the_lead(reader: Reader):
+def test_a_model_outage_in_the_read_stops_the_run(reader: Reader):
+    """A model that cannot be reached on any attempt says nothing about the lead: the run
+    stops, and the lead is due with no attempt counted."""
+
     def offline(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
         raise httpx.ConnectError("synthetic outage")
 
     model = FunctionModel(offline, model_name="scripted")
-    reader.client.make_llm = lambda at: Llm(at, SETTINGS, model=model, now=lambda: NOW)
+    reader.client.make_llm = lambda at: Llm(
+        at, SETTINGS, model=model, now=lambda: NOW, time=reader.time
+    )
     lead = reader.lead()
 
-    first = reader.read()
+    report = reader.read()
 
-    assert (first.failed, first.stopped) == (1, None)
-    assert read_ended(reader, lead) == (WorkOutcome.FAILED, 1, True, None, None)
-    entry = entry_of(reader.session, reader.step, lead)
-    assert entry is not None
-    assert entry.error == "The language model call failed (ConnectError)."
-
-    # Due until its attempts reach the limit, one attempt a run.
-    reader.read()
-    reader.read()
-
-    assert read_ended(reader, lead) == (WorkOutcome.FAILED, LIMIT, False, None, None)
-    assert reader.read().processed == 0
+    assert (report.processed, report.failed) == (0, 0)
+    assert (report.stopped or "").startswith("The language model cannot be asked")
+    assert read_ended(reader, lead) == (None, None, True, None, None)
 
 
 def test_an_invalid_read_fails_the_lead(session: Session, fake_time):
@@ -475,23 +475,9 @@ class TreatmentKindFails(Verticals):
         return super().answer(step, state, options)
 
 
-@pytest.mark.parametrize(
-    ("fault", "error"),
-    [
-        pytest.param(
-            RuntimeError("synthetic fault"), "The fake backend failed (RuntimeError).", id="fault"
-        ),
-        pytest.param(
-            LlmCallFailed("The decision call failed (ConnectError)."),
-            "The decision call failed (ConnectError).",
-            id="unreachable",
-        ),
-    ],
-)
-def test_a_failed_treatment_kind_decision_fails_the_lead(
-    reader: Reader, fault: Exception, error: str
-):
-    reader.backend = TreatmentKindFails(fault)
+def test_a_failed_treatment_kind_decision_fails_the_lead(reader: Reader):
+    error = "The fake backend failed (RuntimeError)."
+    reader.backend = TreatmentKindFails(RuntimeError("synthetic fault"))
     lead = reader.lead()
 
     report = reader.read()
@@ -506,6 +492,25 @@ def test_a_failed_treatment_kind_decision_fails_the_lead(
     ).all()
     assert logged.error == error
     assert len(reader.session.scalars(select(LlmUsage)).all()) == 1
+
+
+@pytest.mark.parametrize(
+    "fault",
+    [
+        LlmCallFailed("The decision call failed (ConnectError)."),
+        ModelCannotBeAsked("The decision backend cannot be asked: openai did not answer."),
+    ],
+    ids=["unreachable", "cannot-be-asked"],
+)
+def test_an_unreachable_treatment_kind_decision_stops_the_run(reader: Reader, fault: Exception):
+    reader.backend = TreatmentKindFails(fault)
+    lead = reader.lead()
+
+    report = reader.read()
+
+    assert (report.processed, report.failed) == (0, 0)
+    assert str(fault) in (report.stopped or "")
+    assert read_ended(reader, lead) == (None, None, True, None, None)
 
 
 # --- link_triage ---------------------------------------------------------------------------

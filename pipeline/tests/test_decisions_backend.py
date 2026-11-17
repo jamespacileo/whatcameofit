@@ -4,7 +4,8 @@ on a fake transport and a real database. The answer replayed was recorded from t
 """
 
 import json
-from datetime import UTC, datetime
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 import httpx
@@ -12,11 +13,14 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import DecisionLog, LlmUsage
+from test_link_triage import add_leads, triage
+from thenwhat.db.models import DecisionLog, LlmUsage, WorkEntry
 from thenwhat.decide.core import DecisionFailed, backend_named, decide, decide_many
 from thenwhat.decide.decisions_backend import DecisionsBackend
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.llm.decisions import Decisions, DecisionsSettings
+from thenwhat.llm.errors import BudgetExceeded, ModelCannotBeAsked
+from thenwhat.work.errors import CannotAsk
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 INTRO = "Claim: An antibody was reported to regrow missing teeth.\nIntervention: EX-1."
@@ -53,12 +57,13 @@ TRIAL_QUESTION = (
 
 def backend(
     session: Session,
-    api: Api,
+    api: Callable[[httpx.Request], httpx.Response],
     *,
     model: str | None = "example-model",
     price: str | None = "0.10",
     budget: str = "10",
     credential: str | None = "test-credential",
+    time=None,
 ) -> DecisionsBackend:
     settings = DecisionsSettings(model, Decimal(budget), Decimal(price) if price else None)
     decisions = Decisions(
@@ -67,6 +72,7 @@ def backend(
         transport=httpx.MockTransport(api),
         now=lambda: NOW,
         credential=credential,
+        time=time,
     )
     return DecisionsBackend(decisions)
 
@@ -151,8 +157,9 @@ def test_a_call_is_recorded_at_the_input_price_and_counts_towards_the_ceiling(
     assert (usage.purpose, usage.model) == ("decision:lookup_match", "example-model")
     assert (usage.input_tokens, usage.output_tokens) == (709, 0)
     assert usage.cost_usd == Decimal("0.000071")
-    # The next call is refused once the month's cost has reached the ceiling.
-    with pytest.raises(DecisionFailed, match="monthly ceiling"):
+    # The next call is refused once the month's cost has reached the ceiling: the backend
+    # cannot be asked, which is not a failed decision.
+    with pytest.raises(BudgetExceeded, match="monthly ceiling"):
         score(session, backend(session, api, budget="0.00005"))
     assert len(api.requests) == 1
 
@@ -188,12 +195,12 @@ def test_no_call_is_made_while_the_backend_is_not_configured(session: Session, s
 
 
 def test_a_failed_call_says_its_status_and_nothing_that_was_sent(session: Session):
-    api = Api(httpx.Response(429, json={"error": {"message": f"echo of {INTRO}"}}))
+    api = Api(httpx.Response(400, json={"error": {"message": f"echo of {INTRO}"}}))
 
     with pytest.raises(DecisionFailed) as failed:
         score(session, backend(session, api))
 
-    assert "status 429" in str(failed.value) and "antibody" not in str(failed.value)
+    assert "status 400" in str(failed.value) and "antibody" not in str(failed.value)
 
 
 def test_one_question_is_answered_from_its_state(session: Session):
@@ -228,3 +235,96 @@ def test_the_configured_name_selects_this_backend(session: Session):
     decisions = Decisions(session, DecisionsSettings(None, Decimal("10"), None))
 
     assert isinstance(backend_named("openai-decisions", llm, decisions), DecisionsBackend)
+
+
+# --- the call policy (openspec decision-steps) -----------------------------------------
+
+
+class Answers:
+    """The API answering each request with the next of the answers given, the last one
+    repeated, and noting the fake clock's time of each request."""
+
+    def __init__(self, fake_time, *answers: httpx.Response) -> None:
+        self.answers = list(answers)
+        self.asked_at: list[datetime] = []
+        self.time = fake_time
+
+    def __call__(self, request: httpx.Request) -> httpx.Response:
+        self.asked_at.append(self.time.now())
+        return self.answers.pop(0) if len(self.answers) > 1 else self.answers[0]
+
+
+QUOTA_USED_UP = httpx.Response(
+    429, json={"error": {"code": "insufficient_quota", "type": "insufficient_quota"}}
+)
+
+
+def test_a_short_wait_the_api_asks_for_is_waited_out(session: Session, fake_time, fixture_json):
+    """Scenario: The backend asks for a short wait"""
+    api = Answers(
+        fake_time,
+        httpx.Response(429, headers={"Retry-After": "5"}),
+        httpx.Response(200, json=fixture_json("openai/decisions_three_records.json")["response"]),
+    )
+
+    decisions = score(session, backend(session, api, time=fake_time))
+
+    assert [d.choice for d in decisions] == ["match", "other_indication", "not_a_match"]
+    assert len(api.asked_at) == 2
+    assert api.asked_at[1] - api.asked_at[0] >= timedelta(seconds=5)
+
+
+def test_an_invalid_result_fails_and_is_not_asked_again(session: Session, fake_time):
+    """Scenario: An invalid result"""
+    answers = [
+        {
+            "type": "choice",
+            "name": f"item-{n}",
+            "choice": "maybe",
+            "probabilities": [{"value": "maybe", "probability": 1.0}],
+            "confidence": 0.9,
+        }
+        for n in (1, 2, 3)
+    ]
+    api = Answers(fake_time, httpx.Response(200, json={"answers": answers}))
+
+    with pytest.raises(DecisionFailed, match="was not offered"):
+        score(session, backend(session, api, time=fake_time))
+
+    assert len(api.asked_at) == 1
+
+
+def test_a_used_up_quota_is_not_a_failed_decision(session: Session, fake_time):
+    """Scenario: The quota is used up"""
+    api = Answers(fake_time, QUOTA_USED_UP)
+
+    with pytest.raises(ModelCannotBeAsked, match="quota") as stopped:
+        score(session, backend(session, api, time=fake_time))
+
+    assert isinstance(stopped.value, CannotAsk)
+    assert len(api.asked_at) == 1
+    assert session.scalars(select(DecisionLog)).all() == []
+
+    # A step that was deciding a record stops, and the record is not recorded as failed.
+    [lead] = add_leads(session, ["A trial result"])
+    report = triage(session, backend(session, api, time=fake_time))
+
+    assert (report.processed, report.failed) == (0, 0)
+    assert "quota" in (report.stopped or "")
+    assert session.scalars(select(WorkEntry).where(WorkEntry.step == "link_triage")).all() == []
+    assert lead.triage_score is None
+
+
+def test_an_item_left_unanswered_fails_alone(session: Session, fake_time, fixture_json):
+    """Scenario: One item of a batch gets no answer"""
+    answered = fixture_json("openai/decisions_three_records.json")["response"]
+    answered["answers"] = [one for one in answered["answers"] if one["name"] != "item-2"]
+    api = Answers(fake_time, httpx.Response(200, json=answered))
+
+    with pytest.raises(DecisionFailed, match="no answer") as failed:
+        score(session, backend(session, api, time=fake_time))
+
+    assert not isinstance(failed.value, CannotAsk) and not failed.value.unreachable
+    assert len(api.asked_at) == 1
+    logged = session.scalars(select(DecisionLog).order_by(DecisionLog.id)).all()
+    assert [entry.output is None for entry in logged] == [False, True, False]
