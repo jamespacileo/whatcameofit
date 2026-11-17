@@ -1,12 +1,13 @@
 # Where each Postgres table goes
 
-Read with `store/schema.sql`. Row counts and sizes are of the working database `thenwhat` on 2026-11-16 (Alembic revision `0026`, 3,094 MB), measured by read-only queries. Sizes include indexes. Counts of the tables under 15,000 rows are the planner's estimates.
+Read with `store/schema.sql`. Row counts and sizes are of the working database `thenwhat` on 2026-11-16 (Alembic revision `0026`, 3,094 MB), measured by read-only queries. Brought up to revision `0032` on 2026-11-17: what that changed is said in the rows for `claim`, `claim_change` and `registry_trial`, and the sizes under "What the sample showed" were measured again that day. Sizes include indexes. Counts of the tables under 15,000 rows are the planner's estimates.
 
 **As is**: same columns, with JSON and arrays as JSON text and row ids replaced by natural keys in what a writer sends. **Reshaped**: the table or its key changed. **Local**: stays on a device and is not migrated. **Dropped**: not kept anywhere.
 
 | Postgres table | Rows | Size | Goes | Store table | Reason |
 | --- | ---: | ---: | --- | --- | --- |
-| `claim` | 1,795 | 1.6 MB | Reshaped | `claim`, `claim_action`, `claim_alias` | Gains `origin` (a reader's claim publishes without the hold, a backfill's waits), `merged_into`, and the run that added and changed it. Holds, clears, archives, merges and renames are also written to `claim_action`, which the list of claims published from readers' leads reads |
+| `claim` | 1,795 | 1.6 MB | Reshaped | `claim`, `claim_action`, `claim_alias`, `work_item` | `merged_into_id` is `merged_into`. `registry_search_due_at` is not a column: a claim due to be searched again is a `work_item` due for `prepare`. Gains `origin` (a reader's claim publishes without the hold, a backfill's waits), `merged_into`, and the run that added and changed it. Holds, clears, archives, merges and renames are also written to `claim_action`, which the list of claims published from readers' leads reads |
+| `claim_change` | 0 | | Reshaped | `claim_action`, `claim_alias` | Added on main by migration `0032`. A merge or a rename is a row of `claim_action` with what was done; a former slug is a row of `claim_alias`. Its `record`, the rows a merge moved by id, has no counterpart yet, so a merge cannot be undone in the store (task 4.7) |
 | `source_article` | 2,469 | 1.4 MB | Reshaped | `source_article` | Unique on claim and address key, not claim and address as written. By a rough copy of the address key, 8 articles are held twice by one claim today; the migration keeps the first of each |
 | `promise` | 834 | 0.2 MB | Reshaped | `promise` | Had no natural key; now unique on article and description. No two promises share that key today |
 | `reported_statement` | 10,257 | 5.5 MB | As is | `reported_statement` | Already keyed by article and text key. `decision_ref` is rewritten from a row id to a natural key |
@@ -22,7 +23,7 @@ Read with `store/schema.sql`. Row counts and sizes are of the working database `
 | `failure_flag` | 0 | | As is | `failure_flag` | |
 | `trial_read` | 4,958 | 1.4 MB | Reshaped | `trial_read` | Takes its readings in as a JSON column |
 | `reading` | 12,784 | 2.8 MB | Reshaped | `trial_read.readings` | Readings are replaced as a set with their read, and nothing asks for one alone |
-| `registry_trial` | 467,064 | 637 MB | Reshaped | `registry_trial`, `registry_trial_status`, `registry_trial_fts`, `payload` | All of them move. The listing columns are what the plain page shows. The payload (642 bytes on average, 12 KB at most) is kept in `payload`, in the row. Gains `checked_at`, a history of states, and a search index |
+| `registry_trial` | 467,064 | 637 MB | Reshaped | `registry_trial`, `registry_trial_status`, `registry_trial_fts`, `payload` | All of them move, with the eleven columns of activity and results that migration `0031` added. The columns are what the plain page shows. The payload (1,711 bytes on average since `0031`; 32 are over 16 KB and go to R2) is kept in `payload`, in the row. Gains `checked_at`, a history of states, and a search index |
 | `registry_load` | 1 | | As is | `registry_load` | Lets any device or the daily job ask the registry only for what changed |
 | `article_lead` | 44,166 | 45 MB | Reshaped | `article_lead` | `raw_result` is dropped: it is the search service's listing fields, all of which are already columns. Keyed by address key |
 | `link_lead` | 682,022 | 430 MB | Reshaped | `link_lead`, `link_lead_fts` | Only leads on listed outlets that were scored, read, labelled or tied to a claim: 414,477. The other 267,545 stay in a device's run files. `outlet_kind` cannot be `unknown` in the store |
@@ -39,6 +40,8 @@ Read with `store/schema.sql`. Row counts and sizes are of the working database `
 | `source_allowance_use` | 75 | 0.1 MB | Local | | A device's own pacing of a source. The store-side consumer needs its own; see open question in `design.md` |
 | `http_cache` | 44,663 | 761 MB | Local | | A device's cache |
 | `alembic_version` | 1 | | Dropped | | D1 keeps its own record of migrations applied |
+
+Rules that main's migrations `0029` and `0030` put in Postgres, and where they are here: one intervention a claim, an article never without its claim on a lead, and counts and amounts that are not negative are CHECKs or unique indexes in `store/schema.sql`. That a row naming an article and a claim names the article's own claim is held by the merge, which finds the article through its claim. Not held: that a lead read into a claim names the claim, because a lead's outcome and its tie to the claim are taken by two statements.
 
 New in the store, with no Postgres table behind them: `run`, `run_step`, `run_stated`, `stg`, `merging`, `merge_report`, `merge_guard`, `store_step` (the merge); `payload`; `evidence_conflict`; `lead_reading` (a lookup's reading, awaiting the rules); `work_slice`; `work_item`; `unlisted_domain_count`; `deployment`; `claim_fts`.
 

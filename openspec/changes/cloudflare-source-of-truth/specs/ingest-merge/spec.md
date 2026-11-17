@@ -55,11 +55,15 @@ The merge SHALL refuse a run, applying nothing and saying why, when any step ver
 - **THEN** the merge is refused
 
 ### Requirement: What was decided in the store is kept
-The merge SHALL NOT unarchive a claim, a match or an event the store holds archived. It SHALL NOT replace a decision recorded by a person with one recorded by a rule, a model, the seed or an assistant. It SHALL NOT change a published claim's published time.
+The merge SHALL NOT unarchive a claim, a match or an event the store holds archived. It SHALL NOT replace a decision recorded by a person with one recorded by a rule, a model, the seed or an assistant. Where a run and the store hold different decisions on one record, the decision of the higher decider SHALL stand: a person's, then an assistant's, then a rule's or the seed's; between two of the same rank, the later. It SHALL NOT change a published claim's published time.
 
 #### Scenario: A claim the operator archived
 - **WHEN** a run holds new records for a claim the store holds archived
 - **THEN** the claim stays archived, its new source articles are stored, and the report lists it
+
+#### Scenario: An assistant and a rule disagree
+- **WHEN** a run holds an approval by rule of a match the store holds rejected by an assistant
+- **THEN** the assistant's rejection stands, whichever of the two runs was merged first
 
 #### Scenario: A match a person rejected
 - **WHEN** a run holds an approval by rule of a trial match that a person rejected

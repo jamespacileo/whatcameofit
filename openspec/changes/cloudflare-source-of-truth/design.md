@@ -284,6 +284,26 @@ Pages read, all under `developers.cloudflare.com`: `d1/platform/limits`, `d1/pla
 7. **CI's export reads a snapshot from the ingest service** into a SQLite file of the store's schema. CI holds no Cloudflare API token for the database.
 8. **A merged claim keeps its entities, matches and events**, archived with it. Its articles, their statements and promises, and its leads move, and the claim that stays is prepared again.
 
+### 17. What the operator decided on 2026-11-17
+
+**Decided by the operator on 2026-11-17**, on the five questions at the top of pull request 273:
+
+1. **The preview resources are created now, by the operator.** The D1 database `thenwhat-store-preview`, the R2 bucket `thenwhat-payloads-preview` and the Queue `thenwhat-work-preview`, each in the European Union jurisdiction, which is set at creation and cannot be changed. The commands are in task 3.3. The Queue's jurisdiction is the assistant's addition: its messages carry article address keys.
+2. **Deciders have an order:** a person's decision, then an assistant's, then a rule's or the seed's; at equal rank the later one. `specs/ingest-merge` now says so.
+3. **Evidence that differs is counted first.** During the 14 days of the parallel run the store is not what the site is built from, so a hold there takes nothing off the site; each night's count of evidence kept apart is recorded, and whether the hold acts on published claims from the cut-over is decided then, with the number.
+4. **The cut-over waits** for at least 14 days in parallel and 7 nights in a row of identical exports (decision 13).
+5. **Reporting without applying stays as written,** with its two stated limits (decision 10).
+
+### 18. Brought up to main on 2026-11-17
+
+Main gained migrations `0027` to `0032` while this was drafted. What changed in the store's SQL to match:
+
+- **The wider trial record** (`0031`): `registry_trial` has the eleven columns the registry states of a trial's activity and results (dates and their types, whether results are posted, the acronym, the lead sponsor's name), and the indexes the named sets of trials select on. The stored payload grew with them, from 642 to 1,711 bytes on average and 55,425 at most; 32 of the 467,064 are over 16 KB and are R2 objects, the rest stay in rows.
+- **Claim merge and rename** (`0032`, `claims/corrections.py`): the store's merge now does what the pipeline's does. What an article reported moves: articles, their promises and statements, leads, the papers, organisations and people an article named, and the names of the intervention that the action lists. What a registry said does not: matches and events stay with the claim that went. A rename can correct the intervention's name, keep the old one as a synonym, give a new slug, or any of these, and leaves the claim's registries due to be searched again. Which names a merge gains is the pipeline's rule, so the action carries them; the store applies them.
+- **A claim has one intervention**, held by a unique index as in Postgres.
+- **`claim_change`** has no table of its own: a merge or rename is a row of `claim_action` and a former slug is a row of `claim_alias` (`store-tables.md`).
+- **Not mirrored:** undoing a merge (`claim unmerge`). Postgres keeps, by row id, every row a merge moved; the store has no such record yet, and its statements are task 4.7.
+
 ## Risks / Trade-offs
 
 - **D1's limits are reached later.** → Criterion 1 leaves headroom; payloads are already outside; the merge and its tests hold for Postgres, so moving stores later is a data migration, not a redesign.

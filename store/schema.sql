@@ -183,7 +183,9 @@ CREATE VIEW claim_public AS
   WHERE review_state = 'approved' AND published_at IS NOT NULL
     AND archived_at IS NULL AND awaiting_audit_at IS NULL;
 
--- Holds, clears, archives, unarchives, merges and renames, as they happened.
+-- Holds, clears, archives, unarchives, merges and renames, as they happened. Postgres
+-- keeps merges and renames in `claim_change`; here they are rows of this table, with
+-- what was done in `detail`.
 CREATE TABLE claim_action (
   id          INTEGER PRIMARY KEY,
   claim_id    INTEGER NOT NULL REFERENCES claim (id),
@@ -275,6 +277,8 @@ CREATE TABLE entity (
   CHECK (doi IS NULL OR type = 'paper')
 ) STRICT;
 CREATE UNIQUE INDEX uq_entity_origin_paper_per_claim ON entity (claim_id) WHERE is_origin_paper = 1;
+-- The intervention half of a claim's identity: one, never two.
+CREATE UNIQUE INDEX uq_entity_intervention_per_claim ON entity (claim_id) WHERE type = 'intervention';
 
 CREATE TABLE entity_article (
   entity_id          INTEGER NOT NULL REFERENCES entity (id),
@@ -473,6 +477,19 @@ CREATE TABLE registry_trial (
   sponsor_class       TEXT,
   search_name         TEXT,
   search_indication   TEXT,
+  -- What the registry states of the trial's activity and results, as it gives them.
+  -- Empty where it gives nothing; never inferred. A completion date can be a month.
+  start_date_type               TEXT,
+  last_update_posted            TEXT,
+  study_first_posted            TEXT,
+  primary_completion_date       TEXT,
+  primary_completion_date_type  TEXT,
+  completion_date               TEXT,
+  completion_date_type          TEXT,
+  results_first_posted          TEXT,
+  has_results                   INTEGER CHECK (has_results IN (0, 1)),
+  acronym                       TEXT,
+  lead_sponsor_name             TEXT,   -- empty when the lead sponsor is a person
   payload_sha256      TEXT NOT NULL REFERENCES payload (sha256),
   fetched_at          TEXT NOT NULL,   -- when the payload held was fetched
   checked_at          TEXT NOT NULL,   -- when the registry was last found to say the same
@@ -482,6 +499,11 @@ CREATE TABLE registry_trial (
 ) STRICT;
 CREATE INDEX ix_registry_trial_added_run ON registry_trial (added_run);
 CREATE INDEX ix_registry_trial_changed_run ON registry_trial (changed_run);
+-- What the named sets of stored trials select on.
+CREATE INDEX ix_registry_trial_overall_status ON registry_trial (overall_status);
+CREATE INDEX ix_registry_trial_last_update ON registry_trial (last_update_posted);
+CREATE INDEX ix_registry_trial_completion_with_results ON registry_trial (completion_date)
+  WHERE has_results = 1 AND completion_date_type = 'ACTUAL';
 
 -- Each state a trial has been seen in, from the first load on.
 CREATE TABLE registry_trial_status (
@@ -543,7 +565,9 @@ CREATE TABLE link_lead (
   source_article_id  INTEGER REFERENCES source_article (id),
   added_run          TEXT NOT NULL REFERENCES run (id),
   changed_run        TEXT NOT NULL REFERENCES run (id),
-  CHECK ((triage_score IS NULL) = (triage_version IS NULL))
+  CHECK ((triage_score IS NULL) = (triage_version IS NULL)),
+  -- A lead may point at a claim with no article; an article never stands without its claim.
+  CHECK (source_article_id IS NULL OR claim_id IS NOT NULL)
 ) STRICT;
 CREATE INDEX ix_link_lead_added_run ON link_lead (added_run);
 CREATE INDEX ix_link_lead_claim ON link_lead (claim_id) WHERE claim_id IS NOT NULL;
@@ -630,8 +654,8 @@ CREATE TABLE work_entry (
   step             TEXT NOT NULL,
   step_version     INTEGER NOT NULL,
   outcome          TEXT NOT NULL CHECK (outcome IN ('done', 'nothing_found', 'failed')),
-  attempts         INTEGER NOT NULL,
-  requests_used    INTEGER NOT NULL,
+  attempts         INTEGER NOT NULL CHECK (attempts >= 0),
+  requests_used    INTEGER NOT NULL CHECK (requests_used >= 0),
   fingerprint      TEXT NOT NULL,
   stale            INTEGER NOT NULL DEFAULT 0 CHECK (stale IN (0, 1)),
   error            TEXT,
@@ -684,9 +708,9 @@ CREATE TABLE llm_usage (
   seq            INTEGER NOT NULL,
   purpose        TEXT NOT NULL,
   model          TEXT NOT NULL,
-  input_tokens   INTEGER NOT NULL,
-  output_tokens  INTEGER NOT NULL,
-  cost_usd       REAL NOT NULL,
+  input_tokens   INTEGER NOT NULL CHECK (input_tokens >= 0),
+  output_tokens  INTEGER NOT NULL CHECK (output_tokens >= 0),
+  cost_usd       REAL NOT NULL CHECK (cost_usd >= 0),
   -- A day for a reader's lookup, a time otherwise.
   created_at     TEXT NOT NULL,
   PRIMARY KEY (run_id, seq)

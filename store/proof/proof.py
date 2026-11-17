@@ -497,6 +497,28 @@ def scenarios():
     s, r1 = base()
     check("56 which records one run added is answered from the records alone", s.one(
           "SELECT count(*) FROM source_article a JOIN run r ON r.id = a.added_run WHERE r.device = 'mini' AND substr(r.registered_at, 1, 10) = '2026-11-16'") == 1)
+    # -- what the pipeline's own merge and rename do (claims/corrections.py), mirrored --
+    s, _ = base()
+    ok, _ = s.run([action("rename", old_name="semaglutide", new_name="semaglutide injection")], writer="operator")
+    check("59 a rename of the intervention: new name, old one kept as a synonym, same slug, registries due again", ok and s.all(
+          "SELECT name, synonyms FROM entity") == [("semaglutide injection", '["Wegovy","semaglutide"]')]
+          and s.all("SELECT slug FROM claim") == [(SLUG,)]
+          and s.one("SELECT state FROM work_item WHERE record_key = ? AND step = 'prepare'", SLUG) == "due")
+    ok, _ = s.run([entity("tirzepatide")])
+    check("60 a claim has one intervention, never two", not ok and s.one("SELECT count(*) FROM entity") == 1)
+    s.db.execute("DELETE FROM stg")
+    company = lambda slug: ("entity", f"{slug}|company|Novo Nordisk", {"slug": slug, "type": "company", "name": "Novo Nordisk"})
+    paper = ("entity", "dup|paper|STEP 1", {"slug": "dup", "type": "paper", "name": "STEP 1"})
+    s.run([company(SLUG), claim("dup", held=None), entity("Ozempic", "dup"), company("dup"), paper, match("NCT4", "approved", "rule", name="Ozempic", slug="dup")])
+    ok, _ = s.run([action("merge", "dup", into_slug=SLUG, gains=["Ozempic", "Wegovy"])], writer="operator")
+    kept = s.one("SELECT id FROM claim WHERE slug = ?", SLUG)
+    check("61 a merge moves what an article named and the names listed; a name both hold is not doubled", ok
+          and s.one("SELECT synonyms FROM entity WHERE claim_id = ? AND type = 'intervention'", kept) in ('["Wegovy","semaglutide","Ozempic"]', '["Ozempic","Wegovy","semaglutide"]')
+          and s.one("SELECT claim_id FROM entity WHERE name = 'STEP 1'") == kept
+          and s.one("SELECT count(*) FROM entity WHERE name = 'Novo Nordisk' AND claim_id = ?", kept) == 1)
+    check("62 what a registry said does not move with a merge: the match stays with the claim that went", s.one(
+          "SELECT c.slug FROM entity_match m JOIN entity e ON e.id = m.entity_id JOIN claim c ON c.id = e.claim_id WHERE m.external_id = 'NCT4'") == "dup")
+
     check(f"57 the report without applying said what the merge then said, for every merge above ({previews['same']})",
           not previews["differ"] and not previews["not reconciling missed"] and previews["same"] >= 50)
     check(f"58 it also said so of every run whose counts did not reconcile ({previews['not reconciling seen']})",
