@@ -54,7 +54,7 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import OutletKind, ScreenOutcome
-from thenwhat.sources.people import without_people
+from thenwhat.sources.people import payload_without_people
 from thenwhat.store import records as r
 from thenwhat.store.form import Payload, Record, key_of, payload_of, payload_record_of, url_key
 
@@ -276,8 +276,9 @@ def _gather(
         if event.entity_match_id is not None:
             entity_match = matches[event.entity_match_id]
             match = (entities[entity_match.entity_id], entity_match)
-        # A second guard: an event stored before people were removed at the source.
-        record, sha256 = payload_record(without_people(event.raw_payload))
+        # A second guard: an event stored before people were removed at the source, a
+        # registry study, a paper's record or anything carrying a person's keys.
+        record, sha256 = payload_record(payload_without_people(event.raw_payload))
         yield record
         yield r.evidence_event_record(
             event, slug=slugs[event.claim_id], match=match, payload_sha256=sha256
