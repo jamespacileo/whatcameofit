@@ -74,10 +74,12 @@ const trialCount = claim.trials?.length ?? 0;
     )
   }
   {
-    /* Every panel is named, so the status is not read as what the report or the record
-       beside it says: "Status now", unless it says the status changed that day. */
+    /* The panel is named, so the status is not read as what the report or the record
+       beside it says: "Status now", unless it says the status changed that day. Where
+       the panel is a column, the day's heading names the column once and this is not
+       drawn; where it is under the claim, this names it. */
     !change && (
-      <span class="row-change">
+      <span class="row-change is-plain">
         <span class="row-was">Status now</span>
       </span>
     )

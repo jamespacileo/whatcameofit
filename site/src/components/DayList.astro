@@ -154,6 +154,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
               <div class="day-head">
                 <h3 data-group-title>{headingTitle(heading)}</h3>
                 <span data-says>{countsText(countKinds(heading.rows))}</span>
+                <span class="day-col">Status now</span>
               </div>
               <ol>
                 {heading.rows.map((row) =>
@@ -193,6 +194,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
               <div class="day-head">
                 <h3 id="older-title">From an earlier year</h3>
                 <span data-picked-note>One older claim, picked by the date.</span>
+                <span class="day-col">Status now</span>
               </div>
               <ol>
                 <DayReport row={list.older} topic={topicTitle.get(list.older.claim.vertical) ?? ""} picked />
@@ -851,7 +853,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   .report-row,
   .record-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 10.25rem;
+    grid-template-columns: minmax(0, 1fr) var(--now-col);
     gap: 0 1.5rem;
     align-items: start;
   }
@@ -860,26 +862,27 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
      a laptop's list is as narrow as a tablet's. */
   .day-list {
     container-type: inline-size;
+    /* The width of the status column: wide enough for "Preclinical only" on one line. */
+    --now-col: 11rem;
   }
 
   .row-main {
     min-width: 0;
   }
 
-  /* The panel: the panel blue, its name and the control's mark on its first line, then
-     the status, its place on the path across the panel's width, and the counts one to
-     a line. Its padding is taken out of the row's, so its first line stands level with
-     the row's top line and the status level with the title. */
+  /* The panel: the panel blue, no taller than what it holds. The status leads, with the
+     control's mark at its right, then its place on the path across the panel's width
+     and the counts one to a line. Its padding is taken out of the row's, so the status
+     stands level with the row's top line. The day's heading names the column. */
   .row-now {
     position: relative;
     display: grid;
-    align-self: stretch;
     align-content: start;
     justify-items: start;
-    gap: 0.2rem;
+    gap: 0.15rem;
     width: 100%;
-    margin-top: -0.55rem;
-    padding: 0.55rem 0.8rem 0.75rem;
+    margin-top: -0.6rem;
+    padding: 0.6rem 0.8rem 0.7rem;
     font: inherit;
     text-align: left;
     color: var(--ink);
@@ -903,29 +906,45 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   }
 
   .row-now .status-name {
-    margin-top: 0.2rem;
+    padding-right: 1.25rem;
     font-size: var(--text-l);
-    line-height: 1.2;
+    line-height: 1.25;
     color: var(--blue);
     text-wrap: balance;
   }
 
   .row-now .track {
     width: 100%;
-    margin: 0.4rem 0 0.3rem;
+    margin: 0.35rem 0 0.25rem;
   }
 
   .row-now .track.off {
     width: auto;
   }
 
-  /* The panel's first line, at the size and leading of the row's top line beside it. */
+  /* A change is said over the status. */
   .row-change {
     display: grid;
     justify-items: start;
     gap: 0.2rem;
     padding-right: 1.5rem;
-    font-size: var(--text-s);
+    font-size: var(--text-xs);
+    line-height: 1.4;
+  }
+
+  /* As a column the panel is named by the day's heading, not by itself. */
+  .row-change.is-plain {
+    display: none;
+  }
+
+  /* The column's name, once a day, over the panels' words. */
+  .day-col {
+    margin-left: auto;
+    width: calc(var(--now-col) - 0.8rem);
+  }
+
+  .day-group:not(:has(.day-row:not([hidden]) .row-now)) .day-col {
+    display: none;
   }
 
   .row-change .new-tag {
@@ -963,7 +982,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
   .row-chev {
     position: absolute;
-    top: 0.75rem;
+    top: 0.72rem;
     right: 0.65rem;
     display: grid;
     color: var(--muted);
@@ -978,6 +997,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
      and the detail its upper right one, as the status tab joins its well on a claim
      page. */
   .row-now[aria-expanded="true"] {
+    align-self: stretch;
     background: var(--panel);
     border-radius: 0.7rem 0.7rem 0 0;
   }
@@ -1177,9 +1197,19 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       grid-column: 1 / -1;
     }
 
+    /* Under the claim the panel names itself, and no heading names a column. */
+    .row-change.is-plain {
+      display: grid;
+    }
+
+    .day-col {
+      display: none;
+    }
+
     /* The status and its place on the path share the panel's second line. */
     .row-now > .status-name {
       grid-column: 1;
+      padding-right: 0;
     }
 
     .row-now > .track {

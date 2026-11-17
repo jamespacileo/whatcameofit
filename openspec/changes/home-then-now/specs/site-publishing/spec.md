@@ -88,15 +88,19 @@ In the home page's day-by-day list, a registry record's row SHALL lead with the 
 - **THEN** a registry row's title is read with its treatment, as what was recorded, a colon and the treatment's name
 
 ### Requirement: A row's status stands in a named panel
-In the home page's day-by-day list, a report's and a registry record's row SHALL show the claim's status in a panel at the row's right: named "Status now" on its first line, so that it is not read as what the report or the record beside it says, then the status, its place on the path, a no-signal note where there is one, and the counts. A row for a record dated on a day the claim's status changed SHALL say "Changed" and the status before in place of "Status now". The panel SHALL be the control that opens the row's detail, and while the detail is open the two SHALL be drawn as one shape. The phase in a registry row's title is the trial's; the status in the panel is the claim's.
+In the home page's day-by-day list, a report's and a registry record's row SHALL show the claim's status in a panel at the row's right: the status, its place on the path, a no-signal note where there is one, and the counts. The panel SHALL be named "Status now", so that it is not read as what the report or the record beside it says: once for each day, at the right of the day's heading, where the panels stand in a column; on the panel's own first line where the panel stands under the claim. The panel SHALL be no taller than what it holds while its detail is closed. A row for a record dated on a day the claim's status changed SHALL say "Changed" and the status before in place of "Status now". The panel SHALL be the control that opens the row's detail, and while the detail is open the two SHALL be drawn as one shape. The phase in a registry row's title is the trial's; the status in the panel is the claim's.
 
 #### Scenario: An early trial of a claim that is further on
 - **WHEN** a phase 2 trial is registered for a claim that stands at phase 3
-- **THEN** the row's title reads "Phase 2 trial registered" and its panel reads "Status now" over "Phase 3 trial"
+- **THEN** the row's title reads "Phase 2 trial registered" and its panel, under "Status now", reads "Phase 3 trial"
 
-#### Scenario: A report
-- **WHEN** a news report's row is drawn
-- **THEN** its panel reads "Status now" over the claim's status
+#### Scenario: A day of three rows on a wide screen
+- **WHEN** a day lists two reports and a registry record
+- **THEN** the day's heading says "Status now" once, over the three panels, and no panel says it
+
+#### Scenario: On a phone
+- **WHEN** the list is read at 375 pixels wide
+- **THEN** each panel says "Status now" on its first line and no heading does
 
 #### Scenario: A record that changed the status
 - **WHEN** a record dated today moved a claim from phase 2 to phase 3
