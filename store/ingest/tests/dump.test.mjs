@@ -97,3 +97,60 @@ test("a dump that fails leaves nothing that looks like a dump, and clears what a
   assert.match(dump(bare, join(out, "store.sql")).stderr, /no primary key/);
   assert.deepEqual(readdirSync(out), ["notes.txt"]);
 });
+
+// Loaded as D1 was seen to: a file at a time, every statement on its own, foreign keys
+// checked at once, and no PRAGMA to defer them.
+function loadStrictly(schema, folder) {
+  const db = new DatabaseSync(":memory:");
+  db.exec(schema);
+  db.exec("PRAGMA foreign_keys = ON");
+  const files = readdirSync(folder).filter((name) => name.endsWith(".sql")).sort();
+  for (const file of files) {
+    const text = readFileSync(join(folder, file), "utf8");
+    assert.ok(!text.includes("defer_foreign_keys"), `${file} leans on deferred checks`);
+    for (const statement of text.split(/;\n(?=INSERT INTO|UPDATE|$)/)) if (statement.trim()) db.exec(statement);
+  }
+  return { db, files };
+}
+
+test("a child never lands in a file, or a statement, before its parent", () => {
+  // The child table is created first, and each row of `tree` has a lower id than its parent.
+  const schema = `CREATE TABLE leaf (id INTEGER PRIMARY KEY, tree_id INTEGER NOT NULL REFERENCES tree (id), run TEXT NOT NULL REFERENCES job (name)) STRICT;
+CREATE TABLE tree (id INTEGER PRIMARY KEY, into_id INTEGER REFERENCES tree (id), run TEXT NOT NULL REFERENCES job (name)) STRICT;
+CREATE TABLE job (name TEXT PRIMARY KEY) STRICT;`;
+  const path = join(dir, "order.sqlite");
+  const db = new DatabaseSync(path, { enableForeignKeyConstraints: false });
+  db.exec(schema);
+  db.prepare("INSERT INTO job VALUES ('r1')").run();
+  for (const [id, into] of [[1, 2], [2, 3], [3, 4], [4, null], [5, 5], [6, null], [7, 1]]) db.prepare("INSERT INTO tree VALUES (?, ?, 'r1')").run(id, into);
+  for (let id = 1; id <= 7; id += 1) db.prepare("INSERT INTO leaf VALUES (?, ?, 'r1')").run(id, id);
+  const out = join(dir, "order");
+  const done = dump(path, join(out, "store.sql"), "--rows-a-file", "2");
+  assert.equal(done.status, 0, done.stderr);
+  const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
+  assert.deepEqual(manifest.deferred, []);
+  assert.deepEqual(manifest.files.map((file) => file.tables.join("+")), ["job+tree", "tree", "tree", "tree", "leaf", "leaf", "leaf", "leaf"]);
+  const { db: loaded, files } = loadStrictly(schema, out);
+  assert.equal(files.length, 8);
+  for (const table of ["job", "tree", "leaf"]) {
+    assert.deepEqual(loaded.prepare(`SELECT * FROM ${table} ORDER BY 1`).all(), db.prepare(`SELECT * FROM ${table} ORDER BY 1`).all(), table);
+  }
+  // Rows that point at each other in a ring cannot be put parents first: the dump says so.
+  db.exec("PRAGMA foreign_keys = OFF; UPDATE tree SET into_id = 7 WHERE id = 4");
+  const ring = dump(path, join(out, "store.sql"), "--rows-a-file", "2");
+  assert.equal(ring.status, 1);
+  assert.match(ring.stderr, /tree holds 7 rows but 2 could be ordered parents first/);
+  assert.deepEqual(readdirSync(out), []);
+  // Two tables that point at each other are kept in one file, named, with checks deferred.
+  const cycle = join(dir, "cycle.sqlite");
+  const both = new DatabaseSync(cycle, { enableForeignKeyConstraints: false });
+  both.exec(`CREATE TABLE a (id INTEGER PRIMARY KEY, b_id INTEGER REFERENCES b (id)) STRICT; CREATE TABLE b (id INTEGER PRIMARY KEY, a_id INTEGER REFERENCES a (id)) STRICT;
+    CREATE TABLE c (id INTEGER PRIMARY KEY) STRICT;`);
+  for (let id = 1; id <= 5; id += 1) { both.prepare("INSERT INTO a VALUES (?, ?)").run(id, id); both.prepare("INSERT INTO b VALUES (?, ?)").run(id, id); both.prepare("INSERT INTO c VALUES (?)").run(id); }
+  const cyclic = dump(cycle, join(out, "store.sql"), "--rows-a-file", "2");
+  assert.equal(cyclic.status, 0, cyclic.stderr);
+  const said = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
+  assert.deepEqual(said.deferred, ["a", "b"]);
+  assert.deepEqual(said.files.at(-1).tables, ["a", "b"]);
+  assert.match(readFileSync(join(out, said.files.at(-1).name), "utf8"), /^PRAGMA defer_foreign_keys = true;/);
+});

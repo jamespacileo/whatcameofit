@@ -10,7 +10,8 @@
 // The manifest is <folder>/manifest.json unless named. Exit 1 on a failure or a count
 // that differs. A file that failed may have been applied in part or not at all: Cloudflare's
 // documentation does not say, so read the counts before loading it again.
-import { readFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import { createReadStream, readFileSync, readdirSync, statSync, existsSync } from "node:fs";
+import { createInterface } from "node:readline";
 import { join, resolve } from "node:path";
 import { execute, sum, target } from "./d1.mjs";
 
@@ -33,12 +34,25 @@ if (unfinished.length || strangers.length) {
 }
 console.log(`${files.length} file(s) into the ${to.remote ? "preview database" : "local engine"}`);
 
+// The tables a file writes to, read from the file when its manifest does not say.
+async function tablesIn(path) {
+  const seen = new Set();
+  for await (const line of createInterface({ input: createReadStream(path), crlfDelay: Infinity })) {
+    const found = /^(?:INSERT INTO|UPDATE) "?([A-Za-z0-9_]+)"?/.exec(line);
+    if (found) seen.add(found[1]);
+  }
+  return [...seen].join(", ") || "none found";
+}
+
 let written = 0, seconds = 0;
 for (const name of files) {
   const path = resolve(folder, name), started = Date.now();
   let answer;
   try { answer = await execute(to, "--file", path); } catch (error) {
-    console.error(`FAILED ${name} after ${((Date.now() - started) / 1000).toFixed(1)} s; nothing after it was loaded\n${error.message}`);
+    const holds = (manifest.files || []).find((file) => (file.name ?? file.file ?? file.path) === name)?.tables;
+    console.error(`FAILED ${name} after ${((Date.now() - started) / 1000).toFixed(1)} s; nothing after it was loaded`);
+    console.error(`its tables: ${holds ? holds.join(", ") : await tablesIn(path)}`);
+    console.error(error.message);
     process.exit(1);
   }
   const took = (Date.now() - started) / 1000, rows = sum(answer, "rows_written");

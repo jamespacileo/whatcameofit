@@ -13,6 +13,16 @@
 // so they and their shadow tables are left out; so are staged records and the tables
 // Wrangler and D1 keep for themselves.
 //
+// Order. D1 checks foreign keys statement by statement: `PRAGMA defer_foreign_keys` did
+// not hold through a file of 400 MB on D1 itself (17 November 2026), so nothing here
+// leans on it. Tables are written parents first by the schema's foreign keys, whatever
+// order they were created in. In a table that points at itself (a merged claim at the
+// claim it went into) rows are written parents first too, since a child's INSERT may be
+// a statement or a file before its parent's. Tables whose foreign keys form a cycle, or
+// that point at themselves in a way this cannot order, are named in the output
+// (`deferred`), kept together in one file and given the PRAGMA: that is the best that
+// can be done for them and it may fail on D1. store/schema.sql has none.
+//
 // A row too long for one statement is written in parts: an INSERT that holds the start
 // of each long value, then UPDATEs that append the rest, found by the row's primary key
 // (`content = CAST(content || X'..' AS BLOB)`, and without the cast for a text). Before such a row is written, its statements are run
@@ -79,7 +89,38 @@ async function dump() {
   const tables = db.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' ORDER BY rowid").all()
     .filter(({ name }) => !LEFT_OUT.test(name) && !virtual.some((v) => name === v || name.startsWith(`${v}_`)));
 
-  const written = [];
+  // Each table's parents, by the schema's foreign keys.
+  const names = tables.map(({ name }) => name);
+  const keysOf = Object.fromEntries(names.map((name) => [name, db.prepare(`PRAGMA foreign_key_list(${quote(name)})`).all()]));
+  const parents = Object.fromEntries(names.map((name) => [name, new Set(keysOf[name].map((key) => key.table).filter((parent) => parent !== name && names.includes(parent)))]));
+  // Parents first: a table is written once all its parents are; ties keep the schema's order.
+  const ordered = [];
+  for (let moved = true; moved;) {
+    moved = false;
+    for (const name of names) {
+      if (ordered.includes(name) || ![...parents[name]].every((parent) => ordered.includes(parent))) continue;
+      ordered.push(name); moved = true;
+    }
+  }
+  // What is left points at itself through other tables: a cycle. It goes last, together.
+  const deferred = names.filter((name) => !ordered.includes(name));
+  // How a table that points at itself is read parents first, or null when it cannot be.
+  function selfOrder(name, columns) {
+    const own = keysOf[name].filter((key) => key.table === name);
+    if (!own.length) return "";
+    const ids = new Set(own.map((key) => key.id));
+    const pk = db.prepare(`PRAGMA table_xinfo(${quote(name)})`).all().filter((column) => column.pk > 0).map((column) => column.name);
+    if (ids.size !== 1 || own.length !== 1 || pk.length !== 1) return null;
+    const [{ from, to }] = own;
+    const target = quote(to || pk[0]);
+    return `WITH RECURSIVE up (k, depth) AS (
+      SELECT ${target}, 0 FROM ${quote(name)} WHERE ${quote(from)} IS NULL OR ${quote(from)} = ${target}
+      UNION ALL
+      SELECT t.${target}, up.depth + 1 FROM ${quote(name)} t JOIN up ON t.${quote(from)} = up.k WHERE t.${quote(from)} <> t.${target})
+    SELECT ${columns.map((column) => `t.${quote(column)}`).join(", ")} FROM ${quote(name)} t JOIN up ON up.k = t.${target} ORDER BY up.depth, t.${quote(pk[0])}`;
+  }
+
+  const written = [], held = {};
   let file = 0, inFile = 0, stream = null, total = 0, statements = 0, longest = 0, inParts = 0;
   const name = () => (rowsAFile === Infinity ? `${base}.sql` : `${base}.${String(file).padStart(4, "0")}.sql`);
   const close = async () => { if (stream) { stream.end(); await once(stream, "finish"); stream = null; } };
@@ -87,9 +128,8 @@ async function dump() {
     await close();
     file += 1; inFile = 0;
     written.push(name());
+    held[name()] = new Set();
     stream = createWriteStream(join(folder, `${name()}.partial`));
-    // Parents are written before children, but a row may point at a later row of its own table.
-    stream.write("PRAGMA defer_foreign_keys = true;\n");
   }
   async function write(text) {
     const bytes = size(text);
@@ -100,7 +140,15 @@ async function dump() {
 
   await open();
   const counts = {};
-  for (const { name: table, sql: created } of tables) {
+  const created = Object.fromEntries(tables.map(({ name, sql }) => [name, sql]));
+  let together = false;
+  for (const table of [...ordered, ...deferred]) {
+    if (deferred.includes(table) && !together) {
+      // The tables of a cycle start a file of their own, which is not cut until they end.
+      together = true;
+      if (inFile) await open();
+      stream.write("PRAGMA defer_foreign_keys = true;\n");
+    }
     // hidden 2 and 3 are generated columns.
     const info = db.prepare(`PRAGMA table_xinfo(${quote(table)})`).all().filter((column) => column.hidden === 0);
     const columns = info.map((column) => column.name);
@@ -141,7 +189,7 @@ async function dump() {
       const scratch = new DatabaseSync(":memory:");
       try {
         scratch.exec("PRAGMA foreign_keys = OFF");
-        scratch.exec(created);
+        scratch.exec(created[table]);
         for (const statement of out) scratch.exec(statement);
         const select = `SELECT ${columns.map((column) => `hex(${quote(column)}) AS ${quote(column)}, typeof(${quote(column)}) AS ${quote(`type of ${column}`)}`).join(", ")} FROM ${quote(table)}`;
         const got = scratch.prepare(select).get();
@@ -160,10 +208,20 @@ async function dump() {
       rows = []; bytes = head;
     };
     counts[table] = 0;
-    const all = db.prepare(`SELECT ${columns.map(quote).join(", ")} FROM ${quote(table)}`);
+    let order = selfOrder(table, columns);
+    if (order === null && !deferred.includes(table)) {
+      // It points at itself in a way that cannot be ordered here: one file, checks deferred.
+      deferred.push(table);
+      await flush();
+      if (inFile) await open();
+      stream.write("PRAGMA defer_foreign_keys = true;\n");
+    }
+    const whole = deferred.includes(table);
+    const all = db.prepare(order || `SELECT ${columns.map(quote).join(", ")} FROM ${quote(table)}`);
     all.setReadBigInts(true);
     for (const row of all.iterate()) {
-      if (inFile >= rowsAFile) { await flush(); await open(); }
+      if (inFile >= rowsAFile && !whole) { await flush(); await open(); }
+      held[name()].add(table);
       const text = `(${columns.map((column) => literal(row[column])).join(", ")})`;
       const length = size(text) + 2;
       if (head + length > MAX_STATEMENT_BYTES) {
@@ -177,22 +235,25 @@ async function dump() {
       inFile += 1; total += 1; counts[table] += 1;
     }
     await flush();
+    // A row that points at itself in a ring is never reached by the ordered read.
+    const there = db.prepare(`SELECT count(*) AS n FROM ${quote(table)}`).get().n;
+    if (counts[table] !== Number(there)) throw new Error(`${table} holds ${there} rows but ${counts[table]} could be ordered parents first: some point at each other in a ring`);
   }
   await close();
   db.close();
 
   // Only now is the folder made to look like a dump: the files take their names and the
   // manifest is written last.
-  const held = Object.fromEntries(Object.entries(counts).filter(([, n]) => n));
+  const rowsOf = Object.fromEntries(Object.entries(counts).filter(([, n]) => n));
   const files = [];
   for (const name of written) {
     const hash = createHash("sha256");
     for await (const chunk of createReadStream(join(folder, `${name}.partial`))) hash.update(chunk);
-    files.push({ name, sha256: hash.digest("hex") });
+    files.push({ name, sha256: hash.digest("hex"), tables: [...held[name]] });
   }
   for (const name of written) renameSync(join(folder, `${name}.partial`), join(folder, name));
-  writeFileSync(join(folder, "manifest.json"), JSON.stringify({ rows: total, statements, rows_written_in_parts: inParts, tables: held, files }, null, 1) + "\n");
-  console.log(JSON.stringify({ files: file, rows: total, statements, rows_written_in_parts: inParts, longest_statement_bytes: longest, tables: held }));
+  writeFileSync(join(folder, "manifest.json"), JSON.stringify({ rows: total, statements, rows_written_in_parts: inParts, tables: rowsOf, deferred, files }, null, 1) + "\n");
+  console.log(JSON.stringify({ files: file, rows: total, statements, rows_written_in_parts: inParts, longest_statement_bytes: longest, deferred, tables: rowsOf }));
 }
 
 // What an earlier dump left under this name goes first, so old files never mix with new.

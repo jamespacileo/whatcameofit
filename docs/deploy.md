@@ -215,13 +215,19 @@ The first load of the tracker does not go through the merge. The whole store is 
    ```bash
    node store/ingest/scripts/dump-for-import.mjs <store.sqlite> <folder>/store.sql --rows-a-file 500000
    ```
-3. Load the folder. Files go in the order of their names; the first failure stops the load; each table is then counted against the manifest.
+3. Try the dump on this machine first. It loads the files into a scratch SQLite file as D1 takes them, each statement on its own with foreign keys checked at once, and counts every table. Nothing is sent anywhere.
+   ```bash
+   node store/ingest/scripts/check-dump.mjs <folder>
+   ```
+4. Load the folder. Files go in the order of their names; the first failure stops the load; each table is then counted against the manifest.
    ```bash
    node store/ingest/scripts/import-folder.mjs <folder> --remote
    ```
-4. If the counts differ, or a file failed, restore to the bookmark rather than loading again over what is there.
+5. If the counts differ, or a file failed, restore to the bookmark (or empty the store) rather than loading again over what is there. A failure names the file's tables.
 
-What the SQL must be, from Cloudflare's import documentation read on 17 November 2026 (`docs/sources.md`): no `BEGIN TRANSACTION` or `COMMIT`; each statement at most 100,000 bytes; a file at most 5 GiB. And from the schema: every `INSERT` names its columns, because a generated column (`review_rank`) cannot be written; the search tables are filled by the schema's triggers and are not in the dump; parents come before children, with `PRAGMA defer_foreign_keys = true` at the head of each file.
+What the SQL must be, from Cloudflare's import documentation read on 17 November 2026 (`docs/sources.md`): no `BEGIN TRANSACTION` or `COMMIT`; each statement at most 100,000 bytes; a file at most 5 GiB. And from the schema: every `INSERT` names its columns, because a generated column (`review_rank`) cannot be written; the search tables are filled by the schema's triggers and are not in the dump; parents come before children, in tables and in rows, because D1 checks foreign keys statement by statement.
+
+**The first real load failed on its second file** (17 November 2026, 2,704,375 rows in 11 files): `FOREIGN KEY constraint failed`. The first file, 557 MB, had loaded in 115 s with 749,396 rows written. The cause: three merged claims point at a claim with a higher id, so their rows came before the claim they point at, and the `PRAGMA defer_foreign_keys = true` at the head of the file did not hold on D1 as it does on the local engine. The dump no longer leans on that PRAGMA: tables are written parents first by the schema's foreign keys, and a table that points at itself (a merged claim) has its rows written parents first. `check-dump.mjs` fails on the old dump at the same place and passes the new one. The local engine cannot read a file over about 500 MB, so a local trial needs smaller files than a remote load does.
 
 A row too long for one statement (an outlet's icon of 93,062 bytes is 186 KB as hex) is written in parts: an `INSERT` with the start of the long value, then `UPDATE`s that append the rest by primary key, a BLOB's cast back to BLOB. The dumper tries each such row on a scratch copy of its table first. The manifest counts rows, not statements. A dump that fails removes its files; `import-folder.mjs` loads nothing from a folder with no manifest, a `.partial` file, or files the manifest does not list.
 
