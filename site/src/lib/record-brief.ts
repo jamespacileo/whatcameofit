@@ -41,6 +41,11 @@ export interface BriefRow {
   link: { href: string; text: string } | null;
   /** A link shown under the answer without opening it. */
   shown: { href: string; text: string } | null;
+  /** The answer as a clause of the section's opening sentence, its figure between
+   * double square brackets: "Tested in [[47 trials]], the largest with 2,733 people". */
+  said: string;
+  /** Where the answer is so many of the claim's trials: drawn as a bar beside it. */
+  share: { n: number; of: number } | null;
   source: BriefSource;
 }
 
@@ -169,11 +174,17 @@ function checked(lastChecked: string | null): BriefSource {
   };
 }
 
-const row = (fields: Omit<BriefRow, "link" | "shown"> & Partial<Pick<BriefRow, "link" | "shown">>): BriefRow => ({
+const row = (
+  fields: Omit<BriefRow, "link" | "shown" | "share"> & Partial<Pick<BriefRow, "link" | "shown" | "share">>,
+): BriefRow => ({
   link: null,
   shown: null,
+  share: null,
   ...fields,
 });
+
+/** A phrase that opens a sentence, set inside one: "Side effects" becomes "side effects". */
+const inside = (text: string) => (/^[A-Z][a-z]/.test(text) ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : text);
 
 /** The trial that states the most participants; the first of equals. Null when none states a number. */
 export function largestTrial(trials: ExportedTrial[]): ExportedTrial | null {
@@ -192,6 +203,7 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
       code: "tested",
       question: QUESTIONS.tested,
       answer: NONE,
+      said: "[[No trial]] in people is on record",
       opened: [DEFINITIONS.no_trial],
       source: checked(lastChecked),
     });
@@ -203,6 +215,7 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
       code: "tested",
       question: QUESTIONS.tested,
       answer: count,
+      said: `Tested in [[${digits(trials.length)} ${plural(trials.length, "trial", "trials")}]]`,
       opened: ["No trial's record states how many people it enrolled."],
       link: { href: "#trials", text: plural(trials.length, "See the trial", `See the ${digits(trials.length)} trials`) },
       source: directFrom(trials),
@@ -236,6 +249,10 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
       trials.length === 1
         ? `In 1 trial of ${digits(size.count)} people`
         : `${count}. ${digits(size.count)} people in the largest`,
+    said:
+      trials.length === 1
+        ? `Tested in [[1 trial]] of ${digits(size.count)} people`
+        : `Tested in [[${digits(trials.length)} trials]], the largest ${size.basis === "planned" ? "planned for" : "with"} ${digits(size.count)} people`,
     opened,
     link: { href: "#trials", text: plural(trials.length, "See the trial", `See the ${digits(trials.length)} trials`) },
     source: directFrom(trials),
@@ -290,6 +307,8 @@ function comparisonRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow 
       code: "comparison",
       question,
       answer: "No record names one",
+      said: `[[No record]] names ${dummy.noun}`,
+      share: { n: 0, of: trials.length },
       opened: [
         `No trial's record names ${dummy.noun} as a comparison.`,
         claim.approach === "device" ? DEFINITIONS.sham : DEFINITIONS.placebo,
@@ -320,6 +339,11 @@ function comparisonRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow 
       naming.length === 1
         ? `One record names ${dummy.noun}`
         : `${capital(word(naming.length))} records name ${dummy.plural}`,
+    said:
+      naming.length === 1
+        ? `[[One record]] names ${dummy.noun}`
+        : `[[${capital(word(naming.length))} records]] name ${dummy.plural}`,
+    share: { n: naming.length, of: trials.length },
     opened,
     source: directFrom(naming),
   });
@@ -332,6 +356,7 @@ function firstReportRow(claim: ExportedClaim): BriefRow | null {
     code: "first_report",
     question: QUESTIONS.first_report,
     answer: stage.answer,
+    said: `The first report was about [[${inside(stage.answer)}]]`,
     opened: [stage.opened],
     source: {
       how: "direct",
@@ -359,6 +384,7 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
       code: "measure",
       question: QUESTIONS.measure,
       answer: `“${outcome.measure}”`,
+      said: `The largest trial measured [[“${outcome.measure}”]]`,
       opened: [DEFINITIONS.registry_words],
       link,
       source: { how: "direct", from: null, records: record, on: trial.facts_as_of, onLabel: "Record read", confidence: null },
@@ -369,6 +395,7 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
     code: "measure",
     question: QUESTIONS.measure,
     answer: `${words.phrase}${words.over}`,
+    said: `The largest trial measured [[${inside(words.phrase)}]]${words.over}`,
     opened: [`The registry names the measure “${words.measure}”${timing}.`],
     link,
     source: {
@@ -394,6 +421,8 @@ function resultsRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
       code: "results",
       question: QUESTIONS.results,
       answer: NONE,
+      said: "[[No trial]] has posted results",
+      share: { n: 0, of: trials.length },
       opened: [DEFINITIONS.posted],
       source: directFrom(trials),
     });
@@ -409,6 +438,14 @@ function resultsRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
     code: "results",
     question: QUESTIONS.results,
     answer: on ? `${by}. ${posted.length === 1 ? "Posted" : "The latest"} on ${day(on)}` : by,
+    said: `${
+      trials.length === 1
+        ? "The one trial has posted [[results]]"
+        : posted.length === trials.length
+          ? `[[All ${digits(trials.length)}]] have posted results`
+          : `[[${digits(posted.length)} of ${digits(trials.length)}]] ${posted.length === 1 ? "has" : "have"} posted results`
+    }${on ? `, ${posted.length === 1 ? "" : "the latest "}on ${day(on)}` : ""}`,
+    share: { n: posted.length, of: trials.length },
     opened: [DEFINITIONS.posted],
     shown: { href: "#trials", text: "See the posted results" },
     source: directFrom(posted),
@@ -422,6 +459,8 @@ function underWayRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
       code: "under_way",
       question: QUESTIONS.under_way,
       answer: `${capital(word(underWay.length))} under way`,
+      said: `[[${capital(word(underWay.length))}]] ${underWay.length === 1 ? "is" : "are"} under way`,
+      share: { n: underWay.length, of: trials.length },
       opened: [DEFINITIONS.under_way],
       source: directFrom(underWay),
     });
@@ -435,6 +474,8 @@ function underWayRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
     code: "under_way",
     question: QUESTIONS.under_way,
     answer: finished ? `${NONE}. The last finished on ${day(finished)}` : NONE,
+    said: `[[None]] is under way${finished ? `; the last finished on ${day(finished)}` : ""}`,
+    share: { n: 0, of: trials.length },
     opened: [DEFINITIONS.under_way],
     source: directFrom(trials),
   });
@@ -450,6 +491,7 @@ function approvedRow(claim: ExportedClaim, lastChecked: string | null): BriefRow
       code: "approved",
       question: QUESTIONS.approved,
       answer: NONE,
+      said: "[[No approval]] by a regulator is on record",
       opened: [DEFINITIONS.regulator, DEFINITIONS.no_approval],
       source: checked(lastChecked),
     });
@@ -462,6 +504,7 @@ function approvedRow(claim: ExportedClaim, lastChecked: string | null): BriefRow
     code: "approved",
     question: QUESTIONS.approved,
     answer: `${by} ${day(approval.event_date)}. ${DEFINITIONS.approval}`,
+    said: `Approved ${regulator ? `by the ${regulator} ` : ""}on [[${day(approval.event_date)}]]`,
     opened: [DEFINITIONS.regulator, DEFINITIONS.approval_scope],
     source: {
       how: "direct",

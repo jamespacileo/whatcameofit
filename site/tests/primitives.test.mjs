@@ -48,7 +48,7 @@ test("labels and column heads are one size, notes another", () => {
   uses(".entry-note", "font-size", "note-size");
   uses(".record .origin", "font-size", "note-size");
   uses(".glance-note", "font-size", "note-size");
-  uses(".fact-more .term-card .match-why-head", "font-size", "label-size");
+  uses(".fact-more .match-why-head", "font-size", "label-size");
 });
 
 test("every table has the same quiet head", () => {
@@ -68,7 +68,6 @@ test("panels share their padding and their corners", () => {
 
 test("label columns are one width", () => {
   uses(".fact-sheet > div", "grid-template-columns", "label-col");
-  uses(".brief-group", "grid-template-columns", "label-col");
 });
 
 // The type scale (openspec type-scale): seven steps for running text and three named

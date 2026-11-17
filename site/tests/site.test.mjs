@@ -845,7 +845,18 @@ test("Scenario: Claim with trials", () => {
   const brief = briefOf("phase-claim");
   assert.match(brief, /The record in brief/);
   assert.match(brief, /describe the records, not the treatment, and are not advice/);
-  assert.ok(brief.indexOf("How it was tested") < brief.indexOf("Where the records stand now"));
+  // One sentence gives every answer first, each figure a link to its row; then the
+  // rows, how it was tested before where the records stand now, with no group names.
+  assert.match(
+    brief.replace(/\s+/g, " ").replace(/ ([.,])/g, "$1"),
+    /Tested in 7 trials, the largest planned for 1,200 people\. One record names a placebo\. 1 of 7 has posted results, on 1 Sep 2025\. One is under way\. No approval by a regulator is on record\./,
+  );
+  assert.ok(brief.indexOf("Compared with a placebo?") < brief.indexOf("Results posted to the registry?"));
+  assert.doesNotMatch(brief, /How it was tested|Where the records stand now/);
+  const drawn = sectionOf(page("phase-claim/index.html"), "brief");
+  assert.match(drawn, /<a class="brief-term" href="#brief-tested">7 trials<\/a>/);
+  // An answer that is so many of the trials has a bar beside it, named in words.
+  assert.match(drawn, /<span class="share-bar" role="img" aria-label="1 of 7" style="--share: 0\.14\d*"/);
   assert.match(brief, /Compared with a placebo\? One record names a placebo/);
   assert.match(brief, /Results posted to the registry\? By 1 of 7 trials\. Posted on 1 Sep 2025/);
   assert.match(brief, /A trial under way\? One under way/);
@@ -857,14 +868,17 @@ test("Scenario: Claim with trials", () => {
 test("Scenario: Every answer opens to something", () => {
   for (const slug of ["phase-claim", "quiet-claim", "approved-claim"]) {
     const section = sectionOf(page(`${slug}/index.html`), "brief");
-    const answers = count(section, "<details");
+    // Each answer is a fact row that opens. With no script it is simply open: the row
+    // is marked open in the page and only the stylesheet's ".js" rules close it.
+    const answers = count(section, 'class="fact-open"');
     assert.ok(answers >= 3, `${slug} has ${answers} answers`);
+    assert.equal(count(section, 'class="fact-open" aria-expanded="true"'), answers);
     assert.equal(count(section, 'class="brief-source"'), answers);
-    // Closed until opened, and opened by the browser alone.
+    // Where an answer was read from is a press further in, closed until asked for,
+    // and that press is the browser's own.
+    assert.equal(count(section, '<details class="match-why">'), answers);
     assert.equal(count(section, "<details open"), 0);
-    // The heading folds the section with a button; the answers themselves need none.
-    const answersOnly = section.slice(section.indexOf("</h2>"));
-    assert.doesNotMatch(answersOnly, /<script|<button/);
+    assert.doesNotMatch(section, /<script/);
   }
 });
 
