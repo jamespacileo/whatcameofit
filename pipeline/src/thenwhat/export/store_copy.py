@@ -76,20 +76,15 @@ class CopyReport:
     runs: int = 0
     # Records handed over, by kind.
     handed: dict[str, int] = field(default_factory=dict)
-    # Records the merge added, by kind. Fewer than handed means the store already held a
-    # record under that natural key: two rows of the database are one record there.
+    # Records the merge added, by kind.
     added: dict[str, int] = field(default_factory=dict)
     payload_objects: int = 0
     # What could not be said in the store's form, in words.
     notes: list[str] = field(default_factory=list)
 
-    def folded(self) -> dict[str, int]:
-        """Kinds of which the store kept fewer records than were handed over."""
-        return {
-            kind: self.handed[kind] - self.added.get(kind, 0)
-            for kind in self.handed
-            if kind not in ("action", "payload") and self.added.get(kind, 0) < self.handed[kind]
-        }
+    # Records that were not handed over because another row of the database has the same
+    # natural key: two rows there are one record in the store. By kind.
+    folded: dict[str, int] = field(default_factory=dict)
 
 
 def _statements(path: Path) -> list[str]:
@@ -703,7 +698,16 @@ def records_of(
                 )
             )
 
-    everything = [*payloads_first, *rest]
+    # A record is staged under its kind and natural key, once. Where two rows of the
+    # database have one key the store can hold only one: the first is handed over.
+    everything: list[Record] = []
+    handed: set[tuple[str, str]] = set()
+    for record in [*payloads_first, *rest]:
+        if (record[0], record[1]) in handed:
+            report.folded[record[0]] = report.folded.get(record[0], 0) + 1
+            continue
+        handed.add((record[0], record[1]))
+        everything.append(record)
     data_runs = [
         everything[start : start + RUN_RECORDS] for start in range(0, len(everything), RUN_RECORDS)
     ]
@@ -773,8 +777,21 @@ def copy_to_store(
                     db.execute(statement, (run,) if "?1" in statement else ())
                 db.execute("COMMIT")
             except sqlite3.Error as error:
+                # Before the batch is undone, what it had counted says which records
+                # found no parent.
+                short = [
+                    f"{kind}: {stated} handed over, {resolved} with a parent found"
+                    for kind, stated, resolved in db.execute(
+                        "SELECT t.kind, t.records, coalesce(m.resolved, 0) FROM run_stated t"
+                        " LEFT JOIN merge_report m ON m.run_id = t.run_id AND m.kind = t.kind"
+                        " WHERE t.run_id = ? AND t.records <> coalesce(m.resolved, 0)",
+                        (run,),
+                    )
+                ]
                 db.execute("ROLLBACK")
-                raise CopyFailed(f"The store's merge undid run {run}: {error}") from error
+                raise CopyFailed(
+                    f"The store's merge undid run {run}: {error}. {'; '.join(short)}"
+                ) from error
             for kind, added in db.execute(
                 "SELECT kind, added FROM merge_report WHERE run_id = ?", (run,)
             ):

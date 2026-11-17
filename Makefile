@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: export-compare setup smoke-research check lint types db-up test scripts-test site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -67,6 +67,18 @@ extension-safari: extension
 
 # Publishing. See docs/deploy.md. SITE_URL must be the public address:
 #   SITE_URL=https://example.org make deploy-check
+# Hold the export the truth store gives to the one the database gives, and exit with 1
+# when they differ (openspec truth-store, "The two exports are compared"). The cut-over
+# waits on seven nights of this in a row. DATABASE_URL names the database, which is only
+# read. With STORE_FILE (and STORE_PAYLOADS, the folder of its payload objects) the
+# store's export is read from that snapshot; without it a store file is first made from
+# the database through store/merge.sql, which shows the store can hold the records.
+#   make export-compare
+#   make export-compare ARGS="--every 5 --report /tmp/compare.json"
+#   STORE_FILE=/path/store.db STORE_PAYLOADS=/path/objects make export-compare
+export-compare:
+	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
+
 PUBLIC_EXPORT := site/data/public-export.json
 
 # A normal export from the running pipeline: every approved, unarchived claim.

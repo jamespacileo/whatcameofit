@@ -191,6 +191,13 @@ class StoreRecords:
         self.first_published = [claim.slug for claim in claims if claim.published_at is None]
         return claims
 
+    def held(self) -> int:
+        """How many approved, unarchived claims are left out as awaiting audit."""
+        return self.db.execute(
+            "SELECT count(*) FROM claim WHERE review_state = 'approved' AND archived_at IS NULL"
+            " AND awaiting_audit_at IS NOT NULL"
+        ).fetchone()[0]
+
     def taken_down(self) -> Iterable[Claim]:
         return [
             self._claim(row)

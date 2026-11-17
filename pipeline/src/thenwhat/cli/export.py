@@ -1,17 +1,96 @@
-"""The export command."""
+"""The export command, and the comparison of the database's export with the store's."""
 
+import json
+import tempfile
+from collections.abc import Generator
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import typer
+from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import awaiting_audit
-from thenwhat.cli.console import out
+from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.config import Settings
+from thenwhat.db.session import make_engine
 from thenwhat.domain import ReviewState
 from thenwhat.export.build import write_export, write_schema
+from thenwhat.export.parallel import compare_with_store, read_only
+from thenwhat.export.store_copy import CopyFailed
+from thenwhat.export.store_records import StoreFault, StoreRecords
+
+# Where the store's schema and merge are in a checkout.
+STORE_SQL = Path(__file__).resolve().parents[4] / "store"
+
+StoreFile = Annotated[
+    Path | None,
+    typer.Option(
+        "--store",
+        envvar="STORE_FILE",
+        help="Read the records from this SQLite file of the truth store's schema, not from"
+        " the database.",
+    ),
+]
+PayloadFolder = Annotated[
+    Path | None,
+    typer.Option(
+        "--payloads",
+        envvar="STORE_PAYLOADS",
+        help="With --store: the folder holding the store's payload objects under their keys"
+        " (payload/<checksum>).",
+    ),
+]
+
+
+@contextmanager
+def reading_session() -> Generator[Session]:
+    """A session the database itself refuses any write in, rolled back when done."""
+    engine = make_engine(settings_or_exit().database_url)
+    with Session(engine) as session:
+        read_only(session)
+        try:
+            yield session
+        finally:
+            session.rollback()
+
+
+def _thresholds(settings: Settings) -> dict[str, Any]:
+    return {
+        "no_signal_years": settings.no_signal_years,
+        "reading_accept_above": settings.reading_accept_above,
+        "stage_show_above": settings.stage_show_above,
+        "match_accept_above": settings.match_accept_above,
+    }
+
+
+def _export_from_store(store: Path, payloads: Path | None, out_path: Path) -> None:
+    settings = settings_or_exit()
+    try:
+        records = StoreRecords(store, payloads=payloads)
+        export = write_export(records, out_path, now=datetime.now(UTC), **_thresholds(settings))
+        held = records.held()
+        records.close()
+    except StoreFault as fault:
+        err.print(str(fault), markup=False)
+        raise typer.Exit(code=1) from None
+    noun = "claim" if len(export.claims) == 1 else "claims"
+    out.print(f"Exported {len(export.claims)} {noun} from {store} to {out_path}.", markup=False)
+    unchecked = sum(1 for claim in export.claims if not claim.checked_by_person)
+    if unchecked:
+        out.print(f"{unchecked} of them have not been checked by a person.", markup=False)
+    if records.first_published:
+        out.print(
+            f"{len(records.first_published)} of them have no published time in the store."
+            " Nothing was written to it.",
+            markup=False,
+        )
+    if held:
+        noun = "claim was" if held == 1 else "claims were"
+        out.print(f"{held} approved {noun} left out: awaiting audit.", markup=False)
 
 
 def export_command(
@@ -22,23 +101,23 @@ def export_command(
         Path | None,
         typer.Option("--write-schema", help="Also write the export's JSON Schema to this file."),
     ] = None,
+    store: StoreFile = None,
+    payloads: PayloadFolder = None,
 ) -> None:
     """Write the JSON file the site is built from: approved, unarchived claims and events.
-    A claim awaiting audit is left out and counted."""
+    A claim awaiting audit is left out and counted.
+
+    With --store the records are read from a SQLite file of the truth store's schema
+    instead of the database. The file is only read."""
     if schema_path is not None:
         write_schema(schema_path)
         out.print(f"Wrote schema to {schema_path}.", markup=False)
+    if store is not None:
+        _export_from_store(store, payloads, out_path)
+        return
     settings = settings_or_exit()
     with entry_session() as session:
-        export = write_export(
-            session,
-            out_path,
-            now=datetime.now(UTC),
-            no_signal_years=settings.no_signal_years,
-            reading_accept_above=settings.reading_accept_above,
-            stage_show_above=settings.stage_show_above,
-            match_accept_above=settings.match_accept_above,
-        )
+        export = write_export(session, out_path, now=datetime.now(UTC), **_thresholds(settings))
         noun = "claim" if len(export.claims) == 1 else "claims"
         out.print(f"Exported {len(export.claims)} {noun} to {out_path}.", markup=False)
         unchecked = sum(1 for claim in export.claims if not claim.checked_by_person)
@@ -55,3 +134,80 @@ def export_command(
                 f"{held} approved {noun} left out: awaiting audit (thenwhat audit list).",
                 markup=False,
             )
+
+
+def export_compare_command(
+    store: StoreFile = None,
+    payloads: PayloadFolder = None,
+    every: Annotated[
+        int,
+        typer.Option(
+            min=1,
+            help="Without --store: copy and compare every Nth claim, not all of them.",
+        ),
+    ] = 1,
+    store_sql: Annotated[
+        Path,
+        typer.Option(
+            envvar="STORE_SQL",
+            help="Without --store: the folder of the store's schema.sql, merge.sql and ingest.sql.",
+        ),
+    ] = STORE_SQL,
+    keep: Annotated[
+        Path | None,
+        typer.Option(help="Without --store: keep the store file made in this folder."),
+    ] = None,
+    report: Annotated[
+        Path | None, typer.Option(help="Also write the comparison to this file, as JSON.")
+    ] = None,
+) -> None:
+    """Compare the export the database gives with the export the truth store gives, for
+    the same claims at the same moment. Exits with 1 when they differ.
+
+    With --store, the store's export is read from that file. Without it, a store file is
+    first made from the database through the store's own merge, which shows whether the
+    store can hold the records, not whether it does.
+
+    Nothing is written to the database or to the store file given."""
+    settings = settings_or_exit()
+    if store is None and not (store_sql / "merge.sql").is_file():
+        err.print(f"No merge.sql in {store_sql}. Name the store's folder with --store-sql.")
+        raise typer.Exit(code=1)
+    with tempfile.TemporaryDirectory() as scratch, reading_session() as session:
+        try:
+            result = compare_with_store(
+                session,
+                now=datetime.now(UTC),
+                store=store,
+                payloads=payloads,
+                work=keep or Path(scratch),
+                store_sql=store_sql,
+                every=every,
+                **_thresholds(settings),
+            )
+        except (StoreFault, CopyFailed) as fault:
+            err.print(str(fault), markup=False)
+            raise typer.Exit(code=1) from None
+    if result.copy is not None:
+        handed = sum(result.copy.handed.values())
+        out.print(
+            f"Copied {handed} records to a store file in {result.copy.runs} runs"
+            f" ({result.copy.payload_objects} payloads as objects).",
+            markup=False,
+        )
+        for kind, fewer in sorted(result.copy.folded.items()):
+            out.print(
+                f"{fewer} {kind} records share a natural key with another and were not"
+                " handed over.",
+                markup=False,
+            )
+        for note in result.copy.notes:
+            out.print(note, markup=False)
+    for line in result.comparison.lines():
+        out.print(line, markup=False)
+    if report is not None:
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(json.dumps(result.as_json(), indent=2, ensure_ascii=False) + "\n")
+        out.print(f"Wrote the comparison to {report}.", markup=False)
+    if not result.comparison.same:
+        raise typer.Exit(code=1)

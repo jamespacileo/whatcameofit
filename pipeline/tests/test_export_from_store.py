@@ -6,16 +6,21 @@ test database through `store/merge.sql`, with a folder standing in for the objec
 
 import json
 import sqlite3
+from collections.abc import Generator
+from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+import jsonschema
 import pytest
 from sqlalchemy.orm import Session
+from typer.testing import CliRunner
 
-from store_support import assert_same_export, both_exports, store_of
+from store_support import STORE_SQL, assert_same_export, both_exports, store_of
 from test_export import (
     ARTICLE,
+    CHECKED_IN_SCHEMA,
     EARLIER,
     NOW,
     SLUG,
@@ -28,6 +33,7 @@ from test_export import (
 )
 from thenwhat.claims.corrections import merge_claims, rename_intervention
 from thenwhat.claims.entry import add_article, archive_claim, clear_audit
+from thenwhat.cli import app
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
@@ -40,6 +46,7 @@ from thenwhat.domain import (
 )
 from thenwhat.export.build import build_export
 from thenwhat.export.compare import canonical_bytes, compare
+from thenwhat.export.parallel import compare_with_store
 from thenwhat.export.store_records import StoreFault, StoreRecords
 from thenwhat.review.queue import confirm_stage, flag_failure
 from thenwhat.seed.load import load_seed
@@ -398,3 +405,118 @@ def test_comparison_looks_past_row_ids_and_order_among_equals_and_nothing_else(
     late = json.loads(json.dumps(export))
     next(e for e in late["claims"][0]["events"] if e["id"] == first.id)["event_date"] = "2025-01-01"
     assert not compare(export, late).same
+
+
+# --- the commands ---------------------------------------------------------------------
+
+
+@pytest.fixture
+def invoke(session: Session, monkeypatch: pytest.MonkeyPatch):
+    @contextmanager
+    def test_session() -> Generator[Session]:
+        with session.no_autoflush:
+            yield session
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://unused/unused")
+    monkeypatch.setattr("thenwhat.cli.export.reading_session", test_session)
+    runner = CliRunner()
+    return lambda *arguments: runner.invoke(app, list(arguments))
+
+
+def test_export_command_reads_a_store_file(session: Session, tmp_path: Path, invoke):
+    """Scenario: Same records, same export"""
+    new_claim(session)
+    add_event(session)
+    held = new_claim(session, "held-claim")
+    held.awaiting_audit_at = EARLIER
+    store_of(session, tmp_path, NOW)[0].close()
+    target = tmp_path / "out" / "export.json"
+
+    result = invoke("export", "--store", str(tmp_path / "store.db"), "--out", str(target))
+
+    assert result.exit_code == 0, result.output
+    assert "Exported 1 claim from" in result.output
+    assert "1 approved claim was left out: awaiting audit." in result.output
+    assert "no published time in the store" in result.output
+    written = json.loads(target.read_text())
+    jsonschema.validate(written, json.loads(CHECKED_IN_SCHEMA.read_text()))
+    assert [claim["slug"] for claim in written["claims"]] == [SLUG]
+
+
+def test_export_command_refuses_a_file_that_is_not_a_store(tmp_path: Path, invoke):
+    """Scenario: Not a store file"""
+    sqlite3.connect(tmp_path / "other.db").close()
+
+    result = invoke("export", "--store", str(tmp_path / "other.db"), "--out", str(tmp_path / "x"))
+
+    assert result.exit_code == 1
+    assert "does not have the store's schema" in result.output
+    assert not (tmp_path / "x").exists()
+
+
+def test_compare_command_says_the_exports_are_the_same_and_stores_nothing(
+    session: Session, tmp_path: Path, invoke
+):
+    """Scenarios: The nightly comparison, Comparing changes neither store"""
+    claim = new_claim(session)
+    add_event(session)
+    session.flush()
+    report = tmp_path / "report.json"
+
+    result = invoke("export-compare", "--store-sql", str(STORE_SQL), "--report", str(report))
+
+    assert result.exit_code == 0, result.output
+    assert "The two exports are the same: 1 claims, byte for byte." in result.output
+    assert json.loads(report.read_text())["same"] is True
+    # The database's export gave the claim its published time in memory only.
+    session.expire_all()
+    assert claim.published_at is None
+
+
+def test_compare_command_exits_with_1_and_names_what_differs(
+    session: Session, tmp_path: Path, invoke
+):
+    """Scenario: A difference is named"""
+    new_claim(session)
+    add_event(session)
+    store_of(session, tmp_path, NOW)[0].close()
+    # The store falls behind: the database gains an event the store file has not.
+    add_event(session, external_id="NCT2", source_url="https://registry.example/NCT2")
+    session.flush()
+
+    result = invoke("export-compare", "--store", str(tmp_path / "store.db"))
+
+    assert result.exit_code == 1
+    assert "The two exports differ: 1 of 1 claims" in result.output
+    assert "claim.events: 2 entries in the first, 1 in the second" in result.output
+
+
+def test_compare_of_every_nth_claim_keeps_both_ends_of_a_merge(session: Session, tmp_path: Path):
+    """Scenario: The nightly comparison"""
+    kept = new_claim(session)
+    twin = new_claim(session, "tooth-regrowth-twin")
+    for number in range(6):
+        new_claim(session, f"another-{number}")
+    build_export(session, now=EARLIER)
+    merge_claims(
+        session,
+        twin.slug,
+        SLUG,
+        reason="one antibody",
+        by=Decider.HUMAN,
+        now=NOW,
+        same_treatment_accepted=True,
+    )
+    session.flush()
+    every = next(n for n in range(2, 9) if (kept.id % n == 0) != (twin.id % n == 0))
+
+    with session.no_autoflush:
+        result = compare_with_store(
+            session, now=NOW, work=tmp_path, store_sql=STORE_SQL, every=every
+        )
+
+    assert result.comparison.same, "\n".join(result.comparison.lines())
+    assert result.comparison.claims_first < 7
+    with sqlite3.connect(tmp_path / "store.db") as db:
+        slugs = {slug for (slug,) in db.execute("SELECT slug FROM claim")}
+    assert {SLUG, twin.slug} <= slugs
