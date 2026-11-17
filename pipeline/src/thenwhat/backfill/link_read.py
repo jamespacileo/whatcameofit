@@ -428,7 +428,7 @@ class LinkRead:
         self.only_trial_set = only_trial_set and trial_set is not None
         self._set_strengths = at_least(least_strength)
         if trial_set is not None:
-            linked_to(STRENGTH_TO_READ, trial_set)  # refuses a set it does not know
+            linked_to(STRENGTH_TO_READ, trial_set, year=0)  # refuses a set it does not know
         self.pass_above = pass_above
         self.reject_below = reject_below
         self.triage_version = triage_version
@@ -483,10 +483,14 @@ class LinkRead:
             and self.pass_above is not None
             and self.reject_below is not None
         ):
-            readable = or_(readable, held_and_linked(self.trial_set, self.reject_below))
+            readable = or_(
+                readable, held_and_linked(self.trial_set, self.reject_below, year=self._year())
+            )
         in_scope = and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
         if self.only_trial_set:
-            in_scope = and_(in_scope, linked_to(self._set_strengths, self.trial_set))
+            in_scope = and_(
+                in_scope, linked_to(self._set_strengths, self.trial_set, year=self._year())
+            )
         if self.read_since is not None:
             since = datetime.combine(self.read_since, datetime.min.time(), tzinfo=UTC)
             in_scope = and_(in_scope, LinkLead.first_shared_at >= since)
@@ -494,6 +498,10 @@ class LinkRead:
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {"key": record.url_key}
+
+    def _year(self) -> int:
+        """The calendar year the rolling set of trials is chosen in: the step's clock's."""
+        return self._time.now().year
 
     def first(self) -> ColumnElement[bool] | None:
         """The leads whose title names one of the operator's topics come first."""
@@ -516,12 +524,16 @@ class LinkRead:
         of_the_set: list[ColumnElement[Any]] = []
         if self.trial_set is not None:
             of_the_set = [
-                linked_to(STRENGTH_TO_READ, self.trial_set, phase=PHASE_3).desc(),
-                linked_to(STRENGTH_TO_READ, self.trial_set).desc(),
+                linked_to(
+                    STRENGTH_TO_READ, self.trial_set, phase=PHASE_3, year=self._year()
+                ).desc(),
+                linked_to(STRENGTH_TO_READ, self.trial_set, year=self._year()).desc(),
             ]
             if self._set_strengths != STRENGTH_TO_READ:
                 of_the_set.append(
-                    linked_to(self._set_strengths, self.trial_set, phase=PHASE_3).desc()
+                    linked_to(
+                        self._set_strengths, self.trial_set, phase=PHASE_3, year=self._year()
+                    ).desc()
                 )
         return [*of_the_set, linked_to(STRENGTH_TO_READ).desc(), linked.desc(), shared.desc()]
 

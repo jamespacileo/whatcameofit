@@ -86,13 +86,15 @@ def references_of(study: dict[str, Any]) -> TrialReferences:
     )
 
 
-def references_in(session: Session, set_name: str) -> Iterator[tuple[str, TrialReferences]]:
+def references_in(
+    session: Session, set_name: str, year: int | None = None
+) -> Iterator[tuple[str, TrialReferences]]:
     """Each trial of a named set whose stored record has a references section, by its
     registry identifier, with what the record lists. One query; no source is asked."""
     module = RegistryTrial.raw_payload["protocolSection"]["referencesModule"]
     rows = session.execute(
         select(RegistryTrial.external_id, module)
-        .where(rule_of(set_name)(), module.is_not(None))
+        .where(rule_of(set_name, year)(), module.is_not(None))
         .order_by(RegistryTrial.external_id)
         .execution_options(yield_per=2000)
     )
@@ -119,16 +121,18 @@ class ReferenceCount:
     domains: Counter[str] = field(default_factory=Counter)
 
 
-def count_references(session: Session, set_name: str) -> ReferenceCount:
+def count_references(session: Session, set_name: str, year: int | None = None) -> ReferenceCount:
     """How many trials of a set list what, and how many papers and links that is."""
     counted = ReferenceCount(set_name)
     counted.trials = (
-        session.scalar(select(func.count()).select_from(RegistryTrial).where(rule_of(set_name)()))
+        session.scalar(
+            select(func.count()).select_from(RegistryTrial).where(rule_of(set_name, year)())
+        )
         or 0
     )
     sponsor: set[str] = set()
     registry: set[str] = set()
-    for _, listed in references_in(session, set_name):
+    for _, listed in references_in(session, set_name, year):
         by_sponsor, by_registry = listed.listed_by_sponsor, listed.linked_by_registry
         counted.with_sponsor_paper += bool(by_sponsor)
         counted.with_registry_paper += bool(by_registry)

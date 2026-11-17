@@ -4,14 +4,19 @@ Scenario names are from openspec registry-corpus."""
 from datetime import date
 from typing import Any
 
+import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from backfill_support import NOW
 from thenwhat.backfill.trial_sets import (
+    ROLLING,
+    UnknownSet,
+    YearNotGiven,
     active_since_2025,
     completed_with_results_since_2025,
     count_sets,
+    rule_of,
 )
 from thenwhat.db.models import RegistryTrial
 
@@ -122,3 +127,58 @@ def test_counting_the_sets_by_phase_with_the_day_they_were_loaded(session: Sessi
         {(): 1},
     )
     assert (report.stored, report.without_wider_record) == (6, 1)
+
+
+def test_the_rolling_set_is_every_trial_under_way_or_ended_in_the_year(session: Session):
+    """Scenarios: A trial under way in phase 1, A trial that ended this year, A trial
+    that ended last year"""
+    trial(session, "R1", phases=["PHASE1"], last_update_posted=date(2019, 1, 1))
+    trial(session, "R2", phases=[], overall_status="NOT_YET_RECRUITING")
+    trial(session, "R3", overall_status="COMPLETED", completion_date="2026-02-14")
+    trial(session, "R4", overall_status="TERMINATED", completion_date="2026-01")
+    trial(session, "R5", overall_status="WITHDRAWN", completion_date="2026-11")
+    trial(session, "R6", overall_status="SUSPENDED", completion_date="2026-12-31")
+    trial(session, "X1", overall_status="COMPLETED", completion_date="2025-12-31")
+    trial(session, "X2", overall_status="COMPLETED", completion_date=None)
+    trial(session, "X3", overall_status="UNKNOWN", completion_date="2026-03")
+    trial(session, "X4", overall_status="TERMINATED", completion_date="2027-01")
+
+    assert in_set(session, rule_of(ROLLING, 2026)) == ["R1", "R2", "R3", "R4", "R5", "R6"]
+    assert in_set(session, rule_of(ROLLING, 2027)) == ["R1", "R2", "X4"]
+
+
+def test_every_trial_of_the_active_set_is_in_the_rolling_set(session: Session):
+    trial(session, "A1", phases=["PHASE2"])
+    trial(session, "A2", phases=["PHASE3"], overall_status="ENROLLING_BY_INVITATION")
+
+    assert set(in_set(session, active_since_2025)) <= set(in_set(session, rule_of(ROLLING, 2026)))
+
+
+def test_the_old_names_still_choose_what_they_chose_and_the_rolling_set_needs_a_year(
+    session: Session,
+):
+    """Scenarios: A set named before the change, The rolling set without a year"""
+    trial(session, "A1", phases=["PHASE2"])
+    trial(session, "P1", phases=["PHASE1"])
+
+    assert in_set(session, rule_of("active-since-2025")) == ["A1"]
+    assert in_set(session, rule_of("active-since-2025", 2031)) == ["A1"]
+    with pytest.raises(YearNotGiven, match="chosen by the year"):
+        rule_of(ROLLING)
+    with pytest.raises(UnknownSet, match="active-or-ended-this-year"):
+        rule_of("elsewhere", 2026)
+
+
+def test_counting_the_sets_counts_the_rolling_set_when_given_its_year(session: Session):
+    trial(session, "A1", phases=["PHASE2"])
+    trial(session, "P1", phases=["PHASE1"])
+    trial(session, "E1", phases=[], overall_status="COMPLETED", completion_date="2026-04")
+
+    rolling = count_sets(session, year=2026).sets[-1]
+
+    assert (rolling.name, rolling.total) == (ROLLING, 3)
+    assert rolling.by_phase == {("PHASE2",): 1, ("PHASE1",): 1, (): 1}
+    assert [counted.name for counted in count_sets(session).sets] == [
+        "active-since-2025",
+        "completed-with-results-since-2025",
+    ]

@@ -53,6 +53,7 @@ def linked_to(
     trial_set: str | None = None,
     *,
     phase: str | None = None,
+    year: int | None = None,
 ) -> ColumnElement[bool]:
     """The query condition for a lead with a link of one of these strengths to a
     registry trial: any trial, or a trial of the named set, or one of its trials in the
@@ -68,7 +69,7 @@ def linked_to(
     )
     if trial_set is not None:
         link = link.join(RegistryTrial, RegistryTrial.id == LinkLeadLink.record_id).where(
-            rule_of(trial_set)()
+            rule_of(trial_set, year)()
         )
         if phase is not None:
             link = link.where(RegistryTrial.phases.contains([phase]))
@@ -104,7 +105,8 @@ def plan_of(
     """Count the leads in scope that are linked to the set at these strengths, by where
     triage left them, how many are read, and how many were read this month."""
     linked = and_(
-        LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, linked_to(strengths, trial_set)
+        LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE,
+        linked_to(strengths, trial_set, year=now.year),
     )
     score = LinkLead.triage_score
 
@@ -149,18 +151,22 @@ def plan_of(
         .where(
             LinkLeadLink.record_kind == REGISTRY_TRIAL,
             LinkLeadLink.strength.in_(strengths),
-            rule_of(trial_set)(),
+            rule_of(trial_set, now.year)(),
         )
     )
     return SetPlan(trial_set, strengths, row[0], trials or 0, *row[1:])
 
 
 def held_and_linked(
-    trial_set: str, reject_below: float, strengths: tuple[str, ...] = STRENGTH_TO_READ
+    trial_set: str,
+    reject_below: float,
+    strengths: tuple[str, ...] = STRENGTH_TO_READ,
+    *,
+    year: int | None = None,
 ) -> ColumnElement[bool]:
     """A lead triage held, linked to the set strongly enough to be read."""
     return and_(
-        linked_to(strengths, trial_set),
+        linked_to(strengths, trial_set, year=year),
         LinkLead.triage_score.is_not(None),
         LinkLead.triage_score >= reject_below,
     )
