@@ -177,7 +177,7 @@ const example = exampleClaim(data.claims);
   {
     days ? (
       <DayList list={days} topics={topicChoices}>
-        <HomeNarrow slot="narrow" claims={data.claims} topics={topicChoices} counts={topicCounts} />
+        <HomeNarrow slot="narrow" named claims={data.claims} topics={topicChoices} counts={topicCounts} />
         {/* Beside the list at the right on a wide screen: how the page is made, in
             three short parts, each with one link. */}
         <aside class="days-rail" slot="rail" aria-label="About this list">

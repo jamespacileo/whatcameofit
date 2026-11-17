@@ -166,6 +166,24 @@ test("Scenario: The spans a reader can keep to", () => {
   assert.match(dated, /<p class="earlier" hidden data-span-end>/);
 });
 
+test("Scenario: Every choice behind one control", () => {
+  const from = dated.indexOf('class="filters"');
+  const choices = dated.slice(from, dated.indexOf('class="list-key"'));
+  // The control is the script's: as built it is not shown, and says "Filter".
+  assert.match(choices, /<button type="button" class="narrow-open" hidden data-narrow-open popovertarget="narrow" aria-expanded="false"/);
+  assert.match(choices, /<span data-narrow-says>Filter<\/span>/);
+  // It opens one panel, which holds every field with its name drawn before it. This
+  // export lists one topic, so there is no topic to choose.
+  assert.match(choices, /<div popover(="")? id="narrow" class="pop narrow"/);
+  assert.deepEqual(
+    [...choices.matchAll(/<span class="pick-name">([^<]+)<\/span>\s*<select id="([a-z-]+)"/g)].map(([, name, id]) => `${id}: ${name}`),
+    ["feed-kind: Show", "feed-span: Dated in", "feed-status: Status now"],
+  );
+  assert.match(choices, /<button type="button" class="text-control narrow-clear" hidden data-narrow-clear>Clear filters<\/button>/);
+  // The control shares the head's line with the list's name.
+  assert.ok(dated.indexOf('id="days-title"') < from && from < dated.indexOf('class="day-list"'));
+});
+
 test("Scenario: Scripting off", () => {
   // Every row is in the page as built: five reports and the older claim, two records,
   // one promise.

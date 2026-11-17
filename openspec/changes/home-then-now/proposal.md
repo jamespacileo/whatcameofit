@@ -11,6 +11,7 @@ On 2026-11-17 the operator asked for the home page to feel more interesting whil
 - The claim is the site's example (`exampleClaim`), chosen by rule and never by hand, as on the about page and the extension page.
 - The outlet's title is a quotation with the outlet named. The status is the site's label with its place on the path. "No signal" is said as the site says it.
 - Below 40rem the card is not drawn, so a row of the list still starts on the first screen.
+- The day-by-day list under it is brought into line (the operator's request of 2026-11-17): its name and each row's headline in the heading face, and one control, "Filter", in place of the row of four fields. The control opens a panel holding the same four fields with their names, says in their words what narrows the list, and takes one line on a phone where the fields took two. What each field does, and how a pick is kept in the address, is unchanged.
 
 Not decided: whether the home page should pick its claim by another rule (the longest time since the report, say); the heading face on the guide, the about page and the link-preview cards.
 
