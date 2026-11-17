@@ -160,9 +160,20 @@ def export_compare_command(
     report: Annotated[
         Path | None, typer.Option(help="Also write the comparison to this file, as JSON.")
     ] = None,
+    allow_named: Annotated[
+        bool,
+        typer.Option(
+            "--allow-named",
+            help="Exit with 0 when every difference has a named cause; each is still listed.",
+        ),
+    ] = False,
 ) -> None:
     """Compare the export the database gives with the export the truth store gives, for
     the same claims at the same moment. Exits with 1 when they differ.
+
+    A difference the comparison can explain is listed with its cause (the data holds
+    what the store cannot, or the store's merge reorders a list). With --allow-named
+    only a difference without a cause fails the comparison.
 
     With --store, the store's export is read from that file. Without it, a store file is
     first made from the database through the store's own merge, which shows whether the
@@ -209,5 +220,6 @@ def export_compare_command(
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(json.dumps(result.as_json(), indent=2, ensure_ascii=False) + "\n")
         out.print(f"Wrote the comparison to {report}.", markup=False)
-    if not result.comparison.same:
+    failing = result.comparison.unexplained if allow_named else result.comparison.differences
+    if failing:
         raise typer.Exit(code=1)

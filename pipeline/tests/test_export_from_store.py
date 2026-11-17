@@ -520,3 +520,50 @@ def test_compare_of_every_nth_claim_keeps_both_ends_of_a_merge(session: Session,
     with sqlite3.connect(tmp_path / "store.db") as db:
         slugs = {slug for (slug,) in db.execute("SELECT slug FROM claim")}
     assert {SLUG, twin.slug} <= slugs
+
+
+def test_a_claim_with_two_articles_at_one_address_key_differs_with_its_cause_named(
+    session: Session, tmp_path: Path, invoke
+):
+    """Scenario: A difference the comparison can explain"""
+    new_claim(session)
+    add_event(session)
+    add_article(
+        session,
+        SLUG,
+        url=ARTICLE + "?utm_source=newsletter",
+        outlet="Example News",
+        title="Mice again",
+        published_date=date(2018, 3, 10),
+    )
+    session.flush()
+
+    strict = invoke("export-compare", "--store-sql", str(STORE_SQL))
+    allowed = invoke("export-compare", "--store-sql", str(STORE_SQL), "--allow-named")
+
+    assert strict.exit_code == 1, strict.output
+    assert "1 have a named cause, 0 do not." in strict.output
+    assert "two source articles of this claim at one" in " ".join(strict.output.split())
+    assert allowed.exit_code == 0, allowed.output
+    assert "The two exports differ: 1 of 1 claims" in allowed.output
+
+
+def test_names_in_another_order_are_the_merges_and_anything_more_is_unexplained(
+    session: Session, tmp_path: Path
+):
+    """Scenario: A difference the comparison can explain"""
+    new_claim(session)
+    add_event(session)
+    export = json.loads(build_export(session, now=NOW).model_dump_json())
+    reordered = json.loads(json.dumps(export))
+    claim_in(reordered)["intervention"]["synonyms"] = ["b", "a"]
+    claim_in(export)["intervention"]["synonyms"] = ["a", "b"]
+    changed = json.loads(json.dumps(reordered))
+    claim_in(changed)["headline"] = "Another headline"
+
+    [order_only] = compare(export, reordered).differences
+    comparison = compare(export, changed)
+
+    assert order_only.cause is not None and "store/merge.sql" in order_only.cause
+    assert [d.cause for d in comparison.differences] == [None]
+    assert comparison.unexplained == comparison.differences

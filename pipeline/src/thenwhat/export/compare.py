@@ -131,6 +131,9 @@ class Difference:
     # Whether `part` is a claim.
     claim: bool
     places: list[str]
+    # Why it differs, when the comparison can say: what is at fault and how. None when
+    # it cannot, which is the case that needs a person.
+    cause: str | None = None
 
 
 @dataclass(frozen=True)
@@ -143,6 +146,11 @@ class Comparison:
     def same(self) -> bool:
         return not self.differences
 
+    @property
+    def unexplained(self) -> list[Difference]:
+        """The differences no cause is named for."""
+        return [difference for difference in self.differences if difference.cause is None]
+
     def lines(self) -> list[str]:
         """The comparison in words: one line when the two are the same, else each part
         that differs with the places it differs at."""
@@ -153,18 +161,49 @@ class Comparison:
             f"The two exports differ: {claims} of {self.claims_first} claims"
             f" ({self.claims_second} in the second),"
             f" and {len(self.differences) - claims} other parts."
+            f" {len(self.differences) - len(self.unexplained)} have a named cause,"
+            f" {len(self.unexplained)} do not."
         ]
         for difference in self.differences:
             lines.append(f"{difference.part}:")
+            if difference.cause is not None:
+                lines.append(f"  cause: {difference.cause}")
             lines += [f"  {place}" for place in difference.places[:PLACES_SHOWN]]
             if len(difference.places) > PLACES_SHOWN:
                 lines.append(f"  and {len(difference.places) - PLACES_SHOWN} more places")
         return lines
 
 
-def compare(first: dict[str, Any], second: dict[str, Any]) -> Comparison:
+SYNONYM_ORDER = (
+    "the store's merge (store/merge.sql): the intervention holds the same names in"
+    " another order. A merge rewrites the names of the claim that stays as a set."
+)
+
+
+def _only_synonym_order(ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
+    """Whether two entries of one claim differ in nothing but the order of the
+    intervention's other names."""
+    one, other = ours.get("intervention"), theirs.get("intervention")
+    if not isinstance(one, dict) or not isinstance(other, dict):
+        return False
+    if sorted(one.get("synonyms", [])) != sorted(other.get("synonyms", [])):
+        return False
+    return {**ours, "intervention": {**one, "synonyms": []}} == {
+        **theirs,
+        "intervention": {**other, "synonyms": []},
+    }
+
+
+def compare(
+    first: dict[str, Any], second: dict[str, Any], *, known: dict[str, str] | None = None
+) -> Comparison:
     """Compare two exports, each as parsed JSON. They are the same exactly when their
-    canonical bytes are."""
+    canonical bytes are.
+
+    `known` names, by slug, a cause the caller knows a claim may differ for (something
+    the first export's records hold that the second's store cannot). It is given to a
+    claim that does differ and has no cause the comparison names itself."""
+    known = known or {}
     ours, theirs = canonical(first), canonical(second)
     differences: list[Difference] = []
     for key in sorted({*ours, *theirs} - {"claims"}):
@@ -180,6 +219,11 @@ def compare(first: dict[str, Any], second: dict[str, Any]) -> Comparison:
             continue
         places = _places(our_claims[slug], their_claims[slug], "claim")
         if places:
-            differences.append(Difference(slug, True, places))
+            cause = (
+                SYNONYM_ORDER
+                if _only_synonym_order(our_claims[slug], their_claims[slug])
+                else known.get(slug)
+            )
+            differences.append(Difference(slug, True, places, cause))
     assert bool(differences) == (canonical_bytes(first) != canonical_bytes(second))
     return Comparison(len(our_claims), len(their_claims), differences)
