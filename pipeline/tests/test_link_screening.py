@@ -38,8 +38,10 @@ from thenwhat.db.models import (
     LinkLeadLink,
     LlmUsage,
     RegistryTrial,
+    WorkEntry,
 )
 from thenwhat.domain import EntityType, OutletKind, ScreenOutcome
+from thenwhat.work.ledger import count
 from thenwhat.work.runner import run_step
 
 WHEN = datetime(2019, 5, 4, 10, 30, tzinfo=UTC)
@@ -150,6 +152,46 @@ def test_a_domain_added_to_the_list_puts_its_leads_in_scope_on_the_next_screenin
     assert added.screen_outcome is ScreenOutcome.IN_SCOPE
     assert added.outlet_kind is OutletKind.TRADE_PRESS
     assert other.screen_outcome is ScreenOutcome.UNLISTED_OUTLET
+
+
+def test_leads_of_an_outlet_added_to_the_list_are_screened_again_and_no_others(
+    session: Session, monkeypatch
+):
+    """Scenarios: An outlet is added to the list, The list did not change for an outlet
+    (openspec lead-screening, change one-work-runner)"""
+    added = share(session, "https://health.example.org/news/synthetic-report")
+    second = share(session, "https://health.example.org/news/another-report", item=2)
+    other = share(session, "https://github.com/example/another", item=3)
+    step = LinkScreen()
+    screen(session, step)
+    assert added.screen_outcome is ScreenOutcome.UNLISTED_OUTLET
+    step.check_ready(session)
+    assert count(session, step, 3, now=NOW).due == 0
+
+    monkeypatch.setattr(
+        "thenwhat.backfill.link_screen.kind_of",
+        lambda domain: (
+            OutletKind.TRADE_PRESS if domain == "health.example.org" else OutletKind.UNKNOWN
+        ),
+    )
+    step.check_ready(session)
+
+    stale = set(
+        session.scalars(
+            select(WorkEntry.record_id).where(WorkEntry.step == step.name, WorkEntry.stale)
+        )
+    )
+    assert stale == {added.id, second.id}
+    assert count(session, step, 3, now=NOW).due == 2
+
+    screen(session, step)
+
+    assert added.screen_outcome is ScreenOutcome.IN_SCOPE
+    assert second.outlet_kind is OutletKind.TRADE_PRESS
+    assert other.screen_outcome is ScreenOutcome.UNLISTED_OUTLET
+    # Nothing changed since: no lead is due again.
+    step.check_ready(session)
+    assert count(session, step, 3, now=NOW).due == 0
 
 
 def test_a_shared_article_that_a_claim_already_has_is_already_tracked(session: Session):

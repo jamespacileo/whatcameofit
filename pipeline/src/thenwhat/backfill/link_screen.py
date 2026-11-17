@@ -12,7 +12,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import ColumnElement, delete, func, select, true
+from sqlalchemy import ColumnElement, delete, func, select, true, update
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key
@@ -35,6 +35,7 @@ from thenwhat.db.models import (
     LinkLeadLink,
     RegistryTrial,
     SourceArticle,
+    WorkEntry,
 )
 from thenwhat.domain import EntityType, OutletKind, ScreenOutcome, WorkOutcome
 from thenwhat.work.steps import NO_SOURCE
@@ -353,7 +354,39 @@ class LinkScreen:
         return true()
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
-        return {"key": record.url_key, "title": record.title}
+        # The kind of the lead's outlet is read too: a lead is screened again when its
+        # outlet is added to the list, removed from it or moved to another kind.
+        return {
+            "key": record.url_key,
+            "title": record.title,
+            "kind": kind_of(record.outlet).value,
+        }
+
+    def check_ready(self, session: Session) -> None:
+        """Before a run: make due the leads of every outlet whose listing has changed
+        since they were screened, and no other lead (openspec lead-screening). The list
+        is checked in, so nothing says when it changed: each outlet's stored kind is
+        compared with the kind the list gives it now."""
+        changed = [
+            outlet
+            for outlet, kind in session.execute(
+                select(LinkLead.outlet, LinkLead.outlet_kind).distinct()
+            )
+            if kind_of(outlet) is not kind
+        ]
+        if not changed:
+            return
+        session.execute(
+            update(WorkEntry)
+            .where(
+                WorkEntry.record_kind == self.record_kind,
+                WorkEntry.step == self.name,
+                WorkEntry.step_version == self.version,
+                WorkEntry.record_id.in_(select(LinkLead.id).where(LinkLead.outlet.in_(changed))),
+            )
+            .values(stale=True)
+        )
+        session.flush()
 
     def stored(self, session: Session) -> Stored:
         """What the database holds, read once for a run. A claim or an article lead
