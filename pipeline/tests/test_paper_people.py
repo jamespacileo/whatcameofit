@@ -153,3 +153,38 @@ def test_a_paper_loses_an_email_in_its_affiliation_and_keeps_its_byline(tmp_path
     )
     db.commit()
     assert prove_file(path) == {"payload row: email in a text": 1}
+
+
+def test_chemistry_and_links_keep_their_at_and_a_spelled_address_goes():
+    from thenwhat.sources.people import emails_in_text, without_email_text
+
+    for kept in (
+        "Fe3O4@SiO2.NH2 particles",
+        "see https://user@host.example.com/x",
+        "x.org/@handle",
+    ):
+        assert without_email_text(kept) == kept and not emails_in_text(kept)
+    assert without_email_text("write to a.b [at] example [dot] org now") == "write to  now"
+    assert emails_in_text({"affiliation": "Leeds; mail (at) uni.edu"})
+
+
+def test_the_proof_sql_takes_the_same_addresses(session):
+    from sqlalchemy import text
+
+    from thenwhat.sources.people import emails_in_text
+    from thenwhat.store.people import PROOF_SQL
+
+    sql = PROOF_SQL.read_text()
+    where = sql[sql.rindex("WHERE raw_payload::text ~") :].split(";")[0].removeprefix("WHERE")
+    cases = [
+        "Leeds. Electronic address: a.b@example.org.",
+        "Fe3O4@SiO2.NH2 particles",
+        "see https://user@host.example.com/x",
+        "write to a.b [at] example [dot] org now",
+        "Example University, Leeds",
+    ]
+    for case in cases:
+        found = session.execute(
+            text(f"SELECT {where.replace('raw_payload::text', ':t')}"), {"t": case}
+        )
+        assert found.scalar_one() == bool(emails_in_text(case)), case

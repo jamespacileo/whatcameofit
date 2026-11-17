@@ -246,7 +246,27 @@ def payload_without_people(payload: Any) -> Any:
 
 
 # An email address written in a text, as a paper's affiliation can carry its author's.
-EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+# The domain ends in a name of letters that nothing follows but punctuation or space, so
+# chemistry (`Fe3O4@SiO2.NH2`) is not taken for one; a word that is a link (`://`, or a
+# handle after a slash) is left alone. `name [at] domain [dot] org` is taken too.
+EMAIL = re.compile(
+    r"(?<![\w/:.@-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![\w-])"
+)
+SPELLED_EMAIL = re.compile(
+    r"\b[\w.+-]+\s*[\[(]at[\])]\s*[\w-]+(?:\s*(?:[\[(]dot[\])]|\.)\s*[A-Za-z]{2,})+\b",
+    re.IGNORECASE,
+)
+
+
+def _emails(text: str) -> list[str]:
+    """The email addresses in a text, outside any link."""
+    found = []
+    for word in text.split():
+        if "://" in word or word.lower().startswith("www."):
+            continue
+        found += [match.group(0) for match in EMAIL.finditer(word)]
+    found += [match.group(0) for match in SPELLED_EMAIL.finditer(text)]
+    return found
 
 
 def without_email_text(value: Any) -> Any:
@@ -256,8 +276,12 @@ def without_email_text(value: Any) -> Any:
         return {k: without_email_text(v) for k, v in value.items()}
     if isinstance(value, list):
         return [without_email_text(item) for item in value]
-    if isinstance(value, str) and "@" in value:
-        return EMAIL.sub("", value)
+    if isinstance(value, str) and (
+        "@" in value or "[at]" in value.lower() or "(at)" in value.lower()
+    ):
+        for address in _emails(value):
+            value = value.replace(address, "")
+        return value
     return value
 
 
@@ -267,7 +291,7 @@ def emails_in_text(value: Any) -> int:
         return sum(emails_in_text(v) for v in value.values())
     if isinstance(value, list):
         return sum(emails_in_text(item) for item in value)
-    return int(isinstance(value, str) and EMAIL.search(value) is not None)
+    return int(isinstance(value, str) and bool(_emails(value)))
 
 
 def keys_found(value: Any, keys: frozenset[str]) -> set[str]:

@@ -73,4 +73,7 @@ SELECT 'trial_paper', 'phone', count(*) FROM trial_paper
   WHERE jsonb_path_exists(raw_payload, 'strict $.**.phone')
 UNION ALL
 SELECT 'trial_paper', 'email in a text', count(*) FROM trial_paper
-  WHERE raw_payload::text ~ '[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}';
+  -- As sources/people.py: chemistry (`Fe3O4@SiO2.NH2`) and a link's `user@host` are not
+  -- addresses; `name [at] domain [dot] org` is.
+  WHERE raw_payload::text ~ '(?<![[:alnum:]_/:.@-])[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}(?![[:alnum:]_-])'
+     OR raw_payload::text ~* '[[:alnum:]_.+-]+\s*[[(]at[])]\s*[[:alnum:]_-]+(\s*([[(]dot[])]|\.)\s*[A-Za-z]{2,})+';
