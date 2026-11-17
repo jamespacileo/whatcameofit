@@ -57,6 +57,15 @@ def _status() -> str:
 
 
 def upgrade() -> None:
+    # Audit could attach an unresolved lead after its unsuccessful read was recorded.
+    # Its successful attachment takes precedence over the earlier ledger outcome.
+    op.execute(
+        f"""
+        UPDATE work_entry e SET outcome = 'done', stale = false
+        FROM link_lead l
+        WHERE l.id = e.record_id AND {READ} AND l.read_outcome = 'added_to_claim'
+        """
+    )
     # A site's answer: gone is final, a refusal needs a fix, anything else is put off.
     op.execute(
         f"""

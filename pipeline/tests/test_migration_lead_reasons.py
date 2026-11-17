@@ -169,6 +169,55 @@ def test_every_lead_read_before_the_codes_is_given_its_code(
     assert searched == "no_stories"
 
 
+def test_manual_attachment_overrides_the_earlier_unsuccessful_read(
+    engine: Engine, alembic_config: Config, at_0036: dict[str, int]
+):
+    lead_id = at_0036["overlap"]
+    with engine.begin() as connection:
+        claim = connection.execute(
+            text(
+                "INSERT INTO claim (slug, headline, summary, vertical, indication)"
+                " VALUES ('attach-upgrade', 'h', '', 'other', 'a condition') RETURNING id"
+            )
+        ).scalar_one()
+        article = connection.execute(
+            text(
+                "INSERT INTO source_article (claim_id, url, outlet, title, published_date)"
+                " VALUES (:claim, 'https://news.example.org/overlap', 'outlet', 'h', current_date)"
+                " RETURNING id"
+            ),
+            {"claim": claim},
+        ).scalar_one()
+        connection.execute(
+            text(
+                "UPDATE link_lead SET read_outcome = 'added_to_claim', claim_id = :claim,"
+                " source_article_id = :article, read_detail = 'attached by editor' WHERE id = :lead"
+            ),
+            {"claim": claim, "article": article, "lead": lead_id},
+        )
+    try:
+        command.upgrade(alembic_config, "0037")
+        assert entries(engine)[lead_id] == (
+            "done",
+            None,
+            1,
+            None,
+            False,
+            "added_to_claim",
+            "attached by editor",
+        )
+        with engine.connect() as connection:
+            assert connection.execute(
+                text("SELECT claim_id, source_article_id FROM link_lead WHERE id = :lead"),
+                {"lead": lead_id},
+            ).one() == (claim, article)
+    finally:
+        with engine.begin() as connection:
+            connection.execute(text("DELETE FROM link_lead WHERE id = :lead"), {"lead": lead_id})
+            connection.execute(text("DELETE FROM source_article WHERE id = :id"), {"id": article})
+            connection.execute(text("DELETE FROM claim WHERE id = :id"), {"id": claim})
+
+
 def test_words_with_no_code_stop_the_migration_and_change_nothing(
     engine: Engine, alembic_config: Config, at_0036: dict[str, int]
 ):

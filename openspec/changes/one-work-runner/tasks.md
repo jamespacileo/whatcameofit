@@ -2,7 +2,7 @@
 
 ## 0. Writer upgrades, retries and due work (P1)
 
-- [ ] 0.1 <a id="task-f36"></a>Teach migration 0037 to recognize the historical audit-attach state. Upgrade a representative pre-migration PostgreSQL fixture, verify the attachment and ledger agree, and retain a test for unknown states. [F36](../../../docs/reviews/2026-11-17-code-review.md#finding-f36) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-a-manually-attached-historical-lead-is-upgraded)
+- [x] 0.1 <a id="task-f36"></a>Teach migration 0037 to recognize the historical audit-attach state. Upgrade a representative pre-migration PostgreSQL fixture, verify the attachment and ledger agree, and retain a test for unknown states. [F36](../../../docs/reviews/2026-11-17-code-review.md#finding-f36) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-a-manually-attached-historical-lead-is-upgraded)
 
 - [ ] 0.2 <a id="task-f38"></a>Share the stop signal across workers before the next claim. Use the two-worker, five-record fixture and verify backlog, attempts and disposition of work already in flight. [F38](../../../docs/reviews/2026-11-17-code-review.md#finding-f38) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-one-worker-reports-a-provider-wide-outage)
 
