@@ -721,8 +721,8 @@ def drop_pending_command(
 ) -> None:
     """Set aside a run left pending that the store undid for a constraint: the same
     records can never merge, so the next push forms them again. Refused unless its push
-    marked it undone and the store does not hold it merged. The file is moved aside, not
-    deleted."""
+    marked it undone, the token may write the run's writer (GET /progress `writers`), and
+    the store does not hold it merged. The file is moved aside, not deleted."""
     pending = pending_path(state)
     held = read_pending(pending)
     if held is None:
@@ -740,7 +740,20 @@ def drop_pending_command(
     if not (url and token):
         err.print("drop-pending asks the store about the run: set INGEST_URL and INGEST_TOKEN.")
         raise typer.Exit(code=1)
+    writer = run.split("-", 1)[0]
     with _client(url, token) as client:
+        # The store answers "no such run" both for a run it does not hold and for one this
+        # token may not see; only a token that may write the run's writer can tell them apart.
+        progress = client.get("/progress")
+        writers = progress.json().get("writers") if progress.status_code == 200 else None
+        if not isinstance(writers, list) or writer not in writers:
+            err.print(
+                f"Run {run} is a {writer} run; the store does not say this token may write"
+                f" {writer} runs ({', '.join(map(str, writers or [])) or 'it names none'}), so"
+                f" its answer about the run cannot be trusted. Use a token of the {writer}"
+                " writer."
+            )
+            raise typer.Exit(code=1)
         answer = client.get(f"/runs/{run}")
         status = answer.json().get("status") if answer.status_code == 200 else None
         if answer.status_code not in (200, 404):

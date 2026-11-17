@@ -24,7 +24,7 @@ def test_only_what_changed_is_handed_over():
     changed = Record("claim", "drug-x", {"slug": "drug-x", "headline": "B"})
     redone = Record("decision", "7", {"seq": 7, "step": "entity_match", "confidence": 1})
     new = Record("claim", "drug-y", {"slug": "drug-y", "headline": "C"})
-    chosen = increment([changed, redone, new, ACTION, DECISION], state, actions=False)
+    chosen = increment([changed, redone, new, ACTION], state, actions=False)
     assert chosen.records == [changed, new]
     assert sum(chosen.left_out.values()) == 2
     assert increment([ACTION], state, actions=True).records == [ACTION]
@@ -477,8 +477,11 @@ def test_a_run_undone_for_a_constraint_is_marked_and_set_aside_only_then(monkeyp
         def __init__(self) -> None:
             super().__init__(status="undone")
             self.held: str | None = None
+            self.writers = ["daily"]
 
         def __call__(self, request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/progress":
+                return httpx.Response(200, json={"writers": self.writers})
             if request.method == "GET" and request.url.path.startswith("/runs/"):
                 if self.held is None:
                     return httpx.Response(404, json={"error": "no_such_run"})
@@ -523,6 +526,11 @@ def test_a_run_undone_for_a_constraint_is_marked_and_set_aside_only_then(monkeyp
     monkeypatch.setattr(httpx, "Client", client)
     monkeypatch.setenv("INGEST_TOKEN", "t")
     args = ["store", "drop-pending", "--state", str(state_file), "--url", "http://s.test"]
+    # A token that may not write daily runs: its "no such run" says nothing.
+    service.writers = ["operator", "migration"]
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "daily writer" in refused.output and pending.is_file()
+    service.writers = ["daily"]
     service.held = "merged"
     refused = CliRunner().invoke(app, args)
     assert refused.exit_code == 1 and "merged" in refused.output and pending.is_file()
@@ -544,3 +552,6 @@ def test_a_record_given_twice_goes_once_and_two_bodies_under_one_key_are_refused
     assert increment([CLAIM, CLAIM], {}, actions=False).records == [CLAIM]
     with pytest.raises(PushFailed, match="Two different claim"):
         increment([CLAIM, other], {}, actions=False)
+    # So are they when the state holds one of them.
+    with pytest.raises(PushFailed, match="Two different claim"):
+        increment([CLAIM, other], state_of([CLAIM]), actions=False)
