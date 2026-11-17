@@ -10,7 +10,7 @@ Each task names its lane and model. "Here" is the one session that writes to the
 
 ## 1. Reddit backfill to the site (data lane, here)
 
-- [x] 1.1 Let the read run finish; confirm nothing readable is left and the 115 held leads were not asked
+- [x] 1.1 Let the read run finish; confirm nothing readable is left and the 115 held leads were not asked (stopped with about 80 readable leads left, once reads had slowed to a few a run; they stay due)
 - [x] 1.2 Prepare every pending claim
 - [x] 1.3 Audit round 2 with auditors on Opus 5.5 under the existing brief; decide their flagged cases here; apply
 - [x] 1.4 Attach each archived duplicate's articles to the published claim it duplicates, skipping pairs an auditor doubted
@@ -37,15 +37,15 @@ Each task names its lane and model. "Here" is the one session that writes to the
 
 - [x] 4.1 Confirm no read, prepare or load is running; pause the daily job
 - [x] 4.2 Dump the working database to the external drive; record its size and checksum; restore one table from it into a scratch database to prove it reads
-- [x] 4.3 Read migration 0028 and confirm it only adds; apply 0027 and 0028
-- [x] 4.4 Run the rekey survey; write for the operator how many leads would merge, how many shares move, how many claims' lead pointers are touched, and ten examples of each kind (addresses only)
+- [x] 4.3 Read migration 0028 and confirm it only adds; apply 0027 and 0028 (applied 0027 to 0032 behind the backup; 0030, which adds database rules, was read first; 0028 and 0029 were not read line by line)
+- [ ] 4.4 (survey run: 659,542 keep their key, 16,610 get a new one, 5,870 merge; shares moved, claims touched and examples were not written out) Run the rekey survey; write for the operator how many leads would merge, how many shares move, how many claims' lead pointers are touched, and ten examples of each kind (addresses only)
 - [x] 4.5 Do not apply the rekey
 
 ## 5. Reload and count (data lane, here)
 
 - [x] 5.1 After 3.4 and 4.3: apply the wider record's migration; load every interventional trial again; confirm the count and that no step gained due records
 - [x] 5.2 Count the two sets, by phase; write the numbers for the operator
-- [x] 5.3 Resume the daily job on its existing checkout, by 04:15 UTC at the latest whatever else is unfinished
+- [x] 5.3 Resume the daily job on its existing checkout, by 04:15 UTC at the latest whatever else is unfinished (resumed 00:04 UTC, with its checkout moved to current main so that code and database agree)
 
 ## 6. Hand-over
 
