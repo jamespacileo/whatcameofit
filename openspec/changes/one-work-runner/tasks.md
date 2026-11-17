@@ -68,7 +68,7 @@
 - [ ] 8.1 Update `scripts/daily-run.sh` to read the new report of `prepare`; verify a dry run of the script prints the prepared counts
 - [ ] 8.2 Delete the process-per-step runner in `cli/prepare.py`, `NOT_NEEDED_TO_DECIDE`, and what is left unused in `backfill/`; verify `vulture` reports nothing new and `make check` passes
 - [ ] 8.3 Update `docs/url-to-claim.md`, `docs/daily-run.md` and `docs/backfill-loop.md` for the claim steps, requeue and the plan's new lines; verify the commands they show run as written
-- [ ] 8.4 Record the decision "one runner for leads and claims; a failure is final only when it is known to be" as an ADR in `docs/adr/`; verify it names what it replaces
+- [x] 8.4 Record the decision "one runner for leads and claims; a failure is final only when it is known to be" as an ADR in `docs/adr/`; verify it names what it replaces
 
 ## 9. Integration
 
