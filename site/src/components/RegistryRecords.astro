@@ -8,20 +8,18 @@
 // "A match score reads as a note").
 import ChevronDown from "@lucide/astro/icons/chevron-down";
 import type { ExportedMatch } from "../lib/export";
-import { NOT_COUNTED_LINK, RECORDS_SHOWN, groupByReading, notCounted } from "../lib/registry-records";
+import { RECORDS_SHOWN, groupByReading } from "../lib/registry-records";
 import Row from "./RegistryRecordRow.astro";
 
 interface Props {
   matches: ExportedMatch[];
   /** The groups' heading level: 3 directly under the section, 4 under a subheading. */
   level?: 3 | 4;
-  /** Candidates: not counted in the status, which the list says once, with the rule. */
+  /** Candidates: not counted in the status, which the section says from its heading. */
   possible?: boolean;
-  /** The score the rule needs to count a record; null when only a person counts one. */
-  acceptAbove?: number | null;
 }
 
-const { matches, level = 3, possible = false, acceptAbove = null } = Astro.props;
+const { matches, level = 3, possible = false } = Astro.props;
 const Heading = `h${level}` as "h3" | "h4";
 const groups = groupByReading(matches).map((group) => ({
   ...group,
@@ -30,13 +28,6 @@ const groups = groupByReading(matches).map((group) => ({
 }));
 ---
 
-{
-  possible && (
-    <p class="record-not-counted">
-      {notCounted(acceptAbove)} <a href={NOT_COUNTED_LINK.href}>{NOT_COUNTED_LINK.text}</a>
-    </p>
-  )
-}
 {
   groups.map((group) => (
     <div class={possible ? "record-group record-group-possible" : "record-group"}>

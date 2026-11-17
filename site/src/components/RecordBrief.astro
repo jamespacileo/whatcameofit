@@ -23,6 +23,12 @@ const groups = recordBrief(claim, lastChecked);
 const rows = groups.flatMap((group) => group.rows);
 // A clause's figure stands between double square brackets: it is drawn in bold and
 // leads to its row.
+// The figures of an answer: a number with what follows it as one figure ("26 of 47",
+// "4 Jun 2026", whose spaces do not break), and a number said in words where it opens
+// the answer.
+const FIGURE =
+  /(\d[\d,.]*(?:\s+of\s+\d[\d,.]*)?(?:\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4})?|^(?:One|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Eleven|Twelve|None|No)\b)/;
+const figures = (answer: string) => answer.split(FIGURE);
 const clause = (said: string) => {
   const [before, figure, after] = said.split(/\[\[|\]\]/);
   return { before, figure, after: after ?? "" };
@@ -32,7 +38,13 @@ const clause = (said: string) => {
 {
   rows.length > 0 && (
     <section class="brief" data-pagefind-ignore>
-      <FoldHead id="brief">{BRIEF_TITLE}</FoldHead>
+      <FoldHead id="brief">
+        {/* What the answers are and are not, from the mark beside the heading. */}
+        <p slot="about">
+          {briefNote(groups)} <a href="/how-it-works">How an answer is made</a>
+        </p>
+        {BRIEF_TITLE}
+      </FoldHead>
       <p class="brief-said">
         {rows.map((row) => {
           const { before, figure, after } = clause(row.said);
@@ -50,6 +62,8 @@ const clause = (said: string) => {
           const words = sourceWords(row.source);
           return (
             <Fact id={`brief-${row.code}`} label={row.question} value={row.answer} opens="What this means and where it is from">
+              {/* Only the figures of an answer are bold, so a reader skims down them. */}
+              {figures(row.answer).map((part, index) => (index % 2 === 1 ? <b>{part}</b> : part))}
               {row.share && row.share.of > 1 && (
                 <span
                   slot="aside"
@@ -97,9 +111,6 @@ const clause = (said: string) => {
           );
         })}
       </FactSheet>
-      <p class="take-why brief-note">
-        {briefNote(groups)} <a href="/how-it-works">How an answer is made</a>
-      </p>
     </section>
   )
 }

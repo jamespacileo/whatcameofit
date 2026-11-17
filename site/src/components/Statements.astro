@@ -17,6 +17,7 @@ import Cog from "@lucide/astro/icons/cog";
 import ExternalLink from "@lucide/astro/icons/external-link";
 import GraduationCap from "@lucide/astro/icons/graduation-cap";
 import Microscope from "@lucide/astro/icons/microscope";
+import Newspaper from "@lucide/astro/icons/newspaper";
 import Scale from "@lucide/astro/icons/scale";
 import Shield from "@lucide/astro/icons/shield";
 import Telescope from "@lucide/astro/icons/telescope";
@@ -57,8 +58,7 @@ const groups = articles
   }))
   .filter((group) => group.statements.length > 0);
 
-// One drawing per kind of statement and per kind of speaker. A report's own statements
-// carry its outlet's icon instead.
+// One drawing per kind of statement and per kind of speaker.
 const KIND_ICONS: Record<string, typeof Activity> = {
   effect: Activity,
   safety: Shield,
@@ -68,6 +68,7 @@ const KIND_ICONS: Record<string, typeof Activity> = {
   what_it_could_lead_to: Telescope,
 };
 const SPEAKER_ICONS: Record<string, typeof Activity> = {
+  article: Newspaper,
   researcher: Microscope,
   company: Building,
   patient: User,
@@ -93,10 +94,13 @@ let serial = 0;
 ---
 
 <section class="matched statements" data-pagefind-ignore>
-  <FoldHead id="reported-statements" phone="folded">{statementsHeading(groups.length)}</FoldHead>
-  <p class="take-why">
-    {statementsNote(groups.length)} <a href="/how-it-works#what-a-report-said">How statements are found</a>
-  </p>
+  <FoldHead id="reported-statements" phone="folded">
+    {/* What a statement is and is not, from the mark beside the heading. */}
+    <p slot="about">
+      {statementsNote(groups.length)} <a href="/how-it-works#what-a-report-said">How statements are found</a>
+    </p>
+    {statementsHeading(groups.length)}
+  </FoldHead>
   <div class="said-tools">
     {/* What the mark before a statement says, once. */}
     <p class="said-key">
@@ -133,15 +137,11 @@ let serial = 0;
               return (
                 <div class="said-group">
                   <h4 class="said-by">
-                    {view === "who" && name === "article" ? (
-                      <Outlet url={group.article.url} outlet={group.article.outlet} link={false} />
-                    ) : (
-                      <span class="said-name">
-                        {GroupIcon && <GroupIcon size={16} stroke-width={1.7} aria-hidden="true" />}
-                        {view === "who" ? speakerText(name) : KIND_WORDS[name]}
-                      </span>
-                    )}
-                    {view === "who" && name === "article" && <small>{speakerText(name)}</small>}
+                    {/* The report is named over its statements, so here it is "The report". */}
+                    <span class="said-name">
+                      {GroupIcon && <GroupIcon size={16} stroke-width={1.7} aria-hidden="true" />}
+                      {view === "who" ? speakerText(name) : KIND_WORDS[name]}
+                    </span>
                   </h4>
                   <ul class="plain entry-rows statement-rows">
                     {list.map((statement) => {
@@ -153,10 +153,6 @@ let serial = 0;
                           name="this statement"
                           opens="What it rests on and how sure the reading is"
                         >
-                          <span class="said-tag">
-                            {TagIcon && <TagIcon size={15} stroke-width={1.8} aria-hidden="true" />}
-                            {view === "who" ? KIND_WORDS[statement.kind] : speakerText(statement.speaker)}
-                          </span>
                           <p class="statement">
                             <span class:list={["firm-mark", { maybe: statement.firmness !== "fact" }]} aria-hidden="true" />
                             <span class="statement-text">
@@ -165,6 +161,11 @@ let serial = 0;
                             </span>
                           </p>
                           <Fragment slot="ties">
+                            {/* What the group is not named by: the kind, or who said it. */}
+                            <span class="said-tag">
+                              {TagIcon && <TagIcon size={15} stroke-width={1.8} aria-hidden="true" />}
+                              {view === "who" ? KIND_WORDS[statement.kind] : speakerText(statement.speaker)}
+                            </span>
                             {!sure && (
                               <Score words={statementConfidenceLabel(statement.confidence)}>
                                 <span>{confidenceMeaning(formatDate(statement.read_on))}</span>

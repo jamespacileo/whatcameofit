@@ -121,7 +121,7 @@ const mainMeasure = planned[0]?.measure ?? null;
     <div class="trial-cell" role="cell">
       <span class="lbl">State</span>
       {/* A shape for the state, beside its words: a column of them is read at a glance.
-          Grey, and never alone: it says where a trial is, not how it turned out. */}
+          In the hue of its state and never alone: it says where a trial is, not how it turned out. */}
       <span class="trial-state">
         <span class:list={["state-mark", { posted: Boolean(results) }]} data-state={trial.state} aria-hidden="true" />
         {columns.state ?? "Not stated in the record"}

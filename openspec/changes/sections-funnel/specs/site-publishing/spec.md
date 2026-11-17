@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Every section of a claim page follows one funnel
-Each section of a claim page below "At a glance" SHALL show, in sight, a label and its value, with a number or a shape where it can stand for words; SHALL give what the value means and where it is from at one press; and SHALL give why it is listed and how sure a reading is at a second press or in the same place. Nothing the page showed before SHALL be removed by this: it is moved down the funnel. A shape SHALL be grey in every state and SHALL stand beside words or a number.
+Each section of a claim page below "At a glance" SHALL show, in sight, a label and its value, with a number or a shape where it can stand for words; SHALL give what the value means and where it is from at one press; and SHALL give why it is listed and how sure a reading is at a second press or in the same place. Nothing the page showed before SHALL be removed by this: it is moved down the funnel. A shape SHALL stand beside words or a number. A shape MAY carry the hue of its kind; no hue SHALL be red or green, and a kind SHALL never be told by hue alone. A paragraph that describes a section SHALL open from the info mark beside the section's heading and SHALL NOT stand under the heading.
 
 #### Scenario: Opening an answer twice
 - **WHEN** a reader opens "Compared with a placebo?" and then "Where this is read from"

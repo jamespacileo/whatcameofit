@@ -890,7 +890,7 @@ test("Scenario: Largest trial with posted values", () => {
 
 test("Scenario: Approved claim", () => {
   const brief = briefOf("approved-claim");
-  assert.match(brief, /Approved by a regulator\? On 1 Apr 2024\. An approval is not advice to take a treatment/);
+  assert.match(brief, /Approved by a regulator\? On\s+1 Apr 2024\s*\. An approval is not advice to take a treatment/);
 });
 
 test("Scenario: Posted comparison with a p value", () => {
@@ -1113,7 +1113,7 @@ test("Scenario: Possible record laid out field by field under its reading", () =
   assert.match(words, /For Another Condition Named in the record Phase-claim agent; Placebo/);
   assert.doesNotMatch(words, /Recruiting|Tests|Match to this claim/);
   // The folded heading and the digest give the count; the digest's links to the section.
-  assert.match(html, /<span class="fold-note">1 possible<\/span>/);
+  assert.match(html, /<span class="fold-note">1 possible, not counted<\/span>/);
   assert.match(html, /, <a href="#matched">1 possible<\/a>/);
 });
 
@@ -1674,7 +1674,8 @@ test("Scenario: Claim with three statements from one report", () => {
   assert.ok(count(byWho, 'class="firm-mark maybe"') >= 1);
   // Each with its kind and how sure the check is, as a word and a percentage: where the
   // check is very sure, the score stands where the row opens.
-  assert.match(plainText(section), /Effect The report said: Synthetic statement: examplumab eased/);
+  // The statement first, in the report's name; its kind ends its line.
+  assert.match(plainText(section), /The report said: Synthetic statement: examplumab eased[^]*?Effect/);
   for (const label of ["Very likely in the report · 93%", "Very likely in the report · 88%", "Very likely in the report · 81%"]) {
     // The percentage is marked apart inside the chip; the words read are the same.
     assert.ok(wordsOf(section).includes(label), `no "${label}"`);

@@ -73,6 +73,15 @@
   /* The rule a section's body starts under: half the ink, so it heads the rows without
      being the loudest line on the page. */
   --head-rule: color-mix(in oklab, var(--ink) 50%, var(--paper));
+  /* Marks by kind (openspec sections-funnel, 2026-11-17: the operator asked for the
+     shapes to be told apart by colour too). A hue for each state of a trial and one for
+     posted results. A hue names a kind, never a verdict: none is red or green, each
+     mark keeps its shape, and each stands beside words. */
+  --mark-plan: #7f90a3;
+  --mark-going: #1f6fc0;
+  --mark-done: #0f1f38;
+  --mark-halt: #8a4fa8;
+  --mark-results: #0b7f7a;
   /* The round mark of anything that folds: a section's heading, a fact's row. */
   --fold-mark: 1.6rem;
   /* A record page's two column stops, measured from a section's left edge. A label, a
@@ -122,6 +131,11 @@
     --rule: #2b3546;
     --rule-soft: #1f2733;
     --table-head: #161d28;
+    --mark-plan: #8d9db1;
+    --mark-going: #6fb1f5;
+    --mark-done: #e4eaf3;
+    --mark-halt: #c79be0;
+    --mark-results: #5fd0c8;
     --raised: #202c40;
     --raised-rule: rgb(142 193 245 / 0.24);
     --band-card-rule: rgb(142 193 245 / 0.32);
@@ -154,6 +168,11 @@
     --rule: #2b3546;
     --rule-soft: #1f2733;
     --table-head: #161d28;
+    --mark-plan: #8d9db1;
+    --mark-going: #6fb1f5;
+    --mark-done: #e4eaf3;
+    --mark-halt: #c79be0;
+    --mark-results: #5fd0c8;
     --raised: #202c40;
     --raised-rule: rgb(142 193 245 / 0.24);
     --band-card-rule: rgb(142 193 245 / 0.32);
@@ -5724,9 +5743,10 @@ main ul:not([class]) li + li {
    under: it leads to its row. */
 .brief-said {
   max-width: 46rem;
-  margin: 0.9rem 0 0;
-  font-size: var(--text-xl);
-  line-height: 1.55;
+  margin: 0.7rem 0 0;
+  /* A step under the section's heading: it sums the rows up, it does not head them. */
+  font-size: var(--text-l);
+  line-height: 1.6;
   text-wrap: pretty;
 }
 
@@ -5748,8 +5768,14 @@ main ul:not([class]) li + li {
 
 /* A question stands in the label's column, as a label of "At a glance" does, and its
    answer starts where a value starts. */
-.brief .fact-value {
+/* Only an answer's figures are bold: a reader skims down them. */
+.brief .fact-sheet .fact-value {
   font-size: var(--text-body);
+  font-weight: 400;
+}
+
+.brief .fact-sheet .fact-value b {
+  font-weight: 700;
 }
 
 /* "So many of them": a thin grey bar at the end of the answer's line. */
@@ -5758,7 +5784,15 @@ main ul:not([class]) li + li {
   width: 6.5rem;
   height: 4px;
   border-radius: 2px;
-  background: linear-gradient(to right, var(--muted) calc(var(--share) * 100%), var(--rule) 0);
+  background: linear-gradient(to right, var(--bar, var(--muted)) calc(var(--share) * 100%), var(--rule) 0);
+}
+
+#brief-results .share-bar {
+  --bar: var(--mark-results);
+}
+
+#brief-under_way .share-bar {
+  --bar: var(--mark-going);
 }
 
 .fact-aside:has(.share-bar) {
@@ -5796,7 +5830,7 @@ main ul:not([class]) li + li {
 
 @media (max-width: 40rem) {
   .brief-said {
-    font-size: var(--text-l);
+    font-size: var(--text-body);
   }
 
   .brief-open {
@@ -8453,7 +8487,7 @@ body.framed {
   color: var(--muted);
 }
 
-/* The tie mark: a ring, filled where the trial's sponsor made the tie. Grey: it says how
+/* The tie mark: a ring, filled in the hue of results where the trial's sponsor made the tie. It says how
    a paper came to be listed, never how good it is. */
 .tie-mark {
   flex: none;
@@ -8464,7 +8498,8 @@ body.framed {
 }
 
 .tie-mark.listed {
-  background: var(--muted);
+  border-color: var(--mark-results);
+  background: var(--mark-results);
 }
 
 .tie-key {
@@ -8564,7 +8599,8 @@ body.framed {
 
 /* The state mark: a shape for where a trial is, beside the words that say it. A ring
    has not started, half is under way, full is finished; a square is one that was
-   halted, filled where it was stopped early. Grey at every state. */
+   halted, filled where it was stopped early. Each state has its hue (--mark-*), none red
+   or green: a hue names a state, never a verdict. */
 .trial-state {
   display: inline-flex;
   align-items: baseline;
@@ -8572,21 +8608,33 @@ body.framed {
 }
 
 .state-mark {
+  --mark: var(--mark-plan);
   flex: none;
   width: 0.6rem;
   height: 0.6rem;
-  border: 1.5px solid var(--muted);
+  border: 1.5px solid var(--mark);
   border-radius: 50%;
   translate: 0 0.02rem;
 }
 
 .state-mark[data-state="under_way"] {
-  background: linear-gradient(to right, var(--muted) 50%, transparent 50%);
+  --mark: var(--mark-going);
+  background: linear-gradient(to right, var(--mark) 50%, transparent 50%);
 }
 
-.state-mark[data-state="completed"],
+.state-mark[data-state="completed"] {
+  --mark: var(--mark-done);
+  background: var(--mark);
+}
+
 .state-mark[data-state="terminated"] {
-  background: var(--muted);
+  --mark: var(--mark-halt);
+  background: var(--mark);
+}
+
+.state-mark[data-state="suspended"],
+.state-mark[data-state="withdrawn"] {
+  --mark: var(--mark-halt);
 }
 
 .state-mark[data-state="suspended"],
@@ -8632,19 +8680,20 @@ body.framed {
 }
 
 /* The firmness mark: full where the report put it as a fact; a broken ring where it
-   put it as something that could be so. Grey both ways. */
+   put it as something that could be so. Ink and grey: no hue. */
 .firm-mark {
   flex: none;
   display: inline-block;
   width: 0.6rem;
   height: 0.6rem;
-  border: 1.5px solid var(--muted);
+  border: 1.5px solid var(--mark-done);
   border-radius: 50%;
-  background: var(--muted);
+  background: var(--mark-done);
 }
 
 .firm-mark.maybe {
   border-style: dashed;
+  border-color: var(--mark-plan);
   background: none;
 }
 
@@ -8669,16 +8718,6 @@ body.framed {
   font-size: var(--text-m);
   font-weight: 700;
   line-height: 1.35;
-}
-
-.said-by small {
-  font-size: var(--text-s);
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.said-by .outlet .domain {
-  display: none;
 }
 
 .said-name,
@@ -8733,15 +8772,14 @@ body.framed {
     column-gap: 1.25rem;
   }
 
-  /* The tag in a column of its own, the statement beside it. */
-  .statement-rows .entry-lead {
-    grid-template-columns: 8.5rem minmax(0, 1fr);
-    column-gap: 1rem;
-    align-items: baseline;
+  /* The statement starts where a value starts; its tag ends the line. */
+  .statement-rows .entry-ties {
+    justify-content: flex-end;
+    min-width: 8.5rem;
   }
 
   .said-more {
-    padding-left: calc(9.5rem + 1.2rem);
+    padding-left: 1.2rem;
   }
 }
 
@@ -8762,17 +8800,17 @@ body.framed {
 .name-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.35rem 1.4rem;
 }
 
+/* A name is words with a dotted line under them, as a term that opens is everywhere:
+   easier to read in a row than a pill. */
 .pop-trigger.name-chip {
   display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 1.85rem;
-  padding: 0.1rem 0.7rem;
-  border: 1px solid var(--rule);
-  border-radius: 99px;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
   background: none;
   color: var(--ink);
   font: inherit;
@@ -8781,10 +8819,16 @@ body.framed {
   cursor: pointer;
 }
 
-.pop-trigger.name-chip:hover,
-.pop-trigger.name-chip:has(+ .pop:popover-open) {
-  border-color: var(--ring);
-  background: var(--panel);
+.name-chip .organisation-name {
+  text-decoration: underline dotted var(--ring);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+}
+
+.pop-trigger.name-chip:hover .organisation-name,
+.pop-trigger.name-chip:has(+ .pop:popover-open) .organisation-name {
+  color: var(--blue);
+  text-decoration-color: currentColor;
 }
 
 .chip-n {
@@ -9004,7 +9048,7 @@ body.framed {
 }
 
 .milestones li > .state-mark[data-state="under_way"] {
-  background: linear-gradient(to right, var(--muted) 50%, var(--paper) 50%);
+  background: linear-gradient(to right, var(--mark) 50%, var(--paper) 50%);
 }
 
 .milestones a {
@@ -9030,7 +9074,7 @@ body.framed {
 
 /* "Results posted": a full mark with a ring round it. */
 .state-mark.posted {
-  outline: 1.5px solid var(--muted);
+  outline: 1.5px solid var(--mark-results);
   outline-offset: 2px;
 }
 
@@ -9214,6 +9258,46 @@ body.framed {
   .sheet .record-list .entry-more-ties {
     grid-column: 1 / -1;
   }
+}
+
+/* A report over its statements: one quiet line, the outlet and the day first, then the
+   report's title as the link to it. */
+.sheet .statement-report {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.9rem;
+  margin: 1rem 0 0.5rem;
+  font-size: var(--text-m);
+  font-weight: 400;
+}
+
+.sheet .statement-report .entry-note {
+  order: -1;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  color: var(--ink);
+  font-size: var(--text-m);
+  font-weight: 600;
+}
+
+.sheet .statement-report .entry-note .domain {
+  display: none;
+}
+
+.sheet .statement-report .entry-note .unbroken {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.sheet .statement-report .statement-source {
+  font-weight: 400;
+}
+
+.sheet .said-tools {
+  margin-top: 0.5rem;
 }
 
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet

@@ -58,6 +58,7 @@ import RegistryRecords from "../components/RegistryRecords.astro";
 import Fact from "../components/Fact.astro";
 import FactSheet from "../components/FactSheet.astro";
 import Glance from "../components/Glance.astro";
+import { NOT_COUNTED_LINK, notCounted } from "../lib/registry-records";
 import GlanceBand from "../components/GlanceBand.astro";
 import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
 import Organisations from "../components/Organisations.astro";
@@ -225,7 +226,7 @@ const scoreNote = trials.length > 0 ? "" : " A score is about the match, not abo
 const matchedNote =
   [
     ...(untried.length > 0 ? [`${untried.length} matched`] : []),
-    ...(candidates.length > 0 ? [`${candidates.length} possible`] : []),
+    ...(candidates.length > 0 ? [`${candidates.length} possible, not counted`] : []),
   ].join(" · ") || null;
 // A reader arrives from a headline, so the page names the reports it is about, newest first.
 const reports = followedReports(claim);
@@ -1202,6 +1203,12 @@ const sections = [
                   ? `Trial registry records that may be about this treatment and condition, with how sure each match is.${scoreNote}`
                   : "The trial registries were searched for this treatment and condition. No record matched."}
             </p>
+            {candidates.length > 0 && (
+              // That a possible record counts for nothing, and the rule that would count it.
+              <p slot="about">
+                {notCounted(data.match_accept_above ?? null)} <a href={NOT_COUNTED_LINK.href}>{NOT_COUNTED_LINK.text}</a>
+              </p>
+            )}
             {matchedHeading}
           </FoldHead>
           {untried.length > 0 && <RegistryRecords matches={untried} />}
@@ -1213,7 +1220,6 @@ const sections = [
               matches={candidates}
               level={untried.length > 0 ? 4 : 3}
               possible
-              acceptAbove={data.match_accept_above ?? null}
             />
           )}
         </section>
