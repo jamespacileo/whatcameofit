@@ -3716,11 +3716,16 @@ body:has(.band.home) .table-frame {
   display: inline-grid;
   place-items: center;
   flex: none;
-  width: 1.3rem;
-  height: 1.3rem;
+  width: 1.05rem;
+  height: 1.05rem;
   border-radius: 50%;
   background: var(--tint);
   color: var(--blue);
+}
+
+.event-mark svg {
+  width: 0.72rem;
+  height: 0.72rem;
 }
 
 /* Which way the record moved: begun or approved, halted or refused. Everything else,
@@ -3734,6 +3739,12 @@ body:has(.band.home) .table-frame {
 .event-mark[data-direction="stopped"] {
   background: var(--stopped-tint);
   color: var(--stopped);
+}
+
+/* A promised date keeps the amber that is a promise's alone. */
+.event-mark[data-direction="promised"] {
+  background: var(--promise);
+  color: var(--promise-mark);
 }
 
 @media (forced-colors: active) {

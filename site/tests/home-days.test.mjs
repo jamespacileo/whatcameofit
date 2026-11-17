@@ -90,7 +90,7 @@ test("Scenario: A kind read aloud", () => {
   // happened, which is not read aloud: the row's title says it.
   assert.match(record, /<span class="row-kind"><span class="event-mark" data-event="trial_results_posted" data-direction="neither" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Registry record<span class="visually-hidden">\. <\/span><\/span>/);
   assert.match(group(dated, "d-2025-09-08"), /<span class="visually-hidden">News report\. <\/span>/);
-  assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-label">Promised date<\/span>/);
+  assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-kind"><span class="event-mark" data-direction="promised" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Promised date<\/span>/);
   // The field that shows one kind is the script's, and names each kind in words.
   const field = dated.slice(dated.indexOf('id="feed-kind"'), dated.indexOf("</select>", dated.indexOf('id="feed-kind"')));
   assert.match(dated, /<label class="pick" hidden data-kinds>/);

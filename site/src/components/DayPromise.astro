@@ -1,6 +1,7 @@
 ---
 // A promised date in the day-by-day list: what the report promised, on pale amber, beside
 // the claim's status now. Nothing here says whether the date has passed.
+import Clock from "@lucide/astro/icons/clock";
 import type { PromiseRow } from "../lib/day-list";
 import { formatDate } from "../lib/timetable";
 import Quoted from "./Quoted.astro";
@@ -27,7 +28,7 @@ const report = claim.articles.find((article) => article.url === promise.article_
   data-on={row.date}
 >
   <p class="row-source">
-    <span class="row-label">Promised date</span>
+    <span class="row-kind"><span class="event-mark" data-direction="promised" aria-hidden="true"><Clock size={13} stroke-width={2.3} /></span>Promised date</span>
     {
       report && (
         <>

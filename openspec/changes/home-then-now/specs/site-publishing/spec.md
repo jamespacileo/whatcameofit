@@ -118,7 +118,7 @@ A registry row SHALL carry one mark for what its record did, hidden from a scree
 - **THEN** its mark keeps the blue
 
 ### Requirement: A row does not repeat its day
-Under a heading that names one day, a row of the day-by-day list SHALL NOT draw its date again. Under a heading that names a week or a year, each row SHALL draw its date. Every row's date SHALL remain in the page as built.
+Under a heading that names one day, a report's or a registry record's row of the day-by-day list SHALL NOT draw its date again. A promised date's row SHALL keep the date of the report that made the promise, which is not the day it is listed under. Under a heading that names a week or a year, each row SHALL draw its date. Every row's date SHALL remain in the page as built.
 
 #### Scenario: Under a day
 - **WHEN** two reports are listed under "Sunday 15 November"
