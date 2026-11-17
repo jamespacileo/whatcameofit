@@ -52,9 +52,11 @@ from thenwhat.store.push import (
     check_target,
     pending_path,
     push,
+    read_pending,
     read_state,
     store_build,
     target_of,
+    undone_of,
     write_state,
 )
 from thenwhat.store.tiers import (
@@ -706,6 +708,61 @@ def strip_paper_abstracts_command(
                     f"  {key}: {count:,} before, {report.after[(t, s, key)]:,} after", markup=False
                 )
     out.print(f'Prove it: psql "$DATABASE_URL" -f {ABSTRACTS_PROOF_SQL}', markup=False)
+
+
+@store_app.command("drop-pending")
+def drop_pending_command(
+    state: Annotated[
+        Path, typer.Option("--state", envvar="STORE_PUSH_STATE", help="The push state.")
+    ],
+    url: Annotated[
+        str, typer.Option("--url", envvar="INGEST_URL", help="The ingest service's address.")
+    ] = "",
+) -> None:
+    """Set aside a run left pending that the store undid for a constraint: the same
+    records can never merge, so the next push forms them again. Refused unless its push
+    marked it undone and the store does not hold it merged. The file is moved aside, not
+    deleted."""
+    pending = pending_path(state)
+    held = read_pending(pending)
+    if held is None:
+        err.print(f"No run is pending beside {state}.")
+        raise typer.Exit(code=1)
+    run = held[0]
+    undone = undone_of(pending)
+    if undone is None:
+        err.print(
+            f"Run {run} in {pending} was not undone by a constraint: push again, which"
+            " settles it first."
+        )
+        raise typer.Exit(code=1)
+    token = os.environ.get("INGEST_TOKEN", "")
+    if not (url and token):
+        err.print("drop-pending asks the store about the run: set INGEST_URL and INGEST_TOKEN.")
+        raise typer.Exit(code=1)
+    with _client(url, token) as client:
+        answer = client.get(f"/runs/{run}")
+        status = answer.json().get("status") if answer.status_code == 200 else None
+        if answer.status_code not in (200, 404):
+            err.print(f"The store did not say what run {run} is: {answer.status_code}.")
+            raise typer.Exit(code=1)
+        if status == "merged":
+            err.print(
+                f"The store holds run {run} merged: push again, which settles it and takes"
+                " its records as handed over."
+            )
+            raise typer.Exit(code=1)
+        if status == "registered":
+            # Still open at the store, with nothing merged: dropped there too.
+            client.delete(f"/runs/{run}")
+    aside = pending.with_name(
+        f"{pending.name}.set-aside-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    pending.replace(aside)
+    out.print(
+        f"Set run {run} aside ({undone}): {aside}. The next push forms its records again.",
+        markup=False,
+    )
 
 
 @store_app.command("fresh-state")

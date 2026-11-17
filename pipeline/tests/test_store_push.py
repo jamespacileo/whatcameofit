@@ -468,3 +468,72 @@ def test_backfill_push_refuses_a_store_of_another_build_or_database(monkeypatch,
     assert refused.exit_code == 1 and "created again" in refused.output
     assert set(asked) == {"/progress"}
     assert read_state(state)["\tdatabase since"] == "2026-11-16 08:00:00"
+
+
+def test_a_run_undone_for_a_constraint_is_marked_and_set_aside_only_then(monkeypatch, tmp_path):
+    from thenwhat.store.push import RunUndone, pending_path, read_pending, write_state
+
+    class Undoes(Service):
+        def __init__(self) -> None:
+            super().__init__(status="undone")
+            self.held: str | None = None
+
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if request.method == "GET" and request.url.path.startswith("/runs/"):
+                if self.held is None:
+                    return httpx.Response(404, json={"error": "no_such_run"})
+                return httpx.Response(200, json={"status": self.held})
+            if request.url.path.endswith("/merge"):
+                super().__call__(request)
+                return httpx.Response(
+                    409,
+                    json={
+                        "status": "undone",
+                        "reason": "constraint",
+                        "detail": "NOT NULL constraint failed: trial_slice.with_results",
+                    },
+                )
+            return super().__call__(request)
+
+    state_file = tmp_path / "s.pushed.json"
+    write_state(state_file, {})
+    pending = pending_path(state_file)
+    service = Undoes()
+    with (
+        httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c,
+        pytest.raises(RunUndone, match=r"never merge.*drop-pending --state"),
+    ):
+        push(
+            c,
+            [CLAIM],
+            {},
+            writer="daily",
+            commit="abc1234",
+            payload_text={}.get,
+            pending=pending,
+        )
+    assert read_pending(pending) is not None
+
+    real = httpx.Client
+
+    def client(**given):
+        given["transport"] = httpx.MockTransport(service)
+        return real(**given)
+
+    monkeypatch.setattr(httpx, "Client", client)
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    args = ["store", "drop-pending", "--state", str(state_file), "--url", "http://s.test"]
+    service.held = "merged"
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "merged" in refused.output and pending.is_file()
+    service.held = None
+    dropped = CliRunner().invoke(app, args)
+    assert dropped.exit_code == 0, dropped.output
+    assert not pending.exists() and list(tmp_path.glob("s.pushed.json.pending.json.set-aside-*"))
+    # A pending run no constraint undid is not set aside: a push settles it.
+    write_state(state_file, {})
+    from thenwhat.store.push import write_pending
+
+    write_pending(pending, "daily-x", [CLAIM])
+    kept = CliRunner().invoke(app, args)
+    assert kept.exit_code == 1 and "push again" in kept.output and pending.is_file()

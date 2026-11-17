@@ -328,6 +328,40 @@ def read_pending(path: Path) -> tuple[str, list[Record], dict[str, str]] | None:
     return value["run"], records, value.get("belongs") or {}
 
 
+class RunUndone(PushFailed):
+    """The store undid a run for a constraint: the same records can never merge."""
+
+    def __init__(self, message: str, detail: str) -> None:
+        super().__init__(message)
+        self.detail = detail
+
+
+UNDONE_KEY = "undone"
+
+
+def mark_undone(path: Path, detail: str) -> None:
+    """Say in the pending file that the store undid its run for a constraint, so that
+    `thenwhat store drop-pending` may set it aside."""
+    value = json.loads(path.read_text())
+    value[UNDONE_KEY] = detail
+    temporary = path.with_name(path.name + ".part")
+    temporary.write_text(json.dumps(value, ensure_ascii=False))
+    temporary.replace(path)
+
+
+def undone_of(path: Path) -> str | None:
+    """What undid the pending run, as its push wrote it; None when nothing did."""
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text()).get(UNDONE_KEY)
+    return value if isinstance(value, str) else None
+
+
+def state_of_pending(path: Path) -> Path:
+    """The push state a pending file is beside."""
+    return path.with_name(path.name.removesuffix(".pending.json"))
+
+
 def check_belongs(path: Path, found: dict[str, str], now: dict[str, str]) -> None:
     """Refuse to settle a pending run made for another build or store: settled against a
     store loaded since from a new build, its records would be there twice."""
@@ -379,7 +413,7 @@ def push(
         if held is not None:
             run, records_of_run, found = held
             check_belongs(pending, found, belongs or {})
-            _send(client, run, records_of_run, writer, commit, payload_text, report, False)
+            _send_kept(client, run, records_of_run, writer, commit, payload_text, report, pending)
             state.update(state_of(records_of_run))
             on_merged(state)
             clear_pending(pending)
@@ -392,14 +426,41 @@ def push(
         run = f"{writer}-{run_checksum(chunks)[:40]}"
         if pending is not None and not report_only:
             write_pending(pending, run, records_of_run, belongs)
-        _send(client, run, records_of_run, writer, commit, payload_text, report, report_only)
         if report_only:
+            _send(client, run, records_of_run, writer, commit, payload_text, report, True)
             continue
+        _send_kept(client, run, records_of_run, writer, commit, payload_text, report, pending)
         state.update(state_of(records_of_run))
         on_merged(state)
         if pending is not None:
             clear_pending(pending)
     return report
+
+
+def _send_kept(
+    client: httpx.Client,
+    run: str,
+    records_of_run: list[Record],
+    writer: str,
+    commit: str,
+    payload_text: Callable[[str], str | None],
+    report: PushReport,
+    pending: Path | None,
+) -> None:
+    """A run sent to be merged; one the store undoes for a constraint is marked so in its
+    pending file, which the message names with the command that sets it aside."""
+    try:
+        _send(client, run, records_of_run, writer, commit, payload_text, report, False)
+    except RunUndone as fault:
+        if pending is None or not pending.is_file():
+            raise
+        mark_undone(pending, fault.detail)
+        raise RunUndone(
+            f"{fault} The run is kept in {pending}. Fix what the store names, then set the"
+            f" run aside with: thenwhat store drop-pending --state {state_of_pending(pending)};"
+            " the next push forms its records again.",
+            fault.detail,
+        ) from None
 
 
 def _send(
@@ -480,6 +541,13 @@ def _send(
     if result.get("status") != "merged":
         if result.get("status") in ("undone", "not_merged"):
             client.delete(f"/runs/{run}")
+        if result.get("status") == "undone" and result.get("reason") == "constraint":
+            detail = str(result.get("detail") or "a constraint")
+            raise RunUndone(
+                f"Run {run} was undone by the store: {detail}. The same records can never"
+                " merge: pushing again sends them again and fails the same way.",
+                detail,
+            )
         raise PushFailed(
             f"Run {run} was not merged: {json.dumps(result)[:400]}. It stays pending: push"
             " again to send it again; if it fails the same way, read why with GET"
