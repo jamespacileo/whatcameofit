@@ -164,6 +164,9 @@ class PushReport:
     added: Counter[str] = field(default_factory=Counter)
     payloads_put: int = 0
     left_out: Counter[str] = field(default_factory=Counter)
+    # By kind, the records the store's merge resolved (found their parents and took),
+    # added or matched: what the store says it holds of what was sent.
+    resolved: Counter[str] = field(default_factory=Counter)
 
 
 class RunRefused(PushFailed):
@@ -175,8 +178,37 @@ def pending_path(state_file: Path) -> Path:
     return state_file.with_name(state_file.name + ".pending.json")
 
 
-# Where a state says which build it holds: not a record's kind and key.
+# Where a state says which build it holds, and which store it was pushed to: not a
+# record's kind and key.
 BUILD_KEY = "\tbuild"
+TARGET_KEY = "\ttarget"
+
+
+class StateForOtherStore(PushFailed):
+    """A push state was pushed to another store than the one named."""
+
+
+def target_of(url: str) -> str:
+    """The store a push goes to, as a state names it: the service's host."""
+    from urllib.parse import urlparse
+
+    found = urlparse(url)
+    return (found.netloc or found.path).lower().rstrip("/")
+
+
+def check_target(state: dict[str, str], url: str, state_file: Path | None = None) -> None:
+    """Refuse a state pushed to another store; a state that names none is taken for this
+    one (it is the build's own, unpushed)."""
+    held = state.get(TARGET_KEY)
+    if held and held != target_of(url):
+        where = f" {state_file}" if state_file else ""
+        raise StateForOtherStore(
+            f"The push state{where} is of {held}, not {target_of(url)}: what it says was"
+            " sent is in that store, not this one. Start this store's own state from the"
+            " build: thenwhat store fresh-state <store file> --url <this store's address>"
+            " --out <new state file>, and push with it."
+        )
+    state[TARGET_KEY] = target_of(url)
 
 
 class PendingStale(PushFailed):
@@ -245,6 +277,9 @@ def push(
     refused, the push stops. Only then is what is left worked out, so records a lost
     answer left unconfirmed are never sent again under another run."""
     report = PushReport()
+    target = (belongs or {}).get("target")
+    if target:
+        check_target(state, target)
     if pending is not None and not report_only:
         held = read_pending(pending)
         if held is not None:
@@ -366,6 +401,7 @@ def _count(report: PushReport, result: dict[str, Any], counts: Counter[str]) -> 
     for kind, numbers in (result.get("report") or {}).items():
         if isinstance(numbers, dict):
             report.added[kind] += int(numbers.get("added", 0))
+            report.resolved[kind] += int(numbers.get("resolved", 0))
     report.handed.update(counts)
     report.runs += 1
 

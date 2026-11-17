@@ -22,6 +22,7 @@ from thenwhat.store.push import (
     pending_path,
     push,
     read_state,
+    target_of,
     write_state,
 )
 from thenwhat.store.slices import (
@@ -158,7 +159,7 @@ def run_command(
     with open_session() as session:
         made, path = _plan(session, trial_set, plan_file)
         if do_push and state is not None:
-            store = read_state(state).get(BUILD_KEY, "")
+            store = store_of(state, url)
             for one in made.slices:
                 if again or one.store != store:
                     one.forget_store()
@@ -202,7 +203,7 @@ def run_command(
                     and stage in (None, "in_store")
                     and "record" in one.done
                 ):
-                    _push_slice(session, one, made, state, url, token)
+                    _push_slice(session, one, made, state, url, token, again=again)
             except (SliceRefused, PushFailed) as fault:
                 made.write(path)
                 err.print(str(fault), markup=False)
@@ -225,8 +226,12 @@ def _client(url: str, token: str) -> httpx.Client:
     )
 
 
-def _push(records, texts, state: Path, url: str, token: str):
+def _push(records, texts, state: Path, url: str, token: str, drop: set[str] | None = None):
+    """Push records with the state's rules, after taking `drop`'s keys out of the state,
+    so that those records are sent again whatever the state said of them."""
     held = read_state(state)
+    for key in drop or ():
+        held.pop(key, None)
     with _client(url, token) as client:
         return push(
             client,
@@ -253,23 +258,40 @@ def _push_plan(made: Plan, state: Path, url: str, token: str) -> None:
     )
 
 
-def _push_slice(session, one, made: Plan, state: Path, url: str, token: str) -> None:
-    """A slice's trials, papers and state, as one run or a few: its state says it is in
-    the store in the same merge as its trials, so the two never disagree."""
-    store = read_state(state).get(BUILD_KEY, "")
-    before = (dict(one.done), dict(one.counts), one.store)
-    one.counts["in_store"] = len(one.trials)
-    one.done["in_store"] = datetime.now(UTC).isoformat(timespec="microseconds")
-    one.store = store
+def store_of(state: Path, url: str) -> str:
+    """The store a slice's `in_store` is true of: the build its push state holds, at the
+    store it pushes to."""
+    return f"{read_state(state).get(BUILD_KEY, '')}@{target_of(url)}"
+
+
+def _push_slice(
+    session, one, made: Plan, state: Path, url: str, token: str, *, again: bool = False
+) -> None:
+    """A slice's trials, papers and state, as one run or a few. Its trials are sent every
+    time, whatever the state says of them, so the merge says how many the store took:
+    the slice is in the store only when the store resolved every one of its trials, and
+    its state says so in the run after. With `again`, every record of the slice is sent."""
     records, texts = slice_records(session, one, rule=made.rule, year=made.year)
-    try:
-        report = _push(records, texts, state, url, token)
-    except PushFailed:
-        one.done, one.counts, one.store = before
-        raise
+    keys = {f"{r.kind}\t{r.key}" for r in records}
+    trials = {f"{r.kind}\t{r.key}" for r in records if r.kind == "registry_trial"}
+    report = _push(records, texts, state, url, token, drop=keys if again else trials)
+    resolved = report.resolved["registry_trial"]
+    one.counts["in_store"] = min(resolved, len(one.trials))
+    if resolved >= len(one.trials):
+        one.done["in_store"] = datetime.now(UTC).isoformat(timespec="microseconds")
+        one.store = store_of(state, url)
+    else:
+        one.done.pop("in_store", None)
+        out.print(
+            f"Slice {one.number}: the store took {resolved:,} of its {len(one.trials):,}"
+            " trials; it is not marked in the store.",
+            markup=False,
+        )
+    # The slice's state, with what the store said, in a run of its own.
+    _push([state_record(one, rule=made.rule, year=made.year)], {}, state, url, token)
     out.print(
         f"Slice {one.number}: {sum(report.handed.values()):,} records handed over in"
-        f" {report.runs} runs; the rest the store held already.",
+        f" {report.runs} runs, {resolved:,} of its trials in the store.",
         markup=False,
     )
 

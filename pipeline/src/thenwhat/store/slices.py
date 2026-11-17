@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import PaperRecord, RegistryTrial, TrialPaper, WorkEntry
 from thenwhat.domain import WorkOutcome
-from thenwhat.sources.people import people_in, without_abstract
+from thenwhat.sources.people import payload_without_people, people_in
 from thenwhat.store import records as r
 from thenwhat.store.form import Record, key_of, payload_of, payload_record_of, when
 
@@ -289,7 +289,7 @@ def slice_records(
             .where(TrialPaper.registry_trial_id.in_(ids[start : start + 1000]))
             .order_by(TrialPaper.id)
         ):
-            payload = payload_of(without_abstract(paper.raw_payload))
+            payload = payload_of(payload_without_people(paper.raw_payload))
             if not payload.inline:
                 texts[payload.sha256] = payload.text
             trial = trials[paper.registry_trial_id]

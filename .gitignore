@@ -57,6 +57,7 @@ store/ingest/wrangler.production.jsonc
 *.sqlite-wal
 *.sqlite-shm
 *.pushed.json
+*.base-state.json
 *.bulk.json
 *.watermarks.json
 *.pending.json

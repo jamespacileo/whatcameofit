@@ -55,7 +55,7 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import OutletKind, ScreenOutcome
-from thenwhat.sources.people import payload_without_people, without_abstract
+from thenwhat.sources.people import payload_without_people
 from thenwhat.store import records as r
 from thenwhat.store.form import (
     Payload,
@@ -349,12 +349,12 @@ def _gather(
         record, sha256 = payload_record(r.registry_payload(trial))
         yield record
         yield r.registry_trial_record(trial, payload_sha256=sha256)
-    # A trial's papers found by its number, without their abstracts (docs/adr/0011).
+    # A trial's papers found by its number, without their abstracts or any email (ADR 0011).
     for paper in _pages(session, select(TrialPaper).order_by(TrialPaper.id)):
         if paper.registry_trial_id not in trials:
             continue
         registry, external = trials[paper.registry_trial_id]
-        record, sha256 = payload_record(without_abstract(paper.raw_payload))
+        record, sha256 = payload_record(payload_without_people(paper.raw_payload))
         yield record
         yield Record(
             "trial_paper",

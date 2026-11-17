@@ -44,12 +44,14 @@ from thenwhat.store.people import (
 )
 from thenwhat.store.push import (
     BUILD_KEY,
+    TARGET_KEY,
     USER_AGENT,
     PushFailed,
     RetryOnBusy,
     pending_path,
     push,
     read_state,
+    target_of,
     write_state,
 )
 from thenwhat.store.tiers import (
@@ -90,6 +92,12 @@ StoreSql = Annotated[
 
 def state_path(file: Path) -> Path:
     return file.with_name(file.name + ".pushed.json")
+
+
+def base_state_path(file: Path) -> Path:
+    """What the hot file holds, as a push state for a store loaded from it and pushed to
+    by nothing yet: `thenwhat store fresh-state` starts a store's own state from it."""
+    return file.with_name(file.name + ".base-state.json")
 
 
 def bulk_state_path(file: Path) -> Path:
@@ -202,7 +210,10 @@ def build_command(
     # what it carried, so it is never settled against the new store.
     for stale in remove_pending(file, bulk_too=effective != HOT):
         out.print(f"Removed {stale}: a run left pending before this build.", markup=False)
-    write_state(state_path(file), {**report.hot_state, BUILD_KEY: report.build_id})
+    hot = {**report.hot_state, BUILD_KEY: report.build_id}
+    write_state(state_path(file), hot)
+    # The same, kept as the build left it: the start of a push state for any other store.
+    write_state(base_state_path(file), hot)
     if effective != HOT:
         write_state(bulk_state_path(file), {**report.state, BUILD_KEY: report.build_id})
     out.print(f"Build {report.build_id}.", markup=False)
@@ -673,3 +684,29 @@ def strip_paper_abstracts_command(
                     f"  {key}: {count:,} before, {report.after[(t, s, key)]:,} after", markup=False
                 )
     out.print(f'Prove it: psql "$DATABASE_URL" -f {ABSTRACTS_PROOF_SQL}', markup=False)
+
+
+@store_app.command("fresh-state")
+def fresh_state_command(
+    file: Annotated[Path, typer.Argument(help="The store file the store was loaded from.")],
+    url: Annotated[str, typer.Option("--url", help="The store's ingest service address.")],
+    out_file: Annotated[Path, typer.Option("--out", help="The new push state file.")],
+) -> None:
+    """Start the push state of a store loaded from this build: what its hot file holds,
+    named for that store. A push state names one store and is refused for any other, so
+    preview and production, or a store loaded again, each get their own."""
+    base = base_state_path(file)
+    if not base.is_file():
+        err.print(f"No {base}: build the store again, which writes it.")
+        raise typer.Exit(code=1)
+    if out_file.exists():
+        err.print(f"{out_file} exists: name another file, or delete it if it is stale.")
+        raise typer.Exit(code=1)
+    state = read_state(base)
+    state[TARGET_KEY] = target_of(url)
+    write_state(out_file, state)
+    out.print(
+        f"Wrote {out_file}: the push state of {target_of(url)}, as build"
+        f" {state.get(BUILD_KEY, '?')} left it.",
+        markup=False,
+    )

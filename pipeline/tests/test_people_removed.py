@@ -178,3 +178,14 @@ def test_a_responsible_party_keeps_its_type_and_nothing_else():
     assert kept["protocolSection"]["sponsorCollaboratorsModule"]["responsibleParty"] == {
         "type": "SPONSOR_INVESTIGATOR"
     }
+
+
+def test_the_proof_flags_any_responsible_party_field_but_its_type():
+    from thenwhat.sources.people import people_in
+
+    study = without_people(_study())
+    assert people_in(study) == set()
+    study["protocolSection"]["sponsorCollaboratorsModule"]["responsibleParty"][
+        "oldOrganization"
+    ] = "A made-up department"
+    assert people_in(study) == {"investigator name, title or affiliation"}

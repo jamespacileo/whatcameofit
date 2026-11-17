@@ -405,7 +405,8 @@ def test_a_merged_pending_run_settles_without_its_large_payloads(tmp_path):
             belongs=belongs,
         )
     assert ("PUT", f"/payloads/{big.key}") not in service.calls
-    assert state == state_of([big]) and not pending.exists()
+    # The state names the store it was pushed to, and holds the run's records.
+    assert state == {**state_of([big]), "\ttarget": "s.test"} and not pending.exists()
 
 
 def test_a_busy_service_is_waited_for_and_asked_again():
