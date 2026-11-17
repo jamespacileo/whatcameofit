@@ -20,13 +20,11 @@ from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
     RetryOnBusy,
-    check_build,
-    check_since,
+    check_store,
     pending_path,
     push,
     read_state,
     slices_held,
-    store_build,
     target_of,
     write_state,
 )
@@ -270,25 +268,18 @@ def _push_plan(made: Plan, state: Path, url: str, token: str) -> None:
     )
 
 
-def _progress(url: str, token: str) -> Any:
-    """The store's `GET /progress`, or None when it does not give it."""
-    with _client(url, token) as client:
-        answer = client.get("/progress")
-    return answer.json() if answer.status_code == 200 else None
-
-
 def _check_store(made: Plan, state: Path, store: str, url: str, token: str, *, again: bool):
     """Before a push: refuse a store loaded from another build than the state's, and a
     store loaded again (it holds no slice of the set) while this device's state or plan
     says slices were sent, unless every slice is to go again."""
-    progress = _progress(url, token)
+    held = read_state(state)
+    with _client(url, token) as client:
+        progress, took_since = check_store(client, held)
+    if took_since:
+        write_state(state, held)
     if progress is None:
         out.print("The store gave no progress; its build and slices are not compared.")
         return
-    held = read_state(state)
-    check_build(held, store_build(progress))
-    if check_since(held, progress):
-        write_state(state, held)
     sent = any(key.startswith("trial_slice\t") for key in held) or any(
         one.store == store for one in made.slices
     )

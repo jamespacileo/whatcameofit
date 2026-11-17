@@ -268,6 +268,17 @@ def check_since(state: dict[str, str], progress: Any) -> bool:
     return False
 
 
+def check_store(client: httpx.Client, state: dict[str, str]) -> tuple[Any, bool]:
+    """Before a push: the store's `GET /progress`, refusing a store loaded from another
+    build than the state's or whose database was created again since the state saw it.
+    The answer (None when the service gives none) and whether the state took the store's
+    `database_since` and is to be written."""
+    answer = client.get("/progress")
+    progress = answer.json() if answer.status_code == 200 else None
+    check_build(state, store_build(progress))
+    return progress, check_since(state, progress)
+
+
 def slices_held(progress: Any, rule: str, year: int) -> int | None:
     """How many slices of a set the store holds, by its `GET /progress`; None when the
     answer is not one to read that from."""

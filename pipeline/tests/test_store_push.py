@@ -438,3 +438,33 @@ def test_the_inline_payload_limit_is_the_schema_s_own():
     assert payload_of({"x": "y" * (INLINE_PAYLOAD_LIMIT - 20)}).inline
     assert not payload_of({"x": "y" * INLINE_PAYLOAD_LIMIT}).inline
     assert schema_inline_limit(Path("/no/such/schema.sql")) == 16384
+
+
+def test_backfill_push_refuses_a_store_of_another_build_or_database(monkeypatch, tmp_path):
+    from thenwhat.store.push import read_state, write_state
+
+    progress = {"build_id": "another", "database_since": "2026-11-17 13:05:22"}
+    asked: list[str] = []
+
+    def service(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.path)
+        return httpx.Response(200, json=progress)
+
+    real = httpx.Client
+
+    def client(**given):
+        given["transport"] = httpx.MockTransport(service)
+        return real(**given)
+
+    monkeypatch.setattr(httpx, "Client", client)
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    state = tmp_path / "s.json"
+    write_state(state, {"\tbuild": "0123456789abcdef", "\tdatabase since": "2026-11-16 08:00:00"})
+    args = ["backfill", "push", "--state", str(state), "--url", "http://store.test"]
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "build another" in refused.output
+    progress["build_id"] = "0123456789abcdef"
+    refused = CliRunner().invoke(app, args)
+    assert refused.exit_code == 1 and "created again" in refused.output
+    assert set(asked) == {"/progress"}
+    assert read_state(state)["\tdatabase since"] == "2026-11-16 08:00:00"

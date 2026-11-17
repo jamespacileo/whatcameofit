@@ -48,8 +48,8 @@ from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
     RetryOnBusy,
-    check_build,
-    check_since,
+    check_store,
+    check_target,
     pending_path,
     push,
     read_state,
@@ -317,6 +317,15 @@ def _commit() -> str:
     return found
 
 
+def _client(url: str, token: str) -> httpx.Client:
+    return httpx.Client(
+        transport=RetryOnBusy(),
+        base_url=url,
+        headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
+        timeout=120,
+    )
+
+
 @backfill_app.command("push")
 def push_command(
     state: Annotated[
@@ -372,6 +381,21 @@ def push_command(
         err.print("The commit of this code could not be read; run from the repository.")
         raise typer.Exit(code=1)
     held = read_state(state)
+    # The store's build, its database and its address, against the state's: a state of
+    # another store, or of this one before a reload, would skip what the store lacks.
+    try:
+        check_target(held, url, state)
+        with _client(url, token) as client:
+            progress, took_since = check_store(client, held)
+    except PushFailed as fault:
+        err.print(str(fault), markup=False)
+        raise typer.Exit(code=1) from None
+    if progress is None:
+        out.print("The store gave no progress: its build is not compared.", markup=False)
+    elif store_build(progress) is None:
+        out.print("The store gives no build id: the build is not compared.", markup=False)
+    if took_since and not report_only:
+        write_state(state, held)
     texts: dict[str, str] = {}
 
     def keep_payload(payload: Payload) -> None:
@@ -386,12 +410,7 @@ def push_command(
             records, left_out = hot_records(
                 stream(session, Gathered(records=[]), keep_payload=keep_payload)
             )
-    with httpx.Client(
-        transport=RetryOnBusy(),
-        base_url=url,
-        headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
-        timeout=120,
-    ) as client:
+    with _client(url, token) as client:
         try:
             report = push(
                 client,
@@ -709,21 +728,13 @@ def fresh_state_command(
     state = read_state(base)
     token = os.environ.get("INGEST_TOKEN", "")
     if token:
-        with httpx.Client(
-            transport=RetryOnBusy(),
-            base_url=url,
-            headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
-            timeout=120,
-        ) as client:
-            answer = client.get("/progress")
-        progress = answer.json() if answer.status_code == 200 else None
+        with _client(url, token) as client:
+            try:
+                progress, _ = check_store(client, state)
+            except PushFailed as fault:
+                err.print(str(fault), markup=False)
+                raise typer.Exit(code=1) from None
         held = store_build(progress)
-        try:
-            check_build(state, held)
-            check_since(state, progress)
-        except PushFailed as fault:
-            err.print(str(fault), markup=False)
-            raise typer.Exit(code=1) from None
         if held is None:
             out.print("The store gives no build id: the build is not compared.", markup=False)
     else:
