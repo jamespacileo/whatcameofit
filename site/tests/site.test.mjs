@@ -371,12 +371,17 @@ test("Scenario: Following from a claim page", () => {
     html,
     /<button[^>]*data-follow[^>]*data-slug="phase-claim"[^>]*data-status="Phase 2 trial"[^>]*aria-pressed="false"[^>]*hidden/,
   );
-  // Under the answer and again beside the reminders, Follow comes with its words: what
-  // it does, and where the list is once followed.
-  assert.equal(count(html, '<div class="follow-offer"'), 2);
-  const offer = html.slice(html.indexOf("data-follow-offer"), html.indexOf('class="glance"'));
+  // Follow comes with its words once, beside the reminders: what it does, and where the
+  // list is once followed. Under the band stands no second control, only the line that
+  // says a reader now follows, which the script shows on the press.
+  assert.equal(count(html, '<div class="follow-offer"'), 1);
+  assert.ok(html.indexOf('id="check-again"') < html.indexOf("data-follow-offer"));
+  const offer = html.slice(html.indexOf("data-follow-offer"));
   assert.match(offer, /Lists this claim on the home page, with a note when its status changes\./);
   assert.match(offer, /<a href="\/#following">the home page<\/a>/);
+  const said = html.slice(html.indexOf('class="digest"'), html.indexOf('class="glance"'));
+  assert.match(said, /<p class="entry-note follow-confirm" hidden data-follow-confirm[^>]*>\s*You follow this claim\. It is listed on <a href="\/#following">the home page<\/a>/);
+  assert.ok(!said.includes("data-follow-offer"));
   // A change since the reader last looked is said on the page they land on.
   assert.match(html, /<p class="was-note" hidden data-follow-was/);
   assert.ok(html.indexOf('class="digest"') < html.indexOf('class="was-note"'));

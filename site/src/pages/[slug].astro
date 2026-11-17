@@ -626,7 +626,13 @@ const sections = [
     {/* For a reader who follows this claim and last saw it at another status: filled in
         by the script, so a change noted on the home page is confirmed where they land. */}
     <p class="was-note" hidden data-follow-was data-pagefind-ignore></p>
-    <FollowOffer claim={claim} />
+    {/* Follow is offered once in the band, as one word, and once with its words, beside
+        the reminders. When a reader follows, this line says so under the band: where the
+        list is, and that it stays in this browser. Shown by the script, on the press. */}
+    <p class="entry-note follow-confirm" hidden data-follow-confirm data-pagefind-ignore>
+      You follow this claim. It is listed on <a href="/#following">the home page</a>, with a
+      note when its status changes. Kept in this browser only.
+    </p>
 
     {
       !claim.checked_by_person && (
@@ -1492,6 +1498,7 @@ const sections = [
           words.hidden = (words.dataset.followWhen === "on") !== on;
         }
       };
+      const confirmed = document.querySelector<HTMLElement>("[data-follow-confirm]");
       const followed = readFollowed(kept.getItem(FOLLOWING_ENTRY));
       const before = followed[slug];
       if (before) {
@@ -1524,6 +1531,7 @@ const sections = [
           }
           write(now);
           show(on);
+          if (confirmed) confirmed.hidden = !on;
           // The bookmark lands in the pill that was pressed, not when a followed page is opened.
           for (const other of follows) other.classList.toggle("landed", on && other === button);
           if (said) {
