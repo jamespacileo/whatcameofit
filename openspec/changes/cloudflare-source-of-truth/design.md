@@ -328,6 +328,24 @@ What a review of the build changed, on 2026-11-17:
 
 All 62 of the proof's scenarios pass through the HTTP routes on the local engine. Where a scenario hands over a person's decision, or an approved claim with no hold, it travels with the operator's token. Where the proof wrote SQL directly, the test asks the service: a person's rejection is pushed as a record, a run that was undone is dropped by its writer, and the queue's and a slice's times are the service's clock. What this does not show is what decision 10 already lists: timings on D1 itself and several writers at once.
 
+### 20. The store in two tiers
+
+**Decided by the operator on 2026-11-17** (`docs/adr/0010`), after the whole working database was built into one store file (5 min 47 s, 2,239 MB) and loaded into the preview D1 in full the same day:
+
+- **The hot tier is loaded into D1:** the tables something on Cloudflare reads. These are what the export of the site from the store reads (claims, their actions and aliases, articles, promises, statements, entities, matches, terms, events, conflicts, failure flags, trial reads, a source's records, decisions, outlet icons, the claims' search), the merge's and the ingest service's own tables (runs, staging, the report, the guard, work items and slices, deployments), and the count of unlisted domains a lookup keeps.
+- **The bulk tier is one SQLite file kept in R2 and not loaded into D1:** registry trials with their states, search and loads, article leads, link leads with their shares, links, labels, search and a lookup's readings, the substances of interventions, the registry route's ledger, model spend and the measurements. Restoring it is downloading the file.
+- **A payload goes with what points at it.** An event's, a conflict's and a source record's payloads are hot; a trial's are bulk; a payload both point at is in both. A payload object over 16 KB goes to the tier's folder of objects.
+- **No hot row references a bulk row.** The schema's foreign keys run from bulk to hot only (a lead to its claim and article, an article lead to its trial, a measurement to its claim), and a hot record that names a bulk one names it by text: an event, a match and a trial read name their trial by registry and identifier, a decision names what it decided by natural key. `pipeline/tests/test_store_tiers.py` holds this against the schema.
+- **Verification is by checksum, not by reading rows back.** For each table, one SELECT of aggregates (`thenwhat store checksum`, `pipeline/src/thenwhat/store/tiers.py`): rows, and for each column the values held, their total bytes and the code points of each value's first, middle and last character. D1 answers it with one row from one scan and no sort; the same statement on the store file gives the same row, and both are hashed the same way. It shows that a load arrived whole. It does not detect two rows swapping values, or a change inside a value that keeps its length and those three characters.
+- **The increments stay the merge path.** `thenwhat backfill push` hands over only the hot kinds and their payloads unless `--every-tier` is given: a bulk kind's parents are not in D1, so its run would not reconcile. The bulk tier is brought up to date by building it again.
+
+What this costs:
+
+- **The bulk tier cannot be queried from a Worker.** A trial's page served from the store (phase 5, tasks 7.1 to 7.3) needs `registry_trial` in D1; those tasks now begin by moving it to the hot tier, which the full load of 2026-11-17 showed fits.
+- **A reader's lookup still stages leads, shares and readings into D1.** After the cut, D1's `link_lead`, `link_share` and `lead_reading` hold only what lookups add, and the bulk file holds the history. A lookup of an article whose lead is only in the bulk file is answered as for a new lead. Promoting `link_lead` to hot reverses this.
+- **A claim merge in D1 moves the leads D1 holds**, not those in the bulk file; the next bulk build carries the change from Postgres.
+- **A full D1 load remains possible:** `thenwhat store build --tier all` writes the one whole file, which was loaded into the preview D1 in full on 2026-11-17.
+
 ## Risks / Trade-offs
 
 - **D1's limits are reached later.** → Criterion 1 leaves headroom; payloads are already outside; the merge and its tests hold for Postgres, so moving stores later is a data migration, not a redesign.

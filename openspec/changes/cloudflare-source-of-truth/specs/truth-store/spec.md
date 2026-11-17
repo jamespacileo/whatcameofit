@@ -60,6 +60,21 @@ The store SHALL be restorable to its state at a chosen time within the last 30 d
 - **WHEN** a run is found to have merged wrong records
 - **THEN** the operator can restore the store to the point recorded before that run
 
+### Requirement: The store is kept in two tiers
+The store SHALL be kept as a hot tier in D1, holding every table something on Cloudflare reads, and a bulk tier kept as one SQLite file of the same schema in R2, holding the rest. No row of the hot tier SHALL reference a row of the bulk tier; a hot record that names a bulk one SHALL name it by its natural key as text. A payload SHALL be kept in each tier whose rows point at it. A load of either tier SHALL be verified by one checksum a table, computed by the same single statement on the store file and on the loaded store, without reading the rows back.
+
+#### Scenario: A build in two tiers
+- **WHEN** the whole tracker is built from Postgres
+- **THEN** a hot file and a bulk file are written, each with the schema whole and only its own tier's rows, and the hot file names no row it does not hold
+
+#### Scenario: A load checked
+- **WHEN** the hot file is loaded into D1 and each table's checksum statement is run there
+- **THEN** each table's checksum from D1 equals the one from the file, and a table loaded short is named
+
+#### Scenario: The day's changes
+- **WHEN** the day's changes are pushed to the store
+- **THEN** only records of hot kinds and their payloads are handed over, and the records of bulk kinds are counted as left for the next bulk file
+
 ### Requirement: Every record says where it came from
 Every record the store holds SHALL carry the run that first added it and the run that last changed it. A run SHALL record the kind of writer, the device or the class of reader request, the code's commit and the time.
 
