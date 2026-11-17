@@ -219,11 +219,15 @@ The first load of the tracker does not go through the merge. The whole store is 
    ```bash
    node store/ingest/scripts/check-dump.mjs <folder>
    ```
-4. Load the folder. Files go in the order of their names; the first failure stops the load; each table is then counted against the manifest.
+4. Put the payload objects in the bucket, under the keys the build gave them (`payload/<sha256>`). It uses Wrangler's own login and makes no access key; it is resumable, and ends by reading 20 objects back and comparing each one's checksum with its key.
+   ```bash
+   node store/ingest/scripts/upload-payloads.mjs <payload folder> --remote
+   ```
+5. Load the folder. Files go in the order of their names; the first failure stops the load; each table is then counted against the manifest.
    ```bash
    node store/ingest/scripts/import-folder.mjs <folder> --remote
    ```
-5. If the counts differ, or a file failed, restore to the bookmark (or empty the store) rather than loading again over what is there. A failure names the file's tables.
+6. If the counts differ, or a file failed, restore to the bookmark (or empty the store) rather than loading again over what is there. A failure names the file's tables.
 
 What the SQL must be, from Cloudflare's import documentation read on 17 November 2026 (`docs/sources.md`): no `BEGIN TRANSACTION` or `COMMIT`; each statement at most 100,000 bytes; a file at most 5 GiB. And from the schema: every `INSERT` names its columns, because a generated column (`review_rank`) cannot be written; the search tables are filled by the schema's triggers and are not in the dump; parents come before children, in tables and in rows, because D1 checks foreign keys statement by statement.
 
