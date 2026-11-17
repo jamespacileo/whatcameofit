@@ -114,10 +114,11 @@ const FOLDED = "(SELECT run_id FROM inbox_folded)";
 // work is read from D1, so it stays, with its shares and reading, until that is done.
 const LEADS = `(SELECT l.id FROM link_lead l WHERE l.added_run IN ${FOLDED} AND NOT EXISTS (
   SELECT 1 FROM work_item w WHERE w.record_kind = 'link_lead' AND w.record_key = l.url_key AND w.step = 'lead_process' AND w.state = 'due'))`;
-// A folded run's trials, but not one a paper has since been stored for: that trial is
-// part of the load of trials now, and stays.
-const TRIALS = `(SELECT t.id FROM registry_trial t WHERE t.added_run IN ${FOLDED} AND NOT EXISTS (SELECT 1 FROM trial_paper p WHERE p.trial_id = t.id))`;
-// What folded runs left in D1's copies of the bulk tables, children first. A lead's
+// What folded runs left in D1's copies of the bulk tables, children first. A trial is
+// never removed: the trials of the set being loaded are kept in D1 (decided by the
+// operator on 2026-11-17), a lookup may find one of them before its slice is pushed, and
+// the service does not know the set's rule. A trial a lookup found stays in D1 beside the
+// copy folded into the bulk file; it is a registry's public record and costs a row. A lead's
 // shares, links, labels and reading go with it whichever run added them: a later run's
 // are still in the inbox as records, and are folded from there.
 const CLEAR = [
@@ -128,9 +129,7 @@ const CLEAR = [
   `DELETE FROM link_lead_link WHERE link_lead_id IN ${LEADS}`,
   `DELETE FROM link_share WHERE link_lead_id IN ${LEADS}`,
   `DELETE FROM link_lead WHERE id IN ${LEADS}`,
-  `DELETE FROM article_lead WHERE registry_trial_id IN ${TRIALS}`,
-  `DELETE FROM registry_trial_status WHERE trial_id IN ${TRIALS}`,
-  `DELETE FROM registry_trial WHERE id IN ${TRIALS}`,
+  `DELETE FROM article_lead WHERE added_run IN ${FOLDED}`,
   `DELETE FROM llm_usage WHERE run_id IN ${FOLDED}`,
   "DELETE FROM inbox_folded WHERE run_id NOT IN (SELECT added_run FROM link_lead)",
 ];

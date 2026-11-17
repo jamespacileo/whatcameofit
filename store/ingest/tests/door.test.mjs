@@ -502,15 +502,15 @@ test("bulk records a run hands over wait in the inbox, and leave D1 once the dai
     assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through + 1 } })).status, 409);
     const cleared = (await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } })).body;
     assert.deepEqual([cleared.cleared, cleared.left, cleared.leads_held], [5, 1, 1]);
-    // The trial is gone. The lead is a reader's, and the consumer has not processed it yet:
+    // The lead is a reader's, and the consumer has not processed it yet:
     // it is held, with its share, though its records have left the inbox.
-    assert.deepEqual(await counts(), [[2, 2, 0, 0, 1]]);
+    assert.deepEqual(await counts(), [[2, 2, 1, 1, 1]]);
     assert.equal(await box.one("SELECT state FROM work_item WHERE record_key = 'inbox.example/one' AND step = 'lead_process'"), "due");
     const work = { kind: "link_lead", key: "inbox.example/one", step: "lead_process" };
     assert.equal((await box.ask("POST", "/work/finish", { as: "consumer", body: work })).body.state, "done");
     const again = (await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } })).body;
     assert.deepEqual([again.cleared, again.left, again.leads_held], [0, 1, 0]);
-    assert.deepEqual(await counts(), [[1, 1, 0, 0, 1]]);
+    assert.deepEqual(await counts(), [[1, 1, 1, 1, 1]]);
     assert.equal(await box.one("SELECT url_key FROM link_lead"), "inbox.example/two");
     // The second run, cleared while its lead still waits, then after its work failed for good.
     const rest = (await box.ask("GET", `/inbox?after=${page.through}`, { as: "daily" })).body;
@@ -520,7 +520,8 @@ test("bulk records a run hands over wait in the inbox, and leave D1 once the dai
     await box.ask("POST", "/work/lease", { as: "consumer", body: { step: "lead_process" } });
     assert.equal((await box.ask("POST", "/work/fail", { as: "consumer", body: { ...work, key: "inbox.example/two", error: "reader_refused", max_attempts: 1 } })).body.state, "failed");
     assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: rest.through } })).body.leads_held, 0);
-    assert.deepEqual(await counts(), [[0, 0, 0, 0, 0]]);
+    // The leads and shares are gone; the trial the lookup found stays in D1, as every trial does.
+    assert.deepEqual(await counts(), [[0, 0, 1, 1, 0]]);
     assert.equal(await box.one("SELECT count(*) FROM inbox_folded"), 0);
     // Clearing again, or with nothing there, changes nothing; the claim was never touched.
     assert.equal((await box.ask("POST", "/inbox/clear", { as: "operator", body: { through: rest.through } })).body.cleared, 0);

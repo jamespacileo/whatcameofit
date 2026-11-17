@@ -274,6 +274,10 @@ The ingest service SHALL show how far the load of trials has come from the slice
 - **WHEN** a device's run hands over the trials of a slice
 - **THEN** they are not kept in the inbox of the bulk tier and are not removed from D1 when the inbox is cleared
 
+#### Scenario: A lookup finds a trial
+- **WHEN** a lookup's run adds a trial and the inbox is later cleared past it
+- **THEN** the trial's record is folded into the bulk file from the inbox and the trial stays in D1
+
 ### Requirement: The service is deployed one way and answers no stranger
 The ingest service SHALL be deployed only by its deploy command, which SHALL refuse unless the database's jurisdiction reads back as the European Union and no migration is left to apply, SHALL set the tokens' secret without printing or logging it, and SHALL then ask the deployed service and fail unless every route answers 401 without a known token. The deployed service SHALL bound how often one address without a token, and one token, may ask.
 
