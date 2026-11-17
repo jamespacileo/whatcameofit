@@ -2,7 +2,7 @@
 
 ## 0. Stored trial eligibility and alias corroboration (P1)
 
-- [ ] 0.1 <a id="task-f09"></a>Apply indication filtering across the fallback candidates before enforcing the hundred-trial cutoff. Exercise the 102nd psoriasis trial, the twenty-or-fewer rule and a set with over 100 eligible trials. [F09](../../../docs/reviews/2026-11-17-code-review.md#finding-f09) · [Acceptance scenario](specs/entity-resolution/spec.md#scenario-the-only-eligible-trial-sorts-after-the-cutoff)
+- [x] 0.1 <a id="task-f09"></a>Apply indication filtering across the fallback candidates before enforcing the hundred-trial cutoff. Exercise the 102nd psoriasis trial, the twenty-or-fewer rule and a set with over 100 eligible trials. [F09](../../../docs/reviews/2026-11-17-code-review.md#finding-f09) · [Acceptance scenario](specs/entity-resolution/spec.md#scenario-the-only-eligible-trial-sorts-after-the-cutoff)
 
 ## 1. Engine
 

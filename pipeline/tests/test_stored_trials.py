@@ -247,6 +247,20 @@ def test_a_listed_name_is_not_looked_for_in_titles(session: Session):
     assert found(session, "zentalimab") == ["NCT00000001"]
 
 
+def test_title_fallback_limits_eligible_trials_after_checking_the_indication(session: Session):
+    for i in range(1, 103):
+        store(
+            session,
+            f"NCT{i:08d}",
+            title="A trial of testmab",
+            conditions=("Psoriasis" if i == 102 else "Hypertension",),
+        )
+        if i == 20:
+            assert len(found(session, "testmab", indication="psoriasis")) == 20
+    assert found(session, "testmab", indication="psoriasis") == ["NCT00000102"]
+    assert found(session, "testmab", indication="hypertension") == []
+
+
 def test_a_broad_name_is_narrowed_to_the_indication_and_given_up_when_still_broad(
     session: Session,
 ):
