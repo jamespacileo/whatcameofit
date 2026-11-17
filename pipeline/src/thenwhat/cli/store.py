@@ -119,6 +119,12 @@ def dump_command(
     for table, rows in manifest.tables.items():
         if rows:
             out.print(f"  {table}: {rows:,}", markup=False)
+    for table, rows in manifest.left_out.items():
+        out.print(
+            f"{rows:,} {table} rows are too large for one D1 statement and were left out;"
+            " they are fetched again.",
+            markup=False,
+        )
     out.print(
         "Load and count: node store/ingest/scripts/import-folder.mjs"
         f" {out_folder} --remote (docs/deploy.md).",

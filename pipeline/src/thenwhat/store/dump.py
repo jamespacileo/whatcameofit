@@ -19,6 +19,7 @@ again by a last file as the merge writes it.
 import hashlib
 import json
 import sqlite3
+from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -42,6 +43,9 @@ SELECT c.id, c.headline, c.indication,
 FROM claim c;
 """
 HEAD = "PRAGMA defer_foreign_keys = true;\n"
+# Tables whose rows are fetched again when missing: one too large for a statement is left
+# out of the load and counted, not refused. An outlet's icon is fetched by `thenwhat icons`.
+REFETCHED = frozenset({"outlet_icon"})
 
 
 class DumpRefused(Exception):
@@ -56,6 +60,8 @@ class Manifest:
     files: list[dict[str, Any]] = field(default_factory=list)
     store_sha256: str = ""
     payload_objects: int = 0
+    # Rows too large for one statement, of a table whose rows are fetched again.
+    left_out: Counter[str] = field(default_factory=Counter)
 
     def write(self, path: Path) -> None:
         path.write_text(
@@ -65,6 +71,7 @@ class Manifest:
                     "tables": self.tables,
                     "files": self.files,
                     "payload_objects": self.payload_objects,
+                    "left_out": dict(self.left_out),
                 },
                 indent=2,
             )
@@ -115,7 +122,9 @@ def literal(value: Any) -> str:
     return "'" + str(value).replace("'", "''") + "'"
 
 
-def _statements(db: sqlite3.Connection, table: str) -> Iterator[tuple[str, int]]:
+def _statements(
+    db: sqlite3.Connection, table: str, left_out: Counter[str]
+) -> Iterator[tuple[str, int]]:
     """A table's rows as INSERTs of several rows each, under `STATEMENT_BYTES`."""
     columns = [row[1] for row in db.execute(f"PRAGMA table_xinfo({table})") if row[6] == 0]
     head = f"INSERT INTO {table} ({', '.join(columns)}) VALUES\n"
@@ -131,6 +140,9 @@ def _statements(db: sqlite3.Connection, table: str) -> Iterator[tuple[str, int]]
     for values in db.execute(f"SELECT {', '.join(columns)} FROM {table} ORDER BY {order}"):
         text = "(" + ", ".join(literal(value) for value in values) + ")"
         if len(head) + len(text.encode()) + 2 > STATEMENT_BYTES:
+            if table in REFETCHED:
+                left_out[table] += 1
+                continue
             raise DumpRefused(
                 f"A row of {table} is {len(text.encode()):,} bytes as SQL; D1 takes a statement"
                 f" of at most {STATEMENT_BYTES:,}."
@@ -197,8 +209,9 @@ def dump(store: Path, out: Path, *, payloads: Path | None = None) -> Manifest:
             if not manifest.tables[table]:
                 continue
             files.start(table)
-            for statement, _ in _statements(db, table):
+            for statement, _ in _statements(db, table, manifest.left_out):
                 files.write(statement, table)
+            manifest.tables[table] -= manifest.left_out[table]
         files.start("claim_fts")
         files.write(CLAIM_FTS, "claim_fts")
         for index in FTS_REBUILT:

@@ -146,3 +146,23 @@ def test_store_check_passes_matching_counts_and_refuses_others(tmp_path: Path):
 def test_store_dump_refuses_a_missing_file(tmp_path: Path):
     result = CliRunner().invoke(app, ["store", "dump", str(tmp_path / "none"), str(tmp_path)])
     assert result.exit_code == 1 and "No store file" in result.output
+
+
+def test_an_icon_too_large_for_a_statement_is_left_out_and_counted(tmp_path: Path, monkeypatch):
+    db = sqlite3.connect(tmp_path / "store.sqlite")
+    db.executescript((STORE / "schema.sql").read_text())
+    db.execute(
+        "INSERT INTO run (id, writer, device, commit_sha, registered_at)"
+        " VALUES ('r', 'migration', 'd', 'abc1234', '2026-11-17T00:00:00.000000+00:00')"
+    )
+    db.execute(
+        "INSERT INTO outlet_icon VALUES ('big.example', 'https://big.example/i.png',"
+        " 'image/png', ?, '2026-11-17T00:00:00.000000+00:00', 'r')",
+        (b"\x00" * 3_000,),
+    )
+    db.commit()
+    db.close()
+    monkeypatch.setattr(dump_module, "STATEMENT_BYTES", 2_000)
+    manifest = dump_module.dump(tmp_path / "store.sqlite", tmp_path / "out")
+    assert manifest.left_out == {"outlet_icon": 1}
+    assert manifest.tables["outlet_icon"] == 0
