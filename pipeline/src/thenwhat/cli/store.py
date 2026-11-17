@@ -508,7 +508,9 @@ def clear_inbox_command(
     ] = "",
 ) -> None:
     """Have the service clear the inbox up to a seq, and the rows those runs added to D1,
-    once their delta is kept in R2."""
+    once their delta is kept in R2. Run it every day, with nothing new too (`--through`
+    the last seq folded, or 0): a lead held while its processing was due is removed by a
+    later clear."""
     with _service(url) as client:
         try:
             answer = clear(client, through)
@@ -517,6 +519,7 @@ def clear_inbox_command(
             raise typer.Exit(code=1) from None
     out.print(
         f"Cleared {answer.get('cleared', 0):,} inbox records and {answer.get('rows_removed', 0):,}"
-        f" rows of D1; {answer.get('left', 0):,} left.",
+        f" rows of D1; {answer.get('left', 0):,} left; {answer.get('leads_held', 0):,} leads held"
+        " in D1 until their processing is done.",
         markup=False,
     )
