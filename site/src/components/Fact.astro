@@ -5,6 +5,7 @@
 //   <Fact label="First reported">1 Oct 2016</Fact>
 //
 // Slots:
+//   label    the label, where it is more than the `label` text (a drawing before it);
 //   default  the value, where it is more than the `value` text (a link, a chip);
 //   under    grey lines under the value (`<span slot="under" class="aka">`);
 //   aside    what must stay in sight at the end of the value's line, such as a score
@@ -38,7 +39,7 @@ if (more && !(id && value)) throw new Error(`The fact “${label}” opens, so i
 ---
 
 <div id={id} tabindex={id ? -1 : undefined}>
-  <dt>{label}</dt>
+  <dt><slot name="label">{label}</slot></dt>
   <dd>
     <span class="fact-head">
       <span class="fact-value"><slot>{value}</slot></span>

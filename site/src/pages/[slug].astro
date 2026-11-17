@@ -12,7 +12,6 @@ import Info from "@lucide/astro/icons/info";
 import Bookmark from "@lucide/astro/icons/bookmark";
 import ClockMark from "../components/ClockMark.astro";
 import BasisMark from "../components/BasisMark.astro";
-import ClaimTable from "../components/ClaimTable.astro";
 import FoldHead from "../components/FoldHead.astro";
 import FollowOffer from "../components/FollowOffer.astro";
 import LookupAgain from "../components/LookupAgain.astro";
@@ -57,6 +56,7 @@ import { LOW_READING_MEANING, MATCH_MEANING, matchWords, stageReading } from "..
 import MatchList from "../components/MatchList.astro";
 import RegistryRecords from "../components/RegistryRecords.astro";
 import Fact from "../components/Fact.astro";
+import FactSheet from "../components/FactSheet.astro";
 import Glance from "../components/Glance.astro";
 import GlanceBand from "../components/GlanceBand.astro";
 import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
@@ -299,7 +299,7 @@ const sections = [
     ? [{ id: "organisations", name: "Organisations named", count: organisations.length }]
     : []),
   ...(others.length > 0 ? [{ id: "others", name: "Other claims" }] : []),
-  { id: "pass-on", name: "Pass it on" },
+  { id: "pass-on", name: "Keep or pass on" },
 ];
 ---
 
@@ -1151,84 +1151,178 @@ const sections = [
               )}
             </Fragment>
           </FoldHead>
-          <ClaimTable claims={others} caption="Each claim, when it was first reported and its status" />
+          {/* A row a claim: its treatment and condition, where it stands as a place on the
+              path, and when it was first reported. The rest is on the claim's own page. */}
+          <ul class="plain entry-rows other-claims">
+            {others.map((other) => (
+              <li>
+                <div class="entry-lead">
+                  <a class="entry-name" href={`/${other.slug}`}>{other.intervention.name}</a>
+                  <span class="entry-note">{other.indication}</span>
+                </div>
+                <div class="entry-ties">
+                  <span class="status-line">
+                    <StageTrack code={other.status.code} />
+                    <strong class="status-name">{STATUS_LABELS[other.status.code]}</strong>
+                  </span>
+                  {overlayText(other.status.overlay_years) && (
+                    <span class="entry-note">{overlayText(other.status.overlay_years)}</span>
+                  )}
+                </div>
+                <span class="entry-note other-first">{formatDate(other.first_reported_date)}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )
     }
 
-    <section class="take" data-pagefind-ignore>
-      <FoldHead id="pass-on" start="folded">Pass it on</FoldHead>
+    {/* Keep or pass on: what a reader can do with the record, a label and its buttons
+        on each row (chosen by the operator from the section mocks, 2026-11-17). The
+        reminders' row is shown only where the browser can make and save the file. */}
+    <section class="take keep" data-pagefind-ignore>
+      <FoldHead id="pass-on" start="folded">Keep or pass on</FoldHead>
       {/* Says "Copied" to a screen reader; the button's own label changes for the eye. */}
       <p class="visually-hidden" role="status" data-said></p>
-      <p class="take-why">Seen this headline shared again? Reply with the record.</p>
-      <div class="take-body">
-        {/* The card the pills download, so a reader sees what they would be passing on. */}
-        <img
-          class="take-card"
-          src={`/og/square/${claim.slug}.png`}
-          width="1080"
-          height="1080"
-          alt={imageAlt}
-          loading="lazy"
-          decoding="async"
-        />
-        <div>
-      <p class="sentence" id="sentence">{sentence}</p>
-      <div class="take-actions">
-        <button type="button" class="share" data-copy="sentence" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy sentence</span>
-        </button>
-        <a class="share" href={`/og/square/${claim.slug}.png`} download>
-          <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
-          Square image
-        </a>
-        <a class="share" href={`/og/tall/${claim.slug}.png`} download>
-          <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
-          Tall image
-        </a>
-        <button type="button" class="share" data-copy="page-address" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy link</span>
-        </button>
-        <span id="page-address" hidden>{address}</span>
-      </div>
-      <details class="post-to">
-        <summary id="post-to">
-          Post it to a network
-          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-        </summary>
-        <ul class="post-links" aria-labelledby="post-to">
-          {
-            posts.map((post) => (
-              <li>
-                <a
-                  class="share"
-                  href={post.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-network={post.network}
-                >
-                  {post.label}
-                </a>
-              </li>
-            ))
-          }
-          <li>
-            {/* Mastodon has no one address: the reader names their server. */}
-            <button
-              type="button"
-              class="share"
-              data-mastodon
-              data-text={postText}
-              data-url={address}
-              hidden
-            >
-              Mastodon
+      <FactSheet>
+        <Fact label="Share">
+          <div class="take-actions">
+            <button type="button" class="share" data-copy="sentence" hidden>
+              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+              <span data-copy-text>Copy sentence</span>
             </button>
-          </li>
-        </ul>
-      </details>
+            <a class="share" href={`/og/square/${claim.slug}.png`} download>
+              <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
+              Square image
+            </a>
+            <a class="share" href={`/og/tall/${claim.slug}.png`} download>
+              <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
+              Tall image
+            </a>
+            <button type="button" class="share" data-copy="page-address" hidden>
+              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+              <span data-copy-text>Copy link</span>
+            </button>
+            <span id="page-address" hidden>{address}</span>
+          </div>
+          <Fragment slot="under">
+            <span class="aka sentence" id="sentence">{sentence}</span>
+            <details class="post-to">
+              <summary id="post-to">
+                Post it to a network
+                <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+              </summary>
+              <ul class="post-links" aria-labelledby="post-to">
+                {
+                  posts.map((post) => (
+                    <li>
+                      <a
+                        class="share"
+                        href={post.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-network={post.network}
+                      >
+                        {post.label}
+                      </a>
+                    </li>
+                  ))
+                }
+                <li>
+                  {/* Mastodon has no one address: the reader names their server. */}
+                  <button
+                    type="button"
+                    class="share"
+                    data-mastodon
+                    data-text={postText}
+                    data-url={address}
+                    hidden
+                  >
+                    Mastodon
+                  </button>
+                </li>
+              </ul>
+            </details>
+          </Fragment>
+        </Fact>
+        <div
+          id="check-again"
+          tabindex="-1"
+          data-remind
+          data-site={SITE.name}
+          data-headline={claim.headline}
+          data-slug={claim.slug}
+          data-url={address}
+          data-promise={promiseDue}
+          data-first={claim.first_reported_date}
+          hidden
+        >
+          <dt>Remind me</dt>
+          <dd>
+            <span class="fact-head">
+              <span class="fact-value">
+                <div class="take-actions">
+                  {
+                    promiseDue && (
+                      <button type="button" class="share" data-when="promise">
+                        <ClockMark />
+                        <span data-when-text>On the promised date, {formatDate(promiseDue)}</span>
+                      </button>
+                    )
+                  }
+                  <button type="button" class="share" data-when="six-months">
+                    <ClockMark />
+                    <span data-when-text>In six months</span>
+                  </button>
+                  <button type="button" class="share" data-when="year">
+                    <ClockMark />
+                    <span data-when-text>In a year</span>
+                  </button>
+                  {
+                    claim.first_reported_date && (
+                      <button type="button" class="share" data-when="anniversary">
+                        <ClockMark />
+                        <span data-when-text>On the anniversary, {dayAndMonth(claim.first_reported_date)}</span>
+                      </button>
+                    )
+                  }
+                </div>
+              </span>
+            </span>
+            <span class="aka">The date is saved to your calendar as a file made on this device; nothing is sent to us.</span>
+          </dd>
+        </div>
+        <Fact label="Follow">
+          <FollowOffer claim={claim} />
+        </Fact>
+        {
+          (claim.status.history?.length ?? 0) > 0 && (
+            <Fact label="Feed">
+              <span class="keep-feed-links">
+                <a href={`/changes/${claim.slug}.xml`}>This claim's status changes</a>
+                <a href="/changes.xml">Every claim's</a>
+              </span>
+            </Fact>
+          )
+        }
+        <Fact label="Embed">
+          <details class="embed-how">
+            <summary>
+              Writing about this? Show the status on your own page
+              <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+            </summary>
+            <p class="entry-note">
+              Paste this where the status should appear. It shows the current status and links back
+              here; it loads nothing else and stores nothing.
+            </p>
+            <pre id="snippet"><code>{snippet}</code></pre>
+            <button type="button" class="share" data-copy="snippet" hidden>
+              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+              <span data-copy-text>Copy code</span>
+            </button>
+          </details>
+        </Fact>
+      </FactSheet>
       <dialog class="mastodon" data-mastodon-dialog aria-labelledby="mastodon-title">
         <form method="dialog">
           <h3 id="mastodon-title">Post to Mastodon</h3>
@@ -1254,78 +1348,6 @@ const sections = [
           </div>
         </form>
       </dialog>
-        </div>
-      </div>
-      <details class="embed-how">
-        <summary>
-          Writing about this? Show the status on your own page
-          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-        </summary>
-        <p class="entry-note">
-          Paste this where the status should appear. It shows the current status and links back
-          here; it loads nothing else and stores nothing.
-        </p>
-        <pre id="snippet"><code>{snippet}</code></pre>
-        <button type="button" class="share" data-copy="snippet" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy code</span>
-        </button>
-      </details>
-    </section>
-
-    {/* Shown only where the browser can make and save the file. */}
-    <section
-      class="again"
-      data-pagefind-ignore
-      data-remind
-      data-site={SITE.name}
-      data-headline={claim.headline}
-      data-slug={claim.slug}
-      data-url={address}
-      data-promise={promiseDue}
-      data-first={claim.first_reported_date}
-      hidden
-    >
-      <FoldHead id="check-again" start="folded">Check again later</FoldHead>
-      <p class="take-why">
-        Save a date to your calendar to look at this record again. The file is made on this
-        device; nothing is sent to us.
-      </p>
-      <div class="take-actions">
-        {
-          promiseDue && (
-            <button type="button" class="share" data-when="promise">
-              <ClockMark />
-              <span data-when-text>On the promised date, {formatDate(promiseDue)}</span>
-            </button>
-          )
-        }
-        <button type="button" class="share" data-when="six-months">
-          <ClockMark />
-          <span data-when-text>In six months</span>
-        </button>
-        <button type="button" class="share" data-when="year">
-          <ClockMark />
-          <span data-when-text>In a year</span>
-        </button>
-        {
-          claim.first_reported_date && (
-            <button type="button" class="share" data-when="anniversary">
-              <ClockMark />
-              <span data-when-text>On the anniversary, {dayAndMonth(claim.first_reported_date)}</span>
-            </button>
-          )
-        }
-      </div>
-      <FollowOffer claim={claim} />
-      {
-        (claim.status.history?.length ?? 0) > 0 && (
-          <p class="entry-note">
-            For a feed reader: <a href={`/changes/${claim.slug}.xml`}>this claim's status changes</a>,
-            or <a href="/changes.xml">every claim's</a>.
-          </p>
-        )
-      }
     </section>
 
     <LookupAgain />

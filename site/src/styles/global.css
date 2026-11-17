@@ -8800,6 +8800,125 @@ body.framed {
   }
 }
 
+/* Names as chips (openspec sections-funnel): the organisations of one part, beside the
+   part's label. A chip is a name and, for a sponsor, how many of the claim's trials name
+   it; it opens a small panel. In order of name. */
+.organisations .fact-value {
+  font-size: var(--text-m);
+  font-weight: 400;
+}
+
+.name-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.pop-trigger.name-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.85rem;
+  padding: 0.1rem 0.7rem;
+  border: 1px solid var(--rule);
+  border-radius: 99px;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-m);
+  text-align: left;
+  cursor: pointer;
+}
+
+.pop-trigger.name-chip:hover,
+.pop-trigger.name-chip:has(+ .pop:popover-open) {
+  border-color: var(--ring);
+  background: var(--panel);
+}
+
+.chip-n {
+  color: var(--muted);
+  font-size: var(--text-s);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pop .pop-title {
+  font-weight: 700;
+}
+
+.pop .organisation-roles {
+  margin: 0.3rem 0;
+}
+
+.pop .organisation-roles li {
+  display: block;
+  padding: 0;
+  border: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 40rem) {
+  .pop-trigger.name-chip {
+    min-height: 2.75rem;
+  }
+}
+
+/* Keep or pass on (openspec sections-funnel): a fact sheet of things to do. A value is
+   a row of buttons, not a figure. */
+.keep .fact-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.55rem;
+  font-size: var(--text-m);
+  font-weight: 400;
+}
+
+.keep .take-actions {
+  display: contents;
+}
+
+.keep .follow-offer {
+  margin: 0;
+}
+
+.keep .fact-sheet .sentence {
+  max-width: var(--measure);
+  margin-top: 0.4rem;
+}
+
+.keep .post-to {
+  grid-column: 1 / -1;
+  margin-top: 0.3rem;
+}
+
+.keep .embed-how {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.keep .embed-how > summary,
+.keep .post-to > summary {
+  margin-top: 0;
+}
+
+.keep-feed-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+}
+
+/* Other claims of the topic: a name, a place on the path, a date. */
+.other-claims .entry-ties {
+  gap: 0.1rem 0.9rem;
+}
+
+.other-claims .other-first {
+  white-space: nowrap;
+}
+
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
    info mark beside a section's heading opens what the section holds in a small panel,
    on hover, on a press and from the keyboard, in place of a paragraph under the

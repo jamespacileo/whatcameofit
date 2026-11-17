@@ -1553,22 +1553,25 @@ test("the method page explains kind cards", () => {
 const organisationsSection = (html) =>
   html.match(/<section class="matched organisations"[\s\S]*?<\/section>/)?.[0] ?? null;
 
-/** One organisation's row, whole: what is in sight and what it opens to. */
+/** One organisation, whole: its name on a chip and the panel the chip opens. */
 const organisationRow = (section, name) =>
-  section.split('<li id="organisation-').find((row) => row.includes(`organisation-name">${name}<`));
+  section.split('class="pop-trigger name-chip"').find((row) => row.includes(`organisation-name">${name}<`));
 
 test("Scenario: Claim with a university and a company", () => {
   const section = organisationsSection(page("phase-claim/index.html"));
   assert.ok(section, "the claim names organisations, so the page lists them");
   assert.match(section, /<h2 class="bar" id="organisations">[\s\S]*?Organisations named\s*<\/span><\/button><\/h2>/);
   // Named in the report first, then sponsors; each group by name.
-  const names = [...section.matchAll(/class="entry-name organisation-name"[^>]*>([^<]+)</g)].map(([, name]) => name);
+  // An organisation with two parts stands in both rows: each name is counted once here.
+  const names = [...new Set([...section.matchAll(/class="organisation-name"[^>]*>([^<]+)</g)].map(([, name]) => name))];
   assert.deepEqual(names, ["Example University", "Zed Start-up", "Synthetic Institute"]);
   // A sponsor's role links to the trial it sponsors on this page.
-  // In sight a row says the part; the trial is named where the row opens.
+  // Two rows, one for each part; a sponsor's chip carries its number of trials, and the
+  // trial is named in the panel the chip opens.
+  assert.ok(section.indexOf("Named in the report") < section.indexOf("Sponsors"));
   const institute = organisationRow(section, "Synthetic Institute");
-  assert.match(institute, /<span class="tie">\s*<svg[\s\S]*?<\/svg>\s*Sponsor of 1 trial\s*<\/span>/);
-  assert.match(institute, /<div class="entry-more"[\s\S]*Sponsor of 1 trial: <a href="#trial-NCT00000002">NCT00000002<\/a>/);
+  assert.match(wordsOf(institute), /Synthetic Institute , sponsor of 1 trial/);
+  assert.match(institute, /<div popover[\s\S]*Sponsor of 1 trial: <a href="#trial-NCT00000002">NCT00000002<\/a>/);
   // An identified organisation shows the registry's facts, its record and the score.
   const university = organisationRow(section, "Example University");
   assert.match(university, /Education, Funder · United Kingdom · <a href="https:\/\/www\.example\.ac\.uk\/"[^>]*>example\.ac\.uk<\/a>/);
@@ -1872,7 +1875,10 @@ test("Scenario: summary and notes are clamped, utility sections start folded, th
   assert.match(html, /<div popover id="about-glance" class="pop" role="note"[^>]*>[\s\S]*?<p class="glance-note">/);
   // The notes that say "not advice" are never cut.
   assert.doesNotMatch(sectionOf(html, "brief"), /data-clamp/);
-  for (const id of ["pass-on", "check-again"]) {
+  // Sharing and reminders are one section; the reminders are a row of it, reached by
+  // the band's link, which opens the section.
+  assert.match(html, /<div id="check-again" tabindex="-1" data-remind[^>]*hidden>\s*<dt>Remind me<\/dt>/);
+  for (const id of ["pass-on"]) {
     assert.match(html, new RegExp(`data-fold="folded" data-fold-phone="folded"[^>]*>\\s*<h2 class="bar" id="${id}"`));
   }
   assert.match(html, /<div class="band-side" aria-hidden="true">\s*<svg/);

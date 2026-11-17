@@ -1,15 +1,19 @@
 ---
-import Entry from "./Entry.astro";
+import Fact from "./Fact.astro";
+import FactSheet from "./FactSheet.astro";
+import Pop from "./Pop.astro";
 import FoldHead from "./FoldHead.astro";
 import KindIcon from "./KindIcon.astro";
 // The organisations a claim names: who a report or a trial record says is behind it,
 // in what role, and what an open registry's record says each one is. Openspec
 // site-publishing: "Organisations on the claim page". Stated, never judged: no rank,
-// no count of other claims, no description of standing. Each is an entry row
-// (components/Entry.astro): its name and its part in sight, the rest where it opens.
+// no count of other claims, no description of standing. Two rows of a fact sheet, the
+// names of each part beside its label; a name opens its part, its trials and what a
+// registry says of it (chosen by the operator from the section mocks, 2026-11-17).
 import {
   NOT_IDENTIFIED,
   ORGANISATIONS_NOTE,
+  ROLE_ORDER,
   identifiedText,
   kindsText,
   orderOrganisations,
@@ -28,6 +32,10 @@ interface Props {
 
 const { organisations, articles, trialIds } = Astro.props;
 const reportOf = (url: string) => articles.find((article) => article.url === url);
+const ordered = orderOrganisations(organisations);
+// What a row of names is called: the part its organisations play.
+const groupWords = (code: string) =>
+  code === "sponsor" ? "Sponsors" : articles.length > 1 ? "Named in a report" : "Named in the report";
 const day = (stamp: string) =>
   new Date(stamp).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -42,85 +50,100 @@ const day = (stamp: string) =>
     <p slot="about">{ORGANISATIONS_NOTE}</p>
     Organisations named
   </FoldHead>
-  <ul class="plain entry-rows">
+  {/* Two rows: the names a report gives, and the names trial records give as sponsor.
+      A name is a press: its part, its trials, and whether an open registry knows it.
+      In order of name, never of size. */}
+  <FactSheet>
     {
-      orderOrganisations(organisations).map((organisation, index) => (
-        // A row is the name and the part its sources give it. Which trials, and whether
-        // an open registry knows the name, are what the row opens to.
-        <Entry id={`organisation-${index + 1}`} name={organisation.name} opens="Trials and registry record">
-          <span class="entry-name organisation-name">{organisation.name}</span>
-          {organisation.record && (
-            <span class="entry-note organisation-facts">
-              {[kindsText(organisation.record.kinds), organisation.record.country]
-                .filter(Boolean)
-                .join(" · ")}
-              {organisation.record.website && (
-                <>
-                  {organisation.record.kinds.length > 0 || organisation.record.country
-                    ? " · "
-                    : ""}
-                  <a href={organisation.record.website} rel="noopener">
-                    {websiteHost(organisation.record.website)}
-                  </a>
-                </>
-              )}
-            </span>
-          )}
-          <Fragment slot="ties">
-            {organisation.roles.map((role) => (
-              // The drawing says which kind of source names it, as in the timetable.
-              <span class="tie">
-                <KindIcon kind={role.role === "named_in_report" ? "report" : "trial"} />
-                {roleText(role)}
-              </span>
-            ))}
-          </Fragment>
-          <Fragment slot="more">
-            <p class="entry-note entry-more-lead">
-              {organisation.record ? (
-                <>
-                  {identifiedText(organisation.record)}{" "}
-                  <a href={organisation.record.url} rel="noopener">
-                    Its registry record
-                  </a>
-                  , read {day(organisation.record.read_at)}.
-                </>
-              ) : (
-                NOT_IDENTIFIED
-              )}
-            </p>
-            <ul class="plain entry-more-ties organisation-roles">
-              {organisation.roles.map((role) => (
-                <li>
-                  {roleText(role)}
-                  {/* With one report on the page, "the report" needs no title. */}
-                  {role.role === "named_in_report" &&
-                    articles.length > 1 &&
-                    role.article_urls.map((url, at) => (
-                      <>
-                        {at === 0 ? ": " : ", "}
-                        <a href={url} rel="noopener">
-                          “{reportOf(url)?.title ?? url}”
-                        </a>
-                      </>
-                    ))}
-                  {role.role === "sponsor" &&
-                    role.trial_ids.map((trialId, at) => (
-                      <>
-                        {at === 0 ? ": " : ", "}
-                        {trialIds.has(trialId) ? (
-                          <a href={`#trial-${trialId}`}>{trialId}</a>
-                        ) : (
-                          trialId
+      ROLE_ORDER.filter((code) => ordered.some((organisation) => organisation.roles.some((role) => role.role === code))).map((code) => (
+        <Fact label={groupWords(code)}>
+          <span slot="label" class="tie">
+            <KindIcon kind={code === "named_in_report" ? "report" : "trial"} />
+            {groupWords(code)}
+          </span>
+          <span class="name-chips">
+            {ordered
+              .filter((organisation) => organisation.roles.some((role) => role.role === code))
+              .map((organisation) => {
+                const part = organisation.roles.find((role) => role.role === code)!;
+                return (
+                  <Pop id={`organisation-${code}-${ordered.indexOf(organisation) + 1}`} class="name-chip">
+                    <Fragment slot="trigger">
+                      <span class="organisation-name">{organisation.name}</span>
+                      {code === "sponsor" && (
+                        <span class="chip-n">
+                          <span class="visually-hidden">, sponsor of </span>
+                          {part.trial_ids.length}
+                          <span class="visually-hidden">{part.trial_ids.length === 1 ? " trial" : " trials"}</span>
+                        </span>
+                      )}
+                    </Fragment>
+                    <p class="pop-title">{organisation.name}</p>
+                    {organisation.record && (
+                      <p class="organisation-facts">
+                        {[kindsText(organisation.record.kinds), organisation.record.country]
+                          .filter(Boolean)
+                          .join(" · ")}
+                        {organisation.record.website && (
+                          <>
+                            {organisation.record.kinds.length > 0 || organisation.record.country
+                              ? " · "
+                              : ""}
+                            <a href={organisation.record.website} rel="noopener">
+                              {websiteHost(organisation.record.website)}
+                            </a>
+                          </>
                         )}
-                      </>
-                    ))}
-                </li>
-              ))}
-            </ul>
-          </Fragment>
-        </Entry>
+                      </p>
+                    )}
+                    <ul class="plain organisation-roles">
+                      {organisation.roles.map((role) => (
+                        <li>
+                          {roleText(role)}
+                          {/* With one report on the page, "the report" needs no title. */}
+                          {role.role === "named_in_report" &&
+                            articles.length > 1 &&
+                            role.article_urls.map((url, at) => (
+                              <>
+                                {at === 0 ? ": " : ", "}
+                                <a href={url} rel="noopener">
+                                  “{reportOf(url)?.title ?? url}”
+                                </a>
+                              </>
+                            ))}
+                          {role.role === "sponsor" &&
+                            role.trial_ids.map((trialId, at) => (
+                              <>
+                                {at === 0 ? ": " : ", "}
+                                {trialIds.has(trialId) ? (
+                                  <a href={`#trial-${trialId}`}>{trialId}</a>
+                                ) : (
+                                  trialId
+                                )}
+                              </>
+                            ))}
+                        </li>
+                      ))}
+                    </ul>
+                    <p class="pop-note">
+                      {organisation.record ? (
+                        <>
+                          {identifiedText(organisation.record)}{" "}
+                          <a href={organisation.record.url} rel="noopener">
+                            Its registry record
+                          </a>
+                          , read {day(organisation.record.read_at)}.
+                        </>
+                      ) : (
+                        NOT_IDENTIFIED
+                      )}
+                    </p>
+                  </Pop>
+                );
+              })}
+          </span>
+        </Fact>
       ))
     }
-  </ul>
+  </FactSheet>
 </section>
