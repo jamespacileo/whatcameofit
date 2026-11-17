@@ -1134,7 +1134,7 @@ def _outlets(records: Records, claims: list[ExportedClaim]) -> list[ExportedOutl
             icon=f"data:{icon.media_type};base64,{base64.b64encode(icon.content).decode()}",
             fetched_at=icon.fetched_at,
         )
-        for icon in records.outlet_icons(domains)
+        for icon in sorted(records.outlet_icons(domains), key=lambda icon: icon.domain)
         if icon.content is not None and not is_blank_icon(icon.content)
     ]
 
@@ -1203,7 +1203,9 @@ def build_export(
     records = _from(source)
     claims: list[ExportedClaim] = []
     last_checked: datetime | None = None
-    for claim in records.published_claims():
+    # By slug, character by character: the same order whichever store hands them over,
+    # where each store's own ordering of text would differ.
+    for claim in sorted(records.published_claims(), key=lambda claim: claim.slug):
         # Every approved claim is published, whoever decided it (openspec auto-publish).
         # Whether a person checked it is still said, in `checked_by_person`.
         assistant = records.decided_by_assistant(claim)
