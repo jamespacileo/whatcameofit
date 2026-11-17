@@ -59,10 +59,11 @@ const state = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf8")
 const note = () => writeFileSync(statePath, JSON.stringify(state));
 const scratch = mkdtempSync(join(tmpdir(), "thenwhat-payloads-"));
 
-// What the bucket holds under a key, as its SHA-256, or null when it holds nothing.
+// What the bucket holds under a key, as its SHA-256, or null when it holds nothing or
+// could not be read (then it is sent, or counted as differing).
 async function held(name, n) {
   const path = join(scratch, `${n}-${name}`);
-  try { return (await to.get(`payload/${name}`, path)) ? await sha(path) : null; } finally { rmSync(path, { force: true }); }
+  try { return (await to.get(`payload/${name}`, path)) ? await sha(path) : null; } catch { return null; } finally { rmSync(path, { force: true }); }
 }
 
 const total = names.reduce((sum, name) => sum + statSync(join(from, name)).size, 0);

@@ -6,9 +6,9 @@
 
 - [x] 0.2 <a id="task-f01"></a>Check completion across all batches. Interrupt a 20,001-record replay after batch one and compare two retries with an uninterrupted restore. [F01](../../../docs/reviews/2026-11-17-code-review.md#finding-f01) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-restore-resumes-between-batches)
 
-- [ ] 0.3 <a id="task-f02"></a>Initialize an index only after confirmed absence. Exercise the 503 and retry with an existing same-day delta and verify both the index and the original object's contents. [F02](../../../docs/reviews/2026-11-17-code-review.md#finding-f02) · [Acceptance scenario](specs/truth-store/spec.md#scenario-an-unreadable-restore-index-survives-an-upload)
+- [x] 0.3 <a id="task-f02"></a>Initialize an index only after confirmed absence. Exercise the 503 and retry with an existing same-day delta and verify both the index and the original object's contents. [F02](../../../docs/reviews/2026-11-17-code-review.md#finding-f02) · [Acceptance scenario](specs/truth-store/spec.md#scenario-an-unreadable-restore-index-survives-an-upload)
 
-- [ ] 0.4 <a id="task-f04"></a>Reconcile referenced keys and hashes with local uploads and existing destination objects. Exercise absent folder, absent object, hash mismatch and already-uploaded cases in a disposable cutover. [F04](../../../docs/reviews/2026-11-17-code-review.md#finding-f04) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-source-document-is-missing-at-cutover)
+- [x] 0.4 <a id="task-f04"></a>Reconcile referenced keys and hashes with local uploads and existing destination objects. Exercise absent folder, absent object, hash mismatch and already-uploaded cases in a disposable cutover. [F04](../../../docs/reviews/2026-11-17-code-review.md#finding-f04) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-source-document-is-missing-at-cutover)
 
 - [x] 0.5 <a id="task-f03"></a>Scope exceptions to the fields they explain. Run the duplicate-article fixture through the cutover comparison both alone and with the altered status. [F03](../../../docs/reviews/2026-11-17-code-review.md#finding-f03) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-duplicate-article-accompanies-a-status-change)
 
