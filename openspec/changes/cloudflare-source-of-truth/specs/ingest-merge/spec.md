@@ -137,3 +137,66 @@ Model usage a run hands over SHALL be stored with the run's writer. The plan for
 #### Scenario: Two devices and readers in one month
 - **WHEN** two devices' runs and a day of lookups have been merged
 - **THEN** the plan shows each device's spend, the lookups' spend, and the total
+
+### Requirement: A writer is held to its scope
+The ingest service SHALL answer only a request that carries a token it knows, SHALL know a token only by its checksum, and SHALL never log or return one. Each token SHALL be of one kind, and a request outside that kind's scope SHALL be refused with nothing stored: a device's token registers runs for its own device and states no action; the daily job's states no action and records no decision by a person or an assistant; a lookup's stages only a link lead, its share, a payload, a registry trial, a reading, usage and a count of an unlisted domain; the consumer's records decisions by rule only; the export's states a publication by rule and nothing else; the operator's may state every action. A token SHALL reach only runs it could have registered.
+
+#### Scenario: A backfill tries to clear an audit
+- **WHEN** a device's token stages an action that clears an audit, archives, publishes, merges or renames
+- **THEN** the chunk is refused, nothing is staged, and the claim is as it was
+
+#### Scenario: A lookup tries to archive
+- **WHEN** a lookup's token stages an archive action, a claim, an evidence event or a match
+- **THEN** the chunk is refused and nothing is staged
+
+#### Scenario: Another device's run
+- **WHEN** one device's token asks for, stages into, merges or drops a run another device registered
+- **THEN** the service answers as if the run did not exist
+
+#### Scenario: No token
+- **WHEN** a request carries no token, a revoked one or one never issued
+- **THEN** it is refused, whatever it asked for, and the answer does not say which
+
+### Requirement: What is handed over is what was sent
+A raw payload larger than a row may hold SHALL be handed over under its SHA-256 before the run that names it, and a body that does not match its checksum SHALL be refused and not stored. A payload kept in its record SHALL match the checksum and size the record states. Each chunk of records SHALL state the SHA-256 of its body, and a chunk that does not match SHALL not be staged. A run SHALL state a checksum of its chunks, the SHA-256 of their checksums sorted and joined by a line feed, and the service SHALL NOT merge a run whose chunks are not the ones it stated.
+
+#### Scenario: A payload altered on the way
+- **WHEN** a payload's body does not hash to the checksum it was put under
+- **THEN** it is refused and no object is stored
+
+#### Scenario: A chunk never arrived
+- **WHEN** a run is asked to merge and one of its stated chunks was not staged
+- **THEN** the merge is not tried and the answer says the checksum does not hold
+
+#### Scenario: A chunk sent twice
+- **WHEN** a writer sends the same chunk for the same run again
+- **THEN** nothing more is staged and the run's checksum is unchanged
+
+### Requirement: The door holds a run to stated bounds
+The ingest service SHALL refuse, before storing anything, a body that does not state its length or its content type, a chunk, a run or a payload larger than the bound set for it, and a record of a kind the store does not have. Each bound SHALL be below the platform's documented limit for what it protects, and the documentation page SHALL be named beside it.
+
+#### Scenario: A run over the set size
+- **WHEN** a writer registers a run stating more records than a run may hold
+- **THEN** the registration is refused and says to split the run, parents first
+
+#### Scenario: A chunk over its bound
+- **WHEN** a chunk is larger in bytes or in records than a chunk may be
+- **THEN** it is refused whole and nothing of it is staged
+
+### Requirement: No field carries an article's text
+The ingest service SHALL refuse a record that has a field no statement of the merge reads, and a record in which a string is longer than the store allows for it: 200 characters for a reported statement, as the schema states, and otherwise a bound far below an article's length. Only a field that holds a source's own structured record, on the one kind of record it belongs to, is bounded by the record's size instead. A refusal SHALL name the record's place and the field, and SHALL NOT repeat any value that was sent.
+
+#### Scenario: A record with an extra field
+- **WHEN** a source article is staged with a field holding the article's text
+- **THEN** the chunk is refused, naming the field, and the answer holds none of the text
+
+#### Scenario: A title as long as an article
+- **WHEN** a record's title holds several thousand characters
+- **THEN** the chunk is refused and nothing is staged
+
+### Requirement: A report without applying leaves no run
+When a writer asks for a run's report without applying, the service SHALL return the report with what it cannot see (what only a constraint of the store refuses; and a run that names one claim by two slugs for one record or whose actions depend on one another beyond a clear before a publication), and SHALL then drop the run and what it staged.
+
+#### Scenario: After a dry run
+- **WHEN** a report without applying has been returned
+- **THEN** the store holds no trace of the run, and the same records can be registered again

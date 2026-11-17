@@ -303,6 +303,21 @@ Main gained migrations `0027` to `0032` while this was drafted. What changed in 
 - **A claim has one intervention**, held by a unique index as in Postgres.
 - **`claim_change`** has no table of its own: a merge or rename is a row of `claim_action` and a former slug is a row of `claim_alias` (`store-tables.md`).
 - **Not mirrored:** undoing a merge (`claim unmerge`). Postgres keeps, by row id, every row a merge moved; the store has no such record yet, and its statements are task 4.7.
+### 19. The ingest service, as built locally
+
+Built on 2026-11-17 in `store/ingest/`, with no Cloudflare account: a JavaScript Worker (decision 16, point 4) run on D1's local engine. Nothing is deployed. What the build settled, beyond decisions 10 and 12:
+
+- **The first migration is `store/schema.sql`, byte for byte.** The service bundles the statements of `merge.sql`, `preview.sql` and `ingest.sql` unchanged; a generator writes both and a test fails when either drifts from the SQL.
+- **The service has one table of its own**, `ingest_chunk`, in a second migration: the checksum of each chunk a run handed over, written in the same batch as the chunk's records. `run.stated_checksum` had no defined meaning; it is now the SHA-256 of the chunks' checksums, sorted and joined by a line feed, and a run whose chunks are not the ones stated is not merged. The table is not part of `store/schema.sql` and holds no record of the tracker.
+- **The service sets a run's time**, from its own clock, a day only for a lookup. A writer does not state it, so a lookup's run cannot carry a time of day by mistake.
+- **A merge has four outcomes:** merged (again, when it was merged before), refused by the merge, undone by D1 with the constraint named, and not merged because the checksum does not hold. A run that was undone still waits and its writer drops it.
+- **A report without applying drops the run**, as `store/README.md` describes, and says what it cannot see.
+- **Six kinds of token**, least scope each (`specs/ingest-merge`, "A writer is held to its scope"). The service knows a token by its SHA-256, read from one secret; a secret holds 5 KB, so about 35 tokens.
+- **The door's checks**, none of them a rule of the tracker: content type, a stated length, the bounds, a known kind, a natural key, only fields a statement reads, and no string long enough to be an article's text.
+- **Bounds**, each under a limit read from Cloudflare's documentation that day (`docs/sources.md`): a chunk of 1.9 MB (D1 binds it as one string of at most 2 MB) or 5,000 records; a run of 20,000 records until timings on D1 set it; a payload of 8 MB; a record of 1 MB. The merge is one batch of 89 statements, the longest far under 100 KB, with one bound parameter; a batch counts as one query against the 30 seconds and against the 1,000 queries an invocation.
+- **After a merge the service sends the Queue one message for each step with work due.** The message names the step and nothing else.
+
+All 62 of the proof's scenarios pass through the HTTP routes on the local engine. Where the proof wrote SQL directly, the test asks the service: a person's rejection is pushed as a record, a run that was undone is dropped by its writer, and the queue's and a slice's times are the service's clock. What this does not show is what decision 10 already lists: timings on D1 itself and several writers at once.
 
 ## Risks / Trade-offs
 
