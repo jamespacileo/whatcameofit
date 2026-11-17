@@ -89,3 +89,12 @@
 - Archive this change after `openspec/changes/social-link-backfill` is archived, so `lead-reading` and `lead-screening` exist in `openspec/specs/`.
 - Tell the owners of `work-reuse-and-metrics` that its task 2.2 (spans from every step) is done here by the runner for pipeline steps, leaving 2.3 (the lookup Worker) to that change.
 - Tell the owners of `work-reuse-and-metrics` 4.3 and `idempotent-runs-and-one-address` 5.3 and 5.5 that the staged-result seam of `design.md` decision 9 is where those land.
+
+## Trial on a copy, 17 November 2026
+
+Run by the assistant on a trimmed copy of the database as frozen on 16 November (357,964 leads that passed triage, every claim), on the test server, after merging `main`. Not a substitute for 6.7, 7.9 and 9.2, which stay open for the writer.
+
+- Migrations 0024 to 0037 applied. `backfill rekey-links --apply` then `backfill run link_screen`: 352,650 done, none failed.
+- `backfill run link_read --limit 6 --workers 2`, against the page reader and the model: 4 done, 1 found nothing (`identity_unresolved`), 2 put off (`reader_not_now`, `outlet_just_asked`), 1 needing a fix (`no_date`).
+- `prepare --pending` was stopped by hand after 595 substance lookups and 85 registry searches, then `prepare <slug>` for the one claim the read drafted: nothing finished was asked for again, and the claim was approved by rule and held for audit. MeSH did not answer after 4 attempts: the run stopped at `claim_terms`, the claim's terms stayed due, and its decision was not held.
+- What the first `prepare --pending` on the writer will cost: about 600 requests each to RxNorm and ClinicalTrials.gov, about 17 minutes of pacing for each at the rate measured here for 85 searches scaled to every live claim, so one to two hours once. `thenwhat measure` named both as the longest waits.
