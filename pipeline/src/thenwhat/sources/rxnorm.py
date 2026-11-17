@@ -203,8 +203,10 @@ class RxNorm(Source):
         pack finds nothing here: an ingredient's own name is the substance registry's
         to answer.
 
-        The answer is whole or it is nothing. A name more than `MAX_CONCEPTS` concepts
-        carry finds nothing. When a concept's own record, its list of ingredients, or
+        The answer is whole or it is nothing. Empty only when RxNorm answered that no
+        concept, or no brand, has the name. When the search's answer cannot be read,
+        a concept's identifier cannot be read, more than `MAX_CONCEPTS` concepts carry
+        the name, or a concept's own record, its list of ingredients, or
         for a brand of one ingredient its branded drugs or one's vaccine code is
         missing, or it has more than `MAX_PRODUCTS` branded drugs, `PartMissing` is
         raised: part of an answer could show one ingredient where the brand has two, or
@@ -216,14 +218,18 @@ class RxNorm(Source):
             return []
         found = self._get(f"{API}/rxcui.json", {"name": asked, "search": "0"}, ttl=KEPT_FOR)
         if found is None or not isinstance(found.payload, dict):
-            return []
+            raise PartMissing(f"RxNorm's exact search for '{asked}' gave no answer to read.")
         identifiers = (found.payload.get("idGroup") or {}).get("rxnormId") or []
         if len(identifiers) > MAX_CONCEPTS:
-            return []
+            # Listed, but under too many concepts to identify one: not "not listed".
+            raise PartMissing(
+                f"RxNorm lists '{asked}' under {len(identifiers)} concepts, more than the"
+                f" {MAX_CONCEPTS} read, so it identifies none."
+            )
         records: dict[str, SourceRecord] = {}
         for identifier in identifiers:
             if not isinstance(identifier, str) or not identifier.isdigit():
-                return []
+                raise PartMissing(f"RxNorm gave '{asked}' a concept identifier it could not read.")
             fetched = self._get(f"{API}/rxcui/{identifier}/properties.json", ttl=KEPT_FOR)
             if fetched is None or not isinstance(fetched.payload, dict):
                 raise PartMissing(f"RxNorm gave no record for concept {identifier} of '{asked}'.")

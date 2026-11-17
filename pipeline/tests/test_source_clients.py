@@ -7,6 +7,7 @@ Scenario names are from openspec source-clients.
 import json
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
@@ -1717,16 +1718,81 @@ def test_a_concept_named_otherwise_than_asked_finds_nothing(
     assert len(replay.requests) == 2
 
 
-def test_a_name_too_many_concepts_carry_finds_nothing(session: Session, fake_time):
-    """Scenario: Name more concepts carry than are read"""
-    replay = Replay(lambda request: {"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}})
+@pytest.mark.parametrize(
+    ("answer", "said"),
+    [
+        # Six concepts: listed, but under too many to identify one. None is read.
+        ({"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}}, "6 concepts"),
+        # A 200 whose body is not an object.
+        (["not", "an", "object"], "no answer to read"),
+        # A concept identifier that is not a number.
+        ({"idGroup": {"rxnormId": ["26416x1"]}}, "could not read"),
+    ],
+)
+def test_a_name_search_the_client_cannot_read_whole_is_not_known(
+    session: Session, fake_time, answer: Any, said: str
+):
+    """Scenarios: Name more concepts carry than are read, Part of a brand's answer is
+    missing"""
+    replay = Replay(lambda request: answer)
     source = RxNorm(
         session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
     )
 
-    # Six concepts: none is read, not the first five.
-    assert source.substances_named("Elevidys") == []
+    with pytest.raises(PartMissing, match=said):
+        source.substances_named("Elevidys")
     assert len(replay.requests) == 1
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        {"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}},
+        ["not", "an", "object"],
+        {"idGroup": {"rxnormId": ["26416x1"]}},
+    ],
+)
+def test_a_kept_ingredient_survives_a_name_search_that_cannot_be_read_whole(
+    session: Session, fake_time, fixture_json, answer: Any
+):
+    """Scenario: A source does not answer for one claim among many"""
+    from datetime import timedelta
+
+    from thenwhat.claims.entry import add_claim
+    from thenwhat.db.models import EntitySubstance
+    from thenwhat.resolve.codes import give_development_codes
+
+    class NoSubstances:
+        name = "gsrs"
+
+        def substances_named(self, name: str) -> list:
+            return []
+
+    claim = add_claim(
+        session,
+        slug="elevidys-dmd",
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention="Elevidys",
+        indication="Duchenne muscular dystrophy",
+    )
+    good, _ = brands(session, fake_time, fixture_json, "rxcui_elevidys")
+    give_development_codes(session, claim, substances=NoSubstances(), brands=good)
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    before = (kept.external_id, dict(kept.payload))
+    # Long enough that nothing kept from the first answers is reused.
+    fake_time.advance(timedelta(days=31))
+    replay = Replay(lambda request: answer)
+    bad = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+
+    with pytest.raises(PartMissing):
+        give_development_codes(session, claim, substances=NoSubstances(), brands=bad)
+    assert len(replay.requests) == 1
+
+    [still] = session.scalars(select(EntitySubstance)).all()
+    assert (still.external_id, still.payload) == before
 
 
 @pytest.mark.parametrize("missing", ["properties", "related"])
