@@ -8,8 +8,8 @@
 - [x] 6 Recorded: milestones over the folded timetable; a link to a record opens every fold it lies in. Verify: a milestone's link opens the fold and lands on its year.
 - [x] 7 Trials: the spread by phase, its key, a size bar under each head count, the results ring.
 - [x] 8 The whole page: 1400px dark, every section open (7,257px; 9,629px before); 390px light; no console errors; site tests; build.
-- [ ] 9 Trials' rows as the mock's one line (state, number, phase, size, results), with "Compared with" and "Main measure" where the row opens. Not done: the table keeps its five columns.
-- [ ] 10 Recorded: a shape for every record in a year's row (the mock's year ledger), in place of the year's words. Not done: the timetable inside the fold is as it was.
-- [ ] 11 Possible registry records as one-line rows that open. Not done beyond the mark.
+- [x] 9 Trials' rows as one line: people with a size bar, phase, state with its shape, when results were posted, the trial's number. "Compared with" and "Main measure" are the first facts where the row opens; a trial that has the treatment only as its comparison still says so in sight. Verify: 1400px, a row opened; 390px dark.
+- [x] 10 Recorded: a folded year's row is a shape for each of its records, oldest first, and the count, with a key over the timetable; the kinds are said in words to a screen reader. This year and last stay written out. Verify: 1400px light, 390px dark.
+- [x] 11 Registry records as entry rows: the title, what the record says and the match on one line; the links, how it was read and what it names where the row opens. A possible record is named as one in words before its title.
 - [ ] 12 A claim with a dated promise, an approved claim and a claim with one trial looked at in the browser; tablet widths; a print preview.
 - [ ] 13 At archive time: fold these additions into the requirements they change ("A claim page answers fixed questions from its records", "Reported statements on the claim page", "Organisations on the claim page", `score-chip`'s "in sight").

@@ -30,8 +30,8 @@ test("the scale is defined once", () => {
 test("rows take their padding and their rule from the scale", () => {
   uses(".fact-sheet > div", "padding", "row-pad");
   uses(".fact-sheet > div", "border-bottom", "row-rule");
-  uses(".record-row", "padding", "row-pad");
-  uses(".record-row", "border-bottom", "row-rule");
+  uses(".entry-rows > li", "padding", "row-pad");
+  uses(".entry-rows > li", "border-bottom", "row-rule");
   uses(".trial-row", "padding", "row-pad");
   uses(".timetable th,\n.timetable td,\n.index th,\n.index td", "padding", "row-pad");
   uses(".timetable th,\n.timetable td,\n.index th,\n.index td", "border-top", "row-rule");

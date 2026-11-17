@@ -47,7 +47,7 @@ const groups = groupByReading(matches).map((group) => ({
           {group.matches.length} {group.matches.length === 1 ? "record" : "records"}
         </span>
       </Heading>
-      <ul class="plain record-list">
+      <ul class="plain entry-rows record-list">
         {group.shown.map((match) => (
           <Row match={match} possible={possible} />
         ))}
@@ -58,7 +58,7 @@ const groups = groupByReading(matches).map((group) => ({
             The other {group.rest.length} of {group.matches.length} records
             <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
           </summary>
-          <ul class="plain record-list">
+          <ul class="plain entry-rows record-list">
             {group.rest.map((match) => (
               <Row match={match} possible={possible} />
             ))}

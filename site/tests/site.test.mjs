@@ -1106,10 +1106,10 @@ test("Scenario: Possible record laid out field by field under its reading", () =
   assert.match(words, /None of these is counted in the status, and no person has checked them\. A record counts only when it is read as this treatment for this condition and its match is 80% or more\./);
   assert.match(registry, /<a href="\/guide\/match-and-confidence">How a match is scored<\/a>/);
   assert.match(registry, /<h3 class="record-group-head">\s*Read as this treatment for another condition, patient group or setting/);
-  assert.match(registry, /<p class="record-title">\s*<span class="state-mark" data-state="unknown" aria-hidden="true"><\/span>\s*Synthetic trial of phase-claim agent in another condition\s*<\/p>/);
+  assert.match(registry, /<p class="entry-name record-title">\s*<span class="state-mark" data-state="unknown" aria-hidden="true"><\/span>\s*<span class="visually-hidden">Possible record: <\/span>\s*Synthetic trial of phase-claim agent in another condition\s*<\/p>/);
   // The line leads with the match, then the trials table's words; then the record and its
   // page here, as a trial entry names them.
-  assert.match(words, /Possible match: low, 31% Read as the same treatment studied for a different condition, patient group or treatment setting\. How well this record matches the reported treatment and condition\. It says nothing about whether the treatment works\. Phase 1 120 people planned Under way NCT00000077 at ClinicalTrials\.gov View trial details here/);
+  assert.match(words, /Phase 1 120 people planned Under way Possible match: low, 31% Read as the same treatment studied for a different condition, patient group or treatment setting\. How well this record matches the reported treatment and condition\. It says nothing about whether the treatment works\.[^]*?NCT00000077 at ClinicalTrials\.gov View trial details here/);
   assert.match(words, /For Another Condition Named in the record Phase-claim agent; Placebo/);
   assert.doesNotMatch(words, /Recruiting|Tests|Match to this claim/);
   // The folded heading and the digest give the count; the digest's links to the section.
@@ -1173,7 +1173,7 @@ test("Scenario: Possible record not yet read into fields", () => {
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
-  assert.match(words, /Registry record NCT00000077 Possible match: low, 31% Read as [^.]+\. How well [^.]+\. It says [^.]+\. Details not read from the registry yet NCT00000077 at ClinicalTrials\.gov/);
+  assert.match(words, /Possible record: Registry record NCT00000077 Details not read from the registry yet Possible match: low, 31% Read as [^.]+\. How well [^.]+\. It says [^.]+\.[^]*?NCT00000077 at ClinicalTrials\.gov/);
   assert.doesNotMatch(words, /Synthetic trial of phase-claim agent in another condition/);
 });
 

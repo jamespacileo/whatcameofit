@@ -52,3 +52,25 @@ A claim page SHALL offer sharing, reminders, following, its feed and its embed a
 #### Scenario: From the band
 - **WHEN** a reader presses "Check again later" in the band
 - **THEN** "Keep or pass on" opens and the row "Remind me" is in view
+
+### Requirement: A trial's row is one line that opens
+On a wide screen a trial's row SHALL hold, on one line, how many people it enrolled or plans to with a bar against the claim's largest trial, its phase, its state beside its shape, when it posted results, and its number. What it was compared with and its main measure SHALL be the first facts where the row opens. A trial that has the claim's treatment only as its comparison SHALL say so on the row.
+
+#### Scenario: A finished trial with results
+- **WHEN** a reader looks at a trial that finished and posted results
+- **THEN** its row reads its size, its phase, "Finished" with its date beside a ringed full mark, the date results were posted and its number, and opening it gives what it was compared with and its main measure first
+
+### Requirement: A folded year is drawn as its records
+In the timetable a year that is folded SHALL show a shape for each of its records, oldest first, in the shapes the trials table uses, with a report as the report's mark, then how many records it holds. What the shapes stand for SHALL be said once over the timetable, and the kinds of record SHALL be said in words to a screen reader.
+
+#### Scenario: A year of seventeen records
+- **WHEN** a reader looks at a folded year that holds seventeen records
+- **THEN** its row shows seventeen shapes and "17 records", and opening it lists the records
+
+### Requirement: A registry record is one line that opens
+A registry record that is not a trial on the page SHALL be a row of its title, what its record says of the trial or that it is not yet read, and its match, which stays in sight. A possible record SHALL be marked and named as possible before its title. Where to read the record, how it was read and what it names SHALL be where the row opens.
+
+#### Scenario: A possible record not yet read
+- **WHEN** a reader looks at a possible record whose details are not yet read
+- **THEN** its row reads its registry number, "Details not read from the registry yet" and "Possible match: medium, 79%", and opening it gives the link to the registry
+

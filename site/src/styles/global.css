@@ -4100,14 +4100,6 @@ main ul:not([class]) li + li {
   font-weight: 400;
 }
 
-.record-row {
-  padding: var(--row-pad) 0;
-  border-bottom: 1px solid var(--row-rule);
-}
-
-.record-row:first-child {
-  border-top: 1px solid var(--rule);
-}
 
 /* Said once above the possible records: none counts, and the rule that would. */
 .record-not-counted {
@@ -8568,47 +8560,6 @@ body.framed {
     max-width: 24rem;
     text-align: right;
   }
-
-  /* A registry record: its title and what its record says at the left edge, where to
-     read it from the second stop, its match at the end of the line. */
-  .sheet .record-row {
-    display: grid;
-    /* The links keep their line; the title gives way before they do. */
-    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(min-content, 1fr) auto;
-    column-gap: 2.5rem;
-    align-items: baseline;
-  }
-
-  .sheet .record-row .record-head {
-    display: contents;
-  }
-
-  .sheet .record-row .record-title,
-  .sheet .record-row .record-meta,
-  .sheet .record-row .record-unread {
-    grid-column: 1;
-  }
-
-  .sheet .record-row .record-head > .pop-trigger {
-    grid-column: 3;
-    grid-row: 1;
-  }
-
-  .sheet .record-row .record-links {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    display: grid;
-    justify-items: start;
-    gap: 0.1rem;
-  }
-
-  .sheet .record-row .record-source {
-    white-space: nowrap;
-  }
-
-  .sheet .record-row .record-fields {
-    grid-column: 1 / -1;
-  }
 }
 
 /* The state mark: a shape for where a trial is, beside the words that say it. A ring
@@ -9233,6 +9184,36 @@ body.framed {
 
 .year-key {
   margin: 0 0 0.6rem;
+}
+
+/* A registry record (openspec sections-funnel): an entry row. Its title and what its
+   record says stand on one line where there is room; its match ends the line. */
+.record-row .entry-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.9rem;
+}
+
+.record-row .record-title {
+  margin: 0;
+}
+
+.sheet .record-group .record-list {
+  margin-top: 0;
+}
+
+@media (min-width: 52rem) {
+  .sheet .record-list > li,
+  .sheet .record-list .entry-more {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: 1.25rem;
+  }
+
+  .sheet .record-list .entry-more-lead,
+  .sheet .record-list .entry-more-ties {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
