@@ -307,6 +307,22 @@ const yearSaid = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }
     ],
   };
 };
+// The shape of each of a year's records, oldest first: a trial's states as in the trials
+// table, results posted as a ringed mark, a report as the report's diamond.
+const EVENT_STATES: Record<string, string> = { started: "under_way" };
+const yearMarks = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }>) =>
+  [...row.recorded].reverse().map((entry) =>
+    entry.kind === "report"
+      ? "report"
+      : entry.event.type === "trial_registered"
+        ? "not_started"
+        : entry.event.type === "trial_results_posted"
+          ? "results"
+          : entry.event.type === "trial_status_change"
+            ? (EVENT_STATES[entry.event.trial_state ?? ""] ?? entry.event.trial_state ?? "unknown")
+            : "completed",
+  );
+const anyYearFolds = timetable.rows.some((row) => row.kind === "year" && row.recorded.length > 0 && yearFolds(row));
 // The trials table's columns, named over every group's table.
 const TRIAL_COLUMNS = ["People", "Phase", "State", "Results posted", "Trial"];
 const posted = withResults(trials);
@@ -831,6 +847,19 @@ const sections = [
         }
       </ul>
     </div>
+    {
+      anyYearFolds && (
+        // What the shapes in a folded year's row stand for, once.
+        <p class="said-key year-key" aria-hidden="true">
+          <span><span class="state-mark" data-state="not_started" />Registered</span>
+          <span><span class="state-mark" data-state="under_way" />Started</span>
+          <span><span class="state-mark" data-state="completed" />Finished</span>
+          <span><span class="state-mark" data-state="terminated" />Stopped early</span>
+          <span><span class="state-mark posted" data-state="completed" />Results posted</span>
+          <span><span class="ev-report" />News report</span>
+        </p>
+      )
+    }
     <p class="visually-hidden" role="status" data-kinds-said></p>
     <div class="table-frame">
     <table role="table" class="timetable" aria-labelledby="timetable">
@@ -903,8 +932,20 @@ const sections = [
                         yearFolds(row) ? (
                           <details class="year-rest">
                             <summary>
+                              {/* A shape for every record of the year, oldest first: what
+                                  kinds they are is seen at a glance and said in words to a
+                                  screen reader. */}
+                              <span class="year-marks" aria-hidden="true">
+                                {yearMarks(row).map((mark) =>
+                                  mark === "report" ? (
+                                    <span class="ev-report" />
+                                  ) : (
+                                    <span class:list={["state-mark", { posted: mark === "results" }]} data-state={mark === "results" ? "completed" : mark} />
+                                  ),
+                                )}
+                              </span>
+                              <span class="visually-hidden">{yearSaid(row).kinds.join(", ")}.</span>
                               <span class="year-total">{yearSaid(row).total}</span>
-                              <span class="year-kinds">{yearSaid(row).kinds.join(" · ")}</span>
                               {yearSaid(row).basis && (
                                 <span class="year-basis">
                                   <BasisMark label={false} />

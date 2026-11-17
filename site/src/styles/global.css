@@ -9208,6 +9208,33 @@ body.framed {
   }
 }
 
+/* A folded year (openspec sections-funnel): a shape for each of its records, oldest
+   first, then how many. The shapes are the trials' own. */
+.year-marks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.55rem;
+  align-self: center;
+  min-width: 0;
+}
+
+.year-marks .state-mark,
+.year-key .state-mark {
+  translate: none;
+}
+
+.year-rest > summary .year-total {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: var(--note-size);
+}
+
+.year-key {
+  margin: 0 0 0.6rem;
+}
+
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
    info mark beside a section's heading opens what the section holds in a small panel,
    on hover, on a press and from the keyboard, in place of a paragraph under the
