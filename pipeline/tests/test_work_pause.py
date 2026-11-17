@@ -100,6 +100,10 @@ def test_a_pause_recorded_during_pacing_prevents_the_reserved_request(
 ):
     from thenwhat.work.pause import pause
 
+    monkeypatch.setenv(
+        "SOURCE_ALLOWANCES",
+        '{"clinicaltrials.gov":{"requests":2,"period_hours":24,"interval_seconds":10}}',
+    )
     source = registry(session, fake_time, rate_per_second=0.1)
     until = fake_time.now() + timedelta(hours=1)
     slept = fake_time.sleep
@@ -121,3 +125,51 @@ def test_a_pause_recorded_during_pacing_prevents_the_reserved_request(
         fake_time.advance(until - fake_time.now())
         assert source.search_trials("next") == []
         assert calls.call_count == 2
+
+
+def test_cancelled_allowance_turn_is_available_after_the_pause(session, fake_time, monkeypatch):
+    from thenwhat.config import SourceAllowance
+    from thenwhat.work.errors import SourcePaused
+
+    source = "test-provider"
+    allowance = SourceAllowance(requests=2, period_hours=24, interval_seconds=10)
+    gate = Allowances(same_session(session), {source: allowance}, fake_time)
+    gate.claim(source)
+    until = fake_time.now() + timedelta(hours=1)
+    slept = fake_time.sleep
+
+    def hold(seconds):
+        gate.hold(source, until)
+        slept(seconds)
+
+    monkeypatch.setattr(fake_time, "sleep", hold)
+    with pytest.raises(SourcePaused) as refused:
+        gate.claim(source)
+    assert refused.value.until == until
+    assert gate.status(session, source).used == 1
+    fake_time.advance(until - fake_time.now())
+    gate.claim(source)
+    assert gate.status(session, source).used == 2
+
+
+def test_cancelled_turn_from_an_earlier_period_keeps_the_new_periods_usage(session, fake_time):
+    from thenwhat.config import SourceAllowance
+    from thenwhat.work.errors import SourcePaused
+    from thenwhat.work.pause import finish_wait
+
+    allowance = SourceAllowance(requests=2, period_hours=1, interval_seconds=0)
+    gate = Allowances(same_session(session), {"period-test": allowance}, fake_time)
+    reserved_at = fake_time.now()
+    gate.claim("period-test")
+    fake_time.advance(timedelta(hours=1))
+    gate.claim("period-test")
+    gate.hold("period-test", fake_time.now() + timedelta(hours=1))
+    with pytest.raises(SourcePaused):
+        finish_wait(
+            same_session(session),
+            "period-test",
+            reserved_at=reserved_at,
+            now=fake_time.now(),
+            counted=True,
+        )
+    assert gate.status(session, "period-test").used == 1
