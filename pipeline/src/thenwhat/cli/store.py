@@ -25,6 +25,7 @@ from thenwhat.store.build import (
     apply_delta,
     base_of,
     build,
+    build_id_of,
     merge_day,
     write_delta,
 )
@@ -42,6 +43,7 @@ from thenwhat.store.people import (
     strip_abstracts,
 )
 from thenwhat.store.push import (
+    BUILD_KEY,
     USER_AGENT,
     PushFailed,
     pending_path,
@@ -92,6 +94,18 @@ def state_path(file: Path) -> Path:
 def bulk_state_path(file: Path) -> Path:
     """What the bulk file holds, for `thenwhat store merge-bulk` to start from."""
     return file.with_name(file.name + ".bulk.json")
+
+
+def remove_pending(file: Path, *, bulk_too: bool) -> list[Path]:
+    """The pending runs a build of `file` makes stale, removed: the hot push's, and the bulk
+    merge's when the bulk file is built again. The build holds what they carried."""
+    replaced = [state_path(file), tier_path(file, HOT)]
+    if bulk_too:
+        replaced += [bulk_state_path(file), tier_path(file, BULK)]
+    removed = [pending_path(path) for path in replaced if pending_path(path).is_file()]
+    for stale in removed:
+        stale.unlink()
+    return removed
 
 
 def _size(count: int) -> str:
@@ -171,9 +185,13 @@ def build_command(
         except BuildFailed as fault:
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None
-    write_state(state_path(file), report.state)
+    # A run left pending was made for the files this build replaces: the build holds
+    # what it carried, so it is never settled against the new store.
+    for stale in remove_pending(file, bulk_too=effective != HOT):
+        out.print(f"Removed {stale}: a run left pending before this build.", markup=False)
+    write_state(state_path(file), {**report.state, BUILD_KEY: report.build_id})
     if effective != HOT:
-        write_state(bulk_state_path(file), report.state)
+        write_state(bulk_state_path(file), {**report.state, BUILD_KEY: report.build_id})
     out.print(f"Build {report.build_id}.", markup=False)
     out.print(f"Built the whole store ({_size(report.size)}) in {report.runs} runs.", markup=False)
     for kind in sorted(report.handed):
@@ -197,7 +215,13 @@ def build_command(
             + (f", its payload objects in {objects}." if tier != ALL else "."),
             markup=False,
         )
-    watermark_write(file, marks, digest, report.build_id)
+    bulk_build = (build_id_of(tier_path(file, BULK)) or "") if kept else report.build_id
+    watermark_write(file, marks, digest, report.build_id, bulk_build)
+    if kept:
+        out.print(
+            f"Bulk build {bulk_build}: the hot build {report.build_id} keeps it as its bulk file.",
+            markup=False,
+        )
     out.print(f"Done in {time.monotonic() - started:,.0f} s.", markup=False)
 
 
@@ -418,6 +442,7 @@ def push_command(
                 report_only=report_only,
                 on_merged=lambda now: write_state(state, now),
                 pending=pending_path(state),
+                belongs={"build": held.get(BUILD_KEY, ""), "target": url},
             )
         except PushFailed as fault:
             err.print(str(fault), markup=False)

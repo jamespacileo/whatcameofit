@@ -51,3 +51,15 @@ store/ingest/.cloudflare.local.json
 .store-rehearsal/
 store/ingest/.upload-state/
 store/ingest/wrangler.production.jsonc
+
+# the store's build files and their state: never committed (pipeline/src/thenwhat/store)
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.pushed.json
+*.bulk.json
+*.watermarks.json
+*.pending.json
+*.pending.json.part
+*.jsonl.gz
+*.jsonl.gz.part

@@ -84,12 +84,30 @@ def watermarks(session: Session, tables: tuple[str, ...]) -> dict[str, list[int]
     return found
 
 
+# The code that forms a record from a row: a build made by other code, a change to what is
+# stripped from a payload say, is another build. Read from the files themselves, so no
+# version number can be left unbumped.
+RECORD_CODE = (
+    "store/form.py",
+    "store/records.py",
+    "store/gather.py",
+    "store/tiers.py",
+    "store/build.py",
+    "sources/people.py",
+    "backfill/address.py",
+)
+PACKAGE = Path(__file__).resolve().parents[1]
+
+
 def sql_digest(store_sql: Path) -> str:
-    """The store's schema, merge and staging, by checksum: a build made by other SQL is
-    another build."""
+    """The store's schema, merge and staging, and the code that forms its records, by
+    checksum: a build made by other SQL or other code is another build, and a rebuild does
+    not keep a bulk file made by them."""
     digest = hashlib.sha256()
     for name in ("schema.sql", "merge.sql", "ingest.sql"):
         digest.update((store_sql / name).read_bytes())
+    for name in RECORD_CODE:
+        digest.update((PACKAGE / name).read_bytes())
     return digest.hexdigest()
 
 
@@ -122,7 +140,12 @@ def read(file: Path) -> dict[str, Any]:
         return {}
 
 
-def write(file: Path, marks: dict[str, list[int]], digest: str, build: str) -> None:
+def write(
+    file: Path, marks: dict[str, list[int]], digest: str, build: str, bulk_build: str
+) -> None:
+    """What a build was made from, its id, and the id of the bulk file beside it: the same
+    id, or the build's that made a bulk file this one kept."""
     temporary = path_of(file).with_suffix(".part")
-    temporary.write_text(json.dumps({"build": build, "sql": digest, "marks": marks}, indent=1))
+    value = {"build": build, "bulk_build": bulk_build, "sql": digest, "marks": marks}
+    temporary.write_text(json.dumps(value, indent=1))
     temporary.replace(path_of(file))

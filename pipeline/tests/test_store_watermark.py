@@ -85,3 +85,20 @@ def test_a_hot_build_is_moved_into_place_with_its_objects(session: Session, tmp_
 
     big = payload_of(world["big_payload"])
     assert (payloads / HOT / big.r2_key).is_file() and not (payloads / "payload").exists()
+
+
+def test_the_build_digest_moves_with_the_code_that_forms_records(tmp_path: Path, monkeypatch):
+    import shutil
+
+    from thenwhat.store import watermark
+
+    before = sql_digest(STORE)
+    copy = tmp_path / "package"
+    for name in watermark.RECORD_CODE:
+        (copy / name).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(watermark.PACKAGE / name, copy / name)
+    monkeypatch.setattr(watermark, "PACKAGE", copy)
+    assert sql_digest(STORE) == before
+    people = copy / "sources" / "people.py"
+    people.write_text(people.read_text() + "\n# a change to what is stripped\n")
+    assert sql_digest(STORE) != before

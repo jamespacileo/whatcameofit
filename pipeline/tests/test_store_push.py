@@ -82,7 +82,8 @@ def test_a_push_puts_large_payloads_stages_chunks_merges_and_keeps_its_state(mon
             payload_text={big.sha256: big.text}.get,
             on_merged=lambda state: saved.append(dict(state)),
         )
-    assert service.calls[0] == ("PUT", f"/payloads/{big.sha256}")
+    # Registered first, then its large payload put, before any chunk is staged.
+    assert service.calls[:2] == [("POST", "/runs"), ("PUT", f"/payloads/{big.sha256}")]
     assert len(service.chunks) == 2
     assert service.registered["counts"] == {"payload": 1, "claim": 2}
     assert report.runs == 1 and report.payloads_put == 1 and report.added["claim"] == 1
@@ -344,3 +345,64 @@ def test_a_refused_run_stops_the_push_and_says_what_to_do(tmp_path):
             pending=pending,
         )
     assert pending.is_file()
+
+
+def test_a_run_pending_for_another_build_is_refused_and_a_build_removes_it(tmp_path):
+    from thenwhat.cli.store import remove_pending, state_path
+    from thenwhat.store.push import PendingStale, pending_path, write_pending
+
+    pending = pending_path(state_path(tmp_path / "store.sqlite"))
+    write_pending(pending, "daily-old", [CLAIM], {"build": "aaaa", "target": "http://s.test"})
+    service = Service()
+    with (
+        httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c,
+        pytest.raises(PendingStale, match="delete the file"),
+    ):
+        push(
+            c,
+            [CLAIM],
+            {},
+            writer="daily",
+            commit="abc1234",
+            payload_text={}.get,
+            pending=pending,
+            belongs={"build": "bbbb", "target": "http://s.test"},
+        )
+    assert service.calls == [], "nothing is sent for a stale run"
+    # The build that made the new files removes what was pending for the old ones.
+    assert remove_pending(tmp_path / "store.sqlite", bulk_too=False) == [pending]
+    assert not pending.exists()
+
+
+def test_a_merged_pending_run_settles_without_its_large_payloads(tmp_path):
+    from thenwhat.store.form import payload_record
+    from thenwhat.store.push import pending_path, write_pending
+
+    big = payload_record({"x": "y" * 20_000})
+    assert "r2_key" in big.body
+    pending = pending_path(tmp_path / "state.json")
+    belongs = {"build": "b", "target": "http://s.test"}
+    run = "daily-merged-before"
+    write_pending(pending, run, [big], belongs)
+
+    class Merged(Service):
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            self.calls.append((request.method, request.url.path))
+            if request.url.path == "/runs":
+                return httpx.Response(200, json={"status": "merged"})
+            return httpx.Response(200, json={"status": "merged", "report": {}})
+
+    service, state = Merged(), {}
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c:
+        push(
+            c,
+            [],
+            state,
+            writer="daily",
+            commit="abc1234",
+            payload_text={}.get,
+            pending=pending,
+            belongs=belongs,
+        )
+    assert ("PUT", f"/payloads/{big.key}") not in service.calls
+    assert state == state_of([big]) and not pending.exists()

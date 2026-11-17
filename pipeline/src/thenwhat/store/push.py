@@ -141,20 +141,44 @@ def pending_path(state_file: Path) -> Path:
     return state_file.with_name(state_file.name + ".pending.json")
 
 
-def write_pending(path: Path, run: str, records: list[Record]) -> None:
-    """The run about to be sent, written whole before anything is sent."""
+# Where a state says which build it holds: not a record's kind and key.
+BUILD_KEY = "\tbuild"
+
+
+class PendingStale(PushFailed):
+    """A run left pending belongs to another build or another store than this one."""
+
+
+def write_pending(
+    path: Path, run: str, records: list[Record], belongs: dict[str, str] | None = None
+) -> None:
+    """The run about to be sent, written whole before anything is sent, with what it
+    belongs to: the build its state holds and the store it is sent to."""
     temporary = path.with_name(path.name + ".part")
-    temporary.write_text(
-        json.dumps({"run": run, "records": [r.staged() for r in records]}, ensure_ascii=False)
-    )
+    value = {"run": run, "belongs": belongs or {}, "records": [r.staged() for r in records]}
+    temporary.write_text(json.dumps(value, ensure_ascii=False))
     temporary.replace(path)
 
 
-def read_pending(path: Path) -> tuple[str, list[Record]] | None:
+def read_pending(path: Path) -> tuple[str, list[Record], dict[str, str]] | None:
     if not path.is_file():
         return None
     value = json.loads(path.read_text())
-    return value["run"], [Record(**record) for record in value["records"]]
+    records = [Record(**record) for record in value["records"]]
+    return value["run"], records, value.get("belongs") or {}
+
+
+def check_belongs(path: Path, found: dict[str, str], now: dict[str, str]) -> None:
+    """Refuse to settle a pending run made for another build or store: settled against a
+    store loaded since from a new build, its records would be there twice."""
+    differ = {k: (found.get(k), v) for k, v in now.items() if found.get(k) != v}
+    if differ:
+        said = "; ".join(f"{k}: the run's {was!r}, now {is_!r}" for k, (was, is_) in differ.items())
+        raise PendingStale(
+            f"{path} holds a run made for another build or store ({said}). If the store was"
+            " rebuilt and loaded since, that build holds the run's records: delete the file"
+            " and push again. If not, run with the build and the store the run was made for."
+        )
 
 
 def clear_pending(path: Path) -> None:
@@ -173,6 +197,7 @@ def push(
     report_only: bool = False,
     on_merged: Callable[[dict[str, str]], None] = lambda _: None,
     pending: Path | None = None,
+    belongs: dict[str, str] | None = None,
 ) -> PushReport:
     """Hand over what changed since `state`, one run at a time. After each merged run,
     `state` holds its records and `on_merged` is given it, so a push stopped part way
@@ -189,7 +214,8 @@ def push(
     if pending is not None and not report_only:
         held = read_pending(pending)
         if held is not None:
-            run, records_of_run = held
+            run, records_of_run, found = held
+            check_belongs(pending, found, belongs or {})
             _send(client, run, records_of_run, writer, commit, payload_text, report, False)
             state.update(state_of(records_of_run))
             on_merged(state)
@@ -202,7 +228,7 @@ def push(
         # which the service registers and merges once.
         run = f"{writer}-{run_checksum(chunks)[:40]}"
         if pending is not None and not report_only:
-            write_pending(pending, run, records_of_run)
+            write_pending(pending, run, records_of_run, belongs)
         _send(client, run, records_of_run, writer, commit, payload_text, report, report_only)
         if report_only:
             continue
@@ -225,19 +251,6 @@ def _send(
 ) -> None:
     """Put a run's large payloads, register it, stage it and merge it, or find it merged
     already; raise unless it ends merged (or reported, with `report_only`)."""
-    for record in records_of_run:
-        if record.kind == "payload" and "r2_key" in record.body:
-            text = payload_text(record.key)
-            if text is None:
-                raise PushFailed(f"The payload {record.key} is not at hand to put.")
-            assert payload_of(json.loads(text)).sha256 == record.key
-            answer = client.put(
-                f"/payloads/{record.key}",
-                content=text.encode(),
-                headers={"Content-Type": "application/octet-stream"},
-            )
-            _ok(answer, f"payload {record.key}")
-            report.payloads_put += 1
     chunks = chunks_of(records_of_run)
     counts = Counter(record.kind for record in records_of_run)
     registered = client.post(
@@ -266,6 +279,20 @@ def _send(
         )
     if status not in (None, "registered"):
         raise PushFailed(f"Run {run} is {status} at the service.")
+    # Only a run still open needs its large payloads: one merged already settles without.
+    for record in records_of_run:
+        if record.kind == "payload" and "r2_key" in record.body:
+            text = payload_text(record.key)
+            if text is None:
+                raise PushFailed(f"The payload {record.key} is not at hand to put.")
+            assert payload_of(json.loads(text)).sha256 == record.key
+            answer = client.put(
+                f"/payloads/{record.key}",
+                content=text.encode(),
+                headers={"Content-Type": "application/octet-stream"},
+            )
+            _ok(answer, f"payload {record.key}")
+            report.payloads_put += 1
     for chunk in chunks:
         _ok(
             client.post(
@@ -290,7 +317,11 @@ def _send(
     if result.get("status") != "merged":
         if result.get("status") in ("undone", "not_merged"):
             client.delete(f"/runs/{run}")
-        raise PushFailed(f"Run {run} was not merged: {json.dumps(result)[:500]}")
+        raise PushFailed(
+            f"Run {run} was not merged: {json.dumps(result)[:400]}. It stays pending: push"
+            " again to send it again; if it fails the same way, read why with GET"
+            f" /runs/<id>, fix it, delete {PENDING_HINT} and push again."
+        )
     _count(report, result, counts)
 
 

@@ -451,6 +451,7 @@ def merge_day(
     the state was saved never merges those records again under another name, even when
     records have arrived since."""
     from thenwhat.store.push import (
+        check_belongs,
         clear_pending,
         increment,
         pending_path,
@@ -460,11 +461,13 @@ def merge_day(
     )
 
     pending = pending_path(file)
+    belongs = {"build": build_id_of(file) or ""}
     runs: list[tuple[str, list[Record]]] = []
     added: Counter[str] = Counter()
     held = read_pending(pending)
     if held is not None:
-        name, settled = held
+        name, settled, found = held
+        check_belongs(pending, found, belongs)
         more, _ = merge_into(file, [(name, settled)], store_sql=store_sql, now=now)
         added.update(more)
         runs.append((name, settled))
@@ -474,7 +477,7 @@ def merge_day(
     chosen = increment(records, state, actions=True)
     content = sorted(f"{k}={v}" for k, v in state_of(chosen.records).items())
     name = run_name("bulk", state_digest(state), *content)
-    write_pending(pending, name, chosen.records)
+    write_pending(pending, name, chosen.records, belongs)
     more, _ = merge_into(file, [(name, chosen.records)], store_sql=store_sql, now=now)
     added.update(more)
     runs.append((name, chosen.records))
@@ -483,3 +486,13 @@ def merge_day(
     save_state(state)
     clear_pending(pending)
     return chosen, added
+
+
+def build_id_of(path: Path) -> str | None:
+    """The build a store file was made by (`BUILD_ID_SQL`), or None."""
+    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        row = db.execute(BUILD_ID_SQL).fetchone()
+    finally:
+        db.close()
+    return row[0] if row else None

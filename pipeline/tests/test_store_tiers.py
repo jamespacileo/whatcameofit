@@ -512,7 +512,7 @@ def test_a_record_going_a_b_a_is_merged_each_day_and_replays(session: Session, t
 
 
 def test_a_crash_after_a_merge_then_new_records_merge_each_once(session: Session, tmp_path: Path):
-    from thenwhat.store.build import merge_day, merge_into
+    from thenwhat.store.build import build_id_of, merge_day, merge_into
     from thenwhat.store.gather import Gathered, stream
     from thenwhat.store.push import pending_path, write_pending
     from thenwhat.store.tiers import bulk_records
@@ -530,7 +530,7 @@ def test_a_crash_after_a_merge_then_new_records_merge_each_once(session: Session
     state = dict(report.state)
     when = datetime(2026, 11, 19, tzinfo=UTC)
     # Monday: written as pending and merged, then the job stops before the state is saved.
-    write_pending(pending_path(bulk), "bulk-monday", [monday])
+    write_pending(pending_path(bulk), "bulk-monday", [monday], {"build": build_id_of(bulk) or ""})
     merge_into(bulk, [("bulk-monday", [monday])], store_sql=STORE, now=when)
     saved: list[dict] = []
     merge_day(
@@ -549,3 +549,26 @@ def test_a_crash_after_a_merge_then_new_records_merge_each_once(session: Session
     runs = {r for (r,) in db.execute("SELECT id FROM run WHERE id LIKE 'bulk-%'")}
     assert len(runs) == 2 and not pending_path(bulk).exists()
     assert saved and saved[-1]["measure_daily\t2026-11-18"]
+
+
+def test_a_bulk_merge_pending_for_another_build_is_refused(session: Session, tmp_path: Path):
+    from thenwhat.store.build import build_id_of, merge_day
+    from thenwhat.store.push import PendingStale, pending_path, write_pending
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    assert build_id_of(bulk) == report.build_id
+    write_pending(pending_path(bulk), "bulk-old", [], {"build": "0000000000000000"})
+    with pytest.raises(PendingStale):
+        merge_day(
+            bulk,
+            [],
+            dict(report.state),
+            delta=tmp_path / "d.jsonl.gz",
+            store_sql=STORE,
+            now=datetime(2026, 11, 18, tzinfo=UTC),
+        )
