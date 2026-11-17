@@ -104,6 +104,7 @@ const sentenceJson = sentences
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { SITE as BRAND } from "../../site.config.mjs";
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
+  import { suggest, suggestParts, suggestWords, type Suggestion } from "../lib/suggest";
   import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, NOT_AN_OPTION, changedShort, findListed, listingWords, registryDate, searchListing, setNote } from "../lib/trial-page.mjs";
   import { PARTS_SEARCHED_AT_ONCE, partFor } from "../lib/trial-listing-parts.mjs";
 
@@ -659,7 +660,21 @@ const sentenceJson = sentences
       '<path d="M15 18h-5"/><path d="M18 14h-8"/><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="10" y="6" rx="1"/>',
     trial:
       '<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+    topic:
+      '<path d="M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/>',
+    treatment: '<path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/>',
+    condition:
+      '<path d="M11 2v2"/><path d="M5 2v2"/><path d="M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1"/><path d="M8 15a6 6 0 0 0 12 0v-3"/><circle cx="20" cy="10" r="2"/>',
+    search: '<path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',
   };
+
+  /** The drawing before a suggested row. */
+  function suggestDrawing(kind: keyof typeof KIND_DRAWINGS) {
+    const holder = element("span", undefined, "suggest-kind");
+    holder.setAttribute("aria-hidden", "true");
+    holder.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${KIND_DRAWINGS[kind]}</svg>`;
+    return holder;
+  }
 
   function kindDrawing(kind: keyof typeof KIND_DRAWINGS) {
     const holder = element("span", undefined, "match-kind");
@@ -1410,6 +1425,188 @@ const sentenceJson = sentences
       if (readAddress(input.value.trim()).kind !== "none") form.requestSubmit();
     });
   });
+
+  // ---- Suggestions (openspec search-suggestions) ----
+  // While words are typed the box offers rows under it, each kind under its name:
+  // topics, treatments, conditions, reports, trials on record. A row opens a page or
+  // searches for what it names. Up and down move through the rows, Enter takes the
+  // chosen one, Escape closes them; with no row chosen Enter searches as before. A
+  // pasted address is looked up at once and offers nothing. The rules are suggest.ts.
+  const boxRow = form.querySelector<HTMLElement>(".row") ?? form;
+  const suggestions = element("div", undefined, "suggest");
+  suggestions.id = "suggestions";
+  suggestions.setAttribute("role", "listbox");
+  suggestions.setAttribute("aria-label", "Suggestions");
+  suggestions.hidden = true;
+  boxRow.append(suggestions);
+  input.setAttribute("role", "combobox");
+  input.setAttribute("aria-autocomplete", "list");
+  input.setAttribute("aria-controls", suggestions.id);
+  input.setAttribute("aria-expanded", "false");
+
+  let choices: HTMLElement[] = [];
+  let chosen = -1;
+  let detailHeld: SearchDetail | null = null;
+  let detailAsked = false;
+  let drawing = 0;
+
+  const choose = (at: number) => {
+    chosen = at;
+    choices.forEach((choice, index) => {
+      choice.classList.toggle("is-active", index === at);
+      choice.setAttribute("aria-selected", String(index === at));
+    });
+    if (at < 0) {
+      input.removeAttribute("aria-activedescendant");
+      return;
+    }
+    input.setAttribute("aria-activedescendant", choices[at].id);
+    // A row chosen past the panel's edge is brought into it.
+    const panel = suggestions.getBoundingClientRect();
+    const row = choices[at].getBoundingClientRect();
+    if (row.bottom > panel.bottom) suggestions.scrollTop += row.bottom - panel.bottom + 6;
+    else if (row.top < panel.top) suggestions.scrollTop -= panel.top - row.top + 6;
+  };
+
+  const closeSuggestions = () => {
+    drawing += 1;
+    suggestions.hidden = true;
+    suggestions.replaceChildren();
+    choices = [];
+    chosen = -1;
+    input.setAttribute("aria-expanded", "false");
+    input.removeAttribute("aria-activedescendant");
+  };
+
+  // The typed words in bold where they start a word. Built as nodes.
+  const typedIn = (text: string, typed: string) => {
+    const fragment = document.createDocumentFragment();
+    for (const part of suggestParts(text, typed)) fragment.append(part.hit ? element("b", part.text) : part.text);
+    return fragment;
+  };
+
+  function suggestionRow(item: Suggestion, typed: string) {
+    const link = element("a", undefined, `suggest-row is-${item.kind}`) as HTMLAnchorElement;
+    link.setAttribute("role", "option");
+    link.setAttribute("aria-selected", "false");
+    link.tabIndex = -1;
+    link.href = item.href ?? `?q=${encodeURIComponent(item.query!)}`;
+    if (item.query !== undefined) link.dataset.query = item.query;
+    const main = element("span", undefined, "suggest-main");
+    // An outlet's title keeps its marks; a trial is named by its identifier.
+    const text = element("span", undefined, item.kind === "report" ? "suggest-quote" : item.kind === "trial" ? "suggest-id" : "suggest-text");
+    if (item.kind === "report") text.append(element("span", "“", "quote-mark"), typedIn(item.text, typed), element("span", "”", "quote-mark"));
+    else text.append(typedIn(item.text, typed));
+    main.append(text);
+    if (item.sub) {
+      const sub = element("span", undefined, "suggest-sub");
+      sub.append(" · ", typedIn(item.sub, typed));
+      main.append(sub);
+    }
+    link.append(suggestDrawing(item.kind), main, element("span", item.meta, "suggest-meta"));
+    return link;
+  }
+
+  async function drawSuggestions() {
+    const typed = input.value.trim();
+    const turn = ++drawing;
+    if (suggestWords(typed).length === 0 || readAddress(typed).kind !== "none") return closeSuggestions();
+    let index: Lookup;
+    try {
+      index = await loadLookup();
+    } catch {
+      // Nothing to offer; sending the search says what is wrong.
+      return closeSuggestions();
+    }
+    if (turn !== drawing) return;
+    // Reports and trials come with the search detail, asked for once, the first time
+    // the box is typed in. The rows are drawn again when it arrives.
+    if (!detailAsked) {
+      detailAsked = true;
+      loadDetail()
+        .then((detail) => {
+          detailHeld = detail;
+          if (!suggestions.hidden) void drawSuggestions();
+        })
+        .catch(() => {
+          detailAsked = false;
+        });
+    }
+    const groups = suggest(typed, index, detailHeld);
+    if (groups.length === 0) return closeSuggestions();
+    suggestions.replaceChildren();
+    for (const group of groups) {
+      const section = element("div", undefined, "suggest-group");
+      const label = element("p", group.label, "suggest-label");
+      label.id = `suggest-${group.kind}`;
+      const rows = element("div");
+      rows.setAttribute("role", "group");
+      rows.setAttribute("aria-labelledby", label.id);
+      for (const item of group.rows) rows.append(suggestionRow(item, typed));
+      section.append(label, rows);
+      suggestions.append(section);
+    }
+    // The last row sends the words as they are.
+    const all = element("a", undefined, "suggest-row suggest-all") as HTMLAnchorElement;
+    all.setAttribute("role", "option");
+    all.setAttribute("aria-selected", "false");
+    all.tabIndex = -1;
+    all.href = `?q=${encodeURIComponent(typed)}`;
+    all.dataset.query = "";
+    all.append(suggestDrawing("search"), element("span", `Search everything for “${typed}”`, "suggest-main"));
+    suggestions.append(all);
+    choices = [...suggestions.querySelectorAll<HTMLElement>('[role="option"]')];
+    choices.forEach((choice, index) => {
+      choice.id = `suggestion-${index}`;
+    });
+    chosen = -1;
+    input.removeAttribute("aria-activedescendant");
+    suggestions.hidden = false;
+    input.setAttribute("aria-expanded", "true");
+    // The panel ends inside the screen and scrolls within itself past that.
+    const room = window.innerHeight - suggestions.getBoundingClientRect().top - 12;
+    suggestions.style.maxHeight = `${Math.max(room, 220)}px`;
+  }
+
+  input.addEventListener("input", () => void drawSuggestions());
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      if (suggestions.hidden) return;
+      event.preventDefault();
+      closeSuggestions();
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (suggestions.hidden) {
+        if (event.key === "ArrowDown") void drawSuggestions();
+        return;
+      }
+      event.preventDefault();
+      // Down from the box is the first row, up is the last; past either end is the box again.
+      const next = chosen + (event.key === "ArrowDown" ? 1 : -1);
+      choose(next >= choices.length ? -1 : next < -1 ? choices.length - 1 : next);
+    } else if (event.key === "Enter" && chosen >= 0 && !suggestions.hidden) {
+      event.preventDefault();
+      choices[chosen].click();
+    }
+  });
+  // A press on a row is not a press away from the box.
+  suggestions.addEventListener("mousedown", (event) => event.preventDefault());
+  suggestions.addEventListener("click", (event) => {
+    const choice = (event.target as Element).closest<HTMLElement>('[role="option"]');
+    if (!choice) return;
+    const query = choice.dataset.query;
+    // A row that names a page is a link and goes there; one that names words searches for them.
+    if (query === undefined) return closeSuggestions();
+    event.preventDefault();
+    if (query) input.value = query;
+    closeSuggestions();
+    form.requestSubmit();
+  });
+  input.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (document.activeElement !== input) closeSuggestions();
+    }, 150);
+  });
+  form.addEventListener("submit", closeSuggestions);
 
   const initial = new URL(location.href).searchParams.get("q");
   if (initial) {
