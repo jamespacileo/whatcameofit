@@ -53,6 +53,8 @@ TIER: dict[str, str] = {
     "decision_log": HOT,
     "outlet_icon": HOT,
     "claim_fts": HOT,
+    # Read by nothing, but it hangs from an entity: 472 rows, kept with it.
+    "entity_substance": HOT,
     # The merge and the ingest service's routes.
     "run": BOTH,
     "run_step": BOTH,
@@ -82,7 +84,6 @@ TIER: dict[str, str] = {
     # shares and readings into D1 after the cut: those tables there then hold only what
     # lookups add, and the consumer works them there (store-tables.md).
     "lead_reading": BULK,
-    "entity_substance": BULK,
     "work_entry": BULK,
     "llm_usage": BULK,
     "measure_daily": BULK,
@@ -101,7 +102,6 @@ BULK_KINDS = frozenset(
         "link_share",
         "link_lead_link",
         "link_lead_label",
-        "entity_substance",
         "work_entry",
         "usage",
         "measure_daily",
@@ -112,6 +112,37 @@ BULK_KINDS = frozenset(
 
 # Full-text indexes that read their table's own columns: emptied by their own command.
 EXTERNAL_CONTENT = frozenset({"registry_trial_fts", "link_lead_fts"})
+
+
+# Hot tables the bulk file also holds a copy of, because bulk rows hang from them: a lead
+# names its claim and article, an article lead its trial's claim through a lead, a
+# measurement its claim. The daily job's merge into the bulk file finds them there.
+REFERENCE = frozenset({"claim", "claim_alias", "claim_action", "source_article"})
+# The kinds of record that carry them.
+REFERENCE_KINDS = frozenset({"claim", "source_article", "action"})
+
+
+HOT_KINDS = frozenset(
+    {
+        "claim",
+        "action",
+        "source_article",
+        "promise",
+        "reported_statement",
+        "entity",
+        "entity_article",
+        "entity_match",
+        "claim_term",
+        "source_record",
+        "evidence_event",
+        "failure_flag",
+        "trial_read",
+        "decision",
+        "outlet_icon",
+        "unlisted_domain",
+        "entity_substance",
+    }
+)
 
 
 def tier_of(table: str) -> str:
@@ -126,6 +157,12 @@ def tier_of(table: str) -> str:
 
 def in_tier(table: str, tier: str) -> bool:
     return tier_of(table) in (tier, BOTH)
+
+
+def kept_in(table: str, tier: str) -> bool:
+    """Whether a tier's file holds the table's rows: its own tables, those of both, and
+    for the bulk file the hot tables it keeps a copy of."""
+    return in_tier(table, tier) or (tier == BULK and table in REFERENCE)
 
 
 def tables(db: sqlite3.Connection) -> list[str]:
@@ -160,7 +197,7 @@ def split(full: Path, out: Path, tier: str, *, payloads: Path | None = None) -> 
     try:
         db.execute("PRAGMA foreign_keys = OFF")
         db.execute("BEGIN")
-        emptied = [t for t in tables(db) if t != "payload" and not in_tier(t, tier)]
+        emptied = [t for t in tables(db) if t != "payload" and not kept_in(t, tier)]
         # The full-text triggers would delete from their index row by row: they go while
         # the rows do, and are put back as they were.
         triggers = db.execute(
@@ -305,12 +342,12 @@ def split_build(file: Path, payloads: Path, tier: str) -> list[Path]:
     return written
 
 
-def hot_records(records: Iterable[Any]) -> tuple[list[Any], int]:
-    """The records a push to D1 hands over: those of hot kinds, and the payloads they
-    point at; how many were left out. Read as a stream: `gather` gives a payload just
-    before the record that points at it, and the hot kinds before the bulk ones, so a
-    payload is kept when the record after it is hot and points at it."""
-    hot: list[Any] = []
+def records_of(records: Iterable[Any], kinds: frozenset[str]) -> tuple[list[Any], int]:
+    """The records of these kinds, and the payloads they point at; how many were left
+    out. Read as a stream: `gather` gives a payload just before the record that points at
+    it, and an earlier record's payload once, so a payload is kept when the record after
+    it is kept and points at it."""
+    chosen: list[Any] = []
     left_out = 0
     held: Any = None
     for record in records:
@@ -320,13 +357,48 @@ def hot_records(records: Iterable[Any]) -> tuple[list[Any], int]:
             held = record
             continue
         if held is not None:
-            if record.kind not in BULK_KINDS and record.body.get("payload_sha256") == held.key:
-                hot.append(held)
+            if record.kind in kinds and record.body.get("payload_sha256") == held.key:
+                chosen.append(held)
             else:
                 left_out += 1
             held = None
-        if record.kind in BULK_KINDS:
-            left_out += 1
+        if record.kind in kinds:
+            chosen.append(record)
         else:
-            hot.append(record)
-    return hot, left_out + (held is not None)
+            left_out += 1
+    return chosen, left_out + (held is not None)
+
+
+def hot_records(records: Iterable[Any]) -> tuple[list[Any], int]:
+    """The records a push to D1 hands over: those of hot kinds and their payloads."""
+    return records_of(records, HOT_KINDS)
+
+
+def bulk_records(records: Iterable[Any]) -> tuple[list[Any], int]:
+    """The records the daily job merges into the bulk file: bulk kinds and their
+    payloads, with the claims, articles and actions bulk rows hang from."""
+    return records_of(records, BULK_KINDS | REFERENCE_KINDS)
+
+
+def checks(path: Path, tier: str | None = None) -> dict[str, Any]:
+    """The checks the ingest lane's `checksum-d1.mjs` runs on D1: for each table its one
+    SELECT and the row it must give, read from the store file; and the build's id."""
+    from thenwhat.store.build import BUILD_ID_SQL
+
+    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        held = db.execute(BUILD_ID_SQL).fetchone()
+        found: dict[str, Any] = {}
+        for table in tables(db):
+            if table.endswith("_fts") or (tier is not None and not in_tier(table, tier)):
+                continue
+            sql = fingerprint_sql(db, table)
+            cursor = db.execute(sql)
+            names = [column[0] for column in cursor.description]
+            found[table] = {
+                "sql": sql,
+                "expected": dict(zip(names, cursor.fetchone(), strict=True)),
+            }
+        return {"build": held[0] if held else None, "tables": found}
+    finally:
+        db.close()

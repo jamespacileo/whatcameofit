@@ -14,7 +14,9 @@ address it had; a merged claim's publication, so the store can say its address w
 public (the export lists it under `moved`).
 """
 
+import gzip
 import json
+import secrets
 import sqlite3
 import time
 from collections import Counter
@@ -54,6 +56,15 @@ class BuildReport:
     size: int = 0
     # Each record handed over, as `push` keeps it: what a later push starts from.
     state: dict[str, str] = field(default_factory=dict)
+    # Names the build: its runs are `build-<id>-<n>`, so a store file and D1 both say
+    # which build they hold with `build_id_sql`.
+    build_id: str = field(default_factory=lambda: secrets.token_hex(8))
+
+
+# Which build a store file or D1 holds: one row, the id, or none.
+BUILD_ID_SQL = (
+    "SELECT substr(id, 7, 16) AS build FROM run WHERE id LIKE 'build-%' ORDER BY id LIMIT 1"
+)
 
 
 def statements(path: Path) -> list[str]:
@@ -271,7 +282,14 @@ def build(
             if not records:
                 continue
             report.handed.update(record.kind for record in records)
-            added = merge_run(db, f"build-{number}", records, merge=merge, ingest=ingest, now=now)
+            added = merge_run(
+                db,
+                f"build-{report.build_id}-{number}",
+                records,
+                merge=merge,
+                ingest=ingest,
+                now=now,
+            )
             report.added.update(added)
             report.runs += 1
         db.execute("PRAGMA journal_mode = DELETE")
@@ -280,3 +298,45 @@ def build(
         db.close()
     report.size = path.stat().st_size
     return report
+
+
+def merge_into(
+    path: Path,
+    records: list[Record],
+    *,
+    store_sql: Path,
+    now: datetime,
+    name: str,
+) -> Counter[str]:
+    """Merge records into a store file already built, by `store/merge.sql`, in runs of
+    `RUN_RECORDS` named `<name>-<n>`, as the daily job merges a day's bulk records into
+    the bulk file. What the merge added, by kind."""
+    merge = statements(store_sql / "merge.sql")
+    ingest = named(store_sql / "ingest.sql")
+    added: Counter[str] = Counter()
+    db = sqlite3.connect(path, isolation_level=None)
+    try:
+        # As in D1: the bulk file holds the hot rows bulk rows hang from (`REFERENCE`).
+        db.execute("PRAGMA foreign_keys = ON")
+        for number, start in enumerate(range(0, len(records), RUN_RECORDS)):
+            run = records[start : start + RUN_RECORDS]
+            added.update(
+                merge_run(db, f"{name}-{number}", run, merge=merge, ingest=ingest, now=now)
+            )
+    finally:
+        db.close()
+    return added
+
+
+def write_delta(path: Path, records: list[Record]) -> None:
+    """A day's bulk records as one object beside the last bulk build: gzipped JSON lines of
+    staged records, replayed in order by `merge_into` on a restore."""
+    with gzip.open(path, "wt", encoding="utf-8") as stream:
+        for record in records:
+            stream.write(json.dumps(record.staged(), ensure_ascii=False, separators=(",", ":")))
+            stream.write("\n")
+
+
+def read_delta(path: Path) -> list[Record]:
+    with gzip.open(path, "rt", encoding="utf-8") as stream:
+        return [Record(**json.loads(line)) for line in stream if line.strip()]

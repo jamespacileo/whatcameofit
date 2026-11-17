@@ -16,6 +16,7 @@ from thenwhat.store.form import Record, payload_of
 from thenwhat.store.tiers import (
     BULK,
     HOT,
+    REFERENCE,
     TIER,
     checksums,
     fingerprint_sql,
@@ -58,7 +59,7 @@ def test_a_build_splits_into_a_hot_and_a_bulk_file(session: Session, tmp_path: P
             continue
         rows_hot = hot_db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
         rows_bulk = bulk_db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
-        if tier_of(table) == HOT:
+        if tier_of(table) == HOT and table not in REFERENCE:
             assert rows_bulk == 0, table
         elif tier_of(table) == BULK:
             assert rows_hot == 0, table
@@ -68,8 +69,9 @@ def test_a_build_splits_into_a_hot_and_a_bulk_file(session: Session, tmp_path: P
         hot_db.execute("SELECT count(*) FROM run").fetchone()
         == bulk_db.execute("SELECT count(*) FROM run").fetchone()
     )
-    # Nothing in the hot file names a row it does not hold.
+    # Neither file names a row it does not hold.
     assert hot_db.execute("PRAGMA foreign_key_check").fetchall() == []
+    assert bulk_db.execute("PRAGMA foreign_key_check").fetchall() == []
     # A payload goes with what points at it: the event's to the hot file, the trials' to
     # the bulk one; the large object to the hot tier's folder.
     big = payload_of(world["big_payload"])
@@ -163,3 +165,88 @@ def test_store_checksum_compares_with_d1_and_refuses_a_difference(tmp_path: Path
         ["store", "checksum", str(path), "--tier", "hot", "--against", str(tmp_path / "d1.json")],
     )
     assert differs.exit_code == 1 and "claim" in differs.output
+
+
+def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_delta(
+    session: Session, tmp_path: Path
+):
+    from sqlalchemy import select
+
+    from thenwhat.db.models import LinkLead, LinkShare
+    from thenwhat.store.build import BUILD_ID_SQL, merge_into, read_delta, write_delta
+    from thenwhat.store.gather import Gathered, stream
+    from thenwhat.store.push import increment
+    from thenwhat.store.tiers import bulk_records, checks
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+    _, bulk = split_build(file, payloads, "both")
+    kept_copy = tmp_path / "downloaded.sqlite"
+    shutil.copyfile(bulk, kept_copy)
+    # The bulk file holds the claims its leads hang from.
+    assert sqlite3.connect(bulk).execute("SELECT count(*) FROM claim").fetchone()[0] == 4
+    # The build is named in both files and in D1 by the same query.
+    assert sqlite3.connect(bulk).execute(BUILD_ID_SQL).fetchone() == (report.build_id,)
+    assert checks(tier_path(file, HOT), HOT)["build"] == report.build_id
+
+    # A day later: a new share of the stored lead.
+    lead = session.scalars(select(LinkLead).where(LinkLead.triage_score.is_not(None))).first()
+    assert lead is not None
+    session.add(
+        LinkShare(
+            link_lead_id=lead.id,
+            platform="reddit",
+            community="medicine",
+            shared_at=datetime(2026, 11, 18, tzinfo=UTC),
+            score=5,
+        )
+    )
+    session.flush()
+    records, _ = bulk_records(stream(session, Gathered(records=[])))
+    day = increment(records, report.state, actions=True).records
+    assert [r.kind for r in day] == ["link_share"]
+    merge_into(bulk, day, store_sql=STORE, now=datetime(2026, 11, 18, tzinfo=UTC), name="bulk-1")
+    shares = "SELECT count(*) FROM link_share"
+    assert sqlite3.connect(bulk).execute(shares).fetchone()[0] == 3
+
+    # The bulk tier's restore: the kept file and the day's delta.
+    delta = tmp_path / "delta.jsonl.gz"
+    write_delta(delta, day)
+    merge_into(
+        kept_copy,
+        read_delta(delta),
+        store_sql=STORE,
+        now=datetime(2026, 11, 18, tzinfo=UTC),
+        name="bulk-1",
+    )
+    assert [c.sha256 for c in checksums(kept_copy, BULK) if c.table == "link_share"] == [
+        c.sha256 for c in checksums(bulk, BULK) if c.table == "link_share"
+    ]
+
+
+def test_the_checks_file_holds_each_table_s_sql_and_the_row_it_must_give(tmp_path: Path):
+    from thenwhat.store.tiers import checks
+
+    path = tmp_path / "s.sqlite"
+    db = sqlite3.connect(path)
+    db.executescript((STORE / "schema.sql").read_text())
+    db.commit()
+    found = checks(path, HOT)
+    assert found["build"] is None
+    for table, check in found["tables"].items():
+        cursor = db.execute(check["sql"])
+        names = [d[0] for d in cursor.description]
+        assert dict(zip(names, cursor.fetchone(), strict=True)) == check["expected"], table
+        assert len(check["sql"].encode()) < 100_000
+    assert "registry_trial" not in found["tables"] and "claim" in found["tables"]
+
+
+def test_every_kind_gather_gives_is_of_one_tier():
+    from test_store_records import KINDS
+    from thenwhat.store.tiers import BULK_KINDS, HOT_KINDS
+
+    assert not HOT_KINDS & BULK_KINDS
+    assert set(KINDS) - {"payload"} <= HOT_KINDS | BULK_KINDS

@@ -3,6 +3,7 @@ D1's import takes it in by."""
 
 import json
 import os
+import re
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -14,16 +15,26 @@ import typer
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.export import STORE_SQL, reading_session
-from thenwhat.store.build import BuildFailed, build
+from thenwhat.store.build import BuildFailed, build, merge_into, read_delta, write_delta
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
-from thenwhat.store.push import USER_AGENT, PushFailed, push, read_state, write_state
+from thenwhat.store.push import (
+    USER_AGENT,
+    PushFailed,
+    increment,
+    push,
+    read_state,
+    state_of,
+    write_state,
+)
 from thenwhat.store.tiers import (
     ALL,
     BOTH,
     CHOICES,
     answer_row,
+    bulk_records,
+    checks,
     checksums,
     hash_of,
     hot_records,
@@ -42,6 +53,11 @@ StoreSql = Annotated[
 
 def state_path(file: Path) -> Path:
     return file.with_name(file.name + ".pushed.json")
+
+
+def bulk_state_path(file: Path) -> Path:
+    """What the bulk file holds, for `thenwhat store merge-bulk` to start from."""
+    return file.with_name(file.name + ".bulk.json")
 
 
 def _size(count: int) -> str:
@@ -92,6 +108,8 @@ def build_command(
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None
     write_state(state_path(file), report.state)
+    write_state(bulk_state_path(file), report.state)
+    out.print(f"Build {report.build_id}.", markup=False)
     out.print(f"Built the whole store ({_size(report.size)}) in {report.runs} runs.", markup=False)
     for kind in sorted(report.handed):
         out.print(
@@ -126,6 +144,14 @@ def checksum_command(
         Path | None,
         typer.Option(help="Also write each table's SQL to this JSON file, for the D1 side."),
     ] = None,
+    checks_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--checks",
+            help="Also write the checks store/ingest/scripts/checksum-d1.mjs runs: each"
+            " table's SQL and the row it must give, and the build's id.",
+        ),
+    ] = None,
     against: Annotated[
         Path | None,
         typer.Option(
@@ -140,6 +166,8 @@ def checksum_command(
         err.print(f"No store file at {file}.")
         raise typer.Exit(code=1)
     found = checksums(file, tier)
+    if checks_file is not None:
+        checks_file.write_text(json.dumps(checks(file, tier), indent=1) + "\n")
     if sql is not None:
         sql.write_text(json.dumps({c.table: c.sql for c in found}, indent=1) + "\n")
     answers = json.loads(against.read_text()) if against is not None else None
@@ -341,3 +369,87 @@ def push_command(
         )
     for reason, count in sorted(report.left_out.items()):
         out.print(f"{count:,} left out: {reason}.", markup=False)
+
+
+@store_app.command("merge-bulk")
+def merge_bulk_command(
+    file: Annotated[
+        Path, typer.Argument(help="The bulk file, as the last build or merge left it.")
+    ],
+    state: Annotated[
+        Path,
+        typer.Option(help="What the bulk file holds: `<store file>.bulk.json` from the build."),
+    ],
+    delta: Annotated[
+        Path, typer.Option(help="Write the day's records here, gzipped JSON lines, for R2.")
+    ],
+    payloads: Annotated[Path, typer.Option(help="The bulk tier's folder of payload objects.")],
+    store_sql: StoreSql = STORE_SQL,
+) -> None:
+    """Merge the day's records of the bulk tier into the bulk file, by the store's own
+    merge, as the one writer of that file (docs/adr/0010), and write them as the day's
+    delta to keep beside the last bulk build. The database is only read."""
+    if not file.is_file() or not state.is_file():
+        err.print(f"No bulk file at {file}, or no state at {state}.")
+        raise typer.Exit(code=1)
+    held = read_state(state)
+
+    def keep_payload(payload: Payload) -> None:
+        if not payload.inline and f"payload\t{payload.sha256}" not in held:
+            target = payloads / payload.r2_key
+            if not target.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(payload.text.encode())
+
+    with reading_session() as session:
+        records, _ = bulk_records(stream(session, Gathered(records=[]), keep_payload=keep_payload))
+    chosen = increment(records, held, actions=True)
+    now = datetime.now(UTC)
+    try:
+        added = merge_into(
+            file, chosen.records, store_sql=store_sql, now=now, name=f"bulk-{now:%Y%m%d%H%M%S}"
+        )
+    except BuildFailed as fault:
+        err.print(str(fault), markup=False)
+        raise typer.Exit(code=1) from None
+    write_delta(delta, chosen.records)
+    held.update(state_of(chosen.records))
+    write_state(state, held)
+    out.print(
+        f"Merged {len(chosen.records):,} records into {file}; the delta is {delta}"
+        f" ({_size(delta.stat().st_size)}).",
+        markup=False,
+    )
+    for kind, count in sorted(added.items()):
+        if count:
+            out.print(f"  {kind}: {count:,} added", markup=False)
+    for reason, count in sorted(chosen.left_out.items()):
+        out.print(f"{count:,} left out: {reason}.", markup=False)
+
+
+@store_app.command("apply-delta")
+def apply_delta_command(
+    file: Annotated[Path, typer.Argument(help="A bulk file downloaded from R2.")],
+    deltas: Annotated[list[Path], typer.Argument(help="The deltas kept beside it, oldest first.")],
+    store_sql: StoreSql = STORE_SQL,
+) -> None:
+    """Bring a downloaded bulk file up to date by merging its deltas into it in order: the
+    bulk tier's restore."""
+    missing = [delta for delta in [file, *deltas] if not delta.is_file()]
+    if missing:
+        err.print(f"No file at {missing[0]}.")
+        raise typer.Exit(code=1)
+    for number, delta in enumerate(deltas):
+        records = read_delta(delta)
+        try:
+            merge_into(
+                file,
+                records,
+                store_sql=store_sql,
+                now=datetime.now(UTC),
+                name="delta-" + re.sub(r"[^A-Za-z0-9_-]", "-", delta.name)[:40] + f"-{number}",
+            )
+        except BuildFailed as fault:
+            err.print(f"{delta}: {fault}", markup=False)
+            raise typer.Exit(code=1) from None
+        out.print(f"Applied {delta}: {len(records):,} records.", markup=False)
