@@ -1,8 +1,10 @@
 // ClinicalTrials.gov API v2, as the pipeline's client searches it. Terms and limits:
 // docs/sources.md. Keep the search rule in step with thenwhat.sources.clinicaltrials.
 // A public registry answer may be reused for a day; a failure is never kept.
+// Every answer has its people removed before it is kept or handed on (people.mjs).
 
 import { withDeadline } from "./deadline.mjs";
+import { answerWithoutPeople } from "./people.mjs";
 import { SOURCE_TTL_SECONDS, makeShared, makeSourceCache } from "./public-cache.mjs";
 
 const API = "https://clinicaltrials.gov/api/v2";
@@ -13,6 +15,8 @@ const TIMEOUT_MS = 10_000;
 const SEARCH_FIELDS =
   "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition" +
   ",Acronym,EnrollmentCount,CollaboratorName,StudyType" +
+  // Who a sponsor or collaborator is, so that one who is a person is not named.
+  ",LeadSponsorClass,CollaboratorClass,ResponsiblePartyType" +
   ",InterventionDescription,InterventionArmGroupLabel,ArmGroupLabel,ArmGroupType,ArmGroupDescription,ArmGroupInterventionName";
 // A trial's name that this many trials carry does not identify one.
 const MAX_NAMED_TRIALS = 20;
@@ -48,14 +52,14 @@ export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS, cache, ca
     return shared(url.href, async (signal) => {
       const key = await reuse.key(url.href);
       const saved = await reuse.get(key);
-      if (saved && typeof saved === "object") return saved;
+      if (saved && typeof saved === "object") return answerWithoutPeople(saved);
       // A registry that does not answer in time is an error, never an empty search.
-      const body = await withDeadline(timeoutMs, async (deadline) => {
+      const body = answerWithoutPeople(await withDeadline(timeoutMs, async (deadline) => {
         const response = await fetch(url.href, { headers, signal: deadline });
         if (response.status === 404) return null;
         if (!response.ok) throw new Error(`registry ${response.status}`);
         return response.json();
-      }, { label: "registry", parent: signal });
+      }, { label: "registry", parent: signal }));
       // Only a public answer is kept; a missing record is asked about again.
       if (body && typeof body === "object") await reuse.put(key, body, SOURCE_TTL_SECONDS);
       return body;
@@ -72,9 +76,12 @@ export function makeRegistry({ fetch, contact, timeoutMs = TIMEOUT_MS, cache, ca
   }
 
   return {
-    /** The full record of one trial, or null when the registry has none by that number. */
-    async fetch(number, { signal } = {}) {
-      return /^NCT\d{8}$/.test(number) ? get(`/studies/${number}`, null, signal) : null;
+    /**
+     * The record of one trial without its people, or null when the registry has none by
+     * that number. With `fields`, the registry is asked for those fields alone.
+     */
+    async fetch(number, { signal, fields } = {}) {
+      return /^NCT\d{8}$/.test(number) ? get(`/studies/${number}`, fields ? { fields } : null, signal) : null;
     },
 
     /**

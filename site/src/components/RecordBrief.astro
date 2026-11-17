@@ -3,6 +3,7 @@
 // each answer read without opening anything and each opening to the record it came from
 // (openspec site-publishing: "A claim page answers fixed questions from its records").
 // Native disclosures, so every answer opens without scripting and prints open.
+import ChevronDown from "@lucide/astro/icons/chevron-down";
 import FoldHead from "./FoldHead.astro";
 import type { ExportedClaim } from "../lib/export";
 import { BRIEF_TITLE, briefNote, recordBrief, sourceWords } from "../lib/record-brief";
@@ -35,6 +36,9 @@ const groups = recordBrief(claim, lastChecked);
                     <summary>
                       <span class="brief-q">{row.question}</span>
                       <span class="brief-a">{row.answer}</span>
+                      <span class="chev" aria-hidden="true">
+                        <ChevronDown size={16} stroke-width={2} />
+                      </span>
                     </summary>
                     <div class="brief-open">
                       {row.opened.map((sentence) => (

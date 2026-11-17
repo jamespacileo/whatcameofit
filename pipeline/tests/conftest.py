@@ -1,10 +1,12 @@
-"""Database fixtures. Tests run against a throwaway Postgres database that is
-dropped and rebuilt from the migrations at the start of every test session."""
+"""Database fixtures. Tests run against a throwaway Postgres database, on the test
+suite's own server, that is dropped and rebuilt from the migrations at the start of
+every test session."""
 
 import json
 import os
+import re
 import socket
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -16,16 +18,82 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import Session
 
-DEFAULT_TEST_URL = "postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:5433/thenwhat_test"
 PIPELINE_ROOT = Path(__file__).resolve().parents[1]
+
+# Where the working database listens on this machine (compose.yaml, `db`). Tests are
+# never run on that server: they drop and recreate a database, and a drop under load
+# has brought it down.
+WORKING_PORT = 5433
+WORKING_DATABASE = "thenwhat"
+# The test suite's own server (compose.yaml, `test-db`).
+TEST_PORT = 5434
+
+
+class NotATestDatabase(RuntimeError):
+    """The address given for the tests is not one a test may drop a database at."""
+
+
+def default_test_database(checkout: Path) -> str:
+    """A database name of this checkout's own, so that two checkouts running their tests
+    at once on the one test server do not drop each other's."""
+    name = re.sub(r"[^a-z0-9]+", "_", checkout.name.lower()).strip("_")[:40]
+    return f"thenwhat_{name or 'checkout'}_test"
+
+
+def database_for_tests(environ: Mapping[str, str], checkout: Path = PIPELINE_ROOT.parent) -> URL:
+    """The database the tests drop and rebuild: `TEST_DATABASE_URL`, or this checkout's
+    own database on the test server. Refused when it could be the working database or
+    any database on the working database's server."""
+    given = environ.get("TEST_DATABASE_URL")
+    if given:
+        url = make_url(given)
+    else:
+        port = int(environ.get("TEST_DB_PORT", TEST_PORT))
+        url = make_url(
+            f"postgresql+psycopg://thenwhat:thenwhat@127.0.0.1:{port}/"
+            + default_test_database(checkout)
+        )
+    name = url.database or ""
+    if not name.endswith("_test") or name == WORKING_DATABASE:
+        raise NotATestDatabase(
+            f"Tests drop the database they are given, so its name must end in _test: {name!r}"
+            " does not. Leave TEST_DATABASE_URL unset to use the test server (make test-db-up)."
+        )
+    working_ports = {WORKING_PORT}
+    if environ.get("DB_PORT", "").isdigit():
+        working_ports.add(int(environ["DB_PORT"]))
+    servers = {(url.host or "", url.port or 5432)}
+    working = {("127.0.0.1", port) for port in working_ports} | {
+        ("localhost", port) for port in working_ports
+    }
+    if environ.get("DATABASE_URL"):
+        database = make_url(environ["DATABASE_URL"])
+        working.add((database.host or "", database.port or 5432))
+    if servers & working:
+        raise NotATestDatabase(
+            f"Tests are not run on the working database's server ({url.host}:{url.port}): a"
+            " dropped database there has brought it down. Leave TEST_DATABASE_URL unset, or"
+            f" point it at the test server on port {TEST_PORT} (make test-db-up)."
+        )
+    return url
+
+
+_resolved: URL | None = None
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Settle the tests' database before anything runs, from the environment as the run
+    was started, and stop the run with the reason when it is not one tests may use."""
+    global _resolved
+    try:
+        _resolved = database_for_tests(os.environ)
+    except NotATestDatabase as refused:
+        raise pytest.UsageError(str(refused)) from None
 
 
 def _test_url() -> URL:
-    url = make_url(os.environ.get("TEST_DATABASE_URL", DEFAULT_TEST_URL))
-    if not (url.database or "").endswith("_test"):
-        # The session fixture drops this database, so never accept a real one.
-        raise RuntimeError("TEST_DATABASE_URL must name a database whose name ends in _test.")
-    return url
+    assert _resolved is not None
+    return _resolved
 
 
 @pytest.fixture(scope="session")
