@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-11-17T23:05:47.474347Z",
+  "generated_at": "2026-11-17T23:30:26.462136Z",
   "last_checked_at": "2026-11-17T08:13:09.235818Z",
   "preview": false,
   "sources": [
@@ -1052756,6 +1052756,3876 @@
           "read_on": "2026-11-17"
         }
       ]
+    },
+    {
+      "slug": "icotrokinra-psoriasis",
+      "headline": "Panel reviews two-year icotrokinra findings in psoriasis at high-impact sites",
+      "summary": "A video panel discusses 112-week findings with icotrokinra, including continued clearance on the scalp, genitals, hands and feet. It also considers data on tissue-resident T cells and whether IL-23 inhibition could influence disease control after treatment ends.",
+      "vertical": "skin-and-hair",
+      "approach": null,
+      "approach_basis": null,
+      "clinical_categories": [
+        {
+          "identifier": "D011565",
+          "sources": [
+            {
+              "kind": "paper",
+              "identifier": "10.1016/s0140-6736(25)01576-4",
+              "score": null
+            },
+            {
+              "kind": "paper",
+              "identifier": "10.1056/evidoa2500155",
+              "score": null
+            },
+            {
+              "kind": "paper",
+              "identifier": "10.1056/nejmoa2504187",
+              "score": null
+            },
+            {
+              "kind": "paper",
+              "identifier": "10.1093/bjd/ljag264",
+              "score": null
+            },
+            {
+              "kind": "term",
+              "identifier": "D011565",
+              "score": 1
+            },
+            {
+              "kind": "trial",
+              "identifier": "NCT06295692",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "intervention": {
+        "name": "icotrokinra",
+        "synonyms": []
+      },
+      "indication": "Psoriasis",
+      "first_reported_date": "2026-11-16",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.95,
+        "also": []
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_3",
+        "overlay_years": null,
+        "updated_at": "2026-11-17T23:27:54.406847Z",
+        "explained_by": [
+          35749,
+          35762,
+          35748,
+          35761,
+          35751,
+          35752,
+          35739,
+          35759,
+          35758,
+          35740,
+          35743,
+          35742
+        ],
+        "history": [
+          {
+            "on": "2022-02-03",
+            "code": "phase_2"
+          },
+          {
+            "on": "2023-10-12",
+            "code": "phase_3"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.hcplive.com/view/high-impact-site-clearance-and-durability-with-oral-il-23-inhibition-in-pso",
+          "outlet": "HCPLive",
+          "title": "High-Impact Site Clearance and Durability With Oral IL-23 Inhibition in PsO | HCPLive",
+          "published_date": "2026-11-16",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 35765,
+          "type": "trial_status_change",
+          "event_date": "2022-02-03",
+          "date_basis": "start date",
+          "summary": "Trial NCT05223868 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05223868",
+          "trial_id": "NCT05223868",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35764,
+          "type": "trial_registered",
+          "event_date": "2022-02-04",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05223868 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05223868",
+          "trial_id": "NCT05223868",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35744,
+          "type": "trial_registered",
+          "event_date": "2022-05-03",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05357755 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05357755",
+          "trial_id": "NCT05357755",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35754,
+          "type": "trial_registered",
+          "event_date": "2022-05-06",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05364554 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05364554",
+          "trial_id": "NCT05364554",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35755,
+          "type": "trial_status_change",
+          "event_date": "2022-06-10",
+          "date_basis": "start date",
+          "summary": "Trial NCT05364554 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05364554",
+          "trial_id": "NCT05364554",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35745,
+          "type": "trial_status_change",
+          "event_date": "2022-06-13",
+          "date_basis": "start date",
+          "summary": "Trial NCT05357755 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05357755",
+          "trial_id": "NCT05357755",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35766,
+          "type": "trial_status_change",
+          "event_date": "2022-12-15",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05223868 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05223868",
+          "trial_id": "NCT05223868",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35746,
+          "type": "trial_status_change",
+          "event_date": "2023-04-10",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05357755 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05357755",
+          "trial_id": "NCT05357755",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35756,
+          "type": "trial_status_change",
+          "event_date": "2023-09-29",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05364554 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05364554",
+          "trial_id": "NCT05364554",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35749,
+          "type": "trial_status_change",
+          "event_date": "2023-10-12",
+          "date_basis": "start date",
+          "summary": "Trial NCT06095115 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06095115",
+          "trial_id": "NCT06095115",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35762,
+          "type": "trial_status_change",
+          "event_date": "2023-10-12",
+          "date_basis": "start date",
+          "summary": "Trial NCT06095102 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06095102",
+          "trial_id": "NCT06095102",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35748,
+          "type": "trial_registered",
+          "event_date": "2023-10-23",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06095115 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06095115",
+          "trial_id": "NCT06095115",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35761,
+          "type": "trial_registered",
+          "event_date": "2023-10-23",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06095102 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06095102",
+          "trial_id": "NCT06095102",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35751,
+          "type": "trial_registered",
+          "event_date": "2023-11-22",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06143878 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06143878",
+          "trial_id": "NCT06143878",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35752,
+          "type": "trial_status_change",
+          "event_date": "2024-01-17",
+          "date_basis": "start date",
+          "summary": "Trial NCT06143878 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06143878",
+          "trial_id": "NCT06143878",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35739,
+          "type": "trial_registered",
+          "event_date": "2024-01-24",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06220604 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06220604",
+          "trial_id": "NCT06220604",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35759,
+          "type": "trial_status_change",
+          "event_date": "2024-02-09",
+          "date_basis": "start date",
+          "summary": "Trial NCT06295692 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06295692",
+          "trial_id": "NCT06295692",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35758,
+          "type": "trial_registered",
+          "event_date": "2024-03-06",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06295692 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06295692",
+          "trial_id": "NCT06295692",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35740,
+          "type": "trial_status_change",
+          "event_date": "2024-03-09",
+          "date_basis": "start date",
+          "summary": "Trial NCT06220604 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06220604",
+          "trial_id": "NCT06220604",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35743,
+          "type": "trial_status_change",
+          "event_date": "2025-04-15",
+          "date_basis": "start date",
+          "summary": "Trial NCT06934226 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06934226",
+          "trial_id": "NCT06934226",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35742,
+          "type": "trial_registered",
+          "event_date": "2025-04-18",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06934226 registered (Phase 3).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06934226",
+          "trial_id": "NCT06934226",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35767,
+          "type": "trial_results_posted",
+          "event_date": "2025-12-30",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT05223868.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05223868",
+          "trial_id": "NCT05223868",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35760,
+          "type": "trial_results_posted",
+          "event_date": "2026-01-28",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT06295692.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06295692",
+          "trial_id": "NCT06295692",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35747,
+          "type": "trial_results_posted",
+          "event_date": "2026-05-05",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT05357755.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05357755",
+          "trial_id": "NCT05357755",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35750,
+          "type": "trial_results_posted",
+          "event_date": "2026-06-01",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT06095115.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06095115",
+          "trial_id": "NCT06095115",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35757,
+          "type": "trial_results_posted",
+          "event_date": "2026-06-01",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT05364554.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05364554",
+          "trial_id": "NCT05364554",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35741,
+          "type": "trial_results_posted",
+          "event_date": "2026-06-25",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT06220604.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06220604",
+          "trial_id": "NCT06220604",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35753,
+          "type": "trial_results_posted",
+          "event_date": "2026-06-25",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT06143878.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06143878",
+          "trial_id": "NCT06143878",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35763,
+          "type": "trial_results_posted",
+          "event_date": "2026-06-25",
+          "date_basis": "results first posted",
+          "summary": "Results posted for trial NCT06095102.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06095102",
+          "trial_id": "NCT06095102",
+          "trial_phases": [
+            "phase_3"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05223868",
+          "url": "https://clinicaltrials.gov/study/NCT05223868",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study of JNJ-77242113 in Participants With Moderate-to-severe Plaque Psoriasis. For: Plaque Psoriasis. Tests: JNJ-77242113, Placebo. Phase 2, completed.",
+          "record": {
+            "title": "A Study of JNJ-77242113 in Participants With Moderate-to-severe Plaque Psoriasis",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113",
+              "Placebo"
+            ],
+            "phases": [
+              "phase_2"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06220604",
+          "url": "https://clinicaltrials.gov/study/NCT06220604",
+          "score": 0.99,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study of JNJ-77242113 for the Treatment of Participants With Moderate to Severe Plaque Psoriasis (ICONIC-ADVANCE 2). For: Plaque Psoriasis. Tests: JNJ-77242113, JNJ-77242113 Matching Placebo, Deucravacitinib, Deucravacitinib Matching Placebo. Phase 3, active not recruiting.",
+          "record": {
+            "title": "A Study of JNJ-77242113 for the Treatment of Participants With Moderate to Severe Plaque Psoriasis (ICONIC-ADVANCE 2)",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113",
+              "JNJ-77242113 Matching Placebo",
+              "Deucravacitinib",
+              "Deucravacitinib Matching Placebo"
+            ],
+            "phases": [
+              "phase_3"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05357755",
+          "url": "https://clinicaltrials.gov/study/NCT05357755",
+          "score": 0.95,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study of JNJ-77242113 for the Treatment of Moderate-to-Severe Plaque Psoriasis. For: Plaque Psoriasis. Tests: JNJ-77242113, Placebo. Phase 2, completed.",
+          "record": {
+            "title": "A Study of JNJ-77242113 for the Treatment of Moderate-to-Severe Plaque Psoriasis",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113",
+              "Placebo"
+            ],
+            "phases": [
+              "phase_2"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06095115",
+          "url": "https://clinicaltrials.gov/study/NCT06095115",
+          "score": 0.95,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study of JNJ-77242113 in Adolescent and Adult Participants With Moderate to Severe Plaque Psoriasis. For: Plaque Psoriasis. Tests: JNJ-77242113, Placebo. Phase 3, active not recruiting.",
+          "record": {
+            "title": "A Study of JNJ-77242113 in Adolescent and Adult Participants With Moderate to Severe Plaque Psoriasis",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113",
+              "Placebo"
+            ],
+            "phases": [
+              "phase_3"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06095102",
+          "url": "https://clinicaltrials.gov/study/NCT06095102",
+          "score": 0.95,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study of JNJ-77242113 for the Treatment of Participants With Plaque Psoriasis Involving Special Areas (Scalp, Genital, and/or Palms of the Hands and the Soles of the Feet). For: Plaque Psoriasis. Tests: JNJ-77242113, Placebo. Phase 3, active not recruiting.",
+          "record": {
+            "title": "A Study of JNJ-77242113 for the Treatment of Participants With Plaque Psoriasis Involving Special Areas (Scalp, Genital, and/or Palms of the Hands and the Soles of the Feet)",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113",
+              "Placebo"
+            ],
+            "phases": [
+              "phase_3"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06934226",
+          "url": "https://clinicaltrials.gov/study/NCT06934226",
+          "score": 0.94,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study to Assess Efficacy and Safety of JNJ-77242113 Compared to Placebo and Ustekinumab in Participants With Moderate to Severe Plaque Psoriasis. For: Plaque Psoriasis. Tests: JNJ-77242113, Matching Placebo to JNJ-77242113, Ustekinumab, Matching Placebo to Ustekinumab. Phase 3, active not recruiting.",
+          "record": {
+            "title": "A Study to Assess Efficacy and Safety of JNJ-77242113 Compared to Placebo and Ustekinumab in Participants With Moderate to Severe Plaque Psoriasis",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113",
+              "Matching Placebo to JNJ-77242113",
+              "Ustekinumab",
+              "Matching Placebo to Ustekinumab"
+            ],
+            "phases": [
+              "phase_3"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05364554",
+          "url": "https://clinicaltrials.gov/study/NCT05364554",
+          "score": 0.94,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Long-term Extension Study of JNJ-77242113 in Participants With Moderate-to-Severe Plaque Psoriasis. For: Plaque Psoriasis. Tests: JNJ-77242113. Phase 2, completed.",
+          "record": {
+            "title": "A Long-term Extension Study of JNJ-77242113 in Participants With Moderate-to-Severe Plaque Psoriasis",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113"
+            ],
+            "phases": [
+              "phase_2"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06143878",
+          "url": "https://clinicaltrials.gov/study/NCT06143878",
+          "score": 0.87,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study of JNJ-77242113 for the Treatment of Participants With Moderate to Severe Plaque Psoriasis. For: Plaque Psoriasis. Tests: JNJ-77242113, JNJ-77242113 Matching Placebo, Deucravacitinib, Deucravacitinib Matching Placebo. Phase 3, active not recruiting.",
+          "record": {
+            "title": "A Study of JNJ-77242113 for the Treatment of Participants With Moderate to Severe Plaque Psoriasis",
+            "conditions": [
+              "Plaque Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113",
+              "JNJ-77242113 Matching Placebo",
+              "Deucravacitinib",
+              "Deucravacitinib Matching Placebo"
+            ],
+            "phases": [
+              "phase_3"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06295692",
+          "url": "https://clinicaltrials.gov/study/NCT06295692",
+          "score": 0.85,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "A Study of JNJ-77242113 for the Treatment of Participants With Generalized Pustular Psoriasis or Erythrodermic Psoriasis. For: Generalized Pustular Psoriasis, Erythrodermic Psoriasis. Tests: JNJ-77242113. Phase 3, active not recruiting.",
+          "record": {
+            "title": "A Study of JNJ-77242113 for the Treatment of Participants With Generalized Pustular Psoriasis or Erythrodermic Psoriasis",
+            "conditions": [
+              "Generalized Pustular Psoriasis",
+              "Erythrodermic Psoriasis"
+            ],
+            "interventions": [
+              "JNJ-77242113"
+            ],
+            "phases": [
+              "phase_3"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07196722",
+          "url": "https://clinicaltrials.gov/study/NCT07196722",
+          "score": 0.06,
+          "state": "candidate",
+          "reading": "other_indication",
+          "decided_by": null,
+          "summary": "A Study of Icotrokinra in Participants With Moderately to Severely Active Crohn's Disease. For: Crohn Disease. Tests: Icotrokinra, Placebo. Phase 2/Phase 3, recruiting.",
+          "record": {
+            "title": "A Study of Icotrokinra in Participants With Moderately to Severely Active Crohn's Disease",
+            "conditions": [
+              "Crohn Disease"
+            ],
+            "interventions": [
+              "Icotrokinra",
+              "Placebo"
+            ],
+            "phases": [
+              "phase_2",
+              "phase_3"
+            ],
+            "state": "under_way",
+            "participants": null
+          }
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT05223868",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05223868",
+          "title": "A Study of JNJ-77242113 in Participants With Moderate-to-severe Plaque Psoriasis",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-17T23:27:58.559525Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 255,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants Who Achieved at Least 75 Percent (%) Improvement From Baseline in Psoriasis Area and Severity Index (PASI-75) at Week 16",
+                "time_frame": "Baseline (Week 0), Week 16"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants Who Achieved at Least 75 Percent (%) Improvement From Baseline in Psoriasis Area and Severity Index (PASI-75) at Week 16",
+                  "time_frame": "Baseline (Week 0), Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Placebo",
+                      "analysed": "43",
+                      "value": "9.3",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 25 mg QD",
+                      "analysed": "43",
+                      "value": "37.2",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 50 mg QD",
+                      "analysed": "43",
+                      "value": "58.1",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 25 mg BID",
+                      "analysed": "41",
+                      "value": "51.2",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 100 mg QD",
+                      "analysed": "43",
+                      "value": "65.1",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 100 mg BID",
+                      "analysed": "42",
+                      "value": "78.6",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Placebo",
+                        "JNJ-77242113 25 mg QD"
+                      ],
+                      "p_value": "=0.002",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo",
+                        "JNJ-77242113 50 mg QD"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo",
+                        "JNJ-77242113 25 mg BID"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo",
+                        "JNJ-77242113 100 mg QD"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo",
+                        "JNJ-77242113 100 mg BID"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 1
+            },
+            "arms": [
+              {
+                "label": "Group 1: JNJ-77242113 Dose 1 Once Daily (QD) and Placebo",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Placebo"
+                ]
+              },
+              {
+                "label": "Group 2: JNJ-77242113 Dose 2 QD and Placebo",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Placebo"
+                ]
+              },
+              {
+                "label": "Group 3: JNJ-77242113 Dose 3 QD and Placebo",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Placebo"
+                ]
+              },
+              {
+                "label": "Group 4: JNJ-77242113 Dose 1 Twice Daily (BID) and Placebo",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Placebo"
+                ]
+              },
+              {
+                "label": "Group 5: JNJ-77242113 Dose 3 BID and Placebo",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Placebo"
+                ]
+              },
+              {
+                "label": "Group 6: Placebo",
+                "kind": "placebo_comparator",
+                "interventions": [
+                  "Placebo"
+                ]
+              }
+            ]
+          },
+          "papers": [
+            "pmid:41424381",
+            "pmid:38324484"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:58.559525Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Psoriasis Area and Severity Index (PASI-75)",
+              "number": null,
+              "unit": null,
+              "code": "symptom_score",
+              "confidence": 0.99,
+              "read_on": "2026-11-17T23:27:58.559525Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT05357755",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05357755",
+          "title": "A Study of JNJ-77242113 for the Treatment of Moderate-to-Severe Plaque Psoriasis",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-17T23:27:55.568902Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 90,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentages of Participants Who Achieved at Least 75 Percent (%) Improvement From Baseline in Psoriasis Area and Severity Index (PASI 75) Score at Week 16",
+                "time_frame": "Baseline (Week 0), Week 16"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentages of Participants Who Achieved at Least 75 Percent (%) Improvement From Baseline in Psoriasis Area and Severity Index (PASI 75) Score at Week 16",
+                  "time_frame": "Baseline (Week 0), Week 16",
+                  "unit": "percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Placebo",
+                      "analysed": "24",
+                      "value": "4.2",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 10 mg QD",
+                      "analysed": "31",
+                      "value": "41.9",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 50 mg QD",
+                      "analysed": "34",
+                      "value": "73.5",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Placebo",
+                        "JNJ-77242113 10 mg QD"
+                      ],
+                      "p_value": "=0.002",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    },
+                    {
+                      "groups": [
+                        "Placebo",
+                        "JNJ-77242113 50 mg QD"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 1
+            },
+            "arms": [
+              {
+                "label": "Group 1: JNJ-77242113 Dose 1",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Group 2: JNJ-77242113 Dose 2",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Group 3: Placebo",
+                "kind": "placebo_comparator",
+                "interventions": [
+                  "Placebo"
+                ]
+              }
+            ]
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:55.568902Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentages of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.99,
+              "read_on": "2026-11-17T23:27:55.568902Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT05364554",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05364554",
+          "title": "A Long-term Extension Study of JNJ-77242113 in Participants With Moderate-to-Severe Plaque Psoriasis",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-17T23:27:57.071858Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 227,
+              "basis": "actual"
+            },
+            "allocation": "non_randomised",
+            "masking": "double",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants Who Achieved Greater Than or Equal to (>=) 75 Percent (%) Improvement From Baseline in Psoriasis Area Severity Index Score (PASI-75) at LTE Week 36",
+                "time_frame": "Baseline (Week 0 of originating study 77242113PSO2001), LTE Week 36 (52 weeks from originating study baseline)"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants Who Achieved Greater Than or Equal to (>=) 75 Percent (%) Improvement From Baseline in Psoriasis Area Severity Index Score (PASI-75) at LTE Week 36",
+                  "time_frame": "Baseline (Week 0 of originating study 77242113PSO2001), LTE Week 36 (52 weeks from originating study baseline)",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Placebo Then JNJ-77242113 100 mg QD",
+                      "analysed": "35",
+                      "value": "65.7",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 25 mg QD",
+                      "analysed": "43",
+                      "value": "48.8",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 50 mg QD",
+                      "analysed": "43",
+                      "value": "69.8",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 25 mg BID",
+                      "analysed": "41",
+                      "value": "58.5",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 100 mg QD",
+                      "analysed": "43",
+                      "value": "65.1",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 100 mg BID",
+                      "analysed": "42",
+                      "value": "76.2",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 1
+            },
+            "arms": [
+              {
+                "label": "Group 1: JNJ-77242113 Dose 1 Once Daily (QD)",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Group 2: JNJ-77242113 Dose 2 QD",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Group 3: JNJ-77242113 Dose 3 QD",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Group 4: JNJ-77242113 Dose 1 Twice Daily (BID)",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Group 5: JNJ-77242113 Dose 3 BID",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Group 6: JNJ-77242113 Dose 3 QD",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              }
+            ]
+          },
+          "papers": [
+            "pmid:41424381",
+            "10.1136/bmjopen-2024-085364"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "52 weeks from originating study baseline",
+              "number": 52,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 0.99,
+              "read_on": "2026-11-17T23:27:57.071858Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved Greater Than or Equal to (>=) 75 Percent (%) Improvement",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.98,
+              "read_on": "2026-11-17T23:27:57.071858Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT06095102",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06095102",
+          "title": "A Study of JNJ-77242113 for the Treatment of Participants With Plaque Psoriasis Involving Special Areas (Scalp, Genital, and/or Palms of the Hands and the Soles of the Feet)",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-17T23:27:58.076568Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 311,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "child",
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and a Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                "time_frame": "Week 16"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and a Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Arm 1: Placebo",
+                      "analysed": "103",
+                      "value": "5.8",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Arm 2: JNJ-77242113 200 mg",
+                      "analysed": "208",
+                      "value": "56.7",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Arm 1: Placebo",
+                        "Arm 2: JNJ-77242113 200 mg"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 1
+            },
+            "arms": [
+              {
+                "label": "JNJ-77242113",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Placebo",
+                "kind": "placebo_comparator",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Placebo"
+                ]
+              }
+            ]
+          },
+          "papers": [
+            "10.1056/evidoa2500155"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:58.076568Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.98,
+              "read_on": "2026-11-17T23:27:58.076568Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT06095115",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06095115",
+          "title": "A Study of JNJ-77242113 in Adolescent and Adult Participants With Moderate to Severe Plaque Psoriasis",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-17T23:27:56.106007Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 684,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "child",
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                "time_frame": "Week 16"
+              },
+              {
+                "measure": "Percentage of Participants Who Achieved Psoriasis Area and Severity Index (PASI) 90 Response at Week 16",
+                "time_frame": "Week 16"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of Participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Placebo to JNJ-77242113 200 mg",
+                      "analysed": "228",
+                      "value": "8.3",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 200 mg",
+                      "analysed": "456",
+                      "value": "64.7",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Placebo to JNJ-77242113 200 mg",
+                        "JNJ-77242113 200 mg"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                },
+                {
+                  "title": "Percentage of Participants Who Achieved Psoriasis Area and Severity Index (PASI) 90 Response at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Placebo to JNJ-77242113 200 mg",
+                      "analysed": "228",
+                      "value": "4.4",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "JNJ-77242113 200 mg",
+                      "analysed": "456",
+                      "value": "49.6",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Placebo to JNJ-77242113 200 mg",
+                        "JNJ-77242113 200 mg"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 2
+            },
+            "arms": [
+              {
+                "label": "JNJ-77242113",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              },
+              {
+                "label": "Placebo",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Placebo"
+                ]
+              }
+            ]
+          },
+          "papers": [
+            "10.1056/nejmoa2504187"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.106007Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.106007Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.106007Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.106007Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT06143878",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06143878",
+          "title": "A Study of JNJ-77242113 for the Treatment of Participants With Moderate to Severe Plaque Psoriasis",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-17T23:27:56.589386Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 774,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo",
+              "active"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and a Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                "time_frame": "Week 16"
+              },
+              {
+                "measure": "Percentage of Participants Who Achieved Psoriasis Area and Severity Index (PASI) 90 at Week 16",
+                "time_frame": "Week 16"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and a Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                      "analysed": "156",
+                      "value": "10.9",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Arm 2: JNJ-77242113 200 mg",
+                      "analysed": "311",
+                      "value": "68.5",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                        "Arm 2: JNJ-77242113 200 mg"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                },
+                {
+                  "title": "Percentage of Participants Who Achieved Psoriasis Area and Severity Index (PASI) 90 at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                      "analysed": "156",
+                      "value": "3.8",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Arm 2: JNJ-77242113 200 mg",
+                      "analysed": "311",
+                      "value": "55.0",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                        "Arm 2: JNJ-77242113 200 mg"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 2
+            },
+            "arms": [
+              {
+                "label": "JNJ-77242113",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Deucravacitinib Matching Placebo"
+                ]
+              },
+              {
+                "label": "Placebo",
+                "kind": "placebo_comparator",
+                "interventions": [
+                  "JNJ-77242113",
+                  "JNJ-77242113 Matching Placebo",
+                  "Deucravacitinib Matching Placebo"
+                ]
+              },
+              {
+                "label": "Deucravacitinib",
+                "kind": "active_comparator",
+                "interventions": [
+                  "JNJ-77242113",
+                  "JNJ-77242113 Matching Placebo",
+                  "Deucravacitinib"
+                ]
+              }
+            ]
+          },
+          "papers": [
+            "10.1093/bjd/ljag264",
+            "10.1016/s0140-6736(25)01576-4"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.589386Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.589386Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.589386Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:56.589386Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT06220604",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06220604",
+          "title": "A Study of JNJ-77242113 for the Treatment of Participants With Moderate to Severe Plaque Psoriasis (ICONIC-ADVANCE 2)",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-17T23:27:54.607837Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 731,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo",
+              "active"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                "time_frame": "Week 16"
+              },
+              {
+                "measure": "Percentage of Participants Who Achieved Psoriasis Area and Severity Index (PASI) 90 Response at Week 16",
+                "time_frame": "Week 16"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants Who Achieved an Investigator's Global Assessment (IGA) Score of 0 or 1 and Greater Than or Equal to (>=) 2-Grade Improvement From Baseline at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                      "analysed": "81",
+                      "value": "8.6",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Arm 2: JNJ-77242113 200 mg",
+                      "analysed": "320",
+                      "value": "70.9",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                        "Arm 2: JNJ-77242113 200 mg"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                },
+                {
+                  "title": "Percentage of Participants Who Achieved Psoriasis Area and Severity Index (PASI) 90 Response at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": null,
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                      "analysed": "81",
+                      "value": "1.2",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    },
+                    {
+                      "title": "Arm 2: JNJ-77242113 200 mg",
+                      "analysed": "320",
+                      "value": "57.5",
+                      "spread": null,
+                      "lower": null,
+                      "upper": null
+                    }
+                  ],
+                  "comparisons": [
+                    {
+                      "groups": [
+                        "Arm 1: Placebo Followed by JNJ-77242113 200 mg",
+                        "Arm 2: JNJ-77242113 200 mg"
+                      ],
+                      "p_value": "<0.001",
+                      "method": "Cochran-Mantel-Haenszel",
+                      "test": "superiority"
+                    }
+                  ]
+                }
+              ],
+              "outcomes_total": 2
+            },
+            "arms": [
+              {
+                "label": "JNJ-77242113",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Deucravacitinib Matching Placebo"
+                ]
+              },
+              {
+                "label": "Placebo",
+                "kind": "placebo_comparator",
+                "interventions": [
+                  "JNJ-77242113",
+                  "JNJ-77242113 Matching Placebo",
+                  "Deucravacitinib Matching Placebo"
+                ]
+              },
+              {
+                "label": "Deucravacitinib",
+                "kind": "active_comparator",
+                "interventions": [
+                  "JNJ-77242113",
+                  "JNJ-77242113 Matching Placebo",
+                  "Deucravacitinib"
+                ]
+              }
+            ]
+          },
+          "papers": [
+            "10.1093/bjd/ljag264",
+            "10.1016/s0140-6736(25)01576-4"
+          ],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:54.607837Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:54.607837Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:54.607837Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Percentage of Participants Who Achieved",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:54.607837Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT06295692",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06295692",
+          "title": "A Study of JNJ-77242113 for the Treatment of Participants With Generalized Pustular Psoriasis or Erythrodermic Psoriasis",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-17T23:27:57.567671Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 19,
+              "basis": "actual"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "child",
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Pharmaceutical K.K.",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Percentage of Participants With Generalized Pustular Psoriasis (GPP) Who Experienced Treatment Success at Week 16",
+                "time_frame": "Week 16"
+              },
+              {
+                "measure": "Percentage of Participants With Erythrodermic Psoriasis (EP) Who Experience Treatment Success at Week 16",
+                "time_frame": "Week 16"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": {
+              "outcomes": [
+                {
+                  "title": "Percentage of Participants With Generalized Pustular Psoriasis (GPP) Who Experienced Treatment Success at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": "95% Confidence Interval",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "GPP: JNJ-77242113 200 mg QD",
+                      "analysed": "9",
+                      "value": "88.9",
+                      "spread": null,
+                      "lower": "51.8",
+                      "upper": "99.7"
+                    }
+                  ],
+                  "comparisons": []
+                },
+                {
+                  "title": "Percentage of Participants With Erythrodermic Psoriasis (EP) Who Experience Treatment Success at Week 16",
+                  "time_frame": "Week 16",
+                  "unit": "Percentage of participants",
+                  "measure": "number",
+                  "spread_kind": "95% Confidence Interval",
+                  "rows": 1,
+                  "groups": [
+                    {
+                      "title": "EP: JNJ-77242113 200 mg QD",
+                      "analysed": "10",
+                      "value": "100.0",
+                      "spread": null,
+                      "lower": "69.2",
+                      "upper": "100.0"
+                    }
+                  ],
+                  "comparisons": []
+                }
+              ],
+              "outcomes_total": 2
+            },
+            "arms": [
+              {
+                "label": "JNJ-77242113- Participants With Generalized Pustular Psoriasis (GPP) or Erythrodermic Psoriasis (EP)",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113"
+                ]
+              }
+            ]
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:57.567671Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentage of Participants With Generalized Pustular Psoriasis (GPP) Who Experienced Treatment Success",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.96,
+              "read_on": "2026-11-17T23:27:57.567671Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:57.567671Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Percentage of Participants With Erythrodermic Psoriasis (EP) Who Experience Treatment Success",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.96,
+              "read_on": "2026-11-17T23:27:57.567671Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT06934226",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06934226",
+          "title": "A Study to Assess Efficacy and Safety of JNJ-77242113 Compared to Placebo and Ustekinumab in Participants With Moderate to Severe Plaque Psoriasis",
+          "phases": [
+            "phase_3"
+          ],
+          "state": "under_way",
+          "facts_as_of": "2026-11-17T23:27:55.054751Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 752,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "double",
+            "comparators": [
+              "placebo",
+              "active"
+            ],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "child",
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Janssen Research & Development, LLC",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "JNJ-77242113 and Placebo Group: Percentage of Participants with Investigator's Global Assessment (IGA) Score of 0 or 1 and Greater than or Equal to (>=) 2 Grade Improvement from Baseline at Week 16",
+                "time_frame": "Week 16"
+              },
+              {
+                "measure": "JNJ-77242113 and Placebo Group: Percentage of Participants Achieving Psoriasis Area and Severity Index (PASI) 90 Response at Week 16",
+                "time_frame": "Week 16"
+              }
+            ],
+            "primary_outcomes_total": 2,
+            "why_stopped": null,
+            "results": null,
+            "arms": [
+              {
+                "label": "Arm 1: JNJ 77242113",
+                "kind": "experimental",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Matching Placebo to Ustekinumab"
+                ]
+              },
+              {
+                "label": "Arm 2: Placebo",
+                "kind": "placebo_comparator",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Matching Placebo to JNJ-77242113",
+                  "Matching Placebo to Ustekinumab"
+                ]
+              },
+              {
+                "label": "Arm 3: Ustekinumab",
+                "kind": "active_comparator",
+                "interventions": [
+                  "JNJ-77242113",
+                  "Matching Placebo to JNJ-77242113",
+                  "Ustekinumab"
+                ]
+              }
+            ]
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:55.054751Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Percentage of Participants",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:55.054751Z"
+            },
+            {
+              "kind": "follow_up",
+              "outcome": 1,
+              "field": "time_frame",
+              "words": "Week 16",
+              "number": 16,
+              "unit": "weeks",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:55.054751Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "Percentage of Participants",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:27:55.054751Z"
+            }
+          ],
+          "claim_arm": null
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "pmid:41424381",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/41424381/",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT05223868",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT05364554",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "pmid:38324484",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/38324484/",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT05223868",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        },
+        {
+          "identifier": "10.1136/bmjopen-2024-085364",
+          "url": "https://doi.org/10.1136/bmjopen-2024-085364",
+          "record_url": "https://europepmc.org/article/MED/39971605",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT05364554",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-17T17:26:39.516224Z",
+          "facts": {
+            "title": "Climate footprint of industry-sponsored in-human clinical trials: life cycle assessments of clinical trials spanning multiple phases and disease areas.",
+            "journal": "BMJ open",
+            "year": 2025,
+            "kinds": [
+              "article"
+            ],
+            "open_access": true,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/evidoa2500155",
+          "url": "https://doi.org/10.1056/evidoa2500155",
+          "record_url": "https://europepmc.org/article/MED/41191932",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06095102",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-17T17:27:14.246646Z",
+          "facts": {
+            "title": "Targeted Oral Peptide Icotrokinra for Psoriasis Involving High-Impact Sites.",
+            "journal": "NEJM evidence",
+            "year": 2025,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1056/nejmoa2504187",
+          "url": "https://doi.org/10.1056/nejmoa2504187",
+          "record_url": "https://europepmc.org/article/MED/41191940",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06095115",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-17T17:27:14.246646Z",
+          "facts": {
+            "title": "Oral Icotrokinra for Plaque Psoriasis in Adults and Adolescents.",
+            "journal": "The New England journal of medicine",
+            "year": 2025,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1093/bjd/ljag264",
+          "url": "https://doi.org/10.1093/bjd/ljag264",
+          "record_url": "https://europepmc.org/article/MED/42397072",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06143878",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06220604",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-17T17:27:14.246646Z",
+          "facts": {
+            "title": "Durability of response to icotrokinra in adults with moderate-to-severe plaque psoriasis: 1-year results from the phase III, placebo- and active comparator-controlled ICONIC-ADVANCE 1 and ICONIC-ADVANCE 2 trials.",
+            "journal": "The British journal of dermatology",
+            "year": 2026,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        },
+        {
+          "identifier": "10.1016/s0140-6736(25)01576-4",
+          "url": "https://doi.org/10.1016/s0140-6736(25)01576-4",
+          "record_url": "https://europepmc.org/article/MED/40976249",
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06143878",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            },
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06220604",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": "2026-11-17T17:27:14.246646Z",
+          "facts": {
+            "title": "Once-daily oral icotrokinra versus placebo and once-daily oral deucravacitinib in participants with moderate-to-severe plaque psoriasis (ICONIC-ADVANCE 1 &amp; 2): two phase 3, randomised, placebo-controlled and active-comparator-controlled trials.",
+            "journal": "Lancet (London, England)",
+            "year": 2025,
+            "kinds": [
+              "randomised_trial",
+              "clinical_trial",
+              "article"
+            ],
+            "open_access": false,
+            "retracted": false,
+            "studied_in": [
+              "people"
+            ]
+          }
+        }
+      ],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "exact",
+          "label": "Psoriasis",
+          "name": null,
+          "definition": "A common genetically determined, chronic, inflammatory skin disease characterized by rounded erythematous, dry, scaling patches. The lesions have a predilection for nails, scalp, genitalia, extensor surfaces, and the lumbosacral region. Accelerated epidermopoiesis is considered to be the fundamental pathologic feature in psoriasis.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D011565",
+          "source": "mesh",
+          "external_id": "D011565",
+          "version": "2026",
+          "score": 1,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "label_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "Psoriasis",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-16T21:56:28.468696Z"
+        },
+        {
+          "kind": "intervention",
+          "fit": "kind",
+          "label": "Peptides",
+          "name": null,
+          "definition": "Members of the class of compounds composed of AMINO ACIDS joined together by peptide bonds between adjacent amino acids into linear, branched or cyclical structures. OLIGOPEPTIDES are composed of approximately 2-12 amino acids. Polypeptides are composed of approximately 13 or more amino acids. PROTEINS are considered to be larger versions of peptides that can form into complex structures such as ENZYMES and RECEPTORS.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D010455",
+          "source": "mesh",
+          "external_id": "D010455",
+          "version": "2026",
+          "score": 0.91,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "kind_chosen",
+              "trials": null,
+              "of": null,
+              "name": null,
+              "entry_term": null,
+              "kind": "peptide",
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T20:50:01.393002Z"
+        },
+        {
+          "kind": "drug",
+          "fit": "exact",
+          "label": "ICOTROKINRA",
+          "name": null,
+          "definition": null,
+          "definition_source": null,
+          "url": "https://platform.opentargets.org/drug/CHEMBL6068124",
+          "source": "opentargets",
+          "external_id": "CHEMBL6068124",
+          "version": null,
+          "score": null,
+          "molecule_kind": "small_molecule",
+          "mechanisms": [],
+          "facts_source": "chembl",
+          "reasons": [
+            {
+              "code": "drug_name_equals_name",
+              "trials": null,
+              "of": null,
+              "name": "icotrokinra",
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-17T23:28:30.551506Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "Janssen Pharmaceutical K.K.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06295692"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Janssen Research & Development, LLC",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT05223868",
+                "NCT05357755",
+                "NCT05364554",
+                "NCT06095102",
+                "NCT06095115",
+                "NCT06143878",
+                "NCT06220604",
+                "NCT06934226"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "By targeting IL-23 signaling, treatment may affect disease persistence beyond the time the drug can be measured in the body.",
+          "kind": "how_it_works",
+          "firmness": "possibility",
+          "speaker": "researcher",
+          "basis": "not_said",
+          "confidence": 0.8,
+          "article_url": "https://www.hcplive.com/view/high-impact-site-clearance-and-durability-with-oral-il-23-inhibition-in-pso",
+          "read_on": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "slug": "sonovein-superficial-venous-reflux",
+      "headline": "FDA authorizes Sonovein for superficial venous reflux in great saphenous veins",
+      "summary": "The FDA granted De Novo authorization to Theraclion’s Sonovein device for superficial venous reflux in great saphenous veins. The decision was based on the VEINRESET trial, which reported a 96.8% vein-occlusion rate at one year and no serious or unanticipated adverse events.",
+      "vertical": "heart-and-circulation",
+      "approach": null,
+      "approach_basis": null,
+      "clinical_categories": [
+        {
+          "identifier": "D014647",
+          "sources": [
+            {
+              "kind": "trial",
+              "identifier": "NCT04280679",
+              "score": null
+            }
+          ]
+        },
+        {
+          "identifier": "D014648",
+          "sources": [
+            {
+              "kind": "trial",
+              "identifier": "NCT04280679",
+              "score": null
+            },
+            {
+              "kind": "trial",
+              "identifier": "NCT05926830",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "intervention": {
+        "name": "Sonovein",
+        "synonyms": []
+      },
+      "indication": "Superficial venous reflux",
+      "first_reported_date": "2026-11-16",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "late_human",
+        "score": 0.78,
+        "also": [
+          {
+            "stage": "early_human",
+            "score": 0.17
+          }
+        ]
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "trial_registered",
+        "overlay_years": null,
+        "updated_at": "2026-11-17T23:28:16.154564Z",
+        "explained_by": [
+          35768,
+          35774,
+          35771
+        ],
+        "history": [
+          {
+            "on": "2020-02-21",
+            "code": "trial_registered"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.news-medical.net/news/20261116/FDA-grants-De-Novo-authorization-for-noninvasive-device-to-treat-varicose-veins.aspx",
+          "outlet": "News-Medical",
+          "title": "FDA grants De Novo authorization for noninvasive device to treat varicose veins",
+          "published_date": "2026-11-16",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [],
+      "events": [
+        {
+          "id": 35768,
+          "type": "trial_registered",
+          "event_date": "2020-02-21",
+          "date_basis": "first posted",
+          "summary": "Trial NCT04280679 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04280679",
+          "trial_id": "NCT04280679",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35769,
+          "type": "trial_status_change",
+          "event_date": "2020-03-03",
+          "date_basis": "start date",
+          "summary": "Trial NCT04280679 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04280679",
+          "trial_id": "NCT04280679",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35770,
+          "type": "trial_status_change",
+          "event_date": "2020-09-10",
+          "date_basis": "completion date",
+          "summary": "Trial NCT04280679 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT04280679",
+          "trial_id": "NCT04280679",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35774,
+          "type": "trial_registered",
+          "event_date": "2022-01-18",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05193643 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05193643",
+          "trial_id": "NCT05193643",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35775,
+          "type": "trial_status_change",
+          "event_date": "2022-03-23",
+          "date_basis": "start date",
+          "summary": "Trial NCT05193643 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05193643",
+          "trial_id": "NCT05193643",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35776,
+          "type": "trial_status_change",
+          "event_date": "2023-01-31",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05193643 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05193643",
+          "trial_id": "NCT05193643",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35771,
+          "type": "trial_registered",
+          "event_date": "2023-07-03",
+          "date_basis": "first posted",
+          "summary": "Trial NCT05926830 registered (no phase).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05926830",
+          "trial_id": "NCT05926830",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35772,
+          "type": "trial_status_change",
+          "event_date": "2023-10-12",
+          "date_basis": "start date",
+          "summary": "Trial NCT05926830 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05926830",
+          "trial_id": "NCT05926830",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35773,
+          "type": "trial_status_change",
+          "event_date": "2025-06-11",
+          "date_basis": "completion date",
+          "summary": "Trial NCT05926830 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT05926830",
+          "trial_id": "NCT05926830",
+          "trial_phases": [
+            "not_applicable"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05926830",
+          "url": "https://clinicaltrials.gov/study/NCT05926830",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Extracorporeal Flow Abolition in Relation With Primary Insufficiency of Great Saphenous Veins (GSV) Using High Intensity Focused Ultrasound (HIFU) Generated by Sonovein: A Multi Center Prospective Pivotal Study. For: Chronic Venous Insufficiency. Tests: Sonovein Treatment. No phase, completed.",
+          "record": {
+            "title": "Extracorporeal Flow Abolition in Relation With Primary Insufficiency of Great Saphenous Veins (GSV) Using High Intensity Focused Ultrasound (HIFU) Generated by Sonovein: A Multi Center Prospective Pivotal Study",
+            "conditions": [
+              "Chronic Venous Insufficiency"
+            ],
+            "interventions": [
+              "Sonovein Treatment"
+            ],
+            "phases": [
+              "not_applicable"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT05193643",
+          "url": "https://clinicaltrials.gov/study/NCT05193643",
+          "score": 1,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Minimally Invasive Treatment of Primary Great Saphenous Vein (GSV) Insufficiency Using High Intensity Focused Ultrasound (HIFU). For: Great Saphenous Vein Insufficiency. Tests: Sonovein Treatment. No phase, completed.",
+          "record": {
+            "title": "Minimally Invasive Treatment of Primary Great Saphenous Vein (GSV) Insufficiency Using High Intensity Focused Ultrasound (HIFU)",
+            "conditions": [
+              "Great Saphenous Vein Insufficiency"
+            ],
+            "interventions": [
+              "Sonovein Treatment"
+            ],
+            "phases": [
+              "not_applicable"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT04280679",
+          "url": "https://clinicaltrials.gov/study/NCT04280679",
+          "score": 0.82,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "rule",
+          "summary": "Treatment of Insufficient Superficial and Perforatring Veins of the Lower Limb Using HIFU. For: Varicose Veins, Veins Diseases, Varicose Ulcer. Tests: Sonovein 2. No phase, completed.",
+          "record": {
+            "title": "Treatment of Insufficient Superficial and Perforatring Veins of the Lower Limb Using HIFU",
+            "conditions": [
+              "Varicose Veins",
+              "Veins Diseases",
+              "Varicose Ulcer"
+            ],
+            "interventions": [
+              "Sonovein 2"
+            ],
+            "phases": [
+              "not_applicable"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT04280679",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT04280679",
+          "title": "Treatment of Insufficient Superficial and Perforatring Veins of the Lower Limb Using HIFU",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-17T23:28:16.314017Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 22,
+              "basis": "actual"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Theraclion",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Reduction of venous reflux",
+                "time_frame": "3 months"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null,
+            "arms": [
+              {
+                "label": "Arm of patient treated by HIFU",
+                "kind": "other",
+                "interventions": [
+                  "Sonovein 2"
+                ]
+              }
+            ]
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "3 months",
+              "number": 3,
+              "unit": "months",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:28:16.314017Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "venous reflux",
+              "number": null,
+              "unit": null,
+              "code": "scan_finding",
+              "confidence": 0.82,
+              "read_on": "2026-11-17T23:28:16.314017Z"
+            }
+          ],
+          "claim_arm": null
+        },
+        {
+          "trial_id": "NCT05193643",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05193643",
+          "title": "Minimally Invasive Treatment of Primary Great Saphenous Vein (GSV) Insufficiency Using High Intensity Focused Ultrasound (HIFU)",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-17T23:28:17.287322Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 20,
+              "basis": "actual"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Englewood Hospital and Medical Center",
+              "kind": "other"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Technical Feasibility",
+                "time_frame": "3 months"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null,
+            "arms": [
+              {
+                "label": "Sonovein Treatment",
+                "kind": "experimental",
+                "interventions": [
+                  "Sonovein Treatment"
+                ]
+              }
+            ]
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "3 months",
+              "number": 3,
+              "unit": "months",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:28:17.287322Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Technical Feasibility",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 0.99,
+              "read_on": "2026-11-17T23:28:17.287322Z"
+            }
+          ],
+          "claim_arm": "experimental"
+        },
+        {
+          "trial_id": "NCT05926830",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT05926830",
+          "title": "Extracorporeal Flow Abolition in Relation With Primary Insufficiency of Great Saphenous Veins (GSV) Using High Intensity Focused Ultrasound (HIFU) Generated by Sonovein: A Multi Center Prospective Pivotal Study",
+          "phases": [
+            "not_applicable"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-17T23:28:16.804915Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 70,
+              "basis": "actual"
+            },
+            "allocation": null,
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult",
+              "older_adult"
+            ],
+            "sponsor": {
+              "name": "Theraclion",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Vein Occlusion Rate",
+                "time_frame": "12 months"
+              }
+            ],
+            "primary_outcomes_total": 1,
+            "why_stopped": null,
+            "results": null,
+            "arms": [
+              {
+                "label": "Sonovein Treatment",
+                "kind": "experimental",
+                "interventions": [
+                  "Sonovein Treatment"
+                ]
+              }
+            ]
+          },
+          "papers": [],
+          "readings": [
+            {
+              "kind": "follow_up",
+              "outcome": 0,
+              "field": "time_frame",
+              "words": "12 months",
+              "number": 12,
+              "unit": "months",
+              "code": null,
+              "confidence": 1,
+              "read_on": "2026-11-17T23:28:16.804915Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Vein Occlusion Rate",
+              "number": null,
+              "unit": null,
+              "code": "frequency",
+              "confidence": 0.94,
+              "read_on": "2026-11-17T23:28:16.804915Z"
+            }
+          ],
+          "claim_arm": "experimental"
+        }
+      ],
+      "papers": [],
+      "background": [
+        {
+          "kind": "intervention",
+          "fit": "kind",
+          "label": "Equipment and Supplies",
+          "name": null,
+          "definition": "Expendable and nonexpendable equipment, supplies, apparatus, and instruments that are used in diagnostic, surgical, therapeutic, scientific, and experimental procedures.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D004864",
+          "source": "mesh",
+          "external_id": "D004864",
+          "version": "2026",
+          "score": 0.98,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "kind_chosen",
+              "trials": null,
+              "of": null,
+              "name": null,
+              "entry_term": null,
+              "kind": "device",
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-14T20:52:33.428187Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "Focused Ultrasound Foundation",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "04qjbd269",
+            "url": "https://ror.org/04qjbd269",
+            "name": "Focused Ultrasound Foundation",
+            "kinds": [
+              "funder",
+              "nonprofit"
+            ],
+            "country": "United States",
+            "website": null,
+            "score": 1,
+            "read_at": "2026-11-17T23:28:15.421027Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.news-medical.net/news/20261116/FDA-grants-De-Novo-authorization-for-noninvasive-device-to-treat-varicose-veins.aspx"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Sonovein, Inc.",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.news-medical.net/news/20261116/FDA-grants-De-Novo-authorization-for-noninvasive-device-to-treat-varicose-veins.aspx"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Theraclion",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.news-medical.net/news/20261116/FDA-grants-De-Novo-authorization-for-noninvasive-device-to-treat-varicose-veins.aspx"
+              ],
+              "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT04280679",
+                "NCT05926830"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "United States Food and Drug Administration",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "034xvzb47",
+            "url": "https://ror.org/034xvzb47",
+            "name": "United States Food and Drug Administration",
+            "kinds": [
+              "funder",
+              "government"
+            ],
+            "country": "United States",
+            "website": "https://www.fda.gov/",
+            "score": 1,
+            "read_at": "2026-11-17T23:04:31.440662Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.news-medical.net/news/20261116/FDA-grants-De-Novo-authorization-for-noninvasive-device-to-treat-varicose-veins.aspx"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Englewood Hospital and Medical Center",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT05193643"
+              ]
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "It is the first noninvasive focused-ultrasound platform for treating varicose veins.",
+          "kind": "comparison",
+          "firmness": "fact",
+          "speaker": "article",
+          "basis": "not_said",
+          "confidence": 0.98,
+          "article_url": "https://www.news-medical.net/news/20261116/FDA-grants-De-Novo-authorization-for-noninvasive-device-to-treat-varicose-veins.aspx",
+          "read_on": "2026-11-17"
+        }
+      ]
+    },
+    {
+      "slug": "dibutepinephrine-sublingual-film-type-i-allergic-reactions",
+      "headline": "Sublingual dibutepinephrine retained its measured profile during localized allergic reactions",
+      "summary": "An integrated analysis combining phase 1 data and a phase 2 oral-allergy-syndrome study found that dibutepinephrine film absorption was not reduced during oral allergy symptoms. The analysis has not been peer reviewed. The FDA accepted a resubmission after changes to the pouch, instructions and labeling, with a March 16, 2027, goal date.",
+      "vertical": "immune-system-and-allergies",
+      "approach": null,
+      "approach_basis": null,
+      "clinical_categories": [
+        {
+          "identifier": "D006967",
+          "sources": [
+            {
+              "kind": "trial",
+              "identifier": "NCT06527937",
+              "score": null
+            }
+          ]
+        }
+      ],
+      "intervention": {
+        "name": "dibutepinephrine sublingual film",
+        "synonyms": [
+          "Anaphylm",
+          "AQST-109 sublingual film"
+        ]
+      },
+      "indication": "Type I allergic reactions",
+      "first_reported_date": "2026-11-16",
+      "evidence_stage": null,
+      "evidence_stage_reading": {
+        "stage": "early_human",
+        "score": 0.84,
+        "also": [
+          {
+            "stage": "late_human",
+            "score": 0.16
+          }
+        ]
+      },
+      "checked_by_person": false,
+      "status": {
+        "code": "phase_2",
+        "overlay_years": null,
+        "updated_at": "2026-11-17T23:29:55.259266Z",
+        "explained_by": [
+          35778,
+          35777
+        ],
+        "history": [
+          {
+            "on": "2024-07-17",
+            "code": "phase_2"
+          }
+        ]
+      },
+      "articles": [
+        {
+          "url": "https://www.hcplive.com/view/allergic-reactions-do-not-blunt-sublingual-epinephrine-lieberman",
+          "outlet": "HCPLive",
+          "title": "Allergic Reactions Do Not Blunt Sublingual Epinephrine: Jay Lieberman, MD | HCPLive",
+          "published_date": "2026-11-16",
+          "archive_url": null,
+          "published_by": null
+        }
+      ],
+      "promises": [
+        {
+          "description": "FDA goal date for the resubmitted application: March 16, 2027",
+          "parsed_date": "2027-12-31",
+          "article_url": "https://www.hcplive.com/view/allergic-reactions-do-not-blunt-sublingual-epinephrine-lieberman"
+        }
+      ],
+      "events": [
+        {
+          "id": 35778,
+          "type": "trial_status_change",
+          "event_date": "2024-07-17",
+          "date_basis": "start date",
+          "summary": "Trial NCT06527937 started.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06527937",
+          "trial_id": "NCT06527937",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "started",
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35777,
+          "type": "trial_registered",
+          "event_date": "2024-07-30",
+          "date_basis": "first posted",
+          "summary": "Trial NCT06527937 registered (Phase 2).",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06527937",
+          "trial_id": "NCT06527937",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": null,
+          "regulatory_outcome": null,
+          "confidence": 1
+        },
+        {
+          "id": 35779,
+          "type": "trial_status_change",
+          "event_date": "2024-10-13",
+          "date_basis": "completion date",
+          "summary": "Trial NCT06527937 completed.",
+          "source_name": "clinicaltrials.gov",
+          "source_url": "https://clinicaltrials.gov/study/NCT06527937",
+          "trial_id": "NCT06527937",
+          "trial_phases": [
+            "phase_2"
+          ],
+          "trial_state": "completed",
+          "regulatory_outcome": null,
+          "confidence": 1
+        }
+      ],
+      "failure_flags": [],
+      "matches": [
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT06527937",
+          "url": "https://clinicaltrials.gov/study/NCT06527937",
+          "score": 0.61,
+          "state": "approved",
+          "reading": "match",
+          "decided_by": "assistant",
+          "summary": "Pharmacokinetics Study of DESF in Adults With Oral Allergy Syndrome. For: Allergic Reaction. Tests: DESF, Epinephrine Injection. Phase 2, completed.",
+          "record": {
+            "title": "Pharmacokinetics Study of DESF in Adults With Oral Allergy Syndrome",
+            "conditions": [
+              "Allergic Reaction"
+            ],
+            "interventions": [
+              "DESF",
+              "Epinephrine Injection"
+            ],
+            "phases": [
+              "phase_2"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        },
+        {
+          "source_name": "clinicaltrials.gov",
+          "external_id": "NCT07703982",
+          "url": "https://clinicaltrials.gov/study/NCT07703982",
+          "score": 0.64,
+          "state": "candidate",
+          "reading": "match",
+          "decided_by": null,
+          "summary": "A Study to Evaluate the Pharmacokinetics, Pharmacodynamics, and Safety of DESF in Pediatric Subjects. For: Allergic Reaction. Tests: DESF. Phase 1, completed.",
+          "record": {
+            "title": "A Study to Evaluate the Pharmacokinetics, Pharmacodynamics, and Safety of DESF in Pediatric Subjects",
+            "conditions": [
+              "Allergic Reaction"
+            ],
+            "interventions": [
+              "DESF"
+            ],
+            "phases": [
+              "phase_1"
+            ],
+            "state": "completed",
+            "participants": null
+          }
+        }
+      ],
+      "trials": [
+        {
+          "trial_id": "NCT06527937",
+          "source_name": "clinicaltrials.gov",
+          "url": "https://clinicaltrials.gov/study/NCT06527937",
+          "title": "Pharmacokinetics Study of DESF in Adults With Oral Allergy Syndrome",
+          "phases": [
+            "phase_2"
+          ],
+          "state": "completed",
+          "facts_as_of": "2026-11-17T23:29:55.424338Z",
+          "facts": {
+            "study_kind": "interventional",
+            "participants": {
+              "count": 36,
+              "basis": "actual"
+            },
+            "allocation": "randomised",
+            "masking": "none",
+            "comparators": [],
+            "healthy_volunteers": false,
+            "age_groups": [
+              "adult"
+            ],
+            "sponsor": {
+              "name": "Aquestive Therapeutics",
+              "kind": "industry"
+            },
+            "primary_outcomes": [
+              {
+                "measure": "Cmax",
+                "time_frame": "0 to 240 minutes post-dose"
+              },
+              {
+                "measure": "AUC0-10",
+                "time_frame": "0 to 10 minutes"
+              },
+              {
+                "measure": "AUC0-20",
+                "time_frame": "0 to 20 minutes"
+              }
+            ],
+            "primary_outcomes_total": 5,
+            "why_stopped": null,
+            "results": null,
+            "arms": [
+              {
+                "label": "Single Doses of DESF and Intramuscular Manual Injection",
+                "kind": "experimental",
+                "interventions": [
+                  "DESF",
+                  "Epinephrine Injection"
+                ]
+              },
+              {
+                "label": "Repeat Doses of DESF and Intramuscular Manual Injection",
+                "kind": "experimental",
+                "interventions": [
+                  "DESF",
+                  "Epinephrine Injection"
+                ]
+              }
+            ]
+          },
+          "papers": [
+            "pmid:42365874"
+          ],
+          "readings": [
+            {
+              "kind": "measure",
+              "outcome": 0,
+              "field": "measure",
+              "words": "Cmax",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:29:55.424338Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 1,
+              "field": "measure",
+              "words": "AUC0-10",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:29:55.424338Z"
+            },
+            {
+              "kind": "measure",
+              "outcome": 2,
+              "field": "measure",
+              "words": "AUC0-20",
+              "number": null,
+              "unit": null,
+              "code": "other",
+              "confidence": 1,
+              "read_on": "2026-11-17T23:29:55.424338Z"
+            }
+          ],
+          "claim_arm": null
+        }
+      ],
+      "papers": [
+        {
+          "identifier": "pmid:42365874",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/42365874/",
+          "record_url": null,
+          "roles": [
+            {
+              "role": "trial_result",
+              "trial_id": "NCT06527937",
+              "listed": "linked_by_registry",
+              "event_id": null,
+              "score": null,
+              "reasons": [],
+              "decided_by": null,
+              "summary": null
+            }
+          ],
+          "facts_as_of": null,
+          "facts": null
+        }
+      ],
+      "background": [
+        {
+          "kind": "condition",
+          "fit": "broader",
+          "label": "Hypersensitivity",
+          "name": null,
+          "definition": "Altered reactivity to an antigen, which can result in pathologic reactions upon subsequent exposure to that particular antigen.",
+          "definition_source": null,
+          "url": "https://id.nlm.nih.gov/mesh/D006967",
+          "source": "mesh",
+          "external_id": "D006967",
+          "version": "2026",
+          "score": 0.92,
+          "molecule_kind": null,
+          "mechanisms": [],
+          "facts_source": null,
+          "reasons": [
+            {
+              "code": "filed_by_registry",
+              "trials": 1,
+              "of": 1,
+              "name": null,
+              "entry_term": null,
+              "kind": null,
+              "type": null,
+              "word": null,
+              "sources": null
+            }
+          ],
+          "decided_by": "rule",
+          "read_at": "2026-11-17T23:29:56.568091Z"
+        }
+      ],
+      "organisations": [
+        {
+          "name": "Aquestive (United States)",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "01m7xb285",
+            "url": "https://ror.org/01m7xb285",
+            "name": "Aquestive (United States)",
+            "kinds": [
+              "company"
+            ],
+            "country": "United States",
+            "website": "https://aquestive.com/",
+            "score": 1,
+            "read_at": "2026-11-17T23:29:16.739752Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.hcplive.com/view/allergic-reactions-do-not-blunt-sublingual-epinephrine-lieberman"
+              ],
+              "trial_ids": []
+            },
+            {
+              "role": "sponsor",
+              "article_urls": [],
+              "trial_ids": [
+                "NCT06527937"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "FDA",
+          "identified": false,
+          "record": null,
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.hcplive.com/view/allergic-reactions-do-not-blunt-sublingual-epinephrine-lieberman"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "Le Bonheur Children's Hospital",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "056wg8a82",
+            "url": "https://ror.org/056wg8a82",
+            "name": "Le Bonheur Children's Hospital",
+            "kinds": [
+              "funder",
+              "healthcare"
+            ],
+            "country": "United States",
+            "website": "https://www.lebonheur.org/",
+            "score": 1,
+            "read_at": "2026-11-17T23:29:16.251900Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.hcplive.com/view/allergic-reactions-do-not-blunt-sublingual-epinephrine-lieberman"
+              ],
+              "trial_ids": []
+            }
+          ]
+        },
+        {
+          "name": "University of Tennessee Health Science Center",
+          "identified": true,
+          "record": {
+            "source": "ror",
+            "external_id": "0011qv509",
+            "url": "https://ror.org/0011qv509",
+            "name": "University of Tennessee Health Science Center",
+            "kinds": [
+              "education",
+              "funder"
+            ],
+            "country": "United States",
+            "website": "https://www.uthsc.edu/",
+            "score": 1,
+            "read_at": "2026-11-17T23:29:15.825594Z"
+          },
+          "roles": [
+            {
+              "role": "named_in_report",
+              "article_urls": [
+                "https://www.hcplive.com/view/allergic-reactions-do-not-blunt-sublingual-epinephrine-lieberman"
+              ],
+              "trial_ids": []
+            }
+          ]
+        }
+      ],
+      "reported_statements": [
+        {
+          "text": "Its small size may make it easier for patients to carry.",
+          "kind": "who_it_could_help",
+          "firmness": "possibility",
+          "speaker": "researcher",
+          "basis": "not_said",
+          "confidence": 0.86,
+          "article_url": "https://www.hcplive.com/view/allergic-reactions-do-not-blunt-sublingual-epinephrine-lieberman",
+          "read_on": "2026-11-17"
+        }
+      ]
     }
   ],
   "archived": [
@@ -1052885,6 +1056755,14 @@
         ]
       },
       {
+        "identifier": "D002318",
+        "label": "Cardiovascular Diseases",
+        "tree_numbers": [
+          "C14"
+        ],
+        "broader": []
+      },
+      {
         "identifier": "D005832",
         "label": "Genital Diseases, Male",
         "tree_numbers": [
@@ -1052894,6 +1056772,34 @@
         "broader": [
           "D000091662",
           "D052801"
+        ]
+      },
+      {
+        "identifier": "D006967",
+        "label": "Hypersensitivity",
+        "tree_numbers": [
+          "C20.543"
+        ],
+        "broader": [
+          "D007154"
+        ]
+      },
+      {
+        "identifier": "D007154",
+        "label": "Immune System Diseases",
+        "tree_numbers": [
+          "C20"
+        ],
+        "broader": []
+      },
+      {
+        "identifier": "D007871",
+        "label": "Leg Ulcer",
+        "tree_numbers": [
+          "C17.800.893.592"
+        ],
+        "broader": [
+          "D012883"
         ]
       },
       {
@@ -1052919,6 +1056825,16 @@
         ]
       },
       {
+        "identifier": "D011565",
+        "label": "Psoriasis",
+        "tree_numbers": [
+          "C17.800.859.675"
+        ],
+        "broader": [
+          "D017444"
+        ]
+      },
+      {
         "identifier": "D012816",
         "label": "Signs and Symptoms",
         "tree_numbers": [
@@ -1052929,12 +1056845,82 @@
         ]
       },
       {
+        "identifier": "D012871",
+        "label": "Skin Diseases",
+        "tree_numbers": [
+          "C17.800"
+        ],
+        "broader": [
+          "D017437"
+        ]
+      },
+      {
+        "identifier": "D012883",
+        "label": "Skin Ulcer",
+        "tree_numbers": [
+          "C17.800.893"
+        ],
+        "broader": [
+          "D012871"
+        ]
+      },
+      {
         "identifier": "D013568",
         "label": "Pathological Conditions, Signs and Symptoms",
         "tree_numbers": [
           "C23"
         ],
         "broader": []
+      },
+      {
+        "identifier": "D014647",
+        "label": "Varicose Ulcer",
+        "tree_numbers": [
+          "C14.907.927.730",
+          "C17.800.893.592.730"
+        ],
+        "broader": [
+          "D007871",
+          "D014648"
+        ]
+      },
+      {
+        "identifier": "D014648",
+        "label": "Varicose Veins",
+        "tree_numbers": [
+          "C14.907.927"
+        ],
+        "broader": [
+          "D014652"
+        ]
+      },
+      {
+        "identifier": "D014652",
+        "label": "Vascular Diseases",
+        "tree_numbers": [
+          "C14.907"
+        ],
+        "broader": [
+          "D002318"
+        ]
+      },
+      {
+        "identifier": "D017437",
+        "label": "Skin and Connective Tissue Diseases",
+        "tree_numbers": [
+          "C17"
+        ],
+        "broader": []
+      },
+      {
+        "identifier": "D017444",
+        "label": "Skin Diseases, Papulosquamous",
+        "tree_numbers": [
+          "C17.800.859"
+        ],
+        "broader": [
+          "D012871"
+        ]
       },
       {
         "identifier": "D020924",
