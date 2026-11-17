@@ -20,9 +20,11 @@ from thenwhat.claimsteps.reasons import (
     put_off,
 )
 from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
+from thenwhat.clinical.service import read_tree, stored_vocabulary
 from thenwhat.db.models import Claim
 from thenwhat.decide.core import DecisionFailed
-from thenwhat.domain import WorkOutcome
+from thenwhat.domain import ReviewState, TermFit, TermRole, WorkOutcome
+from thenwhat.export.records import PostgresRecords
 from thenwhat.llm.errors import LlmError
 from thenwhat.sources.base import SourceError
 from thenwhat.terms.service import (
@@ -48,6 +50,7 @@ class TermsFound:
     kind: KindRun | KindTermMissing | None = None
     targets: TargetsRun | None = None
     drug: DrugRun | None = None
+    tree_error: SourceError | None = None
 
     @property
     def unscored(self) -> int:
@@ -108,6 +111,20 @@ class ClaimTerms(ClaimStep):
                 accept_above=self.accept_above,
                 reject_below=self.reject_below,
             )
+
+            approved = [
+                term.external_id
+                for term in found.terms.scored
+                if term.review_state is ReviewState.APPROVED
+                and term.role is TermRole.CONDITION
+                and term.fit is TermFit.EXACT
+            ]
+            if approved and stored_vocabulary(PostgresRecords(session)).missing(approved):
+                # The fetch step ran before these conditions were approved.
+                try:
+                    read_tree(session, sources.make_mesh(session), [claim], mapping={})
+                except SourceError as error:
+                    found.tree_error = error
 
         def kind() -> None:
             try:

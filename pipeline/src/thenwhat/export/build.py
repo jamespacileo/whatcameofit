@@ -1387,7 +1387,8 @@ def build_export(
     last_checked: datetime | None = None
     # The stored MeSH descriptors, read once: every claim's categories are placed in it.
     vocabulary = Vocabulary(
-        (record.external_id, record.payload) for record in records.mesh_records()
+        ((record.external_id, record.payload) for record in records.mesh_records()),
+        year=str(now.year),
     )
     categories_used: set[str] = set()
     categories_not_read = 0

@@ -7,13 +7,22 @@ way the export does and derives from them, so a report and the export always agr
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Protocol
+from urllib.parse import urlencode
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.verticals import GROUPS, VERTICAL_GROUPS, VERTICALS
-from thenwhat.clinical.categories import Category, ClaimRecords, Derived, derive
+from thenwhat.clinical.categories import (
+    Category,
+    ClaimRecords,
+    Derived,
+    derive,
+    paper_major_headings,
+)
 from thenwhat.clinical.topics import (
     TOPIC_DESCRIPTORS,
     DerivedTopic,
@@ -22,15 +31,22 @@ from thenwhat.clinical.topics import (
     mapped_descriptors,
     uncovered,
 )
-from thenwhat.clinical.vocabulary import Vocabulary
+from thenwhat.clinical.vocabulary import DESCRIPTOR_CHECK, Vocabulary, describe, label_key
 from thenwhat.db.models import Claim, Entity, TermRecord
 from thenwhat.domain import EntityType
 from thenwhat.export.build import claim_clinical_records
 from thenwhat.export.records import PostgresRecords, Records
 from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.mesh import BASE
 
 
 class MeshSource(Protocol):
+    """NLM's service as the tree reads it. A source that also has `vocabulary_year`, the
+    year of the vocabulary its requests name as a string, has its answers kept for that
+    year: a label no descriptor has is not asked again, and a stored descriptor in use is
+    read again once that year's vocabulary has not been checked for it. A source without
+    it is asked as before and nothing but the records it returns is kept."""
+
     name: str
 
     def term(self, identifier: str, *, force: bool = False) -> SourceRecord | None: ...
@@ -38,8 +54,11 @@ class MeshSource(Protocol):
     def descriptor_labelled(self, label: str) -> str | None: ...
 
 
-def stored_vocabulary(records: Records) -> Vocabulary:
-    return Vocabulary((record.external_id, record.payload) for record in records.mesh_records())
+def stored_vocabulary(records: Records, *, year: str | None = None) -> Vocabulary:
+    return Vocabulary(
+        ((record.external_id, record.payload) for record in records.mesh_records()),
+        year=year or str(datetime.now(UTC).year),
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,17 +98,28 @@ class TreeRun:
     unknown_headings: list[str] = field(default_factory=list)
     # Descriptors the vocabulary no longer holds.
     retired: list[str] = field(default_factory=list)
+    # Of those, the ones a record is still stored for, to the year it was last read from.
+    # The record is kept, so the descriptor keeps its last known place in the tree.
+    retired_years: dict[str, str] = field(default_factory=dict)
 
 
 def _keep(session: Session, record: SourceRecord) -> None:
-    kept = session.get(TermRecord, (record.source_name, record.external_id))
-    if kept is None:
-        kept = TermRecord(source_name=record.source_name, external_id=record.external_id)
-        session.add(kept)
-    kept.url = record.url
-    kept.payload = record.payload
-    kept.fetched_at = record.fetched_at
-    session.flush()
+    # Concurrent claim workers often read the same ancestors or paper headings.
+    put = insert(TermRecord).values(
+        source_name=record.source_name,
+        external_id=record.external_id,
+        url=record.url,
+        payload=record.payload,
+        fetched_at=record.fetched_at,
+    )
+    session.scalars(
+        put.on_conflict_do_update(
+            index_elements=[TermRecord.source_name, TermRecord.external_id],
+            set_={col: getattr(put.excluded, col) for col in ("url", "payload", "fetched_at")},
+            where=put.excluded.fetched_at >= TermRecord.fetched_at,
+        ).returning(TermRecord),
+        execution_options={"populate_existing": True},
+    ).all()
 
 
 def read_tree(
@@ -98,43 +128,108 @@ def read_tree(
     claims: Sequence[Claim],
     *,
     mapping: Mapping[str, tuple[tuple[str, str], ...]] = TOPIC_DESCRIPTORS,
+    now: datetime | None = None,
 ) -> TreeRun:
     """Read and store the MeSH record of every category the claims have, of every
     descriptor the topic mapping names and of each descriptor broader than those, up to
-    the top of its tree. A record already stored is not asked for again."""
+    the top of its tree.
+
+    With a source that names its vocabulary year, what is stored is checked against that
+    year: a stored descriptor in use, or in the tree above one, whose record and checks
+    are of an earlier year is read again, and kept as it was when the year no longer
+    holds it; a paper heading an earlier year's lookup found no descriptor for is looked
+    up again. Each such answer is kept, so it is asked once per year. A request that
+    fails raises, and nothing of it is kept as an answer."""
     records = PostgresRecords(session)
     gathered = [claim_clinical_records(records, claim) for claim in claims]
+    year: str | None = getattr(source, "vocabulary_year", None)
+    at = now or datetime.now(UTC)
     run = TreeRun()
     asked: set[str] = set()
     asked_headings: set[str] = set()
+
+    def retired(identifier: str, vocabulary: Vocabulary) -> None:
+        if identifier not in run.retired:
+            run.retired.append(identifier)
+        held = vocabulary.get(identifier)
+        if held is not None and held.year:
+            run.retired_years[identifier] = held.year
+
     while True:
-        vocabulary = stored_vocabulary(records)
+        vocabulary = stored_vocabulary(records, year=year)
         wanted = set(mapped_descriptors(mapping))
         headings: set[str] = set()
+        labelled: set[str] = set()
         for given in gathered:
             placed = _placed(given, vocabulary)
             wanted.update(category.identifier for category in placed.categories)
             headings.update(placed.derived.unread_headings)
-        waiting = [one for one in vocabulary.missing(wanted) if one not in asked]
-        for heading in sorted(headings - asked_headings):
-            asked_headings.add(heading)
+            for heading in placed.derived.unlabelled_headings:
+                if heading not in run.unknown_headings:
+                    run.unknown_headings.append(heading)
+            for _, payload in given.papers:
+                for label in paper_major_headings(payload):
+                    descriptor = vocabulary.labelled(label)
+                    if descriptor is not None:
+                        labelled.add(descriptor.identifier)
+        parents, missing = vocabulary.hierarchy(wanted)
+        candidates = missing | ({*parents, *labelled} if year else set())
+        waiting: set[str] = set()
+        for identifier in candidates - asked:
+            current = vocabulary.current(identifier, year) if year else None
+            if current is None:
+                waiting.add(identifier)
+            elif current is False:
+                retired(identifier, vocabulary)
+        for heading in sorted(headings):
+            key = label_key(heading)
+            if key in asked_headings:
+                continue
+            asked_headings.add(key)
             identifier = source.descriptor_labelled(heading)
             if identifier is None:
-                run.unknown_headings.append(heading)
-            elif identifier not in vocabulary and identifier not in asked:
-                waiting.append(identifier)
+                if heading not in run.unknown_headings:
+                    run.unknown_headings.append(heading)
+                if year is not None:
+                    query = urlencode({"label": heading, "match": "exact", "year": year})
+                    _keep(
+                        session,
+                        SourceRecord(
+                            source.name,
+                            key,
+                            f"{BASE}/lookup/descriptor?{query}",
+                            {"year": year},
+                            at,
+                        ),
+                    )
+            elif identifier in asked:
+                continue
+            elif identifier not in vocabulary or (
+                year is not None and vocabulary.current(identifier, year) is None
+            ):
+                waiting.add(identifier)
         if not waiting:
             return run
-        for identifier in waiting:
-            if identifier in asked:
-                continue
+        for identifier in sorted(waiting):
             asked.add(identifier)
             record = source.term(identifier)
             if record is None:
-                run.retired.append(identifier)
-                continue
-            _keep(session, record)
-            run.read += 1
+                retired(identifier, vocabulary)
+            else:
+                _keep(session, record)
+                run.read += 1
+            if year and (record is None or describe(identifier, record.payload).year != year):
+                # A retired or unversioned record cannot itself show when we checked it.
+                _keep(
+                    session,
+                    SourceRecord(
+                        source.name,
+                        DESCRIPTOR_CHECK + identifier,
+                        f"{BASE}/{year}/{identifier}.json",
+                        {"year": year, "held": record is not None},
+                        at,
+                    ),
+                )
 
 
 # --- the reports -----------------------------------------------------------------------
@@ -246,9 +341,17 @@ def compare(session: Session, claims: Sequence[Claim], vocabulary: Vocabulary) -
             result.per_topic[topic.topic] = result.per_topic.get(topic.topic, 0) + 1
         if len(topics) > 1:
             result.several_topics += 1
-        if VERTICAL_GROUPS.get(claim.vertical) in {topic.group for topic in topics}:
+        filed_group = VERTICAL_GROUPS.get(claim.vertical)
+        if filed_group in {topic.group for topic in topics}:
             result.agrees += 1
-            if _kinds(placed) == {"term"}:
+            from_records = (
+                category.identifier
+                for category in placed.categories
+                if any(source.kind in {"trial", "paper"} for source in category.sources)
+            )
+            if all(
+                topic.group != filed_group for topic in derived_topics(from_records, vocabulary)
+            ):
                 result.agrees_by_term_only += 1
         else:
             result.disagreeing.append(

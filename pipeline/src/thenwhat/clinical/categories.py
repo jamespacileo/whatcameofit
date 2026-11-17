@@ -8,7 +8,9 @@ broader comes from the tree.
 From a paper: the subject headings it is indexed under as a major topic, when the
 descriptor sits in the tree of diseases or of mental disorders. The index gives a heading
 by its descriptor's label, so it is a category only once the vocabulary holds a
-descriptor with that label; until then it is reported as not yet read.
+descriptor with that label; until then it is reported as not yet read. Once a lookup of
+the year's vocabulary has found no descriptor with that label, it is never a category and
+no longer waits to be read.
 
 From the claim's own condition: the MeSH descriptor that was found by the condition's
 name and read, by the terms step's decision, as the claim's condition itself, when that
@@ -70,6 +72,9 @@ class Derived:
     # Paper headings that are major topics and whose descriptor is not stored yet, so
     # whether they are conditions is not known.
     unread_headings: tuple[str, ...]
+    # Paper headings that are major topics and that a stored exact-label lookup found
+    # no descriptor for, so they are never categories.
+    unlabelled_headings: tuple[str, ...] = ()
 
 
 def trial_terms(payload: Mapping[str, Any]) -> list[tuple[str, str]]:
@@ -124,6 +129,7 @@ def derive(
     labels: dict[str, str] = {}
     sources: dict[str, set[Source]] = {}
     unread: set[str] = set()
+    unlabelled: set[str] = set()
 
     def give(identifier: str, label: str, source: Source) -> None:
         held = vocabulary.get(identifier)
@@ -137,7 +143,7 @@ def derive(
         for label in paper_major_headings(payload):
             descriptor = vocabulary.labelled(label)
             if descriptor is None:
-                unread.add(label)
+                (unlabelled if vocabulary.label_absent(label) else unread).add(label)
             elif descriptor.is_condition:
                 give(descriptor.identifier, descriptor.label, Source("paper", paper_id))
     for term in terms:
@@ -154,4 +160,5 @@ def derive(
             for identifier in sorted(labels, key=lambda one: (labels[one].casefold(), one))
         ),
         unread_headings=tuple(sorted(unread, key=str.casefold)),
+        unlabelled_headings=tuple(sorted(unlabelled, key=str.casefold)),
     )

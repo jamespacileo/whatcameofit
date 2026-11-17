@@ -391,6 +391,70 @@ def test_a_trial_and_the_claims_own_condition_both_name_a_category(session: Sess
     assert compare(session, [claim], stored_vocabulary(records)).agrees_by_term_only == 0
 
 
+@pytest.mark.parametrize(("trial_term", "term_only"), [("D012878", 1), ("D012871", 0)])
+def test_agreement_counts_only_evidence_in_the_filed_group(session, trial_term, term_only):
+    store(session, *TREE)
+    claim = new_claim(session, "cream-provenance", vertical="skin-and-hair")
+    with_condition_term(session, claim, "D011565", fit=TermFit.EXACT)
+    with_trial(session, claim, "NCT00000001", trial_term)
+
+    result = compare(session, [claim], stored_vocabulary(PostgresRecords(session)))
+
+    assert (result.agrees, result.agrees_by_term_only) == (1, term_only)
+
+
+@pytest.mark.parametrize("parent_available", [True, False])
+def test_prepare_places_a_new_condition_term_before_first_export(
+    session, tmp_path, parent_available
+):
+    from claim_support import Sources, Vocabulary, prepare
+    from store_support import assert_same_export
+    from thenwhat.sources.base import SourceError
+    from thenwhat.sources.mesh import LabelledTerm
+
+    class MeshWithCondition(FakeMesh, Vocabulary):
+        vocabulary_year = "2026"
+
+        def terms_labelled(self, name):
+            return [LabelledTerm("D011565", "Psoriasis")] if name == "Plaque psoriasis" else []
+
+        def unresolved_entry_terms(self, name):
+            return []
+
+        def term(self, identifier, *, force=False):
+            if identifier == "D900001":
+                if not parent_available:
+                    raise SourceError("The vocabulary did not answer.")
+                broader = {
+                    "@id": f"{YEAR}/D900001",
+                    "label": "Synthetic parent",
+                    "treeNumber": f"{YEAR}/C17.800.859",
+                    "broaderDescriptor": f"{YEAR}/D012871",
+                }
+                return SourceRecord(
+                    "mesh", identifier, f"{YEAR}/{identifier}", {"term": broader}, NOW
+                )
+            record = super().term(identifier, force=force)
+            if record is not None and identifier == "D011565":
+                record.payload["term"]["broaderDescriptor"] = f"{YEAR}/D900001"
+            return record
+
+    claim = new_claim(session, "cream-first-export")
+    prepare(session, Sources(vocabulary=MeshWithCondition()))
+    approved = session.scalars(select(ClaimTerm).where(ClaimTerm.claim_id == claim.id)).all()
+    assert [(t.external_id, t.review_state) for t in approved] == [
+        ("D011565", ReviewState.APPROVED)
+    ]
+    exported = assert_same_export(session, tmp_path, NOW)
+    categories = exported["claims"][0]["clinical_categories"]
+    if parent_available:
+        assert [c["identifier"] for c in categories] == ["D011565"]
+        assert any(node["identifier"] == "D900001" for node in exported["clinical"]["nodes"])
+    else:
+        assert categories is None
+        assert exported["clinical"]["claims_not_read"] == 1
+
+
 def test_the_comparison_counts_every_claim_once(session: Session):
     """Scenarios: Counts; Suggested group differs; Nothing to compare"""
     claims = three_claims(session)

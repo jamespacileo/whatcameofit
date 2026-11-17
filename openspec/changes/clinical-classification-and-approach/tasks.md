@@ -71,15 +71,15 @@
 
 ## 9. Editorial ownership and clinical provenance (P2)
 
-- [ ] 9.1 <a id="task-f22"></a>Persist a definitive negative for its vocabulary year. Restart the reader and verify the known category survives, with a transient lookup failure as a control. [F22](../../../docs/reviews/2026-11-17-code-review.md#finding-f22) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-definitive-negative-paper-heading-accompanies-usable-evidence)
+- [x] 9.1 <a id="task-f22"></a>Persist a definitive negative for its vocabulary year. Restart the reader and verify the known category survives, with a transient lookup failure as a control. [F22](../../../docs/reviews/2026-11-17-code-review.md#finding-f22) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-definitive-negative-paper-heading-accompanies-usable-evidence)
 
-- [ ] 9.2 <a id="task-f23"></a>Include vocabulary year in refresh eligibility. Test changed and retired records across two years and reuse of current records on an unchanged rerun. [F23](../../../docs/reviews/2026-11-17-code-review.md#finding-f23) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-stored-descriptor-changes-in-a-new-vocabulary-year)
+- [x] 9.2 <a id="task-f23"></a>Include vocabulary year in refresh eligibility. Test changed and retired records across two years and reuse of current records on an unchanged rerun. [F23](../../../docs/reviews/2026-11-17-code-review.md#finding-f23) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-stored-descriptor-changes-in-a-new-vocabulary-year)
 
-- [ ] 9.3 <a id="task-f24"></a>Load newly approved condition ancestry during normal preparation. Test the first prepare-to-export cycle and the existing pending behavior when NLM is unavailable. [F24](../../../docs/reviews/2026-11-17-code-review.md#finding-f24) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-preparation-first-discovers-an-approved-condition-term)
+- [x] 9.3 <a id="task-f24"></a>Load newly approved condition ancestry during normal preparation. Test the first prepare-to-export cycle and the existing pending behavior when NLM is unavailable. [F24](../../../docs/reviews/2026-11-17-code-review.md#finding-f24) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-preparation-first-discovers-an-approved-condition-term)
 
-- [ ] 9.4 <a id="task-f25"></a>Update browse copy to describe the three evidence sources. Render a model-only assignment beside one supported by a trial and check the source wording. [F25](../../../docs/reviews/2026-11-17-code-review.md#finding-f25) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-category-comes-only-from-the-checked-condition)
+- [x] 9.4 <a id="task-f25"></a>Update browse copy to describe the three evidence sources. Render a model-only assignment beside one supported by a trial and check the source wording. [F25](../../../docs/reviews/2026-11-17-code-review.md#finding-f25) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-category-comes-only-from-the-checked-condition)
 
-- [ ] 9.5 <a id="task-f26"></a>Attribute corroboration to the group whose agreement is counted. Compare otherwise identical fixtures with a trial supporting the agreeing or unrelated group. [F26](../../../docs/reviews/2026-11-17-code-review.md#finding-f26) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-independent-evidence-supports-a-different-topic)
+- [x] 9.5 <a id="task-f26"></a>Attribute corroboration to the group whose agreement is counted. Compare otherwise identical fixtures with a trial supporting the agreeing or unrelated group. [F26](../../../docs/reviews/2026-11-17-code-review.md#finding-f26) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-independent-evidence-supports-a-different-topic)
 
 ## Workflow follow-up
 
