@@ -1,6 +1,6 @@
 """A store file as data-only SQL that D1's import takes into a database already holding
-the schema (the migrations of `store/ingest/migrations/`, applied in order), and a
-manifest to check the load against.
+the schema (`store/ingest/migrations/0001_store_schema.sql`), and a manifest to check the
+load against.
 
 D1's import (`wrangler d1 execute <db> --remote --file`, read 2026-11-17, docs/sources.md):
 no `BEGIN`/`COMMIT` in the file; a statement is at most 100,000 bytes; a file at most

@@ -102,12 +102,10 @@ def test_the_dump_loads_into_a_database_with_the_schema_and_counts_check(
         for statement in text.split(";\n"):
             assert len(statement.encode()) <= 2_000
 
-    # Into a database holding only the migrations, applied in order as D1 applies them,
-    # each file as one transaction.
+    # Into a database holding only migration 0001, each file as one transaction.
     loaded = sqlite3.connect(tmp_path / "d1.sqlite", isolation_level=None)
     loaded.execute("PRAGMA foreign_keys = ON")
-    for migration in sorted((STORE / "ingest" / "migrations").glob("*.sql")):
-        loaded.executescript(migration.read_text())
+    loaded.executescript((STORE / "ingest" / "migrations" / "0001_store_schema.sql").read_text())
     for name in names:
         loaded.executescript("BEGIN;\n" + (out / name).read_text() + "COMMIT;\n")
     assert loaded.execute("PRAGMA foreign_key_check").fetchall() == []

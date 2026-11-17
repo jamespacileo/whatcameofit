@@ -66,8 +66,6 @@ TIER: dict[str, str] = {
     "store_step": HOT,
     "work_item": HOT,
     "work_slice": HOT,
-    # How far each slice of trials has come: the site's progress reads it from D1.
-    "trial_slice": HOT,
     "deployment": HOT,
     # Counted by a reader's lookup; read by nothing else.
     "unlisted_domain_count": HOT,
@@ -77,8 +75,6 @@ TIER: dict[str, str] = {
     "registry_trial_fts": BULK,
     "registry_load": BULK,
     "article_lead": BULK,
-    # A paper found under a trial's number hangs from its trial.
-    "trial_paper": BULK,
     "link_lead": BULK,
     "link_lead_fts": BULK,
     "link_share": BULK,

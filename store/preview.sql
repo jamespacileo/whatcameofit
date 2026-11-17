@@ -55,15 +55,13 @@ SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind
                                AND x.record_key = s.body ->> 'record_key' AND x.step = s.body ->> 'step'
                                AND x.step_version = s.body ->> 'step_version')
   WHEN 'outlet_icon'    THEN NOT EXISTS (SELECT 1 FROM outlet_icon x WHERE x.domain = s.body ->> 'domain')
-  WHEN 'trial_slice'    THEN NOT EXISTS (SELECT 1 FROM trial_slice x WHERE x.rule = s.body ->> 'rule'
-                               AND x.year = s.body ->> 'year' AND x.number = s.body ->> 'number')
   WHEN 'work_slice'     THEN NOT EXISTS (SELECT 1 FROM work_slice x WHERE x.platform = s.body ->> 'platform'
                                AND x.community = s.body ->> 'community' AND x.month = s.body ->> 'month')
   ELSE 0 END) AS added
 FROM staged s
 WHERE s.kind IN ('payload', 'claim', 'source_record', 'trial_read', 'registry_trial', 'registry_load',
                  'link_lead', 'unlisted_domain', 'decision', 'usage', 'measure_daily', 'work_entry',
-                 'outlet_icon', 'work_slice', 'trial_slice')
+                 'outlet_icon', 'work_slice')
 GROUP BY s.kind
 ;
 -- Records of a claim. An event is a conflict when the approved one stored says otherwise.
@@ -151,14 +149,11 @@ WHERE s.kind IN ('link_share', 'link_lead_link', 'link_lead_label', 'lead_readin
 GROUP BY s.kind
 ;
 -- Records of a trial.
-SELECT s.kind, count(*) AS resolved, 0 AS conflicts, sum(CASE s.kind
-  WHEN 'article_lead' THEN NOT EXISTS (SELECT 1 FROM article_lead a WHERE a.registry_trial_id = s.trial_id
-                             AND a.url_key = s.body ->> 'url_key')
-  ELSE NOT EXISTS (SELECT 1 FROM trial_paper p WHERE p.trial_id = s.trial_id
-                     AND p.source_name = s.body ->> 'source_name' AND p.pubmed_id = s.body ->> 'pubmed_id')
-  END) AS added
+SELECT s.kind, count(*) AS resolved, 0 AS conflicts,
+       sum(NOT EXISTS (SELECT 1 FROM article_lead a WHERE a.registry_trial_id = s.trial_id
+                         AND a.url_key = s.body ->> 'url_key')) AS added
 FROM preview_of_trial s
-WHERE s.kind IN ('article_lead', 'trial_paper')
+WHERE s.kind = 'article_lead'
 GROUP BY s.kind
 ;
 -- Whether the counts would reconcile: every kind the run stated, with what was found.
