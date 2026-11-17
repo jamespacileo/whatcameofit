@@ -54,9 +54,11 @@ class ReadOnlyRecords(PostgresRecords):
 
 def read_only(session: Session) -> None:
     """Have the database itself refuse any write in this session's transaction, and stop
-    the session sending the changes the assembly makes in memory."""
+    the session sending the changes the assembly makes in memory. The transaction reads
+    one state of the database throughout, so that the copy and the export that follows
+    it see the same records while other work goes on."""
     session.autoflush = False
-    session.execute(text("SET TRANSACTION READ ONLY"))
+    session.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
 
 
 def every_nth(session: Session, every: int) -> list[Claim]:
