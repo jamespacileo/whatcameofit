@@ -125,6 +125,10 @@ def at_0036(engine: Engine, alembic_config: Config) -> Iterator[dict[str, int]]:
         with engine.begin() as connection:
             connection.execute(text("DELETE FROM work_entry"))
             connection.execute(text("DELETE FROM link_lead"))
+            connection.execute(
+                text("DELETE FROM source_article WHERE url = 'https://news.example.org/overlap'")
+            )
+            connection.execute(text("DELETE FROM claim WHERE slug = 'a-claim'"))
         command.upgrade(alembic_config, "head")
 
 
@@ -167,6 +171,45 @@ def test_every_lead_read_before_the_codes_is_given_its_code(
             text("SELECT reason FROM work_entry WHERE step = 'news_search'")
         ).scalar_one()
     assert searched == "no_stories"
+
+
+def test_an_article_attached_after_the_read_keeps_its_claim(
+    engine: Engine, alembic_config: Config, at_0036: dict[str, int]
+):
+    lead_id = at_0036["overlap"]
+    detail = "a drug for a condition; names overlap a-claim: attached to it by the operator"
+    # The old audit command updated the lead and left the earlier read's ledger entry.
+    with engine.begin() as connection:
+        attachment = connection.execute(
+            text(
+                "WITH target AS ("
+                " INSERT INTO claim (slug, headline, summary, vertical, indication,"
+                " review_state, reviewed_at, reviewed_by)"
+                " VALUES ('a-claim', 'Headline', '', 'pain', 'Pain',"
+                " 'approved', now(), 'human') RETURNING id"
+                "), article AS ("
+                " INSERT INTO source_article (claim_id, url, outlet, title, published_date)"
+                " SELECT id, 'https://news.example.org/overlap', 'Example', 'Headline',"
+                " '2026-01-01' FROM target RETURNING id, claim_id"
+                ") UPDATE link_lead SET read_outcome = 'added_to_claim', read_detail = :detail,"
+                " claim_id = article.claim_id, source_article_id = article.id"
+                " FROM article WHERE link_lead.id = :lead"
+                " RETURNING link_lead.claim_id, link_lead.source_article_id"
+            ),
+            {"detail": detail, "lead": lead_id},
+        ).one()
+
+    command.upgrade(alembic_config, "0037")
+
+    read = entries(engine)[lead_id]
+    assert read[:3] == ("nothing_found", "already_tracked", 1)
+    assert read[4:] == (False, "added_to_claim", detail)
+    with engine.connect() as connection:
+        kept = connection.execute(
+            text("SELECT claim_id, source_article_id FROM link_lead WHERE id = :lead"),
+            {"lead": lead_id},
+        ).one()
+    assert kept == attachment
 
 
 def test_words_with_no_code_stop_the_migration_and_change_nothing(

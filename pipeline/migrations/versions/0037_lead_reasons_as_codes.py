@@ -48,6 +48,8 @@ BY_OUTCOME = (
     ("not_one_treatment", "not_one_treatment", "nothing_found"),
     ("business_news", "business_news", "nothing_found"),
     ("identity_unresolved", "identity_unresolved", "nothing_found"),
+    # Audit attached the article after the read had finished and kept its ledger entry.
+    ("added_to_claim", "already_tracked", "nothing_found"),
     ("needs_vertical", "needs_vertical", "needs_fix"),
 )
 
