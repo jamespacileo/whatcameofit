@@ -216,7 +216,7 @@ The store is in two tiers. Which table is in which is stated in `store/store-tab
 `thenwhat store build` writes a hot file and a bulk file. The migrations still create every table in D1, so the bulk tables are there and empty. What that means for the ingest service today:
 
 - None of its own routes reads a bulk table. `/work/*` reads `work_item`, `/slices/*` reads `work_slice`, and the audit-hold check reads `claim`.
-- A record of a bulk kind that a merged run hands over is also kept in the service's `inbox`, for the daily job to fold into the bulk file and clear (`GET /inbox`, `POST /inbox/clear`). The migrations now include `0003_inbox.sql`: apply it before the service is deployed.
+- A record of a bulk kind that a merged run hands over is also kept in the service's `inbox`, for the daily job to fold into the bulk file and clear (`GET /inbox`, `POST /inbox/clear`). The migrations now include `0003_inbox.sql` and `0004_inbox_folded.sql`: apply them before the service is deployed.
 - The merge still writes whatever kind it is handed. A reader's lead or a found trial is added to D1's copy of the table and is not matched against the bulk file, so a lead the bulk file already has is added again in D1.
 - A record whose parent is only in the bulk file is not resolved: a share, label or reading of a lead, or an article lead of a trial, that the run does not also carry. The run's counts then do not reconcile and the merge is undone. A run must carry such a parent itself until the merge is taught the tiers.
 

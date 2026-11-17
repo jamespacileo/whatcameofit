@@ -69,7 +69,7 @@ A person's or an assistant's decision (`reviewed_by`, `decided_by`, `labelled_by
 The bulk kinds (registry trials, leads and what hangs from them, usage, measures) are not kept in D1: their truth is the bulk file in R2, which only the daily job writes (`design.md` decision 20). When a run hands such a record over, usually a reader's lookup, the service keeps it as it was staged, with the payload records it names, in its own table `inbox`, in the same batch as the merge. A run the merge refuses or undoes leaves nothing there.
 
 - `GET /inbox?after=<seq>&limit=<n>` gives `{records: [{seq, run, kind, key, body}], through, more}`, oldest first, at most 2,000 records or about 4 MB. A record is exactly what a writer stages, so `thenwhat store merge-bulk` takes it as it is.
-- `POST /inbox/clear` with `{through}`, the last `seq` folded, removes those records. For each run folded whole it also removes the rows that run added to D1's copies of the bulk tables, in one batch. Clearing twice changes nothing.
+- `POST /inbox/clear` with `{through}`, the last `seq` folded, removes those records. For each run folded whole it also removes the rows that run added to D1's copies of the bulk tables, in one batch. A reader's lead the store-side consumer has not yet processed (its `lead_process` work is still due) is held back with its shares and reading, and the answer counts it in `leads_held`; a later clearing removes it once that work is done or has failed for good. Clearing twice changes nothing else.
 
 A payload over 16 KB that an inbox record names is in the bucket under `payload/<sha256>`; the service has no route that serves it.
 

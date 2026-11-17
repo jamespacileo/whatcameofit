@@ -104,33 +104,39 @@ export async function inbox(db, after, limit) {
   return { records, through: records.at(-1)?.seq ?? after, more: results.length > records.length };
 }
 
-// The runs whose every inbox record is at or before ?1: folded whole.
-const FOLDED = "(SELECT run_id FROM inbox WHERE seq <= ?1 EXCEPT SELECT run_id FROM inbox WHERE seq > ?1)";
-const LEADS = `(SELECT id FROM link_lead WHERE added_run IN ${FOLDED})`;
+// A run is folded whole when its every inbox record is at or before ?1. It is noted in
+// `inbox_folded` and stays there while a lead it added is still in D1.
+const FOLDED = "(SELECT run_id FROM inbox_folded)";
+// A folded run's leads, but not one the store-side consumer has yet to process: its
+// work is read from D1, so it stays, with its shares and reading, until that is done.
+const LEADS = `(SELECT l.id FROM link_lead l WHERE l.added_run IN ${FOLDED} AND NOT EXISTS (
+  SELECT 1 FROM work_item w WHERE w.record_kind = 'link_lead' AND w.record_key = l.url_key AND w.step = 'lead_process' AND w.state = 'due'))`;
 const TRIALS = `(SELECT id FROM registry_trial WHERE added_run IN ${FOLDED})`;
-// What a folded run left in D1's copies of the bulk tables, children first. A folded
-// lead's shares, links, labels and reading go with it whichever run added them: a later
-// run's are still in the inbox as records, and are folded from there.
+// What folded runs left in D1's copies of the bulk tables, children first. A lead's
+// shares, links, labels and reading go with it whichever run added them: a later run's
+// are still in the inbox as records, and are folded from there.
 const CLEAR = [
-  `DELETE FROM lead_reading WHERE link_lead_id IN ${LEADS} OR added_run IN ${FOLDED}`,
-  `DELETE FROM link_lead_label WHERE link_lead_id IN ${LEADS} OR changed_run IN ${FOLDED}`,
-  `DELETE FROM link_lead_link WHERE link_lead_id IN ${LEADS} OR added_run IN ${FOLDED}`,
-  `DELETE FROM link_share WHERE link_lead_id IN ${LEADS} OR added_run IN ${FOLDED}`,
-  `DELETE FROM link_lead WHERE added_run IN ${FOLDED}`,
+  "INSERT OR IGNORE INTO inbox_folded SELECT run_id FROM inbox WHERE seq <= ?1 EXCEPT SELECT run_id FROM inbox WHERE seq > ?1",
+  "DELETE FROM inbox WHERE seq <= ?1",
+  `DELETE FROM lead_reading WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_lead_label WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_lead_link WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_share WHERE link_lead_id IN ${LEADS}`,
+  `DELETE FROM link_lead WHERE id IN ${LEADS}`,
   `DELETE FROM article_lead WHERE registry_trial_id IN ${TRIALS} OR added_run IN ${FOLDED}`,
   `DELETE FROM registry_trial_status WHERE trial_id IN ${TRIALS} OR run_id IN ${FOLDED}`,
   `DELETE FROM registry_trial WHERE added_run IN ${FOLDED}`,
   `DELETE FROM llm_usage WHERE run_id IN ${FOLDED}`,
-  "DELETE FROM inbox WHERE seq <= ?1",
+  "DELETE FROM inbox_folded WHERE run_id NOT IN (SELECT added_run FROM link_lead)",
 ];
 
 // Once the daily job has folded the records up to `through` into the bulk file: they
-// leave the inbox, and the rows their runs added leave D1's copies of the bulk tables.
-// One batch, so all of it or none.
+// leave the inbox, and the rows their runs added leave D1's copies of the bulk tables,
+// but for a lead still waiting to be processed. One batch, so all of it or none.
 export async function clearInbox(db, through) {
-  const results = await db.batch(CLEAR.map((sql) => db.prepare(sql).bind(through)));
-  const left = await db.prepare("SELECT count(*) AS n FROM inbox").first();
-  return { cleared: results.at(-1).meta.changes ?? 0, rows_removed: results.slice(0, -1).reduce((sum, result) => sum + (result.meta.changes ?? 0), 0), left: left.n };
+  const results = await db.batch(CLEAR.map((sql) => (sql.includes("?1") ? db.prepare(sql).bind(through) : db.prepare(sql))));
+  const after = await db.prepare(`SELECT (SELECT count(*) FROM inbox) AS left, (SELECT count(*) FROM link_lead WHERE added_run IN ${FOLDED}) AS held`).first();
+  return { cleared: results[1].meta.changes ?? 0, rows_removed: results.slice(2, -1).reduce((sum, result) => sum + (result.meta.changes ?? 0), 0), left: after.left, leads_held: after.held };
 }
 
 const forget = (db, id) => db.prepare("DELETE FROM ingest_chunk WHERE run_id = ?1").bind(id);
