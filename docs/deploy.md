@@ -54,10 +54,10 @@ To publish or remove one by hand:
 PR_NUMBER=12 make pr-preview-check   # builds and rehearses; publishes nothing
 PR_NUMBER=12 make pr-preview
 PR_NUMBER=12 make pr-preview-state   # says whether the published copy is already this commit's
-npx --prefix site wrangler delete --name thenwhat-pr-12 --config site/wrangler.preview.jsonc
+pnpm --dir site exec wrangler delete --name thenwhat-pr-12 --config site/wrangler.preview.jsonc
 ```
 
-`npx --prefix site wrangler deployments list --name thenwhat-pr-12` shows what a preview is serving. A Worker named `thenwhat-pr-*` whose pull request is closed is a leftover and can be deleted.
+`pnpm --dir site exec wrangler deployments list --name thenwhat-pr-12` shows what a preview is serving. A Worker named `thenwhat-pr-*` whose pull request is closed is a leftover and can be deleted.
 
 ## GitHub configuration
 
@@ -88,7 +88,7 @@ make deploy-ci-check # rehearses the committed snapshot; needs no private databa
 make deploy-ci       # publishes that snapshot; needs Cloudflare authentication
 ```
 
-For local authentication, run `npx --prefix site wrangler login` and verify with `npx --prefix site wrangler whoami` before deployment. `make deploy-check` and `make deploy` remain available: both first export directly from the running local pipeline. `SITE_URL` defaults to https://whatcameofit.com and can be overridden explicitly.
+For local authentication, run `pnpm --dir site exec wrangler login` and verify with `pnpm --dir site exec wrangler whoami` before deployment. `make deploy-check` and `make deploy` remain available: both first export directly from the running local pipeline. `SITE_URL` defaults to https://whatcameofit.com and can be overridden explicitly.
 
 Never run raw `wrangler deploy`: it bypasses the public-data checks and could publish an old preview build. ("Preview build" here means a build of unreviewed data, not a pull request preview.) All supported deploy targets validate the export, build it afresh as a public site, and check its sitemap and preview flag before invoking Wrangler.
 
@@ -134,7 +134,7 @@ A published topic address must keep working. To rename or retire a vertical:
 
 1. In `pipeline/src/thenwhat/claims/verticals.py`, change or remove the vertical, and add its old slug to `RETIRED_VERTICALS` with the vertical that replaces it, for example `{"eyes-and-ears": "sight-and-hearing"}`. `make check` refuses a retired slug that is still configured, or one whose successor does not exist.
 2. Move the claims filed under the old slug with `thenwhat claim edit SLUG --vertical NEW`.
-3. Export again and build (`npm --prefix site run build`). The build writes `site/dist/_redirects` with a permanent redirect from `/topic/OLD` to `/topic/NEW`. It fails, naming the slug, when `published-topics.json` lists a topic that is neither current nor retired.
+3. Export again and build (`pnpm --dir site run build`). The build writes `site/dist/_redirects` with a permanent redirect from `/topic/OLD` to `/topic/NEW`. It fails, naming the slug, when `published-topics.json` lists a topic that is neither current nor retired.
 4. Run `make publish-data`, commit both publication files, and push to `main`.
 
 The initial publication history preserves all old topic addresses, including empty topics. `/topic/dental-regeneration` now redirects to `/topic/mouth-and-teeth`. The former transplant topic split across several organs, so its address redirects to the topic directory instead of one organ.
@@ -142,7 +142,7 @@ The initial publication history preserves all old topic addresses, including emp
 
 ## Rollback
 
-Revert the faulty source/data commit on `main` and push. GitHub tests and republishes the reverted version. For an immediate rollback, run `npx wrangler rollback` from `site/` after signing in, then revert the source commit so the next automatic deployment preserves the fix. Keep the previous committed public snapshot for data rollbacks. Do not delete the Worker to roll back.
+Revert the faulty source/data commit on `main` and push. GitHub tests and republishes the reverted version. For an immediate rollback, run `pnpm exec wrangler rollback` from `site/` after signing in, then revert the source commit so the next automatic deployment preserves the fix. Keep the previous committed public snapshot for data rollbacks. Do not delete the Worker to roll back.
 
 ## OpenAlex and ROR
 

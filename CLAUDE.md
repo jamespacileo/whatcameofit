@@ -7,7 +7,7 @@ worktrees via `wt`, archive via quarantine).
 
 - Run: `docker compose up --build -d`, then `docker compose run --rm pipeline thenwhat --help`
 - Test: `make check` (ruff, ty, pytest, site build)
-- New worktree: `make setup` clones `node_modules` from the main checkout (copy-on-write, seconds) when the lockfile is the same, else runs `npm ci`. Node comes from `.node-version` (24, as CI); any Node from 22.23.4 runs the site.
+- New clone or worktree: `make setup` (Node 26 from `.node-version`, pnpm 10). pnpm links packages from its shared store, so nothing is downloaded twice. Never `npm install`: the lock files are `pnpm-lock.yaml`.
 
 ## Where things are defined
 
