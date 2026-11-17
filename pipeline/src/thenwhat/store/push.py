@@ -170,20 +170,35 @@ def push(
         # Named by what it holds: a run sent again after a lost answer is the same run,
         # which the service registers and merges once.
         run = f"{writer}-{run_checksum(chunks)[:40]}"
-        _ok(
-            client.post(
-                "/runs",
-                json={
-                    "id": run,
-                    "writer": writer,
-                    "commit": commit,
-                    "steps": {},
-                    "counts": dict(counts),
-                    "checksum": run_checksum(chunks),
-                },
-            ),
-            f"run {run}",
+        registered = client.post(
+            "/runs",
+            json={
+                "id": run,
+                "writer": writer,
+                "commit": commit,
+                "steps": {},
+                "counts": dict(counts),
+                "checksum": run_checksum(chunks),
+            },
         )
+        _ok(registered, f"run {run}")
+        status = _json(registered).get("status")
+        if status == "merged" and not report_only:
+            # Merged before, and the answer was lost: the service holds it; take its
+            # report and go on, sending nothing again.
+            known = _json(client.get(f"/runs/{run}"))
+            for kind, numbers in (known.get("report") or {}).items():
+                if isinstance(numbers, dict):
+                    report.added[kind] += int(numbers.get("added", 0))
+            report.handed.update(counts)
+            report.runs += 1
+            state.update(state_of(records_of_run))
+            on_merged(state)
+            continue
+        if status not in (None, "registered"):
+            raise PushFailed(
+                f"Run {run} is {status} at the service: {json.dumps(_json(registered))[:300]}"
+            )
         for chunk in chunks:
             _ok(
                 client.post(

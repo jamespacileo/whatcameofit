@@ -205,3 +205,50 @@ def test_a_push_resent_after_a_lost_answer_is_the_same_run():
         push(c, [CLAIM], state, writer="daily", commit="abc1234", payload_text={}.get)
     assert len(service.ids) == 2 and service.ids[0] == service.ids[1]
     assert service.ids[0].startswith("daily-") and len(service.ids[0]) <= 64
+
+
+def test_a_push_whose_merge_answer_was_lost_finishes_without_sending_again():
+    class MergesThenLoses(Service):
+        """Merges the first time and loses the answer; then answers as the service does
+        for a merged run: registering again says merged, staging is refused."""
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.merged: set[str] = set()
+            self.staged_after_merge = 0
+
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            path = request.url.path
+            if path == "/runs":
+                run = json.loads(request.content)["id"]
+                status = "merged" if run in self.merged else "registered"
+                return httpx.Response(200, json={"id": run, "status": status, "again": True})
+            run = path.split("/")[2] if path.startswith("/runs/") else ""
+            if path.endswith("/records") and run in self.merged:
+                self.staged_after_merge += 1
+                return httpx.Response(409, json={"error": "run_closed"})
+            if path.endswith("/merge"):
+                self.merged.add(run)
+                return httpx.Response(504, json={})
+            if request.method == "GET" and path.startswith("/runs/"):
+                report = {"claim": {"resolved": 1, "added": 1}}
+                return httpx.Response(200, json={"run": run, "status": "merged", "report": report})
+            return httpx.Response(200, json={})
+
+    service, state = MergesThenLoses(), {}
+    saved: list[dict[str, str]] = []
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c:
+        with pytest.raises(PushFailed):
+            push(c, [CLAIM], state, writer="daily", commit="abc1234", payload_text={}.get)
+        report = push(
+            c,
+            [CLAIM],
+            state,
+            writer="daily",
+            commit="abc1234",
+            payload_text={}.get,
+            on_merged=lambda now: saved.append(dict(now)),
+        )
+    assert service.staged_after_merge == 0
+    assert report.runs == 1 and report.added["claim"] == 1
+    assert state == state_of([CLAIM]) and saved == [state_of([CLAIM])]
