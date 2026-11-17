@@ -33,6 +33,9 @@ INVESTIGATOR_FIELDS = (
     "investigatorAffiliation",
     "oldNameTitle",
 )
+# What is kept of a responsible party: whether it is the sponsor, a principal investigator
+# or a sponsor-investigator, which the trial's facts read. Nothing else of it.
+PARTY_KEPT = frozenset({"type"})
 # Keys that hold a person's means of contact, wherever they appear.
 CONTACT_KEYS = frozenset({"email", "phone", "phoneExt"})
 
@@ -97,9 +100,9 @@ def without_people(study: dict[str, Any]) -> dict[str, Any]:
             ]
         party = sponsors.get("responsibleParty")
         if isinstance(party, dict):
-            kept["responsibleParty"] = {
-                k: v for k, v in party.items() if k not in INVESTIGATOR_FIELDS
-            }
+            # Kept by name, not removed by name: a field the registry adds later, which
+            # may name a person, is dropped rather than kept.
+            kept["responsibleParty"] = {k: v for k, v in party.items() if k in PARTY_KEPT}
         protocol["sponsorCollaboratorsModule"] = kept
 
     stripped: dict[str, Any] = {**study, "protocolSection": protocol}

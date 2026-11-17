@@ -32,7 +32,6 @@ from thenwhat.store.build import (
     merge_day,
     write_delta,
 )
-from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
 from thenwhat.store.inbox import InboxFailed, clear, fold, record_fold
@@ -49,6 +48,7 @@ from thenwhat.store.push import (
     BUILD_KEY,
     USER_AGENT,
     PushFailed,
+    RetryOnBusy,
     pending_path,
     push,
     read_state,
@@ -348,72 +348,6 @@ def checksum_command(
         raise typer.Exit(code=1)
 
 
-@store_app.command("dump")
-def dump_command(
-    file: Annotated[
-        Path, typer.Argument(help="The store file, as `thenwhat store build` wrote it.")
-    ],
-    out_folder: Annotated[
-        Path, typer.Argument(help="The folder for the SQL files and manifest.json.")
-    ],
-    payloads: Annotated[
-        Path | None,
-        typer.Option("--payloads", help="The build's payload folder, counted into the manifest."),
-    ] = None,
-) -> None:
-    """Write a store file as data-only SQL files for D1's import, into a database that
-    already has the schema, and a manifest to check the load against."""
-    if not file.is_file():
-        err.print(f"No store file at {file}.")
-        raise typer.Exit(code=1)
-    try:
-        manifest = dump(file, out_folder, payloads=payloads)
-    except DumpRefused as fault:
-        err.print(str(fault), markup=False)
-        raise typer.Exit(code=1) from None
-    total = sum(entry["bytes"] for entry in manifest.files)
-    out.print(
-        f"Wrote {len(manifest.files)} files ({_size(total)}) and manifest.json to {out_folder}.",
-        markup=False,
-    )
-    for table, rows in manifest.tables.items():
-        if rows:
-            out.print(f"  {table}: {rows:,}", markup=False)
-    for table, rows in manifest.left_out.items():
-        out.print(
-            f"{rows:,} {table} rows are too large for one D1 statement and were left out;"
-            " they are fetched again.",
-            markup=False,
-        )
-    out.print(
-        "Load and count: node store/ingest/scripts/import-folder.mjs"
-        f" {out_folder} --remote (docs/deploy.md).",
-        markup=False,
-    )
-
-
-@store_app.command("check")
-def check_command(
-    manifest: Annotated[Path, typer.Argument(help="The dump's manifest.json.")],
-    counts: Annotated[
-        Path,
-        typer.Argument(
-            help="The answer of `wrangler d1 execute --json --file counts.sql`, or a JSON"
-            " object of counts by table."
-        ),
-    ],
-) -> None:
-    """Compare a loaded store's counts with the dump's manifest. Exits with 1 when they
-    differ."""
-    expected = json.loads(manifest.read_text())
-    found = differences(expected, counts_of(json.loads(counts.read_text())))
-    if found:
-        for line in found:
-            err.print(line, markup=False)
-        raise typer.Exit(code=1)
-    out.print(f"All {len(expected['tables'])} tables hold the manifest's counts.", markup=False)
-
-
 def _commit() -> str:
     try:
         found = subprocess.run(
@@ -508,6 +442,7 @@ def push_command(
                 with_trials=rule is not None,
             )
     with httpx.Client(
+        transport=RetryOnBusy(),
         base_url=url,
         headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
         timeout=120,
@@ -639,6 +574,7 @@ def _service(url: str) -> httpx.Client:
         err.print("Set INGEST_URL (or --url) and INGEST_TOKEN, the daily or operator token.")
         raise typer.Exit(code=1)
     return httpx.Client(
+        transport=RetryOnBusy(),
         base_url=url,
         headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
         timeout=120,

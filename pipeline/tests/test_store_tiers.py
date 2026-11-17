@@ -460,7 +460,7 @@ def test_clear_inbox_records_the_fold_before_clearing(monkeypatch):
 
     real = httpx.Client
     monkeypatch.setattr(
-        httpx, "Client", lambda **kw: real(transport=httpx.MockTransport(service), **kw)
+        httpx, "Client", lambda **kw: real(**{**kw, "transport": httpx.MockTransport(service)})
     )
     monkeypatch.setenv("INGEST_TOKEN", "t")
     key = "bulk/0123456789abcdef/delta-2026-11-18-1.jsonl.gz"

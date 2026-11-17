@@ -95,6 +95,8 @@ RECORD_CODE = (
     "store/build.py",
     "sources/people.py",
     "backfill/address.py",
+    "db/models.py",
+    "domain.py",
 )
 PACKAGE = Path(__file__).resolve().parents[1]
 

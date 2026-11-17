@@ -406,3 +406,34 @@ def test_a_merged_pending_run_settles_without_its_large_payloads(tmp_path):
         )
     assert ("PUT", f"/payloads/{big.key}") not in service.calls
     assert state == state_of([big]) and not pending.exists()
+
+
+def test_a_busy_service_is_waited_for_and_asked_again():
+    from thenwhat.store.push import RetryOnBusy
+
+    answers = [httpx.Response(429, headers={"Retry-After": "7"}), httpx.Response(200, json={})]
+    asked: list[str] = []
+
+    def service(request: httpx.Request) -> httpx.Response:
+        asked.append(request.url.path)
+        return answers.pop(0)
+
+    waited: list[float] = []
+    transport = RetryOnBusy(httpx.MockTransport(service), sleep=waited.append)
+    with httpx.Client(base_url="http://s.test", transport=transport) as client:
+        assert client.post("/runs/x/merge").status_code == 200
+    assert asked == ["/runs/x/merge", "/runs/x/merge"] and waited == [7.0]
+
+
+def test_the_inline_payload_limit_is_the_schema_s_own():
+    import re
+    from pathlib import Path
+
+    from thenwhat.store.form import INLINE_PAYLOAD_LIMIT, schema_inline_limit
+
+    schema = (Path(__file__).resolve().parents[2] / "store" / "schema.sql").read_text()
+    stated = re.search(r"body IS NULL OR [^)]*\)?\)\s*<=\s*(\d+)", schema)
+    assert stated is not None and int(stated.group(1)) == INLINE_PAYLOAD_LIMIT
+    assert payload_of({"x": "y" * (INLINE_PAYLOAD_LIMIT - 20)}).inline
+    assert not payload_of({"x": "y" * INLINE_PAYLOAD_LIMIT}).inline
+    assert schema_inline_limit(Path("/no/such/schema.sql")) == 16384

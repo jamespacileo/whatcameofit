@@ -18,6 +18,7 @@ from thenwhat.store.push import (
     BUILD_KEY,
     USER_AGENT,
     PushFailed,
+    RetryOnBusy,
     pending_path,
     push,
     read_state,
@@ -201,6 +202,7 @@ def _push_slice(session, one, made: Plan, state, url, token, with_state: bool) -
         records = [record for record in records if record.kind != "trial_slice"]
     held = read_state(state)
     with httpx.Client(
+        transport=RetryOnBusy(),
         base_url=url,
         headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
         timeout=120,

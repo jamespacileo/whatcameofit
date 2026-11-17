@@ -17,6 +17,7 @@ The wire contract is `store/ingest/README.md`, "How a writer hands over a run".
 
 import hashlib
 import json
+import time
 from collections import Counter
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
@@ -35,6 +36,39 @@ RUN_RECORDS = 20_000
 # Handed over once, when new: a run keeps its own, or a merge adds to a total.
 ONCE = frozenset({"decision", "usage", "measure_daily", "measure_claim"})
 USER_AGENT = "thenwhat-pipeline"
+
+
+class RetryOnBusy(httpx.BaseTransport):
+    """A transport that, answered 429, waits as long as the service's `Retry-After` says
+    (60 seconds by default) and sends the same request again, up to `attempts` times.
+    Every write route of the service is safe to repeat, and a 429 is answered before
+    the store is touched (store/ingest/README.md)."""
+
+    def __init__(
+        self,
+        inner: httpx.BaseTransport | None = None,
+        *,
+        attempts: int = 10,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
+        self.inner = inner or httpx.HTTPTransport()
+        self.attempts, self.sleep = attempts, sleep
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        for _ in range(self.attempts - 1):
+            response = self.inner.handle_request(request)
+            if response.status_code != 429:
+                return response
+            response.read()
+            try:
+                wait = float(response.headers.get("Retry-After", "60"))
+            except ValueError:
+                wait = 60.0
+            self.sleep(min(max(wait, 1.0), 300.0))
+        return self.inner.handle_request(request)
+
+    def close(self) -> None:
+        self.inner.close()
 
 
 class PushFailed(Exception):
