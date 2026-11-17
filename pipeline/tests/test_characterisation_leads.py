@@ -49,7 +49,8 @@ link_screen
   in scope, unlisted outlet, already tracked -> test_screening_is_done_whatever_it_finds
 news_search
   done, nothing found -> test_a_news_search_that_answers_is_finished
-  source unavailable -> test_a_news_index_that_fails_fails_the_trial
+  source unavailable
+    -> test_a_news_index_that_does_not_answer_puts_the_trial_off_and_then_stops_the_run
 """
 
 # LANDED:
@@ -66,8 +67,6 @@ news_search
 #   Changed by the call policy (task group 4): now test_a_model_outage_in_the_read_stops_the_run.
 # test_a_failed_treatment_kind_decision_fails_the_lead[unreachable]: stops the run.
 #   Changed by the call policy: now test_an_unreachable_treatment_kind_decision_stops_the_run.
-# test_a_news_index_that_fails_fails_the_trial: a source that is down may stop the run
-#   ("A provider that cannot be asked stops the run"), with no attempt counted.
 
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
@@ -704,15 +703,25 @@ def test_a_news_search_that_answers_is_finished(
     assert ended(session, step, trial) == (outcome, 1, False)
 
 
-def test_a_news_index_that_fails_fails_the_trial(session: Session, fake_time):
-    [trial] = add_trials(session, 1)
+def test_a_news_index_that_does_not_answer_puts_the_trial_off_and_then_stops_the_run(
+    session: Session, fake_time
+):
+    """One search with no answer puts its trial off for an hour, with no attempt counted.
+    Three running stop the run, as for any source that cannot be asked."""
+    trials = add_trials(session, 4)
     client = media_cloud(session, fake_time, Service(httpx.Response(503)))
     step = NewsSearch(time=fake_time)
 
     report = run_step(same_session(session), step, client, now=fake_time.now, attempt_limit=LIMIT)
 
-    assert (report.failed, report.stopped) == (1, None)
-    assert ended(session, step, trial) == (WorkOutcome.FAILED, 1, True)
-    entry = entry_of(session, step, trial)
+    assert (report.later, report.failed) == (2, 0)
+    assert report.stopped is not None and "3 searches running without an answer" in report.stopped
+    entry = entry_of(session, step, trials[0])
     assert entry is not None
-    assert entry.error == "SourceUnavailable: mediacloud answered with status 503."
+    assert (entry.outcome, entry.attempts, entry.reason) == (
+        WorkOutcome.LATER,
+        0,
+        "index_did_not_answer",
+    )
+    # The third and fourth trials have no entry: they are still due.
+    assert entry_of(session, step, trials[2]) is None and entry_of(session, step, trials[3]) is None
