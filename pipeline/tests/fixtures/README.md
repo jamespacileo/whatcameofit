@@ -19,6 +19,7 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `crossref/work_retracted_lancet_1998.json` | `GET /works/10.1016/S0140-6736(97)11096-0` |
 | `crossref/work_srep39654.json` | `GET /works/10.1038/srep39654` |
 | `clinicaltrials/list_page_{1,2}.json` | `GET /api/v2/studies?filter.advanced=<phase 3 drug or biological, migraine, updated since 2026-11-10>&pageSize=3&fields=…`, following `nextPageToken`: four trials over two pages (2026-11-14) |
+| `clinicaltrials/list_page_wide.json` | `GET /api/v2/studies?filter.ids=NCT01596231,NCT07816367,NCT02586935&pageSize=3&fields=…`, the bulk load's fields with the activity and results fields (`LIST_FIELDS`): a trial recruiting with anticipated completion dates by month, one completed with results posted and no start date type, one completed without results (2026-11-16) |
 | `clinicaltrials/phase3_sample_trials.json` | the identifiers, conditions and interventions of the 200 phase 3 trials sampled on 2026-11-14 (`docs/research/phase3-article-hit-rate`), read from `GET /api/v2/studies?filter.ids=…` |
 | `mediacloud/story_list.json` | synthetic: the shape of `GET /api/search/story-list` as Media Cloud's own client reads it, with made-up stories. Never recorded from the service, so it holds no real headline |
 | `openalex/search_median_nerve_tourette.json` | `GET /works?search=("median nerve stimulation") AND "Tourette syndrome"&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
@@ -47,6 +48,9 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `gsrs/search_nothing.json` | the search for `"^faecal microbiota transplant$"`: `total` 0 (2026-11-14) |
 | `rxnorm/rxcui_elevidys.json`, `rxnorm/properties_2641681.json`, `rxnorm/related_in_2641681.json` | `GET rxnav.nlm.nih.gov/REST/rxcui.json?name=Elevidys&search=0`, then `GET /REST/rxcui/2641681/properties.json` and `GET /REST/rxcui/2641681/related.json?tty=IN`: a brand of one ingredient (2026-11-16) |
 | `rxnorm/rxcui_advair.json`, `rxnorm/properties_301543.json`, `rxnorm/related_in_301543.json` | the same three for "Advair": a brand of two ingredients (2026-11-16) |
+| `rxnorm/related_sbd_2641681.json`, `rxnorm/property_cvx_2641685.json` | `GET /REST/rxcui/2641681/related.json?tty=SBD` and `GET /REST/rxcui/2641685/property.json?propName=CVX`: Elevidys's one branded drug, with no vaccine code (`{}`) (2026-11-16) |
+| `rxnorm/rxcui_ervebo.json`, `rxnorm/properties_2624748.json`, `rxnorm/related_in_2624748.json`, `rxnorm/related_sbd_2624748.json`, `rxnorm/property_cvx_2624752.json` | the same five for "Ervebo": a vaccine filed under its antigen, whose branded drug has CVX 204 (2026-11-16) |
+| `rxnorm/rxcui_beyfortus.json`, `rxnorm/properties_2642408.json`, `rxnorm/related_in_2642408.json`, `rxnorm/related_sbd_2642408.json`, `rxnorm/property_cvx_2642412.json`, `rxnorm/property_cvx_2642415.json` | the same for "Beyfortus": a monoclonal antibody (nirsevimab) whose branded drugs carry CVX 306 and 307, codes CDC gives products that are not vaccines (2026-11-16) |
 | `rxnorm/rxcui_corbevax.json` | the exact search for "Corbevax", which RxNorm does not list: an empty `idGroup` (2026-11-16) |
 | `rxnorm/rxcui_aspirin.json`, `rxnorm/properties_1191.json` | the exact search for "aspirin" and its concept's record: an ingredient, not a brand (2026-11-16) |
 | `mesh/term_ketogenic_diet.json` | `GET /mesh/lookup/term?label=Ketogenic Diet&match=exact&limit=10&year=2026`: an entry term of a descriptor labelled otherwise (2026-11-14) |
@@ -54,12 +58,11 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `mesh/term_tirzepatide.json`, `mesh/owner_tirzepatide.json` | the term lookup and the owner query for "tirzepatide": the term belongs to a descriptor and to a withdrawn supplementary record labelled "[OBSOLETE] tirzepatide", whose own address answers an empty object (2026-11-14) |
 | `mesh/term_ketogenic_word.json` | the same lookup for "Ketogenic", a word contained in an entry term: `[]` (2026-11-14) |
 | `mesh/owner_ketogenic_diet.json`, `mesh/owner_orforglipron.json`, `mesh/owner_obesity.json` | `GET /mesh/sparql?query=…&format=JSON&year=2026&inference=false`, the query in `docs/sources.md` for one term each: the descriptor or supplementary record the term belongs to (2026-11-14) |
-| `mesh/owners_three_terms.json` | the same query for the three terms at once (2026-11-14) |
 | `mesh/owner_none.json` | the same query for a term identifier the vocabulary does not hold (`T999999999`): no row (2026-11-14) |
 | `mesh/supplementary_orforglipron.json` | `GET /mesh/2026/C000729680.json`: a supplementary record, with its `note` and the `source` it was taken from (2026-11-14) |
 | `mesh/concept_orforglipron.json` | `GET /mesh/2026/M000766720.json`, its preferred concept, which holds no definition (2026-11-14) |
 | `opentargets/search_cxcr3.json` | `POST api.platform.opentargets.org/api/v4/graphql` with the target search in `sources/opentargets.py` for the word "CXCR3": equal to an approved symbol (2026-11-14) |
-| `opentargets/search_usag_1.json`, `opentargets/search_apoe4.json` | the same for "USAG-1" and "APOE4": each equal to a listed synonym of one gene (2026-11-14) |
+| `opentargets/search_usag_1.json` | the same for "USAG-1": equal to a listed synonym of one gene (2026-11-14) |
 | `opentargets/search_tms.json` | the same for "TMS": a synonym of two genes, among eight genes whose symbols only start with it (2026-11-14) |
 | `opentargets/search_tmsb1.json` | the same for "TMSB1": seven hits, none with an equal symbol or synonym (2026-11-14) |
 | `opentargets/search_ctx310.json` | the same for "CTX310": no hit (2026-11-14) |

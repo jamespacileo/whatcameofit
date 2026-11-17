@@ -51,6 +51,7 @@ from thenwhat.claims.entry import (
     find_article,
     free_slug_for,
     named_claims,
+    owner_of_rule_slug,
     slug_of_claim_close_to,
     slug_of_claim_covering,
 )
@@ -153,11 +154,10 @@ NAMES_OVERLAP = "names overlap"
 _OVERLAPPING = re.compile(rf"; {NAMES_OVERLAP} ([a-z0-9-]+),")
 
 
-def reads_naming_archived_claims(session: Session) -> list[tuple[LinkLead, Claim]]:
+def reads_naming_claims(session: Session) -> list[tuple[LinkLead, Claim]]:
     """Leads whose read was left identity unresolved because its treatment and condition
-    overlap a claim that is now archived, with that claim, oldest lead first. A claim
-    archived at audit for a fault can then be fixed and unarchived, and its leads read
-    again, instead of the reads staying unresolved."""
+    overlap a claim, with that claim, oldest lead first. Such a read is never retried, so
+    an operator decides each: fix the claim, or attach or dismiss the article."""
     leads = session.scalars(
         select(LinkLead)
         .where(LinkLead.read_outcome == ReadOutcome.IDENTITY_UNRESOLVED)
@@ -166,15 +166,28 @@ def reads_naming_archived_claims(session: Session) -> list[tuple[LinkLead, Claim
     named = [
         (lead, found[1]) for lead in leads if (found := _OVERLAPPING.search(lead.read_detail or ""))
     ]
-    archived = {
+    claims = {
         claim.slug: claim
         for claim in session.scalars(
-            select(Claim).where(
-                Claim.slug.in_({slug for _, slug in named}), Claim.archived_at.is_not(None)
-            )
+            select(Claim).where(Claim.slug.in_({slug for _, slug in named}))
         )
     }
-    return [(lead, archived[slug]) for lead, slug in named if slug in archived]
+    return [(lead, claims[slug]) for lead, slug in named if slug in claims]
+
+
+def reads_naming_archived_claims(session: Session) -> list[tuple[LinkLead, Claim]]:
+    """The reads `reads_naming_claims` gives whose claim is now archived. A claim
+    archived at audit for a fault can then be fixed and unarchived, and its leads read
+    again, instead of the reads staying unresolved."""
+    return [(lead, claim) for lead, claim in reads_naming_claims(session) if claim.archived_at]
+
+
+def reads_naming_live_claims(session: Session) -> list[tuple[LinkLead, Claim]]:
+    """The reads `reads_naming_claims` gives whose claim is not archived: the article may
+    belong to that claim, which only an operator can now say."""
+    return [
+        (lead, claim) for lead, claim in reads_naming_claims(session) if claim.archived_at is None
+    ]
 
 
 class NothingToRetry(BackfillError):
@@ -360,9 +373,13 @@ class LinkRead:
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {"key": record.url_key}
 
+    def first(self) -> ColumnElement[bool] | None:
+        """The leads whose title names one of the operator's topics come first."""
+        return self._names_a_topic
+
     def order(self) -> list[ColumnElement[Any]]:
-        """First the leads whose title names one of the operator's topics, then those
-        linked to a registry trial, then the most shared."""
+        """After those of a topic: the leads linked to a registry trial, then the most
+        shared."""
         linked = exists().where(
             LinkLeadLink.link_lead_id == LinkLead.id,
             LinkLeadLink.record_kind == REGISTRY_TRIAL,
@@ -372,8 +389,7 @@ class LinkRead:
             .where(LinkShare.link_lead_id == LinkLead.id)
             .scalar_subquery()
         )
-        topical = [] if self._names_a_topic is None else [self._names_a_topic.desc()]
-        return [*topical, linked.desc(), shared.desc()]
+        return [linked.desc(), shared.desc()]
 
     def check_ready(self, session: Session) -> None:
         """Refuse to read anything until triage has been measured (openspec
@@ -548,6 +564,16 @@ class LinkRead:
             )
             if claim.slug not in offered
         ]
+        # The claim with the slug a new claim would be given has this treatment and
+        # condition by its own words, written alike or not ("alcohol-use" and "alcohol
+        # use"), so it is always offered, beyond any cut.
+        # An archived owner is never joined, whichever way it was found: the read is
+        # left overlapping it, and listed with it, until it is fixed and unarchived.
+        owner = owner_of_rule_slug(session, draft.intervention, draft.indication)
+        if owner is not None and owner.archived_at is not None:
+            candidates = [claim for claim in candidates if claim.slug != owner.slug]
+        elif owner is not None and owner.slug not in {claim.slug for claim in candidates}:
+            candidates += named_claims(session, [owner.id])
         if not candidates:
             return None, None
         answer = choose_same_claim(
@@ -802,9 +828,15 @@ class LinkRead:
 
             # A claim for the same treatment and condition, as named or once dose,
             # schedule and form are left out, means a new claim would duplicate it.
-            collision = slug_of_claim_covering(
-                session, draft.intervention, draft.indication
-            ) or slug_of_claim_close_to(session, draft.intervention, draft.indication)
+            # So does a claim that has the slug the rule would give it: the slug is made
+            # from the same words. The backfill of 2026-11-16 recorded such a read as
+            # failed when the slug was refused.
+            owner = owner_of_rule_slug(session, draft.intervention, draft.indication)
+            collision = (
+                slug_of_claim_covering(session, draft.intervention, draft.indication)
+                or slug_of_claim_close_to(session, draft.intervention, draft.indication)
+                or (owner.slug if owner is not None else None)
+            )
             if collision is not None:
                 # The names are already taken, but identity was not established. Neither
                 # force the article onto that claim nor pay to retry an unchanged read.
@@ -812,7 +844,8 @@ class LinkRead:
                     record,
                     ReadOutcome.IDENTITY_UNRESOLVED,
                     f"{draft.intervention} for {draft.indication}; {NAMES_OVERLAP} {collision}, "
-                    "but the same treatment and condition were not established",
+                    "but the same treatment and condition were not established, so no "
+                    "claim was drafted",
                 )
             if business:
                 return self._finish(

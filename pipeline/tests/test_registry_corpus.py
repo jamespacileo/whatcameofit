@@ -1,7 +1,7 @@
 """Loading registry trials in bulk, replaying two recorded pages of the registry's list.
 Scenario names are from openspec registry-corpus."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import httpx
 import pytest
@@ -9,10 +9,14 @@ from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
 from backfill_support import DemoStep, committed_sessions, remove_committed, same_session
-from thenwhat.backfill.ledger import count
-from thenwhat.backfill.registry_load import load_trials
+from thenwhat.backfill.errors import AllowanceUsedUp, SourcePaused
+from thenwhat.backfill.ledger import count, record_outcome
+from thenwhat.backfill.link_screen import LinkScreen
+from thenwhat.backfill.news_search import NewsSearch
+from thenwhat.backfill.registry_load import load_trials, trial_fields
 from thenwhat.backfill.runner import run_step
-from thenwhat.db.models import RegistryLoad, RegistryTrial
+from thenwhat.db.models import RegistryLoad, RegistryTrial, WorkEntry
+from thenwhat.domain import WorkOutcome
 from thenwhat.export.build import build_export
 from thenwhat.sources.base import MissingContact
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -24,10 +28,13 @@ REGISTRY = "clinicaltrials.gov"
 class Registry:
     """Serves the two recorded pages and remembers each request's parameters."""
 
-    def __init__(self, fixture_json, *, fail_on_second_page: bool = False) -> None:
+    def __init__(
+        self, fixture_json, *, fail_on_second_page: bool = False, throttle_second_page=False
+    ) -> None:
         self.first = fixture_json("clinicaltrials/list_page_1.json")
         self.second = fixture_json("clinicaltrials/list_page_2.json")
         self.fail_on_second_page = fail_on_second_page
+        self.throttle_second_page = throttle_second_page
         self.asked: list[dict[str, str]] = []
 
     def __call__(self, request: httpx.Request) -> httpx.Response:
@@ -35,6 +42,8 @@ class Registry:
         self.asked.append(params)
         if "pageToken" not in params:
             return httpx.Response(200, json=self.first)
+        if self.throttle_second_page:
+            return httpx.Response(429, headers={"Retry-After": "120"}, text="slow down")
         if self.fail_on_second_page:
             return httpx.Response(400, text="bad request")
         return httpx.Response(200, json=self.second)
@@ -201,6 +210,137 @@ def test_a_trial_is_due_again_only_when_a_field_a_step_reads_changed(
     assert step.ran == ["NCT07816367"]
 
 
+def test_the_wider_record_is_stored_as_the_registry_gives_it(fixture_json):
+    """Scenarios: A trial with posted results, A field the registry leaves empty"""
+    page = fixture_json("clinicaltrials/list_page_wide.json")
+    by_id = {fields["external_id"]: fields for fields in map(trial_fields, page["studies"])}
+
+    kudzu = by_id["NCT01596231"]
+    assert kudzu["results_first_posted"] == date(2014, 10, 21)
+    assert kudzu["has_results"] is True
+    assert (kudzu["completion_date"], kudzu["completion_date_type"]) == ("2014-07", "ACTUAL")
+    assert kudzu["primary_completion_date"] == "2013-05"
+    assert kudzu["last_update_posted"] == date(2014, 10, 21)
+    assert kudzu["study_first_posted"] == date(2012, 5, 10)
+    assert (kudzu["acronym"], kudzu["lead_sponsor_name"]) == ("KUDZU", "Mclean Hospital")
+    # The registry gives this start date no type, and none is supplied.
+    assert (kudzu["start_date"], kudzu["start_date_type"]) == ("2010-05", None)
+
+    elismetrep = by_id["NCT07816367"]
+    assert (elismetrep["completion_date"], elismetrep["completion_date_type"]) == (
+        "2027-12",
+        "ESTIMATED",
+    )
+    assert elismetrep["start_date_type"] == "ACTUAL"
+    # No results, no acronym: stored empty, not derived from the state or the dates.
+    assert (elismetrep["has_results"], elismetrep["results_first_posted"]) == (False, None)
+    assert elismetrep["acronym"] is None
+
+    tide = by_id["NCT02586935"]
+    assert (tide["overall_status"], tide["has_results"]) == ("COMPLETED", False)
+    assert tide["last_update_posted"] == date(2025, 7, 16)
+
+
+def test_a_sponsor_who_is_a_person_is_not_named_in_a_column(fixture_json):
+    study = fixture_json("clinicaltrials/list_page_wide.json")["studies"][0]
+    study["protocolSection"]["sponsorCollaboratorsModule"]["leadSponsor"] = {
+        "name": "A made-up person",
+        "class": "INDIVIDUAL",
+    }
+
+    fields = trial_fields(study)
+
+    assert (fields["sponsor_class"], fields["lead_sponsor_name"]) == ("INDIVIDUAL", None)
+
+
+def _sponsors_of(trial: RegistryTrial) -> dict:
+    return trial.raw_payload["protocolSection"]["sponsorCollaboratorsModule"]
+
+
+def test_a_person_who_sponsors_or_collaborates_is_not_named_in_the_stored_record(
+    session: Session, fake_time, fixture_json
+):
+    registry = Registry(fixture_json)
+    by_person = registry.first["studies"][0]["protocolSection"]
+    by_person["sponsorCollaboratorsModule"] = {
+        "leadSponsor": {"name": "A made-up person", "class": "INDIVIDUAL"},
+        "collaborators": [
+            {"name": "Another made-up person", "class": "INDIVIDUAL"},
+            {"name": "A made-up university", "class": "OTHER"},
+        ],
+    }
+    by_organisation = registry.second["studies"][0]["protocolSection"]
+    by_organisation["sponsorCollaboratorsModule"] = {
+        "leadSponsor": {"name": "A made-up company", "class": "INDUSTRY"},
+        "collaborators": [{"name": "A made-up institute", "class": "NIH"}],
+    }
+
+    load(session, fake_time, registry)
+
+    trials = {trial.external_id: trial for trial in stored(session)}
+    person_sponsored = trials[by_person["identificationModule"]["nctId"]]
+    assert _sponsors_of(person_sponsored) == {
+        "leadSponsor": {"class": "INDIVIDUAL"},
+        "collaborators": [
+            {"class": "INDIVIDUAL"},
+            {"name": "A made-up university", "class": "OTHER"},
+        ],
+    }
+    assert person_sponsored.lead_sponsor_name is None
+    company_sponsored = trials[by_organisation["identificationModule"]["nctId"]]
+    assert _sponsors_of(company_sponsored) == {
+        "leadSponsor": {"name": "A made-up company", "class": "INDUSTRY"},
+        "collaborators": [{"name": "A made-up institute", "class": "NIH"}],
+    }
+    assert company_sponsored.lead_sponsor_name == "A made-up company"
+    # Everything else is stored as the registry gave it.
+    assert (
+        person_sponsored.raw_payload["protocolSection"]["conditionsModule"]
+        == (by_person["conditionsModule"])
+    )
+
+
+def _widened(registry: Registry) -> Registry:
+    """The same trials as the registry gives them with the wider record: every listing
+    field as before, plus activity and results fields."""
+    for page in (registry.first, registry.second):
+        for study in page["studies"]:
+            protocol = study["protocolSection"]
+            protocol["statusModule"] |= {
+                "lastUpdatePostDateStruct": {"date": "2026-11-12"},
+                "studyFirstPostDateStruct": {"date": "2026-01-05"},
+                "completionDateStruct": {"date": "2027-12", "type": "ESTIMATED"},
+            }
+            protocol["identificationModule"]["acronym"] = "MADE-UP"
+            sponsors = protocol.setdefault("sponsorCollaboratorsModule", {})
+            sponsors.setdefault("leadSponsor", {})["name"] = "A sponsor"
+            study["hasResults"] = False
+    return registry
+
+
+def test_loading_the_wider_record_makes_no_trial_due_for_any_step(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: The reload. The news search reads only the name and indication worked
+    out from the listing fields; screening reads link leads, which a trial load never
+    marks."""
+    steps = [NewsSearch(time=fake_time), LinkScreen()]
+    load(session, fake_time, Registry(fixture_json), steps=steps)
+    news_search = steps[0]
+    for trial in session.scalars(select(RegistryTrial).where(news_search.scope())):
+        record_outcome(
+            session, news_search, trial, WorkOutcome.DONE, requests_used=1, now=fake_time.now()
+        )
+    assert count(session, news_search, 3).due == 0
+
+    fake_time.advance(timedelta(days=1))
+    load(session, fake_time, _widened(Registry(fixture_json)), steps=steps)
+
+    assert all(trial.last_update_posted == date(2026, 11, 12) for trial in stored(session))
+    assert count(session, news_search, 3).due == 0
+    assert not session.scalars(select(WorkEntry).where(WorkEntry.stale)).first()
+
+
 def test_requests_are_claimed_before_they_are_sent(session: Session, fake_time, fixture_json):
     claimed: list[int] = []
     registry = Registry(fixture_json)
@@ -208,6 +348,51 @@ def test_requests_are_claimed_before_they_are_sent(session: Session, fake_time, 
     load(session, fake_time, registry, before_request=lambda: claimed.append(len(registry.asked)))
 
     assert claimed == [0, 1]
+
+
+def test_a_load_that_reaches_the_allowance_stops_with_what_it_stored(
+    session: Session, fake_time, fixture_json
+):
+    """The allowance runs out after the first page: the load ends without an error, says
+    why, keeps the first page's trials, and is not recorded as completed, so the next
+    changes-only load asks from the same date."""
+    registry = Registry(fixture_json)
+    claims: list[int] = []
+
+    def before_request() -> None:
+        claims.append(1)
+        if len(claims) > 1:
+            raise AllowanceUsedUp("The allowance for clinicaltrials.gov is used up.")
+
+    report = load(session, fake_time, registry, before_request=before_request)
+
+    assert report.stopped == "The allowance for clinicaltrials.gov is used up."
+    assert (report.requests, report.added, report.updated) == (1, 3, 0)
+    assert len(registry.asked) == 1
+    assert len(stored(session)) == 3
+    assert session.get(RegistryLoad, (REGISTRY, CONDITION)) is None
+
+
+def test_a_load_the_registry_asks_to_wait_records_the_pause_and_stops(
+    session: Session, fake_time, fixture_json
+):
+    """The registry answers "too many requests" to the second page every time it is
+    asked: the refusal is recorded with the wait it stated, the load ends without an
+    error with the first page stored, and it is not recorded as completed."""
+    registry = Registry(fixture_json, throttle_second_page=True)
+    waits: list[float | None] = []
+
+    def refused(wait: float | None) -> SourcePaused:
+        waits.append(wait)
+        return SourcePaused("clinicaltrials.gov said it was asked too often.")
+
+    report = load(session, fake_time, registry, refused=refused)
+
+    assert waits == [120.0]
+    assert report.stopped == "clinicaltrials.gov said it was asked too often."
+    assert (report.added, report.updated) == (3, 0)
+    assert len(stored(session)) == 3
+    assert session.get(RegistryLoad, (REGISTRY, CONDITION)) is None
 
 
 def test_no_request_is_sent_without_a_contact_address(session: Session, fake_time, fixture_json):

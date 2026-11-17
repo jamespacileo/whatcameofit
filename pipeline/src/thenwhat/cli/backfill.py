@@ -65,6 +65,7 @@ from thenwhat.backfill.steps import (
     model_spend_of,
 )
 from thenwhat.backfill.topics import TOPICS
+from thenwhat.backfill.trial_sets import count_sets
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
@@ -407,8 +408,9 @@ def load_trials_command(
     trials: Annotated[
         str | None,
         typer.Option(
-            help="A named set of interventional trials of a drug or biological: "
-            "phase-3 (the default) or active-phase-2-3, those under way now."
+            help="A named set of trials: phase-3 (the default) or active-phase-2-3, "
+            "interventional trials of a drug or biological, the second those under way "
+            "now; or interventional, every interventional study."
         ),
     ] = None,
     changes_only: Annotated[
@@ -423,6 +425,9 @@ def load_trials_command(
 
     The trials are kept whether or not any claim refers to them. They are not evidence
     events and never reach the export. Loading again updates each trial in place.
+    With --changes-only, only trials updated since the last completed load of the same
+    set are asked for; with none completed, every trial is. A load that reaches the
+    registry's allowance stops with what it stored, says so, and is not an error.
     """
     settings = settings_or_exit()
     if condition is not None and trials is not None:
@@ -448,6 +453,7 @@ def load_trials_command(
                 changes_only=changes_only,
                 now=lambda: datetime.now(UTC),
                 before_request=lambda: allowances.claim(registry.name),
+                refused=lambda wait: allowances.refused(registry.name, wait),
             )
     since = f" updated since {report.changes_since}" if report.changes_since else ""
     out.print(
@@ -455,6 +461,11 @@ def load_trials_command(
         f"requests: {report.added:,} new, {report.updated:,} already stored.",
         markup=False,
     )
+    if report.stopped:
+        out.print(
+            f"Stopped: {report.stopped} Run the same command again later to go on.",
+            markup=False,
+        )
 
 
 @backfill_app.command("load-links")
@@ -579,6 +590,70 @@ def leads_command() -> None:
         number = rates.by_kind[kind]
         out.print(
             f"  {number:,} ({rates.share(number)}%) have one from {KIND_WORDS[kind]}",
+            markup=False,
+        )
+
+
+SET_WORDS = {
+    "active-since-2025": "phase 2 or 3, under way, record updated on or after 2025-01-01",
+    "completed-with-results-since-2025": (
+        "completed on or after 2025-01-01 (actual date), results posted"
+    ),
+}
+
+
+def _phase_words(phases: tuple[str, ...]) -> str:
+    if not phases:
+        return "no phase given"
+    if phases == ("NA",):
+        return "phase not applicable"
+    words = [
+        phase.replace("EARLY_PHASE", "early phase ").replace("PHASE", "phase ") for phase in phases
+    ]
+    # Phases 2 and 3 together read as "phase 2/3".
+    if len(words) > 1 and all(word.startswith("phase ") for word in words):
+        return "phase " + "/".join(word.removeprefix("phase ") for word in words)
+    return " and ".join(words)
+
+
+@backfill_app.command("trial-sets")
+def trial_sets_command() -> None:
+    """Count the named sets of stored trials, by phase, with the days they were loaded.
+
+    active-since-2025: phase 2 or 3, recruiting or about to, enrolling by invitation, or
+    active and no longer recruiting, with a record the registry updated on or after
+    1 January 2025. completed-with-results-since-2025: completed, with an actual
+    completion date on or after 1 January 2025 and results posted. A set says which
+    trials are in it and nothing of how they turned out. Sends no request and changes
+    nothing.
+    """
+    settings_or_exit()
+    with refusals(), open_session() as session:
+        report = count_sets(session)
+    if report.stored == report.without_wider_record:
+        err.print(
+            "No stored trial has the activity and results fields yet. Load the trials "
+            "again in full: `thenwhat backfill load-trials --trials interventional`."
+        )
+        raise typer.Exit(code=1)
+    for counted in report.sets:
+        loaded = (
+            f"loaded {counted.loaded_first}"
+            if counted.loaded_first == counted.loaded_last
+            else f"loaded {counted.loaded_first} to {counted.loaded_last}"
+        )
+        out.print(
+            f"{counted.name} ({SET_WORDS[counted.name]}): {counted.total:,} "
+            + ("trial" if counted.total == 1 else "trials")
+            + (f", {loaded}" if counted.total else ""),
+            markup=False,
+        )
+        for phases, number in sorted(counted.by_phase.items(), key=lambda item: item[0]):
+            out.print(f"  {_phase_words(phases)}: {number:,}", markup=False)
+    if report.without_wider_record:
+        out.print(
+            f"{report.without_wider_record:,} of {report.stored:,} stored trials were loaded "
+            "before these fields were asked for and are in neither set until loaded again.",
             markup=False,
         )
 

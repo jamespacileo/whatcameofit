@@ -315,22 +315,30 @@ When no existing claim covers what the read names, a claim SHALL be drafted from
 - **THEN** no claim is created and the lead's failure names the slug
 
 ### Requirement: A read's claim is decided after it is prepared
-`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. It SHALL then propose the claim's subject terms, kind and drug record, which its background cards come from; a failure there SHALL be reported and SHALL NOT keep the claim waiting, as cards are not evidence. While another step has failed, the claim SHALL keep awaiting review. A claim whose intervention the registry of substances files under the same substance as another claim that is neither rejected nor archived, for a condition that is the other's or the other's narrowed by words in front, SHALL be rejected by rule, naming that claim, and its articles, with their promises and statements, SHALL join that claim, the lead being recorded as added to it; an article that claim already has is not copied. An archived claim does not count, so one archived for a fault can be replaced, nor does one whose intervention is named in another route or form (oral, pill, tablet, capsule, nasal, spray, inhaled, patch, topical), and a combination never shares a substance with anything, on either side. This is the one join made by rule, on registry identity: the core-name rule above still never joins. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
+`thenwhat prepare` SHALL decide a claim that a lead's read drafted, by the existing rule for drafts, once every step it runs for that claim has succeeded: reading unread articles, searching the registries, reading the registries for approved matches, and reading the stored records. It SHALL then propose the claim's subject terms, kind and drug record, which its background cards come from; a failure there SHALL be reported and SHALL NOT keep the claim waiting, as cards are not evidence. While another step has failed, the claim SHALL keep awaiting review. A claim whose intervention the registry of substances files under the same substance as another claim that is neither rejected nor archived, for a condition that is the other's or the other's narrowed by words in front, SHALL be rejected by rule, naming that claim, and its articles, with their promises and statements, SHALL join that claim, the lead being recorded as added to it; an article that claim already has is not copied. An archived claim does not count, so one archived for a fault can be replaced, nor does one whose intervention is named in another route or form (oral, pill, tablet, capsule, nasal, spray, inhaled, patch, topical), and a combination never shares a substance with anything, on either side. A vaccine filed by the source of brands under its antigen shares nothing either, as two makers' vaccines can share one antigen, nor does an ingredient of the source of brands not yet known to be no vaccine. This is the one join made by rule, on registry identity: the core-name rule above still never joins. `thenwhat prepare` SHALL NOT decide a claim that no lead's read drafted. No claim a read drafted is published with a status that no registry search stands behind. A claim it approves SHALL be marked awaiting audit, and SHALL stay out of every export until `thenwhat audit clear` releases it.
 
 #### Scenario: Prepared and named
 - **WHEN** `thenwhat prepare --pending` has run every step without failure for a claim a read drafted
 - **THEN** the claim is approved by rule, is marked awaiting audit, and is published, with the status its approved evidence gives, by the first export after its audit is cleared
 
 ### Requirement: A prepared batch waits for its audit
-Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. It SHALL then list each lead left identity unresolved because its treatment and condition overlap a claim that is now archived, with that claim and the lead's address, so the claim can be fixed and unarchived and the lead read again. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
+Every export SHALL leave out a claim awaiting audit, whoever runs it, SHALL give it no published time, and SHALL report how many approved, unarchived claims it left out. `thenwhat audit list` SHALL list the claims awaiting audit, oldest first, with whether each is archived. It SHALL then list each lead left identity unresolved because its treatment and condition overlap a claim that is now archived, with that claim and the lead's address, so the claim can be fixed and unarchived and the lead read again. It SHALL then list, apart, each lead left identity unresolved naming a claim that is not archived, with that claim, its review state and the lead's address: such a read is never tried again, so the operator attaches the article to the claim or leaves it. `thenwhat audit clear` SHALL release the named claims only when every one of them awaits audit, and otherwise SHALL release none. Unarchiving a claim SHALL NOT release it.
 
 #### Scenario: Held until audited
 - **WHEN** an export runs while an approved, unarchived claim awaits audit
 - **THEN** the claim is not in the export, is not listed as archived, has no published time, and the export command says one approved claim was left out
 
+#### Scenario: Two vaccines filed under one antigen
+- **WHEN** a read's drafted claim and a live claim are filed by the source of brands under one ingredient that it marks as a vaccine's antigen
+- **THEN** the drafted claim is decided by the rule for drafts and no article is joined to the other claim
+
 #### Scenario: A read that overlaps an archived claim
 - **WHEN** `thenwhat audit list` runs while a lead was left identity unresolved naming a claim that is now archived, and another naming a claim that is not
-- **THEN** the first lead is listed with the archived claim and its address, and the second is not
+- **THEN** the first lead is listed with the archived claim and its address, among the archived overlaps
+
+#### Scenario: A read that overlaps a claim that is not archived
+- **WHEN** `thenwhat audit list` runs while a lead was left identity unresolved naming a claim that is not archived
+- **THEN** the lead is listed after the archived overlaps, with that claim, its review state and the lead's address
 
 #### Scenario: Audit passed
 - **WHEN** `thenwhat audit clear` names a claim awaiting audit and an export runs
@@ -398,7 +406,7 @@ A lead linked by its title to a claim that already has the configured number of 
 - **THEN** the report gives each count and the two costs, and no request is sent
 
 ### Requirement: A read does not draft a duplicate of a claim by its dose or form
-A read SHALL offer the same-claim decision every claim whose intervention shares a name with the read's treatment once dose, schedule, form and any "-assisted" therapy are left out of the names ("semaglutide 2.4 mg once-weekly injections" and "MDMA-assisted psychotherapy" give "semaglutide" and "MDMA"). A route or form that makes another product, such as "nasal spray", "oral", "pill" or "tablets", SHALL be kept. When the decision does not join the article to a claim, and a claim that is not rejected has that same treatment and a condition that is the read's, or the read's with words in front that only narrow it, the read SHALL draft no claim and SHALL record the lead as identity unresolved, naming that claim. A condition that only ends with the other's words after "in", "with" or the like is another condition. Words in brackets are left out of the comparison. This rule SHALL never join an article to a claim: only the decision joins.
+A read SHALL offer the same-claim decision every claim whose intervention shares a name with the read's treatment once dose, schedule, form and any "-assisted" therapy are left out of the names ("semaglutide 2.4 mg once-weekly injections" and "MDMA-assisted psychotherapy" give "semaglutide" and "MDMA"). A route or form that makes another product, such as "nasal spray", "oral", "pill" or "tablets", SHALL be kept. When the decision does not join the article to a claim, and a claim that is not rejected has that same treatment and a condition that is the read's, or the read's with words in front that only narrow it, the read SHALL draft no claim and SHALL record the lead as identity unresolved, naming that claim. A condition that only ends with the other's words after "in", "with" or the like is another condition. Words in brackets are left out of the comparison, and letter case, spacing and hyphens do not count: "Alcohol-use disorder" is "alcohol use disorder". A claim whose own intervention name or synonym and indication make the slug the rule would give the read's new claim SHALL always be offered to the decision, beyond the eight-candidate limit, unless it is rejected or archived. An archived owner SHALL NOT be offered or joined, however it was found. A rejected owner keeps its slug, as every claim does, so no claim is drafted under it. When the decision does not join the article to the owner, or the owner was not offered, the read SHALL draft no claim and SHALL record the lead as identity unresolved, naming that claim, and not as failed. When that claim is archived, `thenwhat audit list` lists the lead with it, as for any read that overlaps an archived claim. This rule SHALL never join an article to a claim: only the decision joins.
 
 #### Scenario: A name with a dose or an assisted therapy
 - **WHEN** a read names "MDMA-assisted psychotherapy" for post-traumatic stress disorder and a claim exists for MDMA for post-traumatic stress disorder (PTSD)
@@ -407,6 +415,22 @@ A read SHALL offer the same-claim decision every claim whose intervention shares
 #### Scenario: A duplicate refused
 - **WHEN** the decision does not establish the same claim, and the read's treatment and condition are a claim's once dose and form are left out
 - **THEN** no claim is drafted, and the lead is identity unresolved, naming that claim
+
+#### Scenario: A read whose new slug a claim already has
+- **WHEN** a read names semaglutide for "Alcohol-use disorder", eight older claims for semaglutide exist, and a claim for semaglutide for "alcohol use disorder" has the slug the rule would give the read
+- **THEN** that claim is offered to the same-claim decision, and the article joins it when the decision agrees
+
+#### Scenario: A read whose new slug a claim has, not established as that claim
+- **WHEN** the decision does not join the article to the claim whose names make the read's slug
+- **THEN** no claim is drafted, and the lead is identity unresolved, naming that claim, not failed
+
+#### Scenario: A read whose new slug an archived claim has
+- **WHEN** that claim is archived, even where the decision would say the article reports it
+- **THEN** it is not offered, the article is not joined to it, the lead is identity unresolved, naming it, and `thenwhat audit list` lists the lead among the archived overlaps
+
+#### Scenario: A read whose new slug a rejected claim has
+- **WHEN** that claim is rejected
+- **THEN** it is not offered, no claim is drafted and the read does not fail, the lead is identity unresolved, naming it, and `thenwhat audit list` lists the lead with it and its review state
 
 #### Scenario: Another condition that ends with the same words
 - **WHEN** a read names orforglipron for obstructive sleep apnoea in people with obesity and a claim exists for orforglipron for obesity

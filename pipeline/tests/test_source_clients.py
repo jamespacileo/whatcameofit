@@ -7,6 +7,7 @@ Scenario names are from openspec source-clients.
 import json
 from datetime import date, timedelta
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
@@ -31,7 +32,7 @@ from thenwhat.sources.mesh import Mesh
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.opentargets import OpenTargets
 from thenwhat.sources.ror import Ror
-from thenwhat.sources.rxnorm import RxNorm
+from thenwhat.sources.rxnorm import PartMissing, RxNorm, vaccine_codes
 
 CONTACT = "ops@thenwhat.test"
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -1501,7 +1502,11 @@ def brands(session: Session, fake_time, fixture_json, search: str) -> tuple[RxNo
         if path.endswith("/properties.json"):
             return fixture_json(f"rxnorm/properties_{identifier}.json")
         if path.endswith("/related.json"):
-            return fixture_json(f"rxnorm/related_in_{identifier}.json")
+            tty = request.url.params["tty"].lower()
+            return fixture_json(f"rxnorm/related_{tty}_{identifier}.json")
+        if path.endswith("/property.json"):
+            prop = request.url.params["propName"].lower()
+            return fixture_json(f"rxnorm/property_{prop}_{identifier}.json")
         return NOT_FOUND
 
     replay = Replay(route)
@@ -1531,6 +1536,112 @@ def test_brand_is_found_under_its_one_ingredient(session: Session, fake_time, fi
     assert (asked["name"], asked["search"]) == ("elevidys", "0")
     assert replay.requests[2].url.params["tty"] == "IN"
     assert CONTACT in replay.requests[0].headers["User-Agent"]
+    # Its one branded drug carries no vaccine code: a drug, whose ingredient is a name.
+    assert record.payload["products"] == fixture_json("rxnorm/related_sbd_2641681.json")
+    assert record.payload["product_codes"] == {"2641685": {}}
+    assert vaccine_codes(record.payload) == []
+
+
+def test_a_vaccine_brand_is_found_under_its_antigen_with_its_vaccine_code(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: A brand the source of brands marks a vaccine"""
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_ervebo")
+
+    [record] = source.substances_named("Ervebo")
+
+    # The antigen is what RxNorm says the brand is made of, and it is kept as such.
+    assert record.external_id == "2624742"
+    assert record.payload["substance"]["_name"] == "Zaire ebolavirus envelope glycoprotein"
+    assert vaccine_codes(record.payload) == ["204"]
+    assert [request.url.path.rsplit("/", 1)[-1] for request in replay.requests] == [
+        "rxcui.json",
+        "properties.json",
+        "related.json",
+        "related.json",
+        "property.json",
+    ]
+    assert replay.requests[3].url.params["tty"] == "SBD"
+    assert replay.requests[4].url.params["propName"] == "CVX"
+
+
+def test_a_monoclonal_antibody_with_a_cvx_code_is_no_vaccine(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: A brand CDC gives a code that is not a vaccine's"""
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_beyfortus")
+
+    [record] = source.substances_named("Beyfortus")
+
+    # CDC codes nirsevimab 306 and 307, as it codes immune globulins: not vaccines.
+    assert record.payload["substance"]["_name"] == "nirsevimab"
+    assert record.payload["product_codes"] == {
+        "2642412": fixture_json("rxnorm/property_cvx_2642412.json"),
+        "2642415": fixture_json("rxnorm/property_cvx_2642415.json"),
+    }
+    assert vaccine_codes(record.payload) == []
+
+
+def test_a_brand_with_more_branded_drugs_than_are_read_is_not_known(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Part of a brand's answer is missing. A vaccine code on a branded drug
+    not asked about could be missed, so none is guessed."""
+    many = {
+        "relatedGroup": {
+            "conceptGroup": [
+                {
+                    "tty": "SBD",
+                    "conceptProperties": [{"rxcui": str(2700000 + n)} for n in range(21)],
+                }
+            ]
+        }
+    }
+
+    def route(request: httpx.Request):
+        last = request.url.path.rsplit("/", 1)[-1]
+        if last == "rxcui.json":
+            return fixture_json("rxnorm/rxcui_elevidys.json")
+        if last == "properties.json":
+            return fixture_json("rxnorm/properties_2641681.json")
+        if request.url.params["tty"] == "SBD":
+            return many
+        return fixture_json("rxnorm/related_in_2641681.json")
+
+    replay = Replay(route)
+    source = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+
+    with pytest.raises(PartMissing, match="21 branded drugs"):
+        source.substances_named("Elevidys")
+    assert not any(r.url.path.endswith("/property.json") for r in replay.requests)
+
+
+def test_a_brand_whose_vaccine_code_is_missing_is_not_known(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Part of a brand's answer is missing"""
+
+    def route(request: httpx.Request):
+        if request.url.path.endswith("/property.json"):
+            return NOT_FOUND
+        return fixture_json(
+            {
+                "rxcui.json": "rxnorm/rxcui_ervebo.json",
+                "properties.json": "rxnorm/properties_2624748.json",
+            }.get(request.url.path.rsplit("/", 1)[-1])
+            or f"rxnorm/related_{request.url.params['tty'].lower()}_2624748.json"
+        )
+
+    source = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(Replay(route)), time=fake_time
+    )
+
+    # Without the vaccine code's answer, a vaccine could not be told from a drug, and
+    # the source has not said the name is no brand.
+    with pytest.raises(PartMissing):
+        source.substances_named("Ervebo")
 
 
 def test_a_brand_the_source_does_not_list_finds_nothing(session: Session, fake_time, fixture_json):
@@ -1554,6 +1665,39 @@ def test_a_brand_of_two_ingredients_is_two_substances(session: Session, fake_tim
     assert one_substance(found) is None
 
 
+def test_a_brand_of_two_ingredients_keeps_no_record_for_its_claim(
+    session: Session, fake_time, fixture_json
+):
+    """Scenario: Brand of more than one ingredient. Only a brand of one ingredient is
+    asked for its vaccine codes, and only such a brand's ingredient is ever kept, so
+    every RxNorm record kept has them."""
+    from thenwhat.claims.entry import add_claim
+    from thenwhat.db.models import EntitySubstance
+    from thenwhat.resolve.codes import Listing, give_development_codes
+
+    class NoSubstances:
+        name = "gsrs"
+
+        def substances_named(self, name: str) -> list:
+            return []
+
+    claim = add_claim(
+        session,
+        slug="advair-asthma",
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention="Advair",
+        indication="asthma",
+    )
+    source, replay = brands(session, fake_time, fixture_json, "rxcui_advair")
+
+    answer = give_development_codes(session, claim, substances=NoSubstances(), brands=source)
+
+    assert answer is not None and answer.listing is Listing.SEVERAL_SUBSTANCES
+    assert session.scalars(select(EntitySubstance)).all() == []
+    assert not any(request.url.params.get("tty") == "SBD" for request in replay.requests)
+
+
 def test_a_name_that_is_not_a_brand_finds_nothing(session: Session, fake_time, fixture_json):
     """Scenario: Name that is not a brand"""
     source, replay = brands(session, fake_time, fixture_json, "rxcui_aspirin")
@@ -1574,20 +1718,85 @@ def test_a_concept_named_otherwise_than_asked_finds_nothing(
     assert len(replay.requests) == 2
 
 
-def test_a_name_too_many_concepts_carry_finds_nothing(session: Session, fake_time):
-    """Scenario: Name more concepts carry than are read"""
-    replay = Replay(lambda request: {"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}})
+@pytest.mark.parametrize(
+    ("answer", "said"),
+    [
+        # Six concepts: listed, but under too many to identify one. None is read.
+        ({"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}}, "6 concepts"),
+        # A 200 whose body is not an object.
+        (["not", "an", "object"], "no answer to read"),
+        # A concept identifier that is not a number.
+        ({"idGroup": {"rxnormId": ["26416x1"]}}, "could not read"),
+    ],
+)
+def test_a_name_search_the_client_cannot_read_whole_is_not_known(
+    session: Session, fake_time, answer: Any, said: str
+):
+    """Scenarios: Name more concepts carry than are read, Part of a brand's answer is
+    missing"""
+    replay = Replay(lambda request: answer)
     source = RxNorm(
         session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
     )
 
-    # Six concepts: none is read, not the first five.
-    assert source.substances_named("Elevidys") == []
+    with pytest.raises(PartMissing, match=said):
+        source.substances_named("Elevidys")
     assert len(replay.requests) == 1
 
 
+@pytest.mark.parametrize(
+    "answer",
+    [
+        {"idGroup": {"rxnormId": [str(n) for n in range(1, 7)]}},
+        ["not", "an", "object"],
+        {"idGroup": {"rxnormId": ["26416x1"]}},
+    ],
+)
+def test_a_kept_ingredient_survives_a_name_search_that_cannot_be_read_whole(
+    session: Session, fake_time, fixture_json, answer: Any
+):
+    """Scenario: A source does not answer for one claim among many"""
+    from datetime import timedelta
+
+    from thenwhat.claims.entry import add_claim
+    from thenwhat.db.models import EntitySubstance
+    from thenwhat.resolve.codes import give_development_codes
+
+    class NoSubstances:
+        name = "gsrs"
+
+        def substances_named(self, name: str) -> list:
+            return []
+
+    claim = add_claim(
+        session,
+        slug="elevidys-dmd",
+        headline="A synthetic headline",
+        vertical="mouth-and-teeth",
+        intervention="Elevidys",
+        indication="Duchenne muscular dystrophy",
+    )
+    good, _ = brands(session, fake_time, fixture_json, "rxcui_elevidys")
+    give_development_codes(session, claim, substances=NoSubstances(), brands=good)
+    [kept] = session.scalars(select(EntitySubstance)).all()
+    before = (kept.external_id, dict(kept.payload))
+    # Long enough that nothing kept from the first answers is reused.
+    fake_time.advance(timedelta(days=31))
+    replay = Replay(lambda request: answer)
+    bad = RxNorm(
+        session, contact_email=CONTACT, transport=httpx.MockTransport(replay), time=fake_time
+    )
+
+    with pytest.raises(PartMissing):
+        give_development_codes(session, claim, substances=NoSubstances(), brands=bad)
+    assert len(replay.requests) == 1
+
+    [still] = session.scalars(select(EntitySubstance)).all()
+    assert (still.external_id, still.payload) == before
+
+
 @pytest.mark.parametrize("missing", ["properties", "related"])
-def test_a_brand_with_part_of_its_answer_missing_finds_nothing(
+def test_a_brand_with_part_of_its_answer_missing_is_not_known(
     session: Session, fake_time, fixture_json, missing: str
 ):
     """Scenario: Part of a brand's answer is missing"""
@@ -1614,7 +1823,8 @@ def test_a_brand_with_part_of_its_answer_missing_finds_nothing(
         time=fake_time,
     )
 
-    assert source.substances_named("Elevidys") == []
+    with pytest.raises(PartMissing):
+        source.substances_named("Elevidys")
 
 
 # --- Open Targets: a drug by its own name -------------------------------------------

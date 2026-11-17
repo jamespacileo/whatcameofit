@@ -1,6 +1,8 @@
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Engine, inspect, text
+from sqlalchemy import Connection, Engine, inspect, text
+
+from thenwhat.db.models import Base
 
 EXPECTED_TABLES = {
     "claim",
@@ -35,6 +37,7 @@ EXPECTED_TABLES = {
     "link_share",
     "link_lead_link",
     "link_lead_label",
+    "claim_change",
 }
 
 # The migration that records where an entity was named (openspec organisations).
@@ -64,6 +67,54 @@ def test_downgrade_removes_everything_and_upgrade_restores_it(
 def test_migrations_match_models(engine: Engine, alembic_config: Config):
     # Raises if the models have changes that no migration covers.
     command.check(alembic_config)
+
+
+# What `alembic check` does not compare: each check, by table and name, and each
+# column's default.
+_CHECKS = """
+    SELECT t.relname || '.' || c.conname, pg_get_constraintdef(c.oid)
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE c.contype = 'c' AND n.nspname = :schema AND t.relname <> 'alembic_version'
+"""
+_DEFAULTS = """
+    SELECT table_name || '.' || column_name, replace(column_default, :schema || '.', '')
+    FROM information_schema.columns
+    WHERE table_schema = :schema AND table_name <> 'alembic_version'
+"""
+
+
+def _checks_and_defaults(connection: Connection, schema: str) -> dict[str, str | None]:
+    found: dict[str, str | None] = {}
+    for kind, query in (("check", _CHECKS), ("default", _DEFAULTS)):
+        for name, definition in connection.execute(text(query), {"schema": schema}):
+            found[f"{kind} {name}"] = definition
+    return found
+
+
+def test_checks_and_defaults_match_models(engine: Engine):
+    """A value added to an enum, or a check or default changed on a model, needs a
+    migration too."""
+    with engine.connect() as connection:
+        transaction = connection.begin()
+        try:
+            connection.execute(text("CREATE SCHEMA from_models"))
+            Base.metadata.create_all(
+                connection.execution_options(schema_translate_map={None: "from_models"})
+            )
+            from_models = _checks_and_defaults(connection, "from_models")
+            from_migrations = _checks_and_defaults(connection, "public")
+        finally:
+            # Building the tables is undone: nothing of the second schema is kept.
+            transaction.rollback()
+
+    differing = {
+        name: (from_models.get(name), from_migrations.get(name))
+        for name in from_models.keys() | from_migrations.keys()
+        if from_models.get(name) != from_migrations.get(name)
+    }
+    assert differing == {}
 
 
 def test_unknown_stage_default_migration_preserves_existing_statuses(

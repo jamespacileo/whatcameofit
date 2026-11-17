@@ -18,7 +18,7 @@ A substance registry client SHALL return the substances the registry lists under
 - **THEN** no substance is returned and nothing else is asked
 
 ### Requirement: A brand is looked up by its exact name
-A client of a source that files brand names under ingredients SHALL return the ingredients the source lists for the brand of a given name, one record for each ingredient, each with the ingredient's identifier, its page, its name, the brand's own record and the source's answer listing the brand's ingredients as fetched, and the fetch time. A brand SHALL be found only when the source's own exact search answers the name with a concept the source marks as a brand and whose name equals the name asked for, ignoring letter case and runs of spaces and nothing else. The client SHALL NOT use the source's normalised or approximate search, try a part of the name or another spelling, or resolve a name the source lists as anything other than a brand. An answer SHALL be whole or nothing: when more concepts carry the name than the client reads, or a concept's own record or its list of ingredients is missing, the client SHALL return nothing. It SHALL use the same shorter network waits as the optional substance lookup.
+A client of a source that files brand names under ingredients SHALL return the ingredients the source lists for the brand of a given name, one record for each ingredient, each with the ingredient's identifier, its page, its name, the brand's own record and the source's answer listing the brand's ingredients as fetched, and the fetch time. For a brand of one ingredient the client SHALL also read the brand's branded drugs and the vaccine code (CVX) the source gives each, until one carries a vaccine's code, and SHALL keep those answers as fetched with the record.  A brand SHALL be found only when the source's own exact search answers the name with a concept the source marks as a brand and whose name equals the name asked for, ignoring letter case and runs of spaces and nothing else. The client SHALL NOT use the source's normalised or approximate search, try a part of the name or another spelling, or resolve a name the source lists as anything other than a brand. An answer SHALL be whole or nothing. The client SHALL return nothing only when the source answers that no concept, or no brand, has the name. When the exact search's answer cannot be read, a concept's identifier cannot be read, more concepts carry the name than the client reads, or a concept's own record, its list of ingredients, its list of branded drugs or a branded drug's vaccine code answer is missing, or a brand of one ingredient has more than twenty branded drugs, the client SHALL say that the source could not answer whole, as for a source that cannot be asked, and SHALL return no record: the source has not said the name is no brand. It SHALL use the same shorter network waits as the optional substance lookup.
 
 #### Scenario: Brand listed under one ingredient
 - **WHEN** the source lists the name asked for as a brand of one ingredient
@@ -34,11 +34,15 @@ A client of a source that files brand names under ingredients SHALL return the i
 
 #### Scenario: Name more concepts carry than are read
 - **WHEN** the source's exact search answers the name with more concepts than the client's limit
-- **THEN** nothing is returned and no concept is read
+- **THEN** no concept is read, no record is returned, and the client says the name is listed under too many concepts to identify one
+
+#### Scenario: A name search the client cannot read
+- **WHEN** the exact search answers with a body that is not an object, or with a concept identifier that is not a number
+- **THEN** no record is returned, and the client says the source could not answer whole
 
 #### Scenario: Part of a brand's answer is missing
-- **WHEN** two brand concepts carry the name and the record or the list of ingredients of one is not found
-- **THEN** nothing is returned
+- **WHEN** two brand concepts carry the name and the record or the list of ingredients of one is not found, or a brand's branded drugs or one's vaccine code answer is not found, or it has more than twenty branded drugs
+- **THEN** no record is returned, and the client says the source could not answer whole
 
 #### Scenario: Name that is not a brand
 - **WHEN** the source lists the name as an ingredient and not as a brand

@@ -6,9 +6,12 @@ interface Props {
   id: string;
   label?: string;
   class?: string;
+  /** A panel that may stand inside a paragraph: a span, holding spans. */
+  inline?: boolean;
 }
 
-const { id, label, class: className } = Astro.props;
+const { id, label, class: className, inline = false } = Astro.props;
+const Panel = inline ? "span" : "div";
 ---
 
 <button
@@ -18,9 +21,9 @@ const { id, label, class: className } = Astro.props;
   aria-label={label}
   style={`anchor-name: --${id}`}><slot name="trigger" /></button
 >
-<div popover id={id} class="pop" role="note" style={`position-anchor: --${id}`}>
+<Panel popover id={id} class="pop" role="note" style={`position-anchor: --${id}`}>
   <slot />
-</div>
+</Panel>
 
 <script>
   // Say whether a panel is open on the button that opens it, for a screen reader

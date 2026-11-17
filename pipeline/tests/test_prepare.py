@@ -154,6 +154,25 @@ def test_prepare_runs_every_step_and_carries_on_after_an_article_that_cannot_be_
     assert "one" in result.output and "could not be read" in result.output
 
 
+def test_prepare_due_prepares_the_claims_whose_registry_search_is_due(run, session: Session):
+    """Scenario: Search due after a rename (openspec claims)"""
+    claim_with_articles(session, "not-due", "https://news.example.org/a")
+    due = find_claim(session, "not-due")
+    assert due is not None
+    record_decision(due, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    claim_with_articles(session, "renamed", "https://news.example.org/b")
+    renamed = find_claim(session, "renamed")
+    assert renamed is not None
+    record_decision(renamed, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    renamed.registry_search_due_at = NOW
+    session.flush()
+
+    result, ran = run("prepare", "--due")
+
+    assert result.exit_code == 0, result.output
+    assert {step[1] for step in ran if step[0] == "resolve"} == {"renamed"}
+
+
 def test_prepare_with_no_claims_named_explains_and_exits_1(run):
     result, ran = run("prepare")
 
@@ -287,8 +306,9 @@ def test_a_claim_whose_terms_failed_is_still_decided(run, session: Session):
     assert claim is not None and claim.review_state is ReviewState.APPROVED
 
 
-def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Session):
-    """Scenario: A read that overlaps an archived claim"""
+def test_audit_list_shows_reads_that_overlap_a_claim(run, session: Session):
+    """Scenarios: A read that overlaps an archived claim, A read that overlaps a claim
+    that is not archived"""
     from thenwhat.backfill.link_read import NAMES_OVERLAP
     from thenwhat.claims.entry import archive_claim
 
@@ -314,13 +334,26 @@ def test_audit_list_shows_reads_that_overlap_an_archived_claim(run, session: Ses
     listed, _ = run("audit", "list")
 
     assert listed.exit_code == 0, listed.output
-    assert "overlaps archived archived-one  https://news.example.org/overlap-0" in listed.output
-    assert "live-one" not in listed.output
-    assert "1 read overlaps an archived claim" in listed.output
+    said = " ".join(listed.output.split())
+    assert "overlaps archived archived-one https://news.example.org/overlap-0" in said
+    assert "1 read overlaps an archived claim" in said
+    # A read that overlaps a claim that is not archived is never read again, so it is
+    # listed apart, for the operator to attach or leave.
+    assert "overlaps live-one (pending) https://news.example.org/overlap-1" in said
+    assert "1 read overlaps a claim that is not archived and made no claim" in said
+    assert said.index("overlap-0") < said.index("overlap-1")
 
 
-def under_substance(session: Session, slug: str, substance: str) -> None:
-    """File the claim's intervention under a substance of the registry of substances."""
+def under_substance(
+    session: Session,
+    slug: str,
+    substance: str,
+    *,
+    source: str = "gsrs",
+    payload: dict | None = None,
+) -> None:
+    """File the claim's intervention under a substance of the registry of substances,
+    or under an ingredient of the source of brands."""
     from thenwhat.db.models import Entity, EntitySubstance
     from thenwhat.domain import EntityType
 
@@ -332,10 +365,10 @@ def under_substance(session: Session, slug: str, substance: str) -> None:
     session.add(
         EntitySubstance(
             entity_id=entity.id,
-            source_name="gsrs",
+            source_name=source,
             external_id=substance,
-            url=f"https://gsrs.test/{substance}",
-            payload={"substance": {"_name": "Exampletinib"}},
+            url=f"https://{source}.test/{substance}",
+            payload=payload or {"substance": {"_name": "Exampletinib"}},
             fetched_at=NOW,
         )
     )
@@ -379,6 +412,40 @@ def test_a_reads_claim_under_a_live_claims_substance_and_condition_is_rejected(
     drafted_by_a_read(session, "after-archive")
 
     assert decide_prepared_lead_claim(session, "after-archive", now=NOW) is ReviewState.APPROVED
+
+
+VACCINE = {"propConceptGroup": {"propConcept": [{"propName": "CVX", "propValue": "204"}]}}
+
+
+@pytest.mark.parametrize(
+    ("product_codes", "joined"),
+    [
+        # Two brands of one drug, which RxNorm lists under one ingredient: twins.
+        ({"2": {}}, True),
+        # Two makers' vaccines filed under one antigen: not one product.
+        ({"2": VACCINE}, False),
+        # Kept before vaccines were told apart: not known to be no vaccine.
+        (None, False),
+    ],
+)
+def test_two_brands_under_one_rxnorm_ingredient_are_twins_only_when_no_vaccine(
+    session: Session, product_codes, joined: bool
+):
+    """Scenario: Two vaccines filed under one antigen"""
+    for slug in ("first-vaccine", "second-vaccine"):
+        claim_with_articles(session, slug)
+        payload: dict = {"substance": {"rxcui": "777", "_name": "examplevirus glycoprotein"}}
+        if product_codes is not None:
+            payload["product_codes"] = product_codes
+        under_substance(session, slug, "777", source="rxnorm", payload=payload)
+    first = find_claim(session, "first-vaccine")
+    assert first is not None
+    record_decision(first, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    drafted_by_a_read(session, "second-vaccine")
+
+    decided = decide_prepared_lead_claim(session, "second-vaccine", now=NOW)
+
+    assert decided is (ReviewState.REJECTED if joined else ReviewState.APPROVED)
 
 
 def test_a_combination_never_shares_a_single_drugs_substance(session: Session):

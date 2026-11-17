@@ -11,7 +11,9 @@ export const GET: APIRoute = () => {
     dataCredit(SITE.name, SITE.url),
     SITE.url + "/how-it-works",
   );
-  return new Response(JSON.stringify(body, null, 2), {
+  // Written without indentation: indented, the file passed the 25 MiB a host allows one
+  // file at 966 claims. A reader's tool formats it; the content is the same.
+  return new Response(JSON.stringify(body), {
     headers: { "Content-Type": "application/json; charset=utf-8" },
   });
 };

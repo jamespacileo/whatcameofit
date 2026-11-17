@@ -5,7 +5,7 @@ from typing import Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.link_read import reads_naming_archived_claims
+from thenwhat.backfill.link_read import reads_naming_archived_claims, reads_naming_live_claims
 from thenwhat.claims.entry import awaiting_audit, clear_audit
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
@@ -16,7 +16,8 @@ audit_app = typer.Typer(no_args_is_help=True, help="Claims held off the site unt
 @audit_app.command("list")
 def audit_list() -> None:
     """List the claims held off the site until audited, oldest hold first, then the
-    reads left unresolved because they overlap an archived claim."""
+    reads left unresolved because they overlap an archived claim, then those that
+    overlap a claim that is not archived."""
     with entry_session() as session:
         held = awaiting_audit(session)
         for claim in held:
@@ -33,6 +34,7 @@ def audit_list() -> None:
         else:
             out.print("No claim awaits audit.")
         _list_archived_overlaps(session)
+        _list_live_overlaps(session)
 
 
 def _list_archived_overlaps(session: Session) -> None:
@@ -45,6 +47,27 @@ def _list_archived_overlaps(session: Session) -> None:
         out.print(f"lead {lead.id}  overlaps archived {claim.slug}  {lead.url}", markup=False)
     noun = "read overlaps" if len(overlaps) == 1 else "reads overlap"
     out.print(f"{len(overlaps)} {noun} an archived claim and made no claim.", markup=False)
+
+
+def _list_live_overlaps(session: Session) -> None:
+    """Reads that drafted no claim because a claim that is not archived has their
+    treatment and condition, though the decision did not say the article reports it.
+    Such a read is not tried again: the operator attaches the article to the claim, or
+    leaves it."""
+    overlaps = reads_naming_live_claims(session)
+    if not overlaps:
+        return
+    for lead, claim in overlaps:
+        out.print(
+            f"lead {lead.id}  overlaps {claim.slug} ({claim.review_state.value})  {lead.url}",
+            markup=False,
+        )
+    noun = "read overlaps" if len(overlaps) == 1 else "reads overlap"
+    out.print(
+        f"{len(overlaps)} {noun} a claim that is not archived and made no claim:"
+        " attach the article with `thenwhat article add` or leave it.",
+        markup=False,
+    )
 
 
 @audit_app.command("clear")

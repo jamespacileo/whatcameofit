@@ -114,7 +114,7 @@ As of 13 November 2026, 0.9.0 (9) is Waiting for Review. The [0.9.1 preview](htt
 - `test-corpus/`: public pages for checking lookups by hand (its own README).
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
-Tests run with `node --test extension/tests/*.test.mjs` after `npm --prefix site ci` (also part of `make check`). Synthetic YouTube fixtures use LinkeDOM to exercise real selectors without live network calls. The explicit glob discovers the test files on Node 24.
+Tests run with `node --test extension/tests/*.test.mjs` after `make setup` (also part of `make check`). Synthetic YouTube fixtures use LinkeDOM to exercise real selectors without live network calls. The explicit glob discovers the test files on Node 24.
 
 ### Popup sizing regression
 
