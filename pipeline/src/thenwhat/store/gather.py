@@ -277,7 +277,7 @@ def _gather(
             entity_match = matches[event.entity_match_id]
             match = (entities[entity_match.entity_id], entity_match)
         # A second guard: an event stored before people were removed at the source, a
-        # registry study, a paper's record or anything carrying a person's keys.
+        # registry study, or anything carrying a registry person's keys; a paper's byline stays.
         record, sha256 = payload_record(payload_without_people(event.raw_payload))
         yield record
         yield r.evidence_event_record(

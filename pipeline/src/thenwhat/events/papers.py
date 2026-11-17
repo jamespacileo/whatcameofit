@@ -11,7 +11,6 @@ from thenwhat.events.draft import EventDraft
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import PaperInfo, describe
-from thenwhat.sources.people import paper_without_people
 
 BOTH_SIGNS = 0.9
 ONE_SIGN = 0.6
@@ -49,8 +48,7 @@ def follow_up_event(citing: SourceRecord, confidence: float) -> EventDraft | Non
         external_id=citing.external_id,
         summary=info.title,
         confidence=confidence,
-        # Kept without its authors and abstract (openspec paper-facts; sources/people.py).
-        raw_payload=paper_without_people(citing.payload),
+        raw_payload=citing.payload,
         fetched_at=citing.fetched_at,
     )
 
@@ -67,10 +65,7 @@ def retraction_event(doi: str, title: str, notice: Notice, now: datetime) -> Eve
         external_id=doi.lower(),
         summary=f"Retraction notice issued for: {title}",
         confidence=1.0,
-        raw_payload={
-            "retracted_doi": doi.lower(),
-            "notice": paper_without_people(notice.raw) if notice.raw else _plain(notice),
-        },
+        raw_payload={"retracted_doi": doi.lower(), "notice": notice.raw or _plain(notice)},
         fetched_at=notice.fetched_at or now,
     )
 

@@ -31,15 +31,7 @@ from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
 from thenwhat.store.inbox import InboxFailed, clear, fold, record_fold
-from thenwhat.store.people import (
-    FIELDS,
-    PROOF_SQL,
-    emails_left,
-    prove_file,
-    prove_file_objects,
-    strip,
-    strip_papers,
-)
+from thenwhat.store.people import FIELDS, PROOF_SQL, prove_file, prove_file_objects, strip
 from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
@@ -612,40 +604,3 @@ def prove_no_people_command(
     if found:
         raise typer.Exit(code=1)
     out.print("No person is named in these files.", markup=False)
-
-
-@backfill_app.command("strip-paper-people")
-def strip_paper_people_command(
-    apply: Annotated[
-        bool, typer.Option("--apply", help="Write the records without them; else only count.")
-    ] = False,
-) -> None:
-    """Count the authors, their identifiers and affiliations, the abstracts and any person's
-    keys in every stored payload that is not a registry study (a follow-up paper's record,
-    a retraction notice, a paper's or a trial paper's record) and, with --apply, store each
-    without them (openspec paper-facts). Running it again changes nothing."""
-    engine = make_engine(settings_or_exit().database_url)
-    with Session(engine) as session:
-        if not apply:
-            read_only(session)
-        report = strip_papers(session, apply=apply)
-        left = emails_left(session)
-        session.rollback()
-    for table, source in sorted(report.rows):
-        out.print(
-            f"{table} {source}: {report.rows[(table, source)]:,} records,"
-            f" {report.changed[(table, source)]:,} naming a person or holding an abstract"
-            + (" (written without)" if apply else " (counted only; --apply writes)"),
-            markup=False,
-        )
-        for (t, s, key), count in sorted(report.before.items()):
-            if (t, s) == (table, source):
-                out.print(
-                    f"  {key}: {count:,} before, {report.after[(t, s, key)]:,} after", markup=False
-                )
-    out.print(
-        f"Registry studies with an email address left in a text once stripped (reported,"
-        f" not changed): {left['with an email in a text']:,} of {left['studies']:,}.",
-        markup=False,
-    )
-    out.print(f'Prove it: psql "$DATABASE_URL" -f {PROOF_SQL}', markup=False)

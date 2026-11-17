@@ -22,7 +22,6 @@ What reads a stored record, and that none of it is removed:
 A site's facility, city and country are kept: they are places, not people.
 """
 
-import re
 from typing import Any
 
 PERSON_CLASSES = frozenset({"INDIV", "INDIVIDUAL"})
@@ -170,51 +169,16 @@ def people_in(study: Any) -> set[str]:
     return found
 
 
-# --- a literature index's record of a paper ------------------------------------------
+# --- every other payload --------------------------------------------------------------
 #
-# The rule is openspec paper-facts, "The stored record holds no abstract and no author":
-# before a paper's record is stored, its abstract, author names, author identifiers and
-# affiliations are removed. `events/paper_facts.reduced` applies it to a paper's record
-# (`paper_record`); this applies it to every literature record, a follow-up paper's
-# event and a retraction notice's included, of each index the pipeline asks:
-#
-# - Europe PMC: `abstractText`, `authorList`, `authorString`, `authorIdList`,
-#   `affiliation`, `investigatorList`, and the full-text links (`fullTextUrlList`,
-#   `fullTextIdList`), as `paper_facts.NOT_STORED`;
-# - OpenAlex: `authorships` (names, ORCIDs, institutions, raw affiliation strings),
-#   `abstract_inverted_index`, `corresponding_author_ids`, `corresponding_institution_ids`;
-# - Crossref: `author`, `editor`, `abstract`;
-# - PubMed: already kept without abstract and author (`sources/pubmed.py`); `authors` and
-#   `abstract` are removed if present.
-#
-# What reads a stored paper record, and that none of it is removed: paper facts
-# (`events/paper_facts.py`: title, journal, year, publication types, open access,
-# retraction, subject headings, DOI, PubMed number, the index's source and number), the
-# export's papers, which read paper facts, and `events/fetch.py`'s `_index_record`, which
-# needs the source and number. The authors and the abstract are read once, when a
-# follow-up paper is found (`events/papers.describe`: a shared author, the intervention
-# named in the abstract), from the record as fetched and before it is stored.
+# Paper authors are not removed. Decided by the operator on 2026-11-17 (docs/adr/0011):
+# a paper's authors are its published byline, so `authorString`, `authorList`,
+# `authorships` and the like stay in a stored literature record. Nor is a paper's
+# abstract removed from an event's payload: the written rule (openspec paper-facts, "The
+# stored record holds no abstract and no author") covers the record a paper's facts are
+# read from (`paper_record`, reduced by `events/paper_facts.reduced`), not an event's.
+# Do not "fix" either without a new decision.
 
-PAPER_KEYS = frozenset(
-    {
-        "abstractText",
-        "authorList",
-        "authorString",
-        "authorIdList",
-        "affiliation",
-        "investigatorList",
-        "fullTextUrlList",
-        "fullTextIdList",
-        "authorships",
-        "abstract_inverted_index",
-        "corresponding_author_ids",
-        "corresponding_institution_ids",
-        "author",
-        "authors",
-        "editor",
-        "abstract",
-    }
-)
 # A registry's person keys, wherever they appear: a guard for a record that is not shaped
 # as a whole study (`protocolSection`) but carries part of one.
 REGISTRY_PERSON_KEYS = frozenset(
@@ -239,19 +203,13 @@ def _without_keys(value: Any, keys: frozenset[str]) -> Any:
     return value
 
 
-def paper_without_people(record: Any) -> Any:
-    """A literature record without its authors, their identifiers and affiliations, its
-    abstract and its full-text links, at any depth; anything else as it is."""
-    return _without_keys(record, PAPER_KEYS)
-
-
 def payload_without_people(payload: Any) -> Any:
-    """Any stored payload without the people it names: a registry study by
-    `without_people`; any other payload without a literature record's person and abstract
-    keys, a registry's person keys and every email and phone, wherever they are."""
+    """Any stored payload without a registry's people: a registry study by
+    `without_people`; any other payload without a registry's person keys and any email or
+    phone, wherever they are. A paper's byline and abstract are kept (see above)."""
     if is_study(payload):
-        return paper_without_people(without_people(payload))
-    return _without_keys(payload, PAPER_KEYS | REGISTRY_PERSON_KEYS | CONTACT_KEYS)
+        return without_people(payload)
+    return _without_keys(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS)
 
 
 def keys_found(value: Any, keys: frozenset[str]) -> set[str]:
@@ -266,16 +224,3 @@ def keys_found(value: Any, keys: frozenset[str]) -> set[str]:
         for item in value:
             found |= keys_found(item, keys)
     return found
-
-
-# An email address written in a text, as a proof counts it; nothing is changed by it.
-EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
-
-
-def emails_in_text(value: Any) -> int:
-    """How many strings in a value hold something shaped as an email address."""
-    if isinstance(value, dict):
-        return sum(emails_in_text(v) for v in value.values())
-    if isinstance(value, list):
-        return sum(emails_in_text(item) for item in value)
-    return int(isinstance(value, str) and EMAIL.search(value) is not None)

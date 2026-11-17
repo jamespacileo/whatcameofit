@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Event record
-An evidence event SHALL have a type, an event date, a source name, a source URL, a summary, a confidence between 0 and 1, the raw payload it was built from, the time that payload was fetched, and a review state. The type SHALL be one of: follow-up paper, trial registered, trial status change, trial results posted, grant awarded, company event, retraction, regulatory decision. A payload that is a registry's record of a trial SHALL be kept without the people it names: its officials and contacts, each site's contacts, the investigator a responsible party is, a sponsor or collaborator who is a person, the results' point of contact, and every email address and telephone number. Nothing else SHALL be removed from it.
+An evidence event SHALL have a type, an event date, a source name, a source URL, a summary, a confidence between 0 and 1, the raw payload it was built from, the time that payload was fetched, and a review state. The type SHALL be one of: follow-up paper, trial registered, trial status change, trial results posted, grant awarded, company event, retraction, regulatory decision. A payload that is a registry's record of a trial SHALL be kept without the people it names: its officials and contacts, each site's contacts, the investigator a responsible party is, a sponsor or collaborator who is a person, the results' point of contact, and every email address and telephone number. Nothing else SHALL be removed from it. A literature record's authors, its published byline, SHALL be kept, and so SHALL its abstract in an event's payload (`docs/adr/0011`).
 
 #### Scenario: Event without a source link
 - **WHEN** an event is created without a source URL
