@@ -236,7 +236,7 @@ Then, against the real resources (`--remote`; production also needs `--productio
    node store/ingest/scripts/dump-for-import.mjs <hot.sqlite> <folder>/store.sql --rows-a-file 60000
    node store/ingest/scripts/check-dump.mjs <folder>
    ```
-3. Load it, and hold D1 to the file by checksum. No row is fetched back: one statement a table is run on both and the answers compared. With `--checks`, the statements and expected answers are the ones `thenwhat store checksum` writes.
+3. Load it, and hold D1 to the file by checksum. No row is fetched back: one statement a table is run on both and the answers compared. With `--checks`, the statements and expected answers are the ones `thenwhat store checksum` writes. D1 answers at most 100 columns a statement (found on the preview on 17 November 2026; the local engine has no such cap), so a table of many columns is checked by several statements of at most 90.
    ```bash
    node store/ingest/scripts/import-folder.mjs <folder> --remote
    node store/ingest/scripts/checksum-d1.mjs --file <hot.sqlite> --remote
@@ -298,13 +298,27 @@ A row too long for one statement (an outlet's icon of 93,062 bytes is 186 KB as 
 - **The plan.** The free plan allows 100,000 rows written a day and then refuses every query until midnight UTC. The trial wrote 250,037 in one day and a later write succeeded, which only the Workers Paid plan allows (50 million a month included). No Wrangler command shows the plan; the dashboard does, under Workers & Pages, Plans.
 - **Not known:** Cloudflare's documentation does not say whether the database refuses other requests while a file is loading, nor whether a file that fails is undone. Load when nothing reads the store, and restore after a failure.
 
-To clear trial rows before the real load (the schema and the record of migrations stay):
+To clear trial rows from a small store (the schema and the record of migrations stay):
 
 ```bash
 node store/ingest/scripts/empty-store.mjs --empty thenwhat-store-preview --remote
 ```
 
-It takes only the preview database, by name. There is no such command for production.
+It takes only the preview database, by name; there is no such command for production. It deletes in batches of 20,000 rows, passes over tables the database does not have yet, and refuses a store of more than 200,000 rows.
+
+### Resetting the preview store
+
+A large store is not emptied: it is replaced. On 17 November 2026 one file of `DELETE`s against the fully loaded preview (2.7 million rows, 2.3 GB) failed after 60 s with "Upstream service unavailable [code: 7009]", and every deleted row would have been a billed write. Deleting the database and creating it again took 7 s and wrote nothing.
+
+```bash
+npx wrangler d1 delete thenwhat-store-preview
+npx wrangler d1 create thenwhat-store-preview --jurisdiction eu
+cd store/ingest && node scripts/preview-config.mjs
+npx wrangler d1 info thenwhat-store-preview --json     # jurisdiction must read eu
+npx wrangler d1 migrations apply STORE --remote --config wrangler.preview.jsonc
+```
+
+The new database has a new id, so `preview-config.mjs` must be run again, and anything bound to the old id (a deployed Worker) must be deployed again. Its Time Travel history starts empty. Preview only: production is never reset this way.
 
 ### Restore
 

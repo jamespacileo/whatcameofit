@@ -207,3 +207,31 @@ test("the faults of the first real loads, in one store of the real schema", asyn
     assert.deepEqual(loaded.prepare(sql).all(), db.prepare(sql).all(), sql);
   }
 });
+
+// D1 answers at most 100 columns a statement, which the local engine does not hold to.
+test("no checksum statement asks D1 for more than 90 columns, on the real schema", async () => {
+  const { MAX_RESULT_COLUMNS, fingerprint } = await import("../scripts/fingerprint.mjs");
+  const db = new DatabaseSync(":memory:");
+  for (const file of readdirSync(here("../migrations")).sort()) db.exec(readFileSync(here(`../migrations/${file}`), "utf8"));
+  db.exec(`CREATE TABLE wide (${Array.from({ length: 70 }, (_, i) => `c${i} TEXT`).join(", ")})`);
+  db.prepare(`INSERT INTO wide (c0, c69) VALUES ('first', 'last')`).run();
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND sql NOT LIKE 'CREATE VIRTUAL%' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '%_fts_%'").all().map((row) => row.name);
+  assert.ok(tables.length > 40);
+  let most = 0, split = 0;
+  for (const table of tables) {
+    const columns = db.prepare(`PRAGMA table_xinfo("${table}")`).all().filter((column) => column.hidden === 0).map((column) => column.name);
+    const parts = fingerprint(table, columns);
+    if (parts.length > 1) split += 1;
+    const seen = new Set();
+    for (const sql of parts) {
+      assert.ok(Buffer.byteLength(sql) < 100_000, `${table}: a statement of ${Buffer.byteLength(sql)} bytes`);
+      const answered = db.prepare(sql).columns().map((column) => column.name);
+      most = Math.max(most, answered.length);
+      assert.ok(answered.length <= MAX_RESULT_COLUMNS, `${table}: ${answered.length} columns in one answer`);
+      for (const name of answered) if (name !== "rows") { assert.ok(!seen.has(name), `${table}: ${name} twice`); seen.add(name); }
+    }
+    assert.equal(seen.size, columns.length * 3, `${table}: every column has its three figures`);
+  }
+  assert.ok(most > 60 && split >= 1, "a table of many columns is spread over statements");
+  assert.equal(fingerprint("wide", Array.from({ length: 70 }, (_, i) => `c${i}`)).length, 3);
+});
