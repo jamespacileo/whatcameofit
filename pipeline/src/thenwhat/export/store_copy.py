@@ -372,6 +372,19 @@ def records_of(
     for change in session.scalars(select(ClaimChange).order_by(ClaimChange.id)):
         changes.setdefault(change.claim_id, []).append(change)
     for claim in sorted(claims, key=lambda claim: claim.id):
+        if claim.id in merged and claim.published_at is not None:
+            # The mapping leaves a merged claim's publication out, because a second push
+            # would publish the claim it went into. This file is filled once, and the
+            # merge applies a publication before the merge of the same run, so it is
+            # handed over: without it the store cannot say the address was ever public,
+            # and the export would not list it under `moved`.
+            rest.append(
+                Record(
+                    "action",
+                    key_of("publish", claim.slug),
+                    body(action="publish", slug=claim.slug, at=when(claim.published_at)),
+                )
+            )
         for action in r.claim_actions(claim, changes.get(claim.id, []), slug):
             kind = action.body["action"]
             # Renames went before, each in its own run.
