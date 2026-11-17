@@ -11,7 +11,7 @@ import typer
 from thenwhat.cli.console import err, out
 from thenwhat.cli.export import STORE_SQL, reading_session
 from thenwhat.store.build import BuildFailed, build
-from thenwhat.store.dump import DumpRefused, count_query, counts_of, differences, dump
+from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 
 store_app = typer.Typer(help="Fill the truth store in bulk, and restore it.", no_args_is_help=True)
 
@@ -100,15 +100,8 @@ def dump_command(
         if rows:
             out.print(f"  {table}: {rows:,}", markup=False)
     out.print(
-        "Load each file in name order: wrangler d1 execute <db> --remote --file <file>.",
-        markup=False,
-    )
-    (out_folder / "counts.sql").write_text(
-        count_query(json.loads((out_folder / "manifest.json").read_text())) + "\n"
-    )
-    out.print(
-        "Then: wrangler d1 execute <db> --remote --json --file counts.sql > counts.json,"
-        " and thenwhat store check.",
+        "Load and count: node store/ingest/scripts/import-folder.mjs"
+        f" {out_folder} --remote (docs/deploy.md).",
         markup=False,
     )
 
