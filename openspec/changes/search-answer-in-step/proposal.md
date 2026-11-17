@@ -32,7 +32,17 @@ Chosen by the operator from mocks of the built site (`.impeccable/mocks/search-n
 - A list cut at twenty ends with "Show 20 more", which draws the next twenty under those on screen.
 - A suggested row that opens a page ends in an arrow; one that searches here has none.
 
+After a third critique the same day (`.impeccable/critique/2026-11-17T18-02-05Z__site-src-pages-index-astro.md`), with the operator's decision on the first two:
+
+- Topics beside a search's answer count every claim the index found, not the claims read so far. Each claim page names its topic to the search index, which counts the found pages by topic: one small file, asked for with the first search, and no page read for it. A topic picked shows that topic's claims, reading those not yet read, and its count says how many it holds among every claim found.
+- The example words in the field are chosen by rule at build from a published claim they lead to, never by hand. With no such claim the field offers a link alone.
+- A searched word the index holds nowhere is named under the answer's heading. The index answers such a search without the word, or with a shorter word it does hold, and says nothing; each word is now asked for alone to find out.
+- The suggestions start under the line that says where a link goes. Where they do not fit under the box as it stands, the box is brought to the top of the screen, and the panel is sized from what the reader can see, which a phone's keyboard shortens.
+- On a touch screen a typed search puts the reader on the answer's heading, so the keyboard closes. On a screen narrower than 34rem the line under the box is not drawn; it is kept for a screen reader.
+- "Show 20 more" is 44px tall on every screen. "Check again later" under an answer is quieter than the answer's sentence. A suggested row that searches in place says so to a screen reader. The page's title names the words searched for.
+
 ## Impact
 
 - `site/src/components/Lookup.astro`, `site/src/lib/suggest.ts`, `site/src/styles/global.css`, `site/tests/home-search.test.mjs`, `site/tests/lookup-component.test.mjs`, `DESIGN.md`.
-- No new data and no new request. The pasted address still never enters the page's address.
+- No new data. The pasted address still never enters the page's address.
+- Third pass: `site/src/lib/search-order.ts` (the order of matches, moved out of the box's script, and the example's rule), `site/src/lib/search-example.ts`, `site/src/lib/extension-page.ts` (the order examples are preferred in), `site/src/pages/[slug].astro` (the topic, named to the search index), `site/tests/search-order.test.mjs`, `site/tests/search-example.build-test.mjs`. One new request, once per page: the search index's file of topics. One search of the index per searched word, and a second for a word not found whole, to name a word it does not hold.
