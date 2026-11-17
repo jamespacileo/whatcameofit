@@ -163,7 +163,7 @@ def runs_of(
 
     def tell() -> None:
         for kind, at in began.items():
-            if kind not in told:
+            if kind not in told and kind != "payload":
                 told.add(kind)
                 on_kind(kind, read[kind], time.monotonic() - at)
 
@@ -189,6 +189,8 @@ def runs_of(
     run.extend(_merged_publications(session))
     yield run
     tell()
+    if "payload" in began:
+        on_kind("payload", read["payload"], time.monotonic() - began["payload"])
 
 
 def merge_run(
