@@ -72,6 +72,9 @@ class Slice:
     # Its next push sends every record of it, whatever the push state says: the store
     # lost it (a restore), so what the state says of its records is stale too.
     whole: bool = False
+    # When its trials were last fetched from the registry, as they were when it was last
+    # pushed: a later fetch is an update the store does not hold yet.
+    trials_at: str = ""
 
     def forget_store(self) -> None:
         """Its `in_store` belongs to another store: not done for this one."""
@@ -216,15 +219,49 @@ def listed_papers(session: Session, one: Slice) -> list[str]:
 
 
 def registry_papers_stage(
-    session: Session, one: Slice, now: datetime, keep: Callable[[str], Any]
+    session: Session, one: Slice, now: datetime, keep: Callable[[list[str]], Any]
 ) -> None:
     """Each paper its trials' records list is kept as a paper record, by `keep` (the one
-    store of paper records, `events.paper_records.keep_paper`, given a PubMed number)."""
+    store of paper records, `events.paper_records.keep_papers_by_pubmed_id`, given the
+    PubMed numbers all at once, so the index is asked many to a request)."""
     numbers = listed_papers(session, one)
-    for number in numbers:
-        keep(number)
+    keep(numbers)
     one.counts["registry_papers"] = len(numbers)
     one.done["registry_papers"] = when(now) or ""
+
+
+def papers_lost(session: Session, one: Slice) -> int:
+    """How many papers its trials' records list have no paper record, though its registry
+    papers stage is done: a stage whose work was rolled back after the plan said it was
+    done. Nought when the stage is not done."""
+    if "registry_papers" not in one.done:
+        return 0
+    numbers = listed_papers(session, one)
+    kept = 0
+    for start in range(0, len(numbers), 1000):
+        kept += (
+            session.scalar(
+                select(func.count(func.distinct(PaperRecord.pubmed_id))).where(
+                    PaperRecord.pubmed_id.in_(numbers[start : start + 1000])
+                )
+            )
+            or 0
+        )
+    return len(numbers) - kept
+
+
+def trials_fetched_at(session: Session, one: Slice) -> str:
+    """When its trials were last fetched from the registry, the latest of them."""
+    return max((when(trial.fetched_at) or "" for trial in _trials(session, one)), default="")
+
+
+def trials_changed(session: Session, one: Slice) -> bool:
+    """Whether a trial of it was fetched from the registry again since the slice was last
+    pushed: a registry update the store does not hold yet. False for a slice pushed
+    before this was noted, or never pushed."""
+    if not one.trials_at or "in_store" not in one.done:
+        return False
+    return trials_fetched_at(session, one) > one.trials_at
 
 
 def pubmed_counts(session: Session, one: Slice) -> tuple[int, int, int]:
@@ -274,16 +311,22 @@ def due_slices(
     session: Session, made: Plan, count: int | None, *, store: str | None
 ) -> list[Slice]:
     """The next `count` slices with work to do, in order. A slice is due when its record
-    or registry papers stage is not done; with `store` (a push), when it is not in that
-    store or is to go whole; and when PubMed's off-peak step has moved on its trials
-    since the slice last looked. A slice waiting only on that step, with its ledger where
-    it was, is not due: it would be pushed again for nothing and keep the next slices
-    from their turn."""
+    or registry papers stage is not done, or the papers that stage kept are not all held;
+    with `store` (a push), when it is not in that store, is to go whole, or has a trial
+    fetched from the registry since it was put there (only what changed goes); and when
+    PubMed's off-peak step has moved on its trials since the slice last looked. A slice
+    waiting only on that step, with its ledger where it was, is not due: it would be
+    pushed again for nothing and keep the next slices from their turn."""
 
     def has_work(one: Slice) -> bool:
-        if one.due() in ("record", "registry_papers"):
+        if one.due() in ("record", "registry_papers") or papers_lost(session, one):
             return True
-        if store is not None and ("in_store" not in one.done or one.store != store or one.whole):
+        if store is not None and (
+            "in_store" not in one.done
+            or one.store != store
+            or one.whole
+            or trials_changed(session, one)
+        ):
             return True
         if one.due() != "pubmed_papers":
             return False

@@ -38,6 +38,27 @@ ONCE = frozenset({"decision", "usage", "measure_daily", "measure_claim"})
 USER_AGENT = "thenwhat-pipeline"
 
 
+@dataclass
+class Traffic:
+    """What a push's requests cost: how many, the bytes sent, the chunks of records among
+    them, the seconds spent in requests and waiting after a 429, and the requests sent
+    again after one."""
+
+    requests: int = 0
+    sent: int = 0
+    chunks: int = 0
+    seconds: float = 0.0
+    waited: float = 0.0
+    retries: int = 0
+
+    def said(self) -> str:
+        return (
+            f"{self.requests:,} requests, {self.chunks:,} chunks, {self.sent / 1e6:.1f} MB"
+            f" sent, {self.seconds:.1f} s in requests, {self.waited:.0f} s waiting on 429,"
+            f" {self.retries:,} retries"
+        )
+
+
 class RetryOnBusy(httpx.BaseTransport):
     """A transport that, answered 429, waits as long as the service's `Retry-After` says
     (60 seconds by default) and sends the same request again, up to `attempts` times.
@@ -50,22 +71,34 @@ class RetryOnBusy(httpx.BaseTransport):
         *,
         attempts: int = 10,
         sleep: Callable[[float], None] = time.sleep,
+        traffic: Traffic | None = None,
     ) -> None:
         self.inner = inner or httpx.HTTPTransport()
         self.attempts, self.sleep = attempts, sleep
+        self.traffic = traffic if traffic is not None else Traffic()
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
-        for _ in range(self.attempts - 1):
+        counted = self.traffic
+        counted.requests += 1
+        if request.method == "POST" and request.url.path.endswith("/records"):
+            counted.chunks += 1
+        for attempt in range(self.attempts):
+            counted.sent += len(request.content)
+            began = time.monotonic()
             response = self.inner.handle_request(request)
-            if response.status_code != 429:
-                return response
             response.read()
+            counted.seconds += time.monotonic() - began
+            if response.status_code != 429 or attempt == self.attempts - 1:
+                return response
             try:
                 wait = float(response.headers.get("Retry-After", "60"))
             except ValueError:
                 wait = 60.0
-            self.sleep(min(max(wait, 1.0), 300.0))
-        return self.inner.handle_request(request)
+            wait = min(max(wait, 1.0), 300.0)
+            counted.retries += 1
+            counted.waited += wait
+            self.sleep(wait)
+        raise AssertionError("unreachable")
 
     def close(self) -> None:
         self.inner.close()

@@ -412,7 +412,11 @@ def test_a_merged_pending_run_settles_without_its_large_payloads(tmp_path):
 def test_a_busy_service_is_waited_for_and_asked_again():
     from thenwhat.store.push import RetryOnBusy
 
-    answers = [httpx.Response(429, headers={"Retry-After": "7"}), httpx.Response(200, json={})]
+    answers = [
+        httpx.Response(429, headers={"Retry-After": "7"}),
+        httpx.Response(200, json={}),
+        httpx.Response(200, json={}),
+    ]
     asked: list[str] = []
 
     def service(request: httpx.Request) -> httpx.Response:
@@ -423,7 +427,11 @@ def test_a_busy_service_is_waited_for_and_asked_again():
     transport = RetryOnBusy(httpx.MockTransport(service), sleep=waited.append)
     with httpx.Client(base_url="http://s.test", transport=transport) as client:
         assert client.post("/runs/x/merge").status_code == 200
-    assert asked == ["/runs/x/merge", "/runs/x/merge"] and waited == [7.0]
+        assert client.post("/runs/x/records", content=b"[1,2]").status_code == 200
+    assert asked[:2] == ["/runs/x/merge", "/runs/x/merge"] and waited == [7.0]
+    counted = transport.traffic
+    assert (counted.requests, counted.chunks, counted.retries, counted.waited) == (2, 1, 1, 7.0)
+    assert counted.sent == 5 and "7 s waiting on 429, 1 retries" in counted.said()
 
 
 def test_the_inline_payload_limit_is_the_schema_s_own():

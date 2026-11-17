@@ -556,7 +556,7 @@ def _three_slices(session, tmp_path, monkeypatch, store: "_Store"):
     monkeypatch.setattr(cli_slices, "_working_session", working_session)
     monkeypatch.setattr(cli_slices, "target_rule", lambda name: (three, "test-set:2025"))
     monkeypatch.setattr(cli_slices, "plan", partial(plan, size=1))
-    monkeypatch.setattr("thenwhat.events.paper_records.keep_paper", lambda *a, **k: None)
+    monkeypatch.setattr("thenwhat.events.paper_records.keep_papers_by_pubmed_id", lambda *a, **k: 0)
     monkeypatch.setenv("CONTACT_EMAIL", "ops@thenwhat.test")
     monkeypatch.setenv("INGEST_TOKEN", "t")
     # Read by the settings only: the command works on the test's session above.
@@ -578,6 +578,8 @@ def test_slices_run_works_two_then_three_slices_in_one_command(
     args, plan_file = _three_slices(session, tmp_path, monkeypatch, store)
     two = CliRunner().invoke(app, [*args, "--slices", "2"])
     assert two.exit_code == 0, two.output
+    # Each slice says what its stages and its push cost.
+    assert "registry papers:" in two.output and "s waiting on 429" in two.output
     made = Plan.read(plan_file)
     assert made is not None and len(made.slices) == 3
     assert [("in_store" in one.done) for one in made.slices] == [True, True, False]
@@ -597,6 +599,25 @@ def test_slices_run_works_two_then_three_slices_in_one_command(
     named = CliRunner().invoke(app, [*args, "--only", "2"])
     assert named.exit_code == 0, named.output
     assert "Slice 2 " in named.output and "registry_trial" not in store.kinds_sent()
+    unknown = CliRunner().invoke(app, [*args, "--only", "2,9"])
+    assert unknown.exit_code == 0 and "No slice of the plan is numbered 9" in unknown.output
+    # A trial fetched from the registry again makes its slice due; only it goes.
+    from datetime import timedelta
+
+    trial = session.scalars(
+        select(RegistryTrial).where(RegistryTrial.external_id == "NCT07654322")
+    ).one()
+    trial.fetched_at = trial.fetched_at + timedelta(days=1)
+    trial.title = "A third, updated"
+    session.commit()
+    store.staged.clear()
+    updated = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert updated.exit_code == 0, updated.output
+    assert "Slice 3 " in updated.output and "Slice 2 " not in updated.output
+    assert store.kinds_sent().count("registry_trial") == 1
+    store.staged.clear()
+    settled = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert "No slice has work" in settled.output
 
 
 def test_a_slice_waiting_on_pubmed_is_due_only_when_its_ledger_moved(session: Session):
@@ -612,3 +633,79 @@ def test_a_slice_waiting_on_pubmed_is_due_only_when_its_ledger_moved(session: Se
     # The off-peak step moved on the first slice's trials (its counts are not what it saw).
     made.slices[0].counts["pubmed_asked"] = -1
     assert due_slices(session, made, None, store=None) == [made.slices[0]]
+
+
+def test_a_failed_push_keeps_the_papers_and_a_lost_paper_runs_the_stage_again(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    """The registry papers stage's records are kept before the push: a push that fails
+    rolls back none of them, and the next run sends them. A paper the plan says was kept
+    and the database does not hold makes the stage run again."""
+    from sqlalchemy import delete, select
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+    from thenwhat.cli import slices as cli_slices
+    from thenwhat.db.models import PaperRecord
+    from thenwhat.events import paper_records
+    from thenwhat.store.push import PushFailed
+
+    store = _Store()
+    real_keep = paper_records.keep_papers_by_pubmed_id
+    args, plan_file = _three_slices(session, tmp_path, monkeypatch, store)
+    monkeypatch.setattr(paper_records, "keep_papers_by_pubmed_id", real_keep)
+
+    class Index:
+        def __init__(self, *_: object, **__: object) -> None:
+            pass
+
+        def papers_by_pubmed_ids(self, numbers: list[str]) -> dict[str, None]:
+            return dict.fromkeys(numbers)
+
+    monkeypatch.setattr("thenwhat.sources.europepmc.EuropePmc", Index)
+    third = session.scalars(
+        select(RegistryTrial).where(RegistryTrial.external_id == "NCT07654322")
+    ).one()
+    third.raw_payload = {
+        "protocolSection": {
+            "referencesModule": {"references": [{"pmid": "88123", "type": "RESULT"}]}
+        }
+    }
+    session.flush()
+    real_push, failed = cli_slices._push_slice, []
+
+    def push_once_failing(*given, **named):
+        if not failed:
+            failed.append(True)
+            raise PushFailed("The service refused a chunk: 503.")
+        return real_push(*given, **named)
+
+    monkeypatch.setattr(cli_slices, "_push_slice", push_once_failing)
+
+    def papers_sent() -> list[str]:
+        return [
+            record["body"].get("pubmed_id")
+            for run in store.staged.values()
+            for record in run
+            if record["kind"] == "source_record"
+        ]
+
+    refused = CliRunner().invoke(app, [*args, "--only", "3"])
+    assert refused.exit_code == 1 and "503" in refused.output
+    assert "88123" in session.scalars(select(PaperRecord.pubmed_id)).all()
+    made = Plan.read(plan_file)
+    assert made is not None and "registry_papers" in made.slices[2].done
+    assert "in_store" not in made.slices[2].done
+    store.staged.clear()
+    resumed = CliRunner().invoke(app, [*args, "--only", "3"])
+    assert resumed.exit_code == 0, resumed.output
+    assert papers_sent() == ["88123"]
+    # Lost since: the stage runs again and the paper goes again.
+    session.execute(delete(PaperRecord).where(PaperRecord.pubmed_id == "88123"))
+    session.commit()
+    store.staged.clear()
+    again = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert again.exit_code == 0, again.output
+    assert "1 of its registry papers are not held" in again.output
+    assert "88123" in session.scalars(select(PaperRecord.pubmed_id)).all()
+    assert papers_sent() == ["88123"]
