@@ -110,11 +110,12 @@ const stageRead = claim.evidence_stage_reading
 const timetable = buildTimetable(claim, data.generated_at);
 const overlay = overlayText(claim.status.overlay_years);
 const thisYear = Number(data.generated_at.slice(0, 4));
-const latestRecord = claim.events.map((event) => event.event_date).sort().at(-1) ?? null;
-// The latest record is at the foot of a long timetable, so the date leads to it.
-const latestMark =
-  timetable.sources.find(({ event }) => event.event_date === latestRecord)?.mark ?? null;
+// The timetable already orders both reports and events newest first.
+const latestYear = timetable.rows.find((row) => row.kind === "year" && row.recorded.length > 0);
+const latestRecord = latestYear?.kind === "year" ? latestYear.recorded[0] : null;
+const latestAnchor = latestRecord?.kind === "event" ? `record-${latestRecord.mark}` : "latest-report";
 const onPath = STAGE_PATH.includes(claim.status.code);
+const phase4 = phase4Note(claim);
 const hasDatedPromise = claim.promises.some((promise) => promise.parsed_date !== null);
 const hasPromise = claim.promises.length > 0;
 // The claim's records by date on its own axis, and a key naming only the marks drawn;
@@ -290,7 +291,7 @@ const firstOn = (type: string, state?: string) =>
     .filter((event) => event.type === type && (!state || event.trial_state === state))
     .map((event) => event.event_date)
     .sort()[0] ?? null;
-const latestOn = claim.events.map((event) => event.event_date).sort().pop() ?? null;
+const latestOn = latestRecord?.date;
 const moments = [
   { date: firstOn("trial_registered"), label: "First trial registered", mark: "not_started" },
   { date: firstOn("trial_status_change", "started"), label: "First trial started", mark: "under_way" },
@@ -326,15 +327,10 @@ const yearSaid = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }
     tally.set(label, (tally.get(label) ?? 0) + 1);
   }
   const kindsSaid = [...tally].sort((a, b) => b[1] - a[1]);
-  const shown = kindsSaid.slice(0, 3);
-  const others = kindsSaid.slice(3).reduce((n, [, count]) => n + count, 0);
   return {
     basis: row.recorded.some((entry) => entry.kind === "event" && entry.explains),
     total: plural(row.recorded.length, "record"),
-    kinds: [
-      ...shown.map(([label, n]) => `${label.toLowerCase()} ${n}`),
-      ...(others > 0 ? [`other ${others}`] : []),
-    ],
+    kinds: kindsSaid.map(([label, n]) => `${label.toLowerCase()} ${n}`),
   };
 };
 // The shape of each of a year's records, oldest first: a trial's states as in the trials
@@ -350,7 +346,7 @@ const yearMarks = (row: Extract<(typeof timetable.rows)[number], { kind: "year" 
           ? "results"
           : entry.event.type === "trial_status_change"
             ? (EVENT_STATES[entry.event.trial_state ?? ""] ?? entry.event.trial_state ?? "unknown")
-            : "completed",
+            : eventKind(entry.event),
   );
 const anyYearFolds = timetable.rows.some((row) => row.kind === "year" && row.recorded.length > 0 && yearFolds(row));
 // A key names only the marks its list draws (critique of 2026-11-17: a key listed states
@@ -358,6 +354,7 @@ const anyYearFolds = timetable.rows.some((row) => row.kind === "year" && row.rec
 const yearKeyMarks = new Set(
   timetable.rows.flatMap((row) => (row.kind === "year" && row.recorded.length > 0 && yearFolds(row) ? yearMarks(row) : [])),
 );
+const otherYearKinds = kinds.filter((kind) => kind !== "report" && yearKeyMarks.has(kind));
 const YEAR_KEY: [string, string, string][] = [
   ["not_started", "state-mark", "Registered"],
   ["under_way", "state-mark", "Started"],
@@ -617,10 +614,10 @@ const sections = [
                         </li>
                       ))}
                     </ol>
-                    {phase4Note(claim) && <p class="pop-note">{phase4Note(claim)}</p>}
                   </>
                 )
               }
+              {phase4 && <p class="pop-note">{phase4}</p>}
               <p class="pop-note">
                 <a href={`/guide/${statusSlug(claim.status.code)}`}>
                   What “{STATUS_LABELS[claim.status.code]}” does and does not tell you
@@ -672,9 +669,9 @@ const sections = [
           <p class="changed" data-pagefind-ignore>
             <Calendar size={15} stroke-width={1.9} aria-hidden="true" />
             <span>
-              {latestMark ? (
+              {latestRecord ? (
                 <>
-                  Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
+                  Latest record <a href={`#${latestAnchor}`}>{formatDate(latestRecord.date)}</a>
                 </>
               ) : (
                 "No record yet"
@@ -939,6 +936,7 @@ const sections = [
           {yearKeyMarks.has("results") && (
             <span><span class="state-mark posted" data-state="completed" />{RESULTS_POSTED}</span>
           )}
+          {otherYearKinds.map((kind) => <span><KindIcon kind={kind} />{KIND_NAMES[kind]}</span>)}
           {yearKeyMarks.has("report") && (
             <span><span class="ev-report" />News report</span>
           )}
@@ -1024,6 +1022,8 @@ const sections = [
                                 {yearMarks(row).map((mark) =>
                                   mark === "report" ? (
                                     <span class="ev-report" />
+                                  ) : mark in KIND_NAMES ? (
+                                    <KindIcon kind={mark as RecordKind} />
                                   ) : (
                                     <span class:list={["state-mark", { posted: mark === "results" }]} data-state={mark === "results" ? "completed" : mark} />
                                   ),
@@ -1047,7 +1047,7 @@ const sections = [
                       <ul class="entries">
                         {recordedLines(row.recorded).map((line) =>
                           line.kind === "report" ? (
-                            <li class="record" data-kind="report">
+                            <li class="record" data-kind="report" id={line === latestRecord ? latestAnchor : undefined}>
                               <KindIcon kind="report" />
                               <span class="visually-hidden">News report.</span>
                               <span class="entry-date">{dayAndMonth(line.date)}</span>

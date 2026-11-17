@@ -179,6 +179,24 @@ test("Scenario: Comparison group", () => {
   assert.equal(none.answer, "No record names one");
 });
 
+test("a comparison is counted from each trial's codes, including a trial naming both", () => {
+  const compare = (approach, codes) => rowOf(recordBrief(claim({
+    approach, trials: codes.map((comparators, i) => trial(`NCT${i}`, { facts: facts({ comparators }) })),
+  }), null), "comparison");
+  const sham = compare("surgery-or-procedure", Array.from({ length: 5 }, () => ["sham"]));
+  assert.equal(sham.question, "Compared with a sham procedure?");
+  assert.equal(sham.answer, "Five records name a sham procedure");
+  assert.deepEqual(sham.opened, [DEFINITIONS.sham]);
+  const placebo = compare("device", [["placebo"]]);
+  assert.equal(placebo.question, "Compared with a placebo?");
+  assert.equal(placebo.answer, "One record names a placebo");
+  const mixed = compare("drug", [["placebo", "sham"], ["sham"], ["active"]]);
+  assert.equal(mixed.question, "Compared with a sham procedure or a placebo?");
+  assert.equal(mixed.answer, "Two records name a sham procedure, and one record names a placebo");
+  assert.deepEqual(mixed.share, { n: 2, of: 3 });
+  assert.deepEqual(mixed.opened, [DEFINITIONS.sham, DEFINITIONS.placebo, "The other record names no such comparison."]);
+});
+
 test("Scenario: What the largest trial measured", () => {
   const measure = rowOf(recordBrief(device, null), "measure");
   // "Changed" because the registry's title names a change: read by rule, not by the model.
