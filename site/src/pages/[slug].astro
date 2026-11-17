@@ -34,8 +34,8 @@ import { categoryPath, termSourceSentence } from "../lib/clinical";
 import MeshCredit from "../components/MeshCredit.astro";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
-import { BRIEF_TITLE, digestBridge, recordBrief } from "../lib/record-brief";
-import { UNCHECKED_NOTE } from "../lib/notices";
+import { BRIEF_TITLE, digestApproval, digestBridge, phase4Note, recordBrief } from "../lib/record-brief";
+import { UNCHECKED_BYLINE } from "../lib/notices";
 import { statementsHeading } from "../lib/statements";
 import {
   EVIDENCE_STAGES,
@@ -134,6 +134,9 @@ const kinds: RecordKind[] = [
 const explaining = timetable.sources.filter(({ event }) =>
   claim.status.explained_by.includes(event.id),
 );
+const latestExplaining = [...explaining]
+  .sort((a, b) => (b.event.event_date ?? "").localeCompare(a.event.event_date ?? ""))
+  .slice(0, 3);
 const description = `${STATUS_LABELS[claim.status.code]}. ${claim.summary}`;
 const imageAlt = cardAlt(cardFor(claim));
 // In a browser tab and a search result there is room for what and for what, not for
@@ -227,6 +230,9 @@ for (const group of trialGroups) {
 const matchOf = (trialId: string) =>
   registryMatches.find((match) => match.state === "approved" && match.external_id === trialId);
 const bridge = digestBridge(claim);
+const approvalNote = digestApproval(claim);
+// The popover names the latest records the status rests on; the timetable marks all.
+const WHY_SHOWN = latestExplaining.length;
 // Who a report or a trial record says is behind the claim (openspec organisations), and
 // the organisation, if any, on whose website a report is.
 const organisations = claim.organisations ?? [];
@@ -303,7 +309,6 @@ const milestones = [
 const timetableNote = [
   ...(counts.promises > 0 ? [plural(counts.promises, "promise")] : []),
   plural(counts.records, "record"),
-  "newest first",
 ].join(" · ");
 // A long record folds by year (openspec sheet-cohesion). This year and last stay open,
 // with any year a promise names; an older year is one line that says how many records
@@ -461,21 +466,30 @@ const sections = [
             }
           </div>
         </div>
+        {/* The title is the claim: the treatment, then what it is for. Each is drawn as
+            the record gives it. A report's own headline is quoted with its outlet, under
+            the title on a wide screen and at the head of the sheet on a phone, never set
+            as the page's own words (openspec claim-title). */}
         <h1
           class:list={[
             "title",
-            { long: claim.headline.length > 70, longer: claim.headline.length > 110 },
+            "claim-title",
+            { long: claim.intervention.name.length > 40, longer: claim.intervention.name.length > 80 },
           ]}
         >
-          {
-            /* A name such as "USAG-1" must not break at its hyphen. */
-            claim.headline.split(" ").map((word, index) => (
-              <>
-                {index > 0 && " "}
-                {word.includes("-") && word.length <= 16 ? <span class="unbroken">{word}</span> : word}
-              </>
-            ))
-          }
+          <span class="title-what">
+            {
+              /* A name such as "USAG-1" must not break at its hyphen. */
+              claim.intervention.name.split(" ").map((word, index) => (
+                <>
+                  {index > 0 && " "}
+                  {word.includes("-") && word.length <= 16 ? <span class="unbroken">{word}</span> : word}
+                </>
+              ))
+            }
+          </span>
+          <span class="visually-hidden"> for </span>
+          <span class="title-for">{claim.indication}</span>
         </h1>
 
         {/* The summary, straight under the title where the band has room for it. On a
@@ -499,6 +513,21 @@ const sections = [
             : reports.length === 1
               ? "this news report"
               : "these news reports"}. <a href="/how-it-works">How a status is set</a>
+        </p>
+
+        {/* Who and when, where a reader looks for a byline: the day the registries were
+            last read and, for a claim no person checked, that software put the page
+            together. Said once, here (openspec mobile-claim-page). */}
+        <p class="byline" data-pagefind-ignore>
+          {
+            !claim.checked_by_person && (
+              <>
+                {UNCHECKED_BYLINE[0]}{" "}
+                <a href="/guide/checked-by-a-person">{UNCHECKED_BYLINE[1]}</a>.{" "}
+              </>
+            )
+          }
+          {data.last_checked_at && <>Registries last checked {formatDate(data.last_checked_at)}.</>}
         </p>
 
         {
@@ -547,7 +576,7 @@ const sections = [
         <div class="standing">
           <div class="label-row">
             <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
-            <Pop id="why" label="Why this status" class="info">
+            <Pop id="why" label="Why this status" class="info" close>
               <Info slot="trigger" size={20} stroke-width={1.9} aria-hidden="true" />
               {
                 explaining.length > 0 ? (
@@ -556,13 +585,19 @@ const sections = [
                       <BasisMark label={false} /> The status rests on these records
                     </p>
                     <ul class="pop-list">
-                      {explaining.map(({ mark, event }) => (
+                      {latestExplaining.map(({ mark, event }) => (
                         <li>
                           <a href={`#record-${mark}`}>{eventLabel(event)}</a>,{" "}
                           {formatDate(event.event_date)}
                         </li>
                       ))}
                     </ul>
+                    {explaining.length > WHY_SHOWN && (
+                      <p class="pop-note">
+                        The {WHY_SHOWN} latest of {explaining.length}.{" "}
+                        <a href="#timetable">All are marked on the timetable</a>
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p>No trial, approval or retraction record is attached to this claim.</p>
@@ -580,6 +615,7 @@ const sections = [
                         </li>
                       ))}
                     </ol>
+                    {phase4Note(claim) && <p class="pop-note">{phase4Note(claim)}</p>}
                   </>
                 )
               }
@@ -605,7 +641,7 @@ const sections = [
           {
             overlay && (
               <div>
-                <Pop id="quiet" class="overlay">
+                <Pop id="quiet" class="overlay" close>
                   <Fragment slot="trigger">
                     <Clock size={15} stroke-width={1.9} aria-hidden="true" />
                     {overlay}
@@ -672,6 +708,11 @@ const sections = [
         <div class="says">
           {/* What the status means, in a sentence, beside the label it explains. */}
           <p class="means">{STATUS_MEANINGS[claim.status.code]}</p>
+          {
+            /* Under a Phase 3 status with no approval listed: the site reads no
+               regulator's records, said beside the status and not only in the brief. */
+            approvalNote && <p class="bridge">{approvalNote}</p>
+          }
           {
             /* Trials on record with no phase: said here, so the status is not read as
                contradicting the trials the page lists. No link in it: on a phone it is drawn
@@ -750,14 +791,6 @@ const sections = [
       You follow this claim. It is listed on <a href="/#following">the home page</a>, with a
       note when its status changes. Kept in this browser only.
     </p>
-
-    {
-      !claim.checked_by_person && (
-        <p class="unchecked">
-          {UNCHECKED_NOTE} <a href="/guide/checked-by-a-person">What “checked by a person” means</a>
-        </p>
-      )
-    }
 
     {/* What the treatment and the condition are, then the claim's own facts: before
         the record in brief, so a reader knows what the records are about. */}

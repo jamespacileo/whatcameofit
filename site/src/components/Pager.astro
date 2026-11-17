@@ -1,8 +1,11 @@
 ---
-// Steps through the rows of the table just before it, a page at a time. Every row is
-// in the page: without JavaScript the whole list is shown, and search engines and
-// print see all of it. The table marks rows after the first page with "data-later", which
-// the stylesheet hides from the first paint where scripts run.
+// Steps through the rows of the table just before it, a page at a time. Where every row
+// is in the page (a topic's or a year's list), the whole list is shown without
+// JavaScript, and search engines and print see all of it: the table marks rows after
+// the first page with "data-later", which the stylesheet hides from the first paint
+// where scripts run. Where the page holds a list's first rows only (the home page's
+// lists, openspec landing-rows-on-demand), the rest are fetched on the first step
+// forward: the pager stands as built, with the list's own total, until they are here.
 import { pageLine, pageOf } from "../lib/paging";
 
 interface Props {
@@ -26,6 +29,7 @@ const first = pageOf(total, size, 1);
   aria-label={`Pages of ${label}`}
   data-pager={name}
   data-size={size}
+  data-total={total}
   data-one={one}
   data-many={many}
   hidden
@@ -37,12 +41,15 @@ const first = pageOf(total, size, 1);
 
 <script>
   import { pageLine, pageOf } from "../lib/paging";
+  import { loadRest, waiting } from "../lib/rest";
 
   for (const nav of document.querySelectorAll<HTMLElement>("[data-pager]")) {
     const frame = nav.previousElementSibling as HTMLElement | null;
     const table = frame?.querySelector("table");
     if (!frame || !table) continue;
-    const rows = [...table.tBodies[0].rows];
+    let rows = [...table.tBodies[0].rows];
+    // The list's holder, where the page as built holds only its first rows.
+    const holder = nav.closest<HTMLElement>("[data-rest]");
     const name = nav.dataset.pager!;
     const size = Number(nav.dataset.size);
     const line = nav.querySelector<HTMLElement>("[data-at]")!;
@@ -59,6 +66,13 @@ const first = pageOf(total, size, 1);
 
     const draw = () => {
       const list = listed();
+      // Until the rest of the rows are here the page holds the first page and no more:
+      // the line and the steps stay as built, from the list's own total.
+      if (waiting(holder)) {
+        for (const row of rows) row.hidden = out(row);
+        nav.hidden = Number(nav.dataset.total) <= size;
+        return;
+      }
       const at = pageOf(list.length, size, page);
       page = at.page;
       const shown = new Set(printing ? list : list.slice(at.from - 1, at.to));
@@ -87,8 +101,14 @@ const first = pageOf(total, size, 1);
     };
 
     for (const step of steps) {
-      step.addEventListener("click", () => {
+      step.addEventListener("click", async () => {
         if (step.getAttribute("aria-disabled") === "true") return;
+        // The next page is among the rows still to be fetched. If they do not arrive
+        // the list says so, and the page shown stays the first.
+        if (waiting(holder)) {
+          page = 1;
+          if (!(await loadRest(holder))) return;
+        }
         page += Number(step.dataset.step);
         draw();
         remember();
@@ -113,6 +133,15 @@ const first = pageOf(total, size, 1);
       draw();
     });
 
+    // The rest of the rows have arrived: the same page, over all of them.
+    holder?.addEventListener("rest:here", () => {
+      rows = [...table.tBodies[0].rows];
+      draw();
+    });
+
     draw();
+    // An address that names a later page asks for the rows that page is among. They are
+    // drawn when they arrive, at that page unless a filter has since begun the list again.
+    if (waiting(holder) && page > 1) void loadRest(holder);
   }
 </script>

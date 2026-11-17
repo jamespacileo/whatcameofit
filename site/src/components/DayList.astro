@@ -1,25 +1,29 @@
 ---
 // The home page's day-by-day list (openspec home-day-by-day): everything dated for the
 // published claims, newest first, under dated headings. The page is dated by the day
-// the registries were last checked. Every row is in the page as built; the script only
-// hides, counts and marks.
+// the registries were last checked. The rows under its day headings are in the page as
+// built. The earlier headings and the promised dates still to come are fetched the
+// first time a reader asks for them (openspec landing-rows-on-demand): a span wider
+// than the past week, promised dates, or a heading named in the address. The script
+// hides, counts and marks the rows that are in the page.
 import type { DayList } from "../lib/day-list";
-import { countKinds, countsText, dayName, earlierText, gatherRecords, headingTitle, toComeText } from "../lib/day-list";
-import { formatDate } from "../lib/timetable";
+import { DAY_HEADINGS, countKinds, dayName, earlierText } from "../lib/day-list";
 import Info from "@lucide/astro/icons/info";
-import DayPromise from "./DayPromise.astro";
-import DayRecord from "./DayRecord.astro";
+import DayGroups from "./DayGroups.astro";
 import DayReport from "./DayReport.astro";
 import FilterMenu from "./FilterMenu.astro";
 import Pop from "./Pop.astro";
+import RestSaid from "./RestSaid.astro";
 
 interface Props {
   list: DayList;
   /** Every listed topic, for a row's topic name and the side column's choice. */
   topics: { slug: string; title: string; count: number }[];
+  /** Where the earlier headings and the dates to come are, when there are any. */
+  rest?: string;
 }
 
-const { list, topics } = Astro.props;
+const { list, topics, rest } = Astro.props;
 const topicTitle = new Map(topics.map((topic) => [topic.slug, topic.title]));
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const weekday = (day: string) => WEEKDAYS[new Date(`${day}T00:00:00Z`).getUTCDay()];
@@ -38,6 +42,7 @@ const SPANS = [
   { span: "all", name: "All time" },
 ] as const;
 const earlier = list.headings.filter((heading) => heading.span !== "day");
+const earlierRows = earlier.reduce((sum, heading) => sum + heading.rows.length, 0);
 // "Saturday 14 November", in its parts.
 const [checkedWeekday, checkedNumber, checkedMonth] = dayName(list.checked).split(" ");
 const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checkedMonth };
@@ -123,58 +128,9 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       </div>
 
 
-      <div class="day-list" data-day-list>
-        {
-          list.toCome.length > 0 && (
-            <details class="to-come" data-to-come>
-              <summary>
-                <strong>Ahead.</strong> <span data-to-come-count>{toComeText(list.toCome.length)}</span>{" "}
-                Next: <span data-to-come-next>{formatDate(list.toCome[0].date)}</span>.{" "}
-                <span class="text-control">Show them</span>
-              </summary>
-              <p class="entry-note">
-                A promise is what a report said, not a record. Each is listed by the date it was promised for.
-              </p>
-              <ol>
-                {list.toCome.map((row) => <DayPromise row={row} />)}
-              </ol>
-            </details>
-          )
-        }
-        {
-          list.headings.map((heading) => (
-            <section
-              class="day-group"
-              id={heading.id}
-              data-group
-              data-span={heading.span}
-              data-date={heading.date}
-              data-earlier={heading.span === "day" ? undefined : ""}
-            >
-              <div class="day-head">
-                <h3 data-group-title>{headingTitle(heading)}</h3>
-                <span data-says>{countsText(countKinds(heading.rows))}</span>
-                <span class="day-col">Status now</span>
-              </div>
-              <ol>
-                {gatherRecords(heading.rows).map(({ row, follows }, index, all) =>
-                  row.kind === "report" ? (
-                    <DayReport row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
-                  ) : row.kind === "record" ? (
-                    <DayRecord row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} follows={follows} first={follows && !all[index - 1].follows} />
-                  ) : (
-                    <DayPromise row={row} />
-                  ),
-                )}
-              </ol>
-              {/* The rest of a long day, where the list is narrow. The script's. */}
-              <p class="day-more" hidden data-day-more>
-                <button type="button" class="share"></button>
-              </p>
-            </section>
-          ))
-        }
-        <p class="none" hidden data-days-none>Nothing in this list for that choice.</p>
+      <div class="day-list" data-day-list data-rest={rest}>
+        <DayGroups headings={list.headings.filter((heading) => heading.span === "day")} topics={topics} />
+        <p class="none" hidden data-days-none data-rest-before>Nothing in this list for that choice.</p>
         {/* Where a span ends: what it held, and the next span one press away. */}
         <p class="earlier" hidden data-span-end>
           <span class="entry-note" data-span-said></span>
@@ -185,9 +141,24 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
             <p class="earlier" hidden data-earlier-control>
               <button type="button" class="share">Show earlier</button>
               <span class="entry-note" data-earlier-left>
-                {earlierText(earlier.reduce((sum, heading) => sum + heading.rows.length, 0))}
+                {earlierText(earlierRows)}
               </span>
             </p>
+          )
+        }
+        {
+          rest && (
+            <RestSaid>
+              Shown here: what is dated in the {DAY_HEADINGS} days up to the last check.{" "}
+              {earlierRows > 0 && <>{earlierText(earlierRows)} are not shown. </>}
+              {list.toCome.length > 0 && (
+                <>
+                  {list.toCome.length} promised {list.toCome.length === 1 ? "date" : "dates"} still to come{" "}
+                  {list.toCome.length === 1 ? "is" : "are"} not shown.{" "}
+                </>
+              )}
+              Every claim is also listed under its topic: <a href="/topics">all topics</a>.
+            </RestSaid>
           )
         }
         {/* One claim from an earlier year, under the list: the same for every reader
@@ -214,14 +185,16 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
 <script>
   import { countKinds, countsText, earlierText, keptRows, toComeText, type RowKind } from "../lib/day-list";
+  import { loadRest, onArrive, waiting } from "../lib/rest";
   import { VISIT_ENTRY, lastVisitIndex, nextVisit, sinceOf } from "../lib/returning";
   import { formatDate } from "../lib/timetable";
 
   const root = document.querySelector<HTMLElement>("[data-days]");
   if (root) {
     const list = root.querySelector<HTMLElement>("[data-day-list]")!;
-    const groups = [...list.querySelectorAll<HTMLElement>("[data-group]")];
-    const toCome = list.querySelector<HTMLDetailsElement>("[data-to-come]");
+    // Read again when the earlier headings and the dates to come arrive.
+    let groups = [...list.querySelectorAll<HTMLElement>("[data-group]")];
+    let toCome = list.querySelector<HTMLDetailsElement>("[data-to-come]");
     const control = list.querySelector<HTMLElement>("[data-earlier-control]");
     const none = list.querySelector<HTMLElement>("[data-days-none]")!;
     const sideTopics = root.querySelector<HTMLElement>("[data-side-topics]");
@@ -229,7 +202,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     const spanSaid = spanEnd.querySelector<HTMLElement>("[data-span-said]")!;
     const spanWider = spanEnd.querySelector<HTMLButtonElement>("[data-span-wider]")!;
     const visitNote = root.querySelector<HTMLElement>("[data-visit-note]");
-    const allRows = [...list.querySelectorAll<HTMLElement>("[data-day-row]")];
+    let allRows = [...list.querySelectorAll<HTMLElement>("[data-day-row]")];
     const rowsIn = (element: Element) => [...element.querySelectorAll<HTMLElement>("[data-day-row]")];
     // Each filter marks the rows it leaves out, as on the tables further down the page.
     const out = (row: Element) => row.getAttributeNames().some((name) => name.startsWith("data-out"));
@@ -318,6 +291,10 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     let kind = "all";
     let setSpan: (picked: string, keep?: boolean) => void = () => {};
 
+    // The rows not in the page as built are all dated before the past week, or still to
+    // come: a wider span or the promised dates cannot be read without them.
+    const short = () => waiting(list) && (span !== "week" || kind === "promise");
+
     const refresh = () => {
       list.querySelectorAll(".last-visit-item").forEach((item) => item.remove());
       let shown = 0;
@@ -375,21 +352,31 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       }
       const at = SPANS.findIndex((entry) => entry.span === span);
       const wider = SPANS[at + 1];
-      none.hidden = shown > 0 || wider !== undefined;
+      // While rows the choice needs are not here, the list does not say where it ends:
+      // it says they are being fetched, or that they did not arrive.
+      const lacking = short();
+      none.hidden = lacking || shown > 0 || wider !== undefined;
       // A span that has been read to its end says so, and offers the next one.
-      spanEnd.hidden = wider === undefined || later > 0;
+      spanEnd.hidden = lacking || wider === undefined || later > 0;
       if (wider) {
         spanSaid.textContent =
           shown > 0 ? `That is everything dated in ${SPANS[at].name}.` : `Nothing is dated in ${SPANS[at].name} for that choice.`;
         spanWider.textContent = `Show ${wider.name}`;
       }
       if (control) {
-        control.hidden = later === 0;
+        control.hidden = lacking || later === 0;
         control.querySelector("[data-earlier-left]")!.textContent = earlierText(later);
       }
       filterMenu?.dispatchEvent(new Event("filter:say"));
       drawLastVisit();
+      if (lacking) void loadRest(list);
     };
+    list.addEventListener("rest:here", () => {
+      groups = [...list.querySelectorAll<HTMLElement>("[data-group]")];
+      toCome = list.querySelector<HTMLDetailsElement>("[data-to-come]");
+      allRows = [...list.querySelectorAll<HTMLElement>("[data-day-row]")];
+      refresh();
+    });
     spanWider.addEventListener("click", () => {
       const wider = SPANS[SPANS.findIndex((entry) => entry.span === span) + 1];
       if (wider) setSpan(wider.span);
@@ -421,6 +408,13 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     };
     const revealTo = (id: string) => {
       const target = groups.find((group) => group.id === id);
+      // A heading that is not in the page may be among those still to be fetched.
+      if (!target && waiting(list)) {
+        void loadRest(list).then((here) => {
+          if (here) revealTo(id);
+        });
+        return;
+      }
       if (!target) return;
       openTo(target);
       target.scrollIntoView({ block: "start" });
@@ -449,13 +443,15 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       refresh();
     });
 
-    // The rest of a long day is one press away, and stays shown.
-    for (const group of groups) {
-      group.querySelector("[data-day-more] button")?.addEventListener("click", () => {
-        group.setAttribute("data-all", "");
-        refresh();
-      });
-    }
+    // The rest of a long day is one press away, and stays shown. Heard on the list, so
+    // a heading that arrives later is heard too.
+    list.addEventListener("click", (event) => {
+      const more = (event.target as Element).closest("[data-day-more] button");
+      const group = more?.closest<HTMLElement>("[data-group]");
+      if (!group) return;
+      group.setAttribute("data-all", "");
+      refresh();
+    });
 
     const remember = (name: string, value: string, first: string) => {
       const url = new URL(location.href);
@@ -502,6 +498,16 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
     // The status path and the topic choice narrow these rows too, and say so here.
     list.addEventListener("paged:refresh", refresh);
+
+    // Rows that arrive later are left out by the kind and the span as the rows in the
+    // page were.
+    onArrive(({ rows }) => {
+      const from = fromOf(SPANS.find((entry) => entry.span === span)!.days);
+      for (const row of rows.querySelectorAll<HTMLElement>("[data-day-row]")) {
+        row.toggleAttribute("data-out-kind", kind !== "all" && row.dataset.kind !== kind);
+        row.toggleAttribute("data-out-span", row.dataset.on! < from);
+      }
+    });
 
     // On a wide screen the topic is chosen from the side column; it drives the same
     // field a narrower screen shows, so there is one choice and one place it is kept.

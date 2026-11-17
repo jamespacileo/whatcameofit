@@ -54,6 +54,8 @@ const statuses = [...STAGE_PATH, ...offPath];
 </div>
 
 <script>
+  import { loadRest, onArrive } from "../lib/rest";
+
   // Picking a status shows only the rows of claims that stand there now. Rows left out
   // are marked "data-out", as a topic page's path marks them; each list then recounts.
   const field = document.querySelector<HTMLSelectElement>("#feed-status");
@@ -61,14 +63,21 @@ const statuses = [...STAGE_PATH, ...offPath];
     const scope = field.dataset.scope!;
     const tables = [...document.querySelectorAll<HTMLTableElement>(`${scope} table`)];
     const dayList = document.querySelector<HTMLElement>(`${scope} [data-day-list]`);
-    const rows: HTMLElement[] = [
+    // Read at each pick: a list's rows past its first arrive when they are asked for.
+    const rows = (): HTMLElement[] => [
       ...tables.flatMap((table) => [...table.querySelectorAll<HTMLElement>("tbody tr[data-status]")]),
       ...(dayList?.querySelectorAll<HTMLElement>("[data-day-row]") ?? []),
     ];
     const options = [...field.options].filter((option) => option.value !== "");
 
     const apply = (picked: string, remember = true) => {
-      for (const row of rows) row.toggleAttribute("data-out", picked !== "" && row.dataset.status !== picked);
+      // One status of a list is found among all its rows, not its first ones.
+      if (picked !== "") {
+        for (const holder of document.querySelectorAll<HTMLElement>(`${scope} [data-rest][data-rest-for="narrowing"]`)) {
+          void loadRest(holder);
+        }
+      }
+      for (const row of rows()) row.toggleAttribute("data-out", picked !== "" && row.dataset.status !== picked);
       for (const table of tables) table.dispatchEvent(new Event("paged:refresh"));
       dayList?.dispatchEvent(new Event("paged:refresh"));
       if (!remember) return;
@@ -78,6 +87,12 @@ const statuses = [...STAGE_PATH, ...offPath];
       history.replaceState(history.state, "", url);
     };
     field.addEventListener("change", () => apply(field.value));
+    // Rows that arrive later are narrowed as the rows in the page were.
+    onArrive(({ rows: arriving }) => {
+      for (const row of arriving.querySelectorAll<HTMLElement>("tr[data-status], [data-day-row]")) {
+        row.toggleAttribute("data-out", field.value !== "" && row.dataset.status !== field.value);
+      }
+    });
 
     // A topic choice changes how many claims are at each status.
     field.addEventListener("stage:counts", (event) => {
