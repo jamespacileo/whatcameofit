@@ -943,6 +943,17 @@ class LinkLeadLink(Base):
             "reason",
             name="uq_link_lead_link_lead_record_reason",
         ),
+        CheckConstraint(
+            "strength IS NULL OR strength IN ('exact', 'strong', 'named', 'candidate')",
+            name="strength_is_known",
+        ),
+        # Reading asks which leads have an exact or strong link to a trial of a set.
+        Index(
+            "ix_link_lead_link_strong",
+            "record_id",
+            "link_lead_id",
+            postgresql_where=text("strength IN ('exact', 'strong')"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -950,6 +961,13 @@ class LinkLeadLink(Base):
     record_kind: Mapped[str] = mapped_column(Text)
     record_id: Mapped[int]
     reason: Mapped[str] = mapped_column(Text)
+    # For a link to a registry trial: how much it says (exact, strong, named or
+    # candidate; backfill/link_screen.py), the term of the trial the title holds, and
+    # the word of the trial's condition found beside it. Empty on a link to a claim and
+    # on links made before screening version 3.
+    strength: Mapped[str | None] = mapped_column(Text)
+    term: Mapped[str | None] = mapped_column(Text)
+    beside: Mapped[str | None] = mapped_column(Text)
 
 
 class LinkLeadLabel(Base):

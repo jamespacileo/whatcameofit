@@ -123,10 +123,38 @@ One paper carried three numbers and none more, so the rule against papers of man
 
 Route 3, stored leads on more than the intervention's name (pull request 4; does 3.1 and 3.3, part of 3.5, 3.6, 3.7, 4.1 to 4.3 and 8.6):
 
-- [ ] 9.8 Link a stored lead to a trial on the trial's registry number, its acronym, a development code among its intervention names and other names, and its other intervention names, each as its own reason with its own strength, with the term and the condition word recorded; an acronym that is an ordinary word never links; the present link is kept as a candidate; verify tests for each reason, for a code written without its hyphen, for a common-word acronym, and that a run sends no request and records no usage
-- [ ] 9.9 Measure on the working database, read-only, how many leads link to how many trials of each set under each reason, and judge 40 links by hand from headline and outlet alone; record the tables here and in `design.md`, and nothing of any article
-- [ ] 9.10 Say which strength is enough for a held lead to be read, and make the reading order selectable for a named set: leads strongly linked to trials of the set first, phase 3 before phase 2, a rejected lead never; verify tests for a held lead, a rejected lead and the order of three due leads
-- [ ] 9.11 Hold the route's share of the ceiling as a setting (15 US dollars a month), print the plan of `specs/trial-report-links` before a set is read, and read nothing when the expected cost passes what is left of the share; verify tests of a plan and of a refusal
+- [x] 9.8 Link a stored lead to a trial on the trial's registry number, its acronym, a development code among its intervention names and other names, and its other intervention names, each as its own reason with its own strength, with the term and the condition word recorded; an acronym that is an ordinary word never links; the present link is kept as a candidate; verify tests for each reason, for a code written without its hyphen, for a common-word acronym, and that a run sends no request and records no usage
+- [x] 9.9 Measure on the working database, read-only, how many leads link to how many trials of each set under each reason, and judge 40 links by hand from headline and outlet alone; record the tables here and in `design.md`, and nothing of any article
+- [x] 9.10 Say which strength is enough for a held lead to be read, and make the reading order selectable for a named set: leads strongly linked to trials of the set first, phase 3 before phase 2, a rejected lead never; verify tests for a held lead, a rejected lead and the order of three due leads
+- [x] 9.11 Hold the route's share of the ceiling as a setting (15 US dollars a month), print the plan of `specs/trial-report-links` before a set is read, and read nothing when the expected cost passes what is left of the share; verify tests of a plan and of a refusal
+
+What 9.9 measured, on the working database on 2026-11-17, read-only, with no request: 558,864 leads in scope against 467,064 stored trials. 18,913 development codes were gathered over 58,014 trials, and 3,658 acronyms that carry a number. "Leads" and "trials" are those linked under the reason; the two sets are counted inside the totals.
+
+| Reason | Strength | Leads | Trials | `active-since-2025`: leads / trials | `completed-with-results-since-2025`: leads / trials |
+| --- | --- | --- | --- | --- | --- |
+| The registry number in the title or address | exact | 0 | 0 | 0 / 0 | 0 / 0 |
+| A development code and a condition word | strong | 13 | 32 | 9 / 16 | 1 / 1 |
+| A development code alone | named | 13 | 42 | 6 / 8 | 1 / 1 |
+| An acronym that carries a number, and a condition word | named | 0 | 0 | 0 / 0 | 0 / 0 |
+| Another name of a drug or biological, and a condition word (at most 10 trials a name) | candidate | 611 | 742 | 237 / 216 | 34 / 23 |
+
+Where triage left the leads linked to `active-since-2025`: of the 9 strongly linked, 6 passed and 3 were held, 4 are to phase 3 trials, and 3 are neither read nor rejected; 10 of the 13 strongly linked leads overall were already read. Of the 237 linked on another name, 170 passed, 45 were held, 13 were rejected and 9 are not scored; 136 are to phase 3 trials and 45 are passed and not yet read. For `completed-with-results-since-2025`: 20 passed, 8 held, 5 passed and not yet read.
+
+The forty links judged by hand, drawn by a seeded order, each from the lead's headline and outlet against the trial's registry title; nothing of any article was read or written anywhere:
+
+| Reason as first tried | Judged | Right treatment and right condition | Plainly that trial or its programme |
+| --- | --- | --- | --- |
+| A development code and a condition word | 8 | 8 | about 4 |
+| A development code alone | 4 | 3 (one was a map's number) | 0 |
+| An acronym of five letters or more with no number, and a condition word | 8 | 1 (a product's name; seven were ordinary words) | 0 |
+| An acronym with no number, alone | 4 | 0 | 0 |
+| Any other intervention name and a condition word | 16 | 1 (eleven were ordinary words or classes, "cancer" among them) | 0 |
+
+What the judgement changed before the rule was fixed: an acronym with no number never links (under the loose rule 3,495 leads were linked on an acronym alone, 2,483 of them rejected by triage); another name links only for a drug, biological, genetic or combination intervention and never when it holds a general word. Sixteen more links on other names were judged after that change: 10 of the 12 not on "cancer" named the right treatment and condition and none was plainly that trial; the four on "cancer" are now left out.
+
+What 9.10 says: only an exact or a strong link is enough for a held lead to be read. A named or candidate link orders reads and can be asked for by `--strength`, which widens which passed leads `thenwhat backfill read-set` reads and never which held leads. So "the leads strongly linked to the active set, phase 3 first" is, today, about 3 leads to read; with `--strength candidate` it is about 45. The route's yield from stored leads is small, and is recorded here as a finding, not a fault of the rule: the leads were gathered by what readers shared, and few headlines hold a code.
+
+Still open of the tasks this pull request touches: 3.1's run over the working database (the screening step is at version 3, so every lead is due; the coordinating session runs it), 3.2 and 3.4 (a substance's name as telling), 4.4 (linked trials handed to preparation), 4.6 and 4.7 (working a set).
 
 Not in phase 1, and still open where they stand: telling names from the substance registry (3.2, 3.4), handing linked trials to preparation as candidates (4.4), papers on the trial page (8.8), fingerprints as a stored record (8.3), the batched news search (8.9 to 8.13), everything of sections 2.4 to 2.8 and 6.
 

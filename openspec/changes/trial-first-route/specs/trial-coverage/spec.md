@@ -190,15 +190,15 @@ A trial page SHALL list the papers attached to the trial under two fixed heading
 - **THEN** its page lists the paper with its title, journal and year, and still reads that no news report is linked yet
 
 ### Requirement: Stored leads matched on the fingerprint
-The offline linking SHALL treat a fit acronym as it treats a telling name, so that a stored lead whose title holds a fit acronym, a development code or a telling name of a trial is strongly linked to it by the rules of `trial-report-links`. A registry number in a lead's title or address SHALL strongly link the lead to that one trial with no condition word needed.
+The offline linking SHALL link a stored lead to a trial on the trial's registry number, a development code, its acronym and the other names of its interventions, each as its own reason with its own strength, by the rules of `trial-report-links`. A registry number in a lead's title or address SHALL link the lead exactly to that one trial with no condition word needed. An acronym SHALL link only when it carries a number, and its link SHALL be named, not strong: on the working database on 2026-11-17 no stored lead held such an acronym, and of twelve links judged on acronyms without a number, one named a treatment and none a study.
 
 #### Scenario: An acronym in a headline
-- **WHEN** a stored lead's title holds "KEYNOTE-789" and a stored trial has that acronym
-- **THEN** the lead is strongly linked to that trial with the acronym recorded as the reason
+- **WHEN** a stored lead's title holds "KEYNOTE-789" and a word of the conditions of the stored trial with that acronym
+- **THEN** the lead has a named link to that trial with the acronym recorded
 
 #### Scenario: A registry number in an address
 - **WHEN** a stored lead's address holds a trial's registry number
-- **THEN** the lead is strongly linked to that trial alone
+- **THEN** the lead is linked exactly to that trial alone
 
 ### Requirement: One news search carries many trials
 The news search for a set SHALL send the fit terms of many trials in one request, as alternatives, restricted to the configured collections and outlets and to the configured period, within the source's allowance. The number of trials a request carries SHALL be a setting. A trial whose terms were sent and answered SHALL be recorded as searched at that step version whether or not anything was found.

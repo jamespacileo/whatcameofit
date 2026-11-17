@@ -181,6 +181,15 @@ class Settings(BaseSettings):
     # Read only leads first shared on or after this day. Unset reads leads of any date.
     # It narrows a run to a period; a lead outside it stays due for a later run.
     lead_read_since: date | None = None
+    # The named set of stored trials being worked (openspec trial-report-links), such as
+    # active-since-2025. While it is set, a held lead with an exact or strong link to a
+    # trial of the set is read, and leads so linked are read before the others, phase 3
+    # first. Unset, no set orders the reading.
+    lead_read_trial_set: str | None = None
+    # The share of the month's ceiling that reads for a set of trials may use
+    # (`thenwhat backfill read-set`), in US dollars. Decided by the operator on
+    # 2026-11-17.
+    trial_route_monthly_usd: Decimal = Decimal("15")
     # Score only leads first shared on or after this day. Unset scores leads of any date.
     # An older lead stays unscored, and so unread, until a later run widens the period.
     lead_triage_since: date | None = None
