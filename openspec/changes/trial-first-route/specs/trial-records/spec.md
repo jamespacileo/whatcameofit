@@ -54,3 +54,21 @@ Only well-formed ClinicalTrials.gov identifiers that the published export cites 
 #### Scenario: Any stored trial, answered from the store
 - **WHEN** trial pages are answered from the store and a request names a stored trial outside every listing
 - **THEN** the page is shown from the stored record and the registry is not asked
+
+## ADDED Requirements
+
+### Requirement: No person of a registry record is saved or shown
+The site's Worker SHALL remove every person from a registry record before the record is saved, shown, compared or sent to a model: central contacts, overall officials, each site's contacts, the responsible party's investigator name, title and affiliation, the name of a lead sponsor who is a person (classed as an individual by the registry, or a sponsor-investigator), the name of a collaborator classed as an individual, the results' point of contact, and every email address and phone number. The rule SHALL be the pipeline's. A trial page SHALL ask the registry only for the fields it shows. A saved copy made before this rule, or one that names a person, SHALL NOT be shown: the registry SHALL be read again and the copy replaced. What says that a sponsor is a person (the class, the responsible party's type) and where a site is (facility, city, country) are not people and MAY be kept.
+
+#### Scenario: A record that names people
+- **WHEN** the registry answers a trial page's read with a record holding contacts, officials, site contacts, an investigator and a person as sponsor
+- **THEN** neither the page nor the saved copy holds any of their names, email addresses or phone numbers
+
+#### Scenario: A copy saved before people were removed
+- **WHEN** a trial page is opened and the saved copy is the registry's whole record
+- **THEN** the copy is not shown, the registry is read again, and the saved copy is replaced by one without people
+
+#### Scenario: A search answered for a lookup
+- **WHEN** a lookup's registry search returns a trial whose lead sponsor is a person
+- **THEN** the answer kept for reuse and the record handed to the lookup do not hold that sponsor's name
+

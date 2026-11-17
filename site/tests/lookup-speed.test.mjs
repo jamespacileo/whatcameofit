@@ -373,7 +373,7 @@ test("a paper mapping is kept as trial numbers only, under a digest, for at most
   const papers = makePapers({ fetch: europe("Abstract text that must not be kept. NCT07654321.", calls), contact: "t@example.org", cache: store });
   assert.deepEqual(await papers.trialNumbers({ doi: "10.1/kept" }), ["NCT07654321"]);
   const [[key, value]] = [...store.values];
-  assert.match(key, /^source-v1:papers:[0-9a-f]{64}$/);
+  assert.match(key, /^source-v2:papers:[0-9a-f]{64}$/);
   assert.doesNotMatch(value, /Abstract|PRIVATE|10\.1\/kept/);
   assert.deepEqual(JSON.parse(value).value, ["NCT07654321"]);
   assert.ok(store.puts[0].options.expirationTtl <= 86_400);
@@ -435,7 +435,7 @@ test("public registry answers are reused across lookups; failures and missing re
   assert.equal(await first.fetch("NCT00000404"), null);
   await assert.rejects(first.fetch("NCT00000500"), /registry 500/);
   assert.equal(store.values.size, 1);
-  assert.match([...store.values.keys()][0], /^source-v1:registry:[0-9a-f]{64}$/);
+  assert.match([...store.values.keys()][0], /^source-v2:registry:[0-9a-f]{64}$/);
 });
 
 test("the same paper asked twice at once is fetched once, and one caller leaving does not fail the other", async () => {
