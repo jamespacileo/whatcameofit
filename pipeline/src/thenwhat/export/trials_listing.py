@@ -17,7 +17,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.trial_sets import SETS
-from thenwhat.db.models import Claim, EvidenceEvent, RegistryTrial
+from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, RegistryTrial
 from thenwhat.domain import ReviewState
 from thenwhat.events.trial import PHASES
 from thenwhat.events.trial_facts import STATES
@@ -79,22 +79,42 @@ def listing_json_schema() -> dict[str, Any]:
 
 
 def _cited(session: Session) -> dict[str, str]:
-    """For each trial an approved event of a published claim cites, that claim's slug:
-    the first by slug when several cite it. Published is what the export publishes:
-    approved, unarchived and not awaiting audit."""
-    rows = session.execute(
+    """For each trial a published claim cites, that claim's slug: the first by slug when
+    several cite it. A claim cites a trial through an approved event or an approved
+    match, as the site's own index of cited trials counts it; a candidate match counts
+    for nothing. Published is what the export publishes: approved, unarchived and not
+    awaiting audit."""
+    published = (
+        Claim.review_state == ReviewState.APPROVED,
+        Claim.archived_at.is_(None),
+        Claim.awaiting_audit_at.is_(None),
+    )
+    by_event = (
         select(EvidenceEvent.external_id, Claim.slug)
         .join(Claim, Claim.id == EvidenceEvent.claim_id)
         .where(
             EvidenceEvent.review_state == ReviewState.APPROVED,
             EvidenceEvent.external_id.regexp_match(REGISTRY_ID),
-            Claim.review_state == ReviewState.APPROVED,
-            Claim.archived_at.is_(None),
-            Claim.awaiting_audit_at.is_(None),
+            *published,
         )
-        .order_by(Claim.slug.desc())
     )
-    return {external_id: slug for external_id, slug in rows}
+    by_match = (
+        select(EntityMatch.external_id, Claim.slug)
+        .join(Entity, Entity.id == EntityMatch.entity_id)
+        .join(Claim, Claim.id == Entity.claim_id)
+        .where(
+            EntityMatch.review_state == ReviewState.APPROVED,
+            EntityMatch.source_name == REGISTRY,
+            EntityMatch.external_id.regexp_match(REGISTRY_ID),
+            *published,
+        )
+    )
+    cited: dict[str, str] = {}
+    for query in (by_event, by_match):
+        for external_id, slug in session.execute(query):
+            if external_id not in cited or slug < cited[external_id]:
+                cited[external_id] = slug
+    return cited
 
 
 def build_listing(session: Session, set_name: str) -> TrialsListing:

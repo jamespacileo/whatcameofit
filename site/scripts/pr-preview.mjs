@@ -19,6 +19,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { buildKey } from "./build-key.mjs";
+import { besideProblems } from "./listing-checks.mjs";
 import { deployProblems, pullRequestWorker } from "./deploy-checks.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
@@ -71,7 +72,9 @@ const exportFile = path.resolve(SITE_DIR, process.env.EXPORT_FILE ?? "data/publi
 if (!fs.existsSync(exportFile)) stop([`No export at ${exportFile}.`]);
 const data = JSON.parse(fs.readFileSync(exportFile, "utf8"));
 const siteUrl = process.env.SITE_URL;
-const problems = deployProblems({ data, siteUrl });
+// The listing beside the export is held to what staging holds it to: its schema, its
+// size, and naming only claims this export publishes.
+const problems = [...deployProblems({ data, siteUrl }), ...besideProblems(exportFile, data)];
 if (problems.length > 0) stop(problems);
 
 // The settings the copy is built with, which are also what its key is made from.
