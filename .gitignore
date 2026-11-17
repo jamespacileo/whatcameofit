@@ -48,3 +48,4 @@ store/ingest/.dev.vars
 site/.cache/
 store/ingest/wrangler.preview.jsonc
 store/ingest/.cloudflare.local.json
+.store-rehearsal/

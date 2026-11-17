@@ -47,6 +47,7 @@ from thenwhat.domain import (
 from thenwhat.export.build import build_export
 from thenwhat.export.compare import canonical_bytes, compare
 from thenwhat.export.parallel import compare_with_store
+from thenwhat.export.rehearsal import against, problems
 from thenwhat.export.store_records import StoreFault, StoreRecords
 from thenwhat.review.queue import confirm_stage, flag_failure
 from thenwhat.seed.load import load_seed
@@ -581,6 +582,12 @@ def answering_from(path: Path, asked: list[list[str]]):
             rows = [dict(row) for row in db.execute(arguments[arguments.index("--command") + 1])]
             db.close()
             return json.dumps([{"results": rows, "success": True, "meta": {}}])
+        if arguments[:3] == ["r2", "object", "get"]:
+            key = arguments[3].split("/", 1)[1]
+            Path(arguments[arguments.index("--file") + 1]).write_bytes(
+                (path.parent / "objects" / key).read_bytes()
+            )
+            return ""
         raise AssertionError(f"not expected: {arguments}")
 
     return wrangler
@@ -626,3 +633,59 @@ def test_compare_command_refuses_a_store_it_cannot_read(
 
     assert result.exit_code == 1
     assert "did not answer" in result.output
+
+
+def test_export_command_reads_the_d1_store_and_fetches_the_objects_it_lacks(
+    session: Session, tmp_path: Path, invoke, monkeypatch: pytest.MonkeyPatch, fixture_json
+):
+    """Scenario: Comparing against the store itself"""
+    claim = new_claim(session)
+    add_registry_events(session, claim, study(fixture_json, "study_NCT03491397_rows"))
+    held = tmp_path / "held"
+    store_of(session, held, NOW)[0].close()
+    asked: list[list[str]] = []
+    monkeypatch.setattr(
+        "thenwhat.cli.export.wrangler_in",
+        lambda folder, config: answering_from(held / "store.db", asked),
+    )
+    target = tmp_path / "export.json"
+
+    result = invoke(
+        "export",
+        "--d1",
+        "thenwhat-store-preview",
+        "--store",
+        str(tmp_path / "fetched.db"),
+        "--payloads",
+        str(tmp_path / "objects"),
+        "--r2-bucket",
+        "thenwhat-payloads-preview",
+        "--out",
+        str(target),
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "(1 payload objects)" in result.output
+    assert [claim["slug"] for claim in json.loads(target.read_text())["claims"]] == [SLUG]
+    assert sum(arguments[0] == "r2" for arguments in asked) == 1
+
+
+def test_rehearsal_passes_an_export_from_the_store_and_refuses_one_the_site_cannot_read(
+    session: Session, tmp_path: Path
+):
+    """Scenario: A rehearsal"""
+    new_claim(session)
+    add_event(session)
+    records, _ = store_of(session, tmp_path, NOW)
+    export = json.loads(build_export(records, now=NOW).model_dump_json())
+    records.close()
+    schema = json.loads(CHECKED_IN_SCHEMA.read_text())
+    broken = json.loads(json.dumps(export))
+    del claim_in(broken)["status"]
+
+    assert problems(export, schema) == []
+    assert against(export, {"claims": [{"slug": "another"}]})[0].startswith(
+        "1 claims from the store, 1 in the published snapshot, 0 in both."
+    )
+    assert any("status" in problem for problem in problems(broken, schema))
+    assert problems({**export, "claims": []}, schema)[-1] == "The export holds no claim."

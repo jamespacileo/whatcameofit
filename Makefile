@@ -95,6 +95,24 @@ extension-safari: extension
 export-compare:
 	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
 
+# A rehearsal of taking the site's export from the truth store (task 6.2). It reads the D1
+# database and the bucket named, writes an export under STORE_REHEARSAL, holds it to the
+# schema the site reads and to the checks a published snapshot must pass, and says how it
+# compares with the committed snapshot. It changes nothing the site is built from.
+#   STORE_D1=thenwhat-store-preview STORE_R2_BUCKET=thenwhat-payloads-preview make store-export-rehearsal
+# Wrangler must be signed in (or CLOUDFLARE_API_TOKEN set) with read access to both.
+STORE_REHEARSAL ?= $(CURDIR)/.store-rehearsal
+.PHONY: store-export-rehearsal
+store-export-rehearsal: store/ingest/node_modules
+	@test -n "$(STORE_D1)" || { echo "Name the D1 database with STORE_D1."; exit 1; }
+	mkdir -p $(STORE_REHEARSAL)
+	uv run --directory pipeline thenwhat export --d1 $(STORE_D1) \
+	  --store $(STORE_REHEARSAL)/store.db --payloads $(STORE_REHEARSAL)/objects \
+	  --out $(STORE_REHEARSAL)/export.json
+	uv run --directory pipeline python -m thenwhat.export.rehearsal \
+	  $(STORE_REHEARSAL)/export.json $(CURDIR)/site/export.schema.json $(CURDIR)/site/data/published-export.json
+	node site/scripts/stage-public-export.mjs $(STORE_REHEARSAL)/export.json $(STORE_REHEARSAL)/published-export.json
+
 PUBLIC_EXPORT := site/data/public-export.json
 
 # A normal export from the running pipeline: every approved, unarchived claim.

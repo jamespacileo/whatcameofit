@@ -20,6 +20,7 @@ import json
 import sqlite3
 import subprocess
 from collections.abc import Callable, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -30,6 +31,9 @@ from thenwhat.export.store_records import TABLES_READ
 # answer may carry, and a payload's row can hold 16 KB.
 PAGE_ROWS = 2000
 PAGE_ROWS_OF = {"payload": 100, "source_record": 500, "trial_read": 500, "decision_log": 1000}
+
+# Payload objects fetched at the same time.
+OBJECTS_AT_ONCE = 8
 
 # Runs `wrangler` with these arguments and returns what it printed.
 Wrangler = Callable[[Sequence[str]], str]
@@ -150,17 +154,25 @@ def fetch_store(
                     break
             report.rows[table] = fetched
         if bucket is not None and payloads is not None:
-            for (key,) in db.execute(
-                "SELECT r2_key FROM payload WHERE r2_key IS NOT NULL ORDER BY r2_key"
-            ).fetchall():
+            lacking = [
+                key
+                for (key,) in db.execute(
+                    "SELECT r2_key FROM payload WHERE r2_key IS NOT NULL ORDER BY r2_key"
+                )
+                if not (payloads / key).is_file()
+            ]
+
+            def get(key: str) -> None:
                 held = payloads / key
-                if held.is_file():
-                    continue
                 held.parent.mkdir(parents=True, exist_ok=True)
                 wrangler(
                     ["r2", "object", "get", f"{bucket}/{key}", "--remote", "--file", str(held)]
                 )
-                report.objects_fetched += 1
+
+            # One request an object, so several at once: a store holds thousands.
+            with ThreadPoolExecutor(max_workers=OBJECTS_AT_ONCE) as pool:
+                list(pool.map(get, lacking))
+            report.objects_fetched = len(lacking)
     finally:
         db.close()
     return report

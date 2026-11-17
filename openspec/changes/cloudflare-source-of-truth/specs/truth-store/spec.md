@@ -123,3 +123,26 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 #### Scenario: Comparing changes neither store
 - **WHEN** the comparison is run against the working database
 - **THEN** the database is read in a read-only transaction that is rolled back, nothing is written to it, and the store file it makes is removed unless it is asked to be kept
+
+#### Scenario: A difference the comparison can explain
+- **WHEN** a claim differs because the database holds two of its source articles at one address key, or only in the order of its intervention's other names
+- **THEN** the claim is listed with that cause, the comparison still exits with an error, and with `--allow-named` it exits successfully only when every difference has a named cause
+
+#### Scenario: Comparing against a store file built elsewhere
+- **WHEN** the comparison is given a store file and its folder of payload objects (`--store`, `--payloads`)
+- **THEN** the store's export is read from that file, the database's export is of every claim, and no store file is made
+
+#### Scenario: Comparing against the store itself
+- **WHEN** the comparison is given the name of the D1 database (`--d1`)
+- **THEN** the rows an export reads are fetched with read-only queries into a store file, a payload object the local folder lacks is fetched from the bucket named, every payload is checked against its checksum, and the comparison is of that file
+
+### Requirement: A deployment can rehearse taking its export from the store
+Until the cut-over, CI SHALL be able to take an export from the store, hold it to the schema the site reads and to the checks a published snapshot must pass, and report how its claims compare with the committed snapshot. The rehearsal SHALL be off unless a repository setting turns it on, SHALL only read the store, and SHALL change nothing the site is built or deployed from: the committed snapshot remains the source.
+
+#### Scenario: A rehearsal
+- **WHEN** the setting is on and a run on `main` starts
+- **THEN** a separate job writes the store's export to its own workspace, fails when the export breaks the schema, holds no claim or fails a deployment check, and the deploy job neither waits for it nor reads what it wrote
+
+#### Scenario: The setting is off
+- **WHEN** the setting is absent or not `true`
+- **THEN** the job does not run and no request reaches the store

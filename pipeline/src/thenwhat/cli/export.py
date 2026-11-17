@@ -68,6 +68,35 @@ def _thresholds(settings: Settings) -> dict[str, Any]:
     }
 
 
+D1Database = Annotated[
+    str | None,
+    typer.Option(
+        "--d1",
+        envvar="STORE_D1",
+        help="Read the store's records from this D1 database itself: its rows are first"
+        " fetched into a store file with `wrangler d1 execute --remote`. Only reads.",
+    ),
+]
+R2Bucket = Annotated[
+    str | None,
+    typer.Option(
+        envvar="STORE_R2_BUCKET",
+        help="With --d1 and --payloads: fetch each payload object the folder lacks from"
+        " this bucket.",
+    ),
+]
+WranglerDir = Annotated[
+    Path, typer.Option(help="With --d1: the folder wrangler is installed and run in.")
+]
+WranglerConfig = Annotated[
+    Path | None,
+    typer.Option(
+        envvar="STORE_WRANGLER_CONFIG",
+        help="With --d1: the Wrangler configuration that names the database.",
+    ),
+]
+
+
 def _export_from_store(store: Path, payloads: Path | None, out_path: Path) -> None:
     settings = settings_or_exit()
     try:
@@ -104,15 +133,41 @@ def export_command(
     ] = None,
     store: StoreFile = None,
     payloads: PayloadFolder = None,
+    d1: D1Database = None,
+    r2_bucket: R2Bucket = None,
+    wrangler_dir: WranglerDir = STORE_SQL / "ingest",
+    wrangler_config: WranglerConfig = None,
 ) -> None:
     """Write the JSON file the site is built from: approved, unarchived claims and events.
     A claim awaiting audit is left out and counted.
 
     With --store the records are read from a SQLite file of the truth store's schema
-    instead of the database. The file is only read."""
+    instead of the database. The file is only read. With --d1 as well, that file is
+    first made from the D1 database named, which is only read."""
     if schema_path is not None:
         write_schema(schema_path)
         out.print(f"Wrote schema to {schema_path}.", markup=False)
+    if d1 is not None:
+        if store is None:
+            err.print("With --d1, name the store file to fetch into with --store.")
+            raise typer.Exit(code=1)
+        try:
+            fetched = fetch_store(
+                d1,
+                store,
+                schema=STORE_SQL / "schema.sql",
+                wrangler=wrangler_in(wrangler_dir, wrangler_config),
+                payloads=payloads,
+                bucket=r2_bucket,
+            )
+        except FetchFailed as fault:
+            err.print(str(fault), markup=False)
+            raise typer.Exit(code=1) from None
+        out.print(
+            f"Fetched {sum(fetched.rows.values())} rows of {d1} in {fetched.queries} queries"
+            f" ({fetched.objects_fetched} payload objects).",
+            markup=False,
+        )
     if store is not None:
         _export_from_store(store, payloads, out_path)
         return
@@ -161,31 +216,10 @@ def export_compare_command(
     report: Annotated[
         Path | None, typer.Option(help="Also write the comparison to this file, as JSON.")
     ] = None,
-    d1: Annotated[
-        str | None,
-        typer.Option(
-            "--d1",
-            envvar="STORE_D1",
-            help="Read the store's export from this D1 database itself: its rows are first"
-            " fetched into a store file with `wrangler d1 execute --remote`. Only reads.",
-        ),
-    ] = None,
-    r2_bucket: Annotated[
-        str | None,
-        typer.Option(
-            envvar="STORE_R2_BUCKET",
-            help="With --d1 and --payloads: fetch each payload object the folder lacks from"
-            " this bucket.",
-        ),
-    ] = None,
-    wrangler_dir: Annotated[
-        Path,
-        typer.Option(help="With --d1: the folder wrangler is installed and run in."),
-    ] = STORE_SQL / "ingest",
-    wrangler_config: Annotated[
-        Path | None,
-        typer.Option(help="With --d1: the Wrangler configuration that names the database."),
-    ] = None,
+    d1: D1Database = None,
+    r2_bucket: R2Bucket = None,
+    wrangler_dir: WranglerDir = STORE_SQL / "ingest",
+    wrangler_config: WranglerConfig = None,
     allow_named: Annotated[
         bool,
         typer.Option(
