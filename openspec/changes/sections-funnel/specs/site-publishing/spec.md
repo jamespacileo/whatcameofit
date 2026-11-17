@@ -76,8 +76,13 @@ A registry record that is not a trial on the page SHALL be a row of its title, w
 
 
 ### Requirement: A section's heading is set apart from its content
-Each section of a claim page SHALL start in the same way: more room over its heading than between any two things inside a section, a heading larger than any text under it, and a rule directly under the heading that is heavier than any rule inside the section. A section that is folded SHALL keep its heading and that rule.
+Each section of a claim page SHALL start in the same way: more room over its heading than between any two things inside a section, and a heading that differs from every text under it in face, size and colour. A heading SHALL NOT be set apart by a rule heavier than the hairlines between rows. A heading that follows a folded section SHALL stand closer to it than to an open one.
 
 #### Scenario: Skimming for a section
 - **WHEN** a reader scrolls a claim page looking for "Trials on record"
-- **THEN** each section's heading stands on a full-width rule with nothing as heavy under it until the next heading
+- **THEN** each section's heading is the only text in the heading face and the accent colour, with more room over it than anywhere inside a section
+- **AND** no line on the page between two headings is heavier than a hairline, except the timeline drawn under "Recorded"
+
+#### Scenario: Folded sections in a row
+- **WHEN** several sections one after another are folded
+- **THEN** their headings stand close together as a list, with no rule between them

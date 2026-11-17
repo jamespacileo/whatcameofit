@@ -76,8 +76,9 @@
   --radius-s: 0.65rem;
   --row-pad: 0.8rem;
   --row-rule: var(--rule-soft);
-  /* The rule a section's body starts under: half the ink, so it heads the rows without
-     being the loudest line on the page. */
+  /* The one line on a record page that is drawn at 2px: the timeline under "Recorded",
+     which is a drawing. Half the ink, so it is not the loudest thing on the page. No
+     heading stands on a rule (see "Section heads"). */
   --head-rule: color-mix(in oklab, var(--ink) 50%, var(--paper));
   /* Marks by kind (openspec sections-funnel, 2026-11-17: the operator asked for the
      shapes to be told apart by colour too). A hue for each state of a trial and one for
@@ -9534,29 +9535,43 @@ body.framed {
 }
 
 /* Section heads (openspec sections-funnel, after the critique of 2026-11-17: headings
-   were hard to tell from the content under them). A section starts in one way: more
-   room over its heading than anywhere inside a section, the heading a clear step over
-   the text, and the page's one 2px rule directly under it, across the sheet. Inside a
-   section a list starts on a hairline, or on the heading's rule where it comes first. */
+   were hard to tell from the content under them; the operator then asked for no strong
+   line, since it drew the eye more than the heading did). A heading is told from what
+   is under it by three things and no rule: its face and size (the news serif, a clear
+   step over the text), its colour (the page's blue, where everything recorded is ink
+   or grey), and room (far more over it than anywhere inside a section, little under
+   it, so it belongs to what follows). Inside a section lines are hairlines. */
 .sheet .fold-head {
-  margin-top: clamp(2.6rem, 7vw, 3.6rem);
-  padding-bottom: 0.55rem;
-  border-bottom: 2px solid var(--head-rule);
+  margin-top: clamp(3rem, 8vw, 4.25rem);
+}
+
+.sheet .fold-head .bar {
+  font-weight: 650;
+  color: var(--blue);
 }
 
 .sheet .fold-head + * {
-  margin-top: 0.85rem;
+  margin-top: 0.9rem;
 }
 
-/* Rows that come first stand on the heading's rule. */
-.sheet .fold-head + :is(.fact-sheet, .entry-rows, .said-view, .year-groups, .table-frame, .record-list) {
-  margin-top: 0;
+/* Rows that come first need no line of their own over them: the heading heads them. */
+.sheet .fold-head + :is(.fact-sheet, .entry-rows, .said-view, .year-groups, .record-list, .trial-matrix) {
+  margin-top: 0.3rem;
   border-top: 0;
 }
 
-.sheet .fold-head + .trial-matrix {
-  margin-top: 0;
-  border-top: 0;
+/* A heading after a folded section stands closer: folded sections one after another
+   read as a list of headings, not as headings over empty room. */
+@media screen {
+  .js .sheet section:has(> .fold-head:is([data-state="closed"], [data-fold="folded"]:not([data-state]))) + section > .fold-head {
+    margin-top: 1.6rem;
+  }
+}
+
+@media screen and (max-width: 40rem) {
+  .js .sheet section:has(> .fold-head[data-fold-phone="folded"]:not([data-state])) + section > .fold-head {
+    margin-top: 1.6rem;
+  }
 }
 
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
