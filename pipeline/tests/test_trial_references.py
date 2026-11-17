@@ -169,3 +169,15 @@ def test_a_set_the_command_does_not_know_is_refused_with_the_list(session: Sessi
     """Scenario: A set the command does not know"""
     with pytest.raises(UnknownSet, match=f"{ACTIVE}, {COMPLETED}"):
         count_references(session, "elsewhere")
+
+
+def test_the_rolling_set_is_counted_for_the_year_given(session: Session):
+    """Scenario: References of the trial target set"""
+    result = record([{"pmid": "111", "type": "RESULT"}])
+    trial(session, "P1", result, phases=["PHASE1"])
+    trial(session, "E1", result, overall_status="COMPLETED", completion_date="2026-03")
+    trial(session, "X1", result, overall_status="COMPLETED", completion_date="2025-03")
+
+    counted = count_references(session, "active-or-ended-this-year", 2026)
+
+    assert (counted.trials, counted.with_sponsor_paper, counted.sponsor_papers) == (2, 2, 1)
