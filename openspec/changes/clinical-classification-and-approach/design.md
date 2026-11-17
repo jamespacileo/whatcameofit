@@ -143,7 +143,34 @@ Rollback: the site pages are removed by reverting the site commit. Clinical cate
 
 ## Measured
 
-To be filled on the writer (Decision 9). Empty until then.
+### 2026-11-17, on a scratch copy of the MacBook's frozen database
+
+Not the writer's data. The MacBook's `thenwhat` was frozen on 2026-11-16 at migration 0024. It was copied into a scratch database (`thenwhat_clinical`, without the lead, share, cache and ledger tables), the copy was migrated to 0035, and everything below was read from the copy. The frozen database was not touched. The writer's numbers will differ a little and replace these when it is run there.
+
+**Approach rule** (`thenwhat claim approaches --dry-run --unset`, 802 unarchived claims):
+
+- 115 would be given an approach; 597 stay empty; 90 are set by a person or the seed and left alone.
+- Of those 90 the rule answers for 19 and agrees with 17. Both differences are the risk named under Risks: `cholesterol-crispr-ctx310` (stored gene therapy) and `low-back-pain-rexlemestrocel-l` (stored cell therapy) are each registered under `DRUG` in every trial. Two wrong of 19 is too few to put a rate on, and both wrong answers are `DRUG`.
+- 195 claims with approved trials get none: 150 because no approved trial lists the intervention by an equal name, 23 with one unmapped type (16 `BIOLOGICAL`, 4 `OTHER`, 2 `BEHAVIORAL`, 1 `COMBINATION_PRODUCT`), 22 because the types do not agree (9 of them `BIOLOGICAL` with `DRUG`).
+- So the equal-name requirement, not the table, is what holds coverage down. Mapping `BEHAVIORAL` would add 2 claims.
+
+**Clinical categories, from the records alone** (594 approved, unarchived claims; a script over the same `claim_clinical_records` the export uses):
+
+- 343 (58%) have a category from an approved trial: 683 distinct descriptors.
+- 141 (24%) have no trial term and a paper with major headings. How many of those are conditions is not measured: it needs the tree. 2,557 distinct heading labels would have to be looked up.
+- 110 (19%) have neither.
+
+**Derived topics against verticals, approximate.** NLM's MeSH service did not answer from this machine on the day (`thenwhat clinical tree`: "mesh did not answer after 4 attempts"), so the tree was not read and `thenwhat clinical compare` could not run. The figures below use the registry's own ancestor lists in place of the tree, for the 343 claims with a trial term. They are a stand-in for the comparison, not the comparison.
+
+- 328 agree (96%), 15 disagree (4%), none uncovered.
+- 232 of 343 (68%) fall under more than one group; 95 under three or more; one under nine.
+- The disagreements are of the three kinds Decision 6 names. Mapping: hypercholesterolaemia and hyperaldosteronism sit in MeSH under metabolic and endocrine disease, and are filed here under heart and circulation. Filing: `varespladib-snakebite-envenoming` is filed under infections. Defensible: a GLP-1 drug for sleep apnoea, whose trials are indexed under obesity.
+
+**What this says about the switch-over.** Deriving the group agrees with today's filing almost always, so the mapping is sound enough to suggest a group. Showing a claim under every derived topic is another matter: two thirds of claims would appear under several, and some of those are noise from the pooled conditions of all a claim's trials (`flibanserin-lack-of-sexual-desire-in-women` reaches cancer through a trial in people with breast cancer; `biological-ageing-glp-1-drugs` reaches infections). Before claims are shown under several friendly topics, the derivation needs a narrower input than "every condition of every approved trial": for example only terms that a majority of the claim's trials share. That is a question for the switch-over change, with these numbers as its starting point.
+
+### Still to measure
+
+On the writer, or here once NLM answers: `thenwhat clinical tree`, then `thenwhat clinical categories` and `thenwhat clinical compare --uncovered` for the real figures, how many paper-only claims gain a category, and the export and site build times before and after.
 
 ## Open Questions
 
