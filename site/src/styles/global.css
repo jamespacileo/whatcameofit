@@ -98,9 +98,19 @@
   --radius-s: 0.65rem;
   --row-pad: 0.8rem;
   --row-rule: var(--rule-soft);
-  /* The rule a section's body starts under: half the ink, so it heads the rows without
-     being the loudest line on the page. */
+  /* The one line on a record page that is drawn at 2px: the timeline under "Recorded",
+     which is a drawing. Half the ink, so it is not the loudest thing on the page. No
+     heading stands on a rule (see "Section heads"). */
   --head-rule: color-mix(in oklab, var(--ink) 50%, var(--paper));
+  /* Marks by kind (openspec sections-funnel, 2026-11-17: the operator asked for the
+     shapes to be told apart by colour too). A hue for each state of a trial and one for
+     posted results. A hue names a kind, never a verdict: none is red or green, each
+     mark keeps its shape, and each stands beside words. */
+  --mark-plan: #7f90a3;
+  --mark-going: #1f6fc0;
+  --mark-done: #0f1f38;
+  --mark-halt: #8a4fa8;
+  --mark-results: #0b7f7a;
   /* The round mark of anything that folds: a section's heading, a fact's row. */
   --fold-mark: 1.6rem;
   /* A record page's two column stops, measured from a section's left edge. A label, a
@@ -120,7 +130,7 @@
   --text-l: 1.08rem;
   --text-xl: 1.2rem;
   --text-wordmark: 1.25rem;
-  --text-heading: 1.35rem;
+  --text-heading: 1.5rem;
   --text-status: 1.5rem;
   --label-size: var(--text-s);
   --note-size: var(--text-s);
@@ -154,6 +164,11 @@
     --rule: #2b3546;
     --rule-soft: #1f2733;
     --table-head: #161d28;
+    --mark-plan: #8d9db1;
+    --mark-going: #6fb1f5;
+    --mark-done: #e4eaf3;
+    --mark-halt: #c79be0;
+    --mark-results: #5fd0c8;
     --raised: #202c40;
     --raised-rule: rgb(142 193 245 / 0.24);
     --band-card-rule: rgb(142 193 245 / 0.32);
@@ -190,6 +205,11 @@
     --rule: #2b3546;
     --rule-soft: #1f2733;
     --table-head: #161d28;
+    --mark-plan: #8d9db1;
+    --mark-going: #6fb1f5;
+    --mark-done: #e4eaf3;
+    --mark-halt: #c79be0;
+    --mark-results: #5fd0c8;
     --raised: #202c40;
     --raised-rule: rgb(142 193 245 / 0.24);
     --band-card-rule: rgb(142 193 245 / 0.32);
@@ -4323,14 +4343,6 @@ main ul:not([class]) li + li {
   font-weight: 400;
 }
 
-.record-row {
-  padding: var(--row-pad) 0;
-  border-bottom: 1px solid var(--row-rule);
-}
-
-.record-row:first-child {
-  border-top: 1px solid var(--rule);
-}
 
 /* Said once above the possible records: none counts, and the rule that would. */
 .record-not-counted {
@@ -4605,24 +4617,10 @@ main ul:not([class]) li + li {
 
 /* Reported statements: under each report, what it said, framed as the report's, with
    how sure the check is one press away. Openspec reported-statements. */
-.statement-report {
-  display: grid;
-  gap: 0.15rem;
-  color: var(--ink);
-}
-
 .statement-source {
   width: fit-content;
   font-weight: 600;
   text-wrap: pretty;
-}
-
-.statement-report .entry-note {
-  font-weight: 400;
-}
-
-.statement-list li + li {
-  margin-top: 1.1rem;
 }
 
 .statement {
@@ -5934,100 +5932,91 @@ main ul:not([class]) li + li {
   }
 }
 
-/* The record in brief: fixed questions about a claim's records, in two groups. The
-   answer is read without opening anything; opening shows the record it came from. A
-   group's name stands in a column of its own beside its rows, as in the topic
-   directory. No colour, mark or order says an answer is for or against a treatment. */
+/* The record in brief (openspec sections-funnel): one sentence that gives every answer,
+   then the answers as a fact sheet. No colour, mark or order says an answer is for or
+   against a treatment. */
 
 .digest .bridge {
   margin: 0 0 0.45rem;
   font-size: var(--text-body);
 }
 
-.brief-group {
-  display: grid;
-  grid-template-columns: var(--label-col) minmax(0, 1fr);
-  column-gap: 1.5rem;
-  border-top: 1px solid var(--ring);
-  padding-top: 0.2rem;
+@media (max-width: 40rem) {
+  /* With the sentence that says what the status means, ahead of the path. */
+  .digest .bridge {
+    order: 2;
+    margin: 0 0 0.2rem;
+  }
 }
 
-.brief .take-why + .brief-group {
-  margin-top: 1rem;
-  border-top: 2px solid var(--head-rule);
-}
-
-.brief-group + .brief-group {
-  margin-top: 0.6rem;
-}
-
-.brief-group:last-child {
-  border-bottom: 1px solid var(--rule);
-}
-
-.brief-group h3 {
-  margin: 0.72rem 0 0;
+/* The sentence: read first, in the page's larger size. A figure is bold and dotted
+   under: it leads to its row. */
+.brief-said {
+  /* About 75 characters a line at this size (46rem ran to 91). */
+  max-width: 37rem;
+  margin: 0.7rem 0 0;
+  /* A step under the section's heading: it sums the rows up, it does not head them. */
   font-size: var(--text-l);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.brief-term {
+  color: inherit;
   font-weight: 700;
-  line-height: 1.25;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.2em;
 }
 
-/* Twice the class, to outrank the page's own list indent. */
-.brief .brief-group ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.brief-term:hover {
+  color: var(--blue);
 }
 
-.brief-group li + li {
-  border-top: 1px solid var(--rule-soft);
+.brief .fact-sheet {
+  margin-top: 1rem;
 }
 
-.brief summary {
-  display: grid;
-  /* The question gives way before the answer does: the answer keeps a readable width. */
-  grid-template-columns: minmax(8rem, 17rem) minmax(12rem, 1fr) auto;
-  column-gap: 1rem;
-  align-items: baseline;
-  padding: 0.7rem 0;
-  cursor: pointer;
-  list-style: none;
+/* A question stands in the label's column, as a label of "At a glance" does, and its
+   answer starts where a value starts. */
+/* Only an answer's figures are bold: a reader skims down them. */
+.brief .fact-sheet .fact-value {
+  font-size: var(--text-body);
+  font-weight: 400;
 }
 
-.brief summary::-webkit-details-marker {
-  display: none;
-}
-
-/* One chevron, turned when the answer is open. */
-/* An answer's press is its whole line, tinted under the pointer and while it is open,
-   with the fold mark at its end: the same press as a fact row's. */
-.brief summary:hover,
-.brief details[open] > summary {
-  background: var(--panel);
-  box-shadow:
-    -0.85rem 0 0 var(--panel),
-    0.85rem 0 0 var(--panel);
-}
-
-.brief summary .chev {
-  align-self: start;
-  margin: -0.05rem 0;
-}
-
-.brief-q {
-  color: var(--muted);
-}
-
-.brief-a {
+.brief .fact-sheet .fact-value b {
   font-weight: 700;
-  overflow-wrap: anywhere;
 }
 
-/* What an answer opens to: on the page's own ground under the tinted line. */
+/* "So many of them": a thin grey bar at the end of the answer's line. */
+.share-bar {
+  display: block;
+  width: 6.5rem;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--bar, var(--muted)) calc(var(--share) * 100%), var(--rule) 0);
+}
+
+#brief-results .share-bar {
+  --bar: var(--mark-results);
+}
+
+#brief-under_way .share-bar {
+  --bar: var(--mark-going);
+}
+
+.fact-aside:has(.share-bar) {
+  align-self: center;
+}
+
+/* Under the answer; its own lines are one column. */
 .brief-open {
+  --part: 1;
+  grid-column: 2;
   display: grid;
   gap: 0.4rem;
-  padding: 0.85rem 0 1rem;
+  font-size: var(--text-m);
 }
 
 .brief-open p {
@@ -6046,76 +6035,23 @@ main ul:not([class]) li + li {
   font-weight: 600;
 }
 
-.brief-shown {
-  margin: -0.3rem 0 0.7rem 18rem;
+.brief-note {
+  margin-top: 0.8rem;
 }
 
 @media (max-width: 40rem) {
-  /* With the sentence that says what the status means, ahead of the path. */
-  .digest .bridge {
-    order: 2;
-    margin: 0 0 0.2rem;
+  .brief-said {
+    font-size: var(--text-body);
   }
 
-  .brief-group {
-    display: block;
-    padding-top: 0.7rem;
-  }
-
-  .brief-group h3 {
-    margin: 0 0 0.2rem;
-  }
-
-  /* The question above its answer; a row is 44 pixels tall at least. */
-  .brief summary {
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 0.75rem;
-    align-items: center;
-    min-height: 2.75rem;
-    padding: 0.5rem 0;
-  }
-
-  .brief-q {
+  .brief-open {
     grid-column: 1;
-    font-size: var(--text-s);
-  }
-
-  .brief-a {
-    grid-column: 1;
-  }
-
-  .brief summary .chev {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: center;
-  }
-
-  .brief-shown {
-    margin: -0.2rem 0 0.3rem;
   }
 
   .brief-link a {
     display: inline-flex;
     align-items: center;
     min-height: 2.75rem;
-  }
-}
-
-/* On paper every answer is printed open, with no chevron. */
-@media print {
-  .brief details::details-content {
-    display: block;
-    block-size: auto;
-    content-visibility: visible;
-  }
-
-  .brief summary .chev {
-    display: none;
-  }
-
-  .brief details[open] > summary {
-    background: none;
-    box-shadow: none;
   }
 }
 
@@ -6325,8 +6261,10 @@ main ul:not([class]) li + li {
   --column-gap: 2rem;
   /* Secondary text on the navy. */
   --navy-soft: #c9d9ee;
-  /* The sheet's inner margin: the band's title and status card keep to it too. */
-  --sheet-pad: clamp(1.1rem, 3vw, 2.4rem);
+  /* The sheet's inner margin: the band's title and status card keep to it too. Beside
+     the side columns it is wide enough to hold a section's fold mark (see "The fold
+     mark in the margin"). */
+  --sheet-pad: clamp(1.1rem, 3.6vw, 2.6rem);
 }
 
 body.framed {
@@ -6478,6 +6416,12 @@ body.framed {
   font-weight: 600;
 }
 
+/* The trials' states, counted, under a status that names a phase: the status's sentence
+   is the answer and stays the heavier; the count supports it. */
+.band.record .digest .bridge.counts {
+  font-weight: 400;
+}
+
 .frame {
   display: grid;
   grid-template-columns: var(--list) minmax(0, 1fr) auto;
@@ -6582,7 +6526,8 @@ body.framed {
 /* A heading that folds its section: the heading holds the button, and the button's
    reach is the whole line. What follows the heading in its section is the body.
    The title starts at the section's left edge, where its rows start; the fold's mark
-   stands at the right edge, over the marks of the rows that open. */
+   stands at the right edge, over the marks of the rows that open (on a record page's
+   sheet it hangs in the left margin where there is one: "The fold mark in the margin"). */
 .fold-head {
   position: relative;
   display: flex;
@@ -6933,8 +6878,6 @@ body.framed {
   .fold .chev svg,
   .fact-open .chev,
   .fact-open .chev svg,
-  .brief summary .chev,
-  .brief summary .chev svg,
   .onpage a,
   .onpage::before,
   .onpage::after {
@@ -6996,7 +6939,7 @@ body.framed {
 
 /* The trials table: one row to read across for each trial; a row opens to the rest. */
 .trial-table {
-  --trial-cols: minmax(0, 0.95fr) minmax(0, 1fr) minmax(0, 1.9fr) minmax(0, 0.95fr) minmax(0, 0.95fr);
+  --trial-cols: minmax(0, 1.5fr) minmax(0, 0.7fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   overflow: hidden;
@@ -7953,14 +7896,14 @@ body.framed {
 .sheet .table-frame,
 .sheet .trial-table {
   border: 0;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
   border-radius: 0;
 }
 
 .sheet .statement-list,
 .sheet .record-list {
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 .sheet .statement-list > li:first-child,
@@ -8013,7 +7956,7 @@ body.framed {
    group, and stay in sight; each phase is a tinted row with its name and its count, as
    the reference draws a group; a row is two lines. */
 .sheet .trials {
-  --trial-cols-wide: 8rem minmax(0, 1.1fr) minmax(0, 1.25fr) minmax(0, 1.45fr) minmax(0, 0.9fr);
+  --trial-cols-wide: minmax(13rem, 1.5fr) 6rem minmax(0, 1.3fr) 8.5rem 8.5rem;
 }
 
 .sheet .trials .trial-table,
@@ -8025,7 +7968,7 @@ body.framed {
   position: sticky;
   top: var(--sticky-top, 0);
   z-index: 3;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 /* A group's own column names: read out, not drawn. */
@@ -8215,7 +8158,7 @@ body.framed {
 .fact-sheet {
   display: block;
   margin: 0.7rem 0 0;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 .fact-sheet > div {
@@ -8345,8 +8288,7 @@ body.framed {
   white-space: nowrap;
 }
 
-.fact-open .chev,
-.brief summary .chev {
+.fact-open .chev {
   display: grid;
   place-items: center;
   width: var(--fold-mark);
@@ -8358,28 +8300,23 @@ body.framed {
     color 120ms;
 }
 
-.fact-open .chev svg,
-.brief summary .chev svg {
+.fact-open .chev svg {
   transition: rotate 200ms var(--ease-out);
 }
 
-.fact-open[aria-expanded="true"] .chev svg,
-.brief details[open] > summary .chev svg {
+.fact-open[aria-expanded="true"] .chev svg {
   rotate: 180deg;
 }
 
 .js .fact-open:hover .chev,
 .js .fact-sheet > div[data-open] .fact-open .chev,
-.js .entry-rows > li[data-open] > .fact-open .chev,
-.brief summary:hover .chev,
-.brief details[open] > summary .chev {
+.js .entry-rows > li[data-open] > .fact-open .chev {
   background: var(--tint);
   color: var(--blue);
 }
 
 .js .fact-sheet > div[data-open] .fact-open:hover .chev,
-.js .entry-rows > li[data-open] > .fact-open:hover .chev,
-.brief details[open] > summary:hover .chev {
+.js .entry-rows > li[data-open] > .fact-open:hover .chev {
   background: var(--tag);
 }
 
@@ -8415,7 +8352,8 @@ body.framed {
   column-gap: 1.5rem;
   row-gap: 0.5rem;
   align-items: baseline;
-  margin: var(--row-pad) 0 calc(-1 * var(--row-pad)) calc(-1 * (var(--label-col) + 1.5rem));
+  /* A row of the fact's grid under its label and value, across both columns. */
+  margin: var(--row-pad) 0 calc(-1 * var(--row-pad));
   padding: 0.95rem 0 1.1rem;
   background: var(--paper);
   box-shadow:
@@ -8506,7 +8444,7 @@ body.framed {
 .fact-more .term-card > .entry-note,
 .fact-more .term-credit,
 .fact-more .term-note,
-.fact-more .term-card .match-why {
+.fact-more .match-why {
   grid-column: var(--part);
   margin: 0;
 }
@@ -8525,36 +8463,66 @@ body.framed {
   font-size: var(--text-m);
 }
 
-/* Why a term matched, and its score: how the site works, not what the term is. Closed
-   until asked for, last under the card it is about, in the value's column. The press is
-   grey and the label's size; opened, the reasons read in ink a step smaller than the
-   source's words. */
-.fact-more .term-card .match-why {
-  max-width: var(--measure);
+/* The second press of a row that opens, outside a term card too: closed until asked
+   for, grey and small, with what it holds under it. */
+.fact-more .match-why,
+.entry-more .match-why {
+  justify-self: start;
+  text-align: left;
 }
 
-.fact-more .term-card .match-why-head {
+.fact-more .match-why p,
+.entry-more .match-why p {
+  margin: 0;
+  max-width: 62ch;
+}
+
+.entry-more .match-why-head {
   min-height: 1.75rem;
   color: var(--muted);
   font-size: var(--label-size);
   font-weight: 500;
 }
 
-.fact-more .term-card .match-why-head:hover,
-.fact-more .term-card .match-why[open] .match-why-head {
+.entry-more .match-why-head:hover,
+.entry-more .match-why[open] .match-why-head {
   color: var(--ink);
 }
 
-.fact-more .term-card .match-why-head + * {
+.entry-more .match-why p + p {
+  margin-top: 0.35rem;
+}
+
+/* Why a term matched, and its score: how the site works, not what the term is. Closed
+   until asked for, last under the card it is about, in the value's column. The press is
+   grey and the label's size; opened, the reasons read in ink a step smaller than the
+   source's words. */
+.fact-more .match-why {
+  max-width: var(--measure);
+}
+
+.fact-more .match-why-head {
+  min-height: 1.75rem;
+  color: var(--muted);
+  font-size: var(--label-size);
+  font-weight: 500;
+}
+
+.fact-more .match-why-head:hover,
+.fact-more .match-why[open] .match-why-head {
+  color: var(--ink);
+}
+
+.fact-more .match-why-head + * {
   margin-top: 0.2rem;
 }
 
-.fact-more .term-card .match-why p:not(.match-score) {
+.fact-more .match-why p:not(.match-score) {
   font-size: var(--text-m);
   color: var(--ink);
 }
 
-.fact-more .term-card .match-why p + p {
+.fact-more .match-why p + p {
   margin-top: 0.35rem;
 }
 
@@ -8613,10 +8581,8 @@ body.framed {
      full width, under the label too. */
   .fact-sheet .fact-more {
     --part: 1;
-    order: 3;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 0.25rem;
-    margin-left: calc(-7.25rem - 0.9rem);
   }
 
   .fact-more .card-label,
@@ -8625,7 +8591,7 @@ body.framed {
   }
 
   /* A finger's size on a phone, as every other press here. */
-  .fact-more .term-card .match-why-head {
+  .fact-more .match-why-head {
     min-height: 2.75rem;
   }
 }
@@ -8669,7 +8635,7 @@ body.framed {
    page's own ground. */
 .entry-rows {
   margin: 0.7rem 0 0;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 .entry-rows > li {
@@ -8740,7 +8706,7 @@ body.framed {
   color: var(--muted);
 }
 
-/* The tie mark: a ring, filled where the trial's sponsor made the tie. Grey: it says how
+/* The tie mark: a ring, filled in the hue of results where the trial's sponsor made the tie. It says how
    a paper came to be listed, never how good it is. */
 .tie-mark {
   flex: none;
@@ -8751,7 +8717,8 @@ body.framed {
 }
 
 .tie-mark.listed {
-  background: var(--muted);
+  border-color: var(--mark-results);
+  background: var(--mark-results);
 }
 
 .tie-key {
@@ -8847,52 +8814,12 @@ body.framed {
     max-width: 24rem;
     text-align: right;
   }
-
-  /* A registry record: its title and what its record says at the left edge, where to
-     read it from the second stop, its match at the end of the line. */
-  .sheet .record-row {
-    display: grid;
-    /* The links keep their line; the title gives way before they do. */
-    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(min-content, 1fr) auto;
-    column-gap: 2.5rem;
-    align-items: baseline;
-  }
-
-  .sheet .record-row .record-head {
-    display: contents;
-  }
-
-  .sheet .record-row .record-title,
-  .sheet .record-row .record-meta,
-  .sheet .record-row .record-unread {
-    grid-column: 1;
-  }
-
-  .sheet .record-row .record-head > .pop-trigger {
-    grid-column: 3;
-    grid-row: 1;
-  }
-
-  .sheet .record-row .record-links {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    display: grid;
-    justify-items: start;
-    gap: 0.1rem;
-  }
-
-  .sheet .record-row .record-source {
-    white-space: nowrap;
-  }
-
-  .sheet .record-row .record-fields {
-    grid-column: 1 / -1;
-  }
 }
 
 /* The state mark: a shape for where a trial is, beside the words that say it. A ring
    has not started, half is under way, full is finished; a square is one that was
-   halted, filled where it was stopped early. Grey at every state. */
+   halted, filled where it was stopped early. Each state has its hue (--mark-*), none red
+   or green: a hue names a state, never a verdict. */
 .trial-state {
   display: inline-flex;
   align-items: baseline;
@@ -8900,21 +8827,33 @@ body.framed {
 }
 
 .state-mark {
+  --mark: var(--mark-plan);
   flex: none;
   width: 0.6rem;
   height: 0.6rem;
-  border: 1.5px solid var(--muted);
+  border: 1.5px solid var(--mark);
   border-radius: 50%;
   translate: 0 0.02rem;
 }
 
 .state-mark[data-state="under_way"] {
-  background: linear-gradient(to right, var(--muted) 50%, transparent 50%);
+  --mark: var(--mark-going);
+  background: linear-gradient(to right, var(--mark) 50%, transparent 50%);
 }
 
-.state-mark[data-state="completed"],
+.state-mark[data-state="completed"] {
+  --mark: var(--mark-done);
+  background: var(--mark);
+}
+
 .state-mark[data-state="terminated"] {
-  background: var(--muted);
+  --mark: var(--mark-halt);
+  background: var(--mark);
+}
+
+.state-mark[data-state="suspended"],
+.state-mark[data-state="withdrawn"] {
+  --mark: var(--mark-halt);
 }
 
 .state-mark[data-state="suspended"],
@@ -8925,6 +8864,803 @@ body.framed {
 
 .state-mark[data-state="unknown"] {
   border-style: dotted;
+}
+
+/* What the report said (openspec sections-funnel; re-laid out after the critique of
+   2026-11-17). Every statement stands in a group named in the label's column: who the
+   report had saying it, what kind of statement it is, or its report. A row is the
+   firmness mark and the statement, from where a value starts; then, each in a column of
+   its own so they line up down the list, a tag in words (the kind, or who said it) and
+   a drawing alone (the report's outlet, or who said it). */
+.said-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 1.5rem;
+  margin: 0.6rem 0 0;
+}
+
+.said-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1.3rem;
+  margin: 0;
+  font-size: var(--text-s);
+  color: var(--muted);
+}
+
+.said-key > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+/* The order's choice: smaller than the timetable's filter, since it changes nothing
+   that is said. */
+.said-order {
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.said-order .kind-tab {
+  min-height: 1.85rem;
+  padding: 0.1rem 0.75rem;
+  font-size: var(--text-s);
+}
+
+/* The firmness mark: full where the report put it as a fact; a broken ring where it
+   put it as something that could be so. Ink and grey: no hue. */
+.firm-mark {
+  flex: none;
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid var(--mark-done);
+  border-radius: 50%;
+  background: var(--mark-done);
+}
+
+.firm-mark.maybe {
+  border-style: dashed;
+  border-color: var(--muted);
+  background: none;
+}
+
+/* One list for each order, under the section's rule and closed by a hairline. */
+.said-view {
+  margin-top: 0.6rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.said-group {
+  display: grid;
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
+  column-gap: 1.5rem;
+  border-top: 1px solid var(--ring);
+}
+
+.said-view > .said-group:first-child {
+  border-top: 0;
+}
+
+/* A group's name sits on the first statement's first line. */
+.said-by {
+  display: grid;
+  align-content: start;
+  gap: 0.1rem;
+  margin: 0;
+  padding: calc(var(--row-pad) + 0.14rem) 0 var(--row-pad);
+  font-family: var(--face);
+  font-size: var(--text-m);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.said-by small {
+  font-size: var(--text-s);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.said-by .outlet .domain {
+  display: none;
+}
+
+/* Under an outlet's name its day starts where the name starts, past the icon. */
+.said-by:has(.outlet) small {
+  padding-left: 1.45rem;
+}
+
+.said-name,
+.said-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.said-name svg,
+.said-tag svg,
+.said-source svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.said-tag {
+  font-size: var(--text-s);
+  color: var(--muted);
+}
+
+/* The third thing a row says, as a drawing alone: an outlet's icon, or who said it. Its
+   name is read out and shown under the pointer. */
+.said-source {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+}
+
+.said-source .outlet-name > :not(.outlet-icon),
+.said-source .domain {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sheet .said-group .statement-rows {
+  margin: 0;
+  border-top: 0;
+}
+
+.said-group .statement-rows > li:last-child {
+  border-bottom: 0;
+}
+
+.statement-rows .statement {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.6rem;
+  align-items: baseline;
+  max-width: none;
+}
+
+.statement-rows .statement-text {
+  max-width: 60ch;
+}
+
+.statement-rows .statement-text b {
+  font-weight: 700;
+}
+
+.statement-rows .entry-ties {
+  gap: 0.2rem 0.9rem;
+}
+
+.said-more {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.3rem;
+}
+
+/* Where a row opens, its report first: the title as the link, then the outlet and day. */
+.said-from {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.8rem;
+}
+
+.said-from .entry-note {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+}
+
+@media (min-width: 52rem) {
+  .sheet .statement-rows > li,
+  .sheet .statement-rows .entry-more {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: 1.25rem;
+  }
+
+  /* Two columns after the statement: the tag's words start on one edge down the list,
+     and the drawings stand in a column of their own. */
+  .statement-rows .entry-ties {
+    display: grid;
+    grid-template-columns: 9.5rem 1.3rem;
+    column-gap: 0.7rem;
+    align-items: baseline;
+    justify-content: end;
+  }
+
+  .statement-rows .entry-ties > .pop-trigger {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  .said-more {
+    padding-left: 1.2rem;
+  }
+}
+
+@media (max-width: 40rem) {
+  .said-group {
+    display: block;
+  }
+
+  .said-by {
+    padding-bottom: 0;
+  }
+
+  /* On a phone the tags stand under the statement, where there is room for the
+     outlet's name beside its icon. */
+  .said-source .outlet-name > :not(.outlet-icon) {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+    font-size: var(--text-s);
+    color: var(--muted);
+  }
+}
+
+/* Names as chips (openspec sections-funnel): the organisations of one part, beside the
+   part's label. A chip is a name and, for a sponsor, how many of the claim's trials name
+   it; it opens a small panel. In order of name. */
+.organisations .fact-value {
+  font-size: var(--text-m);
+  font-weight: 400;
+}
+
+.name-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.4rem;
+}
+
+/* A name is words with a dotted line under them, as a term that opens is everywhere:
+   easier to read in a row than a pill. */
+.pop-trigger.name-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-m);
+  text-align: left;
+  cursor: pointer;
+}
+
+.name-chip .organisation-name {
+  text-decoration: underline dotted var(--ring);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.22em;
+}
+
+.pop-trigger.name-chip:hover .organisation-name,
+.pop-trigger.name-chip:has(+ .pop:popover-open) .organisation-name {
+  color: var(--blue);
+  text-decoration-color: currentColor;
+}
+
+.chip-n {
+  color: var(--muted);
+  font-size: var(--text-s);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pop .pop-title {
+  font-weight: 700;
+}
+
+.pop .organisation-roles {
+  margin: 0.3rem 0;
+}
+
+.pop .organisation-roles li {
+  display: block;
+  padding: 0;
+  border: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 40rem) {
+  .pop-trigger.name-chip {
+    min-height: 2.75rem;
+  }
+}
+
+/* Keep or pass on (openspec sections-funnel): a fact sheet of things to do. A value is
+   a row of buttons, not a figure. */
+.keep .fact-value {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.55rem;
+  font-size: var(--text-m);
+  font-weight: 400;
+}
+
+.keep .take-actions {
+  display: contents;
+}
+
+.keep .follow-offer {
+  margin: 0;
+}
+
+.keep .fact-sheet .sentence {
+  max-width: var(--measure);
+  margin-top: 0.4rem;
+}
+
+.keep .post-to {
+  grid-column: 1 / -1;
+  margin-top: 0.3rem;
+}
+
+.keep .embed-how {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.keep .embed-how > summary,
+.keep .post-to > summary {
+  margin-top: 0;
+}
+
+.keep-feed-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+}
+
+/* Other claims of the topic: a name, a place on the path, a date. */
+.other-claims .entry-ties {
+  gap: 0.1rem 0.9rem;
+}
+
+.other-claims .other-first {
+  white-space: nowrap;
+}
+
+/* A labelled group of rows (openspec sections-funnel): the group's name in the label's
+   column, its rows beside it. Papers stand under their year. */
+.year-groups {
+  margin: 0.5rem 0 0;
+  border-top: 1px solid var(--rule);
+}
+
+.label-group {
+  display: grid;
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
+  column-gap: 1.5rem;
+  border-top: 1px solid var(--ring);
+}
+
+.year-groups > .label-group:first-child {
+  border-top: 0;
+}
+
+.label-group-name {
+  margin: 0;
+  padding-top: var(--row-pad);
+  font-family: var(--face);
+  font-size: var(--text-l);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.sheet .label-group > .entry-rows {
+  margin: 0;
+  border-top: 0;
+}
+
+.label-group > .entry-rows > li:last-child {
+  border-bottom: 0;
+}
+
+.paper-kind {
+  color: var(--muted);
+}
+
+.paper-rows .entry-ties {
+  justify-content: flex-end;
+  gap: 0.2rem 0.9rem;
+  color: var(--muted);
+}
+
+@media (min-width: 52rem) {
+  /* The same width on every row, so the titles end on one edge. */
+  .paper-rows .entry-ties {
+    min-width: 14.5rem;
+  }
+}
+
+.paper-rows .paper-kind {
+  margin-right: 0.4rem;
+}
+
+@media (min-width: 52rem) {
+  /* A paper is its title, then its kind and its ties. */
+  .sheet .paper-rows > li,
+  .sheet .paper-rows .entry-more {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: 1.25rem;
+  }
+}
+
+/* A long title is cut to two lines while its row is closed, so the list stays a list;
+   the opened row shows it whole (2026-11-17: cut to one line, a title of 196 characters
+   could be read nowhere). With no script, and on paper, a title is always whole. */
+@media screen {
+  .js .paper-rows > li:not([data-open]) .paper-name {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+@media (min-width: 52rem) {
+
+  .sheet .paper-rows .entry-more-lead,
+  .sheet .paper-rows .entry-more-ties {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 40rem) {
+  .label-group {
+    display: block;
+  }
+}
+
+/* A possible record's mark, before its title. */
+.record-title .state-mark {
+  display: inline-block;
+  margin-right: 0.55rem;
+}
+
+/* Milestones (openspec sections-funnel): the record's moments on one line under the
+   section's rule, each a shape on the line, its name and its date. The shapes are the
+   trials' own: a ring registered, half started, full with a ring results posted. A
+   report is a small blue diamond, the colour of a link; a promise is amber, as a
+   promise is everywhere. */
+.milestones {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin: 1.6rem 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.milestones li {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.05rem;
+  padding: 0.95rem 1rem 0 0;
+  border-top: 2px solid var(--head-rule);
+  font-size: var(--text-m);
+}
+
+.sheet .milestones li + li {
+  margin-top: 0;
+}
+
+.milestones li > :first-child {
+  position: absolute;
+  top: -0.43rem;
+  left: 0;
+  box-shadow: 0 0 0 4px var(--paper);
+}
+
+.milestones li > .state-mark {
+  translate: none;
+}
+
+.milestones li > .state-mark:not([data-state="completed"]):not([data-state="terminated"]),
+.milestones li > .ev-report {
+  background-color: var(--paper);
+}
+
+.milestones li > .state-mark[data-state="under_way"] {
+  background: linear-gradient(to right, var(--mark) 50%, var(--paper) 50%);
+}
+
+.milestones a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.milestones a:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.milestones li > span:last-child {
+  color: var(--muted);
+  font-size: var(--text-s);
+}
+
+.milestones li.promised {
+  border-top-style: dashed;
+  border-top-color: var(--promise-rule);
+}
+
+/* "Results posted": a full mark with a ring round it. */
+.state-mark.posted {
+  outline: 1.5px solid var(--mark-results);
+  outline-offset: 2px;
+}
+
+.ev-report,
+.ev-promise {
+  flex: none;
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1.5px solid var(--blue);
+  rotate: 45deg;
+}
+
+.ev-promise {
+  border-color: var(--promise-mark);
+  background: var(--promise-mark);
+}
+
+.record-all > summary {
+  margin-top: 0.4rem;
+}
+
+.sheet .record-all,
+.sheet .milestones {
+  max-width: none;
+}
+
+@media (max-width: 40rem) {
+  .milestones {
+    grid-auto-flow: row;
+    margin-top: 1rem;
+  }
+
+  .milestones li {
+    padding: 0 0 0.85rem 1.2rem;
+    border-top: 0;
+    border-left: 2px solid var(--head-rule);
+  }
+
+  .milestones li > :first-child {
+    top: 0.35rem;
+    left: -0.43rem;
+  }
+
+  .milestones li.promised {
+    border-left-style: dashed;
+    border-left-color: var(--promise-rule);
+  }
+}
+
+/* The trials' spread (openspec sections-funnel): over the table, a mark a trial under
+   its phase, in the shape of its state and ringed where results are posted. Grey at
+   every state: it shows how the trials are spread, never how one turned out. */
+.trial-matrix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2.2rem;
+  margin: 0.7rem 0 0;
+  padding: 1rem 0 0.3rem;
+  border-top: 1px solid var(--rule);
+  font-size: var(--text-m);
+}
+
+.trial-matrix p {
+  margin: 0;
+}
+
+.trial-dots {
+  display: grid;
+  grid-template-columns: repeat(6, 0.6rem);
+  gap: 0.55rem;
+  margin-top: 0.6rem;
+}
+
+.trial-dots a {
+  display: block;
+  line-height: 0;
+}
+
+.trial-dots .state-mark {
+  display: block;
+  translate: none;
+}
+
+.trial-dots a:hover .state-mark {
+  border-color: var(--blue);
+  outline-color: var(--blue);
+}
+
+.trial-key {
+  margin: 0.5rem 0 0.8rem;
+}
+
+.trial-key .state-mark {
+  translate: none;
+}
+
+/* A trial's size against the claim's largest: under its head count, and beside it once
+   the row is wide enough, so a row is one line. */
+.trial-lead .share-bar {
+  width: auto;
+  max-width: 6.5rem;
+  margin: 0.4rem 0 0 1.9rem;
+}
+
+.trial-none {
+  color: var(--muted);
+}
+
+@media (min-width: 52rem) {
+  .sheet .trials .trial-lead {
+    display: grid;
+    grid-template-columns: 8.9rem minmax(2rem, 1fr);
+    column-gap: 0.6rem;
+    align-items: start;
+  }
+
+  .sheet .trials .trial-lead .share-bar {
+    max-width: none;
+    margin: 0.55rem 0 0;
+  }
+
+  .sheet .trials .trial-lead .trial-by {
+    grid-column: 1 / -1;
+    margin-left: 1.9rem;
+  }
+}
+
+/* A folded year (openspec sections-funnel): a shape for each of its records, oldest
+   first, then how many. The shapes are the trials' own. */
+.year-marks {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.55rem;
+  align-self: center;
+  min-width: 0;
+}
+
+.year-marks .state-mark,
+.year-key .state-mark {
+  translate: none;
+}
+
+.year-rest > summary .year-total {
+  margin-left: auto;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: var(--note-size);
+}
+
+.year-key {
+  margin: 0 0 0.6rem;
+}
+
+/* A registry record (openspec sections-funnel): an entry row. Its title and what its
+   record says stand on one line where there is room; its match ends the line. */
+.record-row .entry-lead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.1rem 0.9rem;
+}
+
+.record-row .record-title {
+  margin: 0;
+}
+
+.sheet .record-group .record-list {
+  margin-top: 0;
+}
+
+@media (min-width: 52rem) {
+  .sheet .record-list > li,
+  .sheet .record-list .entry-more {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: 1.25rem;
+  }
+
+  .sheet .record-list .entry-more-lead,
+  .sheet .record-list .entry-more-ties {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Section heads (openspec sections-funnel, after the critique of 2026-11-17: headings
+   were hard to tell from the content under them; the operator then asked for no strong
+   line, since it drew the eye more than the heading did). A heading is told from what
+   is under it by three things and no rule: its face and size (the news serif, a clear
+   step over the text), its colour (the page's blue, where everything recorded is ink
+   or grey), and room (far more over it than anywhere inside a section, little under
+   it, so it belongs to what follows). Inside a section lines are hairlines. */
+.sheet .fold-head {
+  margin-top: clamp(3rem, 8vw, 4.25rem);
+}
+
+.sheet .fold-head .bar {
+  font-weight: 650;
+  color: var(--blue);
+}
+
+.sheet .fold-head + * {
+  margin-top: 0.9rem;
+}
+
+/* Rows that come first need no line of their own over them: the heading heads them. */
+.sheet .fold-head + :is(.fact-sheet, .entry-rows, .said-view, .year-groups, .record-list, .trial-matrix) {
+  margin-top: 0.3rem;
+  border-top: 0;
+}
+
+/* A heading after a folded section stands closer: folded sections one after another
+   read as a list of headings, not as headings over empty room. */
+@media screen {
+  .js .sheet section:has(> .fold-head:is([data-state="closed"], [data-fold="folded"]:not([data-state]))) + section > .fold-head {
+    margin-top: 1.6rem;
+  }
+}
+
+@media screen and (max-width: 40rem) {
+  .js .sheet section:has(> .fold-head[data-fold-phone="folded"]:not([data-state])) + section > .fold-head {
+    margin-top: 1.6rem;
+  }
+}
+
+/* The fold mark in the margin (asked for by the operator on 2026-11-17, after the way
+   examine.com sets its section headings). Where the sheet has a margin wide enough, a
+   section's fold mark hangs in it, to the left of the heading: the title still starts
+   on the edge its rows start on, the section's mark is told from the marks of the rows
+   that open (which stay at the right), and the heading's note reaches the right edge.
+   Below that width the margin is too narrow to hold it and the mark stays at the right. */
+@media screen and (min-width: 68.01rem) {
+  .js .sheet .fold-head {
+    --fold-gap: 0.45rem;
+    --fold-hang: calc(var(--fold-mark) + var(--fold-gap));
+    padding-right: 0;
+  }
+
+  .js .sheet .fold {
+    gap: var(--fold-gap);
+  }
+
+  /* The mark stands in the button's own line, before the title and pulled out by its
+     width and the gap, so it is centred on the title's first line whatever else the
+     heading's row holds. */
+  .js .sheet .fold .chev {
+    position: static;
+    flex: none;
+    align-self: flex-start;
+    margin: calc((1lh - var(--fold-mark)) / 2) 0 0 calc(-1 * var(--fold-hang));
+  }
+
+  /* The press reaches the mark too. */
+  .js .sheet .fold::after {
+    left: calc(-1 * var(--fold-hang));
+  }
 }
 
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet

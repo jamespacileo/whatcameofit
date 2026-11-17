@@ -57,7 +57,7 @@ On a record page a paper, an organisation and a registry record SHALL each be dr
 - **THEN** its row shows its name and "Sponsor of 2 trials" beside the drawing of a registry record, and opening it names the two trials
 
 ### Requirement: Marks say a kind or a state, with words, and never a verdict
-A mark that stands for how a paper came to be listed SHALL be explained in words once over its list and again, as a sentence, where its row opens. A mark for a trial's state SHALL stand beside the words that say the state. Every such mark SHALL be grey in every state, and SHALL NOT differ by colour between states: it says what kind of tie or which state, never whether a result is for or against a treatment.
+A mark that stands for how a paper came to be listed SHALL be explained in words once over its list and again, as a sentence, where its row opens. A mark for a trial's state SHALL stand beside the words that say the state. Every such mark SHALL keep its shape in every state; it MAY carry the hue of its kind, never red or green, and a state SHALL never be told by hue alone: it says what kind of tie or which state, never whether a result is for or against a treatment.
 
 #### Scenario: A column of trial states
 - **WHEN** a reader looks down the State column of the trials table

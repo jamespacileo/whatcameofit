@@ -42,15 +42,16 @@ interface Props {
   approach: string | null;
   /** When the trial finished and when it last posted results, from the claim's events. */
   dates: TrialDates;
-  /** Its phase group holds more than one phase wording, so the row names its own. */
-  showPhase?: boolean;
   /** Its main measure's abbreviations said plainly, those not already said above it. */
   glosses?: string[];
+  /** The largest size any of the claim's trials states: this trial's is drawn against it. */
+  largest?: number;
   /** The claim's treatment, by name, for a trial that has it only as a comparison. */
   treatment?: string;
 }
 
-const { trial, match, approach, dates, showPhase = false, glosses = [], treatment } = Astro.props;
+const { largest = 0 } = Astro.props;
+const { trial, match, approach, dates, glosses = [], treatment } = Astro.props;
 // What it was compared with, by the names its record gives its comparator arms; else in
 // the plain words for the kinds of comparator.
 const arms = trial.facts?.arms ?? [];
@@ -102,31 +103,33 @@ const mainMeasure = planned[0]?.measure ?? null;
         <span class="trial-title">{columns.isTitle ? NO_SIZE : columns.lead}</span>
         <span class="visually-hidden">: more from its record</span>
       </button>
+      {/* Its size against the claim's largest trial: a bar, since a column of numbers is slow to compare. */}
+      {!columns.isTitle && largest > 0 && facts?.participants?.count !== undefined && (
+        <span class="share-bar" aria-hidden="true" style={`--share: ${(facts.participants.count / largest).toFixed(3)}`} />
+      )}
+      {/* A trial that has the claim's treatment only as its comparison says so in sight. */}
+      {asComparison && (
+        <span class="trial-by">
+          It tests {asComparison}; {treatment ?? "this treatment"} is what it is compared with.
+        </span>
+      )}
     </div>
     <div class="trial-cell" role="cell">
-      <span class="lbl">Compared with</span>{compared ?? columns.compared}
-      {
-        asComparison && (
-          <span class="trial-by">
-            It tests {asComparison}; {treatment ?? "this treatment"} is what it is compared with.
-          </span>
-        )
-      }
-    </div>
-    <div class="trial-cell trial-measure" role="cell">
-      <span class="lbl">Main measure</span>
-      <span class="trial-measure-words">{mainMeasure ?? "Not stated in the record"}</span>
-      {glosses.length > 0 && <span class="trial-gloss">{glosses.join(" · ")}</span>}
+      <span class="lbl">Phase</span>
+      {columns.phase ?? <span class="trial-none">Not given</span>}
     </div>
     <div class="trial-cell" role="cell">
       <span class="lbl">State</span>
       {/* A shape for the state, beside its words: a column of them is read at a glance.
-          Grey, and never alone: it says where a trial is, not how it turned out. */}
+          In the hue of its state and never alone: it says where a trial is, not how it turned out. */}
       <span class="trial-state">
-        <span class="state-mark" data-state={trial.state} aria-hidden="true" />
+        <span class:list={["state-mark", { posted: Boolean(results) }]} data-state={trial.state} aria-hidden="true" />
         {columns.state ?? "Not stated in the record"}
       </span>
-      {results && <span class="trial-posted">{RESULTS_POSTED}{columns.results.replace(/^Posted/, "")}</span>}
+    </div>
+    <div class="trial-cell" role="cell">
+      <span class="lbl">{RESULTS_POSTED}</span>
+      {results ? (columns.results.replace(/^Posted\s*/, "") || "Yes") : <span class="trial-none">None</span>}
     </div>
     <div class="trial-cell trial-id" role="cell">
       <span class="lbl">Trial</span>
@@ -135,7 +138,6 @@ const mainMeasure = planned[0]?.measure ?? null;
         {!local && <ExternalLink class="out" size={13} stroke-width={1.9} aria-hidden="true" />}
         <span class="visually-hidden">{local ? "(its record, on this site)" : `(at ${registry})`}</span>
       </a>
-      {showPhase && columns.phase && <span class="trial-phase">{columns.phase}</span>}
     </div>
   </div>
   <div class="trial-detail" role="row" id={`trial-detail-${trial.trial_id}`}>
@@ -183,6 +185,26 @@ const mainMeasure = planned[0]?.measure ?? null;
     }
   </p>
     <dl class="trial-facts">
+      {/* What tells a trial's design apart, said where the row opens: a row keeps to
+          its size, phase, state and results. */}
+      <div>
+        <dt>Compared with</dt>
+        <dd>
+          {compared ?? columns.compared}
+          {asComparison && (
+            <span class="entry-note">
+              It tests {asComparison}; {treatment ?? "this treatment"} is what it is compared with.
+            </span>
+          )}
+        </dd>
+      </div>
+      <div>
+        <dt>Main measure</dt>
+        <dd>
+          {mainMeasure ?? "Not stated in the record"}
+          {glosses.length > 0 && <span class="entry-note">{glosses.join(" · ")}</span>}
+        </dd>
+      </div>
       {
         sponsor && (
           <div>

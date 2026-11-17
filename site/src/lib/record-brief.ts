@@ -41,6 +41,11 @@ export interface BriefRow {
   link: { href: string; text: string } | null;
   /** A link shown under the answer without opening it. */
   shown: { href: string; text: string } | null;
+  /** The answer as a clause of the section's opening sentence, its figure between
+   * double square brackets: "Tested in [[47 trials]], the largest with 2,733 people". */
+  said: string;
+  /** Where the answer is so many of the claim's trials: drawn as a bar beside it. */
+  share: { n: number; of: number } | null;
   source: BriefSource;
 }
 
@@ -58,6 +63,10 @@ export const GROUP_NAMES: Record<BriefGroup["code"], string> = {
 };
 
 export const NONE = "None on record";
+/** No approval listed. Said by what the site reads: it reads no regulator's records
+ * (docs/sources.md), so "none on record" alone read as "not approved" beside a report of
+ * an approval (critique of 2026-11-17). */
+export const NO_APPROVAL = "None listed. Regulators' records are not read";
 
 /** What a list says of a claim's trials, and what its column is called and counts. */
 export const TESTED_WORDS = {
@@ -93,7 +102,8 @@ export const DEFINITIONS = {
   approval: "An approval is not advice to take a treatment",
   approval_scope: "Its approval covers the uses it names, in the place it governs.",
   no_trial: "No trial in people for this treatment and condition is among the records this site holds.",
-  no_approval: "No approval of this treatment for this condition is among the records this site holds.",
+  no_approval:
+    "No approval of this treatment for this condition is among the records this site holds. The site does not read regulators' own records, such as the FDA's or the EMA's: an approval is listed only where one was entered by hand, so one can exist and not be listed here.",
   registry_words: "These are the registry's words. No plainer wording is given for this measure.",
 } as const;
 
@@ -169,11 +179,17 @@ function checked(lastChecked: string | null): BriefSource {
   };
 }
 
-const row = (fields: Omit<BriefRow, "link" | "shown"> & Partial<Pick<BriefRow, "link" | "shown">>): BriefRow => ({
+const row = (
+  fields: Omit<BriefRow, "link" | "shown" | "share"> & Partial<Pick<BriefRow, "link" | "shown" | "share">>,
+): BriefRow => ({
   link: null,
   shown: null,
+  share: null,
   ...fields,
 });
+
+/** A phrase that opens a sentence, set inside one: "Side effects" becomes "side effects". */
+const inside = (text: string) => (/^[A-Z][a-z]/.test(text) ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : text);
 
 /** The trial that states the most participants; the first of equals. Null when none states a number. */
 export function largestTrial(trials: ExportedTrial[]): ExportedTrial | null {
@@ -192,6 +208,7 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
       code: "tested",
       question: QUESTIONS.tested,
       answer: NONE,
+      said: "[[No trial]] in people is on record",
       opened: [DEFINITIONS.no_trial],
       source: checked(lastChecked),
     });
@@ -203,6 +220,7 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
       code: "tested",
       question: QUESTIONS.tested,
       answer: count,
+      said: `Tested in [[${digits(trials.length)} ${plural(trials.length, "trial", "trials")}]]`,
       opened: ["No trial's record states how many people it enrolled."],
       link: { href: "#trials", text: plural(trials.length, "See the trial", `See the ${digits(trials.length)} trials`) },
       source: directFrom(trials),
@@ -236,6 +254,10 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
       trials.length === 1
         ? `In 1 trial of ${digits(size.count)} people`
         : `${count}. ${digits(size.count)} people in the largest`,
+    said:
+      trials.length === 1
+        ? `Tested in [[1 trial]] of ${digits(size.count)} people`
+        : `Tested in [[${digits(trials.length)} trials]], the largest ${size.basis === "planned" ? "planned for" : "with"} ${digits(size.count)} people`,
     opened,
     link: { href: "#trials", text: plural(trials.length, "See the trial", `See the ${digits(trials.length)} trials`) },
     source: directFrom(trials),
@@ -290,6 +312,8 @@ function comparisonRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow 
       code: "comparison",
       question,
       answer: "No record names one",
+      said: `[[No record]] names ${dummy.noun}`,
+      share: { n: 0, of: trials.length },
       opened: [
         `No trial's record names ${dummy.noun} as a comparison.`,
         claim.approach === "device" ? DEFINITIONS.sham : DEFINITIONS.placebo,
@@ -320,6 +344,11 @@ function comparisonRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow 
       naming.length === 1
         ? `One record names ${dummy.noun}`
         : `${capital(word(naming.length))} records name ${dummy.plural}`,
+    said:
+      naming.length === 1
+        ? `[[One record]] names ${dummy.noun}`
+        : `[[${capital(word(naming.length))} records]] name ${dummy.plural}`,
+    share: { n: naming.length, of: trials.length },
     opened,
     source: directFrom(naming),
   });
@@ -332,6 +361,7 @@ function firstReportRow(claim: ExportedClaim): BriefRow | null {
     code: "first_report",
     question: QUESTIONS.first_report,
     answer: stage.answer,
+    said: `The first report was about [[${inside(stage.answer)}]]`,
     opened: [stage.opened],
     source: {
       how: "direct",
@@ -359,6 +389,7 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
       code: "measure",
       question: QUESTIONS.measure,
       answer: `“${outcome.measure}”`,
+      said: `The largest trial measured [[“${outcome.measure}”]]`,
       opened: [DEFINITIONS.registry_words],
       link,
       source: { how: "direct", from: null, records: record, on: trial.facts_as_of, onLabel: "Record read", confidence: null },
@@ -369,6 +400,7 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
     code: "measure",
     question: QUESTIONS.measure,
     answer: `${words.phrase}${words.over}`,
+    said: `The largest trial measured [[${inside(words.phrase)}]]${words.over}`,
     opened: [`The registry names the measure “${words.measure}”${timing}.`],
     link,
     source: {
@@ -394,6 +426,8 @@ function resultsRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
       code: "results",
       question: QUESTIONS.results,
       answer: NONE,
+      said: "[[No trial]] has posted results",
+      share: { n: 0, of: trials.length },
       opened: [DEFINITIONS.posted],
       source: directFrom(trials),
     });
@@ -409,6 +443,14 @@ function resultsRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
     code: "results",
     question: QUESTIONS.results,
     answer: on ? `${by}. ${posted.length === 1 ? "Posted" : "The latest"} on ${day(on)}` : by,
+    said: `${
+      trials.length === 1
+        ? "The one trial has posted [[results]]"
+        : posted.length === trials.length
+          ? `[[All ${digits(trials.length)}]] have posted results`
+          : `[[${digits(posted.length)} of ${digits(trials.length)}]] ${posted.length === 1 ? "has" : "have"} posted results`
+    }${on ? `, ${posted.length === 1 ? "" : "the latest "}on ${day(on)}` : ""}`,
+    share: { n: posted.length, of: trials.length },
     opened: [DEFINITIONS.posted],
     shown: { href: "#trials", text: "See the posted results" },
     source: directFrom(posted),
@@ -422,6 +464,8 @@ function underWayRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
       code: "under_way",
       question: QUESTIONS.under_way,
       answer: `${capital(word(underWay.length))} under way`,
+      said: `[[${capital(word(underWay.length))}]] ${underWay.length === 1 ? "is" : "are"} under way`,
+      share: { n: underWay.length, of: trials.length },
       opened: [DEFINITIONS.under_way],
       source: directFrom(underWay),
     });
@@ -435,6 +479,8 @@ function underWayRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow {
     code: "under_way",
     question: QUESTIONS.under_way,
     answer: finished ? `${NONE}. The last finished on ${day(finished)}` : NONE,
+    said: `[[None]] is under way${finished ? `; the last finished on ${day(finished)}` : ""}`,
+    share: { n: 0, of: trials.length },
     opened: [DEFINITIONS.under_way],
     source: directFrom(trials),
   });
@@ -449,7 +495,8 @@ function approvedRow(claim: ExportedClaim, lastChecked: string | null): BriefRow
     return row({
       code: "approved",
       question: QUESTIONS.approved,
-      answer: NONE,
+      answer: NO_APPROVAL,
+      said: "[[No approval]] is listed, and regulators' records are not read",
       opened: [DEFINITIONS.regulator, DEFINITIONS.no_approval],
       source: checked(lastChecked),
     });
@@ -462,6 +509,7 @@ function approvedRow(claim: ExportedClaim, lastChecked: string | null): BriefRow
     code: "approved",
     question: QUESTIONS.approved,
     answer: `${by} ${day(approval.event_date)}. ${DEFINITIONS.approval}`,
+    said: `Approved ${regulator ? `by the ${regulator} ` : ""}on [[${day(approval.event_date)}]]`,
     opened: [DEFINITIONS.regulator, DEFINITIONS.approval_scope],
     source: {
       how: "direct",
@@ -517,7 +565,8 @@ export function sourceWords(source: BriefSource): { before: string; after: strin
  * site-publishing: "The digest says when trials state no phase". */
 export function digestBridge(claim: ExportedClaim): string | null {
   const trials = claim.trials ?? [];
-  if (claim.status.code !== "trial_registered" || trials.length === 0) return null;
+  if (trials.length === 0) return null;
+  if (claim.status.code !== "trial_registered") return digestStates(trials);
   const finished = trials.filter((trial) => trial.state === "completed").length;
   const are = trials.length === 1 ? "1 trial is on record" : `${digits(trials.length)} trials are on record`;
   const done =
@@ -534,10 +583,42 @@ export function digestBridge(claim: ExportedClaim): string | null {
   return `${are}${done}.${phase}`;
 }
 
+/** The trials' states as the status card counts them, in a fixed order. */
+const STATE_COUNT_WORDS: [string, string][] = [
+  ["under_way", "under way"],
+  ["not_started", "not started"],
+  ["completed", "finished"],
+  ["terminated", "stopped early"],
+];
+/** Every other state (suspended, withdrawn, none given), counted together: the card says
+ * where most trials stand, and the trials' list says each one's state. */
+const OTHER_STATES = "in another state";
+
+/** For a claim whose status names a phase: how many trials are on record and where each
+ * stands, so the status is not read alone ("Phase 3 trial" said the same of a claim with
+ * five trials under way and of one with five stopped early; critique of 2026-11-17). A
+ * count of records, never a reading of them. A Phase 4 trial has no place on the path,
+ * so their number is said too. */
+function digestStates(trials: ExportedTrial[]): string {
+  const count = (state: string) => trials.filter((trial) => trial.state === state).length;
+  const named = STATE_COUNT_WORDS.map(([state, words]) => [count(state), words] as const);
+  const other = trials.length - named.reduce((sum, [n]) => sum + n, 0);
+  const parts = [...named, [other, OTHER_STATES] as const]
+    .filter(([n]) => n > 0)
+    .map(([n, words]) => (trials.length === 1 ? words : `${digits(n)} ${words}`));
+  const phase4 = trials.filter((trial) => trial.phases.includes("phase_4")).length;
+  const later =
+    phase4 === 0
+      ? ""
+      : ` ${digits(phase4)} ${plural(phase4, "is a Phase 4 trial", "are Phase 4 trials")}; the path counts phases up to Phase 3.`;
+  return `${digits(trials.length)} ${plural(trials.length, "trial", "trials")} on record: ${parts.join(", ")}.${later}`;
+}
+
 // A build fails rather than publish a verdict in a question, an answer or a group name.
 assertNeutral([
   BRIEF_TITLE,
   NONE,
+  NO_APPROVAL,
   ...Object.values(GROUP_NAMES),
   ...Object.values(TESTED_WORDS),
   ...Object.values(QUESTIONS),
@@ -545,4 +626,6 @@ assertNeutral([
   ...Object.values(FIRST_REPORT).flatMap((stage) => [stage.answer, stage.opened]),
   ...Object.values(DUMMY).flatMap((dummy) => [dummy.noun, dummy.plural]),
   ...Object.values(COMPARATOR_WORDS),
+  ...STATE_COUNT_WORDS.map(([, words]) => words),
+  OTHER_STATES,
 ]);
