@@ -177,8 +177,11 @@ def runs_of(
         if in_claims and record.kind != "claim":
             in_claims = False
             yield run
-            run = []
             yield from rename_runs
+            # With the first records after the claims, which the merges are among: a
+            # publication is applied before a merge of the same run, and in any later
+            # run the merged slug already names the claim that stayed.
+            run = _merged_publications(session)
         if record.kind == "claim":
             slug = first.get(record.key, record.key)
             record = Record("claim", slug, record.body | {"slug": slug})
@@ -186,7 +189,11 @@ def runs_of(
         if len(run) >= RUN_RECORDS and not in_claims:
             yield run
             run = []
-    run.extend(_merged_publications(session))
+    if in_claims:
+        # Nothing but claims: there is no merge, and so no merged claim's publication.
+        yield run
+        yield from rename_runs
+        run = []
     yield run
     tell()
     if "payload" in began:

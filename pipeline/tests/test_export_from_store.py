@@ -116,6 +116,28 @@ def test_merged_claims_address_moves_the_same(session: Session, tmp_path: Path):
     assert [entry["slug"] for entry in export["archived"]] == [SLUG, "tooth-regrowth-twin"]
 
 
+def test_merged_claim_that_was_never_public_moves_from_neither(session: Session, tmp_path: Path):
+    """Scenario: Archived, merged and held claims"""
+    new_claim(session)
+    build_export(session, now=EARLIER)
+    # Entered after the last export and merged before the next: its address was never public.
+    new_claim(session, "tooth-regrowth-twin")
+    merge_claims(
+        session,
+        "tooth-regrowth-twin",
+        SLUG,
+        reason="one antibody",
+        by=Decider.HUMAN,
+        now=NOW,
+        same_treatment_accepted=True,
+    )
+
+    export = assert_same_export(session, tmp_path, NOW)
+
+    assert export["moved"] == []
+    assert [claim["slug"] for claim in export["claims"]] == [SLUG]
+
+
 def test_renamed_claims_old_address_moves_the_same(session: Session, tmp_path: Path):
     """Scenario: Archived, merged and held claims"""
     new_claim(session)

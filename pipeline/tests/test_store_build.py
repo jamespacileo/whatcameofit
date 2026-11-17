@@ -10,8 +10,11 @@ from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from test_store_records import STORE, _world
+from thenwhat.claims.corrections import moved_addresses
 from thenwhat.cli import app
 from thenwhat.db.models import RegistryTrial
+from thenwhat.export.store_records import StoreRecords
+from thenwhat.store import build as build_module
 from thenwhat.store import dump as dump_module
 from thenwhat.store.build import build
 from thenwhat.store.form import payload_of
@@ -166,3 +169,27 @@ def test_an_icon_too_large_for_a_statement_is_left_out_and_counted(tmp_path: Pat
     manifest = dump_module.dump(tmp_path / "store.sqlite", tmp_path / "out")
     assert manifest.left_out == {"outlet_icon": 1}
     assert manifest.tables["outlet_icon"] == 0
+
+
+def test_a_merged_claims_address_is_public_however_many_runs_the_build_takes(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    """A merge is among the first records after the claims; the store must learn the
+    merged claim was public before that run, or the export has no address to move."""
+    _world(session)
+    session.flush()
+    monkeypatch.setattr(build_module, "RUN_RECORDS", 5)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+
+    report = build(
+        session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC)
+    )
+
+    assert report.runs > 3
+    records = StoreRecords(file, payloads=payloads)
+    moved = [(former, kept.slug) for former, kept in records.moved()]
+    records.close()
+    assert ("drug-x-tablets-for-melanoma", moved_addresses(session)[0][1].slug) in moved
+    assert sorted(former for former, _ in moved) == sorted(
+        former for former, _ in moved_addresses(session)
+    )
