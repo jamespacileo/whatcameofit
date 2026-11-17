@@ -69,7 +69,7 @@
 
 ## 8. Switch over and remove
 
-- [ ] 8.1 Update `scripts/daily-run.sh` to read the new report of `prepare`; verify a dry run of the script prints the prepared counts
+- [x] 8.1 Update `scripts/daily-run.sh` to read the new report of `prepare`; verify a dry run of the script prints the prepared counts
 - [ ] 8.2 Delete the process-per-step runner in `cli/prepare.py`, `NOT_NEEDED_TO_DECIDE`, and what is left unused in `backfill/`; verify `vulture` reports nothing new and `make check` passes
   - 2026-11-17: the process-per-step runner, `NOT_NEEDED_TO_DECIDE`, `plan_claims`, `steps_for`, `_step` and the read's `_named_on_the_page` are deleted, and `make check`'s Python tools pass. Not ticked: `vulture` is not a dependency of the pipeline and could not be run here.
 - [ ] 8.3 Update `docs/url-to-claim.md`, `docs/daily-run.md` and `docs/backfill-loop.md` for the claim steps, requeue and the plan's new lines; verify the commands they show run as written
