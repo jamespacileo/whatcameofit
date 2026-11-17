@@ -6223,8 +6223,10 @@ main ul:not([class]) li + li {
   --column-gap: 2rem;
   /* Secondary text on the navy. */
   --navy-soft: #c9d9ee;
-  /* The sheet's inner margin: the band's title and status card keep to it too. */
-  --sheet-pad: clamp(1.1rem, 3vw, 2.4rem);
+  /* The sheet's inner margin: the band's title and status card keep to it too. Beside
+     the side columns it is wide enough to hold a section's fold mark (see "The fold
+     mark in the margin"). */
+  --sheet-pad: clamp(1.1rem, 3.6vw, 2.6rem);
 }
 
 body.framed {
@@ -6480,7 +6482,8 @@ body.framed {
 /* A heading that folds its section: the heading holds the button, and the button's
    reach is the whole line. What follows the heading in its section is the body.
    The title starts at the section's left edge, where its rows start; the fold's mark
-   stands at the right edge, over the marks of the rows that open. */
+   stands at the right edge, over the marks of the rows that open (on a record page's
+   sheet it hangs in the left margin where there is one: "The fold mark in the margin"). */
 .fold-head {
   position: relative;
   display: flex;
@@ -9571,6 +9574,39 @@ body.framed {
 @media screen and (max-width: 40rem) {
   .js .sheet section:has(> .fold-head[data-fold-phone="folded"]:not([data-state])) + section > .fold-head {
     margin-top: 1.6rem;
+  }
+}
+
+/* The fold mark in the margin (asked for by the operator on 2026-11-17, after the way
+   examine.com sets its section headings). Where the sheet has a margin wide enough, a
+   section's fold mark hangs in it, to the left of the heading: the title still starts
+   on the edge its rows start on, the section's mark is told from the marks of the rows
+   that open (which stay at the right), and the heading's note reaches the right edge.
+   Below that width the margin is too narrow to hold it and the mark stays at the right. */
+@media screen and (min-width: 68.01rem) {
+  .js .sheet .fold-head {
+    --fold-gap: 0.45rem;
+    --fold-hang: calc(var(--fold-mark) + var(--fold-gap));
+    padding-right: 0;
+  }
+
+  .js .sheet .fold {
+    gap: var(--fold-gap);
+  }
+
+  /* The mark stands in the button's own line, before the title and pulled out by its
+     width and the gap, so it is centred on the title's first line whatever else the
+     heading's row holds. */
+  .js .sheet .fold .chev {
+    position: static;
+    flex: none;
+    align-self: flex-start;
+    margin: calc((1lh - var(--fold-mark)) / 2) 0 0 calc(-1 * var(--fold-hang));
+  }
+
+  /* The press reaches the mark too. */
+  .js .sheet .fold::after {
+    left: calc(-1 * var(--fold-hang));
   }
 }
 

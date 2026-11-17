@@ -83,6 +83,11 @@ Each section of a claim page SHALL start in the same way: more room over its hea
 - **THEN** each section's heading is the only text in the heading face and the accent colour, with more room over it than anywhere inside a section
 - **AND** no line on the page between two headings is heavier than a hairline, except the timeline drawn under "Recorded"
 
+#### Scenario: Where a section's fold mark stands
+- **WHEN** a claim page is read at a width that shows the side columns
+- **THEN** each section's fold mark stands to the left of its heading, in the sheet's margin, and the heading's title starts on the edge its rows start on
+- **AND** at a narrower width the mark stands at the right end of the heading's first line
+
 #### Scenario: Folded sections in a row
 - **WHEN** several sections one after another are folded
 - **THEN** their headings stand close together as a list, with no rule between them
