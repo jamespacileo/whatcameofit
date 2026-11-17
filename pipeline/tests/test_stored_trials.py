@@ -397,7 +397,7 @@ def test_whoever_scores_is_told_the_other_names_and_sees_those_a_record_lists(se
     resolve(session, claim, trials, backend)
 
     asked = "\n".join(backend.states)
-    assert "Other names for it" in asked and "EX-900." in asked
+    assert "list beside its name" in asked and "EX-900." in asked and "not proof" in asked
     assert '"other_names":["Zentalimab"]' in asked
     # The name the stored trials file it under is searched for at the registry as well.
     assert "EX-900" in trials.searched

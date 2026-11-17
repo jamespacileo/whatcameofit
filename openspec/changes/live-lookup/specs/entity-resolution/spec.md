@@ -108,7 +108,7 @@ To find stored candidates only, the system SHALL also use each name that at leas
 
 #### Scenario: Generic name filed under a development code
 - **WHEN** every stored entry that lists "sasanlimab" among its other names is named PF-06801591
-- **THEN** PF-06801591 is searched in the trial registry as a name, the scoring is told it is another name of the intervention, and the intervention's synonyms are unchanged
+- **THEN** PF-06801591 is searched in the trial registry as a name, the scoring is told that registry trials list it beside the intervention's name and that this is a lead, not proof that a trial tests the intervention, and the intervention's synonyms are unchanged
 
 #### Scenario: Name one trial alone files under another
 - **WHEN** a single stored entry named Palifermin lists "growth factor" among its other names

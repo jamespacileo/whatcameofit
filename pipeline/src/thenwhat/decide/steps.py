@@ -311,8 +311,9 @@ def _also_named(names: Sequence[str]) -> str:
     if not names:
         return ""
     return (
-        "\nOther names for it, from the registry of substances or from registry trials"
-        f" that list its name: {', '.join(names)}."
+        "\nNames the registry of substances gives it, or that registry trials list beside"
+        f" its name: {', '.join(names)}. A trial entry can list a related product beside a"
+        " name, so such a name is a lead, not proof that a trial tests this intervention."
     )
 
 
