@@ -258,6 +258,10 @@ def test_restore_finishes_a_run_interrupted_after_its_first_20000_records(tmp_pa
     assert merge_into(restored, [("day", records[:RUN_RECORDS])], store_sql=STORE, now=now)[1] == [
         "day-0"
     ]
+    first_merge = "SELECT merged_at FROM run WHERE id = 'day-0'"
+    with sqlite3.connect(restored) as partial:
+        original_time = partial.execute(first_merge).fetchone()[0]
+        assert original_time
     assert apply_delta(uninterrupted, delta, store_sql=STORE, now=now) == ["day-0", "day-1"]
     assert apply_delta(restored, delta, store_sql=STORE, now=now) == ["day-1"]
     assert apply_delta(restored, delta, store_sql=STORE, now=now) == []
@@ -265,8 +269,14 @@ def test_restore_finishes_a_run_interrupted_after_its_first_20000_records(tmp_pa
         assert recovered.execute("SELECT count(*) FROM unlisted_domain_count").fetchone() == (
             20001,
         )
-        for table in ("unlisted_domain_count", "run", "merge_report"):
-            query = f"SELECT * FROM {table} ORDER BY 1, 2"
+        assert recovered.execute(first_merge).fetchone()[0] == original_time
+        # Each database records the real time it merged each batch.
+        for query in (
+            "SELECT * FROM unlisted_domain_count ORDER BY domain, day",
+            "SELECT * FROM merge_report ORDER BY run_id, kind",
+            "SELECT id, writer, device, request_class, commit_sha, registered_at, stated_checksum,"
+            " restore_bookmark, status, refusal, merged_at IS NOT NULL FROM run ORDER BY id",
+        ):
             assert recovered.execute(query).fetchall() == complete.execute(query).fetchall()
 
 
