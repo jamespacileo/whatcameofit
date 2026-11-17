@@ -10,7 +10,7 @@
 
 - [ ] 0.4 <a id="task-f44"></a>Apply the budget guard only where model spending is possible. Test a registry fetch, a deterministic decision and a model-dependent step at the same exhausted ceiling. [F44](../../../docs/reviews/2026-11-17-code-review.md#finding-f44) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-the-model-budget-is-exhausted-during-non-model-work)
 
-- [ ] 0.5 <a id="task-f45"></a>Invalidate only leads whose stored classification differs from the outlet's current classification. Run the three-lead, limit-two case to completion and check the processed IDs on each run. [F45](../../../docs/reviews/2026-11-17-code-review.md#finding-f45) · [Acceptance scenario](specs/lead-screening/spec.md#scenario-bounded-rescreening-reaches-the-last-lead)
+- [x] 0.5 <a id="task-f45"></a>Invalidate only leads whose stored classification differs from the outlet's current classification. Run the three-lead, limit-two case to completion and check the processed IDs on each run. [F45](../../../docs/reviews/2026-11-17-code-review.md#finding-f45) · [Acceptance scenario](specs/lead-screening/spec.md#scenario-bounded-rescreening-reaches-the-last-lead)
 
 ## 1. Pin down present behaviour
 

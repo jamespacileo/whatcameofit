@@ -154,6 +154,32 @@ def test_a_domain_added_to_the_list_puts_its_leads_in_scope_on_the_next_screenin
     assert other.screen_outcome is ScreenOutcome.UNLISTED_OUTLET
 
 
+def test_bounded_rescreening_advances_over_three_changed_leads(session, monkeypatch):
+    leads = [
+        share(session, f"https://health.example.org/news/story-{n}", item=n) for n in (1, 2, 3)
+    ]
+    step = LinkScreen()
+    screen(session, step)
+    monkeypatch.setattr("thenwhat.backfill.link_screen.kind_of", lambda _: OutletKind.TRADE_PRESS)
+    ids = [lead.id for lead in leads]
+    for expected in (ids[:2], ids[2:], []):
+        step.check_ready(session)
+        before = set(
+            session.scalars(
+                select(LinkLead.id).where(LinkLead.outlet_kind == OutletKind.TRADE_PRESS)
+            )
+        )
+        report = run_step(
+            same_session(session), step, Client(), now=lambda: NOW, attempt_limit=3, limit=2
+        )
+        after = set(
+            session.scalars(
+                select(LinkLead.id).where(LinkLead.outlet_kind == OutletKind.TRADE_PRESS)
+            )
+        )
+        assert report.done == len(expected) and sorted(after - before) == expected
+
+
 def test_leads_of_an_outlet_added_to_the_list_are_screened_again_and_no_others(
     session: Session, monkeypatch
 ):

@@ -12,7 +12,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from sqlalchemy import ColumnElement, delete, func, select, true, update
+from sqlalchemy import ColumnElement, delete, func, select, true, tuple_, update
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key
@@ -368,7 +368,7 @@ class LinkScreen:
         is checked in, so nothing says when it changed: each outlet's stored kind is
         compared with the kind the list gives it now."""
         changed = [
-            outlet
+            (outlet, kind)
             for outlet, kind in session.execute(
                 select(LinkLead.outlet, LinkLead.outlet_kind).distinct()
             )
@@ -382,7 +382,11 @@ class LinkScreen:
                 WorkEntry.record_kind == self.record_kind,
                 WorkEntry.step == self.name,
                 WorkEntry.step_version == self.version,
-                WorkEntry.record_id.in_(select(LinkLead.id).where(LinkLead.outlet.in_(changed))),
+                WorkEntry.record_id.in_(
+                    select(LinkLead.id).where(
+                        tuple_(LinkLead.outlet, LinkLead.outlet_kind).in_(changed)
+                    )
+                ),
             )
             .values(stale=True)
         )
