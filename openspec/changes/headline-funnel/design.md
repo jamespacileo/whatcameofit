@@ -158,21 +158,46 @@ Phase 1 is the carry of article leads and the headline route for one source, sin
 
 - **One day measured.** Every headline figure is from one weekday. → Task 2.7 loads a week before any long span and compares.
 - **Judged by an assistant, from titles.** → Phase samples are recorded as an assistant's and a share is spot-checked by the operator, as lead labels are.
-- **Most kept headlines are on outlets on no list, and screening may stop them.** → Counted in task 2.8 before any read; what happens to them rests on the operator's decision in task 1.1.
+- **Most kept headlines are on outlets on no list.** → They go on to triage under decision 10; counted by outlet kind in task 2.8 before any read, with the hosts that kept the most leads listed so a mirror or an aggregator is seen.
 - **Trade press is thin in both corpora.** → Stated in the load's report by outlet kind; no claim of coverage is made.
 - **A file's description field reaching disk.** → The fetch script drops it as rows arrive, and a test fails if a staged file holds any field but the five.
-- **A subscription's terms on automated use.** → Read and noted in `docs/sources.md` before the service hands out a trial; the operator decides with the note in front of them (task 1.3).
+- **A subscription's terms on automated use.** → The operator decided on 2026-11-17 to use it at modest volume. The terms as read are noted in `docs/sources.md` with that decision before the service hands out a trial, and the route runs under a daily allowance.
 - **A service-side limit near 325 tasks an hour.** → The route is planned as weeks of background work, with a daily allowance, not as a run.
 - **Invented addresses.** Public tests put them at 3 to 13% of what such tools cite. → Nothing is checked at report time; the read fails them and they are counted by route.
 - **The share ceiling drops a real treatment that is in the news.** → The report lists terms near the ceiling; a dropped term is a setting change and a reload, since loads can be run again.
 - **Triage cost grows with the period loaded.** → The plan prints it against the route's share before a span is loaded.
 
+## What the operator decided
+
+On 2026-11-17, after this change was first drafted, the operator answered twelve multiple-choice questions. The answers that shape this change:
+
+| Question | Answer |
+| --- | --- |
+| May a sponsor's, an investor page's or a university's own release be a source article? | Yes, marked as a release |
+| May the second headline corpus be used? | Yes, with the five fields asked for by name and the text never read |
+| May the subscription run the search route? | Yes, at modest volume, as the operator's own decision on its terms |
+| What may finding articles cost? | The provider's free monthly credit; no cash |
+| Which trials first? | Industry-sponsored, phase 2 and 3 |
+| What closing the gap means | A claim for every named trial, drafted from the registry record where no report exists (`registry-drafted-claims`) |
+
+The last answer changes what these routes are for. With `registry-drafted-claims`, a named trial is cited by a claim whether or not anything reports it, so a route here does not draft most claims: it finds a report and the same-claim decision attaches it to the claim that exists. A trial is due for a route while no claim that cites it has a report linked, not while no claim cites it. The routes still draft a claim when a report names a treatment and condition no claim holds.
+
+Decisions 10 and 11 follow from the first answer.
+
+### 10. A lead a trial route found goes on though its outlet is on no list
+
+Screening stops a lead on an outlet that is on no list, and that is right for links people shared: most such domains are not news. A lead these routes found is different: it was kept because it names a tracked treatment, or was returned for a trial. Most are a sponsor's or an institution's own page (154 of 198 in the second search run). So a lead whose reasons include one of these routes goes on to triage with its outlet kind unknown, and triage and the read decide as for any lead. A lead that was only shared is stopped as before.
+
+*Instead of* adding each sponsor's domain to the outlet list: thousands of sponsors, and a list of them would call them outlets.
+
+### 11. A release is marked by rule, from the sponsor's own website
+
+The site already says when a report is on the website of one of a claim's organisations. Today that mark is set when a read finds it. For these routes it is also set by rule: a source article whose domain is the website an organisation record gives for the lead sponsor of one of the claim's approved trials is marked as on that organisation's website. A release on a domain no organisation record gives is shown with its outlet's name as the page gives it and no mark, and its outlet kind is unknown; the mark is never guessed.
+
 ## Open Questions
 
-These are the operator's. Each is a task in section 1 and nothing after it is built until it is answered.
+The operator's. Each is a task in section 1.
 
-1. **May a sponsor's own release be a source article?** Two thirds of what the search finds and much of what the files hold are sponsor, investor and university pages on no outlet list. If not, both routes yield far less and should be judged on news alone.
-2. **May the second headline corpus be used?** Its files hold article text; only the five fields would be asked for, by name, as the loader for shared links already does with a column it must not read. It was ruled out in 2026-11 in its raw form for holding text.
-3. **May the subscription be used for the search route?** One reading of its terms forbids programmatic extraction of output and points automation at keyed access.
-4. **Does adding these routes reopen questions 13 and 14 of `trial-first-route`?** This change adds no paid source and reads no wire feed. The filings index is left out; if the operator wants it, how a lead with no headline is triaged has to be decided first.
-5. **Which sets, in which order?** The headline route serves every stored trial; the search route works one named set at a time.
+1. The daily allowance for the search route.
+2. The monthly ceiling for model spend, within the free credit.
+3. Whether the filings index is wanted, which first needs a decision on how a lead with no headline is triaged.

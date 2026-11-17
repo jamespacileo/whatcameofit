@@ -22,6 +22,7 @@ So the work is not another search per trial. It is to take in headlines in bulk,
 - **Leads that tell one story are grouped before they are read.** A group orders the reading so that one story costs one or two reads, not one for each outlet that ran it. A group drops nothing and decides nothing.
 - **A search by a model is a route, the last one.** A service on the pipeline's own machine hands a trial to an agent and takes back addresses. The agent searches and opens no page. What it reports becomes link leads. It can create or change no claim, match, event or status.
 - **Article leads the news search already stored enter the same path.** 44,166 article leads sit in the store and no step reads them. Each is carried into the lead path once, as a link lead with its reason.
+- **A lead these routes found goes on though its outlet is on no list**, and a report on a sponsor's own website is marked as such by rule. The operator decided on 2026-11-17 that a sponsor's, an investor page's or a university's own release may be a source article, marked as a release.
 - **Two routes join the fixed order of `trial-coverage`**: headline files after the stored leads matched on a fingerprint, and the search by a model last.
 
 Not in this change:
@@ -30,7 +31,7 @@ Not in this change:
 - Any paid search. The prices read on 2026-11-17 are recorded in `design.md` and nothing here needs them.
 - A classifier for headlines that name no tracked treatment. That is `work-reuse-and-metrics`, capability `lead-prefilter`.
 - A change to what makes a name telling or a link strong (`trial-report-links`), to triage's thresholds, to the outlet list, or to the audit hold.
-- Whether a sponsor's own release may be a source article. It is the operator's decision and is asked before any build (`tasks.md`, section 1).
+- Drafting a claim for a trial nothing reports. That is `registry-drafted-claims`; with it, these routes mostly attach a report to a claim that exists.
 - Lighter publishing for claims these routes draft.
 
 ## Capabilities
@@ -45,6 +46,8 @@ Not in this change:
 
 - `trial-coverage`: two routes are added to the fixed order. This capability is created by `trial-first-route` and is not yet synced; the requirements here are added beside that change's and apply after it.
 - `article-leads`: an article lead is carried into the lead path once, and is still not a source article.
+- `lead-screening`: a lead a trial route found goes on to triage though its outlet is on no list. This capability is created by `social-link-backfill` and is not yet synced; the requirement here is added beside that change's.
+- `site-publishing`: a report on the website of a trial's sponsor is marked as such by rule.
 
 ## Impact
 

@@ -7,7 +7,7 @@ Says how a model with a search tool looks for reports of a trial: the service th
 ## ADDED Requirements
 
 ### Requirement: The service hands out one due trial at a time
-The service SHALL hand an agent one trial that is due and hold it for that agent until the agent reports or the hold runs out. A trial SHALL be due when it is in the set the operator named, has a fit term or a candidate term, is cited by no published claim, and has no ledger entry for this step at its present version. No two agents SHALL hold one trial at once. A hold that runs out SHALL make the trial due again.
+The service SHALL hand an agent one trial that is due and hold it for that agent until the agent reports or the hold runs out. A trial SHALL be due when it is in the set the operator named, has a fit term or a candidate term, is cited by no published claim that has a source article, and has no ledger entry for this step at its present version. No two agents SHALL hold one trial at once. A hold that runs out SHALL make the trial due again.
 
 #### Scenario: Two agents ask at once
 - **WHEN** two agents ask for a trial at the same moment
@@ -16,6 +16,10 @@ The service SHALL hand an agent one trial that is due and hold it for that agent
 #### Scenario: An agent that never reports
 - **WHEN** an agent is handed a trial and does not report within the hold's time
 - **THEN** the trial is due again and a later report under that hold is refused
+
+#### Scenario: A trial whose claim has no report
+- **WHEN** a trial of the set is cited by a published claim that was drafted from registry records and has no source article
+- **THEN** the trial is due
 
 #### Scenario: Nothing is due
 - **WHEN** an agent asks and no trial of the set is due
