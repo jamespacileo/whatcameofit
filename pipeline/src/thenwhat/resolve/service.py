@@ -28,7 +28,7 @@ from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.events.trial import PHASES
 from thenwhat.events.trial_facts import STATES, is_registry_record, read_trial
 from thenwhat.measure import spans as measure
-from thenwhat.resolve.stored import stored_trials
+from thenwhat.resolve.stored import filed_under_another_name, stored_trials
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -409,12 +409,20 @@ def rescore_claim(
     """Score again the pending trial candidates that the search still returns, and return
     them. For candidates scored before the indication was part of the question.
 
+    A candidate a rule rejected for scoring near zero is scored again too when its
+    record files the intervention under another name: an entry lists one of the
+    intervention's names among its other names, or is named by a name the stored trials
+    file the intervention under. Until the scoring was shown those names, such a trial
+    read as a trial of something else. Once scored it waits like a pending candidate,
+    and the same rules decide it.
+
     A candidate someone has decided keeps the score it was decided on. A pending
     candidate the search no longer returns keeps its old score, and the review queue
     says how it was scored.
     """
     just_scored = {match.id for match in skip or []}
     again: list[tuple[Entity, EntityMatch, SourceRecord]] = []
+    reopened: list[EntityMatch] = []
     also_named: dict[int, list[str]] = {}
     for entity in entities_of(session, claim):
         if entity.type is not EntityType.INTERVENTION:
@@ -429,6 +437,18 @@ def rescore_claim(
             )
             if match.id not in just_scored
         }
+        rejected_by_rule = {
+            (match.source_name, match.external_id): match
+            for match in session.scalars(
+                select(EntityMatch).where(
+                    EntityMatch.entity_id == entity.id,
+                    EntityMatch.source_name == ClinicalTrials.name,
+                    EntityMatch.review_state == ReviewState.REJECTED,
+                    EntityMatch.reviewed_by == Decider.RULE,
+                )
+            )
+            if match.id not in just_scored
+        }
         candidates, also_named[entity.id] = candidates_of(
             session,
             trials,
@@ -436,15 +456,37 @@ def rescore_claim(
             claim.indication,
             unsearchable,
             records=records,
-            wanted=lambda nct_id, pending=pending: (ClinicalTrials.name, nct_id) in pending,
+            wanted=lambda nct_id, known=(pending, rejected_by_rule): any(
+                (ClinicalTrials.name, nct_id) in matches for matches in known
+            ),
         )
+        names = [
+            entity.name,
+            *entity.synonyms,
+            *development_codes(session, entity),
+            *also_named[entity.id],
+        ]
         for record in candidates:
-            match = pending.pop((record.source_name, record.external_id), None)
+            key = (record.source_name, record.external_id)
+            match = pending.pop(key, None)
+            if (
+                match is None
+                and key in rejected_by_rule
+                and filed_under_another_name(record.payload, names, also_named[entity.id])
+            ):
+                match = rejected_by_rule.pop(key)
+                reopened.append(match)
             if match is not None:
                 match.record_summary = what_it_says(record)
                 match.record_facts = facts_of(record)
                 again.append((entity, match, record))
     score_matches(session, backend, claim=claim, candidates=again, now=now, also_named=also_named)
+    # Only once every candidate is scored: a scoring that fails leaves the rule's
+    # rejections as they were.
+    for match in reopened:
+        match.review_state = ReviewState.PENDING
+        match.reviewed_at = None
+        match.reviewed_by = None
     rescored = [match for _, match, _ in again]
     reject_near_zero(rescored, reject_below, now)
     approve_confident(session, rescored, accept_above, now)

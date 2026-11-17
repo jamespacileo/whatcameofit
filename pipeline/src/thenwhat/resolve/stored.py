@@ -118,6 +118,27 @@ def _entry_keys(entry: dict[str, Any]) -> set[str]:
     return keys
 
 
+def filed_under_another_name(
+    payload: dict[str, Any], names: Sequence[str], filed_under: Sequence[str] = ()
+) -> bool:
+    """True when a trial's record files the intervention under a name that is none of
+    `names`: an entry that is not named by any of them lists one among its other names,
+    or is named by one of the `filed_under` names. Such a record shows whoever scores a
+    name the claim does not carry, and reads as a trial of something else unless the
+    other names are shown."""
+    under = {claim_key(name) for name in filed_under if name}
+    known = {claim_key(name) for name in names if name} - under
+    entries = payload.get("protocolSection", {}).get("armsInterventionsModule", {})
+    for entry in entries.get("interventions", []):
+        own = keys_written(entry.get("name") or "")
+        others: set[str] = set()
+        for other in entry.get("otherNames") or []:
+            others |= keys_written(other)
+        if not own & known and (own & under or known & others):
+            return True
+    return False
+
+
 @dataclass(frozen=True, slots=True)
 class Stored:
     """What the stored trials give for one intervention."""

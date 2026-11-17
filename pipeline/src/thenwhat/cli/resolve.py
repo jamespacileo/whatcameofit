@@ -669,7 +669,8 @@ def resolve_command(
         typer.Option(
             "--rescore",
             help="Also score again the pending trial candidates the search still returns,"
-            " and the pending related papers.",
+            " the ones a rule rejected whose record files the intervention under another"
+            " name, and the pending related papers.",
         ),
     ] = False,
     redo_rule: Annotated[

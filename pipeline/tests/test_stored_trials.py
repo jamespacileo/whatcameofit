@@ -15,14 +15,16 @@ from thenwhat.claims.entry import add_claim
 from thenwhat.db.models import Claim, EntityMatch, RegistryTrial
 from thenwhat.decide.core import BackendAnswer
 from thenwhat.domain import Decider, ReviewState
-from thenwhat.resolve.service import resolve_claim
+from thenwhat.resolve.service import rescore_claim, resolve_claim
 from thenwhat.resolve.stored import (
     StoredTrial,
     filed_under,
+    filed_under_another_name,
     keys_written,
     parts_of,
     stored_trials,
 )
+from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
@@ -447,3 +449,89 @@ def test_a_combination_claim_gets_the_stored_trial_that_files_a_part_under_its_c
 
     assert set(trial_matches(session)) == {"NCT00000002"}
     assert trials.read == ["NCT00000002"]
+
+
+# --- Candidates scored without the other names are scored again ------------------
+
+
+def test_a_record_that_files_the_intervention_under_another_name_is_told_apart():
+    filed = payload("NCT00000001", "T", ["Tooth Agenesis"], [entry("EX-900", "Zentalimab")])
+    plain = payload("NCT00000002", "T", ["Tooth Agenesis"], [entry("Zentalimab", "EX-900")])
+    coded = payload("NCT00000003", "T", ["Tooth Agenesis"], [entry("EX-900")])
+
+    assert filed_under_another_name(filed, ["zentalimab"])
+    assert not filed_under_another_name(plain, ["zentalimab"])
+    assert not filed_under_another_name(coded, ["zentalimab"])
+    assert filed_under_another_name(coded, ["zentalimab"], ["EX-900"])
+
+
+class Blind:
+    """A backend that calls a record a match only where it can see the claim's name."""
+
+    name = "fake"
+
+    def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+        text = state.split("Candidate record", 1)[-1]
+        choice = "match" if "Zentalimab" in text else "not_a_match"
+        return BackendAnswer(choice, {o: 0.97 if o == choice else 0.01 for o in options})
+
+
+def test_rescore_scores_again_a_rule_rejection_whose_record_files_it_under_another_name(
+    session: Session,
+):
+    claim = zentalimab_claim(session)
+    without_names = [{"type": "DRUG", "name": "EX-900"}]
+    trials = FakeTrials(
+        {
+            "zentalimab": [
+                record(
+                    "NCT00000001", payload("NCT00000001", "A", ["Tooth Agenesis"], without_names)
+                ),
+                record(
+                    "NCT00000002", payload("NCT00000002", "B", ["Tooth Agenesis"], without_names)
+                ),
+            ]
+        },
+        {},
+    )
+    resolve(session, claim, trials, Blind(), reject_below=0.05, accept_above=0.8)
+    assert {m.review_state for m in trial_matches(session).values()} == {ReviewState.REJECTED}
+    # The search now returns the other names: one record lists the claim's name, one does not.
+    listed = [entry("EX-900", "Zentalimab")]
+    trials.results["zentalimab"] = [
+        record("NCT00000001", payload("NCT00000001", "A", ["Tooth Agenesis"], listed)),
+        record("NCT00000002", payload("NCT00000002", "B", ["Tooth Agenesis"], without_names)),
+    ]
+
+    again = rescore_claim(
+        session,
+        claim,
+        trials=trials,
+        backend=Blind(),
+        now=NOW,
+        records=trials,
+        reject_below=0.05,
+        accept_above=0.8,
+    )
+
+    found = trial_matches(session)
+    assert [match.external_id for match in again] == ["NCT00000001"]
+    assert found["NCT00000001"].review_state is ReviewState.APPROVED
+    assert found["NCT00000001"].reviewed_by is Decider.RULE
+    assert found["NCT00000002"].review_state is ReviewState.REJECTED
+
+
+def test_rescore_leaves_a_rejection_a_person_made(session: Session):
+    claim = zentalimab_claim(session)
+    listed = [entry("EX-900", "Zentalimab")]
+    study = payload("NCT00000001", "A", ["Tooth Agenesis"], listed)
+    trials = FakeTrials({"zentalimab": [record("NCT00000001", study)]}, {})
+    resolve(session, claim, trials, Blind())
+    match = trial_matches(session)["NCT00000001"]
+    record_decision(match, ReviewState.REJECTED, by=Decider.HUMAN, now=NOW)
+    session.flush()
+
+    again = rescore_claim(session, claim, trials=trials, backend=Blind(), now=NOW, accept_above=0.8)
+
+    assert again == []
+    assert trial_matches(session)["NCT00000001"].reviewed_by is Decider.HUMAN

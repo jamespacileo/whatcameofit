@@ -125,6 +125,17 @@ The trial registry's search SHALL ask for the other names of each intervention, 
 - **WHEN** a candidate's intervention is named NMRA-335140 and lists navacaprant among its other names
 - **THEN** the record shown for scoring names navacaprant beside NMRA-335140
 
+### Requirement: A rule's rejection made without the other names is scored again
+When pending candidates are scored again on request, the system SHALL also score again each trial candidate that a rule rejected for scoring near zero and whose record files the intervention under another name: an intervention entry that is named by none of the intervention's names or codes lists one of them among its other names, or is named by a name the stored trials file the intervention under. Before the scoring was shown those names, such a record read as a trial of something else. A candidate scored again this way SHALL wait like a pending candidate and SHALL be decided by the same rules: rejected again near zero, approved only when scored high for the claim's indication. A rejection a person or an assistant made SHALL be left as it is, and so SHALL a rule's rejection of a record that names the intervention plainly. When a scoring fails, every rejection SHALL stay as it was.
+
+#### Scenario: Rejected when the name was not shown
+- **WHEN** a rule rejected a trial whose intervention is named by a development code, the record lists the claim's intervention among that entry's other names, and pending candidates are scored again
+- **THEN** the trial is scored again with the other names shown, and the rules decide it afresh
+
+#### Scenario: Rejected by a person
+- **WHEN** a person rejected such a trial
+- **THEN** it is not scored again and stays rejected
+
 ### Requirement: The brand source is credited with the statement it asks for
 While the source of brands is recorded as accepted, the export's list of data sources SHALL name it with its address, and the site SHALL show, where it lists its data sources, the statement the source's terms ask an application to carry, word for word.
 
