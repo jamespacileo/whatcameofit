@@ -186,6 +186,71 @@ def test_a_category_goes_once_its_only_record_is_no_longer_approved(session: Ses
     assert labels(session, claim) == []
 
 
+def test_retained_event_cannot_file_a_rejected_match_on_either_export(session, tmp_path):
+    from store_support import assert_same_export
+
+    store(session, *TREE)
+    claim = new_claim(session, "cream-a")
+    rejected = with_trial(session, claim, "NCT00000001", "D011565", "D012878")
+    with_trial(session, claim, "NCT00000002", "D012878")
+    event = session.scalars(
+        select(EvidenceEvent).where(EvidenceEvent.entity_match_id == rejected.id)
+    ).one()
+    record_decision(event, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+
+    def categories():
+        exported = assert_same_export(session, tmp_path, NOW)
+        return {
+            c["identifier"]: [s["identifier"] for s in c["sources"]]
+            for c in exported["claims"][0]["clinical_categories"]
+        }
+
+    assert categories()["D011565"] == ["NCT00000001"]
+    record_decision(rejected, ReviewState.REJECTED, by=Decider.HUMAN, now=NOW)
+    session.flush()
+    assert event.review_state == ReviewState.APPROVED
+    assert categories() == {"D012878": ["NCT00000002"]}
+
+
+@pytest.mark.parametrize("latest_first", [False, True])
+def test_only_the_current_snapshot_supplies_each_trials_categories(session, tmp_path, latest_first):
+    from copy import deepcopy
+    from datetime import timedelta
+
+    from store_support import assert_same_export
+
+    store(session, *TREE)
+    claim = new_claim(session, "cream-a")
+    match = with_trial(session, claim, "NCT00000001", "D012878", "D011565")
+    first = session.scalars(
+        select(EvidenceEvent).where(EvidenceEvent.entity_match_id == match.id)
+    ).one()
+    earlier = first.raw_payload
+    latest = deepcopy(earlier)
+    latest["derivedSection"]["conditionBrowseModule"]["meshes"].pop()
+    first.raw_payload = latest if latest_first else earlier
+    first.fetched_at = NOW if latest_first else NOW - timedelta(days=1)
+    second = EvidenceEvent(
+        claim_id=claim.id,
+        entity_match_id=match.id,
+        type=EventType.TRIAL_RESULTS_POSTED,
+        event_date=date(2024, 8, 1),
+        source_name=first.source_name,
+        source_url=first.source_url,
+        external_id=first.external_id,
+        summary="Results posted.",
+        confidence=1.0,
+        raw_payload=earlier if latest_first else latest,
+        fetched_at=NOW - timedelta(days=1) if latest_first else NOW,
+        dedupe_key="second-snapshot",
+    )
+    session.add(second)
+    record_decision(second, ReviewState.APPROVED, by=Decider.RULE, now=NOW)
+    session.flush()
+    exported = assert_same_export(session, tmp_path, NOW)
+    assert [c["identifier"] for c in exported["claims"][0]["clinical_categories"]] == ["D012878"]
+
+
 def test_a_merged_claim_keeps_its_own_trials_categories(session: Session):
     """A merge moves no registry match, so the kept claim's categories are its own until
     its registries are searched again (openspec claims, "Merging duplicate claims")."""

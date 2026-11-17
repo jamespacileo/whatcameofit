@@ -57,14 +57,22 @@ const byLabel = (nodes: Map<string, MeshNode>) => (a: string, b: string) =>
   (nodes.get(a)?.label ?? a).localeCompare(nodes.get(b)?.label ?? b);
 
 /** A descriptor with every descriptor broader than it, at any distance. */
-export function atOrAbove(identifier: string, nodes: Map<string, MeshNode>): Set<string> {
-  const found = new Set<string>([identifier]);
-  const waiting = [identifier];
-  while (waiting.length > 0) {
-    for (const broader of nodes.get(waiting.pop()!)?.broader ?? []) {
-      if (!found.has(broader)) {
-        found.add(broader);
-        waiting.push(broader);
+export function atOrAbove(
+  identifier: string, nodes: Map<string, MeshNode>, edge?: (parent: string, child: string) => void,
+): Set<string> {
+  const found = new Set([identifier]);
+  const waiting: [string, string][] = (nodes.get(identifier)?.tree_numbers ?? []).map(n => [identifier, n]);
+  const seen = new Set<string>();
+  while (waiting.length) {
+    const [child, number] = waiting.pop()!;
+    if (seen.has(number)) continue;
+    seen.add(number);
+    for (const parent of nodes.get(child)?.broader ?? []) {
+      for (const prefix of nodes.get(parent)?.tree_numbers ?? []) {
+        if (!number.startsWith(prefix + ".")) continue;
+        found.add(parent);
+        edge?.(parent, child);
+        waiting.push([parent, prefix]);
       }
     }
   }
@@ -75,15 +83,15 @@ export function atOrAbove(identifier: string, nodes: Map<string, MeshNode>): Set
 export function buildTree(clinical: Clinical | null | undefined, claims: Filed[]): Tree {
   const nodes = new Map((clinical?.nodes ?? []).map((node) => [node.identifier, node]));
   const narrower = new Map<string, string[]>();
-  for (const node of nodes.values()) {
-    for (const broader of node.broader) {
-      narrower.set(broader, [...(narrower.get(broader) ?? []), node.identifier]);
-    }
+  function keepEdge(parent: string, child: string) {
+    const children = narrower.get(parent) ?? [];
+    if (!children.includes(child)) children.push(child);
+    narrower.set(parent, children);
   }
   const filed = new Map<string, Set<string>>();
   for (const claim of claims) {
     for (const category of claim.clinical_categories ?? []) {
-      for (const identifier of atOrAbove(category.identifier, nodes)) {
+      for (const identifier of atOrAbove(category.identifier, nodes, keepEdge)) {
         if (!nodes.has(identifier)) continue;
         if (!filed.has(identifier)) filed.set(identifier, new Set());
         filed.get(identifier)!.add(claim.slug);

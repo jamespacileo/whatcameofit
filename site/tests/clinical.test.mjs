@@ -12,15 +12,15 @@ import {
   topCategories,
 } from "../src/lib/clinical.ts";
 
-const node = (identifier, label, broader = []) => ({ identifier, label, tree_numbers: [], broader });
+const node = (identifier, label, tree_numbers, broader = []) => ({ identifier, label, tree_numbers, broader });
 const clinical = {
   mesh_years: ["2026"],
   nodes: [
-    node("A", "Top one"),
-    node("B", "Top two"),
-    node("C", "Under both", ["A", "B"]),
-    node("D", "Under one", ["A"]),
-    node("E", "Empty top"),
+    node("A", "Top one", ["C01"]),
+    node("B", "Top two", ["C02"]),
+    node("C", "Under both", ["C01.1", "C02.1"], ["A", "B"]),
+    node("D", "Under one", ["C01.2"], ["A"]),
+    node("E", "Empty top", ["C03"]),
   ],
 };
 const claims = [
@@ -61,4 +61,14 @@ test("an export is refused with categories and no year, or a category it places 
     clinicalProblems(clinical, [{ slug: "x", clinical_categories: [{ identifier: "Z", sources: [] }] }]),
     ["it places no node in the tree for: Z"],
   );
+});
+
+test("Wolfram syndrome reaches diabetes only on its metabolic placement", () => {
+  const nodes = [node("M", "Metabolic diseases", ["C18"]), node("I", "Immune diseases", ["C20"]),
+    node("T", "Type 1 diabetes", ["C18.100", "C20.100"], ["M", "I"]),
+    node("W", "Wolfram syndrome", ["C18.100.100"], ["T"])];
+  const filed = (slug, identifier) => ({slug, clinical_categories: [{identifier}]});
+  const tree = buildTree({mesh_years:["2026"], nodes}, [filed("wolfram", "W"), filed("diabetes", "T")]);
+  assert.deepEqual([...tree.claims.get("I")], ["diabetes"]);
+  assert.deepEqual([...tree.claims.get("M")].sort(), ["diabetes", "wolfram"]);
 });

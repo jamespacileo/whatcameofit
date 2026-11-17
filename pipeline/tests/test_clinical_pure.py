@@ -87,6 +87,19 @@ def test_a_descriptor_in_two_places_is_below_both():
     assert VOCABULARY.at_or_above("D003930") == above | {"D003930"}
 
 
+def test_wolfram_does_not_inherit_the_unrelated_immune_placement_of_type_one_diabetes():
+    vocab = Vocabulary(
+        [
+            descriptor("D000001", "Metabolic diseases", ["C18"], []),
+            descriptor("D000002", "Immune diseases", ["C20"], []),
+            descriptor("D000003", "Type 1 diabetes", ["C18.100", "C20.100"], ["D000001", "D000002"]),
+            descriptor("D000004", "Wolfram syndrome", ["C18.100.100"], ["D000003"]),
+        ]
+    )
+    assert vocab.above("D000004") == {"D000003", "D000001"}
+    assert vocab.above("D000003") == {"D000001", "D000002"}
+
+
 def test_missing_names_each_record_the_tree_still_needs():
     """Scenario: Record not yet read"""
     partial = Vocabulary([descriptor("D009765", "Obesity", ["C18.654.726.750.500"], ["D050177"])])

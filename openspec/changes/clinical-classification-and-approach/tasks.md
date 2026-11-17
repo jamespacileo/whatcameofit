@@ -4,11 +4,11 @@
 
 - [x] 0.1 <a id="task-f18"></a>Enforce ownership when writing. Test the two-session interleaving and verify a control where the rule may update its own value. [F18](../../../docs/reviews/2026-11-17-code-review.md#finding-f18) · [Acceptance scenario](specs/health-areas/spec.md#scenario-an-editor-commits-while-a-rule-is-fetching)
 
-- [ ] 0.2 <a id="task-f19"></a>Check current trial-match approval when selecting evidence. Export before and after rejection with the old event retained and compare database and store results. [F19](../../../docs/reviews/2026-11-17-code-review.md#finding-f19) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-once-approved-trial-match-is-rejected)
+- [x] 0.2 <a id="task-f19"></a>Check current trial-match approval when selecting evidence. Export before and after rejection with the old event retained and compare database and store results. [F19](../../../docs/reviews/2026-11-17-code-review.md#finding-f19) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-once-approved-trial-match-is-rejected)
 
-- [ ] 0.3 <a id="task-f20"></a>Choose the current registry snapshot per approved trial. Exercise a removed condition, a retained condition and reversed event order on both export paths. [F20](../../../docs/reviews/2026-11-17-code-review.md#finding-f20) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-newer-trial-snapshot-removes-a-condition)
+- [x] 0.3 <a id="task-f20"></a>Choose the current registry snapshot per approved trial. Exercise a removed condition, a retained condition and reversed event order on both export paths. [F20](../../../docs/reviews/2026-11-17-code-review.md#finding-f20) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-newer-trial-snapshot-removes-a-condition)
 
-- [ ] 0.4 <a id="task-f21"></a>Traverse valid MeSH placements in the pipeline and site. Use Wolfram syndrome/type 1 diabetes for the spurious immune branch and a genuinely multi-placed descriptor as a positive control. [F21](../../../docs/reviews/2026-11-17-code-review.md#finding-f21) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-parent-descriptor-has-an-unrelated-placement)
+- [x] 0.4 <a id="task-f21"></a>Traverse valid MeSH placements in the pipeline and site. Use Wolfram syndrome/type 1 diabetes for the spurious immune branch and a genuinely multi-placed descriptor as a positive control. [F21](../../../docs/reviews/2026-11-17-code-review.md#finding-f21) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-parent-descriptor-has-an-unrelated-placement)
 
 ## 1. The approach rule
 

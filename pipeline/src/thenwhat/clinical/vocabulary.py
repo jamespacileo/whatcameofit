@@ -85,37 +85,52 @@ class Vocabulary:
         identifier = self._by_label.get(_key(label))
         return self._by_id[identifier] if identifier else None
 
-    def above(self, identifier: str) -> frozenset[str]:
-        """Every descriptor broader than this one, at any distance, that is stored."""
-        found: set[str] = set()
-        waiting = [identifier]
-        while waiting:
-            held = self._by_id.get(waiting.pop())
-            for broader in held.broader if held else ():
-                if broader not in found:
-                    found.add(broader)
-                    waiting.append(broader)
-        return frozenset(found)
-
-    def at_or_above(self, identifier: str) -> frozenset[str]:
-        return self.above(identifier) | {identifier}
-
-    def missing(self, identifiers: Iterable[str]) -> list[str]:
-        """The descriptors not stored that the tree above these needs, these included."""
+    def hierarchy(self, identifiers: Iterable[str]) -> tuple[dict[str, set[str]], set[str]]:
+        """Reached edges and unread descriptors, following each placement up its own branch."""
+        parents: dict[str, set[str]] = {}
         missing: set[str] = set()
-        seen: set[str] = set()
-        waiting = list(identifiers)
-        while waiting:
-            identifier = waiting.pop()
-            if identifier in seen:
-                continue
-            seen.add(identifier)
-            held = self._by_id.get(identifier)
+        waiting: list[tuple[str, str]] = []
+        for identifier in identifiers:
+            held = self.get(identifier)
             if held is None:
                 missing.add(identifier)
             else:
-                waiting.extend(held.broader)
-        return sorted(missing)
+                parents.setdefault(identifier, set())
+                waiting.extend((identifier, number) for number in held.tree_numbers)
+        seen: set[tuple[str, str]] = set()
+        while waiting:
+            placement = waiting.pop()
+            if placement in seen:
+                continue
+            seen.add(placement)
+            identifier, number = placement
+            unresolved: set[str] = set()
+            placed = False
+            for broader in self._by_id[identifier].broader:
+                parent = self.get(broader)
+                if parent is None:
+                    unresolved.add(broader)
+                    continue
+                for prefix in parent.tree_numbers:
+                    if number.startswith(prefix + "."):
+                        parents[identifier].add(broader)
+                        parents.setdefault(broader, set())
+                        waiting.append((broader, prefix))
+                        placed = True
+            if not placed and "." in number:
+                missing.update(unresolved)
+        return parents, missing
+
+    def above(self, identifier: str) -> frozenset[str]:
+        return self.at_or_above(identifier) - {identifier}
+
+    def at_or_above(self, identifier: str) -> frozenset[str]:
+        parents, _ = self.hierarchy([identifier])
+        return frozenset(parents) | {identifier}
+
+    def missing(self, identifiers: Iterable[str]) -> list[str]:
+        """The descriptors not stored that the tree above these needs, these included."""
+        return sorted(self.hierarchy(identifiers)[1])
 
     def years(self) -> list[str]:
         """Each MeSH year the stored descriptors were read from, oldest first."""
