@@ -3,7 +3,7 @@
 Every door to a model writes here and checks the same ceiling.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import func, select
@@ -27,11 +27,14 @@ def spent_this_month(session: Session, now: datetime) -> Decimal:
 
 
 def check_ceiling(session: Session, now: datetime, monthly_budget_usd: Decimal) -> None:
-    """Refuse a call when this month's recorded cost has reached the ceiling."""
+    """Refuse a call when this month's recorded cost has reached the ceiling. No model
+    can be asked until the next month starts."""
     if spent_this_month(session, now) >= monthly_budget_usd:
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         raise BudgetExceeded(
             f"The monthly ceiling of ${monthly_budget_usd} for language model"
-            " calls has been reached. No call was made."
+            " calls has been reached. No call was made.",
+            until=(month_start + timedelta(days=32)).replace(day=1),
         )
 
 

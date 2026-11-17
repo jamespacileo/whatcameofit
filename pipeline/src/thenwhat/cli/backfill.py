@@ -543,8 +543,6 @@ def load_trials_command(
                 condition=condition,
                 changes_only=changes_only,
                 now=lambda: datetime.now(UTC),
-                before_request=lambda: allowances.claim(registry.name),
-                refused=lambda wait: allowances.refused(registry.name, wait),
             )
     since = f" updated since {report.changes_since}" if report.changes_since else ""
     out.print(

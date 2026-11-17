@@ -23,12 +23,12 @@
 ## 4. One call policy
 
 - [ ] 4.1 Add `tenacity`, `respx` and `time-machine` to `pipeline/pyproject.toml`; verify `uv sync` and `make check` pass
-- [ ] 4.2 Write `work/calls.py`: bounded retries with jitter, `Retry-After` as seconds or as a date, a ceiling on any wait, and `CannotAsk` with a time; verify with `respx` tests for the four scenarios of "A stated wait is honoured in either form and bounded" and "Try later is told apart from not found"
-- [ ] 4.3 Write `work/pause.py`: a pause kept in `source_allowance_use`, checked before every request, and requests counted for every command; verify with tests for "A pause is seen by every process" and "Every command's requests count against the source's allowance"
-- [ ] 4.4 Put `sources/base.py` behind the policy and delete its own retry loop; verify the recorded-fixture tests of every source client pass unchanged
-- [ ] 4.5 Put `llm/client.py` and `llm/decisions.py` behind the policy, and make a backend that cannot be asked raise `CannotAsk` apart from a failed decision; verify with tests for every scenario of the `decision-steps` delta
-- [ ] 4.6 Make the runner stop on `CannotAsk` from any call of any step, with no attempt counted; verify with tests for both scenarios of "A provider that cannot be asked stops the run"
-- [ ] 4.7 Note the retry and pause behaviour per source in `docs/sources.md`; verify each source's entry states its ceiling and where its pause is kept
+- [x] 4.2 Write `work/calls.py`: bounded retries with jitter, `Retry-After` as seconds or as a date, a ceiling on any wait, and `CannotAsk` with a time; verify with `respx` tests for the four scenarios of "A stated wait is honoured in either form and bounded" and "Try later is told apart from not found"
+- [x] 4.3 Write `work/pause.py`: a pause kept in `source_allowance_use`, checked before every request, and requests counted for every command; verify with tests for "A pause is seen by every process" and "Every command's requests count against the source's allowance"
+- [x] 4.4 Put `sources/base.py` behind the policy and delete its own retry loop; verify the recorded-fixture tests of every source client pass unchanged
+- [x] 4.5 Put `llm/client.py` and `llm/decisions.py` behind the policy, and make a backend that cannot be asked raise `CannotAsk` apart from a failed decision; verify with tests for every scenario of the `decision-steps` delta
+- [x] 4.6 Make the runner stop on `CannotAsk` from any call of any step, with no attempt counted; verify with tests for both scenarios of "A provider that cannot be asked stops the run"
+- [x] 4.7 Note the retry and pause behaviour per source in `docs/sources.md`; verify each source's entry states its ceiling and where its pause is kept
 
 ## 5. Measured by construction
 

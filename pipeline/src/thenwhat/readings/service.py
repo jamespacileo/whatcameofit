@@ -30,7 +30,7 @@ from thenwhat.domain import (
 )
 from thenwhat.events.trial_facts import read_trial
 from thenwhat.events.trial_records import newest_registry_record
-from thenwhat.llm.errors import BudgetExceeded, LlmError
+from thenwhat.llm.errors import BudgetExceeded, LlmError, ModelCannotBeAsked
 from thenwhat.readings.rules import FIELD_OF_KIND, Outcome, Proposed, Refusal, input_hash, refusal
 
 if TYPE_CHECKING:
@@ -369,10 +369,11 @@ def read_trials(
     trial whose stored read is of this record under these instructions is not asked
     about.
 
-    The monthly spend ceiling is looked at before each group. When it is reached the run
-    stops there and says so: the trials it did not reach keep what they had, which for a
-    trial never read is no reading. A trial whose call fails otherwise is reported and
-    the run goes on. A model that is not configured is raised: nothing can be read."""
+    The monthly spend ceiling is looked at before each group. When it is reached, or the
+    model cannot be asked, the run stops there and says so: the trials it did not reach
+    keep what they had, which for a trial never read is no reading. A trial whose call
+    fails otherwise is reported and the run goes on. A model that is not configured is
+    raised: nothing can be read."""
     run = ReadingsRun()
     # A trial two claims share is read once, as the first of them holds it.
     once: dict[tuple[str, str], TrialRecord] = {}
@@ -393,7 +394,7 @@ def read_trials(
                 prompts=[shown(trial) for trial in group],
                 output_type=ReadingsAnswer,
             )
-        except BudgetExceeded as error:
+        except (BudgetExceeded, ModelCannotBeAsked) as error:
             run.stopped = str(error)
             run.unread = [later.trial_id for later in todo[start:]]
             break

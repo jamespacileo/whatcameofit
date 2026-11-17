@@ -241,6 +241,21 @@ def test_provider_rejection_is_reported_without_the_credential(
     assert "401" in str(raised.value)
 
 
+def test_a_short_wait_the_model_asks_for_is_waited_out(session: Session, fake_time):
+    """Scenario: The backend asks for a short wait (openspec decision-steps)"""
+    slow_down = ModelHTTPError(429, "scripted-model", headers={"Retry-After": "5"})
+    client = Llm(
+        session,
+        settings(),
+        model=scripted(slow_down, {"word": "ok"}),
+        now=Clock(NOVEMBER),
+        time=fake_time,
+    )
+
+    assert ask(client).word == "ok"
+    assert fake_time.slept and fake_time.slept[0] >= 5
+
+
 def test_output_that_never_validates_names_the_failing_fields(session: Session):
     with pytest.raises(LlmOutputInvalid) as raised:
         ask(llm(session, scripted({"word": "far too long"})))

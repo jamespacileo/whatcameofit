@@ -1,5 +1,7 @@
 """What a backfill command refuses, in words for the operator."""
 
+from datetime import datetime
+
 
 class BackfillError(Exception):
     """A backfill command could not do what was asked."""
@@ -30,21 +32,32 @@ class SourceStop(Exception):
     attempt is counted."""
 
 
-class AllowanceUsedUp(SourceStop):
+class CannotAsk(SourceStop):
+    """A source or a model cannot be asked: it is paused, its allowance or quota is used
+    up, its key was refused, the spend ceiling is reached, or it kept failing for causes
+    that pass. That says nothing about the record it was asked for. `until` is when it
+    may be asked again, where that is known (openspec source-clients, decision-steps)."""
+
+    def __init__(self, message: str, *, until: datetime | None = None) -> None:
+        super().__init__(message)
+        self.until = until
+
+
+class AllowanceUsedUp(CannotAsk):
     """The source's allowance for the period is spent."""
 
 
-class SpendCeilingReached(SourceStop):
+class SpendCeilingReached(CannotAsk):
     """The month's recorded model cost has reached the ceiling. No call was made."""
 
 
-class ModelUnreachable(SourceStop):
+class ModelUnreachable(CannotAsk):
     """A call to the model did not get through. That says nothing about the record it
     was for, so the run ends with the record still due and no attempt counted."""
 
 
-class SourcePaused(SourceStop):
-    """The source said "too many requests" and is not asked until the pause has passed."""
+class SourcePaused(CannotAsk):
+    """The source said it cannot be asked before a time, and is sent nothing until then."""
 
 
 class ReaderUnavailable(SourceStop):
