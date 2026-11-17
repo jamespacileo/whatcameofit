@@ -64,6 +64,59 @@ When the substance registry lists no substance under any of an intervention's na
 - **WHEN** neither the substance registry nor the second source lists any of the names
 - **THEN** nothing is kept, the command says that neither lists it, and the trial registry is searched as before
 
+### Requirement: Stored trials that list the intervention are candidates
+Besides the trial registry's own search, the system SHALL look for an intervention among the registry trials it holds (registry-corpus), with no network request and no model. A stored trial SHALL be found when one of its intervention entries names the intervention: the entry's name or one of the other names it lists equals one of the intervention's names, a development code kept for it, or its substance's name. Names SHALL be compared whole, ignoring only letter case, runs of spaces and trade mark signs. An entry that writes several names, apart by commas or semicolons or with one in brackets ("Braftovi, PF-07263896, LGX818", "Zidesamtinib (NVL-520)"), SHALL count as naming each; no name SHALL be found inside a longer name. A name that no stored entry names SHALL be looked for as a whole word in the stored trials' titles and acronyms and at the start of the sponsor's study identifier. A name that joins several treatments SHALL find the stored trials that have an entry for every treatment it joins; a part that names a kind of care and no product ("standard chemotherapy") SHALL need no entry. When more than a hundred stored trials are found for a name, only those whose conditions or title share a telling word with the claim's indication SHALL be kept, and none when those are still more than a hundred: the registry's own search, which ranks, handles a broad name.
+
+A stored trial found this way that the registry's search did not return SHALL be read from the registry in full and SHALL then be a candidate match like any other: scored with the same question, rejected near zero and approved by the same rule, and never approved for being listed. One the registry no longer answers for SHALL NOT become a candidate. A candidate that already exists SHALL be left as it is and SHALL NOT be read again.
+
+#### Scenario: Trial filed under a code that lists the name
+- **WHEN** a stored trial's intervention entry is named by a development code and lists the claim's intervention among its other names, and the registry's search for the claim did not return it
+- **THEN** the trial is read from the registry in full, stored as a candidate match and scored for the claim's indication
+
+#### Scenario: Stored trial for another condition
+- **WHEN** a stored trial lists the intervention and is for a condition other than the claim's indication
+- **THEN** it is a candidate, it is scored as any candidate is, and the rule that approves a trial scored high for the indication does not approve it
+
+#### Scenario: Name inside a longer name
+- **WHEN** a stored entry is named "zentalimab pegol" and the intervention is "zentalimab"
+- **THEN** the trial is not found by that entry
+
+#### Scenario: Combination whose parts are filed apart
+- **WHEN** the intervention is "zanzalintinib plus Tecentriq" and a stored trial has one entry named XL092 and another that lists Tecentriq among its other names, and other stored trials list zanzalintinib as another name of XL092
+- **THEN** the trial is a candidate
+
+#### Scenario: Name in a study identifier only
+- **WHEN** no stored entry names "BNT211" and a stored trial's sponsor identifier is "BNT211-01"
+- **THEN** the trial is a candidate
+
+#### Scenario: Broad name
+- **WHEN** more than a hundred stored trials list a name, and more than a hundred of them share a telling word with the claim's indication
+- **THEN** none becomes a candidate through the stored trials
+
+#### Scenario: No stored trials
+- **WHEN** the system holds no registry trial
+- **THEN** resolution searches the registry as before
+
+### Requirement: A name the stored trials file under one other name is searched under it
+When stored intervention entries list one of the intervention's names among their other names, the entry's own name, without dose, form or route, is what a sponsor files the treatment under. The system SHALL take such a name as another name of the intervention only when every entry that lists the intervention's name agrees on one name, or on one name and its forms as for a substance; an entry that joins several products, an entry whose own name is a control or a description, and an entry that is not a drug, biological, genetic, combination or supplement entry SHALL say nothing. The name taken SHALL be searched in the trial registry as a name of the intervention and SHALL be named in the question put to the match scoring, together with the substance's name. It SHALL NOT be stored or shown as a name of the intervention, and no model SHALL supply it. A name the entries file under two names SHALL give none.
+
+To find stored candidates only, the system SHALL also use each name that at least two stored trials file the intervention's name under, whether or not the entries agree: a wrong one adds a candidate that is scored, and nothing else. Such a name SHALL NOT be searched in the trial registry and SHALL NOT be named in the question.
+
+#### Scenario: Generic name filed under a development code
+- **WHEN** every stored entry that lists "sasanlimab" among its other names is named PF-06801591
+- **THEN** PF-06801591 is searched in the trial registry as a name, the scoring is told it is another name of the intervention, and the intervention's synonyms are unchanged
+
+#### Scenario: Name filed under two names
+- **WHEN** one stored entry named EX-900 lists the intervention's name and another, named "Arm A chemotherapy", lists it too
+- **THEN** no other name is taken, searched or told to the scoring
+
+### Requirement: Whoever scores a trial sees the other names it lists
+The trial registry's search SHALL ask for the other names of each intervention, and the record put to the match scoring SHALL show them with the intervention they belong to, at most eight for an intervention. A sponsor files a trial under one name and lists the generic name, the brand and the development codes there; without them a trial of the claim's intervention filed under a code reads as a trial of something else.
+
+#### Scenario: Trial filed under a code
+- **WHEN** a candidate's intervention is named NMRA-335140 and lists navacaprant among its other names
+- **THEN** the record shown for scoring names navacaprant beside NMRA-335140
+
 ### Requirement: The brand source is credited with the statement it asks for
 While the source of brands is recorded as accepted, the export's list of data sources SHALL name it with its address, and the site SHALL show, where it lists its data sources, the statement the source's terms ask an application to carry, word for word.
 
