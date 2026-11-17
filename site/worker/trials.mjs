@@ -6,7 +6,7 @@ import { makeRegistry } from "./registry.mjs";
 import { SITE } from "../site.config.mjs";
 import {
   NO_PHASE, NO_REPORT, NOT_STATED, PAGE_LABELS, SELECTED_FIELDS, STOPPED_REASON,
-  phaseWords, registryDate, resultsPhrase, statePhrase,
+  phaseWords, registryDate, resultsPhrase, sponsorIsPerson, sponsorName, statePhrase,
 } from "../src/lib/trial-page.mjs";
 
 const DAY = 86400000;
@@ -88,7 +88,8 @@ function content(copy, id, claims) {
     ["Study type", label(design.studyType)],
     ["Enrolment", count],
     ["Conditions", strings(p.conditionsModule?.conditions).join(", ") || "Not reported"],
-    ["Lead sponsor", text(p.sponsorCollaboratorsModule?.leadSponsor?.name) || "Not reported"],
+    // A sponsor who is a person is not named, on this page or the plain one.
+    ...(sponsorIsPerson(p.sponsorCollaboratorsModule) ? [] : [["Lead sponsor", sponsorName(p.sponsorCollaboratorsModule) ?? "Not reported"]]),
   ];
   const interventions = items(p.armsInterventionsModule?.interventions).filter(i => text(i?.name));
   const outcomes = items(p.outcomesModule?.primaryOutcomes).filter(o => text(o?.measure));
@@ -132,15 +133,15 @@ function plainContent(copy, id) {
   const count = Number.isFinite(enrollment?.count) && enrollment.count >= 0 ? `${enrollment.count}${basis ? ` (${basis})` : ""}` : NOT_STATED;
   const conditions = strings(p.conditionsModule?.conditions);
   const interventions = items(p.armsInterventionsModule?.interventions).filter(i => text(i?.name));
-  const sponsor = p.sponsorCollaboratorsModule?.leadSponsor;
+  const sponsors = p.sponsorCollaboratorsModule;
   const list = values => values.length ? `<ul class="trial-list">${values.map(value=>`<li>${value}</li>`).join("")}</ul>` : escape(NOT_STATED);
   const facts = [
     [PAGE_LABELS.phase, escape(phaseWords(design.phases) ?? NO_PHASE)],
     [PAGE_LABELS.enrolment, escape(count)],
     [PAGE_LABELS.conditions, list(conditions.map(escape))],
     [PAGE_LABELS.interventions, list(interventions.map(i => `${text(i.type) ? `${escape(label(i.type))}: ` : ""}${escape(i.name)}`))],
-    // A sponsor the registry classes as a person is not named.
-    ...(sponsor?.class === "INDIVIDUAL" ? [] : [[PAGE_LABELS.sponsor, escape(text(sponsor?.name) || NOT_STATED)]]),
+    // A sponsor who is a person is not named: one rule for both pages (trial-page.mjs).
+    ...(sponsorIsPerson(sponsors) ? [] : [[PAGE_LABELS.sponsor, escape(sponsorName(sponsors) ?? NOT_STATED)]]),
   ];
   const stopped = text(status.whyStopped).trim();
   const retrieved = new Date(copy.at).toISOString().slice(0,10);

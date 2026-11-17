@@ -72,11 +72,15 @@ When a record's phase is the registry's "not applicable" or is empty, the page S
 - **THEN** the page reads that the registry gives no phase for this study
 
 ### Requirement: Sponsor and reason for stopping
-A lead sponsor that the registry classes as an individual SHALL NOT be shown. When a record states why a trial was stopped, the page SHALL show that statement in the registry's words, attributed to the registry record, and SHALL NOT reword it.
+A lead sponsor who is a person SHALL NOT be shown, on the page of a trial a claim cites as on the plain page. A sponsor is a person when the registry classes it as an individual, which its API writes "INDIV", or when the record's responsible party is a sponsor-investigator, whatever the class: the rule `trial-facts` uses, held once for the Worker and once for the bulk load. When a record states why a trial was stopped, the page SHALL show that statement in the registry's words, attributed to the registry record, and SHALL NOT reword it.
 
 #### Scenario: A trial sponsored by a person
 - **WHEN** a record's lead sponsor is classed as an individual
 - **THEN** the page shows no sponsor
+
+#### Scenario: A sponsor-investigator classed as other
+- **WHEN** a record's lead sponsor is classed "OTHER" and its responsible party is a sponsor-investigator
+- **THEN** the page shows no sponsor and no name of the investigator
 
 #### Scenario: A terminated trial with a stated reason
 - **WHEN** a terminated trial's record states "Sponsor decision"
