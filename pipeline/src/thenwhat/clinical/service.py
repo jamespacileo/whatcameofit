@@ -17,6 +17,7 @@ from thenwhat.clinical.categories import Category, Derived, derive
 from thenwhat.clinical.topics import (
     TOPIC_DESCRIPTORS,
     DerivedTopic,
+    configuration_problems,
     derived_topics,
     mapped_descriptors,
     uncovered,
@@ -286,3 +287,26 @@ def suggestion_line(session: Session, claim: Claim) -> str:
     )
     filed = VERTICALS.get(claim.vertical, claim.vertical)
     return f"Health area suggested: {listed}. Filed under: {filed}."
+
+
+def prepared_line(session: Session, claims: Sequence[Claim]) -> str:
+    """One line for `thenwhat prepare`: how many of the claims it handled are filed under
+    a group their clinical categories do not derive. Nothing is changed."""
+    vocabulary = stored_vocabulary(PostgresRecords(session))
+    if configuration_problems(vocabulary):
+        return (
+            "Clinical categories not compared with verticals: the topic mapping's MeSH"
+            f" records are not read; {TREE_FIRST}."
+        )
+    differing = len(compare(session, claims, vocabulary).disagreeing)
+    if not differing:
+        return "No claim prepared is filed under a group its clinical categories do not derive."
+    filed = (
+        "is filed under a group its clinical categories do"
+        if differing == 1
+        else "are filed under a group their clinical categories do"
+    )
+    return (
+        f"{differing} of the {len(claims)} claims prepared {filed} not derive;"
+        " `thenwhat clinical compare --disagreeing` lists them."
+    )

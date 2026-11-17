@@ -18,6 +18,7 @@ from thenwhat.clinical.service import (
     clinical_of,
     compare,
     coverage,
+    prepared_line,
     read_tree,
     stored_vocabulary,
 )
@@ -280,6 +281,22 @@ def test_the_comparison_counts_every_claim_once(session: Session):
     )
     # Nothing was filed anew.
     assert {claim.vertical for claim in claims} == {"skin-and-hair"}
+
+
+def test_prepare_is_told_how_many_claims_disagree(session: Session, monkeypatch):
+    """Scenario: Prepare reports disagreements"""
+    claims = three_claims(session)
+
+    assert "the topic mapping's MeSH records are not read" in prepared_line(session, claims)
+
+    monkeypatch.setattr("thenwhat.clinical.service.configuration_problems", lambda vocabulary: [])
+    assert prepared_line(session, claims) == (
+        "1 of the 3 claims prepared is filed under a group its clinical categories do not"
+        " derive; `thenwhat clinical compare --disagreeing` lists them."
+    )
+    assert prepared_line(session, claims[:1]) == (
+        "No claim prepared is filed under a group its clinical categories do not derive."
+    )
 
 
 # --- the commands ------------------------------------------------------------------------

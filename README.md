@@ -214,6 +214,8 @@ Two claims for one intervention and indication are merged, not archived: `thenwh
 
 `thenwhat claim approaches` sets claims' approaches by rule from the registry's intervention types (the table is in `pipeline/src/thenwhat/claims/approach_rule.py`); `thenwhat fetch` does the same for the one claim it reads. An approach set by a person, the seed or an assistant is never changed. `--dry-run` reports what would change and how often the rule agrees with approaches it may not write, and changes nothing; `--unset` lists each claim with approved trials that the rule gave no approach, and why.
 
+Clinical categories are a claim's MeSH descriptors, derived from its approved trial records and its papers' index records; nothing is stored per claim. `thenwhat clinical tree` reads from NLM the MeSH record of every category in use, of every descriptor the topic mapping names (`pipeline/src/thenwhat/clinical/topics.py`) and of each broader descriptor; `thenwhat fetch` does the same for the one claim it reads. `thenwhat clinical categories` says how many claims have a category and from what, and with a slug lists that claim's. `thenwhat clinical compare` compares the topics those categories derive with the vertical each claim is filed under: `--disagreeing` lists the claims filed under another group, `--tsv` prints them as rows for the fault tab of the failed-address sheet, and `--uncovered` lists the categories no topic covers. None of them changes a vertical.
+
 ### CSV import
 
 `thenwhat claim import-csv claims.csv` imports every row or none. Inside the container the file must be reachable, for example `docker compose run --rm -v "$PWD/data/seed:/seed" pipeline thenwhat claim import-csv /seed/claims.csv`.
