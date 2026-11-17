@@ -257,11 +257,11 @@ def trials_fetched_at(session: Session, one: Slice) -> str:
 
 def trials_changed(session: Session, one: Slice) -> bool:
     """Whether a trial of it was fetched from the registry again since the slice was last
-    pushed: a registry update the store does not hold yet. False for a slice pushed
-    before this was noted, or never pushed."""
-    if not one.trials_at or "in_store" not in one.done:
+    pushed: a registry update the store does not hold yet. A previously pushed slice without a baseline gets one
+    incremental check against its saved record hashes."""
+    if "in_store" not in one.done:
         return False
-    return trials_fetched_at(session, one) > one.trials_at
+    return trials_fetched_at(session, one) > (one.trials_at or "")
 
 
 def pubmed_counts(session: Session, one: Slice) -> tuple[int, int, int]:

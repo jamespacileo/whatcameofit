@@ -10,11 +10,11 @@
 
 - [ ] 0.4 <a id="task-f04"></a>Reconcile referenced keys and hashes with local uploads and existing destination objects. Exercise absent folder, absent object, hash mismatch and already-uploaded cases in a disposable cutover. [F04](../../../docs/reviews/2026-11-17-code-review.md#finding-f04) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-source-document-is-missing-at-cutover)
 
-- [ ] 0.5 <a id="task-f03"></a>Scope exceptions to the fields they explain. Run the duplicate-article fixture through the cutover comparison both alone and with the altered status. [F03](../../../docs/reviews/2026-11-17-code-review.md#finding-f03) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-duplicate-article-accompanies-a-status-change)
+- [x] 0.5 <a id="task-f03"></a>Scope exceptions to the fields they explain. Run the duplicate-article fixture through the cutover comparison both alone and with the altered status. [F03](../../../docs/reviews/2026-11-17-code-review.md#finding-f03) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-duplicate-article-accompanies-a-status-change)
 
-- [ ] 0.6 <a id="task-f05"></a>Include trial-paper changes in the bulk reuse check. Add only a paper, rerun the default build and compare it with a fresh build. [F05](../../../docs/reviews/2026-11-17-code-review.md#finding-f05) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-trial-paper-is-the-only-change)
+- [x] 0.6 <a id="task-f05"></a>Include trial-paper changes in the bulk reuse check. Add only a paper, rerun the default build and compare it with a fresh build. [F05](../../../docs/reviews/2026-11-17-code-review.md#finding-f05) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-trial-paper-is-the-only-change)
 
-- [ ] 0.7 <a id="task-f11"></a>Handle previously completed slices lacking a baseline. Push the dated fixture twice by the normal route and verify the newer trial lands once. [F11](../../../docs/reviews/2026-11-17-code-review.md#finding-f11) · [Acceptance scenario](specs/ingest-merge/spec.md#scenario-a-completed-slice-predates-fetch-timestamps)
+- [x] 0.7 <a id="task-f11"></a>Handle previously completed slices lacking a baseline. Push the dated fixture twice by the normal route and verify the newer trial lands once. [F11](../../../docs/reviews/2026-11-17-code-review.md#finding-f11) · [Acceptance scenario](specs/ingest-merge/spec.md#scenario-a-completed-slice-predates-fetch-timestamps)
 
 ## 1. Decisions before any build
 

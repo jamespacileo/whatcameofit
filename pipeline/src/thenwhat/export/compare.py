@@ -156,11 +156,12 @@ class Comparison:
         that differs with the places it differs at."""
         if self.same:
             return [f"The two exports are the same: {self.claims_first} claims, byte for byte."]
-        claims = sum(1 for difference in self.differences if difference.claim)
+        claims = len({d.part for d in self.differences if d.claim})
+        other = sum(not d.claim for d in self.differences)
         lines = [
             f"The two exports differ: {claims} of {self.claims_first} claims"
             f" ({self.claims_second} in the second),"
-            f" and {len(self.differences) - claims} other parts."
+            f" and {other} other parts."
             f" {len(self.differences) - len(self.unexplained)} have a named cause,"
             f" {len(self.unexplained)} do not."
         ]
@@ -195,14 +196,13 @@ def _only_synonym_order(ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
 
 
 def compare(
-    first: dict[str, Any], second: dict[str, Any], *, known: dict[str, str] | None = None
+    first: dict[str, Any], second: dict[str, Any], *, known: dict[str, dict[str, str]] | None = None
 ) -> Comparison:
     """Compare two exports, each as parsed JSON. They are the same exactly when their
     canonical bytes are.
 
-    `known` names, by slug, a cause the caller knows a claim may differ for (something
-    the first export's records hold that the second's store cannot). It is given to a
-    claim that does differ and has no cause the comparison names itself."""
+    `known` maps discarded article URLs to their retained URLs by claim. Only the
+    differences that collapsing those specific articles produces are explained."""
     known = known or {}
     ours, theirs = canonical(first), canonical(second)
     differences: list[Difference] = []
@@ -217,13 +217,36 @@ def compare(
             where = "the first" if slug in our_claims else "the second"
             differences.append(Difference(slug, True, [f"only in {where}"]))
             continue
-        places = _places(our_claims[slug], their_claims[slug], "claim")
-        if places:
-            cause = (
-                SYNONYM_ORDER
-                if _only_synonym_order(our_claims[slug], their_claims[slug])
-                else known.get(slug)
-            )
-            differences.append(Difference(slug, True, places, cause))
+        original, actual = our_claims[slug], their_claims[slug]
+        if original == actual:
+            continue
+        expected = original
+        if aliases := known.get(slug):
+            present = {article["url"] for article in actual["articles"]}
+            removed = {
+                url: kept for url, kept in aliases.items() if url not in present and kept in present
+            }
+            if removed:
+                # The store retains the first article and points its dependants at it.
+                expected = _claim(original)
+                expected["articles"] = [a for a in expected["articles"] if a["url"] not in removed]
+                for entry in [*expected["promises"], *expected.get("reported_statements", [])]:
+                    url = entry["article_url"]
+                    entry["article_url"] = removed.get(url, url)
+                for org in expected.get("organisations", []):
+                    for role in org["roles"]:
+                        if "article_urls" in role:
+                            role["article_urls"] = list(
+                                dict.fromkeys(removed.get(u, u) for u in role["article_urls"])
+                            )
+                expected = _claim(expected)
+                places = _places(original, expected, "claim")
+                if places:
+                    cause = "the data: the database holds two source articles of this claim at one address key; the store keeps the first"
+                    differences.append(Difference(slug, True, places, cause))
+        residual = _places(expected, actual, "claim")
+        if residual:
+            cause = SYNONYM_ORDER if _only_synonym_order(expected, actual) else None
+            differences.append(Difference(slug, True, residual, cause))
     assert bool(differences) == (canonical_bytes(first) != canonical_bytes(second))
     return Comparison(len(our_claims), len(their_claims), differences)
