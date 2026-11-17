@@ -2,10 +2,10 @@
 
 ## 1. The approach rule
 
-- [ ] 1.1 Add `claims/approach_rule.py` with the registry-type table and the pure `approach_from_registry`, importing `registry_types` from `terms/kinds.py`. Verify with pure tests for: one mapped type, types that do not agree, an unmapped type, no type found, and a configuration test that every table value is a configured approach.
-- [ ] 1.2 Add `approach_decided_by` and `approach_basis` to the claim model with a new migration (not an edit of an existing one). Verify the migration applies and reverts on a branch-specific test database.
-- [ ] 1.3 Record who set the approach in `claim add`, `claim edit` (including `--as-assistant`), CSV import and the seed loader; clearing an approach clears both columns. Verify with session tests against the test database for each path.
-- [ ] 1.4 Add the session function that applies the rule to one claim: fills an empty approach, updates or clears one a rule set, leaves any other. Verify with session tests using recorded trial payloads for each scenario of "A rule never overwrites an approach set otherwise".
+- [x] 1.1 Add `claims/approach_rule.py` with the registry-type table and the pure `approach_from_registry`, importing `registry_types` from `terms/kinds.py`. Verify with pure tests for: one mapped type, types that do not agree, an unmapped type, no type found, and a configuration test that every table value is a configured approach.
+- [x] 1.2 Add `approach_decided_by` and `approach_basis` to the claim model with a new migration (not an edit of an existing one). Verify the migration applies and reverts on a branch-specific test database.
+- [x] 1.3 Record who set the approach in `claim add`, `claim edit`, CSV import and the seed loader; clearing an approach clears both columns. Verify with session tests against the test database for each path.
+- [x] 1.4 Add the session function that applies the rule to one claim: fills an empty approach, updates or clears one a rule set, leaves any other. Verify with session tests using recorded trial payloads for each scenario of "A rule never overwrites an approach set otherwise".
 
 ## 2. Running the approach rule
 
