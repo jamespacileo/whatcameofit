@@ -371,18 +371,14 @@ When Time Travel cannot help (the history has run out, or the database is gone),
    ```bash
    uv run thenwhat store build <store.sqlite> --payloads <folder>
    ```
-3. Write the SQL: rows only, parents first, no transactions or schema, statements under 90 KB, files cut at 50 MB, with `manifest.json`. The last three files rebuild the search tables.
+3. Run the cut-over on the build's folder. It is the same command as the first fill, and does the dump, the strict replay, the load, the checksums, the payload objects and the bulk file in order (above, "Cut-over: one command"):
    ```bash
-   uv run thenwhat store dump <store.sqlite> <sql-folder> --payloads <folder>
+   make store-cutover ENV=preview STORE_DIR=<the build's folder>
    ```
-4. Into an empty database with the migrations applied and its jurisdiction read back: upload the payload folder to R2 under the same keys, then load and count.
-   ```bash
-   node store/ingest/scripts/import-folder.mjs <sql-folder> --remote
-   ```
-   After a load by hand, `uv run thenwhat store check <manifest.json> <counts.json>` does the count.
-5. Keep `<store.sqlite>.pushed.json` with the file: `thenwhat backfill push --state <it>` then hands over only what changed since the build.
+   By hand, for the hot file alone: `node store/ingest/scripts/dump-for-import.mjs <store.hot.sqlite> <sql-folder>/store.sql --rows-a-file 60000`, then `check-dump.mjs <sql-folder>`, then `import-folder.mjs <sql-folder> --remote`, which counts every table against the dump's manifest, then `checksum-d1.mjs`. The pipeline's own `store dump` and `store check` are retired.
+4. Keep `<store.sqlite>.pushed.json` with the file: `thenwhat backfill push --state <it>` then hands over only what changed since the build.
 
-Not tested: whether rebuilding `link_lead_fts` on D1 fits its 30 seconds for a query. The schema's triggers have already filled that table as the rows arrived, so if that file fails it can be left out; the load stops there, and the count is then run by hand.
+The search tables are filled by the schema's triggers as the rows arrive; the dump holds no statement that rebuilds them.
 
 ### Deploying the ingest service
 
