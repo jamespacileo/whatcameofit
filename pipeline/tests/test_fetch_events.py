@@ -29,6 +29,7 @@ from thenwhat.events.manual import DuplicateEvent, add_manual_event
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.crossref import Notice
+from thenwhat.sources.people import without_people
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
 ORIGIN_DOI = "10.1000/origin"
@@ -179,7 +180,7 @@ def test_trial_event_from_an_approved_match_is_approved_by_rule(session: Session
             NOW,
         )
         assert event.entity_match_id == match.id
-        assert event.raw_payload == study and event.fetched_at == NOW
+        assert event.raw_payload == without_people(study) and event.fetched_at == NOW
     assert events(session)[0].trial_phases == [TrialPhase.PHASE_2.value]
 
 

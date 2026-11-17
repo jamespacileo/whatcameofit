@@ -5,21 +5,27 @@ import json
 import os
 import re
 import subprocess
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
 import httpx
 import typer
+from sqlalchemy.orm import Session
 
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.export import STORE_SQL, reading_session
+from thenwhat.cli.session import settings_or_exit
+from thenwhat.db.session import make_engine
+from thenwhat.export.parallel import read_only
 from thenwhat.store.build import BuildFailed, build, merge_into, read_delta, write_delta
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
 from thenwhat.store.inbox import InboxFailed, clear, fold
+from thenwhat.store.people import FIELDS, PROOF_SQL, prove_file, prove_file_objects, strip
 from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
@@ -526,3 +532,59 @@ def clear_inbox_command(
         " in D1 until their processing is done.",
         markup=False,
     )
+
+
+@backfill_app.command("strip-event-people")
+def strip_event_people_command(
+    apply: Annotated[
+        bool, typer.Option("--apply", help="Write the records without people; else only count.")
+    ] = False,
+) -> None:
+    """Count the people named in the registry records stored with evidence events and
+    registry trials (officials, contacts, investigators, a sponsor who is a person) and,
+    with --apply, store each record without them. Running it again changes nothing."""
+    engine = make_engine(settings_or_exit().database_url)
+    with Session(engine) as session:
+        if not apply:
+            read_only(session)  # counting writes nothing, and the database refuses it
+        report = strip(session, apply=apply)
+        session.rollback()
+    for table in report.before:
+        out.print(
+            f"{table}: {report.rows[table]:,} registry records,"
+            f" {report.changed[table]:,} naming a person"
+            + (" (written without)" if apply else " (counted only; --apply writes)"),
+            markup=False,
+        )
+        for name in FIELDS:
+            out.print(
+                f"  {name}: {report.before[table][name]:,} before,"
+                f" {report.after[table][name]:,} after",
+                markup=False,
+            )
+    out.print(f'Prove it: psql "$DATABASE_URL" -f {PROOF_SQL}', markup=False)
+
+
+@store_app.command("prove-no-people")
+def prove_no_people_command(
+    files: Annotated[list[Path], typer.Argument(help="Store files: the hot and the bulk one.")],
+    payloads: Annotated[
+        list[Path] | None,
+        typer.Option("--payloads", help="Folders of payload objects to read too."),
+    ] = None,
+) -> None:
+    """Count the people the payloads of store files and their objects on disk name. Exits
+    with 1 when any is found."""
+    found: Counter[str] = Counter()
+    for file in files:
+        if not file.is_file():
+            err.print(f"No store file at {file}.")
+            raise typer.Exit(code=1)
+        found.update({f"{file.name}: {k}": v for k, v in prove_file(file).items()})
+    for folder in payloads or []:
+        found.update({f"{folder}: {k}": v for k, v in prove_file_objects(folder).items()})
+    for name, count in sorted(found.items()):
+        err.print(f"{name}: {count:,}", markup=False)
+    if found:
+        raise typer.Exit(code=1)
+    out.print("No person is named in these files.", markup=False)

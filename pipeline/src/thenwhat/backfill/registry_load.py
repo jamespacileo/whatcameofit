@@ -17,6 +17,7 @@ from thenwhat.backfill.trial_names import indication_words, name_under_test
 from thenwhat.db.models import RegistryLoad, RegistryTrial
 from thenwhat.sources.base import SourceThrottled
 from thenwhat.sources.clinicaltrials import TrialPage
+from thenwhat.sources.people import sponsored_by_a_person, without_people
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 
@@ -146,53 +147,6 @@ def trial_fields(study: dict[str, Any]) -> dict[str, Any]:
 
 # The registry's API writes the class of a person as INDIV; INDIVIDUAL is its name for the
 # same class elsewhere and is treated alike.
-PERSON_CLASSES = frozenset({"INDIV", "INDIVIDUAL"})
-SPONSOR_INVESTIGATOR = "SPONSOR_INVESTIGATOR"
-
-
-def sponsored_by_a_person(sponsors: dict[str, Any]) -> bool:
-    """Whether a record's lead sponsor is a person, by the rule the trial facts use
-    (`events/trial_facts.py`, `_sponsor`): the registry classes it as an individual, or
-    the responsible party is a sponsor-investigator, whom the registry often classes as
-    "other"."""
-    lead = sponsors.get("leadSponsor")
-    party = sponsors.get("responsibleParty")
-    return (isinstance(lead, dict) and lead.get("class") in PERSON_CLASSES) or (
-        isinstance(party, dict) and party.get("type") == SPONSOR_INVESTIGATOR
-    )
-
-
-def without_people(study: dict[str, Any]) -> dict[str, Any]:
-    """The registry's record as stored: exactly as the registry gave it, except that the
-    name of a lead sponsor or collaborator who is a person is removed, and with it the
-    name a sponsor-investigator is given as responsible party. Nothing else is removed.
-    The project keeps no personal data beyond subscriber emails and such a name is a
-    person's. The class is kept, so the record still says a person sponsors or
-    collaborates on the trial. The record given is not changed."""
-    sponsors = study.get("protocolSection", {}).get("sponsorCollaboratorsModule")
-    if not sponsors:
-        return study
-
-    def unnamed(party: dict[str, Any], person: bool) -> dict[str, Any]:
-        if not person and party.get("class") not in PERSON_CLASSES:
-            return party
-        return {key: value for key, value in party.items() if key != "name"}
-
-    kept = dict(sponsors)
-    person = sponsored_by_a_person(sponsors)
-    if isinstance(sponsors.get("leadSponsor"), dict):
-        kept["leadSponsor"] = unnamed(sponsors["leadSponsor"], person)
-    if isinstance(sponsors.get("collaborators"), list):
-        kept["collaborators"] = [unnamed(party, False) for party in sponsors["collaborators"]]
-    party = sponsors.get("responsibleParty")
-    if isinstance(party, dict) and party.get("type") == SPONSOR_INVESTIGATOR:
-        kept["responsibleParty"] = {
-            key: value for key, value in party.items() if key != "investigatorFullName"
-        }
-    protocol = {**study["protocolSection"], "sponsorCollaboratorsModule": kept}
-    return {**study, "protocolSection": protocol}
-
-
 def store_trial(
     session: Session,
     steps: Sequence[Step],

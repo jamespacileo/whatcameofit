@@ -12,7 +12,6 @@ from enum import Enum
 from typing import Any, Protocol
 
 from thenwhat.backfill.address import KEY_VERSION
-from thenwhat.backfill.registry_load import sponsored_by_a_person, without_people
 from thenwhat.db.models import (
     ArticleLead,
     Claim,
@@ -46,6 +45,7 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import OutletKind, ScreenOutcome
+from thenwhat.sources.people import sponsored_by_a_person, without_people
 from thenwhat.store.form import (
     Record,
     body,
@@ -546,7 +546,7 @@ def intervention_names(interventions: Sequence[Mapping[str, Any]]) -> str:
 
 def registry_payload(trial: RegistryTrial) -> Any:
     """A trial's payload as the store keeps it: without a person's name, as the corpus
-    load keeps one since 2026-11-17 (`backfill.registry_load.without_people`). Rows
+    load keeps one since 2026-11-17 (`sources.people.without_people`). Rows
     loaded before then still hold such names in Postgres."""
     if not isinstance(trial.raw_payload, dict):
         return trial.raw_payload
