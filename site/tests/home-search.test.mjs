@@ -84,7 +84,10 @@ const SEARCH_DETAIL = {
 };
 
 function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
-  const history = { replaceState() {} };
+  const history = { replaceState() {}, pushState() {} };
+  const location = { href: "https://example.test/", origin: "https://example.test" };
+  // What the script listens for on the window, by event name.
+  const listeners = {};
   const { document, window } = parseHTML(`<html><body>${body}</body></html>`);
   let resolveLookup, rejectLookup;
   const pending = new Promise((resolve, reject) => { resolveLookup = resolve; rejectLookup = reject; });
@@ -98,7 +101,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
     NOT_AN_OPTION, NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, changedShort, findListed, listingWords, registryDate,
     searchListing, setNote, PARTS_SEARCHED_AT_ONCE, partFor,
-    location: { href: "https://example.test/", origin: "https://example.test" }, history,
+    location, history, addEventListener: (type, heard) => { listeners[type] = heard; },
     innerHeight: 800, matchMedia: () => ({ matches: false }),
     loadSearchIndex: async () => {
       searches++;
@@ -130,6 +133,8 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
     document,
     window,
     history,
+    location,
+    listeners,
     results,
     get requests() { return requests; },
     get searches() { return searches; },
@@ -194,6 +199,20 @@ test("clearing a search prevents an earlier article lookup from reappearing", as
   page.resolve();
   await settle();
   assert.equal(page.results.textContent, "");
+});
+
+test("a lookup that cannot be read offers the same question again, never the box that failed", async () => {
+  const page = setup();
+  page.submit("https://example.org/old-report");
+  page.reject();
+  await settle();
+  assert.match(page.results.textContent, /The lookup is not available right now\./);
+  assert.doesNotMatch(page.results.textContent, /typed in the box/);
+  assert.equal(page.results.querySelector("a").getAttribute("href"), "/topics");
+  const again = page.results.querySelector("button");
+  assert.equal(again.textContent, "Try again");
+  again.dispatchEvent(new page.window.Event("click"));
+  assert.match(page.results.textContent, /Looking up/);
 });
 
 for (const outcome of ["resolve", "reject"]) {
@@ -298,6 +317,44 @@ test("words that are a tracked report's headline lead with that report, then its
   assert.equal(answer.querySelector("#other-matches").textContent, "Other claims with these words");
   assert.match(answer.querySelector(".jump-others").textContent, /2 other claims with these words/);
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+});
+
+test("each search looked up is a step Back returns to, and an emptied field leaves no answer", async () => {
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  const page = setup(null, HOME);
+  const steps = [];
+  page.history.pushState = (_, __, url) => { steps.push(String(url)); page.location.href = String(url); };
+  page.history.replaceState = (_, __, url) => { page.location.href = String(url); };
+  const answer = await searched(page, "tooth regrowth");
+  assert.equal(steps.length, 1);
+  assert.match(steps[0], /[?&]q=tooth\+regrowth/);
+  // The line under the box leads to the answer's heading.
+  assert.equal(page.results.querySelector("a").getAttribute("href"), "#search-answer-title");
+  assert.equal(answer.querySelector("h2").id, "search-answer-title");
+
+  // Back: the address has no words again, and the list is back in the answer's place.
+  page.location.href = "https://example.test/";
+  page.listeners.popstate();
+  assert.equal(answer.hidden, true);
+  assert.equal(page.results.textContent, "");
+  assert.equal(page.document.querySelector("#query").value, "");
+
+  // Forward: the words are in the field and answered again.
+  page.location.href = steps[0];
+  page.listeners.popstate();
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(page.document.querySelector("#query").value, "tooth regrowth");
+  assert.equal(answer.hidden, false);
+  assert.equal(steps.length, 1, "going back and forward adds no step");
+
+  // The field emptied, as its cross or Escape leaves it.
+  const field = page.document.querySelector("#query");
+  field.value = "";
+  field.focus = () => {};
+  field.dispatchEvent(new page.window.Event("input"));
+  assert.equal(answer.hidden, true);
+  assert.equal(page.results.textContent, "");
+  assert.doesNotMatch(page.location.href, /q=/);
 });
 
 test("a topic picked is kept in the page's address and cleared with the search", async () => {

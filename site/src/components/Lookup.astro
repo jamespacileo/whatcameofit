@@ -22,6 +22,11 @@ const {
   sentences = false,
 } = Astro.props;
 
+// Said under the field on every page: that it takes a link, and where the link goes.
+const hint = SITE.lookupUrl
+  ? "A pasted link is compared in your browser, and sent only if you ask for a registry search."
+  : "A pasted link is compared in your browser and sent nowhere.";
+
 // Keyed by the claim's page, as the lookup file names it. "<" is escaped so that no
 // text in the data can close the script element.
 const sentenceJson = sentences
@@ -55,9 +60,11 @@ const sentenceJson = sentences
       autocapitalize="off"
       spellcheck="false"
       placeholder="https://… or tooth regrowth"
+      aria-describedby="query-hint"
     />
     <button type="submit">Look up</button>
   </div>
+  <p class="box-hint" id="query-hint">{hint}</p>
 </form>
 {/* What a page sets under the box, ahead of the answer. */}
 <slot />
@@ -186,20 +193,45 @@ const sentenceJson = sentences
   }
 
   // Where to go when the box has no answer: never a full stop.
-  function next() {
+  function listedByTopic() {
     const line = element("p", "Every tracked claim is listed by ", "entry-note");
     const topics = element("a", "topic") as HTMLAnchorElement;
     topics.href = "/topics";
-    line.append(topics, ". A treatment's name can also be typed in the box above.");
+    line.append(topics, ".");
     return line;
+  }
+
+  function next() {
+    const line = listedByTopic();
+    line.append(" A treatment's name can also be typed in the box above.");
+    return line;
+  }
+
+  // A lookup or a search that could not be read says so and offers the same question
+  // again. It never sends the reader back to type what has just failed.
+  function failed(message: string, asked: string) {
+    const line = element("p", `${message} `);
+    const again = element("button", "Try again", "text-control") as HTMLButtonElement;
+    again.type = "button";
+    again.addEventListener("click", () => {
+      input.focus();
+      answer(asked);
+    });
+    line.append(again);
+    results.replaceChildren(line, listedByTopic());
   }
 
   function show(...messages: string[]) {
     results.replaceChildren(...messages.map((message) => element("p", message)));
   }
 
+  // Under a list of claims none of which a person has checked, said once.
+  const LISTED_UNCHECKED =
+    "None of these pages has yet been checked by a person. Each was put together by software from the public records it links to.";
+
   function claimList(claims: LookupClaim[]) {
     const list = element("ul", undefined, "plain");
+    const once = claims.length > 1 && claims.every((claim) => claim.unchecked);
     for (const claim of claims) {
       const item = element("li");
       const link = element("a", claim.headline) as HTMLAnchorElement;
@@ -215,10 +247,13 @@ const sentenceJson = sentences
         .join(" ");
       note.append(` ${rest}`);
       item.append(link, note);
-      if (claim.unchecked) item.append(element("span", claim.unchecked, "entry-note"));
+      if (claim.unchecked && !once) item.append(element("span", claim.unchecked, "entry-note"));
       list.append(item);
     }
-    return list;
+    if (!once) return list;
+    const fragment = document.createDocumentFragment();
+    fragment.append(list, element("p", LISTED_UNCHECKED, "entry-note"));
+    return fragment;
   }
 
   // The claim's sentence, as its page offers it: copied where the clipboard can be
@@ -566,7 +601,10 @@ const sentenceJson = sentences
     const button = element("button", post ? LIVE.postOffer : LIVE.offer, "live-offer") as HTMLButtonElement;
     button.type = "button";
     button.addEventListener("click", () => void askLive({ url: address }));
-    return [button, element("p", post ? LIVE.postDisclosure : LIVE.disclosure, "entry-note")];
+    const sends = element("p", post ? LIVE.postDisclosure : LIVE.disclosure, "entry-note");
+    sends.id = "live-sends";
+    button.setAttribute("aria-describedby", sends.id);
+    return [button, sends];
   }
 
   let lookup: Promise<Lookup> | undefined;
@@ -608,7 +646,7 @@ const sentenceJson = sentences
     } catch {
       lookup = undefined;
       if (asked !== latest) return;
-      results.replaceChildren(element("p", "The lookup is not available right now."), next());
+      failed("The lookup is not available right now.", address);
       return;
     }
     if (asked !== latest) return;
@@ -636,6 +674,7 @@ const sentenceJson = sentences
         claimList(close),
         ...liveOffer(address),
         ...suggestion(address),
+        ...later(address),
       );
       return;
     }
@@ -646,8 +685,16 @@ const sentenceJson = sentences
       ),
       ...liveOffer(address),
       ...suggestion(address),
+      ...later(address),
       next(),
     );
+  }
+
+  // A report the site does not track is offered a date to come back on. The file is
+  // made on the device, so it needs no registry search first.
+  function later(address: string) {
+    const section = remindLater(address);
+    return section ? [section] : [];
   }
 
   // A slow answer to an earlier question must not replace the answer to a later one.
@@ -867,10 +914,13 @@ const sentenceJson = sentences
     }
   }
 
-  function setAddress(change: (params: URLSearchParams) => void) {
+  // A search looked up, and a search cleared, is a step the Back button returns from.
+  // Narrowing an answer by topic is not: it changes the address in place.
+  function setAddress(change: (params: URLSearchParams) => void, step = false) {
     const url = new URL(location.href);
     change(url.searchParams);
-    history.replaceState(null, "", url);
+    if (step && url.href !== location.href) history.pushState(null, "", url);
+    else history.replaceState(null, "", url);
   }
 
   function clearSearch() {
@@ -878,7 +928,7 @@ const sentenceJson = sentences
     setAddress((params) => {
       params.delete("q");
       params.delete("topic");
-    });
+    }, true);
     answer("");
     input.focus();
   }
@@ -886,7 +936,10 @@ const sentenceJson = sentences
   // The one way out of an answer, beside its count, as tall as a fingertip.
   function searchHead(title: string, count: string) {
     const head = element("div", undefined, "search-head");
-    head.append(element("h2", title, "search-title"));
+    const heading = element("h2", title, "search-title");
+    heading.id = "search-answer-title";
+    heading.tabIndex = -1;
+    head.append(heading);
     const said = element("p", undefined, "search-count");
     said.append(element("span", count));
     const clear = element("button", "Clear search", "text-control search-clear") as HTMLButtonElement;
@@ -906,7 +959,20 @@ const sentenceJson = sentences
       answerSlot.replaceChildren(block);
       answerSlot.hidden = false;
       days?.setAttribute("data-searching", "");
-      results.replaceChildren(element("p", note, "search-note"));
+      // The line under the box leads to the answer: pressed, it puts the reader on the
+      // answer's heading, past everything that stands between.
+      const said = element("p", `${note} `, "search-note");
+      const jump = element("a", "shown below") as HTMLAnchorElement;
+      jump.href = "#search-answer-title";
+      jump.addEventListener("click", (event) => {
+        const heading = answerSlot.querySelector<HTMLElement>("#search-answer-title");
+        if (!heading) return;
+        event.preventDefault();
+        heading.focus({ preventScroll: true });
+        heading.scrollIntoView({ block: "start" });
+      });
+      said.append(jump, ".");
+      results.replaceChildren(said);
     } else {
       results.replaceChildren(block);
     }
@@ -1030,7 +1096,7 @@ const sentenceJson = sentences
     if (listedGroup) block.append(listedGroup);
     if (pickedIn && answerSlot) answerSlot.replaceChildren(block);
     else if (pickedIn) results.replaceChildren(block);
-    else place(block, `Results for “${query}” are shown below.`);
+    else place(block, `Results for “${query}” are`);
 
     if (searchTopics) {
       const sidePicks = topicButtons(matches, index, picked, (slug) => pick(slug, "side"));
@@ -1223,10 +1289,10 @@ const sentenceJson = sentences
     place();
   }
 
-  function searchFailed() {
+  function searchFailed(asked: string) {
     lookup = undefined;
     searchDetail = undefined;
-    results.replaceChildren(element("p", "Search is not available right now."), next());
+    failed("Search is not available right now.", asked);
   }
 
   // A trial registry's identifier, typed whole: answered with that trial, never with a
@@ -1253,7 +1319,7 @@ const sentenceJson = sentences
     try {
       [index, detail] = await Promise.all([loadLookup(), loadDetail()]);
     } catch {
-      if (asked === latest) searchFailed();
+      if (asked === latest) searchFailed(query);
       return;
     }
     if (asked !== latest) return;
@@ -1287,7 +1353,7 @@ const sentenceJson = sentences
         const list = element("ol", undefined, "plain listed-trials");
         list.append(listedRow(listed, index.claims, citedTrials));
         block.append(list, element("p", NOT_AN_OPTION, "trial-note"));
-        place(block, `${id} is a registered trial, shown below.`);
+        place(block, `${id} is a registered trial,`);
         return;
       }
       results.replaceChildren(
@@ -1325,7 +1391,7 @@ const sentenceJson = sentences
       const [report] = detail.claims[claim.page.slice(1)]?.reports ?? [];
       if (report) block.append(reportCard(report, claim, [], index.topics));
     }
-    place(block, `${trial.id} is on record for ${said}, shown below.`);
+    place(block, `${trial.id} is on record for ${said},`);
   }
 
   // The words a headline is compared by: letters and numbers, in lower case.
@@ -1355,7 +1421,7 @@ const sentenceJson = sentences
         .map((hit) => pages.get(new URL(hit.url, location.origin).pathname.replace(/(\/index\.html|\.html|\/)$/, "")))
         .filter((claim): claim is LookupClaim => Boolean(claim));
     } catch {
-      if (asked === latest) searchFailed();
+      if (asked === latest) searchFailed(query);
       return;
     }
     if (asked !== latest) return;
@@ -1408,14 +1474,33 @@ const sentenceJson = sentences
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const text = input.value.trim();
-    const url = new URL(location.href);
-    // Only typed words go into the page's address. A pasted article address stays in
-    // the field: in the address it would reach the server on a reload or when shared.
-    if (text && readAddress(text).kind === "none") url.searchParams.set("q", text);
-    else url.searchParams.delete("q");
-    // A new search starts on every topic.
-    url.searchParams.delete("topic");
-    history.replaceState(null, "", url);
+    setAddress((params) => {
+      // Only typed words go into the page's address. A pasted article address stays in
+      // the field: in the address it would reach the server on a reload or when shared.
+      if (text && readAddress(text).kind === "none") params.set("q", text);
+      else params.delete("q");
+      // A new search starts on every topic.
+      params.delete("topic");
+    }, true);
+    answer(text);
+  });
+
+  // A field emptied by its cross, by Escape or by deleting leaves no answer behind it.
+  const emptied = () => {
+    if (input.value) return;
+    const answered = results.childElementCount > 0 || (answerSlot !== null && !answerSlot.hidden);
+    if (answered) clearSearch();
+  };
+  input.addEventListener("input", emptied);
+  input.addEventListener("search", emptied);
+
+  // Back and Forward move between the searches looked up, each drawn again.
+  addEventListener("popstate", () => {
+    const params = new URL(location.href).searchParams;
+    const text = params.get("q") ?? "";
+    input.value = text;
+    addressTopic = params.get("topic") ?? "";
+    closeSuggestions();
     answer(text);
   });
 

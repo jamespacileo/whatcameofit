@@ -1388,8 +1388,17 @@ body.embed {
   max-width: 46rem;
 }
 
+/* The status, its place on the path and the no-signal note each on a line of their
+   own: a note beside the last word of a two-line status reads as part of it. */
+.found .standing {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+}
+
 .found .note {
   width: fit-content;
+  margin-top: 0.5rem;
 }
 
 .found h2 {
@@ -3497,6 +3506,12 @@ body:has(.band.home) .table-frame {
 
 .under-box .try + .holds {
   margin-top: 0.9rem;
+}
+
+/* Once the box has answered, nothing stands between it and its answer: the words to
+   try, the tally and the example give way until the search is cleared. */
+.band.home:has(#results:not(:empty)) :is(.under-box, .then-now) {
+  display: none;
 }
 
 /* A phone keeps the band to the title and the box, and the page white. */
@@ -5832,6 +5847,15 @@ main ul:not([class]) li + li {
 
 .search.lookup label {
   font-size: var(--text-l);
+}
+
+/* Under the field: that it takes a link, and where the link goes. */
+.search .box-hint {
+  max-width: none;
+  margin: 0.6rem 0 0;
+  font-size: var(--text-m);
+  color: var(--muted);
+  text-wrap: balance;
 }
 
 .search.lookup input {
