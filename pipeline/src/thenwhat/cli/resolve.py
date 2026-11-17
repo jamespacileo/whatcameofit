@@ -42,6 +42,7 @@ from thenwhat.resolve.papers import (
 from thenwhat.resolve.service import (
     DoiLookup,
     RuleRedo,
+    TrialRecords,
     TrialSearch,
     fill_record_facts,
     redo_rule_approvals,
@@ -668,7 +669,8 @@ def resolve_command(
         typer.Option(
             "--rescore",
             help="Also score again the pending trial candidates the search still returns,"
-            " and the pending related papers.",
+            " the ones a rule rejected whose record files the intervention under another"
+            " name, and the pending related papers.",
         ),
     ] = False,
     redo_rule: Annotated[
@@ -702,6 +704,8 @@ def resolve_command(
         claim = claim_by_slug(session, claim_slug)
         backend = make_backend(session)
         trials, dois = make_registries(session)
+        # A stored trial that becomes a candidate is read from the registry in full.
+        records = trials if isinstance(trials, TrialRecords) else None
         research = make_research(session)
         now = datetime.now(UTC)
         settings = settings_or_exit()
@@ -745,6 +749,7 @@ def resolve_command(
                 reject_below=reject_below,
                 accept_above=accept_above,
                 unsearchable=unsearchable,
+                records=records,
             )
             again = (
                 rescore_claim(
@@ -757,6 +762,7 @@ def resolve_command(
                     reject_below=reject_below,
                     accept_above=accept_above,
                     unsearchable=unsearchable,
+                    records=records,
                 )
                 if rescore
                 else []
@@ -772,6 +778,7 @@ def resolve_command(
                     accept_above=accept_above,
                     no_signal_years=settings.no_signal_years,
                     unsearchable=unsearchable,
+                    records=records,
                 )
             if claim.evidence_stage is None:
                 stage = latest_stage_suggestion(session, claim)

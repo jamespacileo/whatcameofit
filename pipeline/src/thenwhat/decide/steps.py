@@ -1,7 +1,7 @@
 """The steps that use decisions, and what each is shown."""
 
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
@@ -262,6 +262,7 @@ def score_matches(
     claim: Claim,
     candidates: list[tuple[Entity, EntityMatch, SourceRecord]],
     now: datetime,
+    also_named: Mapping[int, Sequence[str]] | None = None,
 ) -> None:
     """Set each candidate's score: the probability that its registry record is evidence
     for the claim. Scores order the review queue, and the resolver's rules approve or
@@ -272,6 +273,11 @@ def score_matches(
     condition is its own answer, so the reviewer can be told which it was. A paper is
     only asked whether it is the same paper. An entity's candidates are scored together,
     several to a backend call.
+
+    `also_named` gives, by entity, the other names known for an intervention that the
+    claim does not carry: its substance's name and the names registry trials file it
+    under. They are said with the entity, so a trial filed under one of them is not
+    read as a trial of something else.
     """
     by_entity: dict[int, list[tuple[Entity, EntityMatch, SourceRecord]]] = {}
     for candidate in candidates:
@@ -290,6 +296,7 @@ def score_matches(
             step=ENTITY_MATCH,
             intro=(
                 f"{_claim_text(session, claim)}\n\nEntity to match ({entity.type}): {entity.name}"
+                + _also_named((also_named or {}).get(entity.id, ()))
             ),
             question=question,
             items=[(match_ref(match.id), candidate_text(record)) for _, match, record in group],
@@ -298,6 +305,16 @@ def score_matches(
         )
         for (_, match, _), decision in zip(group, decisions, strict=True):
             match.score = decision.probabilities[MATCH]
+
+
+def _also_named(names: Sequence[str]) -> str:
+    if not names:
+        return ""
+    return (
+        "\nNames the registry of substances gives it, or that registry trials list beside"
+        f" its name: {', '.join(names)}. A trial entry can list a related product beside a"
+        " name, so such a name is a lead, not proof that a trial tests this intervention."
+    )
 
 
 def paper_text(record: SourceRecord) -> str:
@@ -687,6 +704,13 @@ def _describe(candidate: SourceRecord) -> str:
             "interventions": [
                 {
                     "name": intervention.get("name"),
+                    # A sponsor files a treatment under one name and lists its others
+                    # here: the generic, the brand, the development codes.
+                    **(
+                        {"other_names": [_excerpt(name, 80) for name in others[:8]]}
+                        if (others := intervention.get("otherNames"))
+                        else {}
+                    ),
                     "description": _excerpt(intervention.get("description"), 350),
                     **(
                         {"arms": labels}

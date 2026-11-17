@@ -722,6 +722,12 @@ def test_a_combination_is_also_searched_for_all_its_treatments_together(session:
         ),
         ("emtricitabine/tenofovir", "(emtricitabine) AND (tenofovir)"),
         ("nivolumab + ipilimumab", "(nivolumab) AND (ipilimumab)"),
+        (
+            "eloralintide and tirzepatide combination regimen",
+            "(eloralintide) AND (tirzepatide)",
+        ),
+        ("Braftovi, cetuximab and standard chemotherapy", "(Braftovi) AND (cetuximab)"),
+        ("zipalertinib plus chemotherapy", "(zipalertinib) AND (chemotherapy)"),
         ("semaglutide", None),
         ("EX-1 antibody", None),
     ],
