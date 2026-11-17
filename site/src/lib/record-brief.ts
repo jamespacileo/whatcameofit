@@ -86,12 +86,6 @@ export const QUESTIONS = {
   approved: "Approved by a regulator?",
 } as const;
 
-/** What a trial is compared with, by the kind of treatment: a device has a dummy device. */
-const DUMMY = {
-  device: { noun: "a dummy device", plural: "a dummy device" },
-  other: { noun: "a placebo", plural: "a placebo" },
-} as const;
-
 export const DEFINITIONS = {
   sham: "A sham is a device or procedure that looks the same and does nothing.",
   placebo: "A placebo looks like the treatment and has no active ingredient.",
@@ -364,24 +358,29 @@ export function testedSummary(claim: ExportedClaim): { lead: string; detail: str
 
 const statesDesign = (trial: ExportedTrial) =>
   Boolean(trial.facts && (trial.facts.allocation || trial.facts.masking || trial.facts.comparators.length > 0));
-const namesDummy = (trial: ExportedTrial) =>
-  (trial.facts?.comparators ?? []).some((code) => code === "sham" || code === "placebo");
-
-/** Counts records that name a dummy comparison. It never says the other trials had none. */
+/** Count each comparator from the registry's codes. A trial can name both. */
 function comparisonRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow | null {
   if (!trials.some(statesDesign)) return null;
-  const dummy = claim.approach === "device" ? DUMMY.device : DUMMY.other;
-  const naming = trials.filter(namesDummy);
-  const question = `Compared with ${dummy.noun}?`;
+  const sham = claim.approach === "device" ? "a dummy device" : "a sham procedure";
+  const comparators = [
+    { code: "sham", noun: sham, definition: DEFINITIONS.sham },
+    { code: "placebo", noun: "a placebo", definition: DEFINITIONS.placebo },
+  ];
+  const counts = comparators.map((kind) => ({
+    ...kind, count: trials.filter((trial) => trial.facts?.comparators.includes(kind.code)).length,
+  })).filter((kind) => kind.count > 0);
+  const naming = trials.filter((trial) => counts.some((kind) => trial.facts?.comparators.includes(kind.code)));
+  const nouns = counts.map((kind) => kind.noun).join(" or ") || (claim.approach === "device" ? sham : "a placebo");
+  const question = `Compared with ${nouns}?`;
   if (naming.length === 0) {
     return row({
       code: "comparison",
       question,
       answer: "No record names one",
-      said: `[[No record]] names ${dummy.noun}`,
+      said: `[[No record]] names ${nouns}`,
       share: { n: 0, of: trials.length },
       opened: [
-        `No trial's record names ${dummy.noun} as a comparison.`,
+        `No trial's record names ${nouns} as a comparison.`,
         claim.approach === "device" ? DEFINITIONS.sham : DEFINITIONS.placebo,
       ],
       source: directFrom(trials),
@@ -392,9 +391,7 @@ function comparisonRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow 
     const design = designText(naming[0].facts);
     if (design) opened.push(`The registry gives that trial's design as: ${design.charAt(0).toLowerCase()}${design.slice(1)}.`);
   }
-  const kinds = new Set(naming.flatMap((trial) => trial.facts?.comparators ?? []));
-  if (kinds.has("sham")) opened.push(DEFINITIONS.sham);
-  if (kinds.has("placebo")) opened.push(DEFINITIONS.placebo);
+  opened.push(...counts.map((kind) => kind.definition));
   const rest = trials.length - naming.length;
   if (rest > 0) {
     opened.push(
@@ -403,17 +400,16 @@ function comparisonRow(claim: ExportedClaim, trials: ExportedTrial[]): BriefRow 
         : `The other ${word(rest)} records name no such comparison.`,
     );
   }
+  const descriptions = counts.map(({ count, noun }, i) => {
+    const records = `${i === 0 ? capital(word(count)) : word(count)} ${plural(count, "record", "records")}`;
+    return `${i === 0 ? `[[${records}]]` : records} ${count === 1 ? "names" : "name"} ${noun}`;
+  });
+  const said = descriptions.join(", and ");
   return row({
     code: "comparison",
     question,
-    answer:
-      naming.length === 1
-        ? `One record names ${dummy.noun}`
-        : `${capital(word(naming.length))} records name ${dummy.plural}`,
-    said:
-      naming.length === 1
-        ? `[[One record]] names ${dummy.noun}`
-        : `[[${capital(word(naming.length))} records]] name ${dummy.plural}`,
+    answer: said.replace("[[", "").replace("]]", ""),
+    said,
     share: { n: naming.length, of: trials.length },
     opened,
     source: directFrom(naming),
@@ -726,7 +722,6 @@ assertNeutral([
   ...Object.values(QUESTIONS),
   ...Object.values(DEFINITIONS),
   ...Object.values(FIRST_REPORT).flatMap((stage) => [stage.answer, stage.opened]),
-  ...Object.values(DUMMY).flatMap((dummy) => [dummy.noun, dummy.plural]),
   ...Object.values(COMPARATOR_WORDS),
   ...STATE_COUNT_WORDS.map(([, words]) => words),
   OTHER_STATES,
