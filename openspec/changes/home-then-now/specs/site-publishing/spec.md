@@ -69,17 +69,49 @@ The head of the home page's day-by-day list SHALL be one line on a wide screen: 
 - **THEN** a panel says "With each report and record: where its claim stands on record now. Press it for why."
 
 ### Requirement: A registry row leads with what was recorded
-In the home page's day-by-day list, a registry record's row SHALL lead with the record: its kind in words and its date, then what was recorded, in the record's own words, as the row's title leading to the claim page, then the claim and the record's identifier leading to the record at its source. The claim's newest news report SHALL follow these, set smaller than the row's title and joined to the row as what the record belongs to: named "Newest report", with its outlet and date, how long ago the claim was first reported when that is a year or more, and its title quoted. A registry row SHALL NOT set a news report's title as its own title.
+In the home page's day-by-day list, a registry record's row SHALL lead with the record: a mark of what happened, its kind in words and the record's identifier leading to the record at its source, then what was recorded, in the record's own words, as the row's title leading to the claim page, then the claim. Where the registry gives a trial's phase, the title SHALL name it. The claim's newest news report SHALL follow these, set smaller than the row's title and joined to the row as what the record belongs to: named "Newest report", with its outlet and date, how long ago the claim was first reported when that is a year or more, and its title quoted. A registry row SHALL NOT set a news report's title as its own title.
 
-#### Scenario: A trial registered last week
-- **WHEN** a trial for a published claim was registered on 2 November 2026
-- **THEN** the row's title reads "Trial registered", and the claim's newest report is quoted under it, smaller, after "Newest report"
+#### Scenario: A phase 3 trial registered last week
+- **WHEN** a phase 3 trial for a published claim was registered on 2 November 2026
+- **THEN** the row's title reads "Phase 3 trial registered", and the claim's newest report is quoted under it, smaller, after "Newest report"
+
+#### Scenario: A trial with no phase given
+- **WHEN** the registry gives no phase for a trial whose results were posted
+- **THEN** the row's title reads "Trial results posted"
 
 #### Scenario: A report and a record of one claim on one day
 - **WHEN** a claim was reported and a trial for it was registered on the same day
-- **THEN** the report's row has the outlet's title as its title, and the record's row has "Trial registered" as its title
+- **THEN** the report's row has the outlet's title as its title, and the record's row has what was recorded as its title
 
 #### Scenario: Read aloud
 - **WHEN** a screen reader lists the page's links
-- **THEN** a registry row's title is read with its treatment, as "Trial registered: " and the treatment's name
+- **THEN** a registry row's title is read with its treatment, as what was recorded, a colon and the treatment's name
 
+### Requirement: A registry row tells the record from the claim's status
+A registry row SHALL name the status in its right column "Status now", so that it is not read as what the record says, unless the row says the status changed that day. The phase in the row's title is the trial's; the status is the claim's.
+
+#### Scenario: An early trial of a claim that is further on
+- **WHEN** a phase 2 trial is registered for a claim that stands at phase 3
+- **THEN** the row's title reads "Phase 2 trial registered" and its right column reads "Status now" over "Phase 3 trial"
+
+#### Scenario: A record that changed the status
+- **WHEN** a record dated today moved a claim from phase 2 to phase 3
+- **THEN** the right column says "Changed" and the status before, and does not say "Status now"
+
+### Requirement: What a record did is drawn without a verdict
+A registry row SHALL carry one mark for what its record did, the same colour for every kind, hidden from a screen reader. No mark SHALL be a tick or a cross, and no mark SHALL be coloured to say that what happened was good or bad. A regulator's approval and refusal SHALL share one mark; the row's words say which.
+
+#### Scenario: A terminated trial
+- **WHEN** a trial is recorded as terminated
+- **THEN** its mark is a square in the colour every mark has, and the row says "terminated" in words
+
+### Requirement: A row does not repeat its day
+Under a heading that names one day, a row of the day-by-day list SHALL NOT draw its date again. Under a heading that names a week or a year, each row SHALL draw its date. Every row's date SHALL remain in the page as built.
+
+#### Scenario: Under a day
+- **WHEN** two reports are listed under "Sunday 15 November"
+- **THEN** neither row draws "15 Nov 2026"
+
+#### Scenario: Under a week
+- **WHEN** a report dated 21 October is listed under "Week of 19 October"
+- **THEN** its row draws "21 Oct 2026"

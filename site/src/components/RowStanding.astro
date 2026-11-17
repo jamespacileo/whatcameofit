@@ -33,9 +33,12 @@ interface Props {
   id: string;
   /** Set where the row stands for a change of the claim's status that day. */
   change?: { code: StatusCode; before: StatusCode } | null;
+  /** On a registry row: the status is named "Status now", so that it is not read as
+   * what the record beside it says. */
+  named?: boolean;
 }
 
-const { claim, date, id, change = null } = Astro.props;
+const { claim, date, id, change = null, named = false } = Astro.props;
 const code = change?.code ?? claim.status.code;
 const label = STATUS_LABELS[code];
 const nowLabel = STATUS_LABELS[claim.status.code];
@@ -70,6 +73,13 @@ const trialCount = claim.trials?.length ?? 0;
       <span class="row-change">
         <span class="new-tag">Changed</span>
         <span class="row-was">from {before}</span>
+      </span>
+    )
+  }
+  {
+    named && !change && (
+      <span class="row-change">
+        <span class="row-was">Status now</span>
       </span>
     )
   }

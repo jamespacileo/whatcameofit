@@ -3696,6 +3696,25 @@ body:has(.band.home) .table-frame {
   }
 }
 
+/* The mark of something that happened on record (EventMark.astro): one drawing for
+   what the record did, on the tint, the size of an outlet's icon. One blue for all. */
+.event-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-radius: 50%;
+  background: var(--tint);
+  color: var(--blue);
+}
+
+@media (forced-colors: active) {
+  .event-mark {
+    border: 1px solid CanvasText;
+  }
+}
+
 /* A quotation's marks (Quoted.astro): softer than the words they hold, and the opening
    one hung in the margin, so the words start on the edge of their column. */
 .quote-mark {

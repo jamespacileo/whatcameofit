@@ -1,16 +1,18 @@
 ---
 // A registry record in the day-by-day list (openspec latest-rows, home-then-now): the
-// row is the record, so what was recorded leads, in the text face, with its kind and
-// its date over it; then the claim, and the record's identifier on the panel blue. The
-// claim's newest report hangs under these, smaller, on a hairline at its left: what
-// the record belongs to, not what the row is. Where the claim stands is the column on
-// the right, as on a report row.
+// row is the record. Over it, where a report row names its outlet: the mark of what
+// happened, "Registry record" and the record at its source. Then what was recorded,
+// in the text face, with the trial's phase; then the claim. The claim's newest report
+// hangs under these, smaller, on a hairline at its left: what the record belongs to,
+// not what the row is. The claim's status now is the column on the right, named so,
+// since a record and a status side by side are easily read as one.
 import type { RecordRow } from "../lib/day-list";
 import { confidenceLabel } from "../lib/confidence";
 import { followedReports } from "../lib/reports";
-import { eventKind, eventLabel, sourceName } from "../lib/status";
+import { sourceName } from "../lib/status";
 import { formatDate } from "../lib/timetable";
-import KindIcon from "./KindIcon.astro";
+import { recordedText } from "../lib/trial-facts";
+import EventMark from "./EventMark.astro";
 import Outlet from "./Outlet.astro";
 import Quoted from "./Quoted.astro";
 import RowStanding from "./RowStanding.astro";
@@ -24,12 +26,11 @@ const { row, topic } = Astro.props;
 const { claim, event, change } = row;
 const [report] = followedReports(claim);
 const confidence = event.confidence ?? 1;
-// What was recorded, said of the record, never in a status's words: "Trial registered",
-// "Trial results posted", "Follow-up paper".
-const label = eventLabel(event);
-// A trial's record is named by its identifier, with where it is kept beside it; any
-// other by where it is kept.
-const kept = sourceName(event.source_name);
+// What was recorded, said of the record, never in a status's words: "Phase 3 trial
+// registered", "Trial results posted", "Follow-up paper".
+const label = recordedText(event);
+// A trial's record is named by its identifier; any other by where it is kept.
+const sourceText = event.trial_id ?? sourceName(event.source_name);
 // Years between the claim's first report and this record, said only when it is one or more.
 const firstYear = claim.first_reported_date?.slice(0, 4);
 const years = firstYear ? Number(row.date.slice(0, 4)) - Number(firstYear) : 0;
@@ -46,7 +47,8 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
 >
   <div class="row-main">
     <p class="row-source">
-      <span class="row-kind"><KindIcon kind={eventKind(event)} />Registry record<span class="visually-hidden">. </span></span>
+      <span class="row-kind"><EventMark event={event} />Registry record<span class="visually-hidden">. </span></span>
+      <a class="row-record" href={event.source_url}>{sourceText}</a>
       <span class="when">{formatDate(row.date)}</span>
       {topic && <span class="row-topic">{topic}</span>}
       {!report && years > 0 && <span class="row-age">First reported {years} {years === 1 ? "year" : "years"} ago</span>}
@@ -59,12 +61,6 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
     <p class="row-claim">
       <span class="row-intervention">{claim.intervention.name}</span> · {claim.indication}
     </p>
-    <ul class="row-items" aria-label="The record">
-      <li class="row-item is-record">
-        <a href={event.source_url}>{event.trial_id ?? kept}</a>
-        {event.trial_id && <span>{kept}</span>}
-      </li>
-    </ul>
     {/* A record with no trial behind it (a regulator's decision, a paper) is given in its own words. */}
     {!event.trial_id && <p class="row-detail">{event.summary}</p>}
     {confidence < 1 && <p class="row-detail">{confidenceLabel(confidence)}</p>}
@@ -82,5 +78,5 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
       )
     }
   </div>
-  <RowStanding claim={claim} date={row.date} id={moreId} change={change} />
+  <RowStanding claim={claim} date={row.date} id={moreId} change={change} named />
 </li>

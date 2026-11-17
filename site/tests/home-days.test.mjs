@@ -86,8 +86,9 @@ test("Scenario: Checked on the reader's own date", () => {
 test("Scenario: A kind read aloud", () => {
   const record = group(dated, "d-2025-09-01");
   assert.match(record, /data-kind="record"/);
-  // A registry row says its kind in words anyone can see, beside the kind's drawing.
-  assert.match(record, /<span class="row-kind"><svg[^>]*class="[^"]*kind[^"]*"[^>]*>[\s\S]*?<\/svg>Registry record<span class="visually-hidden">\. <\/span><\/span>/);
+  // A registry row says its kind in words anyone can see, after the mark of what
+  // happened, which is not read aloud: the row's title says it.
+  assert.match(record, /<span class="row-kind"><span class="event-mark" data-event="trial_results_posted" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Registry record<span class="visually-hidden">\. <\/span><\/span>/);
   assert.match(group(dated, "d-2025-09-08"), /<span class="visually-hidden">News report\. <\/span>/);
   assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-label">Promised date<\/span>/);
   // The field that shows one kind is the script's, and names each kind in words.
@@ -123,8 +124,10 @@ test("Scenario: An approval that changed the status, and a record that changed n
   assert.match(changed, /class="row-now is-changed"[^>]*aria-label="Changed from Phase 2 trial to Phase 3 trial\. More on phase-claim agent"/);
   assert.match(changed, /<span class="new-tag">Changed<\/span>\s*<span class="row-was">from Phase 2 trial<\/span><\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
   // What was recorded is said of the record, not in a status's words.
-  assert.match(changed, /<h4 class="row-title">\s*<a href="\/phase-claim">\s*Trial results posted<span class="visually-hidden">: phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
-  assert.match(changed, /<li class="row-item is-record">\s*<a href="[^"]+">NCT00000002<\/a>\s*<span>ClinicalTrials\.gov<\/span>\s*<\/li>/);
+  assert.match(changed, /<h4 class="row-title">\s*<a href="\/phase-claim">\s*(Phase \d )?[Tt]rial results posted<span class="visually-hidden">: phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
+  // The record at its source is in the row's top line, where a report row links its outlet.
+  assert.match(changed, /<a class="row-record" href="[^"]+">NCT00000002<\/a>/);
+  assert.ok(!changed.includes("Status now"), "a row that says Changed does not also say Status now");
   const paper = group(dated, "d-2025-09-05");
   assert.ok(!paper.includes("Changed"));
   assert.match(paper, /class="row-now" [^>]*aria-label="Phase 3 trial\. More on phase-claim agent"/);
@@ -135,7 +138,9 @@ test("Scenario: An approval that changed the status, and a record that changed n
   // with how long ago the claim was first reported.
   const lead = paper.indexOf('class="row-title"');
   assert.match(paper, /<h4 class="row-title">\s*<a href="\/phase-claim">\s*Follow-up paper<span class="visually-hidden">: phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
-  assert.match(paper, /<li class="row-item is-record">\s*<a href="https:\/\/registry\.example\/record\/4">[^<]+<\/a>\s*<\/li>/);
+  assert.match(paper, /<a class="row-record" href="https:\/\/registry\.example\/record\/4">[^<]+<\/a>/);
+  // A record that changed nothing names the column beside it: the claim's status now.
+  assert.match(paper, /<span class="row-change">\s*<span class="row-was">Status now<\/span>\s*<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
   assert.match(paper, /<span class="when">5 Sep 2025<\/span>/);
   const about = paper.slice(paper.indexOf('class="row-about"'));
   assert.ok(lead > -1 && lead < paper.indexOf('class="row-about"'), "the record leads, its report follows");

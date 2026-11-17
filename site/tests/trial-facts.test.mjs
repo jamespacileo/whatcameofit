@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 
 import {
+  recordedText,
   TRIAL_STATE_WORDS,
   assertNoOutcomeVerdict,
   comparisonText,
@@ -411,4 +412,16 @@ test("a comparison is named by its arms, an active arm only beside an experiment
     "B, C and 1 more",
   );
   assert.equal(testedNames([arm("experimental", ["Mometasone"]), arm("active_comparator", ["Montelukast"])]), "Mometasone");
+});
+
+test("what was recorded names the trial's phase where the registry gives one", () => {
+  const event = (type, phases, state = null) => ({ type, trial_phases: phases, trial_state: state, regulatory_outcome: null });
+  assert.equal(recordedText(event("trial_registered", ["phase_3"])), "Phase 3 trial registered");
+  assert.equal(recordedText(event("trial_results_posted", ["phase_1", "phase_2"])), "Phase 1/Phase 2 trial results posted");
+  assert.equal(recordedText(event("trial_status_change", ["early_phase_1"], "completed")), "Early Phase 1 trial completed");
+  // No phase given, or none that applies: the record's words alone.
+  assert.equal(recordedText(event("trial_registered", [])), "Trial registered");
+  assert.equal(recordedText(event("trial_registered", ["not_applicable"])), "Trial registered");
+  // A record that is not a trial's is never given a phase.
+  assert.equal(recordedText(event("followup_paper", ["phase_3"])), "Follow-up paper");
 });

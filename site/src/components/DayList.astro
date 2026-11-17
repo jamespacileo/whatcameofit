@@ -751,6 +751,26 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     white-space: nowrap;
   }
 
+  /* Under a day's heading every row is dated that day: the heading says it once. A
+     week's or a year's rows keep their dates. */
+  .day-group[data-span="day"] .row-source > .when {
+    display: none;
+  }
+
+  /* The outlet is named in ink, as a registry row names its kind; it is underlined
+     when pointed at. */
+  .row-source .outlet a {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .row-source .outlet a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
+  }
+
   /* The outlet's name is enough in a row; its domain is on the claim page. */
   .row-source .domain {
     display: none;
@@ -990,13 +1010,15 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     white-space: nowrap;
   }
 
-  .row-kind .kind {
-    display: inline;
-    width: 0.95rem;
-    height: 0.95rem;
-    margin-right: 0.35rem;
-    vertical-align: -0.16em;
-    color: var(--muted);
+  .row-kind .event-mark {
+    margin-right: 0.4rem;
+    vertical-align: -0.3em;
+  }
+
+  /* The record at its source, where a report row links its outlet. */
+  .row-record {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   .record-row .row-title {
@@ -1026,7 +1048,9 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     color: var(--muted);
   }
 
-  .row-about-source .domain {
+  /* The attached report is named in words alone. */
+  .row-about-source .domain,
+  .row-about-source .outlet-icon {
     display: none;
   }
 
