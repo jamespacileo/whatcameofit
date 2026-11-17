@@ -23,4 +23,6 @@ export default defineConfig({
   site: SITE.url,
   trailingSlash: "ignore",
   integrations: [extensionPage],
+  // A page a reader points at is fetched before they press, so it opens at once.
+  prefetch: { prefetchAll: true, defaultStrategy: "hover" },
 });

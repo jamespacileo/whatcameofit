@@ -32,7 +32,7 @@ test("the home page carries the lookup and the script that answers", () => {
     assert.equal(html.split(`id="${id}"`).length - 1, 1, id);
   }
   // The script that answers is bundled with the page.
-  const script = html.match(/<script type="module" src="(\/_astro\/[^"]+\.js)">/);
+  const script = html.match(/<script type="module" src="(\/_astro\/Lookup[^"]+\.js)">/);
   assert.ok(script, "the lookup's script is not on the page");
   assert.match(page(script[1]), /This article is one we track\./);
   assert.doesNotMatch(html, /lookup-sentences/);
