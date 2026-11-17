@@ -17,12 +17,12 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import KEY_VERSION, article_key
-from thenwhat.backfill.errors import KeysOutOfDate, WorkInProgress
-from thenwhat.backfill.ledger import find_entry, fingerprint
 from thenwhat.backfill.outlet_kinds import kind_of
-from thenwhat.backfill.steps import NO_SOURCE, Step
 from thenwhat.db.models import LinkLead, LinkLeadLabel, LinkLeadLink, LinkShare, WorkEntry
 from thenwhat.domain import ReadOutcome
+from thenwhat.work.errors import KeysOutOfDate, WorkInProgress
+from thenwhat.work.ledger import find_entry, fingerprint
+from thenwhat.work.steps import NO_SOURCE, Step
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 

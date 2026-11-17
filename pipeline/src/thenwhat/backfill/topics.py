@@ -13,9 +13,9 @@ from collections.abc import Sequence
 
 from sqlalchemy import ColumnElement
 
-from thenwhat.backfill.errors import BackfillError
 from thenwhat.db.models import LinkLead
 from thenwhat.extract.names import is_a_name
+from thenwhat.work.errors import BackfillError
 
 # Each topic's words, grouped by drug: every word of one group is the same treatment under
 # another name. A group of one word, or a word that is no drug's name, stands alone.

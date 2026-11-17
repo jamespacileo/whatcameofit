@@ -24,6 +24,7 @@ from thenwhat.backfill.address import KEY_VERSION
 from thenwhat.backfill.link_read import (
     NO_DATE,
     Attached,
+    Deferred,
     NotAnOverlap,
     NotAttached,
     dismiss_overlap,
@@ -31,7 +32,6 @@ from thenwhat.backfill.link_read import (
     reads_naming_live_claims,
 )
 from thenwhat.backfill.outlet_kinds import name_of
-from thenwhat.backfill.steps import Deferred
 from thenwhat.claims.entry import add_article, archive_claim, articles_of
 from thenwhat.cli import app
 from thenwhat.db.models import Claim, LinkLead

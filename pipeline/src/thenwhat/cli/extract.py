@@ -7,8 +7,6 @@ from typing import TYPE_CHECKING, Annotated
 import typer
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import ReaderUnavailable
-from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER, OutletHeld, retrieve_unless_held
 from thenwhat.claims.entry import EntryError
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
@@ -16,11 +14,11 @@ from thenwhat.cli.session import settings_or_exit
 from thenwhat.domain import ReviewState
 from thenwhat.extract.retrieve import (
     ArticleRetriever,
-    NotNow,
     PasteNeeded,
     Retrieved,
     reader_turns,
 )
+from thenwhat.work.errors import ReaderUnavailable
 
 if TYPE_CHECKING:
     from thenwhat.llm.client import Llm
@@ -118,32 +116,15 @@ def make_retriever() -> ArticleRetriever:
     )
 
 
-def _article_text(url: str, paste: bool, unless_held: bool = False) -> Retrieved:
-    """The article's text for this run only. It is never stored.
-
-    With `unless_held`, an outlet the page reader has stopped is not asked before its
-    wait is over, and a "not now" that states a wait is kept as the outlet's hold: the
-    command then exits with `LEFT_FOR_LATER`, which is no failure."""
+def _article_text(url: str, paste: bool) -> Retrieved:
+    """The article's text for this run only. It is never stored."""
     if paste:
         text = sys.stdin.read().strip()
         if not text:
             raise EntryError("No article text arrived on standard input.")
         return Retrieved(text)
     try:
-        if unless_held:
-            from thenwhat.cli import entry
-
-            return retrieve_unless_held(
-                lambda: entry.open_session(), make_retriever(), url, datetime.now(UTC)
-            )
         return make_retriever().retrieve(url)
-    except (OutletHeld, NotNow) as later:
-        if not unless_held:
-            raise EntryError(
-                f"{later} Run the command again with --paste and pipe the text in."
-            ) from None
-        out.print(f"Left for later. {later}", markup=False)
-        raise typer.Exit(code=LEFT_FOR_LATER) from None
     except PasteNeeded as needed:
         raise EntryError(
             f"{needed} Run the command again with --paste and pipe the text in."
@@ -213,22 +194,14 @@ def extract_article(
     claim_slug: Annotated[str, typer.Argument(help="Slug of a claim that is still pending.")],
     article_url: Annotated[str, typer.Option(help="One of the claim's articles.")],
     paste: Annotated[bool, typer.Option("--paste", help=PASTE_HELP)] = False,
-    unless_held: Annotated[
-        bool,
-        typer.Option(
-            "--unless-held",
-            help="Do not ask the page reader while it has said the article's outlet cannot"
-            " be asked yet: leave the article for later and exit 75. `thenwhat prepare`"
-            " reads this way. Without it the reader is asked whatever it said before.",
-        ),
-    ] = False,
 ) -> None:
     """Add what one of a claim's articles says: entities, the paper, promises and
-    reported statements."""
+    reported statements. `thenwhat prepare` reads a claim's unread articles itself (the
+    step `claim_articles`); this reads one now, or takes its pasted text."""
     from thenwhat.extract.service import extract_into_claim
 
     with entry_session() as session:
-        article = _article_text(article_url, paste, unless_held)
+        article = _article_text(article_url, paste)
         extracted = extract_into_claim(
             session,
             make_llm(session),

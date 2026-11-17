@@ -10,12 +10,19 @@ from pathlib import Path
 
 import httpx
 import pytest
-from sqlalchemy import select
+from sqlalchemy import Engine, select
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
-from backfill_support import NOW, ModelStep, QuietStep, add_trials, same_session
-from thenwhat.backfill.allowance import Allowances
+from backfill_support import (
+    NOW,
+    ModelStep,
+    QuietStep,
+    add_trials,
+    committed_sessions,
+    remove_committed,
+    same_session,
+)
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.news_search import query_for
 from thenwhat.backfill.registry_load import condition_of
@@ -33,8 +40,12 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import Decider, OutletKind, ScreenOutcome
+from thenwhat.measure import spans as measure
+from thenwhat.measure.events import RUN_ENDED, RUN_STARTED
+from thenwhat.measure.files import days_held, read_day, read_events
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import Paper
+from thenwhat.work.allowance import Allowances
 
 
 class Index:
@@ -147,6 +158,36 @@ def test_a_step_that_asks_no_source_is_planned_and_run_without_an_allowance(
     assert "hours" not in plan.output and "allowance" not in plan.output
     assert ran.exit_code == 0, ran.output
     assert "quiet: 5 done, 0 found nothing, 0 failed; 0 still due." in ran.output
+
+
+def test_a_run_of_several_workers_is_one_run(
+    run, engine: Engine, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+):
+    """What happens to a run is recorded as it happens: a command's workers make one
+    run, which starts with its limit and its workers and ends with why and its counts,
+    and every record's measurement names it."""
+    step = QuietStep("quiet-workers", registry="workers-registry")
+    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings, **_: [step])
+    # Each worker in a transaction of its own, as in a real run.
+    monkeypatch.setattr("thenwhat.cli.session.open_session", committed_sessions(engine))
+    monkeypatch.setenv("MEASURE_DIR", str(tmp_path))
+    monkeypatch.setenv("MEASURE_KEEP_DAYS", "30")
+    monkeypatch.setenv("MEASURE_LOOKUP_KEEP_DAYS", "7")
+    with Session(engine) as session, session.begin():
+        add_trials(session, 4, registry="workers-registry")
+
+    try:
+        ran = run("run", "quiet-workers", "--workers", "2")
+    finally:
+        measure.use(None)
+        remove_committed(engine, registry="workers-registry", step=step.name, source=step.source)
+
+    assert ran.exit_code == 0, ran.output
+    [day] = days_held(tmp_path)
+    started, ended = read_events(tmp_path, day, [RUN_STARTED, RUN_ENDED])
+    assert (started.values["limit"], started.values["workers"]) == (None, 2)
+    assert (ended.values["why"], ended.values["counts"]["done"]) == ("nothing_due", 4)
+    assert {span.run for span in read_day(tmp_path, day)} == {started.values["run"]}
 
 
 def model_step(monkeypatch: pytest.MonkeyPatch, usd_per_mtok: str | None) -> ModelStep:
@@ -686,12 +727,16 @@ def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_non
     run, session: Session
 ):
     """Scenarios: Asking an outlet again, An outlet with nothing to retry"""
-    from thenwhat.backfill.link_read import NO_PAGE, OUTLET_REFUSES
+    from thenwhat.backfill import link_reasons as why
+    from thenwhat.backfill.link_read import LinkRead
     from thenwhat.domain import ReadOutcome, WorkOutcome
 
-    for number, detail in enumerate(
-        [f"{NO_PAGE} (the site answered 401)", f"{OUTLET_REFUSES} for 5 pages and served none"]
+    refused = {"outlet": "news.example.org", "status": 401}
+    unasked = {"outlet": "news.example.org", "pages": 5}
+    for number, (reason, values) in enumerate(
+        [(why.SITE_REFUSED, refused), (why.OUTLET_REFUSES, unasked)]
     ):
+        detail = reason.say(values)
         lead = LinkLead(
             url=f"https://news.example.org/refused-{number}",
             url_key=f"news.example.org/refused-{number}",
@@ -709,12 +754,14 @@ def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_non
                 record_kind="link_lead",
                 record_id=lead.id,
                 step="link_read",
-                step_version=1,
-                outcome=WorkOutcome.NOTHING_FOUND,
-                attempts=1,
+                step_version=LinkRead.version,
+                outcome=WorkOutcome.NEEDS_FIX,
+                attempts=0,
                 requests_used=1,
                 fingerprint="earlier",
                 last_attempt_at=NOW,
+                reason=reason.code,
+                reason_values=values,
             )
         )
     session.flush()
@@ -892,7 +939,7 @@ def test_load_trials_records_a_too_many_requests_and_stops_cleanly(
     assert again.exit_code == 0, again.output
     assert asked == []
     assert "Loaded 0 trials in 0 requests" in again.output
-    assert "Stopped: clinicaltrials.gov said it was asked too often." in again.output
+    assert "Stopped: clinicaltrials.gov is paused until" in again.output
 
 
 def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
@@ -1225,3 +1272,63 @@ def test_the_paper_step_takes_the_trial_target_set(run, session: Session, monkey
     assert result.exit_code == 0, result.output
     # The trial that ended this year with results first; the one that ended last year never.
     assert asked == [["NCT00000003", "NCT00000001", "NCT00000002"]]
+
+
+def test_the_funnel_counts_why_leads_were_not_read_from_their_reason_codes(run, session: Session):
+    """Scenario: The funnel report (openspec lead-reading, change one-work-runner)"""
+    from datetime import timedelta
+
+    from thenwhat.backfill import link_reasons as why
+    from thenwhat.backfill.link_read import LinkRead
+    from thenwhat.domain import ReadOutcome, WorkOutcome
+
+    def lead(name: str, outlet: str, outcome, reason, values, entry_outcome) -> None:
+        carried = {"outlet": outlet, **values}
+        said = outcome is not None
+        added = LinkLead(
+            url=f"https://{outlet}/{name}",
+            url_key=f"{outlet}/{name}",
+            outlet=outlet,
+            outlet_kind=OutletKind.GENERAL_NEWS,
+            title="words a person wrote when sharing the link",
+            first_shared_at=NOW,
+            read_outcome=outcome,
+            read_detail=reason.say(carried) if said else None,
+        )
+        session.add(added)
+        session.flush()
+        later = entry_outcome is WorkOutcome.LATER
+        session.add(
+            WorkEntry(
+                record_kind="link_lead",
+                record_id=added.id,
+                step="link_read",
+                step_version=LinkRead.version,
+                outcome=entry_outcome,
+                attempts=0,
+                requests_used=1,
+                fingerprint="earlier",
+                last_attempt_at=NOW,
+                reason=reason.code,
+                reason_values=carried,
+                not_before=NOW + timedelta(hours=6) if later else None,
+                first_put_off_at=NOW if later else None,
+            )
+        )
+
+    unreadable, fix = ReadOutcome.CANNOT_BE_READ, WorkOutcome.NEEDS_FIX
+    lead("a", "news.example.org", unreadable, why.SITE_REFUSED, {"status": 403}, fix)
+    lead("b", "other.example.org", unreadable, why.SITE_REFUSED, {"status": 403}, fix)
+    lead("c", "news.example.org", unreadable, why.NO_DATE, {}, fix)
+    lead("d", "news.example.org", None, why.SITE_BUSY, {"status": 503}, WorkOutcome.LATER)
+    session.flush()
+
+    result = run("funnel")
+
+    assert result.exit_code == 0, result.output
+    assert "could not be read: 3" in result.output
+    assert "  the page could not be retrieved (the site answered 403): 2" in result.output
+    assert "  the page gives no publication date: 1" in result.output
+    assert "outlets whose pages gave no publication date:\n  news.example.org  1" in result.output
+    assert "put off, to be asked for again: 1" in result.output
+    assert "  the page could not be retrieved (the site answered 503): 1" in result.output

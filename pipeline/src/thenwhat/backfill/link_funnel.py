@@ -5,14 +5,15 @@ from collections import Counter
 from dataclasses import dataclass
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.link_read import LEAD_READING, NO_DATE
+from thenwhat.backfill import link_reasons as why
+from thenwhat.backfill.link_read import LEAD_READING, LinkRead
 from thenwhat.backfill.link_triage import Standing, standings
-from thenwhat.db.models import Claim, LinkLead, LlmUsage
+from thenwhat.db.models import Claim, LinkLead, LlmUsage, WorkEntry
 from thenwhat.decide.steps import LEAD_TRIAGE, SAME_CLAIM, TREATMENT_KIND, VERTICAL_CHOICE
-from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome
+from thenwhat.domain import Decider, ReadOutcome, ReviewState, ScreenOutcome, WorkOutcome
 
 TRIAGE_PURPOSE = f"decision:{LEAD_TRIAGE}"
 READING_PURPOSES = (
@@ -21,6 +22,11 @@ READING_PURPOSES = (
     f"decision:{SAME_CLAIM}",
     f"decision:{TREATMENT_KIND}",
 )
+
+
+# The read's reasons by code, and what is said of a lead whose entry holds none.
+WORDS = {reason.code: reason for reason in why.REASONS}
+NO_CODE = "no reason code recorded"
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,8 +49,11 @@ class Funnel:
     business_news: int
     identity_unresolved: int
     enough_articles: int
-    # Why leads could not be read, and how many for each reason.
+    # Why leads could not be read, and how many for each reason, in the words made from
+    # the reason's code.
     cannot_be_read: dict[str, int]
+    # Leads put off, to be asked for again by themselves, and why.
+    put_off: dict[str, int]
     # The outlets whose pages gave no publication date, and how many leads each lost.
     undated_outlets: list[tuple[str, int]]
     triage_cost_usd: Decimal
@@ -94,18 +103,39 @@ def funnel(session: Session, *, pass_above: float | None, reject_below: float | 
     rejected = new_claims(Claim.review_state == ReviewState.REJECTED, by_rule)
     awaiting = new_claims(Claim.review_state == ReviewState.PENDING)
     unreadable = LinkLead.read_outcome == ReadOutcome.CANNOT_BE_READ
-    reasons = session.execute(
-        select(LinkLead.read_detail, func.count())
-        .where(unreadable)
-        .group_by(LinkLead.read_detail)
-        .order_by(func.count().desc(), LinkLead.read_detail)
-    ).all()
+    # The entry of each lead's read, which holds why as a code with its values.
+    read = and_(
+        WorkEntry.record_kind == LinkRead.record_kind,
+        WorkEntry.record_id == LinkLead.id,
+        WorkEntry.step == LinkRead.name,
+        WorkEntry.step_version == LinkRead.version,
+    )
+    # A reason's values apart from the outlet, so one line counts every outlet.
+    carried = WorkEntry.reason_values.op("-")("outlet")
     undated = session.execute(
         select(LinkLead.outlet, func.count())
-        .where(unreadable, LinkLead.read_detail == NO_DATE)
+        .join(WorkEntry, read)
+        .where(unreadable, WorkEntry.reason == why.NO_DATE.code)
         .group_by(LinkLead.outlet)
         .order_by(func.count().desc(), LinkLead.outlet)
     ).all()
+
+    def by_reason(*conditions) -> dict[str, int]:
+        """How many leads for each reason, in the words made from its code, the reason
+        most leads have first."""
+        rows = session.execute(
+            select(WorkEntry.reason, carried, func.count())
+            .select_from(LinkLead)
+            .outerjoin(WorkEntry, read)
+            .where(*conditions)
+            .group_by(WorkEntry.reason, carried)
+        ).all()
+        counted: dict[str, int] = {}
+        for code, values, number in rows:
+            words = NO_CODE if code not in WORDS else WORDS[code].say(values or {})
+            counted[words] = counted.get(words, 0) + number
+        return dict(sorted(counted.items(), key=lambda line: (-line[1], line[0])))
+
     in_scope = LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE
     return Funnel(
         loaded=number(),
@@ -122,7 +152,8 @@ def funnel(session: Session, *, pass_above: float | None, reject_below: float | 
         business_news=number(LinkLead.read_outcome == ReadOutcome.BUSINESS_NEWS),
         identity_unresolved=number(LinkLead.read_outcome == ReadOutcome.IDENTITY_UNRESOLVED),
         enough_articles=number(LinkLead.read_outcome == ReadOutcome.ENOUGH_ARTICLES),
-        cannot_be_read={reason or "no reason recorded": count for reason, count in reasons},
+        cannot_be_read=by_reason(unreadable),
+        put_off=by_reason(WorkEntry.outcome == WorkOutcome.LATER, WorkEntry.stale.is_(False)),
         undated_outlets=[(outlet, count) for outlet, count in undated],
         triage_cost_usd=_cost(session, (TRIAGE_PURPOSE,)),
         reading_cost_usd=_cost(session, READING_PURPOSES),

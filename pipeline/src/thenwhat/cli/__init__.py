@@ -29,6 +29,7 @@ from thenwhat.cli.statements import statements_command
 from thenwhat.cli.store import store_app
 from thenwhat.cli.terms import terms_command
 from thenwhat.cli.trials_listing import trials_listing_command
+from thenwhat.cli.work import work_app
 from thenwhat.db.session import make_engine, ping
 
 app = typer.Typer(no_args_is_help=True)
@@ -60,6 +61,7 @@ app.add_typer(clinical_app, name="clinical")
 app.add_typer(seed_app, name="seed")
 app.add_typer(backfill_app, name="backfill")
 app.add_typer(store_app, name="store")
+app.add_typer(work_app, name="work")
 app.command("coverage")(coverage_command)
 
 

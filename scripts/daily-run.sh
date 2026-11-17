@@ -363,7 +363,15 @@ write_summary() {
     echo "- Scored: $(report_of score '^link_triage:' 'did not run')"
     echo "- Read: $(report_of read '^link_read:' 'did not run')"
     if [ -f "$work/prepare.out" ]; then
-      echo "- Prepared: $(grep -c -E ' \([0-9]+s\)$' "$work/prepare.out" || true) claims worked on"
+      # One line a step, as `thenwhat prepare` prints them. The decision's line says how
+      # many claims were decided; a step with claims put off, needing a fix or failed is
+      # listed under it, so what is left waiting is seen without opening the log.
+      echo "- Prepared: $(grep -m1 -E '^claim_decide: ' "$work/prepare.out" || echo 'no claim was due for a decision')"
+      grep -E '^claim_[a-z_]+: ' "$work/prepare.out" \
+        | grep -v -E '^claim_decide: ' \
+        | grep -v -E ' 0 put off, 0 need a fix, 0 failed;' \
+        | sed 's/^/  - /' || true
+      grep -E '^Never searched: ' "$work/prepare.out" | sed 's/^/  - /' || true
     else
       echo "- Prepared: did not run"
     fi

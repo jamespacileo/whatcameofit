@@ -6,10 +6,11 @@ from thenwhat.backfill.link_read import LinkRead
 from thenwhat.backfill.link_screen import LinkScreen
 from thenwhat.backfill.link_triage import LinkTriage
 from thenwhat.backfill.news_search import NewsSearch
-from thenwhat.backfill.steps import Step
 from thenwhat.backfill.topics import terms_of
 from thenwhat.backfill.trial_papers import TrialPapers
+from thenwhat.claimsteps.run import claim_steps
 from thenwhat.config import Settings
+from thenwhat.work.steps import Step
 
 
 def link_read_step(settings: Settings, triage_version: int, **options: Any) -> LinkRead:
@@ -30,6 +31,7 @@ def link_read_step(settings: Settings, triage_version: int, **options: Any) -> L
         match_reject_below=settings.match_reject_below,
         match_accept_above=settings.match_accept_above,
         outlet_gap_seconds=settings.reader_outlet_gap_seconds,
+        site_retry_hours=settings.lead_site_retry_hours,
         read_since=settings.lead_read_since,
         **options,
     )
@@ -40,8 +42,9 @@ def make_triage(settings: Settings) -> LinkTriage:
 
 
 def registered_steps(settings: Settings, year: int | None = None) -> list[Step]:
-    """Every step, as the settings give it. `year` is the calendar year the rolling set
-    of trials is chosen in, read from the clock by the command."""
+    """Every step, as the settings give it: those over leads and trials, then a claim's
+    preparation. `year` is the calendar year the rolling set of trials is chosen in, read
+    from the clock by the command."""
     triage = make_triage(settings)
     return [
         NewsSearch(leads_per_trial=settings.leads_per_trial),
@@ -49,4 +52,5 @@ def registered_steps(settings: Settings, year: int | None = None) -> list[Step]:
         LinkScreen(links_max=settings.lead_links_max),
         triage,
         link_read_step(settings, triage.version),
+        *claim_steps(settings),
     ]

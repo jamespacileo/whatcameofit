@@ -3,7 +3,7 @@
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
@@ -12,10 +12,7 @@ import typer
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.allowance import Allowances, AllowanceStatus
-from thenwhat.backfill.errors import BackfillError, SourceStop
 from thenwhat.backfill.leads import hit_rates
-from thenwhat.backfill.ledger import count
 from thenwhat.backfill.link_evaluation import (
     TENTHS,
     Figures,
@@ -46,24 +43,6 @@ from thenwhat.backfill.registry_load import (
     condition_of,
     load_trials,
 )
-from thenwhat.backfill.runner import RunReport, run_step
-from thenwhat.backfill.spend import (
-    PricesNotSet,
-    ceiling_check,
-    cost_of,
-    left_this_month,
-    prices_for,
-    records_covered,
-)
-from thenwhat.backfill.steps import (
-    NO_SOURCE,
-    ModelSpend,
-    Step,
-    asks_a_source,
-    by_name,
-    find_step,
-    model_spend_of,
-)
 from thenwhat.backfill.topics import TOPICS
 from thenwhat.backfill.trial_coverage import coverage_of
 from thenwhat.backfill.trial_links import CLAIMS_A_READ, at_least, plan_of
@@ -82,15 +61,39 @@ from thenwhat.backfill.trial_sets import (
     require_wider_record,
     rule_of,
 )
+from thenwhat.claimsteps.inputs import CLAIM, notice_changes
+from thenwhat.claimsteps.step import ClaimStep
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.config import Settings, SourceAllowance
-from thenwhat.domain import Decider, LeadVerdict, OutletKind
+from thenwhat.domain import Decider, LeadVerdict, OutletKind, WorkOutcome
 from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import PubMed
+from thenwhat.work.allowance import Allowances, AllowanceStatus
+from thenwhat.work.errors import BackfillError, SourceStop
+from thenwhat.work.ledger import count, waiting
+from thenwhat.work.outcome import UndeclaredReason, declared
+from thenwhat.work.runner import RunReport, measured_run, run_step
+from thenwhat.work.spend import (
+    PricesNotSet,
+    ceiling_check,
+    cost_of,
+    left_this_month,
+    prices_for,
+    records_covered,
+)
+from thenwhat.work.steps import (
+    NO_SOURCE,
+    ModelSpend,
+    Step,
+    asks_a_source,
+    by_name,
+    find_step,
+    model_spend_of,
+)
 
 backfill_app = typer.Typer(
     help="Work through many records: load trials, see what is due, run a step.",
@@ -150,9 +153,23 @@ class NoClient:
         self.requests_made = 0
 
 
+def claim_steps_of(steps: list[Step]) -> list[ClaimStep]:
+    return [step for step in steps if isinstance(step, ClaimStep)]
+
+
+def under_an_allowance(step: Step) -> bool:
+    """Whether the step's requests are counted against a source's allowance. A claim's
+    preparation asks many sources, each at its own pace, under none."""
+    return asks_a_source(step) and step.record_kind != CLAIM
+
+
 def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
     """What a step asks its source through. Refuses here, before any record is
     touched, when the source could not be asked at all."""
+    if step.record_kind == CLAIM:
+        from thenwhat.cli.claim_steps import claim_sources
+
+        return claim_sources()
     if step.source == NO_SOURCE:
         return NoClient()
     if isinstance(step, LinkTriage):
@@ -170,7 +187,6 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
             make_llm=extract.make_llm,
             make_checker=extract.make_checker,
             make_backend=resolve.make_backend,
-            make_research=resolve.make_research,
         )
     if step.source == MediaCloud.name:
         client = MediaCloud(
@@ -303,6 +319,30 @@ def steps_command() -> None:
             )
 
 
+def _waiting_lines(session: Session, step: Step) -> list[str]:
+    """The step's records that wait, by class and reason: those put off, with when the
+    first is due, and those that need a fix."""
+    lines: list[str] = []
+    for waits in waiting(session, step):
+        try:
+            words = declared(step, waits.reason).describe()
+        except UndeclaredReason:
+            # A reason the step no longer declares: its records still wait for it.
+            words = "a reason the step no longer declares"
+        if waits.outcome is WorkOutcome.LATER:
+            first = f"{waits.first_due_at:%Y-%m-%d %H:%M} UTC" if waits.first_due_at else "now"
+            lines.append(
+                f"  put off: {waits.records:,} for '{waits.reason}' ({words}); "
+                f"the first is due {first}"
+            )
+        else:
+            lines.append(
+                f"  need a fix: {waits.records:,} for '{waits.reason}' ({words}); make them "
+                f"due with `thenwhat work requeue {step.name} --reason {waits.reason}`"
+            )
+    return lines
+
+
 @backfill_app.command("plan")
 def plan_command() -> None:
     """Show what each step has done and has left to do, and what the rest would take.
@@ -312,8 +352,12 @@ def plan_command() -> None:
     settings = settings_or_exit()
     with refusals():
         allowances = make_allowances(settings)
-        with open_session() as session:
-            for step in steps_for(settings):
+        steps = steps_for(settings)
+        with open_session() as session, session.begin_nested() as unchanged:
+            # Claims whose input changed are counted as due, as a run would find them,
+            # and the ledger is left as it was.
+            notice_changes(session, claim_steps_of(steps))
+            for step in steps:
                 counts = count(session, step, settings.backfill_attempt_limit)
                 total = session.scalar(select(func.count()).select_from(step.model)) or 0
                 out.print(f"{step.name} (version {step.version})", markup=False)
@@ -323,7 +367,7 @@ def plan_command() -> None:
                     f"  failed: {counts.failed:,}  due: {counts.due:,}",
                     markup=False,
                 )
-                if asks_a_source(step):
+                if under_an_allowance(step):
                     allowance = allowances.of(step.source)
                     status = allowances.status(session, step.source)
                     requests = _requests_for(step, counts.due)
@@ -345,6 +389,12 @@ def plan_command() -> None:
                             f"{allowance.period_hours:g} hours",
                             markup=False,
                         )
+                elif step.record_kind == CLAIM:
+                    out.print(
+                        "  asks the registries, literature indexes and models a claim's"
+                        " preparation needs, each at its own pace",
+                        markup=False,
+                    )
                 else:
                     out.print("  asks no source: the due records need 0 requests", markup=False)
                 if isinstance(step, LinkRead):
@@ -356,6 +406,8 @@ def plan_command() -> None:
                         _spend_line(session, settings, spend, counts.due, step.name),
                         markup=False,
                     )
+                for line in _waiting_lines(session, step):
+                    out.print(line, markup=False)
                 if counts.needs_attention:
                     out.print(
                         f"  {counts.needs_attention:,} failed "
@@ -363,6 +415,7 @@ def plan_command() -> None:
                         "they need attention",
                         markup=False,
                     )
+            unchanged.rollback()
 
 
 def _merge(reports: list[RunReport]) -> RunReport:
@@ -371,7 +424,8 @@ def _merge(reports: list[RunReport]) -> RunReport:
         merged.done += report.done
         merged.nothing_found += report.nothing_found
         merged.failed += report.failed
-        merged.deferred += report.deferred
+        merged.later += report.later
+        merged.needs_fix += report.needs_fix
         merged.stopped = merged.stopped or report.stopped
         merged.errors = (merged.errors or []) + (report.errors or [])
     merged.remaining_due = min(report.remaining_due for report in reports)
@@ -407,12 +461,16 @@ def run_command(
             # the current one, and miss.
             with open_session() as session:
                 refuse_stale_keys(session)
+        if step.record_kind == CLAIM:
+            # A claim whose input changed since its entry was made is due again.
+            with open_session() as session:
+                notice_changes(session, claim_steps_of(steps_for(settings)))
         check_ready = getattr(step, "check_ready", None)
         if check_ready is not None:
             with open_session() as session:
                 check_ready(session)
         allowances = make_allowances(settings)
-        if asks_a_source(step):
+        if under_an_allowance(step):
             allowances.of(step.source)
         clients = [make_client(step, settings, allowances) for _ in range(workers)]
         share = None if limit is None else -(-limit // workers)
@@ -420,32 +478,40 @@ def run_command(
         def now() -> datetime:
             return datetime.now(UTC)
 
-        # A step that calls a model stops when the month's ceiling is reached.
-        before_call = ceiling_check(settings, now) if model_spend_of(step) else None
+        # A step that calls a model stops when the month's ceiling is reached. Most of a
+        # claim's preparation does.
+        calls_a_model = model_spend_of(step) is not None or step.record_kind == CLAIM
+        before_call = ceiling_check(settings, now) if calls_a_model else None
 
         tried: set[int] = set()
+        # One run for all the workers: its measurements and events name it.
+        with measured_run(step.name, limit=limit, workers=workers) as run:
 
-        def work(client: Any) -> RunReport:
-            return run_step(
-                open_session,
-                step,
-                client,
-                now=now,
-                attempt_limit=settings.backfill_attempt_limit,
-                limit=share,
-                before_call=before_call,
-                tried=tried,
-            )
+            def work(client: Any) -> RunReport:
+                return run_step(
+                    open_session,
+                    step,
+                    client,
+                    now=now,
+                    attempt_limit=settings.backfill_attempt_limit,
+                    limit=share,
+                    before_call=before_call,
+                    tried=tried,
+                    put_off_span=timedelta(days=settings.work_put_off_days),
+                    run=run,
+                )
 
-        if workers == 1:
-            report = work(clients[0])
-        else:
-            with ThreadPoolExecutor(max_workers=workers) as pool:
-                report = _merge(list(pool.map(work, clients)))
+            if workers == 1:
+                report = work(clients[0])
+            else:
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    report = _merge(list(pool.map(work, clients)))
+        report.not_written = run.not_written
     out.print(
         f"{step.name}: {report.done:,} done, {report.nothing_found:,} found nothing, "
         f"{report.failed:,} failed"
-        + (f", {report.deferred:,} could not be asked for now" if report.deferred else "")
+        + (f", {report.later:,} put off" if report.later else "")
+        + (f", {report.needs_fix:,} need a fix" if report.needs_fix else "")
         + f"; {report.remaining_due:,} still due.",
         markup=False,
     )
@@ -453,6 +519,17 @@ def run_command(
         out.print(f"  failed: {error}", markup=False)
     if report.stopped:
         out.print(f"Stopped: {report.stopped}", markup=False)
+    _say_not_written(report)
+
+
+def _say_not_written(report: RunReport) -> None:
+    if report.not_written:
+        out.print(
+            f"{report.not_written:,} measurements of this run could not be written to"
+            " MEASURE_DIR. The work is not affected; `thenwhat measure` counts them once"
+            " writing works again.",
+            markup=False,
+        )
 
 
 @backfill_app.command("load-trials")
@@ -511,8 +588,6 @@ def load_trials_command(
                 condition=condition,
                 changes_only=changes_only,
                 now=lambda: datetime.now(UTC),
-                before_request=lambda: allowances.claim(registry.name),
-                refused=lambda wait: allowances.refused(registry.name, wait),
             )
     since = f" updated since {report.changes_since}" if report.changes_since else ""
     out.print(
@@ -619,8 +694,12 @@ def retry_outlet_command(
     """Ask the page reader again for an outlet's leads that it refused with 401, or that
     were not asked because of those refusals. Its old refusals lapse after 30 days on
     their own; this is for an outlet known to serve the reader now."""
+    settings = settings_or_exit()
     with refusals(), open_session() as session:
-        retried = retry_outlet(session, outlet)
+        step = find_step(steps_for(settings), LinkRead.name)
+        if not isinstance(step, LinkRead):
+            raise BackfillError("The step that reads link leads is not among the steps.")
+        retried = retry_outlet(session, step, outlet)
     noun = "lead" if retried == 1 else "leads"
     out.print(
         f"{retried:,} {noun} of {outlet} are due to be read again."
@@ -963,12 +1042,12 @@ def read_set_command(
     out.print(
         f"{step.name} for {trial_set}: {report.done:,} done, {report.nothing_found:,} "
         f"found nothing, {report.failed:,} failed"
-        + (f", {report.deferred:,} could not be asked for now" if report.deferred else "")
         + f"; {report.remaining_due:,} still due. Run `thenwhat prepare --pending` next.",
         markup=False,
     )
     if report.stopped:
         out.print(f"Stopped: {report.stopped}", markup=False)
+    _say_not_written(report)
 
 
 @backfill_app.command("links")
@@ -1331,6 +1410,9 @@ def funnel_command() -> None:
         f"could not be read: {sum(found.cannot_be_read.values()):,}",
     ]
     lines += [f"  {reason}: {number:,}" for reason, number in found.cannot_be_read.items()]
+    if found.put_off:
+        lines.append(f"put off, to be asked for again: {sum(found.put_off.values()):,}")
+        lines += [f"  {reason}: {number:,}" for reason, number in found.put_off.items()]
     if found.undated_outlets:
         lines.append("outlets whose pages gave no publication date:")
         lines += [f"  {outlet}  {number:,}" for outlet, number in found.undated_outlets]

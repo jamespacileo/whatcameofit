@@ -6,7 +6,6 @@ from typing import Annotated
 
 import typer
 
-from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.backfill.outlet_hold import OutletHeld, retrieve_unless_held
 from thenwhat.claims.entry import EntryError, claim_by_slug
 from thenwhat.cli import entry, extract
@@ -20,6 +19,7 @@ from thenwhat.statements.service import (
     claims_missing_statements,
     read_again,
 )
+from thenwhat.work.errors import ReaderUnavailable
 
 
 def statements_command(

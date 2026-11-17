@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from thenwhat.backfill.errors import BackfillError
+from thenwhat.work.errors import BackfillError
 
 HACKER_NEWS = "hackernews"
 REDDIT = "reddit"

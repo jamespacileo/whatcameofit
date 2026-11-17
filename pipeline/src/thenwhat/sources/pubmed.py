@@ -22,14 +22,14 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from thenwhat.backfill.allowance import Allowances
-from thenwhat.backfill.errors import AllowanceUsedUp, BackfillError, SourceStop
 from thenwhat.sources.base import (
     MissingContact,
     SystemTime,
     Time,
     require_recorded,
 )
+from thenwhat.work.allowance import Allowances
+from thenwhat.work.errors import AllowanceUsedUp, BackfillError, SourceStop
 
 API = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 DATABASE = "pubmed"

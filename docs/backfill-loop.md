@@ -24,7 +24,15 @@ A batch is about 200 reads. Each step names what goes on which tab of the spread
 ### 1. Before
 
 - Measurements are on: `MEASURE_DIR`, `MEASURE_KEEP_DAYS` and `MEASURE_LOOKUP_KEEP_DAYS` are set. A batch run without them has no figures and does not count.
-- `thenwhat backfill plan`: what is due and what it would cost. Show the operator before a step that spends.
+- `thenwhat backfill plan`: what is due and what it would cost, and under each step the records that wait: how many are put off and when the first is due, and how many need a fix for each reason. Show the operator before a step that spends.
+- A cause that was put right since the last batch (the reader now finds a date, an outlet now serves the reader, an outlet was given a name) brings its leads back with one command. Count them first:
+
+  ```sh
+  thenwhat work requeue link_read --reason no_date --dry-run
+  thenwhat work requeue link_read --reason site_refused --where outlet=example.org
+  ```
+
+  A reason's code is the one the plan prints. Leads refused for what their article is (a class of treatments, business news) are final and are not brought back this way.
 - Decide the **one** change this batch tries, if any, and write it on *Strategies* with the figure it should move and that figure now. One change a batch: with two, neither can be credited.
 
 ### 2. Run
@@ -34,7 +42,9 @@ thenwhat backfill run link_read --limit 200
 thenwhat prepare --pending
 ```
 
-A claim `prepare` approves for a read is held awaiting audit.
+`prepare` runs a claim's preparation as steps of the work ledger: its articles, its substance, its registry search, its papers, its fetch, its trial readings, its terms, the records its articles' pages name, and its decision. It prints one line a step, then each claim a step left waiting and why. A step that finished for a claim is not done again by a later run, and a claim whose source was down is put off and comes back by itself.
+
+A claim a read drafted is decided once its substance lookup, its registry search and its fetch have finished. Its papers, readings and terms do not hold the decision: they stay due, for a published claim too, until a run finishes them. A claim `prepare` approves for a read is held awaiting audit.
 
 ### 3. Audit
 

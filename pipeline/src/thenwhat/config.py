@@ -37,10 +37,28 @@ DEFAULT_ALLOWANCES = {
 }
 
 
-class Settings(BaseSettings):
+class CallSettings(BaseSettings):
+    """What every call to a source or a model reads, whichever command makes it: the
+    sources' allowances and the ceiling on any one wait (openspec source-clients). Read
+    by the clients themselves, so no command can leave them out, and needing nothing
+    else to be set."""
+
     # Empty variables, as in a freshly copied .env, count as not set.
     model_config = SettingsConfigDict(extra="ignore", env_ignore_empty=True)
 
+    # JSON by source name, for example
+    # {"mediacloud": {"requests": 4000, "period_hours": 168, "interval_seconds": 30}}.
+    source_allowances: dict[str, SourceAllowance] = {}
+    # The longest one wait inside a call may be, in seconds: a delay before a retry, or a
+    # wait the source or model stated. One that asks for longer cannot be asked until
+    # then, and the call ends at once saying so.
+    call_wait_ceiling_seconds: float = Field(default=60, gt=0)
+
+    def allowances(self) -> dict[str, SourceAllowance]:
+        return {**DEFAULT_ALLOWANCES, **self.source_allowances}
+
+
+class Settings(CallSettings):
     database_url: str
     # Sent in the User-Agent of every registry request. No request is sent without it.
     contact_email: str | None = None
@@ -117,12 +135,13 @@ class Settings(BaseSettings):
     # causes no request (openspec paper-facts).
     paper_record_max_age_days: int = 30
 
-    # Backfill (openspec work-ledger, source-allowances, article-leads).
-    # JSON by source name, for example
-    # {"mediacloud": {"requests": 4000, "period_hours": 168, "interval_seconds": 30}}.
-    source_allowances: dict[str, SourceAllowance] = {}
+    # Backfill (openspec work-ledger, source-allowances, article-leads). The allowances
+    # and the ceiling on a wait are read with every call, in `CallSettings`.
     # A record that failed this many times is skipped and reported.
     backfill_attempt_limit: int = 3
+    # A record put off for one reason for longer than this is said to need a fix, so it
+    # is listed and not asked for without end.
+    work_put_off_days: int = 30
     # Media Cloud key, and the collections and single outlets to search, as
     # comma-separated ids from its directory. The news search refuses to run while the
     # key is empty or while neither list names anything.
@@ -181,6 +200,9 @@ class Settings(BaseSettings):
     # this only keeps the pipeline from sending it one outlet's pages back to back.
     # 0 turns it off.
     reader_outlet_gap_seconds: float = Field(default=30, ge=0)
+    # A lead whose site answered that it is busy, throttling or failing is asked for
+    # again after this many hours.
+    lead_site_retry_hours: float = Field(default=6, gt=0)
     # Read only leads first shared on or after this day. Unset reads leads of any date.
     # It narrows a run to a period; a lead outside it stays due for a later run.
     lead_read_since: date | None = None
@@ -216,9 +238,10 @@ class Settings(BaseSettings):
             if name.strip()
         )
 
-    def allowances(self) -> dict[str, SourceAllowance]:
-        return {**DEFAULT_ALLOWANCES, **self.source_allowances}
-
 
 def load_settings() -> Settings:
     return Settings()
+
+
+def load_call_settings() -> CallSettings:
+    return CallSettings()

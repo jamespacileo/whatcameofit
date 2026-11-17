@@ -9,8 +9,8 @@ from datetime import date
 from sqlalchemy import ColumnElement, and_, func, or_, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import BackfillError
 from thenwhat.db.models import RegistryTrial
+from thenwhat.work.errors import BackfillError
 
 # Both sets start on 1 January 2025. A completion date can be a year and month without
 # a day, so it is compared by its year: any date the registry writes for 2025 or later,

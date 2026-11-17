@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-extension check-store lint types db-up test-db-up test test-fast test-slow scripts-test store-test store-dev site-test site-build-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -31,6 +31,7 @@ check-store: store-test
 lint:
 	uv run --directory pipeline ruff check .
 	uv run --directory pipeline ruff format --check .
+	uv run --directory pipeline lint-imports
 
 types:
 	uv run --directory pipeline ty check
@@ -46,13 +47,18 @@ test: test-fast test-slow
 
 # One worker per core, each on a database of its own (pipeline/tests/conftest.py).
 test-fast: test-db-up
-	uv run --directory pipeline pytest -q -n auto -m "not slow"
+	uv run --directory pipeline pytest -q -n auto -m "not slow and not benchmark"
 
 # Tests marked `slow` build the site, so the site's dependencies must be installed.
 test-slow: test-db-up site/node_modules
-	uv run --directory pipeline pytest -q -m slow
+	uv run --directory pipeline pytest -q -m "slow and not benchmark"
 
 # The daily job's script, against a stand-in for the pipeline: no database, no network.
+# What measuring costs a step that asks no source: at most a twentieth of its time
+# (openspec processing-metrics). Minutes long, so not part of `make check`.
+benchmark: test-db-up
+	uv run --directory pipeline pytest -m benchmark
+
 scripts-test:
 	sh -n scripts/daily-run.sh
 	sh -n scripts/worktree-setup.sh

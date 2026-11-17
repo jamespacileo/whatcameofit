@@ -19,9 +19,8 @@ from thenwhat.backfill.link_triage import (
     standing_of,
     standings,
 )
-from thenwhat.backfill.runner import run_step
 from thenwhat.db.models import DecisionLog, LinkLead, LlmUsage, WorkEntry
-from thenwhat.decide.core import BackendAnswer
+from thenwhat.decide.core import Backend, BackendAnswer
 from thenwhat.decide.steps import (
     HEALTH_OTHER,
     LEAD_TRIAGE,
@@ -31,6 +30,7 @@ from thenwhat.decide.steps import (
 )
 from thenwhat.domain import ScreenOutcome, WorkOutcome
 from thenwhat.llm.errors import LlmCallFailed
+from thenwhat.work.runner import run_step
 
 NOW = datetime(2026, 11, 20, 9, 0, tzinfo=UTC)
 WHEN = datetime(2019, 5, 4, 10, 30, tzinfo=UTC)
@@ -115,7 +115,7 @@ def add_leads(
     return list(session.scalars(select(LinkLead).order_by(LinkLead.id)))
 
 
-def triage(session: Session, backend: Headlines, step: LinkTriage | None = None):
+def triage(session: Session, backend: Backend, step: LinkTriage | None = None):
     return run_step(
         same_session(session),
         step or LinkTriage(Clock()),

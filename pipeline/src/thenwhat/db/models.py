@@ -175,7 +175,8 @@ class Claim(Reviewed, Base):
     # archived, stands for no intervention any more, and its address leads to that claim.
     merged_into_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"), index=True)
     # Set when the intervention gained or changed a name, so its registries are to be
-    # searched again (`thenwhat prepare --due`). Cleared by a registry search that succeeds.
+    # searched again (`thenwhat prepare --due`): the time a new search was last asked
+    # for. Its change makes the claim due for its search steps; a search leaves it as it is.
     registry_search_due_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
@@ -244,6 +245,13 @@ class SourceArticle(Base):
     published_date: Mapped[date]
     content_hash: Mapped[str | None] = mapped_column(Text)
     archive_url: Mapped[str | None] = mapped_column(Text)
+    # The registry numbers and paper DOIs the article's page names, as the page reader
+    # gave them: identifiers only, never the article's text. The step `claim_named_records`
+    # looks them up as candidates of the claim (openspec lead-reading).
+    named_registry_numbers: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
+    named_dois: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list, server_default="{}")
 
 
 class Promise(Base):
@@ -646,6 +654,38 @@ class HttpCache(Base):
     expires_at: Mapped[datetime] = mapped_column(TIMESTAMP)
 
 
+class RegistrySearch(Base):
+    """One term of a claim's latest finished registry search: what was sent, when, and
+    what came back, or why the term was not sent. The rows of a claim's search replace
+    those of the search before. A claim with none was never searched. Behavior: openspec
+    entity-resolution, "A registry search leaves a record"."""
+
+    __tablename__ = "registry_search"
+    __table_args__ = (
+        # A term sent says what came back; a term not sent says why, and nothing else.
+        CheckConstraint(
+            "(not_sent_reason IS NULL) = (reported IS NOT NULL)"
+            " AND (reported IS NULL) = (kept IS NULL)",
+            name="sent_or_why_not",
+        ),
+        CheckConstraint("reported >= 0 AND kept >= 0", name="counts_not_negative"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), index=True)
+    source_name: Mapped[str] = mapped_column(Text)
+    term: Mapped[str] = mapped_column(Text)
+    # The wording of the condition the search was narrowed by, if it was.
+    condition: Mapped[str | None] = mapped_column(Text)
+    ran_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # How many records the source said it holds for the search, and how many were taken.
+    reported: Mapped[int | None]
+    kept: Mapped[int | None]
+    # A limit left some of the reported records out.
+    cut: Mapped[bool] = mapped_column(default=False, server_default="false")
+    not_sent_reason: Mapped[str | None] = mapped_column(Text)
+
+
 class PaperRecord(Base):
     """The index record a paper's facts are read from (openspec paper-facts), kept once
     per paper with the time it was fetched.
@@ -707,8 +747,22 @@ class WorkEntry(Base):
         ),
         CheckConstraint("(outcome = 'failed') = (error IS NOT NULL)", name="failure_has_error"),
         CheckConstraint("attempts >= 0 AND requests_used >= 0", name="counts_not_negative"),
+        # A record put off says until when, and one that waits says for what.
+        CheckConstraint("(outcome = 'later') = (not_before IS NOT NULL)", name="later_has_time"),
+        CheckConstraint(
+            "outcome NOT IN ('later', 'needs_fix') OR reason IS NOT NULL",
+            name="waiting_has_reason",
+        ),
         # The unique index leads with the record, so a step's entries need their own.
         Index("ix_work_entry_step_step_version", "step", "step_version"),
+        # What `thenwhat work requeue` and the plan look entries up by.
+        Index(
+            "ix_work_entry_step_reason",
+            "step",
+            "step_version",
+            "reason",
+            postgresql_where=text("reason IS NOT NULL"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -725,6 +779,15 @@ class WorkEntry(Base):
     stale: Mapped[bool] = mapped_column(default=False, server_default="false")
     error: Mapped[str | None] = mapped_column(Text)
     last_attempt_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # Why the record was not done, as a code the step declared, with the values the
+    # reason carries: the status a site answered, an outlet.
+    reason: Mapped[str | None] = mapped_column(Text)
+    reason_values: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # A record put off is not due before this time.
+    not_before: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    # When the record was first put off for the reason it is put off for now. One put
+    # off for the same reason past the configured span is said to need a fix.
+    first_put_off_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
 
 
 class SourceAllowanceUse(Base):

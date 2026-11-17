@@ -15,7 +15,6 @@ import httpx
 import pytest
 
 from reader_support import READER_URL, SyntheticReader, retriever
-from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.extract.retrieve import (
     NOT_ALLOWED,
     NOT_NOW,
@@ -27,6 +26,7 @@ from thenwhat.extract.retrieve import (
     NotServed,
     Probe,
 )
+from thenwhat.work.errors import ReaderUnavailable
 
 ARTICLE_URL = "https://news.example.org/2018/teeth"
 SNAPSHOT_URL = "http://web.archive.org/web/20190101000000/https://news.example.org/2018/teeth"
@@ -382,8 +382,8 @@ def test_a_reader_at_capacity_is_asked_again_after_the_wait_it_states():
 
 def test_a_reader_that_stays_busy_ends_as_unavailable():
     from reader_support import SyntheticReader
-    from thenwhat.backfill.errors import ReaderUnavailable
     from thenwhat.extract.retrieve import BUSY_TRIES
+    from thenwhat.work.errors import ReaderUnavailable
 
     reader = SyntheticReader()
     reader.answer = lambda: _busy("1")
@@ -399,7 +399,7 @@ def test_a_reader_that_stays_busy_ends_as_unavailable():
 @pytest.mark.parametrize("wait", [None, "3600", "soon"])
 def test_a_429_with_no_stated_wait_or_too_long_a_one_is_not_waited_for(wait):
     from reader_support import SyntheticReader
-    from thenwhat.backfill.errors import ReaderUnavailable
+    from thenwhat.work.errors import ReaderUnavailable
 
     reader = SyntheticReader()
     reader.answer = lambda: _busy(wait)

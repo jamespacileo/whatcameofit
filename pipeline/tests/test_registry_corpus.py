@@ -10,17 +10,17 @@ from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
 from backfill_support import DemoStep, committed_sessions, remove_committed, same_session
-from thenwhat.backfill.errors import AllowanceUsedUp, SourcePaused
-from thenwhat.backfill.ledger import count, record_outcome
 from thenwhat.backfill.link_screen import LinkScreen
 from thenwhat.backfill.news_search import NewsSearch
 from thenwhat.backfill.registry_load import load_trials, trial_fields, without_people
-from thenwhat.backfill.runner import run_step
-from thenwhat.db.models import RegistryLoad, RegistryTrial, WorkEntry
+from thenwhat.db.models import RegistryLoad, RegistryTrial, SourceAllowanceUse, WorkEntry
 from thenwhat.domain import WorkOutcome
 from thenwhat.export.build import build_export
 from thenwhat.sources.base import MissingContact
 from thenwhat.sources.clinicaltrials import LIST_FIELDS, ClinicalTrials
+from thenwhat.work.errors import AllowanceUsedUp
+from thenwhat.work.ledger import count, record_outcome
+from thenwhat.work.runner import run_step
 
 CONDITION = "AREA[Phase]PHASE3 AND AREA[Condition]Migraine"
 REGISTRY = "clinicaltrials.gov"
@@ -464,20 +464,20 @@ def test_a_load_that_reaches_the_allowance_stops_with_what_it_stored(
 def test_a_load_the_registry_asks_to_wait_records_the_pause_and_stops(
     session: Session, fake_time, fixture_json
 ):
-    """The registry answers "too many requests" to the second page every time it is
-    asked: the refusal is recorded with the wait it stated, the load ends without an
-    error with the first page stored, and it is not recorded as completed."""
+    """The registry answers "too many requests" to the second page, with a wait longer
+    than any one wait inside a call: the pause is recorded for every process with the
+    wait it stated, the load ends without an error with the first page stored, and it is
+    not recorded as completed."""
     registry = Registry(fixture_json, throttle_second_page=True)
-    waits: list[float | None] = []
 
-    def refused(wait: float | None) -> SourcePaused:
-        waits.append(wait)
-        return SourcePaused("clinicaltrials.gov said it was asked too often.")
+    report = load(session, fake_time, registry)
 
-    report = load(session, fake_time, registry, refused=refused)
-
-    assert waits == [120.0]
-    assert report.stopped == "clinicaltrials.gov said it was asked too often."
+    assert report.stopped is not None
+    assert report.stopped.startswith("clinicaltrials.gov said it was asked too often")
+    use = session.get(SourceAllowanceUse, REGISTRY)
+    assert use is not None and use.paused_until == fake_time.now() + timedelta(seconds=120)
+    # Asked once for the second page: a wait above the ceiling is not waited out.
+    assert len(registry.asked) == 2
     assert (report.added, report.updated) == (3, 0)
     assert len(stored(session)) == 3
     assert session.get(RegistryLoad, (REGISTRY, CONDITION)) is None

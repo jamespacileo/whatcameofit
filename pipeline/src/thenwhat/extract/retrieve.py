@@ -18,10 +18,10 @@ from typing import Any
 
 import httpx
 
-from thenwhat.backfill.errors import ReaderUnavailable
 from thenwhat.extract.page import BODY_FROM, Page, read_page
 from thenwhat.measure import spans as measure
 from thenwhat.sources.base import require_contact, user_agent
+from thenwhat.work.errors import ReaderUnavailable
 
 # The name the read step's allowance is kept under.
 READER = "reader"

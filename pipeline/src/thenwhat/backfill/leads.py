@@ -6,10 +6,10 @@ from dataclasses import dataclass
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.ledger import FINISHED
-from thenwhat.backfill.steps import Step
 from thenwhat.db.models import ArticleLead, WorkEntry
 from thenwhat.domain import OutletKind
+from thenwhat.work.ledger import FINISHED
+from thenwhat.work.steps import Step
 
 
 @dataclass(frozen=True, slots=True)

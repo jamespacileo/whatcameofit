@@ -14,7 +14,6 @@ from typing import Any
 from sqlalchemy import ColumnElement, and_, false, func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import BackfillError
 from thenwhat.backfill.link_screen import (
     CANDIDATE,
     EXACT,
@@ -26,6 +25,7 @@ from thenwhat.backfill.link_screen import (
 from thenwhat.backfill.trial_sets import rule_of
 from thenwhat.db.models import LinkLead, LinkLeadLink, RegistryTrial, WorkEntry
 from thenwhat.domain import ScreenOutcome
+from thenwhat.work.errors import BackfillError
 
 STRONGEST_FIRST = (EXACT, STRONG, NAMED, CANDIDATE)
 PHASE_3 = "PHASE3"

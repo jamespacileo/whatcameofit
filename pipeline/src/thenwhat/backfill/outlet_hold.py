@@ -9,6 +9,7 @@ Whether and when a site is asked stays the reader's decision (ADR 0006): this on
 the reader's own answer for as long as the reader said.
 """
 
+import time as system_time
 from collections.abc import Callable, Generator
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
@@ -19,7 +20,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key
-from thenwhat.backfill.allowance import Allowances, held_until
 from thenwhat.extract.retrieve import (
     NOT_NOW,
     WAIT_MOST,
@@ -29,6 +29,8 @@ from thenwhat.extract.retrieve import (
     Probe,
     Retrieved,
 )
+from thenwhat.measure import spans as measure
+from thenwhat.work.allowance import Allowances, held_until
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 
@@ -40,6 +42,8 @@ OUTLET_HOLD = "reader:"
 LEFT_FOR_LATER = 75
 # The first key of the lock that gives one worker at a time an outlet's turn.
 OUTLET_TURN_LOCK = 7_468
+# What a measurement calls the wait for an outlet's turn.
+OUTLET_TURN = "outlet_turn"
 
 
 class OutletHeld(PasteNeeded):
@@ -68,7 +72,11 @@ def asking(session: Session, outlet: str) -> Generator[None]:
     looked at and the page reader is asked. The lock is the connection's and is given
     back as soon as the reader has answered: whatever follows needs no turn."""
     key = func.hashtext(OUTLET_HOLD + outlet)
+    waited_from = system_time.monotonic()
     session.execute(select(func.pg_advisory_lock(OUTLET_TURN_LOCK, key)))
+    # Waiting for another worker to finish asking this outlet is waiting, under its own
+    # cause (openspec processing-metrics, "Every wait is given its cause").
+    measure.add_wait(OUTLET_TURN, system_time.monotonic() - waited_from)
     try:
         yield
     finally:

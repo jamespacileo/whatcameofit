@@ -1,19 +1,20 @@
 """Commands that create evidence events: fetching from registries and entry by hand."""
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Annotated
 
 import typer
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import claim_by_slug
-from thenwhat.cli.clinical import make_mesh
-from thenwhat.cli.console import out
+from thenwhat.claimsteps.evidence import ClaimFetch
+from thenwhat.cli.claim_steps import outcome_line, run_for_claims, unfinished
+from thenwhat.cli.clinical import make_mesh as make_mesh
+from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.clinical.service import read_tree
 from thenwhat.domain import EventType, RegulatoryOutcome, ReviewState, TrialPhase, TrialState
-from thenwhat.events.fetch import LiteratureIndex, NoticeRegistry, TrialRegistry, fetch_claim
+from thenwhat.events.fetch import LiteratureIndex, NoticeRegistry, TrialRegistry
 from thenwhat.events.manual import MANUAL_SOURCE, add_manual_event
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -37,52 +38,45 @@ def make_evidence_sources(
 def fetch_command(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
 ) -> None:
-    """Read the registries for a claim's approved matches and record what they show.
+    """Read the registries for a claim's approved matches and record what they show, now:
+    the step `claim_fetch` of `thenwhat prepare`.
 
     Trial events from an approved match are approved by rule. A follow-up paper is
     approved by rule when its confidence reaches the review threshold, and waits for
-    your review otherwise.
+    your review otherwise. A registry that failed puts the claim off, and the command
+    exits with 1.
     """
-    settings = settings_or_exit()
     with entry_session() as session:
         claim = claim_by_slug(session, claim_slug)
-        trials, literature, notices = make_evidence_sources(session)
-        created = fetch_claim(
-            session,
-            claim,
-            trials=trials,
-            literature=literature,
-            notices=notices,
-            threshold=settings.review_confidence_threshold,
-            no_signal_years=settings.no_signal_years,
-            paper_max_age=timedelta(days=settings.paper_record_max_age_days),
-            now=datetime.now(UTC),
-        )
-        pending = sum(event.review_state is ReviewState.PENDING for event in created)
-        noun = "event" if len(created) == 1 else "events"
-        out.print(f"Recorded {len(created)} new {noun} for {claim.slug}; {pending} await review.")
-        for event in created:
+        claim_id, slug = claim.id, claim.slug
+    [step] = run_for_claims([claim_id], [ClaimFetch.name], alone=True)
+    with entry_session() as session:
+        created = step.results.get(claim_id)
+        if created is not None:
+            pending = sum(event.review_state is ReviewState.PENDING for event in created)
+            noun = "event" if len(created) == 1 else "events"
+            out.print(f"Recorded {len(created)} new {noun} for {slug}; {pending} await review.")
+            for event in created:
+                out.print(
+                    f"  {event.event_date}  {event.review_state.value:8}  {event.summary}",
+                    markup=False,
+                )
+        out.print(f"Status: {claim_by_slug(session, slug).current_status.value}", markup=False)
+        tree = step.trees.get(claim_id) if isinstance(step, ClaimFetch) else None
+        if isinstance(tree, SourceError):
             out.print(
-                f"  {event.event_date}  {event.review_state.value:8}  {event.summary}",
-                markup=False,
-            )
-        out.print(f"Status: {claim.current_status.value}", markup=False)
-        # The claim's clinical categories are derived from the records just stored, and
-        # placed in MeSH's tree by NLM's own records. Reading those here keeps a new term
-        # from leaving the claim's categories unread in the next export. NLM not
-        # answering is said and is no failure of the fetch: the records above are kept.
-        try:
-            tree = read_tree(session, make_mesh(session), [claim])
-        except SourceError as error:
-            out.print(
-                f"MeSH records not read ({error}): its clinical categories stay not yet read"
+                f"MeSH records not read ({tree}): its clinical categories stay not yet read"
                 " until `thenwhat clinical tree` has run.",
                 markup=False,
             )
-        else:
-            if tree.read:
-                noun = "record" if tree.read == 1 else "records"
-                out.print(f"Read {tree.read} MeSH {noun} for its clinical categories.")
+        elif tree is not None and tree.read:
+            noun = "record" if tree.read == 1 else "records"
+            out.print(f"Read {tree.read} MeSH {noun} for its clinical categories.")
+        line = outcome_line(session, step, claim_id, slug)
+        if line is not None:
+            err.print(line, markup=False)
+        if unfinished(session, [step], claim_id):
+            raise typer.Exit(code=1)
 
 
 @event_app.command("add")

@@ -15,12 +15,12 @@ from backfill_support import (
     remove_committed,
     same_session,
 )
-from thenwhat.backfill.allowance import Allowances
-from thenwhat.backfill.errors import AllowanceUsedUp, NoAllowance, SourcePaused
-from thenwhat.backfill.ledger import count
-from thenwhat.backfill.runner import run_step
 from thenwhat.config import DEFAULT_ALLOWANCES, Settings, SourceAllowance
 from thenwhat.db.models import WorkEntry
+from thenwhat.work.allowance import Allowances
+from thenwhat.work.errors import AllowanceUsedUp, NoAllowance, SourcePaused
+from thenwhat.work.ledger import count
+from thenwhat.work.runner import run_step
 
 SOURCE = "demo-source"
 THREE_A_DAY = {SOURCE: SourceAllowance(requests=3, period_hours=24, interval_seconds=5)}

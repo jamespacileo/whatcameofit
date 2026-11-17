@@ -11,7 +11,6 @@ from typing import Any
 from sqlalchemy import ColumnElement, Engine, delete
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.steps import MODEL, NO_SOURCE, ModelSpend
 from thenwhat.db.models import (
     ArticleLead,
     LlmUsage,
@@ -20,6 +19,8 @@ from thenwhat.db.models import (
     WorkEntry,
 )
 from thenwhat.domain import OutletKind, WorkOutcome
+from thenwhat.work.outcome import Reason, ReasonClass
+from thenwhat.work.steps import MODEL, NO_SOURCE, ModelSpend
 
 NOW = datetime(2026, 11, 20, 9, 0, tzinfo=UTC)
 
@@ -107,6 +108,31 @@ class DemoStep:
         if record.external_id in self.fails:
             raise RuntimeError(f"could not process {record.external_id}")
         return WorkOutcome.DONE
+
+
+SITE_BUSY = Reason("site_busy", ReasonClass.LATER, "the site answered {status}")
+NO_DATE = Reason("no_date", ReasonClass.NEEDS_FIX, "the page gives no publication date")
+NOT_A_REPORT = Reason("not_a_report", ReasonClass.FINAL, "not a report of a treatment")
+
+
+class ReasonedStep(DemoStep):
+    """A step whose answer for each trial a test sets."""
+
+    reasons: tuple[Reason, ...] = (SITE_BUSY, NO_DATE, NOT_A_REPORT)
+
+    def __init__(self, name: str = "reasoned", version: int = 1) -> None:
+        super().__init__(name, version)
+        # The steps that must have finished for a trial before this one is due for it.
+        self.after: tuple[DemoStep, ...] = ()
+        self.answers: dict[str, Callable[[], Any]] = {}
+
+    def run(self, session: Session, record: RegistryTrial, client: Client) -> Any:
+        answer = self.answers.get(record.external_id)
+        if answer is None:
+            return super().run(session, record, client)
+        with self._lock:
+            self.ran.append(record.external_id)
+        return answer()
 
 
 class QuietStep(DemoStep):

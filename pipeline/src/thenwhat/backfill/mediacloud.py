@@ -13,10 +13,10 @@ from typing import Any
 import httpx
 
 from thenwhat import __version__
-from thenwhat.backfill.allowance import Allowances
-from thenwhat.backfill.errors import BackfillError, SourceStop
 from thenwhat.backfill.outlet_kinds import outlet_of
 from thenwhat.sources.base import MissingContact, SourceError, SourceUnavailable, SystemTime, Time
+from thenwhat.work.allowance import Allowances
+from thenwhat.work.errors import BackfillError, SourceStop
 
 API = "https://search.mediacloud.org/api/search/story-list"
 PLATFORM = "onlinenews-mediacloud"

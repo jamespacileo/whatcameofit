@@ -181,34 +181,6 @@ def test_extract_article_reads_pasted_text_from_standard_input(run, session: Ses
     assert claim is not None and len(promises_of(session, claim)) == 1
 
 
-def test_extract_article_unless_held_leaves_a_stopped_outlets_article_for_later(
-    run, session: Session
-):
-    """Scenario: Prepare comes to an article of a stopped outlet"""
-    from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
-    from thenwhat.extract.retrieve import NotNow
-
-    run(*NEW)
-    article = ("extract", "article", "tooth-regrowth-ex1", "--article-url", URL)
-
-    # The reader stops the outlet: left for later, and the hold is kept.
-    stopped = run(*article, "--unless-held", web=NotNow(URL, "news.example.org is stopped", 3600))
-
-    assert stopped.exit_code == LEFT_FOR_LATER and "Left for later." in stopped.output
-
-    # Within the wait the reader is not asked, though it would give the page.
-    never = PasteNeeded("the reader must not be asked for a held outlet")
-    held = run(*article, "--unless-held", web=never)
-
-    assert held.exit_code == LEFT_FOR_LATER
-    assert "news.example.org cannot be asked before" in " ".join(held.output.split())
-
-    # Without the flag the operator's own command asks the reader all the same.
-    direct = run(*article, web=Retrieved(TEXT))
-
-    assert direct.exit_code == 0, direct.output
-
-
 def test_extract_article_without_a_configured_model_names_the_setting_and_exits_1(run):
     run(*NEW)
 

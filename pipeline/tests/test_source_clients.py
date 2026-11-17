@@ -24,7 +24,7 @@ from thenwhat.sources.base import (
     SourceUnavailable,
     UnsearchableTerm,
 )
-from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.clinicaltrials import ClinicalTrials, NotSent, Searched
 from thenwhat.sources.crossref import Crossref, Notice
 from thenwhat.sources.europepmc import EuropePmc, describe
 from thenwhat.sources.gsrs import Gsrs, codes_of, label_of
@@ -271,7 +271,7 @@ def test_broad_name_with_no_trial_under_the_condition_gives_no_candidates(
     assert all("pageToken" not in request.url.params for request in replay.requests)
 
 
-@pytest.mark.parametrize("method", ["search_trials", "search_phrase"])
+@pytest.mark.parametrize("method", ["name_search", "phrase_search"])
 def test_refused_condition_uses_one_bounded_discovery_fallback(
     session: Session, fake_time, fixture_json, method: str
 ):
@@ -290,11 +290,11 @@ def test_refused_condition_uses_one_bounded_discovery_fallback(
         return fixture_json("clinicaltrials/search_broad_with_condition.json")
 
     source, replay = trials(session, fake_time, route)
-    records = getattr(source, method)("CAR-T cell therapy", condition)
+    records = getattr(source, method)("CAR-T cell therapy", condition).records
 
     assert [record.external_id for record in records] == ["NCT07341828", "NCT06588491"]
     expected: list[str | None] = [condition, fallback]
-    if method == "search_trials":
+    if method == "name_search":
         expected.insert(0, None)
     assert [r.url.params.get("query.cond") for r in replay.requests] == expected
     assert all(r.url.params["query.intr"] == "CAR-T cell therapy" for r in replay.requests)
@@ -310,7 +310,7 @@ def test_refused_condition_is_reported_when_no_usable_fallback_remains(
     source, replay = trials(session, fake_time, lambda request: refused)
 
     with pytest.raises(UnsearchableTerm, match="Too complicated query"):
-        source.search_phrase("cell therapy", condition)
+        source.phrase_search("cell therapy", condition)
 
     assert len(replay.requests) == requests
     assert all("query.cond" in r.url.params for r in replay.requests)
@@ -324,7 +324,7 @@ def test_only_an_explicit_condition_refusal_can_use_the_fallback(
     source, replay = trials(session, fake_time, lambda request: refused)
 
     with pytest.raises(UnsearchableTerm):
-        source.search_phrase("cell therapy", "Stiff person syndrome")
+        source.phrase_search("cell therapy", "Stiff person syndrome")
 
     assert len(replay.requests) == 1
 
@@ -341,7 +341,8 @@ def test_refused_condition_fallback_keeps_the_candidate_limit(
 
     source, replay = trials(session, fake_time, route)
 
-    assert source.search_phrase("cell therapy", "Stiff person syndrome") == []
+    found = source.phrase_search("cell therapy", "Stiff person syndrome")
+    assert isinstance(found, Searched) and found.records == []
     assert len(replay.requests) == 2
     assert all("pageToken" not in r.url.params for r in replay.requests)
 
@@ -660,9 +661,10 @@ def test_search_phrase_is_searched_only_within_the_condition(
 ):
     source, replay = trials(session, fake_time, broad_search(fixture_json))
 
-    records = source.search_phrase("cell therapy", "Stiff person syndrome")
+    found = source.phrase_search("cell therapy", "Stiff person syndrome")
 
-    assert [record.external_id for record in records] == ["NCT07341828", "NCT06588491"]
+    assert isinstance(found, Searched)
+    assert [record.external_id for record in found.records] == ["NCT07341828", "NCT06588491"]
     assert [request.url.params.get("query.cond") for request in replay.requests] == [
         "Stiff person syndrome"
     ]
@@ -681,7 +683,7 @@ def test_a_term_the_registry_cannot_read_is_reported_with_its_reason_and_not_ret
     )
 
     with pytest.raises(UnsearchableTerm) as raised:
-        source.search_phrase(long_phrase, "Periodontal bone defect")
+        source.phrase_search(long_phrase, "Periodontal bone defect")
 
     assert raised.value.term == long_phrase
     assert str(raised.value) == (
@@ -703,7 +705,7 @@ def test_another_refusal_by_the_registry_is_still_a_plain_error(session: Session
 def test_search_phrase_without_a_condition_sends_nothing(session: Session, fake_time, fixture_json):
     source, replay = trials(session, fake_time, broad_search(fixture_json))
 
-    assert source.search_phrase("cell therapy", None) == []
+    assert isinstance(source.phrase_search("cell therapy", None), NotSent)
     assert replay.requests == []
 
 
@@ -715,7 +717,8 @@ def test_search_phrase_that_is_broad_within_the_condition_finds_nothing(
         session, fake_time, lambda request: fixture_json("clinicaltrials/search_broad_count.json")
     )
 
-    assert source.search_phrase("cell therapy", "Cancer") == []
+    found = source.phrase_search("cell therapy", "Cancer")
+    assert isinstance(found, Searched) and found.records == []
 
 
 # --- OpenAlex --------------------------------------------------------------------
@@ -1993,3 +1996,30 @@ def test_drug_record_by_identifier_and_an_unknown_identifier(
     assert unknown == {"data": {"drug": None}}
     assert none.drug("CHEMBL0000000") is None and none.drug("tirzepatide") is None
     assert len(asked.requests) == 1
+
+
+def test_a_search_says_what_the_registry_reported_and_what_was_taken(
+    session: Session, fake_time, fixture_json
+):
+    """Scenarios: A search that found trials, A limit left records out (openspec
+    entity-resolution, "A registry search leaves a record")"""
+    source, _ = trials(session, fake_time, broad_search(fixture_json))
+
+    narrowed = source.name_search("CAR-T cell therapy", condition="Stiff person syndrome")
+
+    assert (narrowed.reported, narrowed.kept, narrowed.condition, narrowed.cut) == (
+        2,
+        2,
+        "Stiff person syndrome",
+        False,
+    )
+
+    broad = fixture_json("clinicaltrials/search_broad_count.json")
+    source, _ = trials(session, fake_time, lambda request: broad)
+
+    still_broad = source.name_search("buprenorphine", condition="Opioid use disorder")
+    phrase = source.phrase_search("opioid agonist therapy", "Opioid use disorder")
+
+    assert (still_broad.reported, still_broad.kept, still_broad.cut) == (2071, 3, True)
+    assert isinstance(phrase, Searched)
+    assert (phrase.reported, phrase.kept, phrase.cut) == (2071, 0, True)

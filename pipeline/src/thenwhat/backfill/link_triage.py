@@ -15,8 +15,6 @@ from typing import Any
 from sqlalchemy import ColumnElement, and_, case, false, func, select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import ModelUnreachable
-from thenwhat.backfill.steps import MODEL, Failed, ModelSpend
 from thenwhat.backfill.topics import title_names
 from thenwhat.db.models import DecisionLog, LinkLead
 from thenwhat.decide.core import Backend, DecisionFailed
@@ -29,6 +27,8 @@ from thenwhat.decide.steps import (
 )
 from thenwhat.domain import ScreenOutcome, WorkOutcome
 from thenwhat.sources.base import SystemTime, Time
+from thenwhat.work.errors import ModelUnreachable
+from thenwhat.work.steps import MODEL, Failed, ModelSpend
 
 
 class Standing(StrEnum):

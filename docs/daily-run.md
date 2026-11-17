@@ -14,7 +14,7 @@ In this order, each step with its start, end and outcome in the day's log:
 | screen | `thenwhat backfill run link_screen` | no |
 | score | `thenwhat backfill run link_triage --limit DAILY_RUN_TRIAGE_LIMIT` | model |
 | read | `thenwhat backfill run link_read --limit DAILY_RUN_READ_LIMIT --workers DAILY_RUN_READ_WORKERS` | page reader, model |
-| prepare | `thenwhat prepare --pending` | registries, model |
+| prepare | `thenwhat prepare --pending`: every claim awaiting review, and every published claim with a part of its preparation still due | registries, model |
 | trials | `thenwhat backfill load-trials --trials interventional --changes-only` | registry |
 | refresh | `thenwhat fetch <slug>` for published claims, `DAILY_RUN_REFRESH_LIMIT` a run, in turn | registries, model |
 | measure | `thenwhat measure --days 1` | no |
@@ -60,6 +60,30 @@ sh scripts/daily-run.sh summary
 - The summaries: `~/Library/Application Support/thenwhat/daily-run/summary-YYYY-MM-DD.md`, and `latest.md` beside them.
 - The logs, one a day: `~/Library/Logs/thenwhat/daily-run/YYYY-MM-DD.log`. What launchd itself has to say goes to `launchd.log` in the same folder.
 - Both are kept `DAILY_RUN_KEEP_DAYS` days. They hold counts, slugs, registry facts and addresses that failed. They never hold article text.
+
+## Watching a run while it works
+
+```sh
+uv run --env-file .env --directory pipeline thenwhat measure --live
+```
+
+A second process, on the machine that holds `MEASURE_DIR`, that reads the day's measurement files from where it last read and draws the view again every four seconds until Ctrl-C. `--once` draws it once and exits, for a script or a quick look. It changes nothing: it adds no totals up, removes no file, and asks no source; its only other reads are two small queries each time it draws, the paused sources and the month's model spend. Without `MEASURE_DIR` it refuses, since there is nothing to watch.
+
+What it shows:
+
+- **Each step, in the last 1, 5 and 15 minutes:** records finished a minute by outcome (done, found nothing, put off, need a fix, failed); the share of the step's time spent running and spent waiting, by wait cause, and the cause it waited on most; model cost a minute and cost a record. A step's cost includes what was measured inside it, such as its decisions, which also show as steps of their own.
+- **The runs at work**, with their step, limit and workers. When nothing has been recorded for fifteen minutes it says so, and shows how the last run ended and why, with its counts, even if that was days ago.
+- **Records in hand:** by step, how many and how long the oldest has been, with its address key. A record is in hand from the line written when it is taken until its measurement is written. A process holding a record writes a line at least every 30 seconds, so a record whose process has written nothing for 75 seconds is no longer counted in hand: a run that crashed leaves nothing in hand for longer than that. Such records are counted apart, as left in hand by a process that stopped.
+- **Paused sources** and outlets the page reader has held, until when; **the month's model spend** against `LLM_MONTHLY_BUDGET_USD`.
+- **Measurements that could not be written** today, and lines of the files that could not be read.
+
+The view names the writers whose lines it read and how old the newest line is: only the writer runs steps, so a view on another machine is only as fresh as the files it is given.
+
+**Wait causes.** Time a record spends not being worked on is measured as waiting, under the one cause that held it; the rest is running. The causes are a source's pacing, a source's pause, an outlet's turn or gap, a place among the page reader's requests in flight, a delay before a retry, the turn that settles which claim an article reports, a row another run holds, and `measure_writer`: measurements made faster than they could be written, so the work waited for them. In the measurements they are named: a source's pacing under the source's name (`clinicaltrials.gov`, `reader`); a delay before a retry under `retry:<source>`; an outlet's turn under `outlet_turn`; the claim turn under `claim_turn`; the writer under `measure_writer`. A source's pause and an outlet's gap put a record off instead of holding it, so they show as records put off with their reason, not as time waited; and a row another run holds is skipped, not waited for.
+
+**Run events.** Beside the measurements, the day's file holds lines with a kind of their own, each with its time: a run started (`run_started`: step, limit, workers); a run ended (`run_ended`: why, one of nothing due, the limit, a provider that cannot be asked, the spend ceiling, stopped by the operator, or an error; and its counts, with how many stay due unless the operator or an error stopped it); a source paused (`source_paused`: source, until when); records made due by `thenwhat work requeue` (`made_due`: step, reason, how many). Every measurement a run makes, and its events, carry the run's identifier, one for each `backfill run` however many workers it has. A measurement also carries its outcome's class (final, later, needs_fix, failed) and its reason's code.
+
+**Measurements are written apart from the work.** A worker hands a finished measurement on and goes on; a thread of its own writes them, several at a time, at least once a second, to files it holds open. When they come faster than they can be written, the work waits for them rather than one being dropped, and the wait is measured as `measure_writer`. A write that fails does not stop the work: what was not written is counted, the run's last line says how many (`backfill run` prints it), a `not_written` line is written once writing works again, and `thenwhat measure` reports it for that day while the day's file is kept. If writing never works again before the process ends, the process says so on stderr. With measuring on, a step that asks no source takes no more than a twentieth longer, and no measurement makes a statement to the database (`tests/test_measure_benchmark.py`).
 
 ## Audit and publish
 

@@ -7,13 +7,13 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from sqlalchemy import select
-from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.errors import AllowanceUsedUp, NoAllowance, SourcePaused
 from thenwhat.config import SourceAllowance
 from thenwhat.db.models import SourceAllowanceUse
-from thenwhat.sources.base import SystemTime, Time
+from thenwhat.work.clock import SystemTime, Time, when
+from thenwhat.work.errors import NoAllowance, SourcePaused
+from thenwhat.work.pause import keep, let_in, paused_until
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 
@@ -61,45 +61,30 @@ class Allowances:
         """Take one request from the source's allowance, waiting for its turn. Raises
         when the allowance is spent or the source is paused; nothing is counted then."""
         allowance = self.of(source)
-        period = timedelta(hours=allowance.period_hours)
         with self._open_session() as session:
-            use = self._locked(session, source)
             now = self._time.now()
-            if now >= use.period_start + period:
-                use.period_start = now
-                use.requests_used = 0
-            if use.paused_until is not None and now < use.paused_until:
-                raise SourcePaused(
-                    f"{source} said it was asked too often. "
-                    f"It is not asked again before {_when(use.paused_until)}."
-                )
-            if use.requests_used >= allowance.requests:
-                raise AllowanceUsedUp(
-                    f"The allowance for {source} ({allowance.requests} requests) is used up. "
-                    f"It is restored at {_when(use.period_start + period)}."
-                )
-            if use.last_request_at is not None:
-                wait = allowance.interval_seconds - (now - use.last_request_at).total_seconds()
-                if wait > 0:
-                    self._time.sleep(wait)
-                    now = self._time.now()
-            use.requests_used += 1
-            use.last_request_at = now
-            session.flush()
+            turn = let_in(
+                session,
+                source,
+                now=now,
+                allowance=allowance,
+                interval=allowance.interval_seconds,
+            )
+        wait = (turn - now).total_seconds()
+        if wait > 0:
+            self._time.sleep(wait)
 
     def refused(self, source: str, retry_after_seconds: float | None = None) -> SourcePaused:
         """Record that the source answered "too many requests". Returns the error to
         raise: the run stops asking this source until the pause has passed."""
         allowance = self.of(source)
         pause = timedelta(seconds=retry_after_seconds or allowance.pause_minutes * 60)
+        now = self._time.now()
         with self._open_session() as session:
-            use = self._locked(session, source)
-            until = self._time.now() + pause
-            use.paused_until = until
-            use.refusals += 1
-            session.flush()
+            until = keep(session, source, now + pause, now)
         return SourcePaused(
-            f"{source} said it was asked too often. It is not asked again before {_when(until)}."
+            f"{source} said it was asked too often. It is not asked again before {when(until)}.",
+            until=until,
         )
 
     def hold(self, name: str, until: datetime) -> datetime:
@@ -108,13 +93,7 @@ class Allowances:
         allowance of its own; only the time is kept, beside the sources' pauses. A hold
         already kept that ends later stands. Returns when the hold ends."""
         with self._open_session() as session:
-            use = self._locked(session, name)
-            kept = use.paused_until
-            if kept is None or kept < until:
-                use.paused_until = kept = until
-                use.refusals += 1
-            session.flush()
-            return kept
+            return keep(session, name, until, self._time.now())
 
     def status(self, session: Session, source: str) -> AllowanceStatus:
         allowance = self.of(source)
@@ -131,25 +110,10 @@ class Allowances:
             allowance.requests, use.requests_used, use.period_start + period, paused
         )
 
-    def _locked(self, session: Session, source: str) -> SourceAllowanceUse:
-        session.execute(
-            insert(SourceAllowanceUse)
-            .values(source_name=source, period_start=self._time.now(), requests_used=0)
-            .on_conflict_do_nothing(index_elements=[SourceAllowanceUse.source_name])
-        )
-        return session.scalars(
-            select(SourceAllowanceUse)
-            .where(SourceAllowanceUse.source_name == source)
-            .with_for_update()
-        ).one()
-
 
 def held_until(session: Session, name: str, now: datetime) -> datetime | None:
     """When the hold kept under `name` ends, or None when none is running."""
-    until = session.scalar(
-        select(SourceAllowanceUse.paused_until).where(SourceAllowanceUse.source_name == name)
-    )
-    return until if until is not None and until > now else None
+    return paused_until(session, name, now)
 
 
 def holds_under(session: Session, prefix: str, now: datetime) -> dict[str, datetime]:
@@ -161,7 +125,3 @@ def holds_under(session: Session, prefix: str, now: datetime) -> dict[str, datet
         )
     )
     return {name[len(prefix) :]: until for name, until in rows if until is not None}
-
-
-def _when(moment: datetime) -> str:
-    return moment.strftime("%Y-%m-%d %H:%M UTC")
