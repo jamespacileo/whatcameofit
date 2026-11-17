@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.trial_sets import SETS
+from thenwhat.backfill.trial_sets import UnknownSet, YearNotGiven, rule_of
 from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, RegistryTrial
 from thenwhat.domain import ReviewState
 from thenwhat.events.trial import PHASES
@@ -70,8 +70,7 @@ class TrialsListing(BaseModel):
     trials: list[Row] = Field(default_factory=list)
 
 
-class UnknownSet(ValueError):
-    pass
+__all__ = ["UnknownSet", "YearNotGiven", "build_listing", "write_listing"]
 
 
 def listing_json_schema() -> dict[str, Any]:
@@ -117,10 +116,11 @@ def _cited(session: Session) -> dict[str, str]:
     return cited
 
 
-def build_listing(session: Session, set_name: str) -> TrialsListing:
-    rule = SETS.get(set_name)
-    if rule is None:
-        raise UnknownSet(f'No set of trials is named "{set_name}". The sets: {", ".join(SETS)}.')
+def build_listing(session: Session, set_name: str, year: int | None = None) -> TrialsListing:
+    """The listing of a named set. `year` is the calendar year the rolling set is chosen
+    in, which the command reads from the clock; the dated sets ignore it. The rule is
+    the one `backfill.trial_sets` names, and an unknown name is refused there."""
+    rule = rule_of(set_name, year)
     cited = _cited(session)
     rows: list[Row] = []
     read: date | None = None
@@ -167,10 +167,12 @@ def build_listing(session: Session, set_name: str) -> TrialsListing:
     return TrialsListing(set=set_name, records_read=read, trials=rows)
 
 
-def write_listing(session: Session, path: Path, set_name: str) -> TrialsListing:
+def write_listing(
+    session: Session, path: Path, set_name: str, year: int | None = None
+) -> TrialsListing:
     """Write the listing to `path`, replacing any earlier file only once it is complete.
     One line with no spaces: the file is fetched by readers."""
-    listing = build_listing(session, set_name)
+    listing = build_listing(session, set_name, year)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f"{path.name}.{os.getpid()}.tmp")
     temporary.write_text(listing.model_dump_json() + "\n")

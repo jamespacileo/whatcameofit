@@ -20,7 +20,10 @@
   },
   // Its own counter, so a pull request's copy never uses up production's.
   "ratelimits": [
-    { "name": "TRIAL_RECORD_READS", "namespace_id": "4113", "simple": { "limit": 60, "period": 60 } }
+    { "name": "TRIAL_RECORD_READS", "namespace_id": "4113", "simple": { "limit": 60, "period": 60 } },
+    // Registry reads for pages of listed trials no claim cites: a part of the allowance
+    // above, so that reading through those pages leaves room for the cited trials' pages.
+    { "name": "LISTED_TRIAL_READS", "namespace_id": "4114", "simple": { "limit": 30, "period": 60 } }
   ]
   // Deliberately absent: the custom domain, the LOOKUP_RESULTS namespace, the lookup's
   // rate limits and every secret. /api/lookup therefore answers "not set up", no model

@@ -1,16 +1,20 @@
 """The trials-listing command."""
 
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from thenwhat.backfill.trial_sets import ROLLING
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.export.trials_listing import UnknownSet, write_listing, write_listing_schema
 
-DEFAULT_SET = "active-since-2025"
+# The set the site lists, by the operator's decision of 2026-11-17: trials under way
+# now, or ended in the current calendar year.
+DEFAULT_SET = ROLLING
 
 
 def trials_listing_command(
@@ -36,7 +40,8 @@ def trials_listing_command(
     settings_or_exit()
     with cli_session.open_session() as session:
         try:
-            listing = write_listing(session, out_path, set_name)
+            # The rolling set is chosen by the year, read from the clock here and nowhere else.
+            listing = write_listing(session, out_path, set_name, datetime.now(UTC).year)
         except UnknownSet as error:
             err.print(str(error), markup=False)
             raise typer.Exit(code=1) from None
