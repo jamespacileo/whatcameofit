@@ -3,9 +3,11 @@
 import json
 import shutil
 import sqlite3
+from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
@@ -177,7 +179,7 @@ def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_del
     from sqlalchemy import select
 
     from thenwhat.db.models import LinkLead, LinkShare
-    from thenwhat.store.build import BUILD_ID_SQL, merge_into, read_delta, write_delta
+    from thenwhat.store.build import BUILD_ID_SQL, apply_delta, base_of, merge_into, write_delta
     from thenwhat.store.gather import Gathered, stream
     from thenwhat.store.push import increment
     from thenwhat.store.tiers import bulk_records, checks
@@ -212,23 +214,58 @@ def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_del
     records, _ = bulk_records(stream(session, Gathered(records=[])))
     day = increment(records, report.state, actions=True).records
     assert [r.kind for r in day] == ["link_share"]
-    merge_into(bulk, day, store_sql=STORE, now=datetime(2026, 11, 18, tzinfo=UTC), name="bulk-1")
+    runs = [("bulk-1", day)]
+    when = datetime(2026, 11, 18, tzinfo=UTC)
+    added, merged = merge_into(bulk, runs, store_sql=STORE, now=when)
+    assert merged == ["bulk-1-0"] and added["link_share"] == 1
     shares = "SELECT count(*) FROM link_share"
     assert sqlite3.connect(bulk).execute(shares).fetchone()[0] == 3
+    # The same run again, as after a crash before the state was written: nothing doubles.
+    assert merge_into(bulk, runs, store_sql=STORE, now=when) == (Counter(), [])
+    assert sqlite3.connect(bulk).execute(shares).fetchone()[0] == 3
 
-    # The bulk tier's restore: the kept file and the day's delta.
+    # The bulk tier's restore: the kept file and the day's delta, once however often given.
     delta = tmp_path / "delta.jsonl.gz"
-    write_delta(delta, day)
-    merge_into(
-        kept_copy,
-        read_delta(delta),
-        store_sql=STORE,
-        now=datetime(2026, 11, 18, tzinfo=UTC),
-        name="bulk-1",
-    )
-    assert [c.sha256 for c in checksums(kept_copy, BULK) if c.table == "link_share"] == [
-        c.sha256 for c in checksums(bulk, BULK) if c.table == "link_share"
+    write_delta(delta, runs, base=base_of(bulk, runs))
+    assert apply_delta(kept_copy, delta, store_sql=STORE, now=when) == ["bulk-1-0"]
+    assert apply_delta(kept_copy, delta, store_sql=STORE, now=when) == []
+    assert [c.sha256 for c in checksums(kept_copy, BULK)] == [
+        c.sha256 for c in checksums(bulk, BULK)
     ]
+
+
+def test_a_delta_applies_only_in_its_order(session: Session, tmp_path: Path):
+    from thenwhat.store.build import BuildFailed, apply_delta, base_of, merge_into, write_delta
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    _, bulk = split_build(file, payloads, "both")
+    restored = tmp_path / "restored.sqlite"
+    shutil.copyfile(bulk, restored)
+    when = datetime(2026, 11, 18, tzinfo=UTC)
+    deltas = []
+    for day in (18, 19):
+        share = Record(
+            "link_share",
+            f"news.example.com/drug-x|reader|reader|2026-11-{day}",
+            {
+                "lead_url_key": "news.example.com/drug-x",
+                "platform": "reader",
+                "community": "reader",
+                "shared_at": f"2026-11-{day}",
+                "score": 0,
+            },
+        )
+        runs = [(f"bulk-{day}", [share])]
+        merge_into(bulk, runs, store_sql=STORE, now=when)
+        deltas.append(tmp_path / f"delta-{day}.jsonl.gz")
+        write_delta(deltas[-1], runs, base=base_of(bulk, runs))
+    with pytest.raises(BuildFailed, match="apply the deltas before it"):
+        apply_delta(restored, deltas[1], store_sql=STORE, now=when)
+    assert apply_delta(restored, deltas[0], store_sql=STORE, now=when) == ["bulk-18-0"]
+    assert apply_delta(restored, deltas[1], store_sql=STORE, now=when) == ["bulk-19-0"]
+    assert apply_delta(restored, deltas[0], store_sql=STORE, now=when) == []
 
 
 def test_the_checks_file_holds_each_table_s_sql_and_the_row_it_must_give(tmp_path: Path):
@@ -365,3 +402,46 @@ def test_a_payload_an_event_and_a_trial_share_reaches_both_tiers():
     stream = [shared, event, trial]
     assert hot_records(stream)[0] == [shared, event]
     assert bulk_records(stream)[0] == [shared, trial]
+
+
+def test_a_fold_that_failed_merges_or_fails_again_and_never_skips(session: Session, tmp_path: Path):
+    import httpx
+
+    from thenwhat.store.inbox import InboxFailed, fold
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=datetime(2026, 11, 17, tzinfo=UTC))
+    _, bulk = split_build(file, payloads, "both")
+    asked = {"platform": "reader", "community": "reader", "shared_at": "2026-11-18", "score": 0}
+    good = {"lead_url_key": "news.example.com/drug-x", **asked}
+    orphan = {"lead_url_key": "news.example.com/not-held", **asked}
+    # Two runs whose ids are the service's longest and differ only at the end.
+    first, second = "a" * 63 + "1", "a" * 63 + "2"
+    inbox = [
+        {"seq": 1, "run": first, "kind": "link_share", "key": "k1", "body": good},
+        {"seq": 2, "run": second, "kind": "link_share", "key": "k2", "body": orphan},
+    ]
+
+    def service(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"records": inbox, "through": 2, "more": False})
+
+    when = datetime(2026, 11, 19, tzinfo=UTC)
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c:
+        with pytest.raises(InboxFailed):
+            fold(c, bulk, store_sql=STORE, now=when)
+        runs = {r for (r,) in sqlite3.connect(bulk).execute("SELECT id FROM run")}
+        assert f"inbox-{first}-0" in runs and f"inbox-{second}-0" not in runs
+        # Again, still failing: the failed run is tried again, not taken as folded.
+        with pytest.raises(InboxFailed):
+            fold(c, bulk, store_sql=STORE, now=when)
+        # Once its lead is there, it merges; the run folded before is not merged twice.
+        inbox[1]["body"] = {"lead_url_key": "news.example.com/drug-x", **asked}
+        inbox[1]["body"]["shared_at"] = "2026-11-19"
+        folded = fold(c, bulk, store_sql=STORE, now=when)
+    assert folded.runs == 1 and [name for name, _ in folded.named] == [
+        f"inbox-{first}",
+        f"inbox-{second}",
+    ]
+    shares = "SELECT count(*) FROM link_share WHERE platform = 'reader'"
+    assert sqlite3.connect(bulk).execute(shares).fetchone() == (2,)

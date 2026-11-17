@@ -3,7 +3,6 @@ D1's import takes it in by."""
 
 import json
 import os
-import re
 import subprocess
 from collections import Counter
 from datetime import UTC, datetime
@@ -20,7 +19,15 @@ from thenwhat.cli.export import STORE_SQL, reading_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.db.session import make_engine
 from thenwhat.export.parallel import read_only
-from thenwhat.store.build import BuildFailed, build, merge_into, read_delta, write_delta
+from thenwhat.store.build import (
+    BuildFailed,
+    apply_delta,
+    base_of,
+    build,
+    merge_into,
+    run_name,
+    write_delta,
+)
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
@@ -414,15 +421,16 @@ def merge_bulk_command(
     with reading_session() as session:
         records, _ = bulk_records(stream(session, Gathered(records=[]), keep_payload=keep_payload))
     chosen = increment(records, held, actions=True)
-    now = datetime.now(UTC)
+    # Named by the records it merges, which the state chose: run again after a crash
+    # before the state was written, it is the same run, which the file already holds.
+    name = run_name("bulk", *sorted(f"{k}={v}" for k, v in state_of(chosen.records).items()))
+    runs = [(name, chosen.records)]
     try:
-        added = merge_into(
-            file, chosen.records, store_sql=store_sql, now=now, name=f"bulk-{now:%Y%m%d%H%M%S}"
-        )
+        added, _ = merge_into(file, runs, store_sql=store_sql, now=datetime.now(UTC))
     except BuildFailed as fault:
         err.print(str(fault), markup=False)
         raise typer.Exit(code=1) from None
-    write_delta(delta, chosen.records)
+    write_delta(delta, runs, base=base_of(file, runs))
     held.update(state_of(chosen.records))
     write_state(state, held)
     out.print(
@@ -449,20 +457,18 @@ def apply_delta_command(
     if missing:
         err.print(f"No file at {missing[0]}.")
         raise typer.Exit(code=1)
-    for number, delta in enumerate(deltas):
-        records = read_delta(delta)
+    for delta in deltas:
         try:
-            merge_into(
-                file,
-                records,
-                store_sql=store_sql,
-                now=datetime.now(UTC),
-                name="delta-" + re.sub(r"[^A-Za-z0-9_-]", "-", delta.name)[:40] + f"-{number}",
-            )
+            merged = apply_delta(file, delta, store_sql=store_sql, now=datetime.now(UTC))
         except BuildFailed as fault:
             err.print(f"{delta}: {fault}", markup=False)
             raise typer.Exit(code=1) from None
-        out.print(f"Applied {delta}: {len(records):,} records.", markup=False)
+        out.print(
+            f"Applied {delta}: {len(merged)} runs merged."
+            if merged
+            else f"{delta} was already applied: nothing merged.",
+            markup=False,
+        )
 
 
 def _service(url: str) -> httpx.Client:
@@ -501,9 +507,10 @@ def fold_inbox_command(
         except InboxFailed as fault:
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None
-    write_delta(delta, folded.records)
+    write_delta(delta, folded.named, base=base_of(file, folded.named))
     out.print(
-        f"Folded {len(folded.records):,} records of {folded.runs} runs into {file};"
+        f"Folded {len(folded.records):,} records of {len(folded.named)} runs into {file}"
+        f" ({folded.runs} merged now, the others already);"
         f" the delta is {delta}. Through seq {folded.through}.",
         markup=False,
     )

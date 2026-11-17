@@ -15,6 +15,7 @@ public (the export lists it under `moved`).
 """
 
 import gzip
+import hashlib
 import json
 import secrets
 import sqlite3
@@ -220,21 +221,30 @@ def merge_run(
     ingest: dict[str, str],
     now: datetime,
 ) -> dict[str, int]:
-    """Register, stage and merge one run as the ingest service does; what it added."""
+    """Register, stage and merge one run as the ingest service does, all in one
+    transaction, so a run either is merged with its registration or leaves no trace; what
+    it added. A run the merge refuses is undone and raised, never left registered."""
     counts = Counter(record.kind for record in records)
-    db.execute(
-        ingest["register_run"],
-        (run, "migration", "build", None, "build", now.isoformat(), None, None),
-    )
-    db.execute(ingest["state_steps"], (run, "{}"))
-    db.execute(ingest["state_counts"], (run, json.dumps(counts)))
-    for start in range(0, len(records), CHUNK_RECORDS):
-        chunk = [record.staged() for record in records[start : start + CHUNK_RECORDS]]
-        db.execute(ingest["stage"], (run, json.dumps(chunk)))
     db.execute("BEGIN")
     try:
+        db.execute(
+            ingest["register_run"],
+            (run, "migration", "build", None, "build", now.isoformat(), None, None),
+        )
+        db.execute(ingest["state_steps"], (run, "{}"))
+        db.execute(ingest["state_counts"], (run, json.dumps(counts)))
+        for start in range(0, len(records), CHUNK_RECORDS):
+            chunk = [record.staged() for record in records[start : start + CHUNK_RECORDS]]
+            db.execute(ingest["stage"], (run, json.dumps(chunk)))
         for statement in merge:
             db.execute(statement, (run,) if "?1" in statement else ())
+        (status,) = db.execute("SELECT status FROM run WHERE id = ?", (run,)).fetchone()
+        if status != "merged":
+            raise sqlite3.IntegrityError(f"the run ended {status}, not merged")
+        added = dict(
+            db.execute("SELECT kind, added FROM merge_report WHERE run_id = ?", (run,)).fetchall()
+        )
+        db.execute("DELETE FROM stg WHERE run_id = ?", (run,))
         db.execute("COMMIT")
     except sqlite3.Error as error:
         short = [
@@ -250,10 +260,6 @@ def merge_run(
         raise BuildFailed(
             f"The store's merge undid run {run}: {error}. {'; '.join(short)}"
         ) from error
-    added = dict(
-        db.execute("SELECT kind, added FROM merge_report WHERE run_id = ?", (run,)).fetchall()
-    )
-    db.execute("DELETE FROM stg WHERE run_id = ?", (run,))
     return added
 
 
@@ -300,43 +306,109 @@ def build(
     return report
 
 
+def merged_runs(db: sqlite3.Connection) -> set[str]:
+    """The runs a store file holds as merged."""
+    return {run for (run,) in db.execute("SELECT id FROM run WHERE status = 'merged'")}
+
+
 def merge_into(
     path: Path,
-    records: list[Record],
+    runs: list[tuple[str, list[Record]]],
     *,
     store_sql: Path,
     now: datetime,
-    name: str,
-) -> Counter[str]:
-    """Merge records into a store file already built, by `store/merge.sql`, in runs of
-    `RUN_RECORDS` named `<name>-<n>`, as the daily job merges a day's bulk records into
-    the bulk file. What the merge added, by kind."""
+) -> tuple[Counter[str], list[str]]:
+    """Merge named runs of records into a store file already built, by `store/merge.sql`,
+    as the daily job merges a day's bulk records into the bulk file; a run over
+    `RUN_RECORDS` is merged as `<name>-<n>`. A run the file already holds as merged is not
+    merged again, so a retry merges what is left or fails, and never counts a run it did
+    not merge. What the merge added, by kind, and the names of the runs it merged."""
     merge = statements(store_sql / "merge.sql")
     ingest = named(store_sql / "ingest.sql")
     added: Counter[str] = Counter()
+    done: list[str] = []
     db = sqlite3.connect(path, isolation_level=None)
     try:
         # As in D1: the bulk file holds the hot rows bulk rows hang from (`REFERENCE`).
         db.execute("PRAGMA foreign_keys = ON")
-        for number, start in enumerate(range(0, len(records), RUN_RECORDS)):
-            run = records[start : start + RUN_RECORDS]
-            added.update(
-                merge_run(db, f"{name}-{number}", run, merge=merge, ingest=ingest, now=now)
-            )
+        held = merged_runs(db)
+        for name, records in runs:
+            for number, start in enumerate(range(0, max(len(records), 1), RUN_RECORDS)):
+                part = f"{name}-{number}"
+                chunk = records[start : start + RUN_RECORDS]
+                if part in held or not chunk:
+                    continue
+                added.update(merge_run(db, part, chunk, merge=merge, ingest=ingest, now=now))
+                done.append(part)
     finally:
         db.close()
-    return added
+    return added, done
 
 
-def write_delta(path: Path, records: list[Record]) -> None:
-    """A day's bulk records as one object beside the last bulk build: gzipped JSON lines of
-    staged records, replayed in order by `merge_into` on a restore."""
-    with gzip.open(path, "wt", encoding="utf-8") as stream:
-        for record in records:
-            stream.write(json.dumps(record.staged(), ensure_ascii=False, separators=(",", ":")))
-            stream.write("\n")
+def run_name(prefix: str, *parts: str) -> str:
+    """A run's name made from what it holds, so the same records give the same run."""
+    return f"{prefix}-" + hashlib.sha256("\n".join(parts).encode()).hexdigest()[:24]
 
 
-def read_delta(path: Path) -> list[Record]:
+def base_of(path: Path, runs: list[tuple[str, list[Record]]]) -> str:
+    """What a delta is applied on top of: the merged runs of the file, other than the
+    delta's own, by checksum. A restore applies a delta only on a file that has the same."""
+    names = {name for name, _ in runs}
+    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        held = sorted(run for run in merged_runs(db) if run.rsplit("-", 1)[0] not in names)
+    finally:
+        db.close()
+    return hashlib.sha256("\n".join(held).encode()).hexdigest()
+
+
+DELTA_VERSION = 2
+
+
+def write_delta(path: Path, runs: list[tuple[str, list[Record]]], *, base: str) -> None:
+    """A day's bulk records as one object beside the last bulk build: gzipped JSON lines,
+    a head line naming the base it applies on and its runs, then each record with its run.
+    Written to a temporary name and moved into place, so a delta is whole or absent."""
+    temporary = path.with_name(path.name + ".part")
+    with gzip.open(temporary, "wt", encoding="utf-8") as stream:
+        head = {"delta": DELTA_VERSION, "base": base, "runs": [name for name, _ in runs]}
+        stream.write(json.dumps(head) + "\n")
+        for name, records in runs:
+            for record in records:
+                line = {"run": name, **record.staged()}
+                stream.write(json.dumps(line, ensure_ascii=False, separators=(",", ":")) + "\n")
+    temporary.replace(path)
+
+
+def read_delta(path: Path) -> tuple[str, list[tuple[str, list[Record]]]]:
+    """A delta's base and its runs, in order."""
     with gzip.open(path, "rt", encoding="utf-8") as stream:
-        return [Record(**json.loads(line)) for line in stream if line.strip()]
+        head = json.loads(stream.readline())
+        if head.get("delta") != DELTA_VERSION:
+            raise BuildFailed(f"{path} is not a delta this pipeline writes.")
+        by_run: dict[str, list[Record]] = {name: [] for name in head["runs"]}
+        for line in stream:
+            if line.strip():
+                value = json.loads(line)
+                by_run[value.pop("run")].append(Record(**value))
+    return head["base"], list(by_run.items())
+
+
+def apply_delta(path: Path, delta: Path, *, store_sql: Path, now: datetime) -> list[str]:
+    """Replay a delta into a downloaded bulk file under its own run names: runs the file
+    already holds are skipped, and a delta whose base is not the file's is refused, so a
+    delta applied out of order or twice changes nothing it should not. The runs merged."""
+    base, runs = read_delta(delta)
+    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        held = merged_runs(db)
+    finally:
+        db.close()
+    if runs and all(f"{name}-0" in held for name, records in runs if records):
+        return []  # applied before
+    if base_of(path, runs) != base:
+        raise BuildFailed(
+            f"{delta.name} applies on another state of the bulk file: apply the deltas"
+            " before it first, in order."
+        )
+    return merge_into(path, runs, store_sql=store_sql, now=now)[1]

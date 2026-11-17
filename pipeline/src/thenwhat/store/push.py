@@ -17,7 +17,6 @@ The wire contract is `store/ingest/README.md`, "How a writer hands over a run".
 
 import hashlib
 import json
-import uuid
 from collections import Counter
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
@@ -168,7 +167,9 @@ def push(
                 report.payloads_put += 1
         chunks = chunks_of(records_of_run)
         counts = Counter(record.kind for record in records_of_run)
-        run = uuid.uuid4().hex
+        # Named by what it holds: a run sent again after a lost answer is the same run,
+        # which the service registers and merges once.
+        run = f"{writer}-{run_checksum(chunks)[:40]}"
         _ok(
             client.post(
                 "/runs",

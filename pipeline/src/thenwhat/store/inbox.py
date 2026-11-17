@@ -8,7 +8,6 @@ holds the records and the day's delta that carries them is kept in R2, so nothin
 between the two.
 """
 
-import sqlite3
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -31,6 +30,9 @@ class InboxFailed(Exception):
 @dataclass
 class Folded:
     records: list[Record] = field(default_factory=list)
+    # The folded runs by their local names, for the delta.
+    named: list[tuple[str, list[Record]]] = field(default_factory=list)
+    # How many of them this fold merged; the others the file already held.
     runs: int = 0
     # The last seq folded: what `clear` is then given.
     through: int = 0
@@ -55,34 +57,26 @@ def fold(
     client: httpx.Client, bulk: Path, *, store_sql: Path, now: datetime, after: int = 0
 ) -> Folded:
     """Merge the inbox into the bulk file, one local run for each run that handed the
-    records over, in the order the service gives them: a share's lead, if a lookup brought
-    it, is then in the file before the share."""
+    records over, named by that run's id whole, in the order the service gives them: a
+    share's lead, if a lookup brought it, is then in the file before the share. A run the
+    file already holds as merged, by an earlier fold that stopped, is not merged again; a
+    run that fails stops the fold, and a fold again merges it or fails again."""
     folded = Folded(through=after)
     for run, entries in groupby(read(client, after), key=lambda entry: entry["run"]):
         given = list(entries)
         records = [Record(entry["kind"], entry["key"], entry["body"]) for entry in given]
-        name = f"inbox-{run}"[:60]
-        # A run folded by an earlier fold that stopped before the inbox was cleared is not
-        # merged again, but goes into this delta too: that fold's delta may not be kept.
-        if not _merged(bulk, f"{name}-0"):
-            try:
-                merge_into(bulk, records, store_sql=store_sql, now=now, name=name)
-            except BuildFailed as fault:
-                raise InboxFailed(
-                    f"Run {run}'s records did not merge into the bulk file: {fault}"
-                ) from fault
-            folded.runs += 1
+        name = f"inbox-{run}"
+        try:
+            _, merged = merge_into(bulk, [(name, records)], store_sql=store_sql, now=now)
+        except BuildFailed as fault:
+            raise InboxFailed(
+                f"Run {run}'s records did not merge into the bulk file: {fault}"
+            ) from fault
+        folded.runs += bool(merged)
+        folded.named.append((name, records))
         folded.records.extend(records)
         folded.through = int(given[-1]["seq"])
     return folded
-
-
-def _merged(bulk: Path, run: str) -> bool:
-    db = sqlite3.connect(f"file:{bulk}?mode=ro", uri=True)
-    try:
-        return db.execute("SELECT 1 FROM run WHERE id = ?", (run,)).fetchone() is not None
-    finally:
-        db.close()
 
 
 def clear(client: httpx.Client, through: int) -> dict[str, Any]:

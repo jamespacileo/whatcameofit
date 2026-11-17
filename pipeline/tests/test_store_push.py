@@ -180,3 +180,28 @@ def test_backfill_push_refuses_without_an_ingest_address(monkeypatch, tmp_path):
     monkeypatch.delenv("INGEST_URL", raising=False)
     result = CliRunner().invoke(app, ["backfill", "push", "--state", str(tmp_path / "s.json")])
     assert result.exit_code == 1 and "ingest address" in result.output
+
+
+def test_a_push_resent_after_a_lost_answer_is_the_same_run():
+    class LosesTheAnswer(Service):
+        def __init__(self) -> None:
+            super().__init__()
+            self.ids: list[str] = []
+            self.lost = False
+
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/runs":
+                self.ids.append(json.loads(request.content)["id"])
+            if request.url.path.endswith("/merge") and not self.lost:
+                self.lost = True
+                return httpx.Response(504, json={})
+            return super().__call__(request)
+
+    service, state = LosesTheAnswer(), {}
+    with httpx.Client(base_url="http://s.test", transport=httpx.MockTransport(service)) as c:
+        with pytest.raises(PushFailed):
+            push(c, [CLAIM], state, writer="daily", commit="abc1234", payload_text={}.get)
+        assert state == {}
+        push(c, [CLAIM], state, writer="daily", commit="abc1234", payload_text={}.get)
+    assert len(service.ids) == 2 and service.ids[0] == service.ids[1]
+    assert service.ids[0].startswith("daily-") and len(service.ids[0]) <= 64
