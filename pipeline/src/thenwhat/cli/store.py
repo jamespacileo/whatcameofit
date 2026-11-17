@@ -1,7 +1,6 @@
 """The truth store filled in bulk: a store file built from the database, and the SQL files
 D1's import takes it in by."""
 
-import inspect
 import json
 import os
 import subprocess
@@ -15,6 +14,7 @@ import httpx
 import typer
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.trial_sets import rule_of
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.export import STORE_SQL, reading_session
@@ -105,16 +105,7 @@ TARGET_SET = "active-or-ended-this-year"
 def target_rule(name: str) -> tuple[Any, str]:
     """The rule over stored trials of the named target set, chosen in this year, and how it
     is named; the registry corpus's own rule (`backfill.trial_sets.rule_of`)."""
-    from thenwhat.backfill import trial_sets
-
     year = datetime.now(UTC).year
-    rule_of: Any = getattr(trial_sets, "rule_of", None)
-    if rule_of is None or len(inspect.signature(rule_of).parameters) < 2:
-        err.print(
-            "This checkout's `backfill.trial_sets.rule_of` takes no year: the rolling target"
-            " set comes with pull request 315."
-        )
-        raise typer.Exit(code=1)
     return rule_of(name, year)(), f"{name}:{year}"
 
 

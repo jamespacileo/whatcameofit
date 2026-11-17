@@ -1,7 +1,6 @@
 """The trial target set loaded into the store progressively, in slices
 (`store/slices.py`), and its coverage by group and stage."""
 
-import importlib
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -10,6 +9,7 @@ from typing import Annotated, Any
 import httpx
 import typer
 
+from thenwhat.backfill.trial_coverage import coverage_of
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import open_session, settings_or_exit
@@ -302,21 +302,16 @@ def coverage_command(trial_set: SetName = TARGET_SET, plan_file: PlanFile = None
     settings_or_exit()
     with open_session() as session:
         made, path = _plan(session, trial_set, plan_file)
-        # The database's own counts come with pull request 315 (backfill.trial_coverage).
-        try:
-            coverage_of = importlib.import_module("thenwhat.backfill.trial_coverage").coverage_of
-        except (ImportError, AttributeError):
-            coverage_of = None
-        if coverage_of is not None:
-            counted = coverage_of(session, made.year)
-            out.print("The database, by the registry's groups (trial_coverage):", markup=False)
-            for group in [*counted.groups, counted.total]:
-                out.print(
-                    f"  {group.name}: {group.trials:,} trials, {group.with_results:,} with"
-                    f" results, {group.with_listed_paper:,} with a paper the registry lists,"
-                    f" {group.with_pubmed_paper:,} with a paper found by number",
-                    markup=False,
-                )
+        # The database's own counts, by the registry's groups (`backfill.trial_coverage`).
+        counted = coverage_of(session, made.year)
+        out.print("The database, by the registry's groups (trial_coverage):", markup=False)
+        for group in [*counted.groups, counted.total]:
+            out.print(
+                f"  {group.name}: {group.trials:,} trials, {group.with_results:,} with"
+                f" results, {group.with_listed_paper:,} with a paper the registry lists,"
+                f" {group.with_pubmed_paper:,} with a paper found by number",
+                markup=False,
+            )
     found = coverage(made)
     out.print(f"The slices, by group and stage ({path}):", markup=False)
     for name, counted in [*found.groups.items(), ("all", found.total)]:

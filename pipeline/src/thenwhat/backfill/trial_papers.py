@@ -10,6 +10,7 @@ nothing here says a paper reports a trial's results: only the registry record do
 """
 
 from collections.abc import Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Protocol
 
@@ -17,7 +18,13 @@ from sqlalchemy import ColumnElement, and_, or_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.trial_sets import SETS, completed_with_results_since_2025
+from thenwhat.backfill.trial_sets import (
+    SETS,
+    active_or_ended_in,
+    completed_with_results_since_2025,
+    ended_in,
+)
+from thenwhat.config import SourceAllowance
 from thenwhat.db.models import RegistryTrial, TrialPaper
 from thenwhat.domain import WorkOutcome
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -45,8 +52,11 @@ class TrialPapers:
     # the papers it found: a fetch holds 200 papers and a batch of 25 trials found 12.
     REQUESTS_PER_BATCH = 2
 
-    def __init__(self, trials_per_request: int = 50) -> None:
+    def __init__(self, trials_per_request: int = 50, year: int | None = None) -> None:
         self.batch_size = trials_per_request
+        # The calendar year the rolling set is chosen in, given by the command that
+        # builds the step. Without it only the two dated sets are asked for.
+        self.year = year
 
     def requests_for(self, due: int) -> int:
         """About how many requests this many due trials need, asked in batches."""
@@ -57,17 +67,23 @@ class TrialPapers:
         return requests // self.REQUESTS_PER_BATCH * self.batch_size
 
     def scope(self) -> ColumnElement[bool]:
-        """The trials of the named sets, cited by a claim or not: a paper belongs on a
-        trial's page either way. Only ClinicalTrials.gov's numbers are in PubMed's field
-        under that registry's name."""
-        return and_(
-            RegistryTrial.registry_name == ClinicalTrials.name,
-            or_(*(rule() for rule in SETS.values())),
-        )
+        """The trials of the rolling set (under way now, or ended in the year) and of
+        the two dated sets it replaced as the target, so a trial already in scope stays
+        in scope. Cited by a claim or not: a paper belongs on a trial's page either way.
+        Only ClinicalTrials.gov's numbers are in PubMed's field under that registry's
+        name."""
+        rules = [rule() for rule in SETS.values()]
+        if self.year is not None:
+            rules.append(active_or_ended_in(self.year))
+        return and_(RegistryTrial.registry_name == ClinicalTrials.name, or_(*rules))
 
     def first(self) -> ColumnElement[bool]:
-        """The completed set first: it is the smaller, and where papers are."""
-        return completed_with_results_since_2025()
+        """Trials that ended in the year and trials with results posted first: they are
+        the fewer, and where papers are."""
+        with_results = RegistryTrial.has_results.is_(True)
+        if self.year is None:
+            return or_(completed_with_results_since_2025(), with_results)
+        return or_(ended_in(self.year), with_results)
 
     def inputs(self, record: RegistryTrial) -> dict[str, Any]:
         return {"number": record.external_id}
@@ -110,3 +126,40 @@ class TrialPapers:
             WorkOutcome.DONE if record.id in found else WorkOutcome.NOTHING_FOUND
             for record in records
         ]
+
+
+# A weeknight's off-peak hours at NCBI: 21:00 to 05:00 Eastern.
+OFF_PEAK_NIGHT_HOURS = 8
+# What NCBI allows a client a second without a key and with one (docs/sources.md).
+PER_SECOND_WITHOUT_KEY, PER_SECOND_WITH_KEY = 3, 10
+
+
+@dataclass(frozen=True, slots=True)
+class PaperEstimate:
+    """What asking the paper index for the trials not yet asked would take."""
+
+    trials: int
+    requests: int
+    # At the configured least interval between requests.
+    minutes: float
+    # Weeknights of off-peak hours, under the allowance for a day and the interval.
+    nights: int
+    # At the fastest NCBI allows a client with a key, were the interval set to it.
+    minutes_with_key: float
+
+
+def estimate_for(step: TrialPapers, due: int, allowance: SourceAllowance) -> PaperEstimate:
+    """How many requests the due trials need, how long they take at the allowed rate,
+    and how many off-peak nights, with no key and with one. No request is sent."""
+    requests = step.requests_for(due)
+    window = OFF_PEAK_NIGHT_HOURS * 3600
+    by_rate = int(window / allowance.interval_seconds) if allowance.interval_seconds else requests
+    by_count = int(allowance.requests * max(1, OFF_PEAK_NIGHT_HOURS / allowance.period_hours))
+    a_night = max(1, min(by_rate, by_count))
+    return PaperEstimate(
+        trials=due,
+        requests=requests,
+        minutes=requests * allowance.interval_seconds / 60,
+        nights=-(-requests // a_night),
+        minutes_with_key=requests / PER_SECOND_WITH_KEY / 60,
+    )

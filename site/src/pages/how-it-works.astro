@@ -7,7 +7,7 @@ import { data } from "../lib/export";
 import { statusSlug } from "../lib/guide";
 import { SITE } from "../../site.config.mjs";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "../lib/status";
-import { NO_REPORT } from "../lib/trial-page.mjs";
+import { NO_REPORT, setAbout } from "../lib/trial-page.mjs";
 import { listing } from "../lib/trials-listing";
 
 const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
@@ -220,10 +220,14 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
       <h2 class="bar" id="a-trial-with-no-report">A trial with no report</h2>
       <p>
         Most registered trials are never the subject of a news report, so no claim here cites them.
-        For {listing.trials.length.toLocaleString("en")} of them this site still has a page: the
-        phase 2 and phase 3 studies that ClinicalTrials.gov lists as not finished and whose record it
-        has changed since the start of 2025. Search finds them by registry number, or by words of
-        their title, treatment or condition, after any tracked claim.
+        For {listing.trials.length.toLocaleString("en")} of them this site still has a page:{" "}
+        {setAbout(listing.set, listing.records_read)}. Search finds them by registry number, or by
+        words of their title, treatment or condition, after any tracked claim.
+      </p>
+      <p>
+        A study's state is the registry's own, as of the day the registry last changed the record,
+        and that day is shown beside it. A record can be listed as not finished and not have been
+        changed for years: this site does not check a study's state any other way.
       </p>
       <p>
         Such a page is read from the registry's own record when it is opened. It states what the

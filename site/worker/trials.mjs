@@ -6,8 +6,8 @@ import { peopleIn, withoutPeople } from "./people.mjs";
 import { makeRegistry } from "./registry.mjs";
 import { SITE } from "../site.config.mjs";
 import {
-  NO_PHASE, NO_REPORT, NOT_STATED, PAGE_LABELS, SELECTED_FIELDS, STOPPED_REASON,
-  phaseWords, registryDate, resultsPhrase, sponsorIsPerson, sponsorName, statePhrase,
+  NO_PHASE, NO_REPORT, NOT_STATED, PAGE_LABELS, RECORD_CHANGE_NOT_STATED, SELECTED_FIELDS, STOPPED_REASON,
+  phaseWords, recordChanged, registryDate, resultsPhrase, sponsorIsPerson, sponsorName, statePhrase,
 } from "../src/lib/trial-page.mjs";
 
 const DAY = 86400000;
@@ -158,6 +158,9 @@ function plainContent(copy, id) {
     ...(sponsorIsPerson(sponsors) ? [] : [[PAGE_LABELS.sponsor, escape(sponsorName(sponsors) ?? NOT_STATED)]]),
   ];
   const stopped = text(status.whyStopped).trim();
+  // The state is the registry's, as of the day it last changed the record: that day
+  // stands with it, since a record can go unchanged for years.
+  const changed = registryDate(status.lastUpdatePostDateStruct?.date, true);
   const retrieved = new Date(copy.at).toISOString().slice(0,10);
   const dates = [
     [PAGE_LABELS.start, stated(status.startDateStruct)],
@@ -171,6 +174,7 @@ function plainContent(copy, id) {
     <h1>${escape(p.identificationModule.briefTitle)}</h1>
     <p class="trial-source"><span class="trial-number">${id}</span> · ClinicalTrials.gov</p>
     <p class="trial-state">${escape(statePhrase(status.overallStatus))}</p>
+    <p class="trial-source">${escape(changed ? recordChanged(changed) : RECORD_CHANGE_NOT_STATED)}</p>
     <div class="trial-notice"><p>${NO_REPORT}</p></div>
     <dl class="trial-facts">${facts.map(([name,value])=>`<div><dt>${name}</dt><dd>${value}</dd></div>`).join("")}</dl>
     ${stopped ? `<section aria-labelledby="trial-stopped"><h2 id="trial-stopped">${STOPPED_REASON}</h2><blockquote>${escape(stopped)}</blockquote></section>` : ""}
@@ -242,6 +246,11 @@ export async function handleTrial(request, env, {fetch: get=globalThis.fetch, no
   const unavailable = () => failure(request,env,id,claims,503,"We could not retrieve this record from ClinicalTrials.gov. Please try again shortly, or open the official record.");
   if (!text(env.CONTACT_EMAIL).trim()) return unavailable();
   try {
+    // Pages of listed trials no claim cites are many, and have a smaller allowance of
+    // their own: reading through them cannot use up what the cited trials' pages need.
+    if (!cited && env.LISTED_TRIAL_READS && !(await env.LISTED_TRIAL_READS.limit({key:"all"})).success) {
+      return failure(request,env,id,claims,503,"The registry reader is busy. Please try again in a minute.");
+    }
     if (env.TRIAL_RECORD_READS && !(await env.TRIAL_RECORD_READS.limit({key:"all"})).success) {
       return failure(request,env,id,claims,503,"The registry reader is busy. Please try again in a minute.");
     }

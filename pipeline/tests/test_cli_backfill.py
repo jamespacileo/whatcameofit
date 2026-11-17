@@ -29,6 +29,7 @@ from thenwhat.db.models import (
     LlmUsage,
     RegistryTrial,
     SourceAllowanceUse,
+    TrialPaper,
     WorkEntry,
 )
 from thenwhat.domain import Decider, OutletKind, ScreenOutcome
@@ -134,7 +135,7 @@ def test_a_step_that_asks_no_source_is_planned_and_run_without_an_allowance(
 ):
     """Scenario: Planning a step that only reads the database"""
     step = QuietStep("quiet")
-    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings: [step])
+    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings, **_: [step])
     add_trials(session, 5)
 
     plan = run("plan")
@@ -151,7 +152,7 @@ def test_a_step_that_asks_no_source_is_planned_and_run_without_an_allowance(
 def model_step(monkeypatch: pytest.MonkeyPatch, usd_per_mtok: str | None) -> ModelStep:
     """A registered step that calls the decision backend, priced as the Decisions API is."""
     step = ModelStep()
-    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings: [step])
+    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings, **_: [step])
     monkeypatch.setenv("DECISION_BACKEND", "openai-decisions")
     monkeypatch.setenv("LLM_MONTHLY_BUDGET_USD", "13")
     if usd_per_mtok is None:
@@ -1127,3 +1128,100 @@ def test_read_set_refuses_a_set_or_a_strength_it_does_not_know(run):
     assert (unknown_set.exit_code, unknown_strength.exit_code) == (1, 1)
     assert "No set of stored trials is named 'elsewhere'" in unknown_set.output
     assert "No strength of link is named 'certain'" in unknown_strength.output
+
+
+# --- the trial target set: active-or-ended-this-year -------------------------------------
+
+
+def target_set(session: Session, fake_now: datetime) -> list[RegistryTrial]:
+    """Three trials of the rolling set, chosen in the year of `fake_now`, and one outside."""
+    trials = add_trials(session, 4, registry=ClinicalTrials.name)
+    year = fake_now.year
+    for number, stored in enumerate(trials, start=1):
+        stored.external_id = f"NCT0000000{number}"
+        stored.phases = ["PHASE1"]
+        stored.overall_status = "RECRUITING"
+        stored.last_update_posted = date(year, 3, 1)
+        stored.has_results = False
+    trials[1].last_update_posted = date(year - 2, 12, 31)
+    trials[2].overall_status, trials[2].completion_date = "COMPLETED", f"{year}-02"
+    trials[2].has_results = True
+    trials[3].overall_status, trials[3].completion_date = "COMPLETED", f"{year - 1}-02"
+    session.flush()
+    return trials
+
+
+def test_trial_coverage_counts_the_set_by_group_and_estimates_the_paper_index(
+    run, session: Session
+):
+    """Scenarios: A coverage report for the set, An estimate before the paper index is asked"""
+    now = datetime.now(UTC)
+    trials = target_set(session, now)
+    session.add(
+        TrialPaper(
+            registry_trial_id=trials[2].id,
+            source_name="pubmed",
+            pubmed_id="11",
+            raw_payload={"pmid": "11"},
+            fetched_at=NOW,
+        )
+    )
+    session.flush()
+
+    result = run("trial-coverage")
+
+    assert result.exit_code == 0, result.output
+    said = result.output
+    assert f"active-or-ended-this-year, chosen in {now.year}" in said
+    assert "under way: 2 trials" in said
+    assert f"completed in {now.year}: 1 trials" in said
+    assert f"terminated, withdrawn or suspended in {now.year}: 0 trials" in said
+    whole = said.split("all: 3 trials")[1]
+    assert "results posted: 1" in whole and "a paper found in PubMed by number: 1" in whole
+    assert "cited by a published claim: 0" in whole
+    assert f"record not updated since before {now.year - 1}: 1" in whole
+    assert "PubMed has not been asked about 3 trials in scope: about 2 requests" in said
+    assert "1 off-peak night under the allowance of 5,000 in 24 hours" in said
+    assert "set PUBMED_API_KEY" in said
+    # Counting asks nothing and marks nothing done.
+    assert session.scalars(select(WorkEntry)).all() == []
+
+
+def test_trial_coverage_is_refused_before_the_wider_load(run, session: Session):
+    add_trials(session, 2)
+
+    result = run("trial-coverage")
+
+    assert result.exit_code == 1
+    assert "No stored trial has the activity and results fields yet." in result.output
+
+
+def test_trial_references_counts_the_trial_target_set(run, session: Session):
+    target_set(session, datetime.now(UTC))
+
+    result = run("trial-references", "--set", "active-or-ended-this-year")
+
+    assert result.exit_code == 0, result.output
+    assert "active-or-ended-this-year: 3 trials" in result.output
+
+
+def test_the_paper_step_takes_the_trial_target_set(run, session: Session, monkeypatch):
+    """Scenario: A trial under way in phase 1 is asked"""
+    target_set(session, datetime.now(UTC))
+    asked: list[list[str]] = []
+
+    class Papers:
+        name = "pubmed"
+        requests_made = 0
+
+        def papers_carrying(self, numbers):
+            asked.append(list(numbers))
+            return [], NOW
+
+    monkeypatch.setattr("thenwhat.cli.backfill.make_client", lambda step, settings, a: Papers())
+
+    result = run("run", "pubmed_papers")
+
+    assert result.exit_code == 0, result.output
+    # The trial that ended this year with results first; the one that ended last year never.
+    assert asked == [["NCT00000003", "NCT00000001", "NCT00000002"]]

@@ -165,7 +165,7 @@ public-export:
 # stored trials, for the site's search and its page of an uncited trial. The site finds it
 # by name beside the export it builds from. Sends no request.
 PUBLIC_LISTING := site/data/public-trials-listing.json
-TRIALS_SET ?= active-since-2025
+TRIALS_SET ?= active-or-ended-this-year
 
 public-trials-listing:
 	docker compose exec -T pipeline sh -c 'thenwhat trials-listing --set $(TRIALS_SET) --out /tmp/public-trials-listing.json >&2 && cat /tmp/public-trials-listing.json' > $(PUBLIC_LISTING).tmp
