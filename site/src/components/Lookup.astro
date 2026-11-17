@@ -7,6 +7,7 @@ import Unfound from "./Unfound.astro";
 import { SITE } from "../../site.config.mjs";
 import { shareSentence } from "../lib/card";
 import { data } from "../lib/export";
+import { SEARCH_EXAMPLE } from "../lib/search-example";
 import { STATUS_LABELS } from "../lib/status";
 import { canonicalAddress } from "../lib/structured";
 
@@ -26,6 +27,10 @@ const {
 const hint = SITE.lookupUrl
   ? "A pasted link is compared in your browser, and sent only if you ask for a registry search."
   : "A pasted link is compared in your browser and sent nowhere.";
+
+// The field's example: a link, or words chosen by rule from a published claim they
+// lead to (`searchExample`). With no such claim the field offers a link alone.
+const placeholder = SEARCH_EXAMPLE ? `https://… or ${SEARCH_EXAMPLE.words}` : "https://…";
 
 // Keyed by the claim's page, as the lookup file names it. "<" is escaped so that no
 // text in the data can close the script element.
@@ -59,7 +64,7 @@ const sentenceJson = sentences
       autocomplete="off"
       autocapitalize="off"
       spellcheck="false"
-      placeholder="https://… or tooth regrowth"
+      placeholder={placeholder}
       aria-describedby="query-hint"
     />
     <button type="submit">Look up</button>
@@ -111,6 +116,7 @@ const sentenceJson = sentences
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { SITE as BRAND } from "../../site.config.mjs";
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
+  import { ranked, searchWords, wordPattern, wordsIn } from "../lib/search-order";
   import { suggest, suggestParts, suggestWords, type Suggestion } from "../lib/suggest";
   import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, NOT_AN_OPTION, changedShort, findListed, listingWords, registryDate, searchListing, setNote } from "../lib/trial-page.mjs";
   import { PARTS_SEARCHED_AT_ONCE, partFor } from "../lib/trial-listing-parts.mjs";
@@ -129,6 +135,8 @@ const sentenceJson = sentences
 
   interface Hit {
     url: string;
+    /** The page's words, as the search index read them. */
+    content?: string;
     meta: { title?: string; status?: string; summary?: string };
   }
   interface LookupClaim {
@@ -301,29 +309,6 @@ const sentenceJson = sentences
     }
     track.append(steps);
     return track;
-  }
-
-  // The words of a search, for marking where they stand in a match. Short words are
-  // left unmarked, as they would mark half of every line. A common ending is cut, so
-  // "regrowing" also finds "regrows" and "cells" finds "cell".
-  function searchWords(query: string) {
-    return query
-      .toLowerCase()
-      .split(/[^\p{L}\p{N}]+/u)
-      .map((word) => (word.length >= 5 ? word.replace(/(?:ing|ed|es|s)$/u, "") : word))
-      .filter((word) => word.length >= 3);
-  }
-
-  function wordPattern(words: string[]) {
-    const escaped = words.map((word) => word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    return new RegExp(`(?<![\\p{L}\\p{N}])(?:${escaped.join("|")})[\\p{L}\\p{N}]*`, "giu");
-  }
-
-  // How many of the searched words a text holds.
-  function wordsIn(text: string, words: string[]) {
-    if (!text || words.length === 0) return 0;
-    const lower = text.toLowerCase();
-    return words.filter((word) => wordPattern([word]).test(lower)).length;
   }
 
   // The text with each word that starts with a searched word marked. Built as nodes,
@@ -835,6 +820,8 @@ const sentenceJson = sentences
 
   // The width under which a result is one column.
   const narrow = () => matchMedia("(max-width: 34rem)").matches;
+  // A screen worked by touch, where typing brings up a keyboard over the page.
+  const touch = () => matchMedia("(pointer: coarse)").matches;
 
   // One match: where it stands with when it was first reported, in a column of their
   // own so the dates line up; its headline as a heading that opens the claim; the
@@ -873,36 +860,6 @@ const sentenceJson = sentences
     const found = foundIn(claim.page, words, detail);
     if (found.length) item.append(foundList(found, words, narrow() ? 1 : closest ? 3 : 2));
     return item;
-  }
-
-  // The words of a text, for finding the searched words side by side.
-  const tokens = (text: string) => text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-  const holdsAll = (text: string, words: string[]) => words.length > 0 && wordsIn(text, words) === words.length;
-  function holdsPhrase(text: string, words: string[]) {
-    if (words.length < 2) return false;
-    const said = tokens(text);
-    return said.some((_, at) => words.every((word, step) => said[at + step]?.startsWith(word)));
-  }
-
-  // The order matches are shown in: the searched words side by side, then all of them,
-  // in the claim's own headline first, then in a report's headline, then in the
-  // treatment and what it is claimed for. The search index's order breaks a tie. A
-  // fixed rule over the words a match holds, never a score shown to the reader.
-  function ranked(matches: LookupClaim[], words: string[], detail: SearchDetail) {
-    const weigh = (claim: LookupClaim) => {
-      const titles = detail.claims[claim.page.slice(1)]?.reports.map((report) => report.title) ?? [];
-      let weight = 0;
-      if (holdsPhrase(claim.headline, words)) weight += 6;
-      if (holdsAll(claim.headline, words)) weight += 4;
-      if (titles.some((title) => holdsPhrase(title, words))) weight += 3;
-      if (titles.some((title) => holdsAll(title, words))) weight += 2;
-      if (holdsAll([...claim.names, claim.indication].join(" "), words)) weight += 2;
-      return weight;
-    };
-    return matches
-      .map((claim, at) => ({ claim, at, weight: weigh(claim) }))
-      .sort((a, b) => b.weight - a.weight || a.at - b.at)
-      .map((entry) => entry.claim);
   }
 
   const claimsText = (count: number) => `${count} tracked ${count === 1 ? "claim" : "claims"}`;
@@ -967,18 +924,24 @@ const sentenceJson = sentences
       answerSlot.hidden = false;
       days?.setAttribute("data-searching", "");
       // The line under the box leads to the answer: pressed, it puts the reader on the
-      // answer's heading, past everything that stands between.
-      const said = element("p", `${note} `, "search-note");
-      const jump = element("a", "shown below") as HTMLAnchorElement;
-      jump.href = "#search-answer-title";
-      jump.addEventListener("click", (event) => {
-        const heading = answerSlot.querySelector<HTMLElement>("#search-answer-title");
-        if (!heading) return;
-        event.preventDefault();
-        heading.focus({ preventScroll: true });
-        heading.scrollIntoView({ block: "start" });
-      });
-      said.append(jump, ".");
+      // answer's heading, past everything that stands between. On a narrow screen the
+      // heading follows the box at once and says the same, so the line is not drawn
+      // there: it is kept, without its link, for a screen reader to announce.
+      const said = element("p", `${note} `, narrow() ? "search-note visually-hidden" : "search-note");
+      if (narrow()) {
+        said.append("shown below.");
+      } else {
+        const jump = element("a", "shown below") as HTMLAnchorElement;
+        jump.href = "#search-answer-title";
+        jump.addEventListener("click", (event) => {
+          const heading = answerSlot.querySelector<HTMLElement>("#search-answer-title");
+          if (!heading) return;
+          event.preventDefault();
+          heading.focus({ preventScroll: true });
+          heading.scrollIntoView({ block: "start" });
+        });
+        said.append(jump, ".");
+      }
       results.replaceChildren(said);
     } else {
       results.replaceChildren(block);
@@ -991,33 +954,45 @@ const sentenceJson = sentences
       form.scrollIntoView({ block: "start", behavior: "instant" });
     }
     // A search asked from anywhere but the field (a word to try, the address, Back)
-    // puts the reader on the answer's heading; one typed leaves them in the field.
-    if (answerSlot && document.activeElement !== input) {
-      answerSlot.querySelector<HTMLElement>("#search-answer-title")?.focus({ preventScroll: true });
+    // puts the reader on the answer's heading; one typed leaves them in the field. On
+    // a touch screen a typed one moves them too: the keyboard, which would cover the
+    // answer, closes when the field is left.
+    if ((answerSlot && document.activeElement !== input) || touch()) {
+      holder.querySelector<HTMLElement>("#search-answer-title")?.focus({ preventScroll: true });
     }
   }
 
   interface Shown {
+    /** Every claim the search index found, read or not. */
+    total: number;
+    /** How many of them each topic holds, as the index counts them. */
+    topics: [string, number][];
+    /** Draws the answer again with one topic's claims, or with all of them. */
+    pick: (slug: string, from: "side" | "row") => void;
     picked?: string;
     /** Where the reader picked a topic, to keep their place on it when it is redrawn. */
     pickedIn?: "side" | "row";
     /** A report whose headline is the search itself: its claim leads, so labelled. */
     exact?: SearchReport;
-    /** How many claims the index found and this answer has not read yet. */
+    /** The claim that report belongs to. */
+    lead?: LookupClaim;
+    /** How many of the claims on view, every one or the picked topic's, are not read yet. */
     left?: number;
     /** Reads the next of them and draws the answer again; given where any are left. */
     more?: () => Promise<void>;
     /** The answer drawn again in its place, with more in it: the page is not moved. */
     again?: boolean;
+    /** Searched words that no tracked claim holds. */
+    unheld?: string[];
+    /** Something that could not be done, said under the heading. */
+    said?: string;
   }
 
-  // The topics of the matches, each narrowing them, with how many each holds.
-  function topicButtons(matches: LookupClaim[], index: Lookup, picked: string, pick: (slug: string) => void) {
-    const counts = new Map<string, number>();
-    for (const claim of matches) counts.set(claim.topic, (counts.get(claim.topic) ?? 0) + 1);
+  // The topics of every claim found, each narrowing them, with how many each holds.
+  function topicButtons(view: Shown, index: Lookup, from: "side" | "row") {
     const picks: [string, string, number][] = [
-      ["", "All results", matches.length],
-      ...[...counts]
+      ["", "All results", view.total],
+      ...view.topics
         .filter(([slug]) => index.topics[slug])
         .map(([slug, n]): [string, string, number] => [slug, index.topics[slug].title, n])
         .sort((a, b) => b[2] - a[2] || a[1].localeCompare(b[1])),
@@ -1027,41 +1002,55 @@ const sentenceJson = sentences
       const button = element("button", `${title} `, "side-pick") as HTMLButtonElement;
       button.type = "button";
       button.dataset.topic = slug;
-      button.setAttribute("aria-pressed", String(slug === picked));
+      button.setAttribute("aria-pressed", String(slug === (view.picked ?? "")));
       button.append(element("span", String(n), "kind-count"));
-      button.addEventListener("click", () => pick(slug));
+      button.addEventListener("click", () => {
+        // A topic whose claims are not read yet takes a moment.
+        button.setAttribute("aria-busy", "true");
+        view.pick(slug, from);
+      });
       return button;
     });
+  }
+
+  // Searched words the index holds nowhere, named: the answer is for the others.
+  function unheldSays(words: string[]) {
+    const named = words.map((word) => `“${word}”`);
+    const list = named.length > 1 ? `${named.slice(0, -1).join(", ")} or ${named.at(-1)}` : named[0];
+    return `No tracked claim holds ${list}. These claims were found without ${words.length === 1 ? "that word" : "those words"}.`;
   }
 
   // The answer to typed words. Most searches lead with the closest match as a row and
   // the others under it; the site gives one claim the full digest only where it
   // knows: words that are a tracked report's whole headline. The answer ends with
-  // the topics the matches belong to.
-  function searchAnswer(query: string, matches: LookupClaim[], index: Lookup, detail: SearchDetail, view: Shown = {}) {
-    const { picked = "", pickedIn, exact, left = 0, more, again = false } = view;
-    const total = matches.length + left;
+  // the topics the matches belong to. `shown` is the claims on view: those read of
+  // every claim found, or of the picked topic's.
+  function searchAnswer(query: string, shown: LookupClaim[], index: Lookup, detail: SearchDetail, view: Shown) {
+    const { total, picked = "", pickedIn, exact, lead, left = 0, more, again = false, unheld = [], said } = view;
     const cut = left > 0;
     const words = searchWords(query);
-    const shown = picked ? matches.filter((claim) => claim.topic === picked) : matches;
     const block = element("div", undefined, "search-results");
-    // The count is of every claim found. Where only the first are drawn it says so,
-    // and a topic's count is then of those drawn.
-    const counted = cut ? `First ${matches.length} of ${claimsText(total)}` : claimsText(matches.length);
-    const inTopic = `, in ${index.topics[picked]?.title ?? picked}`;
-    block.append(
-      searchHead(
-        `Results for “${query}”`,
-        !picked ? counted : cut ? `${shown.length} of the first ${matches.length}${inTopic}` : `${shown.length} of ${counted}${inTopic}`,
-      ),
-    );
+    // The count is of every claim found. Where only the first are drawn it says so. A
+    // picked topic's count is of that topic's claims, among every claim found.
+    const found = claimsText(total);
+    const topic = index.topics[picked]?.title ?? picked;
+    const counted = !picked
+      ? cut
+        ? `First ${shown.length} of ${found}`
+        : found
+      : cut
+        ? `First ${shown.length} of ${shown.length + left} in ${topic}, of ${found}`
+        : `${shown.length} of ${found}, in ${topic}`;
+    block.append(searchHead(`Results for “${query}”`, counted));
+    if (unheld.length) block.append(element("p", unheldSays(unheld), "search-unheld"));
+    if (said) {
+      const line = element("p", said, "match-more");
+      line.setAttribute("role", "status");
+      block.append(line);
+    }
 
-    const pick = (slug: string, from: "side" | "row") => {
-      setAddress((params) => (slug ? params.set("topic", slug) : params.delete("topic")));
-      searchAnswer(query, matches, index, detail, { ...view, picked: slug, pickedIn: from });
-    };
     // On a narrow screen, and on a page with no side column, the topics stand here.
-    const rowPicks = topicButtons(matches, index, picked, (slug) => pick(slug, "row"));
+    const rowPicks = topicButtons(view, index, "row");
     if (rowPicks.length) {
       const row = element("div", undefined, "search-topic-row");
       row.setAttribute("role", "group");
@@ -1071,7 +1060,7 @@ const sentenceJson = sentences
     }
 
     const [best, ...others] = shown;
-    const leads = exact !== undefined && best === matches[0];
+    const leads = exact !== undefined && best !== undefined && best === lead;
     if (leads) {
       block.append(element("p", "A tracked report has this headline.", "exact-says"));
       block.append(reportCard(exact, best, words, index.topics));
@@ -1090,7 +1079,7 @@ const sentenceJson = sentences
         list.append(...others.map((claim) => matchRow(claim, index.places, words, index.topics, detail)));
         block.append(head, list);
       }
-    } else {
+    } else if (best) {
       const first = element("ol", undefined, "plain hit-list");
       first.append(matchRow(best, index.places, words, index.topics, detail, true));
       block.append(first);
@@ -1107,24 +1096,25 @@ const sentenceJson = sentences
 
     if (cut) {
       // The next of them are drawn under these at a press; the line counts what is left.
-      const said = element("p", `${left} more tracked ${left === 1 ? "claim holds" : "claims hold"} these words.`, "match-more show-more-says");
-      said.setAttribute("role", "status");
+      const where = picked ? ` in ${topic}` : "";
+      const line = element("p", `${left} more tracked ${left === 1 ? `claim${where} holds` : `claims${where} hold`} these words.`, "match-more show-more-says");
+      line.setAttribute("role", "status");
       if (more) {
         const button = element("button", `Show ${Math.min(left, SHOWN_AT_ONCE)} more`, "share show-more") as HTMLButtonElement;
         button.type = "button";
         button.addEventListener("click", async () => {
           button.disabled = true;
-          said.textContent = "Reading…";
+          line.textContent = "Reading…";
           try {
             await more();
           } catch {
             button.disabled = false;
-            said.textContent = "The next claims could not be read right now.";
+            line.textContent = "The next claims could not be read right now.";
           }
         });
         block.append(button);
       }
-      block.append(said);
+      block.append(line);
     }
 
     const subjects = [...new Set(shown.map((claim) => claim.topic))].filter((slug) => index.topics[slug]);
@@ -1143,10 +1133,18 @@ const sentenceJson = sentences
     if (listedGroup) block.append(listedGroup);
     if (pickedIn && answerSlot) answerSlot.replaceChildren(block);
     else if (pickedIn) results.replaceChildren(block);
-    else place(block, cut ? `The first ${matches.length} of ${claimsText(total)} for “${query}” are` : `${claimsText(matches.length)} for “${query}”,`, again);
+    else {
+      const asked = `for “${query}”`;
+      const note = picked
+        ? `Claims in ${topic} ${asked}, of ${found}, are`
+        : cut
+          ? `The first ${shown.length} of ${found} ${asked} are`
+          : `${found} ${asked},`;
+      place(block, note, again);
+    }
 
     if (searchTopics) {
-      const sidePicks = topicButtons(matches, index, picked, (slug) => pick(slug, "side"));
+      const sidePicks = topicButtons(view, index, "side");
       searchTopics.querySelector("ul")!.replaceChildren(
         ...sidePicks.map((button) => {
           const item = element("li");
@@ -1448,49 +1446,138 @@ const sentenceJson = sentences
   // A topic named in the page's address when it was opened, applied to its search.
   let addressTopic = new URL(location.href).searchParams.get("topic") ?? "";
 
+  // What the search index answers with: every page found, each read only when asked
+  // for, and how many of them each topic holds.
+  interface IndexResult {
+    data: () => Promise<Hit>;
+  }
+  interface IndexAnswer {
+    results: IndexResult[];
+    filters?: Record<string, Record<string, number>>;
+  }
+  interface SearchIndex {
+    filters: () => Promise<unknown>;
+    search: (words: string, options?: { filters: Record<string, string> }) => Promise<IndexAnswer>;
+  }
+  // The claims on view: the pages the index found, how many of them have been read,
+  // and the claims read, in the order they are shown.
+  interface View {
+    results: IndexResult[];
+    read: number;
+    matches: LookupClaim[];
+  }
+
+  // Whether the index holds a word: whole, in any of its forms, or as the start of a
+  // longer word. A search for the word in quotation marks finds it whole. A word found
+  // only without them is held if the first page found has a word that starts with it:
+  // otherwise the index has answered for a shorter word.
+  async function holds(searchIndex: SearchIndex, word: string) {
+    if ((await searchIndex.search(`"${word}"`)).results.length > 0) return true;
+    const [first] = (await searchIndex.search(word)).results;
+    if (!first) return false;
+    const { content = "" } = await first.data();
+    return content.toLowerCase().split(/[^\p{L}\p{N}]+/u).some((said) => said.startsWith(word));
+  }
+
   async function search(query: string) {
     const asked = latest;
     show("Searching…");
-    let matches: LookupClaim[];
+    const words = searchWords(query);
     let index: Lookup;
     let detail: SearchDetail;
-    // Every claim page the index found; they are read and drawn twenty at a time.
-    let found: { results: { data: () => Promise<Hit> }[] };
+    let searchIndex: SearchIndex;
     let pages: Map<string, LookupClaim>;
     const claimOf = (hit: Hit) => pages.get(new URL(hit.url, location.origin).pathname.replace(/(\/index\.html|\.html|\/)$/, ""));
+    // The next twenty of a view's pages, read and put in order among themselves by the
+    // rule; those already on view keep their place.
+    const readNext = async (view: View) => {
+      const hits = await Promise.all(view.results.slice(view.read, view.read + SHOWN_AT_ONCE).map((result) => result.data()));
+      view.read += hits.length;
+      const fresh = ranked(
+        hits.map(claimOf).filter((claim): claim is LookupClaim => Boolean(claim) && !view.matches.includes(claim!)),
+        words,
+        detail,
+      );
+      view.matches = [...view.matches, ...fresh];
+      return fresh;
+    };
+    // Every claim page the index found; they are read and drawn twenty at a time.
+    const all: View = { results: [], read: 0, matches: [] };
+    let topics: [string, number][] = [];
+    let unheld: string[] = [];
+    // Words that are a tracked report's whole headline put its claim first.
+    let exact: SearchReport | undefined;
+    let lead: LookupClaim | undefined;
+    // One topic's claims. Where every claim found has been read they are among those;
+    // otherwise the index is asked for that topic's pages and the first twenty are read.
+    const narrowed = new Map<string, View>();
+    const viewOf = async (slug: string): Promise<View> => {
+      if (!slug) return all;
+      if (all.read >= all.results.length) return { results: [], read: 0, matches: all.matches.filter((claim) => claim.topic === slug) };
+      let view = narrowed.get(slug);
+      if (!view) {
+        const found = await searchIndex.search(query, { filters: { topic: slug } });
+        view = { results: found.results, read: 0, matches: lead?.topic === slug ? [lead] : [] };
+        await readNext(view);
+        narrowed.set(slug, view);
+      }
+      return view;
+    };
+    let picked = "";
+    let onView = all;
     try {
       const indexUrl = "/pagefind/pagefind.js";
-      const pagefind = await import(/* @vite-ignore */ indexUrl);
-      const [searched, loaded, held] = await Promise.all([pagefind.search(query), loadLookup(), loadDetail()]);
-      found = searched;
+      searchIndex = await import(/* @vite-ignore */ indexUrl);
+      // The index counts the pages it finds by topic once its topics are read: one
+      // small file, asked for with the first search.
+      const [found, loaded, held] = await Promise.all([
+        searchIndex.filters().then(() => searchIndex.search(query)),
+        loadLookup(),
+        loadDetail(),
+      ]);
       index = loaded;
       detail = held;
-      const hits: Hit[] = await Promise.all(found.results.slice(0, SHOWN_AT_ONCE).map((result) => result.data()));
       // Only claim pages are in the search index; each is named by its page.
       pages = new Map(Object.values(index.claims).map((claim) => [claim.page, claim]));
-      matches = hits.map(claimOf).filter((claim): claim is LookupClaim => Boolean(claim));
+      all.results = found.results;
+      topics = Object.entries(found.filters?.topic ?? {}).filter(([, count]) => count > 0);
+      // For a word it holds nowhere the index answers without it, or with a shorter
+      // word it does hold, and says nothing. Each word is asked for alone, so the
+      // answer can name the ones no claim holds.
+      const typed = [...new Set(query.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean))];
+      const [, inIndex] = await Promise.all([
+        readNext(all),
+        found.results.length > 0 ? Promise.all(typed.map((word) => holds(searchIndex, word))) : [],
+      ]);
+      unheld = typed.filter((_, at) => inIndex[at] === false);
+
+      const asWords = plain(query);
+      if (asWords.includes(" ")) {
+        for (const [slug, held] of Object.entries(detail.claims)) {
+          const report = held.reports.find((candidate) => plain(candidate.title) === asWords);
+          const claim = index.claims[slug];
+          if (!report || !claim) continue;
+          exact = report;
+          lead = claim;
+          all.matches = [claim, ...all.matches.filter((other) => other !== claim)];
+          break;
+        }
+      }
+      if (asked !== latest) return;
+      if (all.matches.length > 0) {
+        picked = topics.some(([slug]) => slug === addressTopic) ? addressTopic : "";
+        // A topic in the address that no claim found belongs to is dropped from it.
+        if (addressTopic && !picked) setAddress((params) => params.delete("topic"));
+        addressTopic = "";
+        onView = await viewOf(picked);
+      }
     } catch {
       if (asked === latest) searchFailed(query);
       return;
     }
     if (asked !== latest) return;
-    matches = ranked(matches, searchWords(query), detail);
 
-    // Words that are a tracked report's whole headline put its claim first.
-    let exact: SearchReport | undefined;
-    const asWords = plain(query);
-    if (asWords.includes(" ")) {
-      for (const [slug, held] of Object.entries(detail.claims)) {
-        const report = held.reports.find((candidate) => plain(candidate.title) === asWords);
-        const claim = index.claims[slug];
-        if (!report || !claim) continue;
-        exact = report;
-        matches = [claim, ...matches.filter((other) => other !== claim)];
-        break;
-      }
-    }
-
-    if (matches.length === 0) {
+    if (all.matches.length === 0) {
       show(
         `Nothing tracked here matches “${query}”.`,
         "This site covers only the claims it has tracked so far. To check a story, paste the article's link into the box above.",
@@ -1502,42 +1589,61 @@ const sentenceJson = sentences
       void showListed(query);
       return;
     }
-    const picked = matches.some((claim) => claim.topic === addressTopic) ? addressTopic : "";
-    // A topic in the address that no match belongs to is dropped from it.
-    if (addressTopic && !picked) setAddress((params) => params.delete("topic"));
-    addressTopic = "";
 
+    const draw = (view: View, change: Partial<Shown> = {}) => {
+      onView = view;
+      searchAnswer(query, view.matches, index, detail, {
+        total: all.matches.length + all.results.length - all.read,
+        topics,
+        pick,
+        picked,
+        exact,
+        lead,
+        unheld,
+        left: view.results.length - view.read,
+        more: view.read < view.results.length ? () => more(view) : undefined,
+        ...change,
+      });
+    };
     // The claims found and not yet read are drawn under those on screen, twenty at a
-    // press. Those on screen keep their order; the new ones are ordered among
-    // themselves by the same rule. The reader is put on the first of them.
-    let read = Math.min(found.results.length, SHOWN_AT_ONCE);
-    const view = (): Shown => ({ exact, left: found.results.length - read, more: read < found.results.length ? more : undefined });
-    const more = async () => {
-      const hits = await Promise.all(found.results.slice(read, read + SHOWN_AT_ONCE).map((result) => result.data()));
+    // press. The reader is put on the first of them.
+    const more = async (view: View) => {
+      const fresh = await readNext(view);
       if (asked !== latest) return;
-      read += hits.length;
-      const words = searchWords(query);
-      const fresh = ranked(
-        hits.map(claimOf).filter((claim): claim is LookupClaim => Boolean(claim) && !matches.includes(claim!)),
-        words,
-        detail,
-      );
-      matches = [...matches, ...fresh];
+      draw(view, { again: true });
       const holder = answerSlot && !answerSlot.hidden ? answerSlot : results;
-      const topic = holder.querySelector<HTMLElement>('.search-topic-row button[aria-pressed="true"]')?.dataset.topic ?? "";
-      searchAnswer(query, matches, index, detail, { ...view(), picked: topic, again: true });
-      const first = fresh.find((claim) => !topic || claim.topic === topic);
-      const link = first && [...holder.querySelectorAll<HTMLAnchorElement>("a.hit-title")].find((title) => title.getAttribute("href") === first.page);
+      const link = fresh[0] && [...holder.querySelectorAll<HTMLAnchorElement>("a.hit-title")].find((title) => title.getAttribute("href") === fresh[0].page);
       (link ?? holder.querySelector<HTMLElement>("#search-answer-title"))?.focus();
     };
-    searchAnswer(query, matches, index, detail, { ...view(), picked });
+    // A topic picked shows that topic's claims, reading those not yet read.
+    const pick = async (slug: string, from: "side" | "row") => {
+      let view: View;
+      try {
+        view = await viewOf(slug);
+      } catch {
+        if (asked !== latest) return;
+        draw(onView, { pickedIn: from, said: `The claims in ${index.topics[slug]?.title ?? "that topic"} could not be read right now.` });
+        return;
+      }
+      if (asked !== latest) return;
+      picked = slug;
+      setAddress((params) => (slug ? params.set("topic", slug) : params.delete("topic")));
+      draw(view, { pickedIn: from });
+    };
+    draw(onView);
     void showListed(query);
   }
+
+  // The page's own title, and the words searched for ahead of it while they are
+  // answered: in a tab, in the history and to a screen reader. A pasted address stays
+  // out of it, as it stays out of the page's address.
+  const PAGE_TITLE = document.title;
 
   function answer(text: string) {
     latest += 1;
     listedGroup = null;
     leaveSearch();
+    document.title = text && readAddress(text).kind === "none" ? `“${text}” · ${PAGE_TITLE}` : PAGE_TITLE;
     if (!text) {
       results.replaceChildren();
       return;
@@ -1593,13 +1699,13 @@ const sentenceJson = sentences
   // searches for what it names. Up and down move through the rows, Enter takes the
   // chosen one, Escape closes them; with no row chosen Enter searches as before. A
   // pasted address is looked up at once and offers nothing. The rules are suggest.ts.
-  const boxRow = form.querySelector<HTMLElement>(".row") ?? form;
   const suggestions = element("div", undefined, "suggest");
   suggestions.id = "suggestions";
   suggestions.setAttribute("role", "listbox");
   suggestions.setAttribute("aria-label", "Suggestions");
   suggestions.hidden = true;
-  boxRow.append(suggestions);
+  // After the line under the field, so the rows start clear of it.
+  form.append(suggestions);
   input.setAttribute("role", "combobox");
   input.setAttribute("aria-autocomplete", "list");
   input.setAttribute("aria-controls", suggestions.id);
@@ -1672,6 +1778,8 @@ const sentenceJson = sentences
       opens.setAttribute("aria-hidden", "true");
       opens.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`;
       meta.append(opens, element("span", " Opens its page.", "visually-hidden"));
+    } else {
+      meta.append(element("span", " Searches here.", "visually-hidden"));
     }
     link.append(suggestDrawing(item.kind), main, meta);
     return link;
@@ -1733,10 +1841,25 @@ const sentenceJson = sentences
     input.removeAttribute("aria-activedescendant");
     suggestions.hidden = false;
     input.setAttribute("aria-expanded", "true");
-    // The panel ends inside the screen and scrolls within itself past that.
-    const room = window.innerHeight - suggestions.getBoundingClientRect().top - 12;
-    suggestions.style.maxHeight = `${Math.max(room, 220)}px`;
+    sizeSuggestions();
   }
+
+  // The panel ends inside what the reader can see, which a phone's keyboard shortens,
+  // and scrolls within itself past that. Where the rows do not fit under the box as
+  // it stands, the box is brought to the top of the screen first.
+  function sizeSuggestions() {
+    if (suggestions.hidden) return;
+    const seen = globalThis.visualViewport;
+    const bottom = seen ? seen.offsetTop + seen.height : innerHeight;
+    const room = () => bottom - suggestions.getBoundingClientRect().top - 12;
+    if (room() < suggestions.scrollHeight && form.getBoundingClientRect().top > 24) {
+      form.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+    suggestions.style.maxHeight = `${Math.max(room(), PANEL_FLOOR)}px`;
+  }
+  // The least the panel is given, in pixels: two rows and a kind's name.
+  const PANEL_FLOOR = 160;
+  globalThis.visualViewport?.addEventListener("resize", sizeSuggestions);
 
   input.addEventListener("input", () => void drawSuggestions());
   input.addEventListener("keydown", (event) => {

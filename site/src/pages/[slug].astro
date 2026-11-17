@@ -403,7 +403,9 @@ const sections = [
   framed
 >
   {/* The band: what was reported and, level with it, where it stands. */}
-  <section class="band record" slot="band" data-pagefind-body aria-label="The claim and where it stands">
+  {/* The topic is kept in the search index, so a search counts its claims by topic
+      without reading each one (openspec search-answer-in-step). */}
+  <section class="band record" slot="band" data-pagefind-body data-pagefind-filter={`topic:${claim.vertical}`} aria-label="The claim and where it stands">
     <div class="wrap band-grid">
       {/* The side column on a wide screen: the topic's drawing, large. Decoration only:
           the chip beside it names the topic. */}

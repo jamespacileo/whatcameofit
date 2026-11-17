@@ -36,6 +36,8 @@ test("the home page carries the lookup and the script that answers", () => {
   assert.ok(script, "the lookup's script is not on the page");
   assert.match(page(script[1]), /This article is one we track\./);
   assert.doesNotMatch(html, /lookup-sentences/);
+  // No fixture claim passes the rule for the field's example words: a link alone is offered.
+  assert.match(html, /<input[^>]*id="query"[^>]*placeholder="https:\/\/…"/);
 });
 
 // The component's script, run against a small page with only its network boundary,

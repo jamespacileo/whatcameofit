@@ -2148,9 +2148,39 @@ main nav.contents ul li + li {
   text-wrap: pretty;
 }
 
-/* After the last claim drawn of a longer answer: the next, at a press. */
+/* After the last claim drawn of a longer answer: the next, at a press, as tall as a
+   fingertip on every screen. */
 .search-results .show-more {
+  min-height: 2.75rem;
   margin: 1.1rem 0 0.4rem;
+  padding-inline: 1.1rem;
+}
+
+/* A searched word that no tracked claim holds, named under the answer's heading. */
+.search-results .search-unheld {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: var(--text-m);
+  text-wrap: pretty;
+}
+
+/* On a narrow screen the line under the box is kept for a screen reader only: the
+   answer's heading follows the box at once and says the same. Nothing is drawn, so
+   the answer area takes no room. */
+.results:has(> .search-note.visually-hidden:only-child) {
+  margin-top: 0;
+}
+
+/* Under an answer about an article, the date to come back on is an offer after the
+   answer, not a section of the page: its heading is quieter than the answer's
+   sentence. The home page sets its section headings in the heading face; this is
+   not one of them. */
+.results .again .bar,
+body:has(.band.home) .results .again .bar {
+  margin-top: 0;
+  font-family: var(--face);
+  font-size: var(--text-m);
+  font-weight: 700;
 }
 
 .search-results .show-more-says {
@@ -10205,7 +10235,8 @@ body:has(.band.home) .bar {
   z-index: 6;
 }
 
-.search .row .suggest {
+/* The rows start under the line that says where a link goes, clear of it. */
+.search > .suggest {
   position: absolute;
   z-index: 20;
   top: calc(100% + 0.45rem);
