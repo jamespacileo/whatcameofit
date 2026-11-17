@@ -10,10 +10,38 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:
-      # Local only: used by the test suite and by Alembic when run outside Compose.
+      # Local only: used by Alembic and the pipeline when run outside Compose. Never by
+      # the test suite, which has its own server (`test-db`).
       - "127.0.0.1:${DB_PORT:-5433}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U thenwhat -d thenwhat"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # The test suite's own Postgres. Tests drop and recreate databases, and a drop under
+  # load once brought the working database's server down, so tests never share its
+  # server: this one holds nothing but test databases, keeps them in memory, and is
+  # lost whenever its container goes. It is not started by `docker compose up`; `make
+  # check` starts it (`docker compose up -d --wait test-db`).
+  test-db:
+    profiles: ["test"]
+    image: postgres:16
+    environment:
+      POSTGRES_USER: thenwhat
+      POSTGRES_PASSWORD: thenwhat
+      POSTGRES_DB: postgres
+    # Nothing here is worth a disk write: no fsync, no full-page images, small buffers.
+    command: >
+      postgres -c fsync=off -c synchronous_commit=off -c full_page_writes=off
+      -c shared_buffers=128MB -c max_connections=100 -c max_wal_size=256MB
+    tmpfs:
+      - /var/lib/postgresql/data:size=3g
+    shm_size: 256m
+    ports:
+      - "127.0.0.1:${TEST_DB_PORT:-5434}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U thenwhat -d postgres"]
       interval: 2s
       timeout: 3s
       retries: 30

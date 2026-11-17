@@ -40,7 +40,7 @@ await test('serves real readable HTML with source and independent dates',async()
  const s=setup();const r=await s.run();const h=await r.text();assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/text\/html/);
  for(const word of ['A study of CIN-107','Primary aldosteronism','CIN-107','Example Sponsor','15','ClinicalTrials.gov',original,'/primary-aldosteronism-baxdrostat'])assert.ok(h.includes(word),word);
  assert.match(h,/2026-03-03|3\s+Mar(?:ch)?\s+2026/);assert.match(h,/2026-11-14|14\s+Nov(?:ember)?\s+2026/);assert.match(h,/estimated/i);
- assert.ok(!h.includes('__TRIAL_'));assert.equal(s.calls.length,1);assert.equal(s.calls[0].url,'https://clinicaltrials.gov/api/v2/studies/'+id);
+ assert.ok(!h.includes('__TRIAL_'));assert.equal(s.calls.length,1);assert.ok(s.calls[0].url.startsWith('https://clinicaltrials.gov/api/v2/studies/'+id+'?fields=NCTId%2C'));
  assert.equal(s.puts.length,1);assert.equal(s.puts[0].k,key);assert.equal(s.puts[0].v.at,now);assert.equal(s.puts[0].v.record.protocolSection.identificationModule.nctId,id);
 });
 await test('does not forward reader cookies or authorisation and has a timeout',async()=>{
@@ -48,16 +48,16 @@ await test('does not forward reader cookies or authorisation and has a timeout',
  const headers=new Headers(s.calls[0].options.headers);assert.equal(headers.get('cookie'),null);assert.equal(headers.get('authorization'),null);assert.match(headers.get('user-agent'),/corrections@whatcameofit\.com/);assert.ok(s.calls[0].options.signal instanceof AbortSignal);
 });
 await test('reuses a fresh copy without upstream reads',async()=>{
- const s=setup({entry:{version:1,at:now-3600000,record}});const r=await s.run();assert.equal(r.status,200);assert.equal(s.calls.length,0);assert.equal(s.puts.length,0);
+ const s=setup({entry:{version:2,at:now-3600000,record}});const r=await s.run();assert.equal(r.status,200);assert.equal(s.calls.length,0);assert.equal(s.puts.length,0);
 });
 await test('a copy older than a day is never shown, even when the registry is down',async()=>{
- const s=setup({fail:true,entry:{version:1,at:now-2*86400000,record}});const r=await s.run();const h=await r.text();assert.equal(r.status,503);assert.equal(s.calls.length,1);assert.ok(!h.includes('A study of CIN-107'));assert.doesNotMatch(h,/older copy/i);assert.ok(h.includes(original));assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));
+ const s=setup({fail:true,entry:{version:2,at:now-2*86400000,record}});const r=await s.run();const h=await r.text();assert.equal(r.status,503);assert.equal(s.calls.length,1);assert.ok(!h.includes('A study of CIN-107'));assert.doesNotMatch(h,/older copy/i);assert.ok(h.includes(original));assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));
 });
 await test('a copy older than a day is read again from the registry',async()=>{
- const s=setup({entry:{version:1,at:now-2*86400000,record}});const r=await s.run();assert.equal(r.status,200);assert.equal(s.calls.length,1);assert.equal(s.puts.length,1);assert.equal(s.puts[0].v.at,now);assert.equal(s.puts[0].options.expirationTtl,86400);
+ const s=setup({entry:{version:2,at:now-2*86400000,record}});const r=await s.run();assert.equal(r.status,200);assert.equal(s.calls.length,1);assert.equal(s.puts.length,1);assert.equal(s.puts[0].v.at,now);assert.equal(s.puts[0].options.expirationTtl,86400);
 });
 await test('outage without a usable copy is a recoverable 503',async()=>{
- for(const entry of [undefined,{version:1,at:now-2*86400000,record},{version:1,at:now-8*86400000,record},{version:1,at:now+60000,record}]){const s=setup({fail:true,entry});const r=await s.run();const h=await r.text();assert.equal(r.status,503);assert.ok(h.includes(original));assert.match(h,/try again|retry/i);assert.match(r.headers.get('cache-control'),/no-store/);assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));}
+ for(const entry of [undefined,{version:2,at:now-2*86400000,record},{version:2,at:now-8*86400000,record},{version:2,at:now+60000,record}]){const s=setup({fail:true,entry});const r=await s.run();const h=await r.text();assert.equal(r.status,503);assert.ok(h.includes(original));assert.match(h,/try again|retry/i);assert.match(r.headers.get('cache-control'),/no-store/);assert.ok(!h.includes('PRIVATE_ERROR_SECRET'));}
 });
 await test('invalid or uncited IDs never query registry',async()=>{
  for(const suffix of ['NCT1','NCT00000000','NCT04605549/extra','%3Cscript%3E']){const s=setup();const r=await s.run('/trials/'+suffix);assert.equal(r.status,404);assert.equal(s.calls.length,0);}
@@ -67,7 +67,7 @@ await test('upstream missing record is 404 and not cached',async()=>{
 });
 await test('wrong record identity is rejected',async()=>{
  const wrong=structuredClone(record);wrong.protocolSection.identificationModule.nctId='NCT07007793';const s=setup({payload:wrong});const r=await s.run();assert.equal(r.status,503);assert.equal(s.puts.length,0);
- const cached=setup({payload:record,entry:{version:1,at:now,record:wrong}});assert.equal((await cached.run()).status,200);assert.equal(cached.calls.length,1);
+ const cached=setup({payload:record,entry:{version:2,at:now,record:wrong}});assert.equal((await cached.run()).status,200);assert.equal(cached.calls.length,1);
 });
 await test('external text cannot execute HTML or break replacement markers',async()=>{
  const evil=structuredClone(record);evil.protocolSection.identificationModule.briefTitle='<script>alert(1)</script> $&';evil.protocolSection.descriptionModule.briefSummary='<img src=x onerror=alert(1)> $&';const s=setup({payload:evil});const h=await(await s.run()).text();assert.ok(!h.includes('<script>alert(1)</script>'));assert.ok(!h.includes('<img src=x'));assert.ok(h.includes('&lt;script&gt;'));assert.ok(h.includes('$&amp;')||h.includes('$&'));assert.ok(!h.includes('__TRIAL_'));

@@ -3,7 +3,9 @@
 // Only structured public answers are kept, under a digest of the public query: never an
 // abstract, article text, image, reader or credential. A slow or failing cache is a miss.
 
-const VERSION = 1;
+// Version 2: a registry answer is kept without its people. An entry of version 1 could
+// hold a whole record, contacts included, and is never read again.
+const VERSION = 2;
 // No source answer is reused for longer than this.
 export const SOURCE_TTL_SECONDS = 86_400;
 // The longest one cache read or write is waited on.
