@@ -235,6 +235,29 @@ const kindCounts = [
   })),
 ];
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+// The record's moments: the first of each kind of record, the report, the latest record
+// and a promised date, in order of date. They say when, never how it turned out.
+const firstOn = (type: string, state?: string) =>
+  claim.events
+    .filter((event) => event.type === type && (!state || event.trial_state === state))
+    .map((event) => event.event_date)
+    .sort()[0] ?? null;
+const latestOn = claim.events.map((event) => event.event_date).sort().pop() ?? null;
+const moments = [
+  { date: firstOn("trial_registered"), label: "First trial registered", mark: "not_started" },
+  { date: firstOn("trial_status_change", "started"), label: "First trial started", mark: "under_way" },
+  { date: claim.first_reported_date, label: claim.articles.length > 1 ? "First report" : "This report", mark: "report" },
+  { date: firstOn("trial_results_posted"), label: "First results posted", mark: "results" },
+  { date: firstOn("regulatory_decision"), label: "A regulator’s decision", mark: "completed" },
+  { date: promiseDue, label: "Promised", mark: "promise" },
+].filter((moment): moment is { date: string; label: string; mark: string } => moment.date !== null);
+const milestones = [
+  ...moments,
+  // The latest record is a moment of its own unless one of the others is it.
+  ...(latestOn && !moments.some((moment) => moment.date === latestOn)
+    ? [{ date: latestOn, label: "Latest record", mark: "latest" }]
+    : []),
+].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 const timetableNote = [
   ...(counts.promises > 0 ? [plural(counts.promises, "promise")] : []),
   plural(counts.records, "record"),
@@ -719,6 +742,30 @@ const sections = [
       <FoldHead id="timetable" note={timetableNote}>
         {hasDatedPromise ? "Promised and recorded" : "Recorded"}
       </FoldHead>
+      {/* The record's moments, in order, on one line: what a reader wants first. Each
+          leads to its year in the full record under it. */}
+      <ol class="milestones">
+        {milestones.map((moment) => (
+          <li class:list={[{ promised: moment.mark === "promise" }]}>
+            {moment.mark === "report" ? (
+              <span class="ev-report" aria-hidden="true" />
+            ) : moment.mark === "promise" ? (
+              <span class="ev-promise" aria-hidden="true" />
+            ) : (
+              <span class:list={["state-mark", { posted: moment.mark === "results" }]} data-state={moment.mark === "results" ? "completed" : moment.mark} aria-hidden="true" />
+            )}
+            <a href={`#year-${moment.date.slice(0, 4)}`}>{moment.label}</a>
+            <span>{formatDate(moment.date)}</span>
+          </li>
+        ))}
+      </ol>
+      {/* Every record, by year: one press under the moments. A link to a record opens it
+          (scripts/folds.ts); on paper it is printed open. */}
+      <details class="papers-rest record-all">
+        <summary>
+          All {plural(counts.records, "record")}{counts.promises > 0 ? ` and ${plural(counts.promises, "promise")}` : ""}, by year
+          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+        </summary>
       {
         ownAxis && (
           <div class="claim-strip">
@@ -957,6 +1004,7 @@ const sections = [
       </tbody>
     </table>
     </div>
+      </details>
 
     {
       timetable.undated.length > 0 && (

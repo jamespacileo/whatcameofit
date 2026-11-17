@@ -60,7 +60,7 @@ for (const order of document.querySelectorAll<HTMLElement>("[data-said-order]"))
 }
 
 // Paper has no press: why each term matched prints open, then goes back as it was.
-const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why, .entry-more .match-why")];
+const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why, .entry-more .match-why, .record-all")];
 addEventListener("beforeprint", () => {
   for (const why of whys) {
     why.toggleAttribute("data-was-open", why.open);
@@ -83,8 +83,12 @@ const reveal = (hash: string) => {
   // A link to a fact row that opens, or to something inside it, opens it.
   const term = target.closest<HTMLElement>(".fact-sheet > div, .entry-rows > li")?.querySelector<HTMLButtonElement>(".fact-open");
   if (term) openTerm(term, true);
-  const rest = target.closest<HTMLDetailsElement>("details");
-  if (rest) rest.open = true;
+  // Every fold the target lies in is opened, the outermost too.
+  let rest = target.closest<HTMLDetailsElement>("details");
+  for (let fold = rest; fold; fold = fold.parentElement?.closest<HTMLDetailsElement>("details") ?? null) {
+    fold.open = true;
+    rest = fold;
+  }
   const head =
     target.closest<HTMLElement>(".fold-head") ??
     heads.find((candidate) => candidate.parentElement?.contains(target));

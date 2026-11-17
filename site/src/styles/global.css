@@ -9008,6 +9008,124 @@ body.framed {
   margin-right: 0.55rem;
 }
 
+/* Milestones (openspec sections-funnel): the record's moments on one line under the
+   section's rule, each a shape on the line, its name and its date. The shapes are the
+   trials' own: a ring registered, half started, full with a ring results posted. A
+   report is a small blue diamond, the colour of a link; a promise is amber, as a
+   promise is everywhere. */
+.milestones {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  margin: 1.6rem 0 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+
+.milestones li {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 0.05rem;
+  padding: 0.95rem 1rem 0 0;
+  border-top: 2px solid var(--head-rule);
+  font-size: var(--text-m);
+}
+
+.milestones li > :first-child {
+  position: absolute;
+  top: -0.43rem;
+  left: 0;
+  box-shadow: 0 0 0 4px var(--paper);
+}
+
+.milestones li > .state-mark {
+  translate: none;
+}
+
+.milestones li > .state-mark:not([data-state="completed"]):not([data-state="terminated"]),
+.milestones li > .ev-report {
+  background-color: var(--paper);
+}
+
+.milestones li > .state-mark[data-state="under_way"] {
+  background: linear-gradient(to right, var(--muted) 50%, var(--paper) 50%);
+}
+
+.milestones a {
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.milestones a:hover {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+.milestones li > span:last-child {
+  color: var(--muted);
+  font-size: var(--text-s);
+}
+
+.milestones li.promised {
+  border-top-style: dashed;
+  border-top-color: var(--promise-rule);
+}
+
+/* "Results posted": a full mark with a ring round it. */
+.state-mark.posted {
+  outline: 1.5px solid var(--muted);
+  outline-offset: 2px;
+}
+
+.ev-report,
+.ev-promise {
+  flex: none;
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1.5px solid var(--blue);
+  rotate: 45deg;
+}
+
+.ev-promise {
+  border-color: var(--promise-mark);
+  background: var(--promise-mark);
+}
+
+.record-all > summary {
+  margin-top: 0.4rem;
+}
+
+.sheet .record-all,
+.sheet .milestones {
+  max-width: none;
+}
+
+@media (max-width: 40rem) {
+  .milestones {
+    grid-auto-flow: row;
+    margin-top: 1rem;
+  }
+
+  .milestones li {
+    padding: 0 0 0.85rem 1.2rem;
+    border-top: 0;
+    border-left: 2px solid var(--head-rule);
+  }
+
+  .milestones li > :first-child {
+    top: 0.35rem;
+    left: -0.43rem;
+  }
+
+  .milestones li.promised {
+    border-left-style: dashed;
+    border-left-color: var(--promise-rule);
+  }
+}
+
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
    info mark beside a section's heading opens what the section holds in a small panel,
    on hover, on a press and from the keyboard, in place of a paragraph under the
