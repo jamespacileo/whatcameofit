@@ -207,6 +207,8 @@
       "summary": "Researchers at Kyoto University and the University of Fukui reported that one dose of an antibody blocking the protein USAG-1 grew a whole new tooth in mice with congenital tooth agenesis, with similar results in ferrets. The paper appeared in Science Advances in February 2021.",
       "vertical": "mouth-and-teeth",
       "approach": "drug",
+      "approach_basis": null,
+      "clinical_categories": [],
       "intervention": {
         "name": "Anti-USAG-1 antibody",
         "synonyms": [

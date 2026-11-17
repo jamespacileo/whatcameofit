@@ -612,6 +612,34 @@ test("Scenario: Claim with an approach", () => {
   assert.match(html, /<span class="approach"><span class="visually-hidden">Approach: <\/span>Gene therapy<\/span>/);
 });
 
+test("Scenario: Registry supports the approach", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(
+    html,
+    /<span class="approach-basis">The registry lists it as a genetic intervention in 2 trials\.<\/span>/,
+  );
+});
+
+test("Scenario: Approach the registry does not support, and a claim with no approach", () => {
+  // Every other claim of the fixture has no basis, with or without an approach.
+  const others = htmlFiles(dist).filter((file) => !file.endsWith(path.join("phase-claim", "index.html")));
+  assert.ok(others.length > 0);
+  for (const file of others) assert.ok(!fs.readFileSync(file, "utf8").includes('class="approach-basis"'), file);
+});
+
+test("Scenario: Registry type without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims.find((claim) => claim.slug === "phase-claim").approach_basis.type = "RADIATION";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-registry-type-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /registry intervention types the site has no words for: RADIATION/);
+});
+
 test("Scenario: Claim without an approach", () => {
   assert.ok(!page("quiet-claim/index.html").includes('class="approach"'));
 });
@@ -1905,4 +1933,89 @@ test("Scenario: the home page draws one claim, reported and on record", () => {
   assert.match(card, /class="track/);
   // The home page loads the heading face ahead of need, as a claim page does.
   assert.match(html, /rel="preload" as="font" type="font\/woff2" href="[^"]*newsreader[^"]*"/);
+});
+
+// --- clinical categories (openspec site-publishing) ---------------------------------
+
+test("Scenario: Top category with claims, and one with no claim", () => {
+  const html = page("clinical/index.html");
+  // Periodontitis and Periodontal Diseases both sit under Stomatognathic Diseases: two claims.
+  assert.match(html, /<a href="\/clinical\/D009057">Stomatognathic Diseases<\/a>\s*<span class="count">\s*2/);
+  // Diabetic Retinopathy sits under two trees, so its one claim is counted under each top.
+  assert.match(html, /<a href="\/clinical\/D005128">Eye Diseases<\/a>\s*<span class="count">\s*1/);
+  assert.match(html, /<a href="\/clinical\/D004700">Endocrine System Diseases<\/a>\s*<span class="count">\s*1/);
+  // Neoplasms is in the tree and no claim falls under it.
+  assert.ok(!html.includes("Neoplasms"));
+  assert.ok(!fs.existsSync(path.join(dist, "clinical", "D009369")));
+  assert.match(html, /href="\/topics"/);
+});
+
+test("Scenario: Category in two places links to both broader categories", () => {
+  const html = page("clinical/D003930/index.html");
+  assert.match(html, /<a href="\/clinical\/D003920" data-broader[^>]*>\s*Diabetes Mellitus\s*<\/a>/);
+  assert.match(html, /<a href="\/clinical\/D012164" data-broader[^>]*>\s*Retinal Diseases\s*<\/a>/);
+  assert.match(html, /Sits under 2 broader categories: /);
+});
+
+test("Scenario: Claims at and below a category, each once, with narrower categories", () => {
+  const html = page("clinical/D010510/index.html");
+  // One claim has Periodontal Diseases itself, one the narrower Periodontitis.
+  assert.match(html, /2\s*claims in this MeSH category or one narrower/);
+  assert.equal(count(html, 'href="/phase-claim"'), 1);
+  assert.equal(count(html, 'href="/approved-claim"'), 1);
+  assert.match(html, /<a href="\/clinical\/D010518">Periodontitis<\/a>\s*<span class="count">\s*1/);
+});
+
+test("Scenario: Category from a trial and a paper, on the claim page", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(html, /<a class="entry-name" href="\/clinical\/D010518">Periodontitis<\/a>/);
+  const row = html.slice(html.indexOf('href="/clinical/D010518">Periodontitis'));
+  const source = row.slice(0, row.indexOf("</li>"));
+  assert.match(source, /trial\s*<a href="[^"]+">NCT00000002<\/a>/);
+  assert.match(source, /paper\s*<a href="[^"]+">10\.5555\/synthetic\.results<\/a>/);
+});
+
+test("Scenario: Category from the reading of the claim's own condition shows its score", () => {
+  const html = page("approved-claim/index.html");
+  const row = html.slice(html.indexOf('href="/clinical/D010510">Periodontal Diseases'));
+  const source = row.slice(0, row.indexOf("</li>"));
+  assert.match(source, /paper\s*pmid:90000009/);
+  assert.match(source, /the claim&#39;s own condition, read as this category with a score of 0\.93/);
+});
+
+test("Scenario: Claim with no category, or whose categories are not yet read, shows none", () => {
+  assert.ok(!page("quiet-claim/index.html").includes('class="clinical"'));
+});
+
+test("Scenario: Credit on every page that shows a MeSH category", () => {
+  for (const file of ["clinical/index.html", "clinical/D010510/index.html", "phase-claim/index.html"]) {
+    const html = page(file);
+    assert.match(html, /Medical Subject Headings \(MeSH\), U\.S\. National Library of Medicine/, file);
+    assert.match(html, /MeSH 2026/, file);
+    assert.match(html, /NLM does not endorse this site/, file);
+  }
+});
+
+test("Scenario: The clinical index is reachable and in the sitemap", () => {
+  assert.match(page("for/clinicians/index.html"), /href="\/clinical"/);
+  assert.match(page("topics/index.html"), /href="\/clinical"/);
+  const sitemap = page("sitemap.xml");
+  assert.match(sitemap, /\/clinical<\/loc>/);
+  for (const identifier of ["D009057", "D009059", "D010510", "D010518", "D003930", "D003920"]) {
+    assert.match(sitemap, new RegExp(`/clinical/${identifier}</loc>`));
+  }
+  assert.ok(!sitemap.includes("/clinical/D009369"));
+});
+
+test("Scenario: Export without a MeSH year stops the build", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.clinical.mesh_years = [];
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-mesh-year-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /carries clinical categories and no MeSH year/);
 });

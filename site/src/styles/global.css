@@ -731,6 +731,11 @@ a.chip:hover {
   color: var(--muted);
 }
 
+.approach-basis {
+  font-size: var(--text-s);
+  color: var(--muted);
+}
+
 .share {
   display: inline-flex;
   align-items: center;
@@ -851,6 +856,22 @@ a.share {
   color: var(--muted);
   font-size: var(--text-m);
   margin: 0.6rem 0 0;
+}
+
+/* The credit NLM asks for wherever a MeSH category is shown. */
+.mesh-credit {
+  color: var(--muted);
+  font-size: var(--text-s);
+  margin: 1.5rem 0 0;
+  max-width: 70ch;
+}
+
+.clinical-directory {
+  margin-top: 1.25rem;
+}
+
+.clinical-claims {
+  margin-top: 2rem;
 }
 
 /* The headline a reader followed here, named before anything is said about it. */

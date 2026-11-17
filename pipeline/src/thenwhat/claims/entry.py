@@ -20,7 +20,7 @@ from thenwhat.db.models import (
     Promise,
     SourceArticle,
 )
-from thenwhat.domain import EntityType, ReviewState
+from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.sources.rxnorm import not_searched
 
 MAX_SLUG_LENGTH = 60
@@ -493,7 +493,9 @@ def add_claim(
     summary: str = "",
     approach: str | None = None,
 ) -> Claim:
-    """Create a claim and its intervention entity. One claim per intervention and indication."""
+    """Create a claim and its intervention entity. One claim per intervention and indication.
+
+    An approach given here is recorded as a person's; the seed loader says otherwise."""
     _check_slug(slug)
     headline = _required("headline", headline)
     intervention = _required("intervention", intervention)
@@ -512,6 +514,7 @@ def add_claim(
         summary=tidy(summary),
         vertical=vertical,
         approach=approach,
+        approach_decided_by=Decider.HUMAN if approach else None,
         indication=indication,
     )
     session.add(claim)
@@ -556,6 +559,13 @@ def find_article(session: Session, claim: Claim, url: str) -> SourceArticle | No
     ).one_or_none()
 
 
+def unarchived_claims(session: Session) -> list[Claim]:
+    """Every claim not taken off the site, by slug."""
+    return list(
+        session.scalars(select(Claim).where(Claim.archived_at.is_(None)).order_by(Claim.slug))
+    )
+
+
 def check_new_claim(session: Session, slug: str, vertical: str) -> None:
     """Refuse a slug or vertical that `add_claim` would refuse, before any costly work."""
     _check_slug(slug)
@@ -577,7 +587,8 @@ def edit_claim(
 ) -> Claim:
     """Correct a claim's own fields. Changing its identity is checked against other claims.
 
-    An empty approach clears it."""
+    An empty approach clears it, with who set it and what a rule set it on; a rule may
+    then fill it again. An approach given here is recorded as a person's."""
     claim = claim_by_slug(session, slug)
     entity = session.scalars(
         select(Entity).where(Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION)
@@ -588,6 +599,8 @@ def edit_claim(
         claim.vertical = vertical
     if approach is not None:
         claim.approach = _approach(approach)
+        claim.approach_decided_by = Decider.HUMAN if claim.approach else None
+        claim.approach_basis = None
     if headline is not None:
         claim.headline = _required("headline", headline)
     if summary is not None:

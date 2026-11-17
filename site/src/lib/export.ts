@@ -3,7 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { unlabelledApproaches } from "./approach";
+import { unlabelledApproaches, unwordedRegistryTypes } from "./approach";
+import { clinicalProblems, type Clinical, type ClinicalCategory } from "./clinical";
 import { unlabelledPaperCodes } from "./paper-facts";
 import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
 import { unwordedStatementCodes, type ExportedStatement } from "./statements";
@@ -221,6 +222,14 @@ export interface ExportedClaim {
   vertical: string;
   /** The kind of intervention, as a code the site words; null when none is recorded. */
   approach: string | null;
+  /** What the registry lists the intervention as, when that is the approach. Codes. */
+  approach_basis?: { type: string; trials: number } | null;
+  /**
+   * The claim's clinical categories, as MeSH descriptors with the records that gave
+   * each. Empty when its records give none; null or absent when a MeSH record needed to
+   * place them has not been read, and then none is shown.
+   */
+  clinical_categories?: ClinicalCategory[] | null;
   intervention: { name: string; synonyms: string[] };
   indication: string;
   first_reported_date: string | null;
@@ -298,6 +307,8 @@ export interface Export {
   /** Icons of the outlets whose articles are exported, each as a data URI. */
   outlets: { domain: string; icon: string; fetched_at: string }[];
   claims: ExportedClaim[];
+  /** The part of the MeSH tree the claims' clinical categories sit in. */
+  clinical?: Clinical | null;
   /** Claims the operator took down. Each address answers 410; the reason is never exported. */
   archived?: { slug: string; on: string }[];
   /** Addresses that were a claim's page and now lead to another's: merged into it, or renamed. */
@@ -360,6 +371,18 @@ function load(): Export {
   if (unlabelled.length > 0) {
     throw new Error(
       `The export at ${file} has approaches the site has no words for: ${unlabelled.join(", ")}. Add them to src/lib/approach.ts.`,
+    );
+  }
+  const clinical = clinicalProblems((content as Export).clinical, (content as Export).claims);
+  if (clinical.length > 0) {
+    throw new Error(`The export at ${file} cannot be shown by clinical category: ${clinical.join("; ")}.`);
+  }
+  const unwordedTypes = unwordedRegistryTypes(
+    (content as Export).claims.map((claim) => claim.approach_basis?.type),
+  );
+  if (unwordedTypes.length > 0) {
+    throw new Error(
+      `The export at ${file} has registry intervention types the site has no words for: ${unwordedTypes.join(", ")}. Add them to src/lib/approach.ts.`,
     );
   }
   const unworded = unlabelledTrialCodes(

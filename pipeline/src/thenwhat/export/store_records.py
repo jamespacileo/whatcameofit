@@ -70,6 +70,7 @@ from thenwhat.domain import (
     TermRole,
     TrialState,
 )
+from thenwhat.sources.mesh import Mesh
 
 # The tables an export reads. A snapshot need hold no other.
 # Every table and column an export from the store reads, and nothing else of the store:
@@ -711,6 +712,22 @@ class StoreRecords:
             payload=json.loads(row["body"]),
             fetched_at=_time(row["fetched_at"]),
         )
+
+    def mesh_records(self) -> list[TermRecord]:
+        return [
+            TermRecord(
+                source_name=row["source_name"],
+                external_id=row["external_id"],
+                url=row["url"],
+                payload=json.loads(row["body"]),
+                fetched_at=_time(row["fetched_at"]),
+            )
+            for row in self._rows(
+                "SELECT * FROM source_record WHERE kind = 'term' AND source_name = ?"
+                " AND body IS NOT NULL ORDER BY external_id",
+                Mesh.name,
+            )
+        ]
 
     def organisation_record(self, source_name: str, external_id: str) -> OrganisationRecord | None:
         row = self._source_record("organisation", source_name, external_id)
