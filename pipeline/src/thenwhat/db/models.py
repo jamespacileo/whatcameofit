@@ -160,7 +160,8 @@ class Claim(Reviewed, Base):
     # archived, stands for no intervention any more, and its address leads to that claim.
     merged_into_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"), index=True)
     # Set when the intervention gained or changed a name, so its registries are to be
-    # searched again (`thenwhat prepare --due`). Cleared by a registry search that succeeds.
+    # searched again (`thenwhat prepare --due`): the time a new search was last asked
+    # for. Its change makes the claim due for its search steps; a search leaves it as it is.
     registry_search_due_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
 
