@@ -1,5 +1,21 @@
 # Tasks
 
+## 0. Restore, cutover and bulk completeness (P1)
+
+- [ ] 0.1 <a id="task-f37"></a>Carry the runner outcomes, reasons, retry time and first-deferred time through schema, serializer, merge and restore. Test an older store and round-trip both waiting states before and after the retry time. [F37](../../../docs/reviews/2026-11-17-code-review.md#finding-f37) · [Acceptance scenario](specs/truth-store/spec.md#scenario-waiting-work-survives-a-bulk-round-trip)
+
+- [ ] 0.2 <a id="task-f01"></a>Check completion across all batches. Interrupt a 20,001-record replay after batch one and compare two retries with an uninterrupted restore. [F01](../../../docs/reviews/2026-11-17-code-review.md#finding-f01) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-restore-resumes-between-batches)
+
+- [ ] 0.3 <a id="task-f02"></a>Initialize an index only after confirmed absence. Exercise the 503 and retry with an existing same-day delta and verify both the index and the original object's contents. [F02](../../../docs/reviews/2026-11-17-code-review.md#finding-f02) · [Acceptance scenario](specs/truth-store/spec.md#scenario-an-unreadable-restore-index-survives-an-upload)
+
+- [ ] 0.4 <a id="task-f04"></a>Reconcile referenced keys and hashes with local uploads and existing destination objects. Exercise absent folder, absent object, hash mismatch and already-uploaded cases in a disposable cutover. [F04](../../../docs/reviews/2026-11-17-code-review.md#finding-f04) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-source-document-is-missing-at-cutover)
+
+- [ ] 0.5 <a id="task-f03"></a>Scope exceptions to the fields they explain. Run the duplicate-article fixture through the cutover comparison both alone and with the altered status. [F03](../../../docs/reviews/2026-11-17-code-review.md#finding-f03) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-duplicate-article-accompanies-a-status-change)
+
+- [ ] 0.6 <a id="task-f05"></a>Include trial-paper changes in the bulk reuse check. Add only a paper, rerun the default build and compare it with a fresh build. [F05](../../../docs/reviews/2026-11-17-code-review.md#finding-f05) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-trial-paper-is-the-only-change)
+
+- [ ] 0.7 <a id="task-f11"></a>Handle previously completed slices lacking a baseline. Push the dated fixture twice by the normal route and verify the newer trial lands once. [F11](../../../docs/reviews/2026-11-17-code-review.md#finding-f11) · [Acceptance scenario](specs/ingest-merge/spec.md#scenario-a-completed-slice-predates-fetch-timestamps)
+
 ## 1. Decisions before any build
 
 - [x] 1.1 Confirm on the MacBook Pro, where the operator believes it is, the database that holds the published claims and the link leads, by counting both there; verify its host, its counts and how to dump it are written in `design.md` in place of the open question. Done 2026-11-16: database `thenwhat`, 829 claims, 2,686,680 leads, 3,912 MB; figures and the dump's checksum are in `design.md`, Context

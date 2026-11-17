@@ -21,6 +21,16 @@ A claim's clinical categories SHALL include every MeSH descriptor that an approv
 - **WHEN** a trial is matched to the claim as a candidate and not approved
 - **THEN** its condition terms give the claim no clinical category
 
+#### Scenario: A once-approved trial match is rejected
+
+- **WHEN** an approved trial match is rejected while its approved historical evidence event remains
+- **THEN** the trial ceases to supply clinical categories or provenance on either export path. Independently supported categories remain
+
+#### Scenario: A newer trial snapshot removes a condition
+
+- **WHEN** successive snapshots for one approved trial give different conditions
+- **THEN** only the current snapshot supplies that trial's categories, regardless of the order of the historical events
+
 ### Requirement: Clinical categories from approved papers
 A claim's clinical categories SHALL also include each MeSH descriptor that an approved paper of the claim is indexed under as a major topic, when that descriptor sits in the MeSH tree of diseases or of mental disorders. Any other heading of the paper SHALL NOT become a category.
 
@@ -35,6 +45,11 @@ A claim's clinical categories SHALL also include each MeSH descriptor that an ap
 #### Scenario: Heading that is not a major topic
 - **WHEN** the paper lists "Diabetes Mellitus" as a heading that is not a major topic
 - **THEN** it does not become a clinical category
+
+#### Scenario: A definitive negative paper heading accompanies usable evidence
+
+- **WHEN** a paper heading has no descriptor in the current vocabulary and the claim has independently supported categories
+- **THEN** a fresh session still exports the known categories. A pending or failed lookup remains distinguishable from the completed negative result
 
 ### Requirement: Clinical categories from the claim's checked condition term
 A claim's clinical categories SHALL also include each MeSH descriptor that an approved term check read as the claim's own condition. The category SHALL carry the score of that reading. A term read as broader than the condition, and a reading that is not approved, SHALL NOT give a category. This SHALL apply to every claim alike, whether or not a trial or a paper gives it a category.
@@ -92,6 +107,21 @@ For every clinical category in use, the pipeline SHALL hold NLM's record of the 
 - **WHEN** NLM answers that a descriptor does not exist in the current year
 - **THEN** the claim keeps the category with the year it was last read in, and the pipeline lists it as retired
 
+#### Scenario: A parent descriptor has an unrelated placement
+
+- **WHEN** a disease reaches a parent with several tree numbers and only one shares its branch
+- **THEN** the export and browse hierarchy follow compatible tree-number prefixes. Other placements of that parent contribute no ancestor on this path
+
+#### Scenario: A stored descriptor changes in a new vocabulary year
+
+- **WHEN** a new MeSH year changes one previously stored placement and retires another descriptor
+- **THEN** refresh updates the changed placement and identifies the retired descriptor with its last known year
+
+#### Scenario: Preparation first discovers an approved condition term
+
+- **WHEN** normal preparation approves a new condition term after trial evidence was fetched and NLM is available
+- **THEN** the first subsequent export includes the required ancestry without a separate tree command
+
 ### Requirement: Topic mapping from clinical categories
 A checked-in mapping SHALL name, for each reader-friendly group and vertical, the MeSH descriptors it covers. One topic MAY cover several descriptors, and one descriptor MAY be covered by several topics. A claim's derived topics SHALL be every topic that covers one of its clinical categories or a broader category of one. Every descriptor in the mapping SHALL exist in the vocabulary.
 
@@ -132,6 +162,11 @@ The pipeline SHALL report, on request, for all unarchived claims: how many have 
 #### Scenario: Nothing to compare
 - **WHEN** a claim has no clinical category, or none that a topic covers
 - **THEN** it counts as none to compare, under the one of the two that applies
+
+#### Scenario: Independent evidence supports a different topic
+
+- **WHEN** only a checked condition term supports the agreeing group and a trial supports an unrelated group on the same claim
+- **THEN** the comparison counts the agreement as term-only. A trial supporting the agreeing group instead counts as independent evidence
 
 ### Requirement: Disagreeing claims are listed
 The pipeline SHALL list, on request, every unarchived claim whose derived topics disagree with its vertical, with its slug, intervention, indication, filed vertical, derived topics, and the clinical categories that produced them. The list SHALL also be available as tab-separated rows. `thenwhat prepare` SHALL say how many of the claims it handled disagree.

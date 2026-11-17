@@ -36,6 +36,11 @@ The site SHALL have a clinical index at `/clinical` that lists the top categorie
 - **WHEN** no published claim falls under a top category
 - **THEN** the index does not list it
 
+#### Scenario: A category comes only from the checked condition
+
+- **WHEN** a filed claim has an approved condition reading and no trial or paper supporting that category
+- **THEN** the clinical index identifies a checked condition term as a possible source and does not imply that every assignment was indexed from a trial or paper
+
 ### Requirement: Clinical category page
 Each MeSH category at or above a published claim's clinical category SHALL have a page at `/clinical/{descriptor identifier}`. It SHALL show the category's MeSH name, every broader category it sits under, its narrower categories that have published claims with their counts, and the published claims at or below it with their statuses. A claim under several narrower categories SHALL be listed once.
 

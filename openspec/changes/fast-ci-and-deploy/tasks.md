@@ -70,6 +70,16 @@ Read `design.md` first. Strategy numbers (S1 to S9) refer to its table. Every fi
 - [ ] 7.2 If any limit is still missed, stop and tell the operator with the ledger's evidence before changing a limit; verify no limit in `scripts/ci-budgets.json` differs from the spec
 - [ ] 7.3 Final integration check: `make check` locally, one real pull request through checks and preview, one real deployment with the live check, and the report exiting successfully; verify all four and record the run ids in the ledger
 
+## 8. Test coverage and checkout isolation
+
+### P2
+
+- [ ] 8.1 <a id="task-f06"></a>Use a stable checkout identity within the database identifier limit. Run same-basename checkouts concurrently and verify that cleaning up one leaves the other operational. [F06](../../../docs/reviews/2026-11-17-code-review.md#finding-f06) · [Acceptance scenario](specs/delivery-time/spec.md#scenario-identically-named-checkouts-run-concurrently)
+
+- [ ] 8.2 <a id="task-f07"></a>Include packaging in `make check-extension`. Verify a normal build produces the artifact and an isolated packaging failure fails this target with its unit tests passing. [F07](../../../docs/reviews/2026-11-17-code-review.md#finding-f07) · [Acceptance scenario](specs/delivery-time/spec.md#scenario-the-extension-only-check-catches-a-packaging-failure)
+
+- [ ] 8.3 <a id="task-f08"></a>Move the home-row build test to the build suite. Trace both normal commands to verify that the fast suite skips Astro build and the build suite runs the assertions. [F08](../../../docs/reviews/2026-11-17-code-review.md#finding-f08) · [Acceptance scenario](specs/delivery-time/spec.md#scenario-the-fast-site-suite-leaves-builds-to-the-build-suite)
+
 ## Workflow follow-up
 
 - Archive the change once the operator has read the verdicts.

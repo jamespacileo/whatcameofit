@@ -1,5 +1,9 @@
 # Tasks
 
+## 0. Stored trial eligibility and alias corroboration (P1)
+
+- [ ] 0.1 <a id="task-f09"></a>Apply indication filtering across the fallback candidates before enforcing the hundred-trial cutoff. Exercise the 102nd psoriasis trial, the twenty-or-fewer rule and a set with over 100 eligible trials. [F09](../../../docs/reviews/2026-11-17-code-review.md#finding-f09) · [Acceptance scenario](specs/entity-resolution/spec.md#scenario-the-only-eligible-trial-sorts-after-the-cutoff)
+
 ## 1. Engine
 
 - [x] 1.1 Name the trial question and record text in `decide/steps.py` so match scoring and lookup share them; verify the resolution and decision tests still pass
@@ -83,3 +87,7 @@
 
 - [x] 8.1 Give each displayed trial record its own match-confidence percentage and unavailable state, with wording distinguishing it from effectiveness and trial quality; verify score boundaries and missing values through the shared answer seam
 - [x] 8.2 Update the public privacy and method copy for automatic lookup when the extension opens, with no background browsing collection; extension implementation and browser checks are tracked in the browser-extension change
+
+## 9. Stored trial eligibility and alias corroboration (P2)
+
+- [ ] 9.1 <a id="task-f10"></a>Count distinct registry IDs across drug forms. Verify lookup and scoring in the one-NCT and two-NCT cases, preserving the development-code exception. [F10](../../../docs/reviews/2026-11-17-code-review.md#finding-f10) · [Acceptance scenario](specs/entity-resolution/spec.md#scenario-one-trial-lists-two-forms-under-one-brand)

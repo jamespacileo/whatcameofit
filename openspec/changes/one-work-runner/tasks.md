@@ -1,5 +1,17 @@
 # Tasks
 
+## 0. Writer upgrades, retries and due work (P1)
+
+- [ ] 0.1 <a id="task-f36"></a>Teach migration 0037 to recognize the historical audit-attach state. Upgrade a representative pre-migration PostgreSQL fixture, verify the attachment and ledger agree, and retain a test for unknown states. [F36](../../../docs/reviews/2026-11-17-code-review.md#finding-f36) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-a-manually-attached-historical-lead-is-upgraded)
+
+- [ ] 0.2 <a id="task-f38"></a>Share the stop signal across workers before the next claim. Use the two-worker, five-record fixture and verify backlog, attempts and disposition of work already in flight. [F38](../../../docs/reviews/2026-11-17-code-review.md#finding-f38) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-one-worker-reports-a-provider-wide-outage)
+
+- [ ] 0.3 <a id="task-f42"></a>Preserve pending DOI work under the runner's declared reasons, including any registry numbers processed successfully. Test the unconfigured run, recovery after configuration and an unchanged rerun. [F42](../../../docs/reviews/2026-11-17-code-review.md#finding-f42) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-a-cited-paper-awaits-a-configured-source)
+
+- [ ] 0.4 <a id="task-f44"></a>Apply the budget guard only where model spending is possible. Test a registry fetch, a deterministic decision and a model-dependent step at the same exhausted ceiling. [F44](../../../docs/reviews/2026-11-17-code-review.md#finding-f44) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-the-model-budget-is-exhausted-during-non-model-work)
+
+- [ ] 0.5 <a id="task-f45"></a>Invalidate only leads whose stored classification differs from the outlet's current classification. Run the three-lead, limit-two case to completion and check the processed IDs on each run. [F45](../../../docs/reviews/2026-11-17-code-review.md#finding-f45) · [Acceptance scenario](specs/lead-screening/spec.md#scenario-bounded-rescreening-reaches-the-last-lead)
+
 ## 1. Pin down present behaviour
 
 - [x] 1.1 Write characterisation tests against the present code, one record per outcome, for `link_read` (each `ReadOutcome` and each cannot-be-read cause), `link_triage`, `link_screen` and `news_search`, at the session seam with synthetic article fixtures; verify they pass on `main` unchanged
@@ -83,6 +95,18 @@
 
 - [x] 9.1 Run `make check`; verify ruff, ty, pytest and the site build pass
 - [ ] 9.2 On the writer, run one day's run end to end, then `thenwhat backfill plan`; record here the records put off and needing a fix by reason, the number of live claims with no terms against 206 of 594, and from `thenwhat measure` each step's share of time and cost and its largest wait cause
+
+## 10. Writer upgrades, retries and due work (P2)
+
+- [ ] 10.1 <a id="task-f39"></a>Recheck eligibility atomically with requeue and the lead update. Exercise both transaction orders and verify the resulting ledger, read outcome and affected count. [F39](../../../docs/reviews/2026-11-17-code-review.md#finding-f39) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-a-successful-retry-races-with-requeue)
+
+- [ ] 10.2 <a id="task-f40"></a>Distinguish a failed batch attempt from final per-record outcomes. Feed actual fallback measurements to the live view and compare its totals with the ledger. [F40](../../../docs/reviews/2026-11-17-code-review.md#finding-f40) · [Acceptance scenario](specs/processing-metrics/spec.md#scenario-a-failed-batch-falls-back-to-individual-records)
+
+- [ ] 10.3 <a id="task-f41"></a>Recheck the shared pause after pacing and before sending. Use a controlled clock and mock transport to verify zero requests before 13:00 and normal eligibility afterwards. [F41](../../../docs/reviews/2026-11-17-code-review.md#finding-f41) · [Acceptance scenario](specs/source-clients/spec.md#scenario-a-pause-begins-while-a-client-awaits-its-turn)
+
+- [ ] 10.4 <a id="task-f43"></a>Include paper DOIs in the fingerprint of their owning lookup. Prepare, add a paper entity, prepare again and verify one lookup with no repeat on an unchanged run. [F43](../../../docs/reviews/2026-11-17-code-review.md#finding-f43) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-adding-a-paper-changes-the-lookup-inputs)
+
+- [ ] 10.5 <a id="task-f46"></a>Use the screening eligibility calculation in the read-only plan. Check the plan before and after successive bounded runs and confirm that planning itself leaves ledger and lead rows untouched. [F46](../../../docs/reviews/2026-11-17-code-review.md#finding-f46) · [Acceptance scenario](specs/lead-screening/spec.md#scenario-planning-sees-the-same-newly-eligible-leads-as-screening)
 
 ## Workflow follow-up
 

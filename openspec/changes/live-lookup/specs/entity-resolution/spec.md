@@ -101,6 +101,11 @@ A stored trial found this way that the registry's search did not return SHALL be
 - **WHEN** the system holds no registry trial
 - **THEN** resolution searches the registry as before
 
+#### Scenario: The only eligible trial sorts after the cutoff
+
+- **WHEN** 102 stored titles name an intervention and only the last by registry ID shares the claim's indication
+- **THEN** the last trial is returned for scoring. The broad-name limit applies to the eligible set
+
 ### Requirement: A name the stored trials file under one other name is searched under it
 When stored intervention entries list one of the intervention's names among their other names, the entry's own name, without dose, form or route, is what a sponsor files the treatment under. The system SHALL take such a name as another name of the intervention only when every entry that lists the intervention's name agrees on one name, or on one name and its forms as for a substance, and either at least two stored trials file it so or the name it is filed under is a development code, one with a digit in it; an entry that joins several products, an entry whose own name is a control or a description, and an entry that is not a drug, biological, genetic, combination or supplement entry SHALL say nothing. The name taken SHALL be searched in the trial registry as a name of the intervention and SHALL be named in the question put to the match scoring, together with the substance's name. It SHALL NOT be stored or shown as a name of the intervention, and no model SHALL supply it. A name the entries file under two names SHALL give none.
 
@@ -121,6 +126,11 @@ To find stored candidates only, the system SHALL also use each name that at leas
 #### Scenario: Name filed under two names
 - **WHEN** one stored entry named EX-900 lists the intervention's name and another, named "Arm A chemotherapy", lists it too
 - **THEN** no other name is taken, searched or told to the scoring
+
+#### Scenario: One trial lists two forms under one brand
+
+- **WHEN** one NCT lists a non-code brand alias for two forms of the same drug
+- **THEN** it contributes one trial of corroboration. A second distinct supporting NCT qualifies the alias under the two-trial rule
 
 ### Requirement: Whoever scores a trial sees the other names it lists
 The trial registry's search SHALL ask for the other names of each intervention, and the record put to the match scoring SHALL show them with the intervention they belong to, at most eight for an intervention. A sponsor files a trial under one name and lists the generic name, the brand and the development codes there; without them a trial of the claim's intervention filed under a code reads as a trial of something else.

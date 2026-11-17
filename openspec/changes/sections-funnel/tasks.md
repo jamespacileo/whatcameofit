@@ -1,5 +1,9 @@
 # Tasks
 
+## 0. Evidence in the claim brief and timetable (P1)
+
+- [ ] 0.1 <a id="task-f14"></a>Preserve enrollment basis and outcome status in the brief and expanded facts. Render the Impella/NCT05064202 fixture and an actual-enrollment control. [F14](../../../docs/reviews/2026-11-17-code-review.md#finding-f14) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-single-trial-has-only-planned-enrollment)
+
 - [x] 1 Mocks: nine sections, 21 variants, three real claims; picks and notes from the operator. `.impeccable/mocks/sections-rebuild/`.
 - [x] 2 The record in brief: `said` and `share` on each row (`lib/record-brief.ts`); sentence over a fact sheet. Verify: 1400px, a row opened and its second press; site tests.
 - [x] 3 What the report said: groups by who or by kind (`scripts/folds.ts`), firmness mark, bold figures, score behind a press when very sure. Verify: a claim with 12 statements in four reports; site tests.
@@ -19,3 +23,11 @@
 - [x] 11f The five fixes of the critique of 2026-11-17 (23 of 36): an opened fact row starts under its label; a paper's title on two lines, whole when opened; the brief's sentence at about 75 characters; the digest counts the trials' states and Phase 4 trials; no approval said by what the site reads; the unconfirmed reading's chip reworded; keys list only the marks drawn, "Stopped early" everywhere. Verify: aducanumab, dupilumab and fenebrutinib at 1400px; dupilumab at 375px; fenebrutinib in the dark theme; site tests.
 - [ ] 12 A claim with a dated promise, an approved claim and a claim with one trial looked at in the browser; tablet widths; a print preview.
 - [ ] 13 At archive time: fold these additions into the requirements they change ("A claim page answers fixed questions from its records", "Reported statements on the claim page", "Organisations on the claim page", `score-chip`'s "in sight", `review`'s "Lower-band stage reading" where it words the chip).
+
+## 14. Evidence in the claim brief and timetable (P2)
+
+- [ ] 14.1 <a id="task-f15"></a>Derive comparator wording from each trial's codes. Test five sham/zero placebo, placebo-only and mixed fixtures against rendered counts and labels. [F15](../../../docs/reviews/2026-11-17-code-review.md#finding-f15) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-sham-and-placebo-have-distinct-registry-codes)
+
+- [ ] 14.2 <a id="task-f16"></a>Use the dated record types that the timetable includes. Test the SomnoDent dates and preserve the rule for coincident milestones. [F16](../../../docs/reviews/2026-11-17-code-review.md#finding-f16) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-an-article-follows-the-last-registry-event)
+
+- [ ] 14.3 <a id="task-f17"></a>Choose folded-year marks by event kind. Test the August 2021 retraction, an actual trial completion, the legend and accessible wording. [F17](../../../docs/reviews/2026-11-17-code-review.md#finding-f17) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-folded-year-contains-a-retraction)
