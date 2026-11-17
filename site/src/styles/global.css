@@ -8919,6 +8919,95 @@ body.framed {
   white-space: nowrap;
 }
 
+/* A labelled group of rows (openspec sections-funnel): the group's name in the label's
+   column, its rows beside it. Papers stand under their year. */
+.year-groups {
+  margin: 0.5rem 0 0;
+  border-top: 2px solid var(--head-rule);
+}
+
+.label-group {
+  display: grid;
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
+  column-gap: 1.5rem;
+  border-top: 1px solid var(--ring);
+}
+
+.year-groups > .label-group:first-child {
+  border-top: 0;
+}
+
+.label-group-name {
+  margin: 0;
+  padding-top: var(--row-pad);
+  font-family: var(--face);
+  font-size: var(--text-l);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.sheet .label-group > .entry-rows {
+  margin: 0;
+  border-top: 0;
+}
+
+.label-group > .entry-rows > li:last-child {
+  border-bottom: 0;
+}
+
+.paper-kind {
+  color: var(--muted);
+}
+
+.paper-rows .entry-ties {
+  justify-content: flex-end;
+  gap: 0.2rem 0.9rem;
+  color: var(--muted);
+}
+
+@media (min-width: 52rem) {
+  /* The same width on every row, so the titles end on one edge. */
+  .paper-rows .entry-ties {
+    min-width: 17rem;
+  }
+}
+
+.paper-rows .paper-kind {
+  margin-right: 0.4rem;
+}
+
+@media (min-width: 52rem) {
+  /* A paper is one line: its title, cut to the line, then its kind and its ties. */
+  .sheet .paper-rows > li,
+  .sheet .paper-rows .entry-more {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    column-gap: 1.25rem;
+  }
+
+  .paper-rows .paper-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sheet .paper-rows .entry-more-lead,
+  .sheet .paper-rows .entry-more-ties {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 40rem) {
+  .label-group {
+    display: block;
+  }
+}
+
+/* A possible record's mark, before its title. */
+.record-title .state-mark {
+  display: inline-block;
+  margin-right: 0.55rem;
+}
+
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
    info mark beside a section's heading opens what the section holds in a small panel,
    on hover, on a press and from the keyboard, in place of a paragraph under the

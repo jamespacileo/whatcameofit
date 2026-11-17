@@ -139,6 +139,18 @@ const inTopic = data.claims
   .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
 const others = inTopic.slice(0, 3);
+// A group's papers stand newest first, under the year each appeared.
+type PaperOnPage = NonNullable<typeof claim.papers>[number];
+const newestFirst = (papers: PaperOnPage[]) =>
+  [...papers].sort((a, b) => (b.facts?.year ?? 0) - (a.facts?.year ?? 0));
+const byYear = (papers: PaperOnPage[]) => {
+  const years = new Map<string, PaperOnPage[]>();
+  for (const paper of papers) {
+    const year = paper.facts?.year ? String(paper.facts.year) : "No year";
+    years.set(year, [...(years.get(year) ?? []), paper]);
+  }
+  return [...years];
+};
 // Matched records, approved first, each with how sure the match is. A paper is not a
 // registry record, so papers are listed and counted apart.
 const matched = claim.matches ?? [];
@@ -1090,22 +1102,36 @@ const sections = [
               ) : (
                 <p class="entry-note paper-group-note">{group.note}</p>
               )}
-              <ul class="plain entry-rows">
-                {group.papers.slice(0, PAPERS_SHOWN).map((paper) => (
-                  <Paper paper={paper} trialIds={trialIds} />
+              <div class="year-groups">
+                {byYear(newestFirst(group.papers).slice(0, PAPERS_SHOWN)).map(([year, papers]) => (
+                  <div class="label-group">
+                    <h4 class="label-group-name">{year}</h4>
+                    <ul class="plain entry-rows paper-rows">
+                      {papers.map((paper) => (
+                        <Paper paper={paper} trialIds={trialIds} />
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
               {group.papers.length > PAPERS_SHOWN && (
                 <details class="papers-rest">
                   <summary>
                     The other {group.papers.length - PAPERS_SHOWN} of {group.papers.length} papers
                     <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
                   </summary>
-                  <ul class="plain entry-rows">
-                    {group.papers.slice(PAPERS_SHOWN).map((paper) => (
-                      <Paper paper={paper} trialIds={trialIds} />
+                  <div class="year-groups">
+                    {byYear(newestFirst(group.papers).slice(PAPERS_SHOWN)).map(([year, papers]) => (
+                      <div class="label-group">
+                        <h4 class="label-group-name">{year}</h4>
+                        <ul class="plain entry-rows paper-rows">
+                          {papers.map((paper) => (
+                            <Paper paper={paper} trialIds={trialIds} />
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </details>
               )}
             </>

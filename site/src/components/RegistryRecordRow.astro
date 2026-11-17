@@ -28,7 +28,11 @@ const standing = record ? [phaseOf(record), ...(size ? [size] : []), stateOf(rec
 
 <li class="record-row">
   <div class="record-head">
-    <p class="record-title">{title}</p>
+    <p class="record-title">
+      {/* A possible record carries the dotted ring of a state not given: it is not yet read as a trial of this claim. */}
+      {possible && <span class="state-mark" data-state="unknown" aria-hidden="true" />}
+      {title}
+    </p>
     {/* A possible record says so in sight, before its phase and state. */}
     <Score about={possible ? "Possible match" : "Match to this claim"} words={matchWords(match.score)} shown={possible}>
       <span>{readingOf(match.reading)}</span>
