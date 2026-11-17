@@ -16,7 +16,7 @@ its own tier's rows. The run tables are in both, because every row names the run
 it. A payload goes with the rows that point at it, to both when rows of both tiers do.
 
 Each table's checksum is one statement of aggregates, the same SQL on a store file and on
-D1, which answers with one row: see `fingerprint_sql`.
+D1, which answers each in one row: see `fingerprint_parts`.
 """
 
 import hashlib
@@ -250,8 +250,8 @@ def _columns(db: sqlite3.Connection, table: str) -> list[tuple[str, str]]:
     ]
 
 
-def fingerprint_sql(db: sqlite3.Connection, table: str) -> str:
-    """One SELECT of aggregates over a table that D1 answers with one row, cheap there:
+def _aggregates(db: sqlite3.Connection, table: str) -> list[str]:
+    """The aggregates of a table's fingerprint, which D1 answers in one row, cheap there:
     one scan, no sort, nothing held but the sums.
 
     For each column: how many values it holds, their total length in bytes, and the sum
@@ -271,13 +271,35 @@ def fingerprint_sql(db: sqlite3.Connection, table: str) -> str:
             f"sum(unicode(substr({text}, length({text}) / 2 + 1, 1)))",
             f"sum(unicode(substr({text}, -1, 1)))",
         ]
-    named = ", ".join(f"{part} AS c{number}" for number, part in enumerate(parts))
-    return f"SELECT {named} FROM {table}"
+    return parts
+
+
+# D1 answers at most 100 columns a result; the checks keep under it.
+MAX_COLUMNS = 90
+
+
+def fingerprint_parts(
+    db: sqlite3.Connection, table: str, parts: list[str] | None = None
+) -> list[str]:
+    """The fingerprint as statements of at most `MAX_COLUMNS` columns each, numbered
+    `c0`, `c1`... across them: their rows, joined in order, are the one row hashed."""
+    if parts is None:
+        parts = _aggregates(db, table)
+    return [
+        "SELECT "
+        + ", ".join(
+            f"{part} AS c{start + n}" for n, part in enumerate(parts[start : start + MAX_COLUMNS])
+        )
+        + f" FROM {table}"
+        for start in range(0, len(parts), MAX_COLUMNS)
+    ]
 
 
 def hash_of(row: Any) -> str:
     """The checksum of a fingerprint's one row, the same from Python's SQLite and from D1's
     JSON (each value as an integer or null, in order)."""
+    if isinstance(row, list) and row and isinstance(row[0], dict):
+        row = {key: value for part in row for key, value in part.items()}
     if isinstance(row, dict):
         values = [row[f"c{number}"] for number in range(len(row))]
     else:
@@ -291,7 +313,8 @@ class Checksum:
     table: str
     rows: int
     sha256: str
-    sql: str
+    # The statements whose rows, joined in order, give the checksum.
+    sql: list[str]
 
 
 def checksums(path: Path, tier: str | None = None) -> list[Checksum]:
@@ -304,9 +327,9 @@ def checksums(path: Path, tier: str | None = None) -> list[Checksum]:
         for table in tables(db):
             if table.endswith("_fts") or (tier is not None and not in_tier(table, tier)):
                 continue
-            sql = fingerprint_sql(db, table)
-            row = db.execute(sql).fetchone()
-            found.append(Checksum(table, int(row[0]), hash_of(row), sql))
+            statements = fingerprint_parts(db, table)
+            row = [value for sql in statements for value in db.execute(sql).fetchone()]
+            found.append(Checksum(table, int(row[0]), hash_of(row), statements))
         return found
     finally:
         db.close()
@@ -382,8 +405,10 @@ def bulk_records(records: Iterable[Any]) -> tuple[list[Any], int]:
 
 
 def checks(path: Path, tier: str | None = None) -> dict[str, Any]:
-    """The checks the ingest lane's `checksum-d1.mjs` runs on D1: for each table its one
-    SELECT and the row it must give, read from the store file; and the build's id."""
+    """The checks the ingest lane's `checksum-d1.mjs` runs on D1: for each table its
+    statements, each of at most `MAX_COLUMNS` columns, and the row each must give, read from
+    the store file (`{"build", "tables": {t: {"parts": [{"sql", "expected"}]}}}`); and the
+    build's id."""
     from thenwhat.store.build import BUILD_ID_SQL
 
     db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
@@ -393,13 +418,14 @@ def checks(path: Path, tier: str | None = None) -> dict[str, Any]:
         for table in tables(db):
             if table.endswith("_fts") or (tier is not None and not in_tier(table, tier)):
                 continue
-            sql = fingerprint_sql(db, table)
-            cursor = db.execute(sql)
-            names = [column[0] for column in cursor.description]
-            found[table] = {
-                "sql": sql,
-                "expected": dict(zip(names, cursor.fetchone(), strict=True)),
-            }
+            parts = []
+            for sql in fingerprint_parts(db, table):
+                cursor = db.execute(sql)
+                names = [column[0] for column in cursor.description]
+                parts.append(
+                    {"sql": sql, "expected": dict(zip(names, cursor.fetchone(), strict=True))}
+                )
+            found[table] = {"parts": parts}
         return {"build": held[0] if held else None, "tables": found}
     finally:
         db.close()

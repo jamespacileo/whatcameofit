@@ -16,10 +16,11 @@ from thenwhat.store.form import Record, payload_of
 from thenwhat.store.tiers import (
     BULK,
     HOT,
+    MAX_COLUMNS,
     REFERENCE,
     TIER,
     checksums,
-    fingerprint_sql,
+    fingerprint_parts,
     hash_of,
     hot_records,
     in_tier,
@@ -108,12 +109,13 @@ def test_a_checksum_is_the_same_from_the_file_and_from_d1s_answer(tmp_path: Path
     (icons,) = [c for c in checksums(path, HOT) if c.table == "outlet_icon"]
     assert icons.rows == 1
     # D1 answers a SELECT as JSON objects keyed by the column names.
-    cursor = db.execute(fingerprint_sql(db, "outlet_icon"))
+    (statement,) = fingerprint_parts(db, "outlet_icon")
+    cursor = db.execute(statement)
     names = [d[0] for d in cursor.description]
     answer = [{"results": [dict(zip(names, cursor.fetchone(), strict=True))], "success": True}]
     from thenwhat.store.tiers import answer_row
 
-    assert hash_of(answer_row(answer)) == icons.sha256
+    assert hash_of([answer_row(answer)]) == icons.sha256
     # A value changed in length, or at its first character, changes the checksum.
     for change in ("domain = 'b.example'", "media_type = 'image/gif'", "content = X'89504e'"):
         copy = tmp_path / "copy.sqlite"
@@ -148,17 +150,19 @@ def test_store_checksum_compares_with_d1_and_refuses_a_difference(tmp_path: Path
     assert passed.exit_code == 0, passed.output
     statements = json.loads(sql_file.read_text())
     answers = {}
-    for table, sql in statements.items():
-        cursor = db.execute(sql)
-        names = [d[0] for d in cursor.description]
-        answers[table] = [{"results": [dict(zip(names, cursor.fetchone(), strict=True))]}]
+    for table, parts in statements.items():
+        answers[table] = []
+        for sql in parts:
+            cursor = db.execute(sql)
+            names = [d[0] for d in cursor.description]
+            answers[table].append([{"results": [dict(zip(names, cursor.fetchone(), strict=True))]}])
     (tmp_path / "d1.json").write_text(json.dumps(answers))
     same = CliRunner().invoke(
         app,
         ["store", "checksum", str(path), "--tier", "hot", "--against", str(tmp_path / "d1.json")],
     )
     assert same.exit_code == 0 and "DIFFERS" not in same.output
-    answers["claim"][0]["results"][0]["c0"] = 1
+    answers["claim"][0][0]["results"][0]["c0"] = 1
     (tmp_path / "d1.json").write_text(json.dumps(answers))
     differs = CliRunner().invoke(
         app,
@@ -237,10 +241,11 @@ def test_the_checks_file_holds_each_table_s_sql_and_the_row_it_must_give(tmp_pat
     found = checks(path, HOT)
     assert found["build"] is None
     for table, check in found["tables"].items():
-        cursor = db.execute(check["sql"])
-        names = [d[0] for d in cursor.description]
-        assert dict(zip(names, cursor.fetchone(), strict=True)) == check["expected"], table
-        assert len(check["sql"].encode()) < 100_000
+        for part in check["parts"]:
+            cursor = db.execute(part["sql"])
+            names = [d[0] for d in cursor.description]
+            assert dict(zip(names, cursor.fetchone(), strict=True)) == part["expected"], table
+            assert len(part["sql"].encode()) < 100_000
     assert "registry_trial" not in found["tables"] and "claim" in found["tables"]
 
 
@@ -330,3 +335,21 @@ def test_fold_inbox_refuses_without_the_service(monkeypatch, tmp_path: Path):
         app, ["store", "fold-inbox", str(bulk), "--delta", str(tmp_path / "d.jsonl.gz")]
     )
     assert result.exit_code == 1 and "INGEST_TOKEN" in result.output
+
+
+def test_no_check_asks_d1_for_more_columns_than_it_answers():
+    db = _schema()
+    widest = 0
+    for table in tables(db):
+        if table.endswith("_fts"):
+            continue
+        parts = fingerprint_parts(db, table)
+        numbers = []
+        for sql in parts:
+            columns = db.execute(sql).description
+            assert len(columns) <= MAX_COLUMNS, table
+            numbers += [int(column[0][1:]) for column in columns]
+        assert numbers == list(range(len(numbers))), table
+        widest = max(widest, len(numbers))
+    # The schema has tables wide enough to need more than one statement.
+    assert widest > MAX_COLUMNS

@@ -156,8 +156,9 @@ def checksum_command(
     against: Annotated[
         Path | None,
         typer.Option(
-            help="A JSON object of D1's answers by table (each the `wrangler d1 execute"
-            " --json` answer to that table's SQL): exit 1 where a checksum differs."
+            help="A JSON object of D1's answers by table: for each, a list of the `wrangler d1"
+            " execute --json` answers to that table's statements, in order. Exit 1 where a"
+            " checksum differs."
         ),
     ] = None,
 ) -> None:
@@ -177,7 +178,9 @@ def checksum_command(
         line = f"{checksum.table}\t{checksum.rows}\t{checksum.sha256}"
         if answers is not None:
             given = answers.get(checksum.table)
-            theirs = hash_of(answer_row(given)) if given is not None else "missing"
+            theirs = (
+                hash_of([answer_row(part) for part in given]) if given is not None else "missing"
+            )
             same = theirs == checksum.sha256
             differ += not same
             line += "\tsame" if same else f"\tDIFFERS ({theirs})"
