@@ -6,9 +6,18 @@
   Strict-Transport-Security: max-age=31536000
 
 # Files Astro names by their content: a changed file has a new name, so a browser may
-# keep these for a year without asking again.
+# use its copy at once, for a year. It still asks again behind the page each time, and
+# keeps the newer answer for the next page.
+#
+# It must ask, because a rule in this file is matched by the address alone and cannot
+# tell a file from the "not found" page sent in its place. Built files skip the Worker
+# (wrangler.jsonc, run_worker_first), so nothing else sets this header. While a deploy
+# is reaching Cloudflare's locations, a new page can ask a location still on the old
+# version for a file it does not have yet. With "immutable" here that 404 was kept by
+# the reader's browser for a year, and the site stayed unstyled for them (seen on
+# 2026-11-17). Never give this rule, or any rule here, "immutable" or a long max-age.
 /_astro/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=0, stale-while-revalidate=31536000
 
 # The trial listing and the list of its registry numbers are data for the site's own
 # search and Worker, not pages: search engines are asked not to index them.

@@ -96,6 +96,26 @@ Never run raw `wrangler deploy`: it bypasses the public-data checks and could pu
 
 `site/public/_headers` sets the response headers Cloudflare sends with every page and file: no content-type sniffing, a limited referrer, and HTTPS only for a year. It sets nothing that forbids framing, because the embed is made to be framed.
 
+### How long a browser keeps a built file
+
+Files under `/_astro/` are named by their content, and `_headers` sends them with `Cache-Control: public, max-age=0, stale-while-revalidate=31536000`. A browser uses its copy at once, asks again behind the page, and keeps the newer answer for the next page. It was `public, max-age=31536000, immutable` until 2026-11-17, and must not go back to that, or to any long `max-age`. `site/tests/headers.test.mjs` holds every rule in the file to it.
+
+The reason is how a missing file is answered. Built files skip the Worker (`run_worker_first` in `site/wrangler.jsonc` lists `!/_astro/*`), so a request for one that is not there is answered by Cloudflare's file serving with the site's "not found" page and status 404. A rule in `_headers` is matched by the address alone, so that 404 carries the `/_astro/*` rule's `Cache-Control` too. Nothing in `_headers` can tell a file from a 404.
+
+A file can be missing for a moment at every deploy. Cloudflare calls it version skew: while a new version is reaching its locations, one location can send the new page and another, still on the old version, be asked for the new page's stylesheet, which the old version does not have. On 2026-11-17, straight after a deploy, a browser got exactly that:
+
+| Asked for | Answer | `Cache-Control` | `Content-Type` |
+| --- | --- | --- | --- |
+| `/_astro/global.<hash>.css`, seconds after the deploy | 404, the "not found" page | `public, max-age=31536000, immutable` | `text/html` |
+| the same address, minutes later, past the browser's store | 200 | `public, max-age=31536000, immutable` | `text/css` |
+| any made-up `/_astro/…` address | 404 | `public, max-age=31536000, immutable` | `text/html` |
+
+The browser kept the 404 as it was told to, refused it as a stylesheet (`X-Content-Type-Options: nosniff`), and drew every page unstyled on every reload until that one address was fetched afresh by hand. It would have done so for a year.
+
+With the header as it is now, checked on `wrangler dev` (2026-11-17): a real file and a missing one both carry the new header; a browser that has kept a 404 for an address gets the 404 once more from its store when the file exists, asks again behind that, and has the file from the next request on. A reader caught by a deploy can see one or two unstyled pages, not a year of them.
+
+What this does not close is the moment itself: the first page loaded during a deploy's spread can still be unstyled. One `wrangler deploy` cannot order its way out of that, since the page and its files belong to one version and the spread is Cloudflare's. Two things would narrow it, neither done here: keeping the previous build's `/_astro/` files in each new build, so a page from the version before still finds its files, and a response header rule on the zone that marks a 404 under `/_astro/` as `no-store`, which is set in Cloudflare's dashboard and not in this repository. Sending built files through the Worker would let it set the header by status, at the cost of a Worker request for every file of every page.
+
 Cloudflare owns the apex custom-domain attachment and certificate. Enable Always Use HTTPS. Configure `www` as a proxied DNS record with a permanent redirect to `https://whatcameofit.com`, preserving paths and query strings. Do not enable an additional Cloudflare Git build pipeline alongside GitHub Actions, which would cause competing deployments.
 
 `suggest@whatcameofit.com` and `corrections@whatcameofit.com` forward to the verified operator inbox. Configure their GitHub variables only after Email Routing reports active rules. Forwarding receives mail; it does not provide an outgoing mailbox.
