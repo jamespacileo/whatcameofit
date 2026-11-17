@@ -88,7 +88,7 @@ test("Scenario: A kind read aloud", () => {
   assert.match(record, /data-kind="record"/);
   // A registry row says its kind in words anyone can see, after the mark of what
   // happened, which is not read aloud: the row's title says it.
-  assert.match(record, /<span class="row-kind"><span class="event-mark" data-event="trial_results_posted" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Registry record<span class="visually-hidden">\. <\/span><\/span>/);
+  assert.match(record, /<span class="row-kind"><span class="event-mark" data-event="trial_results_posted" data-direction="neither" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Registry record<span class="visually-hidden">\. <\/span><\/span>/);
   assert.match(group(dated, "d-2025-09-08"), /<span class="visually-hidden">News report\. <\/span>/);
   assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-label">Promised date<\/span>/);
   // The field that shows one kind is the script's, and names each kind in words.

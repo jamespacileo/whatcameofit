@@ -2,8 +2,9 @@
 // The mark of something that happened on record: one small drawing for what the record
 // did, on the tint, where a news report has its outlet's icon. A trial's life is drawn
 // as a recording's controls are: added, started, paused, stopped, run to its end, taken
-// back. Every mark is the same blue. None says whether what happened was good or bad;
-// the row's words say what it was.
+// back. Its colour says which way the record moved (docs/adr/0010): begun or approved,
+// halted or refused, or neither. It never says whether a treatment works: a finished
+// trial and posted results keep the blue. The row's words say what happened.
 import Building from "@lucide/astro/icons/building";
 import ChartNoAxesColumn from "@lucide/astro/icons/chart-no-axes-column";
 import File from "@lucide/astro/icons/file";
@@ -19,6 +20,7 @@ import Square from "@lucide/astro/icons/square";
 import Stamp from "@lucide/astro/icons/stamp";
 import Undo2 from "@lucide/astro/icons/undo-2";
 import type { ExportedEvent } from "../lib/export";
+import { eventDirection } from "../lib/status";
 
 interface Props {
   event: ExportedEvent;
@@ -50,4 +52,4 @@ const Icon =
     : (BY_TYPE[event.type as keyof typeof BY_TYPE] ?? File);
 ---
 
-<span class="event-mark" data-event={event.type} aria-hidden="true"><Icon size={13} stroke-width={2.3} /></span>
+<span class="event-mark" data-event={event.type} data-direction={eventDirection(event)} aria-hidden="true"><Icon size={13} stroke-width={2.3} /></span>

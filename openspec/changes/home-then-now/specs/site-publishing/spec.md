@@ -98,12 +98,24 @@ A registry row SHALL name the status in its right column "Status now", so that i
 - **WHEN** a record dated today moved a claim from phase 2 to phase 3
 - **THEN** the right column says "Changed" and the status before, and does not say "Status now"
 
-### Requirement: What a record did is drawn without a verdict
-A registry row SHALL carry one mark for what its record did, the same colour for every kind, hidden from a screen reader. No mark SHALL be a tick or a cross, and no mark SHALL be coloured to say that what happened was good or bad. A regulator's approval and refusal SHALL share one mark; the row's words say which.
+### Requirement: A record's mark is coloured by which way the record moved
+A registry row SHALL carry one mark for what its record did, hidden from a screen reader. The mark's colour SHALL say which way the record moved and nothing else: one colour where something began or a regulator approved (a trial registered, a trial started, a regulatory approval), another where something was halted, taken back or refused (a trial suspended, terminated or withdrawn, a regulatory refusal, a retraction), and the site's blue for every other record. A completed trial and posted results SHALL keep the blue. No mark SHALL be a tick or a cross, and colour SHALL never be the only thing that tells two marks apart: each has its own drawing and the row says what happened in words. No status and no place on the path SHALL take these colours.
+
+#### Scenario: A trial registered
+- **WHEN** a trial is recorded as registered
+- **THEN** its mark is a plus in the colour of a record that moved forward
 
 #### Scenario: A terminated trial
 - **WHEN** a trial is recorded as terminated
-- **THEN** its mark is a square in the colour every mark has, and the row says "terminated" in words
+- **THEN** its mark is a square in the colour of a record that stopped, and the row says "terminated" in words
+
+#### Scenario: A completed trial
+- **WHEN** a trial is recorded as completed, whatever its results
+- **THEN** its mark keeps the blue
+
+#### Scenario: Results posted
+- **WHEN** a trial's results are posted
+- **THEN** its mark keeps the blue
 
 ### Requirement: A row does not repeat its day
 Under a heading that names one day, a row of the day-by-day list SHALL NOT draw its date again. Under a heading that names a week or a year, each row SHALL draw its date. Every row's date SHALL remain in the page as built.

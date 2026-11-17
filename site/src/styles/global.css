@@ -10,6 +10,12 @@
   --muted: #46566b;
   --panel: #f1f5fb;
   --tint: #e6eef8;
+  /* The colour of a record's mark by which way the record moved (docs/adr/0010): a
+     drawing in the first of each pair on a ground of the second. */
+  --forward: #1c7a54;
+  --forward-tint: #e1f3ea;
+  --stopped: #b4442c;
+  --stopped-tint: #fbe8e2;
   --tag: #d6e2f2;
   --rule: #d9e2ee;
   --rule-soft: #e9eff5;
@@ -107,6 +113,10 @@
     --muted: #a3b0c2;
     --panel: #17202d;
     --tint: #1d2838;
+    --forward: #73d3a6;
+    --forward-tint: #15342a;
+    --stopped: #f2957e;
+    --stopped-tint: #3e2019;
     --tag: #2a4163;
     --rule: #2b3546;
     --rule-soft: #1f2733;
@@ -139,6 +149,10 @@
     --muted: #a3b0c2;
     --panel: #17202d;
     --tint: #1d2838;
+    --forward: #73d3a6;
+    --forward-tint: #15342a;
+    --stopped: #f2957e;
+    --stopped-tint: #3e2019;
     --tag: #2a4163;
     --rule: #2b3546;
     --rule-soft: #1f2733;
@@ -3707,6 +3721,19 @@ body:has(.band.home) .table-frame {
   border-radius: 50%;
   background: var(--tint);
   color: var(--blue);
+}
+
+/* Which way the record moved: begun or approved, halted or refused. Everything else,
+   a finished trial and posted results among it, keeps the blue: what a trial found is
+   not known from its record. The drawing and the row's words say the same without colour. */
+.event-mark[data-direction="forward"] {
+  background: var(--forward-tint);
+  color: var(--forward);
+}
+
+.event-mark[data-direction="stopped"] {
+  background: var(--stopped-tint);
+  color: var(--stopped);
 }
 
 @media (forced-colors: active) {
