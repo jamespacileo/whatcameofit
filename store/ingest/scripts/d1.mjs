@@ -2,21 +2,36 @@
 // is given, and then only through wrangler.preview.jsonc (scripts/preview-config.mjs),
 // which holds the database's id and is never committed. Nothing here prints an id.
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
 const here = (path) => fileURLToPath(new URL(path, import.meta.url));
 const run = promisify(execFile);
 
-// The flags after the script's own arguments: --remote, --persist-to <folder>, --config <file>.
-export function target(argv) {
+// The flags after the script's own arguments: --remote, --persist-to <folder>, --config
+// <file>, --production <database name>.
+//
+// The database acted on is the one the configuration in use names, whichever file that
+// is, and it is said before anything is done. A name that does not end in `-preview` is
+// production: it is taken only when `--production <that name>` is given too, and never
+// by a script that passes `previewOnly` (emptying a store).
+export function target(argv, { previewOnly = false } = {}) {
   const value = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
   const remote = argv.includes("--remote");
   const config = value("--config") || (remote ? here("../wrangler.preview.jsonc") : here("../wrangler.jsonc"));
-  if (remote && !existsSync(config)) throw new Error("no wrangler.preview.jsonc: run `node scripts/preview-config.mjs` first");
+  if (!existsSync(config)) throw new Error(remote && !value("--config") ? "no wrangler.preview.jsonc: run `node scripts/preview-config.mjs` first" : `no configuration at ${config}`);
+  const text = readFileSync(config, "utf8");
+  const store = /\{[^{}]*"binding":\s*"STORE"[^{}]*\}/.exec(text)?.[0] || "";
+  const database = /"database_name":\s*"([^"]+)"/.exec(store)?.[1];
+  if (!database) throw new Error(`${config} binds no database as STORE`);
+  if (!database.endsWith("-preview")) {
+    if (previewOnly) throw new Error(`the configuration in use names ${database}, which is not a preview database: this is never done to production`);
+    if (value("--production") !== database) throw new Error(`the configuration in use names ${database}, which is not a preview database: pass --production ${database} to act on it`);
+  } else if (value("--production")) throw new Error(`--production was given but the configuration in use names ${database}`);
   const where = remote ? ["--remote"] : ["--local", ...(value("--persist-to") ? ["--persist-to", value("--persist-to")] : [])];
-  return { remote, flags: [...where, "--config", config, "--yes", "--json"] };
+  console.log(`database: ${database} (${remote ? "remote" : "local engine"})`);
+  return { remote, database, flags: [...where, "--config", config, "--yes", "--json"] };
 }
 
 // One `wrangler d1 execute`, its JSON answer parsed. A failure throws with Wrangler's words.

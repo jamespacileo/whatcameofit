@@ -25,14 +25,17 @@ const here = (path) => fileURLToPath(new URL(path, import.meta.url));
 const argv = process.argv.slice(2);
 const value = (flag) => (argv.includes(flag) ? argv[argv.indexOf(flag) + 1] : null);
 const name = value("--empty");
-const bound = /"database_name":\s*"([^"]+)"/.exec(readFileSync(here("../wrangler.jsonc"), "utf8"))?.[1];
-if (!name || name !== bound || !name.endsWith("-preview")) {
-  console.error(`name the database to empty: --empty ${bound}. Only the preview database this service is bound to is taken.`);
+// The database is the one the configuration in use names, not the one this file's
+// neighbour names: `--config` may point anywhere. It must be a preview database, and the
+// one named on the command line.
+let to;
+try { to = target(process.argv, { previewOnly: true }); } catch (error) { console.error(error.message); process.exit(2); }
+if (!name || name !== to.database) {
+  console.error(`name the database to empty: --empty ${to.database}. Only the preview database of the configuration in use is taken.`);
   process.exit(2);
 }
 const LARGE = 200_000;
 const batch = Math.min(Math.max(Number(value("--batch")) || 20_000, 1), 100_000);
-const to = target(process.argv);
 const quote = (table) => `"${table}"`;
 const first = async (sql) => (await execute(to, "--command", sql))[0].results;
 

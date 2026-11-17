@@ -17,7 +17,8 @@ import { execute, sum, target } from "./d1.mjs";
 
 const folder = process.argv[2];
 if (!folder || folder.startsWith("--")) { console.error("usage: import-folder.mjs <folder> [--manifest <file>] [--remote | --persist-to <folder>]"); process.exit(2); }
-const to = target(process.argv);
+let to;
+try { to = target(process.argv); } catch (error) { console.error(error.message); process.exit(2); }
 const named = process.argv.includes("--manifest") ? process.argv[process.argv.indexOf("--manifest") + 1] : join(folder, "manifest.json");
 const files = readdirSync(folder).filter((name) => name.endsWith(".sql")).sort();
 if (!files.length) { console.error(`no .sql file in ${folder}`); process.exit(2); }

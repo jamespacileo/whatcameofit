@@ -46,7 +46,8 @@ else {
       .map((sql, n, all) => ({ table, part: all.length > 1 ? n + 1 : 0, sql })));
 }
 
-const to = target(process.argv);
+let to;
+try { to = target(process.argv); } catch (error) { console.error(error.message); process.exit(2); }
 const started = Date.now();
 const same = (a, b) => JSON.stringify(Object.entries(a).sort()) === JSON.stringify(Object.entries(b).sort());
 const differ = [];
