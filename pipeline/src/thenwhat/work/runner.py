@@ -20,7 +20,6 @@ from thenwhat.work.outcome import Later, NeedsFix, NothingFound, ReasonClass, ch
 from thenwhat.work.steps import (
     BatchStep,
     CountingClient,
-    Deferred,
     Failed,
     Step,
     batch_size_of,
@@ -30,8 +29,8 @@ OpenSession = Callable[[], AbstractContextManager[Session]]
 # How many failures' errors a run's report carries. The ledger keeps every one.
 ERRORS_KEPT = 50
 # A record's id, its outcome and its error. The outcome is None for a record that
-# another run finished first, and Deferred for one that may not be worked on now.
-Processed = tuple[int, WorkOutcome | Deferred | None, str | None]
+# another run finished first.
+Processed = tuple[int, WorkOutcome | None, str | None]
 
 
 @dataclass(slots=True)
@@ -39,8 +38,6 @@ class RunReport:
     done: int = 0
     nothing_found: int = 0
     failed: int = 0
-    # Records the source said could not be asked for now: no outcome, no attempt.
-    deferred: int = 0
     # Records put off until a time, and records that wait for something to be fixed:
     # each has an entry that says why, and neither counts an attempt.
     later: int = 0
@@ -84,7 +81,7 @@ class Run:
         loop, how many stay due."""
         counts = {
             name: sum(getattr(report, name) for report in self.reports)
-            for name in ("done", "nothing_found", "later", "needs_fix", "failed", "deferred")
+            for name in ("done", "nothing_found", "later", "needs_fix", "failed")
         }
         if finished and self.reports:
             counts["still_due"] = min(report.remaining_due for report in self.reports)
@@ -158,9 +155,7 @@ def process_next(
     return _process_record(session, step, record, client, now, put_off_span, skip, run)
 
 
-# How a measurement names a record that may not be worked on now.
-DEFERRED = "deferred"
-# The class a measurement gives each outcome. A deferred record comes back by itself.
+# The class a measurement gives each outcome.
 _CLASS_OF = {
     WorkOutcome.DONE: ReasonClass.FINAL.value,
     WorkOutcome.NOTHING_FOUND: ReasonClass.FINAL.value,
@@ -171,10 +166,13 @@ _CLASS_OF = {
 
 
 def _trace_of(record: Any) -> str | None:
-    """What a measurement says a record is: a link lead's address key. Other kinds of
-    record are measured without one."""
+    """What a measurement says a record is: a link lead's address key, or a claim's
+    slug. Other kinds of record are measured without one."""
     key = getattr(record, "url_key", None)
-    return key if isinstance(key, str) else None
+    if isinstance(key, str):
+        return key
+    slug = getattr(record, "slug", None)
+    return measure.claim_trace(slug) if isinstance(slug, str) else None
 
 
 @dataclass(frozen=True, slots=True)
@@ -263,10 +261,6 @@ def _process_record(
         try:
             with session.begin_nested():
                 answer = step.run(session, record, client)
-                if isinstance(answer, Deferred):
-                    # Nothing is written for it: it stays due with its attempts unchanged.
-                    span.ended(DEFERRED, outcome_class=ReasonClass.LATER.value)
-                    return record.id, answer, answer.reason
                 settled = _settle(step, answer)
         except SourceStop:
             raise
@@ -461,7 +455,7 @@ def run_step(
                 # Remember retryable records before releasing their row locks, so
                 # another worker in this run cannot pick them immediately.
                 for record_id, outcome, _ in processed or []:
-                    if isinstance(outcome, Deferred) or outcome is WorkOutcome.FAILED:
+                    if outcome is WorkOutcome.FAILED:
                         tried.add(record_id)
         except SourceStop as stop:
             report.stopped = str(stop)
@@ -474,11 +468,6 @@ def run_step(
             break
         for record_id, outcome, error in processed:
             if outcome is None:
-                continue
-            if isinstance(outcome, Deferred):
-                # Not picked again in this run, so the run goes on with other records.
-                tried.add(record_id)
-                report.deferred += 1
                 continue
             if outcome is WorkOutcome.DONE:
                 report.done += 1

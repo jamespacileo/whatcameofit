@@ -311,7 +311,7 @@ def test_a_site_that_refuses_the_reader_needs_a_fix(reader: Reader, status: int)
 
     report = reader.read()
 
-    assert (report.needs_fix, report.nothing_found, report.later, report.deferred) == (1, 0, 0, 0)
+    assert (report.needs_fix, report.nothing_found, report.later) == (1, 0, 0)
     assert read_ended(reader, lead) == (
         WorkOutcome.NEEDS_FIX,
         0,
@@ -357,7 +357,7 @@ def test_a_site_that_cannot_serve_now_is_put_off(reader: Reader, status: int):
     report = reader.read(by_the_step_clock=True)
 
     # Put off for the configured six hours: no attempt, and the lead holds nothing.
-    assert (report.later, report.needs_fix, report.nothing_found, report.deferred) == (1, 0, 0, 0)
+    assert (report.later, report.needs_fix, report.nothing_found) == (1, 0, 0)
     assert put_off(reader, lead) == (WorkOutcome.LATER, 0, None, None)
     assert reason_of(reader, lead) == (
         "site_busy",
@@ -487,7 +487,7 @@ def test_not_now_from_the_reader_is_put_off(reader: Reader):
 
     # Put off until the wait the reader stated is over. It is a put-off lead, not a
     # deferred one: the ledger holds an entry, with no attempt and no read outcome.
-    assert (report.processed, report.later, report.deferred, report.stopped) == (0, 1, 0, None)
+    assert (report.processed, report.later, report.stopped) == (0, 1, None)
     assert put_off(reader, lead) == (WorkOutcome.LATER, 0, None, None)
     assert reason_of(reader, lead) == (
         "reader_not_now",
@@ -506,7 +506,7 @@ def test_a_held_outlet_is_put_off(reader: Reader):
     report = reader.read(by_the_step_clock=True)
 
     # Not asked at all, and put off until the hold ends.
-    assert (report.processed, report.later, report.deferred, report.stopped) == (0, 1, 0, None)
+    assert (report.processed, report.later, report.stopped) == (0, 1, None)
     assert put_off(reader, lead) == (WorkOutcome.LATER, 0, None, None)
     assert reason_of(reader, lead) == ("outlet_held", {"outlet": "theguardian.com"}, until)
     assert (reader.client.requests_made, reader.page_reader.asked) == (0, [])
@@ -570,7 +570,7 @@ def test_the_spend_ceiling_in_the_read_stops_the_run(reader: Reader):
     assert report.stopped == (
         "The monthly ceiling of $10 for language model calls has been reached. No call was made."
     )
-    assert (report.processed, report.deferred, report.remaining_due) == (0, 0, 1)
+    assert (report.processed, report.remaining_due) == (0, 1)
     assert read_ended(reader, lead) == (None, None, True, None, None)
 
 

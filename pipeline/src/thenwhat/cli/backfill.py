@@ -424,7 +424,6 @@ def _merge(reports: list[RunReport]) -> RunReport:
         merged.done += report.done
         merged.nothing_found += report.nothing_found
         merged.failed += report.failed
-        merged.deferred += report.deferred
         merged.later += report.later
         merged.needs_fix += report.needs_fix
         merged.stopped = merged.stopped or report.stopped
@@ -511,7 +510,6 @@ def run_command(
     out.print(
         f"{step.name}: {report.done:,} done, {report.nothing_found:,} found nothing, "
         f"{report.failed:,} failed"
-        + (f", {report.deferred:,} could not be asked for now" if report.deferred else "")
         + (f", {report.later:,} put off" if report.later else "")
         + (f", {report.needs_fix:,} need a fix" if report.needs_fix else "")
         + f"; {report.remaining_due:,} still due.",
@@ -1044,7 +1042,6 @@ def read_set_command(
     out.print(
         f"{step.name} for {trial_set}: {report.done:,} done, {report.nothing_found:,} "
         f"found nothing, {report.failed:,} failed"
-        + (f", {report.deferred:,} could not be asked for now" if report.deferred else "")
         + f"; {report.remaining_due:,} still due. Run `thenwhat prepare --pending` next.",
         markup=False,
     )

@@ -378,23 +378,3 @@ def test_a_run_remembers_only_the_records_that_failed(session: Session, monkeypa
     assert (report.done, report.failed) == (59, 1)
     # Nothing is remembered until a record fails, and then only that one.
     assert remembered[0] == 0 and max(remembered) == 1
-
-
-def test_deferred_records_are_shared_between_workers_in_one_run(session: Session):
-    from thenwhat.work.steps import Deferred
-
-    add_trials(session, 1)
-    step = DemoStep()
-    calls = []
-
-    def defer(session, record, client):
-        calls.append(record.id)
-        return Deferred("busy")
-
-    step.run = defer
-    tried = set()
-    first = run(session, step, tried=tried)
-    second = run(session, step, tried=tried)
-    assert (first.deferred, second.deferred) == (1, 0)
-    assert len(calls) == 1
-    assert entries(session, step) == []

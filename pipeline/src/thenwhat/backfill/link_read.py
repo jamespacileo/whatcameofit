@@ -17,6 +17,7 @@ for drafts, so that no claim is published with a status no search stands behind.
 
 import re
 import threading
+import time as system_time
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
@@ -97,6 +98,7 @@ from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import article_from_draft, claim_from_draft, read_article
 from thenwhat.llm.client import Llm
 from thenwhat.llm.errors import BudgetExceeded, LlmError
+from thenwhat.measure import spans as measure
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SystemTime, Time
 from thenwhat.statements.service import StatementChecker, StatementsRun
@@ -104,7 +106,7 @@ from thenwhat.work.allowance import Allowances, held_until, holds_under
 from thenwhat.work.errors import BackfillError, CannotAsk, SpendCeilingReached
 from thenwhat.work.ledger import due_records, requeue
 from thenwhat.work.outcome import Later, NeedsFix, NothingFound, Reason, ReasonClass
-from thenwhat.work.steps import TEXT_DOOR, Deferred, Failed, ModelSpend
+from thenwhat.work.steps import TEXT_DOOR, Failed, ModelSpend
 
 NO_NAME = "its outlet has no display name"
 NO_DATE = "the page gives no publication date"
@@ -164,6 +166,8 @@ LEAD_READING = "extraction:link_lead"
 # Held, until its transaction ends, by the one read that is settling which claim its
 # article belongs to. A claim another read has just drafted is then there to be found.
 CLAIM_IDENTITY_LOCK = 7_468_656_001
+# What a measurement calls the wait for that turn.
+CLAIM_TURN = "claim_turn"
 # An article joins a candidate claim only when the same-claim decision gives that claim
 # more than every other answer together.
 SAME_CLAIM_MAJORITY = 0.5
@@ -306,6 +310,15 @@ class _NoPage:
     @property
     def detail(self) -> str:
         return self.reason.say(self.values)
+
+
+@dataclass(frozen=True, slots=True)
+class Deferred:
+    """An article that could not be attached now, for a reason that is not its own: the
+    page reader said its outlet cannot be asked yet. Nothing is written, and the lead
+    stays listed for a later try."""
+
+    reason: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -992,7 +1005,11 @@ class LinkRead:
         address = without_tracking(record.url)
         # One read at a time from here to the end of its transaction: whichever claim
         # another read has just made for this story is found, not made again.
+        waited_from = system_time.monotonic()
         session.execute(select(func.pg_advisory_xact_lock(CLAIM_IDENTITY_LOCK)))
+        # Time spent waiting for another read to settle its claim is waiting, under its
+        # own cause (openspec processing-metrics, "Every wait is given its cause").
+        measure.add_wait(CLAIM_TURN, system_time.monotonic() - waited_from)
         try:
             existing, how = self._claim_it_reports(session, record, draft, client, now)
             if existing is not None:

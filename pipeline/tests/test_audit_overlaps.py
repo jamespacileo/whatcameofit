@@ -24,6 +24,7 @@ from thenwhat.backfill.address import KEY_VERSION
 from thenwhat.backfill.link_read import (
     NO_DATE,
     Attached,
+    Deferred,
     NotAnOverlap,
     NotAttached,
     dismiss_overlap,
@@ -36,7 +37,6 @@ from thenwhat.cli import app
 from thenwhat.db.models import Claim, LinkLead
 from thenwhat.domain import Decider, ReadOutcome, ReviewState
 from thenwhat.review.decisions import record_decision
-from thenwhat.work.steps import Deferred
 
 URL = "https://www.theguardian.com/science/2019/may/04/synthetic-teeth"
 

@@ -325,6 +325,26 @@ def stored_everywhere(session: Session) -> str:
 # --- a new claim -----------------------------------------------------------------------
 
 
+def test_a_read_measures_its_waits_for_a_turn_under_their_own_causes(reader: Reader):
+    """Scenario: A read that waits for the claim turn (openspec processing-metrics,
+    "Every wait is given its cause"). A read that waits for nobody still names the turns
+    it took, so a slow one shows under them."""
+    from test_measure import AT, Kept, Ticks
+    from thenwhat.measure import spans as measure
+
+    reader.lead("https://www.theguardian.com/science/2019/may/04/synthetic-teeth")
+    kept = Kept()
+    measure.use(measure.Recorder(out=kept, writer="test", clock=Ticks(), now=lambda: AT))
+    try:
+        report = reader.read()
+    finally:
+        measure.use(None)
+
+    assert report.done == 1
+    waited = {cause for span in kept.spans for cause in span.waited}
+    assert {"claim_turn", "outlet_turn"} <= waited
+
+
 def test_a_passed_lead_is_read_into_a_new_claim_from_its_own_page(reader: Reader):
     """Scenarios: A named intervention, A listed outlet, A date the page gives in a tag,
     A shared title that differs from the headline"""
@@ -448,7 +468,7 @@ def test_a_lead_whose_site_cannot_be_asked_now_is_put_off_and_the_run_goes_on(re
 
     # Put off until the wait the reader stated is over: no outcome on the lead, no
     # attempt, the reason a code. The other outlet's lead is read.
-    assert (report.later, report.deferred, report.needs_fix) == (1, 0, 0)
+    assert (report.later, report.needs_fix) == (1, 0)
     assert (busy.read_outcome, busy.read_detail) == (None, None)
     entry = reader.entry(busy)
     assert (entry.outcome, entry.attempts, entry.reason) == (
@@ -512,7 +532,7 @@ def test_an_outlet_the_reader_has_stopped_is_not_asked_until_its_wait_is_over(re
 
     # One request told the pipeline; the outlet's other leads cost none. Another outlet
     # is read as usual. All four are put off until the wait the reader stated is over.
-    assert (asked_of_the_outlet(), first.later, first.deferred) == (1, 4, 0)
+    assert (asked_of_the_outlet(), first.later) == (1, 4)
     assert other.read_outcome is ReadOutcome.NEW_CLAIM
     assert waiting() == WAITING
     assert {reader.entry(lead).not_before for lead in stopped} == {began + timedelta(seconds=7200)}
@@ -2008,7 +2028,7 @@ def test_a_wait_past_a_day_holds_the_outlet_for_a_day_and_ends_no_run(reader: Re
 
     report = reader.read(by_the_step_clock=True)
 
-    assert (report.later, report.deferred, report.failed, report.stopped) == (1, 0, 0, None)
+    assert (report.later, report.failed, report.stopped) == (1, 0, None)
     entry = reader.entry(lead)
     assert (entry.outcome, entry.attempts, entry.reason) == (
         WorkOutcome.LATER,
@@ -2034,7 +2054,7 @@ def test_an_outlet_the_reader_cannot_get_is_left_after_three_pages(reader: Reade
 
     asked = [body["url"] for body in reader.page_reader.asked]
     assert sum("theguardian.com" in url for url in asked) == 3
-    assert (report.later, report.deferred) == (6, 0)
+    assert report.later == 6
     assert all(lead.read_outcome is None for lead in blocked)
     assert other.read_outcome is ReadOutcome.NEW_CLAIM
     entries = [reader.entry(lead) for lead in blocked]
@@ -2075,7 +2095,7 @@ def test_one_outlets_pages_are_not_asked_for_back_to_back(reader: Reader):
 
     asked = [body["url"] for body in reader.page_reader.asked]
     assert sum("theguardian.com" in url for url in asked) == 1
-    assert (report.later, report.deferred) == (1, 0)
+    assert report.later == 1
     assert sorted(lead.read_outcome is None for lead in (first, second)) == [False, True]
     assert other.read_outcome is not None
     [put_off] = [lead for lead in (first, second) if lead.read_outcome is None]
