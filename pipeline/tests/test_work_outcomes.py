@@ -36,10 +36,12 @@ NEVER_DECLARED = Reason("never_declared", ReasonClass.FINAL, "nothing the step k
 class ReasonedStep(DemoStep):
     """A step whose answer for each trial a test sets."""
 
-    reasons = (SITE_BUSY, NO_DATE, NOT_A_REPORT)
+    reasons: tuple[Reason, ...] = (SITE_BUSY, NO_DATE, NOT_A_REPORT)
 
     def __init__(self, name: str = "reasoned", version: int = 1) -> None:
         super().__init__(name, version)
+        # The steps that must have finished for a trial before this one is due for it.
+        self.after: tuple[DemoStep, ...] = ()
         self.answers: dict[str, Callable[[], Any]] = {}
 
     def run(self, session: Session, record: RegistryTrial, client: Client) -> Any:
