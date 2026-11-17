@@ -62,36 +62,19 @@ The pipeline SHALL list, on request, each claim that has approved trials and no 
 - **WHEN** a claim's only type is biological
 - **THEN** it is shown with that type and the note that the table does not map it
 
-### Requirement: Vertical check against the MeSH suggestion
-For any claim, the pipeline SHALL report whether the group of its vertical agrees with the groups suggested from its approved trials' MeSH terms. The answer SHALL be one of: agrees, when one suggested group is the claim's group; disagrees, when groups are suggested and none is the claim's; no suggestion. The check SHALL read stored records only, SHALL NOT change a vertical, and SHALL NOT change whether or when a claim is published.
+## MODIFIED Requirements
 
-#### Scenario: Specific vertical in the suggested group
-- **WHEN** a claim is filed under dementia and its trials suggest "Brain and nerves"
-- **THEN** the check answers agrees
+### Requirement: Suggested group from matched trials
+For a claim with clinical categories, the pipeline SHALL suggest each group that the topic mapping derives from those categories. It SHALL show the MeSH term that produced each suggestion. A suggestion SHALL NOT change a claim's vertical. Only an operator SHALL.
 
-#### Scenario: One of two suggested groups
-- **WHEN** a claim is filed under "Eyes and ears" and its trials suggest both "Eyes and ears" and "Diabetes and hormones"
-- **THEN** the check answers agrees
+#### Scenario: Trials point to one group
+- **WHEN** a claim's clinical categories sit under the MeSH category "Skin Diseases"
+- **THEN** the pipeline suggests the group "Skin and hair" and names the claim's category and "Skin Diseases" as the reason, and the claim's vertical is unchanged
 
-#### Scenario: Suggested group differs
-- **WHEN** a claim is filed under "Skin and hair" and its trials suggest only "Cancer"
-- **THEN** the check answers disagrees, names "Cancer" and the MeSH term that suggested it, and the claim stays under "Skin and hair" and stays published
+#### Scenario: Trials point to different groups
+- **WHEN** a claim's clinical categories derive two different groups
+- **THEN** both groups are shown, each with its MeSH term, and none is preferred
 
-#### Scenario: Nothing to compare
-- **WHEN** a claim has no approved trial, or its trials carry no MeSH term the table maps
-- **THEN** the check answers no suggestion and says which of the two it is
-
-### Requirement: Disagreeing verticals are reported
-`thenwhat prepare` SHALL say how many of the claims it handled disagree in the vertical check. The pipeline SHALL list, on request, every unarchived claim that disagrees, with its slug, intervention, indication, the vertical it is filed under, and each suggested group with its MeSH term. The list SHALL also be available as tab-separated rows.
-
-#### Scenario: Prepare reports disagreements
-- **WHEN** `thenwhat prepare --pending` handles 40 claims and 3 of them disagree
-- **THEN** its summary says 3 claims are filed under a group their trials do not suggest, and how to list them
-
-#### Scenario: Rows for the fault tab
-- **WHEN** an operator asks for the disagreeing claims as tab-separated rows
-- **THEN** each row carries the slug, intervention, indication, filed vertical, suggested groups and MeSH terms, and no article text
-
-#### Scenario: Nothing disagrees
-- **WHEN** no unarchived claim disagrees
-- **THEN** the list says so and names how many claims agreed and how many had no suggestion
+#### Scenario: No usable MeSH term
+- **WHEN** a claim has no clinical category, or none that the topic mapping covers
+- **THEN** no group is suggested and the pipeline says which of the two it is
