@@ -154,7 +154,11 @@ def payload_record(value: Any) -> Record:
     """A raw payload, named by its checksum. One of 16 KB or less travels in the record;
     a larger one is put in R2 under `payload/<sha256>` first and the record carries only
     the object's key."""
-    payload = payload_of(value)
+    return payload_record_of(payload_of(value))
+
+
+def payload_record_of(payload: "Payload") -> Record:
+    """`payload_record` of a payload already worked out."""
     return Record(
         kind="payload",
         key=payload.sha256,

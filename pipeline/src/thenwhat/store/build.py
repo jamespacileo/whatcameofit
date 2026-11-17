@@ -16,20 +16,20 @@ public (the export lists it under `moved`).
 
 import json
 import sqlite3
+import time
 from collections import Counter
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import Claim, ClaimChange
-from thenwhat.store.form import Record, body, key_of, payload_of, when
-from thenwhat.store.gather import gather
-from thenwhat.store.push import state_of
+from thenwhat.store.form import Payload, Record, body, key_of, when
+from thenwhat.store.gather import Gathered, stream
+from thenwhat.store.push import body_sha256
 
 # Records to a run. Each run is one merge, parents before children across runs.
 RUN_RECORDS = 20_000
@@ -133,12 +133,17 @@ def _merged_publications(session: Session) -> list[Record]:
     ]
 
 
-def runs_of(session: Session, payloads: Path, report: BuildReport) -> Iterator[list[Record]]:
-    """The build's runs in the order they are merged: every claim under its first slug,
-    the renames, then everything else in runs of `RUN_RECORDS`."""
+def runs_of(
+    session: Session,
+    payloads: Path,
+    report: BuildReport,
+    on_kind: Callable[[str, int, float], None] = lambda *_: None,
+) -> Iterator[list[Record]]:
+    """The build's runs in the order they are merged, as the records are read: every
+    claim under its first slug, the renames, then everything else in runs of
+    `RUN_RECORDS`. `on_kind` is told each kind's count and seconds as it is done."""
 
-    def keep_payload(value: Any) -> None:
-        payload = payload_of(value)
+    def keep_payload(payload: Payload) -> None:
         if payload.inline:
             return
         held = payloads / payload.r2_key
@@ -149,20 +154,41 @@ def runs_of(session: Session, payloads: Path, report: BuildReport) -> Iterator[l
         report.payload_objects += 1
         report.payload_bytes += payload.bytes
 
-    gathered = gather(session, keep_payload=keep_payload)
-    report.repeated, report.unnamed = gathered.repeated, gathered.unnamed
-    report.state = state_of(gathered.records)
+    counts = Gathered(records=[], repeated=report.repeated, unnamed=report.unnamed)
     first, rename_runs = _renames(session)
-    claims = [
-        Record("claim", first.get(r.key, r.key), r.body | {"slug": first.get(r.key, r.key)})
-        for r in gathered.records
-        if r.kind == "claim"
-    ]
-    rest = [r for r in gathered.records if r.kind != "claim"] + _merged_publications(session)
-    yield claims
-    yield from rename_runs
-    for start in range(0, len(rest), RUN_RECORDS):
-        yield rest[start : start + RUN_RECORDS]
+    run: list[Record] = []
+    read: Counter[str] = Counter()
+    began: dict[str, float] = {}
+    told: set[str] = set()
+
+    def tell() -> None:
+        for kind, at in began.items():
+            if kind not in told:
+                told.add(kind)
+                on_kind(kind, read[kind], time.monotonic() - at)
+
+    in_claims = True
+    for record in stream(session, counts, keep_payload=keep_payload):
+        report.state[f"{record.kind}\t{record.key}"] = body_sha256(record)
+        read[record.kind] += 1
+        if record.kind not in began:
+            tell()
+            began[record.kind] = time.monotonic()
+        if in_claims and record.kind != "claim":
+            in_claims = False
+            yield run
+            run = []
+            yield from rename_runs
+        if record.kind == "claim":
+            slug = first.get(record.key, record.key)
+            record = Record("claim", slug, record.body | {"slug": slug})
+        run.append(record)
+        if len(run) >= RUN_RECORDS and not in_claims:
+            yield run
+            run = []
+    run.extend(_merged_publications(session))
+    yield run
+    tell()
 
 
 def merge_run(
@@ -212,7 +238,13 @@ def merge_run(
 
 
 def build(
-    session: Session, path: Path, *, payloads: Path, store_sql: Path, now: datetime
+    session: Session,
+    path: Path,
+    *,
+    payloads: Path,
+    store_sql: Path,
+    now: datetime,
+    on_kind: Callable[[str, int, float], None] = lambda *_: None,
 ) -> BuildReport:
     """Make `path` a store file of everything the store keeps of what Postgres holds now.
     The session is only read. A file already at `path` is replaced."""
@@ -226,7 +258,7 @@ def build(
         db.execute("PRAGMA foreign_keys = ON")  # D1 enforces foreign keys
         db.execute("PRAGMA journal_mode = WAL")
         db.executescript((store_sql / "schema.sql").read_text())
-        for number, records in enumerate(runs_of(session, payloads, report)):
+        for number, records in enumerate(runs_of(session, payloads, report, on_kind)):
             if not records:
                 continue
             report.handed.update(record.kind for record in records)

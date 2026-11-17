@@ -9,7 +9,7 @@ payload by its checksum. Nothing here reads a database; `gather.py` does that.
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol
 
 from thenwhat.backfill.address import KEY_VERSION
 from thenwhat.backfill.registry_load import sponsored_by_a_person, without_people
@@ -428,7 +428,11 @@ def entity_substance_record(substance: EntitySubstance, *, entity: Entity, slug:
 
 
 def evidence_event_record(
-    event: EvidenceEvent, *, slug: str, match: tuple[Entity, EntityMatch] | None
+    event: EvidenceEvent,
+    *,
+    slug: str,
+    match: tuple[Entity, EntityMatch] | None,
+    payload_sha256: str | None = None,
 ) -> Record:
     """An event, its payload named by checksum, and the match it came from named by its
     entity's type and name and the record's source and identifier."""
@@ -464,7 +468,7 @@ def evidence_event_record(
             summary=event.summary,
             confidence=event.confidence,
             content_sha256=content_sha256(**fields),
-            payload_sha256=payload_of(event.raw_payload).sha256,
+            payload_sha256=payload_sha256 or payload_of(event.raw_payload).sha256,
             fetched_at=when(event.fetched_at),
             review_state=_text(event.review_state),
             reviewed_at=when(event.reviewed_at),
@@ -549,11 +553,11 @@ def registry_payload(trial: RegistryTrial) -> Any:
     return without_people(trial.raw_payload)
 
 
-def registry_trial_record(trial: RegistryTrial) -> Record:
+def registry_trial_record(trial: RegistryTrial, *, payload_sha256: str | None = None) -> Record:
     """A trial with every column Postgres holds, its payload named by checksum. When the
     registry was last found to say the same (`checked_at`) is the store's to know. A
     sponsor who is a person is not named."""
-    payload = registry_payload(trial)
+    payload = registry_payload(trial) if payload_sha256 is None else trial.raw_payload
     sponsors = (
         payload.get("protocolSection", {}).get("sponsorCollaboratorsModule", {})
         if isinstance(payload, dict)
@@ -588,7 +592,7 @@ def registry_trial_record(trial: RegistryTrial) -> Record:
             lead_sponsor_name=(
                 None if sponsored_by_a_person(sponsors) else trial.lead_sponsor_name
             ),
-            payload_sha256=payload_of(payload).sha256,
+            payload_sha256=payload_sha256 or payload_of(payload).sha256,
             fetched_at=when(trial.fetched_at),
         ),
     )
@@ -607,7 +611,14 @@ def registry_load_record(load: RegistryLoad) -> Record:
     )
 
 
-def article_lead_record(lead: ArticleLead, *, trial: RegistryTrial, url_key: str) -> Record:
+class TrialNamed(Protocol):
+    """What names a trial: its registry and its identifier there."""
+
+    registry_name: str
+    external_id: str
+
+
+def article_lead_record(lead: ArticleLead, *, trial: TrialNamed, url_key: str) -> Record:
     """A news article found for a trial. The search service's raw result is not kept: its
     fields are already the record's."""
     return Record(

@@ -16,7 +16,7 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.export import STORE_SQL, reading_session
 from thenwhat.store.build import BuildFailed, build
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
-from thenwhat.store.form import payload_of
+from thenwhat.store.form import Payload
 from thenwhat.store.gather import gather
 from thenwhat.store.push import USER_AGENT, PushFailed, push, read_state, write_state
 
@@ -58,7 +58,14 @@ def build_command(
     with reading_session() as session:
         try:
             report = build(
-                session, file, payloads=payloads, store_sql=store_sql, now=datetime.now(UTC)
+                session,
+                file,
+                payloads=payloads,
+                store_sql=store_sql,
+                now=datetime.now(UTC),
+                on_kind=lambda kind, count, seconds: out.print(
+                    f"  {kind}: {count:,} read and merged in {seconds:,.1f} s", markup=False
+                ),
             )
         except BuildFailed as fault:
             err.print(str(fault), markup=False)
@@ -200,8 +207,7 @@ def push_command(
     held = read_state(state)
     texts: dict[str, str] = {}
 
-    def keep_payload(value: object) -> None:
-        payload = payload_of(value)
+    def keep_payload(payload: Payload) -> None:
         if not payload.inline and f"payload\t{payload.sha256}" not in held:
             texts[payload.sha256] = payload.text
 
