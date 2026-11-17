@@ -41,10 +41,10 @@
 ## 6. Export and site
 
 - [ ] 6.1 Export each claim's clinical categories with their sources, derived through `Records`, and once per export the tree nodes in use with the MeSH years; a claim whose categories need a MeSH record not yet read is exported as not yet read and counted. Regenerate the schema and the seed export, and report the export time before and after. Verify with export tests for a claim with categories, one without, one not yet read, and that Postgres and the store give the same export.
-- [ ] 6.2 Add `site/src/lib/clinical.ts` (parents, children and claims at or below, from tree numbers) and fail the build when the export has categories and no MeSH year. Verify with site tests including a category in two places and a claim counted once.
-- [ ] 6.3 Add `/clinical` and `/clinical/[descriptor]` with the NLM credit, the MeSH year and the no-endorsement line. Verify with site tests for: an empty top category not listed, a category page's broader links, claims at and below with statuses, no page for a category without published claims.
-- [ ] 6.4 List the clinical categories on the claim page with their source trials and papers. Verify with site tests for a category from a trial and a paper, and a claim with none; and that the site's wording check finds no verdict or advice wording in the new copy.
-- [ ] 6.5 Link the clinical index from `/for/clinicians` and the topics page and add the pages to the sitemap. Verify with site tests for both links and the sitemap entries.
+- [x] 6.2 Add `site/src/lib/clinical.ts` (parents, children and claims at or below, from tree numbers) and fail the build when the export has categories and no MeSH year. Verify with site tests including a category in two places and a claim counted once.
+- [x] 6.3 Add `/clinical` and `/clinical/[descriptor]` with the NLM credit, the MeSH year and the no-endorsement line. Verify with site tests for: an empty top category not listed, a category page's broader links, claims at and below with statuses, no page for a category without published claims.
+- [x] 6.4 List the clinical categories on the claim page with their source trials and papers. Verify with site tests for a category from a trial and a paper, and a claim with none; and that the site's wording check finds no verdict or advice wording in the new copy.
+- [x] 6.5 Link the clinical index from `/for/clinicians` and the topics page and add the pages to the sitemap. Verify with site tests for both links and the sitemap entries.
 - [ ] 6.6 Record the new pages in `DESIGN.md` and report the site build time before and after in the task's commit message. Verify the build passes at phone width with no horizontal scroll on the three new page kinds.
 
 ## 7. Integration

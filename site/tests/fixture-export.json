@@ -139,7 +139,8 @@
           "read_on": "2026-11-14"
         }
       ],
-      "organisations": []
+      "organisations": [],
+      "clinical_categories": null
     },
     {
       "slug": "phase-claim",
@@ -147,7 +148,10 @@
       "summary": "Synthetic test data for phase-claim. It describes no real treatment.",
       "vertical": "gum-disease",
       "approach": "gene-therapy",
-      "approach_basis": { "type": "GENETIC", "trials": 2 },
+      "approach_basis": {
+        "type": "GENETIC",
+        "trials": 2
+      },
       "intervention": {
         "name": "phase-claim agent",
         "synonyms": []
@@ -878,6 +882,30 @@
             }
           ]
         }
+      ],
+      "clinical_categories": [
+        {
+          "identifier": "D010518",
+          "sources": [
+            {
+              "kind": "trial",
+              "identifier": "NCT00000002"
+            },
+            {
+              "kind": "paper",
+              "identifier": "10.5555/synthetic.results"
+            }
+          ]
+        },
+        {
+          "identifier": "D003930",
+          "sources": [
+            {
+              "kind": "trial",
+              "identifier": "NCT00000030"
+            }
+          ]
+        }
       ]
     },
     {
@@ -982,6 +1010,17 @@
             }
           ]
         }
+      ],
+      "clinical_categories": [
+        {
+          "identifier": "D010510",
+          "sources": [
+            {
+              "kind": "paper",
+              "identifier": "pmid:90000009"
+            }
+          ]
+        }
       ]
     }
   ],
@@ -996,5 +1035,107 @@
       "in_data_file": true
     }
   ],
-  "match_accept_above": 0.8
+  "match_accept_above": 0.8,
+  "clinical": {
+    "mesh_years": [
+      "2026"
+    ],
+    "claims_not_read": 1,
+    "nodes": [
+      {
+        "identifier": "D009057",
+        "label": "Stomatognathic Diseases",
+        "tree_numbers": [
+          "C07"
+        ],
+        "broader": []
+      },
+      {
+        "identifier": "D009059",
+        "label": "Mouth Diseases",
+        "tree_numbers": [
+          "C07.465"
+        ],
+        "broader": [
+          "D009057"
+        ]
+      },
+      {
+        "identifier": "D010510",
+        "label": "Periodontal Diseases",
+        "tree_numbers": [
+          "C07.465.714"
+        ],
+        "broader": [
+          "D009059"
+        ]
+      },
+      {
+        "identifier": "D010518",
+        "label": "Periodontitis",
+        "tree_numbers": [
+          "C07.465.714.533"
+        ],
+        "broader": [
+          "D010510"
+        ]
+      },
+      {
+        "identifier": "D005128",
+        "label": "Eye Diseases",
+        "tree_numbers": [
+          "C11"
+        ],
+        "broader": []
+      },
+      {
+        "identifier": "D012164",
+        "label": "Retinal Diseases",
+        "tree_numbers": [
+          "C11.768"
+        ],
+        "broader": [
+          "D005128"
+        ]
+      },
+      {
+        "identifier": "D004700",
+        "label": "Endocrine System Diseases",
+        "tree_numbers": [
+          "C19"
+        ],
+        "broader": []
+      },
+      {
+        "identifier": "D003920",
+        "label": "Diabetes Mellitus",
+        "tree_numbers": [
+          "C19.246"
+        ],
+        "broader": [
+          "D004700"
+        ]
+      },
+      {
+        "identifier": "D003930",
+        "label": "Diabetic Retinopathy",
+        "tree_numbers": [
+          "C11.768.257",
+          "C19.246.099.500.382"
+        ],
+        "broader": [
+          "D012164",
+          "D003920"
+        ]
+      },
+      {
+        "identifier": "D009369",
+        "label": "Neoplasms",
+        "tree_numbers": [
+          "C04"
+        ],
+        "broader": []
+      }
+    ]
+  }
 }

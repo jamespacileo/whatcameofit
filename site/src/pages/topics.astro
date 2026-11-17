@@ -66,6 +66,8 @@ function byGroup(): Section[] {
 const grouped = topics.some((topic) => topic.group);
 const sections = grouped ? byGroup() : byLetter();
 const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
+// The clinical index exists only when a published claim has a category.
+const hasClinical = data.claims.some((claim) => (claim.clinical_categories ?? []).length > 0);
 ---
 
 <Base
@@ -80,6 +82,13 @@ const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
     {topics.length} {topics.length === 1 ? "topic" : "topics"}, {claimCount}{" "}
     {claimCount === 1 ? "claim" : "claims"} tracked.
   </p>
+  {
+    hasClinical && (
+      <p class="what-this-is">
+        The same claims by standard medical category: <a href="/clinical">clinical categories (MeSH)</a>.
+      </p>
+    )
+  }
 
   <div class:list={["directory", { grouped }]} data-directory>
     <div class="directory-tools">
