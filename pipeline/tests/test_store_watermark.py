@@ -102,3 +102,59 @@ def test_the_build_digest_moves_with_the_code_that_forms_records(tmp_path: Path,
     people = copy / "sources" / "people.py"
     people.write_text(people.read_text() + "\n# a change to what is stripped\n")
     assert sql_digest(STORE) != before
+
+
+def test_paper_only_change_is_in_the_normal_and_fresh_build(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    import sqlite3
+    from contextlib import nullcontext
+
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+    from thenwhat.db.models import RegistryTrial, TrialPaper
+    from thenwhat.store.tiers import BULK
+
+    _world(session)
+    monkeypatch.setattr("thenwhat.cli.store.reading_session", lambda: nullcontext(session))
+    file = tmp_path / "store.sqlite"
+    args = [
+        "store",
+        "build",
+        str(file),
+        "--payloads",
+        str(tmp_path / "objects"),
+        "--store-sql",
+        str(STORE),
+    ]
+
+    def run(*flags):
+        result = CliRunner().invoke(app, [*args, *flags])
+        assert result.exit_code == 0, result.output
+
+    def papers():
+        with sqlite3.connect(tier_path(file, BULK)) as db:
+            return db.execute(
+                "SELECT pubmed_id, payload_sha256 FROM trial_paper ORDER BY pubmed_id"
+            ).fetchall()
+
+    run()
+    before = papers()
+    trial = session.scalars(select(RegistryTrial).order_by(RegistryTrial.id)).first()
+    assert trial is not None
+    session.add(
+        TrialPaper(
+            registry_trial_id=trial.id,
+            source_name="pubmed",
+            pubmed_id="123456789",
+            raw_payload={"id": "123456789"},
+            fetched_at=datetime(2026, 11, 17, tzinfo=UTC),
+        )
+    )
+    session.flush()
+    run()
+    rebuilt = papers()
+    assert len(rebuilt) == len(before) + 1 and any(row[0] == "123456789" for row in rebuilt)
+    run("--fresh")
+    assert papers() == rebuilt

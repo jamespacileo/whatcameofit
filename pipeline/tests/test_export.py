@@ -2011,6 +2011,7 @@ def test_a_claims_clinical_categories_are_exported_with_the_tree_above_them(
 ):
     """Scenarios: Trial with a condition term; Ancestor is not a category"""
     claim = new_claim(session)
+    add_match(session, claim, "NCT02586935", 0.95, ReviewState.APPROVED)
     add_registry_events(session, claim, fixture_json("clinicaltrials/study_NCT02586935.json"))
     autism_tree(session)
 
@@ -2043,6 +2044,7 @@ def test_categories_are_left_out_and_counted_while_a_mesh_record_is_not_read(
 ):
     """Scenario: Record not yet read"""
     claim = new_claim(session)
+    add_match(session, claim, "NCT02586935", 0.95, ReviewState.APPROVED)
     add_registry_events(session, claim, fixture_json("clinicaltrials/study_NCT02586935.json"))
     store_descriptor(session, "D001321", "Autistic Disorder", "F03.625.164.113.500", "D000067877")
 

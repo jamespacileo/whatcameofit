@@ -41,6 +41,7 @@ def candidates_named_in_article(
     reject_below: float = 0.0,
     accept_trial_above: float = 0.0,
     accept_paper_above: float = 0.0,
+    unasked_dois: list[str] | None = None,
 ) -> list[EntityMatch]:
     """Store the trials and papers an article's page names as candidates of the claim,
     scored for the claim's indication. Returns the candidates this call added.
@@ -99,7 +100,11 @@ def candidates_named_in_article(
 
     found: list[tuple[EntityMatch, SourceRecord]] = []
     for doi in dict.fromkeys(doi.lower() for doi in dois):
-        if papers is None or known(PAPER_SOURCE, doi):
+        if known(PAPER_SOURCE, doi):
+            continue
+        if papers is None:
+            if unasked_dois is not None:
+                unasked_dois.append(doi)
             continue
         record = papers.paper(doi)
         if record is None or known(PAPER_SOURCE, record.external_id):

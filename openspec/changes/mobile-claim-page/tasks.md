@@ -21,3 +21,11 @@
 
 - [x] 3.1 Update DESIGN.md: the byline, the panel's close control.
 - [ ] 3.2 `make check` passes; the claim page checked in the browser at phone and desktop widths, light and dark.
+
+## 4. Status panel controls and Phase 4 context
+
+### P2
+
+- [ ] 4.1 <a id="task-f32"></a>Separate the close button from hover-opening behavior. Test one-click dismissal on a hover device and retain keyboard and touch dismissal. [F32](../../../docs/reviews/2026-11-17-code-review.md#finding-f32) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-one-press-closes-a-hovered-status-panel)
+
+- [ ] 4.2 <a id="task-f35"></a>Determine Phase 4 note visibility from the trial records independently of the path diagram. Render the off-path ibuprofen/COVID example, an on-path claim and a claim without Phase 4 trials. [F35](../../../docs/reviews/2026-11-17-code-review.md#finding-f35) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-phase-4-trial-is-present-with-an-off-path-status)

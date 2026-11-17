@@ -24,6 +24,11 @@ When a source cannot be asked until a time, that time SHALL be kept where every 
 - **WHEN** the time a source was paused until has passed
 - **THEN** the next command asks it as usual
 
+#### Scenario: A pause begins while a client awaits its turn
+
+- **WHEN** a request was admitted for 12:00:10 and another worker records a pause until 13:00 during the pacing wait
+- **THEN** the client sends no request during the pause and reports the persisted deadline
+
 ### Requirement: Every command's requests count against the source's allowance
 Requests to a source SHALL be counted against that source's allowance whichever command sends them. A command SHALL send no request to a source whose allowance for the period is used up.
 

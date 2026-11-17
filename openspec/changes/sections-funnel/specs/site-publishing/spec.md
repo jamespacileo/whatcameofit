@@ -14,6 +14,16 @@ Each section of a claim page below "At a glance" SHALL show, in sight, a label a
 - **WHEN** a reader opens a claim with seven trials, one of which names a placebo and one of which has posted results
 - **THEN** the sentence reads "Tested in 7 trials, the largest planned for 1,200 people. One record names a placebo. 1 of 7 has posted results, …", and "7 trials" leads to the row "Tested in people?"
 
+#### Scenario: A single trial has only planned enrollment
+
+- **WHEN** the only trial has not started, its registry entry lists 456 people as planned and it names a planned outcome
+- **THEN** the summary and expanded rows identify enrollment and outcome as planned. Neither says testing or measurement has already occurred
+
+#### Scenario: Sham and placebo have distinct registry codes
+
+- **WHEN** five embolisation trials name a sham comparator and none names a placebo
+- **THEN** the brief and expanded facts report five sham comparisons. Mixed comparators are attributed to the trials recording each
+
 ### Requirement: Statements are grouped by who said them or by kind
 A claim's statements SHALL stand in one list, grouped by who the report had saying each; a reader SHALL be able to group them instead by kind of statement, or by report, wherever that order makes more than one group. With no script the statements SHALL be grouped by who said them. Each row SHALL say, beside the statement, the two of kind, speaker and report that its group does not, the report at least by its outlet, and SHALL give the report's title as a link where the row opens. Each statement SHALL carry a mark for how firmly the report put it, named in words once over the list, and SHALL keep its attribution in words for a screen reader. A statement's score SHALL be shown on its row when the check is less than very sure, and where the row opens otherwise.
 
@@ -31,6 +41,11 @@ A claim's statements SHALL stand in one list, grouped by who the report had sayi
 #### Scenario: Following a moment
 - **WHEN** a reader presses "First results posted"
 - **THEN** the timetable opens and the year of that record is in view
+
+#### Scenario: An article follows the last registry event
+
+- **WHEN** the timetable includes a February 15 registry event and an April 12 news report
+- **THEN** April 12 is the latest record. The earlier event receives no latest label, including when the newest date is already shown as a milestone
 
 ### Requirement: The trials' spread is drawn over their table
 Where a claim has four trials or more, the trials section SHALL show a mark for each trial under its phase, in the shape of its state and ringed where it has posted results, with a key in words. Each trial's row SHALL show its size as a bar against the claim's largest trial. The drawing SHALL be for the eye only: the table says the same in words.
@@ -66,6 +81,11 @@ In the timetable a year that is folded SHALL show a shape for each of its record
 #### Scenario: A year of seventeen records
 - **WHEN** a reader looks at a folded year that holds seventeen records
 - **THEN** its row shows seventeen shapes and "17 records", and opening it lists the records
+
+#### Scenario: A folded year contains a retraction
+
+- **WHEN** a folded year contains a retraction alongside trial events
+- **THEN** the finished-trial symbol denotes only a recorded completion, and the retraction remains identifiable in the row
 
 ### Requirement: A registry record is one line that opens
 A registry record that is not a trial on the page SHALL be a row of its title, what its record says of the trial or that it is not yet read, and its match, which stays in sight. A possible record SHALL be marked and named as possible before its title. Where to read the record, how it was read and what it names SHALL be where the row opens.

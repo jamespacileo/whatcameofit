@@ -132,8 +132,9 @@ test("Scenario: Three trials, the largest of 1,200", () => {
     ],
   });
   const tested = rowOf(recordBrief(large, null), "tested");
-  // A count and the largest: never 30 + 1,200 + 83.
-  assert.equal(tested.answer, "In 3 trials. 1,200 people in the largest");
+  // A count and the largest: never 30 + 1,200 + 83. The largest is a planned size, said so.
+  assert.equal(tested.answer, "In 3 trials. 1,200 people planned in the largest");
+  assert.equal(tested.opened[0], "The other two trials enrolled 83 and 30 people.");
   assert.match(tested.opened.join(" "), /planned size, not people who took part/);
 });
 
@@ -458,4 +459,166 @@ test("Scenario: Same words as the claim page", () => {
   }
   // A row never carries a result value.
   assert.doesNotMatch(Object.values(testedSummary(device)).join(" "), /\d\.\d|p\s*[<=]/);
+});
+
+// F14: a planned enrolment is said as planned wherever a size is said, collapsed or
+// opened, and a measure the registry names is never said as measured on its own.
+// The fixture is the recorded Impella record NCT05064202: one trial, not started,
+// 456 people planned, one named main measure, no results.
+const impella = claim({
+  trials: [
+    trial("NCT05064202", {
+      state: "not_started",
+      facts: facts({
+        participants: { count: 456, basis: "planned" },
+        primary_outcomes: [{ measure: "Synthetic composite outcome", time_frame: "30 days" }],
+        primary_outcomes_total: 1,
+      }),
+    }),
+  ],
+});
+const everything = (groups) =>
+  rows(groups)
+    .flatMap((row) => [row.question, row.answer, row.said, ...row.opened, row.link?.text ?? "", row.shown?.text ?? ""])
+    .join(" ");
+
+test("F14: one trial of 456 people planned reads as planned, collapsed and opened", () => {
+  const groups = recordBrief(impella, null);
+  const tested = rowOf(groups, "tested");
+  assert.equal(tested.answer, "1 trial has not started. Planned enrollment is 456 people");
+  assert.equal(tested.said, "[[1 trial]] has not started. Planned enrollment is 456 people");
+  assert.deepEqual(tested.opened, ["The number is a planned size, not people who took part."]);
+  assert.deepEqual(testedSummary(impella), { lead: "1 trial has not started", detail: "456 people planned. No results posted" });
+  // Nothing says people took part, or that the measure was taken.
+  const said = everything(groups);
+  assert.doesNotMatch(said, /enrolled 456|456 people took part|trial measured/i);
+  assert.doesNotMatch(JSON.stringify(groups), /trial measured/i);
+});
+
+test("F14: a planned measure is not said as measured", () => {
+  const measure = rowOf(recordBrief(impella, null), "measure");
+  assert.equal(measure.question, "What did the largest trial plan to measure?");
+  assert.equal(measure.answer, "“Synthetic composite outcome”");
+  assert.equal(measure.said, "The largest trial planned to measure [[“Synthetic composite outcome”]]");
+  assert.deepEqual(measure.opened, [DEFINITIONS.registry_words, DEFINITIONS.planned_measure]);
+  assert.equal(measure.link.text, "See this trial");
+  // A finished trial with no results posted: still a plan, not proof it was measured.
+  const finished = structuredClone(impella);
+  finished.trials[0].state = "completed";
+  finished.trials[0].facts.participants.basis = "actual";
+  const unposted = rowOf(recordBrief(finished, null), "measure");
+  assert.match(unposted.said, /^The largest trial planned to measure/);
+  assert.ok(unposted.opened.includes(DEFINITIONS.planned_measure));
+});
+
+test("F14 control: one finished trial with actual enrolment and posted results", () => {
+  const done = structuredClone(impella);
+  done.trials[0].state = "completed";
+  done.trials[0].facts.participants.basis = "actual";
+  done.trials[0].facts.results = posted;
+  const groups = recordBrief(done, null);
+  const tested = rowOf(groups, "tested");
+  assert.equal(tested.answer, "In 1 trial of 456 people");
+  assert.equal(tested.said, "Tested in [[1 trial]] of 456 people");
+  assert.deepEqual(tested.opened, ["The number is people who took part, not a planned size."]);
+  assert.deepEqual(testedSummary(done), { lead: "In 1 trial", detail: "456 people. Results posted" });
+  // Collapsed, the actual size carries no word of a plan.
+  assert.doesNotMatch(`${tested.answer} ${tested.said} ${testedSummary(done).detail}`, /plan/i);
+  const measure = rowOf(groups, "measure");
+  assert.equal(measure.question, "What did the largest trial measure?");
+  assert.equal(measure.said, "The largest trial measured [[“Synthetic composite outcome”]]");
+  assert.deepEqual(measure.opened, [DEFINITIONS.registry_words]);
+  // The device fixture, all actual, keeps its wording.
+  assert.equal(rowOf(recordBrief(device, null), "tested").said, "Tested in [[3 trials]], the largest with 135 people");
+  assert.match(rowOf(recordBrief(device, null), "measure").said, /^The largest trial measured /);
+});
+
+test("F14: several trials, all planned", () => {
+  const plans = claim({
+    trials: [
+      trial("NCT05064202", { state: "not_started", facts: facts({ participants: { count: 456, basis: "planned" } }) }),
+      trial("NCT2", { state: "not_started", facts: facts({ participants: { count: 120, basis: "planned" } }) }),
+    ],
+  });
+  const tested = rowOf(recordBrief(plans, null), "tested");
+  assert.equal(tested.answer, "2 trials have not started. 456 people planned in the largest");
+  assert.equal(tested.said, "[[2 trials]] have not started, the largest planned for 456 people");
+  assert.deepEqual(tested.opened, [
+    "The other trial plans 120 people.",
+    "The largest number is a planned size, not people who took part.",
+  ]);
+  assert.equal(testedSummary(plans).detail, "456 people planned in the largest. No results posted");
+  assert.doesNotMatch(everything(recordBrief(plans, null)), /enrolled/);
+});
+
+test("F14: mixed planned and actual sizes are each said with their basis", () => {
+  const mixed = claim({
+    trials: [
+      trial("NCT05064202", { state: "not_started", facts: facts({ participants: { count: 456, basis: "planned" } }) }),
+      trial("NCT2", { facts: facts({ participants: { count: 83, basis: "actual" } }) }),
+      trial("NCT3", { state: "under_way", facts: facts({ participants: { count: 30, basis: "planned" } }) }),
+    ],
+  });
+  const tested = rowOf(recordBrief(mixed, null), "tested");
+  assert.equal(tested.answer, "3 trials on record. 456 people planned in the largest");
+  assert.deepEqual(tested.opened, [
+    "Of the other two trials, one enrolled 83 people, and one plans 30 people.",
+    "The largest number is a planned size, not people who took part.",
+  ]);
+  // An actual largest beside planned others: the largest is people who took part.
+  const actualFirst = structuredClone(mixed);
+  actualFirst.trials[0].facts.participants = { count: 456, basis: "actual" };
+  const opened = rowOf(recordBrief(actualFirst, null), "tested");
+  assert.equal(opened.answer, "3 trials on record. 456 people in the largest");
+  assert.equal(opened.said, "[[3 trials]] on record, the largest with 456 people");
+  assert.deepEqual(opened.opened, [
+    "Of the other two trials, one enrolled 83 people, and one plans 30 people.",
+    "The largest number is people who took part, not a planned size.",
+  ]);
+  // Many sizes of both kinds: ranges, never a sum.
+  const many = claim({
+    trials: [
+      ...[640, 18, 90, 120].map((count, index) => trial(`NCTA${index}`, { facts: facts({ participants: { count, basis: "actual" } }) })),
+      ...[900, 44].map((count, index) => trial(`NCTP${index}`, { facts: facts({ participants: { count, basis: "planned" } }) })),
+    ],
+  });
+  assert.deepEqual(rowOf(recordBrief(many, null), "tested").opened, [
+    "Of the other five trials, four enrolled between 18 and 640 people, and one plans 44 people.",
+    "The largest number is a planned size, not people who took part.",
+  ]);
+});
+
+test("F14: a trial with no stated size is counted, not given a size", () => {
+  const partly = claim({
+    trials: [
+      trial("NCT05064202", { state: "not_started", facts: facts({ participants: { count: 456, basis: "planned" } }) }),
+      trial("NCT2"),
+      trial("NCT3", { facts: null }),
+    ],
+  });
+  const tested = rowOf(recordBrief(partly, null), "tested");
+  assert.equal(tested.answer, "3 trials on record. 456 people planned in the largest");
+  assert.deepEqual(tested.opened, [
+    "Two other records state no number of people.",
+    "The largest number is a planned size, not people who took part.",
+  ]);
+  const one = claim({ trials: [trial("NCT05064202", { facts: facts({ participants: { count: 456, basis: "planned" } }) }), trial("NCT2")] });
+  assert.deepEqual(rowOf(recordBrief(one, null), "tested").opened, [
+    "The other trial's record states no number of people.",
+    "The largest number is a planned size, not people who took part.",
+  ]);
+  // No size anywhere: nothing is said as enrolled.
+  const none = rowOf(recordBrief(claim({ trials: [trial("NCT1"), trial("NCT2")] }), null), "tested");
+  assert.deepEqual(none.opened, ["No trial's record states a number of people, enrolled or planned."]);
+});
+
+test("F14: the list row and the claim page name the same planned size", () => {
+  for (const subject of [impella]) {
+    const row = testedSummary(subject);
+    const answer = rowOf(recordBrief(subject, null), "tested").answer;
+    assert.ok(answer.startsWith(row.lead));
+    assert.ok(answer.includes(row.detail.match(/^[\d,]+ people/)[0]));
+    assert.match(row.detail, /planned/i);
+    assert.match(answer, /planned/i);
+  }
 });

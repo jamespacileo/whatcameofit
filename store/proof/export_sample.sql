@@ -191,7 +191,8 @@ SELECT json_build_object('kind', 'work_entry', 'key', 'registry_trial|' || t.reg
          'record_key', t.registry_name || '|' || t.external_id, 'step', w.step, 'step_version', w.step_version,
          'outcome', w.outcome, 'attempts', w.attempts, 'requests_used', w.requests_used,
          'fingerprint', w.fingerprint, 'stale', w.stale::int, 'error', w.error,
-         'last_attempt_at', w.last_attempt_at))
+         'reason', w.reason, 'reason_values', w.reason_values, 'not_before', w.not_before,
+         'first_put_off_at', w.first_put_off_at, 'last_attempt_at', w.last_attempt_at))
 FROM work_entry w JOIN registry_trial t ON t.id = w.record_id
 WHERE w.record_kind = 'registry_trial' AND t.id % 97 = 0;
 

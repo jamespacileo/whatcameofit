@@ -471,6 +471,70 @@ def test_the_terms_step_keeps_its_paid_decisions_when_its_last_lookup_fails(sess
 # --- Records a page names are looked up apart from the join -------------------------------------
 
 
+def test_cli_claim_steps_at_the_ceiling_only_defer_actual_model_work(
+    session, monkeypatch, fixture_json
+):
+    from decimal import Decimal
+
+    from backfill_support import same_session
+    from thenwhat.cli import claim_steps as cli
+
+    claim = new_claim(session)
+    drafted_by_a_read(session, claim.slug)
+    sources = Sources(Registry([readable_trial(fixture_json)]))
+    # Set up approved evidence before the run whose ceiling we test.
+    prepare(session, sources, names=SEARCH)
+    config = settings(llm_monthly_budget_usd=Decimal(0))
+    sources.make_llm = lambda s: llm(s, Scripted(ANSWER), monthly_budget_usd=Decimal(0))
+    monkeypatch.setattr(cli, "settings_or_exit", lambda: config)
+    monkeypatch.setattr(cli, "claim_sources", sources.claim_sources)
+    monkeypatch.setattr(cli, "open_session", same_session(session))
+    names = {"claim_fetch", "claim_decide", "claim_readings"}
+    steps = [s for s in claim_steps(config, claims=named([claim.id])) if s.name in names]
+    for s in steps:
+        s.after = ()
+    cli.run_steps(steps)
+    assert entry(session, "claim_fetch", claim).outcome == WorkOutcome.DONE
+    assert entry(session, "claim_decide", claim).outcome == WorkOutcome.DONE
+    waiting = entry(session, "claim_readings", claim)
+    assert (waiting.outcome, waiting.reason) == (WorkOutcome.LATER, "spend_ceiling")
+
+
+def test_a_cited_doi_is_due_after_configuring_papers_and_requeueing(session):
+    from thenwhat.work.ledger import requeue
+
+    claim = new_claim(session, SLUG, "https://news.example.org/a")
+    article = session.scalars(select(SourceArticle)).one()
+    article.named_registry_numbers = ["NCT00000009"]
+    article.named_dois = ["10.1234/example"]
+    registry = Registry([trial("NCT00000009")])
+    sources = Sources(registry)
+    name = "claim_named_records"
+    [first] = prepare(session, sources, names=(name,))
+    held = entry(session, name, claim)
+    assert (held.outcome, held.reason, held.reason_values) == (
+        WorkOutcome.NEEDS_FIX,
+        "papers_off",
+        {"dois": article.named_dois},
+    )
+    assert session.scalars(select(EntityMatch.external_id)).all() == ["NCT00000009"]
+    asked_before = list(registry.asked)
+    calls = []
+
+    class Papers(Nothing):
+        def paper(self, external_id):
+            calls.append(external_id)
+            return None
+
+    sources.papers = Papers()
+    assert requeue(session, first.step, reason="papers_off") == [claim.id]
+    prepare(session, sources, names=(name,), at=LATER)
+    assert entry(session, name, claim).outcome == WorkOutcome.DONE
+    [unchanged] = prepare(session, sources, names=(name,), at=LATER)
+    assert unchanged.report.processed == 0
+    assert calls == article.named_dois and registry.asked == asked_before
+
+
 def test_a_number_the_page_names_is_looked_up_again_when_the_registry_was_down(
     session: Session,
 ):

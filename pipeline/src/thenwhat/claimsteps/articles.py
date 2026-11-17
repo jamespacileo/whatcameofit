@@ -14,6 +14,7 @@ from thenwhat.claimsteps.inputs import Inputs, names_a_record
 from thenwhat.claimsteps.reasons import (
     ARTICLE_UNREADABLE,
     OUTLET_HELD,
+    PAPERS_OFF,
     SOURCE_FAILED,
     SOURCE_RETRY,
     SourceNotSetUp,
@@ -124,7 +125,7 @@ class ClaimNamedRecords(ClaimStep):
     the claim as they are, and the claim comes back for this step."""
 
     name = "claim_named_records"
-    reasons = (SOURCE_FAILED,)
+    reasons = (SOURCE_FAILED, PAPERS_OFF)
 
     def __init__(self, *, reject_below: float, accept_above: float, **step: Any) -> None:
         super().__init__(**step)
@@ -150,14 +151,15 @@ class ClaimNamedRecords(ClaimStep):
             dois += article.named_dois
         research = sources.make_research(session)
         backend = sources.make_backend(session)
+        unasked: list[str] = []
         added = attempt(
             session,
             lambda: candidates_named_in_article(
                 session,
                 claim,
                 registry_numbers=numbers,
-                # With no literature source configured, papers are left unrecorded.
-                dois=dois if research.papers is not None else (),
+                dois=dois,
+                unasked_dois=unasked,
                 registry=research.registry,
                 papers=research.papers,
                 backend=backend,
@@ -172,4 +174,6 @@ class ClaimNamedRecords(ClaimStep):
         if isinstance(added, DecisionFailed | LlmError):
             return model_failed(added)
         self.results[claim.id] = added
+        if unasked:
+            return NeedsFix(PAPERS_OFF, {"dois": unasked})
         return WorkOutcome.DONE

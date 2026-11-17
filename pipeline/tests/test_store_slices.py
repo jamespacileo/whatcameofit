@@ -570,8 +570,9 @@ def _three_slices(session, tmp_path, monkeypatch, store: "_Store"):
     return args, plan_file
 
 
+@pytest.mark.parametrize("legacy", [False, True])
 def test_slices_run_works_two_then_three_slices_in_one_command(
-    session: Session, tmp_path: Path, monkeypatch
+    session: Session, tmp_path: Path, monkeypatch, legacy
 ):
     from typer.testing import CliRunner
 
@@ -610,7 +611,17 @@ def test_slices_run_works_two_then_three_slices_in_one_command(
     trial = session.scalars(
         select(RegistryTrial).where(RegistryTrial.external_id == "NCT07654322")
     ).one()
-    trial.fetched_at = trial.fetched_at + timedelta(days=1)
+    if legacy:
+        import json
+
+        saved = json.loads(plan_file.read_text())
+        old = saved["slices"][2]
+        old.pop("trials_at")
+        old["done"]["in_store"] = "2026-11-10T12:00:00+00:00"
+        plan_file.write_text(json.dumps(saved))
+    trial.fetched_at = (
+        datetime(2026, 11, 17, 13, tzinfo=UTC) if legacy else trial.fetched_at + timedelta(days=1)
+    )
     trial.title = "A third, updated"
     session.commit()
     store.staged.clear()
@@ -621,6 +632,11 @@ def test_slices_run_works_two_then_three_slices_in_one_command(
     store.staged.clear()
     settled = CliRunner().invoke(app, [*args, "--slices", "3"])
     assert "No slice has work" in settled.output
+    assert "registry_trial" not in store.kinds_sent()
+    saved_plan = Plan.read(plan_file)
+    assert saved_plan is not None and saved_plan.slices[2].trials_at == trial.fetched_at.isoformat(
+        timespec="microseconds"
+    )
 
 
 def test_a_slice_waiting_on_pubmed_is_due_only_when_its_ledger_moved(session: Session):

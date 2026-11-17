@@ -22,12 +22,14 @@ try { from = bucket(argv); } catch (error) { console.error(error.message); proce
 const work = mkdtempSync(join(tmpdir(), "thenwhat-bulk-"));
 const fail = (message) => { console.error(message); rmSync(work, { recursive: true, force: true }); rmSync(`${out}.partial`, { force: true }); process.exit(1); };
 
+// A read that failed (not an absent key) stops the run as a missing one does.
+const fetched = async (key, path) => { try { return await from.get(key, path); } catch (error) { return fail(`FAILED: ${error.message}`); } };
 const started = Date.now();
-if (!(await from.get(`bulk/${build}/manifest.json`, join(work, "manifest.json")))) fail(`no manifest for build ${build} in ${from.label}: the build is not there, or its upload did not finish`);
+if (!(await fetched(`bulk/${build}/manifest.json`, join(work, "manifest.json")))) fail(`no manifest for build ${build} in ${from.label}: the build is not there, or its upload did not finish`);
 const manifest = JSON.parse(readFileSync(join(work, "manifest.json"), "utf8"));
 for (const part of manifest.parts) {
   const path = join(work, part.name);
-  if (!(await from.get(`bulk/${build}/${part.name}`, path))) fail(`MISSING bulk/${build}/${part.name}`);
+  if (!(await fetched(`bulk/${build}/${part.name}`, path))) fail(`MISSING bulk/${build}/${part.name}`);
   if (statSync(path).size !== part.bytes || (await sha256(path)) !== part.sha256) fail(`DIFFERS bulk/${build}/${part.name}: not the bytes the manifest says`);
 }
 async function* joined() { for (const part of manifest.parts) yield* createReadStream(join(work, part.name)); }

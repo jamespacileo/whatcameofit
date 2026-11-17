@@ -1,5 +1,15 @@
 # Tasks
 
+## 0. Editorial ownership and clinical provenance (P1)
+
+- [x] 0.1 <a id="task-f18"></a>Enforce ownership when writing. Test the two-session interleaving and verify a control where the rule may update its own value. [F18](../../../docs/reviews/2026-11-17-code-review.md#finding-f18) · [Acceptance scenario](specs/health-areas/spec.md#scenario-an-editor-commits-while-a-rule-is-fetching)
+
+- [x] 0.2 <a id="task-f19"></a>Check current trial-match approval when selecting evidence. Export before and after rejection with the old event retained and compare database and store results. [F19](../../../docs/reviews/2026-11-17-code-review.md#finding-f19) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-once-approved-trial-match-is-rejected)
+
+- [x] 0.3 <a id="task-f20"></a>Choose the current registry snapshot per approved trial. Exercise a removed condition, a retained condition and reversed event order on both export paths. [F20](../../../docs/reviews/2026-11-17-code-review.md#finding-f20) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-newer-trial-snapshot-removes-a-condition)
+
+- [x] 0.4 <a id="task-f21"></a>Traverse valid MeSH placements in the pipeline and site. Use Wolfram syndrome/type 1 diabetes for the spurious immune branch and a genuinely multi-placed descriptor as a positive control. [F21](../../../docs/reviews/2026-11-17-code-review.md#finding-f21) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-parent-descriptor-has-an-unrelated-placement)
+
 ## 1. The approach rule
 
 - [x] 1.1 Add `claims/approach_rule.py` with the registry-type table and the pure `approach_from_registry`, importing `registry_types` from `terms/kinds.py`. Verify with pure tests for: one mapped type, types that do not agree, an unmapped type, no type found, and a configuration test that every table value is a configured approach.
@@ -58,6 +68,18 @@
 
 - [x] 7.1 Run `make check` and verify ruff, ty, pytest and the site build pass.
 - [ ] 7.2 On the writer, with the operator's go-ahead: run the migration and the three reports of Decision 9, and time the export and the site build before and after on the real data; record all of it in `design.md` under "Measured". Verify all are written there before any write run.
+
+## 9. Editorial ownership and clinical provenance (P2)
+
+- [ ] 9.1 <a id="task-f22"></a>Persist a definitive negative for its vocabulary year. Restart the reader and verify the known category survives, with a transient lookup failure as a control. [F22](../../../docs/reviews/2026-11-17-code-review.md#finding-f22) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-definitive-negative-paper-heading-accompanies-usable-evidence)
+
+- [ ] 9.2 <a id="task-f23"></a>Include vocabulary year in refresh eligibility. Test changed and retired records across two years and reuse of current records on an unchanged rerun. [F23](../../../docs/reviews/2026-11-17-code-review.md#finding-f23) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-a-stored-descriptor-changes-in-a-new-vocabulary-year)
+
+- [ ] 9.3 <a id="task-f24"></a>Load newly approved condition ancestry during normal preparation. Test the first prepare-to-export cycle and the existing pending behavior when NLM is unavailable. [F24](../../../docs/reviews/2026-11-17-code-review.md#finding-f24) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-preparation-first-discovers-an-approved-condition-term)
+
+- [ ] 9.4 <a id="task-f25"></a>Update browse copy to describe the three evidence sources. Render a model-only assignment beside one supported by a trial and check the source wording. [F25](../../../docs/reviews/2026-11-17-code-review.md#finding-f25) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-category-comes-only-from-the-checked-condition)
+
+- [ ] 9.5 <a id="task-f26"></a>Attribute corroboration to the group whose agreement is counted. Compare otherwise identical fixtures with a trial supporting the agreeing or unrelated group. [F26](../../../docs/reviews/2026-11-17-code-review.md#finding-f26) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-independent-evidence-supports-a-different-topic)
 
 ## Workflow follow-up
 
