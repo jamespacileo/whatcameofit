@@ -205,13 +205,23 @@ def readings_for(
     """The stored readings of the trial that were read from these outcomes: none when the
     trial was never read, or was read from a record whose outcomes differ."""
     read = stored_read(session, source_name, trial_id)
-    if read is None or read.input_hash != input_hash(outcomes):
+    if read is None:
+        return []
+    return readings_that_stand(read.input_hash, readings_of(session, read), outcomes)
+
+
+def readings_that_stand(
+    read_hash: str, readings: Sequence[Reading], outcomes: Sequence[Outcome]
+) -> list[Reading]:
+    """Of a stored read's readings, those read from these outcomes that the rules still
+    let through: none when the read was of a record whose outcomes differ."""
+    if read_hash != input_hash(outcomes):
         return []
     # Recheck old reads without paying for another model call or rewriting their
     # provenance. A new refusal leaves the registry's own field in the export.
     return [
         reading
-        for reading in readings_of(session, read)
+        for reading in readings
         if refusal(
             Proposed(
                 outcome=reading.outcome,

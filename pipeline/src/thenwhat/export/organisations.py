@@ -11,26 +11,20 @@ the date the record was read. Organisations are never an input to the status.
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlsplit
 
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import select
-from sqlalchemy.orm import Session
 
-from thenwhat.claims.entities import ORGANISATION_TYPES, entities_of
+from thenwhat.claims.entities import ORGANISATION_TYPES
 from thenwhat.claims.entry import name_key
-from thenwhat.db.models import (
-    Claim,
-    Entity,
-    EntityArticle,
-    EntityMatch,
-    OrganisationRecord,
-    SourceArticle,
-)
-from thenwhat.domain import EntityType, NamedBy, ReviewState
+from thenwhat.db.models import Entity, EntityMatch, OrganisationRecord, SourceArticle
+from thenwhat.domain import EntityType, NamedBy
 from thenwhat.sources.base import SourceRecord, record_url
 from thenwhat.sources.ror import Ror, describe
+
+if TYPE_CHECKING:
+    from thenwhat.export.records import Records
 
 OrganisationRole = Literal["named_in_report", "sponsor"]
 # The order an organisation's roles are listed in, and organisations by their first role.
@@ -149,20 +143,13 @@ class _Organisation:
 
 
 def _identified_by(
-    session: Session, entity: Entity
+    records: "Records", entity: Entity
 ) -> tuple[EntityMatch, OrganisationRecord] | None:
     """The entity's approved organisation match, the most recent when there are several,
     with the record it points to. None when no approved match has a record read."""
-    for match in session.scalars(
-        select(EntityMatch)
-        .where(
-            EntityMatch.entity_id == entity.id,
-            EntityMatch.source_name == Ror.name,
-            EntityMatch.review_state == ReviewState.APPROVED,
-        )
-        .order_by(EntityMatch.id.desc())
-    ):
-        kept = session.get(OrganisationRecord, (match.source_name, match.external_id))
+    approved = [m for m in records.approved_matches(entity) if m.source_name == Ror.name]
+    for match in sorted(approved, key=lambda m: m.id, reverse=True):
+        kept = records.organisation_record(match.source_name, match.external_id)
         if kept is not None:
             return match, kept
     return None
@@ -198,19 +185,18 @@ def _names(entity: Entity) -> set[str]:
 
 
 def organisations_of(
-    session: Session,
-    claim: Claim,
+    records: "Records",
+    entities: list[Entity],
     *,
     articles: list[SourceArticle],
     sponsors: dict[str, str],
 ) -> list[ExportedOrganisation]:
-    """The claim's organisations, ordered by role and then by name.
+    """The organisations among a claim's entities, ordered by role and then by name.
 
     `sponsors` maps each listed trial's identifier to its lead sponsor's name, for the
     trials whose sponsor is not a person. An organisation whose name is a person's
     recorded for the claim is never listed.
     """
-    entities = entities_of(session, claim)
     people = {
         key for entity in entities if entity.type is EntityType.PERSON for key in _names(entity)
     }
@@ -219,7 +205,7 @@ def organisations_of(
     for entity in entities:
         if entity.type not in ORGANISATION_TYPES or _names(entity) & people:
             continue
-        identified = _identified_by(session, entity)
+        identified = _identified_by(records, entity)
         record = _record(*identified) if identified else None
         if record is not None and name_key(record.name) in people:
             continue
@@ -235,13 +221,7 @@ def organisations_of(
         if NamedBy.ARTICLE in entity.named_by:
             organisation.named_in_report = True
             organisation.article_urls += [
-                article_urls[link]
-                for link in session.scalars(
-                    select(EntityArticle.source_article_id).where(
-                        EntityArticle.entity_id == entity.id
-                    )
-                )
-                if link in article_urls
+                article_urls[link] for link in records.named_in(entity) if link in article_urls
             ]
         names = _names(entity)
         organisation.trial_ids += [
