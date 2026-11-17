@@ -174,7 +174,7 @@ const mainMeasure = planned[0]?.measure ?? null;
         </span>
       )
     }
-    {measuredPhrase && <span>What it measured was read by a model and checked against the record</span>}
+    {measuredPhrase && <span>{trial.state === "not_started" ? "The planned measure" : "What it measured"} was read by a model and checked against the record</span>}
     {
       trial.url && (
         <a class="unbroken" href={trial.url} rel="noopener">

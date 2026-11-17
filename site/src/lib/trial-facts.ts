@@ -590,6 +590,7 @@ export function trialColumns(
 /** What the fold's control says is inside it. */
 export function foldLabel(trial: ExportedTrial): string {
   const facts = trial.facts;
+  if (trial.state === "not_started" && facts?.primary_outcomes.length) return "Who it plans to enroll, who runs it, and what it plans to measure";
   if (facts?.results) return FOLD_LABELS.results;
   if (facts && (facts.primary_outcomes.length > 0 || facts.sponsor || facts.age_groups.length > 0)) {
     return FOLD_LABELS.planned;

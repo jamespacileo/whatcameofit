@@ -2,7 +2,7 @@
 
 ## 0. Evidence in the claim brief and timetable (P1)
 
-- [ ] 0.1 <a id="task-f14"></a>Preserve enrollment basis and outcome status in the brief and expanded facts. Render the Impella/NCT05064202 fixture and an actual-enrollment control. [F14](../../../docs/reviews/2026-11-17-code-review.md#finding-f14) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-single-trial-has-only-planned-enrollment)
+- [x] 0.1 <a id="task-f14"></a>Preserve enrollment basis and outcome status in the brief and expanded facts. Render the Impella/NCT05064202 fixture and an actual-enrollment control. [F14](../../../docs/reviews/2026-11-17-code-review.md#finding-f14) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-single-trial-has-only-planned-enrollment)
 
 - [x] 1 Mocks: nine sections, 21 variants, three real claims; picks and notes from the operator. `.impeccable/mocks/sections-rebuild/`.
 - [x] 2 The record in brief: `said` and `share` on each row (`lib/record-brief.ts`); sentence over a fact sheet. Verify: 1400px, a row opened and its second press; site tests.
