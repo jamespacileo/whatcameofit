@@ -36,11 +36,7 @@ A run SHALL record, with the time of each: that it started, with its step, its l
 - **THEN** an event records the source and the time it is paused until
 
 ### Requirement: A run can be watched while it works
-`thenwhat measure --live` SHALL show, refreshed at least every five seconds from another process while runs are at work, for the last one, five and fifteen minutes: for each step, records finished a minute by outcome, the share of time running and waiting by cause, cost a minute and cost a record; the records in hand and how long the oldest has been; the sources paused; and the month's spend against its ceiling. It SHALL name the cause most time was spent waiting on. It SHALL change nothing and ask no source.
-
-#### Scenario: Reads held up by one outlet's pacing
-- **WHEN** four workers read leads and most of their time goes to waiting for outlets' turns
-- **THEN** the view shows the read's waiting share by cause and names the outlet's turn as the largest
+`thenwhat measure --live` SHALL show, from another process while runs are at work and refreshed at least every five seconds, what each step did in the last one, five and fifteen minutes. It SHALL change nothing and ask no source.
 
 #### Scenario: Nothing is running
 - **WHEN** no run has recorded anything in the last fifteen minutes
@@ -49,6 +45,21 @@ A run SHALL record, with the time of each: that it started, with its step, its l
 #### Scenario: A measurement reaches the view
 - **WHEN** a record finishes
 - **THEN** the view counts it within five seconds
+
+### Requirement: The live view shows rate, cost and where work is held
+For each step and each window the live view SHALL show records finished a minute by outcome, the share of time running and waiting by cause, cost a minute and cost a record. It SHALL name the cause most time was spent waiting on. It SHALL show the records in hand and how long the oldest has been, the sources paused and until when, and the month's spend against its ceiling.
+
+#### Scenario: Reads held up by one outlet's pacing
+- **WHEN** four workers read leads and most of their time goes to waiting for outlets' turns
+- **THEN** the view shows the read's waiting share by cause and names the outlet's turn as the largest
+
+#### Scenario: Cost while a run works
+- **WHEN** a run has read 200 leads in the last five minutes for 22 cents
+- **THEN** the view shows the read at 40 records a minute, its cost a minute and its cost a record
+
+#### Scenario: A record stuck in hand
+- **WHEN** one record has been in hand for four minutes
+- **THEN** the view shows it as the oldest in hand, with its step and how long
 
 ### Requirement: Measuring costs the work almost nothing
 Recording a measurement SHALL send no request, call no model and make no statement to the database. A worker SHALL hand a finished measurement on and continue: writing it SHALL be done apart from the work, several at a time. With measuring on, a step that asks no source SHALL handle at least 95 of every 100 records it handles with measuring off, over the same records.

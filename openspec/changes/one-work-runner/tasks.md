@@ -37,7 +37,7 @@
 - [ ] 5.3 Record run events (started, ended and why, source paused, records made due) in the day's file beside the measurements; verify with tests for both scenarios of "What happens to a run is recorded as it happens"
 - [ ] 5.4 Replace the sink that opens the file for each measurement with a writer of its own thread: a bounded queue that makes the work wait when full, lines written several at a time and at least once a second, and a count of what could not be written; verify with tests for both scenarios of "A measurement is never lost without being said"
 - [ ] 5.5 Add a benchmark test that runs a step asking no source over 50,000 records with measuring off and on; verify the run with measuring on takes no more than a twentieth longer and makes no database statement for a measurement
-- [ ] 5.6 Add `thenwhat measure --live`: read the day's files from where it last read, keep one, five and fifteen minute windows, and show rates, waiting by cause, cost, records in hand, paused sources and the month's spend; verify with tests for the three scenarios of "A run can be watched while it works" and one refusal test
+- [ ] 5.6 Add `thenwhat measure --live`: read the day's files from where it last read, keep one, five and fifteen minute windows, and show rates, waiting by cause, cost, records in hand, paused sources and the month's spend; verify with tests for every scenario of "A run can be watched while it works" and "The live view shows rate, cost and where work is held", and one refusal test
 - [ ] 5.7 Describe the live view, the wait causes and the events in `docs/daily-run.md`, and add "run", "wait cause" and "run event" to `GLOSSARY.md`; verify the documented command runs as written
 
 ## 6. Lead steps on the new outcomes
