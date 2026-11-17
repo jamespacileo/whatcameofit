@@ -407,6 +407,61 @@ FROM staged_of_trial s WHERE s.kind = 'article_lead'
 ON CONFLICT (registry_trial_id, url_key) DO NOTHING
 ;
 
+-- A paper found under a trial's number is added when the trial has none from that index
+-- with that paper's number; on one held, the record fetched later replaces the stored one.
+INSERT INTO trial_paper (trial_id, source_name, pubmed_id, payload_sha256, fetched_at, added_run, changed_run)
+SELECT s.trial_id, s.body ->> 'source_name', s.body ->> 'pubmed_id', s.body ->> 'payload_sha256',
+       s.body ->> 'fetched_at', s.run_id, s.run_id
+FROM staged_of_trial s WHERE s.kind = 'trial_paper'
+ON CONFLICT (trial_id, source_name, pubmed_id) DO UPDATE SET
+  payload_sha256 = excluded.payload_sha256, fetched_at = excluded.fetched_at, changed_run = excluded.changed_run
+WHERE excluded.fetched_at > trial_paper.fetched_at
+;
+-- Counted before it is written: a slice is added when the store has none under its rule,
+-- year and number, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM trial_slice x WHERE x.rule = s.body ->> 'rule'
+                                             AND x.year = s.body ->> 'year' AND x.number = s.body ->> 'number'))
+FROM staged s WHERE s.kind = 'trial_slice'
+GROUP BY s.run_id, s.kind
+;
+-- A slice never goes back: of each stage's time the later is kept, a time once set is
+-- never unset, and of each count the larger; its group is the one stated with the later
+-- record.
+INSERT INTO trial_slice (rule, year, number, grp, trials, with_results, registry_papers, pubmed_asked,
+                         pubmed_found, in_store, record_at, registry_papers_at, pubmed_papers_at,
+                         in_store_at, page_at, changed_run)
+SELECT s.body ->> 'rule', s.body ->> 'year', s.body ->> 'number', s.body ->> 'grp', s.body ->> 'trials',
+       s.body ->> 'with_results', s.body ->> 'registry_papers', s.body ->> 'pubmed_asked',
+       s.body ->> 'pubmed_found', coalesce(s.body ->> 'in_store', 0), s.body ->> 'record_at',
+       s.body ->> 'registry_papers_at', s.body ->> 'pubmed_papers_at', s.body ->> 'in_store_at',
+       s.body ->> 'page_at', s.run_id
+FROM staged s WHERE s.kind = 'trial_slice'
+ON CONFLICT (rule, year, number) DO UPDATE SET
+  grp = CASE WHEN coalesce(excluded.record_at, '') >= coalesce(trial_slice.record_at, '')
+             THEN excluded.grp ELSE trial_slice.grp END,
+  trials = max(trial_slice.trials, excluded.trials),
+  with_results = max(trial_slice.with_results, excluded.with_results),
+  registry_papers = max(coalesce(trial_slice.registry_papers, excluded.registry_papers),
+                        coalesce(excluded.registry_papers, trial_slice.registry_papers)),
+  pubmed_asked = max(coalesce(trial_slice.pubmed_asked, excluded.pubmed_asked),
+                     coalesce(excluded.pubmed_asked, trial_slice.pubmed_asked)),
+  pubmed_found = max(coalesce(trial_slice.pubmed_found, excluded.pubmed_found),
+                     coalesce(excluded.pubmed_found, trial_slice.pubmed_found)),
+  in_store = max(trial_slice.in_store, excluded.in_store),
+  record_at = max(coalesce(trial_slice.record_at, excluded.record_at),
+                  coalesce(excluded.record_at, trial_slice.record_at)),
+  registry_papers_at = max(coalesce(trial_slice.registry_papers_at, excluded.registry_papers_at),
+                           coalesce(excluded.registry_papers_at, trial_slice.registry_papers_at)),
+  pubmed_papers_at = max(coalesce(trial_slice.pubmed_papers_at, excluded.pubmed_papers_at),
+                         coalesce(excluded.pubmed_papers_at, trial_slice.pubmed_papers_at)),
+  in_store_at = max(coalesce(trial_slice.in_store_at, excluded.in_store_at),
+                    coalesce(excluded.in_store_at, trial_slice.in_store_at)),
+  page_at = max(coalesce(trial_slice.page_at, excluded.page_at),
+                coalesce(excluded.page_at, trial_slice.page_at)),
+  changed_run = excluded.changed_run
+;
+
 -- =========================================================================================
 -- 6. Link leads
 -- =========================================================================================
@@ -847,9 +902,9 @@ WHERE c.id IN (SELECT claim_id FROM staged_of_claim WHERE kind IN ('claim', 'ent
 -- =========================================================================================
 
 -- The report: for each kind, the records whose parents were found, those the run added,
--- and those in conflict. A record whose parent was not found is in no count. Nine kinds
+-- and those in conflict. A record whose parent was not found is in no count. Ten kinds
 -- are already in it: their tables do not say which run added a row (a link, a label, a
--- day's totals, a ledger entry, an icon, a load, a slice, a count), so each was counted
+-- day's totals, a ledger entry, an icon, a load, a slice of work or of trials, a count), so each was counted
 -- by its key just before it was written. (Written as
 -- several statements: D1 allows few terms in one compound SELECT.)
 INSERT INTO merge_report (run_id, kind, resolved, added)
@@ -876,9 +931,9 @@ SELECT run_id, kind, count(*), 0 FROM staged_of_lead
 WHERE kind IN ('link_share', 'link_lead_link', 'lead_reading') GROUP BY kind
 ;
 INSERT INTO merge_report (run_id, kind, resolved, added)
-SELECT run_id, kind, count(*), 0 FROM staged_of_trial WHERE kind = 'article_lead' GROUP BY kind
+SELECT run_id, kind, count(*), 0 FROM staged_of_trial WHERE kind IN ('article_lead', 'trial_paper') GROUP BY kind
 ;
--- Added is what carries this run as the run that added it. The nine kinds counted
+-- Added is what carries this run as the run that added it. The ten kinds counted
 -- earlier keep that count.
 UPDATE merge_report SET added = min(resolved, CASE kind
   WHEN 'payload'            THEN (SELECT count(*) FROM payload            WHERE added_run = merge_report.run_id)
@@ -896,6 +951,7 @@ UPDATE merge_report SET added = min(resolved, CASE kind
   WHEN 'trial_read'         THEN (SELECT count(*) FROM trial_read         WHERE added_run = merge_report.run_id)
   WHEN 'registry_trial'     THEN (SELECT count(*) FROM registry_trial     WHERE added_run = merge_report.run_id)
   WHEN 'article_lead'       THEN (SELECT count(*) FROM article_lead       WHERE added_run = merge_report.run_id)
+  WHEN 'trial_paper'        THEN (SELECT count(*) FROM trial_paper        WHERE added_run = merge_report.run_id)
   WHEN 'link_lead'          THEN (SELECT count(*) FROM link_lead          WHERE added_run = merge_report.run_id)
   WHEN 'link_share'         THEN (SELECT count(*) FROM link_share         WHERE added_run = merge_report.run_id)
   WHEN 'link_lead_link'     THEN (SELECT count(*) FROM link_lead_link     WHERE added_run = merge_report.run_id)

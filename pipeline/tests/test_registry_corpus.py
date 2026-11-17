@@ -322,13 +322,9 @@ def test_nothing_of_the_person_a_responsible_party_is_is_stored(fixture_json):
 
         kept = without_people(study)["protocolSection"]["sponsorCollaboratorsModule"]
 
-        # The one rule for people (`sources/people.py`) removes the investigator's name,
-        # title and affiliation and keeps what names no person: the type, and the
-        # organisation an older record gives.
-        assert kept["responsibleParty"] == {
-            "type": kind,
-            "oldOrganization": "A made-up department",
-        }
+        # The one rule for people (`sources/people.py`) keeps the type alone, by an
+        # allow-list: a field the registry adds later, which may name a person, is dropped.
+        assert kept["responsibleParty"] == {"type": kind}
         assert "made-up person" not in json.dumps(kept["responsibleParty"])
         assert "made-up title" not in json.dumps(kept["responsibleParty"])
 

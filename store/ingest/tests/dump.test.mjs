@@ -235,3 +235,34 @@ test("no checksum statement asks D1 for more than 90 columns, on the real schema
   assert.ok(most > 60 && split >= 1, "a table of many columns is spread over statements");
   assert.equal(fingerprint("wide", Array.from({ length: 70 }, (_, i) => `c${i}`)).length, 3);
 });
+
+// A payload at the row's bound (the schema's CHECK on payload.body, in bytes) is a row far
+// longer than a statement: it is written in parts, every part passes the CHECK, and it
+// comes back whole.
+test("a payload at the row's bound is dumped in parts and comes back whole", async () => {
+  const { INLINE_PAYLOAD_BYTES } = await import("../src/sql.generated.mjs");
+  const table = /CREATE TABLE payload \([\s\S]*?\n\) STRICT;/.exec(readFileSync(here("../../schema.sql"), "utf8"))[0].replace("REFERENCES run (id)", "");
+  assert.match(table, new RegExp(`<= ${INLINE_PAYLOAD_BYTES}\\)`));
+  const path = join(dir, "bound.sqlite");
+  const db = new DatabaseSync(path);
+  db.exec(table);
+  const body = ('{"text":"it\'s ' + 'naïve 日本語 "quoted" '.repeat(40_000)).slice(0, 300_000);
+  const exact = body + "x".repeat(INLINE_PAYLOAD_BYTES - Buffer.byteLength(body));
+  assert.equal(Buffer.byteLength(exact), INLINE_PAYLOAD_BYTES);
+  db.prepare("INSERT INTO payload (sha256, bytes, body, added_run) VALUES (?, ?, ?, 'r1')").run("a".repeat(64), INLINE_PAYLOAD_BYTES, exact);
+  assert.throws(() => db.prepare("INSERT INTO payload (sha256, bytes, body, added_run) VALUES (?, ?, ?, 'r1')").run("b".repeat(64), INLINE_PAYLOAD_BYTES + 1, `${exact}y`), /CHECK/);
+  const out = join(dir, "bound");
+  const done = dump(path, join(out, "store.sql"));
+  assert.equal(done.status, 0, done.stderr);
+  const manifest = JSON.parse(readFileSync(join(out, "manifest.json"), "utf8"));
+  assert.deepEqual([manifest.rows, manifest.rows_written_in_parts], [1, 1]);
+  assert.ok(manifest.statements >= 6, "one row, many statements");
+  const loaded = new DatabaseSync(":memory:");
+  loaded.exec(table);
+  for (const statement of readFileSync(join(out, "store.sql"), "utf8").split(/;\n(?=INSERT INTO|UPDATE|$)/)) {
+    if (!statement.trim()) continue;
+    assert.ok(Buffer.byteLength(statement) < 100_000);
+    loaded.exec(statement);
+  }
+  assert.equal(loaded.prepare("SELECT body FROM payload").get().body, exact);
+});

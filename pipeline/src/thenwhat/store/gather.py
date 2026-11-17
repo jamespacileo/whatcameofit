@@ -50,13 +50,22 @@ from thenwhat.db.models import (
     ReportedStatement,
     SourceArticle,
     TermRecord,
+    TrialPaper,
     TrialRead,
     WorkEntry,
 )
 from thenwhat.domain import OutletKind, ScreenOutcome
 from thenwhat.sources.people import payload_without_people
 from thenwhat.store import records as r
-from thenwhat.store.form import Payload, Record, key_of, payload_of, payload_record_of, url_key
+from thenwhat.store.form import (
+    Payload,
+    Record,
+    key_of,
+    payload_of,
+    payload_record_of,
+    url_key,
+    when,
+)
 
 # Decisions that stay on the device: the lead already holds its score and version.
 LOCAL_DECISION_STEPS = frozenset({"lead_triage"})
@@ -100,7 +109,6 @@ def gather(
     *,
     keep_payload: Callable[[Payload], None] | None = None,
     hot_only: bool = False,
-    trials: Any = None,
 ) -> Gathered:
     """Every record the store keeps of what Postgres holds now, parents before children,
     each natural key once, with counts of what was left out. `keep_payload` is given each
@@ -117,21 +125,15 @@ def stream(
     *,
     keep_payload: Callable[[Payload], None] | None = None,
     hot_only: bool = False,
-    trials: Any = None,
 ) -> Iterator[Record]:
     """`gather`'s records one at a time, in the same order, each natural key once; what
     is left out is counted into `counts`. With `hot_only`, only the hot tier's records,
-    and no bulk table is read but the leads' addresses and claims (tiers.py) and, with
-    `trials`, a rule over `RegistryTrial` (the trial target set), the trials it selects."""
+    and no bulk table is read but the leads' addresses and claims (tiers.py)."""
     # Each key once, by its hash: two keys that are not one share a 64-bit hash about
     # once in 10^12 pairs, and the set stays small for millions of records.
     seen: set[int] = set()
     for record in _gather(
-        session,
-        counts.unnamed,
-        keep_payload or (lambda _: None),
-        hot_only=hot_only,
-        trial_rule=trials,
+        session, counts.unnamed, keep_payload or (lambda _: None), hot_only=hot_only
     ):
         held = hash((record.kind, record.key))
         if held in seen:
@@ -151,7 +153,6 @@ def _gather(
     keep_payload: Callable[[Payload], None],
     *,
     hot_only: bool = False,
-    trial_rule: Any = None,
 ) -> Iterator[Record]:
     def payload_record(value: Any) -> tuple[Record, str]:
         payload = payload_of(value)
@@ -342,19 +343,31 @@ def _gather(
     for icon in session.scalars(select(OutletIcon).order_by(OutletIcon.domain)):
         yield r.outlet_icon_record(icon)
     if hot_only:
-        # The trials of the target set are hot: read them alone.
-        if trial_rule is not None:
-            chosen = select(RegistryTrial).where(trial_rule).order_by(RegistryTrial.id)
-            for trial in _pages(session, chosen):
-                record, sha256 = payload_record(r.registry_payload(trial))
-                yield record
-                yield r.registry_trial_record(trial, payload_sha256=sha256)
         return
 
     for trial in _pages(session, select(RegistryTrial).order_by(RegistryTrial.id)):
         record, sha256 = payload_record(r.registry_payload(trial))
         yield record
         yield r.registry_trial_record(trial, payload_sha256=sha256)
+    # A trial's papers found by its number, without their abstracts or any email (ADR 0011).
+    for paper in _pages(session, select(TrialPaper).order_by(TrialPaper.id)):
+        if paper.registry_trial_id not in trials:
+            continue
+        registry, external = trials[paper.registry_trial_id]
+        record, sha256 = payload_record(payload_without_people(paper.raw_payload))
+        yield record
+        yield Record(
+            "trial_paper",
+            key_of(registry, external, paper.source_name, paper.pubmed_id),
+            {
+                "registry_name": registry,
+                "trial_id": external,
+                "source_name": paper.source_name,
+                "pubmed_id": paper.pubmed_id,
+                "payload_sha256": sha256,
+                "fetched_at": when(paper.fetched_at),
+            },
+        )
     for load in session.scalars(
         select(RegistryLoad).order_by(RegistryLoad.registry_name, RegistryLoad.condition)
     ):

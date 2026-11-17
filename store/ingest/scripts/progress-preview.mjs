@@ -13,12 +13,17 @@ const unavailable = await engineUnavailable();
 if (unavailable) { console.error(unavailable); process.exit(1); }
 const service = await Service.open({ entries: [{ name: "preview", role: "operator", sha256: createHash("sha256").update(TOKEN).digest("hex") }] });
 const at = "2026-11-17T10:00:00.000000+00:00";
+const groups = ["ended with results", "ended", "active with results", "active updated", "active not updated"];
 const slices = Array.from({ length: 52 }, (_, i) => {
-  const trials = i === 51 ? 679 : 2000, reached = (ahead) => Math.round(trials * Math.max(0, Math.min(1, (ahead - i) / 6)));
-  return { slice: `s${String(i + 1).padStart(3, "0")}`, position: i + 1, trials, updated_at: at,
-    stages: { record: reached(40), registry_papers: reached(30), pubmed_papers: reached(24), in_store: reached(14), page: reached(8) } };
+  const trials = i === 51 ? 679 : 2000;
+  const body = { rule: "active-or-ended-this-year", year: 2026, number: i + 1, grp: groups[Math.floor(i / 11)], trials, with_results: i < 22 ? trials : 0, in_store: i < 14 ? trials : i === 14 ? 900 : 0,
+    ...(i < 40 ? { record_at: at } : {}), ...(i < 30 ? { registry_papers_at: at, registry_papers: Math.round(trials * 0.4) } : {}),
+    ...(i < 24 ? { pubmed_papers_at: at, pubmed_asked: trials, pubmed_found: Math.round(trials * 0.3) } : {}), ...(i < 14 ? { in_store_at: at } : {}), ...(i < 8 ? { page_at: at } : {}) };
+  return ["trial_slice", `${body.rule}|${body.year}|${body.number}`, body];
 });
-await service.ask("PUT", "/progress/slices", { token: TOKEN, body: { set: "active-or-ended-this-year", total_trials: 102679, total_slices: 52, slices } });
+// A slice's state is a record like any other: handed over and merged.
+if (await service.hand("preview-slices", slices, { token: TOKEN, as: "operator", writer: "operator", steps: {} })) throw new Error("the made-up slices were refused");
+if ((await service.ask("POST", "/runs/preview-slices/merge", { token: TOKEN })).body.status !== "merged") throw new Error("the made-up slices were not merged");
 // One origin for the page and its requests: every request is handed to the Worker.
 http.createServer(async (request, response) => {
   const chunks = [];

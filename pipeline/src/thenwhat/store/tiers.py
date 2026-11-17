@@ -66,6 +66,8 @@ TIER: dict[str, str] = {
     "store_step": HOT,
     "work_item": HOT,
     "work_slice": HOT,
+    # How far each slice of trials has come: the site's progress reads it from D1.
+    "trial_slice": HOT,
     "deployment": HOT,
     # Counted by a reader's lookup; read by nothing else.
     "unlisted_domain_count": HOT,
@@ -75,6 +77,8 @@ TIER: dict[str, str] = {
     "registry_trial_fts": BULK,
     "registry_load": BULK,
     "article_lead": BULK,
+    # A paper found under a trial's number hangs from its trial.
+    "trial_paper": BULK,
     "link_lead": BULK,
     "link_lead_fts": BULK,
     "link_share": BULK,
@@ -98,6 +102,7 @@ BULK_KINDS = frozenset(
         "registry_trial",
         "registry_load",
         "article_lead",
+        "trial_paper",
         "link_lead",
         "link_share",
         "link_lead_link",
@@ -110,12 +115,6 @@ BULK_KINDS = frozenset(
     }
 )
 
-
-# Bulk tables of which the hot file also keeps the rows of the trial target set: a trial
-# of the set (operator, 2026-11-17: `active-or-ended-this-year`) is loaded into D1 with
-# its states; every other stored trial stays bulk. The bulk file keeps every trial, so
-# what hangs from a trial there (an article lead) still finds it.
-TARGET = ("registry_trial", "registry_trial_status")
 
 # Full-text indexes that read their table's own columns: emptied by their own command.
 EXTERNAL_CONTENT = frozenset({"registry_trial_fts", "link_lead_fts"})
@@ -148,8 +147,14 @@ HOT_KINDS = frozenset(
         "outlet_icon",
         "unlisted_domain",
         "entity_substance",
+        "work_slice",
+        "trial_slice",
     }
 )
+
+
+# The one kind with no tier of its own: a payload goes with the rows that point at it.
+FOLLOWING_KINDS = frozenset({"payload"})
 
 
 def tier_of(table: str) -> str:
@@ -194,20 +199,10 @@ def references(db: sqlite3.Connection) -> Iterator[tuple[str, str, str]]:
             yield table, row[3], row[2]
 
 
-def split(
-    full: Path,
-    out: Path,
-    tier: str,
-    *,
-    payloads: Path | None = None,
-    hot_trials: Iterable[tuple[str, str]] | None = None,
-) -> Path:
+def split(full: Path, out: Path, tier: str, *, payloads: Path | None = None) -> Path:
     """Write `out`, a store file holding `full`'s rows of one tier and the schema whole.
     With `payloads`, the folder of `full`'s payload objects, the tier's objects are
-    copied to `<payloads>/<tier>/` under the same keys. With `hot_trials`, the trial
-    target set by registry and identifier, the hot file also keeps those trials and their
-    states (`TARGET`), and the payloads they point at."""
-    target = tier == HOT and hot_trials is not None
+    copied to `<payloads>/<tier>/` under the same keys."""
     # A journal left by a split that was stopped would be played onto the new copy.
     for leftover in (out, *(out.with_name(out.name + end) for end in ("-journal", "-wal", "-shm"))):
         leftover.unlink(missing_ok=True)
@@ -216,20 +211,13 @@ def split(
     try:
         db.execute("PRAGMA foreign_keys = OFF")
         db.execute("BEGIN")
-        emptied = [
-            t
-            for t in tables(db)
-            if t != "payload" and not kept_in(t, tier) and not (target and t in TARGET)
-        ]
-        if target:
-            emptied.append("registry_trial_fts")  # rebuilt below from the trials kept
+        emptied = [t for t in tables(db) if t != "payload" and not kept_in(t, tier)]
         # The full-text triggers would delete from their index row by row: they go while
         # the rows do, and are put back as they were.
-        quiet = emptied + (["registry_trial"] if target else [])
         triggers = db.execute(
             "SELECT name, sql FROM sqlite_schema WHERE type = 'trigger' AND tbl_name IN"
-            f" ({', '.join('?' for _ in quiet)})",
-            quiet,
+            f" ({', '.join('?' for _ in emptied)})",
+            emptied,
         ).fetchall()
         for name, _ in triggers:
             db.execute(f"DROP TRIGGER {name}")
@@ -238,29 +226,12 @@ def split(
                 db.execute(f"INSERT INTO {table} ({table}) VALUES ('delete-all')")
             else:
                 db.execute(f"DELETE FROM {table}")
-        if target:
-            db.execute(
-                "CREATE TEMP TABLE kept_trial (registry_name TEXT, external_id TEXT,"
-                " PRIMARY KEY (registry_name, external_id)) WITHOUT ROWID"
-            )
-            db.executemany("INSERT OR IGNORE INTO kept_trial VALUES (?, ?)", list(hot_trials or []))
-            db.execute(
-                "DELETE FROM registry_trial WHERE NOT EXISTS (SELECT 1 FROM kept_trial k"
-                " WHERE k.registry_name = registry_trial.registry_name"
-                " AND k.external_id = registry_trial.external_id)"
-            )
-            db.execute(
-                "DELETE FROM registry_trial_status"
-                " WHERE trial_id NOT IN (SELECT id FROM registry_trial)"
-            )
         for _, sql in triggers:
             db.execute(sql)
-        if target:
-            db.execute("INSERT INTO registry_trial_fts (registry_trial_fts) VALUES ('rebuild')")
         pointing = [
             f"SELECT {column} FROM {table} WHERE {column} IS NOT NULL"
             for table, column, parent in references(db)
-            if parent == "payload" and (in_tier(table, tier) or (target and table in TARGET))
+            if parent == "payload" and in_tier(table, tier)
         ]
         db.execute(
             "DELETE FROM payload WHERE sha256 NOT IN ("
@@ -395,14 +366,7 @@ def tier_path(file: Path, tier: str) -> Path:
     return file.with_name(f"{file.stem}.{tier}{file.suffix}")
 
 
-def split_build(
-    file: Path,
-    payloads: Path,
-    tier: str,
-    *,
-    hot_only: bool = False,
-    hot_trials: Iterable[tuple[str, str]] | None = None,
-) -> list[Path]:
+def split_build(file: Path, payloads: Path, tier: str, *, hot_only: bool = False) -> list[Path]:
     """The tier files of a built store file, written beside it, with each tier's payload
     objects under `<payloads>/<tier>/`. For `all` the whole file is the one written; for
     any other the whole file and its objects folder are removed once split. A build that
@@ -419,11 +383,7 @@ def split_build(
     if tier == ALL:
         return [file]
     wanted = [HOT, BULK] if tier == BOTH else [tier]
-    trials = None if hot_trials is None else list(hot_trials)
-    written = [
-        split(file, tier_path(file, one), one, payloads=payloads, hot_trials=trials)
-        for one in wanted
-    ]
+    written = [split(file, tier_path(file, one), one, payloads=payloads) for one in wanted]
     file.unlink()
     shutil.rmtree(payloads / "payload", ignore_errors=True)
     return written
@@ -467,11 +427,9 @@ def records_of(records: Iterable[Any], kinds: frozenset[str]) -> tuple[list[Any]
     return chosen, left_out + (held is not None)
 
 
-def hot_records(records: Iterable[Any], *, with_trials: bool = False) -> tuple[list[Any], int]:
-    """The records a push to D1 hands over: those of hot kinds and their payloads, and
-    with `with_trials` the trials given (a hot gather with a target set gives only the
-    set's)."""
-    return records_of(records, HOT_KINDS | ({"registry_trial"} if with_trials else set()))
+def hot_records(records: Iterable[Any]) -> tuple[list[Any], int]:
+    """The records a push to D1 hands over: those of hot kinds and their payloads."""
+    return records_of(records, HOT_KINDS)
 
 
 def bulk_records(records: Iterable[Any]) -> tuple[list[Any], int]:

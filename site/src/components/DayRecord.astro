@@ -24,9 +24,11 @@ interface Props {
    * belongs to, drawn as one short line. The list's script decides this again when a
    * choice leaves rows out. */
   follows?: boolean;
+  /** The first of the rows that follow: it carries the one label over them all. */
+  first?: boolean;
 }
 
-const { row, topic, follows = false } = Astro.props;
+const { row, topic, follows = false, first = false } = Astro.props;
 const { claim, event, change } = row;
 const [report] = followedReports(claim);
 const confidence = event.confidence ?? 1;
@@ -49,7 +51,7 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
   data-topic={claim.vertical}
   data-on={row.date}
   data-record={recordKey(row)}
-  data-follows={follows ? "" : undefined}
+  data-follows={follows ? (first ? "first" : "") : undefined}
 >
   <div class="row-main">
     <p class="row-source">
@@ -59,10 +61,10 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
       {topic && <span class="row-topic">{topic}</span>}
       {!report && years > 0 && <span class="row-age">First reported {years} {years === 1 ? "year" : "years"} ago</span>}
     </p>
+    {/* Over the rows that follow a record, once: what they are. A row that follows names
+        its treatment; the record's own words are then for a screen reader only. */}
+    <p class="row-also-label">The same record, for other claims</p>
     <h4 class="row-title">
-      {/* A row that follows its record says "Also for" and the treatment; the record's
-          own words are then for a screen reader only. */}
-      <span class="row-also-label">Also for </span>
       <a href={`/${claim.slug}`}>
         <span class="row-what">{label}</span><span class="visually-hidden">: </span><span class="row-whom">{claim.intervention.name}</span>
       </a>

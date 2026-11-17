@@ -22,6 +22,7 @@ What reads a stored record, and that none of it is removed:
 A site's facility, city and country are kept: they are places, not people.
 """
 
+import re
 from typing import Any
 
 PERSON_CLASSES = frozenset({"INDIV", "INDIVIDUAL"})
@@ -33,6 +34,9 @@ INVESTIGATOR_FIELDS = (
     "investigatorAffiliation",
     "oldNameTitle",
 )
+# What is kept of a responsible party: whether it is the sponsor, a principal investigator
+# or a sponsor-investigator, which the trial's facts read. Nothing else of it.
+PARTY_KEPT = frozenset({"type"})
 # Keys that hold a person's means of contact, wherever they appear.
 CONTACT_KEYS = frozenset({"email", "phone", "phoneExt"})
 
@@ -97,9 +101,9 @@ def without_people(study: dict[str, Any]) -> dict[str, Any]:
             ]
         party = sponsors.get("responsibleParty")
         if isinstance(party, dict):
-            kept["responsibleParty"] = {
-                k: v for k, v in party.items() if k not in INVESTIGATOR_FIELDS
-            }
+            # Kept by name, not removed by name: a field the registry adds later, which
+            # may name a person, is dropped rather than kept.
+            kept["responsibleParty"] = {k: v for k, v in party.items() if k in PARTY_KEPT}
         protocol["sponsorCollaboratorsModule"] = kept
 
     stripped: dict[str, Any] = {**study, "protocolSection": protocol}
@@ -151,7 +155,8 @@ def people_in(study: Any) -> set[str]:
     sponsors = protocol.get("sponsorCollaboratorsModule") or {}
     if isinstance(sponsors, dict):
         party = sponsors.get("responsibleParty") or {}
-        if isinstance(party, dict) and any(party.get(k) for k in INVESTIGATOR_FIELDS):
+        # The allow-list's proof: anything of a responsible party but its type.
+        if isinstance(party, dict) and set(party) - PARTY_KEPT:
             found.add("investigator name, title or affiliation")
         lead = sponsors.get("leadSponsor") or {}
         if isinstance(lead, dict) and lead.get("name") and sponsored_by_a_person(sponsors):
@@ -227,10 +232,38 @@ def _without_keys(value: Any, keys: frozenset[str]) -> Any:
 def payload_without_people(payload: Any) -> Any:
     """Any stored payload without a registry's people: a registry study by
     `without_people`; any other payload without a registry's person keys, any email or
-    phone and a paper's abstract, wherever they are. A paper's byline is kept (see above)."""
+    phone, an email address written in a text, and a paper's abstract, wherever they are.
+    A paper's byline is kept (see above)."""
     if is_study(payload):
         return without_people(payload)
-    return _without_keys(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS | ABSTRACT_KEYS)
+    return without_email_text(
+        _without_keys(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS | ABSTRACT_KEYS)
+    )
+
+
+# An email address written in a text, as a paper's affiliation can carry its author's.
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}")
+
+
+def without_email_text(value: Any) -> Any:
+    """A value with every email address in its texts taken out; the rest of each text,
+    an affiliation's institution say, as it is."""
+    if isinstance(value, dict):
+        return {k: without_email_text(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [without_email_text(item) for item in value]
+    if isinstance(value, str) and "@" in value:
+        return EMAIL.sub("", value)
+    return value
+
+
+def emails_in_text(value: Any) -> int:
+    """How many texts in a value hold something shaped as an email address."""
+    if isinstance(value, dict):
+        return sum(emails_in_text(v) for v in value.values())
+    if isinstance(value, list):
+        return sum(emails_in_text(item) for item in value)
+    return int(isinstance(value, str) and EMAIL.search(value) is not None)
 
 
 def keys_found(value: Any, keys: frozenset[str]) -> set[str]:

@@ -141,11 +141,11 @@ Under a heading that names one day, a report's or a registry record's row of the
 - **THEN** its row draws "21 Oct 2026"
 
 ### Requirement: A record matched to several claims is drawn once
-Where one registry record is listed in a day for more than one claim, the day-by-day list SHALL draw the record in full for the first of those claims and SHALL list each further claim straight after it as one line that names the treatment, leading to its claim page, and what it is for, with that claim's own status. When a reader's choice leaves the first of those rows out, the first one left SHALL be drawn in full. The day's counts SHALL still count every row.
+Where one registry record is listed in a day for more than one claim, the day-by-day list SHALL draw the record in full for the first of those claims and SHALL list each further claim straight after it, under one label that says they are the same record for other claims, as one line that names the treatment, leading to its claim page, and what it is for, with that claim's own status beside it. When a reader's choice leaves the first of those rows out, the first one left SHALL be drawn in full. The day's counts SHALL still count every row.
 
 #### Scenario: One trial, five claims
 - **WHEN** a trial registered on 12 November is matched to five published claims
-- **THEN** the day shows the record once, with its identifier, and four lines after it that each begin "Also for"
+- **THEN** the day shows the record once, with its identifier, then "The same record, for other claims" once, and four lines under it, each a treatment, what it is for and its status
 
 #### Scenario: The leading claim is filtered out
 - **WHEN** a reader narrows the list to a topic the first of those five claims is not filed under

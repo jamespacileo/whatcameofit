@@ -34,6 +34,7 @@ from thenwhat.db.models import Claim, ClaimChange
 from thenwhat.store.form import Payload, Record, body, key_of, when
 from thenwhat.store.gather import Gathered, stream
 from thenwhat.store.push import body_sha256
+from thenwhat.store.tiers import HOT_KINDS
 
 # Records to a run. Each run is one merge, parents before children across runs.
 RUN_RECORDS = 20_000
@@ -58,6 +59,10 @@ class BuildReport:
     size: int = 0
     # Each record handed over, as `push` keeps it: what a later push starts from.
     state: dict[str, str] = field(default_factory=dict)
+    # The same, of the hot tier's records alone: what a load of the hot file holds, and
+    # so what a push to D1 after that load starts from. A bulk record (a trial of the
+    # target set) is not in D1 until a push brings it.
+    hot_state: dict[str, str] = field(default_factory=dict)
     # Names the build: its runs are `build-<id>-<n>`, so a store file and D1 both say
     # which build they hold with `build_id_sql`.
     build_id: str = field(default_factory=lambda: secrets.token_hex(8))
@@ -152,7 +157,6 @@ def runs_of(
     report: BuildReport,
     on_kind: Callable[[str, int, float], None] = lambda *_: None,
     hot_only: bool = False,
-    trials: Any = None,
 ) -> Iterator[list[Record]]:
     """The build's runs in the order they are merged, as the records are read: every
     claim under its first slug, the renames, then everything else in runs of
@@ -183,10 +187,20 @@ def runs_of(
                 on_kind(kind, read[kind], time.monotonic() - at)
 
     in_claims = True
-    for record in stream(
-        session, counts, keep_payload=keep_payload, hot_only=hot_only, trials=trials
-    ):
+    held: Record | None = None
+    for record in stream(session, counts, keep_payload=keep_payload, hot_only=hot_only):
         report.state[f"{record.kind}\t{record.key}"] = body_sha256(record)
+        # A payload goes with the record after it (`gather`): hot when that record is.
+        if record.kind == "payload":
+            held = record
+        else:
+            if record.kind in HOT_KINDS:
+                report.hot_state[f"{record.kind}\t{record.key}"] = report.state[
+                    f"{record.kind}\t{record.key}"
+                ]
+                if held is not None and record.body.get("payload_sha256") == held.key:
+                    report.hot_state[f"payload\t{held.key}"] = report.state[f"payload\t{held.key}"]
+            held = None
         read[record.kind] += 1
         if record.kind not in began:
             tell()
@@ -278,7 +292,6 @@ def build(
     on_kind: Callable[[str, int, float], None] = lambda *_: None,
     hot_only: bool = False,
     build_id: str | None = None,
-    trials: Any = None,
 ) -> BuildReport:
     """Make `path` a store file of everything the store keeps of what Postgres holds now.
     The session is only read. A file already at `path` is replaced."""
@@ -295,7 +308,7 @@ def build(
         db.execute("PRAGMA journal_mode = WAL")
         db.executescript((store_sql / "schema.sql").read_text())
         for number, records in enumerate(
-            runs_of(session, payloads, report, on_kind, hot_only=hot_only, trials=trials)
+            runs_of(session, payloads, report, on_kind, hot_only=hot_only)
         ):
             if not records:
                 continue
