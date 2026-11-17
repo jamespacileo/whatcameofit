@@ -1860,3 +1860,15 @@ test("Scenario: Topic among ten", () => {
   assert.match(list, /href="\/topic\/gum-disease" aria-current="page"[\s\S]*?Gum disease[\s\S]*?class="n">3</);
   assert.ok(!list.includes("empty-topic"));
 });
+
+test("Scenario: summary and notes are clamped, utility sections start folded, the band has its drawing", () => {
+  const html = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
+  assert.match(html, /<p class="lede" data-clamp="3"/);
+  assert.match(html, /<p class="glance-note" data-clamp="1"/);
+  // The notes that say "not advice" are never cut.
+  assert.doesNotMatch(sectionOf(html, "brief"), /data-clamp/);
+  for (const id of ["pass-on", "check-again"]) {
+    assert.match(html, new RegExp(`data-fold="folded" data-fold-phone="folded"[^>]*>\\s*<h2 class="bar" id="${id}"`));
+  }
+  assert.match(html, /<div class="band-side" aria-hidden="true">\s*<svg/);
+});
