@@ -8,7 +8,21 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, and_, exists, func, not_, or_, select
+from sqlalchemy import (
+    ColumnElement,
+    Integer,
+    Select,
+    and_,
+    any_,
+    bindparam,
+    exists,
+    func,
+    not_,
+    or_,
+    select,
+    update,
+)
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Session, aliased
 
 from thenwhat.db.models import WorkEntry
@@ -343,19 +357,26 @@ def requeue(
         wanted.append(WorkEntry.reason == reason)
         if values:
             wanted.append(WorkEntry.reason_values.contains(dict(values)))
-    entries = list(
-        session.scalars(
-            select(WorkEntry)
-            # Every record that still exists, in the step's scope or not: one out of
-            # scope is not worked on whatever its entry says.
-            .join(step.model, _entry_of(step))
-            .where(*wanted)
-            .order_by(WorkEntry.record_id)
-        )
+    # Lock the same records first as a worker taking a batch. The step can then
+    # clear its lead outcomes in this transaction without racing the next retry.
+    candidates = (
+        select(WorkEntry.id, WorkEntry.record_id)
+        .join(step.model, _entry_of(step))
+        .where(*wanted)
+        .order_by(WorkEntry.record_id)
     )
-    if not dry_run:
-        for entry in entries:
-            entry.stale = True
-            entry.attempts = 0
-        session.flush()
-    return [entry.record_id for entry in entries]
+    if dry_run:
+        return [row.record_id for row in session.execute(candidates)]
+    entry_ids = list(session.scalars(candidates.with_for_update(of=step.model)))
+    if not entry_ids:
+        return []
+    # A worker could have finished while the record lock was being acquired.
+    changed = session.scalars(
+        update(WorkEntry)
+        .where(
+            WorkEntry.id == any_(bindparam("entry_ids", entry_ids, type_=ARRAY(Integer))), *wanted
+        )
+        .values(stale=True, attempts=0)
+        .returning(WorkEntry.record_id)
+    )
+    return sorted(changed)
