@@ -90,6 +90,15 @@
         "127.0.0.1"
       ],
       "port": 4335
+    },
+    {
+      "name": "store-progress",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "store/ingest/scripts/progress-preview.mjs",
+        "8791"
+      ],
+      "port": 8791
     }
   ]
 }

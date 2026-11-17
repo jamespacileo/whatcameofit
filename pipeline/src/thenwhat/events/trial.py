@@ -11,6 +11,7 @@ from typing import Any
 from thenwhat.domain import EventType, TrialPhase, TrialState
 from thenwhat.events.draft import EventDraft
 from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.people import without_people
 
 PHASES = {
     "EARLY_PHASE1": TrialPhase.EARLY_PHASE_1,
@@ -40,7 +41,8 @@ STATES_WITH_A_COMPLETION_DATE = {TrialState.COMPLETED, TrialState.TERMINATED}
 
 
 def trial_events(record: SourceRecord) -> list[EventDraft]:
-    study = record.payload
+    # An event keeps the record as fetched, without the people it names (sources/people.py).
+    study = without_people(record.payload)
     status = study["protocolSection"]["statusModule"]
     registry_phases = study["protocolSection"].get("designModule", {}).get("phases", [])
     phases = tuple(PHASES[phase] for phase in registry_phases if phase in PHASES)

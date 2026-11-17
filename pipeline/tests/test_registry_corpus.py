@@ -307,7 +307,7 @@ def test_a_recorded_sponsor_investigator_is_stored_without_a_name(
     }
 
 
-def test_only_the_type_of_a_responsible_party_is_stored(fixture_json):
+def test_nothing_of_the_person_a_responsible_party_is_is_stored(fixture_json):
     study = fixture_json("clinicaltrials/list_page_wide.json")["studies"][0]
     sponsors = study["protocolSection"]["sponsorCollaboratorsModule"]
     for kind in ("SPONSOR_INVESTIGATOR", "PRINCIPAL_INVESTIGATOR"):
@@ -322,8 +322,15 @@ def test_only_the_type_of_a_responsible_party_is_stored(fixture_json):
 
         kept = without_people(study)["protocolSection"]["sponsorCollaboratorsModule"]
 
-        assert kept["responsibleParty"] == {"type": kind}
-        assert "made-up" not in json.dumps(kept["responsibleParty"])
+        # The one rule for people (`sources/people.py`) removes the investigator's name,
+        # title and affiliation and keeps what names no person: the type, and the
+        # organisation an older record gives.
+        assert kept["responsibleParty"] == {
+            "type": kind,
+            "oldOrganization": "A made-up department",
+        }
+        assert "made-up person" not in json.dumps(kept["responsibleParty"])
+        assert "made-up title" not in json.dumps(kept["responsibleParty"])
 
 
 def test_an_organisation_with_a_principal_investigator_is_still_named(fixture_json):
