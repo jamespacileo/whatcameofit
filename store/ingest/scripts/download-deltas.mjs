@@ -17,12 +17,17 @@ let from;
 try { from = bucket(argv); } catch (error) { console.error(error.message); process.exit(2); }
 mkdirSync(out, { recursive: true });
 const listed = join(out, "deltas.json");
-if (!(await from.get(`bulk/${build}/deltas.json`, listed))) { writeFileSync(listed, JSON.stringify({ build, deltas: [] }, null, 1) + "\n"); console.log(`build ${build} has no delta in ${from.label}`); process.exit(0); }
-const { deltas } = JSON.parse(readFileSync(listed, "utf8"));
+// Absent only when Wrangler says so: a list that could not be read (503) is a failure,
+// never a build without deltas.
+const fetched = async (key, path) => { try { return await from.get(key, path); } catch (error) { console.error(`FAILED: ${error.message}`); rmSync(path, { force: true }); process.exit(1); } };
+if (!(await fetched(`bulk/${build}/deltas.json`, listed))) { writeFileSync(listed, JSON.stringify({ build, deltas: [] }, null, 1) + "\n"); console.log(`build ${build} has no delta in ${from.label}`); process.exit(0); }
+let deltas;
+try { ({ deltas } = JSON.parse(readFileSync(listed, "utf8"))); } catch { deltas = null; }
+if (!Array.isArray(deltas) || deltas.some((delta) => !/^[A-Za-z0-9._-]{1,200}$/.test(delta?.name || "") || delta.name.startsWith("."))) { console.error(`bulk/${build}/deltas.json is not a list of deltas`); process.exit(1); }
 for (const delta of deltas) {
   const path = join(out, `${delta.name}.partial`);
   const fail = (message) => { console.error(message); rmSync(path, { force: true }); process.exit(1); };
-  if (!(await from.get(`bulk/${build}/${delta.name}`, path))) fail(`MISSING bulk/${build}/${delta.name}`);
+  if (!(await fetched(`bulk/${build}/${delta.name}`, path))) fail(`MISSING bulk/${build}/${delta.name}`);
   if (statSync(path).size !== delta.bytes || (await sha256(path)) !== delta.sha256) fail(`DIFFERS bulk/${build}/${delta.name}: not the bytes the list says`);
   renameSync(path, join(out, delta.name));
 }

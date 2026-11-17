@@ -79,5 +79,5 @@ def test_allow_named_fails_when_the_retained_article_also_changed(
     assert result.exit_code == 1, result.output
     comparison = json.loads(report.read_text())
     assert comparison["unexplained"] == 1
-    assert comparison["differences"][0]["cause"] is None
-    assert any("articles[0].title" in path for path in comparison["differences"][0]["places"])
+    [unexplained] = [d for d in comparison["differences"] if d["cause"] is None]
+    assert any("articles[0].title" in path for path in unexplained["places"])

@@ -12,3 +12,13 @@ The kind of a lead's outlet, as the checked-in list gives it, SHALL be part of w
 #### Scenario: The list did not change for an outlet
 - **WHEN** the list changes for one outlet
 - **THEN** the leads of every other outlet keep their screening and are not due
+
+#### Scenario: Bounded rescreening reaches the last lead
+
+- **WHEN** three previously screened leads share a reclassified outlet and each ordinary run is limited to two
+- **THEN** the first two are screened once and the next run reaches the third. A further unchanged run has none of the three due
+
+#### Scenario: Planning sees the same newly eligible leads as screening
+
+- **WHEN** the operator plans screening immediately after an outlet changes classification with three affected leads
+- **THEN** the plan reports three eligible records without modifying them, matching the ensuing screening run

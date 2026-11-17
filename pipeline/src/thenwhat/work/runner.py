@@ -78,9 +78,29 @@ class Run:
 
     id: str
     step: str
-    stop: SourceStop | None = None
     reports: list[RunReport] = field(default_factory=list)
     not_written: int = 0
+
+    # Published before the triggering transaction releases its record to a sibling.
+    stop: tuple[type[SourceStop], str] | None = None
+
+    def check_running(self) -> None:
+        if self.stop is not None:
+            kind, detail = self.stop
+            raise kind(detail)
+
+    @contextmanager
+    def stop_together(self) -> Generator[None]:
+        self.check_running()
+        try:
+            yield
+        except SourceStop as interrupted:
+            stop = interrupted.cause if isinstance(interrupted, StopAfterProgress) else interrupted
+            self.stop = (
+                SpendCeilingReached if isinstance(stop, SpendCeilingReached) else SourceStop,
+                str(stop),
+            )
+            raise
 
     def why(self) -> RunEnd:
         """Why the run ended: a source or the ceiling that stopped any worker, else the
@@ -142,6 +162,7 @@ def process_next(
     skip: set[int],
     put_off_span: timedelta = PUT_OFF_SPAN,
     run: str | None = None,
+    check_running: Callable[[], None] | None = None,
 ) -> Processed | None:
     """Process one due record that no other run is holding, in the caller's transaction.
 
@@ -153,6 +174,8 @@ def process_next(
     a record that another run finished first.
     """
     taken = take_due(session, step, attempt_limit, size=1, skip=skip, now=now)
+    if check_running is not None:
+        check_running()
     if not taken:
         return None
     record = taken[0]
@@ -328,6 +351,7 @@ def process_batch(
     size: int,
     put_off_span: timedelta = PUT_OFF_SPAN,
     run: str | None = None,
+    check_running: Callable[[], None] | None = None,
 ) -> list[Processed] | None:
     """Process up to `size` due records in one call of the step, in the caller's
     transaction, so their results and entries are saved together or not at all.
@@ -338,6 +362,8 @@ def process_batch(
     or None when nothing is due.
     """
     records = take_due(session, step, attempt_limit, size=size, skip=skip, now=now)
+    if check_running is not None:
+        check_running()
     if not records:
         return None
     still_due = set(
@@ -458,11 +484,10 @@ def run_step(
     size = batch_size_of(step)
     while limit is None or report.processed < limit:
         try:
-            if run.stop is not None:
-                raise run.stop
-            with _keep_completed_parts(open_session()) as session:
+            with _keep_completed_parts(open_session()) as session, run.stop_together():
                 if before_call is not None:
                     before_call(session)
+                    run.check_running()
                 if size == 1:
                     one = process_next(
                         session,
@@ -473,6 +498,7 @@ def run_step(
                         skip=tried,
                         put_off_span=put_off_span,
                         run=run.id,
+                        check_running=run.check_running,
                     )
                     processed = None if one is None else [one]
                 else:
@@ -487,6 +513,7 @@ def run_step(
                         size=room,
                         put_off_span=put_off_span,
                         run=run.id,
+                        check_running=run.check_running,
                     )
                 # Remember retryable records before releasing their row locks, so
                 # another worker in this run cannot pick them immediately.
@@ -495,7 +522,6 @@ def run_step(
                         tried.add(record.record_id)
         except SourceStop as interrupted:
             stop = interrupted.cause if isinstance(interrupted, StopAfterProgress) else interrupted
-            run.stop = stop
             report.stopped = str(stop)
             report.ended = (
                 RunEnd.SPEND_CEILING if isinstance(stop, SpendCeilingReached) else RunEnd.CANNOT_ASK

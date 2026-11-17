@@ -870,13 +870,16 @@ def _paper_url(identifier: str, url: str | None) -> str:
     return url
 
 
-def _collect_papers(
+def _collect_matches(
     records: Records, entities: list[Entity], events: list[EvidenceEvent], papers: _Papers
-) -> None:
-    """The origin paper, the papers behind approved follow-up events and the approved
-    related papers. Results papers are added as each trial is read."""
+) -> dict[int, str]:
+    """Collect paper roles and return the current approved registry matches by row ID."""
+    trial_matches: dict[int, str] = {}
     for entity in entities:
         approved = records.approved_matches(entity)
+        trial_matches.update(
+            (m.id, m.external_id) for m in approved if m.source_name == ClinicalTrials.name
+        )
         if entity.is_origin_paper and approved and approved[0].external_id.startswith("10."):
             papers.add(ExportedPaperRole(role="origin"), doi=approved[0].external_id)
         if entity.type is not EntityType.INTERVENTION:
@@ -907,6 +910,7 @@ def _collect_papers(
                 identifier=event.external_id,
                 url=event.source_url,
             )
+    return trial_matches
 
 
 def _trials(
@@ -1244,18 +1248,41 @@ def _unconfirmed_stage_reading(
 
 
 def _clinical_records(
-    events: list[EvidenceEvent], papers: _Papers, terms: list[ClaimTerm]
+    events: list[EvidenceEvent],
+    papers: _Papers,
+    terms: list[ClaimTerm],
+    trial_matches: dict[int, str],
 ) -> ClaimRecords:
     """What the claim's clinical categories are derived from: its approved trial
     records, its papers' index records, and the approved readings of a MeSH descriptor as
     its own condition."""
+    approved_numbers = set(trial_matches.values())
+    by_trial: dict[str, list[EvidenceEvent]] = {}
+    for event in events:
+        if (
+            event.source_name == ClinicalTrials.name
+            and event.type in TRIAL_EVENT_TYPES
+            and event.external_id in approved_numbers
+            and (
+                event.entity_match_id is None
+                or trial_matches.get(event.entity_match_id) == event.external_id
+            )
+        ):
+            by_trial.setdefault(event.external_id, []).append(event)
     return ClaimRecords(
         trials=tuple(
-            (event.external_id, event.raw_payload)
-            for event in events
-            if event.source_name == ClinicalTrials.name and event.type in TRIAL_EVENT_TYPES
+            (number, record.raw_payload)
+            for number, snapshots in sorted(by_trial.items())
+            if (record := newest_registry_record(snapshots)) is not None
         ),
-        papers=tuple(papers.payloads.items()),
+        papers=tuple(
+            (key, payload)
+            for key, payload in papers.payloads.items()
+            if any(
+                role.role != "trial_result" or role.trial_id in by_trial
+                for role in papers.found[key].roles
+            )
+        ),
         terms=tuple(
             CheckedTerm(term.external_id, term.label, term.score)
             for term in terms
@@ -1283,17 +1310,18 @@ def claim_clinical_records(records: Records, claim: Claim) -> ClaimRecords:
     events = records.events(claim)
     entities = records.entities(claim)
     papers = _Papers(records)
-    _collect_papers(records, entities, events, papers)
+    trial_matches = _collect_matches(records, entities, events, papers)
     intervention = next((e for e in entities if e.type is EntityType.INTERVENTION), None)
     names = [intervention.name, *intervention.synonyms] if intervention else []
     # Results papers are found as each trial is read.
     _trials(records, events, papers, intervention_names=names)
-    return _clinical_records(events, papers, records.terms(claim))
+    return _clinical_records(events, papers, records.terms(claim), trial_matches)
 
 
 def _clinical(used: set[str], vocabulary: Vocabulary, not_read: int) -> ExportedClinical:
     """The tree the exported categories sit in: each with every descriptor above it."""
-    nodes = sorted({above for one in used for above in vocabulary.at_or_above(one)})
+    parents, _ = vocabulary.hierarchy(used)
+    nodes = sorted(parents)
     held = [node for node in (vocabulary.get(one) for one in nodes) if node is not None]
     return ExportedClinical(
         mesh_years=sorted({node.year for node in held if node.year}),
@@ -1302,7 +1330,7 @@ def _clinical(used: set[str], vocabulary: Vocabulary, not_read: int) -> Exported
                 identifier=node.identifier,
                 label=node.label,
                 tree_numbers=list(node.tree_numbers),
-                broader=list(node.broader),
+                broader=sorted(parents[node.identifier]),
             )
             for node in held
         ],
@@ -1403,7 +1431,7 @@ def build_export(
         )
         assert intervention is not None, "every claim is created with its intervention entity"
         papers = _Papers(records)
-        _collect_papers(records, entities, events, papers)
+        trial_matches = _collect_matches(records, entities, events, papers)
         terms = records.terms(claim)
         trials = _trials(
             records,
@@ -1412,7 +1440,9 @@ def build_export(
             reading_accept_above,
             [intervention.name, *intervention.synonyms],
         )
-        categories = _clinical_categories(_clinical_records(events, papers, terms), vocabulary)
+        categories = _clinical_categories(
+            _clinical_records(events, papers, terms, trial_matches), vocabulary
+        )
         if categories is None:
             categories_not_read += 1
         else:

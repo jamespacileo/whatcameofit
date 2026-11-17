@@ -159,11 +159,12 @@ class Comparison:
         that differs with the places it differs at."""
         if self.same:
             return [f"The two exports are the same: {self.claims_first} claims, byte for byte."]
-        claims = sum(1 for difference in self.differences if difference.claim)
+        claims = len({d.part for d in self.differences if d.claim})
+        other = sum(not d.claim for d in self.differences)
         lines = [
             f"The two exports differ: {claims} of {self.claims_first} claims"
             f" ({self.claims_second} in the second),"
-            f" and {len(self.differences) - claims} other parts."
+            f" and {other} other parts."
             f" {len(self.differences) - len(self.unexplained)} have a named cause,"
             f" {len(self.unexplained)} do not."
         ]
@@ -199,18 +200,16 @@ def _only_synonym_order(ours: dict[str, Any], theirs: dict[str, Any]) -> bool:
     }
 
 
-def _fold_articles(
-    ours: dict[str, Any], theirs: dict[str, Any], duplicates: dict[str, str]
-) -> dict[str, Any] | None:
-    """Apply just the known article merges to the first export, retaining all other data."""
+def _fold_articles(ours: dict[str, Any], duplicates: Mapping[str, str]) -> dict[str, Any] | None:
+    """The first claim with just the known article merges applied and all else kept, or
+    None when the identified articles cannot be merged safely."""
     source = {article["url"] for article in ours["articles"]}
-    stored = {article["url"] for article in theirs["articles"]}
     for removed, kept in duplicates.items():
         if (
-            removed not in source
+            not isinstance(removed, str)
+            or not isinstance(kept, str)
+            or removed not in source
             or kept not in source
-            or removed in stored
-            or kept not in stored
             or not article_key(kept)
             or article_key(removed) != article_key(kept)
         ):
@@ -219,6 +218,7 @@ def _fold_articles(
     folded["articles"] = [
         article for article in folded["articles"] if article["url"] not in duplicates
     ]
+    kept_urls = set(duplicates.values())
     for field in ("promises", "reported_statements"):
         if field not in folded:
             continue
@@ -227,7 +227,7 @@ def _fold_articles(
         for row in folded[field]:
             url = row["article_url"]
             row["article_url"] = duplicates.get(url, url)
-            if row["article_url"] in duplicates.values():
+            if row["article_url"] in kept_urls:
                 # Equal children from different articles become one store record. If
                 # rows of the same article already collide, the cause is ambiguous.
                 urls = origins.setdefault(_said(row), set())
@@ -249,45 +249,45 @@ def _fold_articles(
     return _claim(folded)
 
 
-def _cause(
-    one: dict[str, Any],
-    other: dict[str, Any],
-    aliases: dict[str, str] | str | None,
-    places: list[str],
-) -> str | None:
-    if _only_synonym_order(one, other):
-        return SYNONYM_ORDER
-    if not isinstance(aliases, dict) or not aliases:
-        return None
-    folded = _fold_articles(one, other, aliases)
-    if folded is None:
-        return None
-    kept = ", ".join(sorted(set(aliases.values())))
-    cause = (
-        "the database holds two source articles of this claim at one"
-        f" address key. The store keeps the first ({kept})."
-    )
-    if folded == other:
-        return cause
-    if _only_synonym_order(folded, other):
-        return f"{cause} {SYNONYM_ORDER}"
-    # A length difference hides a change to a retained row in the original report.
-    # Show what still differs after folding.
-    places.extend(p for p in _places(folded, other, "claim") if p not in places)
-    return None
+def _claim_differences(
+    slug: str, one: dict[str, Any], other: dict[str, Any], aliases: Mapping[str, str] | str | None
+) -> list[Difference]:
+    """How one claim differs: first what the known article merges explain, then what
+    still differs after them, each as its own difference."""
+    differences = []
+    # A legacy text hint names no URLs, so it explains nothing.
+    if isinstance(aliases, Mapping) and aliases:
+        present = {article["url"] for article in other["articles"]}
+        removed = {
+            url: kept for url, kept in aliases.items() if url not in present and kept in present
+        }
+        if removed and (folded := _fold_articles(one, removed)) is not None:
+            kept = ", ".join(sorted(set(removed.values())))
+            cause = (
+                "the data: the database holds two source articles of this claim at one"
+                f" address key. The store keeps the first ({kept})."
+            )
+            differences.append(Difference(slug, True, _places(one, folded, "claim"), cause))
+            one = folded
+    residual = _places(one, other, "claim")
+    if residual:
+        cause = SYNONYM_ORDER if _only_synonym_order(one, other) else None
+        differences.append(Difference(slug, True, residual, cause))
+    return differences
 
 
 def compare(
     first: dict[str, Any],
     second: dict[str, Any],
     *,
-    known: Mapping[str, dict[str, str] | str] | None = None,
+    known: Mapping[str, Mapping[str, str] | str] | None = None,
 ) -> Comparison:
     """Compare two exports, each as parsed JSON. They are the same exactly when their
     canonical bytes are.
 
-    `known` gives, by slug, each duplicate article URL and the URL the store keeps.
-    A legacy text explanation alone is insufficient to attribute a difference."""
+    `known` gives, by slug, each duplicate article URL and the URL the store keeps. Only
+    the differences that merging those articles produces are explained; what else differs
+    on the claim is reported apart. A legacy text hint alone explains nothing."""
     known = known or {}
     ours, theirs = canonical(first), canonical(second)
     differences: list[Difference] = []
@@ -301,11 +301,9 @@ def compare(
         if slug not in our_claims or slug not in their_claims:
             where = "the first" if slug in our_claims else "the second"
             differences.append(Difference(slug, True, [f"only in {where}"]))
-            continue
-        one, other = our_claims[slug], their_claims[slug]
-        places = _places(one, other, "claim")
-        if places:
-            cause = _cause(one, other, known.get(slug), places)
-            differences.append(Difference(slug, True, places, cause))
+        elif our_claims[slug] != their_claims[slug]:
+            differences += _claim_differences(
+                slug, our_claims[slug], their_claims[slug], known.get(slug)
+            )
     assert bool(differences) == (canonical_bytes(first) != canonical_bytes(second))
     return Comparison(len(our_claims), len(their_claims), differences)

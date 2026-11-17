@@ -72,3 +72,7 @@ The site's Worker SHALL remove every person from a registry record before the re
 - **WHEN** a lookup's registry search returns a trial whose lead sponsor is a person
 - **THEN** the answer kept for reuse and the record handed to the lookup do not hold that sponsor's name
 
+#### Scenario: A legacy investigator affiliation appears in a record
+
+- **WHEN** a registry response or a previously cached record contains responsibleParty.oldOrganization
+- **THEN** the Worker recognizes it as an investigator affiliation. The returned record and the replacement cache entry omit the field, in agreement with the pipeline

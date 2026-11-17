@@ -561,7 +561,7 @@ def test_compare_of_every_nth_claim_keeps_both_ends_of_a_merge(session: Session,
 
 
 def test_a_claim_with_two_articles_at_one_address_key_differs_with_its_cause_named(
-    session: Session, tmp_path: Path, invoke
+    session: Session, tmp_path: Path, invoke, monkeypatch
 ):
     """Scenario: A difference the comparison can explain"""
     new_claim(session)
@@ -584,6 +584,17 @@ def test_a_claim_with_two_articles_at_one_address_key_differs_with_its_cause_nam
     assert "two source articles of this claim at one" in " ".join(strict.output.split())
     assert allowed.exit_code == 0, allowed.output
     assert "The two exports differ: 1 of 1 claims" in allowed.output
+
+    def changed_status(first, second, **kwargs):
+        claim_in(first)["status"]["code"] = "phase_3"
+        claim_in(second)["status"]["code"] = "approved"
+        return compare(first, second, **kwargs)
+
+    monkeypatch.setattr("thenwhat.export.parallel.compare", changed_status)
+    wrong = invoke("export-compare", "--store-sql", str(STORE_SQL), "--allow-named")
+    assert wrong.exit_code == 1, wrong.output
+    assert "1 have a named cause, 1 do not" in wrong.output
+    assert "claim.status.code" in wrong.output
 
 
 def test_names_in_another_order_are_the_merges_and_anything_more_is_unexplained(

@@ -12,3 +12,8 @@ The title of a claim page SHALL be the claim's intervention followed by its indi
 #### Scenario: Read aloud
 - **WHEN** a screen reader reads the title
 - **THEN** it reads the intervention, "for", and the indication as one heading
+
+#### Scenario: The indication is readable on paper
+
+- **WHEN** a reader prints the intervention-and-indication heading from either screen theme
+- **THEN** the printed heading distinguishes the indication clearly on paper with background graphics disabled

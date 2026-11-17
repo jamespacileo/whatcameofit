@@ -25,6 +25,11 @@ The ledger SHALL hold at most one entry per record, step and step version. An en
 - **WHEN** a step answers with a reason code it has not declared
 - **THEN** the run fails for that record with an error naming the code, and no entry holds it
 
+#### Scenario: A manually attached historical lead is upgraded
+
+- **WHEN** a lead was manually attached to a claim after an earlier unresolved read and migration 0037 sees added_to_claim beside a nothing_found work entry
+- **THEN** the upgrade keeps the claim, article and audit detail on the lead. The earlier read stays terminal with outcome `nothing_found` and reason `already_tracked`. Genuinely unmapped legacy states are still reported
+
 ### Requirement: Due work
 A record SHALL be due for a step when it is in the step's scope and has no ledger entry for that step at its current version with the outcome done, nothing found or needs a fix. A record whose input fingerprint differs from the one in its entry SHALL also be due. A record whose entry holds the outcome later SHALL be due once the time it records has passed, and not before.
 
@@ -47,6 +52,11 @@ A record SHALL be due for a step when it is in the step's scope and has no ledge
 #### Scenario: A record that needs a fix
 - **WHEN** a record's entry says it needs a fix
 - **THEN** no run takes it until its input changes or it is made due by its reason
+
+#### Scenario: Adding a paper changes the lookup inputs
+
+- **WHEN** a prepared claim gains a paper entity with a new DOI and is prepared again
+- **THEN** the responsible lookup becomes due, asks Crossref about the new DOI and becomes current after success
 
 ### Requirement: Failed records
 A failure on one record SHALL be recorded in its entry and SHALL NOT stop the run. A failed record SHALL stay due until its attempts reach the configured limit, after which it is skipped and reported. An outcome of later or needs a fix SHALL count no attempt. A record at the limit SHALL be made due again, with its attempts at zero, when it is made due by the operator.
@@ -88,6 +98,11 @@ Every outcome a step gives SHALL be one of three classes. Final: done or nothing
 - **WHEN** a step establishes that a record holds nothing for it
 - **THEN** the outcome is nothing found, with the reason
 
+#### Scenario: A cited paper awaits a configured source
+
+- **WHEN** an article explicitly cites a DOI and OpenAlex is unconfigured during named-record preparation
+- **THEN** the citation stays identifiable as unfinished. After configuration and the normal recovery or requeue step, the DOI is looked up and the step can complete
+
 ### Requirement: A record put off too long is said to need a fix
 A record answered later for the same reason over a configured span, thirty days unless set, SHALL be recorded as needing a fix with that reason, so that it is listed and not asked for without end.
 
@@ -110,6 +125,11 @@ A record answered later for the same reason over a configured span, thirty days 
 - **WHEN** the operator names a reason the step has not declared
 - **THEN** the command is refused, lists the step's reasons, and changes nothing
 
+#### Scenario: A successful retry races with requeue
+
+- **WHEN** requeue selects a site_busy record and a worker commits a successful retry before requeue updates it
+- **THEN** the completed entry and successful lead outcome survive. Requeue counts only entries it actually changed
+
 ### Requirement: Reasons are counted in the plan
 `thenwhat backfill plan` SHALL show, for each step, the records waiting by class and reason: how many are put off and until when the first is due, and how many need a fix for each reason.
 
@@ -127,6 +147,16 @@ When a source, the page reader or a model cannot be asked at all, for an outage,
 #### Scenario: The ceiling is reached inside a decision
 - **WHEN** the month's ceiling is reached by a decision a step asks after its first model call
 - **THEN** the run stops as for any ceiling, and the record is not recorded as failed
+
+#### Scenario: One worker reports a provider-wide outage
+
+- **WHEN** one of two workers reports a source-wide stop while its sibling is handling a record and more records remain due
+- **THEN** the run stops taking new records across workers. The triggering and unprocessed records remain due with no attempts charged for the outage
+
+#### Scenario: The model budget is exhausted during non-model work
+
+- **WHEN** the monthly model ceiling is reached and a registry fetch or rule-only decision is due
+- **THEN** both can proceed without a model call. A step that actually needs the model respects the ceiling and keeps the affected record due
 
 ### Requirement: A step can depend on another step
 A step SHALL be able to declare the steps that must have finished for a record before it is due. A record SHALL be due for it only when each of those steps has an entry of done or nothing found for the record at that step's current version and for the record's current input.

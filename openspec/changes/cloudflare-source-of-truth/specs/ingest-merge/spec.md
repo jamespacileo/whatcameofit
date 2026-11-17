@@ -282,6 +282,11 @@ The ingest service SHALL show how far the load of trials has come from the slice
 - **WHEN** a lookup's run adds a trial and the inbox is later cleared past it
 - **THEN** the trial's record is folded into the bulk file from the inbox and the trial stays in D1
 
+#### Scenario: A completed slice predates fetch timestamps
+
+- **WHEN** a legacy plan marks a slice pushed on November 10, lacks a fetch watermark and contains a trial fetched again on November 17
+- **THEN** the next ordinary push delivers the current data and establishes a watermark. An unchanged rerun leaves the slice current
+
 ### Requirement: The service is deployed one way and answers no stranger
 The ingest service SHALL be deployed only by its deploy command, which SHALL refuse unless the database's jurisdiction reads back as the European Union and no migration is left to apply, SHALL set the tokens' secret without printing or logging it, and SHALL then ask the deployed service and fail unless every route answers 401 without a known token. The deployed service SHALL bound how often one address without a token, and one token, may ask.
 

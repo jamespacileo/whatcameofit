@@ -25,6 +25,7 @@ export function getStaticPaths() {
 const { node } = Astro.props;
 const tree = buildTree(data.clinical, data.claims);
 const broader = node.broader
+  .filter((parent) => tree.narrower.get(parent)?.includes(node.identifier))
   .map((identifier) => tree.nodes.get(identifier))
   .filter((one) => one !== undefined)
   .sort((a, b) => a.label.localeCompare(b.label));

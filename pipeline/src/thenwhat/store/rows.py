@@ -709,12 +709,12 @@ def work_entry_row(record: Record) -> Row:
             "requests_used": b["requests_used"],
             "fingerprint": b["fingerprint"],
             "stale": bool(b.get("stale", 0)),
-            "error": b.get("error"),
-            "last_attempt_at": moment(b["last_attempt_at"]),
             "reason": b.get("reason"),
             "reason_values": b.get("reason_values"),
             "not_before": moment(b.get("not_before")),
             "first_put_off_at": moment(b.get("first_put_off_at")),
+            "error": b.get("error"),
+            "last_attempt_at": moment(b["last_attempt_at"]),
         },
     )
 

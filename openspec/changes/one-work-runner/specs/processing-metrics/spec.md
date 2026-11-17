@@ -13,6 +13,11 @@ Every record a step handles through the work ledger's runner SHALL be measured b
 - **WHEN** a lead is put off because its site answered 503
 - **THEN** its measurement says it was put off, with that reason's code
 
+#### Scenario: A failed batch falls back to individual records
+
+- **WHEN** a batch of 20 fails and individual fallback finishes 19 records successfully with one failure
+- **THEN** the live throughput and outcomes count 20 completed records, 19 successes and one failure, matching the ledger and run report
+
 ### Requirement: Every wait is given its cause
 Time a record spends not being worked on SHALL be measured as waiting, under the one cause that held it: a source's pacing, a source's pause, an outlet's turn or gap, a place among the page reader's requests in flight, a delay before a retry, the turn that settles which claim an article reports, or a row another run holds. Time that is none of these SHALL be measured as running.
 

@@ -72,6 +72,7 @@ def run_steps(steps: Sequence[ClaimStep], *, workers: int = 1) -> list[StepRun]:
         put_off_span=timedelta(days=settings.work_put_off_days),
         now=now,
         workers=workers,
+        # Both model clients check the ceiling at the point of spending.
     )
 
 

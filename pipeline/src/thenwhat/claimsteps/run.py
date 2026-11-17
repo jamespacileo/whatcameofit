@@ -144,6 +144,7 @@ def run_claim_steps(
     put_off_span: timedelta,
     now: Callable[[], datetime],
     workers: int = 1,
+    before_call: Callable[[Session], None] | None = None,
 ) -> list[StepRun]:
     """Run each step over its due claims in turn, `workers` claims at a time. Before each
     step the claims whose input changed are made due again, so a part an earlier step
@@ -156,24 +157,25 @@ def run_claim_steps(
             notice_changes(session, steps)
         # The claims a worker failed on or put off in this run, kept from the others.
         tried: set[int] = set()
-        work = partial(
-            run_step,
-            open_session,
-            step,
-            now=now,
-            attempt_limit=attempt_limit,
-            tried=tried,
-            put_off_span=put_off_span,
-        )
-        clients = [make_sources() for _ in range(workers)]
-        with measured_run(step.name, limit=None, workers=workers) as run:
-            work = partial(work, run=run)
+        with measured_run(step.name, limit=None, workers=workers) as shared:
+            work = partial(
+                run_step,
+                open_session,
+                step,
+                now=now,
+                attempt_limit=attempt_limit,
+                before_call=before_call,
+                tried=tried,
+                run=shared,
+                put_off_span=put_off_span,
+            )
+            clients = [make_sources() for _ in range(workers)]
             if workers == 1:
                 report = work(clients[0])
             else:
                 with ThreadPoolExecutor(max_workers=workers) as pool:
                     report = merged(list(pool.map(work, clients)))
-        report.not_written = run.not_written
+        report.not_written = shared.not_written
         runs.append(StepRun(step, report, time.monotonic() - started))
     return runs
 

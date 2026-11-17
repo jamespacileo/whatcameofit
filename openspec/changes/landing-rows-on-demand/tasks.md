@@ -24,3 +24,15 @@
 - [ ] 4.3a `make check` in full (the pipeline's lint, types and tests were not run for this change: nothing of theirs is touched).
 - [x] 4.4 Operator confirms that the home page may show its lists' first rows only with scripting off and on paper (proposal, "Decision to confirm"). Confirmed by the operator on 2026-11-17.
 - [ ] 4.5 Checked on the deployed site: a file of rows is served, with the header that asks search engines not to index it.
+
+## 5. Paging, retry and print across home lists
+
+### P2
+
+- [ ] 5.1 <a id="task-f29"></a>Invalidate pending paging intent when the filter changes. Delay the download and verify both the range and page state after filtering. [F29](../../../docs/reviews/2026-11-17-code-review.md#finding-f29) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-filter-changes-while-next-is-pending)
+
+- [ ] 5.2 <a id="task-f30"></a>Retain the current action across a failed fetch. Test Next and an older heading, including replacement by a newer action before retry. [F30](../../../docs/reviews/2026-11-17-code-review.md#finding-f30) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-retry-completes-the-original-action)
+
+- [ ] 5.3 <a id="task-f31"></a>Bind row downloads to the HTML's export or recover to a single export. Test Next across a changed ordering, including loss of an older row file. [F31](../../../docs/reviews/2026-11-17-code-review.md#finding-f31) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-deployment-changes-the-home-list-order)
+
+- [ ] 5.4 <a id="task-f33"></a>Expose every list's initial rows in print media. Check all five with different active tabs and verify printing does not require downloading later rows. [F33](../../../docs/reviews/2026-11-17-code-review.md#finding-f33) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-printing-after-selecting-a-different-tab)

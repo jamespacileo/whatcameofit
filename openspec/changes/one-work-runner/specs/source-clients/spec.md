@@ -28,6 +28,11 @@ When a source cannot be asked until a time, that time SHALL be kept where every 
 - **WHEN** OpenAlex refuses a search because its free allowance is exhausted and the current claim transaction is rolled back
 - **THEN** another process that searches before reset reads the stored pause and sends no search
 
+#### Scenario: A pause begins while a client awaits its turn
+
+- **WHEN** a request was admitted for 12:00:10 and another worker records a pause until 13:00 during the pacing wait
+- **THEN** the client sends no request during the pause and reports the persisted deadline
+
 ### Requirement: Every command's requests count against the source's allowance
 Requests to a source SHALL be counted against that source's allowance whichever command sends them. A command SHALL send no request to a source whose allowance for the period is used up.
 

@@ -297,7 +297,7 @@ test("Scenario: Promise beside the record", () => {
 test("Scenario: Claim with three trials", () => {
   const words = (slug) => wordsOf(rowsOf(claimsPanel()).find((row) => row.includes(`href="/${slug}`)));
   // The count, the largest size and whether results are posted: never what was found.
-  assert.match(words("phase-claim"), /In 7 trials\s+1,200 people in the largest\. Results posted by 1 of 7/);
+  assert.match(words("phase-claim"), /7 trials on record\s+1,200 people planned in the largest\. Results posted by 1 of 7/);
   assert.match(words("quiet-claim"), /None on record\s+The first report was about a study in animals/);
   assert.match(claimsPanel(), /counts the trials on record; it does not say what they found\./);
   assert.doesNotMatch(wordsOf(claimsPanel()), /p\s*[=<]|\d\.\d/);
@@ -873,7 +873,7 @@ const briefOf = (slug) => wordsOf(sectionOf(page(`${slug}/index.html`), "brief")
 test("Scenario: Three trials, the largest of 1,200", () => {
   const html = page("phase-claim/index.html");
   // Said once, in the section: the facts under the digest no longer count the trials.
-  assert.match(briefOf("phase-claim"), /Tested in people\? In 7 trials\. 1,200 people in the largest/);
+  assert.match(briefOf("phase-claim"), /Tested in people\? 7 trials on record\. 1,200 people planned in the largest/);
   assert.match(briefOf("phase-claim"), /The largest number is a planned size, not people who took part\./);
   assert.doesNotMatch(html, /Trials in people/);
   assert.doesNotMatch(html, /7 on record/);
@@ -887,7 +887,7 @@ test("Scenario: Claim with trials", () => {
   // rows, how it was tested before where the records stand now, with no group names.
   assert.match(
     brief.replace(/\s+/g, " ").replace(/ ([.,])/g, "$1"),
-    /Tested in 7 trials, the largest planned for 1,200 people\. One record names a placebo\. 1 of 7 has posted results, on 1 Sep 2025\. One is under way\. No approval is listed, and regulators' records are not read\./,
+    /7 trials on record, the largest planned for 1,200 people\. One record names a placebo\. 1 of 7 has posted results, on 1 Sep 2025\. One is under way\. No approval is listed, and regulators' records are not read\./,
   );
   assert.ok(brief.indexOf("Compared with a placebo?") < brief.indexOf("Results posted to the registry?"));
   assert.doesNotMatch(brief, /How it was tested|Where the records stand now/);
@@ -901,7 +901,7 @@ test("Scenario: Claim with trials", () => {
   // No approval is said by what the site reads, not as "none on record".
   assert.match(brief, /Approved by a regulator\? None listed\. Regulators' records are not read/);
   // The largest trial states no main measure, so that question has nothing to ask.
-  assert.doesNotMatch(brief, /What did the largest trial measure/);
+  assert.doesNotMatch(brief, /What did the largest trial (?:plan to )?measure/);
 });
 
 test("Scenario: Every answer opens to something", () => {

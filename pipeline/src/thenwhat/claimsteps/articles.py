@@ -165,14 +165,15 @@ class ClaimNamedRecords(ClaimStep):
             dois += article.named_dois
         research = sources.make_research(session)
         backend = sources.make_backend(session)
+        unasked: list[str] = []
         added = attempt(
             session,
             lambda: candidates_named_in_article(
                 session,
                 claim,
                 registry_numbers=numbers,
-                # With no literature source configured, papers are left unrecorded.
-                dois=dois if research.papers is not None else (),
+                dois=dois,
+                unasked_dois=unasked,
                 registry=research.registry,
                 papers=research.papers,
                 backend=backend,
@@ -187,6 +188,6 @@ class ClaimNamedRecords(ClaimStep):
         if isinstance(added, DecisionFailed | LlmError):
             return model_failed(added)
         self.results[claim.id] = added
-        if dois and research.papers is None:
-            return NeedsFix(PAPERS_OFF)
+        if unasked:
+            return NeedsFix(PAPERS_OFF, {"dois": unasked})
         return WorkOutcome.DONE

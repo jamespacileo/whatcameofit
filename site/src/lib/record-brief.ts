@@ -11,7 +11,7 @@ import type { ExportedClaim, ExportedEvent, ExportedTrial } from "./export";
 import { measureWords, readingConfidenceLabel } from "./readings.ts";
 import { assertNeutral, sourceName } from "./status.ts";
 import { formatDate } from "./timetable.ts";
-import { COMPARATOR_WORDS, designText } from "./trial-facts.ts";
+import { COMPARATOR_WORDS, designText, sizeText } from "./trial-facts.ts";
 
 export interface BriefRecord {
   /** The registry's identifier, or the regulator's name. */
@@ -80,6 +80,7 @@ export const QUESTIONS = {
   tested: "Tested in people?",
   first_report: "What was the first report about?",
   measure: "What did the largest trial measure?",
+  plannedMeasure: "What did the largest trial plan to measure?",
   results: "Results posted to the registry?",
   under_way: "A trial under way?",
   approved: "Approved by a regulator?",
@@ -105,6 +106,8 @@ export const DEFINITIONS = {
   no_approval:
     "No approval of this treatment for this condition is among the records this site holds. The site does not read regulators' own records, such as the FDA's or the EMA's: an approval is listed only where one was entered by hand, so one can exist and not be listed here.",
   registry_words: "These are the registry's words. No plainer wording is given for this measure.",
+  planned_measure:
+    "The registry lists this as a measure the trial planned. A planned measure alone does not show that it was taken.",
 } as const;
 
 /** What the first report was about, when no trial is on record. */
@@ -202,6 +205,16 @@ export function largestTrial(trials: ExportedTrial[]): ExportedTrial | null {
   return found;
 }
 
+function trialCount(trials: ExportedTrial[], spoken = false): string {
+  const count = `${digits(trials.length)} ${plural(trials.length, "trial", "trials")}`;
+  const label = spoken ? `[[${count}]]` : count;
+  if (trials.every(trial => trial.state === "not_started")) {
+    return `${label} ${trials.length === 1 ? "has" : "have"} not started`;
+  }
+  if (trials.some(trial => trial.state === "not_started")) return `${label} on record`;
+  return `${spoken ? "Tested in" : "In"} ${label}`;
+}
+
 function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRow {
   if (trials.length === 0) {
     return row({
@@ -214,54 +227,106 @@ function testedRow(trials: ExportedTrial[], lastChecked: string | null): BriefRo
     });
   }
   const largest = largestTrial(trials);
-  const count = `In ${digits(trials.length)} ${plural(trials.length, "trial", "trials")}`;
+  const count = trialCount(trials);
+  const saidCount = trialCount(trials, true);
   if (!largest) {
     return row({
       code: "tested",
       question: QUESTIONS.tested,
       answer: count,
-      said: `Tested in [[${digits(trials.length)} ${plural(trials.length, "trial", "trials")}]]`,
-      opened: ["No trial's record states how many people it enrolled."],
+      said: saidCount,
+      opened: ["No trial's record states a number of people, enrolled or planned."],
       link: { href: "#trials", text: plural(trials.length, "See the trial", `See the ${digits(trials.length)} trials`) },
       source: directFrom(trials),
     });
   }
   const size = largest.facts!.participants!;
-  const others = trials
-    .filter((trial) => trial !== largest)
-    .map((trial) => trial.facts?.participants?.count)
-    .filter((stated): stated is number => stated !== undefined)
-    .sort((a, b) => b - a);
-  const opened: string[] = [];
-  if (others.length === 1) opened.push(`The other trial enrolled ${digits(others[0])} people.`);
-  else if (others.length > 1 && others.length <= 3) {
-    const listed = `${others.slice(0, -1).map(digits).join(", ")} and ${digits(others[others.length - 1])}`;
-    opened.push(`The other ${word(others.length)} trials enrolled ${listed} people.`);
-  } else if (others.length > 3) {
-    opened.push(
-      `The others enrolled between ${digits(others[others.length - 1])} and ${digits(others[0])} people.`,
-    );
-  }
+  const planned = size.basis === "planned";
+  const rest = trials.filter((trial) => trial !== largest);
+  const opened = othersSaid(rest);
   opened.push(
-    size.basis === "planned"
-      ? "The largest number is a planned size, not people who took part."
-      : "The largest number is people who took part, not a planned size.",
+    trials.length === 1
+      ? planned
+        ? "The number is a planned size, not people who took part."
+        : "The number is people who took part, not a planned size."
+      : planned
+        ? "The largest number is a planned size, not people who took part."
+        : "The largest number is people who took part, not a planned size.",
   );
   return row({
     code: "tested",
     question: QUESTIONS.tested,
     answer:
       trials.length === 1
-        ? `In 1 trial of ${digits(size.count)} people`
-        : `${count}. ${digits(size.count)} people in the largest`,
+        ? planned
+          ? `${count}. Planned enrollment is ${people(size.count)}`
+          : `In 1 trial of ${people(size.count)}`
+        : `${count}. ${sizeText(size)} in the largest`,
     said:
       trials.length === 1
-        ? `Tested in [[1 trial]] of ${digits(size.count)} people`
-        : `Tested in [[${digits(trials.length)} trials]], the largest ${size.basis === "planned" ? "planned for" : "with"} ${digits(size.count)} people`,
+        ? planned
+          ? `${saidCount}. Planned enrollment is ${people(size.count)}`
+          : `Tested in [[1 trial]] of ${people(size.count)}`
+        : `${saidCount}, the largest ${planned ? "planned for" : "with"} ${people(size.count)}`,
     opened,
     link: { href: "#trials", text: plural(trials.length, "See the trial", `See the ${digits(trials.length)} trials`) },
     source: directFrom(trials),
   });
+}
+
+const people = (count: number) => `${digits(count)} ${plural(count, "person", "people")}`;
+
+/** The sizes of a set of trials that share a basis, largest first, as a clause after a
+ * subject: "enrolled 34 and 31 people", "plan between 18 and 640 people". Never a sum. */
+function sizesClause(counts: number[], verb: { one: string; many: string }): string {
+  const sorted = [...counts].sort((a, b) => b - a);
+  const said = verb[sorted.length === 1 ? "one" : "many"];
+  if (sorted.length === 1) return `${said} ${people(sorted[0])}`;
+  if (sorted.length <= 3) {
+    return `${said} ${sorted.slice(0, -1).map(digits).join(", ")} and ${digits(sorted[sorted.length - 1])} people`;
+  }
+  return `${said} between ${digits(sorted[sorted.length - 1])} and ${digits(sorted[0])} people`;
+}
+
+const ENROLLED = { one: "enrolled", many: "enrolled" };
+const PLAN = { one: "plans", many: "plan" };
+
+/** What the opened answer says of the trials other than the largest: each size with its
+ * basis, so a planned size is never read as people who took part, and how many state no
+ * size. Empty when there is no other trial. */
+function othersSaid(rest: ExportedTrial[]): string[] {
+  if (rest.length === 0) return [];
+  const actual: number[] = [];
+  const planned: number[] = [];
+  let unstated = 0;
+  for (const trial of rest) {
+    const stated = trial.facts?.participants;
+    if (!stated) unstated += 1;
+    else (stated.basis === "planned" ? planned : actual).push(stated.count);
+  }
+  const said: string[] = [];
+  const stated = actual.length + planned.length;
+  const subject =
+    rest.length === 1 ? "The other trial" : stated <= 3 && unstated === 0 ? `The other ${word(rest.length)} trials` : "The others";
+  if (actual.length > 0 && planned.length === 0) said.push(`${subject} ${sizesClause(actual, ENROLLED)}.`);
+  else if (planned.length > 0 && actual.length === 0) said.push(`${subject} ${sizesClause(planned, PLAN)}.`);
+  else if (stated > 0) {
+    const part = (counts: number[], verb: { one: string; many: string }) =>
+      `${word(counts.length)} ${sizesClause(counts, verb)}`;
+    said.push(
+      `Of the ${unstated === 0 ? `other ${word(rest.length)} trials` : "others"}, ${part(actual, ENROLLED)}, and ${part(planned, PLAN)}.`,
+    );
+  }
+  if (unstated > 0) {
+    said.push(
+      rest.length === 1
+        ? "The other trial's record states no number of people."
+        : unstated === 1
+          ? "One other record states no number of people."
+          : `${capital(word(unstated))} other records state no number of people.`,
+    );
+  }
+  return said;
 }
 
 /** The trials of a claim that have posted results to the registry. */
@@ -279,9 +344,10 @@ export function testedSummary(claim: ExportedClaim): { lead: string; detail: str
     return { lead: NONE, detail: about ? `The first report was about ${about}` : null };
   }
   const one = trials.length === 1;
-  const size = largestTrial(trials)?.facts?.participants?.count;
+  const stated = largestTrial(trials)?.facts?.participants;
   const posted = postedTrials(trials).length;
-  const people = size === undefined ? null : one ? `${digits(size)} people` : `${digits(size)} people in the largest`;
+  // "456 people planned": a planned size is said as one, here as on the claim page.
+  const size = stated ? (one ? sizeText(stated) : `${sizeText(stated)} in the largest`) : null;
   const results =
     posted === 0
       ? TESTED_WORDS.no_results
@@ -291,8 +357,8 @@ export function testedSummary(claim: ExportedClaim): { lead: string; detail: str
           ? `${TESTED_WORDS.results} by all ${digits(trials.length)}`
           : `${TESTED_WORDS.results} by ${digits(posted)} of ${digits(trials.length)}`;
   return {
-    lead: `In ${digits(trials.length)} ${plural(trials.length, "trial", "trials")}`,
-    detail: [people, results].filter((part): part is string => part !== null).join(". "),
+    lead: trialCount(trials),
+    detail: [size, results].filter((part): part is string => part !== null).join(". "),
   };
 }
 
@@ -384,13 +450,19 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
   };
   const record = [{ label: trial.trial_id, url: trial.url }];
   const words = measureWords(trial, 0);
+  // A measure the registry names is what the trial planned. It is said as measured only
+  // once the trial has posted results for people who took part.
+  const taken = trial.state !== "not_started" && Boolean(trial.facts?.results) && trial.facts?.participants?.basis !== "planned";
+  const question = taken ? QUESTIONS.measure : QUESTIONS.plannedMeasure;
+  const lead = taken ? "The largest trial measured" : "The largest trial planned to measure";
+  const plan = taken ? [] : [DEFINITIONS.planned_measure];
   if (!words) {
     return row({
       code: "measure",
-      question: QUESTIONS.measure,
+      question,
       answer: `“${outcome.measure}”`,
-      said: `The largest trial measured [[“${outcome.measure}”]]`,
-      opened: [DEFINITIONS.registry_words],
+      said: `${lead} [[“${outcome.measure}”]]`,
+      opened: [DEFINITIONS.registry_words, ...plan],
       link,
       source: { how: "direct", from: null, records: record, on: trial.facts_as_of, onLabel: "Record read", confidence: null },
     });
@@ -398,10 +470,10 @@ function measureRow(trials: ExportedTrial[]): BriefRow | null {
   const timing = words.timeFrame ? ` and gives its timing as “${words.timeFrame}”` : "";
   return row({
     code: "measure",
-    question: QUESTIONS.measure,
+    question,
     answer: `${words.phrase}${words.over}`,
-    said: `The largest trial measured [[${inside(words.phrase)}]]${words.over}`,
-    opened: [`The registry names the measure “${words.measure}”${timing}.`],
+    said: `${lead} [[${inside(words.phrase)}]]${words.over}`,
+    opened: [`The registry names the measure “${words.measure}”${timing}.`, ...plan],
     link,
     source: {
       how: "model",

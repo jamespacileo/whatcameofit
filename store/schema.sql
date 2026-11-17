@@ -686,29 +686,30 @@ CREATE TABLE work_item (
 ) STRICT, WITHOUT ROWID;
 CREATE INDEX ix_work_item_due ON work_item (step, due_since) WHERE state = 'due';
 
--- The latest outcome of each step for a stored record, including why it waits and
--- when it can be tried again. Link steps keep their state on the lead.
+-- The work ledger for records the store holds: one step finished or failed for one record
+-- at one version. The link steps keep no entry here: a lead's own columns say what was
+-- scored and read.
 CREATE TABLE work_entry (
   record_kind      TEXT NOT NULL,
   record_key       TEXT NOT NULL,
   step             TEXT NOT NULL,
   step_version     INTEGER NOT NULL,
   outcome          TEXT NOT NULL CHECK (outcome IN ('done', 'nothing_found', 'later', 'needs_fix', 'failed')),
+  reason           TEXT,
+  reason_values    TEXT CHECK (reason_values IS NULL OR json_type(reason_values) = 'object'),
+  not_before       TEXT,
+  first_put_off_at TEXT,
   attempts         INTEGER NOT NULL CHECK (attempts >= 0),
   requests_used    INTEGER NOT NULL CHECK (requests_used >= 0),
   fingerprint      TEXT NOT NULL,
   stale            INTEGER NOT NULL DEFAULT 0 CHECK (stale IN (0, 1)),
   error            TEXT,
   last_attempt_at  TEXT NOT NULL,
-  reason           TEXT,
-  reason_values    TEXT CHECK (reason_values IS NULL OR json_type(reason_values) = 'object'),
-  not_before       TEXT,
-  first_put_off_at TEXT,
   changed_run      TEXT NOT NULL REFERENCES run (id),
   PRIMARY KEY (record_kind, record_key, step, step_version),
-  CHECK ((outcome = 'failed') = (error IS NOT NULL)),
   CHECK ((outcome = 'later') = (not_before IS NOT NULL)),
-  CHECK (outcome NOT IN ('later', 'needs_fix') OR reason IS NOT NULL)
+  CHECK (outcome NOT IN ('later', 'needs_fix') OR reason IS NOT NULL),
+  CHECK ((outcome = 'failed') = (error IS NOT NULL))
 ) STRICT, WITHOUT ROWID;
 
 -- One platform, one community, one month: who has taken it, and the run that finished it.
