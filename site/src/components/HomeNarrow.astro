@@ -10,9 +10,12 @@ interface Props {
   topics: { slug: string; title: string; count: number }[];
   /** How many claims are at each status, for every topic and, under "", for all. */
   counts: Record<string, Record<string, number>>;
+  /** Inside the day-by-day list's panel each field's name is drawn before it. */
+  named?: boolean;
 }
 
-const { claims, topics, counts } = Astro.props;
+const { claims, topics, counts, named = false } = Astro.props;
+const nameClass = named ? "pick-name" : "visually-hidden";
 const all = counts[""] ?? {};
 const offPath = (Object.keys(all) as StatusCode[]).filter((code) => !STAGE_PATH.includes(code));
 const statuses = [...STAGE_PATH, ...offPath];
@@ -21,7 +24,7 @@ const statuses = [...STAGE_PATH, ...offPath];
 <div class="scoreboard" data-scoreboard>
   {/* Shown by the script: without it there is nothing to pick. */}
   <label class="pick" hidden data-status-filter>
-    <span class="visually-hidden">Status now</span>
+    <span class={nameClass}>Status now</span>
     <select id="feed-status" data-stage-filter data-scope="[data-feed]" data-param="status">
       <option value="">Any status</option>
       {
@@ -36,7 +39,7 @@ const statuses = [...STAGE_PATH, ...offPath];
   {
     topics.length > 1 && (
       <label class="pick topic-filter" hidden data-topic-filter>
-        <span class="visually-hidden">Topic</span>
+        <span class={nameClass}>Topic</span>
         <select id="feed-topic" data-counts={JSON.stringify(counts)}>
           <option value="">All topics</option>
           {topics.map((topic) => (

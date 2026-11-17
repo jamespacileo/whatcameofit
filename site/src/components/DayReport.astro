@@ -7,6 +7,7 @@ import type { ReportRow } from "../lib/day-list";
 import { followedNameFor } from "../lib/reports";
 import { formatDate } from "../lib/timetable";
 import Outlet from "./Outlet.astro";
+import Quoted from "./Quoted.astro";
 import RowStanding from "./RowStanding.astro";
 
 interface Props {
@@ -48,7 +49,7 @@ const moreId = `more-${claim.slug}-${row.date}${picked ? "-picked" : ""}`;
         href={`/${claim.slug}`}
         style={name ? `view-transition-name: ${name}` : undefined}
       >
-        “{first.title}”
+        <Quoted>{first.title}</Quoted>
       </a>
     </h4>
     <p class="row-claim">

@@ -307,6 +307,15 @@ const sentenceJson = sentences
     return fragment;
   }
 
+  // An outlet's title between its marks, drawn as the page's own quotations are
+  // (Quoted.astro): the marks softer than the words, and, where the title leads its
+  // own line, the opening one hung in the margin.
+  function quoted(title: Node, hung = false) {
+    const fragment = document.createDocumentFragment();
+    fragment.append(element("span", "“", hung ? "quote-mark open" : "quote-mark"), title, element("span", "”", "quote-mark"));
+    return fragment;
+  }
+
   // An article we track is answered the way its claim page answers: the status in
   // words, its place on the path, the no-signal note, then what the status means. A
   // search's best match is drawn the same way, under its own heading level, with the
@@ -703,7 +712,7 @@ const sentenceJson = sentences
     const title = element("p", undefined, "search-report-title");
     const link = element("a") as HTMLAnchorElement;
     link.href = claim.page;
-    link.append("“", marked(report.title, words), "”");
+    link.append(quoted(marked(report.title, words), true));
     title.append(link);
     card.append(source, title);
     return card;
@@ -735,7 +744,7 @@ const sentenceJson = sentences
         const { report } = item;
         const link = element("a") as HTMLAnchorElement;
         link.href = report.url;
-        link.append("“", marked(report.title, words), "”");
+        link.append(quoted(marked(report.title, words)));
         const source = element("span", undefined, "match-source");
         source.append(outletName(report));
         if (report.date) source.append(element("span", report.date, "when"));

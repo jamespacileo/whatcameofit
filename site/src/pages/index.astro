@@ -10,6 +10,7 @@ import Pager from "../components/Pager.astro";
 import PromiseText from "../components/PromiseText.astro";
 import StageTrack from "../components/StageTrack.astro";
 import StatusCell from "../components/StatusCell.astro";
+import ThenNow from "../components/ThenNow.astro";
 import TestedCell from "../components/TestedCell.astro";
 import TopicChip from "../components/TopicChip.astro";
 import { EXTENSION_OFFERED, SITE } from "../../site.config.mjs";
@@ -17,6 +18,7 @@ import { SUGGEST_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { calendarByMonth } from "../lib/anniversaries";
 import { dayList } from "../lib/day-list";
 import { data, listedTopics } from "../lib/export";
+import { exampleClaim } from "../lib/extension-page";
 import {
   longestWithoutSignal,
   promisesByDate,
@@ -99,6 +101,8 @@ const calendarDays = calendarByMonth(data.claims).flatMap((month) => month.days)
 // Everything dated, under dated headings. Null when the export does not say when the
 // registries were last checked: then the four lists follow the lookup, as before.
 const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at) : null;
+// The one claim drawn under the box: the site's example, chosen by rule.
+const example = exampleClaim(data.claims);
 ---
 
 <Base current="home" structured={siteData()}>
@@ -131,6 +135,11 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
           )}
         </div>
       </Lookup>
+
+      {/* The site's idea in one look: a headline as it was reported, and where the claim
+          stands on the records. Not drawn on a phone, where a row starts on the first
+          screen. */}
+      {example && <ThenNow claim={example} checkedAt={data.last_checked_at} />}
     </div>
   </section>
 
@@ -168,7 +177,7 @@ const days = data.claims.length > 0 ? dayList(data.claims, data.last_checked_at)
   {
     days ? (
       <DayList list={days} topics={topicChoices}>
-        <HomeNarrow slot="narrow" claims={data.claims} topics={topicChoices} counts={topicCounts} />
+        <HomeNarrow slot="narrow" named claims={data.claims} topics={topicChoices} counts={topicCounts} />
         {/* Beside the list at the right on a wide screen: how the page is made, in
             three short parts, each with one link. */}
         <aside class="days-rail" slot="rail" aria-label="About this list">

@@ -270,6 +270,8 @@ test("matches are ordered by where the words stand side by side, and say what th
   // A report line names its outlet with the outlet's icon over a letter tile, and its date.
   const [report, trial] = rows[0].querySelectorAll(".match-reason");
   assert.match(report.textContent, /“New drug to regrow lost teeth”/);
+  // Its marks are the page's own, softer than the words; inside a line neither hangs.
+  assert.deepEqual([...report.querySelectorAll("a .quote-mark")].map((mark) => mark.className), ["quote-mark", "quote-mark"]);
   assert.equal(report.querySelector(".outlet-icon img").getAttribute("src"), "/outlet-icons/uni.example.ico");
   assert.equal(report.querySelector(".outlet-icon .tile").textContent, "U");
   assert.match(report.textContent, /Example University.*2 Feb 2021/);
@@ -318,6 +320,11 @@ test("a registry identifier is answered with its trial and the claim it belongs 
   assert.match(record.textContent, /ClinicalTrials\.gov NCT00000003.*Phase 1.*Antibody for missing teeth.*A trial on record is not a treatment option\./);
   assert.match(answer.querySelector(".digest").textContent, /Phase 1 trial/);
   assert.match(answer.querySelector(".search-report").textContent, /“New drug to regrow lost teeth”/);
+  // A title that leads its own line hangs its opening mark, as a row of the list does.
+  assert.deepEqual(
+    [...answer.querySelectorAll(".search-report-title .quote-mark")].map((mark) => mark.className),
+    ["quote-mark open", "quote-mark"],
+  );
 });
 
 test("an identifier with no trial on record says so and links to its registry", async () => {
