@@ -518,6 +518,7 @@ def _three_slices(session, tmp_path, monkeypatch, store: "_Store"):
 
     from thenwhat.cli import slices as cli_slices
     from thenwhat.cli.store import base_state_path, state_path
+    from thenwhat.events.paper_records import PapersKept
     from thenwhat.store.push import write_state
 
     world = _world(session)
@@ -556,7 +557,9 @@ def _three_slices(session, tmp_path, monkeypatch, store: "_Store"):
     monkeypatch.setattr(cli_slices, "_working_session", working_session)
     monkeypatch.setattr(cli_slices, "target_rule", lambda name: (three, "test-set:2025"))
     monkeypatch.setattr(cli_slices, "plan", partial(plan, size=1))
-    monkeypatch.setattr("thenwhat.events.paper_records.keep_papers_by_pubmed_id", lambda *a, **k: 0)
+    monkeypatch.setattr(
+        "thenwhat.events.paper_records.keep_papers_by_pubmed_id", lambda *a, **k: PapersKept()
+    )
     monkeypatch.setenv("CONTACT_EMAIL", "ops@thenwhat.test")
     monkeypatch.setenv("INGEST_TOKEN", "t")
     # Read by the settings only: the command works on the test's session above.
@@ -707,5 +710,6 @@ def test_a_failed_push_keeps_the_papers_and_a_lost_paper_runs_the_stage_again(
     again = CliRunner().invoke(app, [*args, "--slices", "3"])
     assert again.exit_code == 0, again.output
     assert "1 of its registry papers are not held" in again.output
+    assert "1 asked of Europe PMC, 0 found, 1 not held, 0 kept as held" in again.output
     assert "88123" in session.scalars(select(PaperRecord.pubmed_id)).all()
     assert papers_sent() == ["88123"]
