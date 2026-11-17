@@ -3,8 +3,9 @@
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
+from typing import Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -79,6 +80,7 @@ class Settings(CallSettings):
 
     # Language model: provider and model as "provider:model". No default on purpose.
     llm_model: str | None = None
+    llm_cache_dir: Path | None = None
     llm_monthly_budget_usd: Decimal = Decimal("13")
     llm_input_usd_per_mtok: Decimal | None = None
     llm_output_usd_per_mtok: Decimal | None = None
@@ -173,6 +175,10 @@ class Settings(CallSettings):
     # and until then nothing is passed.
     lead_pass_above: float | None = None
     lead_reject_below: float | None = None
+    lead_evidence_triage: bool = False
+    lead_evidence_trial_store: Path | None = None
+    lead_evidence_alias_file: Path | None = None
+    research_papers_enabled: bool = True
 
     # Evaluation (openspec lead-evaluation): no link lead is read until this many leads
     # carry a person's label and a score from the current version of triage.
@@ -218,6 +224,12 @@ class Settings(CallSettings):
     # Score only leads first shared on or after this day. Unset scores leads of any date.
     # An older lead stays unscored, and so unread, until a later run widens the period.
     lead_triage_since: date | None = None
+    # Optional inclusive UTC window for a bounded backfill. Narrower step-specific
+    # "since" settings still apply. The reader also checks the publisher's own date.
+    lead_backfill_window: tuple[date, date] | None = None
+    # A sequential batch selects leads first shared on this UTC day. The full
+    # backfill window still controls which publisher dates are eligible.
+    lead_batch_day: date | None = None
 
     # Measurements (openspec processing-metrics). The folder single-step measurements
     # are written to; empty turns measuring off. No default on purpose: they are large
@@ -230,6 +242,22 @@ class Settings(CallSettings):
     # without them.
     measure_keep_days: int | None = Field(default=None, ge=1)
     measure_lookup_keep_days: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def use_calibrated_headline_cutoff(self) -> Self:
+        if self.lead_evidence_triage:
+            self.lead_pass_above = self.lead_reject_below = 0.7883
+        return self
+
+    @model_validator(mode="after")
+    def validate_backfill_window(self) -> Self:
+        if self.lead_backfill_window is not None:
+            first, last = self.lead_backfill_window
+            if first > last:
+                raise ValueError("LEAD_BACKFILL_WINDOW must give the first day before the last day")
+            if self.lead_batch_day is not None and not first <= self.lead_batch_day <= last:
+                raise ValueError("LEAD_BATCH_DAY must be within LEAD_BACKFILL_WINDOW")
+        return self
 
     def chosen_subreddits(self) -> frozenset[str]:
         return frozenset(

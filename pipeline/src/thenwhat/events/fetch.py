@@ -47,7 +47,7 @@ def fetch_claim(
     claim: Claim,
     *,
     trials: TrialRegistry,
-    literature: LiteratureIndex,
+    literature: LiteratureIndex | None,
     notices: NoticeRegistry,
     threshold: float,
     now: datetime,
@@ -77,7 +77,8 @@ def fetch_claim(
     created: list[EvidenceEvent] = []
 
     def keep(**paper: Any) -> None:
-        keep_paper(session, literature, now=now, max_age=paper_max_age, **paper)
+        if literature is not None:
+            keep_paper(session, literature, now=now, max_age=paper_max_age, **paper)
 
     def store(draft: EventDraft, match: EntityMatch | None) -> None:
         event = _store(session, claim, draft, match, threshold, now)
@@ -106,7 +107,7 @@ def fetch_claim(
 
     origin_entity = next((entity for entity in entities if entity.is_origin_paper), None)
     origin_match = next(iter(approved.get(origin_entity.id, [])), None) if origin_entity else None
-    if origin_entity is not None and origin_match is not None:
+    if literature is not None and origin_entity is not None and origin_match is not None:
         origin_doi = origin_match.external_id
         origin = literature.paper(origin_doi)
         names = [

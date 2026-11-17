@@ -158,6 +158,27 @@ class Inputs:
             for identifier in (*row.named_registry_numbers, *row.named_dois)
         )
 
+    @cached_property
+    def matched(self) -> dict[int, list[str]]:
+        """The verified trial numbers, DOIs and PubMed IDs of each claim's articles."""
+        rows = self._session.execute(
+            select(
+                SourceArticle.claim_id,
+                SourceArticle.matched_registry_numbers,
+                SourceArticle.matched_dois,
+                SourceArticle.matched_pubmed_ids,
+            ).where(SourceArticle.claim_id.in_(self._ids))
+        )
+        return _grouped(
+            (row.claim_id, identifier)
+            for row in rows
+            for identifier in (
+                *(f"trial {number.strip().upper()}" for number in row.matched_registry_numbers),
+                *(f"doi {doi.strip().lower()}" for doi in row.matched_dois),
+                *(f"pmid {pmid.strip()}" for pmid in row.matched_pubmed_ids),
+            )
+        )
+
 
 def _grouped(pairs: Any) -> dict[int, list[str]]:
     grouped: dict[int, set[str]] = {}
@@ -204,7 +225,7 @@ def notice_changes(session: Session, steps: Sequence[Reads]) -> int:
 
 def names_a_record() -> Any:
     """The condition of a claim one of whose articles' pages names a registry number or
-    a DOI."""
+    a DOI, or one of whose articles was matched exactly to a trial or a paper."""
     return (
         select(SourceArticle.id)
         .where(
@@ -212,6 +233,9 @@ def names_a_record() -> Any:
             or_(
                 func.cardinality(SourceArticle.named_registry_numbers) > 0,
                 func.cardinality(SourceArticle.named_dois) > 0,
+                func.cardinality(SourceArticle.matched_registry_numbers) > 0,
+                func.cardinality(SourceArticle.matched_dois) > 0,
+                func.cardinality(SourceArticle.matched_pubmed_ids) > 0,
             ),
         )
         .exists()

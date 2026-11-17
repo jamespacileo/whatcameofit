@@ -25,7 +25,7 @@ from thenwhat.decide.steps import (
 )
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.measure import spans as measure
-from thenwhat.resolve.reasons import NAMED_IN_ARTICLE, paper_reasons
+from thenwhat.resolve.reasons import ARTICLE_REASON_CODES, paper_reasons
 from thenwhat.resolve.service import (
     MAX_SUMMARY_CHARACTERS,
     approve_confident,
@@ -230,9 +230,9 @@ def rescore_papers(
             again.append((match, record))
     for match, record in again:
         match.record_summary = paper_line(record)
-        # That the article names the paper is not found from the paper's record, so it
-        # is carried over.
-        named = [NAMED_IN_ARTICLE] if NAMED_IN_ARTICLE in match.reasons else []
+        # That the article names the paper, or that its match was verified, is not found
+        # from the paper's record, so each is carried over in its own order.
+        named = [code for code in ARTICLE_REASON_CODES if code in match.reasons]
         match.reasons = [*_reasons(session, claim, intervention, record), *named]
     score_papers(session, backend, claim=claim, candidates=again, now=now)
     rescored = [match for match, _ in again]

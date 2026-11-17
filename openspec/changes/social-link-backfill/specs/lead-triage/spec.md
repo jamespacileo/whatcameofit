@@ -7,7 +7,7 @@ Scores, from a link lead's title alone, whether the article reports a specific t
 ## ADDED Requirements
 
 ### Requirement: Triage decision
-The triage step SHALL apply to leads that screening left in scope. For each it SHALL request a decision with the options: reports a specific treatment for a specific condition, about health but not that, and not about health. The probability of the first option SHALL be stored as the lead's score, with the version of the step that produced it.
+The triage step SHALL apply to leads that screening left in scope. The standard rule SHALL request a decision with the options: reports a specific treatment for a specific condition, about health but not that, and not about health. The probability of the first option SHALL be stored as the lead's score, with the version of the step that produced it.
 
 #### Scenario: A headline about a trial result
 - **WHEN** a lead in scope is triaged
@@ -18,14 +18,14 @@ The triage step SHALL apply to leads that screening left in scope. For each it S
 - **THEN** it is never triaged and no spend is recorded for it
 
 ### Requirement: What the decision is shown
-The decision SHALL be shown the lead's title, its outlet and the year it was first shared, and nothing else. No article SHALL be fetched for triage.
+The standard decision SHALL be shown the lead's title, its outlet and the year it was first shared, and nothing else. No article SHALL be fetched for triage.
 
 #### Scenario: Triage of ten thousand leads
 - **WHEN** the triage step runs over ten thousand leads
 - **THEN** no outlet receives a request
 
 ### Requirement: The score decides nothing by itself
-A lead's score SHALL NOT create or change a claim, a source article, a match or a status. Whether a lead is passed, held or rejected SHALL be worked out from its score and the two configured thresholds each time it is asked: passed at or above the pass threshold, rejected below the reject threshold, held between them. Neither threshold SHALL have a default.
+A lead's score SHALL NOT create or change a claim, a source article, a match or a status. Whether a lead is passed, held or rejected SHALL be worked out from its score and the thresholds each time it is asked: passed at or above the pass threshold, rejected below the reject threshold, held between them. Neither threshold for the standard rule SHALL have a default.
 
 #### Scenario: Thresholds not set
 - **WHEN** leads are scored and no threshold is configured
@@ -38,6 +38,13 @@ A lead's score SHALL NOT create or change a claim, a source article, a match or 
 #### Scenario: A rejected lead
 - **WHEN** a lead's score is below the reject threshold
 - **THEN** the lead and its score are kept, and it is never read
+
+### Requirement: Calibrated treatment-headline triage
+When the operator enables `LEAD_EVIDENCE_TRIAGE`, triage SHALL run the three calibrated treatment-headline questions with the headline as their only input. The score SHALL be the mean probability of the relevant answer across those questions. The rule SHALL have a separate triage version and SHALL apply 0.7883 to both thresholds.
+
+#### Scenario: Reading after switching rules
+- **WHEN** the calibrated rule is enabled
+- **THEN** the reader requires a score and the evaluation gate for the calibrated version
 
 ### Requirement: No answer is no score
 A lead for which the backend gives no usable answer SHALL have no score and SHALL stay due. No score SHALL be substituted.

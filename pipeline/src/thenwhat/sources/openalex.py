@@ -100,7 +100,6 @@ def describe(record: SourceRecord) -> PaperRecord:
     except ValueError:
         published_date = None
     source = (work.get("primary_location") or {}).get("source") or {}
-    pubmed = str((work.get("ids") or {}).get("pmid") or "").rstrip("/").rsplit("/", 1)[-1]
     return PaperRecord(
         title=str(work.get("title") or ""),
         year=work.get("publication_year"),
@@ -108,7 +107,7 @@ def describe(record: SourceRecord) -> PaperRecord:
         kind=str(work.get("type") or ""),
         journal=str(source.get("display_name") or ""),
         doi=_doi(work),
-        pubmed_id=pubmed if pubmed.isdigit() else None,
+        pubmed_id=_pubmed_id(work),
         authors=tuple(
             Author(
                 name=str((authorship.get("author") or {}).get("display_name") or ""),
@@ -121,6 +120,11 @@ def describe(record: SourceRecord) -> PaperRecord:
         ),
         abstract=_abstract(work.get("abstract_inverted_index")),
     )
+
+
+def _pubmed_id(work: dict[str, Any]) -> str | None:
+    value = str((work.get("ids") or {}).get("pmid") or "").rstrip("/").rsplit("/", 1)[-1]
+    return value if value.isascii() and value.isdecimal() else None
 
 
 def _doi(work: dict[str, Any]) -> str | None:
@@ -212,18 +216,22 @@ class OpenAlex(Source):
         ]
 
     def paper(self, external_id: str) -> SourceRecord | None:
-        """The paper a candidate match points to: by its DOI, or by OpenAlex's own
-        identifier when it has none. None if OpenAlex does not have it. Looking one
+        """Read a paper by DOI, PubMed ID or OpenAlex ID. Looking one
         work up costs nothing, so it is still asked once the day's searches are spent."""
         self._require_key()
+        pubmed_id = external_id.removeprefix("pmid:") if external_id.startswith("pmid:") else None
         if external_id.startswith("10."):
             known_as = f"doi:{external_id}"
-        elif external_id[:1] == "W" and external_id[1:].isdigit():
+        elif (external_id[:1] == "W" and external_id[1:].isdigit()) or (
+            pubmed_id and pubmed_id.isascii() and pubmed_id.isdecimal()
+        ):
             known_as = external_id
         else:
             return None
         fetched = self._get(f"{API}/works/{known_as}", {"select": FIELDS})
-        return self._record(fetched.payload, fetched.fetched_at) if fetched else None
+        if fetched is None or (pubmed_id is not None and _pubmed_id(fetched.payload) != pubmed_id):
+            return None
+        return self._record(fetched.payload, fetched.fetched_at)
 
     def _record(self, work: dict[str, Any], fetched_at: datetime) -> SourceRecord | None:
         own = str(work.get("id") or "").removeprefix(WORK_PREFIX)

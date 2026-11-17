@@ -22,6 +22,7 @@ DOI_LINKS = (
     re.compile(rf"doi\.org/({DOI})", re.IGNORECASE),
     re.compile(rf"/doi/(?:(?:full|abs|pdf|epdf|epub)/)?({DOI})", re.IGNORECASE),
 )
+DOI_CITATION = re.compile(rf"\bdoi\s*:\s*({DOI})", re.IGNORECASE)
 # Publishers whose article address holds the DOI's second half.
 NATURE = re.compile(r"nature\.com/articles/([a-z0-9][a-z0-9.-]+)", re.IGNORECASE)
 ELSEVIER_PII = re.compile(r"(?:thelancet|cell)\.com/[^\s\"']*?/PII(S[0-9X()-]+)", re.IGNORECASE)
@@ -127,7 +128,7 @@ def read_page(html: str, main: str | None = None) -> Page:
         registry_numbers=_unique(
             number.upper() for number in REGISTRY_NUMBER.findall(f"{all_text} {links}")
         ),
-        dois=_unique(_dois(links)),
+        dois=_unique(_dois(links, text)),
         pubmed_ids=_unique(PUBMED.findall(links)),
     )
 
@@ -252,11 +253,18 @@ def _structured(blocks: list[str]) -> dict[str, str]:
     return found
 
 
-def _dois(links: str) -> list[str]:
-    found = [doi.rstrip(".,;") for pattern in DOI_LINKS for doi in pattern.findall(links)]
+def _dois(links: str, text: str) -> list[str]:
+    found = [doi for pattern in DOI_LINKS for doi in pattern.findall(links)]
     found += [f"10.1038/{name}" for name in NATURE.findall(links)]
     found += [f"10.1016/{pii}" for pii in ELSEVIER_PII.findall(links)]
-    return [doi.lower() for doi in found]
+    found += DOI_CITATION.findall(text)
+    normalized = []
+    for value in found:
+        doi = value.rstrip(".,;")
+        while doi.endswith(")") and doi.count(")") > doi.count("("):
+            doi = doi[:-1]
+        normalized.append(doi.lower())
+    return normalized
 
 
 def _first(tags: dict[str, str], names: tuple[str, ...]) -> str | None:

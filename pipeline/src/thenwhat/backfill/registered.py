@@ -33,12 +33,21 @@ def link_read_step(settings: Settings, triage_version: int, **options: Any) -> L
         outlet_gap_seconds=settings.reader_outlet_gap_seconds,
         site_retry_hours=settings.lead_site_retry_hours,
         read_since=settings.lead_read_since,
+        window=settings.lead_backfill_window,
+        batch_day=settings.lead_batch_day,
+        use_current_triage_only=settings.lead_evidence_triage,
         **options,
     )
 
 
 def make_triage(settings: Settings) -> LinkTriage:
-    return LinkTriage(topic_terms=terms_of(), since=settings.lead_triage_since)
+    day = settings.lead_batch_day
+    return LinkTriage(
+        topic_terms=terms_of(),
+        since=settings.lead_triage_since,
+        use_evidence_rule=settings.lead_evidence_triage,
+        window=(day, day) if day is not None else settings.lead_backfill_window,
+    )
 
 
 def registered_steps(settings: Settings, year: int | None = None) -> list[Step]:
@@ -49,7 +58,7 @@ def registered_steps(settings: Settings, year: int | None = None) -> list[Step]:
     return [
         NewsSearch(leads_per_trial=settings.leads_per_trial),
         TrialPapers(trials_per_request=settings.pubmed_trials_per_request, year=year),
-        LinkScreen(links_max=settings.lead_links_max),
+        LinkScreen(links_max=settings.lead_links_max, batch_day=settings.lead_batch_day),
         triage,
         link_read_step(settings, triage.version),
         *claim_steps(settings),

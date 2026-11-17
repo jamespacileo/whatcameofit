@@ -252,3 +252,12 @@ def test_reader_main_content_remains_authoritative_over_structured_body():
     assert "Main visible article." in page.as_text()
     assert "Structured." not in page.as_text()
     assert page.body is not None
+
+
+def test_plain_text_doi_citations_preserve_the_paper_identifier() -> None:
+    page = read_page(
+        "<article><p>Study reference (doi:10.1016/S0140-6736(26)01655-7).</p>"
+        "<p>Unrelated number 10.1001/not-a-citation.</p></article>"
+    )
+
+    assert page.dois == ("10.1016/s0140-6736(26)01655-7",)

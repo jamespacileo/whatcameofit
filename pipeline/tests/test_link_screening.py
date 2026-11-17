@@ -28,7 +28,9 @@ from thenwhat.backfill.link_screen import (
     TITLE_NAMES_TRIAL,
     LinkScreen,
 )
+from thenwhat.backfill.registered import registered_steps
 from thenwhat.claims.entry import add_article, add_claim
+from thenwhat.config import Settings
 from thenwhat.db.models import (
     ArticleLead,
     Claim,
@@ -67,6 +69,23 @@ def screen(session: Session, step: LinkScreen | None = None) -> Client:
     client = Client()
     run_step(same_session(session), step or LinkScreen(), client, now=lambda: NOW, attempt_limit=3)
     return client
+
+
+def test_sequential_batch_screens_only_leads_first_shared_on_that_day(session: Session):
+    older = share(session, "https://bbc.com/news/older")
+    older.first_shared_at = datetime(2019, 5, 3, 23, 59, tzinfo=UTC)
+    selected = share(session, "https://bbc.com/news/selected")
+    newer = share(session, "https://bbc.com/news/newer")
+    newer.first_shared_at = datetime(2019, 5, 5, 0, 0, tzinfo=UTC)
+    session.flush()
+
+    settings = Settings(database_url="unused", lead_batch_day=WHEN.date())
+    step = next(step for step in registered_steps(settings) if isinstance(step, LinkScreen))
+    screen(session, step)
+
+    assert selected.screen_outcome is ScreenOutcome.IN_SCOPE
+    assert older.screen_outcome is None
+    assert newer.screen_outcome is None
 
 
 def links(session: Session, lead: LinkLead) -> list[tuple[str, int, str]]:

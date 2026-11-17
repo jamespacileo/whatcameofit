@@ -39,6 +39,11 @@ Two addresses SHALL be the same link lead when the site's address comparison tre
 - **WHEN** a load is stopped and started again on the same file
 - **THEN** every post in the file is stored once
 
+#### Scenario: A staged GDELT article listing
+- **WHEN** the operator loads a GDELT Global Article List JSONL file containing a source, URL, headline and UTC date per row
+- **THEN** each valid row becomes an unreviewed link lead with a GDELT share dated to that UTC day, malformed rows are counted, and a repeated load adds no duplicate lead or share
+- **AND** the publication date of a source article still comes from the publisher's page during reading
+
 #### Scenario: A platform with no reader
 - **WHEN** the operator names a platform the pipeline has no reader for
 - **THEN** the command fails, lists the platforms it can read, and stores nothing

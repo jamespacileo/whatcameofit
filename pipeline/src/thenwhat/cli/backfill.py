@@ -1,5 +1,6 @@
 """The backfill commands: load registry trials, see what is due, and run a step."""
 
+import sqlite3
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -12,6 +13,7 @@ import typer
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.fingerprint_run import run_fingerprints
 from thenwhat.backfill.leads import hit_rates
 from thenwhat.backfill.link_evaluation import (
     TENTHS,
@@ -68,6 +70,8 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.config import Settings, SourceAllowance
 from thenwhat.domain import Decider, LeadVerdict, OutletKind, WorkOutcome
+from thenwhat.measure import spans
+from thenwhat.measure.files import FileWriter
 from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -181,12 +185,32 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
     if isinstance(step, LinkRead):
         from thenwhat.cli import extract, resolve
 
+        evidence = None
+        if settings.lead_evidence_trial_store is not None:
+            from thenwhat.backfill.article_evidence import ArticleEvidence, product_aliases_of
+
+            evidence = ArticleEvidence(
+                settings.lead_evidence_trial_store,
+                PubMed(
+                    contact_email=settings.contact_email,
+                    tool=settings.pubmed_tool,
+                    api_key=settings.pubmed_api_key,
+                    allowances=allowances,
+                )
+                if settings.research_papers_enabled
+                else None,
+                extract.make_llm,
+                resolve.make_backend,
+                product_aliases_of(settings.lead_evidence_alias_file),
+            )
+            evidence.check_ready()
         return ReadClient(
             retriever=extract.make_retriever(),
             allowances=allowances,
             make_llm=extract.make_llm,
             make_checker=extract.make_checker,
             make_backend=resolve.make_backend,
+            match_article=evidence,
         )
     if step.source == MediaCloud.name:
         client = MediaCloud(
@@ -615,20 +639,18 @@ def load_trials_command(
 
 @backfill_app.command("load-links")
 def load_links_command(
-    platform: Annotated[
-        str, typer.Argument(help="Where the links were shared: hackernews or reddit.")
-    ],
+    platform: Annotated[str, typer.Argument(help="Link source: hackernews, reddit or gdelt-gal.")],
     file: Annotated[
         Path,
         typer.Argument(
             exists=True,
             dir_okay=False,
             readable=True,
-            help="A bulk file of that platform's posts, already on this machine.",
+            help="A local bulk file of posts or article listings from the source.",
         ),
     ],
 ) -> None:
-    """Load the article addresses people shared, from a bulk file of posts.
+    """Load article addresses from a bulk file of posts or article listings.
 
     One link lead is kept per article address, with where and when it was shared. Who
     shared it, the post's text and its comments are never read. No request is sent to
@@ -861,6 +883,66 @@ def trial_references_command(
         )
         for domain, number in counted.domains.most_common(domains):
             out.print(f"    {domain}: {number:,}", markup=False)
+
+
+@backfill_app.command("trial-fingerprints")
+def trial_fingerprints_command(
+    store: Annotated[
+        Path, typer.Argument(help="Bulk store SQLite snapshot.", exists=True, dir_okay=False)
+    ],
+    output: Annotated[Path, typer.Argument(help="New directory for results and measurements.")],
+    word_list: Annotated[
+        list[Path],
+        typer.Option(
+            "--word-list",
+            help="Words and names to exclude, one per line. Repeatable.",
+            exists=True,
+            dir_okay=False,
+        ),
+    ],
+    payloads: Annotated[
+        Path | None,
+        typer.Option(help="Local store payload objects, if any trial payload is held there."),
+    ] = None,
+    limit: Annotated[
+        int | None, typer.Option(min=1, help="Size of the random sample. Omit for all trials.")
+    ] = None,
+    acronym_sample: Annotated[
+        int, typer.Option(min=0, help="Extra distinct trials with acronyms in a limited run.")
+    ] = 0,
+    seed: Annotated[int, typer.Option(help="Random sample seed.")] = 83,
+    max_other_titles: Annotated[
+        int, typer.Option(min=0, help="Maximum other trial titles a fit acronym may appear in.")
+    ] = 3,
+) -> None:
+    """Build trial fingerprints from a local read-only store snapshot."""
+    with refusals():
+        try:
+            output.mkdir()
+        except OSError as error:
+            raise BackfillError(f"Could not create a new run directory: {error}") from error
+        writer = "trial-fingerprints"
+        spans.use(spans.Recorder(out=FileWriter(output, writer=writer), writer=writer))
+        try:
+            with spans.measured("trial_fingerprint.run"):
+                summary = run_fingerprints(
+                    store,
+                    output,
+                    word_list,
+                    payloads=payloads,
+                    limit=limit,
+                    acronym_sample=acronym_sample,
+                    seed=seed,
+                    max_other_titles=max_other_titles,
+                    progress=out.print,
+                )
+        except (OSError, sqlite3.Error, ValueError) as error:
+            raise BackfillError(f"Trial fingerprint run failed: {error}") from error
+        finally:
+            spans.use(None)
+        out.print(
+            f"Wrote {summary['fingerprints']:,} trial fingerprints and a summary to {output}."
+        )
 
 
 @backfill_app.command("trial-coverage")

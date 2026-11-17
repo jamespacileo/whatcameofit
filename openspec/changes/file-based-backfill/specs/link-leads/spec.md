@@ -69,6 +69,16 @@ A load run with `--dry-run` SHALL read the files and print the report a load wou
 ### Requirement: A run can be narrowed to a period
 Scoring and reading SHALL each take an optional first day, set by the operator (`LEAD_TRIAGE_SINCE`, `LEAD_READ_SINCE`). With a first day set, a lead first shared before it SHALL NOT be scored, or read, and SHALL NOT count as due; it SHALL keep its place and be due again once the day is moved back or unset. Screening is not narrowed: it costs nothing per lead.
 
+The operator MAY set an inclusive UTC window for scoring and reading with `LEAD_BACKFILL_WINDOW`. The reader SHALL check the actual publication date before asking the model. A page published outside the window SHALL make no claim or source article. Its reason SHALL be recorded as `outside_publication_window`, so it can be requeued when the window is widened.
+
+#### Scenario: An archived article is indexed during the window
+- **WHEN** a lead first shared inside the window gives a page with a publication date older than the window
+- **THEN** the reader records the date and window in its outcome and makes no model request
+
+#### Scenario: A daily batch picks up an article published earlier in the backfill
+- **WHEN** `LEAD_BATCH_DAY` is set and a lead was first shared that day
+- **THEN** screening, triage and reading can take the lead, the reader checks the publisher date against the full backfill window, and leads first shared on other days stay outside the batch
+
 #### Scenario: A backfill of two years
 - **WHEN** the first day for scoring and for reading is 1 January 2025 and leads go back to 2014
 - **THEN** only leads first shared from that day on are scored and read, and the older ones are neither sent to a model nor asked of an outlet
@@ -76,3 +86,18 @@ Scoring and reading SHALL each take an optional first day, set by the operator (
 #### Scenario: The period is widened later
 - **WHEN** the first day is unset after such a run
 - **THEN** the older leads are due as if the period had never been set
+
+### Requirement: A link read can hand verified research to claim preparation
+With a local trial snapshot configured, the link reader SHALL match eligible articles using Luna, the local registry, PubMed and Decisions on the body it already has. It SHALL keep only verified identifiers at the 0.80 exact threshold and preserve publisher citations separately. Claim preparation SHALL apply its existing evidence checks and review rules.
+
+#### Scenario: A paper is matched by its research
+- **WHEN** a publisher article names no DOI and the verifier confirms the exact paper in PubMed
+- **THEN** the article retains the PMID and any DOI PubMed gives for that paper, separately from the publisher's citations
+
+#### Scenario: The verified paper has a PMID and no DOI
+- **WHEN** claim preparation hands the PMID to the literature index
+- **THEN** the index must return that exact PMID before its canonical work can enter ordinary claim matching
+
+#### Scenario: The literature index stops a batch
+- **WHEN** the configured literature index cannot finish the article's evidence check
+- **THEN** the run stops with the article still due, its recorded model spend retained, and no new claim or source article from that read

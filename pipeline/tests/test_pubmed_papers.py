@@ -117,6 +117,18 @@ def test_one_search_carries_many_numbers_and_each_papers_record_is_read_back(
     assert len(by_number[THREE_NUMBERS].trial_numbers) == 3
 
 
+def test_ranked_article_search_keeps_a_bounded_ordered_result(session: Session, fake_time):
+    service = Service(search={"esearchresult": {"count": "420", "idlist": ["8291", "7420"]}})
+    client = pubmed(session, fake_time, service)
+
+    assert client.ranked_ids("Examplevir[Title/Abstract]", limit=2) == ["8291", "7420"]
+    assert client.ranked_ids(" ", limit=2) == []
+    assert len(service.requests) == 1
+    assert service.fields(0)["term"] == "Examplevir[Title/Abstract]"
+    assert service.fields(0)["sort"] == "relevance"
+    assert service.fields(0)["retmax"] == "2"
+
+
 def test_what_is_kept_of_a_paper_has_no_abstract_and_no_author():
     papers = read_papers((FIXTURES / "efetch_completed_sample.xml").read_text())
 
