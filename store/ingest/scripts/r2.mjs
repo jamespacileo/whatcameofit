@@ -60,5 +60,20 @@ export function bucket(argv) {
       }
     }
   }
-  return { name, remote, remove, label: remote ? `${name} (remote, jurisdiction eu)` : `${name} (local engine)`, put, get };
+  // Many objects in one Wrangler process (`wrangler r2 bulk put`, in 4.161.0): a file of
+  // [{key, file}], so many at a time. One process for 3,463 objects took 6 s on the local
+  // engine where one process an object took minutes.
+  async function putMany(list, concurrency, attempts = 4) {
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        await run(here("../node_modules/.bin/wrangler"), ["r2", "bulk", "put", name, "--filename", list, "--concurrency", String(concurrency), "--force", ...where, "--config", config],
+          { cwd: here(".."), env: { ...process.env, CI: "1", WRANGLER_SEND_METRICS: "false" }, maxBuffer: 64 * 1024 * 1024 });
+        return;
+      } catch (error) {
+        if (attempt >= attempts) throw new Error(said(error));
+        await new Promise((resolve) => setTimeout(resolve, (/429|too many|rate/i.test(String(error.stderr || error.message)) ? 10_000 : 2000) * 2 ** (attempt - 1)));
+      }
+    }
+  }
+  return { name, remote, remove, putMany, label: remote ? `${name} (remote, jurisdiction eu)` : `${name} (local engine)`, put, get };
 }

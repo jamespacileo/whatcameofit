@@ -9,7 +9,8 @@
 // or printed. Only the bucket this service is bound to in wrangler.jsonc, a preview one,
 // is written to; production needs `--production <bucket name>` beside `--remote`.
 //
-//   --jobs N          objects at a time (8)
+//   --jobs N          objects at a time (4: twelve at a time were refused with 429 on the preview)
+//   --batch N         objects a Wrangler process (500); what a stopped run sends again
 //   --state <file>    where what was uploaded is noted (.upload-state/<bucket>.json, git-ignored)
 //   --check-first     before uploading an object the notes do not have, read it back and
 //                     skip it when it is already there with the same bytes
@@ -25,7 +26,8 @@ import { execFile } from "node:child_process";
 import { createHash, randomInt } from "node:crypto";
 import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { bucket, sha256 } from "./r2.mjs";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
@@ -39,21 +41,11 @@ if (!folder || folder.startsWith("--")) usage();
 const remote = argv.includes("--remote");
 if (!remote && !value("--persist-to")) usage();
 
-const bound = /"bucket_name":\s*"([^"]+)"/.exec(readFileSync(here("../wrangler.jsonc"), "utf8"))?.[1];
-const production = value("--production");
-if (production && (!remote || production.endsWith("-preview") || !/^[a-z0-9-]{3,63}$/.test(production))) { console.error("--production names the production bucket, and only with --remote"); process.exit(2); }
-if (!production && !bound?.endsWith("-preview")) { console.error("wrangler.jsonc does not bind a preview bucket: nothing was uploaded"); process.exit(2); }
-const bucket = production || bound;
-const config = remote && !production ? here("../wrangler.preview.jsonc") : here("../wrangler.jsonc");
-if (!existsSync(config)) { console.error("no wrangler.preview.jsonc: run `node scripts/preview-config.mjs` first"); process.exit(2); }
-const where = remote ? ["--remote", "--jurisdiction", "eu"] : ["--local", "--persist-to", value("--persist-to")];
-const jobs = Math.min(Math.max(Number(value("--jobs")) || 8, 1), 32);
-
-const wrangler = (...args) => run(here("../node_modules/.bin/wrangler"), ["r2", "object", ...args, ...where, "--config", config],
-  { cwd: here(".."), env: { ...process.env, CI: "1", WRANGLER_SEND_METRICS: "false" }, maxBuffer: 16 * 1024 * 1024 });
-const sha = async (path) => { const hash = createHash("sha256"); for await (const chunk of createReadStream(path)) hash.update(chunk); return hash.digest("hex"); };
-// Wrangler's last words on a failure, without the path it was given.
-const said = (error) => String(error.stderr || error.stdout || error.message).split("\n").filter((line) => /error|not found|fail|denied|limit|exist/i.test(line)).slice(-2).join(" ").slice(0, 300) || "failed";
+const jobs = Math.min(Math.max(Number(value("--jobs")) || 4, 1), 32);
+const batch = Math.min(Math.max(Number(value("--batch")) || 500, 1), 5000);
+let to;
+try { to = bucket(argv); } catch (error) { console.error(error.message); process.exit(2); }
+const sha = sha256;
 
 const from = existsSync(join(folder, "payload")) ? join(folder, "payload") : folder;
 let names = readdirSync(from).filter((name) => /^[0-9a-f]{64}$/.test(name)).sort();
@@ -61,7 +53,7 @@ const strangers = readdirSync(from).filter((name) => !/^[0-9a-f]{64}$/.test(name
 if (!names.length) { console.error(`no payload object in ${from}`); process.exit(2); }
 if (value("--only")) names = names.slice(0, Number(value("--only")));
 
-const statePath = value("--state") || here(`../.upload-state/${bucket}${remote ? "" : ".local"}.json`);
+const statePath = value("--state") || here(`../.upload-state/${to.name}${remote ? "" : ".local"}.json`);
 mkdirSync(dirname(statePath), { recursive: true });
 const state = existsSync(statePath) ? JSON.parse(readFileSync(statePath, "utf8")) : {};
 const note = () => writeFileSync(statePath, JSON.stringify(state));
@@ -70,48 +62,56 @@ const scratch = mkdtempSync(join(tmpdir(), "thenwhat-payloads-"));
 // What the bucket holds under a key, as its SHA-256, or null when it holds nothing.
 async function held(name, n) {
   const path = join(scratch, `${n}-${name}`);
-  try { await wrangler("get", `${bucket}/payload/${name}`, "--file", path); return await sha(path); } catch { return null; } finally { rmSync(path, { force: true }); }
+  try { return (await to.get(`payload/${name}`, path)) ? await sha(path) : null; } finally { rmSync(path, { force: true }); }
 }
 
 const total = names.reduce((sum, name) => sum + statSync(join(from, name)).size, 0);
-console.log(`${names.length} objects, ${(total / 1e6).toFixed(1)} MB, into ${bucket} (${remote ? "remote, jurisdiction eu" : "local engine"}), ${jobs} at a time`);
+console.log(`${names.length} objects, ${(total / 1e6).toFixed(1)} MB, into ${to.label}, ${jobs} at a time`);
 if (strangers.length) console.log(`${strangers.length} file(s) not named by a checksum are left alone`);
 const done = { uploaded: 0, skipped: 0, there: 0, failed: [] };
 const started = Date.now();
-let next = 0, since = Date.now();
-async function worker(n) {
+// What is still to go: not noted, its bytes its name's checksum, and with --check-first
+// not already in the bucket.
+const todo = [];
+let next = 0;
+await Promise.all(Array.from({ length: 8 }, async (_, n) => {
   for (;;) {
-    const at = next; next += 1;
-    if (at >= names.length) return;
-    const name = names[at], path = join(from, name), size = statSync(path).size;
+    const name = names[next]; next += 1;
+    if (name === undefined) return;
+    const path = join(from, name), size = statSync(path).size;
     if (state[name] === size) { done.skipped += 1; continue; }
     if ((await sha(path)) !== name) { done.failed.push([name, "the file's bytes are not its name's checksum"]); continue; }
     if (argv.includes("--check-first") && (await held(name, n)) === name) { state[name] = size; done.there += 1; continue; }
-    let last = null;
-    for (let attempt = 1; attempt <= 4; attempt += 1) {
-      try { await wrangler("put", `${bucket}/payload/${name}`, "--file", path, "--content-type", "application/octet-stream", "--force"); last = null; break; } catch (error) {
-        last = said(error);
-        await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** attempt));
-      }
-    }
-    if (last) { done.failed.push([name, last]); continue; }
-    state[name] = size; done.uploaded += 1;
-    if (Date.now() - since > 15_000) { since = Date.now(); note(); console.log(`  ${done.uploaded + done.skipped + done.there} of ${names.length} after ${((Date.now() - started) / 1000).toFixed(0)} s`); }
+    todo.push([name, path, size]);
   }
+}));
+// Uploaded a batch at a time, each batch one Wrangler process, and noted when it is done:
+// a run that stopped loses at most the batch it was in, which is sent again.
+for (let at = 0; at < todo.length; at += batch) {
+  const part = todo.slice(at, at + batch), list = join(scratch, `batch-${at}.json`);
+  writeFileSync(list, JSON.stringify(part.map(([name, path]) => ({ key: `payload/${name}`, file: resolve(path) }))));
+  try { await to.putMany(list, jobs); } catch (error) {
+    for (const [name] of part) done.failed.push([name, error.message]);
+    console.error(`FAILED a batch of ${part.length}: ${error.message}\nrun again to go on from here`);
+    break;
+  }
+  for (const [name, , size] of part) state[name] = size;
+  done.uploaded += part.length;
+  note();
+  console.log(`  ${done.uploaded} of ${todo.length} after ${((Date.now() - started) / 1000).toFixed(0)} s`);
 }
-await Promise.all(Array.from({ length: jobs }, (_, n) => worker(n)));
 note();
 const seconds = (Date.now() - started) / 1000;
 console.log(`uploaded ${done.uploaded}, already noted ${done.skipped}, already there ${done.there}, failed ${done.failed.length}, in ${seconds.toFixed(1)} s`);
-for (const [name, why] of done.failed.slice(0, 10)) console.error(`FAILED payload/${name}: ${why}`);
+for (const [name, why] of done.failed.slice(0, 5)) console.error(`FAILED payload/${name.slice(0, 12)}…: ${why}`);
 
 // Twenty at random, read back, each one's checksum against its key.
 const sure = names.filter((name) => state[name] !== undefined);
 const picked = new Set();
 while (picked.size < Math.min(20, sure.length)) picked.add(sure[randomInt(sure.length)]);
 const wrong = [];
-await Promise.all([...picked].map(async (name, n) => { if ((await held(name, `check-${n}`)) !== name) wrong.push(name); }));
-for (const name of wrong) { console.error(`READ BACK DIFFERS payload/${name}`); delete state[name]; }
+for (const [n, name] of [...picked].entries()) if ((await held(name, `check-${n}`)) !== name) wrong.push(name);
+for (const name of wrong) { console.error(`READ BACK DIFFERS payload/${name.slice(0, 12)}…`); delete state[name]; }
 if (wrong.length) note();
 console.log(`read back ${picked.size} at random: ${picked.size - wrong.length} are what their keys say`);
 rmSync(scratch, { recursive: true, force: true });
