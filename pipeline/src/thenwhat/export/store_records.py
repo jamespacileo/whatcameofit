@@ -604,10 +604,11 @@ class StoreRecords:
                 outcome=held["outcome"],
                 kind=ReadingKind(held["kind"]),
                 field=ReadingField(held["field"]),
-                words=held["words"],
-                number=held["number"],
-                unit=None if held["unit"] is None else FollowUpUnit(held["unit"]),
-                code=None if held["code"] is None else MeasureCode(held["code"]),
+                # A writer leaves an empty field out of a reading.
+                words=held.get("words"),
+                number=held.get("number"),
+                unit=None if held.get("unit") is None else FollowUpUnit(held["unit"]),
+                code=None if held.get("code") is None else MeasureCode(held["code"]),
                 confidence=held["confidence"],
                 decided_by=ReadBy(held["decided_by"]),
             )
