@@ -21,6 +21,10 @@ A registry trial SHALL be stored once per registry and registry identifier, with
 - **WHEN** a loaded trial's record lists one paper of the kind result and two of the kind background
 - **THEN** the three paper numbers are stored with their kinds, and no citation text is
 
+#### Scenario: A sponsor-investigator the registry classes as other
+- **WHEN** a loaded trial's lead sponsor is classed "OTHER" and the record's responsible party is a sponsor-investigator
+- **THEN** no name is stored for the sponsor, in the column or in the stored record, and of the responsible party only its type is stored
+
 #### Scenario: A trial sponsored by a person
 - **WHEN** a loaded trial's lead sponsor is classed as an individual
 - **THEN** the sponsor's class is stored and no sponsor name is
