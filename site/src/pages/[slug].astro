@@ -971,8 +971,10 @@ const sections = [
     {
       trials.length > 0 && (
         <section class="trials" data-pagefind-ignore>
-          <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
-          <p class="take-why" data-clamp="1">{TRIALS_NOTE}</p>
+          <FoldHead id="trials" phone="folded" note={trialsNote}>
+            <p slot="about">{TRIALS_NOTE}</p>
+            Trials on record
+          </FoldHead>
           {/* The columns, named once over every group and kept in sight while the groups
               scroll. For the eye only: each group's table keeps its own column names for a
               screen reader. */}
@@ -1037,15 +1039,15 @@ const sections = [
       claim.matches && (untried.length > 0 || candidates.length > 0 || trials.length === 0) && (
         <section class="matched" data-pagefind-ignore>
           <FoldHead id="matched" start={untried.length > 0 ? "open" : "folded"} phone="folded" note={matchedNote}>
+            <p slot="about">
+              {untried.length > 0
+                ? `Trial registry records found for this treatment and condition, with how sure each match is.${scoreNote}`
+                : candidates.length > 0
+                  ? `Trial registry records that may be about this treatment and condition, with how sure each match is.${scoreNote}`
+                  : "The trial registries were searched for this treatment and condition. No record matched."}
+            </p>
             {matchedHeading}
           </FoldHead>
-          <p class="take-why" data-clamp="1">
-            {untried.length > 0
-              ? `Trial registry records found for this treatment and condition, with how sure each match is.${scoreNote}`
-              : candidates.length > 0
-                ? `Trial registry records that may be about this treatment and condition, with how sure each match is.${scoreNote}`
-                : "The trial registries were searched for this treatment and condition. No record matched."}
-          </p>
           {untried.length > 0 && <RegistryRecords matches={untried} />}
           {untried.length > 0 && candidates.length > 0 && (
             <h3 class="matched-group">Possible records</h3>
@@ -1065,8 +1067,10 @@ const sections = [
     {
       paperGroups.length > 0 && (
         <section class="papers" data-pagefind-ignore>
-          <FoldHead id="papers" start="folded" note={papersNote}>Papers on record</FoldHead>
-          <p class="take-why" data-clamp="1">{PAPERS_NOTE}</p>
+          <FoldHead id="papers" start="folded" note={papersNote}>
+            <p slot="about">{PAPERS_NOTE}</p>
+            Papers on record
+          </FoldHead>
           {paperGroups.map((group) => (
             <>
               <h3 class="matched-group">{group.heading}</h3>

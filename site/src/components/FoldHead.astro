@@ -5,7 +5,12 @@
 // The script is src/scripts/folds.ts, loaded once by the base layout, so that a
 // section's own markup holds no script.
 // Openspec site-publishing: "Sections of a claim page fold".
+// A section may say what it holds (slot "about"): a quiet info mark beside the heading
+// opens it in a small panel, on hover, on a press and from the keyboard, so the heading
+// is followed by the section's rows and not by a paragraph (openspec section-info).
 import ChevronDown from "@lucide/astro/icons/chevron-down";
+import Info from "@lucide/astro/icons/info";
+import Pop from "./Pop.astro";
 
 interface Props {
   id: string;
@@ -18,6 +23,11 @@ interface Props {
 }
 
 const { id, start = "open", phone = start, note = null } = Astro.props;
+const about = Astro.slots.has("about");
+// The mark is named after its section, so five of them on a page are told apart.
+const title = about
+  ? (await Astro.slots.render("default")).replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim()
+  : "";
 ---
 
 <div class="fold-head" data-fold={start} data-fold-phone={phone}>
@@ -27,6 +37,14 @@ const { id, start = "open", phone = start, note = null } = Astro.props;
       <span><slot /></span>
     </button>
   </h2>
+  {
+    about && (
+      <Pop id={`about-${id}`} label={`About “${title}”`} class="info about">
+        <Info slot="trigger" size={16} stroke-width={1.9} aria-hidden="true" />
+        <slot name="about" />
+      </Pop>
+    )
+  }
   {note && <span class="fold-note">{note}</span>}
   <slot name="beside" />
 </div>

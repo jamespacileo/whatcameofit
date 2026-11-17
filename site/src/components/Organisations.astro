@@ -36,9 +36,9 @@ const day = (stamp: string) =>
 
 <section class="matched organisations" data-pagefind-ignore>
   <FoldHead id="organisations" start="folded" note={`${organisations.length} named`}>
+    <p slot="about">{ORGANISATIONS_NOTE}</p>
     Organisations named
   </FoldHead>
-  <p class="take-why" data-clamp="1">{ORGANISATIONS_NOTE}</p>
   <ul class="plain match-list organisation-list">
     {
       orderOrganisations(organisations).map((organisation) => (

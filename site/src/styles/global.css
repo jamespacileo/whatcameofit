@@ -8751,3 +8751,75 @@ body.framed {
     border: 0;
   }
 }
+
+/* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
+   info mark beside a section's heading opens what the section holds in a small panel,
+   on hover, on a press and from the keyboard, in place of a paragraph under the
+   heading. The mark is grey until it is used; the panel is the page's own popover, set
+   as a compact card: a fixed width, even padding, the note's size. */
+.pop-trigger.info.about {
+  align-self: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-left: -0.3rem;
+  color: var(--muted);
+}
+
+.pop-trigger.info.about:hover,
+.pop-trigger.info.about:has(+ .pop:popover-open) {
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.pop-trigger.about + .pop {
+  width: 20rem;
+  max-width: min(20rem, calc(100vw - 2rem));
+  margin: 0.3rem 0;
+  padding: 0.9rem 1rem;
+  font-size: var(--text-s);
+  line-height: 1.5;
+}
+
+/* The panel arrives: a short fade and a slight growth from the mark's corner. With
+   reduced motion it is simply there. */
+@media (prefers-reduced-motion: no-preference) {
+  .pop-trigger.about + .pop {
+    opacity: 0;
+    scale: 0.96;
+    transform-origin: top left;
+    transition:
+      opacity 140ms var(--ease-out),
+      scale 140ms var(--ease-out),
+      overlay 140ms allow-discrete,
+      display 140ms allow-discrete;
+  }
+
+  .pop-trigger.about + .pop:popover-open {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @starting-style {
+    .pop-trigger.about + .pop:popover-open {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+}
+
+@media (max-width: 40rem) {
+  .pop-trigger.info.about {
+    margin-left: -0.6rem;
+  }
+}
+
+/* On paper the note is printed under its heading, whole. */
+@media print {
+  .fold-head:has(> .pop) {
+    flex-wrap: wrap;
+  }
+
+  .fold-head > .pop {
+    flex-basis: 100%;
+  }
+}

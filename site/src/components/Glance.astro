@@ -77,8 +77,10 @@ const rows: Row[] = [
 ---
 
 <section class="glance" data-pagefind-ignore>
-  <FoldHead id={GLANCE_ID}>{GLANCE_TITLE}</FoldHead>
-  {cards.length > 0 && <p class="glance-lead" data-clamp="1">{GLANCE_LEAD}</p>}
+  <FoldHead id={GLANCE_ID}>
+    {cards.length > 0 && <p slot="about">{GLANCE_LEAD}</p>}
+    {GLANCE_TITLE}
+  </FoldHead>
   <dl class="glance-rows">
     {
       rows.map(({ row, value, detail, cards: rowCards }) => {
