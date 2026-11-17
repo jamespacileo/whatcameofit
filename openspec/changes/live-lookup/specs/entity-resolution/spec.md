@@ -129,6 +129,17 @@ The trial registry's search SHALL ask for the other names of each intervention, 
 - **WHEN** a candidate's intervention is named NMRA-335140 and lists navacaprant among its other names
 - **THEN** the record shown for scoring names navacaprant beside NMRA-335140
 
+### Requirement: A combination is searched by its treatments as names alone
+When an intervention's name joins several treatments, the search for all of them together SHALL take each treatment as a name alone: words that say the name is a combination ("combination regimen", "combination therapy") SHALL be left out of a part, and treatments listed with commas SHALL be parts like those joined by a word. A part that names a kind of care and no product ("standard chemotherapy") SHALL be left out of the search when at least two named treatments remain, and kept otherwise.
+
+#### Scenario: Combination words in the name
+- **WHEN** the intervention is "eloralintide and tirzepatide combination regimen"
+- **THEN** the registry is searched for trials that give eloralintide and tirzepatide
+
+#### Scenario: Three parts, one a kind of care
+- **WHEN** the intervention is "Braftovi, cetuximab and standard chemotherapy"
+- **THEN** the registry is searched for trials that give Braftovi and cetuximab
+
 ### Requirement: A rule's rejection made without the other names is scored again
 When pending candidates are scored again on request, the system SHALL also score again each trial candidate that a rule rejected for scoring near zero and whose record files the intervention under another name: an intervention entry that is named by none of the intervention's names or codes lists one of them among its other names, or is named by a name the stored trials file the intervention under. Before the scoring was shown those names, such a record read as a trial of something else. A candidate scored again this way SHALL wait like a pending candidate and SHALL be decided by the same rules: rejected again near zero, approved only when scored high for the claim's indication. A rejection a person or an assistant made SHALL be left as it is, and so SHALL a rule's rejection of a record that names the intervention plainly. When a scoring fails, every rejection SHALL stay as it was.
 

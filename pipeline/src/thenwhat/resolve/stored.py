@@ -90,7 +90,8 @@ def parts_of(name: str) -> list[str]:
     return parts
 
 
-def _is_a_kind_of_care(part: str) -> bool:
+def is_a_kind_of_care(part: str) -> bool:
+    """True for a part of a combination that names a kind of care and no product."""
     words = claim_key(part).split()
     return all(word in KINDS_OF_PRODUCT or word in _CARE_WORDS for word in words)
 
@@ -308,7 +309,7 @@ def stored_trials(
     whole: list[str] = []
     combined: list[list[str]] = []
     for name in names:
-        named = [part for part in parts_of(name) if not _is_a_kind_of_care(part)]
+        named = [part for part in parts_of(name) if not is_a_kind_of_care(part)]
         if len(named) > 1:
             combined.append([claim_key(part) for part in named])
         elif named:

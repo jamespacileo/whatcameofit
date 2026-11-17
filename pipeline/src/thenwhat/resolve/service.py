@@ -4,7 +4,6 @@ Every candidate is stored and scored. A rule rejects one scored near zero and ap
 a trial scored high for the claim's indication; the rest wait for review.
 """
 
-import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -28,7 +27,12 @@ from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.events.trial import PHASES
 from thenwhat.events.trial_facts import STATES, is_registry_record, read_trial
 from thenwhat.measure import spans as measure
-from thenwhat.resolve.stored import filed_under_another_name, stored_trials
+from thenwhat.resolve.stored import (
+    filed_under_another_name,
+    is_a_kind_of_care,
+    parts_of,
+    stored_trials,
+)
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -115,20 +119,21 @@ class TrialSearch(Protocol):
     def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]: ...
 
 
-# The words that join the treatments of a combination in a name: "aspirin plus avelumab",
-# "UV1 vaccine plus pembrolizumab with GM-CSF", "emtricitabine/tenofovir".
-COMBINATION = re.compile(
-    r"\s+(?:plus|with|and|in combination with|combined with)\s+|\s*[+/]\s*", re.IGNORECASE
-)
-
-
 def combination_search(name: str) -> str | None:
     """The registry search for each treatment of a combination at once, or None when the
     name names one treatment. The registry reads the name as written as one treatment
     whose description holds every word, joining words such as "plus" included, so a
     combination is never found by its name; the search for its parts joined by AND finds
-    the trials that give all of them."""
-    parts = [part.strip() for part in COMBINATION.split(name) if part.strip()]
+    the trials that give all of them.
+
+    Each part is a name alone: "eloralintide and tirzepatide combination regimen" is
+    searched as eloralintide and tirzepatide. A part that names a kind of care
+    ("standard chemotherapy") is left out when two named treatments remain, as no
+    registry entry need carry those words."""
+    parts = parts_of(name)
+    named = [part for part in parts if not is_a_kind_of_care(part)]
+    if len(named) >= 2:
+        parts = named
     if len(parts) < 2:
         return None
     return " AND ".join(f"({part})" for part in parts)
