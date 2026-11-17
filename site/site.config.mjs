@@ -31,3 +31,11 @@ export const SITE = {
 
 /** Whether the extension can be installed from a store, so the site may offer it. */
 export const EXTENSION_OFFERED = Boolean(SITE.chromeStoreUrl || SITE.safariStoreUrl);
+
+/**
+ * Whether a listed trial that no claim cites has a page and is found by search
+ * (openspec trial-pages; the operator's decision of 2026-11-17). On unless
+ * LISTED_TRIAL_PAGES=0 is set for the build; a build with no trial listing beside its
+ * export opens no such page either way.
+ */
+export const LISTED_TRIAL_PAGES = env.LISTED_TRIAL_PAGES !== "0";

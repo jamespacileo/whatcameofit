@@ -44,14 +44,14 @@ Each section is useful when it is done, without the sections after it. Sections 
 
 ## 5. On the static site
 
-- [ ] 5.1 Hold the state phrases, the no-report line and the results lines in the site's wording module, and fail the build on verdict wording in any of them; verify a build that fails on a planted word
-- [ ] 5.2 Word the state on the trial page that exists by the `trial-facts` mapping; verify a test that a recruiting trial's page does not hold the word "recruiting"
-- [ ] 5.3 Write the trial listing for a named set from the pipeline, with its schema, and build it into the site as a file fetched only on search; verify the schema test, the file's size raw and compressed recorded here, and that a claim page fetches nothing of it
-- [ ] 5.4 Answer a search for a listed trial's identifier or title words with its page, after any claim; verify tests for an uncited identifier, a cited one and a title
-- [ ] 5.5 Add the setting that opens the trial page to listed identifiers, off by default; verify tests that a listed, uncited trial is not found while it is off and is shown, not indexed and with the no-report line, while it is on
-- [ ] 5.6 Verify with tests that an uncited trial's page holds no status, no gloss, no score, no lead, no location or contact, and none of the words `specs/trial-pages` forbids
-- [ ] 5.7 Keep uncited trial pages out of the sitemap; verify a test
-- [ ] 5.8 Add to the method page how a trial comes to have a page, what the page states, and that most trials are never in the news; verify the site build passes its wording checks
+- [x] 5.1 Hold the state phrases, the no-report line and the results lines in the site's wording module, and fail the build on verdict wording in any of them; verify a build that fails on a planted word Done 2026-11-17: `site/src/lib/trial-page.mjs`; the template `trial-reader.astro` reads it, so a build fails; the planted word is tested on the same check in `site/tests/trial-pages.test.mjs`, not by a second build
+- [x] 5.2 Word the state on the trial page that exists by the `trial-facts` mapping; verify a test that a recruiting trial's page does not hold the word "recruiting" Done 2026-11-17, on the cited page and the plain page alike
+- [x] 5.3 Write the trial listing for a named set from the pipeline, with its schema, and build it into the site as a file fetched only on search; verify the schema test, the file's size raw and compressed recorded here, and that a claim page fetches nothing of it Done 2026-11-17: `thenwhat trials-listing`, `site/trials-listing.schema.json`, built as `/trials-listing.json`. Set `active-since-2025`, 23,328 trials on the working database: 7,009,433 bytes raw, 1,933,766 with gzip -9, 1,182,924 with Brotli. Under 8 MiB, so one file
+- [x] 5.4 Answer a search for a listed trial's identifier or title words with its page, after any claim; verify tests for an uncited identifier, a cited one and a title Done 2026-11-17, and for words of the acronym, an intervention's name and a condition too
+- [x] 5.5 Add the setting that opens the trial page to listed identifiers, off by default; verify tests that a listed, uncited trial is not found while it is off and is shown, not indexed and with the no-report line, while it is on Done 2026-11-17, differently: the operator decided that day that the page opens for the listed set, so the setting is on unless a build is given `LISTED_TRIAL_PAGES=0`, and a build with no listing beside its export opens nothing. Both are tested
+- [x] 5.6 Verify with tests that an uncited trial's page holds no status, no gloss, no score, no lead, no location or contact, and none of the words `specs/trial-pages` forbids
+- [x] 5.7 Keep uncited trial pages out of the sitemap; verify a test
+- [x] 5.8 Add to the method page how a trial comes to have a page, what the page states, and that most trials are never in the news; verify the site build passes its wording checks Done 2026-11-17: the section is drawn only in a build that has a listing
 - [ ] 5.9 Deploy to a pull request preview and read twenty uncited trial pages across states and phases with the operator; record here anything reworded
 
 ## 6. From the store (after `cloudflare-source-of-truth` holds the corpus)
