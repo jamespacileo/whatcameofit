@@ -81,7 +81,7 @@ def named(path: Path) -> dict[str, str]:
 def _renames(session: Session) -> tuple[dict[str, str], list[list[Record]]]:
     """Each renamed claim's first slug by the slug it has now, and the renames that bring
     it there, one run a rename so that each sees the one before."""
-    now_slug = dict(session.execute(select(Claim.id, Claim.slug)).tuples().all())
+    now_slug = {claim_id: slug for claim_id, slug in session.execute(select(Claim.id, Claim.slug))}
     by_claim: dict[int, list[ClaimChange]] = {}
     for change in session.scalars(
         select(ClaimChange)
