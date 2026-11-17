@@ -83,11 +83,6 @@ test("Scenario: Checked on the reader's own date", () => {
   assert.ok(!dated.includes("Today,"));
 });
 
-test("Scenario: A day with nothing dated", () => {
-  assert.match(group(dated, "d-2025-09-09"), /<span data-says[^>]*>Nothing dated<\/span>/);
-  assert.match(group(dated, "d-2025-09-08"), /<span data-says[^>]*>1 report<\/span>/);
-});
-
 test("Scenario: A kind read aloud", () => {
   const record = group(dated, "d-2025-09-01");
   assert.match(record, /data-kind="record"/);

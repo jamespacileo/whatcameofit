@@ -172,6 +172,20 @@ _LISTED = (
         # CC BY 4.0, which the data file's own licence can carry with credit.
         in_data_file=True,
     ),
+    SourceTerms(
+        name="pubmed",
+        title="PubMed, through NCBI's E-utilities",
+        licence="NLM data terms; abstracts may be under copyright and are not kept",
+        credit="Courtesy of the U.S. National Library of Medicine",
+        home_url="https://pubmed.ncbi.nlm.nih.gov/",
+        terms_url="https://www.ncbi.nlm.nih.gov/books/NBK25497/",
+        read_on=date(2026, 11, 17),
+        # Asked and stored, not yet published: a paper found by a trial's number is
+        # shown only once the site carries NCBI's disclaimer and NLM's credit
+        # (docs/sources.md; openspec trial-first-route, task 8.8).
+        accepted=False,
+        in_data_file=False,
+    ),
 )
 
 SOURCES: dict[str, SourceTerms] = {listed.name: listed for listed in _LISTED}

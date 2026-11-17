@@ -6,6 +6,7 @@ from thenwhat.backfill.link_triage import LinkTriage
 from thenwhat.backfill.news_search import NewsSearch
 from thenwhat.backfill.steps import Step
 from thenwhat.backfill.topics import terms_of
+from thenwhat.backfill.trial_papers import TrialPapers
 from thenwhat.config import Settings
 
 
@@ -13,6 +14,7 @@ def registered_steps(settings: Settings) -> list[Step]:
     triage = LinkTriage(topic_terms=terms_of(), since=settings.lead_triage_since)
     return [
         NewsSearch(leads_per_trial=settings.leads_per_trial),
+        TrialPapers(trials_per_request=settings.pubmed_trials_per_request),
         LinkScreen(links_max=settings.lead_links_max),
         triage,
         LinkRead(

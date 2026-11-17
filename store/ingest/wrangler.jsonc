@@ -1,0 +1,39 @@
+// The ingest service: the one address a writer outside Cloudflare hands records to.
+// It is a Worker of its own, never on the site's hostname, and answers only to tokens.
+//
+// Resources are named here by binding only. The operator creates the D1 database, the R2
+// bucket (both in the European Union jurisdiction, which cannot be set afterwards) and the
+// Queue, and their ids are given at deployment, not committed. Nothing in this file
+// creates or names a real Cloudflare resource; locally Wrangler stands each binding up on
+// this machine. Never deploy from here by hand: there is no deploy target yet.
+{
+  "name": "thenwhat-store-ingest",
+  "main": "./src/index.mjs",
+  // Not newer than the installed Wrangler supports, or `wrangler dev` will not start.
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  // Nothing a writer sends is logged: not a token, not a record, not a payload.
+  "observability": { "enabled": false },
+  "d1_databases": [
+    { "binding": "STORE", "database_name": "thenwhat-store-preview", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [
+    { "binding": "PAYLOADS", "bucket_name": "thenwhat-payloads-preview" }
+  ],
+  "queues": {
+    "producers": [{ "binding": "WORK", "queue": "thenwhat-work-preview" }]
+  },
+  // The bounds a writer is held to. Each is under a platform limit read on 2026-11-17
+  // (src/limits.mjs names the page for each); the run size is to be set from timings on
+  // D1 itself (task 3.5).
+  "vars": {
+    "MAX_RUN_RECORDS": "20000",
+    "MAX_CHUNK_BYTES": "1900000",
+    "MAX_CHUNK_RECORDS": "5000",
+    "MAX_PAYLOAD_BYTES": "8000000"
+  }
+  // A secret, set with `wrangler secret put` and never written here:
+  //   INGEST_TOKENS   a JSON list of {name, role, device?, sha256}: the SHA-256 of each
+  //                   token, never the token. Locally it is read from .dev.vars.
+}

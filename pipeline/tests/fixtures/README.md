@@ -21,6 +21,7 @@ Responses recorded from the public registries on 2026-11-11 with a generic clien
 | `clinicaltrials/list_page_{1,2}.json` | `GET /api/v2/studies?filter.advanced=<phase 3 drug or biological, migraine, updated since 2026-11-10>&pageSize=3&fields=…`, following `nextPageToken`: four trials over two pages (2026-11-14) |
 | `clinicaltrials/list_page_wide.json` | `GET /api/v2/studies?filter.ids=NCT01596231,NCT07816367,NCT02586935&pageSize=3&fields=…`, the bulk load's fields with the activity and results fields (`LIST_FIELDS`): a trial recruiting with anticipated completion dates by month, one completed with results posted and no start date type, one completed without results (2026-11-16) |
 | `clinicaltrials/phase3_sample_trials.json` | the identifiers, conditions and interventions of the 200 phase 3 trials sampled on 2026-11-14 (`docs/research/phase3-article-hit-rate`), read from `GET /api/v2/studies?filter.ids=…` |
+| `pubmed/esearch_completed_sample.json`, `pubmed/efetch_completed_sample.xml` | `POST /entrez/eutils/esearch.fcgi` for the registry numbers of 25 stored trials, each tagged `[si]`, and `POST /entrez/eutils/efetch.fcgi` for the 12 papers it returned (2026-11-17, generic client name, no key, no email) |
 | `mediacloud/story_list.json` | synthetic: the shape of `GET /api/search/story-list` as Media Cloud's own client reads it, with made-up stories. Never recorded from the service, so it holds no real headline |
 | `openalex/search_median_nerve_tourette.json` | `GET /works?search=("median nerve stimulation") AND "Tourette syndrome"&per_page=3&select=id,doi,title,publication_year,publication_date,type,primary_location,authorships,abstract_inverted_index,ids` (2026-11-14) |
 | `openalex/search_nothing.json` | the same search for made-up words that no paper holds (2026-11-14) |
@@ -80,6 +81,7 @@ Changes made to the recordings, for copyright and size:
 - Europe PMC citing papers, `europepmc/paper_srep39654.json` and `europepmc/paper_sciadv_abf1798.json`: each `abstractText` is replaced by a placeholder sentence.
 - `europepmc/paper_nejmoa2206038.json`: `abstractText` is replaced by a placeholder that keeps only the paper's registry number; subject headings, grants, links and all but two authors are removed.
 - The five Europe PMC recordings of 2026-11-14: `abstractText` is replaced by a placeholder sentence, all but two authors are removed from `authorList`, and grants, chemicals, keywords, data links and comment lists are removed. `authorString` and `affiliation` are kept so that a test can show they are not stored.
+- The PubMed fetch of 2026-11-17: each `Abstract` is replaced by a placeholder sentence; authors, investigators, grants, chemicals, subject headings, keywords, comments, references and history are removed; one placeholder author is added to each article so that a test can show no author is kept. The record is re-indented.
 - OpenAlex works: each `abstract_inverted_index` is replaced by a placeholder sentence. The key was sent in a header and is in no recording.
 - MeSH: none. The records are NLM's own and are kept whole, re-indented.
 - GSRS: none. The data is CC0 and the records are kept whole, re-indented.

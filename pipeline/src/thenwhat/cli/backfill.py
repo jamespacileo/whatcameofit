@@ -65,7 +65,8 @@ from thenwhat.backfill.steps import (
     model_spend_of,
 )
 from thenwhat.backfill.topics import TOPICS
-from thenwhat.backfill.trial_sets import count_sets
+from thenwhat.backfill.trial_references import count_references
+from thenwhat.backfill.trial_sets import SETS, count_sets
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
@@ -74,6 +75,7 @@ from thenwhat.domain import Decider, LeadVerdict, OutletKind
 from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.pubmed import PubMed
 
 backfill_app = typer.Typer(
     help="Work through many records: load trials, see what is due, run a step.",
@@ -159,6 +161,15 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
         )
         client.check_ready()
         return client
+    if step.source == PubMed.name:
+        papers = PubMed(
+            contact_email=settings.contact_email,
+            tool=settings.pubmed_tool,
+            api_key=settings.pubmed_api_key,
+            allowances=allowances,
+        )
+        papers.check_ready()
+        return papers
     raise BackfillError(f"No client is set up for the source '{step.source}'.")
 
 
@@ -656,6 +667,53 @@ def trial_sets_command() -> None:
             "before these fields were asked for and are in neither set until loaded again.",
             markup=False,
         )
+
+
+@backfill_app.command("trial-references")
+def trial_references_command(
+    trial_set: Annotated[
+        str | None,
+        typer.Option("--set", help="A named set of stored trials. Both sets when not given."),
+    ] = None,
+    domains: Annotated[
+        int, typer.Option(min=0, help="How many of the most linked domains to list.")
+    ] = 10,
+) -> None:
+    """Count what the stored registry records of a set themselves list: papers and links.
+
+    A paper the sponsor listed as reporting the study's results is counted apart from
+    one the registry linked from PubMed, which the registry says may or may not be about
+    the study. Papers listed as background are not the trial's and are only counted.
+    A link is counted by its domain and by whether that domain is a listed outlet. Reads
+    the stored records only: sends no request and changes nothing.
+    """
+    settings_or_exit()
+    with refusals(), open_session() as session:
+        counts = [count_references(session, name) for name in ([trial_set] if trial_set else SETS)]
+    for counted in counts:
+        out.print(f"{counted.name}: {counted.trials:,} trials", markup=False)
+        out.print(
+            f"  list a paper as reporting results (sponsor): {counted.with_sponsor_paper:,} "
+            f"trials, {counted.sponsor_papers:,} papers",
+            markup=False,
+        )
+        out.print(
+            f"  have a paper linked by the registry from PubMed: "
+            f"{counted.with_registry_paper:,} trials, {counted.registry_papers:,} more papers",
+            markup=False,
+        )
+        out.print(
+            f"  either: {counted.with_either:,} trials; background papers only: "
+            f"{counted.with_background_only:,}",
+            markup=False,
+        )
+        out.print(
+            f"  give a link: {counted.with_link:,} trials, {counted.links:,} links; on a "
+            f"listed outlet: {counted.with_listed_link:,} trials, {counted.listed_links:,} links",
+            markup=False,
+        )
+        for domain, number in counted.domains.most_common(domains):
+            out.print(f"    {domain}: {number:,}", markup=False)
 
 
 @backfill_app.command("links")

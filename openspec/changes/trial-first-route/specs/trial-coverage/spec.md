@@ -51,17 +51,21 @@ A term that is not fit SHALL stay in the fingerprint, SHALL be used only to conf
 - **THEN** it is searched for by its registry number only, in the sources that search by number
 
 ### Requirement: Which trials are looked for
-Coverage SHALL be looked for only for trials in a set the operator names and that no published claim cites. The sets SHALL be: `active-recent`, trials not started or under way in phase 2 or 3 whose registry record changed on or after the configured date; and `completed-with-results`, trials completed on or after the configured date whose record holds posted results.
+Coverage SHALL be looked for only for trials in a set the operator names. The sets SHALL be: `active-since-2025`, trials not started or under way in phase 2 or 3 whose registry record changed on or after 1 January 2025; and `completed-with-results-since-2025`, trials the registry lists as completed, with an actual completion date on or after 1 January 2025, whose record holds posted results. A set's date SHALL be part of its name, so that a later date is a new set and no set changes its meaning. A route that yields news SHALL NOT be asked for a trial that a published claim cites. A route that yields papers SHALL be asked for every trial of the set, cited or not.
 
 #### Scenario: A trial a claim already cites
 - **WHEN** a trial in the named set is cited by a published claim
-- **THEN** no source is asked for it
+- **THEN** no news source is asked for it, and the paper index is still asked for the papers that carry its number
+
+#### Scenario: A trial completed in 2024 whose results were posted in 2026
+- **WHEN** a stored trial's actual completion date is in 2024 and its results were first posted in 2026
+- **THEN** it is not in `completed-with-results-since-2025`
 
 ### Requirement: A coverage set says which trials, and is refused when it cannot be chosen
 A set SHALL say only which trials are looked for and nothing of how any trial turned out. Both sets SHALL be refused while stored trials carry no date of last change. A name the command does not know SHALL be refused with the list of sets.
 
 #### Scenario: Before the wider load
-- **WHEN** the operator names `active-recent` and no stored trial has a date of last change
+- **WHEN** the operator names `active-since-2025` and no stored trial has a date of last change
 - **THEN** the command refuses and says the wider load has not run
 
 #### Scenario: A set the command does not know
@@ -108,6 +112,21 @@ The papers a trial's registry record lists as reporting its results, or that the
 - **WHEN** a trial's record lists one paper of the kind result and four of the kind background
 - **THEN** one results paper is attached to the trial and the four are not
 
+### Requirement: A listed paper is named by one rule and kept in one store
+The papers of a stored trial SHALL be read from its record by the same rule that reads them for a trial a claim cites: one for each PubMed number, the sponsor's listing kept when a paper is listed both ways, a reference with no PubMed number left out. A paper so named SHALL become a paper record only through the one store of paper records, which asks the paper index once for a paper and keeps "not held" as an answer. It SHALL NOT be a match, SHALL carry no score, SHALL NOT be an evidence event, and SHALL NOT be a related paper of any claim. Reading what a record lists SHALL send no request.
+
+#### Scenario: A trial a claim comes to cite
+- **WHEN** a stored trial's listed paper already has a paper record and a claim later cites the trial
+- **THEN** the claim's refresh finds that record and stores no second one
+
+#### Scenario: A paper listed both ways
+- **WHEN** a record lists one paper as a result and the registry also links it from the paper index
+- **THEN** it is named once, as listed by the sponsor
+
+#### Scenario: Counting a set
+- **WHEN** the operator counts what the records of a set list
+- **THEN** the trials with a paper of each kind, the papers and the links by domain are printed, and no request is sent
+
 ### Requirement: Links the registry record gives
 A link a trial's registry record gives to an article on a listed outlet SHALL become a link lead with the reason that the registry record gives the address. Any other link SHALL be counted by domain and not kept.
 
@@ -120,11 +139,15 @@ A link a trial's registry record gives to an article on a listed outlet SHALL be
 - **THEN** no lead is stored and the domain is counted
 
 ### Requirement: Papers that carry the trial's number
-A paper whose index record carries a trial's registry number in the field its publisher supplied for it SHALL be attached to the trial as a paper that gives the number, with no score. A paper that only mentions the number in its text SHALL NOT be attached. A paper whose record carries more than three registry numbers SHALL NOT be attached. A paper so attached SHALL NOT be called a results paper unless the registry record names it as one.
+A paper whose index record carries a trial's registry number in the field its publisher supplied for it SHALL be attached to the trial as a paper that gives the number, with no score. The index SHALL be asked for the numbers of many trials in one request, within its noted limits, and a paper SHALL be given to a trial only when the paper's own record, read back from the index, carries that trial's number exactly. A paper that only mentions the number in its text SHALL NOT be attached. A paper whose record carries more than three registry numbers SHALL NOT be attached. A paper so attached SHALL NOT be called a results paper unless the registry record names it as one.
 
 #### Scenario: A paper that gives one trial's number
 - **WHEN** the paper index returns a paper whose record carries a trial's number and no other
 - **THEN** the paper is attached to that trial as a paper that gives its number
+
+#### Scenario: Fifty trials in one request
+- **WHEN** fifty trials are due and the index answers one request with three papers
+- **THEN** each paper is given only to the trials whose numbers its own record carries, and the trials no paper names are recorded as asked with nothing found
 
 #### Scenario: A paper that cites the trial in passing
 - **WHEN** a full-text index finds a trial's number in the text of a paper whose own record does not carry it
@@ -134,8 +157,26 @@ A paper whose index record carries a trial's registry number in the field its pu
 - **WHEN** a paper's record carries twelve registry numbers
 - **THEN** it is attached to none of them
 
+### Requirement: The paper index is asked as its usage policy asks
+Every request to the paper index SHALL name the software and give its developer's contact address, and no request SHALL be sent while either is not configured. A key SHALL be sent when one is configured and SHALL NOT be required. Requests SHALL stay under the index's limit for a client with no key. A run that has sent the number of requests the index calls a large job SHALL stop, with its trials still due, during the hours the index asks large jobs to avoid.
+
+#### Scenario: No contact address
+- **WHEN** the step is run and no contact address is configured
+- **THEN** no request is sent and the command names the missing setting
+
+#### Scenario: A large job at midday
+- **WHEN** a run has sent a hundred requests and it is a weekday morning in the index's time zone
+- **THEN** the run stops, says when to run again, and the trials not yet asked stay due
+
+### Requirement: What is stored of a paper found by number
+A paper found for a trial SHALL be stored with the trial, the source's name, the paper's index number, the paper's record as reduced, and the time it was fetched. The reduced record SHALL hold no abstract and no author. Storing it SHALL create no claim, match, evidence event or paper record.
+
+#### Scenario: A paper is found
+- **WHEN** the index returns a paper whose record carries a due trial's number
+- **THEN** one row ties the trial to the paper with the source, the reduced record and the fetch time, and nothing else is created
+
 ### Requirement: Nothing found is an answer
-"No paper found" for a trial SHALL be stored as an answer and SHALL NOT be asked again before the configured age.
+"No paper found" for a trial SHALL be stored as an answer in the work ledger and SHALL NOT be asked again before the configured age. Until an age is configured, a trial that has been asked SHALL NOT be asked again at the step's version.
 
 #### Scenario: Asked last week, nothing found
 - **WHEN** the paper index returned nothing for a trial last week and the configured age is thirty days
@@ -237,7 +278,7 @@ No route SHALL create a claim, a source article, a match or an evidence event by
 Before a route is run for a set, the command SHALL print how many trials are due, how many requests each route would send against what is left of each source's allowance, and what reading the expected hits would cost against the route's share of the ceiling. It SHALL send nothing a source's allowance does not cover. No load and no daily run SHALL start a route.
 
 #### Scenario: A plan for the active set
-- **WHEN** the operator asks for the plan of `active-recent`
+- **WHEN** the operator asks for the plan of `active-since-2025`
 - **THEN** the counts of trials, requests by source, allowance left and expected cost are printed and no request is sent
 
 #### Scenario: A daily run

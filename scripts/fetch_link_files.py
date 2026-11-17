@@ -2,11 +2,16 @@
 
     cd pipeline
     uv run python ../scripts/fetch_link_files.py hackernews 2025-01 2026-11
+    uv run python ../scripts/fetch_link_files.py hackernews --since-days 3
     uv run python ../scripts/fetch_link_files.py reddit 2025-01 2026-11 science longevity
 
 Files land in data/link-files/, which is not committed. A file already there is kept,
-so a stopped run is simply started again. Sources, terms and limits: docs/sources.md,
-"Link datasets for the social-link backfill".
+so a stopped run is simply started again. `--since-days N` asks only for the Hacker News
+stories of the last N days (from midnight UTC N days ago) and merges them into each
+month's file the window touches, keeping every row already there: a nightly run's one
+or two queries in place of a whole month's. It prints the months it wrote.
+
+Sources, terms and limits: docs/sources.md, "Link datasets for the social-link backfill".
 
 Only what a link lead keeps is written: for Hacker News the eight columns the reader
 takes, for Reddit the seven fields. Hacker News authors and text are never requested.
@@ -19,11 +24,12 @@ import io
 import json
 import sys
 import time
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import httpx
 import pyarrow as pa
+import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import zstandard
 
@@ -108,19 +114,20 @@ def hacker_news_from_archive(client: httpx.Client, month: str, size: int, target
     say(f"hackernews {month}: archive file, {size / 1e6:.0f} MB")
 
 
-def hacker_news_from_clickhouse(client: httpx.Client, month: str, target: Path) -> None:
-    """One month of stories that link somewhere, from the public copy the archive itself
-    is built from. It refuses an answer of more than 10,000 rows and allows twenty
-    queries of one shape an hour, so a month is asked for in pages by item number and
-    a refusal for the hour's quota is waited out."""
+def clickhouse_stories(client: httpx.Client, label: str, start: str, end: str | None) -> list[dict]:
+    """The stories that link somewhere posted from `start` (and before `end`, when given),
+    from the public copy the archive itself is built from. It refuses an answer of more
+    than 10,000 rows and allows twenty queries of one shape an hour, so the range is asked
+    for in pages by item number and a refusal for the hour's quota is waited out."""
     rows: list[dict] = []
     after = 0
+    before = f" AND time < '{end}'" if end else ""
     while True:
         query = (
             "SELECT id, toInt8(type) AS kind, url, title, toUnixTimestamp(time) AS at, score, "
             "dead, deleted FROM hackernews.hackernews "
             f"WHERE type = 'story' AND url != '' AND id > {after} "
-            f"AND time >= '{month}-01 00:00:00' AND time < '{next_month(month)}-01 00:00:00' "
+            f"AND time >= '{start}'{before} "
             f"ORDER BY id LIMIT {CLICKHOUSE_PAGE} FORMAT JSONEachRow"
         )
         answer = client.post(CLICKHOUSE, content=query)
@@ -130,7 +137,7 @@ def hacker_news_from_clickhouse(client: httpx.Client, month: str, target: Path) 
             continue
         if answer.status_code != 200:
             raise SystemExit(
-                f"hackernews {month}: status {answer.status_code}: {answer.text[:300]}"
+                f"hackernews {label}: status {answer.status_code}: {answer.text[:300]}"
             )
         page = [json.loads(line) for line in answer.text.splitlines() if line]
         for row in page:
@@ -138,9 +145,16 @@ def hacker_news_from_clickhouse(client: httpx.Client, month: str, target: Path) 
             row["time"] = datetime.fromtimestamp(row.pop("at"), tz=UTC)
         rows.extend(page)
         if len(page) < CLICKHOUSE_PAGE:
-            break
+            return rows
         after = page[-1]["id"]
         time.sleep(SECONDS_BETWEEN_REQUESTS)
+
+
+def hacker_news_from_clickhouse(client: httpx.Client, month: str, target: Path) -> None:
+    """One month of stories that link somewhere."""
+    rows = clickhouse_stories(
+        client, month, f"{month}-01 00:00:00", f"{next_month(month)}-01 00:00:00"
+    )
     partial = target.with_suffix(".partial")
     pq.write_table(
         pa.Table.from_pylist(rows, schema=HACKER_NEWS_SCHEMA), partial, compression="zstd"
@@ -165,6 +179,49 @@ def fetch_hacker_news(first: str, last: str) -> None:
             else:
                 hacker_news_from_clickhouse(client, month, target)
             time.sleep(SECONDS_BETWEEN_REQUESTS)
+
+
+def merge_into(target: Path, rows: list[dict]) -> int:
+    """Writes the rows into a month's file, keeping every row already there: a story
+    fetched again replaces its older copy (its score may have changed), and nothing else
+    is dropped. A file from the archive is reduced to the eight columns kept. Returns how
+    many of the rows were not in the file before."""
+    fresh = pa.Table.from_pylist(rows, schema=HACKER_NEWS_SCHEMA)
+    added = len(rows)
+    if target.exists():
+        held = pq.read_table(target, columns=HACKER_NEWS_SCHEMA.names).cast(HACKER_NEWS_SCHEMA)
+        kept = held.filter(pc.invert(pc.is_in(held["id"], value_set=fresh["id"])))
+        added = len(rows) - (held.num_rows - kept.num_rows)
+        fresh = pa.concat_tables([kept, fresh])
+    fresh = fresh.sort_by("id")
+    partial = target.with_suffix(".partial")
+    pq.write_table(fresh, partial, compression="zstd")
+    partial.rename(target)
+    return added
+
+
+def fetch_hacker_news_window(days: int, today: date | None = None) -> list[str]:
+    """The stories of the last `days` days, merged into each month's file the window
+    touches. Returns those months, oldest first."""
+    folder = ROOT / "hackernews"
+    folder.mkdir(parents=True, exist_ok=True)
+    today = today or datetime.now(UTC).date()
+    first_day = today - timedelta(days=days)
+    touched = months(f"{first_day:%Y-%m}", f"{today:%Y-%m}")
+    with httpx.Client(headers={"User-Agent": CLIENT_NAME}, timeout=120) as client:
+        rows = clickhouse_stories(client, f"last {days} days", f"{first_day} 00:00:00", None)
+    new = 0
+    for month in touched:
+        in_month = [row for row in rows if f"{row['time']:%Y-%m}" == month]
+        added = merge_into(folder / f"{month}.parquet", in_month)
+        new += added
+        say(f"hackernews {month}: {len(in_month)} stories with a link, {added} new to the file")
+    print(
+        f"Months written: {' '.join(touched)} ({len(rows):,} stories with a link "
+        f"from the last {days} days, {new:,} new to the files)",
+        flush=True,
+    )
+    return touched
 
 
 def reddit_page(client: httpx.Client, community: str, after: int, before: int) -> list[dict]:
@@ -229,6 +286,12 @@ def fetch_reddit(first: str, last: str, communities: list[str]) -> None:
 
 
 def main() -> None:
+    if sys.argv[1:3] == ["hackernews", "--since-days"] and len(sys.argv) == 4:
+        days = int(sys.argv[3]) if sys.argv[3].isdigit() else 0
+        if not 1 <= days <= 28:
+            raise SystemExit("--since-days takes a whole number of days from 1 to 28.")
+        fetch_hacker_news_window(days)
+        return
     if len(sys.argv) < 4 or sys.argv[1] not in ("hackernews", "reddit"):
         raise SystemExit(__doc__)
     platform, first, last, *communities = sys.argv[1:]
