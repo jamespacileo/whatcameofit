@@ -269,7 +269,7 @@ A lookup's bulk records wait in D1's inbox until they are safe in R2. The order 
 
 1. `thenwhat store fold-inbox <bulk.sqlite> --delta <file>` reads the inbox and merges it into the bulk file. It prints the last record folded.
 2. `node store/ingest/scripts/upload-delta.mjs <file> --build <id> --through <seq> --remote` puts the delta beside its build and adds it to `bulk/<build id>/deltas.json`. It prints the object's key.
-3. `POST /inbox/folded {through, object}` records the fold. The service looks for the object in the bucket and refuses without it.
+3. `POST /inbox/folded {object}` records the fold. The service looks for the object in the bucket and reads how far it folded from the build's `deltas.json`; it refuses without either.
 4. `POST /inbox/clear {through}` (`thenwhat store clear-inbox`) is refused past the furthest fold recorded.
 
 A restore of the bulk tier is `download-bulk.mjs`, then `download-deltas.mjs <build id> <folder>`, then `thenwhat store apply-delta` for each delta in the list's order.

@@ -10,7 +10,7 @@
 //   GET    /runs/<id>             what the merge did
 //   DELETE /runs/<id>             drop a run that was not merged
 //   GET    /inbox?after=&limit=   records of the bulk tier that runs handed over, oldest first
-//   POST   /inbox/folded          a fold is recorded, with its delta object in the bucket: {through, object}
+//   POST   /inbox/folded          a fold is recorded from its delta in the bucket and the build's list: {object}
 //   POST   /inbox/clear           no further than the furthest fold recorded: {through}
 //   POST   /work/lease|finish|fail    the consumer's queue of due work
 //   POST   /slices/take|release       a device's work slices
@@ -191,17 +191,27 @@ async function inbox(request, env, who, url, verb) {
   const whole = (text) => (/^\d{1,15}$/.test(text ?? "") ? Number(text) : null);
   if (verb !== "read") {
     const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
-    const through = Number.isInteger(value?.through) && value.through >= 0 ? value.through : null;
-    if (through === null) refuse(400, "bad_request", "through is the last record folded, as the inbox gave it");
+    const stated = Number.isInteger(value?.through) && value.through >= 0 ? value.through : null;
     if (verb === "folded") {
-      // The delta that holds what was folded must already be in the bucket, beside its build.
-      if (!/^bulk\/[A-Za-z0-9._-]{1,64}\/delta-[A-Za-z0-9._-]{1,80}$/.test(value.object || "")) refuse(400, "bad_request", "object is the delta's key: bulk/<build id>/delta-...");
-      const held = await env.PAYLOADS.head(value.object);
+      // The delta that holds what was folded must already be in the bucket, beside its
+      // build, and listed in the build's deltas.json. How far it folded is read from that
+      // list, written when the delta was uploaded, never taken from the caller.
+      const key = /^(bulk\/[A-Za-z0-9._-]{1,64})\/(delta-[A-Za-z0-9._-]{1,80})$/.exec(value?.object || "");
+      if (!key) refuse(400, "bad_request", "object is the delta's key: bulk/<build id>/delta-...");
+      const [held, list] = await Promise.all([env.PAYLOADS.head(value.object), env.PAYLOADS.get(`${key[1]}/deltas.json`)]);
       if (!held || !held.size) refuse(409, "delta_not_uploaded", "no such delta object is in the bucket: upload it first");
-      const recorded = await store.recordFold(env.STORE, value.object, through, held.size);
+      let listed = null;
+      try { listed = (await list?.json())?.deltas?.find((delta) => delta.name === key[2]) ?? null; } catch { listed = null; }
+      if (!listed) refuse(409, "delta_not_listed", "the build's deltas.json does not list this delta: upload it with scripts/upload-delta.mjs");
+      if (listed.bytes !== held.size) refuse(409, "delta_differs", "the object is not the size its build's list says");
+      if (!Number.isInteger(listed.through) || listed.through < 0) refuse(409, "delta_has_no_through", "the build's list does not say how far this delta folded the inbox: upload it with --through");
+      if (stated !== null && stated !== listed.through) refuse(409, "through_differs", "the delta's own list says another through", { listed_through: listed.through });
+      const recorded = await store.recordFold(env.STORE, value.object, listed.through, held.size);
       if (!recorded) refuse(409, "beyond_inbox", "through is past the last record the inbox has given");
-      return json(200, { recorded: through, ...recorded });
+      return json(200, recorded);
     }
+    const through = stated;
+    if (through === null) refuse(400, "bad_request", "through is the last record folded, as the inbox gave it");
     const folded = await store.foldedThrough(env.STORE);
     if (through > folded) refuse(409, "not_folded", "the inbox is cleared no further than the furthest fold recorded: record the fold first", { folded_through: folded });
     return json(200, await store.clearInbox(env.STORE, through));

@@ -474,10 +474,28 @@ test("bulk records a run hands over wait in the inbox, and leave D1 once the dai
     assert.equal((await fold("daily", page.through, "payload/abc")).status, 400);
     assert.equal((await fold("daily", page.through, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).body.error, "delta_not_uploaded");
     const r2 = await box.mf.getR2Bucket("PAYLOADS");
-    await r2.put("bulk/b1/delta-2026-11-17-1.jsonl.gz", "the day's records");
-    await r2.put("bulk/b1/delta-2026-11-17-2.jsonl.gz", "the rest");
-    assert.equal((await fold("daily", 9999, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).body.error, "beyond_inbox");
-    assert.deepEqual((await fold("daily", page.through, "bulk/b1/delta-2026-11-17-1.jsonl.gz")).body, { recorded: page.through, folded_through: page.through });
+    const one = "bulk/b1/delta-2026-11-17-1.jsonl.gz", two = "bulk/b1/delta-2026-11-17-2.jsonl.gz";
+    const list = (deltas) => r2.put("bulk/b1/deltas.json", JSON.stringify({ build: "b1", deltas }));
+    const delta = (name, text, through) => ({ name, date: "2026-11-17", bytes: text.length, sha256: sha(text), through });
+    await r2.put(one, "the day's records");
+    await r2.put(two, "the rest");
+    // How far a delta folded is the build's list's word, not the caller's.
+    assert.equal((await fold("daily", page.through, one)).body.error, "delta_not_listed");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", null)]);
+    assert.equal((await fold("daily", page.through, one)).body.error, "delta_has_no_through");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "another size", page.through)]);
+    assert.equal((await fold("daily", page.through, one)).body.error, "delta_differs");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", 9999)]);
+    assert.equal((await fold("daily", undefined, one)).body.error, "beyond_inbox");
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", page.through), delta("delta-2026-11-17-2.jsonl.gz", "the rest", all.through)]);
+    const other = await fold("daily", all.through, one);
+    assert.deepEqual([other.status, other.body.error, other.body.detail.listed_through], [409, "through_differs", page.through]);
+    const recorded = (await fold("daily", undefined, one)).body;
+    assert.deepEqual([recorded.recorded, recorded.again, recorded.folded_through], [page.through, false, page.through]);
+    // Recorded again, even after its list changed: the answer is what was recorded then.
+    await list([delta("delta-2026-11-17-1.jsonl.gz", "the day's records", page.through - 1), delta("delta-2026-11-17-2.jsonl.gz", "the rest", all.through)]);
+    const twice = (await fold("daily", undefined, one)).body;
+    assert.deepEqual([twice.recorded, twice.again, twice.recorded_at, twice.folded_through], [page.through, true, recorded.recorded_at, page.through]);
     assert.equal(await counts().then((rows) => rows[0][4]), 6, "recording a fold clears nothing");
     assert.equal((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through + 1 } })).status, 409);
     const cleared = (await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: page.through } })).body;
@@ -494,7 +512,7 @@ test("bulk records a run hands over wait in the inbox, and leave D1 once the dai
     assert.equal(await box.one("SELECT url_key FROM link_lead"), "inbox.example/two");
     // The second run, cleared while its lead still waits, then after its work failed for good.
     const rest = (await box.ask("GET", `/inbox?after=${page.through}`, { as: "daily" })).body;
-    assert.equal((await fold("operator", rest.through, "bulk/b1/delta-2026-11-17-2.jsonl.gz")).body.folded_through, rest.through);
+    assert.equal((await fold("operator", rest.through, two)).body.folded_through, rest.through);
     assert.deepEqual((await box.ask("POST", "/inbox/clear", { as: "daily", body: { through: rest.through } })).body.leads_held, 1);
     assert.equal(await box.one("SELECT count(*) FROM inbox_folded"), 1);
     await box.ask("POST", "/work/lease", { as: "consumer", body: { step: "lead_process" } });

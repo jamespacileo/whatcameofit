@@ -136,12 +136,14 @@ export async function foldedThrough(db) {
 }
 
 // A fold is recorded once, by its delta object. `through` may not pass the last record
-// the inbox ever gave. Null when it does.
+// the inbox ever gave: null when it does. The answer is what is recorded for the object,
+// which for one recorded before is what was recorded then.
 export async function recordFold(db, object, through, bytes) {
   const given = (await db.prepare("SELECT coalesce((SELECT seq FROM sqlite_sequence WHERE name = 'inbox'), 0) AS n").first()).n;
   if (through > given) return null;
-  await db.prepare("INSERT INTO inbox_fold (object, through, bytes, recorded_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT DO NOTHING").bind(object, through, bytes, now()).run();
-  return { folded_through: await foldedThrough(db) };
+  const done = await db.prepare("INSERT INTO inbox_fold (object, through, bytes, recorded_at) VALUES (?1, ?2, ?3, ?4) ON CONFLICT DO NOTHING").bind(object, through, bytes, now()).run();
+  const row = await db.prepare("SELECT through, recorded_at FROM inbox_fold WHERE object = ?1").bind(object).first();
+  return { recorded: row.through, recorded_at: row.recorded_at, again: (done.meta.changes ?? 0) === 0, folded_through: await foldedThrough(db) };
 }
 
 // Once the daily job has folded the records up to `through` into the bulk file: they

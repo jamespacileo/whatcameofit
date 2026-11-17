@@ -57,7 +57,11 @@ test("a lookup's lead and share reach the bulk file and leave D1", { skip }, asy
     assert.notEqual(early.status, 0);
     assert.match(early.stdout + early.stderr, /delta_not_uploaded/);
     assert.deepEqual(await d1(), [[4, 2, 2]]);
-    await (await s.mf.getR2Bucket("PAYLOADS")).put(object, readFileSync(join(dir, "delta.jsonl.gz")));
+    // What scripts/upload-delta.mjs leaves in the bucket: the delta, and the build's list
+    // saying how far it folded.
+    const bucket = await s.mf.getR2Bucket("PAYLOADS"), delta = readFileSync(join(dir, "delta.jsonl.gz"));
+    await bucket.put(object, delta);
+    await bucket.put("bulk/b1/deltas.json", JSON.stringify({ build: "b1", deltas: [{ name: object.split("/")[2], date: day, bytes: delta.length, sha256: "", through: 4 }] }));
     const cleared = uv(env, "clear-inbox", "--through", "4", "--object", object);
     assert.equal(cleared.status, 0, cleared.stderr);
     // The records are out of the inbox; the leads wait for the consumer.
