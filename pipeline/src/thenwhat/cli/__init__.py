@@ -23,6 +23,7 @@ from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
 from thenwhat.cli.seed import seed_app
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.cli.slices import coverage_command
 from thenwhat.cli.statements import statements_command
 from thenwhat.cli.store import store_app
 from thenwhat.cli.terms import terms_command
@@ -57,6 +58,7 @@ app.add_typer(audit_app, name="audit")
 app.add_typer(seed_app, name="seed")
 app.add_typer(backfill_app, name="backfill")
 app.add_typer(store_app, name="store")
+app.command("coverage")(coverage_command)
 
 
 @app.callback()

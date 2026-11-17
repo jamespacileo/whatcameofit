@@ -351,6 +351,14 @@ What this costs, against decision 1's one source of truth:
 - **No Worker query over leads or stored trials** until a table is moved to hot.
 - **Going back is one full load.** `thenwhat store build --tier all`, dumped and loaded, put the whole store in the preview D1 on 2026-11-17 in about 9 minutes.
 
+- **The set is loaded in slices (2026-11-17).** The first production load is the hot file's bulk import. After it, the set's trials arrive by push, about 2,000 at a time, in this order of groups:
+  1. ended this year with results;
+  2. ended this year;
+  3. under way with results;
+  4. under way and updated in the last twelve months;
+  5. the rest.
+
+  Each slice passes through stages: record, registry papers, PubMed papers (off-peak, the operator's), in store, page. Its state is pushed with it (`trial_slice`), so production shows progress. The push state a build seeds holds what the base load held, so a slice sends only what changed since and its own state. On 2026-11-17 the set made 54 slices. A full slice is 4,051 records and 6.9 MB, sent in 4 chunks: about 6,000 table rows, and about 23,000 rows written in D1 at the 3.75 rows written per table row the preview load measured.
 - **The trial target set is hot (amended 2026-11-17).** The trials of `active-or-ended-this-year` (102,877 that day), their states and payloads are in the hot tier as well as the bulk file. The hot file grows from 328 to 695 MB. A trial that leaves the set keeps its rows in D1 (`docs/adr/0010`).
 - **The bulk tier cannot be queried from a Worker.** A trial's page served from the store (phase 5, tasks 7.1 to 7.3) needs `registry_trial` in D1; those tasks now begin by moving it to the hot tier, which the full load of 2026-11-17 showed fits.
 - **A reader's lookup still stages leads, shares and readings into D1.** After the cut, D1's `link_lead`, `link_share` and `lead_reading` hold only what lookups add, and the bulk file holds the history. A lookup of an article whose lead is only in the bulk file is answered as for a new lead. Promoting `link_lead` to hot reverses this.
