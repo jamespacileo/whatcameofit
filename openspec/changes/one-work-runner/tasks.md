@@ -17,8 +17,8 @@
 - [x] 3.3 Change the due rule and `record_outcome`: `Later` due after its time, `NeedsFix` not due, neither counts an attempt, and thirty days of one reason becomes `NeedsFix`; verify with tests for every scenario of "Ledger entry", "Due work", "Failed records" and "A record put off too long is said to need a fix"
 - [x] 3.4 Add step dependencies to the due rule; verify with tests for both scenarios of "A step can depend on another step"
 - [ ] 3.5 Add `thenwhat work requeue` with `--where` and `--dry-run`, and make `thenwhat backfill retry-outlet` call it; verify with one success and one refusal test and the three scenarios of "Records are made due by step and reason"
-- [ ] 3.6 Show waiting records by class and reason in `thenwhat backfill plan`; verify with a test of "Planning with records waiting"
-- [ ] 3.7 Add "final", "put off", "needs a fix" and "reason" to `GLOSSARY.md`; verify the terms in code, CLI output and specs match
+- [x] 3.6 Show waiting records by class and reason in `thenwhat backfill plan`; verify with a test of "Planning with records waiting"
+- [x] 3.7 Add "final", "put off", "needs a fix" and "reason" to `GLOSSARY.md`; verify the terms in code, CLI output and specs match
 
 ## 4. One call policy
 

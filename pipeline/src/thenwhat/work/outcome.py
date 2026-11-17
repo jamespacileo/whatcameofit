@@ -11,6 +11,7 @@ the values it carries. The words a person reads are made from the code here and 
 else, so a report and a stored detail cannot say two things.
 """
 
+import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -51,6 +52,11 @@ class Reason:
             raise ReasonMisused(
                 f"The reason '{self.code}' is said with a value it was not given: {missing}."
             ) from None
+
+    def describe(self) -> str:
+        """The reason in words for a line that covers many records, each with its own
+        values: a value's place is held by its name, "the site answered <status>"."""
+        return re.sub(r"\{(\w+)[^}]*\}", r"<\1>", self.words)
 
 
 def _check(reason: Reason, wanted: ReasonClass, values: Mapping[str, Any]) -> None:

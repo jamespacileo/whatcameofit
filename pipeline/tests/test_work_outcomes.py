@@ -1,15 +1,23 @@
 """Outcomes that say whether a record comes back, on a real database. Scenario names are
 from openspec work-ledger (change one-work-runner)."""
 
-from collections.abc import Callable
 from datetime import datetime, timedelta
-from typing import Any
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from backfill_support import NOW, Client, DemoStep, add_trials, same_session
+from backfill_support import (
+    NO_DATE,
+    NOT_A_REPORT,
+    NOW,
+    SITE_BUSY,
+    Client,
+    DemoStep,
+    ReasonedStep,
+    add_trials,
+    same_session,
+)
 from thenwhat.db.models import RegistryTrial, WorkEntry
 from thenwhat.domain import WorkOutcome
 from thenwhat.work.ledger import count
@@ -27,30 +35,7 @@ from thenwhat.work.runner import run_step
 
 LIMIT = 3
 
-SITE_BUSY = Reason("site_busy", ReasonClass.LATER, "the site answered {status}")
-NO_DATE = Reason("no_date", ReasonClass.NEEDS_FIX, "the page gives no publication date")
-NOT_A_REPORT = Reason("not_a_report", ReasonClass.FINAL, "not a report of a treatment")
 NEVER_DECLARED = Reason("never_declared", ReasonClass.FINAL, "nothing the step knows")
-
-
-class ReasonedStep(DemoStep):
-    """A step whose answer for each trial a test sets."""
-
-    reasons: tuple[Reason, ...] = (SITE_BUSY, NO_DATE, NOT_A_REPORT)
-
-    def __init__(self, name: str = "reasoned", version: int = 1) -> None:
-        super().__init__(name, version)
-        # The steps that must have finished for a trial before this one is due for it.
-        self.after: tuple[DemoStep, ...] = ()
-        self.answers: dict[str, Callable[[], Any]] = {}
-
-    def run(self, session: Session, record: RegistryTrial, client: Client) -> Any:
-        answer = self.answers.get(record.external_id)
-        if answer is None:
-            return super().run(session, record, client)
-        with self._lock:
-            self.ran.append(record.external_id)
-        return answer()
 
 
 def run(session: Session, step: DemoStep, *, at: datetime = NOW, **options):

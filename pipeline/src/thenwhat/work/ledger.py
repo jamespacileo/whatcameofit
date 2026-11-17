@@ -282,3 +282,78 @@ def mark_changed(session: Session, steps: Sequence[Step], record_kind: str, reco
         if entry is not None and entry.fingerprint != fingerprint(step.inputs(record)):
             entry.stale = True
     session.flush()
+
+
+@dataclass(frozen=True, slots=True)
+class Waiting:
+    """How many of a step's records wait for one reason, and until when the first of
+    those put off is due."""
+
+    outcome: WorkOutcome
+    reason: str
+    records: int
+    first_due_at: datetime | None
+
+
+def waiting(session: Session, step: Step) -> list[Waiting]:
+    """The step's records that are put off or need a fix, by class and reason: those put
+    off first, then the reason most records wait for."""
+    rows = session.execute(
+        select(WorkEntry.outcome, WorkEntry.reason, func.count(), func.min(WorkEntry.not_before))
+        .select_from(step.model)
+        .join(WorkEntry, _entry_of(step))
+        .where(
+            step.scope(),
+            WorkEntry.stale.is_(False),
+            WorkEntry.outcome.in_((WorkOutcome.LATER, WorkOutcome.NEEDS_FIX)),
+        )
+        .group_by(WorkEntry.outcome, WorkEntry.reason)
+        .order_by(WorkEntry.outcome, func.count().desc(), WorkEntry.reason)
+    )
+    return [
+        Waiting(outcome, reason or "", records, first) for outcome, reason, records, first in rows
+    ]
+
+
+def requeue(
+    session: Session,
+    step: Step,
+    *,
+    reason: str | None = None,
+    values: Mapping[str, Any] | None = None,
+    failed: bool = False,
+    attempt_limit: int | None = None,
+    dry_run: bool = False,
+) -> list[int]:
+    """Make due the step's records whose entry holds this reason, or, with `failed`,
+    those that failed as often as the limit allows. `values` narrows a reason to the
+    entries that carry each of them: one outlet, one status. Returns the records' ids.
+
+    The entries are marked stale, as the ledger marks a record whose input changed: each
+    stays, with its last attempt, until the record is worked on again, and its attempts
+    then start from none. Asks nothing and, with `dry_run`, changes nothing."""
+    if (reason is None) == (not failed):
+        raise ValueError("Records are made due by a reason or as failed, one of the two.")
+    wanted = [WorkEntry.stale.is_(False)]
+    if failed:
+        wanted.append(WorkEntry.outcome == WorkOutcome.FAILED)
+        if attempt_limit is not None:
+            wanted.append(WorkEntry.attempts >= attempt_limit)
+    else:
+        wanted.append(WorkEntry.reason == reason)
+        if values:
+            wanted.append(WorkEntry.reason_values.contains(dict(values)))
+    entries = list(
+        session.scalars(
+            select(WorkEntry)
+            .join(step.model, _entry_of(step))
+            .where(step.scope(), *wanted)
+            .order_by(WorkEntry.record_id)
+        )
+    )
+    if not dry_run:
+        for entry in entries:
+            entry.stale = True
+            entry.attempts = 0
+        session.flush()
+    return [entry.record_id for entry in entries]

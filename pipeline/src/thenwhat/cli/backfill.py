@@ -3,7 +3,7 @@
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
@@ -65,14 +65,15 @@ from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.config import Settings, SourceAllowance
-from thenwhat.domain import Decider, LeadVerdict, OutletKind
+from thenwhat.domain import Decider, LeadVerdict, OutletKind, WorkOutcome
 from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import PubMed
 from thenwhat.work.allowance import Allowances, AllowanceStatus
 from thenwhat.work.errors import BackfillError, SourceStop
-from thenwhat.work.ledger import count
+from thenwhat.work.ledger import count, waiting
+from thenwhat.work.outcome import UndeclaredReason, declared
 from thenwhat.work.runner import RunReport, run_step
 from thenwhat.work.spend import (
     PricesNotSet,
@@ -303,6 +304,30 @@ def steps_command() -> None:
             )
 
 
+def _waiting_lines(session: Session, step: Step) -> list[str]:
+    """The step's records that wait, by class and reason: those put off, with when the
+    first is due, and those that need a fix."""
+    lines: list[str] = []
+    for waits in waiting(session, step):
+        try:
+            words = declared(step, waits.reason).describe()
+        except UndeclaredReason:
+            # A reason the step no longer declares: its records still wait for it.
+            words = "a reason the step no longer declares"
+        if waits.outcome is WorkOutcome.LATER:
+            first = f"{waits.first_due_at:%Y-%m-%d %H:%M} UTC" if waits.first_due_at else "now"
+            lines.append(
+                f"  put off: {waits.records:,} for '{waits.reason}' ({words}); "
+                f"the first is due {first}"
+            )
+        else:
+            lines.append(
+                f"  need a fix: {waits.records:,} for '{waits.reason}' ({words}); make them "
+                f"due with `thenwhat work requeue {step.name} --reason {waits.reason}`"
+            )
+    return lines
+
+
 @backfill_app.command("plan")
 def plan_command() -> None:
     """Show what each step has done and has left to do, and what the rest would take.
@@ -356,6 +381,8 @@ def plan_command() -> None:
                         _spend_line(session, settings, spend, counts.due, step.name),
                         markup=False,
                     )
+                for line in _waiting_lines(session, step):
+                    out.print(line, markup=False)
                 if counts.needs_attention:
                     out.print(
                         f"  {counts.needs_attention:,} failed "
@@ -372,6 +399,8 @@ def _merge(reports: list[RunReport]) -> RunReport:
         merged.nothing_found += report.nothing_found
         merged.failed += report.failed
         merged.deferred += report.deferred
+        merged.later += report.later
+        merged.needs_fix += report.needs_fix
         merged.stopped = merged.stopped or report.stopped
         merged.errors = (merged.errors or []) + (report.errors or [])
     merged.remaining_due = min(report.remaining_due for report in reports)
@@ -435,6 +464,7 @@ def run_command(
                 limit=share,
                 before_call=before_call,
                 tried=tried,
+                put_off_span=timedelta(days=settings.work_put_off_days),
             )
 
         if workers == 1:
@@ -446,6 +476,8 @@ def run_command(
         f"{step.name}: {report.done:,} done, {report.nothing_found:,} found nothing, "
         f"{report.failed:,} failed"
         + (f", {report.deferred:,} could not be asked for now" if report.deferred else "")
+        + (f", {report.later:,} put off" if report.later else "")
+        + (f", {report.needs_fix:,} need a fix" if report.needs_fix else "")
         + f"; {report.remaining_due:,} still due.",
         markup=False,
     )
