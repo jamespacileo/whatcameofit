@@ -7,7 +7,11 @@ import { parseHTML } from "linkedom";
 import { readAddress, closestClaims } from "../src/lib/lookup-match.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../src/lib/contact.mjs";
 import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../src/lib/live-lookup.mjs";
-import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, findListed, forbiddenWord, searchListing } from "../src/lib/trial-page.mjs";
+import {
+  NOT_AN_OPTION, NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, changedShort, findListed, forbiddenWord, listingWords,
+  registryDate, searchListing, setNote,
+} from "../src/lib/trial-page.mjs";
+import { PARTS_SEARCHED_AT_ONCE, PART_BYTES, partFor, splitListing } from "../src/lib/trial-listing-parts.mjs";
 
 // Exercise the actual home-page submit handler, with only its network boundary
 // controlled. No real article text or live provider requests are used.
@@ -45,6 +49,19 @@ let LISTING = null;
 // Which claims cite which trials, as the build's trial index has it.
 let TRIAL_INDEX = { trials: {} };
 let listingRequests = 0;
+// How large a part of the listing is in a test, the parts asked for, and whether they answer.
+let PART_SIZE = PART_BYTES;
+let PARTS_UNREADABLE = false;
+let partRequests = [];
+function listingFiles() {
+  const cut = splitListing(LISTING.trials, PART_SIZE);
+  const file = (part) => `/trials-listing/${part.name}.json`;
+  const { trials, ...head } = LISTING;
+  return {
+    manifest: { ...head, total: trials.length, parts: cut.map((part) => ({ file: file(part), first: part.first, last: part.last, trials: part.trials.length })) },
+    parts: Object.fromEntries(cut.map((part) => [file(part), { ...head, trials: part.trials }])),
+  };
+}
 const FIXTURE_LISTING = JSON.parse(fs.readFileSync(new URL("./fixture-trials-listing.json", import.meta.url), "utf8"));
 
 // What each synthetic claim's reports and trials are, as the search detail file has them.
@@ -77,7 +94,8 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
   const context = {
     document, URL, setTimeout, BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
-    NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, findListed, searchListing,
+    NOT_AN_OPTION, NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, changedShort, findListed, listingWords, registryDate,
+    searchListing, setNote, PARTS_SEARCHED_AT_ONCE, partFor,
     location: { href: "https://example.test/", origin: "https://example.test" }, history,
     innerHeight: 800, matchMedia: () => ({ matches: false }),
     loadSearchIndex: async () => {
@@ -92,9 +110,15 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
       if (!searching) return pending;
       if (url === "/search-detail.json") return Promise.resolve({ ok: true, json: async () => SEARCH_DETAIL });
       if (url === "/trial-index.json") return Promise.resolve(TRIAL_INDEX ? { ok: true, json: async () => TRIAL_INDEX } : { ok: false, status: 404 });
+      // The listing as the build serves it: a manifest, and the parts it names.
       if (url === "/trials-listing.json") {
         listingRequests++;
-        return Promise.resolve(LISTING ? { ok: true, json: async () => LISTING } : { ok: false, status: 404 });
+        return Promise.resolve(LISTING ? { ok: true, json: async () => listingFiles().manifest } : { ok: false, status: 404 });
+      }
+      if (url.startsWith("/trials-listing/")) {
+        partRequests.push(url);
+        const part = LISTING && !PARTS_UNREADABLE ? listingFiles().parts[url] : null;
+        return Promise.resolve(part ? { ok: true, json: async () => part } : { ok: false, status: 404 });
       }
       return Promise.resolve({ json: async () => SEARCH_LOOKUP });
     },
@@ -415,3 +439,110 @@ test("a listed trial a claim cites through an approved match leads to that claim
   TRIAL_INDEX = { trials: {} };
   LISTING = null;
 });
+
+// A listing cut into more parts than are searched at once: every row its own part.
+function large() {
+  LISTING = FIXTURE_LISTING;
+  PART_SIZE = 1;
+  partRequests = [];
+  PARTS_UNREADABLE = false;
+  assert.ok(listingFiles().manifest.parts.length > PARTS_SEARCHED_AT_ONCE);
+}
+function small() {
+  LISTING = null;
+  PART_SIZE = PART_BYTES;
+  PARTS_UNREADABLE = false;
+}
+
+test("a registry number in a large listing is found by reading the one part that holds it", async () => {
+  large();
+  const page = setup(null, HOME);
+  const answer = await searched(page, "NCT09000002");
+  assert.deepEqual(partRequests, [partFor(listingFiles().manifest, "NCT09000002").file]);
+  assert.equal(answer.querySelector(".listed-trial a.listed-title").getAttribute("href"), "/trials/NCT09000002");
+  // The day the registry last changed the record stands with its state.
+  assert.match(answer.querySelector(".listed-trial .match-source").textContent, /Not started · Record last changed 30 Jun 2026$/);
+  // A number between two parts' ranges, or past the last, is in no part: nothing is read.
+  partRequests = [];
+  await searched(page, "NCT09999999");
+  assert.deepEqual(partRequests, []);
+  small();
+});
+
+test("a large listing is searched for words only when the reader asks", async () => {
+  large();
+  const page = setup(null, HOME);
+  const answer = await searched(page, "zetamab");
+  const group = answer.querySelector(".listed-trials") ?? page.results.querySelector(".listed-trials");
+  assert.ok(group, "the reader is not offered the search");
+  assert.deepEqual(partRequests, [], "no part is read before the reader asks");
+  assert.equal(group.querySelector(".listed-trial"), null);
+  const button = group.querySelector("button");
+  assert.equal(button.textContent, SEARCH_WORDS.ask(FIXTURE_LISTING.trials.length));
+  assert.ok(group.textContent.includes(NOT_AN_OPTION));
+
+  button.dispatchEvent(new page.window.Event("click"));
+  await settle();
+  assert.equal(partRequests.length, listingFiles().manifest.parts.length, "every part is read once");
+  const rows = [...group.querySelectorAll(".listed-trial")];
+  assert.deepEqual(rows.map((row) => row.querySelector(".match-source").textContent.match(/NCT\d{8}/)[0]).sort(), ["NCT09000001", "NCT09000003"]);
+  assert.equal(group.querySelector("button"), null);
+  assert.equal(forbiddenWord(group.textContent.replace(NOT_AN_OPTION, "")), null);
+
+  // Once read, the listing answers the next search with nothing more fetched or asked.
+  partRequests = [];
+  const next = await searched(page, "EX-9");
+  const again = next.querySelector(".listed-trials") ?? page.results.querySelector(".listed-trials");
+  assert.equal(again.querySelectorAll(".listed-trial").length, 1);
+  assert.deepEqual(partRequests, []);
+  small();
+});
+
+test("a reader who asks is told when no listed trial has the words, or the listing cannot be read", async () => {
+  large();
+  const page = setup(null, HOME);
+  await searched(page, "nonesuchword");
+  const group = page.document.querySelector(".listed-trials");
+  group.querySelector("button").dispatchEvent(new page.window.Event("click"));
+  await settle();
+  assert.ok(group.textContent.includes(SEARCH_WORDS.none));
+  assert.equal(group.querySelector(".listed-trial"), null);
+
+  large();
+  PARTS_UNREADABLE = true;
+  const other = setup(null, HOME);
+  await searched(other, "zetamab");
+  const asked = (other.document.querySelector("[data-search-answer] .listed-trials") ?? other.results.querySelector(".listed-trials"));
+  asked.querySelector("button").dispatchEvent(new other.window.Event("click"));
+  await settle();
+  assert.ok(asked.textContent.includes(SEARCH_WORDS.unread));
+  assert.equal(asked.querySelector("button").disabled, false);
+  small();
+});
+
+test("the search's line on which trials are listed is worded from the set's name", () => {
+  assert.equal(setNote("active-since-2025", "2026-11-17"), `Phase 2 and 3 studies that ClinicalTrials.gov lists as not finished. ${NOT_AN_OPTION}`);
+  assert.equal(setNote("active-or-ended-this-year", "2026-11-17"), `Studies that ClinicalTrials.gov lists as not finished, or as ended in 2026. ${NOT_AN_OPTION}`);
+  // A set with no words here is described as no more than it surely is.
+  assert.equal(setNote("constructor", null), `Studies registered on ClinicalTrials.gov. ${NOT_AN_OPTION}`);
+});
+
+test("the listing is cut in registry-number order into parts no larger than asked, every row once", () => {
+  const rows = Array.from({ length: 500 }, (_, at) => [`NCT${String(90000000 - at * 7).padStart(8, "0")}`, `A synthetic study ${at}`, null, [], "under_way", null, [], [], null]);
+  const parts = splitListing(rows, 2000);
+  assert.ok(parts.length > 10);
+  const ids = parts.flatMap((part) => part.trials.map((row) => row[0]));
+  assert.deepEqual(ids, rows.map((row) => row[0]).sort());
+  assert.equal(new Set(parts.map((part) => part.name)).size, parts.length);
+  for (const [at, part] of parts.entries()) {
+    assert.ok(JSON.stringify(part.trials).length <= 2000 + 2, part.name);
+    assert.deepEqual([part.first, part.last], [part.trials[0][0], part.trials.at(-1)[0]]);
+    if (at) assert.ok(parts[at - 1].last < part.first);
+    for (const row of part.trials) assert.equal(partFor({ parts }, row[0].toLowerCase()), part);
+  }
+  assert.equal(partFor({ parts }, "NCT00000001"), null);
+  assert.deepEqual(splitListing([]), []);
+  // A row larger than a part is a part of its own, never dropped.
+  assert.equal(splitListing([["NCT00000001", "x".repeat(50)], ["NCT00000002", "y"]], 10).length, 2);
+});
+

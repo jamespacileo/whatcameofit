@@ -67,7 +67,7 @@ function record(id, changes = {}) {
 
 // The built files, served as Cloudflare serves them, and a registry that answers with
 // the synthetic record. The Worker's own code runs unchanged.
-function site(directory, payload) {
+function site(directory, payload, bindings = {}) {
   const calls = [];
   const env = {
     CONTACT_EMAIL: "corrections@example.test",
@@ -82,6 +82,7 @@ function site(directory, payload) {
       },
     },
     TRIAL_RECORD_READS: { limit: async () => ({ success: true }) },
+    ...bindings,
   };
   const fetch = async (url) => {
     calls.push(String(url));
@@ -166,6 +167,27 @@ test("Scenario: A record with results posted; a terminated trial with a stated r
   assert.ok(!html.includes("PLANTED-PERSON") && !html.includes("Lead sponsor"));
 });
 
+test("the day the registry last changed the record stands with the state", async () => {
+  // Listed as under way, and not changed since 2019: the page says both.
+  const old = record(UNCITED, { status: { overallStatus: "RECRUITING", lastUpdatePostDateStruct: { date: "2019-04-02" } } });
+  const html = await (await site(dist, old).open(UNCITED)).text();
+  const state = html.indexOf(STATE_PHRASES.under_way);
+  const changed = html.indexOf("The registry last changed this record on 2 April 2019.");
+  assert.ok(state > 0 && changed > state && changed < html.indexOf(NO_REPORT));
+  const undated = record(UNCITED, { status: { lastUpdatePostDateStruct: undefined } });
+  assert.ok((await (await site(dist, undated).open(UNCITED)).text()).includes("The registry does not state when it last changed this record."));
+});
+
+test("pages of uncited trials have a read allowance of their own, and a cited trial's page does not use it", async () => {
+  const served = site(dist, record(UNCITED), { LISTED_TRIAL_READS: { limit: async () => ({ success: false }) } });
+  const refused = await served.open(UNCITED);
+  assert.equal(refused.status, 503);
+  assert.equal(refused.headers.get("retry-after"), "60");
+  assert.deepEqual(served.calls, [], "the registry is not asked");
+  const cited = site(dist, record(CITED), { LISTED_TRIAL_READS: { limit: async () => ({ success: false }) } });
+  assert.equal((await cited.open(CITED)).status, 200);
+});
+
 test("an uncited trial page is not to be indexed", async () => {
   const response = await site(dist, record(UNCITED)).open(UNCITED);
   assert.equal(response.headers.get("x-robots-tag"), "noindex, follow");
@@ -204,7 +226,19 @@ test("a listed trial the registry no longer has answers 404", async () => {
 });
 
 test("the built listing is the pipeline's file, and a claim page does not fetch it", () => {
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dist, "trials-listing.json"), "utf8")), listing);
+  // The manifest says which part holds which numbers; the parts together are the file.
+  const manifest = JSON.parse(fs.readFileSync(path.join(dist, "trials-listing.json"), "utf8"));
+  assert.equal(manifest.total, listing.trials.length);
+  assert.equal(manifest.set, listing.set);
+  assert.equal(manifest.trials, undefined, "the manifest holds no trial");
+  const built = manifest.parts.map((part) => JSON.parse(fs.readFileSync(path.join(dist, part.file), "utf8")));
+  assert.deepEqual(built.flatMap((part) => part.trials), [...listing.trials].sort((a, b) => a[0].localeCompare(b[0])));
+  for (const [at, part] of built.entries()) {
+    assert.deepEqual({ ...part, trials: [] }, { ...listing, trials: [] }, "a part is a listing in itself");
+    assert.equal(manifest.parts[at].first, part.trials[0][0]);
+    assert.equal(manifest.parts[at].last, part.trials.at(-1)[0]);
+    assert.equal(manifest.parts[at].trials, part.trials.length);
+  }
   assert.deepEqual(fs.readFileSync(path.join(dist, "trial-listed.txt"), "utf8").trim().split("\n"), listing.trials.map((row) => row[0]));
   // Scenario: A page that needs no search
   const claim = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
@@ -214,7 +248,7 @@ test("the built listing is the pipeline's file, and a claim page does not fetch 
 test("with the setting off, a listed uncited trial has no page and search finds no listed trial", async () => {
   const result = build(off, { LISTED_TRIAL_PAGES: "0" });
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(off, "trials-listing.json"), "utf8")).trials, []);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(off, "trials-listing.json"), "utf8")).parts, []);
   const served = site(off, record(UNCITED));
   assert.equal((await served.open(UNCITED)).status, 404);
   assert.deepEqual(served.calls, []);
@@ -278,7 +312,7 @@ test("an export under a name of its own has no listing beside it, and still buil
   const out = path.join(directory, "dist");
   const result = build(out, { EXPORT_FILE: file });
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(out, "trials-listing.json"), "utf8")).trials, []);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(out, "trials-listing.json"), "utf8")).parts, []);
 });
 
 test("a sponsor who is a person is never named, on either kind of trial page", async () => {
@@ -310,7 +344,7 @@ test("a sponsor who is a person is never named, on either kind of trial page", a
 
 test("the listing files are served marked not to be indexed", () => {
   const headers = fs.readFileSync(path.join(dist, "_headers"), "utf8");
-  for (const file of ["/trials-listing.json", "/trial-listed.txt"]) {
-    assert.match(headers, new RegExp(`^${file.replace(".", "\\.")}\\n  X-Robots-Tag: noindex$`, "m"), file);
+  for (const file of ["/trials-listing.json", "/trials-listing/*", "/trial-listed.txt"]) {
+    assert.match(headers, new RegExp(`^${file.replace(/[.*]/g, "\\$&")}\\n  X-Robots-Tag: noindex$`, "m"), file);
   }
 });

@@ -32,6 +32,9 @@
   // the dedicated OpenAI project's enforced monthly limit controls model spending.
   "ratelimits": [
     { "name": "TRIAL_RECORD_READS", "namespace_id": "4103", "simple": { "limit": 60, "period": 60 } },
+    // Registry reads for pages of listed trials no claim cites: a part of the allowance
+    // above, so that reading through those pages leaves room for the cited trials' pages.
+    { "name": "LISTED_TRIAL_READS", "namespace_id": "4104", "simple": { "limit": 30, "period": 60 } },
     { "name": "LOOKUP_PER_READER", "namespace_id": "4101", "simple": { "limit": 5, "period": 60 } },
     { "name": "LOOKUP_IN_ALL", "namespace_id": "4102", "simple": { "limit": 30, "period": 60 } }
   ]

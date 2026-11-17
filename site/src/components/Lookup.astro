@@ -104,7 +104,8 @@ const sentenceJson = sentences
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { SITE as BRAND } from "../../site.config.mjs";
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
-  import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, findListed, searchListing } from "../lib/trial-page.mjs";
+  import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, NOT_AN_OPTION, changedShort, findListed, listingWords, registryDate, searchListing, setNote } from "../lib/trial-page.mjs";
+  import { PARTS_SEARCHED_AT_ONCE, partFor } from "../lib/trial-listing-parts.mjs";
 
   const SITE_NAME = BRAND.name;
   const form = document.querySelector<HTMLFormElement>("#search")!;
@@ -1040,16 +1041,49 @@ const sentenceJson = sentences
     acronym: string | null;
     phases: string[];
     state: string;
+    updated: string | null;
     conditions: string[];
     interventions: string[];
     claim: string | null;
   }
-  let trialListing: Promise<unknown> | undefined;
+  // The listing is in parts, in registry-number order. Its manifest says which part
+  // holds which numbers: a registry number costs one part, and the whole listing is
+  // read only for a search by words.
+  type ListingPart = { file: string; first: string; last: string; trials: number };
+  type ListingManifest = { set: string; records_read: string | null; columns: string[]; total: number; parts: ListingPart[] };
+  let trialListing: Promise<ListingManifest> | undefined;
   const loadListing = () =>
     (trialListing ??= fetch("/trials-listing.json").then((response) => {
       if (!response.ok) throw new Error(`trial listing ${response.status}`);
       return response.json();
     }));
+  const listingParts = new Map<string, Promise<{ columns: string[]; trials: unknown[][] }>>();
+  function loadPart(part: ListingPart) {
+    let read = listingParts.get(part.file);
+    if (!read) {
+      read = fetch(part.file).then((response) => {
+        if (!response.ok) throw new Error(`trial listing part ${response.status}`);
+        return response.json();
+      });
+      listingParts.set(part.file, read);
+      // A part that could not be read is asked for again by the next search.
+      read.catch(() => listingParts.delete(part.file));
+    }
+    return read;
+  }
+  /** The listed trial with this registry number: the manifest, then the one part. */
+  async function listedTrial(id: string) {
+    const part = partFor(await loadListing(), id) as ListingPart | null;
+    return part ? (findListed(await loadPart(part), id) as ListedTrial | null) : null;
+  }
+  // Every part, as one listing. Kept once read, so a later search reads nothing.
+  let wholeListing: { columns: string[]; trials: unknown[][] } | undefined;
+  async function loadWholeListing(manifest: ListingManifest) {
+    if (wholeListing) return wholeListing;
+    const read = await Promise.all(manifest.parts.map(loadPart));
+    wholeListing = { columns: manifest.columns, trials: read.flatMap((part) => part.trials) };
+    return wholeListing;
+  }
   // Which published claims cite which trials, as the Worker reads it: built from the
   // export, so it counts a trial cited through an approved match as well as through an
   // event. It decides where a listed trial's row leads; the listing's own column is the
@@ -1082,7 +1116,9 @@ const sentenceJson = sentences
     title.append(marked(trial.acronym ? `${trial.acronym}: ${trial.title}` : trial.title, words));
     const source = element("p", undefined, "match-source");
     const phases = trial.phases.map((phase) => PHASE_WORDS[phase]).filter(Boolean).join(", ");
-    source.append([`ClinicalTrials.gov ${trial.id}`, phases, STATE_WORDS[trial.state]].filter(Boolean).join(" · "));
+    // The state is the registry's, as of the day it last changed the record.
+    const changed = registryDate(trial.updated);
+    source.append([`ClinicalTrials.gov ${trial.id}`, phases, STATE_WORDS[trial.state], changed && changedShort(changed)].filter(Boolean).join(" · "));
     const about = element("p", undefined, "listed-about");
     about.append(marked([trial.interventions.slice(0, 3).join(", "), trial.conditions.slice(0, 2).join(", ")].filter(Boolean).join(" · "), words));
     const says = element("p", claim ? `${SEARCH_WORDS.claim}: ` : `${NO_REPORT} `, "listed-says");
@@ -1093,15 +1129,17 @@ const sentenceJson = sentences
     return item;
   }
 
-  // After the claims, the listed trials that hold the searched words. Nothing is said
-  // when none does, or when the listing cannot be read: the claims' answer stands.
+  // After the claims, the listed trials that hold the searched words. A small listing
+  // is searched at once. A large one is read only when the reader asks: the group then
+  // holds one button, and the answer takes its place. Nothing is said when the listing
+  // cannot be found at all: the claims' answer stands.
   async function showListed(query: string) {
     const asked = latest;
-    let listing: unknown;
+    let manifest: ListingManifest;
     let index: Lookup;
     let cited: TrialIndex;
     try {
-      [listing, index, cited] = await Promise.all([loadListing(), loadLookup(), loadTrialIndex()]);
+      [manifest, index, cited] = await Promise.all([loadListing(), loadLookup(), loadTrialIndex()]);
     } catch {
       // Without the index of cited trials a row could say no report is linked for a
       // trial a claim cites, so no listed trial is shown.
@@ -1109,19 +1147,56 @@ const sentenceJson = sentences
       trialIndex = undefined;
       return;
     }
-    if (asked !== latest) return;
+    if (asked !== latest || !manifest.total) return;
     const words = searchWords(query);
-    const found = searchListing(listing, query) as { total: number; trials: ListedTrial[] };
-    if (found.total === 0) return;
+    // A search with no word the listing is searched for offers nothing.
+    if (!listingWords(query).length) return;
     const group = element("section", undefined, "listed-trials");
-    group.append(element("h3", SEARCH_WORDS.heading), element("p", SEARCH_WORDS.note, "trial-note"));
-    const list = element("ol", undefined, "plain");
-    list.append(...found.trials.map((trial) => listedRow(trial, index.claims, cited, words)));
-    group.append(list);
-    if (found.total > found.trials.length) group.append(element("p", SEARCH_WORDS.more(found.total - found.trials.length), "match-more"));
-    listedGroup = group;
-    const holder = answerSlot && !answerSlot.hidden ? answerSlot : results;
-    (holder.querySelector(".search-results") ?? holder).append(group);
+    const place = () => {
+      listedGroup = group;
+      const holder = answerSlot && !answerSlot.hidden ? answerSlot : results;
+      (holder.querySelector(".search-results") ?? holder).append(group);
+    };
+    const head = () => [element("h3", SEARCH_WORDS.heading), element("p", setNote(manifest.set, manifest.records_read), "trial-note")];
+    const fill = (listing: unknown, asking: boolean) => {
+      const found = searchListing(listing, query) as { total: number; trials: ListedTrial[] };
+      if (found.total === 0) {
+        // Said only to a reader who asked for the search; otherwise nothing is added.
+        if (asking) group.replaceChildren(...head(), element("p", SEARCH_WORDS.none, "match-more"));
+        return asking;
+      }
+      const list = element("ol", undefined, "plain");
+      list.append(...found.trials.map((trial) => listedRow(trial, index.claims, cited, words)));
+      group.replaceChildren(...head(), list);
+      if (found.total > found.trials.length) group.append(element("p", SEARCH_WORDS.more(found.total - found.trials.length), "match-more"));
+      return true;
+    };
+    if (wholeListing || manifest.parts.length <= PARTS_SEARCHED_AT_ONCE) {
+      let listing: unknown;
+      try {
+        listing = await loadWholeListing(manifest);
+      } catch {
+        return;
+      }
+      if (asked === latest && fill(listing, false)) place();
+      return;
+    }
+    const button = element("button", SEARCH_WORDS.ask(manifest.total), "text-control listed-ask") as HTMLButtonElement;
+    button.type = "button";
+    const status = element("p", "", "match-more");
+    status.setAttribute("role", "status");
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      status.textContent = SEARCH_WORDS.reading;
+      try {
+        fill(await loadWholeListing(manifest), true);
+      } catch {
+        button.disabled = false;
+        status.textContent = SEARCH_WORDS.unread;
+      }
+    });
+    group.append(...head(), button, status);
+    place();
   }
 
   function searchFailed() {
@@ -1174,7 +1249,7 @@ const sentenceJson = sentences
       let citedTrials: TrialIndex = {};
       if (/^NCT\d{8}$/.test(id)) {
         try {
-          [listed, citedTrials] = [findListed(await loadListing(), id) as ListedTrial | null, await loadTrialIndex()];
+          [listed, citedTrials] = await Promise.all([listedTrial(id), loadTrialIndex()]);
         } catch {
           listed = null;
           trialListing = undefined;
@@ -1187,7 +1262,7 @@ const sentenceJson = sentences
         block.append(searchHead(id, "A registered trial"));
         const list = element("ol", undefined, "plain listed-trials");
         list.append(listedRow(listed, index.claims, citedTrials));
-        block.append(list, element("p", "A trial on record is not a treatment option.", "trial-note"));
+        block.append(list, element("p", NOT_AN_OPTION, "trial-note"));
         place(block, `${id} is a registered trial, shown below.`);
         return;
       }

@@ -93,13 +93,51 @@ export const PAGE_LABELS = {
   open: "Open the full record on ClinicalTrials.gov",
 };
 
+// What must stand wherever listed trials are shown.
+export const NOT_AN_OPTION = "A trial on record is not a treatment option.";
+
+// Which trials a listing holds, by the pipeline's name for the set (the listing carries
+// the name; these are its words). `note` is the search's one line, `about` the method
+// page's clause. The year is the year the listing's records were read.
+const yearOf = (recordsRead) => (/^\d{4}/.test(String(recordsRead ?? "")) ? String(recordsRead).slice(0, 4) : null);
+export const SET_WORDS = {
+  "active-since-2025": {
+    note: () => "Phase 2 and 3 studies that ClinicalTrials.gov lists as not finished.",
+    about: () =>
+      "the phase 2 and phase 3 studies that ClinicalTrials.gov lists as not finished and whose record it has changed since the start of 2025",
+  },
+  "active-or-ended-this-year": {
+    note: (year) => `Studies that ClinicalTrials.gov lists as not finished, or as ended in ${year ?? "the current year"}.`,
+    about: (year) =>
+      `the studies that ClinicalTrials.gov lists as not finished, and those it lists as ended in ${year ?? "the current year"}`,
+  },
+};
+// A set this file has no words for is described as no more than it surely is.
+const SET_NOT_WORDED = { note: () => "Studies registered on ClinicalTrials.gov.", about: () => "studies registered on ClinicalTrials.gov" };
+const setWords = (set) => (Object.hasOwn(SET_WORDS, set) ? SET_WORDS[set] : SET_NOT_WORDED);
+/** The search's line on which trials are listed, ending with what a trial is not. */
+export const setNote = (set, recordsRead) => `${setWords(set).note(yearOf(recordsRead))} ${NOT_AN_OPTION}`;
+/** The method page's clause on which trials are listed. */
+export const setAbout = (set, recordsRead) => setWords(set).about(yearOf(recordsRead));
+
+// The registry's state is the registry's word, as of the day it last changed the record:
+// a record can be listed as not finished and not have been changed for years. So the
+// day stands beside the state, on the page and in a search row.
+export const recordChanged = (day) => `The registry last changed this record on ${day}.`;
+export const RECORD_CHANGE_NOT_STATED = "The registry does not state when it last changed this record.";
+export const changedShort = (day) => `Record last changed ${day}`;
+
 // What the search says of trials found in the listing.
 export const SEARCH_WORDS = {
   heading: "Registered trials with these words",
-  note: "Phase 2 and 3 studies that ClinicalTrials.gov lists as not finished. A trial on record is not a treatment option.",
   open: "See the registry facts",
   claim: "See the tracked claim",
   more: (count) => `And ${count} more. Add a word to narrow them.`,
+  // A large listing is read only when the reader asks for it.
+  ask: (count) => `Search ${count.toLocaleString("en")} registered trials for these words`,
+  reading: "Reading the registered trials.",
+  none: "No registered trial listed here has these words.",
+  unread: "The registered trials could not be read. Try again.",
 };
 
 // Words that say how a trial turned out, or that speak to a reader as someone who might
@@ -137,11 +175,18 @@ export const FIXED_WORDING = [
   SELECTED_FIELDS,
   ...Object.values(PAGE_LABELS),
   SEARCH_WORDS.heading,
-  // The one sentence that must name what a trial is not; checked without that clause.
-  SEARCH_WORDS.note.replace("A trial on record is not a treatment option.", ""),
+  // The one sentence that must name what a trial is not is not checked: NOT_AN_OPTION.
+  ...[...Object.values(SET_WORDS), SET_NOT_WORDED].flatMap((words) => [words.note("2026"), words.about("2026"), words.note(null), words.about(null)]),
+  recordChanged("3 March 2025"),
+  RECORD_CHANGE_NOT_STATED,
+  changedShort("3 Mar 2025"),
   SEARCH_WORDS.open,
   SEARCH_WORDS.claim,
   SEARCH_WORDS.more(3),
+  SEARCH_WORDS.ask(102679),
+  SEARCH_WORDS.reading,
+  SEARCH_WORDS.none,
+  SEARCH_WORDS.unread,
 ];
 assertPlainWording(FIXED_WORDING);
 
@@ -219,6 +264,9 @@ export function findListed(listing, id) {
 
 const wordsOf = (text) => String(text ?? "").toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
 
+/** The words a search of the listing looks for; none means the listing is not searched. */
+export const listingWords = (query) => [...new Set(wordsOf(query))].filter((word) => word.length > 1 || /\d/.test(word));
+
 /**
  * Listed trials that hold every searched word, as a whole word or the start of one, in
  * the title, acronym, an intervention's name or a condition. Ordered by a fixed rule:
@@ -228,7 +276,7 @@ const wordsOf = (text) => String(text ?? "").toLowerCase().split(/[^\p{L}\p{N}]+
  */
 export function searchListing(listing, query, limit = 8) {
   // A lone letter finds too much to be a search; a lone digit is part of a name ("EX-2").
-  const words = [...new Set(wordsOf(query))].filter((word) => word.length > 1 || /\d/.test(word));
+  const words = listingWords(query);
   if (!words.length) return { total: 0, trials: [] };
   const asked = words.join(" ");
   const found = [];

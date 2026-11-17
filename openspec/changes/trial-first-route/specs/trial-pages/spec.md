@@ -183,9 +183,44 @@ The site SHALL be built with a listing of a set of stored trials the operator na
 - **THEN** the listing is not fetched
 
 ### Requirement: The listing is written by its own command and staged with the export
-The pipeline SHALL write the listing by a command of its own, `thenwhat trials-listing`, for a named set, sending no request and changing nothing in the database. The listing SHALL have a schema file checked into the site, a test SHALL fail when the schema file and the pipeline's model differ, and the site build SHALL fail on a listing that does not match the schema. The listing SHALL be staged for publication by the command that stages the export, beside it, and staging SHALL refuse a listing that does not match the schema, that holds no trial, that is larger than 8 MiB, or that names a claim the staged export does not publish. A site built with no listing beside its export SHALL build, open no page for an uncited trial, and leave search as it was.
+The pipeline SHALL write the listing by a command of its own, `thenwhat trials-listing`, for a named set, sending no request and changing nothing in the database. The listing SHALL have a schema file checked into the site, a test SHALL fail when the schema file and the pipeline's model differ, and the site build SHALL fail on a listing that does not match the schema. The listing SHALL be staged for publication by the command that stages the export, beside it, and staging SHALL refuse a listing that does not match the schema, that holds no trial, that is larger than 64 MiB, or that names a claim the staged export does not publish. A site built with no listing beside its export SHALL build, open no page for an uncited trial, and leave search as it was.
 
 Settled by the build on 2026-11-17: the set listed is `active-since-2025` (phase 2 or 3, under way or not yet started, record changed by the registry on or after 1 January 2025), which held 23,328 trials on the working database that day; its listing is one file of 7,009,433 bytes (6.68 MiB; 1.93 MB with gzip, 1.18 MB with Brotli), so it is not split.
+
+Changed on 2026-11-17, when the operator made the listed set one rolling set (under way or not yet started now, or ended in the current calendar year): 102,877 trials by that rule on the working database that day, a listing of 29,090,078 bytes (27.7 MiB; 8.7 MB with gzip, 5.8 MB with Brotli), more than Cloudflare takes as one file. The pipeline still writes one file; the site's build cuts it into parts (next requirement), and the single-file limit of 8 MiB became a limit of 64 MiB on the whole.
+
+### Requirement: The listing is served in parts
+The site's build SHALL cut the listing, in registry-number order, into parts of about one mebibyte, each a listing in itself by the same schema, and SHALL serve a manifest that names the set, the day its records were read, the number of trials, and for each part its address and its first and last registry numbers. No file a reader fetches SHALL hold the whole listing, and every listed trial SHALL be in exactly one part. A search for a registry number SHALL fetch the manifest and the one part that could hold the number. A search by words SHALL read every part; where the listing has more than two parts it SHALL do so only when the reader asks, by a control that states how many trials would be searched, and SHALL then answer later searches from what was read. The manifest and the parts SHALL be served marked not to be indexed.
+
+#### Scenario: A registry number in a large listing
+- **WHEN** a reader searches for the identifier of a listed trial and the listing has twenty-eight parts
+- **THEN** the manifest and one part are fetched, and the search answers with that trial's page
+
+#### Scenario: Words in a large listing
+- **WHEN** a reader searches for words and the listing has twenty-eight parts
+- **THEN** no part is fetched, and after the claims the reader is offered a search of the registered trials that says how many there are
+
+#### Scenario: The reader asks
+- **WHEN** the reader takes up that offer
+- **THEN** every part is fetched once, the listed trials with those words are shown, and the reader's next search by words is answered with nothing more fetched
+
+#### Scenario: A small listing
+- **WHEN** the listing has one or two parts
+- **THEN** a search by words reads it at once, as before
+
+### Requirement: The registry's state is shown with the day the record last changed
+A plain trial page SHALL state, directly under the trial's state, the day the registry last changed the record, or that the registry does not state one; a listed trial's row in a search SHALL show that day beside its state. The method page SHALL say that a state is the registry's own as of that day and that a record can be listed as not finished and not have been changed for years. On 2026-11-17, 7,976 of the trials the registry listed as under way or not yet started had a record it had not changed since before 2025.
+
+#### Scenario: A record listed as under way and unchanged since 2019
+- **WHEN** a reader opens the plain page of a trial the registry lists as recruiting and last changed in April 2019
+- **THEN** the page states that the registry lists the study as started and not yet finished, and under it that the registry last changed the record on 2 April 2019
+
+### Requirement: Pages of uncited trials have their own allowance of registry reads
+Reading the registry for the page of a listed trial no claim cites SHALL count against an allowance of its own, smaller than and within the allowance for all trial pages, so that requests for many such pages cannot use up the reads that pages of cited trials need. A page refused by either allowance SHALL answer as temporarily unavailable, say when to try again, and send no request to the registry. Every trial page SHALL stay marked not to be indexed, and no page of an uncited trial SHALL be in the sitemap.
+
+#### Scenario: Many uncited pages asked for at once
+- **WHEN** pages of uncited trials have used their allowance for the minute and a reader opens the page of a trial a claim cites
+- **THEN** the cited trial's page is read from the registry and shown
 
 #### Scenario: An unknown set
 - **WHEN** the command is asked for a set that is not named
@@ -195,9 +230,9 @@ Settled by the build on 2026-11-17: the set listed is `active-since-2025` (phase
 - **WHEN** the listing names a claim as citing a trial and the staged export does not publish that claim
 - **THEN** staging is refused, the staged listing is unchanged, and the message says to write both again
 
-#### Scenario: A listing too large to be one file
-- **WHEN** a listing is larger than 8 MiB
-- **THEN** staging is refused and says to list a smaller set or split it
+#### Scenario: A listing too large to build
+- **WHEN** a listing is larger than 64 MiB
+- **THEN** staging is refused and says to list a smaller set
 
 #### Scenario: No listing
 - **WHEN** the site is built from an export with no listing beside it

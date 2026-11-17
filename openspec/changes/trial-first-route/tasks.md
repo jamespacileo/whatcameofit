@@ -54,6 +54,7 @@ Each section is useful when it is done, without the sections after it. Sections 
 - [x] 5.8 Add to the method page how a trial comes to have a page, what the page states, and that most trials are never in the news; verify the site build passes its wording checks Done 2026-11-17: the section is drawn only in a build that has a listing
 - [ ] 5.9 Deploy to a pull request preview and read twenty uncited trial pages across states and phases with the operator; record here anything reworded
 - [x] 5.10 Remove every person from a registry record before the Worker saves, shows, compares or sends it: one rule (`site/worker/people.mjs`), the trial page asking only for the fields it shows, saved copies of the older version refused and replaced, and a test that plants a person in every field (`specs/trial-records`, "No person of a registry record is saved or shown")
+- [x] 5.11 Serve the listing in parts with a manifest, so that a set of some 100,000 trials can be listed: one part read for a registry number, the whole only when a reader asks to search it by words; show the day the registry last changed a record with its state; give uncited trials' pages a registry read allowance of their own (`specs/trial-pages`, "The listing is served in parts" and the two requirements after it)
 
 ## 6. From the store (after `cloudflare-source-of-truth` holds the corpus)
 
