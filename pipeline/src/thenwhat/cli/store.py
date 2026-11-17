@@ -48,10 +48,15 @@ from thenwhat.store.push import (
     USER_AGENT,
     PushFailed,
     RetryOnBusy,
+    check_store,
+    check_target,
     pending_path,
     push,
+    read_pending,
     read_state,
+    store_build,
     target_of,
+    undone_of,
     write_state,
 )
 from thenwhat.store.tiers import (
@@ -314,6 +319,15 @@ def _commit() -> str:
     return found
 
 
+def _client(url: str, token: str) -> httpx.Client:
+    return httpx.Client(
+        transport=RetryOnBusy(),
+        base_url=url,
+        headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
+        timeout=120,
+    )
+
+
 @backfill_app.command("push")
 def push_command(
     state: Annotated[
@@ -369,6 +383,21 @@ def push_command(
         err.print("The commit of this code could not be read; run from the repository.")
         raise typer.Exit(code=1)
     held = read_state(state)
+    # The store's build, its database and its address, against the state's: a state of
+    # another store, or of this one before a reload, would skip what the store lacks.
+    try:
+        check_target(held, url, state)
+        with _client(url, token) as client:
+            progress, took_since = check_store(client, held)
+    except PushFailed as fault:
+        err.print(str(fault), markup=False)
+        raise typer.Exit(code=1) from None
+    if progress is None:
+        out.print("The store gave no progress: its build is not compared.", markup=False)
+    elif store_build(progress) is None:
+        out.print("The store gives no build id: the build is not compared.", markup=False)
+    if took_since and not report_only:
+        write_state(state, held)
     texts: dict[str, str] = {}
 
     def keep_payload(payload: Payload) -> None:
@@ -383,12 +412,7 @@ def push_command(
             records, left_out = hot_records(
                 stream(session, Gathered(records=[]), keep_payload=keep_payload)
             )
-    with httpx.Client(
-        transport=RetryOnBusy(),
-        base_url=url,
-        headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
-        timeout=120,
-    ) as client:
+    with _client(url, token) as client:
         try:
             report = push(
                 client,
@@ -686,6 +710,74 @@ def strip_paper_abstracts_command(
     out.print(f'Prove it: psql "$DATABASE_URL" -f {ABSTRACTS_PROOF_SQL}', markup=False)
 
 
+@store_app.command("drop-pending")
+def drop_pending_command(
+    state: Annotated[
+        Path, typer.Option("--state", envvar="STORE_PUSH_STATE", help="The push state.")
+    ],
+    url: Annotated[
+        str, typer.Option("--url", envvar="INGEST_URL", help="The ingest service's address.")
+    ] = "",
+) -> None:
+    """Set aside a run left pending that the store undid for a constraint: the same
+    records can never merge, so the next push forms them again. Refused unless its push
+    marked it undone, the token may write the run's writer (GET /progress `writers`), and
+    the store does not hold it merged. The file is moved aside, not deleted."""
+    pending = pending_path(state)
+    held = read_pending(pending)
+    if held is None:
+        err.print(f"No run is pending beside {state}.")
+        raise typer.Exit(code=1)
+    run = held[0]
+    undone = undone_of(pending)
+    if undone is None:
+        err.print(
+            f"Run {run} in {pending} was not undone by a constraint: push again, which"
+            " settles it first."
+        )
+        raise typer.Exit(code=1)
+    token = os.environ.get("INGEST_TOKEN", "")
+    if not (url and token):
+        err.print("drop-pending asks the store about the run: set INGEST_URL and INGEST_TOKEN.")
+        raise typer.Exit(code=1)
+    writer = run.split("-", 1)[0]
+    with _client(url, token) as client:
+        # The store answers "no such run" both for a run it does not hold and for one this
+        # token may not see; only a token that may write the run's writer can tell them apart.
+        progress = client.get("/progress")
+        writers = progress.json().get("writers") if progress.status_code == 200 else None
+        if not isinstance(writers, list) or writer not in writers:
+            err.print(
+                f"Run {run} is a {writer} run; the store does not say this token may write"
+                f" {writer} runs ({', '.join(map(str, writers or [])) or 'it names none'}), so"
+                f" its answer about the run cannot be trusted. Use a token of the {writer}"
+                " writer."
+            )
+            raise typer.Exit(code=1)
+        answer = client.get(f"/runs/{run}")
+        status = answer.json().get("status") if answer.status_code == 200 else None
+        if answer.status_code not in (200, 404):
+            err.print(f"The store did not say what run {run} is: {answer.status_code}.")
+            raise typer.Exit(code=1)
+        if status == "merged":
+            err.print(
+                f"The store holds run {run} merged: push again, which settles it and takes"
+                " its records as handed over."
+            )
+            raise typer.Exit(code=1)
+        if status == "registered":
+            # Still open at the store, with nothing merged: dropped there too.
+            client.delete(f"/runs/{run}")
+    aside = pending.with_name(
+        f"{pending.name}.set-aside-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    pending.replace(aside)
+    out.print(
+        f"Set run {run} aside ({undone}): {aside}. The next push forms its records again.",
+        markup=False,
+    )
+
+
 @store_app.command("fresh-state")
 def fresh_state_command(
     file: Annotated[Path, typer.Argument(help="The store file the store was loaded from.")],
@@ -694,7 +786,8 @@ def fresh_state_command(
 ) -> None:
     """Start the push state of a store loaded from this build: what its hot file holds,
     named for that store. A push state names one store and is refused for any other, so
-    preview and production, or a store loaded again, each get their own."""
+    preview and production, or a store loaded again, each get their own. With
+    INGEST_TOKEN set, a store that says it was loaded from another build is refused."""
     base = base_state_path(file)
     if not base.is_file():
         err.print(f"No {base}: build the store again, which writes it.")
@@ -703,6 +796,19 @@ def fresh_state_command(
         err.print(f"{out_file} exists: name another file, or delete it if it is stale.")
         raise typer.Exit(code=1)
     state = read_state(base)
+    token = os.environ.get("INGEST_TOKEN", "")
+    if token:
+        with _client(url, token) as client:
+            try:
+                progress, _ = check_store(client, state)
+            except PushFailed as fault:
+                err.print(str(fault), markup=False)
+                raise typer.Exit(code=1) from None
+        held = store_build(progress)
+        if held is None:
+            out.print("The store gives no build id: the build is not compared.", markup=False)
+    else:
+        out.print("INGEST_TOKEN is not set: the store's build is not compared.", markup=False)
     state[TARGET_KEY] = target_of(url)
     write_state(out_file, state)
     out.print(

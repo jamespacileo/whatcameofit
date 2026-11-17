@@ -10,7 +10,7 @@
 ## 2. Site
 
 - [x] 2.1 `lib/registry-records.ts` (grouping, phase and state words) and reading headings in `lib/confidence.ts`. Verify: `site/tests/registry-records.test.mjs`.
-- [x] 2.2 `RegistryRecords.astro` on the claim page in place of `MatchList` for registry records; styles; `DESIGN.md` entry. Verify: the two scenarios in `site/tests/site.test.mjs`; claim page at 1280px and 375px.
+- [x] 2.2 `RegistryRecords.astro` on the claim page in place of `MatchList` for registry records; styles; `DESIGN.md` entry. Verify: the two scenarios in `site/tests/site.build-test.mjs`; claim page at 1280px and 375px.
 
 ## 3. Revisions after critique (2026-11-16)
 

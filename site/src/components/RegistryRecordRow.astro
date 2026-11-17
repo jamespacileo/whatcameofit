@@ -1,11 +1,14 @@
 ---
-// One registry record in RegistryRecords: its title as the registry wrote it; a line of
+// One registry record in RegistryRecords, an entry row (components/Entry.astro): in sight
+// its title, what its record says of the trial and its match; where to read it and what
+// it names are where the row opens. Its title as the registry wrote it; a line of
 // what the record says of the trial in the trials table's words ("Phase 3 · 780 people
 // planned · Under way"), opened by its match when it is only possible; then the record
 // and its page here in the trials' own grammar ("NCT… at ClinicalTrials.gov", "View
 // trial details here"); a matched record's match note; then what it is for and names.
 // Openspec registry-record-rows.
 import ExternalLink from "@lucide/astro/icons/external-link";
+import Entry from "./Entry.astro";
 import { MATCH_MEANING, matchWords, readingOf } from "../lib/confidence";
 import type { ExportedMatch } from "../lib/export";
 import { FOR_LABEL, NAMED_LABEL, NOT_READ_YET, phaseOf, sizeOf, stateOf } from "../lib/registry-records";
@@ -26,54 +29,64 @@ const size = record ? sizeOf(record) : null;
 const standing = record ? [phaseOf(record), ...(size ? [size] : []), stateOf(record)] : [];
 ---
 
-<li class="record-row">
-  <div class="record-head">
-    <p class="record-title">{title}</p>
-    {/* A possible record says so in sight, before its phase and state. */}
-    <Score about={possible ? "Possible match" : "Match to this claim"} words={matchWords(match.score)} shown={possible}>
-      <span>{readingOf(match.reading)}</span>
-      <span>{MATCH_MEANING}</span>
-    </Score>
-  </div>
+<Entry class="record-row" id={`registry-${match.external_id}`} name={title} opens="Where to read it and what it names">
+  <p class="entry-name record-title">
+    {/* A possible record carries the dotted ring of a state not given: it is not yet read as a trial of this claim. */}
+    {possible && <span class="state-mark" data-state="unknown" aria-hidden="true" />}
+    {possible && <span class="visually-hidden">Possible record: </span>}
+    {title}
+  </p>
   {
     standing.length > 0 && (
       <p class="record-meta">
-        {standing.map((part, index) => (
+        {standing.map((part) => (
           <span>{part}</span>
         ))}
       </p>
     )
   }
   {!record && <p class="record-unread">{NOT_READ_YET}</p>}
-  <p class="record-links">
-    {
-      match.url ? (
-        <a class="record-source" href={match.url} rel="noopener">
-          {at}
-          <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
-        </a>
-      ) : (
-        at
-      )
-    }
-    <TrialDetailsLink url={match.url} />
-  </p>
-  {
-    record && (record.conditions.length > 0 || record.interventions.length > 0) && (
-      <dl class="record-fields">
-        {record.conditions.length > 0 && (
-          <div>
-            <dt>{FOR_LABEL}</dt>
-            <dd>{record.conditions.join("; ")}</dd>
-          </div>
-        )}
-        {record.interventions.length > 0 && (
-          <div>
-            <dt>{NAMED_LABEL}</dt>
-            <dd>{record.interventions.join("; ")}</dd>
-          </div>
-        )}
-      </dl>
-    )
-  }
-</li>
+  {/* A record's match stays in sight: a possible record says so before anything else. */}
+  <Fragment slot="ties">
+    <Score about={possible ? "Possible match" : "Match to this claim"} words={matchWords(match.score)} shown={possible}>
+      <span>{readingOf(match.reading)}</span>
+      <span>{MATCH_MEANING}</span>
+    </Score>
+  </Fragment>
+  <Fragment slot="more">
+    <p class="record-links entry-more-lead">
+      {
+        match.url ? (
+          <a class="record-source" href={match.url} rel="noopener">
+            {at}
+            <ExternalLink class="out" size={12} stroke-width={1.9} aria-hidden="true" />
+          </a>
+        ) : (
+          at
+        )
+      }
+      <TrialDetailsLink url={match.url} />
+    </p>
+    <div class="entry-more-ties">
+      <p>{readingOf(match.reading)}</p>
+      {
+        record && (record.conditions.length > 0 || record.interventions.length > 0) && (
+          <dl class="record-fields">
+            {record.conditions.length > 0 && (
+              <div>
+                <dt>{FOR_LABEL}</dt>
+                <dd>{record.conditions.join("; ")}</dd>
+              </div>
+            )}
+            {record.interventions.length > 0 && (
+              <div>
+                <dt>{NAMED_LABEL}</dt>
+                <dd>{record.interventions.join("; ")}</dd>
+              </div>
+            )}
+          </dl>
+        )
+      }
+    </div>
+  </Fragment>
+</Entry>

@@ -30,8 +30,8 @@ test("the scale is defined once", () => {
 test("rows take their padding and their rule from the scale", () => {
   uses(".fact-sheet > div", "padding", "row-pad");
   uses(".fact-sheet > div", "border-bottom", "row-rule");
-  uses(".record-row", "padding", "row-pad");
-  uses(".record-row", "border-bottom", "row-rule");
+  uses(".entry-rows > li", "padding", "row-pad");
+  uses(".entry-rows > li", "border-bottom", "row-rule");
   uses(".trial-row", "padding", "row-pad");
   uses(".timetable th,\n.timetable td,\n.index th,\n.index td", "padding", "row-pad");
   uses(".timetable th,\n.timetable td,\n.index th,\n.index td", "border-top", "row-rule");
@@ -48,7 +48,7 @@ test("labels and column heads are one size, notes another", () => {
   uses(".entry-note", "font-size", "note-size");
   uses(".record .origin", "font-size", "note-size");
   uses(".glance-note", "font-size", "note-size");
-  uses(".fact-more .term-card .match-why-head", "font-size", "label-size");
+  uses(".fact-more .match-why-head", "font-size", "label-size");
 });
 
 test("every table has the same quiet head", () => {
@@ -68,7 +68,6 @@ test("panels share their padding and their corners", () => {
 
 test("label columns are one width", () => {
   uses(".fact-sheet > div", "grid-template-columns", "label-col");
-  uses(".brief-group", "grid-template-columns", "label-col");
 });
 
 // The type scale (openspec type-scale): seven steps for running text and three named

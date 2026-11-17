@@ -650,7 +650,23 @@ test("progress is read from the slices in the store, as counts only, by the toke
 
     const { status, body } = await box.ask("GET", "/progress", { as: "daily" });
     assert.equal(status, 200);
-    assert.deepEqual(Object.keys(body).sort(), ["at", "groups", "rows", "runs", "sets", "stages"]);
+    assert.deepEqual(Object.keys(body).sort(), ["at", "build_id", "database_since", "groups", "role", "rows", "runs", "sets", "stages", "writers"]);
+    // The asking token's own role and the kinds of run it may register and see.
+    assert.deepEqual([body.role, body.writers], ["daily", ["daily"]]);
+    const asOperator = (await box.ask("GET", "/progress", { as: "operator" })).body;
+    assert.deepEqual([asOperator.role, asOperator.writers], ["operator", ["operator", "migration"]]);
+    // No build's run is in this store, so no build is named; the database knows since when it is.
+    assert.equal(body.build_id, null);
+    assert.match(body.database_since, /^\d{4}-\d\d-\d\d/);
+    // A run a device registers under a build's name is not a build's: only a migration run counts.
+    assert.equal((await box.ask("POST", "/runs", { as: "device-mini", body: { id: "build-ffffffffffffffff-0", writer: "device", commit: "abc1234", steps: {}, counts: {}, checksum: runChecksum([]) } })).status, 201);
+    assert.equal((await box.ask("GET", "/progress", { as: "daily" })).body.build_id, null);
+    assert.equal((await box.ask("POST", "/runs", { as: "device-mini", body: { id: "build-eeeeeeeeeeeeeeee-0", writer: "migration", commit: "abc1234", steps: {}, counts: {}, checksum: runChecksum([]) } })).status, 403);
+    assert.equal((await box.drop("build-ffffffffffffffff-0")).status, 200);
+    // A store loaded from a build holds the build's own runs, and its id is read from them.
+    await box.db.prepare("INSERT INTO run (id, writer, commit_sha, registered_at) VALUES ('build-0123456789abcdef-0', 'migration', 'abc1234', ?1)").bind(at).run();
+    assert.equal((await box.ask("GET", "/progress", { as: "daily" })).body.build_id, "0123456789abcdef");
+    await box.db.prepare("DELETE FROM run WHERE id LIKE 'build-%'").run();
     assert.deepEqual(body.stages, ["record", "registry_papers", "pubmed_papers", "in_store", "page"]);
     const [shown] = body.sets;
     assert.deepEqual(Object.keys(shown).sort(), ["changed_at", "counts", "groups", "rule", "slices", "stages", "total_slices", "total_trials", "year"]);

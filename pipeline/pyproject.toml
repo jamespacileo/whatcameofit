@@ -43,8 +43,9 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 testpaths = ["tests"]
 # The benchmark is left out of an ordinary run: it takes minutes and guards one figure.
 # Run it with `make benchmark`, or `pytest -m benchmark`.
-addopts = "-m 'not benchmark'"
+addopts = "--strict-markers -m 'not benchmark'"
 markers = [
+    "slow: builds the site; left out of `make check-fast`, run by `make check-slow`",
     "benchmark: times work over many records; runs for minutes. Run with -m benchmark.",
 ]
 
@@ -53,6 +54,8 @@ dev = [
     "import-linter>=2.16",
     "jsonschema>=4.26.0",
     "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
     "respx>=0.23.1",
     "ruff>=0.17.4",
     "time-machine>=3.6.0",

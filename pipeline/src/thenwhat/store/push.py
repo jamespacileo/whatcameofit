@@ -38,6 +38,27 @@ ONCE = frozenset({"decision", "usage", "measure_daily", "measure_claim"})
 USER_AGENT = "thenwhat-pipeline"
 
 
+@dataclass
+class Traffic:
+    """What a push's requests cost: how many, the bytes sent, the chunks of records among
+    them, the seconds spent in requests and waiting after a 429, and the requests sent
+    again after one."""
+
+    requests: int = 0
+    sent: int = 0
+    chunks: int = 0
+    seconds: float = 0.0
+    waited: float = 0.0
+    retries: int = 0
+
+    def said(self) -> str:
+        return (
+            f"{self.requests:,} requests, {self.chunks:,} chunks, {self.sent / 1e6:.1f} MB"
+            f" sent, {self.seconds:.1f} s in requests, {self.waited:.0f} s waiting on 429,"
+            f" {self.retries:,} retries"
+        )
+
+
 class RetryOnBusy(httpx.BaseTransport):
     """A transport that, answered 429, waits as long as the service's `Retry-After` says
     (60 seconds by default) and sends the same request again, up to `attempts` times.
@@ -50,22 +71,34 @@ class RetryOnBusy(httpx.BaseTransport):
         *,
         attempts: int = 10,
         sleep: Callable[[float], None] = time.sleep,
+        traffic: Traffic | None = None,
     ) -> None:
         self.inner = inner or httpx.HTTPTransport()
         self.attempts, self.sleep = attempts, sleep
+        self.traffic = traffic if traffic is not None else Traffic()
 
     def handle_request(self, request: httpx.Request) -> httpx.Response:
-        for _ in range(self.attempts - 1):
+        counted = self.traffic
+        counted.requests += 1
+        if request.method == "POST" and request.url.path.endswith("/records"):
+            counted.chunks += 1
+        for attempt in range(self.attempts):
+            counted.sent += len(request.content)
+            began = time.monotonic()
             response = self.inner.handle_request(request)
-            if response.status_code != 429:
-                return response
             response.read()
+            counted.seconds += time.monotonic() - began
+            if response.status_code != 429 or attempt == self.attempts - 1:
+                return response
             try:
                 wait = float(response.headers.get("Retry-After", "60"))
             except ValueError:
                 wait = 60.0
-            self.sleep(min(max(wait, 1.0), 300.0))
-        return self.inner.handle_request(request)
+            wait = min(max(wait, 1.0), 300.0)
+            counted.retries += 1
+            counted.waited += wait
+            self.sleep(wait)
+        raise AssertionError("unreachable")
 
     def close(self) -> None:
         self.inner.close()
@@ -101,12 +134,25 @@ class Increment:
 
 
 def increment(records: list[Record], state: dict[str, str], *, actions: bool) -> Increment:
-    """The records that are new or changed since `state`, in the order given."""
+    """The records that are new or changed since `state`, in the order given, each once.
+    A record given twice (one paper's payload, listed by two trials) goes once: the store
+    stages one row per key, so a second would leave the run's stated count short and the
+    merge undone. Two different bodies under one key are refused, even when the state
+    holds one of them."""
     chosen: list[Record] = []
     left_out: Counter[str] = Counter()
+    given: dict[str, str] = {}
+    sent: set[str] = set()
     for record in records:
-        held = state.get(f"{record.kind}\t{record.key}")
-        if held == body_sha256(record):
+        name = f"{record.kind}\t{record.key}"
+        body = body_sha256(record)
+        # Two copies of a key must be one record, whether or not the state holds one.
+        if given.setdefault(name, body) != body:
+            raise PushFailed(f"Two different {record.kind} records under one key: {record.key}.")
+        if name in sent:
+            continue
+        held = state.get(name)
+        if held == body:
             continue
         if held is not None and record.kind in ONCE:
             left_out[f"{record.kind} changed after it was handed over"] += 1
@@ -114,6 +160,7 @@ def increment(records: list[Record], state: dict[str, str], *, actions: bool) ->
         if record.kind == "action" and not actions:
             left_out["action (needs the operator's token and --actions)"] += 1
             continue
+        sent.add(name)
         chosen.append(record)
     return Increment(chosen, left_out)
 
@@ -211,6 +258,100 @@ def check_target(state: dict[str, str], url: str, state_file: Path | None = None
     state[TARGET_KEY] = target_of(url)
 
 
+class StoreOfOtherBuild(PushFailed):
+    """The store was loaded from another build than the one the push state is of."""
+
+
+def store_build(progress: Any) -> str | None:
+    """The build a store was loaded from, as its `GET /progress` gives it (`build_id`);
+    None while the service gives none."""
+    value = progress.get("build_id") if isinstance(progress, dict) else None
+    return value if isinstance(value, str) and value else None
+
+
+def check_build(state: dict[str, str], held: str | None) -> None:
+    """Refuse a push state of another build than the one the store was loaded from: what
+    it says was sent is that build's, not what this store holds. Nothing to compare while
+    the store gives no build id, or the state names none."""
+    build = state.get(BUILD_KEY)
+    if held and build and held != build:
+        raise StoreOfOtherBuild(
+            f"The store was loaded from build {held}; the push state is of build {build}."
+            " Push with a state of the build the store holds: thenwhat store fresh-state"
+            " <that build's store file> --url <this store's address> --out <new state file>."
+        )
+
+
+AFTER_RELOAD = (
+    "After any reload or restore: thenwhat store fresh-state <store file> --url <address>"
+    " --out <new state file>, then thenwhat backfill slices run --push --again --state"
+    " <new state file>."
+)
+RELOADED = (
+    "The store holds no slice of this set, but this device's push state or plan says some"
+    " were sent: the store was loaded again. " + AFTER_RELOAD
+)
+
+
+SINCE_KEY = "\tdatabase since"
+
+
+def check_since(state: dict[str, str], progress: Any) -> bool:
+    """Refuse a store whose database was created again since the push state first saw it
+    (its `GET /progress` `database_since` moved): what the state says was sent went to
+    the old one. A state that has not seen it takes it; True when it did."""
+    since = progress.get("database_since") if isinstance(progress, dict) else None
+    if not isinstance(since, str) or not since:
+        return False
+    held = state.get(SINCE_KEY)
+    if held is None:
+        state[SINCE_KEY] = since
+        return True
+    if held != since:
+        raise PushFailed(
+            f"The store's database was created again: it dates from {since}, the push state"
+            f" from {held}, so what the state says was sent went to the old one. " + AFTER_RELOAD
+        )
+    return False
+
+
+def check_store(client: httpx.Client, state: dict[str, str]) -> tuple[Any, bool]:
+    """Before a push: the store's `GET /progress`, refusing a store loaded from another
+    build than the state's or whose database was created again since the state saw it.
+    The answer (None when the service gives none) and whether the state took the store's
+    `database_since` and is to be written."""
+    answer = client.get("/progress")
+    progress = answer.json() if answer.status_code == 200 else None
+    check_build(state, store_build(progress))
+    return progress, check_since(state, progress)
+
+
+def slices_in_store(progress: Any, rule: str, year: int) -> set[int] | None:
+    """The numbers of a set's slices the store shows in it (`in_store_at` set), by its
+    `GET /progress`; None when the answer does not list them."""
+    if not isinstance(progress, dict) or not isinstance(progress.get("sets"), list):
+        return None
+    for one in progress["sets"]:
+        if isinstance(one, dict) and (one.get("rule"), one.get("year")) == (rule, year):
+            return {
+                int(each["number"])
+                for each in one.get("slices") or []
+                if isinstance(each, dict) and each.get("in_store_at")
+            }
+    return set()
+
+
+def slices_held(progress: Any, rule: str, year: int) -> int | None:
+    """How many slices of a set the store holds, by its `GET /progress`; None when the
+    answer is not one to read that from."""
+    if not isinstance(progress, dict) or not isinstance(progress.get("sets"), list):
+        return None
+    for one in progress["sets"]:
+        if isinstance(one, dict) and (one.get("rule"), one.get("year")) == (rule, year):
+            return int(one.get("total_slices") or 0)
+    return 0
+
+
 class PendingStale(PushFailed):
     """A run left pending belongs to another build or another store than this one."""
 
@@ -232,6 +373,40 @@ def read_pending(path: Path) -> tuple[str, list[Record], dict[str, str]] | None:
     value = json.loads(path.read_text())
     records = [Record(**record) for record in value["records"]]
     return value["run"], records, value.get("belongs") or {}
+
+
+class RunUndone(PushFailed):
+    """The store undid a run for a constraint: the same records can never merge."""
+
+    def __init__(self, message: str, detail: str) -> None:
+        super().__init__(message)
+        self.detail = detail
+
+
+UNDONE_KEY = "undone"
+
+
+def mark_undone(path: Path, detail: str) -> None:
+    """Say in the pending file that the store undid its run for a constraint, so that
+    `thenwhat store drop-pending` may set it aside."""
+    value = json.loads(path.read_text())
+    value[UNDONE_KEY] = detail
+    temporary = path.with_name(path.name + ".part")
+    temporary.write_text(json.dumps(value, ensure_ascii=False))
+    temporary.replace(path)
+
+
+def undone_of(path: Path) -> str | None:
+    """What undid the pending run, as its push wrote it; None when nothing did."""
+    if not path.is_file():
+        return None
+    value = json.loads(path.read_text()).get(UNDONE_KEY)
+    return value if isinstance(value, str) else None
+
+
+def state_of_pending(path: Path) -> Path:
+    """The push state a pending file is beside."""
+    return path.with_name(path.name.removesuffix(".pending.json"))
 
 
 def check_belongs(path: Path, found: dict[str, str], now: dict[str, str]) -> None:
@@ -285,7 +460,7 @@ def push(
         if held is not None:
             run, records_of_run, found = held
             check_belongs(pending, found, belongs or {})
-            _send(client, run, records_of_run, writer, commit, payload_text, report, False)
+            _send_kept(client, run, records_of_run, writer, commit, payload_text, report, pending)
             state.update(state_of(records_of_run))
             on_merged(state)
             clear_pending(pending)
@@ -298,14 +473,41 @@ def push(
         run = f"{writer}-{run_checksum(chunks)[:40]}"
         if pending is not None and not report_only:
             write_pending(pending, run, records_of_run, belongs)
-        _send(client, run, records_of_run, writer, commit, payload_text, report, report_only)
         if report_only:
+            _send(client, run, records_of_run, writer, commit, payload_text, report, True)
             continue
+        _send_kept(client, run, records_of_run, writer, commit, payload_text, report, pending)
         state.update(state_of(records_of_run))
         on_merged(state)
         if pending is not None:
             clear_pending(pending)
     return report
+
+
+def _send_kept(
+    client: httpx.Client,
+    run: str,
+    records_of_run: list[Record],
+    writer: str,
+    commit: str,
+    payload_text: Callable[[str], str | None],
+    report: PushReport,
+    pending: Path | None,
+) -> None:
+    """A run sent to be merged; one the store undoes for a constraint is marked so in its
+    pending file, which the message names with the command that sets it aside."""
+    try:
+        _send(client, run, records_of_run, writer, commit, payload_text, report, False)
+    except RunUndone as fault:
+        if pending is None or not pending.is_file():
+            raise
+        mark_undone(pending, fault.detail)
+        raise RunUndone(
+            f"{fault} The run is kept in {pending}. Fix what the store names, then set the"
+            f" run aside with: thenwhat store drop-pending --state {state_of_pending(pending)};"
+            " the next push forms its records again.",
+            fault.detail,
+        ) from None
 
 
 def _send(
@@ -386,6 +588,13 @@ def _send(
     if result.get("status") != "merged":
         if result.get("status") in ("undone", "not_merged"):
             client.delete(f"/runs/{run}")
+        if result.get("status") == "undone" and result.get("reason") == "constraint":
+            detail = str(result.get("detail") or "a constraint")
+            raise RunUndone(
+                f"Run {run} was undone by the store: {detail}. The same records can never"
+                " merge: pushing again sends them again and fails the same way.",
+                detail,
+            )
         raise PushFailed(
             f"Run {run} was not merged: {json.dumps(result)[:400]}. It stays pending: push"
             " again to send it again; if it fails the same way, read why with GET"

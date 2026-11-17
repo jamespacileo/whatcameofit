@@ -26,4 +26,4 @@ Not in this change: shared components for the row and table markup (`claim-primi
 
 ## Impact
 
-- `site/src/pages/[slug].astro`, `site/src/components/Glance.astro`, `site/src/components/Paper.astro`, `site/src/scripts/timetable-kinds.ts`, `site/src/styles/global.css`, `site/tests/site.test.mjs`, `DESIGN.md`.
+- `site/src/pages/[slug].astro`, `site/src/components/Glance.astro`, `site/src/components/Paper.astro`, `site/src/scripts/timetable-kinds.ts`, `site/src/styles/global.css`, `site/tests/site.build-test.mjs`, `DESIGN.md`.

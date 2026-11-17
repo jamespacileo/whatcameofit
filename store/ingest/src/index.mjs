@@ -275,7 +275,10 @@ async function route(request, env, ctx) {
     case "POST /inbox/*": if (parts[1] === "folded") return inbox(request, env, who, new URL(request.url), "folded"); if (parts[1] === "clear") return inbox(request, env, who, new URL(request.url), "clear"); break;
     case "GET /progress":
       if (!who.may.includes("progress")) refuse(403, "outside_scope", `a ${who.role} token may not read the progress`);
-      return json(200, await progress(env.STORE));
+      // With the answer, what the asking token is: a client that is about to set a run
+      // aside must know whether this token could have seen it, since a run it may not see
+      // answers as a run that is gone.
+      return json(200, { role: who.role, writers: who.writers, ...(await progress(env.STORE)) });
     case "POST /work/*": if (["lease", "finish", "fail"].includes(parts[1])) return work(request, env, who, parts[1]); break;
     case "POST /slices/*": if (["take", "release"].includes(parts[1])) return slice(request, env, who, parts[1]); break;
   }

@@ -12,6 +12,8 @@ REGISTRY_NUMBER = re.compile(r"NCT\d{8}", re.IGNORECASE)
 # A paper that reports a trial gives its number, sometimes two. One that lists more is a
 # review of many trials and identifies none.
 MAX_TRIALS_OF_ONE_PAPER = 3
+# PubMed numbers asked in one search: `EXT_ID:<n> OR ...`, about 2 KB of query.
+PAPERS_A_REQUEST = 100
 
 
 @dataclass(frozen=True, slots=True)
@@ -64,6 +66,45 @@ class EuropePmc(Source):
         if not results or fetched is None:
             return None
         return self._record(results[0], fetched.fetched_at)
+
+    def papers_by_pubmed_ids(self, pubmed_ids: list[str]) -> dict[str, SourceRecord | None]:
+        """Papers by PubMed number, up to `PAPERS_A_REQUEST` in one search, each number's
+        paper or None when Europe PMC does not have it, asked alone too. A number that is
+        not all digits sends nothing and is left out of the answer."""
+        numbers = list(dict.fromkeys(n for n in pubmed_ids if n.isdigit()))
+        found: dict[str, SourceRecord | None] = dict.fromkeys(numbers)
+        for start in range(0, len(numbers), PAPERS_A_REQUEST):
+            part = numbers[start : start + PAPERS_A_REQUEST]
+            query = f"({' OR '.join(f'EXT_ID:{n}' for n in part)}) AND SRC:MED"
+            cursor, seen = "*", 0
+            while True:
+                params = self._search(query) | {
+                    "pageSize": str(PAPERS_A_REQUEST),
+                    "cursorMark": cursor,
+                }
+                fetched = self._get(f"{API}/search", params)
+                if fetched is None:
+                    break
+                results = fetched.payload["resultList"]["result"]
+                for result in results:
+                    number = str(result.get("pmid") or "")
+                    if number in found and found[number] is None:
+                        found[number] = self._record(result, fetched.fetched_at)
+                seen += len(results)
+                next_cursor = fetched.payload.get("nextCursorMark")
+                if (
+                    len(results) < PAPERS_A_REQUEST
+                    or seen >= int(fetched.payload.get("hitCount") or 0)
+                    or not next_cursor
+                    or next_cursor == cursor
+                ):
+                    break
+                cursor = next_cursor
+        # A number a search did not answer for is asked alone before it is called not
+        # held: a search of many is not trusted to say a paper is missing.
+        for number in [n for n, record in found.items() if record is None]:
+            found[number] = self.paper_by_pubmed_id(number)
+        return found
 
     def trial_numbers(self, *, doi: str | None = None, pubmed_id: str | None = None) -> list[str]:
         """The ClinicalTrials.gov numbers a paper's abstract gives for its own trial.

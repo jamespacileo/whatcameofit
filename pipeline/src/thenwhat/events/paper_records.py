@@ -6,6 +6,7 @@ A paper is known by its DOI, else by its PubMed number, else by the index's own
 identifier. One row per paper, whichever of them it was asked for by.
 """
 
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Protocol
 
@@ -25,6 +26,56 @@ PUBMED_PREFIX = "pmid:"
 class PaperIndex(Protocol):
     def paper(self, doi: str) -> SourceRecord | None: ...
     def paper_by_pubmed_id(self, pubmed_id: str) -> SourceRecord | None: ...
+
+
+class PapersByNumber(Protocol):
+    def papers_by_pubmed_ids(self, pubmed_ids: list[str]) -> dict[str, SourceRecord | None]: ...
+
+
+@dataclass(frozen=True)
+class PapersKept:
+    """What keeping many papers came to: how many were due and asked for, how many the
+    index answered, and how many it does not hold. A record already held with its paper
+    is kept as it is when the index now answers nothing: `kept_held` counts those."""
+
+    asked: int = 0
+    found: int = 0
+    not_held: int = 0
+    kept_held: int = 0
+
+
+def keep_papers_by_pubmed_id(
+    session: Session,
+    index: PapersByNumber,
+    numbers: list[str],
+    *,
+    now: datetime,
+    max_age: timedelta,
+) -> PapersKept:
+    """`keep_paper` for many PubMed numbers at once: the index is asked, many numbers to
+    a request, only for those with no stored record young enough. A paper the index does
+    not answer for is stored as not held, unless a record of it with its paper is stored
+    already: that one is never emptied by a missing answer."""
+    due: list[tuple[str, PaperRecord | None]] = []
+    for number in dict.fromkeys(numbers):
+        row = stored_paper(session, pubmed_id=number)
+        if row is None or now - row.fetched_at > max_age:
+            due.append((number, row))
+    if not due:
+        return PapersKept()
+    answered = index.papers_by_pubmed_ids([number for number, _ in due])
+    found = not_held = kept_held = 0
+    for number, row in due:
+        record = answered.get(number)
+        if record is not None:
+            _store(session, row, record, doi=None, pubmed_id=number, identifier=None)
+            found += 1
+        elif row is not None and row.payload is not None:
+            kept_held += 1
+        else:
+            _store_not_held(session, row, doi=None, pubmed_id=number, now=now)
+            not_held += 1
+    return PapersKept(len(due), found, not_held, kept_held)
 
 
 def paper_reference(external_id: str) -> tuple[str | None, str | None]:

@@ -258,9 +258,9 @@ A build's folder is what `thenwhat store build` leaves: `store.hot.sqlite`, `sto
 | 0 | privacy | `thenwhat store prove-no-people` on both files and both payload folders. If it fails or cannot be run, nothing is sent. |
 | 1 | jurisdiction | The database's jurisdiction is read back and must be `eu`; the bucket must be found in `eu`. |
 | 2 | config | The configuration for the environment, with the database's id looked up by name, in a git-ignored file. Production's is removed at the end. |
-| 3 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`, before anything is changed, so a migration that fails has a point to go back to. |
-| 4 | migrations | All of `store/ingest/migrations/`. Refused when the database applied a migration under a name the files no longer have in that place (they were renumbered on 17 November 2026): such a database is replaced. |
-| 5 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. |
+| 3 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`, before anything is changed. |
+| 4 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. This comes before the migrations, so a store that holds rows never meets a migration that makes a table again. |
+| 5 | migrations | All of `store/ingest/migrations/`. Refused when the database applied a migration under a name the files no longer have in that place (they were renumbered on 17 November 2026), and when a pending migration makes a table again while the store holds rows: such a database is replaced. |
 | 6 | dump | The hot file as SQL (`dump-for-import.mjs`), and that SQL replayed strictly on this machine (`check-dump.mjs`). |
 | 7 | import | The files, in order, counted against the manifest (`import-folder.mjs`). |
 | 8 | checksum | Every hot table in D1 against the build's checks (`checksum-d1.mjs --checks`). No row is fetched back. |
@@ -270,6 +270,8 @@ A build's folder is what `thenwhat store build` leaves: `store.hot.sqlite`, `sto
 | 12 | export | On this machine only: `thenwhat export-compare` of the hot file against the working database (`ARGS="--skip-export"` leaves it out). |
 
 A rebuild may keep an unchanged bulk file. The hot file, and D1 after it, then carry the new build's id while the bulk file keeps the id of the build that made it; the bulk file is stored under its own id, and when the bucket's manifest for that id already describes the same file it is not sent again. Where the build left `<file>.watermarks.json`, the two files must agree with it or nothing is run.
+
+**A migration that makes a table again is for an empty store only.** SQLite cannot change a CHECK, so `0007_payload_inline_limit.sql` copies every payload aside, drops the table, makes it again and copies the rows back, in one transaction. On the loaded preview (the hot tier, migrations 0001 to 0005 applied) on 17 November 2026 it failed after 38 s: "D1 DB exceeded its CPU time limit and was reset. [code: 7429]". Nothing was lost; the database was replaced. So 0007 is applied before a load, never after one; never run `wrangler d1 migrations apply` by hand against a store that holds rows when such a migration is pending. A migration of this kind says so on a line of its own, `-- rebuilds: <table>`, and the cut-over also takes any migration that drops a table for one. The next change of this kind is to be written to copy in batches across several migrations, or avoided.
 
 Production needs both `ENV=production` and `CONFIRM=thenwhat-store`, and every script it calls is given `--production` explicitly. Everything the steps print goes, as it arrives and unfiltered, to `<build's folder>/cutover/<env>-<time>.log`; the terminal shows the same with ids masked. `result-<env>-<time>.json` beside it has each stage's seconds, the rows D1 says were written, and the build's id. The log can hold a database's id: it stays in the build's folder and is not committed.
 
@@ -284,6 +286,19 @@ If a stage fails after the import began, restore to the bookmark, or for the pre
   node store/ingest/scripts/download-bulk.mjs <build id> <out.sqlite> --remote
   ```
 - **Payload objects** are never overwritten, each being stored under its own checksum; upload the folder again and only the missing ones are sent (`--check-first` when the notes of the earlier upload are gone).
+
+### After a reload or a restore: start the push state again
+
+The push state does not notice a reload or a restore of the store, even one from the same build on the same host. What `backfill push` and `slices run --push` sent since the build stays in `<file>.pushed.json`, and those records would be skipped. After any reload or restore, start the state again and send every slice again:
+
+```bash
+thenwhat store fresh-state <store file> --url <address> --out <new state file>
+thenwhat backfill slices run --push --again --state <new state file>
+```
+
+`slices run --push` stops when the store holds no slice of the set but the state or the plan says some were sent. `GET /progress` gives `build_id`, the build the store was loaded from, read from the ids of the build's own runs; `fresh-state` and `slices run --push` refuse a store loaded from another build than the state's. It also gives `database_since`, when the database's first migration was applied: a database that was replaced shows a new time, one restored by Time Travel does not.
+
+**A restore by Time Travel is not a reload.** The database keeps its `database_since` and the build it was loaded from, so no check catches it, and the push state goes on saying that what was pushed after the bookmark is in the store. So keep a copy of the push state with every bookmark: when a bookmark is taken, copy `<state>.pushed.json` and the slices' plan (`slices-<set>-<year>.json`) beside its id. After a restore to a bookmark, put back that bookmark's copy of the push state and the plan, and do not run `fresh-state`: it starts from the build, so the next push would send again every decision and action pushed since the build, and an action is not idempotent (a decision would be held twice). Then run `thenwhat backfill push` and `thenwhat backfill slices run --push`: they send what was pushed after the bookmark, and a slice the store no longer shows goes whole.
 
 ### The daily fold, in order
 

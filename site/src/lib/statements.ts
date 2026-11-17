@@ -42,6 +42,21 @@ const SPEAKER_WORDS: Record<string, string> = {
   other_expert: "another expert",
 };
 
+/** Who said it, as the name of a group of statements: "The report", "A researcher". */
+export function speakerText(speaker: string): string {
+  const words = SPEAKER_WORDS[speaker];
+  return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
+}
+
+/** What the mark before a statement says, once, over the list. */
+export const FIRMNESS_KEY: Record<string, string> = {
+  fact: "Said as a fact",
+  possibility: "Said as a possibility",
+};
+
+/** A reading the check is this sure of, or more, keeps its score where the row opens. */
+export const SURE_READING = 0.8;
+
 /** How firmly the report put it, completing the attribution's opening words. */
 const FIRMNESS_WORDS: Record<string, { own: string; theirs: string }> = {
   fact: { own: "said", theirs: "saying" },

@@ -12,7 +12,6 @@ import Info from "@lucide/astro/icons/info";
 import Bookmark from "@lucide/astro/icons/bookmark";
 import ClockMark from "../components/ClockMark.astro";
 import BasisMark from "../components/BasisMark.astro";
-import ClaimTable from "../components/ClaimTable.astro";
 import FoldHead from "../components/FoldHead.astro";
 import FollowOffer from "../components/FollowOffer.astro";
 import LookupAgain from "../components/LookupAgain.astro";
@@ -57,7 +56,9 @@ import { LOW_READING_MEANING, MATCH_MEANING, matchWords, stageReading } from "..
 import MatchList from "../components/MatchList.astro";
 import RegistryRecords from "../components/RegistryRecords.astro";
 import Fact from "../components/Fact.astro";
+import FactSheet from "../components/FactSheet.astro";
 import Glance from "../components/Glance.astro";
+import { NOT_COUNTED_LINK, notCounted } from "../lib/registry-records";
 import GlanceBand from "../components/GlanceBand.astro";
 import { GLANCE_ID, GLANCE_TITLE, bandFacts, glanceCards } from "../lib/glance";
 import Organisations from "../components/Organisations.astro";
@@ -82,6 +83,9 @@ import {
   measureGlosses,
   phaseGroups,
   withResults,
+  PLAIN_STATE,
+  RESULTS_POSTED,
+  phaseText,
 } from "../lib/trial-facts";
 import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
 import { claimPageData } from "../lib/structured";
@@ -139,6 +143,18 @@ const inTopic = data.claims
   .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
 const others = inTopic.slice(0, 3);
+// A group's papers stand newest first, under the year each appeared.
+type PaperOnPage = NonNullable<typeof claim.papers>[number];
+const newestFirst = (papers: PaperOnPage[]) =>
+  [...papers].sort((a, b) => (b.facts?.year ?? 0) - (a.facts?.year ?? 0));
+const byYear = (papers: PaperOnPage[]) => {
+  const years = new Map<string, PaperOnPage[]>();
+  for (const paper of papers) {
+    const year = paper.facts?.year ? String(paper.facts.year) : "No year";
+    years.set(year, [...(years.get(year) ?? []), paper]);
+  }
+  return [...years];
+};
 // Matched records, approved first, each with how sure the match is. A paper is not a
 // registry record, so papers are listed and counted apart.
 const matched = claim.matches ?? [];
@@ -155,6 +171,21 @@ const trials = orderTrials(claim.trials ?? []);
 const trialIds = new Set(trials.map((trial) => trial.trial_id));
 // The trials by furthest phase, furthest first; each phase shows its first ten.
 const trialGroups = phaseGroups(trials);
+// The trials spread by phase: a mark for each under its phase, drawn over the table
+// once there are enough to make a pattern. The phases in order, no phase last.
+const NO_PHASE = "No phase given";
+const trialSpread = (() => {
+  const columns = new Map<string, typeof trials>();
+  for (const trial of trials) {
+    const name = phaseText(trial.phases.filter((code) => code !== "not_applicable")) ?? NO_PHASE;
+    columns.set(name, [...(columns.get(name) ?? []), trial]);
+  }
+  return [...columns].sort(([a], [b]) =>
+    a === NO_PHASE ? 1 : b === NO_PHASE ? -1 : a.localeCompare(b, "en", { numeric: true }),
+  );
+})();
+// The largest size a trial states, against which each trial's size is drawn.
+const largestSize = Math.max(0, ...trials.map((trial) => trial.facts?.participants?.count ?? 0));
 // Each abbreviation in a main measure is said plainly once, on the first row that uses it.
 const glossSeen = new Set<string>();
 const trialGlosses = new Map<string, string[]>();
@@ -196,7 +227,7 @@ const scoreNote = trials.length > 0 ? "" : " A score is about the match, not abo
 const matchedNote =
   [
     ...(untried.length > 0 ? [`${untried.length} matched`] : []),
-    ...(candidates.length > 0 ? [`${candidates.length} possible`] : []),
+    ...(candidates.length > 0 ? [`${candidates.length} possible, not counted`] : []),
   ].join(" · ") || null;
 // A reader arrives from a headline, so the page names the reports it is about, newest first.
 const reports = followedReports(claim);
@@ -223,6 +254,29 @@ const kindCounts = [
   })),
 ];
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+// The record's moments: the first of each kind of record, the report, the latest record
+// and a promised date, in order of date. They say when, never how it turned out.
+const firstOn = (type: string, state?: string) =>
+  claim.events
+    .filter((event) => event.type === type && (!state || event.trial_state === state))
+    .map((event) => event.event_date)
+    .sort()[0] ?? null;
+const latestOn = claim.events.map((event) => event.event_date).sort().pop() ?? null;
+const moments = [
+  { date: firstOn("trial_registered"), label: "First trial registered", mark: "not_started" },
+  { date: firstOn("trial_status_change", "started"), label: "First trial started", mark: "under_way" },
+  { date: claim.first_reported_date, label: claim.articles.length > 1 ? "First report" : "This report", mark: "report" },
+  { date: firstOn("trial_results_posted"), label: "First results posted", mark: "results" },
+  { date: firstOn("regulatory_decision"), label: "A regulator’s decision", mark: "completed" },
+  { date: promiseDue, label: "Promised", mark: "promise" },
+].filter((moment): moment is { date: string; label: string; mark: string } => moment.date !== null);
+const milestones = [
+  ...moments,
+  // The latest record is a moment of its own unless one of the others is it.
+  ...(latestOn && !moments.some((moment) => moment.date === latestOn)
+    ? [{ date: latestOn, label: "Latest record", mark: "latest" }]
+    : []),
+].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
 const timetableNote = [
   ...(counts.promises > 0 ? [plural(counts.promises, "promise")] : []),
   plural(counts.records, "record"),
@@ -255,8 +309,38 @@ const yearSaid = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }
     ],
   };
 };
+// The shape of each of a year's records, oldest first: a trial's states as in the trials
+// table, results posted as a ringed mark, a report as the report's diamond.
+const EVENT_STATES: Record<string, string> = { started: "under_way" };
+const yearMarks = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }>) =>
+  [...row.recorded].reverse().map((entry) =>
+    entry.kind === "report"
+      ? "report"
+      : entry.event.type === "trial_registered"
+        ? "not_started"
+        : entry.event.type === "trial_results_posted"
+          ? "results"
+          : entry.event.type === "trial_status_change"
+            ? (EVENT_STATES[entry.event.trial_state ?? ""] ?? entry.event.trial_state ?? "unknown")
+            : "completed",
+  );
+const anyYearFolds = timetable.rows.some((row) => row.kind === "year" && row.recorded.length > 0 && yearFolds(row));
+// A key names only the marks its list draws (critique of 2026-11-17: a key listed states
+// the claim did not have, and one state went by two names).
+const yearKeyMarks = new Set(
+  timetable.rows.flatMap((row) => (row.kind === "year" && row.recorded.length > 0 && yearFolds(row) ? yearMarks(row) : [])),
+);
+const YEAR_KEY: [string, string, string][] = [
+  ["not_started", "state-mark", "Registered"],
+  ["under_way", "state-mark", "Started"],
+  ["completed", "state-mark", "Finished"],
+  ["terminated", "state-mark", PLAIN_STATE.terminated],
+];
+const TRIAL_KEY_ORDER = ["not_started", "under_way", "completed", "terminated", "suspended", "withdrawn", "unknown"];
+const stateOf = (trial: (typeof trials)[number]) => (TRIAL_KEY_ORDER.includes(trial.state) ? trial.state : "unknown");
+const trialKeyStates = TRIAL_KEY_ORDER.filter((state) => trials.some((trial) => stateOf(trial) === state));
 // The trials table's columns, named over every group's table.
-const TRIAL_COLUMNS = ["People", "Compared with", "Main measure", "State", "Trial"];
+const TRIAL_COLUMNS = ["People", "Phase", "State", "Results posted", "Trial"];
 const posted = withResults(trials);
 const trialsNote = [
   plural(trials.length, "trial"),
@@ -299,7 +383,7 @@ const sections = [
     ? [{ id: "organisations", name: "Organisations named", count: organisations.length }]
     : []),
   ...(others.length > 0 ? [{ id: "others", name: "Other claims" }] : []),
-  { id: "pass-on", name: "Pass it on" },
+  { id: "pass-on", name: "Keep or pass on" },
 ];
 ---
 
@@ -561,7 +645,7 @@ const sections = [
             /* Trials on record with no phase: said here, so the status is not read as
                contradicting the trials the page lists. No link in it: on a phone it is drawn
                ahead of the path, and nothing drawn out of order may be pressed. */
-            bridge && <p class="bridge">{bridge}</p>
+            bridge && <p class:list={["bridge", { counts: claim.status.code !== "trial_registered" }]}>{bridge}</p>
           }
         </div>
       </div>
@@ -707,6 +791,30 @@ const sections = [
       <FoldHead id="timetable" note={timetableNote}>
         {hasDatedPromise ? "Promised and recorded" : "Recorded"}
       </FoldHead>
+      {/* The record's moments, in order, on one line: what a reader wants first. Each
+          leads to its year in the full record under it. */}
+      <ol class="milestones">
+        {milestones.map((moment) => (
+          <li class:list={[{ promised: moment.mark === "promise" }]}>
+            {moment.mark === "report" ? (
+              <span class="ev-report" aria-hidden="true" />
+            ) : moment.mark === "promise" ? (
+              <span class="ev-promise" aria-hidden="true" />
+            ) : (
+              <span class:list={["state-mark", { posted: moment.mark === "results" }]} data-state={moment.mark === "results" ? "completed" : moment.mark} aria-hidden="true" />
+            )}
+            <a href={`#year-${moment.date.slice(0, 4)}`}>{moment.label}</a>
+            <span>{formatDate(moment.date)}</span>
+          </li>
+        ))}
+      </ol>
+      {/* Every record, by year: one press under the moments. A link to a record opens it
+          (scripts/folds.ts); on paper it is printed open. */}
+      <details class="papers-rest record-all">
+        <summary>
+          All {plural(counts.records, "record")}{counts.promises > 0 ? ` and ${plural(counts.promises, "promise")}` : ""}, by year
+          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+        </summary>
       {
         ownAxis && (
           <div class="claim-strip">
@@ -755,6 +863,22 @@ const sections = [
         }
       </ul>
     </div>
+    {
+      anyYearFolds && (
+        // What the shapes in a folded year's row stand for, once.
+        <p class="said-key year-key" aria-hidden="true">
+          {YEAR_KEY.filter(([mark]) => yearKeyMarks.has(mark)).map(([mark, , words]) => (
+            <span><span class="state-mark" data-state={mark} />{words}</span>
+          ))}
+          {yearKeyMarks.has("results") && (
+            <span><span class="state-mark posted" data-state="completed" />{RESULTS_POSTED}</span>
+          )}
+          {yearKeyMarks.has("report") && (
+            <span><span class="ev-report" />News report</span>
+          )}
+        </p>
+      )
+    }
     <p class="visually-hidden" role="status" data-kinds-said></p>
     <div class="table-frame">
     <table role="table" class="timetable" aria-labelledby="timetable">
@@ -827,8 +951,20 @@ const sections = [
                         yearFolds(row) ? (
                           <details class="year-rest">
                             <summary>
+                              {/* A shape for every record of the year, oldest first: what
+                                  kinds they are is seen at a glance and said in words to a
+                                  screen reader. */}
+                              <span class="year-marks" aria-hidden="true">
+                                {yearMarks(row).map((mark) =>
+                                  mark === "report" ? (
+                                    <span class="ev-report" />
+                                  ) : (
+                                    <span class:list={["state-mark", { posted: mark === "results" }]} data-state={mark === "results" ? "completed" : mark} />
+                                  ),
+                                )}
+                              </span>
+                              <span class="visually-hidden">{yearSaid(row).kinds.join(", ")}.</span>
                               <span class="year-total">{yearSaid(row).total}</span>
-                              <span class="year-kinds">{yearSaid(row).kinds.join(" · ")}</span>
                               {yearSaid(row).basis && (
                                 <span class="year-basis">
                                   <BasisMark label={false} />
@@ -945,6 +1081,7 @@ const sections = [
       </tbody>
     </table>
     </div>
+      </details>
 
     {
       timetable.undated.length > 0 && (
@@ -976,6 +1113,44 @@ const sections = [
             <p slot="about">{TRIALS_NOTE}</p>
             Trials on record
           </FoldHead>
+          {/* How the trials are spread: a mark a trial, under its phase, in the shape of
+              its state. For the eye; the table under it says the same in words, and a
+              mark leads to its trial. */}
+          {
+            trials.length >= 4 && (
+              <>
+                <div class="trial-matrix" aria-hidden="true">
+                  {trialSpread.map(([name, list]) => (
+                    <div class="trial-matrix-col">
+                      <p>
+                        <b>{name}</b> <span class="entry-note">{list.length}</span>
+                      </p>
+                      <div class="trial-dots">
+                        {list.map((trial) => (
+                          <a
+                            href={`#trial-${trial.trial_id}`}
+                            tabindex="-1"
+                            title={`${trial.trial_id}: ${PLAIN_STATE[trial.state] ?? "State not given"}${trial.facts?.results ? ", results posted" : ""}`}
+                          >
+                            <span class:list={["state-mark", { posted: Boolean(trial.facts?.results) }]} data-state={trial.state} />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p class="said-key trial-key" aria-hidden="true">
+                  {/* The states these trials have, in the rows' own words. */}
+                  {trialKeyStates.map((state) => (
+                    <span><span class="state-mark" data-state={state} />{PLAIN_STATE[state]}</span>
+                  ))}
+                  {posted > 0 && (
+                    <span><span class="state-mark posted" data-state="completed" />{RESULTS_POSTED}</span>
+                  )}
+                </p>
+              </>
+            )
+          }
           {/* The columns, named once over every group and kept in sight while the groups
               scroll. For the eye only: each group's table keeps its own column names for a
               screen reader. */}
@@ -1000,9 +1175,9 @@ const sections = [
                     match={matchOf(trial.trial_id)}
                     approach={claim.approach}
                     dates={trialDates(claim.events, trial.trial_id)}
-                    showPhase={group.mixed}
                     glosses={trialGlosses.get(trial.trial_id) ?? []}
                     treatment={claim.intervention.name}
+                    largest={largestSize}
                   />
                 ))}
               </div>
@@ -1047,6 +1222,12 @@ const sections = [
                   ? `Trial registry records that may be about this treatment and condition, with how sure each match is.${scoreNote}`
                   : "The trial registries were searched for this treatment and condition. No record matched."}
             </p>
+            {candidates.length > 0 && (
+              // That a possible record counts for nothing, and the rule that would count it.
+              <p slot="about">
+                {notCounted(data.match_accept_above ?? null)} <a href={NOT_COUNTED_LINK.href}>{NOT_COUNTED_LINK.text}</a>
+              </p>
+            )}
             {matchedHeading}
           </FoldHead>
           {untried.length > 0 && <RegistryRecords matches={untried} />}
@@ -1058,7 +1239,6 @@ const sections = [
               matches={candidates}
               level={untried.length > 0 ? 4 : 3}
               possible
-              acceptAbove={data.match_accept_above ?? null}
             />
           )}
         </section>
@@ -1090,22 +1270,36 @@ const sections = [
               ) : (
                 <p class="entry-note paper-group-note">{group.note}</p>
               )}
-              <ul class="plain entry-rows">
-                {group.papers.slice(0, PAPERS_SHOWN).map((paper) => (
-                  <Paper paper={paper} trialIds={trialIds} />
+              <div class="year-groups">
+                {byYear(newestFirst(group.papers).slice(0, PAPERS_SHOWN)).map(([year, papers]) => (
+                  <div class="label-group">
+                    <h4 class="label-group-name">{year}</h4>
+                    <ul class="plain entry-rows paper-rows">
+                      {papers.map((paper) => (
+                        <Paper paper={paper} trialIds={trialIds} />
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
               {group.papers.length > PAPERS_SHOWN && (
                 <details class="papers-rest">
                   <summary>
                     The other {group.papers.length - PAPERS_SHOWN} of {group.papers.length} papers
                     <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
                   </summary>
-                  <ul class="plain entry-rows">
-                    {group.papers.slice(PAPERS_SHOWN).map((paper) => (
-                      <Paper paper={paper} trialIds={trialIds} />
+                  <div class="year-groups">
+                    {byYear(newestFirst(group.papers).slice(PAPERS_SHOWN)).map(([year, papers]) => (
+                      <div class="label-group">
+                        <h4 class="label-group-name">{year}</h4>
+                        <ul class="plain entry-rows paper-rows">
+                          {papers.map((paper) => (
+                            <Paper paper={paper} trialIds={trialIds} />
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </details>
               )}
             </>
@@ -1151,84 +1345,178 @@ const sections = [
               )}
             </Fragment>
           </FoldHead>
-          <ClaimTable claims={others} caption="Each claim, when it was first reported and its status" />
+          {/* A row a claim: its treatment and condition, where it stands as a place on the
+              path, and when it was first reported. The rest is on the claim's own page. */}
+          <ul class="plain entry-rows other-claims">
+            {others.map((other) => (
+              <li>
+                <div class="entry-lead">
+                  <a class="entry-name" href={`/${other.slug}`}>{other.intervention.name}</a>
+                  <span class="entry-note">{other.indication}</span>
+                </div>
+                <div class="entry-ties">
+                  <span class="status-line">
+                    <StageTrack code={other.status.code} />
+                    <strong class="status-name">{STATUS_LABELS[other.status.code]}</strong>
+                  </span>
+                  {overlayText(other.status.overlay_years) && (
+                    <span class="entry-note">{overlayText(other.status.overlay_years)}</span>
+                  )}
+                </div>
+                <span class="entry-note other-first">{formatDate(other.first_reported_date)}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )
     }
 
-    <section class="take" data-pagefind-ignore>
-      <FoldHead id="pass-on" start="folded">Pass it on</FoldHead>
+    {/* Keep or pass on: what a reader can do with the record, a label and its buttons
+        on each row (chosen by the operator from the section mocks, 2026-11-17). The
+        reminders' row is shown only where the browser can make and save the file. */}
+    <section class="take keep" data-pagefind-ignore>
+      <FoldHead id="pass-on" start="folded">Keep or pass on</FoldHead>
       {/* Says "Copied" to a screen reader; the button's own label changes for the eye. */}
       <p class="visually-hidden" role="status" data-said></p>
-      <p class="take-why">Seen this headline shared again? Reply with the record.</p>
-      <div class="take-body">
-        {/* The card the pills download, so a reader sees what they would be passing on. */}
-        <img
-          class="take-card"
-          src={`/og/square/${claim.slug}.png`}
-          width="1080"
-          height="1080"
-          alt={imageAlt}
-          loading="lazy"
-          decoding="async"
-        />
-        <div>
-      <p class="sentence" id="sentence">{sentence}</p>
-      <div class="take-actions">
-        <button type="button" class="share" data-copy="sentence" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy sentence</span>
-        </button>
-        <a class="share" href={`/og/square/${claim.slug}.png`} download>
-          <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
-          Square image
-        </a>
-        <a class="share" href={`/og/tall/${claim.slug}.png`} download>
-          <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
-          Tall image
-        </a>
-        <button type="button" class="share" data-copy="page-address" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy link</span>
-        </button>
-        <span id="page-address" hidden>{address}</span>
-      </div>
-      <details class="post-to">
-        <summary id="post-to">
-          Post it to a network
-          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-        </summary>
-        <ul class="post-links" aria-labelledby="post-to">
-          {
-            posts.map((post) => (
-              <li>
-                <a
-                  class="share"
-                  href={post.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  data-network={post.network}
-                >
-                  {post.label}
-                </a>
-              </li>
-            ))
-          }
-          <li>
-            {/* Mastodon has no one address: the reader names their server. */}
-            <button
-              type="button"
-              class="share"
-              data-mastodon
-              data-text={postText}
-              data-url={address}
-              hidden
-            >
-              Mastodon
+      <FactSheet>
+        <Fact label="Share">
+          <div class="take-actions">
+            <button type="button" class="share" data-copy="sentence" hidden>
+              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+              <span data-copy-text>Copy sentence</span>
             </button>
-          </li>
-        </ul>
-      </details>
+            <a class="share" href={`/og/square/${claim.slug}.png`} download>
+              <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
+              Square image
+            </a>
+            <a class="share" href={`/og/tall/${claim.slug}.png`} download>
+              <ImageDown size={16} stroke-width={1.9} aria-hidden="true" />
+              Tall image
+            </a>
+            <button type="button" class="share" data-copy="page-address" hidden>
+              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+              <span data-copy-text>Copy link</span>
+            </button>
+            <span id="page-address" hidden>{address}</span>
+          </div>
+          <Fragment slot="under">
+            <span class="aka sentence" id="sentence">{sentence}</span>
+            <details class="post-to">
+              <summary id="post-to">
+                Post it to a network
+                <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+              </summary>
+              <ul class="post-links" aria-labelledby="post-to">
+                {
+                  posts.map((post) => (
+                    <li>
+                      <a
+                        class="share"
+                        href={post.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-network={post.network}
+                      >
+                        {post.label}
+                      </a>
+                    </li>
+                  ))
+                }
+                <li>
+                  {/* Mastodon has no one address: the reader names their server. */}
+                  <button
+                    type="button"
+                    class="share"
+                    data-mastodon
+                    data-text={postText}
+                    data-url={address}
+                    hidden
+                  >
+                    Mastodon
+                  </button>
+                </li>
+              </ul>
+            </details>
+          </Fragment>
+        </Fact>
+        <div
+          id="check-again"
+          tabindex="-1"
+          data-remind
+          data-site={SITE.name}
+          data-headline={claim.headline}
+          data-slug={claim.slug}
+          data-url={address}
+          data-promise={promiseDue}
+          data-first={claim.first_reported_date}
+          hidden
+        >
+          <dt>Remind me</dt>
+          <dd>
+            <span class="fact-head">
+              <span class="fact-value">
+                <div class="take-actions">
+                  {
+                    promiseDue && (
+                      <button type="button" class="share" data-when="promise">
+                        <ClockMark />
+                        <span data-when-text>On the promised date, {formatDate(promiseDue)}</span>
+                      </button>
+                    )
+                  }
+                  <button type="button" class="share" data-when="six-months">
+                    <ClockMark />
+                    <span data-when-text>In six months</span>
+                  </button>
+                  <button type="button" class="share" data-when="year">
+                    <ClockMark />
+                    <span data-when-text>In a year</span>
+                  </button>
+                  {
+                    claim.first_reported_date && (
+                      <button type="button" class="share" data-when="anniversary">
+                        <ClockMark />
+                        <span data-when-text>On the anniversary, {dayAndMonth(claim.first_reported_date)}</span>
+                      </button>
+                    )
+                  }
+                </div>
+              </span>
+            </span>
+            <span class="aka">The date is saved to your calendar as a file made on this device; nothing is sent to us.</span>
+          </dd>
+        </div>
+        <Fact label="Follow">
+          <FollowOffer claim={claim} />
+        </Fact>
+        {
+          (claim.status.history?.length ?? 0) > 0 && (
+            <Fact label="Feed">
+              <span class="keep-feed-links">
+                <a href={`/changes/${claim.slug}.xml`}>This claim's status changes</a>
+                <a href="/changes.xml">Every claim's</a>
+              </span>
+            </Fact>
+          )
+        }
+        <Fact label="Embed">
+          <details class="embed-how">
+            <summary>
+              Writing about this? Show the status on your own page
+              <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+            </summary>
+            <p class="entry-note">
+              Paste this where the status should appear. It shows the current status and links back
+              here; it loads nothing else and stores nothing.
+            </p>
+            <pre id="snippet"><code>{snippet}</code></pre>
+            <button type="button" class="share" data-copy="snippet" hidden>
+              <Copy size={16} stroke-width={1.9} aria-hidden="true" />
+              <span data-copy-text>Copy code</span>
+            </button>
+          </details>
+        </Fact>
+      </FactSheet>
       <dialog class="mastodon" data-mastodon-dialog aria-labelledby="mastodon-title">
         <form method="dialog">
           <h3 id="mastodon-title">Post to Mastodon</h3>
@@ -1254,78 +1542,6 @@ const sections = [
           </div>
         </form>
       </dialog>
-        </div>
-      </div>
-      <details class="embed-how">
-        <summary>
-          Writing about this? Show the status on your own page
-          <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
-        </summary>
-        <p class="entry-note">
-          Paste this where the status should appear. It shows the current status and links back
-          here; it loads nothing else and stores nothing.
-        </p>
-        <pre id="snippet"><code>{snippet}</code></pre>
-        <button type="button" class="share" data-copy="snippet" hidden>
-          <Copy size={16} stroke-width={1.9} aria-hidden="true" />
-          <span data-copy-text>Copy code</span>
-        </button>
-      </details>
-    </section>
-
-    {/* Shown only where the browser can make and save the file. */}
-    <section
-      class="again"
-      data-pagefind-ignore
-      data-remind
-      data-site={SITE.name}
-      data-headline={claim.headline}
-      data-slug={claim.slug}
-      data-url={address}
-      data-promise={promiseDue}
-      data-first={claim.first_reported_date}
-      hidden
-    >
-      <FoldHead id="check-again" start="folded">Check again later</FoldHead>
-      <p class="take-why">
-        Save a date to your calendar to look at this record again. The file is made on this
-        device; nothing is sent to us.
-      </p>
-      <div class="take-actions">
-        {
-          promiseDue && (
-            <button type="button" class="share" data-when="promise">
-              <ClockMark />
-              <span data-when-text>On the promised date, {formatDate(promiseDue)}</span>
-            </button>
-          )
-        }
-        <button type="button" class="share" data-when="six-months">
-          <ClockMark />
-          <span data-when-text>In six months</span>
-        </button>
-        <button type="button" class="share" data-when="year">
-          <ClockMark />
-          <span data-when-text>In a year</span>
-        </button>
-        {
-          claim.first_reported_date && (
-            <button type="button" class="share" data-when="anniversary">
-              <ClockMark />
-              <span data-when-text>On the anniversary, {dayAndMonth(claim.first_reported_date)}</span>
-            </button>
-          )
-        }
-      </div>
-      <FollowOffer claim={claim} />
-      {
-        (claim.status.history?.length ?? 0) > 0 && (
-          <p class="entry-note">
-            For a feed reader: <a href={`/changes/${claim.slug}.xml`}>this claim's status changes</a>,
-            or <a href="/changes.xml">every claim's</a>.
-          </p>
-        )
-      }
     </section>
 
     <LookupAgain />
