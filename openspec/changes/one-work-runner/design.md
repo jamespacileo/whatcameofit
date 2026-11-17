@@ -12,6 +12,8 @@ What exists, as read on 17 November 2026:
 - `sources/base.py`: four attempts, backoff `max(2^n, Retry-After)` with no ceiling, a `Retry-After` given as a date ignored, backoff per process. `source_allowance_use.paused_until` is read by the backfill only.
 - `llm/decisions.py`: plain `httpx`, no retry. `decide/core.py` marks a failed call `unreachable`; only `link_triage.py` acts on it.
 
+- `measure/`: a span per step with time running, waits by cause, requests by source, tokens and cost; `FileSink` appends one JSON line per span to a file per day, opening the file each time; `thenwhat measure` reports a range of days. A step is measured only if its code wraps itself in `measured`, and most do not (`work-reuse-and-metrics` task 2.2 is open).
+
 Constraints: no article text is stored anywhere; approval is by deterministic rule; one way of doing each thing, with no looser path standing in when the first cannot run; migrations are added, not regenerated, and run on the writer only; no hosted service is added.
 
 ## Goals / Non-Goals
@@ -22,6 +24,7 @@ Constraints: no article text is stored anywhere; approval is by deterministic ru
 - Every record that can still be completed comes back by itself or by one command, and none comes back that cannot.
 - A run that meets a throttled or exhausted provider leaves everything it did not finish due, at no cost to those records.
 - Fewer shapes: one outcome type, one runner, one call policy, one reason vocabulary.
+- Cost and the place work is held up can be read within seconds of it happening, at a cost to the work small enough to leave on for every run.
 
 **Non-Goals:**
 
@@ -110,7 +113,28 @@ No article text is kept, so a read cannot be replayed against stored data. Accep
 - The data migration maps every stored lead outcome to a code, and the funnel report before and after gives the same counts per line.
 - On the writer, the claim steps are run for fifty approved claims whose answers are in `http_cache` and `decision_log`; their matches, events and status must equal what is stored. Any difference is reported before the old path is removed.
 
+### 11. Measurement belongs to the runner and the call policy
+
+The existing `measure/` module is kept and fed from two places only. The runner opens the span around each record (or each batch) and closes it with the outcome's class and reason. `work/calls.py`, `work/pause.py`, the outlet's turn and the claim turn report requests, retries and waits to the span that is open, each wait under one named cause. A step's own code measures nothing, so a new step is measured without being told to, and the run's identifier ties its spans and events together.
+
+Run events (started, ended and why, source paused, records made due) are lines in the same day's file with a kind of their own. One file, one reader, one retention rule.
+
+**Writing.** `FileSink` is replaced by a writer on its own thread: workers put a finished span on a bounded queue and go on; the thread writes what has gathered, at least once a second, with the file held open. A full queue makes workers wait, so nothing is dropped to keep up. A write that fails is counted, reported at the run's end and written as an event once writing works again; it does not stop the work, and it is never silent. Nothing about a measurement goes to the database, as `processing-metrics` already requires ("no row for each step of each lead").
+
+**Reading live.** `thenwhat measure --live` is a second process that reads the day's files from where it last read, keeps windows of one, five and fifteen minutes in memory, and redraws. Records in hand come from spans started and not yet finished, which the writer marks with a start line. Paused sources and the month's spend are two small queries every few seconds; no count over the lead table is made, because that is what `thenwhat backfill plan` is for.
+
+**Budget.** A step that asks no source must keep 95 of every 100 records a run without measuring handles; a benchmark test holds it. Screening is the case that matters: it handles hundreds of thousands of leads in batches of 500, so the span there is per batch, as today.
+
+Alternatives considered:
+
+- Prometheus, OpenTelemetry with a collector, or a hosted metrics service. Each is a service to run or pay for, for one machine and one operator; and a counter loses the per-record detail the end-to-end account needs. The field names stay close enough to a trace's that an exporter could be added later.
+- A table in Postgres. A row per record per step is the write load the pipeline already avoids, on the connection the work needs.
+- Sampling. It would make cost a record an estimate, and cost is the figure most asked for.
+
 ## Risks / Trade-offs
+
+- [The live view misleads when several machines write] → Only the writer runs steps; the view says which writer's files it reads and how old the newest line is.
+- [A slow disk makes workers wait on measurements] → The queue is sized for seconds of work, the wait is itself measured under a cause of its own, and the live view shows it.
 
 - [Leads once final come back and cost page requests and reads] → Only reasons declared as later or needs a fix can come back, a requeue has a dry run that counts them, and the spend ceiling and allowances apply as to any run. The first requeue is by one reason at a time.
 - [A record put off for ever] → After thirty days of one reason it becomes needs a fix and is listed in the plan.
