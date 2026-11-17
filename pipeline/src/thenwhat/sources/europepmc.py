@@ -69,8 +69,8 @@ class EuropePmc(Source):
 
     def papers_by_pubmed_ids(self, pubmed_ids: list[str]) -> dict[str, SourceRecord | None]:
         """Papers by PubMed number, up to `PAPERS_A_REQUEST` in one search, each number's
-        paper or None when Europe PMC does not have it. A number that is not all digits
-        sends nothing and is left out of the answer."""
+        paper or None when Europe PMC does not have it, asked alone too. A number that is
+        not all digits sends nothing and is left out of the answer."""
         numbers = list(dict.fromkeys(n for n in pubmed_ids if n.isdigit()))
         found: dict[str, SourceRecord | None] = dict.fromkeys(numbers)
         for start in range(0, len(numbers), PAPERS_A_REQUEST):
@@ -100,6 +100,10 @@ class EuropePmc(Source):
                 ):
                     break
                 cursor = next_cursor
+        # A number a search did not answer for is asked alone before it is called not
+        # held: a search of many is not trusted to say a paper is missing.
+        for number in [n for n, record in found.items() if record is None]:
+            found[number] = self.paper_by_pubmed_id(number)
         return found
 
     def trial_numbers(self, *, doi: str | None = None, pubmed_id: str | None = None) -> list[str]:

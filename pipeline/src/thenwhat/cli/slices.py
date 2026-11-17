@@ -170,7 +170,7 @@ def run_command(
     to be pushed again, as --again does. A store loaded from another build is refused,
     and so is one loaded again (it holds no slice of the set while this device says some
     were sent), until fresh-state and --again."""
-    from thenwhat.events.paper_records import keep_papers_by_pubmed_id
+    from thenwhat.events.paper_records import PapersKept, keep_papers_by_pubmed_id
     from thenwhat.sources.europepmc import EuropePmc
 
     if stage is not None and stage not in STAGES[:-1]:
@@ -247,17 +247,19 @@ def run_command(
                 if one.due() == "record" and stage in (None, "record"):
                     record_stage(session, one, now)
                 if one.due() == "registry_papers" and stage in (None, "registry_papers"):
-                    began, asked = time.monotonic(), [0]
+                    began, kept = time.monotonic(), [PapersKept()]
 
-                    def keep(numbers: list[str], at: datetime = now, asked=asked) -> None:
-                        asked[0] = keep_papers_by_pubmed_id(
+                    def keep(numbers: list[str], at: datetime = now, kept=kept) -> None:
+                        kept[0] = keep_papers_by_pubmed_id(
                             session, index, numbers, now=at, max_age=max_age
                         )
 
                     registry_papers_stage(session, one, now, keep)
+                    got = kept[0]
                     out.print(
                         f"Slice {one.number}: registry papers: {one.counts['registry_papers']:,}"
-                        f" listed, {asked[0]:,} asked of Europe PMC,"
+                        f" listed, {got.asked:,} asked of Europe PMC, {got.found:,} found,"
+                        f" {got.not_held:,} not held, {got.kept_held:,} kept as held,"
                         f" {time.monotonic() - began:.1f} s.",
                         markup=False,
                     )

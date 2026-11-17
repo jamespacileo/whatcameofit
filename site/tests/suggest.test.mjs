@@ -68,9 +68,9 @@ test("a treatment is named once for its claim, with what it is for and where the
   const rows = of(suggest("lung", index, null), "treatment");
   // A name that begins with the word comes first; the shorter of two first.
   assert.deepEqual(rows[0], { kind: "treatment", text: "Lung patch", sub: "Lung cancer", meta: "Phase 2 trial", href: "/f" });
-  // A second name finds the claim; the first name is what is shown.
+  // A second name finds the claim; the first name is what is shown, then the name found.
   assert.deepEqual(of(suggest("lungz", index, null), "treatment"), [
-    { kind: "treatment", text: "Agent B", sub: "Lung cancer", meta: "Phase 3 trial", href: "/b" },
+    { kind: "treatment", text: "Agent B", also: "lungzumab", sub: "Lung cancer", meta: "Phase 3 trial", href: "/b" },
   ]);
 });
 

@@ -58,10 +58,10 @@ test("the website opts in and displays each independent claim with its own resul
   ] };
   document.querySelector("#results").scrollIntoView = () => {};
   vm.runInNewContext(script, {
-    document, URL, navigator: {}, getSelection: () => null, setTimeout,
+    document, URL, crypto, navigator: {}, getSelection: () => null, setTimeout,
     BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
-    location: { href: "https://example.test/" }, history: { replaceState() {} },
+    location: { href: "https://example.test/" }, history: { replaceState() {}, pushState() {} }, addEventListener() {},
     fetch: async (_url, options) => {
       if (options?.method === "POST") { sent.push(JSON.parse(options.body)); return { status: 200, json: async () => found }; }
       return { json: async () => ({ articles: {}, claims: {}, places: 6 }) };
@@ -94,10 +94,10 @@ async function trackedAnswer({ navigator, carried = true }) {
   results.scrollIntoView = () => {};
   const timers = [];
   vm.runInNewContext(script, {
-    document, URL, navigator, getSelection: () => null, setTimeout: (run) => timers.push(run),
+    document, URL, crypto, navigator, getSelection: () => null, setTimeout: (run) => timers.push(run),
     BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
-    location: { href: "https://example.test/" }, history: { replaceState() {} },
+    location: { href: "https://example.test/" }, history: { replaceState() {}, pushState() {} }, addEventListener() {},
     fetch: async () => ({ json: async () => ({
       articles: { "example.org/old-report": ["old"] },
       claims: { old: { headline: "Earlier report", page: "/old", status: "Trial registered", meaning: "A trial is registered." } },

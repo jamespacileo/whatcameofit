@@ -698,10 +698,27 @@ def test_many_papers_are_kept_in_one_request_and_young_ones_are_not_asked(
 
     index = Index({RESULTS_PMID: indexed(fixture_json)})
     age = timedelta(days=30)
-    due = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID, "111"], now=NOW, max_age=age)
-    assert due == 2 and index.asked == [f"{RESULTS_PMID},111"]
+    kept = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID, "111"], now=NOW, max_age=age)
+    assert (kept.asked, kept.found, kept.not_held) == (2, 1, 1)
+    assert index.asked == [f"{RESULTS_PMID},111"]
     held = {row.pubmed_id: row.payload is not None for row in paper_records(session)}
     assert held == {RESULTS_PMID: True, "111": False}
     later = NOW + timedelta(days=7)
     again = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID, "111"], now=later, max_age=age)
-    assert again == 0 and len(index.asked) == 1
+    assert again.asked == 0 and len(index.asked) == 1
+
+
+def test_a_paper_held_is_never_emptied_by_a_missing_answer(session: Session, fixture_json):
+    """Synthetic: the index held the paper, and later answers nothing for it. The stored
+    record keeps its paper and says so in the counts."""
+    from thenwhat.events.paper_records import keep_papers_by_pubmed_id
+
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+    age = timedelta(days=30)
+    keep_papers_by_pubmed_id(session, index, [RESULTS_PMID], now=NOW, max_age=age)
+    index.by_pubmed_id.clear()
+    later = NOW + timedelta(days=60)
+    kept = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID], now=later, max_age=age)
+    assert (kept.asked, kept.found, kept.not_held, kept.kept_held) == (1, 0, 0, 1)
+    [stored] = paper_records(session)
+    assert stored.payload is not None and stored.fetched_at == NOW
