@@ -6,7 +6,7 @@ Folder: `products`. Workspace rules: `~/Projects/CLAUDE.md` (never create at roo
 worktrees via `wt`, archive via quarantine).
 
 - Run: `docker compose up --build -d`, then `docker compose run --rm pipeline thenwhat --help`
-- Test: `make check` (ruff, ty, pytest, site build)
+- Test: `make check` (ruff, ty, pytest, site build). While working in one area, run only its part: `make check-pipeline`, `check-site`, `check-extension` or `check-store`. Run the full `make check` before committing a change that crosses areas. The Node tests print a dot per passing test and the full detail of each failure.
 - New clone or worktree: `make setup` (Node 26 from `.node-version`, pnpm 10). pnpm links packages from its shared store, so nothing is downloaded twice. Never `npm install`: the lock files are `pnpm-lock.yaml`.
 
 ## Where things are defined

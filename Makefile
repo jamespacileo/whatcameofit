@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check lint types db-up test-db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-pipeline check-site check-extension check-store lint types db-up test-db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -10,6 +10,13 @@ export TEST_DB_PORT ?= 5434
 # Everything CI runs. Needs Docker for the test database; no internet access is
 # needed once dependencies and the Postgres image are present.
 check: lint types test scripts-test store-test site-test site-build extension-test
+
+# One area at a time, for work that touches only that area. Each runs exactly what
+# `check` runs for it; run `check` itself before a commit that crosses areas.
+check-pipeline: lint types test
+check-site: site-test site-build
+check-extension: extension-test
+check-store: store-test
 
 lint:
 	uv run --directory pipeline ruff check .
@@ -74,7 +81,7 @@ smoke-research: site/node_modules
 
 # The browser extension: plain JavaScript, tested with Node's own runner, then built.
 extension-test: site/node_modules
-	node --test extension/tests/*.test.mjs
+	node --test --test-reporter=dot extension/tests/*.test.mjs
 	node extension/build.mjs
 
 # The extension as loaded in Chrome ("Load unpacked" on extension/dist).
