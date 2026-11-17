@@ -8,6 +8,7 @@
 // that is previewed and dropped, and the two reports are held to each other (57, 58).
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
+import { INLINE_PAYLOAD_BYTES } from "../src/sql.generated.mjs";
 import { setTimeout as wait } from "node:timers/promises";
 import { PAYLOADS, Service, engineUnavailable, sha } from "./harness.mjs";
 
@@ -23,11 +24,11 @@ const open = [];
 // ---- records, in the natural-key form a writer hands over ---------------------------------
 
 // A payload's checksum is really its body's, since the service checks. With a body it is
-// small and travels in its record; without, it is over 16 KB and is put to R2 first.
+// small and travels in its record; without, it is over the row's bound and is put to R2 first.
 const bodies = new Map();
 function content(n, body) {
   if (body !== undefined) bodies.set(n, JSON.stringify(body));
-  else if (!bodies.has(n)) bodies.set(n, `payload ${n} ${"x".repeat(17_000)}`);
+  else if (!bodies.has(n)) bodies.set(n, `payload ${n} ${"x".repeat(INLINE_PAYLOAD_BYTES + 600)}`);
   return bodies.get(n);
 }
 const digest = (n) => sha(content(n));

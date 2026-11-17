@@ -271,7 +271,7 @@ test("Scenario: A list named in the address", () => {
   // "view" in the address. Without scripting the tabs stay hidden and every list is
   // shown under its own heading, Claims after Headlines.
   assert.match(html, /role="tab"[^>]*aria-controls="feed-claims"[^>]*data-view="claims"/);
-  assert.match(html, /role="tablist" aria-label="Lists of tracked claims" hidden/);
+  assert.match(html, /role="tablist" aria-label="Lists of tracked claims" data-await/);
   assert.match(claimsPanel(), /<h2 class="bar">\s*Every claim tracked\s*<\/h2>/);
   assert.ok(html.indexOf('id="feed-headlines"') < html.indexOf('id="feed-claims"'));
 });
@@ -361,7 +361,7 @@ test("Scenario: A returning reader's home page", () => {
   // The head of the day-by-day list says when the registries were last checked.
   assert.match(html, /Registries last checked\s+<span class="unbroken/);
   // The status and topic choices are fields, shown by the reader's browser.
-  assert.match(html, /<label class="pick" hidden data-status-filter>/);
+  assert.match(html, /<label class="pick" data-await data-status-filter>/);
 });
 
 test("Scenario: Following from a claim page", () => {

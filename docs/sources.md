@@ -496,7 +496,7 @@ Read on 2026-11-17 from `developers.cloudflare.com`, for `store/ingest`. The fig
 
 ## D1's bulk import, for loading the whole store (17 November 2026)
 
-Read on 2026-11-17 from `developers.cloudflare.com`, for `thenwhat store dump` (`pipeline/src/thenwhat/store/dump.py`).
+Read on 2026-11-17 from `developers.cloudflare.com`, for the bulk import of the store. Written first for `thenwhat store dump`, retired the same day for `store/ingest/scripts/dump-for-import.mjs`, which does the same with the same limits.
 
 - **`d1/best-practices/import-export-data`** (updated 2026-04-21): a SQL file is imported with `wrangler d1 execute <db> --remote --file <file>`; a SQLite file cannot be imported as it is. Remove `BEGIN TRANSACTION` and `COMMIT` (else "cannot start a transaction within a transaction") and any `_cf_KV` table. A file is at most 5 GiB, uploaded to R2 first; larger imports are split into several files. "Statement too long" means one INSERT holds too many rows: split it. Tables must be imported parents first, or foreign keys deferred with `PRAGMA defer_foreign_keys = true`. Export does not support virtual tables. The page does not say how `PRAGMA`, `sqlite_sequence` or FTS5 tables are treated on import.
 - **`d1/platform/limits`** (updated 2026-10-30): a statement is at most 100,000 bytes; 100 bound parameters a query; a string, BLOB or row at most 2,000,000 bytes; 30 seconds a query, which also bounds a whole API call; 10 GB a database (Workers Paid); a file import at most 5 GB. No limit is stated on rows in one INSERT or statements in one file.

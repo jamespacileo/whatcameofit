@@ -89,6 +89,8 @@ A registry record with posted results can exceed 2 MB, which is what forces this
 
 **Decided by the operator on 2026-11-16** (decision 16, and the amendment at the end of `docs/adr/0008`): a payload of 16 KB or less is kept in the store itself, in the `payload` table, and only a larger one is an R2 object. That is every registry listing record (467,064 of them, 642 bytes on average, 12 KB at most) and none of the large records. Half a million tiny objects would otherwise have to be uploaded before the first merge, and a trial's page would need a second service to show its record. `docs/adr/0008` said R2 for every payload and is amended.
 
+**Raised on 2026-11-17 to 524,288 bytes (512 KiB), counted in bytes.** The first cut-over to the preview passed every stage, and 659 of its 810 seconds went on putting 3,211 payloads into R2 one object at a time; at this bound about 37 are objects. The bound is the CHECK on `payload.body` in `store/schema.sql`, which the service reads its own from and the pipeline is held to. It is in bytes because D1's 2,000,000 a row is, and a body's characters can each be four bytes; through the service a payload also travels inside its staged record, escaped, under 1 MB a record, which 512 KiB leaves room for. Migration `0007` makes the table again to change the CHECK (SQLite cannot alter one): the rows are copied aside, the table dropped and made again under its name, and the rows copied back, with foreign keys deferred, because that is the one way D1's local engine accepted on a table that rows reference.
+
 A payload is stored once, under its checksum, however many events point to it. The present database stores that record four times, once for each event read from it; 546 MB of event payloads as text will be less once each distinct payload is kept once. How much less is measured in task 2.2.
 
 ### 3. What the store holds, and what it never holds
@@ -219,7 +221,7 @@ Read replication is left off. The database is in the European Union; a reader el
 **How a device's run folder becomes a merge.** `thenwhat backfill push`:
 
 1. reads the run's files and writes each result as a record in natural-key form, by one mapping function a kind, each tested by a round trip;
-2. puts each payload over 16 KB to the ingest service, which checks its checksum and stores it in R2 once;
+2. puts each payload over the bound a row may hold (16 KB when this was written; 524,288 bytes since 2026-11-17, decision 2) to the ingest service, which checks its checksum and stores it in R2 once;
 3. splits the records into store runs of about 20,000, parents first, and for each registers the run with its counts and step versions, stages it in chunks of under 2 MB, and asks for the merge;
 4. prints each merge's report and marks the folder pushed when the last is merged.
 
@@ -334,7 +336,7 @@ All 62 of the proof's scenarios pass through the HTTP routes on the local engine
 
 - **The hot tier is loaded into D1:** the tables something on Cloudflare reads. These are what the export of the site from the store reads (claims, their actions and aliases, articles, promises, statements, entities, matches, terms, events, conflicts, failure flags, trial reads, a source's records, decisions, outlet icons, the claims' search), the merge's and the ingest service's own tables (runs, staging, the report, the guard, work items and slices, deployments), and the count of unlisted domains a lookup keeps.
 - **The bulk tier is one SQLite file kept in R2 and not loaded into D1:** registry trials with their states, search and loads, article leads, link leads with their shares, links, labels, search and a lookup's readings, the registry route's ledger, model spend and the measurements. Restoring it is downloading the file.
-- **A payload goes with what points at it.** An event's, a conflict's and a source record's payloads are hot; a trial's are bulk; a payload both point at is in both. A payload object over 16 KB goes to the tier's folder of objects.
+- **A payload goes with what points at it.** An event's, a conflict's and a source record's payloads are hot; a trial's are bulk; a payload both point at is in both. A payload object, one over the bound a row may hold (16 KB then; 524,288 bytes since, decision 2), goes to the tier's folder of objects.
 - **No hot row references a bulk row.** The schema's foreign keys run from bulk to hot only (a lead to its claim and article, an article lead to its trial, a measurement to its claim), and a hot record that names a bulk one names it by text: an event, a match and a trial read name their trial by registry and identifier, a decision names what it decided by natural key. `pipeline/tests/test_store_tiers.py` holds this against the schema.
 - **Verification is by checksum, not by reading rows back.** For each table, one SELECT of aggregates (`thenwhat store checksum`, `pipeline/src/thenwhat/store/tiers.py`): rows, and for each column the values held, their total bytes and the code points of each value's first, middle and last character. D1 answers it with one row from one scan and no sort; the same statement on the store file gives the same row, and both are hashed the same way. It shows that a load arrived whole. It does not detect two rows swapping values, or a change inside a value that keeps its length and those three characters.
 - **After the cut-over, the bulk file is the truth for bulk kinds, with one writer: the daily job.** The hot kinds of a day go through the ingest service to D1 as before (`thenwhat backfill push`, hot kinds only unless `--every-tier`: a bulk kind's parents are not in D1, so its run would not reconcile). The bulk kinds go into the bulk file on the device, by the same `store/merge.sql` (`thenwhat store merge-bulk`). The bulk file keeps a copy of the hot rows bulk rows hang from (claims, their aliases and actions, articles: `REFERENCE` in `tiers.py`), refreshed by the same merge, so its foreign keys hold.
@@ -349,11 +351,33 @@ What this costs, against decision 1's one source of truth:
 - **No Worker query over leads or stored trials** until a table is moved to hot.
 - **Going back is one full load.** `thenwhat store build --tier all`, dumped and loaded, put the whole store in the preview D1 on 2026-11-17 in about 9 minutes.
 
-- **The trial target set is hot (amended 2026-11-17).** The trials of `active-or-ended-this-year` (102,877 that day), their states and payloads are in the hot tier as well as the bulk file. The hot file grows from 328 to 695 MB. A trial that leaves the set keeps its rows in D1 (`docs/adr/0010`).
+- **The set is loaded in slices (2026-11-17).** The first production load is the hot file's bulk import, which holds none of the set's trials: a build does not split a kind by set (`docs/adr/0010`). After it, the set's trials arrive by push, about 2,000 at a time, in this order of groups:
+  1. ended this year with results;
+  2. ended this year;
+  3. under way with results;
+  4. under way and updated in the last twelve months;
+  5. the rest.
+
+  Each slice passes through stages: record, registry papers, PubMed papers (off-peak, the operator's), in store, page. Its trials, papers and state (`trial_slice`) merge in one run, so "in the store" cannot disagree with the store. Every planned slice's state is pushed first, so the set's totals are whole from the start. The push state a build seeds holds the hot tier's records only, so a slice sends its trials and no record the base load held. On 2026-11-17 the set made 54 slices. A full slice is 4,051 records and 6.9 MB, sent in 4 chunks: about 6,000 table rows, and about 23,000 rows written in D1 at the 3.75 rows written per table row the preview load measured.
 - **The bulk tier cannot be queried from a Worker.** A trial's page served from the store (phase 5, tasks 7.1 to 7.3) needs `registry_trial` in D1; those tasks now begin by moving it to the hot tier, which the full load of 2026-11-17 showed fits.
 - **A reader's lookup still stages leads, shares and readings into D1.** After the cut, D1's `link_lead`, `link_share` and `lead_reading` hold only what lookups add, and the bulk file holds the history. A lookup of an article whose lead is only in the bulk file is answered as for a new lead. Promoting `link_lead` to hot reverses this.
 - **A claim merge in D1 moves the leads D1 holds**, not those in the bulk file; the next bulk build carries the change from Postgres.
 - **A full D1 load remains possible:** `thenwhat store build --tier all` writes the one whole file, which was loaded into the preview D1 in full on 2026-11-17.
+
+### 21. The target set of trials reaches D1 by slice pushes, and no kind is split by set
+
+**Decided on 2026-11-17**, the same day the operator decided that trials are loaded progressively, a slice at a time, with production showing how far the load has come. The operator's requirement: the trials of the set being loaded, and their papers, are in production's D1. Settled by the coordinating session, with the three store lanes, as follows.
+
+- **No kind is in two tiers.** `registry_trial` and `trial_paper` stay bulk in the pipeline's tier lists (`pipeline/src/thenwhat/store/tiers.py`), and a build's bulk file keeps every trial. The tests that hold the lists to one another (`pipeline/tests/test_store_kinds.py`, `store/ingest/tests/kinds.test.mjs`) stay as written: every kind the service's door takes is in exactly one tier list, the inbox's kinds are the bulk kinds, and clearing the inbox never deletes a row from under another.
+- **The target set is in D1 because it is pushed there, not because of its kind.** A base cut-over loads the claims side (the hot tier). The set's trials, their states, payloads and papers then reach D1 as slices, each a run through the merge like any other. What a device, the daily job or the operator pushes on purpose stays in D1; only what a reader's lookup or the store-side consumer creates of a bulk kind is kept in the inbox for the bulk file (decision 20, as the ingest service now applies it).
+- **Clearing the inbox removes no trial.** The service does not know the set's rule, and a lookup may find a trial of the set before its slice is pushed, so a trial stays in D1 once it is there. A trial a lookup found is then in D1 and in the bulk file both; it is a registry's public record and costs a row.
+- **How far the load has come is `trial_slice`,** one row a slice, written only by the merge: the later of each stage's time and the larger of each count are kept, so a slice never goes back a stage. The service's progress reads it. "In D1" for a slice is counted from it.
+- **A cut-over from nothing empties D1, so the slices are pushed again afterwards.** The pipeline's `slices` command is made able to; pushing a slice twice adds nothing, as for any run.
+- **The one-way rule holds.** A hot row still references no bulk row in the schema. `trial_paper` references its trial, and both are bulk tables; in D1 a pushed paper's trial is there because its slice brought it, and a paper whose trial the store lacks undoes its merge.
+
+What this leaves different between the two tiers' files and D1: D1 holds rows of bulk tables (the set's trials and papers) that a build's hot file does not. So `thenwhat store checksum` compares the hot tables, and the set in D1 is checked by its slices, not against a file.
+
+Considered, and not taken: a mark on a trial's row saying it is of the set, with `registry_trial` in both tiers and the build splitting its rows by the mark. It would let a cut-over load the set, at the cost of one kind in two tiers, a rule the service would have to know when clearing, and a schema change; pushing the slices again after a cut-over reaches the same state with none of the three.
 
 ## Risks / Trade-offs
 

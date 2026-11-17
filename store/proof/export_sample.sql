@@ -21,8 +21,8 @@ SET default_transaction_read_only = on;
 -- its checksum and size are exported.
 SELECT DISTINCT ON (sha) json_build_object('kind', 'payload', 'key', sha, 'body', json_build_object(
          'sha256', sha, 'bytes', bytes,
-         'body', CASE WHEN bytes <= 16384 THEN txt END,
-         'r2_key', CASE WHEN bytes > 16384 THEN 'payload/' || sha END))
+         'body', CASE WHEN bytes <= 524288 THEN txt END,
+         'r2_key', CASE WHEN bytes > 524288 THEN 'payload/' || sha END))
 FROM (SELECT encode(sha256(convert_to(raw_payload::text, 'UTF8')), 'hex') AS sha,
              octet_length(raw_payload::text) AS bytes, raw_payload::text AS txt
       FROM registry_trial t

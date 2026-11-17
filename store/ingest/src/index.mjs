@@ -3,7 +3,7 @@
 // not a record, not a payload, not an address.
 //
 //   POST   /runs                  register a run: who, which device, what kind of writer
-//   PUT    /payloads/<sha256>     a raw payload over 16 KB, into R2 under its checksum
+//   PUT    /payloads/<sha256>     a raw payload too large for a row, into R2 under its checksum
 //   POST   /runs/<id>/records     stage one chunk of records in natural-key form
 //   POST   /runs/<id>/merge       the merge; the same run twice adds nothing
 //   POST   /runs/<id>/preview     the report without applying; the run is then dropped
@@ -12,19 +12,18 @@
 //   GET    /inbox?after=&limit=   records of the bulk tier that runs handed over, oldest first
 //   POST   /inbox/folded          a fold is recorded from its delta in the bucket and the build's list: {object}
 //   POST   /inbox/clear           no further than the furthest fold recorded: {through}
-//   PUT    /progress/slices       the pipeline reports how far slices of a set of trials have come
-//   GET    /progress              counts only: sets, slices by stage, last runs, rows by table
+//   GET    /progress              counts only: each slice of trials by stage (trial_slice), last runs, rows by table
 //   GET    /progress/page         the same as a page; it holds nothing until a token is typed into it
 //   POST   /work/lease|finish|fail    the consumer's queue of due work
 //   POST   /slices/take|release       a device's work slices
 import { principal } from "./auth.mjs";
 import { Refusal, checkRecords } from "./check.mjs";
 import { sha256 } from "./hash.mjs";
-import { peopleInText } from "./people.mjs";
-import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_INBOX_RECORDS, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
+import { forbiddenInText } from "./people.mjs";
+import { MAX_LEASE, OBJECT_FLOOR_BYTES, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_INBOX_RECORDS, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
 import { INGEST } from "./sql.generated.mjs";
 import * as store from "./store.mjs";
-import { progress, reportSlices } from "./progress.mjs";
+import { progress } from "./progress.mjs";
 import { PAGE } from "./page.mjs";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
@@ -95,11 +94,12 @@ async function putPayload(request, env, who, checksum) {
   if (!who.may.includes("payload")) refuse(403, "outside_scope", `a ${who.role} token may not hand over payloads`);
   if (!SHA.test(checksum)) refuse(400, "bad_checksum", "a payload is named by its SHA-256 in lower-case hex");
   const bytes = await body(request, ["application/octet-stream", "application/json"], limits(env).MAX_PAYLOAD_BYTES);
-  if (bytes.length <= INLINE_PAYLOAD_BYTES) refuse(422, "small_payload", `a payload of ${INLINE_PAYLOAD_BYTES} bytes or less is kept in its staged record, not here`);
+  if (bytes.length <= OBJECT_FLOOR_BYTES) refuse(422, "small_payload", `a payload of ${OBJECT_FLOOR_BYTES} bytes or less is kept in its staged record, not here`);
   if ((await sha256(bytes)) !== checksum) refuse(422, "checksum_mismatch", "the body is not what its checksum says; nothing was stored");
   // A registry record that still names people is not stored: the store keeps no personal data.
-  const people = peopleInText(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
-  if (people.length) refuse(422, "personal_data", "a registry record is handed over without the people it names; nothing was stored", { people });
+  const forbidden = forbiddenInText(new TextDecoder("utf-8", { fatal: false }).decode(bytes));
+  if (forbidden.people.length) refuse(422, "personal_data", "a source's record is handed over without the people it names; nothing was stored", { people: forbidden.people });
+  if (forbidden.text.length) refuse(422, "article_text", "a paper's record is handed over without its abstract or text; nothing was stored", { text: forbidden.text });
   const key = `payload/${checksum}`;
   if (await env.PAYLOADS.head(key)) return json(200, { key, bytes: bytes.length, stored: false });
   await env.PAYLOADS.put(key, bytes, { sha256: checksum });
@@ -238,7 +238,8 @@ const page = () => new Response(PAGE, { status: 200, headers: {
 // a known token is counted by its address, which is used as the key and is neither stored
 // nor logged; a caller with one, by the token's name.
 const tooOften = async (limiter, key) => Boolean(limiter) && !(await limiter.limit({ key })).success;
-const slowDown = () => json(429, { error: "too_many_requests" });
+// The limits count by the minute, so a caller is told to wait one.
+const slowDown = () => new Response(JSON.stringify({ error: "too_many_requests" }), { status: 429, headers: { "content-type": "application/json", "cache-control": "no-store", "retry-after": "60" } });
 
 async function route(request, env, ctx) {
   const from = request.headers.get("cf-connecting-ip") || "unknown";
@@ -275,12 +276,6 @@ async function route(request, env, ctx) {
     case "GET /progress":
       if (!who.may.includes("progress")) refuse(403, "outside_scope", `a ${who.role} token may not read the progress`);
       return json(200, await progress(env.STORE));
-    case "PUT /progress/*": {
-      if (parts[1] !== "slices") break;
-      if (!who.may.includes("report")) refuse(403, "outside_scope", `a ${who.role} token may not report progress`);
-      const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
-      return json(200, await reportSlices(env.STORE, value));
-    }
     case "POST /work/*": if (["lease", "finish", "fail"].includes(parts[1])) return work(request, env, who, parts[1]); break;
     case "POST /slices/*": if (["take", "release"].includes(parts[1])) return slice(request, env, who, parts[1]); break;
   }

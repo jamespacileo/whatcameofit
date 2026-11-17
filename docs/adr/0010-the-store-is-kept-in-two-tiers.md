@@ -30,13 +30,12 @@ Decided by the operator on 2026-11-17.
 - **A full load stays one command away.** `thenwhat store build --tier all` writes the whole store as one file. A table is moved between tiers by changing its line in `TIER`; the test then checks the references still run one way.
 - **The checksum shows that a load arrived whole, and nothing more.** It is not cryptographic. It does not catch two rows swapping values, or a change inside a value that keeps its length and its first, middle and last characters.
 
-## Amended 2026-11-17: the trial target set is hot
+## Amended 2026-11-17: the trial target set reaches D1 by slices
 
-Decided by the operator later the same day: the trials of interest go to production, loaded progressively, with their states and papers. The set of interest is one rolling rule, `active-or-ended-this-year`: a trial under way now, or completed, terminated, withdrawn or suspended with a completion date in the current year. Its definition is `backfill/trial_sets.rule_of`, from pull request 315.
+Decided by the operator and the coordinator later the same day. The trials of interest go to production progressively, with visible progress. The set is one rolling rule, `active-or-ended-this-year`, defined by `backfill/trial_sets.rule_of`.
 
-- **The set's trials are hot.** The set's trials, their states and the payloads they point at go to the hot tier (`TARGET` in `store/tiers.py`). Every other stored trial stays bulk only.
-- **The bulk file keeps every trial**, the set's included, so what hangs from a trial there still finds it: an article lead, which stays bulk.
-- **The one-way rule holds.** No hot row references a bulk row: a trial's state and payload go with it.
-- **What it costs:** measured on the working database the same day, 102,877 trials of the set moved the hot file from 328 MB to 695 MB. The trials' payloads, kept in their rows, make up about half of that.
-- **A trial that leaves the set**, next year or by a change of status, keeps its rows in D1. No step deletes a fact the store has been given. A store loaded afresh from a later build holds that year's set in its hot tier, and the bulk file holds every trial, so nothing is lost either way.
-- **Papers found by a trial's number (`trial_paper`) are to go hot with their trial.** They are not in the store's schema yet; the schema session has been asked for the table.
+- **A build does not split a kind by set.** `registry_trial` and `trial_paper` stay bulk, and the bulk file keeps every trial and its papers, the set's included. Nothing depends on D1 holding the whole set.
+- **The set reaches D1 only by slice pushes.** It is pushed through the merge about 2,000 trials at a time, each slice as its own run with its trials, their payloads, their papers (`trial_paper`, without abstracts) and its state (`trial_slice`), using `thenwhat backfill slices run --push`. These trials are hot because a device or the operator pushed them. The ingest service never folds or clears them: only a lookup's and the consumer's records go to its inbox, and clearing never removes a trial.
+- **The push state a build seeds holds only the hot tier's records.** A slice pushed after the base load therefore sends its trials, which that load did not hold, and none of the records it did.
+- **A store loaded afresh holds none of the set's trials.** A slice's `in_store` is bound to the build its push state names, so a push state from a new build makes every slice due again. `--again` does the same by hand. The coverage report reads "in D1" from the store's own `trial_slice` rows.
+- **A trial that leaves the set**, next year or by a change of status, keeps its rows in D1. No step deletes a fact the store has been given.

@@ -93,7 +93,7 @@ test("Scenario: A kind read aloud", () => {
   assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-kind"><span class="event-mark" data-direction="promised" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Promised date<\/span>/);
   // The field that shows one kind is the script's, and names each kind in words.
   const field = dated.slice(dated.indexOf('id="feed-kind"'), dated.indexOf("</select>", dated.indexOf('id="feed-kind"')));
-  assert.match(dated, /<label class="pick" hidden data-kinds>/);
+  assert.match(dated, /<label class="pick" data-await data-kinds>/);
   for (const [kind, name] of [["report", "News reports"], ["record", "Registry records"], ["promise", "Promised dates"]]) {
     assert.match(field, new RegExp(`<option value="${kind}">${name}</option>`));
   }
@@ -180,7 +180,7 @@ test("Scenario: The spans a reader can keep to", () => {
     ["week: Past week", "month: Past month", "year: Past year", "all: All time"],
   );
   // The span and its end are the script's: as built every row is shown.
-  assert.match(dated, /<label class="pick" hidden data-spans>/);
+  assert.match(dated, /<label class="pick" data-await data-spans>/);
   assert.match(dated, /<p class="earlier" hidden data-span-end>/);
 });
 

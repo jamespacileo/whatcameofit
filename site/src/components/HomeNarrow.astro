@@ -23,7 +23,7 @@ const statuses = [...STAGE_PATH, ...offPath];
 
 <div class="scoreboard" data-scoreboard>
   {/* Shown by the script: without it there is nothing to pick. */}
-  <label class="pick" hidden data-status-filter>
+  <label class="pick" data-await data-status-filter>
     <span class={nameClass}>Status now</span>
     <select id="feed-status" data-stage-filter data-scope="[data-feed]" data-param="status">
       <option value="">Any status</option>
@@ -90,7 +90,7 @@ const statuses = [...STAGE_PATH, ...offPath];
       }
     });
 
-    field.closest<HTMLElement>("[data-status-filter]")!.hidden = false;
+    field.closest<HTMLElement>("[data-status-filter]")!.removeAttribute("data-await");
     const asked = new URL(location.href).searchParams.get(field.dataset.param!);
     if (asked && options.some((option) => option.value === asked && !option.disabled)) {
       field.value = asked;

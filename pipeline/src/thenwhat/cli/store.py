@@ -1,7 +1,6 @@
 """The truth store filled in bulk: a store file built from the database, and the SQL files
 D1's import takes it in by."""
 
-import inspect
 import json
 import os
 import subprocess
@@ -13,14 +12,13 @@ from typing import Annotated, Any
 
 import httpx
 import typer
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.trial_sets import rule_of
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.export import STORE_SQL, reading_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.db.models import RegistryTrial
 from thenwhat.db.session import make_engine
 from thenwhat.export.parallel import read_only
 from thenwhat.store.build import (
@@ -32,7 +30,6 @@ from thenwhat.store.build import (
     merge_day,
     write_delta,
 )
-from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
 from thenwhat.store.inbox import InboxFailed, clear, fold, record_fold
@@ -47,11 +44,14 @@ from thenwhat.store.people import (
 )
 from thenwhat.store.push import (
     BUILD_KEY,
+    TARGET_KEY,
     USER_AGENT,
     PushFailed,
+    RetryOnBusy,
     pending_path,
     push,
     read_state,
+    target_of,
     write_state,
 )
 from thenwhat.store.tiers import (
@@ -94,51 +94,27 @@ def state_path(file: Path) -> Path:
     return file.with_name(file.name + ".pushed.json")
 
 
+def base_state_path(file: Path) -> Path:
+    """What the hot file holds, as a push state for a store loaded from it and pushed to
+    by nothing yet: `thenwhat store fresh-state` starts a store's own state from it."""
+    return file.with_name(file.name + ".base-state.json")
+
+
 def bulk_state_path(file: Path) -> Path:
     """What the bulk file holds, for `thenwhat store merge-bulk` to start from."""
     return file.with_name(file.name + ".bulk.json")
 
 
-# The trial target set, decided by the operator on 2026-11-17.
+# The trial target set, decided by the operator on 2026-11-17. Its trials reach D1 by
+# slice pushes (`thenwhat backfill slices`), never by a build's split (docs/adr/0010).
 TARGET_SET = "active-or-ended-this-year"
 
 
 def target_rule(name: str) -> tuple[Any, str]:
     """The rule over stored trials of the named target set, chosen in this year, and how it
-    is named in a build; no rule for 'none'. The rule is the registry corpus's own
-    (`backfill.trial_sets.rule_of`)."""
-    if name == "none":
-        return None, "none"
-    from thenwhat.backfill import trial_sets
-
+    is named; the registry corpus's own rule (`backfill.trial_sets.rule_of`)."""
     year = datetime.now(UTC).year
-    rule_of: Any = getattr(trial_sets, "rule_of", None)
-    if rule_of is None or len(inspect.signature(rule_of).parameters) < 2:
-        if name == "auto":
-            err.print(
-                f"This checkout has no rule for {TARGET_SET} (pull request 315): every trial"
-                " stays bulk in this build."
-            )
-            return None, "none"
-        err.print(
-            "This checkout's `backfill.trial_sets.rule_of` takes no year: the rolling target"
-            " set comes with pull request 315. Build with --set none until it is merged."
-        )
-        raise typer.Exit(code=1)
-    name = TARGET_SET if name == "auto" else name
     return rule_of(name, year)(), f"{name}:{year}"
-
-
-def target_trials(session: Any, rule: Any) -> list[tuple[str, str]] | None:
-    """The target set's trials, by registry and identifier; None without a rule."""
-    if rule is None:
-        return None
-    return [
-        (registry, external)
-        for registry, external in session.execute(
-            select(RegistryTrial.registry_name, RegistryTrial.external_id).where(rule)
-        )
-    ]
 
 
 def remove_pending(file: Path, *, bulk_too: bool) -> list[Path]:
@@ -180,15 +156,6 @@ def build_command(
             "--fresh", help="Build every tier again, even one whose sources have not changed."
         ),
     ] = False,
-    trial_set: Annotated[
-        str,
-        typer.Option(
-            "--set",
-            help="The trial target set whose trials also go to the hot tier (operator,"
-            " 2026-11-17), chosen in this year; 'none' keeps every trial bulk; 'auto' (the"
-            f" default) is {TARGET_SET} where this checkout has its rule, else none.",
-        ),
-    ] = "auto",
 ) -> None:
     """Build the store from the database, through the store's own merge, as the hot tier
     loaded into D1 and the bulk tier kept as one file in R2 (docs/adr/0010). The database
@@ -206,15 +173,9 @@ def build_command(
         raise typer.Exit(code=1)
     digest = sql_digest(store_sql)
     started = time.monotonic()
-    rule, chosen_in = target_rule(trial_set)
     with reading_session() as session:
-        # A hot build reads only the hot tier's sources, its watermarks included; with a
-        # target set, the trials too.
-        sources = HOT_SOURCES if tier == HOT else HOT_SOURCES + BULK_SOURCES
-        if rule is not None:
-            sources = (*sources, "registry_trial")
-        marks = watermarks(session, sources)
-        hot_trials = target_trials(session, rule)
+        # A hot build reads only the hot tier's sources, its watermarks included.
+        marks = watermarks(session, HOT_SOURCES if tier == HOT else HOT_SOURCES + BULK_SOURCES)
         before = {} if fresh else watermark_read(file)
         kept = (
             tier == BOTH
@@ -228,7 +189,7 @@ def build_command(
                 f" {tier_path(file, BULK)} is kept; building the hot tier only.",
                 markup=False,
             )
-        identity = build_id(marks, digest, f"{tier}:{chosen_in}")
+        identity = build_id(marks, digest, tier)
         try:
             report = build(
                 session,
@@ -238,7 +199,6 @@ def build_command(
                 now=datetime.now(UTC),
                 hot_only=effective == HOT,
                 build_id=identity,
-                trials=rule,
                 on_kind=lambda kind, count, seconds: out.print(
                     f"  {kind}: {count:,} read and merged in {seconds:,.1f} s", markup=False
                 ),
@@ -250,7 +210,10 @@ def build_command(
     # what it carried, so it is never settled against the new store.
     for stale in remove_pending(file, bulk_too=effective != HOT):
         out.print(f"Removed {stale}: a run left pending before this build.", markup=False)
-    write_state(state_path(file), {**report.state, BUILD_KEY: report.build_id})
+    hot = {**report.hot_state, BUILD_KEY: report.build_id}
+    write_state(state_path(file), hot)
+    # The same, kept as the build left it: the start of a push state for any other store.
+    write_state(base_state_path(file), hot)
     if effective != HOT:
         write_state(bulk_state_path(file), {**report.state, BUILD_KEY: report.build_id})
     out.print(f"Build {report.build_id}.", markup=False)
@@ -269,14 +232,7 @@ def build_command(
         out.print(f"{count:,} {kind} rows share a natural key with an earlier row.", markup=False)
     for kind, count in sorted(report.unnamed.items()):
         out.print(f"{count:,} {kind} rows name no record the store keeps.", markup=False)
-    if hot_trials is not None:
-        out.print(
-            f"The trial target set {chosen_in}: {len(hot_trials):,} trials go to the hot tier too.",
-            markup=False,
-        )
-    for written in split_build(
-        file, payloads, effective, hot_only=effective == HOT, hot_trials=hot_trials
-    ):
+    for written in split_build(file, payloads, effective, hot_only=effective == HOT):
         objects = payloads / written.stem.rsplit(".", 1)[-1]
         out.print(
             f"Wrote {written} ({_size(written.stat().st_size)})"
@@ -348,72 +304,6 @@ def checksum_command(
         raise typer.Exit(code=1)
 
 
-@store_app.command("dump")
-def dump_command(
-    file: Annotated[
-        Path, typer.Argument(help="The store file, as `thenwhat store build` wrote it.")
-    ],
-    out_folder: Annotated[
-        Path, typer.Argument(help="The folder for the SQL files and manifest.json.")
-    ],
-    payloads: Annotated[
-        Path | None,
-        typer.Option("--payloads", help="The build's payload folder, counted into the manifest."),
-    ] = None,
-) -> None:
-    """Write a store file as data-only SQL files for D1's import, into a database that
-    already has the schema, and a manifest to check the load against."""
-    if not file.is_file():
-        err.print(f"No store file at {file}.")
-        raise typer.Exit(code=1)
-    try:
-        manifest = dump(file, out_folder, payloads=payloads)
-    except DumpRefused as fault:
-        err.print(str(fault), markup=False)
-        raise typer.Exit(code=1) from None
-    total = sum(entry["bytes"] for entry in manifest.files)
-    out.print(
-        f"Wrote {len(manifest.files)} files ({_size(total)}) and manifest.json to {out_folder}.",
-        markup=False,
-    )
-    for table, rows in manifest.tables.items():
-        if rows:
-            out.print(f"  {table}: {rows:,}", markup=False)
-    for table, rows in manifest.left_out.items():
-        out.print(
-            f"{rows:,} {table} rows are too large for one D1 statement and were left out;"
-            " they are fetched again.",
-            markup=False,
-        )
-    out.print(
-        "Load and count: node store/ingest/scripts/import-folder.mjs"
-        f" {out_folder} --remote (docs/deploy.md).",
-        markup=False,
-    )
-
-
-@store_app.command("check")
-def check_command(
-    manifest: Annotated[Path, typer.Argument(help="The dump's manifest.json.")],
-    counts: Annotated[
-        Path,
-        typer.Argument(
-            help="The answer of `wrangler d1 execute --json --file counts.sql`, or a JSON"
-            " object of counts by table."
-        ),
-    ],
-) -> None:
-    """Compare a loaded store's counts with the dump's manifest. Exits with 1 when they
-    differ."""
-    expected = json.loads(manifest.read_text())
-    found = differences(expected, counts_of(json.loads(counts.read_text())))
-    if found:
-        for line in found:
-            err.print(line, markup=False)
-        raise typer.Exit(code=1)
-    out.print(f"All {len(expected['tables'])} tables hold the manifest's counts.", markup=False)
-
-
 def _commit() -> str:
     try:
         found = subprocess.run(
@@ -457,12 +347,6 @@ def push_command(
         bool,
         typer.Option("--report-only", help="Say what each run would do, apply nothing."),
     ] = False,
-    trial_set: Annotated[
-        str,
-        typer.Option(
-            "--set", help="The trial target set whose trials are hot, as for store build."
-        ),
-    ] = "auto",
 ) -> None:
     """Hand the day's changes to the ingest service: every record new or changed since
     the last push or the build. The token is read from INGEST_TOKEN. The database is
@@ -496,18 +380,11 @@ def push_command(
         if every_tier:
             records = gather(session, keep_payload=keep_payload).records
         else:
-            rule, _ = target_rule(trial_set)
             records, left_out = hot_records(
-                stream(
-                    session,
-                    Gathered(records=[]),
-                    keep_payload=keep_payload,
-                    hot_only=True,
-                    trials=rule,
-                ),
-                with_trials=rule is not None,
+                stream(session, Gathered(records=[]), keep_payload=keep_payload)
             )
     with httpx.Client(
+        transport=RetryOnBusy(),
         base_url=url,
         headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
         timeout=120,
@@ -639,6 +516,7 @@ def _service(url: str) -> httpx.Client:
         err.print("Set INGEST_URL (or --url) and INGEST_TOKEN, the daily or operator token.")
         raise typer.Exit(code=1)
     return httpx.Client(
+        transport=RetryOnBusy(),
         base_url=url,
         headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
         timeout=120,
@@ -806,3 +684,29 @@ def strip_paper_abstracts_command(
                     f"  {key}: {count:,} before, {report.after[(t, s, key)]:,} after", markup=False
                 )
     out.print(f'Prove it: psql "$DATABASE_URL" -f {ABSTRACTS_PROOF_SQL}', markup=False)
+
+
+@store_app.command("fresh-state")
+def fresh_state_command(
+    file: Annotated[Path, typer.Argument(help="The store file the store was loaded from.")],
+    url: Annotated[str, typer.Option("--url", help="The store's ingest service address.")],
+    out_file: Annotated[Path, typer.Option("--out", help="The new push state file.")],
+) -> None:
+    """Start the push state of a store loaded from this build: what its hot file holds,
+    named for that store. A push state names one store and is refused for any other, so
+    preview and production, or a store loaded again, each get their own."""
+    base = base_state_path(file)
+    if not base.is_file():
+        err.print(f"No {base}: build the store again, which writes it.")
+        raise typer.Exit(code=1)
+    if out_file.exists():
+        err.print(f"{out_file} exists: name another file, or delete it if it is stale.")
+        raise typer.Exit(code=1)
+    state = read_state(base)
+    state[TARGET_KEY] = target_of(url)
+    write_state(out_file, state)
+    out.print(
+        f"Wrote {out_file}: the push state of {target_of(url)}, as build"
+        f" {state.get(BUILD_KEY, '?')} left it.",
+        markup=False,
+    )

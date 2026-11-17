@@ -25,6 +25,7 @@ from thenwhat.sources.people import (
     CONTACT_KEYS,
     FIELDS,
     REGISTRY_PERSON_KEYS,
+    emails_in_text,
     is_study,
     keys_found,
     people_in,
@@ -187,7 +188,8 @@ def _people(payload: Any) -> set[str]:
     person field (docs/adr/0011)."""
     if is_study(payload):
         return people_in(payload)
-    return keys_found(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS | ABSTRACT_KEYS)
+    found = keys_found(payload, REGISTRY_PERSON_KEYS | CONTACT_KEYS | ABSTRACT_KEYS)
+    return found | ({"email in a text"} if emails_in_text(payload) else set())
 
 
 def _json(text: str) -> Any:

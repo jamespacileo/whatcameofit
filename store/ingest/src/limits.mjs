@@ -23,10 +23,19 @@
 export const D1 = { statementBytes: 100_000, boundParameters: 100, stringBytes: 2_000_000, batchSeconds: 30 };
 
 // A payload of this size or less is kept in the store, in the staged `payload` record
-// itself; only a larger one is an R2 object (design.md decision 2).
-export const INLINE_PAYLOAD_BYTES = 16_384;
+// itself; only a larger one is an R2 object (design.md decision 2). The figure is the
+// schema's, read from its CHECK on payload.body when the statements are bundled.
+import { INLINE_PAYLOAD_BYTES } from "./sql.generated.mjs";
+export { INLINE_PAYLOAD_BYTES };
+// Below this a payload is never an object in the bucket: it always fits its record.
+// Between this and the row's bound a writer keeps it in its record, and may put it in
+// the bucket instead when the record would not fit once the payload is written as a JSON
+// string (a body of mostly control characters grows sixfold).
+export const OBJECT_FLOOR_BYTES = 16_384;
 // A staged record is one row of `stg`, and the row it becomes must fit a row too.
-export const MAX_RECORD_BYTES = 1_000_000;
+// It is also large enough for the longest payload kept in a row once written as a JSON
+// string inside its record, which at worst doubles it (every character escaped).
+export const MAX_RECORD_BYTES = Math.max(1_000_000, 2 * INLINE_PAYLOAD_BYTES + 8_192);
 // A string in a record. No field the schema has needs more, and it is far below an
 // article's length; the fields in src/check.mjs that hold structured data are bounded by
 // the record's size instead.

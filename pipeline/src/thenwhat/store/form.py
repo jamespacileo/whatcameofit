@@ -8,16 +8,40 @@ keys their bodies carry") and `store/schema.sql`. Nothing here reads a database.
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 from thenwhat.backfill.address import article_key
 
 # A payload larger than this, in bytes of its JSON text, is an R2 object; a smaller one is
-# kept in the store's `payload` table (design.md decision 16, point 1).
-INLINE_PAYLOAD_LIMIT = 16384
+# kept in the store's `payload` table (design.md decision 16, point 1). The bound is the
+# schema's own CHECK on `payload.body`, read from store/schema.sql as the ingest service
+# reads it, so the build, the push and the store can never disagree; the default is the
+# bound before the schema stated one in bytes.
+SCHEMA = Path(__file__).resolve().parents[4] / "store" / "schema.sql"
+DEFAULT_INLINE_LIMIT = 16384
+
+
+def schema_inline_limit(schema: Path = SCHEMA) -> int:
+    """The largest payload body the schema's CHECK on `payload.body` takes."""
+    try:
+        text = schema.read_text()
+    except OSError:
+        return DEFAULT_INLINE_LIMIT
+    found = re.search(
+        r"body\s+IS\s+NULL\s+OR\s+(?:octet_length|length)\s*\(\s*"
+        r"(?:CAST\s*\(\s*body\s+AS\s+BLOB\s*\)|body)\s*\)\s*<=\s*([0-9_]+)",
+        text,
+        re.IGNORECASE,
+    )
+    return int(found.group(1).replace("_", "")) if found else DEFAULT_INLINE_LIMIT
+
+
+INLINE_PAYLOAD_LIMIT = schema_inline_limit()
 R2_PREFIX = "payload/"
 # What joins the parts of a natural key into the staged record's one `key` string.
 KEY_JOIN = "|"

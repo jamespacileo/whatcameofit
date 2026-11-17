@@ -103,13 +103,15 @@ CREATE TABLE merge_guard (
 -- 2. Raw payloads, once per checksum
 -- ---------------------------------------------------------------------------------------
 
--- A payload as its source gave it. A small one (a registry listing record) is kept here;
+-- A payload as its source gave it. One of 524,288 bytes (512 KiB) or less is kept here;
 -- a larger one is an R2 object under `payload/<sha256>`. Either way the record that uses
--- it holds the checksum and its own fetch time.
+-- it holds the checksum and its own fetch time. The bound is in bytes, as D1's 2,000,000
+-- a row is: a body's characters can each be four. It is the one figure the service and
+-- the pipeline hold to: `scripts/generate.mjs` reads it from the line below.
 CREATE TABLE payload (
   sha256     TEXT PRIMARY KEY CHECK (length(sha256) = 64),
   bytes      INTEGER NOT NULL CHECK (bytes > 0),
-  body       TEXT CHECK (body IS NULL OR length(body) <= 16384),
+  body       TEXT CHECK (body IS NULL OR length(CAST(body AS BLOB)) <= 524288),
   r2_key     TEXT,
   added_run  TEXT NOT NULL REFERENCES run (id),
   CHECK ((body IS NULL) <> (r2_key IS NULL))
@@ -539,6 +541,45 @@ CREATE TABLE article_lead (
   added_run          TEXT NOT NULL REFERENCES run (id),
   UNIQUE (registry_trial_id, url_key)
 ) STRICT;
+
+-- A paper a literature index lists under a trial's registry number. Kept once per trial,
+-- index and paper, with the record as the index gave it (its payload) and when.
+CREATE TABLE trial_paper (
+  id              INTEGER PRIMARY KEY,
+  trial_id        INTEGER NOT NULL REFERENCES registry_trial (id),
+  source_name     TEXT NOT NULL,
+  pubmed_id       TEXT NOT NULL,
+  payload_sha256  TEXT NOT NULL REFERENCES payload (sha256),
+  fetched_at      TEXT NOT NULL,
+  added_run       TEXT NOT NULL REFERENCES run (id),
+  changed_run     TEXT NOT NULL REFERENCES run (id),
+  UNIQUE (trial_id, source_name, pubmed_id)
+) STRICT;
+CREATE INDEX ix_trial_paper_added_run ON trial_paper (added_run);
+
+-- Trials are loaded a slice at a time: the trials one rule selects, of one year, in
+-- numbered parts. A row says how far a slice has come, which is what the site's progress
+-- reads. A stage is done when its time is set, and no merge takes a slice back a stage.
+CREATE TABLE trial_slice (
+  rule                TEXT NOT NULL,
+  year                INTEGER NOT NULL,
+  number              INTEGER NOT NULL,
+  grp                 TEXT NOT NULL CHECK (grp IN ('ended with results', 'ended', 'active with results',
+                        'active updated', 'active not updated')),
+  trials              INTEGER NOT NULL CHECK (trials >= 0),
+  with_results        INTEGER NOT NULL CHECK (with_results >= 0),
+  registry_papers     INTEGER CHECK (registry_papers >= 0),
+  pubmed_asked        INTEGER CHECK (pubmed_asked >= 0),
+  pubmed_found        INTEGER CHECK (pubmed_found >= 0),
+  in_store            INTEGER NOT NULL DEFAULT 0 CHECK (in_store >= 0),
+  record_at           TEXT,
+  registry_papers_at  TEXT,
+  pubmed_papers_at    TEXT,
+  in_store_at         TEXT,
+  page_at             TEXT,
+  changed_run         TEXT NOT NULL REFERENCES run (id),
+  PRIMARY KEY (rule, year, number)
+) STRICT, WITHOUT ROWID;
 
 -- ---------------------------------------------------------------------------------------
 -- 7. Link leads: only those on listed outlets, which is all that is ever scored
