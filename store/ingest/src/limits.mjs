@@ -38,6 +38,8 @@ export const LONGER = { registry_trial: { intervention_names: 20_000 } };
 export const MAX_REGISTRATION_BYTES = 64_000;
 // Payloads kept in R2 that one chunk may name: each is looked for before it is staged.
 export const MAX_R2_PAYLOADS_A_CHUNK = 500;
+// Records of the inbox one request may read: a Worker's answer is built in memory.
+export const MAX_INBOX_RECORDS = 2_000;
 // Due work one request may lease, and the longest lease.
 export const MAX_LEASE = 100;
 export const MAX_LEASE_SECONDS = 3_600;

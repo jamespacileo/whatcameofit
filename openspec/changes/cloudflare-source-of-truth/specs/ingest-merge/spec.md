@@ -203,6 +203,29 @@ The ingest service SHALL stage the value it checked, written out again, and neve
 - **WHEN** a run that was merged is registered again with more steps or counts
 - **THEN** it is refused and the run's steps and counts are as they were
 
+### Requirement: Bulk records wait in an inbox
+When a run that is merged hands over a record of a bulk kind, the ingest service SHALL keep that record as it was staged, with the payload records it names, until the daily job has read it and said it is folded into the bulk file. A run that is refused or undone SHALL leave none. Only the daily job's token and the operator's SHALL read or clear the inbox. A fold SHALL be recorded only when the delta object that holds it is in the bucket and listed beside its build, how far it folded SHALL be read from that list and not from the caller, and the inbox SHALL be cleared no further than the furthest fold recorded. Clearing SHALL remove the records up to the one named and, for each run folded whole, the rows that run added to D1's copies of the bulk tables, all or none, except a lead whose processing is still due, which is held until it is not.
+
+#### Scenario: A lookup's lead and share
+- **WHEN** a reader's lookup is merged with a lead and its share
+- **THEN** the inbox gives both records as they were staged, and after the daily job clears them D1 holds neither the records nor the lead and share rows
+
+#### Scenario: Clearing before the delta is uploaded
+- **WHEN** the daily job asks to clear the inbox past the furthest fold recorded, or records a fold whose delta object is not in the bucket
+- **THEN** it is refused and nothing leaves D1
+
+#### Scenario: A lead the consumer has not processed
+- **WHEN** the inbox is cleared and a reader's lead of a folded run still has its processing due
+- **THEN** its records leave the inbox, the lead stays in D1 with its share, and a later clearing removes it once the processing is done or has failed for good
+
+#### Scenario: A run cut by a page
+- **WHEN** the inbox is cleared up to a record in the middle of a run
+- **THEN** that run's earlier records leave the inbox and its rows stay in D1 until the rest are cleared
+
+#### Scenario: Another token asks
+- **WHEN** a device's, a lookup's, the consumer's or the export's token reads or clears the inbox
+- **THEN** it is refused
+
 ### Requirement: The door holds a run to stated bounds
 The ingest service SHALL refuse, before storing anything, a body that does not state its length or its content type, a chunk, a run or a payload larger than the bound set for it, and a record of a kind the store does not have. Each bound SHALL be below the platform's documented limit for what it protects, and the documentation page SHALL be named beside it.
 
@@ -224,6 +247,39 @@ The ingest service SHALL refuse a record that has a field no statement reading t
 #### Scenario: A title as long as an article
 - **WHEN** a record's title holds several thousand characters
 - **THEN** the chunk is refused and nothing is staged
+
+### Requirement: No stored registry record names a person
+The ingest service SHALL refuse a ClinicalTrials.gov record that names a person, whether it arrives in a payload record, in a source record or as a payload object: its officials and contacts, a site's contacts, the investigator a responsible party is, a sponsor or collaborator who is a person, the results' point of contact, and any email or phone. The refusal SHALL say which kinds of field were found and SHALL NOT repeat a name or a means of contact. Nothing of a refused record SHALL be stored.
+
+#### Scenario: A lookup hands over a record as the registry gave it
+- **WHEN** a lookup's token stages or puts a trial's record that still holds its overall officials
+- **THEN** it is refused, naming the kind of field, and no row or object is stored
+
+#### Scenario: The same record with its people removed
+- **WHEN** the record is handed over with those fields removed
+- **THEN** it is taken
+
+### Requirement: The progress of a backfill is shown as counts
+The ingest service SHALL take the pipeline's report of how many trials of each slice of a set have reached each stage, and SHALL give it back, with the rows of each table and the last merged run of each kind of writer, to the operator's and the daily job's tokens only. Neither the report nor the answer SHALL hold a trial's identifier or anything of a record. The page that shows it SHALL hold no count until a token is typed into it, SHALL keep that token for the browser tab only and SHALL never put it in an address, and SHALL load nothing from another origin.
+
+#### Scenario: A slice moves on
+- **WHEN** the pipeline reports a slice again with one stage's count
+- **THEN** that count changes and the slice's other stages keep theirs
+
+#### Scenario: The page without a token
+- **WHEN** anyone asks for the progress page
+- **THEN** the same empty page is answered, with no count in it
+
+#### Scenario: A report that carries text
+- **WHEN** a report names a stage the service does not know, or a slice by anything but an identifier of letters, digits and marks
+- **THEN** it is refused and nothing is stored
+
+### Requirement: The service is deployed one way and answers no stranger
+The ingest service SHALL be deployed only by its deploy command, which SHALL refuse unless the database's jurisdiction reads back as the European Union and no migration is left to apply, SHALL set the tokens' secret without printing or logging it, and SHALL then ask the deployed service and fail unless every route answers 401 without a known token. The deployed service SHALL bound how often one address without a token, and one token, may ask.
+
+#### Scenario: A migration is not applied
+- **WHEN** the deploy command finds a migration the database does not have
+- **THEN** nothing is deployed
 
 ### Requirement: A report without applying leaves no run
 When a writer asks for a run's report without applying, the service SHALL return the report with what it cannot see (what only a constraint of the store refuses; and a run that names one claim by two slugs for one record or whose actions depend on one another beyond a clear before a publication), and SHALL then drop the run and what it staged.

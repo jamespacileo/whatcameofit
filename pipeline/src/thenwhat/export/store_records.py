@@ -72,24 +72,163 @@ from thenwhat.domain import (
 )
 
 # The tables an export reads. A snapshot need hold no other.
-TABLES_READ = (
-    "claim",
-    "claim_alias",
-    "source_article",
-    "promise",
-    "reported_statement",
-    "entity",
-    "entity_article",
-    "entity_match",
-    "claim_term",
-    "source_record",
-    "evidence_event",
-    "failure_flag",
-    "trial_read",
-    "payload",
-    "decision_log",
-    "outlet_icon",
-)
+# Every table and column an export from the store reads, and nothing else of the store:
+# the store's hot tier has to hold these (`store/store-tables.md`). No registry trial,
+# lead, share, ledger entry, usage or measure is read: a trial's facts on a claim's page
+# come from the raw payload of the claim's own evidence event.
+#
+# Of the rows: `source_record` of kind term, organisation and paper; `payload` rows an
+# `evidence_event` names; `decision_log` rows of the steps entity_match, paper_match and
+# evidence_stage whose `input_ref` names a claim or a match.
+COLUMNS_READ: dict[str, tuple[str, ...]] = {
+    "claim": (
+        "id",
+        "slug",
+        "headline",
+        "summary",
+        "vertical",
+        "approach",
+        "indication",
+        "first_reported_date",
+        "evidence_stage",
+        "current_status",
+        "overlay_years",
+        "status_updated_at",
+        "review_state",
+        "reviewed_at",
+        "reviewed_by",
+        "published_at",
+        "archived_at",
+        "archive_reason",
+        "awaiting_audit_at",
+        "merged_into",
+        "created_at",
+    ),
+    "claim_alias": ("slug", "claim_id"),
+    "source_article": (
+        "id",
+        "claim_id",
+        "url",
+        "outlet",
+        "title",
+        "published_date",
+        "content_hash",
+        "archive_url",
+    ),
+    "promise": ("id", "claim_id", "source_article_id", "description", "parsed_date"),
+    "reported_statement": (
+        "id",
+        "claim_id",
+        "source_article_id",
+        "text",
+        "text_key",
+        "kind",
+        "firmness",
+        "speaker",
+        "basis",
+        "confidence",
+        "decision_ref",
+        "article_read_at",
+        "review_state",
+        "reviewed_at",
+        "reviewed_by",
+        "created_at",
+    ),
+    "entity": (
+        "id",
+        "claim_id",
+        "type",
+        "name",
+        "synonyms",
+        "search_phrases",
+        "is_origin_paper",
+        "doi",
+        "named_by",
+    ),
+    "entity_article": ("entity_id", "source_article_id"),
+    "entity_match": (
+        "id",
+        "entity_id",
+        "source_name",
+        "external_id",
+        "score",
+        "record_summary",
+        "record_facts",
+        "reasons",
+        "review_state",
+        "reviewed_at",
+        "reviewed_by",
+        "created_at",
+    ),
+    "claim_term": (
+        "id",
+        "claim_id",
+        "role",
+        "source_name",
+        "external_id",
+        "label",
+        "score",
+        "fit",
+        "reasons",
+        "review_state",
+        "reviewed_at",
+        "reviewed_by",
+        "created_at",
+    ),
+    "source_record": (
+        "kind",
+        "source_name",
+        "external_id",
+        "pubmed_id",
+        "url",
+        "body",
+        "fetched_at",
+    ),
+    "evidence_event": (
+        "id",
+        "claim_id",
+        "entity_match_id",
+        "dedupe_key",
+        "type",
+        "event_date",
+        "date_basis",
+        "source_name",
+        "source_url",
+        "external_id",
+        "trial_phases",
+        "trial_state",
+        "regulatory_outcome",
+        "summary",
+        "confidence",
+        "payload_sha256",
+        "fetched_at",
+        "review_state",
+        "reviewed_at",
+        "reviewed_by",
+        "created_at",
+    ),
+    "failure_flag": (
+        "id",
+        "claim_id",
+        "trial_external_id",
+        "evidence_event_id",
+        "source_url",
+        "created_at",
+    ),
+    "trial_read": ("source_name", "trial_id", "input_hash", "readings"),
+    "payload": ("sha256", "body", "r2_key"),
+    "decision_log": (
+        "seq",
+        "step",
+        "input_ref",
+        "output",
+        "confidence",
+        "error",
+        "created_at",
+    ),
+    "outlet_icon": ("domain", "icon_url", "media_type", "content", "fetched_at"),
+}
+TABLES_READ = tuple(COLUMNS_READ)
 
 
 class StoreFault(Exception):
@@ -132,11 +271,29 @@ class StoreRecords:
         self.db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         self.db.row_factory = sqlite3.Row
         self.payloads = payloads
-        held = {name for (name,) in self.db.execute("SELECT name FROM sqlite_master")}
-        missing = [table for table in TABLES_READ if table not in held]
-        if missing:
+        try:
+            held = {name for (name,) in self.db.execute("SELECT name FROM sqlite_master")}
+            missing = [table for table in TABLES_READ if table not in held]
+            lacking = [
+                f"{table}.{column}"
+                for table, columns in COLUMNS_READ.items()
+                if table in held
+                for column in columns
+                if column not in {row[1] for row in self.db.execute(f"PRAGMA table_xinfo({table})")}
+            ]
+        except sqlite3.DatabaseError as error:
+            self.db.close()
+            raise StoreFault(f"{path} is not a store file: {error}.") from error
+        if missing or lacking:
+            self.db.close()
+            said = []
+            if missing:
+                said.append(f"it has no table {', '.join(missing)}")
+            if lacking:
+                said.append(f"it has no column {', '.join(lacking)}")
             raise StoreFault(
-                f"{path} does not have the store's schema: it has no table {', '.join(missing)}."
+                f"{path} does not have the store's schema as an export reads it:"
+                f" {' and '.join(said)}."
             )
         # Slugs of the claims that had no published time when they were read.
         self.first_published: list[str] = []

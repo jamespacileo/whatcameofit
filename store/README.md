@@ -5,7 +5,7 @@ The truth store's SQL: the D1 schema and the one merge path every writer uses. A
 | File | What it is |
 | --- | --- |
 | `schema.sql` | Tables, natural keys, CHECK guards, the FTS5 indexes, and the views that find a staged record's parent |
-| `merge.sql` | The merge: 89 fixed statements sent as one D1 batch, each with its conflict rule above it |
+| `merge.sql` | The merge: 98 fixed statements sent as one D1 batch, each with its conflict rule above it |
 | `preview.sql` | The report without the merge: what a run would add, match and put in conflict, counted and not tried |
 | `ingest.sql` | What surrounds a merge: registering a run, staging records, reading the report, dropping a previewed run, the work queue, slices |
 | `proof/` | A local proof in plain SQLite, and a check on D1's local engine |
@@ -19,7 +19,7 @@ Which Postgres table became what, and why: `openspec/changes/cloudflare-source-o
 python3 store/proof/proof.py --scenarios
 ```
 
-Builds the schema in memory and runs 62 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's. Before every merge it also takes the report without applying (`preview.sql`) and holds it to what the merge then reports.
+Builds the schema in memory and runs 63 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's. Before every merge it also takes the report without applying (`preview.sql`) and holds it to what the merge then reports.
 
 ```bash
 docker exec -i thenwhat-db-1 psql -U thenwhat -d thenwhat -q -f - < store/proof/export_sample.sql > store/proof/sample/records.jsonl

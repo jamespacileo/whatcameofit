@@ -21,6 +21,7 @@ from thenwhat.domain import ReviewState
 from thenwhat.export.build import write_export, write_schema
 from thenwhat.export.parallel import compare_with_store, read_only
 from thenwhat.export.store_copy import CopyFailed
+from thenwhat.export.store_fetch import FetchFailed, fetch_store, wrangler_in
 from thenwhat.export.store_records import StoreFault, StoreRecords
 
 # Where the store's schema and merge are in a checkout.
@@ -67,6 +68,46 @@ def _thresholds(settings: Settings) -> dict[str, Any]:
     }
 
 
+D1Database = Annotated[
+    str | None,
+    typer.Option(
+        "--d1",
+        envvar="STORE_D1",
+        help="Read the store's records from this D1 database itself: its rows are first"
+        " fetched into a store file with `wrangler d1 execute --remote`. Only reads.",
+    ),
+]
+R2Bucket = Annotated[
+    str | None,
+    typer.Option(
+        envvar="STORE_R2_BUCKET",
+        help="With --d1 and --payloads: fetch each payload object the folder lacks from"
+        " this bucket.",
+    ),
+]
+D1Local = Annotated[
+    bool,
+    typer.Option(
+        "--d1-local",
+        help="With --d1: read the database Wrangler keeps on this machine, not Cloudflare's.",
+    ),
+]
+WranglerDir = Annotated[
+    Path, typer.Option(help="With --d1: the folder wrangler is installed and run in.")
+]
+WranglerConfig = Annotated[
+    Path | None,
+    typer.Option(
+        envvar="STORE_WRANGLER_CONFIG",
+        help="With --d1: the Wrangler configuration that names the database.",
+    ),
+]
+
+
+def _fetched_table(table: str, rows: int, seconds: float) -> None:
+    out.print(f"  {table}: {rows} rows in {seconds:.0f} s", markup=False)
+
+
 def _export_from_store(store: Path, payloads: Path | None, out_path: Path) -> None:
     settings = settings_or_exit()
     try:
@@ -103,15 +144,44 @@ def export_command(
     ] = None,
     store: StoreFile = None,
     payloads: PayloadFolder = None,
+    d1: D1Database = None,
+    r2_bucket: R2Bucket = None,
+    wrangler_dir: WranglerDir = STORE_SQL / "ingest",
+    wrangler_config: WranglerConfig = None,
+    d1_local: D1Local = False,
 ) -> None:
     """Write the JSON file the site is built from: approved, unarchived claims and events.
     A claim awaiting audit is left out and counted.
 
     With --store the records are read from a SQLite file of the truth store's schema
-    instead of the database. The file is only read."""
+    instead of the database. The file is only read. With --d1 as well, that file is
+    first made from the D1 database named, which is only read."""
     if schema_path is not None:
         write_schema(schema_path)
         out.print(f"Wrote schema to {schema_path}.", markup=False)
+    if d1 is not None:
+        if store is None:
+            err.print("With --d1, name the store file to fetch into with --store.")
+            raise typer.Exit(code=1)
+        try:
+            fetched = fetch_store(
+                d1,
+                store,
+                schema=STORE_SQL / "schema.sql",
+                wrangler=wrangler_in(wrangler_dir, wrangler_config),
+                payloads=payloads,
+                bucket=r2_bucket,
+                remote=not d1_local,
+                on_table=_fetched_table,
+            )
+        except FetchFailed as fault:
+            err.print(str(fault), markup=False)
+            raise typer.Exit(code=1) from None
+        out.print(
+            f"Fetched {sum(fetched.rows.values())} rows of {d1} in {fetched.queries} queries"
+            f" ({fetched.objects_fetched} payload objects).",
+            markup=False,
+        )
     if store is not None:
         _export_from_store(store, payloads, out_path)
         return
@@ -160,21 +230,58 @@ def export_compare_command(
     report: Annotated[
         Path | None, typer.Option(help="Also write the comparison to this file, as JSON.")
     ] = None,
+    d1: D1Database = None,
+    r2_bucket: R2Bucket = None,
+    wrangler_dir: WranglerDir = STORE_SQL / "ingest",
+    wrangler_config: WranglerConfig = None,
+    d1_local: D1Local = False,
+    allow_named: Annotated[
+        bool,
+        typer.Option(
+            "--allow-named",
+            help="Exit with 0 when every difference has a named cause; each is still listed.",
+        ),
+    ] = False,
 ) -> None:
     """Compare the export the database gives with the export the truth store gives, for
     the same claims at the same moment. Exits with 1 when they differ.
 
-    With --store, the store's export is read from that file. Without it, a store file is
-    first made from the database through the store's own merge, which shows whether the
-    store can hold the records, not whether it does.
+    A difference the comparison can explain is listed with its cause (the data holds
+    what the store cannot, or the store's merge reorders a list). With --allow-named
+    only a difference without a cause fails the comparison.
+
+    With --store, the store's export is read from that file, whoever built it. With
+    --d1, from the D1 database itself. With neither, a store file is first made from the
+    database through the store's own merge, which shows whether the store can hold the
+    records, not whether it does.
 
     Nothing is written to the database or to the store file given."""
     settings = settings_or_exit()
+    if store is not None and d1 is not None:
+        err.print("Give --store or --d1, not both.")
+        raise typer.Exit(code=1)
     if store is None and not (store_sql / "merge.sql").is_file():
         err.print(f"No merge.sql in {store_sql}. Name the store's folder with --store-sql.")
         raise typer.Exit(code=1)
     with tempfile.TemporaryDirectory() as scratch, reading_session() as session:
         try:
+            if d1 is not None:
+                store = (keep or Path(scratch)) / "store.db"
+                fetched = fetch_store(
+                    d1,
+                    store,
+                    schema=store_sql / "schema.sql",
+                    wrangler=wrangler_in(wrangler_dir, wrangler_config),
+                    payloads=payloads,
+                    bucket=r2_bucket,
+                    remote=not d1_local,
+                    on_table=_fetched_table,
+                )
+                out.print(
+                    f"Fetched {sum(fetched.rows.values())} rows of {d1} in {fetched.queries}"
+                    f" queries ({fetched.objects_fetched} payload objects).",
+                    markup=False,
+                )
             result = compare_with_store(
                 session,
                 now=datetime.now(UTC),
@@ -185,7 +292,7 @@ def export_compare_command(
                 every=every,
                 **_thresholds(settings),
             )
-        except (StoreFault, CopyFailed) as fault:
+        except (StoreFault, CopyFailed, FetchFailed) as fault:
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None
     if result.copy is not None:
@@ -209,5 +316,6 @@ def export_compare_command(
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(json.dumps(result.as_json(), indent=2, ensure_ascii=False) + "\n")
         out.print(f"Wrote the comparison to {report}.", markup=False)
-    if not result.comparison.same:
+    failing = result.comparison.unexplained if allow_named else result.comparison.differences
+    if failing:
         raise typer.Exit(code=1)

@@ -137,6 +137,16 @@ SELECT s.claim_id, s.body ->> 'type', s.body ->> 'name', coalesce(s.body -> 'syn
 FROM staged_of_claim s WHERE s.kind = 'entity'
 ON CONFLICT (claim_id, type, name) DO NOTHING
 ;
+-- Counted before it is written: a link is added when its article is found and the entity
+-- is not yet linked to it, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*),
+       sum(EXISTS (SELECT 1 FROM source_article a WHERE a.claim_id = s.claim_id AND a.url_key = s.body ->> 'url_key')
+           AND NOT EXISTS (SELECT 1 FROM entity_article x JOIN source_article a ON a.id = x.source_article_id
+                           WHERE x.entity_id = s.entity_id AND a.claim_id = s.claim_id AND a.url_key = s.body ->> 'url_key'))
+FROM staged_of_entity s WHERE s.kind = 'entity_article'
+GROUP BY s.run_id, s.kind
+;
 -- An entity is linked to an article that named it once.
 INSERT INTO entity_article (entity_id, source_article_id)
 SELECT s.entity_id, a.id
@@ -371,6 +381,13 @@ WHERE coalesce(t.overall_status, '') IS NOT coalesce(
    OR NOT EXISTS (SELECT 1 FROM registry_trial_status h WHERE h.trial_id = t.id)
 ON CONFLICT DO NOTHING
 ;
+-- Counted before it is written: a load is added when the store remembers none for that registry and condition, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM registry_load x WHERE x.registry_name = s.body ->> 'registry_name'
+                                             AND x.condition = s.body ->> 'condition'))
+FROM staged s WHERE s.kind = 'registry_load'
+GROUP BY s.run_id, s.kind
+;
 -- A condition's load is remembered at the latest time it completed.
 INSERT INTO registry_load (registry_name, condition, loaded_from, completed_at, changed_run)
 SELECT s.body ->> 'registry_name', s.body ->> 'condition', s.body ->> 'loaded_from',
@@ -442,6 +459,13 @@ SELECT s.link_lead_id, s.body ->> 'record_kind', s.body ->> 'record_key', s.body
 FROM staged_of_lead s WHERE s.kind = 'link_lead_link'
 ON CONFLICT DO NOTHING
 ;
+-- Counted before it is written: a label is added when its lead has none by that kind of reader, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM link_lead_label x WHERE x.link_lead_id = s.link_lead_id
+                                             AND x.labelled_by = s.body ->> 'labelled_by'))
+FROM staged_of_lead s WHERE s.kind = 'link_lead_label'
+GROUP BY s.run_id, s.kind
+;
 -- A reader's label of a headline is kept once per reader kind; the later label wins.
 INSERT INTO link_lead_label (link_lead_id, labelled_by, label, labelled_at, changed_run)
 SELECT s.link_lead_id, s.body ->> 'labelled_by', s.body ->> 'label', s.body ->> 'labelled_at', s.run_id
@@ -463,6 +487,12 @@ ON CONFLICT (link_lead_id) DO UPDATE SET
   confidence = excluded.confidence, reasons = excluded.reasons, trials = excluded.trials,
   read_version = excluded.read_version, read_on = excluded.read_on, changed_run = excluded.changed_run
 WHERE excluded.read_version > lead_reading.read_version
+;
+-- Counted before it is written: a count is added when the store has none for that domain and day, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM unlisted_domain_count x WHERE x.domain = s.body ->> 'domain' AND x.day = s.body ->> 'day'))
+FROM staged s WHERE s.kind = 'unlisted_domain'
+GROUP BY s.run_id, s.kind
 ;
 -- A domain on no outlet list is counted by day and nothing of the address is kept.
 INSERT INTO unlisted_domain_count (domain, day, asked)
@@ -491,6 +521,14 @@ SELECT s.run_id, s.body ->> 'seq', s.body ->> 'purpose', s.body ->> 'model', s.b
 FROM staged s WHERE s.kind = 'usage'
 ON CONFLICT DO NOTHING
 ;
+-- Counted before it is written: a day's totals are added when the store has none under their key, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM measure_daily x WHERE x.day = s.body ->> 'day' AND x.step = s.body ->> 'step'
+                                             AND x.step_version = s.body ->> 'step_version' AND x.writer = s.body ->> 'writer'
+                                             AND x.outcome = s.body ->> 'outcome'))
+FROM staged s WHERE s.kind = 'measure_daily'
+GROUP BY s.run_id, s.kind
+;
 -- A day's totals for a step and writer are added to what the store holds for that day.
 INSERT INTO measure_daily (day, step, step_version, writer, outcome, spans, records, reused, ran_seconds,
                            waited_seconds, waited_by_cause, requests_by_source, tokens_in, tokens_out,
@@ -508,6 +546,12 @@ ON CONFLICT (day, step, step_version, writer, outcome) DO UPDATE SET
   cost_usd = cost_usd + excluded.cost_usd, inner_cost_usd = inner_cost_usd + excluded.inner_cost_usd,
   rows_written = rows_written + excluded.rows_written
 ;
+-- Counted before it is written: a claim's totals are added when the store has none for the claim, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM measure_claim x WHERE x.claim_id = s.claim_id))
+FROM staged_of_claim s WHERE s.kind = 'measure_claim'
+GROUP BY s.run_id, s.kind
+;
 -- What a claim took is added to what the store holds for it.
 INSERT INTO measure_claim (claim_id, first_seen_at, last_step_at, spans, ran_seconds, waited_seconds, cost_usd)
 SELECT s.claim_id, s.body ->> 'first_seen_at', s.body ->> 'last_step_at', s.body ->> 'spans',
@@ -518,6 +562,14 @@ ON CONFLICT (claim_id) DO UPDATE SET
   last_step_at = max(last_step_at, excluded.last_step_at), spans = spans + excluded.spans,
   ran_seconds = ran_seconds + excluded.ran_seconds, waited_seconds = waited_seconds + excluded.waited_seconds,
   cost_usd = cost_usd + excluded.cost_usd
+;
+-- Counted before it is written: a ledger entry is added when the store has none for that record, step and version, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM work_entry x WHERE x.record_kind = s.body ->> 'record_kind'
+                                             AND x.record_key = s.body ->> 'record_key' AND x.step = s.body ->> 'step'
+                                             AND x.step_version = s.body ->> 'step_version'))
+FROM staged s WHERE s.kind = 'work_entry'
+GROUP BY s.run_id, s.kind
 ;
 -- A ledger entry is kept once per record, step and version; the later attempt replaces it.
 INSERT INTO work_entry (record_kind, record_key, step, step_version, outcome, attempts, requests_used,
@@ -532,6 +584,12 @@ ON CONFLICT (record_kind, record_key, step, step_version) DO UPDATE SET
   last_attempt_at = excluded.last_attempt_at, changed_run = excluded.changed_run
 WHERE excluded.last_attempt_at > work_entry.last_attempt_at
 ;
+-- Counted before it is written: an icon is added when the store has none for the domain, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM outlet_icon x WHERE x.domain = s.body ->> 'domain'))
+FROM staged s WHERE s.kind = 'outlet_icon'
+GROUP BY s.run_id, s.kind
+;
 -- An outlet's icon is kept once per domain; the one fetched later replaces it.
 INSERT INTO outlet_icon (domain, icon_url, media_type, content, fetched_at, changed_run)
 SELECT s.body ->> 'domain', s.body ->> 'icon_url', s.body ->> 'media_type',
@@ -541,6 +599,13 @@ ON CONFLICT (domain) DO UPDATE SET
   icon_url = excluded.icon_url, media_type = excluded.media_type, content = excluded.content,
   fetched_at = excluded.fetched_at, changed_run = excluded.changed_run
 WHERE excluded.fetched_at > outlet_icon.fetched_at
+;
+-- Counted before it is written: a slice is added when no device had taken it, and the rest are matched.
+INSERT INTO merge_report (run_id, kind, resolved, added)
+SELECT s.run_id, s.kind, count(*), sum(NOT EXISTS (SELECT 1 FROM work_slice x WHERE x.platform = s.body ->> 'platform'
+                                             AND x.community = s.body ->> 'community' AND x.month = s.body ->> 'month'))
+FROM staged s WHERE s.kind = 'work_slice'
+GROUP BY s.run_id, s.kind
 ;
 -- A slice a run finished is marked done whoever held it, and noted when its device did not.
 INSERT INTO work_slice (platform, community, month, done_run, unheld)
@@ -678,13 +743,20 @@ SET claim_id = (SELECT g.kept_id FROM staged_claim_merge g WHERE g.gone_id = ent
 WHERE type <> 'intervention' AND claim_id IN (SELECT gone_id FROM staged_claim_merge)
 ;
 -- The intervention that stays gains the names the action lists, each once. Which names
--- those are is the pipeline's rule (a name that breaks an entry rule is left out).
+-- those are is the pipeline's rule (a name that breaks an entry rule is left out). The
+-- names it had keep their order and the gained ones follow, in the order listed: a name's
+-- place is shown, so a merge must not sort them.
 UPDATE entity SET synonyms = (
   SELECT json_group_array(name) FROM (
-    SELECT value AS name FROM json_each(entity.synonyms)
-    UNION
-    SELECT j.value FROM staged_claim_merge g, json_each(coalesce(g.body -> 'gains', '[]')) j
-    WHERE g.kept_id = entity.claim_id AND j.value <> entity.name))
+    SELECT name FROM (
+      SELECT o.value AS name, 0 AS part, o.key AS place FROM json_each(entity.synonyms) o
+      UNION ALL
+      SELECT j.value, 1, min(j.key)
+      FROM staged_claim_merge g, json_each(coalesce(g.body -> 'gains', '[]')) j
+      WHERE g.kept_id = entity.claim_id AND j.value <> entity.name
+        AND j.value NOT IN (SELECT value FROM json_each(entity.synonyms))
+      GROUP BY j.value)
+    ORDER BY part, place, name))
 WHERE type = 'intervention' AND claim_id IN (SELECT kept_id FROM staged_claim_merge)
 ;
 UPDATE claim_alias SET claim_id = (SELECT g.kept_id FROM staged_claim_merge g WHERE g.gone_id = claim_alias.claim_id)
@@ -775,18 +847,20 @@ WHERE c.id IN (SELECT claim_id FROM staged_of_claim WHERE kind IN ('claim', 'ent
 -- =========================================================================================
 
 -- The report: for each kind, the records whose parents were found, those the run added,
--- and those in conflict. A record whose parent was not found is in no count. (Written as
+-- and those in conflict. A record whose parent was not found is in no count. Nine kinds
+-- are already in it: their tables do not say which run added a row (a link, a label, a
+-- day's totals, a ledger entry, an icon, a load, a slice, a count), so each was counted
+-- by its key just before it was written. (Written as
 -- several statements: D1 allows few terms in one compound SELECT.)
 INSERT INTO merge_report (run_id, kind, resolved, added)
 SELECT run_id, kind, count(*), 0 FROM staged
-WHERE kind IN ('payload', 'claim', 'source_record', 'trial_read', 'registry_trial', 'registry_load',
-               'link_lead', 'unlisted_domain', 'decision', 'usage', 'measure_daily', 'work_entry',
-               'outlet_icon', 'work_slice')
+WHERE kind IN ('payload', 'claim', 'source_record', 'trial_read', 'registry_trial', 'link_lead',
+               'decision', 'usage')
 GROUP BY kind
 ;
 INSERT INTO merge_report (run_id, kind, resolved, added)
 SELECT run_id, kind, count(*), 0 FROM staged_of_claim
-WHERE kind IN ('source_article', 'entity', 'claim_term', 'evidence_event', 'failure_flag', 'measure_claim', 'action')
+WHERE kind IN ('source_article', 'entity', 'claim_term', 'evidence_event', 'failure_flag', 'action')
 GROUP BY kind
 ;
 INSERT INTO merge_report (run_id, kind, resolved, added)
@@ -795,17 +869,17 @@ WHERE kind IN ('promise', 'reported_statement') GROUP BY kind
 ;
 INSERT INTO merge_report (run_id, kind, resolved, added)
 SELECT run_id, kind, count(*), 0 FROM staged_of_entity
-WHERE kind IN ('entity_match', 'entity_substance', 'entity_article') GROUP BY kind
+WHERE kind IN ('entity_match', 'entity_substance') GROUP BY kind
 ;
 INSERT INTO merge_report (run_id, kind, resolved, added)
 SELECT run_id, kind, count(*), 0 FROM staged_of_lead
-WHERE kind IN ('link_share', 'link_lead_link', 'link_lead_label', 'lead_reading') GROUP BY kind
+WHERE kind IN ('link_share', 'link_lead_link', 'lead_reading') GROUP BY kind
 ;
 INSERT INTO merge_report (run_id, kind, resolved, added)
 SELECT run_id, kind, count(*), 0 FROM staged_of_trial WHERE kind = 'article_lead' GROUP BY kind
 ;
--- Added is what carries this run as the run that added it; kinds that are replaced in
--- place or summed (a label, a ledger entry, a day's totals) are reported as matched.
+-- Added is what carries this run as the run that added it. The nine kinds counted
+-- earlier keep that count.
 UPDATE merge_report SET added = min(resolved, CASE kind
   WHEN 'payload'            THEN (SELECT count(*) FROM payload            WHERE added_run = merge_report.run_id)
   WHEN 'claim'              THEN (SELECT count(*) FROM claim              WHERE added_run = merge_report.run_id)
@@ -829,7 +903,7 @@ UPDATE merge_report SET added = min(resolved, CASE kind
   WHEN 'decision'           THEN (SELECT count(*) FROM decision_log       WHERE run_id = merge_report.run_id)
   WHEN 'usage'              THEN (SELECT count(*) FROM llm_usage          WHERE run_id = merge_report.run_id)
   WHEN 'action'             THEN (SELECT count(*) FROM claim_action       WHERE run_id = merge_report.run_id AND action <> 'audit_hold')
-  ELSE 0 END)
+  ELSE added END)
 WHERE run_id = (SELECT run_id FROM merging)
 ;
 UPDATE merge_report SET

@@ -6,6 +6,7 @@ import { FIELDS_OF } from "./sql.generated.mjs";
 import { KINDS } from "./kinds.mjs";
 import { INLINE_PAYLOAD_BYTES, LONGER, MAX_RECORD_BYTES, MAX_STRING_CHARS } from "./limits.mjs";
 import { sha256 } from "./hash.mjs";
+import { peopleIn, peopleInText } from "./people.mjs";
 
 export { ACTIONS, KINDS } from "./kinds.mjs";
 
@@ -86,12 +87,19 @@ export async function checkRecords(records, who) {
     if (body.human_label != null && !who.deciders.includes("human")) bad(403, "outside_scope", `a ${who.role} token may not record a person's label`, { field: "human_label" });
     if (who.holds && kind === "claim" && body.review_state === "approved" && body.awaiting_audit_at == null) unheld.push({ at, slug: body.slug });
     if (kind === "action" && !who.actions.includes(body.action)) bad(403, "outside_scope", `a ${who.role} token may not state this action`, { field: "action" });
+    if (kind === "source_record" && body.body != null) {
+      // A source's own record kept beside a claim: the same holds for it.
+      const people = typeof body.body === "string" ? peopleInText(body.body) : peopleIn(body.body);
+      if (people.length) bad(422, "personal_data", "a registry record is handed over without the people it names", { field: "body", people });
+    }
     if (kind === "payload") {
       if (!/^[0-9a-f]{64}$/.test(body.sha256 || "")) bad(422, "bad_checksum", "a payload is named by its SHA-256 in lower-case hex", { field: "sha256" });
       if (typeof body.body === "string" && body.r2_key == null) {
         const raw = encoder.encode(body.body);
         if (raw.length > INLINE_PAYLOAD_BYTES) bad(413, "payload_too_large_for_a_row", `a payload over ${INLINE_PAYLOAD_BYTES} bytes is put to /payloads first`);
         if (raw.length !== body.bytes || (await sha256(raw)) !== body.sha256) bad(422, "checksum_mismatch", "the payload is not what its checksum and size say");
+        const people = peopleInText(body.body);
+        if (people.length) bad(422, "personal_data", "a registry record is handed over without the people it names", { field: "body", people });
       } else if (body.body == null && body.r2_key === `payload/${body.sha256}`) r2.push({ at, sha256: body.sha256, bytes: body.bytes });
       else bad(422, "bad_payload", "a payload carries its body, or the key payload/<sha256> of the object put first");
     }

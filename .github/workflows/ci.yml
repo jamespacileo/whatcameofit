@@ -82,6 +82,48 @@ jobs:
           path: site/.cache/cards
           key: ${{ steps.cards.outputs.cache-primary-key }}
 
+  # A rehearsal of task 6.2 of `cloudflare-source-of-truth`: take the export from the truth
+  # store, hold it to the schema and the checks a published snapshot passes, and report how
+  # it compares with the committed snapshot. Off unless the repository variable
+  # EXPORT_FROM_STORE is `true`. Nothing it writes is built or deployed: the committed
+  # snapshot stays the site's source, and the deploy job does not wait for this one.
+  store-export:
+    name: Export from the store (rehearsal)
+    if: vars.EXPORT_FROM_STORE == 'true' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      UV_LOCKED: "1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: "0.11.20"
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: site/package.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+      - run: pnpm --dir store/ingest install --frozen-lockfile
+      - run: pnpm --dir site install --frozen-lockfile
+      - name: Take the export from the store and check it
+        run: make store-export-rehearsal
+        env:
+          # A token that can only read the store's database and bucket.
+          CLOUDFLARE_API_TOKEN: ${{ secrets.STORE_READ_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          STORE_D1: ${{ vars.STORE_D1 }}
+          STORE_R2_BUCKET: ${{ vars.STORE_R2_BUCKET }}
+          # The export's settings are read with the database's address, which an export
+          # from the store never opens.
+          DATABASE_URL: postgresql+psycopg://unused:unused@127.0.0.1:1/unused
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
+
   deploy:
     name: Deploy production
     needs: check
