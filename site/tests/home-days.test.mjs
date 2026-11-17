@@ -86,9 +86,11 @@ test("Scenario: Checked on the reader's own date", () => {
 test("Scenario: A kind read aloud", () => {
   const record = group(dated, "d-2025-09-01");
   assert.match(record, /data-kind="record"/);
-  assert.match(record, /<span class="visually-hidden">Registry record\. <\/span>/);
+  // A registry row says its kind in words anyone can see, after the mark of what
+  // happened, which is not read aloud: the row's title says it.
+  assert.match(record, /<span class="row-kind"><span class="event-mark" data-event="trial_results_posted" data-direction="neither" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Registry record<span class="visually-hidden">\. <\/span><\/span>/);
   assert.match(group(dated, "d-2025-09-08"), /<span class="visually-hidden">News report\. <\/span>/);
-  assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-label">Promised date<\/span>/);
+  assert.match(dated, /data-kind="promise"[\s\S]*?<span class="row-kind"><span class="event-mark" data-direction="promised" aria-hidden="true"><svg[\s\S]*?<\/svg><\/span>Promised date<\/span>/);
   // The field that shows one kind is the script's, and names each kind in words.
   const field = dated.slice(dated.indexOf('id="feed-kind"'), dated.indexOf("</select>", dated.indexOf('id="feed-kind"')));
   assert.match(dated, /<label class="pick" hidden data-kinds>/);
@@ -99,12 +101,12 @@ test("Scenario: A kind read aloud", () => {
 
 test("Scenario: A report of an animal study, and what the records add", () => {
   const row = group(dated, "d-2025-09-08");
-  assert.match(row, /<a class="followed" href="\/phase-claim"[^>]*>\s*“Example report 5”\s*<\/a>/);
+  assert.match(row, /<a class="followed" href="\/phase-claim"[^>]*>\s*<span class="quote-mark open">“<\/span>Example report 5<span class="quote-mark">”<\/span>\s*<\/a>/);
   // The headline and the claim lead; the status is the column after them, a button
   // that opens the detail under the row (openspec latest-rows).
   assert.ok(row.indexOf("row-title") < row.indexOf('class="row-now"'));
   // Its name is short: the status and what it opens. The counts and sentences describe it.
-  assert.match(row, /<button type="button" class="row-now" aria-expanded="false" aria-controls="more-phase-claim-2025-09-08" aria-label="Phase 3 trial\. More on phase-claim agent" aria-describedby="more-phase-claim-2025-09-08-said" data-row-open>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  assert.match(row, /<button type="button" class="row-now" aria-expanded="false" aria-controls="more-phase-claim-2025-09-08" aria-label="Status now: Phase 3 trial\. More on phase-claim agent" aria-describedby="more-phase-claim-2025-09-08-said" data-row-open>\s*<span class="row-change is-plain">\s*<span class="row-was">Status now<\/span>\s*<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
   // What the column says is named once, above the list.
   assert.equal(count(dated, 'class="list-key"'), 1);
   assert.match(row, /<div class="row-more" id="more-phase-claim-2025-09-08" role="region" aria-label="More on phase-claim agent" data-row-more>/);
@@ -112,7 +114,7 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   assert.match(row, /Large late-stage trial in people/);
   // What the records add is said in words: the counts in sight, the row's sentences
   // for a screen reader only. The records by date are drawn on the claim page.
-  assert.match(row, /<span class="row-counts" id="more-phase-claim-2025-09-08-said">\d+ trials?( · \d+ with results posted)?<span class="visually-hidden"> [^<]*trials on record[^<]*<\/span><\/span>/);
+  assert.match(row, /<span class="row-counts" id="more-phase-claim-2025-09-08-said">\s*<span class="count">\d+ trials?<\/span>(<span class="count-sep"> · <\/span><span class="count">\d+ with results posted<\/span>)?\s*<span class="visually-hidden"> [^<]*trials on record[^<]*<\/span><\/span>/);
   assert.ok(!row.includes("record-strip"));
   assert.ok(!row.includes("row-adds"));
 });
@@ -122,17 +124,33 @@ test("Scenario: An approval that changed the status, and a record that changed n
   assert.match(changed, /class="row-now is-changed"[^>]*aria-label="Changed from Phase 2 trial to Phase 3 trial\. More on phase-claim agent"/);
   assert.match(changed, /<span class="new-tag">Changed<\/span>\s*<span class="row-was">from Phase 2 trial<\/span><\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
   // What was recorded is said of the record, not in a status's words.
-  assert.match(changed, /<li class="row-item is-record"><a href="[^"]+">NCT00000002<\/a><span>results posted<\/span>/);
+  assert.match(changed, /<h4 class="row-title">[\s\S]*?<a href="\/phase-claim">\s*<span class="row-what">(Phase \d )?[Tt]rial results posted<\/span><span class="visually-hidden">: <\/span><span class="row-whom">phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
+  // The record at its source is in the row's top line, where a report row links its outlet.
+  assert.match(changed, /<a class="row-record" href="[^"]+">NCT00000002<\/a>/);
+  // Each day carries the control for the rest of its rows, the script's: as built it is not shown.
+  assert.equal(count(changed, '<p class="day-more" hidden data-day-more>'), 1);
+  // The day's heading names the column once; a panel that says Changed does not name itself.
+  assert.equal(count(changed, '<span class="day-col">Status now</span>'), 1);
+  assert.ok(!changed.includes('class="row-change is-plain"'), "a panel that says Changed does not also say Status now");
   const paper = group(dated, "d-2025-09-05");
   assert.ok(!paper.includes("Changed"));
-  assert.match(paper, /class="row-now" [^>]*aria-label="Phase 3 trial\. More on phase-claim agent"/);
+  assert.match(paper, /class="row-now" [^>]*aria-label="Status now: Phase 3 trial\. More on phase-claim agent"/);
   // Scenario: A follow-up paper scored 0.6.
   assert.match(paper, /Medium match · 60%/);
-  // A registry row leads with the report it belongs to, and says how long ago the claim
-  // was first reported; what was recorded is one dated item.
-  assert.match(paper, /<span class="row-age">First reported 6 years ago<\/span>/);
-  assert.match(paper, /<h4 class="row-title"><a href="\/phase-claim">“Example report 5”<\/a><\/h4>/);
-  assert.match(paper, /<li class="row-item is-record"><a href="https:\/\/registry\.example\/record\/4">[^<]+<\/a><span>Follow-up paper<\/span><span class="when">5 Sep 2025<\/span><\/li>/);
+  // A registry row is the record: what was recorded leads, in the record's own words,
+  // then the record at its source. The claim's newest report hangs under them, quoted,
+  // with how long ago the claim was first reported.
+  const lead = paper.indexOf('class="row-title"');
+  assert.match(paper, /<h4 class="row-title">[\s\S]*?<a href="\/phase-claim">\s*<span class="row-what">Follow-up paper<\/span><span class="visually-hidden">: <\/span><span class="row-whom">phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
+  assert.match(paper, /<a class="row-record" href="https:\/\/registry\.example\/record\/4">[^<]+<\/a>/);
+  // A record that changed nothing names the column beside it: the claim's status now.
+  assert.match(paper, /<span class="row-change is-plain">\s*<span class="row-was">Status now<\/span>\s*<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  assert.match(paper, /<span class="when">5 Sep 2025<\/span>/);
+  const about = paper.slice(paper.indexOf('class="row-about"'));
+  assert.ok(lead > -1 && lead < paper.indexOf('class="row-about"'), "the record leads, its report follows");
+  assert.match(about, /<span class="row-about-label">Newest report<\/span>/);
+  assert.match(about, /<span class="row-age">First reported 6 years ago<\/span>/);
+  assert.match(about, /<p class="row-about-title"><span class="quote-mark open">“<\/span>Example report 5<span class="quote-mark">”<\/span>\s*<\/p>/);
 });
 
 test("Scenario: Promises still to come", () => {
@@ -164,6 +182,34 @@ test("Scenario: The spans a reader can keep to", () => {
   // The span and its end are the script's: as built every row is shown.
   assert.match(dated, /<label class="pick" hidden data-spans>/);
   assert.match(dated, /<p class="earlier" hidden data-span-end>/);
+});
+
+test("Scenario: Every choice behind one control", () => {
+  const head = dated.slice(dated.indexOf('class="days-head"'), dated.indexOf('class="day-list"'));
+  // The control is the script's: as built it is not shown, and says "Filter". It opens
+  // by a press only, since a field's own list opens outside the panel.
+  assert.match(head, /<button type="button" class="share filter-open" hidden data-filter-open data-press-only popovertarget="days-filter" aria-expanded="false"/);
+  assert.match(head, /<span data-filter-says>Filter<\/span>/);
+  // It opens one panel, which holds every field with its name drawn before it. This
+  // export lists one topic, so there is no topic to choose.
+  assert.match(head, /<div popover(="")? id="days-filter" class="pop filter-panel"/);
+  assert.deepEqual(
+    [...head.matchAll(/<span class="pick-name">([^<]+)<\/span>\s*<select id="([a-z-]+)"/g)].map(([, name, id]) => `${id}: ${name}`),
+    ["feed-kind: Show", "feed-span: Dated in", "feed-status: Status now"],
+  );
+  assert.match(head, /<button type="button" class="text-control filter-clear" hidden data-filter-clear>Clear filters<\/button>/);
+});
+
+test("Scenario: The head of the list is one line", () => {
+  const head = dated.slice(dated.indexOf('class="days-head"'), dated.indexOf('class="day-list"'));
+  // The name, then what a row's right column says behind a mark, then the day checked,
+  // then the control.
+  const at = (text) => head.indexOf(text);
+  assert.ok(at('id="days-title"') < at('popovertarget="days-key"'));
+  assert.ok(at('popovertarget="days-key"') < at('class="checked-on"'));
+  assert.ok(at('class="checked-on"') < at("data-filter-menu"));
+  assert.match(head, /<button type="button" class="pop-trigger info" popovertarget="days-key" aria-label="About this list"/);
+  assert.match(head, /<div popover(="")? id="days-key" class="pop" role="note"[^>]*>\s*<p class="list-key">With each report and record: where its claim stands on record now\. Press it for why\.<\/p>/);
 });
 
 test("Scenario: Scripting off", () => {

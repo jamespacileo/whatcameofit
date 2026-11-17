@@ -11,7 +11,7 @@ import type {
   ExportedTrialFacts,
 } from "./export";
 import type { ExportedArm, ExportedEvent } from "./export";
-import { assertNeutral } from "./status.ts";
+import { assertNeutral, eventLabel } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
 export const TRIAL_STATE_WORDS: Record<string, string> = {
@@ -182,6 +182,16 @@ function listOf(parts: string[]): string {
 export function phaseText(phases: string[]): string | null {
   const named = phases.map((phase) => PHASE_WORDS[phase] ?? phase);
   return named.length > 0 ? named.join("/") : null;
+}
+
+/** What was recorded, in the record's own words, with the trial's phase where the
+ * registry gives one: "Phase 3 trial registered". A reader who sees only "Trial
+ * registered" beside a claim's status takes the two for a contradiction. The phase is
+ * the trial's, as the registry files it; it is not the claim's status. */
+export function recordedText(event: ExportedEvent): string {
+  const label = eventLabel(event);
+  const phase = phaseText(event.trial_phases.filter((code) => code !== "not_applicable"));
+  return phase && label.startsWith("Trial ") ? `${phase} trial ${label.slice(6)}` : label;
 }
 
 function phaseRank(trial: ExportedTrial): number {
