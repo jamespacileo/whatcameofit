@@ -37,5 +37,9 @@ store/proof/sample/
 store/proof/out/
 store/proof/.wrangler/
 
+# the ingest service's local state and local tokens
+store/ingest/.wrangler/
+store/ingest/.dev.vars
+
 # drawn card images kept between builds
 site/.cache/

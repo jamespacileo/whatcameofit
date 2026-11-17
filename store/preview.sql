@@ -81,7 +81,8 @@ SELECT 'action' AS kind, count(*) AS resolved, 0 AS conflicts, sum(CASE a.action
                                    AND c.body ->> 'action' = 'audit_clear' AND c.body ->> 'slug' = a.body ->> 'slug')))
   WHEN 'archive'     THEN NOT a.archived
   WHEN 'unarchive'   THEN a.archived AND NOT a.merged
-  WHEN 'rename'      THEN (a.own_id IS NOT NULL OR a.claim_id IS NULL) AND a.body ->> 'slug' <> a.body ->> 'new_slug'
+  WHEN 'rename'      THEN ((a.own_id IS NOT NULL AND a.own_merged_into IS NULL) OR a.claim_id IS NULL)
+                          AND (a.body ->> 'slug' <> a.body ->> 'new_slug' OR a.body ->> 'new_name' IS NOT NULL)
   WHEN 'merge'       THEN ((a.own_id IS NOT NULL AND a.own_merged_into IS NULL) OR a.claim_id IS NULL)
                           AND EXISTS (SELECT 1 FROM claim_key k WHERE k.slug = a.body ->> 'into_slug'
                                         AND k.claim_id IS NOT a.own_id)

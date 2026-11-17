@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NOTICES } from "../src/lib/notices.ts";
+import { FILE_LIMIT, oversizedFiles } from "./dist-size.mjs";
 
 const DIST = path.resolve("dist");
 const REQUIRED = [...NOTICES, "Data sources:", "Registries"];
@@ -24,8 +25,16 @@ for (const page of found) {
 }
 
 if (found.length === 0) problems.push("no pages were built");
+// The host refuses a file over 25 MiB at deploy time; stop well before that, here.
+for (const { file, bytes } of oversizedFiles(DIST, FILE_LIMIT)) {
+  problems.push(
+    `${file} is ${(bytes / 2 ** 20).toFixed(1)} MiB, over the ${FILE_LIMIT / 2 ** 20} MiB a built file may be`,
+  );
+}
 if (problems.length > 0) {
   console.error(`Build check failed:\n  ${problems.join("\n  ")}`);
   process.exit(1);
 }
-console.log(`Build check passed: footer notices present on ${found.length} pages.`);
+console.log(
+  `Build check passed: footer notices present on ${found.length} pages; no file over ${FILE_LIMIT / 2 ** 20} MiB.`,
+);

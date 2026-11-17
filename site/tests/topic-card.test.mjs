@@ -80,7 +80,7 @@ test("a topic takes its group's drawing, else its own, else the plain ring", () 
 });
 
 test("the card draws the same topics with the same drawings as the chip", () => {
-  const chip = fs.readFileSync("src/components/TopicChip.astro", "utf8");
+  const chip = fs.readFileSync("src/components/TopicDrawing.astro", "utf8");
   const imported = Object.fromEntries(
     [...chip.matchAll(/import (\w+) from "@lucide\/astro\/icons\/([\w-]+)";/g)].map(([, name, icon]) => [
       name,

@@ -315,13 +315,21 @@ WHERE excluded.read_at > trial_read.read_at
 -- a later fetch whose payload differs.
 INSERT INTO registry_trial (registry_name, external_id, title, conditions, interventions,
                             intervention_names, phases, overall_status, start_date, sponsor_class,
-                            search_name, search_indication, payload_sha256, fetched_at, checked_at,
+                            search_name, search_indication, start_date_type, last_update_posted,
+                            study_first_posted, primary_completion_date, primary_completion_date_type,
+                            completion_date, completion_date_type, results_first_posted, has_results,
+                            acronym, lead_sponsor_name, payload_sha256, fetched_at, checked_at,
                             added_run, changed_run)
 SELECT s.body ->> 'registry_name', s.body ->> 'external_id', s.body ->> 'title',
        coalesce(s.body -> 'conditions', '[]'), coalesce(s.body -> 'interventions', '[]'),
        coalesce(s.body ->> 'intervention_names', ''), coalesce(s.body -> 'phases', '[]'),
        s.body ->> 'overall_status', s.body ->> 'start_date', s.body ->> 'sponsor_class',
-       s.body ->> 'search_name', s.body ->> 'search_indication', s.body ->> 'payload_sha256',
+       s.body ->> 'search_name', s.body ->> 'search_indication', s.body ->> 'start_date_type',
+       s.body ->> 'last_update_posted', s.body ->> 'study_first_posted',
+       s.body ->> 'primary_completion_date', s.body ->> 'primary_completion_date_type',
+       s.body ->> 'completion_date', s.body ->> 'completion_date_type',
+       s.body ->> 'results_first_posted', s.body ->> 'has_results', s.body ->> 'acronym',
+       s.body ->> 'lead_sponsor_name', s.body ->> 'payload_sha256',
        s.body ->> 'fetched_at', s.body ->> 'fetched_at', s.run_id, s.run_id
 FROM staged s WHERE s.kind = 'registry_trial'
 ON CONFLICT (registry_name, external_id) DO UPDATE SET
@@ -329,7 +337,19 @@ ON CONFLICT (registry_name, external_id) DO UPDATE SET
   intervention_names = excluded.intervention_names, phases = excluded.phases,
   overall_status = excluded.overall_status, start_date = excluded.start_date,
   sponsor_class = excluded.sponsor_class, search_name = excluded.search_name,
-  search_indication = excluded.search_indication, payload_sha256 = excluded.payload_sha256,
+  search_indication = excluded.search_indication,
+  start_date_type = excluded.start_date_type,
+  last_update_posted = excluded.last_update_posted,
+  study_first_posted = excluded.study_first_posted,
+  primary_completion_date = excluded.primary_completion_date,
+  primary_completion_date_type = excluded.primary_completion_date_type,
+  completion_date = excluded.completion_date,
+  completion_date_type = excluded.completion_date_type,
+  results_first_posted = excluded.results_first_posted,
+  has_results = excluded.has_results,
+  acronym = excluded.acronym,
+  lead_sponsor_name = excluded.lead_sponsor_name,
+  payload_sha256 = excluded.payload_sha256,
   fetched_at = excluded.fetched_at, changed_run = excluded.changed_run
 WHERE excluded.fetched_at > registry_trial.fetched_at
   AND excluded.payload_sha256 <> registry_trial.payload_sha256
@@ -585,12 +605,34 @@ UPDATE claim SET archived_at = NULL, archive_reason = NULL, changed_run = (SELEC
 WHERE id IN (SELECT a.claim_id FROM claim_action a JOIN merging m ON m.run_id = a.run_id
              WHERE a.action = 'unarchive')
 ;
--- A renamed claim keeps answering to its old slug; a new slug another claim holds fails
--- the batch, and nothing is renamed.
+-- A rename corrects what a claim's intervention is called, gives the claim a new slug, or
+-- both. The old name stays as a synonym when the action says so, the claim keeps answering
+-- to its old slug, and its registries are due to be searched again. A new slug another
+-- claim holds fails the batch, and nothing is renamed.
 INSERT INTO claim_action (claim_id, action, detail, decided_by, at, run_id)
-SELECT c.id, 'rename', c.slug || ' -> ' || (s.body ->> 'new_slug'), s.body ->> 'decided_by', s.body ->> 'at', s.run_id
+SELECT c.id, 'rename',
+       json_object('old_slug', c.slug, 'new_slug', s.body ->> 'new_slug',
+                   'old_name', s.body ->> 'old_name', 'new_name', s.body ->> 'new_name'),
+       s.body ->> 'decided_by', s.body ->> 'at', s.run_id
 FROM staged s JOIN claim c ON c.slug = s.body ->> 'slug'
-WHERE s.kind = 'action' AND s.body ->> 'action' = 'rename' AND c.slug <> s.body ->> 'new_slug'
+WHERE s.kind = 'action' AND s.body ->> 'action' = 'rename' AND c.merged_into IS NULL
+  AND (c.slug <> s.body ->> 'new_slug' OR s.body ->> 'new_name' IS NOT NULL)
+;
+UPDATE entity SET name = s.body ->> 'new_name',
+                  synonyms = CASE WHEN coalesce(s.body ->> 'keep_old_name', 1) = 1
+                                  THEN json_insert(entity.synonyms, '$[#]', entity.name) ELSE entity.synonyms END
+FROM staged s JOIN claim c ON c.slug = s.body ->> 'slug'
+WHERE s.kind = 'action' AND s.body ->> 'action' = 'rename' AND c.merged_into IS NULL
+  AND entity.claim_id = c.id AND entity.type = 'intervention'
+  AND s.body ->> 'new_name' IS NOT NULL AND entity.name <> s.body ->> 'new_name'
+;
+INSERT INTO work_item (record_kind, record_key, step, due_since)
+SELECT 'claim', coalesce(s.body ->> 'new_slug', c.slug), 'prepare', s.body ->> 'at'
+FROM staged s JOIN claim c ON c.slug = s.body ->> 'slug'
+WHERE s.kind = 'action' AND s.body ->> 'action' = 'rename' AND c.merged_into IS NULL
+  AND s.body ->> 'new_name' IS NOT NULL
+ON CONFLICT (record_kind, record_key, step) DO UPDATE SET state = 'due', attempts = 0, error = NULL,
+                                                         due_since = excluded.due_since
 ;
 DELETE FROM claim_alias
 WHERE (slug, claim_id) IN (SELECT s.body ->> 'new_slug', c.id FROM staged s JOIN claim c ON c.slug = s.body ->> 'slug'
@@ -604,10 +646,13 @@ WHERE s.kind = 'action' AND s.body ->> 'action' = 'rename' AND c.slug <> s.body 
 UPDATE claim SET slug = s.body ->> 'new_slug', changed_run = s.run_id
 FROM staged s
 WHERE s.kind = 'action' AND s.body ->> 'action' = 'rename' AND claim.slug = s.body ->> 'slug'
+  AND claim.merged_into IS NULL AND s.body ->> 'new_slug' IS NOT NULL
 ;
--- A claim merged into another gives it its articles, their promises and statements and
--- its leads, and is archived pointing at it; its own entities, matches and events stay
--- with it, and the claim that stays keeps every decision made on it.
+-- A claim merged into another gives it what an article reported: its articles, their
+-- promises and statements, its leads, the papers, organisations and people an article
+-- named, and the names of its intervention that the action lists. What a registry was
+-- found to say does not move: its intervention's matches and every evidence event stay
+-- with it, archived, and the claim that stays keeps every decision made on it.
 INSERT INTO claim_action (claim_id, action, detail, decided_by, at, run_id)
 SELECT g.gone_id, 'merge', 'into ' || g.kept_slug, g.body ->> 'decided_by', g.body ->> 'at', g.run_id
 FROM staged_claim_merge g
@@ -626,6 +671,21 @@ WHERE claim_id IN (SELECT gone_id FROM staged_claim_merge)
 ;
 UPDATE link_lead SET claim_id = (SELECT g.kept_id FROM staged_claim_merge g WHERE g.gone_id = link_lead.claim_id)
 WHERE claim_id IN (SELECT gone_id FROM staged_claim_merge)
+;
+-- A paper, organisation or person both claims name stays with the claim that goes.
+UPDATE OR IGNORE entity
+SET claim_id = (SELECT g.kept_id FROM staged_claim_merge g WHERE g.gone_id = entity.claim_id)
+WHERE type <> 'intervention' AND claim_id IN (SELECT gone_id FROM staged_claim_merge)
+;
+-- The intervention that stays gains the names the action lists, each once. Which names
+-- those are is the pipeline's rule (a name that breaks an entry rule is left out).
+UPDATE entity SET synonyms = (
+  SELECT json_group_array(name) FROM (
+    SELECT value AS name FROM json_each(entity.synonyms)
+    UNION
+    SELECT j.value FROM staged_claim_merge g, json_each(coalesce(g.body -> 'gains', '[]')) j
+    WHERE g.kept_id = entity.claim_id AND j.value <> entity.name))
+WHERE type = 'intervention' AND claim_id IN (SELECT kept_id FROM staged_claim_merge)
 ;
 UPDATE claim_alias SET claim_id = (SELECT g.kept_id FROM staged_claim_merge g WHERE g.gone_id = claim_alias.claim_id)
 WHERE claim_id IN (SELECT gone_id FROM staged_claim_merge)

@@ -4,7 +4,7 @@ Each section is useful when it is done, without the sections after it. Sections 
 
 ## 1. Decisions before any build
 
-- [ ] 1.1 Put the open decisions of `design.md` to the operator; verify each answer replaces its question in `design.md`, and that a spec is revised where an answer differs from the recommendation it was written to
+- [x] 1.1 Done 2026-11-17: every open decision was put to the operator in a question dialog and is recorded, dated, under "Open Questions" in `design.md`; `specs/trial-coverage` was revised for the sets as built and for route 2's batched requests. Was: Put the open decisions of `design.md` to the operator; verify each answer replaces its question in `design.md`, and that a spec is revised where an answer differs from the recommendation it was written to
 - [ ] 1.2 Write `docs/adr/0010`: a registry trial has a page of registry facts without a claim, which facts it may state, and that no word for how a trial turned out is used; verify it names the glossary line and the `CLAUDE.md` lines it supersedes
 - [ ] 1.3 Add trial page, trial listing, telling name, strong link and set to `GLOSSARY.md`, and revise "Registry trial" ("never exported"); verify the terms match the specs word for word
 - [x] 1.4 Reconcile section 2 and `specs/registry-corpus` with the change `daily-trial-refresh` (pull request 268, open on 2026-11-16); verify the outcome is recorded here before any task of section 2 starts. Done 2026-11-16, on paper: the daily step, the clean stop and "the daily run starts no step over loaded trials" are that change's and were removed from this one; a load here starts nothing; the refresh of a citing claim is the daily run's existing `refresh` step taking those claims first, not a new step, and it is not model-free; the export hold is on `thenwhat export`, since the daily run never exports. Table in `design.md`, decision 10. To check again if pull request 268 changes before it merges
@@ -13,9 +13,9 @@ Each section is useful when it is done, without the sections after it. Sections 
 
 ## 2. The corpus: wider records, kept current
 
-- [ ] 2.1 Add the fields of `specs/registry-corpus` to the list request and to the stored trial, with a new migration; verify a recorded fixture of one page with the wider fields loads, and a trial stored with ten fields gains the rest in place
-- [ ] 2.2 Keep no name for a sponsor classed as an individual; verify a test with such a record
-- [ ] 2.3 Load every interventional study again with the wider fields, as a full load and not `--changes-only`, so trials unchanged since 16 November gain them; verify the count stored equals the registry's count that day, and record here the requests sent, the time taken and the table's size
+- [x] 2.1 Done on `main` (migration `0031`, `backfill/registry_load.py`). Was: Add the fields of `specs/registry-corpus` to the list request and to the stored trial, with a new migration; verify a recorded fixture of one page with the wider fields loads, and a trial stored with ten fields gains the rest in place
+- [x] 2.2 Done on `main` (`without_people`). Was: Keep no name for a sponsor classed as an individual; verify a test with such a record
+- [x] 2.3 Done 2026-11-17: 467,064 stored with the wider record. Was: Load every interventional study again with the wider fields, as a full load and not `--changes-only`, so trials unchanged since 16 November gain them; verify the count stored equals the registry's count that day, and record here the requests sent, the time taken and the table's size
 - [ ] 2.4 Add to a load's report how many cited trials changed and how many claims that made due; verify tests of a day with four cited trials changed and a day with none. The daily step and its clean stop are `daily-trial-refresh`'s and are not built again
 - [ ] 2.5 Make a cited trial's change of state, phases, dates or results posting make its claims due for the registry refresh, and make new or renamed trials due for the offline linking; verify tests for a cited trial, an uncited trial, and a field no step uses
 - [ ] 2.6 Have the daily run's `refresh` step take first the claims a load made due, within `DAILY_RUN_REFRESH_LIMIT` and its spend guard, and put both counts in the summary; verify with the stand-in in `scripts/tests/daily-run.test.sh`: the order, more due than the limit, and the spend guard stopping the run
@@ -69,17 +69,66 @@ Free and deterministic first. Each task is useful when done; 8.1 to 8.6 send no 
 - [x] 8.1 Run the batching experiment before specifying the news search; verify its request count, limits, attribution and a hand sample of 40 are in `design.md`. Done 2026-11-17: 19 requests logged, counted as 20; results under "The batching experiment"
 - [ ] 8.2 Correct the news index's allowance count by 20 requests for the week of 2026-11-16, and add to its entry in `docs/sources.md` the limits read from its source and the limits observed; verify the entry is dated
 - [ ] 8.3 Build a trial's fingerprint by rule from the stored record, with each term marked fit or not; verify tests for an acronym that is an ordinary word, one that is a condition's abbreviation, one with a digit, a code, and a trial with no fit term but its number
-- [ ] 8.4 Add the sets `active-recent` and `completed-with-results` with their dates as settings with no default; verify tests that each is refused before the wider load, that a cited trial is left out, and that an unknown name is refused with the list
+- [x] 8.4 Done on `main` before phase 1 as `active-since-2025` and `completed-with-results-since-2025` (`backfill/trial_sets.py`, `thenwhat backfill trial-sets`), the date in the name (`design.md`, question 16); leaving a cited trial out is the news routes' and is task 8.9's. Was: Add the sets `active-recent` and `completed-with-results` with their dates as settings with no default; verify tests that each is refused before the wider load, that a cited trial is left out, and that an unknown name is refused with the list
 - [ ] 8.5 Attach the papers a stored record lists as result or derived, with the registry's kind, never background, and store a link the record gives on a listed outlet as a link lead; verify tests for each kind and for a link on an unlisted domain
 - [ ] 8.6 Treat a fit acronym and a registry number as strong links in the offline linking; verify tests for an acronym in a headline and a number in an address, and record here how many stored leads link to each set
 - [ ] 8.7 Write PubMed's entry in `docs/sources.md` from its current pages, including the usage-policy chapter that could not be read on 2026-11-16, then its client with recorded fixtures: one request a trial for the number in the publisher's field, "nothing found" stored; verify no paper with more than three numbers is attached and none that only mentions the number
 - [ ] 8.8 List attached papers on the trial page under the two fixed headings with paper facts; verify a test that a paper leaves the no-report line in place and that the page states nothing of what a paper found
 - [ ] 8.9 Build the batched news search as a step: fit terms only, the number of trials a request as a setting starting at ten, a request cut short asked again in halves, a timed-out request leaving its trials due, a hit tied only on headline or address, untied hits counted and dropped; verify with recorded fixtures on synthetic headlines
 - [ ] 8.10 Try title-only search on three requests of ten trials when the index is not slow, and record here whether it answers faster and how many hits tie; keep it only if it does
-- [ ] 8.11 Run the batched search for `completed-with-results`, then judge 40 tied hits by hand; record here the requests, time-outs, stories, ties and the judgement, and stop to tell the operator if fewer than half name the trial's own treatment
+- [ ] 8.11 Run the batched search for `completed-with-results-since-2025`, then judge 40 tied hits by hand; record here the requests, time-outs, stories, ties and the judgement, and stop to tell the operator if fewer than half name the trial's own treatment
 - [ ] 8.12 Print the plan of `specs/trial-coverage` before any route runs; verify tests of a plan, of a route that is off, and of a route turned on with no dated entry for its source
 - [ ] 8.13 Verify with one test for each route that a found article is a lead and nothing more: no claim, source article, match or event exists until it is read, a rejected lead is not read, and a drafted claim is held awaiting audit
-- [ ] 8.14 Only on the operator's answers to open decisions 11, 13 and 14: write the entry in `docs/sources.md`, then the client, for a wire's feeds, a full-text search or a mentions index; verify each is off by default
+- [ ] 8.14 Not in phase 1. Questions 11, 13 and 14 were decided on 2026-11-17 as "not now"; only after the operator's two emails are answered and a route is turned on: write the entry in `docs/sources.md`, then the client, for a wire's feeds, a full-text search or a mentions index; verify each is off by default
+
+## 9. Phase 1: the free routes (decided 2026-11-17)
+
+The first phase built: routes 1 to 3 of `design.md`, decision 13. No spend, no new paid source, and no request but to PubMed. One pull request a group, each with its tests, its requirement deltas and the commands to run after it merges. A task here says which earlier task it does, in whole or in part; what it leaves of that task stays open there.
+
+Route 1, the registry's own references (pull request 2; part of 8.5):
+
+- [x] 9.1 Read from each stored record the papers it lists, result and derived kept apart from background, and the links it gives; verify tests for a record with each kind, a paper listed twice, a number that is not a number, and a record with no references
+- [x] 9.2 Count, for each of the two sets, the trials with a result paper, with a derived paper, with either, the papers, and the links by domain and by whether the domain is a listed outlet, from stored records and with no request (`thenwhat backfill trial-references`); verify one test of the figures and one that an unknown set is refused with the list
+- [x] 9.3 Record how a listed paper becomes a paper record: by the one rule and the one store a claim's results papers already use, and by no other path; verify a test that the papers read for a stored trial are those the claim path reads for the same record. Storing a link on a listed outlet as a link lead (the rest of 8.5) waits for the counts of 9.2
+
+Counted on the working database on 2026-11-17, read-only, from stored records:
+
+| | `active-since-2025` | `completed-with-results-since-2025` |
+| --- | --- | --- |
+| Trials | 23,328 | 3,141 |
+| List a paper as reporting results (sponsor) | 597 (2.6%) | 190 (6.0%) |
+| Have a paper the registry linked from PubMed | 2,845 (12.2%) | 1,083 (34.5%) |
+| Either | 3,350 (14.4%) | 1,206 (38.4%) |
+| Background papers only | 1,652 | 259 |
+| Distinct papers: sponsor's, registry's (a paper both ways counted in each) | 3,424, 4,447 | 532, 2,070 |
+| Give a link | 3,402 trials, 4,522 links | 639 trials, 861 links |
+
+The fifteen most linked domains across both sets are sponsors' trial sites, hospitals and file hosts (mdanderson.org 502, mskcc.org 323, a sponsors' file host 288, merckclinicaltrials.com 262, clinicalstudies.info.nih.gov 240, pubmed.ncbi.nlm.nih.gov 213). None is a listed outlet. So no link becomes a link lead in phase 1: the rest of 8.5 stays open until `thenwhat backfill trial-references` shows a listed outlet among them.
+
+Route 2, papers by trial number (pull request 3; does 8.7):
+
+- [x] 9.4 Write PubMed's entry in `docs/sources.md` from NCBI's current pages, with the date, the pages read, the key, the tool and email parameters, the limits and the off-peak rule, before the client; add the settings to `.env.example`
+- [x] 9.5 Write the client: the numbers of many trials in one request, exact, in the field the publisher supplied; each paper's own record read back, and a paper given to a trial only when that record carries the trial's number; refuse to run without what the terms require; verify with recorded fixtures (generic client name, no abstract, no author) a paper for one trial, a paper naming more than three numbers, a trial with no paper, and the refusal
+- [x] 9.6 Store each paper found for a trial with its source, identifier, reduced raw payload and fetch time, in a migration numbered after `main`'s head; make it a step of the work ledger over the two sets, so a run resumes and a trial already asked is not asked again, "nothing found" included; verify tests of a run, a second run that sends nothing, and a run stopped by the allowance
+- [x] 9.7 Ask for a sample of at most 50 trials across the two sets, with the generic client name, and record here how many of each set's sample have a paper
+
+The sample of 9.7, asked on 2026-11-17 with a generic client name, no key, in 4 requests (2 searches, 2 fetches): 25 trials drawn by a seeded order from each set.
+
+| Set | Trials asked | With a paper that carries the number | Papers |
+| --- | --- | --- | --- |
+| `active-since-2025` | 25 | 4 (16%) | 6 |
+| `completed-with-results-since-2025` | 25 | 10 (40%) | 12 |
+
+One paper carried three numbers and none more, so the rule against papers of many trials removed nothing. Twenty-five trials is a small sample: the figures say the route is worth running, not what it will give. Still open of 8.7 and "Nothing found is an answer": asking a trial again after a configured age; today a trial asked is not asked again until the step's version is raised.
+
+Route 3, stored leads on more than the intervention's name (pull request 4; does 3.1 and 3.3, part of 3.5, 3.6, 3.7, 4.1 to 4.3 and 8.6):
+
+- [ ] 9.8 Link a stored lead to a trial on the trial's registry number, its acronym, a development code among its intervention names and other names, and its other intervention names, each as its own reason with its own strength, with the term and the condition word recorded; an acronym that is an ordinary word never links; the present link is kept as a candidate; verify tests for each reason, for a code written without its hyphen, for a common-word acronym, and that a run sends no request and records no usage
+- [ ] 9.9 Measure on the working database, read-only, how many leads link to how many trials of each set under each reason, and judge 40 links by hand from headline and outlet alone; record the tables here and in `design.md`, and nothing of any article
+- [ ] 9.10 Say which strength is enough for a held lead to be read, and make the reading order selectable for a named set: leads strongly linked to trials of the set first, phase 3 before phase 2, a rejected lead never; verify tests for a held lead, a rejected lead and the order of three due leads
+- [ ] 9.11 Hold the route's share of the ceiling as a setting (15 US dollars a month), print the plan of `specs/trial-report-links` before a set is read, and read nothing when the expected cost passes what is left of the share; verify tests of a plan and of a refusal
+
+Not in phase 1, and still open where they stand: telling names from the substance registry (3.2, 3.4), handing linked trials to preparation as candidates (4.4), papers on the trial page (8.8), fingerprints as a stored record (8.3), the batched news search (8.9 to 8.13), everything of sections 2.4 to 2.8 and 6.
 
 ## 7. Records
 

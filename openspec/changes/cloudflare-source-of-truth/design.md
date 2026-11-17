@@ -177,11 +177,11 @@ What differs from the spike's merge, and why:
 - **A claim can be renamed or merged without losing a late push.** A renamed claim keeps answering to its old slug (`claim_alias`). A merged claim is archived pointing at the one that stays (`claim.merged_into`), gives it its articles, their statements and promises, and its leads; its own entities, matches and events stay with it; and the claim that stays is due to be prepared again. A device that pushes records for either old slug reaches the claim that stays.
 - **Nothing a lookup leaves has a time of day.** Its run's times, its share and its queue entry are dates; CHECKs hold the first two.
 
-The local proof (`store/proof/`, run on 2026-11-16): 58 scenarios pass in plain SQLite, the spike's 14 among them. A sample of 51,155 records exported read-only from the working database (358 claims with their records, 5,795 trials, 2,465 leads) loads through the merge in three runs, the slowest 4.9 seconds for 20,000 records on a laptop's disk, and pushing the first run again adds nothing. Projected to the whole database: 1.20 GB, 12% of D1's limit. The schema and one merge also run on D1's local engine through `wrangler d1 execute --local`.
+The local proof (`store/proof/`, run again on 2026-11-17 against main's revision `0032`): 62 scenarios pass in plain SQLite, the spike's 14 among them. A sample of 55,096 records exported read-only from the working database (407 claims with their records, 5,908 trials, 2,528 leads) loads through the merge in three runs, the slowest 2 seconds on a laptop's disk (4.9 seconds the day before, on a busier machine), and pushing the first run again adds nothing. Projected to the whole database: **1.67 GB, 17% of D1's limit**. It was 1.20 GB on 2026-11-16; the difference is the wider trial record, whose payloads in rows went from 292 MB to 670 MB. The schema and one merge also run on D1's local engine through `wrangler d1 execute --local`.
 
 What the proof does not show: timings on D1 itself, several writers at once, and a merge of 20,000 records on D1 (the spike merged 22,000 simpler rows in 0.63 seconds).
 
-**Reporting without applying** (written later on 2026-11-16, unattended). A D1 batch cannot be undone on request, so a report-only run cannot run the merge and take it back. `store/preview.sql` counts instead: for each kind, the staged records whose parent the store holds or the same run brings, those the store has none of under their key, and the events that differ from an approved one stored. It writes nothing that stays, and `discard_run` then drops the run and what it staged. Two reports that must agree could drift, so the proof takes the preview before every merge it runs and compares it with the merge's own report: all 60 merges of the scenarios and the three runs of the sample agree, actions included, and a run whose counts do not reconcile is seen not to. It cannot see what only a CHECK or a foreign key refuses (a reader share with a time of day, a payload never handed over); the merge refuses those. It is not exact, by design, for a run that names one claim by a present and a former slug for the same record, or whose actions depend on one another beyond a clear before a publication.
+**Reporting without applying** (written later on 2026-11-16, unattended). A D1 batch cannot be undone on request, so a report-only run cannot run the merge and take it back. `store/preview.sql` counts instead: for each kind, the staged records whose parent the store holds or the same run brings, those the store has none of under their key, and the events that differ from an approved one stored. It writes nothing that stays, and `discard_run` then drops the run and what it staged. Two reports that must agree could drift, so the proof takes the preview before every merge it runs and compares it with the merge's own report: every merge of the scenarios (60 when it was written, more since) and the three runs of the sample agree, actions included, and a run whose counts do not reconcile is seen not to. It cannot see what only a CHECK or a foreign key refuses (a reader share with a time of day, a payload never handed over); the merge refuses those. It is not exact, by design, for a run that names one claim by a present and a former slug for the same record, or whose actions depend on one another beyond a clear before a publication.
 
 ### 11. The read side
 
@@ -255,10 +255,10 @@ Read from Cloudflare's pages on 2026-11-16 (listed below). The operator already 
 
 | What | Included a month | Used at today's volumes | Cost |
 | --- | --- | --- | --- |
-| D1 storage | 5 GB | 1.2 GB | 0 |
+| D1 storage | 5 GB | 1.67 GB | 0 |
 | D1 rows written | 50 million | About 9 million once, for the migration (2.7 million rows, each written again for each index and search index it is in); then under 2 million a month: a daily refresh of a few thousand changed trials, 2,000 leads scored a day, and lookups | 0 |
 | D1 rows read | 25 billion | Under 1 billion: a build's export reads about 150,000 rows; a trial page about 10; a lookup's merge a few thousand | 0 |
-| R2 storage | 10 GB | 0.33 GB of payloads, and each deployment's export | 0 |
+| R2 storage | 10 GB | 0.37 GB of payloads, and each deployment's export | 0 |
 | R2 writes and reads | 1 million and 10 million | 19,723 writes once; a few hundred a day | 0 |
 | Queues | 1 million operations | 3 for each reader's lead | 0 |
 | Workflows | 500,000 steps, 30 million CPU milliseconds | About 10 steps a lead | 0 |
@@ -283,6 +283,41 @@ Pages read, all under `developers.cloudflare.com`: `d1/platform/limits`, `d1/pla
 6. **`prepare` runs store-side for every claim**, a backfill's included, as `file-based-backfill` decision 9 already had it. That change's `prepare` stage on the device only writes the records to push; its text now says so, and that a folder's push is several store runs (task 9.5).
 7. **CI's export reads a snapshot from the ingest service** into a SQLite file of the store's schema. CI holds no Cloudflare API token for the database.
 8. **A merged claim keeps its entities, matches and events**, archived with it. Its articles, their statements and promises, and its leads move, and the claim that stays is prepared again.
+
+### 17. What the operator decided on 2026-11-17
+
+**Decided by the operator on 2026-11-17**, on the five questions at the top of pull request 273:
+
+1. **The preview resources are created now, by the operator.** The D1 database `thenwhat-store-preview`, the R2 bucket `thenwhat-payloads-preview` and the Queue `thenwhat-work-preview`, each in the European Union jurisdiction, which is set at creation and cannot be changed. The commands are in task 3.3. The Queue's jurisdiction is the assistant's addition: its messages carry article address keys.
+2. **Deciders have an order:** a person's decision, then an assistant's, then a rule's or the seed's; at equal rank the later one. `specs/ingest-merge` now says so.
+3. **Evidence that differs is counted first.** During the 14 days of the parallel run the store is not what the site is built from, so a hold there takes nothing off the site; each night's count of evidence kept apart is recorded, and whether the hold acts on published claims from the cut-over is decided then, with the number.
+4. **The cut-over waits** for at least 14 days in parallel and 7 nights in a row of identical exports (decision 13).
+5. **Reporting without applying stays as written,** with its two stated limits (decision 10).
+
+### 18. Brought up to main on 2026-11-17
+
+Main gained migrations `0027` to `0032` while this was drafted. What changed in the store's SQL to match:
+
+- **The wider trial record** (`0031`): `registry_trial` has the eleven columns the registry states of a trial's activity and results (dates and their types, whether results are posted, the acronym, the lead sponsor's name), and the indexes the named sets of trials select on. The stored payload grew with them, from 642 to 1,711 bytes on average and 55,425 at most; 32 of the 467,064 are over 16 KB and are R2 objects, the rest stay in rows.
+- **Claim merge and rename** (`0032`, `claims/corrections.py`): the store's merge now does what the pipeline's does. What an article reported moves: articles, their promises and statements, leads, the papers, organisations and people an article named, and the names of the intervention that the action lists. What a registry said does not: matches and events stay with the claim that went. A rename can correct the intervention's name, keep the old one as a synonym, give a new slug, or any of these, and leaves the claim's registries due to be searched again. Which names a merge gains is the pipeline's rule, so the action carries them; the store applies them.
+- **A claim has one intervention**, held by a unique index as in Postgres.
+- **`claim_change`** has no table of its own: a merge or rename is a row of `claim_action` and a former slug is a row of `claim_alias` (`store-tables.md`).
+- **Not mirrored:** undoing a merge (`claim unmerge`). Postgres keeps, by row id, every row a merge moved; the store has no such record yet, and its statements are task 4.7.
+### 19. The ingest service, as built locally
+
+Built on 2026-11-17 in `store/ingest/`, with no Cloudflare account: a JavaScript Worker (decision 16, point 4) run on D1's local engine. Nothing is deployed. What the build settled, beyond decisions 10 and 12:
+
+- **The first migration is `store/schema.sql`, byte for byte.** The service bundles the statements of `merge.sql`, `preview.sql` and `ingest.sql` unchanged; a generator writes both and a test fails when either drifts from the SQL.
+- **The service has one table of its own**, `ingest_chunk`, in a second migration: the checksum of each chunk a run handed over, written in the same batch as the chunk's records. `run.stated_checksum` had no defined meaning; it is now the SHA-256 of the chunks' checksums, sorted and joined by a line feed, and a run whose chunks are not the ones stated is not merged. The table is not part of `store/schema.sql` and holds no record of the tracker.
+- **The service sets a run's time**, from its own clock, a day only for a lookup. A writer does not state it, so a lookup's run cannot carry a time of day by mistake.
+- **A merge has four outcomes:** merged (again, when it was merged before), refused by the merge, undone by D1 with the constraint named, and not merged because the checksum does not hold. A run that was undone still waits and its writer drops it.
+- **A report without applying drops the run**, as `store/README.md` describes, and says what it cannot see.
+- **Six kinds of token**, least scope each (`specs/ingest-merge`, "A writer is held to its scope"). The service knows a token by its SHA-256, read from one secret; a secret holds 5 KB, so about 35 tokens.
+- **The door's checks**, none of them a rule of the tracker: content type, a stated length, the bounds, a known kind, a natural key, only fields a statement reads, and no string long enough to be an article's text.
+- **Bounds**, each under a limit read from Cloudflare's documentation that day (`docs/sources.md`): a chunk of 1.9 MB (D1 binds it as one string of at most 2 MB) or 5,000 records; a run of 20,000 records until timings on D1 set it; a payload of 8 MB; a record of 1 MB. The merge is one batch of 89 statements, the longest far under 100 KB, with one bound parameter; a batch counts as one query against the 30 seconds and against the 1,000 queries an invocation.
+- **After a merge the service sends the Queue one message for each step with work due.** The message names the step and nothing else.
+
+All 62 of the proof's scenarios pass through the HTTP routes on the local engine. Where the proof wrote SQL directly, the test asks the service: a person's rejection is pushed as a record, a run that was undone is dropped by its writer, and the queue's and a slice's times are the service's clock. What this does not show is what decision 10 already lists: timings on D1 itself and several writers at once.
 
 ## Risks / Trade-offs
 

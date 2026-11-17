@@ -178,6 +178,8 @@ SELECT json_build_object('kind', 'registry_trial', 'key', t.registry_name || '|'
          'phases', to_json(t.phases), 'overall_status', t.overall_status, 'start_date', t.start_date,
          'sponsor_class', t.sponsor_class, 'search_name', t.search_name,
          'search_indication', t.search_indication,
+         'start_date_type', t.start_date_type, 'last_update_posted', t.last_update_posted, 'study_first_posted', t.study_first_posted, 'primary_completion_date', t.primary_completion_date, 'primary_completion_date_type', t.primary_completion_date_type, 'completion_date', t.completion_date, 'completion_date_type', t.completion_date_type, 'results_first_posted', t.results_first_posted, 'acronym', t.acronym, 'lead_sponsor_name', t.lead_sponsor_name,
+         'has_results', t.has_results::int,
          'payload_sha256', encode(sha256(convert_to(t.raw_payload::text, 'UTF8')), 'hex'),
          'fetched_at', t.fetched_at))
 FROM registry_trial t
@@ -195,7 +197,7 @@ WHERE w.record_kind = 'registry_trial' AND t.id % 97 = 0;
 
 -- ---- link leads: listed outlets only, and only those scored, read, labelled or tied --
 SELECT json_build_object('kind', 'link_lead', 'key', l.url_key, 'body', json_build_object(
-         'url_key', l.url_key, 'url_key_version', 1, 'url', l.url, 'outlet', l.outlet,
+         'url_key', l.url_key, 'url_key_version', l.url_key_version, 'url', l.url, 'outlet', l.outlet,
          'outlet_kind', l.outlet_kind, 'title', l.title, 'first_shared_at', l.first_shared_at,
          'origin', 'file', 'screen_outcome', l.screen_outcome, 'triage_score', l.triage_score,
          'triage_version', l.triage_version, 'read_outcome', l.read_outcome, 'read_detail', l.read_detail,
@@ -203,7 +205,7 @@ SELECT json_build_object('kind', 'link_lead', 'key', l.url_key, 'body', json_bui
 FROM link_lead l
 WHERE l.outlet_kind <> 'unknown' AND l.screen_outcome IS DISTINCT FROM 'unlisted_outlet'
   AND ((l.claim_id IS NOT NULL AND l.claim_id % 5 = 0)
-       OR (l.id % 200 = 0 AND (l.triage_score IS NOT NULL OR l.read_outcome IS NOT NULL)));
+       OR (l.id % 200 = 0 AND l.claim_id IS NULL AND (l.triage_score IS NOT NULL OR l.read_outcome IS NOT NULL)));
 
 SELECT json_build_object('kind', 'link_share',
        'key', l.url_key || '|' || s.platform || '|' || s.community || '|' || s.shared_at,
@@ -212,7 +214,7 @@ SELECT json_build_object('kind', 'link_share',
 FROM link_share s JOIN link_lead l ON l.id = s.link_lead_id
 WHERE l.outlet_kind <> 'unknown' AND l.screen_outcome IS DISTINCT FROM 'unlisted_outlet'
   AND ((l.claim_id IS NOT NULL AND l.claim_id % 5 = 0)
-       OR (l.id % 200 = 0 AND (l.triage_score IS NOT NULL OR l.read_outcome IS NOT NULL)));
+       OR (l.id % 200 = 0 AND l.claim_id IS NULL AND (l.triage_score IS NOT NULL OR l.read_outcome IS NOT NULL)));
 
 -- ---- spend and decisions, a slice of each ---------------------------------------------
 SELECT json_build_object('kind', 'usage', 'key', u.id::text, 'body', json_build_object(

@@ -5,10 +5,11 @@ The truth store's SQL: the D1 schema and the one merge path every writer uses. A
 | File | What it is |
 | --- | --- |
 | `schema.sql` | Tables, natural keys, CHECK guards, the FTS5 indexes, and the views that find a staged record's parent |
-| `merge.sql` | The merge: 85 fixed statements sent as one D1 batch, each with its conflict rule above it |
+| `merge.sql` | The merge: 89 fixed statements sent as one D1 batch, each with its conflict rule above it |
 | `preview.sql` | The report without the merge: what a run would add, match and put in conflict, counted and not tried |
 | `ingest.sql` | What surrounds a merge: registering a run, staging records, reading the report, dropping a previewed run, the work queue, slices |
 | `proof/` | A local proof in plain SQLite, and a check on D1's local engine |
+| `ingest/` | The ingest service: the Worker that runs these statements for a writer holding a token. Its own `README.md` says how to run it locally |
 
 Which Postgres table became what, and why: `openspec/changes/cloudflare-source-of-truth/store-tables.md`.
 
@@ -18,13 +19,13 @@ Which Postgres table became what, and why: `openspec/changes/cloudflare-source-o
 python3 store/proof/proof.py --scenarios
 ```
 
-Builds the schema in memory and runs 58 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's. Before every merge it also takes the report without applying (`preview.sql`) and holds it to what the merge then reports.
+Builds the schema in memory and runs 62 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's. Before every merge it also takes the report without applying (`preview.sql`) and holds it to what the merge then reports.
 
 ```bash
 docker exec -i thenwhat-db-1 psql -U thenwhat -d thenwhat -q -f - < store/proof/export_sample.sql > store/proof/sample/records.jsonl
 ```
 
-Exports a sample from the working Postgres in natural-key form: every fifth claim with its records, about 5,800 trials, 2,500 scored leads. The session is read-only (`default_transaction_read_only`). It takes about four minutes, most of it checksums. Create `store/proof/sample/` first; it is not committed.
+Exports a sample from the working Postgres in natural-key form: every fifth claim with its records, about 5,900 trials, 2,500 scored leads. The session is read-only (`default_transaction_read_only`). It takes about four minutes, most of it checksums. Create `store/proof/sample/` first; it is not committed.
 
 ```bash
 python3 store/proof/proof.py
@@ -68,6 +69,8 @@ A staged record's `key` is its natural key as one string, parts joined by `|`. F
 | `decision`, `usage` | the run | `seq` |
 | `measure_daily`, `measure_claim`, `work_entry`, `outlet_icon`, `work_slice`, `unlisted_domain` | | as their tables' primary keys |
 | `action` | `slug` | `action`: `audit_clear`, `archive`, `unarchive`, `rename`, `merge`, `conflict_accept`, `conflict_dismiss`, `publish` |
+
+A `rename` carries any of `new_slug`, and `old_name` with `new_name` (and `keep_old_name`, true unless stated). A `merge` carries `into_slug` and `gains`, the names the kept intervention gains, which the pipeline's rule chooses.
 
 ## Reading the SQL
 
