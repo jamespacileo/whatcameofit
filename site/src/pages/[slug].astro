@@ -32,7 +32,7 @@ import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
-import { BRIEF_TITLE, digestApproval, digestBridge, recordBrief } from "../lib/record-brief";
+import { BRIEF_TITLE, digestApproval, digestBridge, phase4Note, recordBrief } from "../lib/record-brief";
 import { UNCHECKED_BYLINE } from "../lib/notices";
 import { statementsHeading } from "../lib/statements";
 import {
@@ -286,7 +286,6 @@ const milestones = [
 const timetableNote = [
   ...(counts.promises > 0 ? [plural(counts.promises, "promise")] : []),
   plural(counts.records, "record"),
-  "newest first",
 ].join(" · ");
 // A long record folds by year (openspec sheet-cohesion). This year and last stay open,
 // with any year a promise names; an older year is one line that says how many records
@@ -436,21 +435,30 @@ const sections = [
             }
           </div>
         </div>
+        {/* The title is the claim: the treatment, then what it is for. Each is drawn as
+            the record gives it. A report's own headline is quoted with its outlet, under
+            the title on a wide screen and at the head of the sheet on a phone, never set
+            as the page's own words (openspec claim-title). */}
         <h1
           class:list={[
             "title",
-            { long: claim.headline.length > 70, longer: claim.headline.length > 110 },
+            "claim-title",
+            { long: claim.intervention.name.length > 40, longer: claim.intervention.name.length > 80 },
           ]}
         >
-          {
-            /* A name such as "USAG-1" must not break at its hyphen. */
-            claim.headline.split(" ").map((word, index) => (
-              <>
-                {index > 0 && " "}
-                {word.includes("-") && word.length <= 16 ? <span class="unbroken">{word}</span> : word}
-              </>
-            ))
-          }
+          <span class="title-what">
+            {
+              /* A name such as "USAG-1" must not break at its hyphen. */
+              claim.intervention.name.split(" ").map((word, index) => (
+                <>
+                  {index > 0 && " "}
+                  {word.includes("-") && word.length <= 16 ? <span class="unbroken">{word}</span> : word}
+                </>
+              ))
+            }
+          </span>
+          <span class="visually-hidden"> for </span>
+          <span class="title-for">{claim.indication}</span>
         </h1>
 
         {/* The summary, straight under the title where the band has room for it. On a
@@ -576,6 +584,7 @@ const sections = [
                         </li>
                       ))}
                     </ol>
+                    {phase4Note(claim) && <p class="pop-note">{phase4Note(claim)}</p>}
                   </>
                 )
               }

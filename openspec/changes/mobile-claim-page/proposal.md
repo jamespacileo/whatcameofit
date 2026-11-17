@@ -15,6 +15,14 @@ On 2026-11-17 the claim page was critiqued on a phone beside examine.com (`.impe
 - The "Why this status" panel names the three latest records the status rests on and, when there are more, says how many there are and leads to the timetable, which marks them all. The panel and the no-signal panel end with a "Close" control that stays at the panel's foot.
 - On a phone, the two links under the title are as tall as a fingertip.
 
+## Second pass (the re-critique of 2026-11-17, all picked by the operator)
+
+- The status card's count of trials says the three states of trials that have started (under way, finished, stopped early): four numbers, not seven. How many are Phase 4 trials moves to the panel that names the path's places. This amends the requirement added the same day in `sections-funnel`.
+- A link under a fact row's value ("See the posted results") lay under the row's own press and could not be pressed. It now lies over it.
+- The timetable's note no longer says "newest first" over a line of moments that runs oldest first.
+- On a phone, a moment, the fold line under a list and a marked word of the brief are a fingertip tall.
+- The requirement "Ways back sit beside the answer" loses its sentence on where the unchecked notice stands: the byline settles that.
+
 ## Not changing
 
 - No sentence says what a news report claimed. The export carries no such code, and reading it from a title would be a guess.

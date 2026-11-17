@@ -1834,7 +1834,7 @@ test("Scenario: Records from 2021 to 2026 with none in 2024 and 2025", () => {
 test("Scenario: Four promises and seventeen records", () => {
   // Here: one promise and three records, given as two numbers wherever they are given.
   const html = page("quiet-claim/index.html");
-  assert.match(html, /class="fold-note">1 promise · 3 records · newest first</);
+  assert.match(html, /class="fold-note">1 promise · 3 records</);
   assert.match(html, /href="#timetable"[\s\S]{0,200}class="n">1 and 3</);
   const controls = html.match(/<div class="kind-tabs"[\s\S]*?<\/div>/)[0];
   assert.match(wordsOf(controls), /All\s+Promises 1\s+News reports 2\s+/);
@@ -1915,4 +1915,15 @@ test("Scenario: the home page draws one claim, reported and on record", () => {
   assert.match(card, /class="track/);
   // The home page loads the heading face ahead of need, as a claim page does.
   assert.match(html, /rel="preload" as="font" type="font\/woff2" href="[^"]*newsreader[^"]*"/);
+});
+
+test("Scenario: A claim page is titled by its claim", () => {
+  const html = page("phase-claim/index.html");
+  const title = html.match(/<h1[^>]*>[\s\S]*?<\/h1>/)[0];
+  // The treatment, "for" to a screen reader, then what it is for.
+  assert.match(title, /class="title-what">[\s\S]*phase-claim[\s\S]*agent[\s\S]*<\/span>/);
+  assert.match(title, /<span class="visually-hidden"> for <\/span>/);
+  assert.match(title, /class="title-for">example condition<\/span>/);
+  // The claim's headline is not set as the page's own title.
+  assert.doesNotMatch(title, /Synthetic claim with a started trial/);
 });

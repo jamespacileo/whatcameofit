@@ -13,6 +13,7 @@ import {
   briefNote,
   digestApproval,
   digestBridge,
+  phase4Note,
   recordBrief,
   sourceWords,
   testedSummary,
@@ -376,12 +377,18 @@ test("Scenario: A status that names a phase counts the trials' states beside it"
   phased.trials[0].state = "terminated";
   phased.trials[1].state = "under_way";
   assert.equal(digestBridge(phased), "3 trials on record: 1 under way, 1 finished, 1 stopped early.");
-  // A Phase 4 trial has no place on the path, so their number is said.
+  // A Phase 4 trial has no place on the path: said where the path's places are named.
+  assert.equal(phase4Note(phased), null);
   phased.trials[2].phases = ["phase_4"];
-  assert.match(digestBridge(phased), /stopped early\. 1 is a Phase 4 trial; the path counts phases up to Phase 3\.$/);
-  // Suspended, withdrawn and unstated trials are counted together.
+  assert.equal(phase4Note(phased), "1 trial on record is a Phase 4 trial. The path counts phases up to Phase 3.");
+  assert.doesNotMatch(digestBridge(phased), /Phase 4/);
+  // Beside the status only the trials that have started are counted by state.
   phased.trials[0].state = "withdrawn";
-  assert.match(digestBridge(phased), /^3 trials on record: 1 under way, 1 finished, 1 in another state\./);
+  assert.equal(digestBridge(phased), "3 trials on record: 1 under way, 1 finished.");
+  // With no trial in one of those states every state is said, so the count is never bare.
+  const idle = structuredClone(phased);
+  for (const entry of idle.trials) entry.state = "not_started";
+  assert.equal(digestBridge(idle), "3 trials on record: 3 not started.");
   // One trial is said without a count; no trial, nothing.
   phased.trials = [phased.trials[1]];
   assert.equal(digestBridge(phased), "1 trial on record: under way.");

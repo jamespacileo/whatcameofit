@@ -25,7 +25,48 @@ A claim page, and the extension's view of a claim, SHALL say when no person has 
 - **WHEN** the site is built from an export that calls itself a preview
 - **THEN** every page carries the preview note and a noindex tag
 
+### Requirement: Ways back sit beside the answer
+A claim page's status panel SHALL link to the page's reminders where they can be offered. The home page SHALL link the feed of status changes in the open, and each topic page SHALL link a feed of that topic's status changes and offer to share the page. A claim page SHALL end with a link to look up another headline, and the home page SHALL end with the link to suggest a headline when a suggestion address is configured. Where a claim page says it has not been checked by a person is set by "Unchecked claims are marked".
+
+#### Scenario: Following from a claim page
+- **WHEN** a reader opens a claim page
+- **THEN** the status panel holds a link to "Check again later", and the page's last section leads to the lookup
+
+#### Scenario: A topic's status changes as a feed
+- **WHEN** a topic has a claim whose status has changed twice
+- **THEN** the topic page links a feed holding those changes, newest first
+
+### Requirement: The digest counts the trials' states under a status that names a phase
+When a claim's status is not Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record and how many are under way, finished and stopped early, leaving out a state no trial has. Where no trial is in one of those three states, it SHALL count every state instead, so the count never stands bare. Where any trial on record is a Phase 4 trial, the panel that names the path's places SHALL say how many and that the path counts phases up to Phase 3; the digest SHALL NOT. The sentence SHALL be a count of records and SHALL NOT say what the counts mean.
+
+#### Scenario: Most trials stopped early
+- **WHEN** a reader opens a claim whose status is Phase 3 trial and which has 9 trials on record, 3 finished and 6 stopped early
+- **THEN** the digest says "9 trials on record: 3 finished, 6 stopped early."
+
+#### Scenario: Forty-nine trials in six states
+- **WHEN** a claim has 49 trials on record: 5 under way, 1 not started, 32 finished, 3 stopped early and 8 in other states
+- **THEN** the digest says "49 trials on record: 5 under way, 32 finished, 3 stopped early."
+
+#### Scenario: Phase 4 trials on record
+- **WHEN** a claim whose status is Phase 3 trial has 47 trials on record, 24 of them Phase 4
+- **THEN** the panel that opens from the status says, under the path's places, that 24 trials on record are Phase 4 trials and that the path counts phases up to Phase 3
+
 ## ADDED Requirements
+
+### Requirement: A link in a row that opens can be pressed
+In a fact row that opens, a link under the row's value SHALL be pressed for itself and SHALL NOT be covered by the row's own press. On a phone it, a moment of the record, the line that opens the rest of a list and a marked word of the record in brief SHALL each be at least as tall as a fingertip, or lie in running text.
+
+#### Scenario: "See the posted results"
+- **WHEN** a reader presses "See the posted results" under an answer of the record in brief
+- **THEN** the page goes to the trials on record and the row does not open
+
+### Requirement: A heading's note says only what is true of what is in sight
+The note beside the timetable's heading SHALL give the counts of promises and records and SHALL NOT name an order: the moments under it run oldest first and the full record newest first.
+
+#### Scenario: A claim with 163 records and one promise
+- **WHEN** a reader reads the timetable's heading
+- **THEN** the note reads "1 promise · 163 records"
+
 
 ### Requirement: A Phase 3 status with no approval says approvals are not read
 When a claim's status is Phase 3 trial and no approval is among its records, the status card SHALL say, after what the status means, that no approval is listed and that the site does not read regulators' records, so one can exist and not be listed. Whether the sentence is shown SHALL be decided by the status code and the claim's records alone, never by the wording of a news report. The sentence SHALL hold no verdict and no link.

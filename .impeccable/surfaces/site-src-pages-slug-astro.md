@@ -19,9 +19,9 @@ THESIS: Answer the reader's question in the first panel, then let them check it:
 
 OWN-WORLD: White page, one clinical blue accent (the operator asked for blue in the NHS-blue family; never the NHS identity), a pale blue summary panel, pale amber for anything promised, one friendly sans (Figtree) and, since 2026-11-17, a news serif (Newsreader) for a record page's title and section headings only, rounded frames, a small drawn mark per topic.
 
-STORY: The reader sees the topic, the headline, where it stands and the latest record date, reads two sentences, then runs down the years: promise on amber, record on white, gaps left as gaps. Each record has a footnote to its source.
+STORY: The reader sees the topic, the claim (the treatment and what it is for; since 2026-11-17 the title is the claim, not a headline), where it stands and the latest record date, reads two sentences, then runs down the years: promise on amber, record on white, gaps left as gaps. Each record has a footnote to its source.
 
-FIRST VIEWPORT: Deep navy masthead with white lettering. Topic chip. Headline. The digest panel with the status label at left and the summary at right. The facts row. The heading and top rows of the timetable.
+FIRST VIEWPORT: Deep navy masthead with white lettering. Topic chip. The claim as the title. One line saying who put the page together and when the registries were last checked. The digest panel with the status label at left and the summary at right. The facts row. The heading and top rows of the timetable.
 
 FORM: Category standard, chosen by the operator. seed: seed:4e8bc7dce82955a8 (rolled for the first direction; the operator then pinned this one)
 

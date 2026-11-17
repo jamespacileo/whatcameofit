@@ -11,6 +11,12 @@
 - [x] 2.1 Draw the byline under the title: the unchecked wording with its link, then the last-checked day. Remove the notice under the status card. Verify: site test "Preview build".
 - [x] 2.2 Make the two links under the title a fingertip tall on a phone. Verify: measured at 375px.
 
+## 2b. Second pass
+
+- [x] 2b.1 Shorten the status card's trial count; `phase4Note` in the status panel. Verify: record-brief test "A status that names a phase counts the trials' states beside it".
+- [x] 2b.2 Lift a fact row's links over the row's press. Verify in the browser: the centre of "See the posted results" reaches the link.
+- [x] 2b.3 Drop "newest first" from the timetable's note; fingertip-tall moments, fold lines and marked words on a phone. Verify: measured at 375px.
+
 ## 3. Records
 
 - [x] 3.1 Update DESIGN.md: the byline, the panel's close control.
