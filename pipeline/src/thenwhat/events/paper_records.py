@@ -28,6 +28,15 @@ class PaperIndex(Protocol):
     def paper_by_pubmed_id(self, pubmed_id: str) -> SourceRecord | None: ...
 
 
+def young(row: PaperRecord | None, now: datetime, max_age: timedelta) -> bool:
+    """Whether a stored record needs no request: read, or asked without an answer, within
+    `max_age`."""
+    if row is None:
+        return False
+    last = max(row.fetched_at, row.asked_at) if row.asked_at else row.fetched_at
+    return now - last <= max_age
+
+
 class PapersByNumber(Protocol):
     def papers_by_pubmed_ids(self, pubmed_ids: list[str]) -> dict[str, SourceRecord | None]: ...
 
@@ -59,7 +68,7 @@ def keep_papers_by_pubmed_id(
     due: list[tuple[str, PaperRecord | None]] = []
     for number in dict.fromkeys(numbers):
         row = stored_paper(session, pubmed_id=number)
-        if row is None or now - row.fetched_at > max_age:
+        if not young(row, now, max_age):
             due.append((number, row))
     if not due:
         return PapersKept()
@@ -71,6 +80,7 @@ def keep_papers_by_pubmed_id(
             _store(session, row, record, doi=None, pubmed_id=number, identifier=None)
             found += 1
         elif row is not None and row.payload is not None:
+            _store_not_held(session, row, doi=None, pubmed_id=number, now=now)
             kept_held += 1
         else:
             _store_not_held(session, row, doi=None, pubmed_id=number, now=now)
@@ -125,10 +135,11 @@ def keep_paper(
     A stored record that is young enough causes no request. `held` is a record of the
     paper already in hand, such as the one a follow-up event keeps: it is stored when
     nothing is, and asked for again only once it is old. A paper the index does not
-    hold is stored with no payload, so that it is not asked for on every fetch.
+    hold is stored with no payload, so that it is not asked for on every fetch; one
+    stored with its paper is never emptied by a missing answer (`_store_not_held`).
     """
     row = stored_paper(session, doi=doi, pubmed_id=pubmed_id, identifier=identifier)
-    if row is not None and now - row.fetched_at <= max_age:
+    if row is not None and young(row, now, max_age):
         return row
     newer = held is not None and (row is None or held.fetched_at > row.fetched_at)
     if held and newer and (now - held.fetched_at <= max_age or not (doi or pubmed_id)):
@@ -155,7 +166,7 @@ def note_paper(
     """Store what the index has just answered for this DOI, unless a stored record is
     still young enough: the record, or that the index does not hold the paper."""
     row = stored_paper(session, doi=doi)
-    if row is not None and now - row.fetched_at <= max_age:
+    if row is not None and young(row, now, max_age):
         return row
     if record is None:
         return _store_not_held(session, row, doi=doi, pubmed_id=None, now=now)
@@ -202,6 +213,12 @@ def _store_not_held(
     pubmed_id: str | None,
     now: datetime,
 ) -> PaperRecord:
+    """The index answered nothing for the paper. A row holding the paper keeps it, with
+    the time it was read, and notes when it was asked; any other is stored as not held."""
+    if row is not None and row.payload is not None:
+        row.asked_at = now
+        session.flush()
+        return row
     if row is None:
         row = PaperRecord(
             identifier=doi.lower() if doi else f"{PUBMED_PREFIX}{pubmed_id}",

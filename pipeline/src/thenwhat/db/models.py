@@ -650,6 +650,9 @@ class PaperRecord(Base):
     # SQL NULL, not a JSON null, when the index does not hold the paper.
     payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
     fetched_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # When the index was last asked and answered nothing for a paper this row holds: the
+    # paper is kept, with the time it was read, and is not asked again until this is old.
+    asked_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
 
 
 class OutletIcon(Base):

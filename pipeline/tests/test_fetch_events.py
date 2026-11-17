@@ -704,3 +704,25 @@ def test_a_paper_held_is_never_emptied_by_a_missing_answer(session: Session, fix
     assert (kept.asked, kept.found, kept.not_held, kept.kept_held) == (1, 0, 0, 1)
     [stored] = paper_records(session)
     assert stored.payload is not None and stored.fetched_at == NOW
+    # It was asked: it waits the record's age before it is asked again.
+    assert stored.asked_at == later
+    asked = len(index.asked)
+    soon = keep_papers_by_pubmed_id(
+        session, index, [RESULTS_PMID], now=later + timedelta(days=7), max_age=age
+    )
+    assert soon.asked == 0 and len(index.asked) == asked
+
+
+def test_one_paper_asked_alone_is_never_emptied_by_a_missing_answer(session: Session, fixture_json):
+    from thenwhat.events.paper_records import keep_paper
+
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+    age = timedelta(days=30)
+    keep_paper(session, index, now=NOW, max_age=age, pubmed_id=RESULTS_PMID)
+    index.by_pubmed_id.clear()
+    later = NOW + timedelta(days=60)
+    kept = keep_paper(session, index, now=later, max_age=age, pubmed_id=RESULTS_PMID)
+    assert kept is not None and kept.payload is not None
+    assert (kept.fetched_at, kept.asked_at) == (NOW, later)
+    keep_paper(session, index, now=later + timedelta(days=7), max_age=age, pubmed_id=RESULTS_PMID)
+    assert index.asked == [RESULTS_PMID, RESULTS_PMID]
