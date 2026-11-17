@@ -6,6 +6,10 @@ their approved reported statements, the organisations they name and their trials
 record readings.
 The file is the single interface between pipeline and site; its schema is checked in at
 site/export.schema.json.
+
+The export is assembled here once, from a `Records` (`records.py`): the pipeline's own
+database, or a SQLite file that has the truth store's schema. Nothing below asks a
+database for anything.
 """
 
 import base64
@@ -16,28 +20,21 @@ from pathlib import Path
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.claims.corrections import moved_addresses
 from thenwhat.claims.entities import intervention_components
-from thenwhat.claims.entry import articles_of, name_key, promises_of
-from thenwhat.claims.status import refresh_status, status_history
+from thenwhat.claims.entry import name_key
+from thenwhat.claims.status import evidence_of, flags_of, keep_status
 from thenwhat.claims.verticals import GROUPS, RETIRED_VERTICALS, VERTICAL_GROUPS, VERTICALS
 from thenwhat.db.models import (
     Claim,
     ClaimTerm,
     Entity,
-    EntityMatch,
     EvidenceEvent,
-    FailureFlag,
-    OutletIcon,
     PaperRecord,
-    ReportedStatement,
-    SourceArticle,
+    Reading,
     TermRecord,
 )
-from thenwhat.decide.steps import latest_scoring, latest_stage_suggestion
 from thenwhat.domain import (
     TRIAL_EVENT_TYPES,
     ClaimStatus,
@@ -68,7 +65,7 @@ from thenwhat.events.paper_facts import (
     read_paper,
     record_page,
 )
-from thenwhat.events.paper_records import PUBMED_PREFIX, paper_reference, stored_paper
+from thenwhat.events.paper_records import PUBMED_PREFIX, paper_reference
 from thenwhat.events.trial_facts import (
     AgeGroup,
     Allocation,
@@ -89,14 +86,16 @@ from thenwhat.events.trial_facts import (
 )
 from thenwhat.events.trial_records import newest_registry_record
 from thenwhat.export.organisations import ExportedOrganisation, organisations_of, publisher_of
+from thenwhat.export.records import PostgresRecords, Records
 from thenwhat.outlets.icons import is_blank_icon, outlet_domain
 from thenwhat.readings.rules import Outcome
-from thenwhat.readings.service import readings_for
+from thenwhat.readings.service import readings_that_stand
 from thenwhat.sources import opentargets
 from thenwhat.sources.base import SourceRecord, record_url
 from thenwhat.sources.openalex import OpenAlex
 from thenwhat.sources.ror import Ror
 from thenwhat.sources.terms import SOURCES as LISTED_SOURCES
+from thenwhat.status.rules import derive, history
 from thenwhat.terms.candidates import REASON_CODES
 from thenwhat.terms.drugs import DRUG_REASON_CODES, DRUG_RECORD_NAMES_TARGET
 from thenwhat.terms.genes import TARGET_REASON_CODES
@@ -681,34 +680,7 @@ def export_json_schema() -> dict[str, Any]:
     return Export.model_json_schema(mode="serialization")
 
 
-def _decided_by_assistant(session: Session, claim: Claim) -> bool:
-    """Whether the assistant made any decision that still stands on the claim, its
-    matches, its events or its reported statements."""
-    if claim.reviewed_by is Decider.ASSISTANT:
-        return True
-    match_ids = select(EntityMatch.id).join(Entity).where(Entity.claim_id == claim.id)
-    return bool(
-        session.scalar(
-            select(EntityMatch.id).where(
-                EntityMatch.id.in_(match_ids), EntityMatch.reviewed_by == Decider.ASSISTANT
-            )
-        )
-        or session.scalar(
-            select(EvidenceEvent.id).where(
-                EvidenceEvent.claim_id == claim.id,
-                EvidenceEvent.reviewed_by == Decider.ASSISTANT,
-            )
-        )
-        or session.scalar(
-            select(ReportedStatement.id).where(
-                ReportedStatement.claim_id == claim.id,
-                ReportedStatement.reviewed_by == Decider.ASSISTANT,
-            )
-        )
-    )
-
-
-def _statements(session: Session, claim: Claim) -> list[ExportedStatement]:
+def _statements(records: Records, claim: Claim) -> list[ExportedStatement]:
     """The claim's approved reported statements. Pending and rejected ones are left out."""
     return [
         ExportedStatement(
@@ -721,47 +693,20 @@ def _statements(session: Session, claim: Claim) -> list[ExportedStatement]:
             article_url=article.url,
             read_on=statement.article_read_at.date(),
         )
-        for statement, article in session.execute(
-            select(ReportedStatement, SourceArticle)
-            .join(SourceArticle, SourceArticle.id == ReportedStatement.source_article_id)
-            .where(
-                ReportedStatement.claim_id == claim.id,
-                ReportedStatement.review_state == ReviewState.APPROVED,
-            )
-            .order_by(SourceArticle.published_date, SourceArticle.id, ReportedStatement.id)
-        )
+        for statement, article in records.statements(claim)
     ]
 
 
 CANDIDATES_SHOWN = 5
 
 
-def _reading(session: Session, match: EntityMatch) -> str | None:
-    scored = latest_scoring(session, match)
-    if scored is None or scored.output is None:
-        return None
-    choice = scored.output.get("choice")
-    return choice if isinstance(choice, str) else None
-
-
-def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
+def _matches(records: Records, claim: Claim) -> list[ExportedMatch]:
     """The claim's approved matches, then its best pending candidates. Rejected ones are
     never exported. Openspec auto-publish: "Confidence is shown with every match"."""
-    found = list(
-        session.scalars(
-            select(EntityMatch)
-            .join(Entity)
-            .where(
-                Entity.claim_id == claim.id,
-                EntityMatch.review_state.in_([ReviewState.APPROVED, ReviewState.PENDING]),
-                # Papers found by search and organisations are not registry matches of
-                # the claim. An approved paper is exported in `papers`, with the role
-                # "related" (openspec related-research); organisations are not exported.
-                EntityMatch.source_name.not_in([OpenAlex.name, Ror.name]),
-            )
-            .order_by(EntityMatch.score.desc(), EntityMatch.id)
-        )
-    )
+    # Papers found by search and organisations are not registry matches of the claim.
+    # An approved paper is exported in `papers`, with the role "related" (openspec
+    # related-research); organisations are not exported.
+    found = records.shown_matches(claim, but_from=(OpenAlex.name, Ror.name))
     approved = [m for m in found if m.review_state is ReviewState.APPROVED]
     pending = [m for m in found if m.review_state is ReviewState.PENDING][:CANDIDATES_SHOWN]
     return [
@@ -771,7 +716,7 @@ def _matches(session: Session, claim: Claim) -> list[ExportedMatch]:
             url=record_url(match.source_name, match.external_id),
             score=round(match.score, 4),
             state="approved" if match.review_state is ReviewState.APPROVED else "candidate",
-            reading=_reading(session, match),
+            reading=records.match_reading(match),
             decided_by=(
                 match.reviewed_by.value
                 if match.review_state is ReviewState.APPROVED and match.reviewed_by
@@ -793,8 +738,8 @@ class _Papers:
     its DOI in one place and by its PubMed number in another is one paper once its
     index record is stored, because the record gives both."""
 
-    def __init__(self, session: Session) -> None:
-        self.session = session
+    def __init__(self, records: Records) -> None:
+        self.records = records
         self.found: dict[str, ExportedPaper] = {}
 
     def add(
@@ -808,7 +753,7 @@ class _Papers:
     ) -> str | None:
         """Give the paper this role and return its identifier, or None when nothing
         identifies it."""
-        row = stored_paper(self.session, doi=doi, pubmed_id=pubmed_id, identifier=identifier)
+        row = self.records.paper(doi=doi, pubmed_id=pubmed_id, identifier=identifier)
         key = _paper_identifier(row, doi=doi, pubmed_id=pubmed_id, identifier=identifier)
         if key is None:
             return None
@@ -858,23 +803,12 @@ def _paper_url(identifier: str, url: str | None) -> str:
 
 
 def _collect_papers(
-    session: Session, claim: Claim, events: list[EvidenceEvent], papers: _Papers
+    records: Records, entities: list[Entity], events: list[EvidenceEvent], papers: _Papers
 ) -> None:
     """The origin paper, the papers behind approved follow-up events and the approved
     related papers. Results papers are added as each trial is read."""
-    for entity in session.scalars(
-        select(Entity).where(Entity.claim_id == claim.id).order_by(Entity.id)
-    ):
-        approved = list(
-            session.scalars(
-                select(EntityMatch)
-                .where(
-                    EntityMatch.entity_id == entity.id,
-                    EntityMatch.review_state == ReviewState.APPROVED,
-                )
-                .order_by(EntityMatch.score.desc(), EntityMatch.id)
-            )
-        )
+    for entity in entities:
+        approved = records.approved_matches(entity)
         if entity.is_origin_paper and approved and approved[0].external_id.startswith("10."):
             papers.add(ExportedPaperRole(role="origin"), doi=approved[0].external_id)
         if entity.type is not EntityType.INTERVENTION:
@@ -908,7 +842,7 @@ def _collect_papers(
 
 
 def _trials(
-    session: Session,
+    records: Records,
     events: list[EvidenceEvent],
     papers: _Papers,
     reading_accept_above: float = 0.8,
@@ -951,8 +885,8 @@ def _trials(
                     confidence=round(reading.confidence, 4),
                     read_on=record.fetched_at,
                 )
-                for reading in readings_for(
-                    session,
+                for reading in _readings(
+                    records,
                     record.source_name,
                     trial_id,
                     [Outcome(o.measure, o.time_frame) for o in read.facts.primary_outcomes],
@@ -991,7 +925,17 @@ def _trials(
     return trials
 
 
-def _background(session: Session, claim: Claim, intervention: Entity) -> list[ExportedCard]:
+def _readings(
+    records: Records, source_name: str, trial_id: str, outcomes: list[Outcome]
+) -> list[Reading]:
+    """The stored readings of the trial that were read from these outcomes."""
+    read = records.trial_read(source_name, trial_id)
+    return [] if read is None else readings_that_stand(read[0], read[1], outcomes)
+
+
+def _background(
+    records: Records, terms: list[ClaimTerm], intervention: Entity
+) -> list[ExportedCard]:
     """At most one card for the claim's condition and one for its intervention: the
     approved exact link with the highest score or, with none, the approved broader one
     or, for the intervention with neither, the approved kind link. Then at most one
@@ -1001,20 +945,13 @@ def _background(session: Session, claim: Claim, intervention: Entity) -> list[Ex
     one whose term has no stored record, since a card states when its record was read.
     """
     components = intervention_components([intervention.name, *intervention.synonyms])
-    approved = list(
-        session.scalars(
-            select(ClaimTerm)
-            .where(
-                ClaimTerm.claim_id == claim.id,
-                ClaimTerm.review_state == ReviewState.APPROVED,
-                ClaimTerm.fit.is_not(None),
-                ClaimTerm.score.is_not(None),
-            )
-            .order_by(ClaimTerm.score.desc(), ClaimTerm.id)
-        )
+    # Highest score first; `terms` is by id, and the sort keeps that order among equals.
+    approved = sorted(
+        (term for term in terms if term.fit is not None and term.score is not None),
+        key=lambda term: -(term.score or 0.0),
     )
     cards: list[ExportedCard] = []
-    drug, drugs_target = _drug_cards(session, claim, components)
+    drug, drugs_target = _drug_cards(records, terms, components)
     # The drug source's own target comes before a gene named in the intervention.
     for role in (TermRole.CONDITION, TermRole.INTERVENTION, TermRole.DRUG, TermRole.TARGET):
         if role is TermRole.DRUG:
@@ -1030,7 +967,7 @@ def _background(session: Session, claim: Claim, intervention: Entity) -> list[Ex
                     for term in approved
                     if term.role is role and term.fit is fit
                     if role is not TermRole.INTERVENTION or name_key(term.label) not in components
-                    if (made := _card(session, term)) is not None
+                    if (made := _card(records, term)) is not None
                     if role is not TermRole.INTERVENTION or name_key(made.label) not in components
                 ),
                 None,
@@ -1041,9 +978,9 @@ def _background(session: Session, claim: Claim, intervention: Entity) -> list[Ex
     return cards
 
 
-def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
+def _card(records: Records, term: ClaimTerm) -> ExportedCard | None:
     listed = LISTED_SOURCES.get(term.source_name)
-    record = session.get(TermRecord, (term.source_name, term.external_id))
+    record = records.term_record(term.source_name, term.external_id)
     if listed is None or not listed.accepted or record is None:
         return None
     assert term.fit is not None and term.score is not None and term.reviewed_by is not None
@@ -1081,7 +1018,7 @@ def _card(session: Session, term: ClaimTerm) -> ExportedCard | None:
 
 
 def _drug_cards(
-    session: Session, claim: Claim, components: set[str]
+    records: Records, terms: list[ClaimTerm], components: set[str]
 ) -> tuple[ExportedCard | None, ExportedCard | None]:
     """The claim's drug card and, when the drug's record names exactly one single
     protein as its target, that target's card. Neither is scored: the drug was found by
@@ -1097,18 +1034,10 @@ def _drug_cards(
     )
     if listed is None or not listed.accepted or facts is None or not facts.accepted:
         return None, None
-    for link in session.scalars(
-        select(ClaimTerm)
-        .where(
-            ClaimTerm.claim_id == claim.id,
-            ClaimTerm.role == TermRole.DRUG,
-            ClaimTerm.review_state == ReviewState.APPROVED,
-        )
-        .order_by(ClaimTerm.id)
-    ):
+    for link in (term for term in terms if term.role is TermRole.DRUG):
         if name_key(link.label) in components or link.source_name != listed.name:
             continue
-        record = session.get(TermRecord, (link.source_name, link.external_id))
+        record = records.term_record(link.source_name, link.external_id)
         if record is None:
             continue
         drug = opentargets.describe_drug(_source_record(record))
@@ -1197,7 +1126,7 @@ def _card_sources(claims: list[ExportedClaim]) -> list[ExportedCardSource]:
     ]
 
 
-def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutlet]:
+def _outlets(records: Records, claims: list[ExportedClaim]) -> list[ExportedOutlet]:
     domains = {outlet_domain(article.url) for claim in claims for article in claim.articles}
     return [
         ExportedOutlet(
@@ -1205,9 +1134,7 @@ def _outlets(session: Session, claims: list[ExportedClaim]) -> list[ExportedOutl
             icon=f"data:{icon.media_type};base64,{base64.b64encode(icon.content).decode()}",
             fetched_at=icon.fetched_at,
         )
-        for icon in session.scalars(
-            select(OutletIcon).where(OutletIcon.domain.in_(domains)).order_by(OutletIcon.domain)
-        )
+        for icon in records.outlet_icons(domains)
         if icon.content is not None and not is_blank_icon(icon.content)
     ]
 
@@ -1217,13 +1144,13 @@ STAGE_SHARE_FLOOR = 0.05
 
 
 def _unconfirmed_stage_reading(
-    session: Session, claim: Claim, *, show_above: float
+    records: Records, claim: Claim, *, show_above: float
 ) -> ExportedStageReading | None:
     """The latest reading of a claim's evidence stage, when the stage is not confirmed
     and the reading chose its stage with at least `show_above`. Shown, never used."""
     if claim.evidence_stage is not None:
         return None
-    reading = latest_stage_suggestion(session, claim)
+    reading = records.stage_reading(claim)
     stages = {stage.value for stage in EvidenceStage}
     if reading is None or reading.choice not in stages:
         return None
@@ -1248,8 +1175,12 @@ def _unconfirmed_stage_reading(
     )
 
 
+def _from(source: Session | Records) -> Records:
+    return PostgresRecords(source) if isinstance(source, Session) else source
+
+
 def build_export(
-    session: Session,
+    source: Session | Records,
     *,
     now: datetime,
     no_signal_years: int = 3,
@@ -1259,6 +1190,9 @@ def build_export(
 ) -> Export:
     """Everything the site may show, as of now.
 
+    `source` is where the records are read from: the pipeline's session, or any other
+    `Records`. The export is the same for the same records, whichever holds them.
+
     Each claim's status is derived again first, because the no-signal overlay depends
     on today's date. A claim exported for the first time gets its published time.
 
@@ -1266,58 +1200,59 @@ def build_export(
     awaiting the audit of its batch; a claim the assistant decided says it was not
     checked by a person.
     """
+    records = _from(source)
     claims: list[ExportedClaim] = []
     last_checked: datetime | None = None
-    for claim in session.scalars(
-        select(Claim)
-        .where(
-            Claim.review_state == ReviewState.APPROVED,
-            Claim.archived_at.is_(None),
-            Claim.awaiting_audit_at.is_(None),
-        )
-        .order_by(Claim.slug)
-    ):
+    for claim in records.published_claims():
         # Every approved claim is published, whoever decided it (openspec auto-publish).
         # Whether a person checked it is still said, in `checked_by_person`.
-        assistant = _decided_by_assistant(session, claim)
-        derivation = refresh_status(
-            session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years
+        assistant = records.decided_by_assistant(claim)
+        events = records.events(claim)
+        flags = records.failure_flags(claim)
+        entities = records.entities(claim)
+        # The status is derived here by the rules, from what the reader handed over, and
+        # put on the claim: its updated-at time changes only when the status does.
+        evidence = evidence_of(events)
+        origin_paper_ids = frozenset(
+            match.external_id
+            for entity in entities
+            if entity.is_origin_paper
+            for match in records.approved_matches(entity)
         )
+        derivation = derive(
+            evidence,
+            flags_of(flags),
+            first_reported_date=claim.first_reported_date,
+            as_of=now.date(),
+            origin_paper_ids=origin_paper_ids,
+            no_signal_years=no_signal_years,
+            evidence_stage=claim.evidence_stage,
+        )
+        keep_status(claim, derivation, now=now)
         if claim.published_at is None:
             claim.published_at = now
-        events = list(
-            session.scalars(
-                select(EvidenceEvent)
-                .where(
-                    EvidenceEvent.claim_id == claim.id,
-                    EvidenceEvent.review_state == ReviewState.APPROVED,
-                )
-                .order_by(EvidenceEvent.event_date, EvidenceEvent.id)
-            )
-        )
         for event in events:
             if last_checked is None or event.fetched_at > last_checked:
                 last_checked = event.fetched_at
-        articles = articles_of(session, claim)
+        articles = records.articles(claim)
         article_urls = {article.id: article.url for article in articles}
-        intervention = session.scalars(
-            select(Entity).where(
-                Entity.claim_id == claim.id, Entity.type == EntityType.INTERVENTION
-            )
-        ).first()
+        intervention = next(
+            (entity for entity in entities if entity.type is EntityType.INTERVENTION), None
+        )
         assert intervention is not None, "every claim is created with its intervention entity"
-        papers = _Papers(session)
-        _collect_papers(session, claim, events, papers)
+        papers = _Papers(records)
+        _collect_papers(records, entities, events, papers)
+        terms = records.terms(claim)
         trials = _trials(
-            session,
+            records,
             events,
             papers,
             reading_accept_above,
             [intervention.name, *intervention.synonyms],
         )
         organisations = organisations_of(
-            session,
-            claim,
+            records,
+            entities,
             articles=articles,
             sponsors={
                 trial.trial_id: trial.facts.sponsor.name
@@ -1339,7 +1274,7 @@ def build_export(
                 first_reported_date=claim.first_reported_date,
                 evidence_stage=claim.evidence_stage,
                 evidence_stage_reading=_unconfirmed_stage_reading(
-                    session, claim, show_above=stage_show_above
+                    records, claim, show_above=stage_show_above
                 ),
                 checked_by_person=claim.reviewed_by is Decider.HUMAN and not assistant,
                 status=ExportedStatus(
@@ -1349,7 +1284,13 @@ def build_export(
                     explained_by=list(derivation.explaining_event_ids),
                     history=[
                         ExportedStatusChange(on=change.on, code=change.status)
-                        for change in status_history(session, claim)
+                        for change in history(
+                            evidence,
+                            flags_of(flags),
+                            first_reported_date=claim.first_reported_date,
+                            origin_paper_ids=origin_paper_ids,
+                            evidence_stage=claim.evidence_stage,
+                        )
                     ],
                 ),
                 articles=[
@@ -1369,7 +1310,7 @@ def build_export(
                         parsed_date=promise.parsed_date,
                         article_url=article_urls[promise.source_article_id],
                     )
-                    for promise in promises_of(session, claim)
+                    for promise in records.promises(claim)
                 ],
                 events=[
                     ExportedEvent(
@@ -1388,35 +1329,29 @@ def build_export(
                     )
                     for event in events
                 ],
-                matches=_matches(session, claim),
+                matches=_matches(records, claim),
                 trials=trials,
                 papers=papers.listed(),
-                background=_background(session, claim, intervention),
+                background=_background(records, terms, intervention),
                 organisations=organisations,
-                reported_statements=_statements(session, claim),
+                reported_statements=_statements(records, claim),
                 failure_flags=[
                     ExportedFailureFlag(trial_id=flag.trial_external_id, source_url=flag.source_url)
-                    for flag in session.scalars(
-                        select(FailureFlag)
-                        .where(FailureFlag.claim_id == claim.id)
-                        .order_by(FailureFlag.id)
-                    )
+                    for flag in flags
                 ],
             )
         )
-    session.flush()
+    records.done()
     card_sources = _card_sources(claims)
     # An address that was a claim's page leads to the claim it was merged into, or to its
     # page under a new slug, when that claim is published here. Otherwise it answers
     # gone, like any claim taken down.
     public = {claim.slug for claim in claims}
-    elsewhere = moved_addresses(session)
+    elsewhere = records.moved()
     leads_to = {slug: claim.slug for slug, claim in elsewhere if claim.slug in public}
     gone = {
         claim.slug: claim.archived_at.date()
-        for claim in session.scalars(
-            select(Claim).where(Claim.archived_at.is_not(None), Claim.published_at.is_not(None))
-        )
+        for claim in records.taken_down()
         if claim.archived_at is not None and claim.slug not in leads_to
     }
     for slug, claim in elsewhere:
@@ -1453,7 +1388,7 @@ def build_export(
             ExportedRetiredVertical(slug=slug, successor=successor)
             for slug, successor in RETIRED_VERTICALS.items()
         ],
-        outlets=_outlets(session, claims),
+        outlets=_outlets(records, claims),
         claims=claims,
         archived=[ExportedArchived(slug=slug, on=on) for slug, on in sorted(gone.items())],
         moved=[ExportedMoved(slug=slug, to=to) for slug, to in leads_to.items()],
@@ -1462,7 +1397,7 @@ def build_export(
 
 
 def write_export(
-    session: Session,
+    source: Session | Records,
     path: Path,
     *,
     now: datetime,
@@ -1473,7 +1408,7 @@ def write_export(
 ) -> Export:
     """Write the export to `path`, replacing any earlier file only once it is complete."""
     export = build_export(
-        session,
+        source,
         now=now,
         no_signal_years=no_signal_years,
         reading_accept_above=reading_accept_above,
