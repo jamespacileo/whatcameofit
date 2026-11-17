@@ -227,11 +227,9 @@ def registry_papers_stage(
     one.done["registry_papers"] = when(now) or ""
 
 
-def pubmed_stage(session: Session, one: Slice, now: datetime) -> bool:
-    """Whether PubMed was asked about every one of its trials, and what it found. The
-    asking is the operator's off-peak step (`pubmed_papers`); this only reads what it left:
-    a trial asked has its ledger entry, a paper found its `trial_paper`. Done when every
-    ClinicalTrials.gov trial of the slice was asked."""
+def pubmed_counts(session: Session, one: Slice) -> tuple[int, int, int]:
+    """Of a slice's ClinicalTrials.gov trials: how many PubMed was asked about (their
+    ledger entry), how many have a paper it found (`trial_paper`), and how many there are."""
     trials = [t for t in _trials(session, one) if t.registry_name == "clinicaltrials.gov"]
     ids = [trial.id for trial in trials]
     asked = found = 0
@@ -256,11 +254,49 @@ def pubmed_stage(session: Session, one: Slice, now: datetime) -> bool:
             )
             or 0
         )
+    return asked, found, len(trials)
+
+
+def pubmed_stage(session: Session, one: Slice, now: datetime) -> bool:
+    """Whether PubMed was asked about every one of its trials, and what it found. The
+    asking is the operator's off-peak step (`pubmed_papers`); this only reads what it left:
+    a trial asked has its ledger entry, a paper found its `trial_paper`. Done when every
+    ClinicalTrials.gov trial of the slice was asked."""
+    asked, found, trials = pubmed_counts(session, one)
     one.counts["pubmed_asked"], one.counts["pubmed_found"] = asked, found
-    if asked < len(trials):
+    if asked < trials:
         return False
     one.done["pubmed_papers"] = when(now) or ""
     return True
+
+
+def due_slices(
+    session: Session, made: Plan, count: int | None, *, store: str | None
+) -> list[Slice]:
+    """The next `count` slices with work to do, in order. A slice is due when its record
+    or registry papers stage is not done; with `store` (a push), when it is not in that
+    store or is to go whole; and when PubMed's off-peak step has moved on its trials
+    since the slice last looked. A slice waiting only on that step, with its ledger where
+    it was, is not due: it would be pushed again for nothing and keep the next slices
+    from their turn."""
+
+    def has_work(one: Slice) -> bool:
+        if one.due() in ("record", "registry_papers"):
+            return True
+        if store is not None and ("in_store" not in one.done or one.store != store or one.whole):
+            return True
+        if one.due() != "pubmed_papers":
+            return False
+        asked, found, _ = pubmed_counts(session, one)
+        return (asked, found) != (one.counts.get("pubmed_asked"), one.counts.get("pubmed_found"))
+
+    due: list[Slice] = []
+    for one in made.slices:
+        if count is not None and len(due) >= count:
+            break
+        if has_work(one):
+            due.append(one)
+    return due
 
 
 def slice_records(

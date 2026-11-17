@@ -2,18 +2,22 @@
 (`store/slices.py`), and its coverage by group and stage."""
 
 import os
+from collections.abc import Generator
+from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Annotated, Any
 
 import httpx
 import typer
+from sqlalchemy.orm import Session
 
 from thenwhat.backfill.trial_coverage import coverage_of
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import open_session, settings_or_exit
 from thenwhat.cli.store import TARGET_SET, _commit, target_rule
+from thenwhat.db.session import make_engine
 from thenwhat.store.push import (
     BUILD_KEY,
     RELOADED,
@@ -36,6 +40,7 @@ from thenwhat.store.slices import (
     SliceRefused,
     chosen,
     coverage,
+    due_slices,
     plan,
     pubmed_stage,
     record_stage,
@@ -132,6 +137,13 @@ def run_command(
     url: Annotated[
         str, typer.Option("--url", envvar="INGEST_URL", help="With --push: the service.")
     ] = "",
+    only: Annotated[
+        str | None,
+        typer.Option(
+            "--only",
+            help="Work these slices, by number (5,6), whatever is due; --slices is not read.",
+        ),
+    ] = None,
     again: Annotated[
         bool,
         typer.Option(
@@ -157,12 +169,20 @@ def run_command(
     if stage is not None and stage not in STAGES[:-1]:
         err.print(f"--stage is one of {', '.join(STAGES[:-1])}.")
         raise typer.Exit(code=1)
+    numbers: list[int] | None = None
+    if only is not None:
+        try:
+            numbers = [int(part) for part in only.split(",") if part.strip()]
+        except ValueError:
+            err.print("--only is slice numbers with commas between: 5,6.")
+            raise typer.Exit(code=1) from None
     settings = settings_or_exit()
     token = os.environ.get("INGEST_TOKEN", "")
     if do_push and (state is None or not state.is_file() or not url or not token):
         err.print("--push needs --state (the build's .pushed.json), INGEST_URL and INGEST_TOKEN.")
         raise typer.Exit(code=1)
-    with open_session() as session:
+    store: str | None = None
+    with _working_session() as session:
         made, path = _plan(session, trial_set, plan_file)
         if do_push and state is not None:
             store = store_of(state, url)
@@ -187,7 +207,18 @@ def run_command(
                 raise typer.Exit(code=1) from None
         index = EuropePmc(session, contact_email=settings.contact_email)
         max_age = timedelta(days=settings.paper_record_max_age_days)
-        for one in chosen(made, None, slices):
+        session.commit()
+        work = (
+            chosen(made, numbers, None)
+            if numbers is not None
+            else due_slices(session, made, slices, store=store)
+        )
+        if not work:
+            out.print(
+                "No slice has work to do: each waits on the off-peak PubMed step or is done.",
+                markup=False,
+            )
+        for one in work:
             now = datetime.now(UTC)
             try:
                 if one.due() == "record" and stage in (None, "record"):
@@ -220,9 +251,11 @@ def run_command(
                 ):
                     _push_slice(session, one, made, state, url, token, again=again)
             except (SliceRefused, PushFailed) as fault:
+                session.rollback()
                 made.write(path)
                 err.print(str(fault), markup=False)
                 raise typer.Exit(code=1) from None
+            # Each slice's work is its own transaction: a later slice that fails keeps it.
             session.commit()
             made.write(path)
             out.print(
@@ -230,6 +263,14 @@ def run_command(
                 f" {', '.join(sorted(one.done)) or 'nothing done'}.",
                 markup=False,
             )
+
+
+@contextmanager
+def _working_session() -> Generator[Session]:
+    """A session committed slice by slice, never inside one transaction's block: a
+    commit after a slice must leave the session open for the next one."""
+    with Session(make_engine(settings_or_exit().database_url)) as session:
+        yield session
 
 
 def _client(url: str, token: str) -> httpx.Client:
@@ -331,6 +372,17 @@ def _push_slice(
     records, texts = slice_records(session, one, rule=made.rule, year=made.year)
     keys = {f"{r.kind}\t{r.key}" for r in records}
     trials = {f"{r.kind}\t{r.key}" for r in records if r.kind == "registry_trial"}
+    here = store_of(state, url)
+    if not (again or one.whole) and "in_store" in one.done and one.store == here:
+        # In this store already: only what changed goes (papers PubMed found since, say).
+        report = _push(records, texts, state, url, token)
+        _push([state_record(one, rule=made.rule, year=made.year)], {}, state, url, token)
+        out.print(
+            f"Slice {one.number}: in the store; {sum(report.handed.values()):,} changed"
+            " records handed over.",
+            markup=False,
+        )
+        return
     report = _push(records, texts, state, url, token, drop=keys if again or one.whole else trials)
     resolved = report.resolved["registry_trial"]
     one.counts["in_store"] = min(resolved, len(one.trials))

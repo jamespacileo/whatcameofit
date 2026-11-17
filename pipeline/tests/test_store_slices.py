@@ -289,7 +289,7 @@ def test_a_slice_is_in_the_store_only_when_the_store_took_every_trial(
     assert "in_store" in one.done and one.counts["in_store"] == 1
 
 
-def test_a_slice_sends_its_trials_every_time_and_everything_again_with_again(
+def test_a_slice_in_the_store_sends_only_what_changed_and_everything_with_again(
     session: Session, tmp_path: Path, monkeypatch
 ):
     store = _Store()
@@ -298,11 +298,9 @@ def test_a_slice_sends_its_trials_every_time_and_everything_again_with_again(
     assert "in_store" in one.done and one.store.endswith("@prod.test")
     assert {"registry_trial", "payload", "trial_slice"} <= set(store.kinds_sent())
     store.staged.clear()
-    # Again, as a slice is after its PubMed stage: its trials go again, so the merge says
-    # the store holds them; its payloads, held already, do not.
+    # A pass over a slice in the store: no trial goes again, nor anything unchanged.
     cli_slices._push_slice(session, one, made, state, "http://prod.test", "t")
-    assert "registry_trial" in store.kinds_sent() and "payload" not in store.kinds_sent()
-    store.staged.clear()
+    assert store.kinds_sent() == [] and "in_store" in one.done
     cli_slices._push_slice(session, one, made, state, "http://prod.test", "t", again=True)
     assert {"registry_trial", "payload"} <= set(store.kinds_sent())
 
@@ -508,3 +506,109 @@ def test_a_slice_the_store_no_longer_shows_in_it_goes_again_whole(
     store.staged.clear()
     cli_slices._push_slice(session, one, made, state, url, "t")
     assert {"registry_trial", "payload"} <= set(store.kinds_sent()) and not one.whole
+
+
+def _three_slices(session, tmp_path, monkeypatch, store: "_Store"):
+    """A store loaded from a build, three trials in three slices, and `slices run` set to
+    push to a fake service on the test's own session, committed slice by slice."""
+    from contextlib import contextmanager
+    from functools import partial
+
+    import httpx
+
+    from thenwhat.cli import slices as cli_slices
+    from thenwhat.cli.store import base_state_path, state_path
+    from thenwhat.store.push import write_state
+
+    world = _world(session)
+    third = RegistryTrial(
+        registry_name="clinicaltrials.gov",
+        external_id="NCT07654322",
+        title="A third",
+        conditions=[],
+        interventions=[],
+        phases=[],
+        raw_payload={"protocolSection": {}},
+        fetched_at=NOW,
+    )
+    session.add(third)
+    session.flush()
+    del world
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    report = build(session, file, payloads=payloads, store_sql=STORE, now=NOW, hot_only=True)
+    state = state_path(file)
+    write_state(state, {**report.hot_state, "\tbuild": report.build_id})
+    write_state(base_state_path(file), {**report.hot_state, "\tbuild": report.build_id})
+
+    real = httpx.Client
+
+    def client(**given):
+        given["transport"] = httpx.MockTransport(store)
+        return real(**given)
+
+    @contextmanager
+    def working_session():
+        yield session
+
+    three = RegistryTrial.external_id.in_(["NCT01234567", "NCT07654321", "NCT07654322"])
+    monkeypatch.setattr(httpx, "Client", client)
+    monkeypatch.setattr(cli_slices, "_commit", lambda: "abc1234")
+    monkeypatch.setattr(cli_slices, "_working_session", working_session)
+    monkeypatch.setattr(cli_slices, "target_rule", lambda name: (three, "test-set:2025"))
+    monkeypatch.setattr(cli_slices, "plan", partial(plan, size=1))
+    monkeypatch.setattr("thenwhat.events.paper_records.keep_paper", lambda *a, **k: None)
+    monkeypatch.setenv("CONTACT_EMAIL", "ops@thenwhat.test")
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    # Read by the settings only: the command works on the test's session above.
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://test@127.0.0.1:5434/unused")
+    plan_file = tmp_path / "slices.json"
+    args = ["backfill", "slices", "run", "--plan", str(plan_file), "--push"]
+    args += ["--state", str(state), "--url", "http://prod.test"]
+    return args, plan_file
+
+
+def test_slices_run_works_two_then_three_slices_in_one_command(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+
+    store = _Store()
+    args, plan_file = _three_slices(session, tmp_path, monkeypatch, store)
+    two = CliRunner().invoke(app, [*args, "--slices", "2"])
+    assert two.exit_code == 0, two.output
+    made = Plan.read(plan_file)
+    assert made is not None and len(made.slices) == 3
+    assert [("in_store" in one.done) for one in made.slices] == [True, True, False]
+    # The next pass takes the third: the first two wait on PubMed's off-peak step only.
+    store.staged.clear()
+    three = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert three.exit_code == 0, three.output
+    made = Plan.read(plan_file)
+    assert made is not None and all("in_store" in one.done for one in made.slices)
+    assert "Slice 1 " not in three.output and "Slice 3 " in three.output
+    # Nothing is due now: no slice is pushed again, no trial sent.
+    store.staged.clear()
+    idle = CliRunner().invoke(app, [*args, "--slices", "3"])
+    assert idle.exit_code == 0 and "No slice has work" in idle.output
+    assert "registry_trial" not in store.kinds_sent()
+    # --only names a slice, whatever is due: in the store, it sends no trial again.
+    named = CliRunner().invoke(app, [*args, "--only", "2"])
+    assert named.exit_code == 0, named.output
+    assert "Slice 2 " in named.output and "registry_trial" not in store.kinds_sent()
+
+
+def test_a_slice_waiting_on_pubmed_is_due_only_when_its_ledger_moved(session: Session):
+    from thenwhat.store.slices import due_slices, registry_papers_stage
+
+    _world(session)
+    made = plan(session, RULE, name="test-set", year=2025, today=TODAY)
+    for one in made.slices:
+        record_stage(session, one, NOW)
+        registry_papers_stage(session, one, NOW, lambda number: None)
+        pubmed_stage(session, one, NOW)
+    assert due_slices(session, made, None, store=None) == []
+    # The off-peak step moved on the first slice's trials (its counts are not what it saw).
+    made.slices[0].counts["pubmed_asked"] = -1
+    assert due_slices(session, made, None, store=None) == [made.slices[0]]
