@@ -973,6 +973,14 @@ const sections = [
         <section class="trials" data-pagefind-ignore>
           <FoldHead id="trials" phone="folded" note={trialsNote}>Trials on record</FoldHead>
           <p class="take-why" data-clamp="1">{TRIALS_NOTE}</p>
+          {/* The columns, named once over every group and kept in sight while the groups
+              scroll. For the eye only: each group's table keeps its own column names for a
+              screen reader. */}
+          <div class="trial-row trial-columns trial-columns-top" aria-hidden="true">
+            {TRIAL_COLUMNS.map((name) => (
+              <span>{name}</span>
+            ))}
+          </div>
           {trialGroups.map((group) => {
             const shown = group.trials.slice(0, TRIALS_PER_PHASE);
             const rest = group.trials.slice(TRIALS_PER_PHASE);

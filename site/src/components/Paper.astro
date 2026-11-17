@@ -40,6 +40,8 @@ const reasons = (related?.reasons ?? []).map((code) => PAPER_REASON_WORDS[code] 
 ---
 
 <li class="paper" id={paperAnchor(paper.identifier)}>
+  {/* What the paper is, then how it is tied to this claim: two columns on a wide screen. */}
+  <div class="paper-what">
   <p class="paper-name">
     <a href={paper.url} rel="noopener">
       {paperName(paper)}
@@ -48,6 +50,8 @@ const reasons = (related?.reasons ?? []).map((code) => PAPER_REASON_WORDS[code] 
   </p>
   {standing && <p class="paper-standing">{standing}</p>}
   {facts?.retracted && <p class="paper-retracted">{RETRACTED_WORDS}.</p>}
+  </div>
+  <div class="paper-ties">
   {
     trialRoles(paper).map((role) => (
       <p class="paper-role">
@@ -91,4 +95,5 @@ const reasons = (related?.reasons ?? []).map((code) => PAPER_REASON_WORDS[code] 
     }
     {!facts && <span>No {PAPER_INDEX} details are available here</span>}
   </p>
+  </div>
 </li>

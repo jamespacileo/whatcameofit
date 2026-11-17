@@ -23,3 +23,10 @@ On a claim page and a topic page, every section's rows SHALL stand between a rul
 #### Scenario: Reading down the page
 - **WHEN** a reader scrolls a claim page
 - **THEN** each section starts with its heading, at most one muted note, and rows under one rule, whether the section is a table or a list
+
+### Requirement: The trials on a claim page read as one table
+On a wide screen the trials table's columns SHALL be named once, above every group, and SHALL stay in view while the groups scroll. Each group's own column names SHALL remain available to a screen reader. Each group SHALL be introduced by a row that names it and states how many trials it holds.
+
+#### Scenario: Scrolling the trials
+- **WHEN** a reader scrolls through a claim's trials at 1400 pixels wide
+- **THEN** the column names stay at the top of the view and each group begins with a row naming it and its count

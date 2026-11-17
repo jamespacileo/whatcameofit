@@ -11,9 +11,12 @@ On 2026-11-17, after the band, the operator asked for the rest of the claim page
 - **One opening note.** A section's note is one muted line at the note size. "At a glance" joins the sections whose note is held to a line with "More". The notes that say "not advice" stay whole, as `quiet-sheet` decided.
 - **Quieter rows.** In "At a glance" a source's words keep to two lines and where the term is filed shows once the row is open. In the trials table the main measure keeps to two lines and who runs the trial to one.
 
-Measured on the same claim: the page goes from 18,128px to 9,701px at 1400px wide and from 15,940px to 7,755px at 375px.
+- **Trials as one table.** The columns are named once and stay in sight; each group ("Results posted", a phase) is a tinted row with its name and count; a trial's row is two lines.
+- **Papers and organisations in two columns** from 40rem: what it is at the left, how it is tied to the claim at the right.
 
-Not in this change: shared components for the row and table markup (`claim-primitives` task 2.1), papers and organisations rows, one format for score chips, the type scale. A claim with 20 records or fewer is drawn as before.
+Measured on the same claim: the page goes from 18,128px to 8,635px at 1400px wide; at 375px, with the trials folded as a phone draws them, from 15,940px to 7,755px. A trial's row goes from 100px to 77px.
+
+Not in this change: shared components for the row and table markup (`claim-primitives` task 2.1), one format for score chips, the type scale, the two legends over the timetable. A claim with 20 records or fewer is drawn as before.
 
 ## Capabilities
 
@@ -23,4 +26,4 @@ Not in this change: shared components for the row and table markup (`claim-primi
 
 ## Impact
 
-- `site/src/pages/[slug].astro`, `site/src/components/Glance.astro`, `site/src/scripts/timetable-kinds.ts`, `site/src/styles/global.css`, `site/tests/site.test.mjs`, `DESIGN.md`.
+- `site/src/pages/[slug].astro`, `site/src/components/Glance.astro`, `site/src/components/Paper.astro`, `site/src/scripts/timetable-kinds.ts`, `site/src/styles/global.css`, `site/tests/site.test.mjs`, `DESIGN.md`.
