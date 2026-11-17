@@ -7,7 +7,9 @@ import {
   countKinds,
   countsText,
   dayList,
+  gatherRecords,
   headingTitle,
+  keptRows,
   olderClaim,
 } from "../src/lib/day-list.ts";
 
@@ -177,3 +179,36 @@ test("Scenario: No claim first reported in an earlier year", () => {
   assert.equal(olderClaim(fixture.claims, "2017-06-01"), null);
   assert.equal(dayList(fixture.claims, "2017-06-01T00:00:00Z").older, null);
 });
+
+test("the rows of one registry record are brought together, the first where it stood", () => {
+  const record = (slug, trial, type = "trial_registered") => ({
+    kind: "record",
+    date: "2026-11-12",
+    claim: { slug },
+    event: { trial_id: trial, source_url: `https://registry.example/${trial}`, type, trial_state: null },
+    change: null,
+  });
+  const report = (slug) => ({ kind: "report", date: "2026-11-12", claim: { slug }, reports: [] });
+  const rows = [report("a"), record("b", "NCT1"), record("c", "NCT2"), report("d"), record("e", "NCT1"), record("f", "NCT1", "trial_results_posted"), record("g", "NCT1")];
+  assert.deepEqual(
+    gatherRecords(rows).map(({ row, follows }) => `${row.claim.slug}${follows ? "+" : ""}`),
+    // NCT1's registration for e and g follows b; its posted results are another record.
+    ["a", "b", "e+", "g+", "c", "d", "f"],
+  );
+  // A day with no record listed twice is unchanged.
+  assert.deepEqual(gatherRecords(rows.slice(0, 4)).map(({ row, follows }) => [row.claim.slug, follows]), [["a", false], ["b", false], ["c", false], ["d", false]]);
+});
+
+test("a long day is cut after its fifth leading row, and never parts a record from its claims", () => {
+  const L = false;
+  const F = true;
+  // Six leading rows or fewer: nothing is cut, since one row back is not worth a control.
+  assert.equal(keptRows([L, L, L, L, L, L]), 6);
+  assert.equal(keptRows([L, F, F, L, L, L, L, L]), 8);
+  // Seven leading rows: the first five, with the rows that follow them.
+  assert.equal(keptRows([L, L, L, L, L, L, L]), 5);
+  assert.equal(keptRows([L, L, L, L, F, F, F, F, L, L, L]), 9);
+  assert.equal(keptRows([L, L, L, L, L, F, F, L, L]), 7);
+  assert.equal(keptRows([]), 0);
+});
+

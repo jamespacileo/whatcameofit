@@ -204,7 +204,7 @@ test("Scenario: Home lists the newest reports", () => {
   assert.ok(order.every((position) => position > -1), "a report is missing from the home page");
   assert.deepEqual([...order].sort((a, b) => a - b), order);
   // The headline opens the claim; the outlet opens the report itself.
-  assert.match(html, /<a class="followed" href="\/phase-claim"[^>]*>“Example report 3”<\/a>/);
+  assert.match(html, /<a class="followed" href="\/phase-claim"[^>]*>\s*<span class="quote-mark open">“<\/span>Example report 3<span class="quote-mark">”<\/span>\s*<\/a>/);
   assert.match(html, /<a href="https:\/\/uk\.news\.example\.org\/3">Example Outlet 3<\/a>/);
 });
 
@@ -1885,4 +1885,19 @@ test("Scenario: summary and notes are clamped, utility sections start folded, th
     assert.match(html, new RegExp(`data-fold="folded" data-fold-phone="folded"[^>]*>\\s*<h2 class="bar" id="${id}"`));
   }
   assert.match(html, /<div class="band-side" aria-hidden="true">\s*<svg/);
+});
+
+// Openspec home-then-now: under the home page's box, one published claim, reported and
+// on record. The outlet's title is a quotation with the outlet named; the status is the
+// site's label, in the well a claim page shows.
+test("Scenario: the home page draws one claim, reported and on record", () => {
+  const html = page("index.html");
+  const card = html.split('class="then-now"')[1]?.split("</a>")[0] ?? "";
+  assert.match(card, /^ href="\/[a-z0-9-]+"/, "the card leads to its claim");
+  assert.match(card, /<p class="then-when">\s*Reported <span class="unbroken">\d{1,2}(&#160;| | )[A-Z][a-z]{2}(&#160;| | )\d{4}<\/span>/);
+  assert.match(card, /<p class="then-quote"><span class="quote-mark open">“<\/span>[^<]+<span class="quote-mark">”<\/span>\s*<\/p>/);
+  assert.match(card, /<p class="now-tab">Where it stands<\/p>\s*<p class="now-label">[^<]+<\/p>/);
+  assert.match(card, /class="track/);
+  // The home page loads the heading face ahead of need, as a claim page does.
+  assert.match(html, /rel="preload" as="font" type="font\/woff2" href="[^"]*newsreader[^"]*"/);
 });

@@ -196,6 +196,31 @@ export function topicSummary(counts: ReadonlyMap<StatusCode, number>): string | 
   return `Of ${total} reported breakthroughs tracked, ${said}.`;
 }
 
+/** Which way a record moved, for the colour of its mark (docs/adr/0010): "forward" when
+ * something began or a regulator approved, "stopped" when something was halted, taken
+ * back or refused, "neither" for everything else. A trial that ran to its end and
+ * results that were posted are "neither": what they found is not known from the record.
+ * It says which way the record moved. It never says whether a treatment works. */
+export type EventDirection = "forward" | "stopped" | "neither";
+
+const STOPPED_STATES = new Set(["suspended", "terminated", "withdrawn"]);
+
+export function eventDirection(event: ExportedEvent): EventDirection {
+  switch (event.type) {
+    case "trial_registered":
+      return "forward";
+    case "trial_status_change":
+      if (event.trial_state === "started") return "forward";
+      return STOPPED_STATES.has(event.trial_state ?? "") ? "stopped" : "neither";
+    case "regulatory_decision":
+      return event.regulatory_outcome === "approved" ? "forward" : "stopped";
+    case "retraction":
+      return "stopped";
+    default:
+      return "neither";
+  }
+}
+
 // What kind of record an entry is. Each kind has one drawing, named once in a legend.
 export type RecordKind =
   | "report"
