@@ -23,6 +23,9 @@ from backfill_support import (
 from thenwhat.cli import app
 from thenwhat.db.models import RegistryTrial, WorkEntry
 from thenwhat.domain import WorkOutcome
+from thenwhat.measure import spans as measure
+from thenwhat.measure.events import MADE_DUE
+from thenwhat.measure.files import days_held, read_events
 from thenwhat.work.allowance import Allowances
 from thenwhat.work.ledger import count
 from thenwhat.work.outcome import Later, NeedsFix, NothingFound
@@ -106,6 +109,28 @@ def test_requeue_makes_due_the_records_that_wait_for_one_reason(
     assert "thenwhat backfill run reasoned" in result.output
     assert stale_ids(session, step) == {trial.id for trial in undated}
     assert count(session, step, LIMIT, now=NOW).due == 3
+
+
+def test_records_made_due_are_recorded_as_they_are(
+    run: Invoke, session: Session, step: ReasonedStep, monkeypatch: pytest.MonkeyPatch, tmp_path
+):
+    """What happens to a run is recorded as it happens: records made due, with the
+    step, the reason and how many."""
+    waiting_trials(session, step)
+    monkeypatch.setenv("MEASURE_DIR", str(tmp_path))
+    monkeypatch.setenv("MEASURE_KEEP_DAYS", "30")
+    monkeypatch.setenv("MEASURE_LOOKUP_KEEP_DAYS", "7")
+
+    try:
+        result = run("work", "requeue", "reasoned", "--reason", "no_date")
+    finally:
+        measure.use(None)
+
+    assert result.exit_code == 0, result.output
+    [made_due] = [
+        event for day in days_held(tmp_path) for event in read_events(tmp_path, day, [MADE_DUE])
+    ]
+    assert made_due.values == {"step": "reasoned", "reason": "no_date", "records": 3}
 
 
 def test_requeue_can_be_narrowed_by_a_value_the_reason_carries(

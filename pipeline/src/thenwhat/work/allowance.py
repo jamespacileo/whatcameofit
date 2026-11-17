@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.config import SourceAllowance
 from thenwhat.db.models import SourceAllowanceUse
+from thenwhat.measure import events
 from thenwhat.sources.base import SystemTime, Time
 from thenwhat.work.errors import AllowanceUsedUp, NoAllowance, SourcePaused
 
@@ -98,6 +99,7 @@ class Allowances:
             use.paused_until = until
             use.refusals += 1
             session.flush()
+        events.source_paused(source, until)
         return SourcePaused(
             f"{source} said it was asked too often. It is not asked again before {_when(until)}."
         )
@@ -110,11 +112,14 @@ class Allowances:
         with self._open_session() as session:
             use = self._locked(session, name)
             kept = use.paused_until
+            paused = kept is None or kept < until
             if kept is None or kept < until:
                 use.paused_until = kept = until
                 use.refusals += 1
             session.flush()
-            return kept
+        if paused:
+            events.source_paused(name, kept)
+        return kept
 
     def status(self, session: Session, source: str) -> AllowanceStatus:
         allowance = self.of(source)

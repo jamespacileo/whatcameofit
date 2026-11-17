@@ -1,19 +1,22 @@
 """Working through a step's due records, one record per transaction.
 Behavior: openspec work-ledger."""
 
-from collections.abc import Callable, Mapping
-from contextlib import AbstractContextManager
-from dataclasses import dataclass
+from collections import Counter
+from collections.abc import Callable, Generator, Mapping
+from contextlib import AbstractContextManager, contextmanager
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, cast
 
 from sqlalchemy.orm import Session
 
 from thenwhat.domain import WorkOutcome
+from thenwhat.measure import events
 from thenwhat.measure import spans as measure
-from thenwhat.work.errors import SourceStop
+from thenwhat.measure.events import RunEnd
+from thenwhat.work.errors import SourceStop, SpendCeilingReached
 from thenwhat.work.ledger import PUT_OFF_SPAN, count, due_records, record_outcome, take_due
-from thenwhat.work.outcome import Later, NeedsFix, NothingFound, check_declared
+from thenwhat.work.outcome import Later, NeedsFix, NothingFound, ReasonClass, check_declared
 from thenwhat.work.steps import (
     BatchStep,
     CountingClient,
@@ -47,10 +50,74 @@ class RunReport:
     stopped: str | None = None
     # The error of each record that failed in this run.
     errors: list[str] | None = None
+    # Why the run ended, as a code.
+    ended: RunEnd | None = None
+    # Measurements that could not be written while the run worked.
+    not_written: int = 0
 
     @property
     def processed(self) -> int:
         return self.done + self.nothing_found + self.failed + self.needs_fix
+
+
+@dataclass(slots=True, eq=False)
+class Run:
+    """One run of a step as its measurements and events name it: made once for a
+    command and shared by its workers, each of which adds its report."""
+
+    id: str
+    step: str
+    reports: list[RunReport] = field(default_factory=list)
+    not_written: int = 0
+
+    def why(self) -> RunEnd:
+        """Why the run ended: a source or the ceiling that stopped any worker, else the
+        limit, else nothing left due."""
+        ends = {report.ended for report in self.reports}
+        for why in (RunEnd.SPEND_CEILING, RunEnd.CANNOT_ASK, RunEnd.LIMIT):
+            if why in ends:
+                return why
+        return RunEnd.NOTHING_DUE
+
+    def counts(self, *, finished: bool) -> dict[str, int]:
+        """The run's records by what became of them, and, for a run that finished its
+        loop, how many stay due."""
+        counts = {
+            name: sum(getattr(report, name) for report in self.reports)
+            for name in ("done", "nothing_found", "later", "needs_fix", "failed", "deferred")
+        }
+        if finished and self.reports:
+            counts["still_due"] = min(report.remaining_due for report in self.reports)
+        return counts
+
+
+@contextmanager
+def measured_run(step: str, *, limit: int | None, workers: int) -> Generator[Run]:
+    """Record a run's start and its end, with why it ended and its counts. A run ended
+    with Ctrl-C is recorded as stopped by the operator, without the records still due,
+    which were not counted."""
+    run = Run(id=events.new_run(), step=step)
+    events.run_started(run.id, step, limit=limit, workers=workers)
+    lost_before = measure.not_written()
+    why, error_kind = RunEnd.OPERATOR, None
+    try:
+        yield run
+        why = run.why()
+    except Exception as failure:
+        why, error_kind = RunEnd.FAILED, type(failure).__name__
+        raise
+    finally:
+        # Written out first, so the run can say what could not be.
+        run.not_written = measure.flush() - lost_before
+        finished = why not in (RunEnd.OPERATOR, RunEnd.FAILED)
+        events.run_ended(
+            run.id,
+            step,
+            why=why,
+            counts=run.counts(finished=finished),
+            not_written=run.not_written,
+            error_kind=error_kind,
+        )
 
 
 def process_next(
@@ -62,6 +129,7 @@ def process_next(
     attempt_limit: int,
     skip: set[int],
     put_off_span: timedelta = PUT_OFF_SPAN,
+    run: str | None = None,
 ) -> Processed | None:
     """Process one due record that no other run is holding, in the caller's transaction.
 
@@ -87,11 +155,19 @@ def process_next(
     )
     if still_due is None:
         return record.id, None, None
-    return _process_record(session, step, record, client, now, put_off_span)
+    return _process_record(session, step, record, client, now, put_off_span, run)
 
 
 # How a measurement names a record that may not be worked on now.
 DEFERRED = "deferred"
+# The class a measurement gives each outcome. A deferred record comes back by itself.
+_CLASS_OF = {
+    WorkOutcome.DONE: ReasonClass.FINAL.value,
+    WorkOutcome.NOTHING_FOUND: ReasonClass.FINAL.value,
+    WorkOutcome.LATER: ReasonClass.LATER.value,
+    WorkOutcome.NEEDS_FIX: ReasonClass.NEEDS_FIX.value,
+    WorkOutcome.FAILED: measure.FAILED,
+}
 
 
 def _trace_of(record: Any) -> str | None:
@@ -165,17 +241,21 @@ def _process_record(
     client: CountingClient,
     now: datetime,
     put_off_span: timedelta = PUT_OFF_SPAN,
+    run: str | None = None,
 ) -> Processed:
     """Run the step for one record whose row is held, and write its entry. A failure
-    undoes what the step wrote for it and is recorded in the entry."""
+    undoes what the step wrote for it and is recorded in the entry. The record's
+    measurement ends with the outcome its entry holds, its class and its reason."""
     before = client.requests_made
-    with measure.measured(step.name, version=step.version, trace=_trace_of(record)) as span:
+    with measure.measured(
+        step.name, version=step.version, trace=_trace_of(record), run=run
+    ) as span:
         try:
             with session.begin_nested():
                 answer = step.run(session, record, client)
                 if isinstance(answer, Deferred):
                     # Nothing is written for it: it stays due with its attempts unchanged.
-                    span.ended(DEFERRED)
+                    span.ended(DEFERRED, outcome_class=ReasonClass.LATER.value)
                     return record.id, answer, answer.reason
                 settled = _settle(step, answer)
         except SourceStop:
@@ -185,16 +265,16 @@ def _process_record(
                 WorkOutcome.FAILED, error=f"{type(failure).__name__}: {failure}"[:2000]
             )
             span.span.error_kind = type(failure).__name__
-        span.ended(settled.outcome.value)
-    outcome = _record(
-        session,
-        step,
-        record,
-        settled,
-        requests_used=client.requests_made - before,
-        now=now,
-        put_off_span=put_off_span,
-    )
+        outcome = _record(
+            session,
+            step,
+            record,
+            settled,
+            requests_used=client.requests_made - before,
+            now=now,
+            put_off_span=put_off_span,
+        )
+        span.ended(outcome.value, outcome_class=_CLASS_OF[outcome], reason=settled.reason)
     return record.id, outcome, settled.error
 
 
@@ -208,6 +288,7 @@ def process_batch(
     skip: set[int],
     size: int,
     put_off_span: timedelta = PUT_OFF_SPAN,
+    run: str | None = None,
 ) -> list[Processed] | None:
     """Process up to `size` due records in one call of the step, in the caller's
     transaction, so their results and entries are saved together or not at all.
@@ -237,36 +318,56 @@ def process_batch(
         return processed
     before = client.requests_made
     traces = [trace for record in held if (trace := _trace_of(record)) is not None]
-    try:
-        # One call answers for all of them, so it is one measurement that names each.
-        with (
-            measure.measured(step.name, version=step.version, batch=len(held), traces=traces),
-            session.begin_nested(),
-        ):
-            outcomes = list(cast(BatchStep, step).run_many(session, held, client))
-            if len(outcomes) != len(held):
-                raise ValueError(f"The step answered for {len(outcomes)} of {len(held)} records.")
-            answers = [_settle(step, answer) for answer in outcomes]
-    except SourceStop:
-        raise
-    except Exception:  # the call failed as a whole: find the record that fails alone
+    # One call answers for all of them, so it is one measurement that names each.
+    with measure.measured(
+        step.name, version=step.version, batch=len(held), traces=traces, run=run
+    ) as span:
+        try:
+            with session.begin_nested():
+                outcomes = list(cast(BatchStep, step).run_many(session, held, client))
+                if len(outcomes) != len(held):
+                    raise ValueError(
+                        f"The step answered for {len(outcomes)} of {len(held)} records."
+                    )
+                answers = [_settle(step, answer) for answer in outcomes]
+        except SourceStop:
+            raise
+        except Exception as failure:  # the call failed as a whole
+            span.ended(measure.FAILED, outcome_class=measure.FAILED)
+            span.span.error_kind = type(failure).__name__
+            answers = None
+        if answers is not None:
+            used = client.requests_made - before
+            recorded: list[WorkOutcome] = []
+            for place, (record, settled) in enumerate(zip(held, answers, strict=True)):
+                # A call's requests cannot be split between its records: the first
+                # carries them.
+                outcome = _record(
+                    session,
+                    step,
+                    record,
+                    settled,
+                    requests_used=used if place == 0 else 0,
+                    now=now,
+                    put_off_span=put_off_span,
+                )
+                recorded.append(outcome)
+                processed.append((record.id, outcome, settled.error))
+            by_outcome = Counter(recorded)
+            most = by_outcome.most_common(1)[0][0]
+            reasons = {settled.reason for settled in answers}
+            span.ended(
+                most.value,
+                outcome_class=_CLASS_OF[most],
+                reason=reasons.pop() if len(reasons) == 1 else None,
+                outcomes={outcome.value: n for outcome, n in by_outcome.items()},
+            )
+    if answers is None:
+        # Find the record that fails alone, each measured as its own.
         processed.extend(
-            _process_record(session, step, record, client, now, put_off_span) for record in held
+            _process_record(session, step, record, client, now, put_off_span, run)
+            for record in held
         )
-        return processed
-    used = client.requests_made - before
-    for place, (record, settled) in enumerate(zip(held, answers, strict=True)):
-        # A call's requests cannot be split between its records: the first carries them.
-        outcome = _record(
-            session,
-            step,
-            record,
-            settled,
-            requests_used=used if place == 0 else 0,
-            now=now,
-            put_off_span=put_off_span,
-        )
-        processed.append((record.id, outcome, settled.error))
     return processed
 
 
@@ -281,6 +382,7 @@ def run_step(
     before_call: Callable[[Session], None] | None = None,
     tried: set[int] | None = None,
     put_off_span: timedelta = PUT_OFF_SPAN,
+    run: Run | None = None,
 ) -> RunReport:
     """Process due records until none is due, the limit is reached or the source may
     not be asked. Each call of the step is its own transaction, so a run can be stopped
@@ -288,8 +390,29 @@ def run_step(
 
     `before_call` runs ahead of each call and may raise a `SourceStop`, which ends the
     run with the records still due: a model step's spend ceiling is checked this way.
+
+    Every record is measured as part of `run`. A command whose workers share one run
+    makes it with `measured_run`; without one, this call is a run of its own and records
+    its start and its end.
     """
+    if run is None:
+        with measured_run(step.name, limit=limit, workers=1) as own:
+            report = run_step(
+                open_session,
+                step,
+                client,
+                now=now,
+                attempt_limit=attempt_limit,
+                limit=limit,
+                before_call=before_call,
+                tried=tried,
+                put_off_span=put_off_span,
+                run=own,
+            )
+        report.not_written = own.not_written
+        return report
     report = RunReport(errors=[])
+    run.reports.append(report)
     if tried is None:
         tried = set()
     size = batch_size_of(step)
@@ -307,6 +430,7 @@ def run_step(
                         attempt_limit=attempt_limit,
                         skip=tried,
                         put_off_span=put_off_span,
+                        run=run.id,
                     )
                     processed = None if one is None else [one]
                 else:
@@ -320,6 +444,7 @@ def run_step(
                         skip=tried,
                         size=room,
                         put_off_span=put_off_span,
+                        run=run.id,
                     )
                 # Remember retryable records before releasing their row locks, so
                 # another worker in this run cannot pick them immediately.
@@ -328,8 +453,12 @@ def run_step(
                         tried.add(record_id)
         except SourceStop as stop:
             report.stopped = str(stop)
+            report.ended = (
+                RunEnd.SPEND_CEILING if isinstance(stop, SpendCeilingReached) else RunEnd.CANNOT_ASK
+            )
             break
         if processed is None:
+            report.ended = RunEnd.NOTHING_DUE
             break
         for record_id, outcome, error in processed:
             if outcome is None:
@@ -358,6 +487,8 @@ def run_step(
                 report.failed += 1
                 if error and report.errors is not None and len(report.errors) < ERRORS_KEPT:
                     report.errors.append(error)
+    else:
+        report.ended = RunEnd.LIMIT
     with open_session() as session:
         report.remaining_due = count(session, step, attempt_limit, now=now()).due
     return report
