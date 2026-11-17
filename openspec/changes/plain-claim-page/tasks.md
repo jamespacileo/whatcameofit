@@ -4,7 +4,7 @@
 
 - [ ] 1.1 In `site/src/pages/[slug].astro` make the `h1` the intervention name and move the headline to a paragraph directly under it carrying `data-pagefind-meta="title"`; verify on a built claim page that the `h1` reads the name and the headline follows it
 - [ ] 1.2 Style the heading and the headline paragraph in `site/src/styles/global.css`, keeping the long-title rule, and verify in the browser preview at desktop and phone widths, with the longest published name, that nothing overflows
-- [ ] 1.3 Add tests "Scenario: Page of a named intervention" and "Scenario: Search result for a claim" to `site/tests/site.test.mjs`, update "Scenario: Reader opens a claim" and "Scenario: Search by intervention name" if they read the `h1`, and verify the suite passes
+- [ ] 1.3 Add tests "Scenario: Page of a named intervention" and "Scenario: Search result for a claim" to `site/tests/site.build-test.mjs`, update "Scenario: Reader opens a claim" and "Scenario: Search by intervention name" if they read the `h1`, and verify the suite passes
 
 ## 2. Provenance line
 

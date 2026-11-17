@@ -23,4 +23,4 @@ Nothing shown before is dropped. This replaces the two-column cells that `band-t
 
 ## Impact
 
-- `site/src/components/Glance.astro`, `site/src/scripts/folds.ts`, `site/src/styles/global.css`, `site/tests/site.test.mjs`, `DESIGN.md`.
+- `site/src/components/Glance.astro`, `site/src/scripts/folds.ts`, `site/src/styles/global.css`, `site/tests/site.build-test.mjs`, `DESIGN.md`.

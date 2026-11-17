@@ -23,4 +23,4 @@ Not decided: whether the home page should pick its claim by another rule (the lo
 
 ## Impact
 
-- `site/src/components/ThenNow.astro`, `site/src/lib/then-now.ts`, `site/src/pages/index.astro`, `site/src/layouts/Base.astro`, `site/src/styles/global.css`, `site/tests/then-now.test.mjs`, `site/tests/site.test.mjs`, `DESIGN.md`.
+- `site/src/components/ThenNow.astro`, `site/src/lib/then-now.ts`, `site/src/pages/index.astro`, `site/src/layouts/Base.astro`, `site/src/styles/global.css`, `site/tests/then-now.test.mjs`, `site/tests/site.build-test.mjs`, `DESIGN.md`.

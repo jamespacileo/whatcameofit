@@ -40,7 +40,7 @@ The mocks in `.impeccable/mocks/examine/` are the reference for look and behavio
 
 ## 6. Tests, records and checks
 
-- [x] 6.1 Add one test per new scenario to `site/tests/site.test.mjs` and update the tests that read the status panel's place, the timetable's order or a trial entry's markup; verify the site suite passes
+- [x] 6.1 Add one test per new scenario to `site/tests/site.build-test.mjs` and update the tests that read the status panel's place, the timetable's order or a trial entry's markup; verify the site suite passes
 - [x] 6.2 Update `DESIGN.md`: the navy band beside the masthead and footer, the 78rem frame with side columns and its breakpoint, the ground token, the newest-first timetable, trials as table rows, the fold pattern; add any new term used in site copy to `GLOSSARY.md`; verify both files name the new elements and that no rule in DESIGN.md contradicts the built pages
 - [x] 6.3 Run `make check` and verify ruff, ty, pytest, the site tests, the site build and the extension tests pass
 - [ ] 6.4 In the browser preview at 375 by 812, 900 and 1280 pixels wide, open the seeded claim with a dated promise, a claim with no trial and a topic page; verify no sideways scroll, no console error, and that each matches its mock; then run `/impeccable critique` on the claim page and record the score in the pull request

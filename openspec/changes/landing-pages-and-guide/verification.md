@@ -4,7 +4,7 @@
 
 2026-11-14. Scope: `/extension`, its links from the footer, the home page and a claim page, and the settings that publish it. The guide, the about page, the audience pages and the topic pages are not built.
 
-- Site suite: 279 passed, 15 of them new in `site/tests/extension-page.test.mjs`. They cover the rule that picks the example claim, the drawn popup's labels against `extension/src/view.js`, the permissions against the extension's manifest, a build with no store (no page, no link), with one store and with both, and the scenarios in `specs/landing-pages/spec.md` for this page.
+- Site suite: 279 passed, 15 of them new in `site/tests/extension-page.build-test.mjs`. They cover the rule that picks the example claim, the drawn popup's labels against `extension/src/view.js`, the permissions against the extension's manifest, a build with no store (no page, no link), with one store and with both, and the scenarios in `specs/landing-pages/spec.md` for this page.
 - Extension suite: 119 passed. No extension file was changed.
 - Site build: passed its publication check (footer notices on every page). With no store address, 30 pages as before.
 - Not run: the pipeline's tests and `make check` as a whole, which need the Docker database. No pipeline file was changed.
@@ -27,7 +27,7 @@ The example claim on 2026-11-14 is `parkinsons-solengepras`, chosen by the rule.
 2026-11-14. Scope: `/guide` and its 27 entries, their links from the claim page and the method page, the topic page's opening and its card, `/about`, the three `/for/` pages, the footer links, and the lookup box moved into a component.
 
 - `make check`: passed (ruff, ty, the pipeline's tests, the site's tests, the site build, the extension's tests).
-- Site suite: 342 passed. New: 19 in `site/tests/guide-and-landing.test.mjs` (each guide check with a passing and a refused case, then the pages in one build of the fixture export), 7 in `site/tests/topic-card.test.mjs`, and `site/tests/lookup-component.test.mjs`. `site/tests/home-search.test.mjs` now reads the lookup's script from the component.
+- Site suite: 342 passed. New: 19 in `site/tests/guide-and-landing.build-test.mjs` (each guide check with a passing and a refused case, then the pages in one build of the fixture export), 7 in `site/tests/topic-card.test.mjs`, and `site/tests/lookup-component.build-test.mjs`. `site/tests/home-search.test.mjs` now reads the lookup's script from the component.
 - Site build on the published export: 337 pages, the publication check passed.
 - Browser, dev server on the published export. At 375 and 1280 wide: `/about`, `/guide`, `/guide/phase-3-trial`, `/guide/registered-trial-not-treatment-option` (the longest title), `/for/journalists`, `/for/clinicians`. No horizontal overflow on any of them. On `/about` at 375 by 812 the status label's top edge is at 699 pixels. The journalists' search was driven by script: a word with no match shows the no-result sentence, "tooth" lists eight claims, and picking one swaps the embed (339 by 420 at 375 wide, held to its frame) and the code. On the clinicians' page the example claim's article address returned its status, the dated sentence, "Copy sentence" and "Card to post", and the address did not enter the page's own.
 - Topic card: the helper that built it rendered all 18 published topics at 1200 by 630 and looked at the cancer card; a 272-character summary was not clipped.
