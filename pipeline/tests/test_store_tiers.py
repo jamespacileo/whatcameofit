@@ -6,6 +6,7 @@ import sqlite3
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 import pytest
 from sqlalchemy.orm import Session
@@ -459,9 +460,12 @@ def test_clear_inbox_records_the_fold_before_clearing(monkeypatch):
         return httpx.Response(200, json={"cleared": 7, "rows_removed": 3, "left": 0})
 
     real = httpx.Client
-    monkeypatch.setattr(
-        httpx, "Client", lambda **kw: real(**{**kw, "transport": httpx.MockTransport(service)})
-    )
+
+    def client(**given: Any) -> httpx.Client:
+        given["transport"] = httpx.MockTransport(service)
+        return real(**given)
+
+    monkeypatch.setattr(httpx, "Client", client)
     monkeypatch.setenv("INGEST_TOKEN", "t")
     key = "bulk/0123456789abcdef/delta-2026-11-18-1.jsonl.gz"
     result = CliRunner().invoke(
