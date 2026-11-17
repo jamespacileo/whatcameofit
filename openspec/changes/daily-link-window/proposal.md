@@ -7,7 +7,8 @@ The daily run fetched the whole current month of Hacker News links each night. T
 ## What Changes
 
 - `scripts/fetch_link_files.py hackernews --since-days N` asks only for the stories with a link posted since midnight UTC N days ago (1 to 28), and merges them into each month's file the window touches without dropping a row already there. The month form is unchanged.
-- The daily run's fetch uses that window, `DAILY_RUN_FETCH_DAYS` (default 3), then loads each month's file the window touched, oldest first.
+- The daily run's fetch goes on from a record of the last window fetched (`--since-last-fetch`), a day of overlap, at most 20 days a run, so missed nights are caught up and none is lost; with no record it takes `DAILY_RUN_FETCH_DAYS` (default 3). It then loads each month's file the fetch wrote, oldest first.
+- The month form takes `--merge` to fill a past month whose file exists.
 
 ## Capabilities
 

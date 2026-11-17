@@ -46,6 +46,9 @@ case "$*" in
   *"daily_run_figures.py counts") echo "700 4 12" ;;
   *"daily_run_figures.py published") printf 'claim-a\nclaim-b\nclaim-c\n' ;;
   *"thenwhat db-check") [ "${FAKE_DB:-up}" = up ] ;;
+  *"fetch_link_files.py"*)
+    [ -n "${FAKE_MONTHS:-}" ] && echo "Months written: $FAKE_MONTHS (2,000 stories with a link from 2026-09-25 00:00 UTC, 1,500 new to the files; still behind, the next run goes on from 2026-10-15)"
+    true ;;
   *"load-links"*) echo "Read 900 posts from file: 31 new link leads, 2 more shares, 867 already stored." ;;
   *"link_read"*) echo "link_read: 40 done, 0 found nothing, 1 failed; 300 still due." ;;
   *"load-trials --trials interventional --changes-only")
@@ -93,8 +96,8 @@ order=$(sed -n 's/^# start //p' "$tmp/case/dry" | sed 's/ [0-9][0-9-]*$//' | uni
 [ "$order" = "database,fetch-links,load-links,screen,score,read,prepare,trials,refresh,measure," ] ||
   fail "dry run: steps out of order: $order"
 
-grep -q -- "+ uv run .* python $root/scripts/fetch_link_files.py hackernews --since-days 3\$" "$tmp/case/dry.cmds" ||
-  fail "dry run: the fetch is not the three-day window"
+grep -q -- "+ uv run .* python $root/scripts/fetch_link_files.py hackernews --since-last-fetch 3\$" "$tmp/case/dry.cmds" ||
+  fail "dry run: the fetch does not go on from the last fetch, three days without a record"
 grep -q -- "+ uv run .* thenwhat backfill load-links hackernews $root/data/link-files/hackernews/$month.parquet\$" "$tmp/case/dry.cmds" ||
   fail "dry run: this month's file is not loaded"
 
@@ -113,8 +116,8 @@ chmod +x "$tmp/case/bin/date"
 : >"$root/data/link-files/hackernews/2026-11.parquet"
 # shellcheck disable=SC2030,SC2031 # each case sets the window in its own subshell
 (export DAILY_RUN_FETCH_DAYS=5 && job --dry-run) >"$tmp/case/dry" || fail "two months: exit $?"
-[ "$(grep -c 'fetch_link_files.py hackernews --since-days 5$' "$tmp/case/dry")" = 1 ] ||
-  fail "two months: the window is not fetched once, five days back"
+[ "$(grep -c 'fetch_link_files.py hackernews --since-last-fetch 5$' "$tmp/case/dry")" = 1 ] ||
+  fail "two months: the window is not fetched once, five days back without a record"
 [ "$(sed -n 's|^+.* backfill load-links hackernews .*/||p' "$tmp/case/dry" | tr '\n' ',')" = "2026-10.parquet,2026-11.parquet," ] ||
   fail "two months: both months' files are not loaded, oldest first"
 # shellcheck disable=SC2030,SC2031 # each case sets the window in its own subshell
@@ -123,7 +126,18 @@ chmod +x "$tmp/case/bin/date"
 grep -q '^- Loaded 2026-10: Read 900 posts' "$state/latest.md" || fail "two months: the summary lacks last month's load"
 grep -q '^- Loaded 2026-11: Read 900 posts' "$state/latest.md" || fail "two months: the summary lacks this month's load"
 
-# 1c. A window that is not 1 to 28 days is refused before anything starts.
+# 1c. A run loads the months the fetch says it wrote, such as those of a gap it caught up.
+fresh
+: >"$root/data/link-files/hackernews/2026-09.parquet"
+: >"$root/data/link-files/hackernews/2026-10.parquet"
+# shellcheck disable=SC2030,SC2031 # each case sets its stand-in in its own subshell
+(export FAKE_MONTHS="2026-09 2026-10" && job) || true
+[ "$(sed -n 's|.* backfill load-links hackernews .*/||p' "$calls" | tr '\n' ',')" = "2026-09.parquet,2026-10.parquet," ] ||
+  fail "gap: the run did not load the months the fetch wrote"
+grep -q '^- Link files: Months written: 2026-09 2026-10 .*still behind' "$state/latest.md" ||
+  fail "gap: the summary does not say the fetch is still behind"
+
+# 1d. A window that is not 1 to 28 days is refused before anything starts.
 fresh
 # shellcheck disable=SC2030,SC2031 # each case sets the window in its own subshell
 (export DAILY_RUN_FETCH_DAYS=40 && job --dry-run) >/dev/null 2>&1
