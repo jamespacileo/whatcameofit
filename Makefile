@@ -95,6 +95,18 @@ extension-safari: extension
 export-compare:
 	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
 
+# The whole cut-over chain on this machine, nothing sent anywhere: the hot file dumped,
+# replayed strictly, loaded into D1's local engine and held to the file by checksum; the
+# payload objects and the bulk file put in the local bucket and read back; then the
+# export from the hot file compared with the working database's. Each stage is timed.
+# Exit 1 on any failure or difference.
+#   make store-rehearsal STORE_HOT=/path/hot.sqlite STORE_BULK=/path/bulk.sqlite PAYLOADS=/path/payloads
+#   ... ARGS="--skip-export"     without the export comparison, which needs DATABASE_URL
+.PHONY: store-rehearsal
+store-rehearsal: store/ingest/node_modules
+	@test -n "$(STORE_HOT)" -a -n "$(STORE_BULK)" -a -n "$(PAYLOADS)" || { echo "Name STORE_HOT, STORE_BULK and PAYLOADS."; exit 1; }
+	node store/ingest/scripts/rehearsal.mjs --hot $(STORE_HOT) --bulk $(STORE_BULK) --payloads $(PAYLOADS) $(ARGS)
+
 # A rehearsal of taking the site's export from the truth store (task 6.2). It reads the D1
 # database and the bucket named, writes an export under STORE_REHEARSAL, holds it to the
 # schema the site reads and to the checks a published snapshot must pass, and says how it
