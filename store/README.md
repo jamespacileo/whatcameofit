@@ -19,7 +19,7 @@ Which Postgres table became what, and why: `openspec/changes/cloudflare-source-o
 python3 store/proof/proof.py --scenarios
 ```
 
-Builds the schema in memory and runs 62 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's. Before every merge it also takes the report without applying (`preview.sql`) and holds it to what the merge then reports.
+Builds the schema in memory and runs 63 scenarios through `merge.sql` as a D1 batch runs it: every statement in one transaction, nothing read in between. The first 14 are the spike's. Before every merge it also takes the report without applying (`preview.sql`) and holds it to what the merge then reports.
 
 ```bash
 docker exec -i thenwhat-db-1 psql -U thenwhat -d thenwhat -q -f - < store/proof/export_sample.sql > store/proof/sample/records.jsonl

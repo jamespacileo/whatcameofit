@@ -678,13 +678,20 @@ SET claim_id = (SELECT g.kept_id FROM staged_claim_merge g WHERE g.gone_id = ent
 WHERE type <> 'intervention' AND claim_id IN (SELECT gone_id FROM staged_claim_merge)
 ;
 -- The intervention that stays gains the names the action lists, each once. Which names
--- those are is the pipeline's rule (a name that breaks an entry rule is left out).
+-- those are is the pipeline's rule (a name that breaks an entry rule is left out). The
+-- names it had keep their order and the gained ones follow, in the order listed: a name's
+-- place is shown, so a merge must not sort them.
 UPDATE entity SET synonyms = (
   SELECT json_group_array(name) FROM (
-    SELECT value AS name FROM json_each(entity.synonyms)
-    UNION
-    SELECT j.value FROM staged_claim_merge g, json_each(coalesce(g.body -> 'gains', '[]')) j
-    WHERE g.kept_id = entity.claim_id AND j.value <> entity.name))
+    SELECT name FROM (
+      SELECT o.value AS name, 0 AS part, o.key AS place FROM json_each(entity.synonyms) o
+      UNION ALL
+      SELECT j.value, 1, min(j.key)
+      FROM staged_claim_merge g, json_each(coalesce(g.body -> 'gains', '[]')) j
+      WHERE g.kept_id = entity.claim_id AND j.value <> entity.name
+        AND j.value NOT IN (SELECT value FROM json_each(entity.synonyms))
+      GROUP BY j.value)
+    ORDER BY part, place, name))
 WHERE type = 'intervention' AND claim_id IN (SELECT kept_id FROM staged_claim_merge)
 ;
 UPDATE claim_alias SET claim_id = (SELECT g.kept_id FROM staged_claim_merge g WHERE g.gone_id = claim_alias.claim_id)
