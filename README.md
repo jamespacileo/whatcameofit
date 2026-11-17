@@ -348,7 +348,7 @@ make setup   # once per clone or worktree
 make check
 ```
 
-This runs ruff, ty, pytest, the site's tests, the site build and the extension's tests and build. CI runs the same command. The tests start the Compose database and use a throwaway `thenwhat_test` database in it, which is dropped and rebuilt from the migrations on every run.
+This runs ruff, ty, pytest, the site's tests, the site build and the extension's tests and build. CI runs the same command. The tests have a Postgres of their own, the Compose service `test-db` on port 5434, which `make check` starts and `docker compose up` does not. It holds nothing but test databases and keeps them in memory. Each checkout drops and rebuilds one database there, named after its folder, so two checkouts can run their tests at once. Tests are never run on the working database's server (port 5433): a test run pointed there, or at a database whose name does not end in `_test`, stops before anything is dropped and says why. `TEST_DATABASE_URL` names another test database, and `TEST_DB_PORT` another port for the service.
 
 Database migrations live in `pipeline/migrations` and are applied each time the `pipeline` container starts. After changing a model, generate a migration with the database running:
 
