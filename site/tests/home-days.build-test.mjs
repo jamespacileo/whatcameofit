@@ -61,7 +61,8 @@ before(() => {
     const paper = phase.events.find((event) => event.type === "followup_paper");
     phase.events.push({ ...paper, id: 9001, event_date: "2025-09-05", confidence: 0.6 });
   });
-  later = plain(fs.readFileSync(path.join(work, "dated", "rows/latest.txt"), "utf8"));
+  const latest = dated.match(/data-day-list data-rest="([^"]+)"/)[1];
+  later = plain(fs.readFileSync(path.join(work, "dated", latest), "utf8"));
   undated = build("undated", (data) => {
     data.last_checked_at = null;
   });
