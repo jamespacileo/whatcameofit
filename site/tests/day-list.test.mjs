@@ -7,6 +7,7 @@ import {
   countKinds,
   countsText,
   dayList,
+  gatherRecords,
   headingTitle,
   olderClaim,
 } from "../src/lib/day-list.ts";
@@ -177,3 +178,23 @@ test("Scenario: No claim first reported in an earlier year", () => {
   assert.equal(olderClaim(fixture.claims, "2017-06-01"), null);
   assert.equal(dayList(fixture.claims, "2017-06-01T00:00:00Z").older, null);
 });
+
+test("the rows of one registry record are brought together, the first where it stood", () => {
+  const record = (slug, trial, type = "trial_registered") => ({
+    kind: "record",
+    date: "2026-11-12",
+    claim: { slug },
+    event: { trial_id: trial, source_url: `https://registry.example/${trial}`, type, trial_state: null },
+    change: null,
+  });
+  const report = (slug) => ({ kind: "report", date: "2026-11-12", claim: { slug }, reports: [] });
+  const rows = [report("a"), record("b", "NCT1"), record("c", "NCT2"), report("d"), record("e", "NCT1"), record("f", "NCT1", "trial_results_posted"), record("g", "NCT1")];
+  assert.deepEqual(
+    gatherRecords(rows).map(({ row, follows }) => `${row.claim.slug}${follows ? "+" : ""}`),
+    // NCT1's registration for e and g follows b; its posted results are another record.
+    ["a", "b", "e+", "g+", "c", "d", "f"],
+  );
+  // A day with no record listed twice is unchanged.
+  assert.deepEqual(gatherRecords(rows.slice(0, 4)).map(({ row, follows }) => [row.claim.slug, follows]), [["a", false], ["b", false], ["c", false], ["d", false]]);
+});
+

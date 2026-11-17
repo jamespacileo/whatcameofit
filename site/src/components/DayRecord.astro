@@ -6,7 +6,7 @@
 // hangs under these, smaller, on a hairline at its left: what the record belongs to,
 // not what the row is. The claim's status now is the panel on the right, named so,
 // since a record and a status side by side are easily read as one.
-import type { RecordRow } from "../lib/day-list";
+import { recordKey, type RecordRow } from "../lib/day-list";
 import { confidenceLabel } from "../lib/confidence";
 import { followedReports } from "../lib/reports";
 import { sourceName } from "../lib/status";
@@ -20,9 +20,13 @@ import RowStanding from "./RowStanding.astro";
 interface Props {
   row: RecordRow;
   topic: string;
+  /** The record is already drawn in the row before: this row is another claim it
+   * belongs to, drawn as one short line. The list's script decides this again when a
+   * choice leaves rows out. */
+  follows?: boolean;
 }
 
-const { row, topic } = Astro.props;
+const { row, topic, follows = false } = Astro.props;
 const { claim, event, change } = row;
 const [report] = followedReports(claim);
 const confidence = event.confidence ?? 1;
@@ -44,6 +48,8 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
   data-status={claim.status.code}
   data-topic={claim.vertical}
   data-on={row.date}
+  data-record={recordKey(row)}
+  data-follows={follows ? "" : undefined}
 >
   <div class="row-main">
     <p class="row-source">
@@ -54,12 +60,15 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
       {!report && years > 0 && <span class="row-age">First reported {years} {years === 1 ? "year" : "years"} ago</span>}
     </p>
     <h4 class="row-title">
+      {/* A row that follows its record says "Also for" and the treatment; the record's
+          own words are then for a screen reader only. */}
+      <span class="row-also-label">Also for </span>
       <a href={`/${claim.slug}`}>
-        {label}<span class="visually-hidden">: {claim.intervention.name}</span>
+        <span class="row-what">{label}</span><span class="visually-hidden">: </span><span class="row-whom">{claim.intervention.name}</span>
       </a>
     </h4>
     <p class="row-claim">
-      <span class="row-intervention">{claim.intervention.name}</span> · {claim.indication}
+      <span class="row-intervention">{claim.intervention.name}</span><span class="row-claim-sep"> · </span>{claim.indication}
     </p>
     {/* A record with no trial behind it (a regulator's decision, a paper) is given in its own words. */}
     {!event.trial_id && <p class="row-detail">{event.summary}</p>}

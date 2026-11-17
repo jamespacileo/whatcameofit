@@ -139,3 +139,26 @@ Under a heading that names one day, a report's or a registry record's row of the
 #### Scenario: Under a week
 - **WHEN** a report dated 21 October is listed under "Week of 19 October"
 - **THEN** its row draws "21 Oct 2026"
+
+### Requirement: A record matched to several claims is drawn once
+Where one registry record is listed in a day for more than one claim, the day-by-day list SHALL draw the record in full for the first of those claims and SHALL list each further claim straight after it as one line that names the treatment, leading to its claim page, and what it is for, with that claim's own status. When a reader's choice leaves the first of those rows out, the first one left SHALL be drawn in full. The day's counts SHALL still count every row.
+
+#### Scenario: One trial, five claims
+- **WHEN** a trial registered on 12 November is matched to five published claims
+- **THEN** the day shows the record once, with its identifier, and four lines after it that each begin "Also for"
+
+#### Scenario: The leading claim is filtered out
+- **WHEN** a reader narrows the list to a topic the first of those five claims is not filed under
+- **THEN** the first claim left is drawn as the record, in full, and the rest follow it
+
+### Requirement: The list reads as a feed on a phone
+At 375 pixels wide, a row's status panel SHALL be one line of at least 44 pixels: the status, its place on the path and the control's mark; a change of status and a no-signal note SHALL keep a line of their own. The counts SHALL be said in the opened detail. The panel SHALL be named "Status now" to a screen reader. A day's heading SHALL stay in view while its rows are read. A link in an opened detail SHALL be at least 44 pixels to press. The first row and its status panel SHALL both be on the first screen of a phone 812 pixels tall.
+
+#### Scenario: First screen
+- **WHEN** the home page opens on a phone 375 by 812
+- **THEN** the title, the box with its button beside it, three things to try, the list's head, and the first row with its status panel are all in view
+
+#### Scenario: A long day
+- **WHEN** a reader scrolls through a day of eleven rows
+- **THEN** that day's heading stays at the top of the screen until the next day's replaces it
+

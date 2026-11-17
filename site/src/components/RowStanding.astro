@@ -48,7 +48,7 @@ const counts = claim.trials?.length ? countsLine({ trials: claim.trials.length, 
 const before = change ? STATUS_LABELS[change.before] : null;
 // The button's name is short: what it says and what it opens. The counts and the
 // row's sentences are its description.
-const name = `${change ? `Changed from ${before} to ${label}` : label}. More on ${claim.intervention.name}`;
+const name = `${change ? `Changed from ${before} to ${label}` : `Status now: ${label}`}. More on ${claim.intervention.name}`;
 const descId = `${id}-said`;
 const sentences = rowSentences(claim, date);
 const promise = latestPromise(claim);
@@ -113,6 +113,8 @@ const trialCount = claim.trials?.length ?? 0;
 <div class="row-more" id={id} role="region" aria-label={`More on ${claim.intervention.name}`} data-row-more>
   <div>
     <div class="row-more-body">
+      {/* Where the panel is one line the counts are said here. */}
+      {counts && <p class="row-more-counts">{counts}</p>}
       <p class="row-then">
         <strong>{stage ?? "Not recorded"}</strong>{" "}
         {[`when first reported${claim.first_reported_date ? `, ${formatDate(claim.first_reported_date)}` : ""}.`, `${gloss}.`].join(" ")}

@@ -4,7 +4,7 @@
 // the registries were last checked. Every row is in the page as built; the script only
 // hides, counts and marks.
 import type { DayList } from "../lib/day-list";
-import { countKinds, countsText, dayName, earlierText, headingTitle, toComeText } from "../lib/day-list";
+import { countKinds, countsText, dayName, earlierText, gatherRecords, headingTitle, toComeText } from "../lib/day-list";
 import { formatDate } from "../lib/timetable";
 import Info from "@lucide/astro/icons/info";
 import DayPromise from "./DayPromise.astro";
@@ -157,11 +157,11 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
                 <span class="day-col">Status now</span>
               </div>
               <ol>
-                {heading.rows.map((row) =>
+                {gatherRecords(heading.rows).map(({ row, follows }) =>
                   row.kind === "report" ? (
                     <DayReport row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
                   ) : row.kind === "record" ? (
-                    <DayRecord row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} />
+                    <DayRecord row={row} topic={topicTitle.get(row.claim.vertical) ?? ""} follows={follows} />
                   ) : (
                     <DayPromise row={row} />
                   ),
@@ -322,6 +322,15 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
         const rows = rowsIn(group);
         const left = rows.filter((row) => !out(row));
         for (const row of rows) row.hidden = out(row);
+        // One record listed for several claims: the first of its rows left in the day
+        // stands for the record, the rest follow it as short lines.
+        const led = new Set<string>();
+        for (const row of left) {
+          const key = row.dataset.record;
+          if (!key) continue;
+          row.toggleAttribute("data-follows", led.has(key));
+          led.add(key);
+        }
         const says = group.querySelector<HTMLElement>("[data-says]")!;
         says.textContent = countsText(kindsOf(left));
         // A heading with nothing under it is not shown.
@@ -686,6 +695,13 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     gap: 0.1rem 0.6rem;
     padding: 1.5rem 0 0.5rem;
     border-bottom: 1px solid var(--rule);
+    /* A long day keeps its name in view. */
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--paper);
+    /* A headline's hung mark passes under the heading's left edge too. */
+    box-shadow: -0.75rem 0 0 var(--paper);
   }
 
   .day-group:first-of-type .day-head {
@@ -772,6 +788,19 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     color: var(--ink);
     font-weight: 600;
     text-decoration: none;
+  }
+
+  /* A link out of the site says so with one small arrow. */
+  .row-source .outlet a::after,
+  .row-record::after {
+    content: "";
+    display: inline-block;
+    width: 0.62em;
+    height: 0.62em;
+    margin-left: 0.22em;
+    background: currentColor;
+    opacity: 0.6;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 7h10v10'/%3E%3Cpath d='M7 17 17 7'/%3E%3C/svg%3E") center / contain no-repeat;
   }
 
   .row-source .outlet a:hover {
@@ -1029,6 +1058,57 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     white-space: nowrap;
   }
 
+  /* A record listed for several claims is drawn once. Each further claim follows as
+     one short line: "Also for", the treatment as the link, what it is for. */
+  .row-also-label {
+    display: none;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .record-row[data-follows] {
+    padding-top: 0.55rem;
+  }
+
+  .day-row:has(+ .record-row[data-follows]:not([hidden])) {
+    border-bottom: 0;
+    padding-bottom: 0.3rem;
+  }
+
+  /* The line runs on as a sentence does: "Also for", the treatment, what it is for. */
+  .record-row[data-follows] :is(.row-title, .row-claim) {
+    display: inline;
+  }
+
+  .record-row[data-follows] :is(.row-source, .row-about, .row-intervention, .row-detail) {
+    display: none;
+  }
+
+  .record-row[data-follows] .row-also-label {
+    display: inline;
+  }
+
+  .record-row:not([data-follows]) .row-whom,
+  .record-row[data-follows] .row-what {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .record-row[data-follows] .row-title {
+    margin: 0;
+    font-size: var(--text-m);
+    font-weight: 600;
+    line-height: 1.45;
+  }
+
+  .record-row[data-follows] .row-claim {
+    font-size: var(--text-m);
+  }
+
   .record-row .row-title {
     font-family: var(--face);
     font-size: clamp(1.12rem, 3vw, 1.25rem);
@@ -1078,7 +1158,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   .row-about-title {
     margin: 0.2rem 0 0;
     font-family: var(--display);
-    font-size: var(--text-l);
+    font-size: var(--text-body);
     font-weight: 400;
     line-height: 1.3;
     text-wrap: pretty;
@@ -1125,6 +1205,12 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
   .row-more-body p {
     margin: 0;
     max-width: var(--measure);
+  }
+
+  .row-more-body .row-more-counts {
+    display: none;
+    font-size: var(--text-s);
+    color: var(--muted);
   }
 
   .row-more-head {
@@ -1186,30 +1272,30 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       grid-template-columns: minmax(0, 1fr);
     }
 
+    /* Under the claim the panel is one line, 44 pixels to press: the status, its place
+       on the path, the control's mark. A change, and a no-signal note, have a line of
+       their own. The counts are said in the detail, and to a screen reader here. */
     .row-now {
-      margin-top: 0.8rem;
-      grid-template-columns: minmax(0, 1fr) auto;
+      margin-top: 0.7rem;
+      grid-template-columns: minmax(0, 1fr) auto auto;
       align-items: center;
       column-gap: 0.75rem;
+      row-gap: 0;
+      min-height: 2.75rem;
+      padding: 0.45rem 0.8rem;
     }
 
-    .row-now > * {
+    .row-now > .row-change {
       grid-column: 1 / -1;
+      grid-row: 1;
+      margin-bottom: 0.2rem;
     }
 
-    /* Under the claim the panel names itself, and no heading names a column. */
-    .row-change.is-plain {
-      display: grid;
-    }
-
-    .day-col {
-      display: none;
-    }
-
-    /* The status and its place on the path share the panel's second line. */
     .row-now > .status-name {
       grid-column: 1;
+      grid-row: 2;
       padding-right: 0;
+      font-size: var(--text-body);
     }
 
     .row-now > .track {
@@ -1223,6 +1309,61 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       width: auto;
     }
 
+    .row-now > .row-chev {
+      position: static;
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .row-now > .row-note {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      margin-top: 0.2rem;
+    }
+
+    .row-now > .row-counts {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .row-more-body .row-more-counts {
+      display: block;
+    }
+
+    .day-col {
+      display: none;
+    }
+
+    /* A record's top line is its kind and its source; the topic is the filter's. */
+    .record-row .row-topic {
+      display: none;
+    }
+
+    /* The attached report is held to two lines; the whole title is on the claim page. */
+    .row-about-title {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
+      margin-left: -0.6em;
+      padding-left: 0.6em;
+    }
+
+    /* A link in the detail is 44 pixels to press. */
+    .row-links {
+      gap: 0 1.25rem;
+    }
+
+    .row-links a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 2.75rem;
+    }
+
     /* Stacked, the opened panel sits on its detail at the same width: both lose the
        corners where they meet. */
     @media (scripting: enabled) {
@@ -1231,14 +1372,6 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       }
     }
 
-    /* With the panel's width to itself the counts are one line. */
-    .row-counts {
-      display: block;
-    }
-
-    .row-counts .count-sep {
-      display: inline;
-    }
   }
 
   .row-status {
@@ -1471,6 +1604,17 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     /* Rows are parted by their rule and the space under it. */
     .day-row + .day-row {
       padding-top: 1rem;
+    }
+
+    .day-row + .record-row[data-follows] {
+      padding-top: 0.5rem;
+    }
+
+    /* Its link runs in the line; the room to press it is above and below the words. */
+    .record-row[data-follows] .row-title a {
+      display: inline;
+      margin: 0;
+      padding-block: 0.65rem;
     }
 
     .to-come summary .text-control {

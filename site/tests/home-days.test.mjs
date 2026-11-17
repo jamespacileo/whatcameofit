@@ -106,7 +106,7 @@ test("Scenario: A report of an animal study, and what the records add", () => {
   // that opens the detail under the row (openspec latest-rows).
   assert.ok(row.indexOf("row-title") < row.indexOf('class="row-now"'));
   // Its name is short: the status and what it opens. The counts and sentences describe it.
-  assert.match(row, /<button type="button" class="row-now" aria-expanded="false" aria-controls="more-phase-claim-2025-09-08" aria-label="Phase 3 trial\. More on phase-claim agent" aria-describedby="more-phase-claim-2025-09-08-said" data-row-open>\s*<span class="row-change is-plain">\s*<span class="row-was">Status now<\/span>\s*<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
+  assert.match(row, /<button type="button" class="row-now" aria-expanded="false" aria-controls="more-phase-claim-2025-09-08" aria-label="Status now: Phase 3 trial\. More on phase-claim agent" aria-describedby="more-phase-claim-2025-09-08-said" data-row-open>\s*<span class="row-change is-plain">\s*<span class="row-was">Status now<\/span>\s*<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
   // What the column says is named once, above the list.
   assert.equal(count(dated, 'class="list-key"'), 1);
   assert.match(row, /<div class="row-more" id="more-phase-claim-2025-09-08" role="region" aria-label="More on phase-claim agent" data-row-more>/);
@@ -124,7 +124,7 @@ test("Scenario: An approval that changed the status, and a record that changed n
   assert.match(changed, /class="row-now is-changed"[^>]*aria-label="Changed from Phase 2 trial to Phase 3 trial\. More on phase-claim agent"/);
   assert.match(changed, /<span class="new-tag">Changed<\/span>\s*<span class="row-was">from Phase 2 trial<\/span><\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
   // What was recorded is said of the record, not in a status's words.
-  assert.match(changed, /<h4 class="row-title">\s*<a href="\/phase-claim">\s*(Phase \d )?[Tt]rial results posted<span class="visually-hidden">: phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
+  assert.match(changed, /<h4 class="row-title">[\s\S]*?<a href="\/phase-claim">\s*<span class="row-what">(Phase \d )?[Tt]rial results posted<\/span><span class="visually-hidden">: <\/span><span class="row-whom">phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
   // The record at its source is in the row's top line, where a report row links its outlet.
   assert.match(changed, /<a class="row-record" href="[^"]+">NCT00000002<\/a>/);
   // The day's heading names the column once; a panel that says Changed does not name itself.
@@ -132,14 +132,14 @@ test("Scenario: An approval that changed the status, and a record that changed n
   assert.ok(!changed.includes('class="row-change is-plain"'), "a panel that says Changed does not also say Status now");
   const paper = group(dated, "d-2025-09-05");
   assert.ok(!paper.includes("Changed"));
-  assert.match(paper, /class="row-now" [^>]*aria-label="Phase 3 trial\. More on phase-claim agent"/);
+  assert.match(paper, /class="row-now" [^>]*aria-label="Status now: Phase 3 trial\. More on phase-claim agent"/);
   // Scenario: A follow-up paper scored 0.6.
   assert.match(paper, /Medium match · 60%/);
   // A registry row is the record: what was recorded leads, in the record's own words,
   // then the record at its source. The claim's newest report hangs under them, quoted,
   // with how long ago the claim was first reported.
   const lead = paper.indexOf('class="row-title"');
-  assert.match(paper, /<h4 class="row-title">\s*<a href="\/phase-claim">\s*Follow-up paper<span class="visually-hidden">: phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
+  assert.match(paper, /<h4 class="row-title">[\s\S]*?<a href="\/phase-claim">\s*<span class="row-what">Follow-up paper<\/span><span class="visually-hidden">: <\/span><span class="row-whom">phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
   assert.match(paper, /<a class="row-record" href="https:\/\/registry\.example\/record\/4">[^<]+<\/a>/);
   // A record that changed nothing names the column beside it: the claim's status now.
   assert.match(paper, /<span class="row-change is-plain">\s*<span class="row-was">Status now<\/span>\s*<\/span>\s*<strong class="status-name">Phase 3 trial<\/strong>/);
