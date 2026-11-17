@@ -31,7 +31,7 @@ from thenwhat.store.build import (
 from thenwhat.store.dump import DumpRefused, counts_of, differences, dump
 from thenwhat.store.form import Payload
 from thenwhat.store.gather import Gathered, gather, stream
-from thenwhat.store.inbox import InboxFailed, clear, fold
+from thenwhat.store.inbox import InboxFailed, clear, fold, record_fold
 from thenwhat.store.people import FIELDS, PROOF_SQL, prove_file, prove_file_objects, strip
 from thenwhat.store.push import (
     USER_AGENT,
@@ -519,16 +519,33 @@ def fold_inbox_command(
 @store_app.command("clear-inbox")
 def clear_inbox_command(
     through: Annotated[int, typer.Option(help="The last seq folded, as fold-inbox printed it.")],
+    object_key: Annotated[
+        str | None,
+        typer.Option(
+            "--object",
+            help="The delta's key in the bucket, as upload-delta.mjs printed it: the fold is"
+            " recorded first. Leave it out on a quiet day, with --through at or below the"
+            " last fold recorded.",
+        ),
+    ] = None,
     url: Annotated[
         str, typer.Option("--url", envvar="INGEST_URL", help="The ingest service's address.")
     ] = "",
 ) -> None:
     """Have the service clear the inbox up to a seq, and the rows those runs added to D1,
-    once their delta is kept in R2. Run it every day, with nothing new too (`--through`
-    the last seq folded, or 0): a lead held while its processing was due is removed by a
-    later clear."""
+    once their delta is kept in R2: with --object, the fold into that delta is recorded
+    first (docs/deploy.md, "The daily fold, in order"). Run it every day, with nothing new
+    too (`--through` the last fold recorded, or 0): a lead held while its processing was
+    due is removed by a later clear."""
     with _service(url) as client:
         try:
+            if object_key is not None:
+                recorded = record_fold(client, through, object_key)
+                out.print(
+                    f"Recorded the fold through seq {recorded.get('folded_through', through)}"
+                    f" into {object_key}.",
+                    markup=False,
+                )
             answer = clear(client, through)
         except InboxFailed as fault:
             err.print(str(fault), markup=False)

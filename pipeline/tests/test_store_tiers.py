@@ -445,3 +445,31 @@ def test_a_fold_that_failed_merges_or_fails_again_and_never_skips(session: Sessi
     ]
     shares = "SELECT count(*) FROM link_share WHERE platform = 'reader'"
     assert sqlite3.connect(bulk).execute(shares).fetchone() == (2,)
+
+
+def test_clear_inbox_records_the_fold_before_clearing(monkeypatch):
+    import httpx
+
+    calls: list[tuple[str, dict]] = []
+
+    def service(request: httpx.Request) -> httpx.Response:
+        calls.append((request.url.path, json.loads(request.content)))
+        if request.url.path == "/inbox/folded":
+            return httpx.Response(200, json={"recorded": True, "folded_through": 7})
+        return httpx.Response(200, json={"cleared": 7, "rows_removed": 3, "left": 0})
+
+    real = httpx.Client
+    monkeypatch.setattr(
+        httpx, "Client", lambda **kw: real(transport=httpx.MockTransport(service), **kw)
+    )
+    monkeypatch.setenv("INGEST_TOKEN", "t")
+    key = "bulk/0123456789abcdef/delta-2026-11-18-1.jsonl.gz"
+    result = CliRunner().invoke(
+        app,
+        ["store", "clear-inbox", "--through", "7", "--object", key, "--url", "http://s.test"],
+    )
+    assert result.exit_code == 0, result.output
+    assert calls == [
+        ("/inbox/folded", {"through": 7, "object": key}),
+        ("/inbox/clear", {"through": 7}),
+    ]

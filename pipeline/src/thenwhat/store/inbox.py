@@ -79,6 +79,17 @@ def fold(
     return folded
 
 
+def record_fold(client: httpx.Client, through: int, object_key: str) -> dict[str, Any]:
+    """Tell the service the inbox is folded through a seq, into the delta now kept in the
+    bucket under `object_key`; it refuses when the bucket has no such object."""
+    answer = client.post("/inbox/folded", json={"through": through, "object": object_key})
+    if answer.status_code != 200:
+        raise InboxFailed(
+            f"The service did not record the fold: {answer.status_code} {answer.text[:300]}"
+        )
+    return answer.json()
+
+
 def clear(client: httpx.Client, through: int) -> dict[str, Any]:
     """Have the service remove the inbox up to `through` and what those runs added to D1."""
     answer = client.post("/inbox/clear", json={"through": through})
