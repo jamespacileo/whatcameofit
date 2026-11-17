@@ -1367,6 +1367,9 @@ def funnel_command() -> None:
         f"could not be read: {sum(found.cannot_be_read.values()):,}",
     ]
     lines += [f"  {reason}: {number:,}" for reason, number in found.cannot_be_read.items()]
+    if found.put_off:
+        lines.append(f"put off, to be asked for again: {sum(found.put_off.values()):,}")
+        lines += [f"  {reason}: {number:,}" for reason, number in found.put_off.items()]
     if found.undated_outlets:
         lines.append("outlets whose pages gave no publication date:")
         lines += [f"  {outlet}  {number:,}" for outlet, number in found.undated_outlets]

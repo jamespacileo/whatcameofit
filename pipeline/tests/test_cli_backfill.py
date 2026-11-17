@@ -1231,3 +1231,63 @@ def test_the_paper_step_takes_the_trial_target_set(run, session: Session, monkey
     assert result.exit_code == 0, result.output
     # The trial that ended this year with results first; the one that ended last year never.
     assert asked == [["NCT00000003", "NCT00000001", "NCT00000002"]]
+
+
+def test_the_funnel_counts_why_leads_were_not_read_from_their_reason_codes(run, session: Session):
+    """Scenario: The funnel report (openspec lead-reading, change one-work-runner)"""
+    from datetime import timedelta
+
+    from thenwhat.backfill import link_reasons as why
+    from thenwhat.backfill.link_read import LinkRead
+    from thenwhat.domain import ReadOutcome, WorkOutcome
+
+    def lead(name: str, outlet: str, outcome, reason, values, entry_outcome) -> None:
+        carried = {"outlet": outlet, **values}
+        said = outcome is not None
+        added = LinkLead(
+            url=f"https://{outlet}/{name}",
+            url_key=f"{outlet}/{name}",
+            outlet=outlet,
+            outlet_kind=OutletKind.GENERAL_NEWS,
+            title="words a person wrote when sharing the link",
+            first_shared_at=NOW,
+            read_outcome=outcome,
+            read_detail=reason.say(carried) if said else None,
+        )
+        session.add(added)
+        session.flush()
+        later = entry_outcome is WorkOutcome.LATER
+        session.add(
+            WorkEntry(
+                record_kind="link_lead",
+                record_id=added.id,
+                step="link_read",
+                step_version=LinkRead.version,
+                outcome=entry_outcome,
+                attempts=0,
+                requests_used=1,
+                fingerprint="earlier",
+                last_attempt_at=NOW,
+                reason=reason.code,
+                reason_values=carried,
+                not_before=NOW + timedelta(hours=6) if later else None,
+                first_put_off_at=NOW if later else None,
+            )
+        )
+
+    unreadable, fix = ReadOutcome.CANNOT_BE_READ, WorkOutcome.NEEDS_FIX
+    lead("a", "news.example.org", unreadable, why.SITE_REFUSED, {"status": 403}, fix)
+    lead("b", "other.example.org", unreadable, why.SITE_REFUSED, {"status": 403}, fix)
+    lead("c", "news.example.org", unreadable, why.NO_DATE, {}, fix)
+    lead("d", "news.example.org", None, why.SITE_BUSY, {"status": 503}, WorkOutcome.LATER)
+    session.flush()
+
+    result = run("funnel")
+
+    assert result.exit_code == 0, result.output
+    assert "could not be read: 3" in result.output
+    assert "  the page could not be retrieved (the site answered 403): 2" in result.output
+    assert "  the page gives no publication date: 1" in result.output
+    assert "outlets whose pages gave no publication date:\n  news.example.org  1" in result.output
+    assert "put off, to be asked for again: 1" in result.output
+    assert "  the page could not be retrieved (the site answered 503): 1" in result.output
