@@ -49,6 +49,7 @@ from thenwhat.store.push import (
     PushFailed,
     RetryOnBusy,
     check_build,
+    check_since,
     pending_path,
     push,
     read_state,
@@ -715,9 +716,11 @@ def fresh_state_command(
             timeout=120,
         ) as client:
             answer = client.get("/progress")
-        held = store_build(answer.json()) if answer.status_code == 200 else None
+        progress = answer.json() if answer.status_code == 200 else None
+        held = store_build(progress)
         try:
             check_build(state, held)
+            check_since(state, progress)
         except PushFailed as fault:
             err.print(str(fault), markup=False)
             raise typer.Exit(code=1) from None

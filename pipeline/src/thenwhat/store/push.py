@@ -235,12 +235,37 @@ def check_build(state: dict[str, str], held: str | None) -> None:
         )
 
 
+AFTER_RELOAD = (
+    "After any reload or restore: thenwhat store fresh-state <store file> --url <address>"
+    " --out <new state file>, then thenwhat backfill slices run --push --again --state"
+    " <new state file>."
+)
 RELOADED = (
     "The store holds no slice of this set, but this device's push state or plan says some"
-    " were sent: the store was loaded again. After any reload or restore: thenwhat store"
-    " fresh-state <store file> --url <address> --out <new state file>, then thenwhat backfill"
-    " slices run --push --again --state <new state file>."
+    " were sent: the store was loaded again. " + AFTER_RELOAD
 )
+
+
+SINCE_KEY = "\tdatabase since"
+
+
+def check_since(state: dict[str, str], progress: Any) -> bool:
+    """Refuse a store whose database was created again since the push state first saw it
+    (its `GET /progress` `database_since` moved): what the state says was sent went to
+    the old one. A state that has not seen it takes it; True when it did."""
+    since = progress.get("database_since") if isinstance(progress, dict) else None
+    if not isinstance(since, str) or not since:
+        return False
+    held = state.get(SINCE_KEY)
+    if held is None:
+        state[SINCE_KEY] = since
+        return True
+    if held != since:
+        raise PushFailed(
+            f"The store's database was created again: it dates from {since}, the push state"
+            f" from {held}, so what the state says was sent went to the old one. " + AFTER_RELOAD
+        )
+    return False
 
 
 def slices_held(progress: Any, rule: str, year: int) -> int | None:

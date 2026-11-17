@@ -367,3 +367,21 @@ def test_a_store_loaded_again_or_from_another_build_is_refused_before_a_push(
     assert refused.exit_code == 1 and "another" in refused.output
     store.progress["build_id"] = read_state(state)["\tbuild"]
     assert CliRunner().invoke(app, args).exit_code == 0
+
+
+def test_a_store_whose_database_was_created_again_is_refused(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    from thenwhat.store.push import PushFailed, read_state
+
+    store = _Store()
+    cli_slices, made, _, state, _ = _pushed_slice(session, tmp_path, monkeypatch, store)
+    url = "http://prod.test"
+    where = cli_slices.store_of(state, url)
+    store.progress = {"database_since": "2026-11-17 13:05:22"}
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    assert read_state(state)["\tdatabase since"] == "2026-11-17 13:05:22"
+    cli_slices._check_store(made, state, where, url, "t", again=False)
+    store.progress = {"database_since": "2026-11-18 09:00:00"}
+    with pytest.raises(PushFailed, match="created again.*fresh-state"):
+        cli_slices._check_store(made, state, where, url, "t", again=True)

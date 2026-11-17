@@ -21,6 +21,7 @@ from thenwhat.store.push import (
     PushFailed,
     RetryOnBusy,
     check_build,
+    check_since,
     pending_path,
     push,
     read_state,
@@ -286,6 +287,8 @@ def _check_store(made: Plan, state: Path, store: str, url: str, token: str, *, a
         return
     held = read_state(state)
     check_build(held, store_build(progress))
+    if check_since(held, progress):
+        write_state(state, held)
     sent = any(key.startswith("trial_slice\t") for key in held) or any(
         one.store == store for one in made.slices
     )
