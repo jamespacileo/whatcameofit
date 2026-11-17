@@ -1971,6 +1971,13 @@ test("Scenario: Top category with claims, and one with no claim", () => {
   assert.match(html, /href="\/topics"/);
 });
 
+test("Clinical browsing explains registry, paper and model sources", () => {
+  const index = wordsOf(page("clinical/index.html"));
+  const category = wordsOf(page("clinical/D010510/index.html"));
+  assert.match(index, /conditions listed in trial records, major subject headings on papers, or an approved model reading/);
+  assert.match(category, /listed in a trial record, indexed as a major subject on a paper, or identified by an approved model reading/);
+});
+
 test("Scenario: Category in two places links to both broader categories", () => {
   const html = page("clinical/D003930/index.html");
   assert.match(html, /<a href="\/clinical\/D003920" data-broader[^>]*>\s*Diabetes Mellitus\s*<\/a>/);
