@@ -20,8 +20,10 @@ export async function progress(db) {
     db.prepare("SELECT writer, count(*) AS runs, max(merged_at) AS last_merged_at FROM run WHERE status = 'merged' GROUP BY writer ORDER BY writer"),
     db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%' AND name NOT LIKE '%_fts%' ORDER BY name"),
     // The build the store was loaded from: its id is in the ids of the build's own runs,
-    // which the load brings with it, the same in the store file and here.
-    db.prepare("SELECT substr(id, 7, 16) AS build FROM run WHERE id LIKE 'build-%' ORDER BY id LIMIT 1"),
+    // which the load brings with it, the same in the store file and here. Only a run of
+    // the kind `migration` counts, which the operator's token alone may register: a
+    // device's or the daily job's token cannot name a build by registering a run.
+    db.prepare("SELECT substr(id, 7, 16) AS build FROM run WHERE writer = 'migration' AND id LIKE 'build-%' ORDER BY id LIMIT 1"),
   ]);
   // Since when this database has been this database: its first migration. A database
   // that was replaced has a new one; one restored by Time Travel keeps it.
