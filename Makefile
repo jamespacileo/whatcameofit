@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check lint types db-up test-db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-extension check-store lint types db-up test-db-up test test-fast test-slow scripts-test store-test store-dev site-test site-build-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -7,9 +7,26 @@ export SITE_URL ?= https://whatcameofit.com
 # TEST_DATABASE_URL to name another, on that server, ending in _test.
 export TEST_DB_PORT ?= 5434
 
-# Everything CI runs. Needs Docker for the test database; no internet access is
-# needed once dependencies and the Postgres image are present.
-check: lint types test scripts-test store-test site-test site-build extension-test
+# Everything CI runs: the fast set, then the slow set. Needs Docker for the test
+# database; no internet access is needed once dependencies and the Postgres image are
+# present.
+check: check-fast check-slow
+
+# The fast set, for every edit: under a minute. Lint, types, every pipeline test that
+# builds nothing, the site's tests that build nothing, the extension's tests and the
+# daily job's script. Nothing here builds the site.
+check-fast: lint types test-fast scripts-test site-test extension-test
+
+# The slow set, before a commit is pushed: a few minutes. Every test that builds the
+# site (the pipeline's round trip, the site's `*.build-test.mjs`), the store's ingest
+# service, and the site and extension builds themselves.
+check-slow: test-slow store-test site-build-test site-build extension
+
+# One area in full, fast and slow, for work that touches only that area.
+check-pipeline: lint types test
+check-site: site-test site-build-test site-build
+check-extension: extension-test
+check-store: store-test
 
 lint:
 	uv run --directory pipeline ruff check .
@@ -24,9 +41,16 @@ db-up:
 test-db-up:
 	docker compose up -d --wait test-db
 
-# The round-trip test builds the site, so the site's dependencies must be installed.
-test: test-db-up site/node_modules
-	uv run --directory pipeline pytest -q
+# The pipeline's tests, fast then slow.
+test: test-fast test-slow
+
+# One worker per core, each on a database of its own (pipeline/tests/conftest.py).
+test-fast: test-db-up
+	uv run --directory pipeline pytest -q -n auto -m "not slow"
+
+# Tests marked `slow` build the site, so the site's dependencies must be installed.
+test-slow: test-db-up site/node_modules
+	uv run --directory pipeline pytest -q -m slow
 
 # The daily job's script, against a stand-in for the pipeline: no database, no network.
 scripts-test:
@@ -59,8 +83,14 @@ setup:
 	sh scripts/worktree-setup.sh
 	uv sync --directory pipeline
 
+# The site's tests that build nothing (tests/*.test.mjs).
 site-test: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site test
+
+# The site's tests that build the site (tests/*.build-test.mjs). One at a time: builds
+# share the site's cache folder.
+site-build-test: site/node_modules
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run test:build
 
 site-build: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
@@ -74,8 +104,7 @@ smoke-research: site/node_modules
 
 # The browser extension: plain JavaScript, tested with Node's own runner, then built.
 extension-test: site/node_modules
-	node --test extension/tests/*.test.mjs
-	node extension/build.mjs
+	node --test --test-reporter=dot extension/tests/*.test.mjs
 
 # The extension as loaded in Chrome ("Load unpacked" on extension/dist).
 extension: site/node_modules

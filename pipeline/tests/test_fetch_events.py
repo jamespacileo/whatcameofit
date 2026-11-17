@@ -522,6 +522,10 @@ class Index(Literature):
         self.asked.append(pubmed_id)
         return self.by_pubmed_id.get(pubmed_id)
 
+    def papers_by_pubmed_ids(self, pubmed_ids: list[str]) -> dict[str, SourceRecord | None]:
+        self.asked.append(",".join(pubmed_ids))
+        return {number: self.by_pubmed_id.get(number) for number in pubmed_ids}
+
 
 def with_results_paper(study: dict[str, Any]) -> dict[str, Any]:
     """The recorded trial, with a results paper its sponsor listed and one it listed as
@@ -665,3 +669,38 @@ def test_stored_paper_records_are_refreshed_after_thirty_days_by_default(monkeyp
     monkeypatch.delenv("PAPER_RECORD_MAX_AGE_DAYS", raising=False)
 
     assert Settings(database_url="postgresql://example").paper_record_max_age_days == 30
+
+
+def test_many_papers_are_kept_in_one_request_and_young_ones_are_not_asked(
+    session: Session, fixture_json
+):
+    """A slice's listed papers are asked for together, not one request each; a stored
+    record young enough is not asked for, and a paper the index lacks is kept as not held."""
+    from thenwhat.events.paper_records import keep_papers_by_pubmed_id
+
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+    age = timedelta(days=30)
+    kept = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID, "111"], now=NOW, max_age=age)
+    assert (kept.asked, kept.found, kept.not_held) == (2, 1, 1)
+    assert index.asked == [f"{RESULTS_PMID},111"]
+    held = {row.pubmed_id: row.payload is not None for row in paper_records(session)}
+    assert held == {RESULTS_PMID: True, "111": False}
+    later = NOW + timedelta(days=7)
+    again = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID, "111"], now=later, max_age=age)
+    assert again.asked == 0 and len(index.asked) == 1
+
+
+def test_a_paper_held_is_never_emptied_by_a_missing_answer(session: Session, fixture_json):
+    """Synthetic: the index held the paper, and later answers nothing for it. The stored
+    record keeps its paper and says so in the counts."""
+    from thenwhat.events.paper_records import keep_papers_by_pubmed_id
+
+    index = Index({RESULTS_PMID: indexed(fixture_json)})
+    age = timedelta(days=30)
+    keep_papers_by_pubmed_id(session, index, [RESULTS_PMID], now=NOW, max_age=age)
+    index.by_pubmed_id.clear()
+    later = NOW + timedelta(days=60)
+    kept = keep_papers_by_pubmed_id(session, index, [RESULTS_PMID], now=later, max_age=age)
+    assert (kept.asked, kept.found, kept.not_held, kept.kept_held) == (1, 0, 0, 1)
+    [stored] = paper_records(session)
+    assert stored.payload is not None and stored.fetched_at == NOW

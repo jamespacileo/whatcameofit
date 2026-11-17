@@ -69,6 +69,12 @@ class Slice:
     # The build whose store its `in_store` is true of: a store loaded afresh from another
     # build holds none of the set's trials until the slices are pushed to it again.
     store: str = ""
+    # Its next push sends every record of it, whatever the push state says: the store
+    # lost it (a restore), so what the state says of its records is stale too.
+    whole: bool = False
+    # When its trials were last fetched from the registry, as they were when it was last
+    # pushed: a later fetch is an update the store does not hold yet.
+    trials_at: str = ""
 
     def forget_store(self) -> None:
         """Its `in_store` belongs to another store: not done for this one."""
@@ -213,22 +219,54 @@ def listed_papers(session: Session, one: Slice) -> list[str]:
 
 
 def registry_papers_stage(
-    session: Session, one: Slice, now: datetime, keep: Callable[[str], Any]
+    session: Session, one: Slice, now: datetime, keep: Callable[[list[str]], Any]
 ) -> None:
     """Each paper its trials' records list is kept as a paper record, by `keep` (the one
-    store of paper records, `events.paper_records.keep_paper`, given a PubMed number)."""
+    store of paper records, `events.paper_records.keep_papers_by_pubmed_id`, given the
+    PubMed numbers all at once, so the index is asked many to a request)."""
     numbers = listed_papers(session, one)
-    for number in numbers:
-        keep(number)
+    keep(numbers)
     one.counts["registry_papers"] = len(numbers)
     one.done["registry_papers"] = when(now) or ""
 
 
-def pubmed_stage(session: Session, one: Slice, now: datetime) -> bool:
-    """Whether PubMed was asked about every one of its trials, and what it found. The
-    asking is the operator's off-peak step (`pubmed_papers`); this only reads what it left:
-    a trial asked has its ledger entry, a paper found its `trial_paper`. Done when every
-    ClinicalTrials.gov trial of the slice was asked."""
+def papers_lost(session: Session, one: Slice) -> int:
+    """How many papers its trials' records list have no paper record, though its registry
+    papers stage is done: a stage whose work was rolled back after the plan said it was
+    done. Nought when the stage is not done."""
+    if "registry_papers" not in one.done:
+        return 0
+    numbers = listed_papers(session, one)
+    kept = 0
+    for start in range(0, len(numbers), 1000):
+        kept += (
+            session.scalar(
+                select(func.count(func.distinct(PaperRecord.pubmed_id))).where(
+                    PaperRecord.pubmed_id.in_(numbers[start : start + 1000])
+                )
+            )
+            or 0
+        )
+    return len(numbers) - kept
+
+
+def trials_fetched_at(session: Session, one: Slice) -> str:
+    """When its trials were last fetched from the registry, the latest of them."""
+    return max((when(trial.fetched_at) or "" for trial in _trials(session, one)), default="")
+
+
+def trials_changed(session: Session, one: Slice) -> bool:
+    """Whether a trial of it was fetched from the registry again since the slice was last
+    pushed: a registry update the store does not hold yet. False for a slice pushed
+    before this was noted, or never pushed."""
+    if not one.trials_at or "in_store" not in one.done:
+        return False
+    return trials_fetched_at(session, one) > one.trials_at
+
+
+def pubmed_counts(session: Session, one: Slice) -> tuple[int, int, int]:
+    """Of a slice's ClinicalTrials.gov trials: how many PubMed was asked about (their
+    ledger entry), how many have a paper it found (`trial_paper`), and how many there are."""
     trials = [t for t in _trials(session, one) if t.registry_name == "clinicaltrials.gov"]
     ids = [trial.id for trial in trials]
     asked = found = 0
@@ -253,11 +291,55 @@ def pubmed_stage(session: Session, one: Slice, now: datetime) -> bool:
             )
             or 0
         )
+    return asked, found, len(trials)
+
+
+def pubmed_stage(session: Session, one: Slice, now: datetime) -> bool:
+    """Whether PubMed was asked about every one of its trials, and what it found. The
+    asking is the operator's off-peak step (`pubmed_papers`); this only reads what it left:
+    a trial asked has its ledger entry, a paper found its `trial_paper`. Done when every
+    ClinicalTrials.gov trial of the slice was asked."""
+    asked, found, trials = pubmed_counts(session, one)
     one.counts["pubmed_asked"], one.counts["pubmed_found"] = asked, found
-    if asked < len(trials):
+    if asked < trials:
         return False
     one.done["pubmed_papers"] = when(now) or ""
     return True
+
+
+def due_slices(
+    session: Session, made: Plan, count: int | None, *, store: str | None
+) -> list[Slice]:
+    """The next `count` slices with work to do, in order. A slice is due when its record
+    or registry papers stage is not done, or the papers that stage kept are not all held;
+    with `store` (a push), when it is not in that store, is to go whole, or has a trial
+    fetched from the registry since it was put there (only what changed goes); and when
+    PubMed's off-peak step has moved on its trials since the slice last looked. A slice
+    waiting only on that step, with its ledger where it was, is not due: it would be
+    pushed again for nothing and keep the next slices from their turn."""
+
+    def has_work(one: Slice) -> bool:
+        if one.due() in ("record", "registry_papers") or papers_lost(session, one):
+            return True
+        if store is not None and (
+            "in_store" not in one.done
+            or one.store != store
+            or one.whole
+            or trials_changed(session, one)
+        ):
+            return True
+        if one.due() != "pubmed_papers":
+            return False
+        asked, found, _ = pubmed_counts(session, one)
+        return (asked, found) != (one.counts.get("pubmed_asked"), one.counts.get("pubmed_found"))
+
+    due: list[Slice] = []
+    for one in made.slices:
+        if count is not None and len(due) >= count:
+            break
+        if has_work(one):
+            due.append(one)
+    return due
 
 
 def slice_records(
@@ -313,15 +395,21 @@ def slice_records(
     return found, texts
 
 
+REQUIRED_COUNTS = ("with_results", "in_store")
+
+
 def state_record(one: Slice, *, rule: str, year: int) -> Record:
     """A slice's state as the store keeps it (`trial_slice`), for the page of progress."""
-    counted = ("with_results", "registry_papers", "pubmed_asked", "pubmed_found", "in_store")
+    counted = ("registry_papers", "pubmed_asked", "pubmed_found")
     body = {
         "rule": rule,
         "year": int(year),
         "number": int(one.number),
         "grp": one.group,
         "trials": len(one.trials),
+        # The store holds these as numbers from the plan on (NOT NULL): 0 until counted.
+        **{name: int(one.counts.get(name, 0)) for name in REQUIRED_COUNTS},
+        # A stage's own count stays out until the stage is worked: the store keeps none.
         **{name: int(one.counts[name]) for name in counted if name in one.counts},
         **{f"{stage}_at": at for stage, at in one.done.items() if at},
     }

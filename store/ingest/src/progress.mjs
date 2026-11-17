@@ -14,12 +14,21 @@ const TIMES = STAGES.map((stage) => `${stage}_at`);
 // the last merged run of each kind of writer, and the rows each table of the store holds.
 // A set's totals are its slices': the pipeline hands every planned slice over, reached or not.
 export async function progress(db) {
-  const [slices, runs, tables] = await db.batch([
+  const [slices, runs, tables, builds] = await db.batch([
     db.prepare(`SELECT s.rule, s.year, s.number, s.grp, s.trials, ${COUNTS.map((name) => `s.${name}`).join(", ")}, ${TIMES.map((name) => `s.${name}`).join(", ")}, r.merged_at AS changed_at
       FROM trial_slice s LEFT JOIN run r ON r.id = s.changed_run ORDER BY s.year DESC, s.rule, s.number`),
     db.prepare("SELECT writer, count(*) AS runs, max(merged_at) AS last_merged_at FROM run WHERE status = 'merged' GROUP BY writer ORDER BY writer"),
     db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%' AND name NOT LIKE '%_fts%' ORDER BY name"),
+    // The build the store was loaded from: its id is in the ids of the build's own runs,
+    // which the load brings with it, the same in the store file and here. Only a run of
+    // the kind `migration` counts, which the operator's token alone may register: a
+    // device's or the daily job's token cannot name a build by registering a run.
+    db.prepare("SELECT substr(id, 7, 16) AS build FROM run WHERE writer = 'migration' AND id LIKE 'build-%' ORDER BY id LIMIT 1"),
   ]);
+  // Since when this database has been this database: its first migration. A database
+  // that was replaced has a new one; one restored by Time Travel keeps it.
+  let since = null;
+  try { since = (await db.prepare("SELECT min(applied_at) AS at FROM d1_migrations").first())?.at ?? null; } catch { since = null; }
   const names = tables.results.map((row) => row.name).filter((name) => /^[a-z_0-9]+$/.test(name));
   // Ninety counts a statement at most: D1 answers no more than 100 columns.
   const rows = {};
@@ -35,6 +44,8 @@ export async function progress(db) {
     sets.get(key).push(slice);
   }
   return {
+    build_id: builds.results[0]?.build ?? null,
+    database_since: since,
     stages: STAGES,
     groups: GROUPS,
     sets: [...sets.values()].map((own) => {

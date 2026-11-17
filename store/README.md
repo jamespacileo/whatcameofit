@@ -79,3 +79,7 @@ A `rename` carries any of `new_slug`, and `old_name` with `new_name` (and `keep_
 - A statement in `merge.sql` ends at a line holding only `;`.
 - Every statement after the first two reads `staged` or a `staged_of_*` view. Those are empty unless the run is in `merging`, so a refused run changes nothing.
 - A record whose parent is not in the store is absent from its view, so it is neither stored nor counted. The counts then differ from what the run stated, `merge_guard`'s CHECK fails, and the whole batch is undone.
+
+## Changing a table that holds rows
+
+SQLite cannot alter a CHECK or a column's type, so such a change makes the table again. `ingest/migrations/0007_payload_inline_limit.sql` does this for `payload`, in one transaction, and is for an empty store only: on the loaded preview D1 stopped it after 38 s for its CPU time (17 November 2026, code 7429). A migration that makes a table again carries the line `-- rebuilds: <table>`; the cut-over (`ingest/scripts/cutover.mjs`) empties or replaces a preview store before it applies migrations and refuses to apply such a migration to a store that holds rows. A change that must reach a loaded store copies in batches across several migrations, or is designed not to need the table made again. See `docs/deploy.md`, "Cut-over: one command".
