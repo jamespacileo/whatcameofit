@@ -32,6 +32,30 @@ for (const row of rows) {
   row.addEventListener("click", () => openRow(row, row.getAttribute("aria-expanded") !== "true"));
 }
 
+// A fact row that opens (components/Fact.astro), such as a term in "At a glance". The
+// stylesheet draws it closed from the first paint; with no script it is simply open.
+const terms = [...document.querySelectorAll<HTMLButtonElement>(".fact-open")];
+const openTerm = (term: HTMLButtonElement, open: boolean) => {
+  term.setAttribute("aria-expanded", String(open));
+  term.closest<HTMLElement>(".fact-sheet > div, .entry-rows > li")!.toggleAttribute("data-open", open);
+};
+for (const term of terms) {
+  openTerm(term, false);
+  term.addEventListener("click", () => openTerm(term, term.getAttribute("aria-expanded") !== "true"));
+}
+
+// Paper has no press: why each term matched prints open, then goes back as it was.
+const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why")];
+addEventListener("beforeprint", () => {
+  for (const why of whys) {
+    why.toggleAttribute("data-was-open", why.open);
+    why.open = true;
+  }
+});
+addEventListener("afterprint", () => {
+  for (const why of whys) why.open = why.hasAttribute("data-was-open");
+});
+
 // A link to a folded section, or to something inside one, opens it.
 const reveal = (hash: string) => {
   if (hash.length < 2) return;
@@ -41,6 +65,9 @@ const reveal = (hash: string) => {
   const group = target.closest<HTMLElement>(".trial-group");
   const row = group?.querySelector<HTMLButtonElement>(".trial-open");
   if (row) openRow(row, true);
+  // A link to a fact row that opens, or to something inside it, opens it.
+  const term = target.closest<HTMLElement>(".fact-sheet > div, .entry-rows > li")?.querySelector<HTMLButtonElement>(".fact-open");
+  if (term) openTerm(term, true);
   const rest = target.closest<HTMLDetailsElement>("details");
   if (rest) rest.open = true;
   const head =

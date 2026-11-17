@@ -274,7 +274,7 @@ export const MATCH_WHY_HEAD = "Why it matched";
 
 /** One line under the section's heading, where a reader first meets a term match. */
 export const GLANCE_LEAD =
-  "Each term is shown in an outside source’s words. A term match is how well that source’s term fits this claim; it says nothing about the treatment.";
+  "Each term opens to its definition in an outside source’s words. A term match is how well that source’s term fits this claim; it says nothing about the treatment.";
 
 /** What the section says of itself, once, above the cards. */
 export const BACKGROUND_NOTE =
