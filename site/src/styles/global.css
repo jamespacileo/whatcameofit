@@ -8455,3 +8455,86 @@ body:has(.band.home) .bar {
     animation: mark-ring 0.9s var(--ease-out) 1.25s both;
   }
 }
+
+/* The home band on the light page (asked for by the operator on 2026-11-17): a ground
+   with a little depth, and a dot grid that changes in colour and strength across it, all
+   of it leading to the box. Three things do the leading: a pool of light behind the box,
+   the dots thinning to nothing around it, and the band a shade deeper towards its foot.
+   The dots run from the mark's coral at the far left, through the navy, to the mark's
+   blue at the far right: the capsule's two halves, a report and its record. The dark
+   theme, paper and a browser without mask compositing keep the plain grid. */
+@supports (mask-composite: intersect) {
+  @media screen {
+    :root:not([data-theme="dark"]) .band.home {
+      position: relative;
+      isolation: isolate;
+      background: linear-gradient(180deg, var(--panel) 0%, var(--panel) 52%, #e8eff9 100%);
+    }
+
+    :root:not([data-theme="dark"]) .band.home::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background: linear-gradient(
+        96deg,
+        rgb(226 122 84 / 0.42) 0%,
+        rgb(11 37 69 / 0.2) 30%,
+        rgb(11 37 69 / 0.2) 68%,
+        rgb(22 135 218 / 0.5) 100%
+      );
+      /* The grid, and how strongly it shows: faint under the title, full at the sides
+         and the foot. Only where both masks are solid is a dot drawn. */
+      -webkit-mask:
+        radial-gradient(circle at 1px 1px, #000 1px, transparent 1.5px) 0 0 / 22px 22px,
+        radial-gradient(ellipse 62% 78% at 50% 26%, rgb(0 0 0 / 0.3) 0%, rgb(0 0 0 / 0.62) 58%, #000 100%);
+      mask:
+        radial-gradient(circle at 1px 1px, #000 1px, transparent 1.5px) 0 0 / 22px 22px,
+        radial-gradient(ellipse 62% 78% at 50% 26%, rgb(0 0 0 / 0.3) 0%, rgb(0 0 0 / 0.62) 58%, #000 100%);
+      -webkit-mask-composite: source-in;
+      mask-composite: intersect;
+    }
+
+    /* The pool of light: behind the box and a little wider, so the ground is clear of
+       dots where the reader is to type. It moves with the box at every width. */
+    :root:not([data-theme="dark"]) .band.home .search {
+      position: relative;
+      isolation: isolate;
+    }
+
+    :root:not([data-theme="dark"]) .band.home .search::before {
+      content: "";
+      position: absolute;
+      inset: -2.6rem -1rem;
+      z-index: -1;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse closest-side,
+        rgb(255 255 255 / 0.96) 0%,
+        rgb(255 255 255 / 0.82) 46%,
+        rgb(255 255 255 / 0) 100%
+      );
+    }
+  }
+
+  @media screen and (min-width: 40.01rem) {
+    :root:not([data-theme="dark"]) .band.home .search::before {
+      inset: -3.2rem -5.5rem;
+    }
+  }
+
+  /* The device's dark setting, with no theme chosen: the plain grid, as the dark theme. */
+  @media screen and (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .band.home {
+      background:
+        radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 1.5px) 0 0 / 22px 22px,
+        var(--panel);
+    }
+
+    :root:not([data-theme]) .band.home::before,
+    :root:not([data-theme]) .band.home .search::before {
+      content: none;
+    }
+  }
+}

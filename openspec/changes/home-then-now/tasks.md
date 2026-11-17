@@ -6,5 +6,7 @@
 - [x] 4 `DESIGN.md`.
 - [x] 4a Polish: the focus ring off the card's edge; the well's edge in the dark theme; the stacked arrow; home section headings at the record page's size. Verify: 1400px light, 800px dark.
 - [x] 4b Motion, once on load: the arrow drawn, then the marker lands with one ring; only inside `prefers-reduced-motion: no-preference`. Verify: the four animations' delays and durations read from the page, and the finished state. Not watched running: the preview pane was hidden, where animations are paused.
+- [x] 4c The title at the face's regular weight (400), at the operator's request.
+- [x] 4d The light page's band: a ground a shade deeper at its foot, dots that change in colour and strength across it, and a pool of light behind the box. Verify: 1400px light; the dark theme unchanged; 375px with no sideways scroll.
 - [ ] 5 The operator's decision on which claim the home page draws.
 - [ ] 6 Paper: the card without the well's fill. Written, not looked at in a print preview.
