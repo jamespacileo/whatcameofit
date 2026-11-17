@@ -15,7 +15,6 @@ from thenwhat.db.models import Claim
 from thenwhat.domain import WorkOutcome
 from thenwhat.work.ledger import find_entry
 from thenwhat.work.outcome import UndeclaredReason, declared
-from thenwhat.work.spend import ceiling_check
 
 
 @contextmanager
@@ -73,8 +72,7 @@ def run_steps(steps: Sequence[ClaimStep], *, workers: int = 1) -> list[StepRun]:
         put_off_span=timedelta(days=settings.work_put_off_days),
         now=now,
         workers=workers,
-        # A step that calls a model stops when the month's ceiling is reached.
-        before_call=ceiling_check(settings, now),
+        # Both model clients check the ceiling at the point of spending.
     )
 
 

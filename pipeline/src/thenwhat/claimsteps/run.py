@@ -25,7 +25,7 @@ from thenwhat.db.models import Claim, RegistrySearch, WorkEntry
 from thenwhat.domain import WorkOutcome
 from thenwhat.work.ledger import due_records
 from thenwhat.work.outcome import UndeclaredReason, declared
-from thenwhat.work.runner import RunReport, run_step
+from thenwhat.work.runner import RunReport, measured_run, run_step
 
 SUBSTANCE = ClaimSubstance.name
 TRIALS = ClaimTrials.name
@@ -149,22 +149,25 @@ def run_claim_steps(
             notice_changes(session, steps)
         # The claims a worker failed on or put off in this run, kept from the others.
         tried: set[int] = set()
-        work = partial(
-            run_step,
-            open_session,
-            step,
-            now=now,
-            attempt_limit=attempt_limit,
-            before_call=before_call,
-            tried=tried,
-            put_off_span=put_off_span,
-        )
-        clients = [make_sources() for _ in range(workers)]
-        if workers == 1:
-            report = work(clients[0])
-        else:
-            with ThreadPoolExecutor(max_workers=workers) as pool:
-                report = merged(list(pool.map(work, clients)))
+        with measured_run(step.name, limit=None, workers=workers) as shared:
+            work = partial(
+                run_step,
+                open_session,
+                step,
+                now=now,
+                attempt_limit=attempt_limit,
+                before_call=before_call,
+                tried=tried,
+                run=shared,
+                put_off_span=put_off_span,
+            )
+            clients = [make_sources() for _ in range(workers)]
+            if workers == 1:
+                report = work(clients[0])
+            else:
+                with ThreadPoolExecutor(max_workers=workers) as pool:
+                    report = merged(list(pool.map(work, clients)))
+        report.not_written = shared.not_written
         runs.append(StepRun(step, report, time.monotonic() - started))
     return runs
 
