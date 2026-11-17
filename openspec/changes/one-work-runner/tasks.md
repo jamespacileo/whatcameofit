@@ -22,7 +22,7 @@
 
 ## 4. One call policy
 
-- [ ] 4.1 Add `tenacity`, `respx` and `time-machine` to `pipeline/pyproject.toml`; verify `uv sync` and `make check` pass
+- [x] 4.1 Add `tenacity`, `respx` and `time-machine` to `pipeline/pyproject.toml`; verify `uv sync` and `make check` pass
 - [x] 4.2 Write `work/calls.py`: bounded retries with jitter, `Retry-After` as seconds or as a date, a ceiling on any wait, and `CannotAsk` with a time; verify with `respx` tests for the four scenarios of "A stated wait is honoured in either form and bounded" and "Try later is told apart from not found"
 - [x] 4.3 Write `work/pause.py`: a pause kept in `source_allowance_use`, checked before every request, and requests counted for every command; verify with tests for "A pause is seen by every process" and "Every command's requests count against the source's allowance"
 - [x] 4.4 Put `sources/base.py` behind the policy and delete its own retry loop; verify the recorded-fixture tests of every source client pass unchanged
@@ -81,7 +81,7 @@
 
 ## 9. Integration
 
-- [ ] 9.1 Run `make check`; verify ruff, ty, pytest and the site build pass
+- [x] 9.1 Run `make check`; verify ruff, ty, pytest and the site build pass
 - [ ] 9.2 On the writer, run one day's run end to end, then `thenwhat backfill plan`; record here the records put off and needing a fix by reason, the number of live claims with no terms against 206 of 594, and from `thenwhat measure` each step's share of time and cost and its largest wait cause
 
 ## Workflow follow-up
