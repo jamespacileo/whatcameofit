@@ -190,3 +190,11 @@ def test_the_proof_flags_any_responsible_party_field_but_its_type():
         "oldOrganization"
     ] = "A made-up department"
     assert people_in(study) == {"responsible party beyond its type"}
+
+
+def test_legacy_investigator_affiliation_matches_worker_fixture(fixture_json):
+    study = fixture_json("clinicaltrials/synthetic_legacy_affiliation.json")
+    assert people_in(study)
+    sponsors = without_people(study)["protocolSection"]["sponsorCollaboratorsModule"]
+    assert sponsors["responsibleParty"] == {"type": "PRINCIPAL_INVESTIGATOR"}
+    assert sponsors["leadSponsor"]["name"] == "Synthetic Hospital"

@@ -186,6 +186,6 @@ Not in phase 1, and still open where they stand: telling names from the substanc
 
 ### P2
 
-- [ ] 10.1 <a id="task-f12"></a>Cover the legacy field in sanitization and cached-record detection. Use the same synthetic record in pipeline, Worker and old-cache tests. [F12](../../../docs/reviews/2026-11-17-code-review.md#finding-f12) · [Acceptance scenario](specs/trial-records/spec.md#scenario-a-legacy-investigator-affiliation-appears-in-a-record)
+- [x] 10.1 <a id="task-f12"></a>Cover the legacy field in sanitization and cached-record detection. Use the same synthetic record in pipeline, Worker and old-cache tests. [F12](../../../docs/reviews/2026-11-17-code-review.md#finding-f12) · [Acceptance scenario](specs/trial-records/spec.md#scenario-a-legacy-investigator-affiliation-appears-in-a-record)
 
 - [ ] 10.2 <a id="task-f13"></a>Tie part URLs to the manifest version or reload the manifest and retry on version loss. Exercise ID and word search on an open page across two differently partitioned deployments. [F13](../../../docs/reviews/2026-11-17-code-review.md#finding-f13) · [Acceptance scenario](specs/trial-pages/spec.md#scenario-a-deployment-moves-a-trial-between-parts)

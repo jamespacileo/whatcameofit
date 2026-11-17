@@ -26,8 +26,8 @@
 
 ## 14. Evidence in the claim brief and timetable (P2)
 
-- [ ] 14.1 <a id="task-f15"></a>Derive comparator wording from each trial's codes. Test five sham/zero placebo, placebo-only and mixed fixtures against rendered counts and labels. [F15](../../../docs/reviews/2026-11-17-code-review.md#finding-f15) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-sham-and-placebo-have-distinct-registry-codes)
+- [x] 14.1 <a id="task-f15"></a>Derive comparator wording from each trial's codes. Test five sham/zero placebo, placebo-only and mixed fixtures against rendered counts and labels. [F15](../../../docs/reviews/2026-11-17-code-review.md#finding-f15) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-sham-and-placebo-have-distinct-registry-codes)
 
-- [ ] 14.2 <a id="task-f16"></a>Use the dated record types that the timetable includes. Test the SomnoDent dates and preserve the rule for coincident milestones. [F16](../../../docs/reviews/2026-11-17-code-review.md#finding-f16) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-an-article-follows-the-last-registry-event)
+- [x] 14.2 <a id="task-f16"></a>Use the dated record types that the timetable includes. Test the SomnoDent dates and preserve the rule for coincident milestones. [F16](../../../docs/reviews/2026-11-17-code-review.md#finding-f16) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-an-article-follows-the-last-registry-event)
 
-- [ ] 14.3 <a id="task-f17"></a>Choose folded-year marks by event kind. Test the August 2021 retraction, an actual trial completion, the legend and accessible wording. [F17](../../../docs/reviews/2026-11-17-code-review.md#finding-f17) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-folded-year-contains-a-retraction)
+- [x] 14.3 <a id="task-f17"></a>Choose folded-year marks by event kind. Test the August 2021 retraction, an actual trial completion, the legend and accessible wording. [F17](../../../docs/reviews/2026-11-17-code-review.md#finding-f17) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-folded-year-contains-a-retraction)

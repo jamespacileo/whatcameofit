@@ -93,3 +93,31 @@ def test_preparing_claims_and_a_backfill_count_against_one_allowance(
 
     allowances = Allowances(same_session(session), DEFAULT_ALLOWANCES, fake_time)
     assert allowances.status(session, ClinicalTrials.name).used == 3
+
+
+def test_a_pause_recorded_during_pacing_prevents_the_reserved_request(
+    session, fake_time, monkeypatch
+):
+    from thenwhat.work.pause import pause
+
+    source = registry(session, fake_time, rate_per_second=0.1)
+    until = fake_time.now() + timedelta(hours=1)
+    slept = fake_time.sleep
+
+    def record_pause(seconds):
+        pause(session, source.name, until, fake_time.now())
+        slept(seconds)
+
+    with respx.mock:
+        calls = respx.get(f"{API}/studies").mock(
+            return_value=httpx.Response(200, json=NOTHING_FOUND)
+        )
+        source.search_trials("first")
+        monkeypatch.setattr(fake_time, "sleep", record_pause)
+        with pytest.raises(SourceCannotBeAsked) as refused:
+            source.search_trials("next")
+        assert fake_time.slept == [10.0]
+        assert refused.value.until == until and calls.call_count == 1
+        fake_time.advance(until - fake_time.now())
+        assert source.search_trials("next") == []
+        assert calls.call_count == 2

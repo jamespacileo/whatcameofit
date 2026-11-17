@@ -2040,3 +2040,56 @@ test("Scenario: Export without a MeSH year stops the build", () => {
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /carries clinical categories and no MeSH year/);
 });
+
+test("report dates, non-trial marks, and Phase 4 notes follow the record on both status paths", async (t) => {
+  const { parseHTML } = await import("linkedom");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-claim-history-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const data = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const base = data.claims.find((claim) => claim.slug === "phase-claim");
+  const off = structuredClone(base);
+  off.slug = "off-path-trial";
+  off.status.code = "terminated";
+  off.trials[0].phases = ["phase_4"];
+  off.promises = [];
+  off.first_reported_date = "2024-04-12";
+  off.articles[0].published_date = off.first_reported_date;
+  const event = (id, type, date, state = null) => ({
+    ...base.events[0], id, type, event_date: date, trial_state: state,
+    source_url: `https://registry.example/record/${id}`,
+  });
+  off.events = [
+    event(1, "retraction", "2021-08-10"),
+    event(2, "trial_status_change", "2021-09-01", "completed"),
+    event(3, "trial_registered", "2024-02-15"),
+    // Older records make the timetable long enough to fold the 2021 row.
+    ...Array.from({ length: 18 }, (_, j) => event(j + 4, "trial_registered", "2020-02-01")),
+  ];
+  const on = structuredClone(off);
+  on.slug = "on-path-trial";
+  on.status.code = base.status.code;
+  on.articles.push({ ...on.articles[0], url: "https://news.example/follow-up", published_date: "2024-05-01" });
+  data.claims = [off, on, base];
+  const src = path.join(dir, "records.json"), out = path.join(dir, "dist");
+  fs.writeFileSync(src, JSON.stringify(data));
+  const result = build(src, out);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const doc = (claim) => parseHTML(fs.readFileSync(path.join(out, claim.slug, "index.html"), "utf8")).document;
+  const ended = doc(off), started = doc(on);
+  for (const [page, date] of [[ended, "12 Apr 2024"], [started, "1 May 2024"]]) {
+    const link = page.querySelector(".changed a[href='#latest-report']");
+    assert.equal(link.textContent.replaceAll("\u00a0", " "), date);
+    assert.equal(page.querySelector(link.getAttribute("href")).dataset.kind, "report");
+    assert.match(page.querySelector("#why").textContent, /1 trial on record is a Phase 4 trial/);
+  }
+  assert.doesNotMatch(ended.querySelector(".milestones").textContent, /Latest record/);
+  assert.match(started.querySelector(".milestones").textContent.replaceAll("\u00a0", " "), /Latest record1 May 2024/);
+  assert.equal(ended.querySelector("#why .pop-path"), null);
+  assert.ok(started.querySelector("#why .pop-path"));
+  assert.doesNotMatch(doc(base).querySelector("#why").textContent, /Phase 4 trial/);
+  const year = ended.querySelector("#year-2021");
+  assert.equal(year.querySelectorAll(".year-marks [data-state=completed]").length, 1);
+  assert.equal(year.querySelectorAll(".year-marks svg").length, 1);
+  assert.match(year.querySelector("summary").textContent, /retraction notice 1/i);
+  assert.match(ended.querySelector(".year-key").textContent, /Retraction/);
+});
