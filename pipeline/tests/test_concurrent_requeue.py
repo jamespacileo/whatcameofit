@@ -89,8 +89,10 @@ def test_requeue_counts_only_reads_it_reopened(engine, retry_first):
             assert future.result(timeout=5) == ([] if retry_first else None)
         with Session(engine) as checked:
             entry = checked.get(WorkEntry, entry_id)
+            assert entry is not None
             assert (entry.stale, entry.outcome, entry.reason) == (False, WorkOutcome.DONE, None)
-            assert checked.get(LinkLead, lead_id).read_outcome is ReadOutcome.NOT_ONE_TREATMENT
+            lead = checked.get(LinkLead, lead_id)
+            assert lead is not None and lead.read_outcome is ReadOutcome.NOT_ONE_TREATMENT
     finally:
         with Session(engine) as clean, clean.begin():
             clean.execute(delete(WorkEntry).where(WorkEntry.id == entry_id))

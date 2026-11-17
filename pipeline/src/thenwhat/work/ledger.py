@@ -8,7 +8,21 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, and_, any_, exists, func, not_, or_, select, update
+from sqlalchemy import (
+    ColumnElement,
+    Integer,
+    Select,
+    and_,
+    any_,
+    bindparam,
+    exists,
+    func,
+    not_,
+    or_,
+    select,
+    update,
+)
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Session, aliased
 
 from thenwhat.db.models import WorkEntry
@@ -359,7 +373,7 @@ def requeue(
     # A worker could have finished while the record lock was being acquired.
     changed = session.scalars(
         update(WorkEntry)
-        .where(WorkEntry.id == any_(entry_ids), *wanted)
+        .where(WorkEntry.id == any_(bindparam("entry_ids", entry_ids, type_=ARRAY(Integer))), *wanted)
         .values(stale=True, attempts=0)
         .returning(WorkEntry.record_id)
     )
