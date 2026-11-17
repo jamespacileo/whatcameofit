@@ -167,6 +167,10 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
                   ),
                 )}
               </ol>
+              {/* The rest of a long day, where the list is narrow. The script's. */}
+              <p class="day-more" hidden data-day-more>
+                <button type="button" class="share"></button>
+              </p>
             </section>
           ))
         }
@@ -209,7 +213,7 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 </section>
 
 <script>
-  import { countKinds, countsText, earlierText, toComeText, type RowKind } from "../lib/day-list";
+  import { countKinds, countsText, earlierText, keptRows, toComeText, type RowKind } from "../lib/day-list";
   import { VISIT_ENTRY, lastVisitIndex, nextVisit, sinceOf } from "../lib/returning";
   import { formatDate } from "../lib/timetable";
 
@@ -331,6 +335,18 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
           row.toggleAttribute("data-follows", led.has(key));
           led.add(key);
         }
+        // A long day stops after its first rows until the reader asks for the rest. The
+        // rows past that are marked; only a narrow list leaves them out.
+        const kept = group.hasAttribute("data-all")
+          ? left.length
+          : keptRows(left.map((row) => row.hasAttribute("data-follows")));
+        for (const row of rows) row.removeAttribute("data-capped");
+        left.forEach((row, index) => row.toggleAttribute("data-capped", index >= kept));
+        const more = group.querySelector<HTMLElement>("[data-day-more]");
+        if (more) {
+          more.hidden = kept === left.length;
+          more.querySelector("button")!.textContent = `Show ${left.length - kept} more`;
+        }
         const says = group.querySelector<HTMLElement>("[data-says]")!;
         says.textContent = countsText(kindsOf(left));
         // A heading with nothing under it is not shown.
@@ -422,10 +438,21 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     addEventListener("hashchange", fromAddress);
     // Paper gets the whole list.
     addEventListener("beforeprint", () => {
-      for (const group of groups) group.removeAttribute("data-earlier");
+      for (const group of groups) {
+        group.removeAttribute("data-earlier");
+        group.setAttribute("data-all", "");
+      }
       if (toCome) toCome.open = true;
       refresh();
     });
+
+    // The rest of a long day is one press away, and stays shown.
+    for (const group of groups) {
+      group.querySelector("[data-day-more] button")?.addEventListener("click", () => {
+        group.setAttribute("data-all", "");
+        refresh();
+      });
+    }
 
     const remember = (name: string, value: string, first: string) => {
       const url = new URL(location.href);
@@ -702,6 +729,12 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
     background: var(--paper);
     /* A headline's hung mark passes under the heading's left edge too. */
     box-shadow: -0.75rem 0 0 var(--paper);
+  }
+
+  /* The control that brings back the rest of a long day: only where the list is narrow. */
+  .day-more {
+    display: none;
+    margin: 0.7rem 0 0.3rem;
   }
 
   .day-group:first-of-type .day-head {
@@ -1336,6 +1369,21 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
 
     .day-col {
       display: none;
+    }
+
+    /* A long day shows its first rows; the rest wait for the reader. */
+    .day-row[data-capped] {
+      display: none;
+    }
+
+    .day-more:not([hidden]) {
+      display: block;
+    }
+
+    .day-more .share {
+      min-height: 2.75rem;
+      padding-inline: 1.1rem;
+      font-size: var(--text-m);
     }
 
     /* A record's top line is its kind and its source; the topic is the filter's. */

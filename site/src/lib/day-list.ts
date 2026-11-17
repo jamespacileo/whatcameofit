@@ -275,3 +275,22 @@ export function gatherRecords(rows: DayRow[]): { row: DayRow; follows: boolean }
   return groups.flatMap((group) => group.map((row, index) => ({ row, follows: index > 0 })));
 }
 
+/** How many of a long day's rows are shown before the reader asks for the rest. */
+export const DAY_CAP = 5;
+
+/** How many of a day's rows to keep in view. Rows are counted by the ones that lead: a
+ * row that follows its record stays with it, so a record is never parted from its other
+ * claims. A day is cut only when that hides at least two leading rows; a control that
+ * brought back one row would cost more room than the row. */
+export function keptRows(follows: boolean[], cap = DAY_CAP): number {
+  const leading = follows.filter((follow) => !follow).length;
+  if (leading <= cap + 1) return follows.length;
+  let seen = 0;
+  for (let index = 0; index < follows.length; index += 1) {
+    if (follows[index]) continue;
+    seen += 1;
+    if (seen > cap) return index;
+  }
+  return follows.length;
+}
+

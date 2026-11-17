@@ -127,6 +127,8 @@ test("Scenario: An approval that changed the status, and a record that changed n
   assert.match(changed, /<h4 class="row-title">[\s\S]*?<a href="\/phase-claim">\s*<span class="row-what">(Phase \d )?[Tt]rial results posted<\/span><span class="visually-hidden">: <\/span><span class="row-whom">phase-claim agent<\/span>\s*<\/a>\s*<\/h4>/);
   // The record at its source is in the row's top line, where a report row links its outlet.
   assert.match(changed, /<a class="row-record" href="[^"]+">NCT00000002<\/a>/);
+  // Each day carries the control for the rest of its rows, the script's: as built it is not shown.
+  assert.equal(count(changed, '<p class="day-more" hidden data-day-more>'), 1);
   // The day's heading names the column once; a panel that says Changed does not name itself.
   assert.equal(count(changed, '<span class="day-col">Status now</span>'), 1);
   assert.ok(!changed.includes('class="row-change is-plain"'), "a panel that says Changed does not also say Status now");

@@ -162,3 +162,18 @@ At 375 pixels wide, a row's status panel SHALL be one line of at least 44 pixels
 - **WHEN** a reader scrolls through a day of eleven rows
 - **THEN** that day's heading stays at the top of the screen until the next day's replaces it
 
+### Requirement: A long day is cut on a narrow list
+Where the day-by-day list is narrow and scripts run, a day SHALL show its rows up to its fifth leading row, with the rows that follow that one, and SHALL offer the rest behind one control that says how many rows it brings back. A row that follows its record SHALL NOT be parted from it. A day SHALL be cut only when that leaves out at least two leading rows. Once a reader has asked for a day's rest, that day SHALL stay whole. A wide list, paper, and a page without scripts SHALL show every row, and a day's counts SHALL count every row.
+
+#### Scenario: Seven leading rows on a phone
+- **WHEN** a day lists three reports and four records, one of them matched to five claims
+- **THEN** the day shows the three reports, the record with its four following lines and one more record, and "Show 2 more"
+
+#### Scenario: Asked for
+- **WHEN** the reader presses "Show 2 more"
+- **THEN** every row of that day is shown, the control is gone, and narrowing the list afterwards does not cut that day again
+
+#### Scenario: Six leading rows
+- **WHEN** a day lists six leading rows
+- **THEN** all six are shown and there is no control
+
