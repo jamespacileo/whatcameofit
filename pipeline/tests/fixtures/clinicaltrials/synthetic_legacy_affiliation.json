@@ -1,0 +1,18 @@
+{
+  "protocolSection": {
+    "identificationModule": {
+      "nctId": "NCT09000001",
+      "briefTitle": "A synthetic study"
+    },
+    "sponsorCollaboratorsModule": {
+      "responsibleParty": {
+        "type": "PRINCIPAL_INVESTIGATOR",
+        "oldOrganization": "PERSON-LEGACY-PRACTICE"
+      },
+      "leadSponsor": {
+        "name": "Synthetic Hospital",
+        "class": "OTHER"
+      }
+    }
+  }
+}

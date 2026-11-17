@@ -57,7 +57,10 @@ export function withoutPeople(study) {
     if (Array.isArray(sponsors.collaborators)) {
       kept.collaborators = sponsors.collaborators.map((one) => (isObject(one) && PERSON_CLASSES.includes(one.class) ? without(one, ["name"]) : one));
     }
-    if (isObject(sponsors.responsibleParty)) kept.responsibleParty = without(sponsors.responsibleParty, INVESTIGATOR_FIELDS);
+    if (isObject(sponsors.responsibleParty)) {
+      const { type } = sponsors.responsibleParty;
+      kept.responsibleParty = type === undefined ? {} : { type };
+    }
     protocol.sponsorCollaboratorsModule = kept;
   }
 
@@ -94,6 +97,7 @@ export function peopleIn(study) {
   const sponsors = object(protocol.sponsorCollaboratorsModule);
   const party = object(sponsors.responsibleParty);
   if (INVESTIGATOR_FIELDS.some((field) => filled(party[field]))) found.add("investigator name, title or affiliation");
+  if (Object.keys(party).some(key => key !== "type" && !INVESTIGATOR_FIELDS.includes(key))) found.add("responsible party beyond its type");
   if (object(sponsors.leadSponsor).name && sponsoredByAPerson(sponsors)) found.add("person lead sponsor's name");
   if (list(sponsors.collaborators).some((one) => object(one).name && PERSON_CLASSES.includes(object(one).class))) found.add("person collaborator's name");
   if (filled(object(object(study.resultsSection).moreInfoModule).pointOfContact)) found.add("results point of contact");

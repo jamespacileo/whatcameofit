@@ -2,6 +2,7 @@
 // record that names a person in every field the registry has for one. No network.
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { readFileSync } from "node:fs";
 import { peopleIn, withoutPeople } from "../worker/people.mjs";
 import { makeRegistry } from "../worker/registry.mjs";
 import { handleTrial } from "../worker/trials.mjs";
@@ -221,4 +222,20 @@ test("an answer kept before people were removed is not read", async () => {
   assert.equal(reads, 1, "the registry is asked again");
   assert.deepEqual(peopleIn(again), []);
   assert.doesNotMatch(cache.kept.get(key), /PERSON-/);
+});
+
+test("a legacy investigator affiliation is removed on initial fetch and old-cache replacement", async () => {
+  const given = JSON.parse(readFileSync(new URL("../../pipeline/tests/fixtures/clinicaltrials/synthetic_legacy_affiliation.json", import.meta.url)));
+  assert.ok(peopleIn(given).length);
+  const clean = withoutPeople(given);
+  assert.deepEqual(clean.protocolSection.sponsorCollaboratorsModule.responsibleParty, { type: "PRINCIPAL_INVESTIGATOR" });
+  const key = `trial-record:v1:${CITED}`;
+  for (const entries of [[], [[key, JSON.stringify({ version: 2, at: now, record: given })]]]) {
+    const site = served(given, { entries });
+    const response = await site.open(CITED);
+    assert.equal(response.status, 200);
+    assert.doesNotMatch(await response.text(), /PERSON-LEGACY-PRACTICE/);
+    assert.equal(site.calls.length, 1);
+    assert.deepEqual(JSON.parse(site.cache.kept.get(key)).record, clean);
+  }
 });
