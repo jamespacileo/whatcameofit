@@ -26,6 +26,12 @@ After a second critique the same day, on a site built from the published export:
 - A treatment suggested for another of its names says that name. The row chosen by the keys is ringed.
 - Wording: a full stop after a close claim's no-signal note; no "a name can be typed" after typed words found nothing; "Look for … on" a registry for an identifier not on record here.
 
+Chosen by the operator from mocks of the built site (`.impeccable/mocks/search-next/`):
+
+- On a narrow screen a result says where its claim stands right after its headline, and names one report with the rest counted.
+- A list cut at twenty ends with "Show 20 more", which draws the next twenty under those on screen.
+- A suggested row that opens a page ends in an arrow; one that searches here has none.
+
 ## Impact
 
 - `site/src/components/Lookup.astro`, `site/src/lib/suggest.ts`, `site/src/styles/global.css`, `site/tests/home-search.test.mjs`, `site/tests/lookup-component.test.mjs`, `DESIGN.md`.

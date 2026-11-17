@@ -1905,16 +1905,25 @@ main nav.contents ul li + li {
   border-bottom: 1px solid var(--rule-soft);
 }
 
+/* The row's parts follow one another as they are read: the headline, where the claim
+   stands, what it is, what the words were found in. On a wide screen the standing is
+   lifted into the column at the right, beside all of them. */
+.hit-row > * {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.hit-row > .hit-now {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+}
+
 .hit-now {
   display: grid;
   gap: 0.3rem;
   padding: 0.55rem 0.75rem 0.6rem;
   background: var(--panel);
   border-radius: var(--radius-s);
-}
-
-.hit-main {
-  min-width: 0;
 }
 
 .hit-now .status-name {
@@ -2139,22 +2148,31 @@ main nav.contents ul li + li {
   text-wrap: pretty;
 }
 
+/* After the last claim drawn of a longer answer: the next, at a press. */
+.search-results .show-more {
+  margin: 1.1rem 0 0.4rem;
+}
+
+.search-results .show-more-says {
+  padding-left: 0;
+}
+
 @media (max-width: 34rem) {
   .search-results .digest,
   .hit-row {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .hit-now {
+  /* On a narrow screen the standing is one line under the headline, in its panel. */
+  .hit-row > .hit-now {
+    grid-column: 1;
+    grid-row: auto;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.15rem 0.6rem;
-    margin-top: 0.6rem;
-  }
-
-  .hit-now .row-label {
-    flex-basis: 100%;
+    gap: 0.2rem 0.7rem;
+    margin: 0.5rem 0 0.15rem;
+    padding: 0.45rem 0.7rem;
   }
 }
 
@@ -10282,6 +10300,26 @@ body:has(.band.home) .bar {
 .suggest-meta {
   font-size: var(--text-s);
   white-space: nowrap;
+}
+
+/* A row that opens a page ends in an arrow in the blue. A row that searches here has
+   none, and keeps the arrow's room so the grey words stay in one column. */
+.suggest-opens {
+  display: inline-block;
+  width: 0.95em;
+  margin-left: 0.5em;
+  color: var(--blue);
+  vertical-align: -0.12em;
+}
+
+.suggest-opens svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.suggest-row[data-query] .suggest-meta {
+  padding-right: 1.45em;
 }
 
 .suggest-id {

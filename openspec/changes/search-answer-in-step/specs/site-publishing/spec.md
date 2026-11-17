@@ -43,11 +43,15 @@ An article the site does not track SHALL be offered a calendar file, made on the
 - **THEN** "Check again later" follows the answer with both dates
 
 ### Requirement: A search's count is of every claim found
-The count shown for a search by words SHALL be the number of claim pages the search index found. Where fewer are drawn, the answer's heading, the line under the box and the end of the list SHALL each say that only the first are shown and how many were found.
+The count shown for a search by words SHALL be the number of claim pages the search index found. Where fewer are drawn, the answer's heading and the line under the box SHALL say that only the first are shown and how many were found, and the list SHALL end with a control that draws the next twenty under those on screen, over a line that says how many more were found. Claims already drawn SHALL keep their order, and the reader SHALL be put on the first claim added.
 
 #### Scenario: More found than drawn
 - **WHEN** the index finds 161 claims for "cancer" and the page draws 20
-- **THEN** the count reads "First 20 of 161 tracked claims", and the list ends by saying 141 more hold these words and are not shown
+- **THEN** the count reads "First 20 of 161 tracked claims", and the list ends with "Show 20 more" over "141 more tracked claims hold these words."
+
+#### Scenario: The next twenty
+- **WHEN** the reader presses "Show 20 more"
+- **THEN** forty claims are drawn, the first twenty where they were, the count reads "First 40 of 161 tracked claims", and the page has not moved
 
 #### Scenario: All drawn
 - **WHEN** the index finds 3 claims
@@ -59,3 +63,17 @@ Where the typed words are in none of a treatment's first name but in another of 
 #### Scenario: A brand name typed
 - **WHEN** a reader types the start of a treatment's second name
 - **THEN** the row reads the first name, then the second name in brackets
+
+### Requirement: A result says where its claim stands right after its headline
+In a search's answer each result SHALL give, in this order in the page itself, the claim's headline, where the claim stands, the treatment and what it is claimed for, and what the searched words were found in. On a screen narrower than 34rem these SHALL be drawn in that order in one column, with one report or trial named and the rest counted.
+
+#### Scenario: A phone
+- **WHEN** a reader on a phone searches for "cancer"
+- **THEN** each result shows its status under its headline, before any report
+
+### Requirement: A suggested row that opens a page is marked
+A suggested row that opens a page SHALL end in an arrow and SHALL be named to a screen reader as opening its page. A row that searches in place SHALL have neither.
+
+#### Scenario: A topic and a condition
+- **WHEN** a topic and a condition are offered for what is typed
+- **THEN** the topic's row ends in an arrow and the condition's row does not

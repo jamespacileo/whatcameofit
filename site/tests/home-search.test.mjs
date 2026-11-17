@@ -357,14 +357,27 @@ test("each search looked up is a step Back returns to, and an emptied field leav
   assert.doesNotMatch(page.location.href, /q=/);
 });
 
-test("the count is of every claim found, and says so where only the first are drawn", async () => {
-  // The index finds 25 claim pages; this page reads and draws the three it knows.
-  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/", ...Array.from({ length: 22 }, (_, at) => `/other-${at}/`)];
+test("the count is of every claim found; the rest are drawn under the first at a press", async () => {
+  // The index finds 25 claim pages. The first twenty are read: two of them are claims
+  // this page holds. The third is among the five not yet read.
+  const other = (count, from) => Array.from({ length: count }, (_, at) => `/other-${from + at}/`);
+  SEARCH_HITS = ["/germ/", "/antibody/", ...other(18, 0), "/sheet/", ...other(4, 18)];
   const page = setup(null, HOME);
   const answer = await searched(page, "tooth regrowth");
-  assert.match(answer.querySelector(".search-count").textContent, /^First 3 of 25 tracked claims/);
-  assert.match(page.results.textContent, /^The first 3 of 25 tracked claims for “tooth regrowth” are shown below\.$/);
-  assert.match(answer.textContent, /22 more tracked claims hold these words and are not shown\./);
+  assert.match(answer.querySelector(".search-count").textContent, /^First 2 of 7 tracked claims/);
+  assert.match(page.results.textContent, /^The first 2 of 7 tracked claims for “tooth regrowth” are shown below\.$/);
+  assert.equal(answer.querySelectorAll(".hit-row").length, 2);
+  const more = answer.querySelector("button.show-more");
+  assert.equal(more.textContent, "Show 5 more");
+  assert.match(answer.querySelector(".show-more-says").textContent, /^5 more tracked claims hold these words\.$/);
+
+  more.dispatchEvent(new page.window.Event("click"));
+  for (let turn = 0; turn < 4; turn++) await settle();
+  // Those on screen keep their order; the new one follows them, and nothing is left.
+  assert.deepEqual([...answer.querySelectorAll(".hit-row a.hit-title")].map((link) => link.getAttribute("href")), ["/germ", "/antibody", "/sheet"]);
+  assert.match(answer.querySelector(".search-count").textContent, /^3 tracked claims/);
+  assert.equal(answer.querySelector("button.show-more"), null);
+  assert.match(page.results.textContent, /^3 tracked claims for “tooth regrowth”, shown below\.$/);
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
 });
 
