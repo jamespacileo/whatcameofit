@@ -101,12 +101,18 @@ class Increment:
 
 
 def increment(records: list[Record], state: dict[str, str], *, actions: bool) -> Increment:
-    """The records that are new or changed since `state`, in the order given."""
+    """The records that are new or changed since `state`, in the order given, each once.
+    A record given twice (one paper's payload, listed by two trials) goes once: the store
+    stages one row per key, so a second would leave the run's stated count short and the
+    merge undone. Two different bodies under one key, both to be sent, are refused."""
     chosen: list[Record] = []
     left_out: Counter[str] = Counter()
+    given: dict[str, str] = {}
     for record in records:
-        held = state.get(f"{record.kind}\t{record.key}")
-        if held == body_sha256(record):
+        name = f"{record.kind}\t{record.key}"
+        body = body_sha256(record)
+        held = state.get(name)
+        if held == body:
             continue
         if held is not None and record.kind in ONCE:
             left_out[f"{record.kind} changed after it was handed over"] += 1
@@ -114,6 +120,13 @@ def increment(records: list[Record], state: dict[str, str], *, actions: bool) ->
         if record.kind == "action" and not actions:
             left_out["action (needs the operator's token and --actions)"] += 1
             continue
+        if name in given:
+            if given[name] != body:
+                raise PushFailed(
+                    f"Two different {record.kind} records under one key: {record.key}."
+                )
+            continue
+        given[name] = body
         chosen.append(record)
     return Increment(chosen, left_out)
 

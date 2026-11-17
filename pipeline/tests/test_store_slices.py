@@ -392,7 +392,9 @@ def test_the_plan_and_a_slice_merge_into_the_real_store_as_run_push_forms_them(
 ):
     """What `run --push` sends, merged through store/schema.sql and store/merge.sql into
     the hot file the store is loaded from: every planned slice's state before any stage,
-    then one slice end to end, with its in_store state after."""
+    then one slice end to end, with its in_store state after. The store is loaded from a
+    hot-only build, and the slice's records are those `_push_slice` sends against that
+    build's state: two of its trials list one paper, whose payload goes once."""
     import sqlite3
 
     from thenwhat.store.build import merge_into
@@ -400,18 +402,42 @@ def test_the_plan_and_a_slice_merge_into_the_real_store_as_run_push_forms_them(
     from thenwhat.store.tiers import HOT, split_build
 
     _world(session)
+    for trial in session.scalars(select(RegistryTrial).where(RULE)):
+        session.add(
+            TrialPaper(
+                registry_trial_id=trial.id,
+                source_name="pubmed",
+                pubmed_id="77",
+                raw_payload={"pmid": "77", "authorString": "A B.", "abstract": "Text."},
+                fetched_at=NOW,
+            )
+        )
+    session.flush()
     file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
-    build(session, file, payloads=payloads, store_sql=STORE, now=NOW, hot_only=True)
+    report = build(session, file, payloads=payloads, store_sql=STORE, now=NOW, hot_only=True)
     (hot,) = split_build(file, payloads, HOT, hot_only=True)
     made = plan(session, RULE, name="test-set", year=2025, today=TODAY)
-    planned = [state_record(one, rule=made.rule, year=made.year) for one in made.slices]
+    # One slice holding both trials, as a slice of 2,000 holds trials that share papers.
+    one = made.slices[0]
+    one.trials = sorted(trial for each in made.slices for trial in each.trials)
+    made.slices = [one]
+    planned = [state_record(each, rule=made.rule, year=made.year) for each in made.slices]
     merge_into(hot, [("plan", planned)], store_sql=STORE, now=NOW)
 
-    one = made.slices[0]
     record_stage(session, one, NOW)
     registry_papers_stage(session, one, NOW, lambda number: None)
     records, _ = slice_records(session, one, rule=made.rule, year=made.year)
-    merge_into(hot, [("slice", records)], store_sql=STORE, now=NOW)
+    assert len({r.key for r in records if r.kind == "payload"}) < sum(
+        r.kind == "payload" for r in records
+    )
+    held_state = {
+        key: body
+        for key, body in report.hot_state.items()
+        if not key.startswith("registry_trial\t")
+    }
+    sent = increment(records, held_state, actions=False).records
+    assert sum(r.kind == "trial_paper" for r in sent) == 2
+    merge_into(hot, [("slice", sent)], store_sql=STORE, now=NOW)
     one.counts["in_store"] = len(one.trials)
     one.done["in_store"] = NOW.isoformat(timespec="microseconds")
     merge_into(

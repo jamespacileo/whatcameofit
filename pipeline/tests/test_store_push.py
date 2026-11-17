@@ -537,3 +537,10 @@ def test_a_run_undone_for_a_constraint_is_marked_and_set_aside_only_then(monkeyp
     write_pending(pending, "daily-x", [CLAIM])
     kept = CliRunner().invoke(app, args)
     assert kept.exit_code == 1 and "push again" in kept.output and pending.is_file()
+
+
+def test_a_record_given_twice_goes_once_and_two_bodies_under_one_key_are_refused():
+    other = Record("claim", "drug-x", {"slug": "drug-x", "headline": "Other"})
+    assert increment([CLAIM, CLAIM], {}, actions=False).records == [CLAIM]
+    with pytest.raises(PushFailed, match="Two different claim"):
+        increment([CLAIM, other], {}, actions=False)
