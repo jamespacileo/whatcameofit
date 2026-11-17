@@ -247,17 +247,18 @@ def filed_under(trials: Sequence[StoredTrial], key: str) -> str | None:
 
     Sasanlimab is filed under PF-06801591 and zanzalintinib under XL092. The name is
     taken only when every entry that lists it agrees on one name, or on one name and
-    its forms, and at least MIN_TRIALS_FILING trials do. A name sponsors file under two
-    names gives none, as the registry of substances gives no code for a name it lists
-    under two substances; one trial alone can list anything ("growth factor" as another
-    name of one product).
+    its forms. A name sponsors file under two names gives none, as the registry of
+    substances gives no code for a name it lists under two substances. One trial alone
+    is enough only when the name it files under is a development code, one with a digit
+    in it: a single entry can list anything ("growth factor" as another name of one
+    product), and a code is filed with its generic name by the one trial of a new drug.
     """
     found = filed_names(trials, key)
-    if sum(count for _, count in found.values()) < MIN_TRIALS_FILING:
-        return None
+    filing = sum(count for _, count in found.values())
     for base, (name, _) in found.items():
         if all(other == base or other.startswith((f"{base} ", f"{base}-")) for other in found):
-            return name
+            is_a_code = bool(re.search(r"\d", base))
+            return name if filing >= MIN_TRIALS_FILING or is_a_code else None
     return None
 
 

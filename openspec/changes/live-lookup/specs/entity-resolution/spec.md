@@ -102,7 +102,7 @@ A stored trial found this way that the registry's search did not return SHALL be
 - **THEN** resolution searches the registry as before
 
 ### Requirement: A name the stored trials file under one other name is searched under it
-When stored intervention entries list one of the intervention's names among their other names, the entry's own name, without dose, form or route, is what a sponsor files the treatment under. The system SHALL take such a name as another name of the intervention only when at least two stored trials file the intervention's name under another and every entry that lists the intervention's name agrees on one name, or on one name and its forms as for a substance; an entry that joins several products, an entry whose own name is a control or a description, and an entry that is not a drug, biological, genetic, combination or supplement entry SHALL say nothing. The name taken SHALL be searched in the trial registry as a name of the intervention and SHALL be named in the question put to the match scoring, together with the substance's name. It SHALL NOT be stored or shown as a name of the intervention, and no model SHALL supply it. A name the entries file under two names SHALL give none.
+When stored intervention entries list one of the intervention's names among their other names, the entry's own name, without dose, form or route, is what a sponsor files the treatment under. The system SHALL take such a name as another name of the intervention only when every entry that lists the intervention's name agrees on one name, or on one name and its forms as for a substance, and either at least two stored trials file it so or the name it is filed under is a development code, one with a digit in it; an entry that joins several products, an entry whose own name is a control or a description, and an entry that is not a drug, biological, genetic, combination or supplement entry SHALL say nothing. The name taken SHALL be searched in the trial registry as a name of the intervention and SHALL be named in the question put to the match scoring, together with the substance's name. It SHALL NOT be stored or shown as a name of the intervention, and no model SHALL supply it. A name the entries file under two names SHALL give none.
 
 To find stored candidates only, the system SHALL also use each name that at least two stored trials file the intervention's name under, whether or not the entries agree: a wrong one adds a candidate that is scored, and nothing else. Such a name SHALL NOT be searched in the trial registry and SHALL NOT be named in the question.
 
@@ -113,6 +113,10 @@ To find stored candidates only, the system SHALL also use each name that at leas
 #### Scenario: Name one trial alone files under another
 - **WHEN** a single stored entry named Palifermin lists "growth factor" among its other names
 - **THEN** no other name is taken for an intervention named "growth factor"
+
+#### Scenario: One trial files the name under a development code
+- **WHEN** a single stored entry named REGN3767 lists "fianlimab" among its other names and no other entry files fianlimab under another name
+- **THEN** REGN3767 is taken as another name of the intervention
 
 #### Scenario: Name filed under two names
 - **WHEN** one stored entry named EX-900 lists the intervention's name and another, named "Arm A chemotherapy", lists it too

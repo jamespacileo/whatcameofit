@@ -140,6 +140,11 @@ def test_a_name_one_trial_alone_files_under_another_gives_none():
     assert filed_under(trials, "growth factor") is None
 
 
+def test_one_trial_is_enough_when_it_files_the_name_under_a_development_code():
+    trials = [listing(entry("EX-900", "Zentalimab"))]
+    assert filed_under(trials, "zentalimab") == "EX-900"
+
+
 # --- Stored trials that list the intervention are candidates ---------------------
 
 
