@@ -1662,6 +1662,13 @@ main nav.contents ul li + li {
   font-size: clamp(1.35rem, 3.8vw, 1.6rem);
   line-height: 1.2;
   margin: 0;
+  /* Gone to from the line under the box: it stops clear of the screen's edge. */
+  scroll-margin-top: 1.25rem;
+}
+
+/* The box brought up with its answer keeps a little air over it. */
+.search {
+  scroll-margin-top: 1rem;
 }
 
 .search-count {
@@ -2125,6 +2132,11 @@ main nav.contents ul li + li {
   margin: 1.1rem 0 0;
   color: var(--muted);
   font-size: var(--text-m);
+  text-wrap: pretty;
+}
+
+.results .search-note {
+  text-wrap: pretty;
 }
 
 @media (max-width: 34rem) {
@@ -10232,6 +10244,13 @@ body:has(.band.home) .bar {
 .suggest-row:hover,
 .suggest-row.is-active {
   background: var(--tint);
+}
+
+/* The row chosen by the keys is ringed as a focused control is: the tint alone is
+   too close to the panel to say which row Enter will take. */
+.suggest-row.is-active {
+  outline: 2px solid var(--blue);
+  outline-offset: -2px;
 }
 
 .suggest-kind {

@@ -242,7 +242,7 @@ test("a search on the home page answers in the list's place: the closest match, 
   const answer = await searched(page, "tooth regrowth");
   assert.equal(answer.hidden, false);
   assert.ok(document.querySelector("[data-days]").hasAttribute("data-searching"));
-  assert.match(page.results.textContent, /Results for “tooth regrowth” are shown below\./);
+  assert.match(page.results.textContent, /^3 tracked claims for “tooth regrowth”, shown below\.$/);
   // The count is said once, beside the one way out.
   assert.match(answer.querySelector(".search-count").textContent, /^3 tracked claims/);
   assert.equal(answer.querySelectorAll("button.search-clear").length, 1);
@@ -357,6 +357,17 @@ test("each search looked up is a step Back returns to, and an emptied field leav
   assert.doesNotMatch(page.location.href, /q=/);
 });
 
+test("the count is of every claim found, and says so where only the first are drawn", async () => {
+  // The index finds 25 claim pages; this page reads and draws the three it knows.
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/", ...Array.from({ length: 22 }, (_, at) => `/other-${at}/`)];
+  const page = setup(null, HOME);
+  const answer = await searched(page, "tooth regrowth");
+  assert.match(answer.querySelector(".search-count").textContent, /^First 3 of 25 tracked claims/);
+  assert.match(page.results.textContent, /^The first 3 of 25 tracked claims for “tooth regrowth” are shown below\.$/);
+  assert.match(answer.textContent, /22 more tracked claims hold these words and are not shown\./);
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+});
+
 test("a topic picked is kept in the page's address and cleared with the search", async () => {
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
   const page = setup(null, HOME);
@@ -403,6 +414,8 @@ test("a search that finds nothing says so plainly and points to pasting a link",
   for (let turn = 0; turn < 4; turn++) await settle();
   assert.match(page.results.textContent, /Nothing tracked here matches “zzzqqq”\./);
   assert.match(page.results.textContent, /paste the article's link/);
+  // Words were typed: the reader is not told a name can be typed.
+  assert.doesNotMatch(page.results.textContent, /typed in the box/);
   assert.doesNotMatch(page.results.textContent, /We say that a lot/);
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
 });

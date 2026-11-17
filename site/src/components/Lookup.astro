@@ -214,6 +214,7 @@ const sentenceJson = sentences
     const again = element("button", "Try again", "text-control") as HTMLButtonElement;
     again.type = "button";
     again.addEventListener("click", () => {
+      input.value = asked;
       input.focus();
       answer(asked);
     });
@@ -239,7 +240,7 @@ const sentenceJson = sentences
       const note = element("span", undefined, "entry-note");
       note.append(element("strong", claim.status));
       const rest = [
-        claim.no_signal,
+        claim.no_signal && `${claim.no_signal}.`,
         claim.meaning,
         claim.first_reported && `First reported ${claim.first_reported}.`,
       ]
@@ -976,11 +977,15 @@ const sentenceJson = sentences
     } else {
       results.replaceChildren(block);
     }
-    if (holder.getBoundingClientRect().top > innerHeight * 0.7) {
-      holder.scrollIntoView({
-        block: "start",
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      });
+    // An answer low on the screen is brought up with the box above it, in one move: a
+    // glide is cut short by what is drawn after it, and leaves the answer under the fold.
+    if (holder.getBoundingClientRect().top > innerHeight * 0.5) {
+      form.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+    // A search asked from anywhere but the field (a word to try, the address, Back)
+    // puts the reader on the answer's heading; one typed leaves them in the field.
+    if (answerSlot && document.activeElement !== input) {
+      answerSlot.querySelector<HTMLElement>("#search-answer-title")?.focus({ preventScroll: true });
     }
   }
 
@@ -990,6 +995,8 @@ const sentenceJson = sentences
     pickedIn?: "side" | "row";
     /** A report whose headline is the search itself: its claim leads, so labelled. */
     exact?: SearchReport;
+    /** How many claims the index found; more than are drawn where the answer is cut. */
+    total?: number;
   }
 
   // The topics of the matches, each narrowing them, with how many each holds.
@@ -1021,19 +1028,25 @@ const sentenceJson = sentences
   // the topics the matches belong to.
   function searchAnswer(query: string, matches: LookupClaim[], index: Lookup, detail: SearchDetail, view: Shown = {}) {
     const { picked = "", pickedIn, exact } = view;
+    const total = Math.max(view.total ?? 0, matches.length);
+    const cut = total > matches.length;
     const words = searchWords(query);
     const shown = picked ? matches.filter((claim) => claim.topic === picked) : matches;
     const block = element("div", undefined, "search-results");
+    // The count is of every claim found. Where only the first are drawn it says so,
+    // and a topic's count is then of those drawn.
+    const counted = cut ? `First ${matches.length} of ${claimsText(total)}` : claimsText(matches.length);
+    const inTopic = `, in ${index.topics[picked]?.title ?? picked}`;
     block.append(
       searchHead(
         `Results for “${query}”`,
-        picked ? `${shown.length} of ${claimsText(matches.length)}, in ${index.topics[picked]?.title ?? picked}` : claimsText(matches.length),
+        !picked ? counted : cut ? `${shown.length} of the first ${matches.length}${inTopic}` : `${shown.length} of ${counted}${inTopic}`,
       ),
     );
 
     const pick = (slug: string, from: "side" | "row") => {
       setAddress((params) => (slug ? params.set("topic", slug) : params.delete("topic")));
-      searchAnswer(query, matches, index, detail, { picked: slug, pickedIn: from, exact });
+      searchAnswer(query, matches, index, detail, { picked: slug, pickedIn: from, exact, total });
     };
     // On a narrow screen, and on a page with no side column, the topics stand here.
     const rowPicks = topicButtons(matches, index, picked, (slug) => pick(slug, "row"));
@@ -1080,6 +1093,13 @@ const sentenceJson = sentences
       }
     }
 
+    if (cut) {
+      const left = total - matches.length;
+      block.append(
+        element("p", `${left} more tracked ${left === 1 ? "claim holds" : "claims hold"} these words and ${left === 1 ? "is" : "are"} not shown. Add a word to narrow them.`, "match-more"),
+      );
+    }
+
     const subjects = [...new Set(shown.map((claim) => claim.topic))].filter((slug) => index.topics[slug]);
     if (subjects.length > 0) {
       const more = element("p", "Every claim on the subject: ", "search-more");
@@ -1096,7 +1116,7 @@ const sentenceJson = sentences
     if (listedGroup) block.append(listedGroup);
     if (pickedIn && answerSlot) answerSlot.replaceChildren(block);
     else if (pickedIn) results.replaceChildren(block);
-    else place(block, `Results for “${query}” are`);
+    else place(block, cut ? `The first ${matches.length} of ${claimsText(total)} for “${query}” are` : `${claimsText(matches.length)} for “${query}”,`);
 
     if (searchTopics) {
       const sidePicks = topicButtons(matches, index, picked, (slug) => pick(slug, "side"));
@@ -1363,7 +1383,8 @@ const sentenceJson = sentences
       const registry = REGISTRY_PAGES.find(([pattern]) => pattern.test(id));
       if (registry) {
         const line = element("p");
-        const link = element("a", `See ${id} on ${registry[1]}`) as HTMLAnchorElement;
+        // The registry may hold no such record: the link looks for it, and does not say it is there.
+        const link = element("a", `Look for ${id} on ${registry[1]}`) as HTMLAnchorElement;
         link.href = registry[2](id);
         link.rel = "noopener";
         line.append(link);
@@ -1406,12 +1427,15 @@ const sentenceJson = sentences
     let matches: LookupClaim[];
     let index: Lookup;
     let detail: SearchDetail;
+    // Every claim page the index found; only the first are read and drawn.
+    let total = 0;
     try {
       const indexUrl = "/pagefind/pagefind.js";
       const pagefind = await import(/* @vite-ignore */ indexUrl);
       const [found, loaded, held] = await Promise.all([pagefind.search(query), loadLookup(), loadDetail()]);
       index = loaded;
       detail = held;
+      total = found.results.length;
       const hits: Hit[] = await Promise.all(
         found.results.slice(0, 20).map((result: { data: () => Promise<Hit> }) => result.data()),
       );
@@ -1448,13 +1472,16 @@ const sentenceJson = sentences
       );
       const drawing = document.querySelector<HTMLTemplateElement>("#unfound");
       if (drawing) results.prepend(drawing.content.cloneNode(true));
-      results.append(next());
+      // Words were typed: the line on topics, without the one on typing.
+      results.append(listedByTopic());
       void showListed(query);
       return;
     }
     const picked = matches.some((claim) => claim.topic === addressTopic) ? addressTopic : "";
+    // A topic in the address that no match belongs to is dropped from it.
+    if (addressTopic && !picked) setAddress((params) => params.delete("topic"));
     addressTopic = "";
-    searchAnswer(query, matches, index, detail, { exact, picked });
+    searchAnswer(query, matches, index, detail, { exact, picked, total });
     void showListed(query);
   }
 
@@ -1582,6 +1609,7 @@ const sentenceJson = sentences
     const text = element("span", undefined, item.kind === "report" ? "suggest-quote" : item.kind === "trial" ? "suggest-id" : "suggest-text");
     if (item.kind === "report") text.append(element("span", "“", "quote-mark"), typedIn(item.text, typed), element("span", "”", "quote-mark"));
     else text.append(typedIn(item.text, typed));
+    if (item.also) text.append(" (", typedIn(item.also, typed), ")");
     main.append(text);
     if (item.sub) {
       const sub = element("span", undefined, "suggest-sub");

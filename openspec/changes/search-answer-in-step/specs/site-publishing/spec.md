@@ -41,3 +41,21 @@ An article the site does not track SHALL be offered a calendar file, made on the
 #### Scenario: Not tracked, no registry search
 - **WHEN** a reader pastes the address of an article the site does not track, on a site built with no lookup service
 - **THEN** "Check again later" follows the answer with both dates
+
+### Requirement: A search's count is of every claim found
+The count shown for a search by words SHALL be the number of claim pages the search index found. Where fewer are drawn, the answer's heading, the line under the box and the end of the list SHALL each say that only the first are shown and how many were found.
+
+#### Scenario: More found than drawn
+- **WHEN** the index finds 161 claims for "cancer" and the page draws 20
+- **THEN** the count reads "First 20 of 161 tracked claims", and the list ends by saying 141 more hold these words and are not shown
+
+#### Scenario: All drawn
+- **WHEN** the index finds 3 claims
+- **THEN** the count reads "3 tracked claims"
+
+### Requirement: A treatment suggested for another name says that name
+Where the typed words are in none of a treatment's first name but in another of its names, its suggested row SHALL give the first name followed by the name the words are in.
+
+#### Scenario: A brand name typed
+- **WHEN** a reader types the start of a treatment's second name
+- **THEN** the row reads the first name, then the second name in brackets

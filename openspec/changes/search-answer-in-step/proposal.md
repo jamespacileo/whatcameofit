@@ -17,7 +17,16 @@ A critique of the home page's search on 2026-11-17 (`.impeccable/critique/`, run
 - The button that asks for a registry search is described by the line that says what it sends.
 - In a tracked answer, a two-line status, its place on the path and its no-signal note each stand on a line of their own.
 
+After a second critique the same day, on a site built from the published export:
+
+- The count of a search is of every claim the index found. Where only the first twenty are drawn the heading, the line under the box and the end of the list say so.
+- An answer that lands low on the screen is brought up with the box above it, in one move.
+- A search asked from anywhere but the field puts the reader on the answer's heading.
+- "Try again" puts the failed words back in the field. A topic in the address that no match belongs to is dropped from it.
+- A treatment suggested for another of its names says that name. The row chosen by the keys is ringed.
+- Wording: a full stop after a close claim's no-signal note; no "a name can be typed" after typed words found nothing; "Look for … on" a registry for an identifier not on record here.
+
 ## Impact
 
-- `site/src/components/Lookup.astro`, `site/src/styles/global.css`, `site/tests/home-search.test.mjs`, `site/tests/lookup-component.test.mjs`, `DESIGN.md`.
+- `site/src/components/Lookup.astro`, `site/src/lib/suggest.ts`, `site/src/styles/global.css`, `site/tests/home-search.test.mjs`, `site/tests/lookup-component.test.mjs`, `DESIGN.md`.
 - No new data and no new request. The pasted address still never enters the page's address.
