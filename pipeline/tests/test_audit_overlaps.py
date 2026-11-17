@@ -220,7 +220,9 @@ def run(reader: Reader, monkeypatch: pytest.MonkeyPatch) -> Callable[..., Result
 
     monkeypatch.setattr("thenwhat.cli.session.open_session", test_session)
     monkeypatch.setattr("thenwhat.cli.entry.open_session", test_session)
-    monkeypatch.setattr("thenwhat.cli.backfill.registered_steps", lambda settings: [reader.step])
+    monkeypatch.setattr(
+        "thenwhat.cli.backfill.registered_steps", lambda settings, **_: [reader.step]
+    )
     monkeypatch.setattr(
         "thenwhat.cli.backfill.make_allowances", lambda settings: reader.client.allowances
     )
