@@ -248,6 +248,28 @@ npx wrangler d1 time-travel restore thenwhat-store-preview --bookmark <bookmark>
 
 A restore overwrites the database in place and cancels requests in flight. It prints the bookmark of the moment before it, and restoring to that undoes it. At most 10 restores in 10 minutes for a database. R2 is not restored with it: payloads are stored under their checksums and are never overwritten, so an object a restored store no longer names is only unused. A restore of the preview has not been run yet (task 3.8).
 
+### Restoring the store from a Postgres dump or a kept store file
+
+When Time Travel cannot help (the history has run out, or the database is gone), the store is filled again by the same bulk path as the first fill, never row by row through the ingest service.
+
+1. From a Postgres dump: restore it into a scratch Postgres database and point `DATABASE_URL` at it. From a kept store file, skip to step 3.
+2. Build the store file. The database is only read; every record goes through `store/merge.sql`; each payload over 16 KB is written once under `payload/<sha256>`; `<store.sqlite>.pushed.json` is written beside the file.
+   ```bash
+   uv run thenwhat store build <store.sqlite> --payloads <folder>
+   ```
+3. Write the SQL: rows only, parents first, no transactions or schema, statements under 90 KB, files cut at 50 MB, with `manifest.json`. The last three files rebuild the search tables.
+   ```bash
+   uv run thenwhat store dump <store.sqlite> <sql-folder> --payloads <folder>
+   ```
+4. Into an empty database with the migrations applied and its jurisdiction read back: upload the payload folder to R2 under the same keys, then load and count.
+   ```bash
+   node store/ingest/scripts/import-folder.mjs <sql-folder> --remote
+   ```
+   After a load by hand, `uv run thenwhat store check <manifest.json> <counts.json>` does the count.
+5. Keep `<store.sqlite>.pushed.json` with the file: `thenwhat backfill push --state <it>` then hands over only what changed since the build.
+
+Not tested: whether rebuilding `link_lead_fts` on D1 fits its 30 seconds for a query. The schema's triggers have already filled that table as the rows arrived, so if that file fails it can be left out; the load stops there, and the count is then run by hand.
+
 ### The ingest service is not deployed
 
 `store/ingest/wrangler.jsonc` has `workers_dev: false` and no route, so a deployed service would have no address. The bulk load does not need it. Never deploy it by hand before its address is decided.
