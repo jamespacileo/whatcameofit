@@ -47,9 +47,9 @@ New in the store, with no Postgres table behind them: `run`, `run_step`, `run_st
 
 ## What the sample showed
 
-- **Size.** The sample (51,155 records) is 35.5 MB as SQLite. Projected to the whole database: **1.20 GB**, 12% of D1's 10 GB. The largest parts are trials (340 MB), their payloads in rows (292 MB), leads (213 MB) and shares (70 MB). With trial payloads in R2 instead it is about 0.9 GB.
+- **Size.** Measured again on 2026-11-17 at revision `0032`: the sample (55,096 records) is 48.2 MB as SQLite. Projected to the whole database: **1.67 GB**, 17% of D1's 10 GB. The largest parts are trial payloads in rows (670 MB), trials (415 MB), leads (213 MB) and shares (70 MB). On 2026-11-16, before the wider trial record, it was 1.20 GB. With trial payloads in R2 instead it would be about 1.0 GB.
 - **Largest value in a row:** 29,956 bytes, against 2,000,000.
-- **Longest statement:** 4,059 bytes, against 100,000. Most bound parameters: 8, against 100.
+- **Longest statement:** 2,827 bytes, against 100,000. Most bound parameters: 8, against 100.
 - **Not sampled:** `article_lead` (about 15 MB at 350 bytes a row) and `outlet_icon`. Neither changes the picture.
 
 ## A finding that changes the design: what "differs" means for evidence

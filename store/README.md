@@ -24,7 +24,7 @@ Builds the schema in memory and runs 62 scenarios through `merge.sql` as a D1 ba
 docker exec -i thenwhat-db-1 psql -U thenwhat -d thenwhat -q -f - < store/proof/export_sample.sql > store/proof/sample/records.jsonl
 ```
 
-Exports a sample from the working Postgres in natural-key form: every fifth claim with its records, about 5,800 trials, 2,500 scored leads. The session is read-only (`default_transaction_read_only`). It takes about four minutes, most of it checksums. Create `store/proof/sample/` first; it is not committed.
+Exports a sample from the working Postgres in natural-key form: every fifth claim with its records, about 5,900 trials, 2,500 scored leads. The session is read-only (`default_transaction_read_only`). It takes about four minutes, most of it checksums. Create `store/proof/sample/` first; it is not committed.
 
 ```bash
 python3 store/proof/proof.py
