@@ -1031,7 +1031,7 @@ test("an export made before paper facts still builds, with the matched papers as
 test("Scenario: Follow-up paper scored 0.6", () => {
   const timetable = sectionOf(page("phase-claim/index.html"), "timetable");
   // The follow-up paper's score is a chip: its opening words are for a screen reader.
-  assert.match(timetable, /<span class="visually-hidden">Match to this claim: <\/span><span class="score-words">medium, 60%<\/span>/);
+  assert.match(timetable, /<span class="visually-hidden">Match to this claim: <\/span><span class="score-words">medium, <span class="score-figure">60%<\/span><\/span>/);
 });
 
 test("Scenario: Trial event read from a registry record", () => {
@@ -1436,7 +1436,7 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
   // the same row keeps its own score in sight.
   assert.match(drugs, /<span>From Example Drugs<\/span>\s*<\/summary>/);
   // Both scores are chips beside the value, each saying in sight what was matched.
-  assert.match(drugs, /<span class="score-about">Drug record: <\/span><span class="score-words">by exact name<\/span>[\s\S]*?<span class="score-about">Kind term: <\/span><span class="score-words">high, \d+%<\/span>/);
+  assert.match(drugs, /<span class="score-about">Drug record: <\/span><span class="score-words">by exact name<\/span>[\s\S]*?<span class="score-about">Kind term: <\/span><span class="score-words">high, <span class="score-figure">\d+%<\/span><\/span>/);
   assert.match(drugs, /The drug, as a drug database records it/);
   assert.match(drugs, /href="https:\/\/targets\.example\/drug\/CHEMBL0000001"[^>]*>\s*examplumab\s*</);
   assert.match(drugs, /<div class="card-facts">\s*<p>Antibody<\/p>\s*<ul>\s*<li>Inhibitor of Example receptor 1<\/li>\s*<\/ul>/);
@@ -1634,7 +1634,8 @@ test("Scenario: Claim with three statements from one report", () => {
   // Each with its kind and how sure the check is, as a word and a percentage.
   assert.match(plainText(section), /Effect The report said: Synthetic statement: examplumab eased/);
   for (const label of ["Very likely in the report · 93%", "Very likely in the report · 88%", "Very likely in the report · 81%"]) {
-    assert.ok(section.includes(label), `no "${label}"`);
+    // The percentage is marked apart inside the chip; the words read are the same.
+    assert.ok(wordsOf(section).includes(label), `no "${label}"`);
   }
   // A report's statement is not a record, and the records follow it.
   assert.match(section, /A report’s statement is not a record: the records follow\./);

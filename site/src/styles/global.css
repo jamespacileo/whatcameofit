@@ -7978,6 +7978,11 @@ body.framed {
   display: none;
 }
 
+/* No mark is left dangling after the last part in sight. */
+.glance-more:not([open]) summary > span:has(+ .glance-filed)::after {
+  content: none;
+}
+
 /* Trials: a row keeps to what tells one trial from the next. The measure is held to two
    lines and who runs it to one; the row opens to the rest. People are set as figures. */
 .trial-row .trial-measure-words {
@@ -8151,4 +8156,48 @@ body.framed {
   .trial-row .trial-measure-words {
     display: block;
   }
+}
+
+/* The chip, lighter (openspec score-chip, 2026-11-17): the percentage is the chip's
+   figure, in ink and tabular; the band's words beside it are plain. A lower-band reading
+   keeps its words in ink, since the words are what it must say. What is not a score (how
+   a term was found: "by exact name") opens the same panel as plain words, underlined in
+   dots like the page's other words that open, without the chip's outline. */
+.score .score-words {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.score .score-figure {
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.score.low .score-words {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.pop-trigger.score.said {
+  padding-inline: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: none;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--ring);
+  text-underline-offset: 0.25em;
+}
+
+.pop-trigger.score.said .score-words {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pop-trigger.score.said:hover,
+.pop-trigger.score.said:has(+ .pop:popover-open) {
+  border-color: transparent;
+  background: none;
+  text-decoration-style: solid;
+  text-decoration-color: currentColor;
 }

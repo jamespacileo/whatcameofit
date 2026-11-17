@@ -4,6 +4,10 @@
 // text is the whole phrase ("Match to this claim: high, 92%"); where the row already
 // says what is matched, the opening words are kept for a screen reader and for paper.
 // A reading in the lower band is outlined in dashes and says "Low confidence" in words.
+// The percentage is marked apart from the band's words, so it can be drawn as the chip's
+// figure; the text read out and printed is unchanged ("high, 92%"). Words with no
+// percentage ("by exact name") are not a score: they open the same panel, drawn as plain
+// words without the chip's outline.
 // Openspec score-chip.
 import { nextScoreId } from "../lib/score-id";
 import Pop from "./Pop.astro";
@@ -21,11 +25,13 @@ interface Props {
 
 const { about, words, shown = false, low = false } = Astro.props;
 const id = nextScoreId();
+const figure = words.match(/^(.*?)(,\s*|\s·\s)(\d+%)$/);
+const kind = ["score", low && "low", !figure && "said"].filter(Boolean).join(" ");
 ---
 
-<Pop id={id} class={low ? "score low" : "score"} inline>
+<Pop id={id} class={kind} inline>
   <Fragment slot="trigger">
-    {about && <span class={shown ? "score-about" : "visually-hidden"}>{about}: </span>}<span class="score-words">{words}</span>
+    {about && <span class={shown ? "score-about" : "visually-hidden"}>{about}: </span>}<span class="score-words">{figure ? (<>{figure[1]}{figure[2]}<span class="score-figure">{figure[3]}</span></>) : words}</span>
   </Fragment>
   <slot />
 </Pop>
