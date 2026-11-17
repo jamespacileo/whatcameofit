@@ -4,11 +4,10 @@ Every candidate is stored and scored. A rule rejects one scored near zero and ap
 a trial scored high for the claim's indication; the rest wait for review.
 """
 
-import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -28,6 +27,12 @@ from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.events.trial import PHASES
 from thenwhat.events.trial_facts import STATES, is_registry_record, read_trial
 from thenwhat.measure import spans as measure
+from thenwhat.resolve.stored import (
+    filed_under_another_name,
+    is_a_kind_of_care,
+    parts_of,
+    stored_trials,
+)
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -114,20 +119,21 @@ class TrialSearch(Protocol):
     def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]: ...
 
 
-# The words that join the treatments of a combination in a name: "aspirin plus avelumab",
-# "UV1 vaccine plus pembrolizumab with GM-CSF", "emtricitabine/tenofovir".
-COMBINATION = re.compile(
-    r"\s+(?:plus|with|and|in combination with|combined with)\s+|\s*[+/]\s*", re.IGNORECASE
-)
-
-
 def combination_search(name: str) -> str | None:
     """The registry search for each treatment of a combination at once, or None when the
     name names one treatment. The registry reads the name as written as one treatment
     whose description holds every word, joining words such as "plus" included, so a
     combination is never found by its name; the search for its parts joined by AND finds
-    the trials that give all of them."""
-    parts = [part.strip() for part in COMBINATION.split(name) if part.strip()]
+    the trials that give all of them.
+
+    Each part is a name alone: "eloralintide and tirzepatide combination regimen" is
+    searched as eloralintide and tirzepatide. A part that names a kind of care
+    ("standard chemotherapy") is left out when two named treatments remain, as no
+    registry entry need carry those words."""
+    parts = parts_of(name)
+    named = [part for part in parts if not is_a_kind_of_care(part)]
+    if len(named) >= 2:
+        parts = named
     if len(parts) < 2:
         return None
     return " AND ".join(f"({part})" for part in parts)
@@ -140,21 +146,24 @@ def trials_of(
     unsearchable: Callable[[UnsearchableTerm], None] | None = None,
     codes: Sequence[str] = (),
     substance: str | None = None,
+    filed_under: Sequence[str] = (),
 ) -> list[SourceRecord]:
     """Every trial the registry holds under the intervention's name, its other names, its
     search phrases and its development codes. A phrase or a code is searched within the
     indication only. A name that joins several treatments is also searched for all of
     them together. The name the registry of substances gives the intervention's
     substance is searched as a name too, so a brand such as Mosquirix or Aduhelm finds
-    the trials filed under the substance.
+    the trials filed under the substance. So is each name the stored trials file the
+    intervention under (`filed_under`), such as XL092 for zanzalintinib.
 
     A term the registry cannot search for as written is passed to `unsearchable` and the
     other terms are still searched: each term is its own search. Nothing simpler is
     tried in its place. With no `unsearchable`, the failure is raised.
     """
     names = [entity.name, *entity.synonyms]
-    if substance and name_key(substance) not in {name_key(name) for name in names}:
-        names.append(substance)
+    for other in (substance, *filed_under):
+        if other and name_key(other) not in {name_key(name) for name in names}:
+            names.append(other)
     combined = [search for name in names if (search := combination_search(name))]
     searches: list[Callable[[], list[SourceRecord]]] = [
         *(
@@ -177,6 +186,56 @@ def trials_of(
     return records
 
 
+@runtime_checkable
+class TrialRecords(Protocol):
+    def fetch_trial(self, nct_id: str) -> SourceRecord | None: ...
+
+
+def candidates_of(
+    session: Session,
+    trials: TrialSearch,
+    entity: Entity,
+    indication: str | None,
+    unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+    *,
+    records: TrialRecords | None = None,
+    wanted: Callable[[str], bool] = lambda _: True,
+) -> tuple[list[SourceRecord], list[str]]:
+    """Every trial that may be the intervention's: what the registry's search returns,
+    then the stored trials that list the intervention and that the search did not
+    return (openspec entity-resolution, "Stored trials that list the intervention are
+    candidates"). With them, the other names known for the intervention, for whoever
+    scores: its substance's name and the names the stored trials file it under.
+
+    A stored trial holds fewer fields than a search result, so one that is `wanted` is
+    read from the registry in full through `records` before it is returned; one the
+    registry no longer answers for is left out. With no `records` it is returned as
+    stored.
+    """
+    codes = development_codes(session, entity)
+    substance = substance_name(session, entity)
+    stored = stored_trials(
+        session, [entity.name, *entity.synonyms], indication, codes=codes, substance=substance
+    )
+    found = trials_of(
+        trials, entity, indication, unsearchable, codes, substance, stored.other_names
+    )
+    returned = {record.external_id for record in found}
+    for record in stored.records:
+        if record.external_id in returned or not wanted(record.external_id):
+            continue
+        full = records.fetch_trial(record.external_id) if records is not None else record
+        if full is not None:
+            found.append(full)
+    known = {name_key(name) for name in (entity.name, *entity.synonyms)}
+    also_named = [
+        name
+        for name in dict.fromkeys([*([substance] if substance else []), *stored.other_names])
+        if name_key(name) not in known
+    ]
+    return found, also_named
+
+
 class DoiLookup(Protocol):
     def work(self, doi: str) -> SourceRecord | None: ...
 
@@ -196,9 +255,13 @@ def resolve_claim(
     reject_below: float = 0.0,
     accept_above: float = 0.0,
     unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+    records: TrialRecords | None = None,
 ) -> list[EntityMatch]:
     """Search the registries for the claim's interventions and papers and store each new
     hit as a scored, pending candidate. Returns the candidates this run added.
+
+    The stored trials that list the intervention are candidates too, each read in full
+    through `records` when it is given.
 
     Trials are searched within the claim's indication when the intervention's name is a
     broad one. Candidates that already exist are left exactly as they are, whatever their
@@ -217,6 +280,7 @@ def resolve_claim(
         )
     }
     found: list[tuple[Entity, SourceRecord]] = []
+    also_named: dict[int, list[str]] = {}
 
     def consider(entity: Entity, record: SourceRecord) -> None:
         key = (entity.id, record.source_name, record.external_id)
@@ -226,14 +290,18 @@ def resolve_claim(
 
     for entity in entities:
         if entity.type is EntityType.INTERVENTION:
-            for record in trials_of(
+            candidates, also_named[entity.id] = candidates_of(
+                session,
                 trials,
                 entity,
                 claim.indication,
                 unsearchable,
-                development_codes(session, entity),
-                substance_name(session, entity),
-            ):
+                records=records,
+                wanted=lambda nct_id, entity=entity: (
+                    (entity.id, ClinicalTrials.name, nct_id) not in seen
+                ),
+            )
+            for record in candidates:
                 consider(entity, record)
         elif entity.type is EntityType.PAPER and entity.doi:
             if any(key[0] == entity.id and key[2].lower() == entity.doi.lower() for key in seen):
@@ -265,6 +333,7 @@ def resolve_claim(
                 for (entity, record), match in zip(found, added, strict=True)
             ],
             now=now,
+            also_named=also_named,
         )
     except DecisionFailed:
         # The decision log keeps the failure; the unscored candidates are withdrawn.
@@ -286,6 +355,7 @@ def resolve_claim(
             reject_below=reject_below,
             accept_above=accept_above,
             unsearchable=unsearchable,
+            records=records,
         )
     return added
 
@@ -339,9 +409,17 @@ def rescore_claim(
     reject_below: float = 0.0,
     accept_above: float = 0.0,
     unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+    records: TrialRecords | None = None,
 ) -> list[EntityMatch]:
     """Score again the pending trial candidates that the search still returns, and return
     them. For candidates scored before the indication was part of the question.
+
+    A candidate a rule rejected for scoring near zero is scored again too when its
+    record files the intervention under another name: an entry lists one of the
+    intervention's names among its other names, or is named by a name the stored trials
+    file the intervention under. Until the scoring was shown those names, such a trial
+    read as a trial of something else. Once scored it waits like a pending candidate,
+    and the same rules decide it.
 
     A candidate someone has decided keeps the score it was decided on. A pending
     candidate the search no longer returns keeps its old score, and the review queue
@@ -349,6 +427,8 @@ def rescore_claim(
     """
     just_scored = {match.id for match in skip or []}
     again: list[tuple[Entity, EntityMatch, SourceRecord]] = []
+    reopened: list[EntityMatch] = []
+    also_named: dict[int, list[str]] = {}
     for entity in entities_of(session, claim):
         if entity.type is not EntityType.INTERVENTION:
             continue
@@ -362,20 +442,56 @@ def rescore_claim(
             )
             if match.id not in just_scored
         }
-        for record in trials_of(
+        rejected_by_rule = {
+            (match.source_name, match.external_id): match
+            for match in session.scalars(
+                select(EntityMatch).where(
+                    EntityMatch.entity_id == entity.id,
+                    EntityMatch.source_name == ClinicalTrials.name,
+                    EntityMatch.review_state == ReviewState.REJECTED,
+                    EntityMatch.reviewed_by == Decider.RULE,
+                )
+            )
+            if match.id not in just_scored
+        }
+        candidates, also_named[entity.id] = candidates_of(
+            session,
             trials,
             entity,
             claim.indication,
             unsearchable,
-            development_codes(session, entity),
-            substance_name(session, entity),
-        ):
-            match = pending.pop((record.source_name, record.external_id), None)
+            records=records,
+            wanted=lambda nct_id, known=(pending, rejected_by_rule): any(
+                (ClinicalTrials.name, nct_id) in matches for matches in known
+            ),
+        )
+        names = [
+            entity.name,
+            *entity.synonyms,
+            *development_codes(session, entity),
+            *also_named[entity.id],
+        ]
+        for record in candidates:
+            key = (record.source_name, record.external_id)
+            match = pending.pop(key, None)
+            if (
+                match is None
+                and key in rejected_by_rule
+                and filed_under_another_name(record.payload, names, also_named[entity.id])
+            ):
+                match = rejected_by_rule.pop(key)
+                reopened.append(match)
             if match is not None:
                 match.record_summary = what_it_says(record)
                 match.record_facts = facts_of(record)
                 again.append((entity, match, record))
-    score_matches(session, backend, claim=claim, candidates=again, now=now)
+    score_matches(session, backend, claim=claim, candidates=again, now=now, also_named=also_named)
+    # Only once every candidate is scored: a scoring that fails leaves the rule's
+    # rejections as they were.
+    for match in reopened:
+        match.review_state = ReviewState.PENDING
+        match.reviewed_at = None
+        match.reviewed_by = None
     rescored = [match for _, match, _ in again]
     reject_near_zero(rescored, reject_below, now)
     approve_confident(session, rescored, accept_above, now)
@@ -418,6 +534,7 @@ def redo_rule_approvals(
     accept_above: float = 0.0,
     no_signal_years: int = 3,
     unsearchable: Callable[[UnsearchableTerm], None] | None = None,
+    records: TrialRecords | None = None,
 ) -> RuleRedo:
     """Score again, with the question as it is asked now, the trial matches a rule
     approved, and let the rule decide them again. For approvals made before the question
@@ -437,6 +554,7 @@ def redo_rule_approvals(
     if accept_above <= 0:
         return RuleRedo(0, [], [], [], [])
     again: list[tuple[Entity, EntityMatch, SourceRecord]] = []
+    also_named: dict[int, list[str]] = {}
     not_returned: list[str] = []
     for entity in entities_of(session, claim):
         if entity.type is not EntityType.INTERVENTION:
@@ -453,14 +571,16 @@ def redo_rule_approvals(
         }
         if not approved:
             continue
-        for record in trials_of(
+        candidates, also_named[entity.id] = candidates_of(
+            session,
             trials,
             entity,
             claim.indication,
             unsearchable,
-            development_codes(session, entity),
-            substance_name(session, entity),
-        ):
+            records=records,
+            wanted=lambda nct_id, approved=approved: (ClinicalTrials.name, nct_id) in approved,
+        )
+        for record in candidates:
             match = approved.pop((record.source_name, record.external_id), None)
             if match is not None:
                 again.append((entity, match, record))
@@ -471,7 +591,7 @@ def redo_rule_approvals(
             for match in approved.values()
             if match.source_name == ClinicalTrials.name
         ]
-    score_matches(session, backend, claim=claim, candidates=again, now=now)
+    score_matches(session, backend, claim=claim, candidates=again, now=now, also_named=also_named)
     rescored = [match for _, match, _ in again]
     for _, match, record in again:
         match.record_summary = what_it_says(record)
@@ -504,10 +624,6 @@ def redo_rule_approvals(
         not_returned=sorted(not_returned),
         events_kept=events_kept,
     )
-
-
-class TrialRecords(Protocol):
-    def fetch_trial(self, nct_id: str) -> SourceRecord | None: ...
 
 
 def fill_record_facts(session: Session, registry: TrialRecords) -> tuple[int, list[str]]:

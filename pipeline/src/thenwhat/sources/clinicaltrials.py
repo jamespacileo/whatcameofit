@@ -19,11 +19,12 @@ API = "https://clinicaltrials.gov/api/v2"
 NCT_ID = re.compile(r"NCT\d{8}")
 # A search only has to show enough to judge a match; the full record is fetched by identifier.
 # The acronym, the enrolment and the collaborators let a lookup tell which of a treatment's
-# trials an article reports.
+# trials an article reports. An intervention's other names say what else the sponsor calls
+# it: a trial filed under a development code lists the generic name there.
 SEARCH_FIELDS = (
     "NCTId,BriefTitle,OfficialTitle,InterventionName,LeadSponsorName,Phase,OverallStatus,Condition"
     ",Acronym,EnrollmentCount,CollaboratorName,StudyType"
-    ",InterventionDescription,InterventionArmGroupLabel"
+    ",InterventionOtherName,InterventionDescription,InterventionArmGroupLabel"
     ",ArmGroupLabel,ArmGroupType,ArmGroupDescription,ArmGroupInterventionName"
 )
 # What a bulk load keeps of each trial: what identifies it, its activity and results
