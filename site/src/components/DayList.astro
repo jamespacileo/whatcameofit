@@ -371,11 +371,16 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       drawLastVisit();
       if (lacking) void loadRest(list);
     };
+    let pendingHeading: string | null = null;
     list.addEventListener("rest:here", () => {
       groups = [...list.querySelectorAll<HTMLElement>("[data-group]")];
       toCome = list.querySelector<HTMLDetailsElement>("[data-to-come]");
       allRows = [...list.querySelectorAll<HTMLElement>("[data-day-row]")];
       refresh();
+      if (pendingHeading !== null) {
+        revealTo(pendingHeading);
+        pendingHeading = null;
+      }
     });
     spanWider.addEventListener("click", () => {
       const wider = SPANS[SPANS.findIndex((entry) => entry.span === span) + 1];
@@ -410,9 +415,8 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       const target = groups.find((group) => group.id === id);
       // A heading that is not in the page may be among those still to be fetched.
       if (!target && waiting(list)) {
-        void loadRest(list).then((here) => {
-          if (here) revealTo(id);
-        });
+        pendingHeading = id;
+        void loadRest(list);
         return;
       }
       if (!target) return;
@@ -428,11 +432,14 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
       line.scrollIntoView({ block: "center" });
     };
     const fromAddress = () => {
+      pendingHeading = null;
       const id = decodeURIComponent(location.hash.slice(1));
       if (id === "last-visit") toLastVisit();
       else if (/^[dwy]-/.test(id)) revealTo(id);
     };
     addEventListener("hashchange", fromAddress);
+    root.addEventListener("change", () => { pendingHeading = null; });
+    root.addEventListener("topic:pick", () => { pendingHeading = null; });
     // Paper gets the whole list.
     addEventListener("beforeprint", () => {
       for (const group of groups) {

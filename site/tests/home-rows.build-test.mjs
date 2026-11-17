@@ -17,6 +17,8 @@ const built = (file) => fs.readFileSync(path.join(dist, file), "utf8");
 const words = (html) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 let home;
+let version;
+const rowPath = (name) => `rows/${name}.${version}.txt`;
 // One list's part of the page, from its panel's opening tag to the next panel's.
 const panel = (view) => {
   const from = home.indexOf(`id="feed-${view}"`);
@@ -26,6 +28,16 @@ const panel = (view) => {
 };
 // The rows of a table's body: every row but the one of column headers.
 const bodyRows = (html) => count(html, '<tr role="row" data-status=');
+
+function buildExport(data, name, outDir) {
+  const file = path.join(work, `${name}.json`);
+  fs.writeFileSync(file, JSON.stringify(data));
+  const result = spawnSync("npx", ["astro", "build", "--outDir", outDir], {
+    env: { ...process.env, EXPORT_FILE: file, ASTRO_TELEMETRY_DISABLED: "1" },
+    encoding: "utf8",
+  });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+}
 
 before(() => {
   const data = structuredClone(fixture);
@@ -44,14 +56,9 @@ before(() => {
       events: [],
     });
   }
-  const file = path.join(work, "export.json");
-  fs.writeFileSync(file, JSON.stringify(data));
-  const result = spawnSync("npx", ["astro", "build", "--outDir", dist], {
-    env: { ...process.env, EXPORT_FILE: file, ASTRO_TELEMETRY_DISABLED: "1" },
-    encoding: "utf8",
-  });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
+  buildExport(data, "export", dist);
   home = built("index.html");
+  version = home.match(/data-export-version="([0-9a-f]+)"/)[1];
 });
 
 test("Scenario: Opening the home page", () => {
@@ -64,7 +71,7 @@ test("Scenario: Opening the home page", () => {
   ]) {
     const list = panel(view);
     assert.equal(bodyRows(list), 10, view);
-    assert.match(list, new RegExp(`data-rest="/rows/${view}\\.txt"`), view);
+    assert.match(list, new RegExp(`data-rest="/rows/${view}\\.${version}\\.txt"`), view);
     assert.match(home, new RegExp(`id="tab-${view}"[^>]*>\\s*[\\w ]+<span class="count">${total}</span>`), view);
     assert.match(words(list), new RegExp(`1–10 of ${total} ${noun}`), view);
   }
@@ -78,18 +85,18 @@ test("Scenario: Stepping to the next page", () => {
   // The file holds the rows the page does not, drawn the same way: between them every
   // row of the list, once, in the list's order.
   for (const [view, total] of [["headlines", 16], ["claims", 15], ["promised", 13]]) {
-    const rest = built(`rows/${view}.txt`);
+    const rest = built(rowPath(view));
     assert.equal(bodyRows(rest), total - 10, view);
     assert.ok(rest.trimStart().startsWith("<tr "), `${view}: a file of rows begins with a row`);
   }
   const titles = (html) => [...html.matchAll(/(Example|Extra) report \d+/g)].map(([title]) => title);
-  const all = [...titles(panel("headlines")), ...titles(built("rows/headlines.txt"))];
+  const all = [...titles(panel("headlines")), ...titles(built(rowPath("headlines")))];
   assert.equal(all.length, 16);
   assert.equal(new Set(all).size, 16, "a report is drawn twice");
   // Newest first across the two: the fixture's four reports of 2017 to 2019, then 2016's.
   assert.deepEqual(all.slice(0, 4), ["Example report 3", "Example report 2", "Example report 1", "Example report 4"]);
   // A fetched row carries what the status, the topic and the last visit narrow by.
-  assert.match(built("rows/headlines.txt"), /<tr role="row" data-status="\w+" data-topic="[\w-]+" data-on="2016-03-\d\d">/);
+  assert.match(built(rowPath("headlines")), /<tr role="row" data-status="\w+" data-topic="[\w-]+" data-on="2016-03-\d\d">/);
 });
 
 test("Scenario: A count pressed on the line about the last visit", () => {
@@ -106,7 +113,7 @@ test("Scenario: A list that is whole in the page", () => {
   assert.equal(bodyRows(moved), 2);
   assert.ok(!moved.includes("data-rest="));
   assert.ok(!moved.includes("rest-first"));
-  assert.ok(!fs.existsSync(path.join(dist, "rows/moved.txt")));
+  assert.ok(!fs.existsSync(path.join(dist, rowPath("moved"))));
 });
 
 test("Scenario: Rows that do not arrive", () => {
@@ -130,13 +137,13 @@ test("Scenario: Scripting off", () => {
   // The day-by-day list says what it leaves out: sixteen reports and thirteen promises
   // dated before its day headings.
   const days = home.slice(home.indexOf("data-day-list"), home.indexOf('id="lists"'));
-  assert.match(days, /data-day-list data-rest="\/rows\/latest\.txt"/);
+  assert.ok(days.includes(`data-day-list data-rest="/${rowPath("latest")}"`));
   assert.match(words(days), /Shown here: what is dated in the 14 days up to the last check\. 29 earlier rows are not shown\./);
 });
 
 test("Scenario: Widening the span", () => {
   // The earlier headings are in the file, each waiting for the control as before.
-  const rest = built("rows/latest.txt");
+  const rest = built(rowPath("latest"));
   assert.match(rest, /<section class="day-group" id="y-2016"[^>]*data-earlier/);
   assert.equal(count(rest, 'data-kind="report"'), 16);
   assert.equal(count(rest, 'data-kind="promise"'), 13);
@@ -146,7 +153,7 @@ test("Scenario: Widening the span", () => {
 
 test("Scenario: A file of rows asked for by its address", () => {
   // Rows only: not a page, so no footer, no script and no document around them.
-  for (const file of ["rows/headlines.txt", "rows/latest.txt", "rows/on-this-day/05-01.txt"]) {
+  for (const file of ["headlines", "latest", "on-this-day/05-01"].map(rowPath)) {
     const rest = built(file);
     assert.ok(!/<html|<head|<body|<script|<footer/.test(rest), file);
   }
@@ -160,11 +167,31 @@ test("Scenario: Opening the home page on a day with an anniversary", () => {
   const years = JSON.parse(block.match(/data-years="([^"]+)"/)[1].replaceAll("&quot;", '"'));
   assert.deepEqual(years["05-01"], [2018]);
   assert.deepEqual(years["03-01"], [2016]);
-  assert.match(block, /data-rows="\/rows\/on-this-day\/DAY\.txt"/);
+  assert.ok(block.includes(`data-rows="/${rowPath("on-this-day/DAY")}"`));
   for (const [id, list] of Object.entries(years)) {
-    const day = built(`rows/on-this-day/${id}.txt`);
+    const day = built(rowPath(`on-this-day/${id}`));
     assert.match(day, new RegExp(`<li class="day" data-day="${id}"`), id);
     assert.equal(count(day, "data-year="), list.length, id);
   }
   assert.match(block, /data-failed="The anniversaries for this day did not load\."/);
+});
+
+
+test("a changed export publishes the next page under a different address", () => {
+  const next = JSON.parse(fs.readFileSync(path.join(work, "export.json"), "utf8"));
+  const claim = next.claims[0];
+  claim.articles.push({ ...claim.articles[0], title: "New first report", url: "https://news.example.org/new", published_date: "2026-11-17" });
+  const current = path.join(work, "current");
+  buildExport(next, "changed", current);
+  const newHome = fs.readFileSync(path.join(current, "index.html"), "utf8");
+  const rows = (home) => home.match(/id="feed-headlines"[^>]*data-rest="([^"]+)"/)[1];
+  assert.notEqual(rows(home), rows(newHome));
+  assert.ok(!fs.existsSync(path.join(current, rows(home))));
+  const oldRest = fs.readFileSync(path.join(dist, rows(home)), "utf8");
+  const newRest = fs.readFileSync(path.join(current, rows(newHome)), "utf8");
+  const names = (html) => [...html.matchAll(/class="followed" href="[^"]+">“([^”]+)”/g)].map(match => match[1]);
+  const first = (home) => names(home.slice(home.indexOf('id="feed-headlines"'), home.indexOf('id="feed-claims"')));
+  const previous = [...first(home), ...names(oldRest)];
+  assert.equal(previous.length, 16);
+  assert.deepEqual([...first(newHome), ...names(newRest)], ["New first report", ...previous]);
 });

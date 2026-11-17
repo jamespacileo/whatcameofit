@@ -1,5 +1,6 @@
 """The tests' own database: where it is, and that the working database is refused."""
 
+import re
 from pathlib import Path
 
 import pytest
@@ -13,9 +14,34 @@ def test_default_is_this_checkouts_own_database_on_the_test_server():
     url = database_for_tests({}, CHECKOUT)
 
     assert (url.host, url.port) == ("127.0.0.1", 5434)
-    assert url.database == "thenwhat_d1_export_from_store_b403d7_test"
+    assert re.fullmatch(r"thenwhat_d1_export_from_store_b40_[0-9a-f]{16}_test", url.database or "")
     assert database_for_tests({}, Path("/work/another")).database != url.database
     assert database_for_tests({"TEST_DB_PORT": "5544"}, CHECKOUT).port == 5544
+
+
+def test_same_basename_checkouts_are_distinct_and_aliases_are_stable(tmp_path: Path):
+    name = "very-long-project-name-" * 4
+    left = tmp_path / "a" / name
+    right = tmp_path / "b" / name
+    left.mkdir(parents=True)
+    right.mkdir(parents=True)
+    alias = tmp_path / "alias"
+    alias.symlink_to(left, target_is_directory=True)
+
+    for worker in ("", "gw0", "gw" + "9" * 55):
+        env = {"PYTEST_XDIST_WORKER": worker}
+        one = for_worker(database_for_tests({}, left), env).database
+        two = for_worker(database_for_tests({}, right), env).database
+        assert one and two and one != two
+        assert max(len(one.encode()), len(two.encode())) <= 63
+        assert one.endswith("_test") and two.endswith("_test")
+        assert for_worker(database_for_tests({}, alias), env).database == one
+
+
+def test_an_explicit_overlong_database_name_is_refused_before_use():
+    name = "é" * 30 + "_test"
+    with pytest.raises(NotATestDatabase, match="63-byte"):
+        database_for_tests({"TEST_DATABASE_URL": f"postgresql://localhost:5434/{name}"}, CHECKOUT)
 
 
 def test_a_named_test_database_on_another_server_is_used():
@@ -63,7 +89,8 @@ def test_each_worker_of_a_parallel_run_has_a_database_of_its_own():
     first = for_worker(url, {"PYTEST_XDIST_WORKER": "gw0"})
     second = for_worker(url, {"PYTEST_XDIST_WORKER": "gw1"})
 
-    assert first.database == "thenwhat_d1_export_from_store_b403d7_gw0_test"
-    assert second.database == "thenwhat_d1_export_from_store_b403d7_gw1_test"
+    assert url.database is not None
+    assert first.database == f"{url.database.removesuffix('_test')}_gw0_test"
+    assert second.database == f"{url.database.removesuffix('_test')}_gw1_test"
     assert (first.host, first.port) == (url.host, url.port)
     assert for_worker(url, {}) == url

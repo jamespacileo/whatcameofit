@@ -25,7 +25,7 @@ check-slow: test-slow store-test site-build-test site-build extension
 # One area in full, fast and slow, for work that touches only that area.
 check-pipeline: lint types test
 check-site: site-test site-build-test site-build
-check-extension: extension-test
+check-extension: extension-test extension
 check-store: store-test
 
 lint:

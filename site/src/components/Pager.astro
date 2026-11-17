@@ -57,6 +57,7 @@ const first = pageOf(total, size, 1);
 
     let page = Number(new URL(location.href).searchParams.get(name) ?? 1);
     let printing = false;
+    let pendingPage: number | null = null;
 
     // Each filter marks the rows it leaves out ("data-out", "data-out-topic"); the pager
     // pages the rows no filter has marked.
@@ -100,24 +101,26 @@ const first = pageOf(total, size, 1);
       history.replaceState(history.state, "", url);
     };
 
+    const openPage = (requested: number) => {
+      page = requested;
+      draw();
+      remember();
+      if (frame.getBoundingClientRect().top < 0) frame.scrollIntoView({ block: "start" });
+    };
+
     for (const step of steps) {
-      step.addEventListener("click", async () => {
+      step.addEventListener("click", () => {
         if (step.getAttribute("aria-disabled") === "true") return;
-        // The next page is among the rows still to be fetched. If they do not arrive
-        // the list says so, and the page shown stays the first.
+        const requested = page + Number(step.dataset.step);
         if (waiting(holder)) {
-          page = 1;
-          if (!(await loadRest(holder))) return;
-        }
-        page += Number(step.dataset.step);
-        draw();
-        remember();
-        // A shorter last page must not leave the reader looking at the footer.
-        if (frame.getBoundingClientRect().top < 0) frame.scrollIntoView({ block: "start" });
+          pendingPage = requested;
+          void loadRest(holder);
+        } else openPage(requested);
       });
     }
 
     table.addEventListener("paged:refresh", () => {
+      pendingPage = null;
       page = 1;
       draw();
       remember();
@@ -136,7 +139,11 @@ const first = pageOf(total, size, 1);
     // The rest of the rows have arrived: the same page, over all of them.
     holder?.addEventListener("rest:here", () => {
       rows = [...table.tBodies[0].rows];
-      draw();
+      if (pendingPage === null) draw();
+      else {
+        openPage(pendingPage);
+        pendingPage = null;
+      }
     });
 
     draw();

@@ -337,7 +337,7 @@ test("Scenario: Anniversaries on the home page", () => {
   const years = JSON.parse(block.match(/data-years="([^"]+)"/)[1].replaceAll("&quot;", '"'));
   assert.deepEqual(Object.entries(years).map(([day]) => day), ["05-01", "05-03", "05-04"]);
   assert.ok(!block.includes("data-day="), "a day's reports are in the page as built");
-  assert.match(page("rows/on-this-day/05-03.txt"), /<li class="day" data-day="05-03"[^>]*>[^]*data-year="2019"/);
+  assert.match(page(block.match(/data-rows="([^"]+)"/)[1].replace("DAY", "05-03")), /<li class="day" data-day="05-03"[^>]*>[^]*data-year="2019"/);
   assert.match(block, /href="\/anniversaries"/);
 });
 
@@ -763,7 +763,8 @@ test("Scenario: Summary of a topic with ended trials", () => {
 test("Scenario: Reader follows a headline from the home page", () => {
   // The home page's rows are those in the page as built and those it fetches when a
   // reader asks for earlier headings (openspec landing-rows-on-demand).
-  const home = page("index.html") + page("rows/latest.txt");
+  const initial = page("index.html");
+  const home = initial + page(initial.match(/data-day-list data-rest="([^"]+)"/)[1]);
   // Each headline on the home page is named, and its claim page gives the same name
   // to the same headline, shown before the status.
   const named = [...home.matchAll(/class="followed" href="\/([^"]+)" style="view-transition-name: ([^";]+)/g)];
