@@ -385,3 +385,58 @@ def test_a_store_whose_database_was_created_again_is_refused(
     store.progress = {"database_since": "2026-11-18 09:00:00"}
     with pytest.raises(PushFailed, match="created again.*fresh-state"):
         cli_slices._check_store(made, state, where, url, "t", again=True)
+
+
+def test_the_plan_and_a_slice_merge_into_the_real_store_as_run_push_forms_them(
+    session: Session, tmp_path: Path
+):
+    """What `run --push` sends, merged through store/schema.sql and store/merge.sql into
+    the hot file the store is loaded from: every planned slice's state before any stage,
+    then one slice end to end, with its in_store state after."""
+    import sqlite3
+
+    from thenwhat.store.build import merge_into
+    from thenwhat.store.slices import registry_papers_stage, state_record
+    from thenwhat.store.tiers import HOT, split_build
+
+    _world(session)
+    file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
+    build(session, file, payloads=payloads, store_sql=STORE, now=NOW, hot_only=True)
+    (hot,) = split_build(file, payloads, HOT, hot_only=True)
+    made = plan(session, RULE, name="test-set", year=2025, today=TODAY)
+    planned = [state_record(one, rule=made.rule, year=made.year) for one in made.slices]
+    merge_into(hot, [("plan", planned)], store_sql=STORE, now=NOW)
+
+    one = made.slices[0]
+    record_stage(session, one, NOW)
+    registry_papers_stage(session, one, NOW, lambda number: None)
+    records, _ = slice_records(session, one, rule=made.rule, year=made.year)
+    merge_into(hot, [("slice", records)], store_sql=STORE, now=NOW)
+    one.counts["in_store"] = len(one.trials)
+    one.done["in_store"] = NOW.isoformat(timespec="microseconds")
+    merge_into(
+        hot,
+        [("state", [state_record(one, rule=made.rule, year=made.year)])],
+        store_sql=STORE,
+        now=NOW,
+    )
+
+    db = sqlite3.connect(hot)
+    # Every column the store requires and fills no other way is in a planned slice's record.
+    required = {
+        name
+        for _, name, _, notnull, default, _ in db.execute("PRAGMA table_info(trial_slice)")
+        if notnull and default is None
+    }
+    assert required - {"changed_run"} <= set(planned[0].body)
+    rows = db.execute(
+        "SELECT number, trials, with_results, in_store, record_at IS NOT NULL,"
+        " in_store_at IS NOT NULL FROM trial_slice ORDER BY number"
+    ).fetchall()
+    held = db.execute("SELECT count(*) FROM registry_trial").fetchone()[0]
+    db.close()
+    assert len(rows) == len(made.slices)
+    first = rows[0]
+    assert first[1] == len(one.trials) and first[3] == len(one.trials) and first[4] and first[5]
+    assert all(row[2] >= 0 and row[3] == 0 and not row[4] for row in rows[1:])
+    assert held >= len(one.trials)

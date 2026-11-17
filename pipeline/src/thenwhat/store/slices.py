@@ -313,15 +313,21 @@ def slice_records(
     return found, texts
 
 
+REQUIRED_COUNTS = ("with_results", "in_store")
+
+
 def state_record(one: Slice, *, rule: str, year: int) -> Record:
     """A slice's state as the store keeps it (`trial_slice`), for the page of progress."""
-    counted = ("with_results", "registry_papers", "pubmed_asked", "pubmed_found", "in_store")
+    counted = ("registry_papers", "pubmed_asked", "pubmed_found")
     body = {
         "rule": rule,
         "year": int(year),
         "number": int(one.number),
         "grp": one.group,
         "trials": len(one.trials),
+        # The store holds these as numbers from the plan on (NOT NULL): 0 until counted.
+        **{name: int(one.counts.get(name, 0)) for name in REQUIRED_COUNTS},
+        # A stage's own count stays out until the stage is worked: the store keeps none.
         **{name: int(one.counts[name]) for name in counted if name in one.counts},
         **{f"{stage}_at": at for stage, at in one.done.items() if at},
     }
