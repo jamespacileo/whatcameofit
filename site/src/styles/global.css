@@ -4371,29 +4371,8 @@ main ul:not([class]) li + li {
   margin-top: 0.25rem;
 }
 
-/* Organisations named: each once, its name, what the registry says it is, and the part
-   each source gives it. One column at every width: nothing sits beside a name to rank it. */
-.organisation-list li {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.organisation-list > li + li {
-  margin-top: 1.1rem;
-}
-
 .organisation-name {
   font-weight: 600;
-}
-
-.organisation-list .organisation-roles {
-  margin: 0.15rem 0;
-}
-
-.organisation-list .organisation-roles li {
-  display: block;
-  border: 0;
-  padding: 0;
-  overflow-wrap: anywhere;
 }
 
 .reported .publisher,
@@ -4583,22 +4562,6 @@ main ul:not([class]) li + li {
   margin: 0 0 0.5rem;
 }
 
-.paper {
-  display: grid;
-  gap: 0.15rem;
-  scroll-margin-top: 1.25rem;
-}
-
-.paper > p {
-  margin: 0;
-}
-
-.paper:target {
-  background: var(--tint);
-  outline: 0.3rem solid var(--tint);
-  border-radius: 2px;
-}
-
 .paper-name {
   overflow-wrap: anywhere;
 }
@@ -4612,13 +4575,8 @@ main ul:not([class]) li + li {
   vertical-align: -0.05em;
 }
 
-.paper-standing,
 .paper-retracted {
   font-weight: 600;
-}
-
-.paper-role .entry-note {
-  display: block;
 }
 
 .paper-meta {
@@ -7778,16 +7736,12 @@ body.framed {
 }
 
 .sheet .statement-list,
-.sheet .paper-list,
-.sheet .record-list,
-.sheet .organisation-list {
+.sheet .record-list {
   border-top: 2px solid var(--head-rule);
 }
 
 .sheet .statement-list > li:first-child,
-.sheet .paper-list > li:first-child,
-.sheet .record-list > li:first-child,
-.sheet .organisation-list > li:first-child {
+.sheet .record-list > li:first-child {
   border-top: 0;
 }
 
@@ -7906,24 +7860,12 @@ body.framed {
   line-clamp: 1;
 }
 
-.paper-what,
-.paper-ties {
-  display: grid;
-  gap: 0.15rem;
-  min-width: 0;
-  align-content: start;
-}
-
-.paper-what > p,
-.paper-ties > p {
-  margin: 0;
-}
-
 /* One right edge (openspec sheet-cohesion, the layout pass of 2026-11-17): every list,
    strip and fold line of a section runs to the section's right edge, as its head rule
    does. Running text inside keeps its reading measure. */
 .sheet .statement-list,
 .sheet .record-list,
+.sheet .entry-rows,
 .sheet .papers-rest,
 .sheet .claim-strip {
   max-width: none;
@@ -7951,14 +7893,7 @@ body.framed {
   }
 }
 
-/* Papers and organisations as rows of two columns: what it is at the left, how it is
-   tied to this claim at the right, in the note size. The second column starts on the
-   sheet's second stop, where the brief's answers start. */
 @media (min-width: 40.01rem) {
-  .sheet .paper-list {
-    max-width: none;
-  }
-
   /* A report's statement on the sheet's first stop: what kind of statement in the
      label's column, the statement where a value starts, how sure the reading is at the
      end of its line. */
@@ -7986,38 +7921,6 @@ body.framed {
     grid-row: 1;
   }
 
-  .sheet .paper {
-    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(14rem, 1fr);
-    column-gap: 2.5rem;
-    align-items: start;
-  }
-
-  .sheet .paper-ties {
-    font-size: var(--note-size);
-  }
-
-  .sheet .organisation-list {
-    max-width: none;
-  }
-
-  .sheet .organisation-list .match-record {
-    display: grid;
-    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(14rem, 1fr);
-    grid-auto-flow: row dense;
-    column-gap: 2.5rem;
-    align-items: start;
-  }
-
-  .sheet .organisation-list .match-record > * {
-    grid-column: 1;
-  }
-
-  .sheet .organisation-list .match-record > .organisation-roles {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    margin-top: 0;
-    font-size: var(--note-size);
-  }
 }
 
 @media print {
@@ -8244,6 +8147,7 @@ body.framed {
 
 .js .fact-open:hover .chev,
 .js .fact-sheet > div[data-open] .fact-open .chev,
+.js .entry-rows > li[data-open] > .fact-open .chev,
 .brief summary:hover .chev,
 .brief details[open] > summary .chev {
   background: var(--tint);
@@ -8251,6 +8155,7 @@ body.framed {
 }
 
 .js .fact-sheet > div[data-open] .fact-open:hover .chev,
+.js .entry-rows > li[data-open] > .fact-open:hover .chev,
 .brief details[open] > summary:hover .chev {
   background: var(--tag);
 }
@@ -8266,7 +8171,9 @@ body.framed {
 /* The head of a row under the pointer, and of an opened row, stands on the panel tone
    from edge to edge of the list: the tinted strip is what is pressed. */
 .js .fact-sheet > div:has(.fact-open):not([data-open]):hover,
-.js .fact-sheet > div[data-open] {
+.js .fact-sheet > div[data-open],
+.js .entry-rows > li:has(> .fact-open):not([data-open]):hover,
+.js .entry-rows > li[data-open] {
   background: var(--panel);
   box-shadow:
     -0.85rem 0 0 var(--panel),
@@ -8507,9 +8414,15 @@ body.framed {
   }
 
   .js .fact-sheet > div[data-open],
-  .fact-sheet .fact-more {
+  .fact-sheet .fact-more,
+  .js .entry-rows > li[data-open],
+  .entry-rows .entry-more {
     background: none;
     box-shadow: none;
+  }
+
+  .js .entry-rows > li:not([data-open]) .entry-more {
+    display: grid;
   }
 
   .fact-open .chev,
@@ -8520,6 +8433,179 @@ body.framed {
   .source-pill {
     padding: 0;
     border: 0;
+  }
+}
+
+/* Entry rows (components/Entry.astro; openspec sheet-cohesion, the rows pass of
+   2026-11-17): the one grammar for a list of things on a record page, such as papers and
+   organisations. A row is what the thing is, at the left edge: its name and at most one
+   grey line. From the sheet's second stop, how it is tied to this claim: one line of
+   marks and short words, and any score, in sight. At the end of its line, the fold mark.
+   Where it came from, when it was read and the sentences the marks stand for are what
+   the row opens to, by the same press as a fact row: the head tinted, the rest on the
+   page's own ground. */
+.entry-rows {
+  margin: 0.7rem 0 0;
+  border-top: 2px solid var(--head-rule);
+}
+
+.entry-rows > li {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.8rem;
+  align-items: baseline;
+  padding: var(--row-pad) 0;
+  border-bottom: 1px solid var(--row-rule);
+  scroll-margin-top: 1.25rem;
+}
+
+.entry-rows > li:last-child {
+  border-bottom-color: var(--rule);
+}
+
+.entry-rows > li:target {
+  background: var(--tint);
+  box-shadow:
+    -0.85rem 0 0 var(--tint),
+    0.85rem 0 0 var(--tint);
+}
+
+.entry-lead {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.entry-lead > * {
+  margin: 0;
+}
+
+.entry-name {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* What is pressed for itself lies over the row's press. */
+.entry-rows a,
+.entry-rows .pop-trigger {
+  position: relative;
+  z-index: 1;
+}
+
+.entry-ties {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 1.1rem;
+  min-width: 0;
+  font-size: var(--text-m);
+}
+
+/* One tie: a mark or a drawing, then a number or a few words. */
+.tie {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.tie > svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted);
+}
+
+/* The tie mark: a ring, filled where the trial's sponsor made the tie. Grey: it says how
+   a paper came to be listed, never how good it is. */
+.tie-mark {
+  flex: none;
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 1.5px solid var(--muted);
+  border-radius: 50%;
+}
+
+.tie-mark.listed {
+  background: var(--muted);
+}
+
+.tie-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1.4rem;
+  margin: 0 0 0.5rem;
+}
+
+.entry-rows .fact-open {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* What a row opens to. */
+.entry-rows .entry-more {
+  position: relative;
+  z-index: 1;
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.4rem 2.5rem;
+  margin: var(--row-pad) 0 calc(-1 * var(--row-pad));
+  padding: 0.85rem 0 1rem;
+  background: var(--paper);
+  box-shadow:
+    -0.85rem 0 0 var(--paper),
+    0.85rem 0 0 var(--paper);
+  font-size: var(--text-m);
+  cursor: auto;
+}
+
+.js .entry-rows > li:not([data-open]) .entry-more {
+  display: none;
+}
+
+.entry-more p,
+.entry-more ul {
+  margin: 0;
+}
+
+/* A line of what a row opens to is not a row of its own. */
+.entry-rows .entry-more li {
+  display: block;
+  padding: 0;
+  border: 0;
+}
+
+.entry-more-ties {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* From here a row is three columns: the thing, its ties from the second stop, the mark. */
+@media (min-width: 52rem) {
+  .entry-rows > li,
+  .entry-rows .entry-more {
+    grid-template-columns: minmax(0, calc(var(--stop-2) - 2.5rem)) minmax(0, 1fr) auto;
+    column-gap: 2.5rem;
+  }
+
+  .entry-ties {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .entry-rows .fact-open {
+    grid-column: 3;
+  }
+
+  .entry-more-lead {
+    grid-column: 1;
+  }
+
+  .entry-more-ties {
+    grid-column: 2 / -1;
   }
 }
 

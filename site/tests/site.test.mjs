@@ -1539,18 +1539,24 @@ test("the method page explains kind cards", () => {
 const organisationsSection = (html) =>
   html.match(/<section class="matched organisations"[\s\S]*?<\/section>/)?.[0] ?? null;
 
+/** One organisation's row, whole: what is in sight and what it opens to. */
+const organisationRow = (section, name) =>
+  section.split('<li id="organisation-').find((row) => row.includes(`organisation-name">${name}<`));
+
 test("Scenario: Claim with a university and a company", () => {
   const section = organisationsSection(page("phase-claim/index.html"));
   assert.ok(section, "the claim names organisations, so the page lists them");
   assert.match(section, /<h2 class="bar" id="organisations">[\s\S]*?Organisations named\s*<\/span><\/button><\/h2>/);
   // Named in the report first, then sponsors; each group by name.
-  const names = [...section.matchAll(/class="organisation-name"[^>]*>([^<]+)</g)].map(([, name]) => name);
+  const names = [...section.matchAll(/class="entry-name organisation-name"[^>]*>([^<]+)</g)].map(([, name]) => name);
   assert.deepEqual(names, ["Example University", "Zed Start-up", "Synthetic Institute"]);
   // A sponsor's role links to the trial it sponsors on this page.
-  const institute = section.split("Synthetic Institute")[1];
-  assert.match(institute, /Sponsor of 1 trial: <a href="#trial-NCT00000002">NCT00000002<\/a>/);
+  // In sight a row says the part; the trial is named where the row opens.
+  const institute = organisationRow(section, "Synthetic Institute");
+  assert.match(institute, /<span class="tie">\s*<svg[\s\S]*?<\/svg>\s*Sponsor of 1 trial\s*<\/span>/);
+  assert.match(institute, /<div class="entry-more"[\s\S]*Sponsor of 1 trial: <a href="#trial-NCT00000002">NCT00000002<\/a>/);
   // An identified organisation shows the registry's facts, its record and the score.
-  const university = section.split("Example University")[1].split("Zed Start-up")[0];
+  const university = organisationRow(section, "Example University");
   assert.match(university, /Education, Funder · United Kingdom · <a href="https:\/\/www\.example\.ac\.uk\/"[^>]*>example\.ac\.uk<\/a>/);
   // One report on the page: "the report" needs no title.
   assert.match(university, /Named in the report\s*<\/li>/);
@@ -1561,7 +1567,7 @@ test("Scenario: Claim with a university and a company", () => {
 
 test("Scenario: Start-up the registry does not know", () => {
   const section = organisationsSection(page("phase-claim/index.html"));
-  const startUp = section.split("Zed Start-up")[1].split("Synthetic Institute")[0];
+  const startUp = organisationRow(section, "Zed Start-up");
   assert.match(startUp, /Named in the report/);
   assert.match(startUp, /Not matched to a registry record/);
   assert.doesNotMatch(startUp, /organisation-facts|ror\.org/);

@@ -37,7 +37,7 @@ for (const row of rows) {
 const terms = [...document.querySelectorAll<HTMLButtonElement>(".fact-open")];
 const openTerm = (term: HTMLButtonElement, open: boolean) => {
   term.setAttribute("aria-expanded", String(open));
-  term.closest<HTMLElement>(".fact-sheet > div")!.toggleAttribute("data-open", open);
+  term.closest<HTMLElement>(".fact-sheet > div, .entry-rows > li")!.toggleAttribute("data-open", open);
 };
 for (const term of terms) {
   openTerm(term, false);
@@ -66,7 +66,7 @@ const reveal = (hash: string) => {
   const row = group?.querySelector<HTMLButtonElement>(".trial-open");
   if (row) openRow(row, true);
   // A link to a fact row that opens, or to something inside it, opens it.
-  const term = target.closest<HTMLElement>(".fact-sheet > div")?.querySelector<HTMLButtonElement>(".fact-open");
+  const term = target.closest<HTMLElement>(".fact-sheet > div, .entry-rows > li")?.querySelector<HTMLButtonElement>(".fact-open");
   if (term) openTerm(term, true);
   const rest = target.closest<HTMLDetailsElement>("details");
   if (rest) rest.open = true;

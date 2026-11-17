@@ -67,6 +67,8 @@ import Trial from "../components/Trial.astro";
 import {
   PAPERS_NOTE,
   PAPERS_SHOWN,
+  TIE_KEY,
+  trialRoles,
   countRecords,
   groupPapers,
   recordCountText,
@@ -1073,8 +1075,22 @@ const sections = [
           {paperGroups.map((group) => (
             <>
               <h3 class="matched-group">{group.heading}</h3>
-              <p class="entry-note paper-group-note">{group.note}</p>
-              <ul class="plain paper-list">
+              {group.papers.some((paper) => trialRoles(paper).length > 0) ? (
+                // What the two marks beside a trial's number say, once, over the list.
+                <p class="entry-note tie-key">
+                  <span class="tie">
+                    <span class="tie-mark listed" aria-hidden="true" />
+                    {TIE_KEY.listed_by_sponsor}
+                  </span>
+                  <span class="tie">
+                    <span class="tie-mark" aria-hidden="true" />
+                    {TIE_KEY.linked_by_registry}
+                  </span>
+                </p>
+              ) : (
+                <p class="entry-note paper-group-note">{group.note}</p>
+              )}
+              <ul class="plain entry-rows">
                 {group.papers.slice(0, PAPERS_SHOWN).map((paper) => (
                   <Paper paper={paper} trialIds={trialIds} />
                 ))}
@@ -1085,7 +1101,7 @@ const sections = [
                     The other {group.papers.length - PAPERS_SHOWN} of {group.papers.length} papers
                     <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
                   </summary>
-                  <ul class="plain paper-list">
+                  <ul class="plain entry-rows">
                     {group.papers.slice(PAPERS_SHOWN).map((paper) => (
                       <Paper paper={paper} trialIds={trialIds} />
                     ))}
