@@ -24,3 +24,10 @@ The label and the value of a row SHALL share a line at the top of the row, at ev
 - **WHEN** a reader opens "Claimed for"
 - **THEN** the row is tinted, the definition is the largest text under it beside "In MeSH’s words", and "Why it matched" and the credit follow, each smaller and each with its label
 
+### Requirement: "At a glance" is in two named groups
+The terms of "At a glance" SHALL stand in a group named "The claim" and the claim's own facts in a group named "On record", each name beside its rows on a wide screen and over them on a phone. On a wide screen the labels and the values of "At a glance" SHALL stand in the same columns as the questions and the answers of "The record in brief".
+
+#### Scenario: The two sections together
+- **WHEN** a reader looks at "At a glance" above "The record in brief" at 1400 pixels wide
+- **THEN** each has its group names in the left column, and the values of the first stand directly over the answers of the second
+

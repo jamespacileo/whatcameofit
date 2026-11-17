@@ -8612,3 +8612,94 @@ body.framed {
     box-shadow: none;
   }
 }
+
+/* "At a glance" in two groups (openspec glance-rows, the operator's choice of "A1" on
+   2026-11-17): "The claim" beside its terms, "On record" beside the claim's own facts,
+   each name in a column of its own, exactly as "The record in brief" names its groups.
+   A row's label column is the brief's question column, so the values of the two
+   sections stand under one another. */
+.glance-group {
+  display: grid;
+  grid-template-columns: var(--label-col) minmax(0, 1fr);
+  column-gap: 1.5rem;
+  border-top: 1px solid var(--ring);
+}
+
+.glance .glance-group:first-of-type,
+.glance-lead + .glance-group,
+.glance .clamp-more + .glance-group {
+  border-top: 2px solid var(--ink);
+}
+
+.glance-group + .glance-group {
+  margin-top: 0.6rem;
+}
+
+.glance-group:last-of-type {
+  border-bottom: 2px solid var(--ink);
+}
+
+.glance-group h3 {
+  margin: 0;
+  padding-top: var(--row-pad);
+  font-size: var(--text-l);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.sheet .glance-group .glance-rows {
+  border-top: 0;
+}
+
+.sheet .glance-group .glance-rows > div,
+.sheet .glance-group .glance-facts > div {
+  --row-label: 11rem;
+  grid-template-columns: var(--row-label) minmax(0, 1fr);
+  column-gap: 1rem;
+}
+
+@media (min-width: 60rem) {
+  .sheet .glance-group .glance-rows > div,
+  .sheet .glance-group .glance-facts > div {
+    --row-label: 17rem;
+  }
+}
+
+/* What a row opens to starts under the row's label, not under its value. */
+@media (min-width: 40.01rem) {
+  .glance-group .glance-rows .glance-more {
+    margin-left: calc(-1 * (var(--row-label) + 1rem));
+  }
+}
+
+.sheet .glance-group .glance-rows > div:last-child,
+.sheet .glance-group .glance-facts > div:last-child {
+  border-bottom: 0;
+}
+
+/* Other names run under the whole line, not under the value's share of it. */
+.sheet .glance-group .glance-rows .aka {
+  grid-column: 1 / -1;
+}
+
+.glance-group + .glance-note,
+.glance-group + .glance-note + .clamp-more {
+  margin-top: 0.7rem;
+}
+
+@media (max-width: 40rem) {
+  .glance-group {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .glance-group h3 {
+    padding-top: 0.7rem;
+    font-size: var(--text-body);
+  }
+
+  .sheet .glance-group .glance-rows > div,
+  .sheet .glance-group .glance-facts > div {
+    grid-template-columns: 7.25rem minmax(0, 1fr);
+    column-gap: 0.9rem;
+  }
+}

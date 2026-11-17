@@ -14,6 +14,7 @@ import Score from "./Score.astro";
 import TermCard from "./TermCard.astro";
 import { BACKGROUND_NOTE, GLANCE_LEAD, type ExportedCard, type ExportedCardSource } from "../lib/background";
 import {
+  GLANCE_GROUPS,
   GLANCE_ID,
   GLANCE_TITLE,
   SHORT_DEFINITION,
@@ -79,6 +80,10 @@ const rows: Row[] = [
 <section class="glance" data-pagefind-ignore>
   <FoldHead id={GLANCE_ID}>{GLANCE_TITLE}</FoldHead>
   {cards.length > 0 && <p class="glance-lead" data-clamp="1">{GLANCE_LEAD}</p>}
+  {/* Two groups, each named at the left of its rows, as "The record in brief" is laid
+      out: the claim's terms, then what is on record of it. */}
+  <div class="glance-group">
+  <h3>{GLANCE_GROUPS.terms}</h3>
   <dl class="glance-rows">
     {
       rows.map(({ row, value, detail, cards: rowCards }) => {
@@ -190,9 +195,17 @@ const rows: Row[] = [
       })
     }
   </dl>
-  <dl class="glance-facts">
-    <slot />
-  </dl>
+  </div>
+  {
+    Astro.slots.has("default") && (
+      <div class="glance-group">
+        <h3>{GLANCE_GROUPS.facts}</h3>
+        <dl class="glance-facts">
+          <slot />
+        </dl>
+      </div>
+    )
+  }
   {
     cards.length > 0 && (
       <p class="glance-note" data-clamp="1">
