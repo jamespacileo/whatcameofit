@@ -20,7 +20,7 @@ function htmlFiles(directory) {
 }
 
 function build(exportFile, outDir) {
-  return spawnSync("npx", ["astro", "build", "--outDir", outDir], {
+  return spawnSync(process.execPath, ["node_modules/astro/bin/astro.mjs", "build", "--outDir", outDir], {
     env: { ...process.env, EXPORT_FILE: exportFile, ASTRO_TELEMETRY_DISABLED: "1" },
     encoding: "utf8",
   });
