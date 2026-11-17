@@ -574,3 +574,26 @@ def test_a_registry_that_is_paused_stops_the_search_and_counts_nothing_against_t
     # The claim has no entry for the search: it is simply still due, and is not decided.
     assert entry_or_none(session, TRIALS, claim) is None
     assert claim.review_state is ReviewState.PENDING
+
+
+def test_an_added_paper_doi_reopens_the_trial_search_once(session):
+    from thenwhat.db.models import Entity
+    from thenwhat.domain import EntityType
+
+    claim = new_claim(session)
+    sources = Sources()
+    names = ("claim_trials",)
+    calls = []
+
+    def lookup(doi):
+        calls.append(doi)
+        return None
+
+    sources.registry.work = lookup
+    prepare(session, sources, names=("claim_substance", *names))
+    assert entry(session, "claim_trials", claim) is not None and not calls
+    session.add(Entity(claim_id=claim.id, type=EntityType.PAPER, name="A paper", doi="10.1000/new"))
+    [rerun] = prepare(session, sources, names=names, at=LATER)
+    assert rerun.report.processed == 1
+    [unchanged] = prepare(session, sources, names=names, at=LATER)
+    assert unchanged.report.processed == 0 and calls == ["10.1000/new"]

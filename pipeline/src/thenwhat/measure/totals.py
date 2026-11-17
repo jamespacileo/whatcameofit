@@ -42,7 +42,7 @@ class Total:
 
     def add(self, span: Span) -> None:
         self.spans += 1
-        self.records += span.batch
+        self.records += sum(span.records_by_outcome().values())
         self.reused += int(span.reused)
         self.ran_seconds += span.ran_seconds
         self.waited_seconds += span.waited_seconds

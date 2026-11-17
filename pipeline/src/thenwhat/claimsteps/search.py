@@ -134,7 +134,9 @@ class ClaimTrials(ClaimStep):
         self.redo_rule = redo_rule
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return _names(inputs, claim_id)
+        names = _names(inputs, claim_id)
+        dois = inputs.paper_dois.get(claim_id)
+        return {**names, "paper_dois": dois} if dois else names
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()

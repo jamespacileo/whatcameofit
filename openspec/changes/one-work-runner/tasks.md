@@ -100,13 +100,13 @@
 
 - [x] 10.1 <a id="task-f39"></a>Recheck eligibility atomically with requeue and the lead update. Exercise both transaction orders and verify the resulting ledger, read outcome and affected count. [F39](../../../docs/reviews/2026-11-17-code-review.md#finding-f39) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-a-successful-retry-races-with-requeue)
 
-- [ ] 10.2 <a id="task-f40"></a>Distinguish a failed batch attempt from final per-record outcomes. Feed actual fallback measurements to the live view and compare its totals with the ledger. [F40](../../../docs/reviews/2026-11-17-code-review.md#finding-f40) · [Acceptance scenario](specs/processing-metrics/spec.md#scenario-a-failed-batch-falls-back-to-individual-records)
+- [x] 10.2 <a id="task-f40"></a>Distinguish a failed batch attempt from final per-record outcomes. Feed actual fallback measurements to the live view and compare its totals with the ledger. [F40](../../../docs/reviews/2026-11-17-code-review.md#finding-f40) · [Acceptance scenario](specs/processing-metrics/spec.md#scenario-a-failed-batch-falls-back-to-individual-records)
 
 - [x] 10.3 <a id="task-f41"></a>Recheck the shared pause after pacing and before sending. Use a controlled clock and mock transport to verify zero requests before 13:00 and normal eligibility afterwards. [F41](../../../docs/reviews/2026-11-17-code-review.md#finding-f41) · [Acceptance scenario](specs/source-clients/spec.md#scenario-a-pause-begins-while-a-client-awaits-its-turn)
 
-- [ ] 10.4 <a id="task-f43"></a>Include paper DOIs in the fingerprint of their owning lookup. Prepare, add a paper entity, prepare again and verify one lookup with no repeat on an unchanged run. [F43](../../../docs/reviews/2026-11-17-code-review.md#finding-f43) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-adding-a-paper-changes-the-lookup-inputs)
+- [x] 10.4 <a id="task-f43"></a>Include paper DOIs in the fingerprint of their owning lookup. Prepare, add a paper entity, prepare again and verify one lookup with no repeat on an unchanged run. [F43](../../../docs/reviews/2026-11-17-code-review.md#finding-f43) · [Acceptance scenario](specs/work-ledger/spec.md#scenario-adding-a-paper-changes-the-lookup-inputs)
 
-- [ ] 10.5 <a id="task-f46"></a>Use the screening eligibility calculation in the read-only plan. Check the plan before and after successive bounded runs and confirm that planning itself leaves ledger and lead rows untouched. [F46](../../../docs/reviews/2026-11-17-code-review.md#finding-f46) · [Acceptance scenario](specs/lead-screening/spec.md#scenario-planning-sees-the-same-newly-eligible-leads-as-screening)
+- [x] 10.5 <a id="task-f46"></a>Use the screening eligibility calculation in the read-only plan. Check the plan before and after successive bounded runs and confirm that planning itself leaves ledger and lead rows untouched. [F46](../../../docs/reviews/2026-11-17-code-review.md#finding-f46) · [Acceptance scenario](specs/lead-screening/spec.md#scenario-planning-sees-the-same-newly-eligible-leads-as-screening)
 
 ## Workflow follow-up
 

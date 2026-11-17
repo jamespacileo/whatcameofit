@@ -60,6 +60,19 @@ class Inputs:
         }
 
     @cached_property
+    def paper_dois(self) -> dict[int, list[str]]:
+        rows = self._session.execute(
+            select(Entity.claim_id, Entity.id, Entity.doi).where(
+                Entity.claim_id.in_(self._ids),
+                Entity.type == EntityType.PAPER,
+                Entity.doi.is_not(None),
+            )
+        )
+        return _grouped(
+            (claim_id, f"{entity_id}:{doi.lower()}") for claim_id, entity_id, doi in rows if doi
+        )
+
+    @cached_property
     def approved(self) -> dict[int, list[str]]:
         """Each claim's approved matches, as source and identifier."""
         rows = self._session.execute(
