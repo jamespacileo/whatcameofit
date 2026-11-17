@@ -79,7 +79,7 @@
 
 - [ ] 9.4 <a id="task-f25"></a>Update browse copy to describe the three evidence sources. Render a model-only assignment beside one supported by a trial and check the source wording. [F25](../../../docs/reviews/2026-11-17-code-review.md#finding-f25) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-category-comes-only-from-the-checked-condition)
 
-- [ ] 9.5 <a id="task-f26"></a>Attribute corroboration to the group whose agreement is counted. Compare otherwise identical fixtures with a trial supporting the agreeing or unrelated group. [F26](../../../docs/reviews/2026-11-17-code-review.md#finding-f26) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-independent-evidence-supports-a-different-topic)
+- [x] 9.5 <a id="task-f26"></a>Attribute corroboration to the group whose agreement is counted. Compare otherwise identical fixtures with a trial supporting the agreeing or unrelated group. [F26](../../../docs/reviews/2026-11-17-code-review.md#finding-f26) · [Acceptance scenario](specs/clinical-classification/spec.md#scenario-independent-evidence-supports-a-different-topic)
 
 ## Workflow follow-up
 

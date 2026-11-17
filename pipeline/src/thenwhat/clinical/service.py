@@ -246,9 +246,15 @@ def compare(session: Session, claims: Sequence[Claim], vocabulary: Vocabulary) -
             result.per_topic[topic.topic] = result.per_topic.get(topic.topic, 0) + 1
         if len(topics) > 1:
             result.several_topics += 1
-        if VERTICAL_GROUPS.get(claim.vertical) in {topic.group for topic in topics}:
+        filed_group = VERTICAL_GROUPS.get(claim.vertical)
+        if filed_group in {topic.group for topic in topics}:
             result.agrees += 1
-            if _kinds(placed) == {"term"}:
+            from_records = (
+                category.identifier
+                for category in placed.categories
+                if any(source.kind in {"trial", "paper"} for source in category.sources)
+            )
+            if all(topic.group != filed_group for topic in derived_topics(from_records, vocabulary)):
                 result.agrees_by_term_only += 1
         else:
             result.disagreeing.append(

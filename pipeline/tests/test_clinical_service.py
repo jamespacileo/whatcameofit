@@ -391,6 +391,18 @@ def test_a_trial_and_the_claims_own_condition_both_name_a_category(session: Sess
     assert compare(session, [claim], stored_vocabulary(records)).agrees_by_term_only == 0
 
 
+@pytest.mark.parametrize(("trial_term", "term_only"), [("D012878", 1), ("D012871", 0)])
+def test_agreement_counts_only_evidence_in_the_filed_group(session, trial_term, term_only):
+    store(session, *TREE)
+    claim = new_claim(session, "cream-provenance", vertical="skin-and-hair")
+    with_condition_term(session, claim, "D011565", fit=TermFit.EXACT)
+    with_trial(session, claim, "NCT00000001", trial_term)
+
+    result = compare(session, [claim], stored_vocabulary(PostgresRecords(session)))
+
+    assert (result.agrees, result.agrees_by_term_only) == (1, term_only)
+
+
 def test_the_comparison_counts_every_claim_once(session: Session):
     """Scenarios: Counts; Suggested group differs; Nothing to compare"""
     claims = three_claims(session)
