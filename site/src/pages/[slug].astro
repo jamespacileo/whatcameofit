@@ -29,7 +29,9 @@ import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicDrawing from "../components/TopicDrawing.astro";
 import TrialDetailsLink from "../components/TrialDetailsLink.astro";
-import { APPROACH_LABELS } from "../lib/approach";
+import { APPROACH_LABELS, approachBasisSentence } from "../lib/approach";
+import { categoryPath, termSourceSentence } from "../lib/clinical";
+import MeshCredit from "../components/MeshCredit.astro";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
 import { statusSlug } from "../lib/guide";
 import { BRIEF_TITLE, digestApproval, digestBridge, phase4Note, recordBrief } from "../lib/record-brief";
@@ -146,6 +148,27 @@ const inTopic = data.claims
   .filter((other) => other.vertical === claim.vertical && other.slug !== claim.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
 const others = inTopic.slice(0, 3);
+// The claim's clinical categories under NLM's names, each with the trials and papers
+// that gave it, linked where the claim lists them. None while they are not yet read.
+const meshNodes = new Map((data.clinical?.nodes ?? []).map((node) => [node.identifier, node]));
+const categories = (claim.clinical_categories ?? [])
+  .filter((category) => meshNodes.has(category.identifier))
+  .map((category) => ({
+    identifier: category.identifier,
+    label: meshNodes.get(category.identifier)!.label,
+    sources: category.sources.map((source) => ({
+      kind: source.kind,
+      name: source.identifier,
+      score: source.score,
+      href:
+        source.kind === "trial"
+          ? (claim.trials ?? []).find((trial) => trial.trial_id === source.identifier)?.url
+          : source.kind === "paper"
+            ? (claim.papers ?? []).find((paper) => paper.identifier === source.identifier)?.url
+            : undefined,
+    })),
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label));
 // A group's papers stand newest first, under the year each appeared.
 type PaperOnPage = NonNullable<typeof claim.papers>[number];
 const newestFirst = (papers: PaperOnPage[]) =>
@@ -388,6 +411,9 @@ const sections = [
     ? [{ id: "organisations", name: "Organisations named", count: organisations.length }]
     : []),
   ...(others.length > 0 ? [{ id: "others", name: "Other claims" }] : []),
+  ...(categories.length > 0
+    ? [{ id: "clinical", name: "Clinical categories", count: categories.length }]
+    : []),
   { id: "pass-on", name: "Keep or pass on" },
 ];
 ---
@@ -431,6 +457,11 @@ const sections = [
                   <span class="visually-hidden">Approach: </span>
                   {APPROACH_LABELS[claim.approach]}
                 </span>
+              )
+            }
+            {
+              claim.approach && claim.approach_basis && (
+                <span class="approach-basis">{approachBasisSentence(claim.approach_basis)}</span>
               )
             }
           </div>
@@ -1400,6 +1431,51 @@ const sections = [
               </li>
             ))}
           </ul>
+        </section>
+      )
+    }
+
+    {
+      categories.length > 0 && (
+        <section class="clinical" data-pagefind-ignore>
+          <FoldHead id="clinical" start="folded" phone="folded">
+            Clinical categories
+            <Fragment slot="beside">
+              <a href="/clinical">All categories</a>
+            </Fragment>
+          </FoldHead>
+          {/* NLM's own names for what the claim's trials and papers are indexed under,
+              each with the records that gave it. Not a diagnosis, and not advice. */}
+          <p class="entry-note">
+            What this claim's registered trials and published papers are indexed under, and what
+            its reported condition was read as, in MeSH's own names. A category describes the
+            records. It is not a diagnosis and not advice.
+          </p>
+          <ul class="plain entry-rows clinical-categories">
+            {categories.map((category) => (
+              <li>
+                <div class="entry-lead">
+                  <a class="entry-name" href={categoryPath(category.identifier)}>{category.label}</a>
+                </div>
+                <span class="entry-note">
+                  From {category.sources.map((source, index) => (
+                    <>
+                      {index > 0 && ", "}
+                      {source.kind === "term" ? (
+                        termSourceSentence(source.score)
+                      ) : (
+                        <>
+                          {source.kind === "trial" ? "trial" : "paper"}{" "}
+                          {source.href ? <a href={source.href}>{source.name}</a> : source.name}
+                        </>
+                      )}
+                    </>
+                  ))}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <MeshCredit />
         </section>
       )
     }

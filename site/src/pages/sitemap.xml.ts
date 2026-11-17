@@ -4,6 +4,7 @@
 import type { APIRoute } from "astro";
 import { data, listedTopics } from "../lib/export";
 import { AUDIENCES } from "../lib/audiences";
+import { buildTree, categoryPath, listedCategories } from "../lib/clinical";
 import { guide } from "../lib/guide-entries";
 import "../lib/public-build";
 import { sourcesOf } from "../lib/sources";
@@ -11,6 +12,7 @@ import { canonicalAddress } from "../lib/structured";
 import { EXTENSION_OFFERED } from "../../site.config.mjs";
 
 function publicPages(): string[] {
+  const categories = listedCategories(buildTree(data.clinical, data.claims));
   const years = new Set(
     data.claims.flatMap((claim) =>
       claim.first_reported_date ? [claim.first_reported_date.slice(0, 4)] : [],
@@ -20,6 +22,8 @@ function publicPages(): string[] {
     "/",
     "/topics",
     ...listedTopics.map((topic) => `/topic/${topic.slug}`),
+    ...(categories.length > 0 ? ["/clinical"] : []),
+    ...categories.map((node) => categoryPath(node.identifier)),
     ...data.claims.map((claim) => `/${claim.slug}`),
     ...sourcesOf(data.claims).map((source) => `/source/${source.slug}`),
     "/it-happened",

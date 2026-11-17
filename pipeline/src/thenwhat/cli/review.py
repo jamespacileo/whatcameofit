@@ -7,10 +7,10 @@ from typing import Annotated
 import typer
 
 from thenwhat.claims.entry import EntryError, find_claim
-from thenwhat.claims.mesh_areas import suggestion_line
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.clinical.service import suggestion_line
 from thenwhat.domain import Decider, EvidenceStage, ReviewState
 from thenwhat.review.queue import (
     confirm_stage,

@@ -1,0 +1,58 @@
+---
+// The clinical index: the tops of MeSH's trees that a published claim falls under, each
+// with how many. For a reader who thinks in the standard hierarchy; the topics page is
+// the same claims in everyday names. Openspec site-publishing: "Clinical index".
+import Base from "../../layouts/Base.astro";
+import MeshCredit from "../../components/MeshCredit.astro";
+import { data } from "../../lib/export";
+import { buildTree, categoryPath, claimCount, topCategories } from "../../lib/clinical";
+
+const tree = buildTree(data.clinical, data.claims);
+const tops = topCategories(tree);
+const filed = new Set([...tree.claims.values()].flatMap((slugs) => [...slugs])).size;
+---
+
+<Base
+  title="Clinical categories"
+  description="Tracked claims by MeSH category, the U.S. National Library of Medicine's hierarchy of conditions."
+  current="topics"
+  breadcrumbs={[{ name: "Clinical categories", path: "/clinical" }]}
+>
+  <h1 class="title">Clinical categories</h1>
+  <p class="lede">
+    {`${filed} ${filed === 1 ? "claim" : "claims"}`} filed by the conditions their trials and papers
+    are indexed under, in MeSH's own names and hierarchy. A claim can sit under more than one category.
+  </p>
+  <p class="what-this-is">
+    A category says what a claim's registered trials and published papers are about. It is not
+    a diagnosis and not advice. The same claims in everyday names are on the{" "}
+    <a href="/topics">topics page</a>.
+  </p>
+
+  {
+    tops.length === 0 ? (
+      <p>No tracked claim has a clinical category yet.</p>
+    ) : (
+      <div class="directory grouped clinical-directory">
+        <section class="letter" aria-labelledby="clinical-top">
+          <h2 id="clinical-top">Top categories</h2>
+          <ul>
+            {tops.map((node) => (
+              <li>
+                <a href={categoryPath(node.identifier)}>{node.label}</a>
+                <span class="count">
+                  {claimCount(tree, node.identifier)}
+                  <span class="visually-hidden">
+                    {claimCount(tree, node.identifier) === 1 ? " claim" : " claims"}
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    )
+  }
+
+  <MeshCredit />
+</Base>

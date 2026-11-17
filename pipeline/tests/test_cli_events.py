@@ -15,14 +15,16 @@ from typer.testing import CliRunner, Result
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import add_claim
 from thenwhat.cli import app
-from thenwhat.db.models import EntityMatch, EvidenceEvent
+from thenwhat.db.models import EntityMatch, EvidenceEvent, TermRecord
 from thenwhat.domain import Decider, ReviewState
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceRecord
+from thenwhat.sources.base import SourceRecord, SourceUnavailable
 
 NOW = datetime(2026, 11, 20, tzinfo=UTC)
 SLUG = "tooth-regrowth-ex1"
 NCT = "NCT02586935"
+# Set by a test that has the MeSH service fail.
+MESH_DOWN: list[bool] = []
 
 
 @pytest.fixture
@@ -47,6 +49,22 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch, fixture_json):
         def notices(self, doi: str) -> list:
             return []
 
+    class Mesh:
+        """NLM's service: every descriptor asked for is held, at the top of a tree."""
+
+        name = "mesh"
+
+        def term(self, identifier: str, *, force: bool = False) -> SourceRecord | None:
+            if MESH_DOWN:
+                raise SourceUnavailable("the MeSH service did not answer")
+            year = "http://id.nlm.nih.gov/mesh/2026"
+            term = {"@id": f"{year}/{identifier}", "label": identifier, "treeNumber": f"{year}/C01"}
+            url = f"https://id.nlm.nih.gov/mesh/{identifier}"
+            return SourceRecord("mesh", identifier, url, {"term": term, "concept": None}, NOW)
+
+        def descriptor_labelled(self, label: str) -> str | None:
+            return None
+
     @contextmanager
     def test_session() -> Generator[Session]:
         yield session
@@ -56,6 +74,7 @@ def run(session: Session, monkeypatch: pytest.MonkeyPatch, fixture_json):
     monkeypatch.setattr(
         "thenwhat.cli.events.make_evidence_sources", lambda s: (Trials(), Nothing(), Nothing())
     )
+    monkeypatch.setattr("thenwhat.cli.events.make_mesh", lambda s: Mesh())
     monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://unused/unused")
     claim = add_claim(
         session,
@@ -156,3 +175,25 @@ def test_event_add_refusal_explains_and_exits_1(run, session: Session):
     assert result.exit_code == 1
     assert "outcome" in result.output
     assert session.scalars(select(EvidenceEvent)).all() == []
+
+
+def test_fetch_reads_the_mesh_records_of_the_claims_categories(run, session: Session):
+    result = run("fetch", SLUG)
+
+    assert result.exit_code == 0, result.output
+    assert "MeSH records for its clinical categories." in result.output
+    # The recorded trial's two condition terms.
+    assert session.get(TermRecord, ("mesh", "D000067877")) is not None
+    assert session.get(TermRecord, ("mesh", "D001321")) is not None
+
+
+def test_fetch_keeps_its_events_when_the_mesh_service_does_not_answer(run, session: Session):
+    MESH_DOWN.append(True)
+    try:
+        result = run("fetch", SLUG)
+    finally:
+        MESH_DOWN.clear()
+
+    assert result.exit_code == 0, result.output
+    assert "MeSH records not read (the MeSH service did not answer)" in result.output
+    assert session.scalars(select(EvidenceEvent)).all()
