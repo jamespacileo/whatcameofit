@@ -12,10 +12,10 @@
 
 ## 3. Outcomes and reasons
 
-- [ ] 3.1 Add the outcome type (`Done`, `NothingFound`, `Later`, `NeedsFix`, `Failed`) and reason declaration in `work/outcome.py` and `work/reasons.py`, with the words for each reason made in one place; verify with pure tests that a reason's class cannot be contradicted and an undeclared code is refused
-- [ ] 3.2 Add a migration for `work_entry.reason`, `reason_values`, `not_before`, `first_put_off_at` and the two new outcome values; verify it applies and reverses on the test database
-- [ ] 3.3 Change the due rule and `record_outcome`: `Later` due after its time, `NeedsFix` not due, neither counts an attempt, and thirty days of one reason becomes `NeedsFix`; verify with tests for every scenario of "Ledger entry", "Due work", "Failed records" and "A record put off too long is said to need a fix"
-- [ ] 3.4 Add step dependencies to the due rule; verify with tests for both scenarios of "A step can depend on another step"
+- [x] 3.1 Add the outcome type (`Done`, `NothingFound`, `Later`, `NeedsFix`, `Failed`) and reason declaration in `work/outcome.py` and `work/reasons.py`, with the words for each reason made in one place; verify with pure tests that a reason's class cannot be contradicted and an undeclared code is refused
+- [x] 3.2 Add a migration for `work_entry.reason`, `reason_values`, `not_before`, `first_put_off_at` and the two new outcome values; verify it applies and reverses on the test database
+- [x] 3.3 Change the due rule and `record_outcome`: `Later` due after its time, `NeedsFix` not due, neither counts an attempt, and thirty days of one reason becomes `NeedsFix`; verify with tests for every scenario of "Ledger entry", "Due work", "Failed records" and "A record put off too long is said to need a fix"
+- [x] 3.4 Add step dependencies to the due rule; verify with tests for both scenarios of "A step can depend on another step"
 - [ ] 3.5 Add `thenwhat work requeue` with `--where` and `--dry-run`, and make `thenwhat backfill retry-outlet` call it; verify with one success and one refusal test and the three scenarios of "Records are made due by step and reason"
 - [ ] 3.6 Show waiting records by class and reason in `thenwhat backfill plan`; verify with a test of "Planning with records waiting"
 - [ ] 3.7 Add "final", "put off", "needs a fix" and "reason" to `GLOSSARY.md`; verify the terms in code, CLI output and specs match

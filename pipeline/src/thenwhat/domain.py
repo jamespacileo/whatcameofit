@@ -217,10 +217,14 @@ class EvidenceStage(StrEnum):
 
 
 class WorkOutcome(StrEnum):
-    """How a step ended for one record. Nothing found is finished work, not a failure."""
+    """How a step ended for one record. Nothing found is finished work, not a failure.
+    Later and needs a fix are not finished: the first comes back by itself once its time
+    has passed, the second waits to be made due (openspec work-ledger)."""
 
     DONE = "done"
     NOTHING_FOUND = "nothing_found"
+    LATER = "later"
+    NEEDS_FIX = "needs_fix"
     FAILED = "failed"
 
 

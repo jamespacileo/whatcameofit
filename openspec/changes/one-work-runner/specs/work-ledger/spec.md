@@ -45,7 +45,7 @@ A record SHALL be due for a step when it is in the step's scope and has no ledge
 - **THEN** no run takes it until its input changes or it is made due by its reason
 
 ### Requirement: Failed records
-A failure on one record SHALL be recorded in its entry and SHALL NOT stop the run. A failed record SHALL stay due until its attempts reach the configured limit, after which it is skipped and reported. Only an outcome of failed SHALL count an attempt: an outcome of later or needs a fix SHALL count none. A record at the limit SHALL be made due again, with its attempts at zero, when it is made due by the operator.
+A failure on one record SHALL be recorded in its entry and SHALL NOT stop the run. A failed record SHALL stay due until its attempts reach the configured limit, after which it is skipped and reported. An outcome of later or needs a fix SHALL count no attempt. A record at the limit SHALL be made due again, with its attempts at zero, when it is made due by the operator.
 
 #### Scenario: One record fails
 - **WHEN** a step fails on one record of ten

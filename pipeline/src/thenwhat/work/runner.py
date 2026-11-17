@@ -1,10 +1,10 @@
 """Working through a step's due records, one record per transaction.
 Behavior: openspec work-ledger."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from contextlib import AbstractContextManager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, cast
 
 from sqlalchemy.orm import Session
@@ -12,7 +12,8 @@ from sqlalchemy.orm import Session
 from thenwhat.domain import WorkOutcome
 from thenwhat.measure import spans as measure
 from thenwhat.work.errors import SourceStop
-from thenwhat.work.ledger import count, due_records, record_outcome, take_due
+from thenwhat.work.ledger import PUT_OFF_SPAN, count, due_records, record_outcome, take_due
+from thenwhat.work.outcome import Later, NeedsFix, NothingFound, check_declared
 from thenwhat.work.steps import (
     BatchStep,
     CountingClient,
@@ -37,6 +38,10 @@ class RunReport:
     failed: int = 0
     # Records the source said could not be asked for now: no outcome, no attempt.
     deferred: int = 0
+    # Records put off until a time, and records that wait for something to be fixed:
+    # each has an entry that says why, and neither counts an attempt.
+    later: int = 0
+    needs_fix: int = 0
     remaining_due: int = 0
     # Why the run ended before its records ran out, in words for the operator.
     stopped: str | None = None
@@ -45,7 +50,7 @@ class RunReport:
 
     @property
     def processed(self) -> int:
-        return self.done + self.nothing_found + self.failed
+        return self.done + self.nothing_found + self.failed + self.needs_fix
 
 
 def process_next(
@@ -56,6 +61,7 @@ def process_next(
     now: datetime,
     attempt_limit: int,
     skip: set[int],
+    put_off_span: timedelta = PUT_OFF_SPAN,
 ) -> Processed | None:
     """Process one due record that no other run is holding, in the caller's transaction.
 
@@ -66,7 +72,7 @@ def process_next(
     id, its outcome and its error, or None when nothing is due. The outcome is None for
     a record that another run finished first.
     """
-    taken = take_due(session, step, attempt_limit, size=1, skip=skip)
+    taken = take_due(session, step, attempt_limit, size=1, skip=skip, now=now)
     if not taken:
         return None
     record = taken[0]
@@ -75,13 +81,13 @@ def process_next(
     # Another run may have finished this record between this query's view of the ledger
     # and the moment its row lock was free. The lock is now held, so look again.
     still_due = session.scalar(
-        due_records(step, attempt_limit)
+        due_records(step, attempt_limit, now=now)
         .where(step.model.id == record.id)
         .with_only_columns(step.model.id)
     )
     if still_due is None:
         return record.id, None, None
-    return _process_record(session, step, record, client, now)
+    return _process_record(session, step, record, client, now, put_off_span)
 
 
 # How a measurement names a record that may not be worked on now.
@@ -95,21 +101,74 @@ def _trace_of(record: Any) -> str | None:
     return key if isinstance(key, str) else None
 
 
-def _outcome_of(answer: "WorkOutcome | Failed") -> tuple[WorkOutcome, str | None]:
-    """A step's answer as an outcome and its error. A failure the step returns keeps
-    what the step wrote; one it raises does not."""
+@dataclass(frozen=True, slots=True)
+class _Settled:
+    """A step's answer as the ledger records it."""
+
+    outcome: WorkOutcome
+    error: str | None = None
+    reason: str | None = None
+    values: Mapping[str, Any] | None = None
+    not_before: datetime | None = None
+
+
+def _settle(step: Step, answer: Any) -> _Settled:
+    """A step's answer as an outcome with its error or its reason. A failure the step
+    returns keeps what the step wrote; one it raises does not. An answer with a reason
+    the step has not declared is refused, which fails the record."""
     if isinstance(answer, Failed):
-        return WorkOutcome.FAILED, answer.error[:2000]
-    return answer, None
+        return _Settled(WorkOutcome.FAILED, error=answer.error[:2000])
+    if isinstance(answer, NothingFound | Later | NeedsFix):
+        check_declared(step, answer)
+        code, values = answer.reason.code, answer.values
+        if isinstance(answer, Later):
+            return _Settled(
+                WorkOutcome.LATER, reason=code, values=values, not_before=answer.not_before
+            )
+        if isinstance(answer, NeedsFix):
+            return _Settled(WorkOutcome.NEEDS_FIX, reason=code, values=values)
+        return _Settled(WorkOutcome.NOTHING_FOUND, reason=code, values=values)
+    return _Settled(answer)
+
+
+def _record(
+    session: Session,
+    step: Step,
+    record: Any,
+    settled: _Settled,
+    *,
+    requests_used: int,
+    now: datetime,
+    put_off_span: timedelta,
+) -> WorkOutcome:
+    """Write the record's entry, and give the outcome it holds: a record put off for too
+    long is recorded as needing a fix."""
+    return record_outcome(
+        session,
+        step,
+        record,
+        settled.outcome,
+        requests_used=requests_used,
+        now=now,
+        error=settled.error,
+        reason=settled.reason,
+        reason_values=settled.values,
+        not_before=settled.not_before,
+        put_off_span=put_off_span,
+    ).outcome
 
 
 def _process_record(
-    session: Session, step: Step, record: Any, client: CountingClient, now: datetime
+    session: Session,
+    step: Step,
+    record: Any,
+    client: CountingClient,
+    now: datetime,
+    put_off_span: timedelta = PUT_OFF_SPAN,
 ) -> Processed:
     """Run the step for one record whose row is held, and write its entry. A failure
     undoes what the step wrote for it and is recorded in the entry."""
     before = client.requests_made
-    error: str | None = None
     with measure.measured(step.name, version=step.version, trace=_trace_of(record)) as span:
         try:
             with session.begin_nested():
@@ -118,24 +177,25 @@ def _process_record(
                     # Nothing is written for it: it stays due with its attempts unchanged.
                     span.ended(DEFERRED)
                     return record.id, answer, answer.reason
-                outcome, error = _outcome_of(answer)
+                settled = _settle(step, answer)
         except SourceStop:
             raise
         except Exception as failure:  # one record's failure must not end the run
-            outcome = WorkOutcome.FAILED
-            error = f"{type(failure).__name__}: {failure}"[:2000]
+            settled = _Settled(
+                WorkOutcome.FAILED, error=f"{type(failure).__name__}: {failure}"[:2000]
+            )
             span.span.error_kind = type(failure).__name__
-        span.ended(outcome.value)
-    record_outcome(
+        span.ended(settled.outcome.value)
+    outcome = _record(
         session,
         step,
         record,
-        outcome,
+        settled,
         requests_used=client.requests_made - before,
         now=now,
-        error=error,
+        put_off_span=put_off_span,
     )
-    return record.id, outcome, error
+    return record.id, outcome, settled.error
 
 
 def process_batch(
@@ -147,6 +207,7 @@ def process_batch(
     attempt_limit: int,
     skip: set[int],
     size: int,
+    put_off_span: timedelta = PUT_OFF_SPAN,
 ) -> list[Processed] | None:
     """Process up to `size` due records in one call of the step, in the caller's
     transaction, so their results and entries are saved together or not at all.
@@ -156,12 +217,12 @@ def process_batch(
     record that fails alone has a failure recorded. Returns what became of each record,
     or None when nothing is due.
     """
-    records = take_due(session, step, attempt_limit, size=size, skip=skip)
+    records = take_due(session, step, attempt_limit, size=size, skip=skip, now=now)
     if not records:
         return None
     still_due = set(
         session.scalars(
-            due_records(step, attempt_limit)
+            due_records(step, attempt_limit, now=now)
             .where(step.model.id.in_([record.id for record in records]))
             .with_only_columns(step.model.id)
         )
@@ -185,25 +246,27 @@ def process_batch(
             outcomes = list(cast(BatchStep, step).run_many(session, held, client))
             if len(outcomes) != len(held):
                 raise ValueError(f"The step answered for {len(outcomes)} of {len(held)} records.")
+            answers = [_settle(step, answer) for answer in outcomes]
     except SourceStop:
         raise
     except Exception:  # the call failed as a whole: find the record that fails alone
-        processed.extend(_process_record(session, step, record, client, now) for record in held)
+        processed.extend(
+            _process_record(session, step, record, client, now, put_off_span) for record in held
+        )
         return processed
     used = client.requests_made - before
-    for place, (record, answer) in enumerate(zip(held, outcomes, strict=True)):
-        outcome, error = _outcome_of(answer)
+    for place, (record, settled) in enumerate(zip(held, answers, strict=True)):
         # A call's requests cannot be split between its records: the first carries them.
-        record_outcome(
+        outcome = _record(
             session,
             step,
             record,
-            outcome,
+            settled,
             requests_used=used if place == 0 else 0,
             now=now,
-            error=error,
+            put_off_span=put_off_span,
         )
-        processed.append((record.id, outcome, error))
+        processed.append((record.id, outcome, settled.error))
     return processed
 
 
@@ -217,6 +280,7 @@ def run_step(
     limit: int | None = None,
     before_call: Callable[[Session], None] | None = None,
     tried: set[int] | None = None,
+    put_off_span: timedelta = PUT_OFF_SPAN,
 ) -> RunReport:
     """Process due records until none is due, the limit is reached or the source may
     not be asked. Each call of the step is its own transaction, so a run can be stopped
@@ -236,7 +300,13 @@ def run_step(
                     before_call(session)
                 if size == 1:
                     one = process_next(
-                        session, step, client, now=now(), attempt_limit=attempt_limit, skip=tried
+                        session,
+                        step,
+                        client,
+                        now=now(),
+                        attempt_limit=attempt_limit,
+                        skip=tried,
+                        put_off_span=put_off_span,
                     )
                     processed = None if one is None else [one]
                 else:
@@ -249,6 +319,7 @@ def run_step(
                         attempt_limit=attempt_limit,
                         skip=tried,
                         size=room,
+                        put_off_span=put_off_span,
                     )
                 # Remember retryable records before releasing their row locks, so
                 # another worker in this run cannot pick them immediately.
@@ -272,6 +343,12 @@ def run_step(
                 report.done += 1
             elif outcome is WorkOutcome.NOTHING_FOUND:
                 report.nothing_found += 1
+            elif outcome is WorkOutcome.LATER:
+                # Not due until its time has passed, so the run does not pick it again
+                # before then, and may once it has.
+                report.later += 1
+            elif outcome is WorkOutcome.NEEDS_FIX:
+                report.needs_fix += 1
             else:
                 # A failed record stays due, so this run must not pick it again. A
                 # finished one is no longer due and needs no remembering: a run over
@@ -282,5 +359,5 @@ def run_step(
                 if error and report.errors is not None and len(report.errors) < ERRORS_KEPT:
                     report.errors.append(error)
     with open_session() as session:
-        report.remaining_due = count(session, step, attempt_limit).due
+        report.remaining_due = count(session, step, attempt_limit, now=now()).due
     return report

@@ -3,19 +3,21 @@ Behavior: openspec work-ledger."""
 
 import hashlib
 import json
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, and_, func, not_, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy import ColumnElement, Select, and_, exists, func, not_, or_, select
+from sqlalchemy.orm import Session, aliased
 
 from thenwhat.db.models import WorkEntry
 from thenwhat.domain import WorkOutcome
 from thenwhat.work.steps import Step
 
 FINISHED = (WorkOutcome.DONE, WorkOutcome.NOTHING_FOUND)
+# How long a record may be put off for one reason before it is said to need a fix.
+PUT_OFF_SPAN = timedelta(days=30)
 
 
 def fingerprint(inputs: dict[str, Any]) -> str:
@@ -32,12 +34,45 @@ def _entry_of(step: Step) -> ColumnElement[bool]:
     )
 
 
-def _is_due(attempt_limit: int) -> ColumnElement[bool]:
+def _is_due(attempt_limit: int, now: datetime | None = None) -> ColumnElement[bool]:
+    """No entry, a stale one, a failure with attempts left, or a record put off whose
+    time has passed. One that needs a fix is not due until it is made due. With no time
+    given, the database's own clock says whether a put-off record's time has passed."""
     return or_(
         WorkEntry.id.is_(None),
         WorkEntry.stale,
         and_(WorkEntry.outcome == WorkOutcome.FAILED, WorkEntry.attempts < attempt_limit),
+        and_(
+            WorkEntry.outcome == WorkOutcome.LATER,
+            WorkEntry.not_before <= (func.now() if now is None else now),
+        ),
     )
+
+
+def steps_before(step: Step) -> Sequence[Step]:
+    """The steps that must have finished for a record before this one is due for it."""
+    return tuple(getattr(step, "after", ()))
+
+
+def _earlier_finished(step: Step) -> list[ColumnElement[bool]]:
+    """One condition for each step this one depends on: the record has an entry for it,
+    at that step's current version, that is finished and not stale. An entry is marked
+    stale when the record's input for that step changes, so a record whose earlier step
+    is due again waits for it."""
+    conditions: list[ColumnElement[bool]] = []
+    for earlier in steps_before(step):
+        entry = aliased(WorkEntry)
+        conditions.append(
+            exists().where(
+                entry.record_kind == earlier.record_kind,
+                entry.record_id == step.model.id,
+                entry.step == earlier.name,
+                entry.step_version == earlier.version,
+                entry.outcome.in_(FINISHED),
+                entry.stale.is_(False),
+            )
+        )
+    return conditions
 
 
 def _first_of(step: Step) -> ColumnElement[bool] | None:
@@ -46,13 +81,15 @@ def _first_of(step: Step) -> ColumnElement[bool] | None:
     return first() if first is not None else None
 
 
-def _due(step: Step, attempt_limit: int, *, first_leads: bool) -> Select[Any]:
+def _due(
+    step: Step, attempt_limit: int, *, first_leads: bool, now: datetime | None = None
+) -> Select[Any]:
     order = getattr(step, "order", None)
     first = _first_of(step) if first_leads else None
     return (
         select(step.model)
         .outerjoin(WorkEntry, _entry_of(step))
-        .where(step.scope(), _is_due(attempt_limit))
+        .where(step.scope(), _is_due(attempt_limit, now), *_earlier_finished(step))
         # A step may say which due records come first; the record's id settles the rest.
         .order_by(
             *(() if first is None else (first.desc(),)),
@@ -62,10 +99,12 @@ def _due(step: Step, attempt_limit: int, *, first_leads: bool) -> Select[Any]:
     )
 
 
-def due_records(step: Step, attempt_limit: int) -> Select[Any]:
+def due_records(step: Step, attempt_limit: int, *, now: datetime | None = None) -> Select[Any]:
     """The records in the step's scope with no finished entry at its current version, or
-    whose input changed since. A record that failed stays due until its attempts run out."""
-    return _due(step, attempt_limit, first_leads=True)
+    whose input changed since. A record that failed stays due until its attempts run
+    out, one put off is due once its time has passed, and one that needs a fix is not
+    due. A record is due only when every step this one depends on has finished for it."""
+    return _due(step, attempt_limit, first_leads=True, now=now)
 
 
 # Set on a step once a run has found fewer of its first records due than it asked for.
@@ -73,7 +112,13 @@ _FIRST_RAN_OUT = "_first_ran_out"
 
 
 def take_due(
-    session: Session, step: Step, attempt_limit: int, *, size: int, skip: set[int]
+    session: Session,
+    step: Step,
+    attempt_limit: int,
+    *,
+    size: int,
+    skip: set[int],
+    now: datetime | None = None,
 ) -> list[Any]:
     """Up to `size` due records that no other run holds, in the step's order, their rows
     held until the transaction ends.
@@ -92,7 +137,7 @@ def take_due(
             session.scalars(query.limit(limit).with_for_update(skip_locked=True, of=step.model))
         )
 
-    rest = _due(step, attempt_limit, first_leads=False)
+    rest = _due(step, attempt_limit, first_leads=False, now=now)
     first = _first_of(step)
     if first is None or getattr(step, _FIRST_RAN_OUT, False):
         return held(rest, size)
@@ -113,13 +158,18 @@ class StepCounts:
     due: int
     # Failed as often as the limit allows: skipped until someone looks.
     needs_attention: int
+    # Put off: comes back by itself. Needs a fix: waits to be made due.
+    later: int = 0
+    needs_fix: int = 0
 
     @property
     def processed(self) -> int:
         return self.done + self.nothing_found
 
 
-def count(session: Session, step: Step, attempt_limit: int) -> StepCounts:
+def count(
+    session: Session, step: Step, attempt_limit: int, *, now: datetime | None = None
+) -> StepCounts:
     """Where a step stands. Entries are counted through their record, so an entry whose
     record is gone or out of scope is never counted as work done."""
     current = and_(WorkEntry.id.is_not(None), WorkEntry.stale.is_(False))
@@ -133,7 +183,7 @@ def count(session: Session, step: Step, attempt_limit: int) -> StepCounts:
             tally(and_(current, WorkEntry.outcome == WorkOutcome.DONE)),
             tally(and_(current, WorkEntry.outcome == WorkOutcome.NOTHING_FOUND)),
             tally(and_(current, WorkEntry.outcome == WorkOutcome.FAILED)),
-            tally(_is_due(attempt_limit)),
+            tally(and_(_is_due(attempt_limit, now), *_earlier_finished(step))),
             tally(
                 and_(
                     current,
@@ -141,6 +191,8 @@ def count(session: Session, step: Step, attempt_limit: int) -> StepCounts:
                     WorkEntry.attempts >= attempt_limit,
                 )
             ),
+            tally(and_(current, WorkEntry.outcome == WorkOutcome.LATER)),
+            tally(and_(current, WorkEntry.outcome == WorkOutcome.NEEDS_FIX)),
         )
         .select_from(step.model)
         .outerjoin(WorkEntry, _entry_of(step))
@@ -169,9 +221,20 @@ def record_outcome(
     requests_used: int,
     now: datetime,
     error: str | None = None,
+    reason: str | None = None,
+    reason_values: Mapping[str, Any] | None = None,
+    not_before: datetime | None = None,
+    put_off_span: timedelta = PUT_OFF_SPAN,
 ) -> WorkEntry:
     """Write the one entry a record has for a step at its version. A second attempt
-    updates it. An entry made for an earlier input starts its attempts again."""
+    updates it. An entry made for an earlier input starts its attempts again.
+
+    An outcome of later or needs a fix counts no attempt. A record put off for one
+    reason for longer than the span is recorded as needing a fix for that reason."""
+    if outcome is WorkOutcome.LATER and (not_before is None or not_before <= now):
+        raise ValueError("A record put off needs a time that has not yet come.")
+    if outcome in (WorkOutcome.LATER, WorkOutcome.NEEDS_FIX) and not reason:
+        raise ValueError("A record that is put off or needs a fix needs a reason.")
     entry = find_entry(session, step, record)
     if entry is None:
         entry = WorkEntry(
@@ -186,8 +249,19 @@ def record_outcome(
     elif entry.stale:
         entry.attempts = 0
         entry.requests_used = 0
+    first_put_off_at: datetime | None = None
+    if outcome is WorkOutcome.LATER:
+        same = entry.outcome is WorkOutcome.LATER and entry.reason == reason and not entry.stale
+        first_put_off_at = (entry.first_put_off_at if same else None) or now
+        if now - first_put_off_at > put_off_span:
+            outcome, not_before = WorkOutcome.NEEDS_FIX, None
+    if outcome not in (WorkOutcome.LATER, WorkOutcome.NEEDS_FIX):
+        entry.attempts += 1
     entry.outcome = outcome
-    entry.attempts += 1
+    entry.reason = reason
+    entry.reason_values = dict(reason_values) if reason_values else None
+    entry.not_before = not_before if outcome is WorkOutcome.LATER else None
+    entry.first_put_off_at = first_put_off_at
     entry.requests_used += requests_used
     entry.fingerprint = fingerprint(step.inputs(record))
     entry.stale = False

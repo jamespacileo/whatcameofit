@@ -692,8 +692,22 @@ class WorkEntry(Base):
         ),
         CheckConstraint("(outcome = 'failed') = (error IS NOT NULL)", name="failure_has_error"),
         CheckConstraint("attempts >= 0 AND requests_used >= 0", name="counts_not_negative"),
+        # A record put off says until when, and one that waits says for what.
+        CheckConstraint("(outcome = 'later') = (not_before IS NOT NULL)", name="later_has_time"),
+        CheckConstraint(
+            "outcome NOT IN ('later', 'needs_fix') OR reason IS NOT NULL",
+            name="waiting_has_reason",
+        ),
         # The unique index leads with the record, so a step's entries need their own.
         Index("ix_work_entry_step_step_version", "step", "step_version"),
+        # What `thenwhat work requeue` and the plan look entries up by.
+        Index(
+            "ix_work_entry_step_reason",
+            "step",
+            "step_version",
+            "reason",
+            postgresql_where=text("reason IS NOT NULL"),
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -710,6 +724,15 @@ class WorkEntry(Base):
     stale: Mapped[bool] = mapped_column(default=False, server_default="false")
     error: Mapped[str | None] = mapped_column(Text)
     last_attempt_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    # Why the record was not done, as a code the step declared, with the values the
+    # reason carries: the status a site answered, an outlet.
+    reason: Mapped[str | None] = mapped_column(Text)
+    reason_values: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    # A record put off is not due before this time.
+    not_before: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    # When the record was first put off for the reason it is put off for now. One put
+    # off for the same reason past the configured span is said to need a fix.
+    first_put_off_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
 
 
 class SourceAllowanceUse(Base):

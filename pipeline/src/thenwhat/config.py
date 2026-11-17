@@ -123,6 +123,9 @@ class Settings(BaseSettings):
     source_allowances: dict[str, SourceAllowance] = {}
     # A record that failed this many times is skipped and reported.
     backfill_attempt_limit: int = 3
+    # A record put off for one reason for longer than this is said to need a fix, so it
+    # is listed and not asked for without end.
+    work_put_off_days: int = 30
     # Media Cloud key, and the collections and single outlets to search, as
     # comma-separated ids from its directory. The news search refuses to run while the
     # key is empty or while neither list names anything.
