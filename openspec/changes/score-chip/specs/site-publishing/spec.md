@@ -24,3 +24,11 @@ Wherever a claim page or a trial page shows a score (a registry record's, a pape
 #### Scenario: On a phone
 - **WHEN** a chip is pressed at 375 pixels wide
 - **THEN** its press area is at least 44 pixels tall and the panel opens within the screen
+
+### Requirement: Only a score is drawn as a score chip
+Words that say how a background term was found and carry no percentage SHALL open the same panel as a score chip but SHALL NOT be drawn with the chip's outline. Inside a score chip the percentage SHALL be set apart from the band's words in the markup, and the text read out and printed SHALL remain the whole phrase.
+
+#### Scenario: A drug row in "At a glance"
+- **WHEN** a treatment's drug record was found by its exact name and its kind term matched at 0.98
+- **THEN** "Drug record: by exact name" is drawn as plain underlined words that open a panel, and "Kind term: high, 98%" is drawn as a chip
+

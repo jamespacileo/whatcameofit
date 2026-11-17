@@ -146,7 +146,7 @@ const mainMeasure = planned[0]?.measure ?? null;
     {
       match && (
         <span>
-          <Score about="Match to this claim" words={matchWords(match.score)} shown>
+          <Score about="Match to this claim" words={matchWords(match.score)}>
             <span>{MATCH_MEANING}</span>
           </Score>{" "}
           {readingOf(match.reading)}

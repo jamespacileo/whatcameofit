@@ -70,8 +70,21 @@
   --radius-s: 0.65rem;
   --row-pad: 0.8rem;
   --row-rule: var(--rule-soft);
-  --label-size: 0.82rem;
-  --note-size: 0.85rem;
+  /* The type scale (openspec type-scale): seven steps for running text and four named
+     roles. Every font-size in this file is one of them, a title's clamp or inherit; a
+     test holds the file to it (tests/primitives.test.mjs). Root is 17px. */
+  --text-micro: 0.72rem;
+  --text-xs: 0.78rem;
+  --text-s: 0.85rem;
+  --text-m: 0.92rem;
+  --text-body: 1rem;
+  --text-l: 1.08rem;
+  --text-xl: 1.2rem;
+  --text-wordmark: 1.25rem;
+  --text-heading: 1.35rem;
+  --text-status: 1.5rem;
+  --label-size: var(--text-s);
+  --note-size: var(--text-s);
   --panel-pad: 0.85rem 1rem;
   --label-col: 11rem;
   /* The record band's two further tones (openspec band-well): its main surface, a clear
@@ -291,7 +304,7 @@ p {
   display: inline-flex;
   align-items: baseline;
   gap: 0;
-  font-size: 1.25rem;
+  font-size: var(--text-wordmark);
   letter-spacing: -0.01em;
   color: var(--on-navy-ink);
   text-decoration: none;
@@ -420,7 +433,7 @@ p {
 .masthead nav a {
   color: var(--on-navy-ink);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: var(--text-m);
   text-decoration: none;
   padding-block: 0.3rem;
   display: inline-block;
@@ -556,7 +569,7 @@ main > .wrap {
 /* Under the band, the tally opens the lists. */
 .band + .wrap > .tally {
   margin: clamp(1.25rem, 4vw, 1.75rem) 0 0;
-  font-size: 0.95rem;
+  font-size: var(--text-m);
 }
 
 /* The tally belongs to the lists, so the first heading follows it closely. */
@@ -589,7 +602,7 @@ main > .wrap {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   font-weight: 600;
   color: var(--blue);
   background: var(--tint);
@@ -647,7 +660,7 @@ a.chip:hover {
 }
 
 .approach {
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -656,7 +669,7 @@ a.chip:hover {
   align-items: center;
   gap: 0.35rem;
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   font-weight: 600;
   color: var(--blue);
   background: none;
@@ -763,7 +776,7 @@ a.share {
 /* Under the headline: what kind of page this is, for a reader who arrived cold. */
 .what-this-is {
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-m);
   margin: 0.6rem 0 0;
 }
 
@@ -775,7 +788,7 @@ a.share {
 .reported-title {
   display: block;
   width: fit-content;
-  font-size: 1.05rem;
+  font-size: var(--text-l);
   font-weight: 600;
   line-height: 1.4;
   text-wrap: pretty;
@@ -868,7 +881,7 @@ a.share {
   width: fit-content;
   margin: 0.6rem 0 0;
   padding: 0.1rem 0.55rem;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   background: var(--promise);
   border: 1.5px dashed var(--promise-rule);
   border-radius: 6px;
@@ -948,7 +961,7 @@ a.share {
 /* Under the records: how a status is set, and how to say one is wrong. */
 .about-page,
 .report {
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--muted);
   margin: 0.8rem 0 0;
 }
@@ -958,7 +971,7 @@ a.share {
 }
 
 .suggest {
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--muted);
 }
 
@@ -1028,7 +1041,7 @@ a.share {
 
 .post-to summary {
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-weight: 600;
   color: var(--blue);
   width: fit-content;
@@ -1062,13 +1075,13 @@ dialog.mastodon::backdrop {
 
 dialog.mastodon h3 {
   margin: 0 0 0.8rem;
-  font-size: 1.05rem;
+  font-size: var(--text-l);
 }
 
 dialog.mastodon label {
   display: block;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   margin-bottom: 0.3rem;
 }
 
@@ -1102,7 +1115,7 @@ dialog.mastodon input {
   font-weight: 600;
   color: var(--blue);
   width: fit-content;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .embed-how pre {
@@ -1110,7 +1123,7 @@ dialog.mastodon input {
   padding: 0.8rem 1rem;
   background: var(--panel);
   border-radius: var(--radius-s);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   line-height: 1.5;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -1144,7 +1157,7 @@ body.embed {
   margin: 0 -1.1rem;
   padding: 0.5rem 1.1rem;
   max-width: none;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   background: var(--footer);
   /* The quieter line on navy: a pale blue, not a grey. */
   color: #c9d9ee;
@@ -1166,7 +1179,7 @@ body.embed {
 }
 
 .embed h1 {
-  font-size: 1.05rem;
+  font-size: var(--text-l);
   line-height: 1.3;
   margin: 0.7rem 0 0.7rem;
   text-wrap: pretty;
@@ -1186,7 +1199,7 @@ body.embed {
 
 .embed-status .status-name {
   color: var(--blue);
-  font-size: 1.1rem;
+  font-size: var(--text-l);
 }
 
 .embed-more {
@@ -1196,7 +1209,7 @@ body.embed {
   gap: 0.2rem 1rem;
   margin: 0.6rem 0 0;
   max-width: none;
-  font-size: 0.88rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -1208,7 +1221,7 @@ body.embed {
   margin-top: 0.7rem;
   padding-top: 0.6rem;
   border-top: 1px solid var(--rule-soft);
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   line-height: 1.4;
   color: var(--muted);
 }
@@ -1238,7 +1251,7 @@ body.embed {
 }
 
 .lede {
-  font-size: 1.08rem;
+  font-size: var(--text-l);
   margin-top: 1rem;
   max-width: var(--measure);
   text-wrap: pretty;
@@ -1278,7 +1291,7 @@ body.embed {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-weight: 700;
   border: 1.5px dashed var(--blue);
   border-radius: 6px;
@@ -1291,7 +1304,7 @@ body.embed {
 }
 
 .digest .changed {
-  font-size: 0.88rem;
+  font-size: var(--text-s);
   color: var(--muted);
   margin: 0.5rem 0 0;
 }
@@ -1307,7 +1320,7 @@ body.embed {
 }
 
 .found h2 {
-  font-size: 1.05rem;
+  font-size: var(--text-l);
   line-height: 1.3;
   margin: 0 0 0.3rem;
 }
@@ -1320,7 +1333,7 @@ body.embed {
 
 .found p {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text-m);
 }
 
 .found .changed {
@@ -1360,13 +1373,13 @@ body.embed {
 
 .explainer figcaption {
   margin-top: 0.5rem;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--muted);
 }
 
 .explainer details {
   margin-top: 0.5rem;
-  font-size: 0.95rem;
+  font-size: var(--text-m);
 }
 
 .explainer summary {
@@ -1393,20 +1406,20 @@ body.embed {
 }
 
 .made-label {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin: 0 0 0.35rem;
 }
 
 .made-quote {
-  font-size: 1.05rem;
+  font-size: var(--text-l);
   font-weight: 600;
   line-height: 1.3;
   margin: 0;
 }
 
 .made-by {
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
   margin: 0.15rem 0 0;
 }
@@ -1419,7 +1432,7 @@ body.embed {
   border: 1.5px dashed var(--promise-rule);
   border-radius: 6px;
   padding: 0.15rem 0.55rem;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 .made-records {
@@ -1434,7 +1447,7 @@ body.embed {
   align-items: center;
   gap: 0.45rem;
   padding-block: 0.4rem;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .made li + li {
@@ -1451,7 +1464,7 @@ body.embed {
 }
 
 .made-status {
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   line-height: 1.2;
   color: var(--blue);
@@ -1480,7 +1493,7 @@ body.embed {
 
 .made figcaption {
   margin-top: 0.5rem;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--muted);
 }
 
@@ -1550,7 +1563,7 @@ main nav.contents ul li + li {
 .contents a {
   display: inline-block;
   padding-block: 0.35rem;
-  font-size: 0.95rem;
+  font-size: var(--text-m);
 }
 
 /* A search's answer: the best match as a digest with its report under it, then every
@@ -1572,7 +1585,7 @@ main nav.contents ul li + li {
 .search-count {
   margin: 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 .search-results mark.hit {
@@ -1603,7 +1616,7 @@ main nav.contents ul li + li {
 
 .search-results .digest h3 {
   margin: 0 0 0.35rem;
-  font-size: 1.25rem;
+  font-size: var(--text-xl);
   line-height: 1.25;
 }
 
@@ -1630,7 +1643,7 @@ main nav.contents ul li + li {
   gap: 0.2rem 0.7rem;
   margin: 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 .search-report .row-topic {
@@ -1638,7 +1651,7 @@ main nav.contents ul li + li {
   color: var(--ink);
   border-radius: 999px;
   padding: 0.05rem 0.6rem;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
 }
 
 .results .search-report-title,
@@ -1679,7 +1692,7 @@ main nav.contents ul li + li {
 .unchecked-line {
   margin-top: 0.35rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 /* The one way out of an answer: a text control as tall as a fingertip. */
@@ -1743,19 +1756,19 @@ main nav.contents ul li + li {
 }
 
 .hit-row.is-closest .hit-title {
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
 }
 
 .hit-row.is-closest .hit-now .row-label {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
 .results .hit-when,
 .hit-when {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   line-height: 1.3;
 }
 
@@ -1763,7 +1776,7 @@ main nav.contents ul li + li {
 .trial-note {
   margin-top: 0.4rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 .search-group {
@@ -1777,13 +1790,13 @@ main nav.contents ul li + li {
 
 .search-group h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-body);
   font-weight: 700;
 }
 
 .search-group span {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 /* A match reads left to right; where it stands is a column on the right, as in the
@@ -1811,7 +1824,7 @@ main nav.contents ul li + li {
 
 .hit-now .status-name {
   color: var(--blue);
-  font-size: 0.92rem;
+  font-size: var(--text-m);
   line-height: 1.2;
 }
 
@@ -1823,7 +1836,7 @@ main nav.contents ul li + li {
   display: block;
   color: var(--ink);
   font-weight: 700;
-  font-size: 1.02rem;
+  font-size: var(--text-body);
   line-height: 1.3;
   text-decoration: none;
   text-wrap: pretty;
@@ -1841,7 +1854,7 @@ main nav.contents ul li + li {
   gap: 0.2rem 0.6rem;
   margin: 0.2rem 0 0;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: var(--text-s);
 }
 
 .hit-meta .row-topic {
@@ -1849,7 +1862,7 @@ main nav.contents ul li + li {
   color: var(--ink);
   border-radius: 999px;
   padding: 0.05rem 0.6rem;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
 }
 
 /* Under a match, what the words were found in: a drawing for the kind, the kind in
@@ -1867,7 +1880,7 @@ main nav.contents ul li + li {
   grid-template-columns: 1rem minmax(0, 1fr);
   gap: 0 0.5rem;
   align-items: baseline;
-  font-size: 0.88rem;
+  font-size: var(--text-s);
   line-height: 1.4;
 }
 
@@ -1883,7 +1896,7 @@ main nav.contents ul li + li {
 
 .match-label {
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -1906,7 +1919,7 @@ main nav.contents ul li + li {
   align-items: baseline;
   gap: 0.1rem 0.5rem;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--text-s);
 }
 
 .match-source .outlet-name {
@@ -1920,7 +1933,7 @@ main nav.contents ul li + li {
 .results .match-more,
 .match-more {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--text-s);
   padding-left: 1.5rem;
 }
 
@@ -1930,7 +1943,7 @@ main nav.contents ul li + li {
   padding-top: 0.6rem;
   border-top: 1px solid var(--rule);
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
@@ -1954,7 +1967,7 @@ main nav.contents ul li + li {
   align-items: center;
   gap: 0.2rem 0.6rem;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 .trial-record .row-label {
@@ -1977,7 +1990,7 @@ main nav.contents ul li + li {
 
 .listed-trials h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-body);
 }
 
 .listed-trial {
@@ -1998,7 +2011,7 @@ main nav.contents ul li + li {
 
 .listed-trial p {
   margin: 0.25rem 0 0;
-  font-size: 0.88rem;
+  font-size: var(--text-s);
 }
 
 .listed-trial .match-source,
@@ -2018,7 +2031,7 @@ main nav.contents ul li + li {
 .search-more {
   margin: 1.1rem 0 0;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 @media (max-width: 34rem) {
@@ -2062,7 +2075,7 @@ main nav.contents ul li + li {
 
 .digest .lede {
   margin: 0;
-  font-size: 1.02rem;
+  font-size: var(--text-body);
 }
 
 @media (max-width: 40rem) {
@@ -2111,7 +2124,7 @@ main nav.contents ul li + li {
   margin: 0.5rem 0 0;
   max-width: 52ch;
   text-wrap: pretty;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -2158,14 +2171,14 @@ main nav.contents ul li + li {
 }
 
 .glance-value {
-  font-size: 1.08rem;
+  font-size: var(--text-l);
   font-weight: 700;
 }
 
 .glance-rows .aka,
 .glance-facts .aka {
   display: block;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -2291,7 +2304,7 @@ main nav.contents ul li + li {
 /* Section headings. */
 
 .bar {
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
   font-weight: 700;
   margin: clamp(2rem, 6vw, 2.75rem) 0 0;
 }
@@ -2337,7 +2350,7 @@ main nav.contents ul li + li {
 .timetable .year {
   width: 5.25rem;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: var(--text-l);
   /* Blue is for links and the status label, so a year is in ink. */
   color: var(--ink);
   white-space: nowrap;
@@ -2345,7 +2358,7 @@ main nav.contents ul li + li {
 
 .timetable .year small {
   display: block;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--muted);
 }
@@ -2371,7 +2384,7 @@ main nav.contents ul li + li {
 .entry-note.beside {
   color: var(--ink);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: var(--text-body);
 }
 
 .timetable thead .promised,
@@ -2383,11 +2396,11 @@ main nav.contents ul li + li {
 .timetable .quiet th {
   padding-block: 0.4rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .timetable .quiet .year {
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-weight: 600;
   color: var(--muted);
 }
@@ -2502,7 +2515,7 @@ main nav.contents ul li + li {
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--muted);
 }
 
@@ -2535,7 +2548,7 @@ main nav.contents ul li + li {
 }
 
 .absent {
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--muted);
   margin-bottom: 0.6rem;
 }
@@ -2613,7 +2626,7 @@ main nav.contents ul li + li {
   justify-items: center;
   align-content: start;
   gap: 0.3rem;
-  font-size: 0.74rem;
+  font-size: var(--text-micro);
   line-height: 1.15;
   text-align: center;
   color: var(--muted);
@@ -2646,7 +2659,7 @@ main nav.contents ul li + li {
 .track .ends {
   display: block;
   white-space: nowrap;
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin-top: 0.15rem;
 }
@@ -2676,7 +2689,7 @@ main nav.contents ul li + li {
   align-items: center;
   gap: 0.3rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 /* Popovers: detail on demand. */
@@ -2751,7 +2764,7 @@ main nav.contents ul li + li {
   border-radius: var(--radius-s);
   background: var(--paper);
   color: var(--ink);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-weight: 400;
   line-height: 1.45;
   box-shadow:
@@ -2796,7 +2809,7 @@ main nav.contents ul li + li {
   border-radius: 99px;
   background: var(--paper);
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
@@ -2949,7 +2962,7 @@ span.pop > span + span {
 
 .pop .pop-note {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 @media (max-width: 40rem) {
@@ -2958,7 +2971,7 @@ span.pop > span + span {
   }
 
   .masthead nav a {
-    font-size: 0.88rem;
+    font-size: var(--text-s);
   }
 
   .timetable,
@@ -3007,7 +3020,7 @@ span.pop > span + span {
   .timetable td[data-column]::before {
     content: attr(data-column);
     display: block;
-    font-size: 0.78rem;
+    font-size: var(--text-xs);
     font-weight: 600;
     color: var(--muted);
     margin-bottom: 0.2rem;
@@ -3137,12 +3150,12 @@ span.pop > span + span {
 }
 
 .stage-filter .place strong {
-  font-size: 1.15rem;
+  font-size: var(--text-xl);
   line-height: 1.2;
 }
 
 .stage-filter .place-name {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   line-height: 1.25;
   color: var(--muted);
 }
@@ -3190,7 +3203,7 @@ span.pop > span + span {
 }
 
 .stage-filter .place.off strong {
-  font-size: 0.95rem;
+  font-size: var(--text-m);
 }
 
 .stage-filter .shown {
@@ -3198,7 +3211,7 @@ span.pop > span + span {
   align-items: baseline;
   gap: 0.75rem;
   margin: 0.7rem 0 0;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--muted);
 }
 
@@ -3266,7 +3279,7 @@ span.pop > span + span {
    status has changed. The words beside it say what; the tag never stands alone. */
 .new-tag {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: var(--text-micro);
   font-weight: 700;
   line-height: 1.5;
   color: var(--ink);
@@ -3292,7 +3305,7 @@ span.pop > span + span {
 }
 
 .following .entry-note .text-control {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   margin-left: 0.5rem;
 }
@@ -3475,7 +3488,7 @@ body:has(.band.home) .table-frame {
 /* The box is the largest control on the page. */
 .band.home .search input {
   min-height: 3.75rem;
-  font-size: 1.15rem;
+  font-size: var(--text-xl);
   padding-inline: 1.2rem;
   border-width: 2px;
   box-shadow: 0 10px 28px -14px var(--lift);
@@ -3484,7 +3497,7 @@ body:has(.band.home) .table-frame {
 .band.home .search button {
   min-height: 3.75rem;
   padding-inline: 1.6rem;
-  font-size: 1.05rem;
+  font-size: var(--text-l);
 }
 
 /* Where the lede is drawn it says what the box takes; a screen reader keeps the label. */
@@ -3502,7 +3515,7 @@ body:has(.band.home) .table-frame {
 
 .under-box {
   margin-top: 1.1rem;
-  font-size: 0.92rem;
+  font-size: var(--text-m);
   color: var(--muted);
 }
 
@@ -3579,7 +3592,7 @@ body:has(.band.home) .table-frame {
 .pick select {
   appearance: none;
   font: inherit;
-  font-size: 0.92rem;
+  font-size: var(--text-m);
   font-weight: 600;
   color: var(--ink);
   min-height: 2.5rem;
@@ -3650,7 +3663,7 @@ body:has(.band.home) .table-frame {
   align-items: center;
   gap: 0.4rem;
   font: inherit;
-  font-size: 0.95rem;
+  font-size: var(--text-m);
   font-weight: 600;
   color: var(--muted);
   background: none;
@@ -3671,7 +3684,7 @@ body:has(.band.home) .table-frame {
 }
 
 .feed-tabs .count {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--ink);
@@ -3707,7 +3720,7 @@ body:has(.band.home) .table-frame {
 
   .feed > .since {
     margin-top: 1rem;
-    font-size: 0.95rem;
+    font-size: var(--text-m);
   }
 
   .front > .feed {
@@ -3744,7 +3757,7 @@ body:has(.band.home) .table-frame {
 
   .feed-tabs [role="tab"] {
     flex: 0 1 auto;
-    font-size: 0.85rem;
+    font-size: var(--text-s);
     min-height: 2.75rem;
     padding-inline: 0;
   }
@@ -3803,7 +3816,7 @@ body:has(.band.home) .table-frame {
 
 .feed.tabbed .feed-panel > .bar {
   margin-top: 1.1rem;
-  font-size: 1rem;
+  font-size: var(--text-body);
   color: var(--muted);
   font-weight: 600;
 }
@@ -3814,7 +3827,7 @@ body:has(.band.home) .table-frame {
   justify-content: space-between;
   gap: 0.75rem;
   margin-top: 0.5rem;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--muted);
 }
 
@@ -3906,7 +3919,7 @@ body:has(.band.home) .table-frame {
 }
 
 .letter h2 {
-  font-size: 1.2rem;
+  font-size: var(--text-xl);
   line-height: 1.55;
   color: var(--muted);
 }
@@ -3933,7 +3946,7 @@ body:has(.band.home) .table-frame {
 
 .letter .count {
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 /* Under groups rather than letters: the heading is a name, so it gets a column
@@ -3945,7 +3958,7 @@ body:has(.band.home) .table-frame {
 .directory.grouped .letters a {
   padding-inline: 0.55rem;
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .directory.grouped .letter {
@@ -3954,7 +3967,7 @@ body:has(.band.home) .table-frame {
 }
 
 .directory.grouped .letter h2 {
-  font-size: 1rem;
+  font-size: var(--text-body);
   color: var(--ink);
 }
 
@@ -4201,7 +4214,7 @@ main ul:not([class]) li + li {
 
 .matched-group {
   margin: 1.4rem 0 0.4rem;
-  font-size: 1rem;
+  font-size: var(--text-body);
   color: var(--muted);
 }
 
@@ -4215,7 +4228,7 @@ main ul:not([class]) li + li {
 
 .record-group-head {
   margin: 1.4rem 0 0.6rem;
-  font-size: 1rem;
+  font-size: var(--text-body);
   line-height: 1.3;
   text-wrap: pretty;
 }
@@ -4223,7 +4236,7 @@ main ul:not([class]) li + li {
 .record-group-count {
   margin-left: 0.4rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   font-weight: 400;
 }
 
@@ -4239,7 +4252,7 @@ main ul:not([class]) li + li {
 /* Said once above the possible records: none counts, and the rule that would. */
 .record-not-counted {
   margin: 0 0 0.4rem;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   color: var(--ink);
 }
 
@@ -4269,7 +4282,7 @@ main ul:not([class]) li + li {
 .record-links {
   margin: 0;
   max-width: none;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -4304,7 +4317,7 @@ main ul:not([class]) li + li {
   display: grid;
   gap: 0.15rem;
   margin: 0.45rem 0 0;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   max-width: var(--measure);
 }
 
@@ -4378,7 +4391,7 @@ main ul:not([class]) li + li {
   margin: 0.3rem 0 0 auto;
   color: var(--muted);
   max-width: 22ch;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 /* A background card, inside its row's disclosure in "At a glance": the term, the
@@ -4401,7 +4414,7 @@ main ul:not([class]) li + li {
 
 .card-kind {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .card-label {
@@ -4411,7 +4424,7 @@ main ul:not([class]) li + li {
 
 .card-words-label {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -4419,7 +4432,7 @@ main ul:not([class]) li + li {
    louder than what it says. */
 .term-credit {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -4436,7 +4449,7 @@ main ul:not([class]) li + li {
 .term-card .match-why {
   justify-self: start;
   text-align: left;
-  font-size: 0.88rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -4453,7 +4466,7 @@ main ul:not([class]) li + li {
 
 .term-note {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
@@ -4618,7 +4631,7 @@ main ul:not([class]) li + li {
 .trial-title {
   margin: 0;
   max-width: 36ch;
-  font-size: 1.1rem;
+  font-size: var(--text-l);
   font-weight: 700;
   line-height: 1.3;
   text-wrap: balance;
@@ -4627,7 +4640,7 @@ main ul:not([class]) li + li {
 
 .trial-name {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   overflow-wrap: anywhere;
 }
 
@@ -4674,11 +4687,11 @@ main ul:not([class]) li + li {
   list-style: none;
   color: var(--blue);
   font-weight: 600;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .trial-more summary {
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   margin-top: 0.2rem;
 }
 
@@ -4859,7 +4872,7 @@ main ul:not([class]) li + li {
 .result-table thead th {
   border-top: 0;
   padding: 0.1rem 0;
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--muted);
 }
@@ -4902,7 +4915,7 @@ main ul:not([class]) li + li {
 
   .result-table .spread-inline {
     display: block;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
     color: var(--muted);
   }
 
@@ -4940,7 +4953,7 @@ main ul:not([class]) li + li {
   display: block;
   margin-top: 0.15rem;
   color: var(--muted);
-  font-size: 0.95rem;
+  font-size: var(--text-m);
   line-height: 1.4;
 }
 
@@ -4970,13 +4983,13 @@ main ul:not([class]) li + li {
 .gloss {
   display: block;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   line-height: 1.35;
 }
 
 .digest .gloss {
   margin: 0.2rem 0 0.5rem;
-  font-size: 1rem;
+  font-size: var(--text-body);
 }
 
 /* The outlet under a headline: quieter than the headline, still a full-size target. */
@@ -5027,7 +5040,7 @@ main ul:not([class]) li + li {
   border-radius: 4px;
   background: var(--tint);
   color: var(--ink);
-  font-size: 0.66rem;
+  font-size: var(--text-micro);
   font-weight: 700;
   line-height: 1;
 }
@@ -5058,7 +5071,7 @@ main ul:not([class]) li + li {
 }
 
 .outlet .domain {
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
   color: var(--muted);
   overflow-wrap: anywhere;
 }
@@ -5182,7 +5195,7 @@ main ul:not([class]) li + li {
   background: var(--footer);
   color: var(--on-navy-ink);
   padding-block: 2rem 2.5rem;
-  font-size: 0.92rem;
+  font-size: var(--text-m);
 }
 
 .colophon a {
@@ -5742,7 +5755,7 @@ main ul:not([class]) li + li {
 .preview-note {
   border-bottom: 1px solid var(--rule);
   background: var(--tint);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-weight: 600;
 }
 
@@ -5757,7 +5770,7 @@ main ul:not([class]) li + li {
   padding: 0.6rem 0.85rem;
   border: 1px dashed var(--muted);
   border-radius: var(--radius-s);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 @media print {
@@ -5773,19 +5786,19 @@ main ul:not([class]) li + li {
 }
 
 .search.lookup label {
-  font-size: 1.08rem;
+  font-size: var(--text-l);
 }
 
 .search.lookup input {
   padding: 0.95rem 1.1rem;
   border-width: 2px;
-  font-size: 1.15rem;
+  font-size: var(--text-xl);
 }
 
 .search.lookup button {
   padding-inline: 1.5rem;
   border-width: 2px;
-  font-size: 1.08rem;
+  font-size: var(--text-l);
 }
 
 .results .plain {
@@ -5881,7 +5894,7 @@ main ul:not([class]) li + li {
 
 .digest .bridge {
   margin: 0 0 0.45rem;
-  font-size: 1.02rem;
+  font-size: var(--text-body);
 }
 
 .brief-group {
@@ -5907,7 +5920,7 @@ main ul:not([class]) li + li {
 
 .brief-group h3 {
   margin: 0.72rem 0 0;
-  font-size: 1.1rem;
+  font-size: var(--text-l);
   font-weight: 700;
   line-height: 1.25;
 }
@@ -5980,13 +5993,13 @@ main ul:not([class]) li + li {
 }
 
 .brief-open .brief-source {
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--muted);
 }
 
 .brief-link {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text-m);
   font-weight: 600;
 }
 
@@ -6021,7 +6034,7 @@ main ul:not([class]) li + li {
 
   .brief-q {
     grid-column: 1;
-    font-size: 0.88rem;
+    font-size: var(--text-s);
   }
 
   .brief-a {
@@ -6100,7 +6113,7 @@ main ul:not([class]) li + li {
   justify-content: space-between;
   margin-top: 0.1rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   font-variant-numeric: tabular-nums;
 }
 
@@ -6155,7 +6168,7 @@ main ul:not([class]) li + li {
 
 .strip-counts {
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
@@ -6164,7 +6177,7 @@ main ul:not([class]) li + li {
 .row-counts {
   margin: 0.55rem 0 0;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-variant-numeric: tabular-nums;
 }
 
@@ -6193,7 +6206,7 @@ main ul:not([class]) li + li {
 .strip-key {
   margin: 0.9rem 0 0.7rem;
   color: var(--muted);
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .strip-key-title {
@@ -6366,7 +6379,7 @@ body.framed {
 }
 
 .glance-band-label {
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   color: var(--navy-soft);
 }
 
@@ -6445,7 +6458,7 @@ body.framed {
 
 .sheet > .lede {
   margin: 0;
-  font-size: 1.08rem;
+  font-size: var(--text-l);
   max-width: var(--measure);
 }
 
@@ -6479,7 +6492,7 @@ body.framed {
 .onpage-title {
   margin: 0;
   padding: 0 0.6rem 0.5rem;
-  font-size: 0.82rem;
+  font-size: var(--text-s);
   font-weight: 700;
   color: var(--muted);
 }
@@ -6498,7 +6511,7 @@ body.framed {
   border-radius: 0.5rem;
   color: var(--ink);
   text-decoration: none;
-  font-size: 0.92rem;
+  font-size: var(--text-m);
   line-height: 1.3;
   transition:
     background-color 120ms,
@@ -6508,7 +6521,7 @@ body.framed {
 .onpage a .n {
   margin-left: auto;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--text-s);
   white-space: nowrap;
 }
 
@@ -6597,7 +6610,7 @@ body.framed {
   pointer-events: none;
   margin-left: auto;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: var(--text-s);
   text-align: right;
 }
 
@@ -6605,11 +6618,11 @@ body.framed {
   position: relative;
   z-index: 1;
   margin-left: auto;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
 }
 
 .bar.sub {
-  font-size: 1.05rem;
+  font-size: var(--text-l);
 }
 
 /* The controls that narrow the timetable to one kind of entry. */
@@ -6628,7 +6641,7 @@ body.framed {
   background: var(--paper);
   color: var(--ink);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text-m);
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -6988,14 +7001,14 @@ body.framed {
 }
 
 .trial-cell {
-  font-size: 0.95rem;
+  font-size: var(--text-m);
   min-width: 0;
 }
 
 .trial-cell .lbl {
   display: none;
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: var(--text-xs);
 }
 
 .trial-open {
@@ -7055,7 +7068,7 @@ body.framed {
   z-index: 1;
   display: block;
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-s);
   font-weight: 400;
   color: var(--muted);
 }
@@ -7084,7 +7097,7 @@ body.framed {
   margin: 1.6rem 0 0.55rem;
   padding-block: 0.35rem;
   background: var(--paper);
-  font-size: 1.05rem;
+  font-size: var(--text-l);
 }
 
 .take-why + .trial-phase-group .trial-phase-head {
@@ -7100,21 +7113,21 @@ body.framed {
   display: block;
   margin-top: 0.15rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 .trial-posted {
   display: block;
   margin-top: 0.15rem;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
 }
 
 .trial-gloss {
   display: block;
   margin-top: 0.2rem;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: var(--text-s);
   line-height: 1.4;
 }
 
@@ -7234,7 +7247,7 @@ body.framed {
 
 /* The topic page in the frame. */
 .band.record .crumbs {
-  font-size: 0.875rem;
+  font-size: var(--text-s);
 }
 
 .band.record .crumbs a {
@@ -7512,7 +7525,7 @@ body.framed {
 
   /* Beside the card the title leads; the status label gives up a step. */
   .band.record .digest .label {
-    font-size: 1.5rem;
+    font-size: var(--text-status);
   }
 
   /* The tone is a grid item too, so the column's own items say which row they are in. */
@@ -7667,7 +7680,7 @@ body.framed {
 .sheet .bar {
   font-family: var(--display);
   font-weight: 600;
-  font-size: 1.35rem;
+  font-size: var(--text-heading);
   letter-spacing: -0.005em;
 }
 
@@ -7702,7 +7715,7 @@ body.framed {
 .band-lede {
   margin: 0.9rem 0 0;
   max-width: 58ch;
-  font-size: 1.04rem;
+  font-size: var(--text-l);
   line-height: 1.55;
   color: inherit;
   text-wrap: pretty;
@@ -7758,7 +7771,7 @@ body.framed {
   border-radius: var(--radius-s) var(--radius-s) 0 0;
   background: var(--band-card);
   color: var(--on-navy-ink);
-  font-size: 0.85rem;
+  font-size: var(--text-s);
   font-weight: 700;
   line-height: 1.2;
 }
@@ -7826,4 +7839,378 @@ body.framed {
     background: none;
     color: inherit;
   }
+}
+
+/* The sheet as one system (openspec sheet-cohesion, asked for by the operator on
+   2026-11-17 after the band: the rest of a claim page read as disorganised and hard to
+   skim). */
+
+/* A long record folds by year: an older year is one line, its count and its kinds, that
+   opens to the year's records. The fold line is the page's own (as .trials-rest). */
+.year-rest > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--text-m);
+}
+
+.year-rest > summary::-webkit-details-marker {
+  display: none;
+}
+
+.year-total {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.year-kinds,
+.year-basis {
+  color: var(--muted);
+  font-size: var(--note-size);
+}
+
+.year-basis {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.year-rest > summary svg {
+  align-self: center;
+  color: var(--blue);
+  transition: transform 160ms var(--ease-out);
+}
+
+.year-rest[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.year-rest > summary:hover .year-total {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.year-rest[open] > summary {
+  margin-bottom: 0.6rem;
+}
+
+/* A folded year's row is as quiet as its line: the year in the row's weight, not the
+   table's largest. */
+.timetable tr:has(.year-rest:not([open])) th.year {
+  font-size: var(--text-body);
+  color: var(--muted);
+}
+
+/* On a phone a folded year is one compact block: the year beside its count, the kinds
+   under them. */
+@media (max-width: 40rem) {
+  .timetable tr:has(.year-rest:not([open])) {
+    display: grid;
+    grid-template-columns: 3.6rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .timetable tr:has(.year-rest:not([open])) > th.year,
+  .timetable tr:has(.year-rest:not([open])) > td {
+    padding-block: 0.7rem;
+  }
+
+  .timetable tr:has(.year-rest:not([open])) > th.year {
+    padding-top: 0.95rem;
+  }
+
+  .year-rest > summary {
+    min-height: 2.75rem;
+    align-content: center;
+    gap: 0 0.6rem;
+  }
+
+  .year-rest > summary .year-kinds {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+@media print {
+  .year-rest > summary svg {
+    display: none;
+  }
+}
+
+/* One container for every section of a record page: open rows between rules, as "The
+   record in brief" is drawn. A section's body starts under a 2px ink rule and ends on a
+   hairline. A table is not a rounded box, and a list starts under the same rule. */
+.sheet .table-frame,
+.sheet .trial-table {
+  border: 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+}
+
+.sheet .statement-list,
+.sheet .paper-list,
+.sheet .record-list,
+.sheet .organisation-list {
+  border-top: 2px solid var(--ink);
+}
+
+.sheet .statement-list > li:first-child,
+.sheet .paper-list > li:first-child,
+.sheet .record-list > li:first-child,
+.sheet .organisation-list > li:first-child {
+  border-top: 0;
+}
+
+/* A section's opening note is one muted line; "More" gives the rest (scripts/clamps.ts).
+   The same for every section, so the eye lands on the heading and then on the rows. */
+.sheet .glance-lead,
+.sheet .take-why {
+  max-width: var(--measure);
+  margin-bottom: 0.7rem;
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+
+/* At a glance: a term is its label, its value and its score. The source's words keep
+   to two lines, and the line under them says whose words they are; where the claim's
+   term is filed shows once the row is open. */
+.glance-rows .glance-words,
+.glance-rows .glance-words-long {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.glance-more:not([open]) .glance-filed {
+  display: none;
+}
+
+/* No mark is left dangling after the last part in sight. */
+.glance-more:not([open]) summary > span:has(+ .glance-filed)::after {
+  content: none;
+}
+
+/* Trials: a row keeps to what tells one trial from the next. The measure is held to two
+   lines and who runs it to one; the row opens to the rest. People are set as figures. */
+.trial-row .trial-measure-words {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.trial-row .trial-measure .trial-by {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.trial-row .trial-title {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  .glance-rows .glance-words,
+  .glance-rows .glance-words-long,
+  .trial-row .trial-measure-words {
+    display: block;
+    overflow: visible;
+  }
+
+  .trial-row .trial-measure .trial-by {
+    white-space: normal;
+  }
+
+  .glance-more:not([open]) .glance-filed {
+    display: inline;
+  }
+}
+
+/* Trials as one table (openspec sheet-cohesion): the columns are named once, over every
+   group, and stay in sight; each phase is a tinted row with its name and its count, as
+   the reference draws a group; a row is two lines. */
+.sheet .trials {
+  --trial-cols-wide: 8rem minmax(0, 1.1fr) minmax(0, 1.25fr) minmax(0, 1.45fr) minmax(0, 0.9fr);
+}
+
+.sheet .trials .trial-table,
+.sheet .trials .trial-columns-top {
+  --trial-cols: var(--trial-cols-wide);
+}
+
+.sheet .trials .trial-columns-top {
+  position: sticky;
+  top: var(--sticky-top, 0);
+  z-index: 3;
+  border-top: 2px solid var(--ink);
+}
+
+/* A group's own column names: read out, not drawn. */
+.sheet .trials .trial-table > .trial-columns {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sheet .trials .trial-table {
+  border-top: 0;
+  border-bottom: 0;
+}
+
+.sheet .trials .trial-table > .trial-columns + .trial-group {
+  border-top: 0;
+}
+
+.sheet .trials .trial-phase-head {
+  position: static;
+  justify-content: space-between;
+  margin: 0;
+  padding: 0.5rem 1.1rem;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel);
+  font-family: var(--face);
+  font-size: var(--text-m);
+  font-weight: 700;
+}
+
+.sheet .trials .trial-phase-group:first-of-type .trial-phase-head {
+  border-top: 0;
+}
+
+.sheet .trials .trial-phase-group:last-of-type {
+  border-bottom: 1px solid var(--rule);
+}
+
+.sheet .trials .trials-rest {
+  max-width: none;
+}
+
+.sheet .trials .trials-rest > summary {
+  margin: 0.55rem 1.1rem 0.7rem;
+}
+
+.trial-row .trial-measure-words {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+.paper-what,
+.paper-ties {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  align-content: start;
+}
+
+.paper-what > p,
+.paper-ties > p {
+  margin: 0;
+}
+
+/* Papers and organisations as rows of two columns: what it is at the left, how it is
+   tied to this claim at the right, in the note size. */
+@media (min-width: 40.01rem) {
+  .sheet .paper-list {
+    max-width: none;
+  }
+
+  .sheet .paper {
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    column-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .sheet .paper-ties {
+    font-size: var(--note-size);
+  }
+
+  .sheet .organisation-list {
+    max-width: none;
+  }
+
+  .sheet .organisation-list .match-record {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    grid-auto-flow: row dense;
+    column-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .sheet .organisation-list .match-record > * {
+    grid-column: 1;
+  }
+
+  .sheet .organisation-list .match-record > .organisation-roles {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    margin-top: 0;
+    font-size: var(--note-size);
+  }
+}
+
+@media print {
+  .sheet .trials .trial-columns-top {
+    position: static;
+  }
+
+  .trial-row .trial-measure-words {
+    display: block;
+  }
+}
+
+/* The chip, lighter (openspec score-chip, 2026-11-17): the percentage is the chip's
+   figure, in ink and tabular; the band's words beside it are plain. A lower-band reading
+   keeps its words in ink, since the words are what it must say. What is not a score (how
+   a term was found: "by exact name") opens the same panel as plain words, underlined in
+   dots like the page's other words that open, without the chip's outline. */
+.score .score-words {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.score .score-figure {
+  color: var(--ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.score.low .score-words {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.pop-trigger.score.said {
+  padding-inline: 0;
+  border-color: transparent;
+  border-radius: 0;
+  background: none;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--ring);
+  text-underline-offset: 0.25em;
+}
+
+.pop-trigger.score.said .score-words {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pop-trigger.score.said:hover,
+.pop-trigger.score.said:has(+ .pop:popover-open) {
+  border-color: transparent;
+  background: none;
+  text-decoration-style: solid;
+  text-decoration-color: currentColor;
 }
