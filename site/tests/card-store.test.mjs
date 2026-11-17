@@ -36,7 +36,9 @@ test("a card is drawn once and read back the same", async () => {
   const second = await topicPng(vertical, claims);
   assert.deepEqual(second, first);
   assert.equal(kept().length, 1);
-  assert.ok(fs.statSync(file).mtimeMs >= drawnAt, "a card that is read is marked as used");
+  // Marking sets the time to the clock's whole millisecond, which can be a fraction
+  // under the time the file system gave the new file within the same millisecond.
+  assert.ok(fs.statSync(file).mtimeMs >= Math.floor(drawnAt), "a card that is read is marked as used");
 });
 
 test("a card that shows something else is drawn and kept separately", async () => {

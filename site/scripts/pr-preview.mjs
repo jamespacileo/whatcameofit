@@ -19,7 +19,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { buildKey } from "./build-key.mjs";
-import { besideProblems } from "./listing-checks.mjs";
 import { deployProblems, pullRequestWorker } from "./deploy-checks.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
@@ -74,6 +73,9 @@ const data = JSON.parse(fs.readFileSync(exportFile, "utf8"));
 const siteUrl = process.env.SITE_URL;
 // The listing beside the export is held to what staging holds it to: its schema, its
 // size, and naming only claims this export publishes.
+// --state runs before dependencies are installed, and the listing's schema check needs
+// one, so the listing is checked only where the copy is about to be built.
+const { besideProblems } = stateOnly ? { besideProblems: () => [] } : await import("./listing-checks.mjs");
 const problems = [...deployProblems({ data, siteUrl }), ...besideProblems(exportFile, data)];
 if (problems.length > 0) stop(problems);
 
