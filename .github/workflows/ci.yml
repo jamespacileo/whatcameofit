@@ -15,23 +15,93 @@ concurrency:
 
 env:
   ASTRO_TELEMETRY_DISABLED: "1"
+  CI_NODE_VERSION: "26.13.1"
+  UV_PYTHON: "3.12.13"
+  TEST_POSTGRES_IMAGE: postgres@sha256:dd2bf3ce2dc83a81674cf7f217fcfd8a5009a4b325dda5b843bfee82a06cff6f
 
 defaults:
   run:
     shell: bash
 
 jobs:
+  previous-pass:
+    name: Look for a tested tree
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    continue-on-error: true
+    permissions:
+      actions: read
+      contents: read
+    outputs:
+      key: ${{ steps.inputs.outputs.key }}
+      run: ${{ steps.verify.outputs.run }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+          sparse-checkout: /.node-version
+          sparse-checkout-cone-mode: false
+      - name: Fingerprint the checked inputs
+        id: inputs
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SUGGEST_URL: ${{ vars.SUGGEST_URL }}
+          CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
+        run: |
+          # Tests and builds may read today's date. Limit reuse to the same day.
+          if [[ -z "${ImageVersion:-}" || -z "${ImageOS:-}" ]]; then exit 0; fi
+          tree=$(git rev-parse 'HEAD^{tree}')
+          day=$(date -u +%F)
+          key=$(printf '%s\0' "$tree" "$day" "$ImageOS" "$ImageVersion" "$RUNNER_ARCH" \
+            "$SUGGEST_URL" "$CORRECTIONS_URL" "$CHROME_STORE_URL" "$SAFARI_STORE_URL" \
+            "$LLM_MODEL" "$CONTACT_EMAIL" "$DECISION_BACKEND" | sha256sum)
+          echo "key=pr-pass-$PR_NUMBER-${key%% *}" >> "$GITHUB_OUTPUT"
+      - name: Restore the prior run number
+        id: restore
+        if: steps.inputs.outputs.key != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/thenwhat-ci-pass
+          key: ${{ steps.inputs.outputs.key }}
+      - name: Verify the prior workflow passed
+        id: verify
+        if: steps.restore.outputs.cache-hit == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_HEAD: ${{ github.event.pull_request.head.ref }}
+        run: |
+          previous=$(cat "$RUNNER_TEMP/thenwhat-ci-pass")
+          if [[ ! "$previous" =~ ^[0-9]+$ || "$previous" = "$GITHUB_RUN_ID" ]]; then exit 0; fi
+          if gh api "repos/$GITHUB_REPOSITORY/actions/runs/$previous" |
+            jq -e --arg repo "$GITHUB_REPOSITORY" --arg branch "$PR_HEAD" '
+              .event == "pull_request" and .status == "completed" and .conclusion == "success"
+              and .head_repository.full_name == $repo and .head_branch == $branch
+              and .path == ".github/workflows/ci.yml"
+            ' > /dev/null; then
+            echo "run=$previous" >> "$GITHUB_OUTPUT"
+          fi
+
   tests:
     name: ${{ matrix.suite.name }}
+    needs: previous-pass
+    if: ${{ !cancelled() && needs.previous-pass.outputs.run == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         suite:
-          - { name: Pipeline tests, target: check-pipeline, lockfile: site/pnpm-lock.yaml }
+          - { name: Pipeline tests, target: check-pipeline-fast, python: true }
+          - { name: Pipeline round trip, target: test-slow, python: true, lockfile: site/pnpm-lock.yaml }
           - { name: Store tests, target: check-store, lockfile: store/ingest/pnpm-lock.yaml }
-          - { name: Site build tests, target: check-site-build, lockfile: site/pnpm-lock.yaml }
+          - { name: Site build tests 1, target: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '1/2' }
+          - { name: Site build tests 2, target: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '2/2' }
     env:
       UV_LOCKED: "1"
     steps:
@@ -39,24 +109,29 @@ jobs:
         with:
           persist-credentials: false
       - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
-        if: matrix.suite.target == 'check-pipeline'
+        if: matrix.suite.python == true
         with:
           version: "0.11.20"
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: matrix.suite.lockfile != ''
         with:
           package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: matrix.suite.lockfile != ''
         with:
-          node-version-file: .node-version
+          node-version: ${{ env.CI_NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: ${{ matrix.suite.lockfile }}
       - name: Run suite
         env:
           TARGET: ${{ matrix.suite.target }}
+          SITE_TEST_SHARD: ${{ matrix.suite.shard }}
         run: make "$TARGET"
 
   site:
     name: Site tests and release build
+    needs: previous-pass
+    if: ${{ !cancelled() && needs.previous-pass.outputs.run == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     outputs:
@@ -71,7 +146,7 @@ jobs:
           package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version-file: .node-version
+          node-version: ${{ env.CI_NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: site/pnpm-lock.yaml
       # Drawn card images, kept by what decides their pixels (site/src/lib/card-image.ts).
@@ -91,7 +166,7 @@ jobs:
           key: site-deps-${{ runner.os }}-node26-${{ hashFiles('site/pnpm-lock.yaml') }}
           lookup-only: true
       - name: Run site, extension and shell checks
-        run: make site-test extension-test extension scripts-test
+        run: make site-test site-build extension-test extension scripts-test
       - name: Save production extension package
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
@@ -146,7 +221,7 @@ jobs:
 
   check:
     name: Tests and build
-    needs: [tests, site]
+    needs: [previous-pass, tests, site]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -155,9 +230,24 @@ jobs:
         env:
           TESTS: ${{ needs.tests.result }}
           SITE: ${{ needs.site.result }}
+          PRIOR_RUN: ${{ needs.previous-pass.outputs.run }}
         run: |
+          if [[ "$PRIOR_RUN" =~ ^[0-9]+$ && "$TESTS" = skipped && "$SITE" = skipped ]]; then
+            echo "Reused [run $PRIOR_RUN]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$PRIOR_RUN) for identical PR inputs." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           printf 'Test suites: %s\nSite tests and release build: %s\n' "$TESTS" "$SITE"
           test "$TESTS" = success && test "$SITE" = success
+      - name: Record the successful full run
+        if: needs.previous-pass.outputs.key != '' && needs.previous-pass.outputs.run == '' && needs.tests.result == 'success' && needs.site.result == 'success'
+        run: printf '%s\n' "$GITHUB_RUN_ID" > "$RUNNER_TEMP/thenwhat-ci-pass"
+      - name: Save the successful full run
+        if: needs.previous-pass.outputs.key != '' && needs.previous-pass.outputs.run == '' && needs.tests.result == 'success' && needs.site.result == 'success'
+        continue-on-error: true
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/thenwhat-ci-pass
+          key: ${{ needs.previous-pass.outputs.key }}
 
   # A rehearsal of task 6.2 of `cloudflare-source-of-truth`: take the export from the truth
   # store, hold it to the schema and the checks a published snapshot passes, and report how
@@ -184,7 +274,7 @@ jobs:
           package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version-file: .node-version
+          node-version: ${{ env.CI_NODE_VERSION }}
       - run: pnpm --dir store/ingest install --frozen-lockfile
       - run: pnpm --dir site install --frozen-lockfile
       - name: Take the export from the store and check it
@@ -226,7 +316,7 @@ jobs:
           package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version-file: .node-version
+          node-version: ${{ env.CI_NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: site/pnpm-lock.yaml
       - run: pnpm --dir site install --frozen-lockfile

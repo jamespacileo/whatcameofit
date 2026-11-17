@@ -4,7 +4,9 @@ The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare
 
 ## Normal publishing workflow
 
-GitHub Actions runs the pipeline, store, site build, and release checks in parallel. The required `Tests and build` check passes when all four jobs pass. A newer push cancels outstanding checks for the same pull request. Use `make check` to run the checks locally and `make deploy-ci-check` to rehearse the public build.
+GitHub Actions runs the pipeline, store, site build, and release checks in parallel. The required `Tests and build` check passes when all suites pass. A newer push cancels outstanding checks for the same pull request. Use `make check` to run the checks locally and `make deploy-ci-check` to rehearse the public build.
+
+For a new run on a same-repository PR, CI can reuse an earlier pass on that PR if the checked merge tree, release settings, runner image and UTC date match. The required check links to the earlier run and its extension artifact. Changed inputs, forks, manual reruns and pushes to `main` run the suites.
 
 On `main`, the release job archives the rehearsed site for three days. Production downloads the archive from that workflow run, verifies its SHA-256 checksum and commit, and publishes it. It then checks the live commit, a stylesheet, the Worker, the published snapshot and public pages. It retries transient failures and stale responses while the release propagates. If the archive has expired, use **Run workflow** on `main` to build a fresh one.
 

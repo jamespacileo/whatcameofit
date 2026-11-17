@@ -23,7 +23,9 @@ check-fast: lint types test-fast scripts-test site-test extension-test
 check-slow: test-slow store-test check-site-build extension
 
 # One area in full, fast and slow, for work that touches only that area.
-check-pipeline: lint types test
+.PHONY: check-pipeline-fast
+check-pipeline: check-pipeline-fast test-slow
+check-pipeline-fast: lint types test-fast
 check-site: site-test check-site-build
 check-site-build: site-build-test site-build
 check-extension: extension-test
@@ -97,7 +99,7 @@ site-test: site/node_modules
 # The site's tests that build the site (tests/*.build-test.mjs). One at a time: builds
 # share the site's cache folder.
 site-build-test: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run test:build
+	cd site && ASTRO_TELEMETRY_DISABLED=1 node --test --test-reporter=dot --test-concurrency=1 $(if $(SITE_TEST_SHARD),--test-shard="$(SITE_TEST_SHARD)") tests/*.build-test.mjs
 
 site-build: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
