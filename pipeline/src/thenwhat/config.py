@@ -29,8 +29,11 @@ DEFAULT_ALLOWANCES = {
     # reader's to decide.
     "reader": SourceAllowance(requests=3000, period_hours=24, interval_seconds=1),
     # NCBI allows three requests a second without a key; this is two (docs/sources.md).
-    # Its off-peak rule for large jobs is the client's to keep, not a count.
     "pubmed": SourceAllowance(requests=5000, period_hours=24, interval_seconds=0.5),
+    # NCBI asks that a job of more than 100 requests runs off-peak. Requests sent in its
+    # peak hours are counted here as well, across processes and runs; the client stops
+    # at the hundredth until the hours pass or the day's count is restored.
+    "pubmed-peak-hours": SourceAllowance(requests=100, period_hours=24, interval_seconds=0),
 }
 
 
@@ -181,6 +184,15 @@ class Settings(BaseSettings):
     # Read only leads first shared on or after this day. Unset reads leads of any date.
     # It narrows a run to a period; a lead outside it stays due for a later run.
     lead_read_since: date | None = None
+    # The named set of stored trials being worked (openspec trial-report-links), such as
+    # active-since-2025. While it is set, a held lead with an exact or strong link to a
+    # trial of the set is read, and leads so linked are read before the others, phase 3
+    # first. Unset, no set orders the reading.
+    lead_read_trial_set: str | None = None
+    # The share of the month's ceiling that reads for a set of trials may use
+    # (`thenwhat backfill read-set`), in US dollars. Decided by the operator on
+    # 2026-11-17.
+    trial_route_monthly_usd: Decimal = Decimal("15")
     # Score only leads first shared on or after this day. Unset scores leads of any date.
     # An older lead stays unscored, and so unread, until a later run widens the period.
     lead_triage_since: date | None = None

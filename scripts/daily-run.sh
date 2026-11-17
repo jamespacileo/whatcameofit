@@ -150,7 +150,7 @@ if [ "$read_limit" -lt 1 ] || [ "$triage_limit" -lt 1 ]; then
   exit 2
 fi
 if [ "$fetch_days" -lt 1 ] || [ "$fetch_days" -gt 28 ]; then
-  echo "DAILY_RUN_FETCH_DAYS must be 1 to 28: the window may touch two months at most." >&2
+  echo "DAILY_RUN_FETCH_DAYS must be 1 to 28." >&2
   exit 2
 fi
 if [ "$read_workers" -lt 1 ] || [ "$read_workers" -gt 4 ]; then
@@ -159,8 +159,9 @@ if [ "$read_workers" -lt 1 ] || [ "$read_workers" -gt 4 ]; then
 fi
 
 today=$(date '+%Y-%m-%d')
-# The months the link window touches, in UTC as the fetch counts them: the month of the
-# window's first day and, when it differs, this month. `date -v` on macOS, `-d` elsewhere.
+# The months loaded when the fetch names none (it did not run, or failed before writing):
+# those of the last DAILY_RUN_FETCH_DAYS days, in UTC as the fetch counts them.
+# `date -v` on macOS, `-d` elsewhere. A run loads the months the fetch says it wrote.
 window_first=$(date -u -v-"$fetch_days"d '+%Y-%m' 2>/dev/null || date -u -d "$fetch_days days ago" '+%Y-%m')
 window_last=$(date -u '+%Y-%m')
 window_months=$window_first
@@ -484,20 +485,28 @@ elif [ -z "$stopped" ] && before=$(figures counts 2>>"$log"); then
   published_before=$1 pending_before=$2 audit_before=$3
 fi
 
-# 1. The newest link files: the Hacker News stories of the last DAILY_RUN_FETCH_DAYS days,
-#    merged into each month's file the window touches. One or two queries to the public
-#    ClickHouse copy of Hacker News (docs/sources.md); spends nothing.
+# 1. The newest link files: the Hacker News stories since a day before the end of the
+#    last window fetched (hackernews/last-fetch.json beside the files), or of the last
+#    DAILY_RUN_FETCH_DAYS days when there is no record, at most 20 days a run, merged into
+#    each month's file the window touches. After missed nights the gap is caught up, oldest
+#    days first. One or two queries to the public ClickHouse copy of Hacker News
+#    (docs/sources.md); spends nothing.
 if [ -f "$root/scripts/fetch_link_files.py" ] || [ "$dry" = 1 ]; then
   [ -f "$root/scripts/fetch_link_files.py" ] || say "note: scripts/fetch_link_files.py is not in this checkout; a run would skip this step"
   run_step fetch-links uv run --env-file "$env_file" --directory "$root/pipeline" \
-    python "$root/scripts/fetch_link_files.py" hackernews --since-days "$fetch_days" || true
+    python "$root/scripts/fetch_link_files.py" hackernews --since-last-fetch "$fetch_days" || true
 elif [ -z "$stopped" ]; then
   say "skip fetch-links: scripts/fetch_link_files.py is not in this checkout"
   notes="$notes- The link files were not fetched: scripts/fetch_link_files.py is not in this checkout.\\n"
 fi
+if [ -n "$work" ] && [ -f "$work/fetch-links.out" ]; then
+  written=$(sed -n 's/^Months written: \([0-9 -]*\) (.*/\1/p' "$work/fetch-links.out" | tail -n 1)
+  [ -n "$written" ] && window_months=$written
+fi
+[ "$dry" = 1 ] && say "load-links runs for each month the fetch says it wrote; with no record of a fetch, these:"
 
-# 2. Load each month's file the window touched. Sends no request. Loading a link again
-#    adds nothing.
+# 2. Load each month's file the fetch wrote. Sends no request. Loading a link again adds
+#    nothing.
 for window_month in $window_months; do
   hn_file="$link_files/hackernews/$window_month.parquet"
   if [ -f "$hn_file" ] || [ "$dry" = 1 ]; then

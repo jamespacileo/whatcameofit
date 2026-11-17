@@ -7,6 +7,8 @@ import { data } from "../lib/export";
 import { statusSlug } from "../lib/guide";
 import { SITE } from "../../site.config.mjs";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "../lib/status";
+import { NO_REPORT } from "../lib/trial-page.mjs";
+import { listing } from "../lib/trials-listing";
 
 const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
 ---
@@ -90,6 +92,7 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
       <li><a href="#no-signal">No signal</a></li>
       <li><a href="#what-a-report-said">What a report said</a></li>
       <li><a href="#what-a-trial-entry-shows">What a trial entry shows</a></li>
+      {listing.trials.length > 0 && <li><a href="#a-trial-with-no-report">A trial with no report</a></li>}
       <li><a href="#who-a-claim-names">Who a claim names</a></li>
       <li><a href="#what-this-site-never-says">What this site never says</a></li>
       <li><a href="#where-the-data-comes-from">Where the data comes from</a></li>
@@ -211,6 +214,27 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
   <p>
     An entry does not say where a trial takes place or who may take part in it.
   </p>
+
+  {listing.trials.length > 0 && (
+    <>
+      <h2 class="bar" id="a-trial-with-no-report">A trial with no report</h2>
+      <p>
+        Most registered trials are never the subject of a news report, so no claim here cites them.
+        For {listing.trials.length.toLocaleString("en")} of them this site still has a page: the
+        phase 2 and phase 3 studies that ClinicalTrials.gov lists as not finished and whose record it
+        has changed since the start of 2025. Search finds them by registry number, or by words of
+        their title, treatment or condition, after any tracked claim.
+      </p>
+      <p>
+        Such a page is read from the registry's own record when it is opened. It states what the
+        record states and nothing more: the study's state, phase, conditions, treatments, size,
+        sponsor and dates, whether results have been posted to the registry and when, and a link to
+        the record. It reads “{NO_REPORT}” It carries no status, because a status belongs to a
+        claim, and no word on how the study turned out. It does not say where a study takes place
+        or who may take part in it.
+      </p>
+    </>
+  )}
 
   <h2 class="bar" id="what-a-paper-entry-shows">What a paper entry shows</h2>
   <p>

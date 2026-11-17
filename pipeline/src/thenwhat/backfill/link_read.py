@@ -30,7 +30,13 @@ from thenwhat.backfill.allowance import Allowances, held_until, holds_under
 from thenwhat.backfill.errors import BackfillError, SpendCeilingReached
 from thenwhat.backfill.ledger import due_records
 from thenwhat.backfill.link_evaluation import reading_refusal
-from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLAIM
+from thenwhat.backfill.link_screen import (
+    CLAIM,
+    REGISTRY_TRIAL,
+    STRENGTH_TO_READ,
+    STRONG,
+    TITLE_NAMES_CLAIM,
+)
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_hold import OUTLET_HOLD, asking, keep
 from thenwhat.backfill.outlet_kinds import name_of
@@ -41,6 +47,7 @@ from thenwhat.backfill.topics import (
     other_names_of,
     title_names,
 )
+from thenwhat.backfill.trial_links import PHASE_3, at_least, held_and_linked, linked_to
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
@@ -49,6 +56,7 @@ from thenwhat.claims.entry import (
     claims_sharing_a_name,
     core_name,
     find_article,
+    find_claim,
     free_slug_for,
     named_claims,
     owner_of_rule_slug,
@@ -95,7 +103,7 @@ from thenwhat.llm.errors import BudgetExceeded, LlmError
 from thenwhat.resolve.named import candidates_named_in_article
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceError, SystemTime, Time
-from thenwhat.statements.service import StatementChecker
+from thenwhat.statements.service import StatementChecker, StatementsRun
 
 NO_NAME = "its outlet has no display name"
 NO_DATE = "the page gives no publication date"
@@ -188,6 +196,99 @@ def reads_naming_live_claims(session: Session) -> list[tuple[LinkLead, Claim]]:
     return [
         (lead, claim) for lead, claim in reads_naming_claims(session) if claim.archived_at is None
     ]
+
+
+# How a read that the operator or an assistant judged is no report of the claim it
+# overlaps says so in its detail. It no longer names the claim as overlapped, so it is
+# not listed again.
+NOT_A_REPORT_OF = "not a report of"
+_DECIDED_BY = {Decider.HUMAN: "the operator", Decider.ASSISTANT: "the assistant"}
+
+
+class NotAnOverlap(BackfillError):
+    """The lead is not a read left unresolved because it overlaps a claim that is not
+    archived, or it cannot be settled as asked."""
+
+
+def overlapping_read(session: Session, lead_id: int) -> tuple[LinkLead, Claim]:
+    """The lead, with the claim that is not archived whose treatment and condition its
+    read overlaps: one of those `reads_naming_live_claims` lists. Refuses any other."""
+    lead = session.get(LinkLead, lead_id)
+    named = (
+        _OVERLAPPING.search(lead.read_detail or "")
+        if lead is not None and lead.read_outcome is ReadOutcome.IDENTITY_UNRESOLVED
+        else None
+    )
+    claim = find_claim(session, named[1]) if named else None
+    if lead is None or claim is None:
+        raise NotAnOverlap(
+            f"Lead {lead_id} is not a read left unresolved because it overlaps a claim."
+        )
+    if claim.archived_at is not None:
+        raise NotAnOverlap(
+            f"Lead {lead_id} overlaps {claim.slug}, which is archived: fix and unarchive"
+            " the claim, then read the lead again."
+        )
+    return lead, claim
+
+
+def _decided(by: Decider, now: datetime) -> str:
+    """Who settled an overlapping read and on what day, for the lead's detail. Only the
+    operator or an assistant settles one, and an assistant is never recorded as the
+    operator."""
+    if by not in _DECIDED_BY:
+        raise ValueError("An overlapping read is settled by the operator or by an assistant.")
+    return f"by {_DECIDED_BY[by]} on {now:%Y-%m-%d}"
+
+
+def _drafted(lead: LinkLead) -> str:
+    """What the lead's read drafted, as its detail says before naming the overlap."""
+    return (lead.read_detail or "").split(f"; {NAMES_OVERLAP} ", 1)[0]
+
+
+def dismiss_overlap(
+    session: Session, lead_id: int, *, reason: str, by: Decider, now: datetime
+) -> tuple[LinkLead, Claim]:
+    """Record that an overlapping read's article is no report of the claim it overlaps,
+    as the operator or an assistant judged, with the reason. The lead stays identity
+    unresolved, is never read again, points at no claim, and is no longer listed."""
+    lead, claim = overlapping_read(session, lead_id)
+    decided = _decided(by, now)
+    reason = " ".join(reason.split())
+    if not reason:
+        raise NotAnOverlap("Give a reason for dismissing. It is kept, and never published.")
+    lead.read_detail = (
+        f"{_drafted(lead)}; {NOT_A_REPORT_OF} {claim.slug}, decided {decided}: {reason}"
+    )
+    session.flush()
+    return lead, claim
+
+
+@dataclass(frozen=True, slots=True)
+class Attached:
+    """An overlapping read's article, now a source article of the claim it overlaps."""
+
+    claim: Claim
+    article: SourceArticle
+    # False when the claim had the address already: the lead was pointed at that article
+    # and the page reader was not asked.
+    added: bool
+    statements: StatementsRun | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class NotAttached:
+    """Why an overlapping read's article was not attached. The lead is left as it was."""
+
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class _NoPage:
+    """Why the page reader gave no page for a lead, or a page that cannot be used, in
+    the words a lead's detail keeps."""
+
+    detail: str
 
 
 class NothingToRetry(BackfillError):
@@ -313,8 +414,21 @@ class LinkRead:
         match_accept_above: float = 0.0,
         outlet_gap_seconds: float = 0.0,
         read_since: date | None = None,
+        trial_set: str | None = None,
+        only_trial_set: bool = False,
+        least_strength: str = STRONG,
         time: Time | None = None,
     ) -> None:
+        # The set of trials being worked, if the operator named one (openspec
+        # trial-report-links). A held lead linked to it by an exact or strong link is
+        # read, and the leads so linked are read first, phase 3 before the rest. With
+        # `only_trial_set`, no other lead is read: only those linked to the set at
+        # `least_strength` or better. A lead triage rejected is never read.
+        self.trial_set = trial_set
+        self.only_trial_set = only_trial_set and trial_set is not None
+        self._set_strengths = at_least(least_strength)
+        if trial_set is not None:
+            linked_to(STRENGTH_TO_READ, trial_set)  # refuses a set it does not know
         self.pass_above = pass_above
         self.reject_below = reject_below
         self.triage_version = triage_version
@@ -364,7 +478,15 @@ class LinkRead:
                 LinkLead.triage_score >= self.reject_below,
             )
             readable = or_(readable, held_on_a_topic)
+        if (
+            self.trial_set is not None
+            and self.pass_above is not None
+            and self.reject_below is not None
+        ):
+            readable = or_(readable, held_and_linked(self.trial_set, self.reject_below))
         in_scope = and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
+        if self.only_trial_set:
+            in_scope = and_(in_scope, linked_to(self._set_strengths, self.trial_set))
         if self.read_since is not None:
             since = datetime.combine(self.read_since, datetime.min.time(), tzinfo=UTC)
             in_scope = and_(in_scope, LinkLead.first_shared_at >= since)
@@ -378,8 +500,10 @@ class LinkRead:
         return self._names_a_topic
 
     def order(self) -> list[ColumnElement[Any]]:
-        """After those of a topic: the leads linked to a registry trial, then the most
-        shared."""
+        """After those of a topic: the leads with an exact or strong link to a trial of
+        the set being worked, those to its phase 3 trials first; then those so linked
+        to any other trial; then the leads with any link to a registry trial; then the
+        most shared."""
         linked = exists().where(
             LinkLeadLink.link_lead_id == LinkLead.id,
             LinkLeadLink.record_kind == REGISTRY_TRIAL,
@@ -389,7 +513,17 @@ class LinkRead:
             .where(LinkShare.link_lead_id == LinkLead.id)
             .scalar_subquery()
         )
-        return [linked.desc(), shared.desc()]
+        of_the_set: list[ColumnElement[Any]] = []
+        if self.trial_set is not None:
+            of_the_set = [
+                linked_to(STRENGTH_TO_READ, self.trial_set, phase=PHASE_3).desc(),
+                linked_to(STRENGTH_TO_READ, self.trial_set).desc(),
+            ]
+            if self._set_strengths != STRENGTH_TO_READ:
+                of_the_set.append(
+                    linked_to(self._set_strengths, self.trial_set, phase=PHASE_3).desc()
+                )
+        return [*of_the_set, linked_to(STRENGTH_TO_READ).desc(), linked.desc(), shared.desc()]
 
     def check_ready(self, session: Session) -> None:
         """Refuse to read anything until triage has been measured (openspec
@@ -635,16 +769,18 @@ class LinkRead:
         # another's request may be about to stop it.
         with asking(session, record.outlet):
             page = self._ask_for_the_page(session, record, client, now)
-        if not isinstance(page, Retrieved):
+        if isinstance(page, _NoPage):
+            return self._finish(record, ReadOutcome.CANNOT_BE_READ, page.detail)
+        if isinstance(page, Deferred):
             return page
-        retrieved = page
-        return self._read(session, record, client, now, outlet, retrieved)
+        return self._read(session, record, client, now, outlet, page)
 
     def _ask_for_the_page(
         self, session: Session, record: LinkLead, client: ReadClient, now: datetime
-    ) -> Retrieved | WorkOutcome | Deferred:
-        """The lead's page from the page reader, or what became of the lead without one.
-        Run while this worker holds the outlet's turn."""
+    ) -> Retrieved | _NoPage | Deferred:
+        """The lead's page from the page reader, or why there is none: the reader gave
+        none (`_NoPage`), or the outlet may not be asked for now (`Deferred`). Nothing
+        is written on the lead. Run while this worker holds the outlet's turn."""
         held = held_until(session, OUTLET_HOLD + record.outlet, now)
         if held is not None:
             # The reader said when this outlet may be asked again, in this run or an
@@ -684,17 +820,11 @@ class LinkRead:
                 keep(client.allowances, record.outlet, now, later.retry_after_seconds)
             return Deferred(str(later))
         except NotAllowed as refused:
-            return self._finish(
-                record, ReadOutcome.CANNOT_BE_READ, f"{NOT_ALLOWED}: {refused.reason}"
-            )
+            return _NoPage(f"{NOT_ALLOWED}: {refused.reason}")
         except NotServed as missing:
-            return self._finish(
-                record,
-                ReadOutcome.CANNOT_BE_READ,
-                f"{NO_PAGE} (the site answered {missing.status})",
-            )
+            return _NoPage(f"{NO_PAGE} (the site answered {missing.status})")
         except ThinPage:
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, "too little article text")
+            return _NoPage("too little article text")
         # The reader got a page from this outlet: it can be asked again.
         with self._outlets:
             self._not_now.pop(record.outlet, None)
@@ -712,12 +842,10 @@ class LinkRead:
         """What the page the reader gave becomes: a source article, a new claim, or the
         reason it is neither."""
         page = retrieved.page
-        day = published_day(page.published if page else None)
-        if day is None:
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_DATE)
-        headline = (page.headline or "").strip() if page else ""
-        if not headline:
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_HEADLINE)
+        dated = _date_and_headline(retrieved)
+        if isinstance(dated, _NoPage):
+            return self._finish(record, ReadOutcome.CANNOT_BE_READ, dated.detail)
+        day, headline = dated
 
         # The one model read. From here a failure is returned, not raised, so that the
         # call's cost and any logged decision stay recorded.
@@ -808,21 +936,9 @@ class LinkRead:
             existing, how = self._claim_it_reports(session, record, draft, client, now)
             if existing is not None:
                 claim = claim_by_slug(session, existing)
-                article, _ = article_from_draft(
-                    session,
-                    checker,
-                    claim,
-                    draft,
-                    text=retrieved.text,
-                    url=address,
-                    outlet=outlet,
-                    title=headline,
-                    published_date=day,
-                    archive_url=retrieved.archive_url,
-                    now=now,
+                _, _, note = self._join(
+                    session, record, client, now, claim, draft, checker, retrieved, outlet, dated
                 )
-                record.claim_id, record.source_article_id = claim.id, article.id
-                note = self._named_on_the_page(session, claim, page, client, now)
                 detail = "; ".join(part for part in (established, how, note) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
@@ -899,3 +1015,130 @@ class LinkRead:
         note = self._named_on_the_page(session, extracted.claim, page, client, now)
         detail = "; ".join(part for part in (established, note) if part) or None
         return self._finish(record, ReadOutcome.NEW_CLAIM, detail)
+
+    def _join(
+        self,
+        session: Session,
+        record: LinkLead,
+        client: ReadClient,
+        now: datetime,
+        claim: Claim,
+        draft: Draft,
+        checker: StatementChecker,
+        retrieved: Retrieved,
+        outlet: str,
+        dated: tuple[date, str],
+    ) -> tuple[SourceArticle, StatementsRun, str | None]:
+        """Make the article that was read a source article of a claim that exists, and
+        point the lead at both: the outlet's display name, the page's own headline and
+        publication day, the hash of its text, its reported statements, and the trials
+        and papers its page names. Returns the article, what became of its statements,
+        and why what the page names was not recorded, when it was not."""
+        day, headline = dated
+        article, statements = article_from_draft(
+            session,
+            checker,
+            claim,
+            draft,
+            text=retrieved.text,
+            url=without_tracking(record.url),
+            outlet=outlet,
+            title=headline,
+            published_date=day,
+            archive_url=retrieved.archive_url,
+            now=now,
+        )
+        record.claim_id, record.source_article_id = claim.id, article.id
+        note = self._named_on_the_page(session, claim, retrieved.page, client, now)
+        return article, statements, note
+
+    def attach(
+        self,
+        session: Session,
+        record: LinkLead,
+        claim: Claim,
+        client: ReadClient,
+        *,
+        by: Decider,
+    ) -> Attached | NotAttached | Deferred:
+        """Attach an overlapping read's article to the claim it overlaps, as the read
+        would have had the decision said the article reports that claim: the operator or
+        an assistant has said so instead (openspec lead-reading).
+
+        Nothing of the first read's page was kept, so the page reader is asked again,
+        under the rules of any read: the outlet's hold and turn, the gap between two of
+        its pages, an outlet that refuses the reader, and the reader's allowance. The
+        headline and the publication day are the page's own, never the title the link
+        was shared under or the time it was shared. The claim's review state and audit
+        hold are left as they are. A lead that cannot be attached is left as it was."""
+        now = self._time.now()
+        decided = _decided(by, now)
+        if claim.review_state is not ReviewState.APPROVED or claim.archived_at is not None:
+            state = "archived" if claim.archived_at is not None else claim.review_state.value
+            return NotAttached(
+                f"{claim.slug} is {state}: an article is attached only to an approved claim"
+                " that is not archived"
+            )
+        drafted = _drafted(record)
+        for article in session.scalars(
+            select(SourceArticle).where(SourceArticle.claim_id == claim.id)
+        ):
+            if article_key(article.url) == record.url_key:
+                record.claim_id, record.source_article_id = claim.id, article.id
+                self._finish(
+                    record,
+                    ReadOutcome.ADDED_TO_CLAIM,
+                    f"{drafted}; {NAMES_OVERLAP} {claim.slug}, which had the article: joined"
+                    f" to it {decided}",
+                )
+                session.flush()
+                return Attached(claim, article, added=False)
+        outlet = name_of(record.outlet)
+        if outlet is None:
+            return NotAttached(NO_NAME)
+        refusals = self._outlet_refusals(session, record.outlet, now)
+        if refusals is not None:
+            return NotAttached(f"{OUTLET_REFUSES} for {refusals} pages and served none")
+        with asking(session, record.outlet):
+            page = self._ask_for_the_page(session, record, client, now)
+        if isinstance(page, Deferred):
+            return page
+        if isinstance(page, _NoPage):
+            return NotAttached(page.detail)
+        dated = _date_and_headline(page)
+        if isinstance(dated, _NoPage):
+            return NotAttached(dated.detail)
+        # The one model read, for the article's reported statements, as in any read.
+        checker = client.make_checker(session)
+        try:
+            draft = read_article(client.make_llm(session), checker, page.text, purpose=LEAD_READING)
+        except BudgetExceeded as ceiling:
+            raise SpendCeilingReached(str(ceiling)) from None
+        except LlmError as failure:
+            return NotAttached(str(failure))
+        try:
+            article, statements, note = self._join(
+                session, record, client, now, claim, draft, checker, page, outlet, dated
+            )
+        except EntryError as refused:
+            session.flush()
+            return NotAttached(str(refused))
+        attached = f"{drafted}; {NAMES_OVERLAP} {claim.slug}: attached to it {decided}"
+        self._finish(
+            record, ReadOutcome.ADDED_TO_CLAIM, "; ".join(part for part in (attached, note) if part)
+        )
+        session.flush()
+        return Attached(claim, article, added=True, statements=statements)
+
+
+def _date_and_headline(retrieved: Retrieved) -> tuple[date, str] | _NoPage:
+    """The publication day and the headline the page itself gives, or which one it lacks:
+    an article is never dated or titled from anything else."""
+    page = retrieved.page
+    day = published_day(page.published if page else None)
+    if day is None:
+        return _NoPage(NO_DATE)
+    headline = (page.headline or "").strip() if page else ""
+    if not headline:
+        return _NoPage(NO_HEADLINE)
+    return day, headline

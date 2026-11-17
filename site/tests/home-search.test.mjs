@@ -7,6 +7,7 @@ import { parseHTML } from "linkedom";
 import { readAddress, closestClaims } from "../src/lib/lookup-match.mjs";
 import { SUGGEST_SUBJECT, contactLink } from "../src/lib/contact.mjs";
 import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../src/lib/live-lookup.mjs";
+import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, findListed, forbiddenWord, searchListing } from "../src/lib/trial-page.mjs";
 
 // Exercise the actual home-page submit handler, with only its network boundary
 // controlled. No real article text or live provider requests are used.
@@ -39,6 +40,12 @@ const SEARCH_LOOKUP = {
   },
 };
 let SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+// The trial listing a build carries: synthetic. None unless a test sets it.
+let LISTING = null;
+// Which claims cite which trials, as the build's trial index has it.
+let TRIAL_INDEX = { trials: {} };
+let listingRequests = 0;
+const FIXTURE_LISTING = JSON.parse(fs.readFileSync(new URL("./fixture-trials-listing.json", import.meta.url), "utf8"));
 
 // What each synthetic claim's reports and trials are, as the search detail file has them.
 const SEARCH_DETAIL = {
@@ -70,6 +77,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
   const context = {
     document, URL, setTimeout, BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
+    NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, findListed, searchListing,
     location: { href: "https://example.test/", origin: "https://example.test" }, history,
     innerHeight: 800, matchMedia: () => ({ matches: false }),
     loadSearchIndex: async () => {
@@ -83,6 +91,11 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
       if (url === "/api/lookup") return Promise.resolve({ status: 200, json: async () => liveAnswer });
       if (!searching) return pending;
       if (url === "/search-detail.json") return Promise.resolve({ ok: true, json: async () => SEARCH_DETAIL });
+      if (url === "/trial-index.json") return Promise.resolve(TRIAL_INDEX ? { ok: true, json: async () => TRIAL_INDEX } : { ok: false, status: 404 });
+      if (url === "/trials-listing.json") {
+        listingRequests++;
+        return Promise.resolve(LISTING ? { ok: true, json: async () => LISTING } : { ok: false, status: 404 });
+      }
       return Promise.resolve({ json: async () => SEARCH_LOOKUP });
     },
   };
@@ -302,4 +315,103 @@ test("a search that finds nothing says so plainly and points to pasting a link",
   assert.match(page.results.textContent, /paste the article's link/);
   assert.doesNotMatch(page.results.textContent, /We say that a lot/);
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+});
+
+test("Scenario: A search for an identifier no claim cites", async () => {
+  LISTING = FIXTURE_LISTING;
+  listingRequests = 0;
+  const page = setup(null, HOME);
+  assert.equal(listingRequests, 0, "the listing is fetched before any search");
+  const answer = await searched(page, "nct09000001");
+  assert.equal(page.searches, 0);
+  assert.equal(listingRequests, 1);
+  assert.equal(answer.querySelector(".search-title").textContent, "NCT09000001");
+  const row = answer.querySelector(".listed-trial");
+  assert.equal(row.querySelector("a.listed-title").getAttribute("href"), "/trials/NCT09000001");
+  assert.match(row.textContent, /SYNTH-1: A synthetic study of zetamab.*ClinicalTrials\.gov NCT09000001 · Phase 3 · Under way.*No news report is linked to this record yet\./);
+  assert.match(answer.textContent, /A trial on record is not a treatment option\./);
+  assert.equal(forbiddenWord(answer.textContent.replace("A trial on record is not a treatment option.", "")), null);
+  LISTING = null;
+});
+
+test("words are answered with listed trials after the claims, and a cited one leads to its claim", async () => {
+  LISTING = structuredClone(FIXTURE_LISTING);
+  // The fixture's cited trial, named for a claim this page's index holds.
+  LISTING.trials[0][8] = "antibody";
+  listingRequests = 0;
+  const page = setup(null, HOME);
+  const answer = await searched(page, "synthetic");
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(listingRequests, 1);
+  const group = answer.querySelector(".listed-trials");
+  assert.ok(group, "no listed trials are shown");
+  // After every claim that matched.
+  const claims = [...answer.querySelectorAll(".hit-row")];
+  assert.ok(claims.length > 0 && answer.innerHTML.lastIndexOf("hit-row") < answer.innerHTML.indexOf("listed-trials"));
+  assert.equal(group.querySelector("h3").textContent, "Registered trials with these words");
+  const rows = [...group.querySelectorAll(".listed-trial")];
+  assert.equal(rows.length, 4);
+  const cited = rows.find((row) => /NCT00000002/.test(row.textContent));
+  assert.equal(cited.querySelector("a.listed-title").getAttribute("href"), "/antibody");
+  assert.match(cited.textContent, /See the tracked claim: An antibody was reported to regrow teeth/);
+  assert.doesNotMatch(cited.textContent, /No news report/);
+  for (const row of rows.filter((other) => other !== cited)) {
+    assert.match(row.querySelector("a.listed-title").getAttribute("href"), /^\/trials\/NCT0900000\d$/);
+    assert.match(row.textContent, /No news report is linked to this record yet\./);
+  }
+  assert.doesNotMatch(group.textContent, /recruit/i);
+  // Narrowing the claims by topic keeps the listed trials.
+  [...answer.querySelectorAll(".search-topic-row button")][1]?.dispatchEvent(new page.window.Event("click"));
+  assert.ok(page.document.querySelector("[data-search-answer] .listed-trials"));
+  LISTING = null;
+});
+
+test("words no claim holds are still answered with listed trials; none found adds nothing", async () => {
+  LISTING = FIXTURE_LISTING;
+  SEARCH_HITS = [];
+  const page = setup(null, PAGE, true);
+  page.submit("zetamab kidney");
+  for (let turn = 0; turn < 6; turn++) await settle();
+  assert.match(page.results.textContent, /Nothing tracked here matches “zetamab kidney”\./);
+  const rows = [...page.results.querySelectorAll(".listed-trial")];
+  assert.equal(rows.length, 1);
+  assert.match(rows[0].textContent, /NCT09000003/);
+  page.submit("zzzqqq");
+  for (let turn = 0; turn < 6; turn++) await settle();
+  assert.equal(page.results.querySelector(".listed-trials"), null);
+  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  LISTING = null;
+});
+
+test("a listed trial a claim cites through an approved match leads to that claim", async () => {
+  // The listing names no claim for it: its column knows only trials cited by an event.
+  LISTING = structuredClone(FIXTURE_LISTING);
+  LISTING.trials[1][8] = null;
+  TRIAL_INDEX = { trials: {
+    NCT09000001: [{ slug: "sheet", headline: "x", possible: true }, { slug: "germ", headline: "x" }],
+    // Only a possible match: counted for nothing, so still no report linked.
+    NCT09000003: [{ slug: "antibody", headline: "x", possible: true }],
+  } };
+  const page = setup(null, HOME);
+  const answer = await searched(page, "zetamab");
+  for (let turn = 0; turn < 4; turn++) await settle();
+  const rows = [...answer.querySelectorAll(".listed-trial")];
+  const matched = rows.find((row) => /NCT09000001/.test(row.textContent));
+  assert.equal(matched.querySelector("a.listed-title").getAttribute("href"), "/germ");
+  assert.match(matched.textContent, /See the tracked claim: Tooth germs were reported to grow teeth/);
+  assert.doesNotMatch(matched.textContent, /No news report/);
+  const possible = rows.find((row) => /NCT09000003/.test(row.textContent));
+  assert.equal(possible.querySelector("a.listed-title").getAttribute("href"), "/trials/NCT09000003");
+  assert.match(possible.textContent, /No news report is linked to this record yet\./);
+  // By its number too.
+  const byNumber = await searched(setup(null, HOME), "NCT09000001");
+  assert.equal(byNumber.querySelector(".listed-trial a.listed-title").getAttribute("href"), "/germ");
+  // Without the index of cited trials, no listed trial is shown at all.
+  TRIAL_INDEX = null;
+  const blind = setup(null, HOME);
+  const unsure = await searched(blind, "zetamab");
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(unsure.querySelector(".listed-trial"), null);
+  TRIAL_INDEX = { trials: {} };
+  LISTING = null;
 });

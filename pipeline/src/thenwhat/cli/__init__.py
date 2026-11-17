@@ -11,7 +11,7 @@ from thenwhat.cli.cache import cache_prune_command
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import article_app, claim_app, promise_app
 from thenwhat.cli.events import event_app, fetch_command
-from thenwhat.cli.export import export_command
+from thenwhat.cli.export import export_command, export_compare_command
 from thenwhat.cli.extract import extract_app
 from thenwhat.cli.icons import icons_command
 from thenwhat.cli.lookup import lookup_command
@@ -25,6 +25,7 @@ from thenwhat.cli.seed import seed_app
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.cli.statements import statements_command
 from thenwhat.cli.terms import terms_command
+from thenwhat.cli.trials_listing import trials_listing_command
 from thenwhat.db.session import make_engine, ping
 
 app = typer.Typer(no_args_is_help=True)
@@ -45,6 +46,8 @@ app.add_typer(review_app, name="review")
 app.command("icons")(icons_command)
 app.command("outlets")(outlets_command)
 app.command("export")(export_command)
+app.command("export-compare")(export_compare_command)
+app.command("trials-listing")(trials_listing_command)
 app.command("measure")(measure_command)
 app.command("archive")(archive_command)
 app.command("unarchive")(unarchive_command)

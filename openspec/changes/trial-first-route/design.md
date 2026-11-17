@@ -347,6 +347,8 @@ What else was weighed as a signal:
 
 Screening's present link is kept, unchanged and still a candidate. It is right about one thing: 34% of the leads it links pass triage, against 1.6% of all. It goes on ordering reads, as `lead-reading` says. It is not strong and is never called a report.
 
+**As built in phase 1 (2026-11-17, task 9.8 to 9.10).** Every link to a trial carries a reason and one of four strengths: `exact` (the registry number), `strong` (a development code beside a condition word), `named` (a code alone, or an acronym that carries a number beside a condition word), `candidate` (the present link, and another name of a drug or biological intervention beside a condition word). Only a development code is telling: the substance registry has not been asked, so a substance's or brand's name is a candidate and no more. An acronym with no number never links. The measurement and the forty links judged are in `tasks.md` under 9.9: a code beside its condition named the right treatment for the right condition in eight of eight, and it links 13 of 558,864 leads; another name beside a condition links 611. Only exact and strong are enough for a held lead to be read (`backfill/link_screen.py`, `STRENGTH_TO_READ`).
+
 ### 5. What a strong link changes, and what it never does
 
 It changes two things, both in what is read:
@@ -366,6 +368,8 @@ A set is a named choice of trials that says which strong links are read first. I
 2. **Under way, phase 2** (17,775).
 3. **Completed in the last two years, phase 2 or 3.** Needs the wider load, since no completion date is stored.
 4. Everything else, in no hurry.
+
+**As built in phase 1:** the sets worked are the two of decision 12, `active-since-2025` and `completed-with-results-since-2025`, and inside a set the leads linked to its phase 3 trials are read first. The set is named by `LEAD_READ_TRIAL_SET` for every read, or by `thenwhat backfill read-set <set>`, which prints the plan and reads only the set's linked leads within `TRIAL_ROUTE_MONTHLY_USD`.
 
 One set is worked at a time, by the operator's command. Finishing a set means its strong links have been read, prepared and audited; it does not mean its trials have reports.
 
@@ -562,13 +566,13 @@ Each step can stop there. Rollback of 1 to 3 is to leave the new columns unread;
 
 None is open for the operator. Each question below was put to the operator on 2026-11-17, in a question dialog, and is recorded with the choice made. The operator's answer to all but three was "Take recommendations": each is settled by the recommendation it was written with. Questions 1, 17, and 11 with 12 were answered in the operator's own words, and are marked so. Where an answer changed a requirement, the spec delta named beside it was revised the same day.
 
-1. **Before the store exists, may a trial with no claim open the page that reads the registry on request?** *Decided 2026-11-17, stated by the operator:* yes, for the listed set only (trials under way in phase 2 or 3), from one static listing, not indexed by search engines. This replaces "wait for the store", which was said on 2026-11-16 before the existing page had been considered. `specs/trial-records` and `specs/trial-pages` already say it; task 5.5's setting is therefore on where the listing is built.
-2. **What the static listing holds.** *Decided 2026-11-17 (recommendation taken):* trials under way in phase 2 or 3, one file.
+1. **Before the store exists, may a trial with no claim open the page that reads the registry on request?** *Decided 2026-11-17, stated by the operator:* yes, for the listed set only (trials under way in phase 2 or 3), from one static listing, not indexed by search engines. This replaces "wait for the store", which was said on 2026-11-16 before the existing page had been considered. `specs/trial-records` and `specs/trial-pages` already say it; task 5.5's setting is therefore on where the listing is built; `LISTED_TRIAL_PAGES=0` at build time turns it off.
+2. **What the static listing holds.** *Decided 2026-11-17 (recommendation taken):* trials under way in phase 2 or 3, one file. Settled by the build: the set is `active-since-2025`, which is that choice less the 2,570 trials whose record the registry has not changed since 1 January 2025: 23,328 trials on the working database on 2026-11-17, in one file of 7,009,433 bytes (1.18 MB with Brotli). `thenwhat trials-listing --set` takes another named set. Each row also holds the acronym, conditions and intervention names, which is why it is 7.0 MB and not the 4.8 MB estimated above for five fields.
 3. **Which fields the load gains.** *Decided 2026-11-17 (recommendation taken), and done:* those of decision 2's first table and decision 12's list, with planned primary outcomes. The reload of 2026-11-17 stored them for all 467,064 trials (`backfill/registry_load.py`, migration `0031`).
 4. **Does a claim drafted on this route wait for its audit?** *Decided 2026-11-17 (recommendation taken):* yes, as every backfill batch does (`docs/adr/0007`).
 5. **Is a held lead read on a strong link?** *Decided 2026-11-17 (recommendation taken):* yes, for the set being worked. A rejected lead is never read.
 6. **May search engines index a trial page with no claim?** *Decided 2026-11-17 (recommendation taken):* no.
-7. **The fixed phrases of decision 2.** *Decided 2026-11-17 (recommendation taken):* approved as written there, the no-report line included. The site holds them and its build still fails on verdict wording.
+7. **The fixed phrases of decision 2.** *Decided 2026-11-17 (recommendation taken):* approved as written there, the no-report line included. The site holds them and its build still fails on verdict wording. They are in `site/src/lib/trial-page.mjs`. The build added three the decision did not have, for the operator to read with the rest (task 5.9): a state the mapping lacks ("The registry gives this study a state this page has no words for. The registry's own record shows it."), results posted with no date ("The registry record holds posted results."), and no phase ("The registry gives no phase for this study.", the wording `specs/trial-pages` already gave).
 8. **The share of the ceiling for this route.** *Decided 2026-11-17 (recommendation taken):* 15 US dollars a month, held as a setting and checked before each batch.
 9. **How recent is "recently completed".** *Decided 2026-11-17 (recommendation taken):* primary completion in the last two years, for the reading set `completed-recently`. The coverage set of question 17 is defined apart from it.
 10. **Papers on a trial page.** *Decided 2026-11-17 (recommendation taken):* papers the registry names as results, and papers whose own record carries the number in the publisher's field, under two plain headings. Not papers that only mention the number.

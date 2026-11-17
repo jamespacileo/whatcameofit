@@ -1,6 +1,7 @@
 """Loading registry trials in bulk, replaying two recorded pages of the registry's list.
 Scenario names are from openspec registry-corpus."""
 
+import json
 from datetime import date, timedelta
 
 import httpx
@@ -13,7 +14,7 @@ from thenwhat.backfill.errors import AllowanceUsedUp, SourcePaused
 from thenwhat.backfill.ledger import count, record_outcome
 from thenwhat.backfill.link_screen import LinkScreen
 from thenwhat.backfill.news_search import NewsSearch
-from thenwhat.backfill.registry_load import load_trials, trial_fields
+from thenwhat.backfill.registry_load import load_trials, trial_fields, without_people
 from thenwhat.backfill.runner import run_step
 from thenwhat.db.models import RegistryLoad, RegistryTrial, WorkEntry
 from thenwhat.domain import WorkOutcome
@@ -251,6 +252,46 @@ def test_a_sponsor_who_is_a_person_is_not_named_in_a_column(fixture_json):
     fields = trial_fields(study)
 
     assert (fields["sponsor_class"], fields["lead_sponsor_name"]) == ("INDIVIDUAL", None)
+
+
+@pytest.mark.parametrize(
+    "sponsors",
+    [
+        # The class as the registry's API writes it.
+        {"leadSponsor": {"name": "A made-up person", "class": "INDIV"}},
+        # A sponsor-investigator, whom the registry often classes as "other".
+        {
+            "leadSponsor": {"name": "A made-up person", "class": "OTHER"},
+            "responsibleParty": {
+                "type": "SPONSOR_INVESTIGATOR",
+                "investigatorFullName": "A made-up person",
+                "investigatorAffiliation": "A made-up university",
+            },
+        },
+    ],
+)
+def test_a_person_is_known_by_the_rule_the_trial_facts_use(fixture_json, sponsors):
+    study = fixture_json("clinicaltrials/list_page_wide.json")["studies"][0]
+    study["protocolSection"]["sponsorCollaboratorsModule"] = sponsors
+
+    assert trial_fields(study)["lead_sponsor_name"] is None
+    assert "A made-up person" not in json.dumps(without_people(study))
+    # The record given is not changed, and the class still says who sponsors.
+    assert study["protocolSection"]["sponsorCollaboratorsModule"] == sponsors
+    kept = without_people(study)["protocolSection"]["sponsorCollaboratorsModule"]
+    assert kept["leadSponsor"] == {"class": sponsors["leadSponsor"]["class"]}
+
+
+def test_an_organisation_with_a_principal_investigator_is_still_named(fixture_json):
+    study = fixture_json("clinicaltrials/list_page_wide.json")["studies"][0]
+    sponsors = {
+        "leadSponsor": {"name": "A made-up university", "class": "OTHER"},
+        "responsibleParty": {"type": "PRINCIPAL_INVESTIGATOR"},
+    }
+    study["protocolSection"]["sponsorCollaboratorsModule"] = sponsors
+
+    assert trial_fields(study)["lead_sponsor_name"] == "A made-up university"
+    assert without_people(study) == study
 
 
 def _sponsors_of(trial: RegistryTrial) -> dict:

@@ -104,6 +104,7 @@ const sentenceJson = sentences
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { SITE as BRAND } from "../../site.config.mjs";
   import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
+  import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, findListed, searchListing } from "../lib/trial-page.mjs";
 
   const SITE_NAME = BRAND.name;
   const form = document.querySelector<HTMLFormElement>("#search")!;
@@ -1001,6 +1002,7 @@ const sentenceJson = sentences
       block.append(more);
     }
 
+    if (listedGroup) block.append(listedGroup);
     if (pickedIn && answerSlot) answerSlot.replaceChildren(block);
     else if (pickedIn) results.replaceChildren(block);
     else place(block, `Results for “${query}” are shown below.`);
@@ -1029,6 +1031,98 @@ const sentenceJson = sentences
       if (!response.ok) throw new Error(`search detail ${response.status}`);
       return response.json();
     }));
+
+  // The trial listing: registry facts of the listed trials. Fetched only once a reader
+  // has searched, and then kept for the page's life.
+  interface ListedTrial {
+    id: string;
+    title: string;
+    acronym: string | null;
+    phases: string[];
+    state: string;
+    conditions: string[];
+    interventions: string[];
+    claim: string | null;
+  }
+  let trialListing: Promise<unknown> | undefined;
+  const loadListing = () =>
+    (trialListing ??= fetch("/trials-listing.json").then((response) => {
+      if (!response.ok) throw new Error(`trial listing ${response.status}`);
+      return response.json();
+    }));
+  // Which published claims cite which trials, as the Worker reads it: built from the
+  // export, so it counts a trial cited through an approved match as well as through an
+  // event. It decides where a listed trial's row leads; the listing's own column is the
+  // pipeline's view on the day it was written.
+  type TrialIndex = { trials?: Record<string, { slug: string; possible?: boolean }[]> };
+  let trialIndex: Promise<TrialIndex> | undefined;
+  const loadTrialIndex = () =>
+    (trialIndex ??= fetch("/trial-index.json").then((response) => {
+      if (!response.ok) throw new Error(`trial index ${response.status}`);
+      return response.json();
+    }));
+  // The claim a listed trial's row leads to: one that cites it, never one it is only a
+  // possible match for.
+  function citingClaim(trial: ListedTrial, claims: Record<string, LookupClaim>, cited: TrialIndex) {
+    const slugs = [...(cited.trials?.[trial.id] ?? []).filter((entry) => entry.possible !== true).map((entry) => entry.slug), trial.claim];
+    const slug = slugs.find((candidate) => candidate && claims[candidate]);
+    return slug ? claims[slug] : undefined;
+  }
+  // The listed trials found for the search on screen, kept so that narrowing the
+  // claims by topic does not drop them.
+  let listedGroup: HTMLElement | null = null;
+
+  // One listed trial: its title, leading to the claim that cites it or to its page of
+  // registry facts; then its registry number, phase and state, and what it tests.
+  function listedRow(trial: ListedTrial, claims: Record<string, LookupClaim>, cited: TrialIndex, words: string[] = []) {
+    const item = element("li", undefined, "listed-trial");
+    const claim = citingClaim(trial, claims, cited);
+    const title = element("a", undefined, "listed-title") as HTMLAnchorElement;
+    title.href = claim ? claim.page : `/trials/${trial.id}`;
+    title.append(marked(trial.acronym ? `${trial.acronym}: ${trial.title}` : trial.title, words));
+    const source = element("p", undefined, "match-source");
+    const phases = trial.phases.map((phase) => PHASE_WORDS[phase]).filter(Boolean).join(", ");
+    source.append([`ClinicalTrials.gov ${trial.id}`, phases, STATE_WORDS[trial.state]].filter(Boolean).join(" · "));
+    const about = element("p", undefined, "listed-about");
+    about.append(marked([trial.interventions.slice(0, 3).join(", "), trial.conditions.slice(0, 2).join(", ")].filter(Boolean).join(" · "), words));
+    const says = element("p", claim ? `${SEARCH_WORDS.claim}: ` : `${NO_REPORT} `, "listed-says");
+    const link = element("a", claim ? claim.headline : SEARCH_WORDS.open) as HTMLAnchorElement;
+    link.href = title.href;
+    says.append(link);
+    item.append(title, source, about, says);
+    return item;
+  }
+
+  // After the claims, the listed trials that hold the searched words. Nothing is said
+  // when none does, or when the listing cannot be read: the claims' answer stands.
+  async function showListed(query: string) {
+    const asked = latest;
+    let listing: unknown;
+    let index: Lookup;
+    let cited: TrialIndex;
+    try {
+      [listing, index, cited] = await Promise.all([loadListing(), loadLookup(), loadTrialIndex()]);
+    } catch {
+      // Without the index of cited trials a row could say no report is linked for a
+      // trial a claim cites, so no listed trial is shown.
+      trialListing = undefined;
+      trialIndex = undefined;
+      return;
+    }
+    if (asked !== latest) return;
+    const words = searchWords(query);
+    const found = searchListing(listing, query) as { total: number; trials: ListedTrial[] };
+    if (found.total === 0) return;
+    const group = element("section", undefined, "listed-trials");
+    group.append(element("h3", SEARCH_WORDS.heading), element("p", SEARCH_WORDS.note, "trial-note"));
+    const list = element("ol", undefined, "plain");
+    list.append(...found.trials.map((trial) => listedRow(trial, index.claims, cited, words)));
+    group.append(list);
+    if (found.total > found.trials.length) group.append(element("p", SEARCH_WORDS.more(found.total - found.trials.length), "match-more"));
+    listedGroup = group;
+    const holder = answerSlot && !answerSlot.hidden ? answerSlot : results;
+    (holder.querySelector(".search-results") ?? holder).append(group);
+  }
 
   function searchFailed() {
     lookup = undefined;
@@ -1075,6 +1169,28 @@ const sentenceJson = sentences
     }
     if (!trial) {
       const id = asWritten(query);
+      // A registry number no claim cites: the listed trial's page of registry facts.
+      let listed: ListedTrial | null = null;
+      let citedTrials: TrialIndex = {};
+      if (/^NCT\d{8}$/.test(id)) {
+        try {
+          [listed, citedTrials] = [findListed(await loadListing(), id) as ListedTrial | null, await loadTrialIndex()];
+        } catch {
+          listed = null;
+          trialListing = undefined;
+          trialIndex = undefined;
+        }
+        if (asked !== latest) return;
+      }
+      if (listed) {
+        const block = element("div", undefined, "search-results");
+        block.append(searchHead(id, "A registered trial"));
+        const list = element("ol", undefined, "plain listed-trials");
+        list.append(listedRow(listed, index.claims, citedTrials));
+        block.append(list, element("p", "A trial on record is not a treatment option.", "trial-note"));
+        place(block, `${id} is a registered trial, shown below.`);
+        return;
+      }
       results.replaceChildren(
         element("p", `No trial with the identifier ${id} is matched to a claim tracked here.`),
         element("p", "This site lists only the trials matched to the claims it tracks."),
@@ -1168,15 +1284,18 @@ const sentenceJson = sentences
       const drawing = document.querySelector<HTMLTemplateElement>("#unfound");
       if (drawing) results.prepend(drawing.content.cloneNode(true));
       results.append(next());
+      void showListed(query);
       return;
     }
     const picked = matches.some((claim) => claim.topic === addressTopic) ? addressTopic : "";
     addressTopic = "";
     searchAnswer(query, matches, index, detail, { exact, picked });
+    void showListed(query);
   }
 
   function answer(text: string) {
     latest += 1;
+    listedGroup = null;
     leaveSearch();
     if (!text) {
       results.replaceChildren();

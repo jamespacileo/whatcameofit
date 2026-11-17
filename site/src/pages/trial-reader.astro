@@ -1,5 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
+// The page's fixed words are filled in by the Worker. Reading them here makes a build
+// fail on a verdict or advice word in any of them (openspec trial-pages).
+import { FIXED_WORDING, assertPlainWording } from "../lib/trial-page.mjs";
+assertPlainWording(FIXED_WORDING);
 ---
 <Base title="__TRIAL_TITLE__" canonicalPath="/trials/__TRIAL_ID__" noindex
   description="Selected trial details from ClinicalTrials.gov, with the source and dates.">
@@ -13,6 +17,9 @@ import Base from "../layouts/Base.astro";
   .trial-reader .trial-source { color: var(--muted); font-size: 0.88rem; }
   .trial-reader .trial-source a { display: inline-block; }
   .trial-reader .trial-number { font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .trial-reader .trial-state { font-size: 1.08rem; margin-block: 1.2rem 0.6rem; }
+  .trial-reader blockquote { margin: 0; padding-inline-start: 1rem; border-inline-start: 3px solid var(--rule); }
+  .trial-reader .trial-facts .trial-list { margin: 0; padding-inline-start: 1.1rem; }
   .trial-reader .trial-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1.1rem 2rem; margin-block: 1.5rem 0; padding-block: 1.3rem; border-block: 1px solid var(--rule); }
   .trial-reader dt { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.25rem; }
   .trial-reader dd { margin: 0; }
@@ -28,7 +35,10 @@ import Base from "../layouts/Base.astro";
   .trial-reader .trial-date { white-space: nowrap; }
   .trial-reader summary { cursor: pointer; padding-block: 0.35rem; }
   @media (max-width: 40rem) {
-    .trial-reader .trial-facts { gap: 1rem; }
+    .trial-reader .trial-state { font-size: 1.08rem; margin-block: 1.2rem 0.6rem; }
+  .trial-reader blockquote { margin: 0; padding-inline-start: 1rem; border-inline-start: 3px solid var(--rule); }
+  .trial-reader .trial-facts .trial-list { margin: 0; padding-inline-start: 1.1rem; }
+  .trial-reader .trial-facts { gap: 1rem; }
     .trial-reader .trial-dates { grid-template-columns: 1fr; gap: 0.2rem; }
     .trial-reader .trial-dates dd { margin-bottom: 0.8rem; }
     .trial-reader a { display: inline-flex; align-items: center; min-height: 44px; }

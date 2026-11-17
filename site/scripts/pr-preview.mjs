@@ -71,7 +71,12 @@ const exportFile = path.resolve(SITE_DIR, process.env.EXPORT_FILE ?? "data/publi
 if (!fs.existsSync(exportFile)) stop([`No export at ${exportFile}.`]);
 const data = JSON.parse(fs.readFileSync(exportFile, "utf8"));
 const siteUrl = process.env.SITE_URL;
-const problems = deployProblems({ data, siteUrl });
+// The listing beside the export is held to what staging holds it to: its schema, its
+// size, and naming only claims this export publishes.
+// --state runs before dependencies are installed, and the listing's schema check needs
+// one, so the listing is checked only where the copy is about to be built.
+const { besideProblems } = stateOnly ? { besideProblems: () => [] } : await import("./listing-checks.mjs");
+const problems = [...deployProblems({ data, siteUrl }), ...besideProblems(exportFile, data)];
 if (problems.length > 0) stop(problems);
 
 // The settings the copy is built with, which are also what its key is made from.

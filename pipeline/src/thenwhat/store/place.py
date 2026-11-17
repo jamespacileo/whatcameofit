@@ -22,7 +22,7 @@ from thenwhat.db.models import (
     SourceArticle,
     TrialRead,
 )
-from thenwhat.store.form import KEY_JOIN, Record, payload_value
+from thenwhat.store.form import KEY_JOIN, Record, key_of, key_parts, payload_value
 from thenwhat.store.rows import (
     SIMPLE,
     ArticleRef,
@@ -46,6 +46,10 @@ from thenwhat.store.rows import (
 
 class NotFound(LookupError):
     """A record names a parent Postgres does not hold."""
+
+
+class Occupied(RuntimeError):
+    """Postgres already holds rows in a table the records would be placed in."""
 
 
 def _claim_id(session: Session, slug: str) -> int | None:
@@ -93,13 +97,11 @@ def _decision_ref(session: Session, text: str) -> str:
         return f"claim:{found(_claim_id(session, slug))}{colon}{tail}"
     if kind == "source_article" and ":statement:" in rest:
         article, _, place = rest.rpartition(":statement:")
-        slug, _, url_key = article.partition(KEY_JOIN)
+        slug, url_key = key_parts(article)
         row_id = found(_article_id(session, ArticleRef(slug, url_key)))
         return f"source_article:{row_id}:statement:{place}"
     if kind == "entity_match" and KEY_JOIN in rest:
-        parts = rest.split(KEY_JOIN)
-        slug, entity_type, source, external = parts[0], parts[1], parts[-2], parts[-1]
-        name = KEY_JOIN.join(parts[2:-2])
+        slug, entity_type, name, source, external = key_parts(rest)
         ref = MatchRef(EntityRef(slug, entity_type, name), source, external)
         return f"entity_match:{found(resolve(session, ref))}"
     if kind == "link_lead" and not rest.isdigit():
@@ -220,7 +222,7 @@ def rows_of(
         return [registry_trial_row(record, payload=payload(b["payload_sha256"]))]
     if kind == "entity_substance":
         substance = records[
-            ("source_record", KEY_JOIN.join(("substance", b["source_name"], b["external_id"])))
+            ("source_record", key_of("substance", b["source_name"], b["external_id"]))
         ]
         value = payload(substance.body["payload_sha256"])
         return [entity_substance_row(record, substance=substance, payload=value)]
@@ -267,7 +269,12 @@ def place(
     session: Session, records: Iterable[Record], r2_objects: Mapping[str, str] | None = None
 ) -> None:
     """Every record into Postgres, parents first, as the store's merge takes a run:
-    publication, then archive, then merge, then rename."""
+    publication, then archive, then merge, then rename.
+
+    Only into empty tables: a record's values replace a row's, which on a row already
+    held would clear a hold or put a rule's review over a person's. The store's merge has
+    the rules for a row already held; this does not, so it refuses (`Occupied`) before
+    writing anything."""
     given = list(records)
     by_key = {(record.kind, record.key): record for record in given}
 
@@ -275,6 +282,18 @@ def place(
         action = record.body.get("action") if record.kind == "action" else None
         return ORDER.index(record.kind), ACTION_ORDER.index(action) if action else 0
 
-    for record in sorted(given, key=order):
-        for row in rows_of(record, by_key, r2_objects):
-            place_row(session, row)
+    rows = [
+        row for record in sorted(given, key=order) for row in rows_of(record, by_key, r2_objects)
+    ]
+    models = {row.model for row in rows}
+    held = sorted(
+        model.__tablename__
+        for model in models
+        if session.scalar(select(model).limit(1)) is not None
+    )
+    if held:
+        raise Occupied(
+            f"Postgres already holds rows in {', '.join(held)}; place only fills empty tables."
+        )
+    for row in rows:
+        place_row(session, row)

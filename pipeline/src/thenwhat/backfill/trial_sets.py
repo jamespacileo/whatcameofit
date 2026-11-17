@@ -2,12 +2,14 @@
 stored trials alone, asking no source. A set says only which trials are in it, never how
 any of them turned out. Behavior: openspec registry-corpus."""
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
 
 from sqlalchemy import ColumnElement, and_, func, select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.errors import BackfillError
 from thenwhat.db.models import RegistryTrial
 
 # Both sets start on 1 January 2025. A completion date can be a year and month without
@@ -49,6 +51,37 @@ SETS = {
     "active-since-2025": active_since_2025,
     "completed-with-results-since-2025": completed_with_results_since_2025,
 }
+
+NO_WIDER_RECORD = (
+    "No stored trial has the activity and results fields yet. Load the trials "
+    "again in full: `thenwhat backfill load-trials --trials interventional`."
+)
+
+
+class UnknownSet(BackfillError):
+    """No set of stored trials has the name given."""
+
+
+class NoWiderRecord(BackfillError):
+    """No stored trial holds the fields the sets are chosen by."""
+
+
+def rule_of(name: str) -> Callable[[], ColumnElement[bool]]:
+    """The rule of a named set of stored trials. Refuses a name it does not know with
+    the list of sets."""
+    if name not in SETS:
+        raise UnknownSet(f"No set of stored trials is named '{name}'. Sets: {', '.join(SETS)}.")
+    return SETS[name]
+
+
+def require_wider_record(session: Session) -> None:
+    """Refuse when no stored trial was loaded with the fields the sets are chosen by:
+    every set would be empty, which says nothing of the trials."""
+    loaded = session.scalar(
+        select(RegistryTrial.id).where(RegistryTrial.last_update_posted.is_not(None)).limit(1)
+    )
+    if loaded is None:
+        raise NoWiderRecord(NO_WIDER_RECORD)
 
 
 @dataclass(slots=True)

@@ -14,6 +14,9 @@ site/.astro/
 site/data/export.json
 site/data/public-export.json
 site/data/public-export.json.tmp
+site/data/trials-listing.json
+site/data/public-trials-listing.json
+site/data/public-trials-listing.json.tmp
 site/.wrangler/
 site/.dev.vars
 

@@ -23,11 +23,9 @@ from zoneinfo import ZoneInfo
 import httpx
 
 from thenwhat.backfill.allowance import Allowances
-from thenwhat.backfill.errors import BackfillError, SourceStop
+from thenwhat.backfill.errors import AllowanceUsedUp, BackfillError, SourceStop
 from thenwhat.sources.base import (
     MissingContact,
-    SourceError,
-    SourceUnavailable,
     SystemTime,
     Time,
     require_recorded,
@@ -45,6 +43,9 @@ FETCH_MAX = 200
 # NCBI asks that a series of more than this many requests runs at the weekend or
 # between 21:00 and 05:00 Eastern time on a weekday.
 SMALL_JOB = 100
+# The allowance that counts requests sent in NCBI's peak hours, for every process and
+# across runs: `SMALL_JOB` of them in a day (`config.DEFAULT_ALLOWANCES`).
+PEAK_HOURS = "pubmed-peak-hours"
 EASTERN = ZoneInfo("America/New_York")
 OFF_PEAK_FROM, OFF_PEAK_UNTIL = 21, 5
 
@@ -61,8 +62,15 @@ class SourceRejectedKey(SourceStop):
     """NCBI did not accept the key. Every record would fail the same way."""
 
 
-class TooManyPapers(SourceError):
-    """A search matched more papers than one answer may hold. Ask for fewer trials."""
+class IndexUnavailable(SourceStop):
+    """NCBI could not be reached, failed, or answered in a form this client does not
+    know. That says nothing about the trials asked for, and every other request would
+    fail the same way: the run ends with its trials still due and no attempt counted."""
+
+
+class TooManyPapers(SourceStop):
+    """A search matched more papers than one answer may hold. Asking the batch's trials
+    one by one would spend the allowance, so the run ends: ask for fewer in a request."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,33 +182,50 @@ class PubMed:
         when they were fetched. One search, then one fetch for each 200 papers."""
         if not numbers:
             return [], self._time.now()
-        found = self._post(
+        answer = self._post(
             "esearch.fcgi",
             {"term": search_term(numbers), "retmax": str(SEARCH_MAX), "retmode": "json"},
-        ).json()["esearchresult"]
-        ids = [str(one) for one in found.get("idlist", [])]
-        if int(found.get("count", len(ids))) > len(ids):
+        )
+        try:
+            found = answer.json()["esearchresult"]
+            ids = [str(one) for one in found["idlist"]]
+            count = int(found.get("count", len(ids)))
+        except (ValueError, KeyError, TypeError):
+            raise IndexUnavailable(
+                f"{self.name} answered a search in a form this client does not know."
+            ) from None
+        if count > len(ids):
             raise TooManyPapers(
-                f"{self.name} holds {found['count']} papers for {len(numbers)} trials, more "
-                "than one answer returns. Ask for fewer trials in a request."
+                f"{self.name} holds {count} papers for {len(numbers)} trials, more than one "
+                "answer returns. Lower PUBMED_TRIALS_PER_REQUEST and run the step again."
             )
         papers: list[Paper] = []
         for start in range(0, len(ids), FETCH_MAX):
             fetched = self._post(
                 "efetch.fcgi", {"id": ",".join(ids[start : start + FETCH_MAX]), "retmode": "xml"}
             )
-            papers += read_papers(fetched.text)
+            try:
+                papers += read_papers(fetched.text)
+            except ElementTree.ParseError:
+                raise IndexUnavailable(
+                    f"{self.name} answered a fetch in a form this client does not know."
+                ) from None
         return papers, self._time.now()
 
     def _post(self, utility: str, fields: dict[str, str]) -> httpx.Response:
         """One request, by POST so a long list of numbers is never an address, counted
-        against the shared allowance."""
+        against the shared allowance. In NCBI's peak hours it is counted against a
+        second allowance too, shared by every process and kept across runs, so workers
+        and restarts together send no more than a small job's requests then."""
         self.check_ready()
-        if self.requests_made >= SMALL_JOB and not is_off_peak(self._time.now()):
-            raise PeakHours(
-                f"{self.name}: NCBI asks that more than {SMALL_JOB} requests run at the "
-                "weekend or between 21:00 and 05:00 Eastern time. Run the step again then."
-            )
+        if not is_off_peak(self._time.now()):
+            try:
+                self._allowances.claim(PEAK_HOURS)
+            except AllowanceUsedUp:
+                raise PeakHours(
+                    f"{self.name}: NCBI asks that more than {SMALL_JOB} requests run at the "
+                    "weekend or between 21:00 and 05:00 Eastern time. Run the step again then."
+                ) from None
         self._allowances.claim(self.name)
         self.requests_made += 1
         data = {"db": DATABASE, "tool": self._tool, "email": self._contact, **fields}
@@ -209,7 +234,7 @@ class PubMed:
         try:
             response = self._client.post(f"{API}/{utility}", data=data)
         except httpx.TransportError as error:
-            raise SourceUnavailable(f"{self.name} could not be reached: {error}") from None
+            raise IndexUnavailable(f"{self.name} could not be reached: {error}") from None
         if response.status_code == 429:
             raise self._allowances.refused(self.name, _retry_after(response))
         if response.status_code in (401, 403) or (
@@ -219,11 +244,9 @@ class PubMed:
                 f"{self.name} did not accept the request (status {response.status_code}). "
                 "Check PUBMED_API_KEY."
             )
-        if response.status_code >= 500:
-            raise SourceUnavailable(f"{self.name} answered with status {response.status_code}.")
         if not response.is_success:
-            raise SourceError(
-                f"{self.name} refused the request with status {response.status_code}."
+            raise IndexUnavailable(
+                f"{self.name} answered with status {response.status_code}. Its trials stay due."
             )
         return response
 

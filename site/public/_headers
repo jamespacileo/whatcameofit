@@ -9,3 +9,10 @@
 # keep these for a year without asking again.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable
+
+# The trial listing and the list of its registry numbers are data for the site's own
+# search and Worker, not pages: search engines are asked not to index them.
+/trials-listing.json
+  X-Robots-Tag: noindex
+/trial-listed.txt
+  X-Robots-Tag: noindex

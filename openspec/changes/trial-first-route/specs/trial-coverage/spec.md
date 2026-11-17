@@ -158,15 +158,19 @@ A paper whose index record carries a trial's registry number in the field its pu
 - **THEN** it is attached to none of them
 
 ### Requirement: The paper index is asked as its usage policy asks
-Every request to the paper index SHALL name the software and give its developer's contact address, and no request SHALL be sent while either is not configured. A key SHALL be sent when one is configured and SHALL NOT be required. Requests SHALL stay under the index's limit for a client with no key. A run that has sent the number of requests the index calls a large job SHALL stop, with its trials still due, during the hours the index asks large jobs to avoid.
+Every request to the paper index SHALL name the software and give its developer's contact address, and no request SHALL be sent while either is not configured. A key SHALL be sent when one is configured and SHALL NOT be required. Requests SHALL stay under the index's limit for a client with no key. Requests sent during the hours the index asks large jobs to avoid SHALL be counted together for every process and across runs, and once they reach the number the index calls a large job, a run SHALL stop with its trials still due. When the index cannot be reached, fails, answers in a form not understood, or holds more papers than one answer returns, the run SHALL end with its trials still due and no attempt counted, and the trials of the request SHALL NOT be asked one by one. The plan SHALL show the requests the due trials need as asked in batches.
 
 #### Scenario: No contact address
 - **WHEN** the step is run and no contact address is configured
 - **THEN** no request is sent and the command names the missing setting
 
 #### Scenario: A large job at midday
-- **WHEN** a run has sent a hundred requests and it is a weekday morning in the index's time zone
-- **THEN** the run stops, says when to run again, and the trials not yet asked stay due
+- **WHEN** a hundred requests have been sent on a weekday morning in the index's time zone, by any number of workers and runs
+- **THEN** the next run stops before sending one, says when to run again, and the trials not yet asked stay due
+
+#### Scenario: The index is down
+- **WHEN** a search for fifty trials is answered with a server error
+- **THEN** the run ends after that one request, the fifty trials stay due and no attempt is counted against any
 
 ### Requirement: What is stored of a paper found by number
 A paper found for a trial SHALL be stored with the trial, the source's name, the paper's index number, the paper's record as reduced, and the time it was fetched. The reduced record SHALL hold no abstract and no author. Storing it SHALL create no claim, match, evidence event or paper record.
@@ -190,15 +194,15 @@ A trial page SHALL list the papers attached to the trial under two fixed heading
 - **THEN** its page lists the paper with its title, journal and year, and still reads that no news report is linked yet
 
 ### Requirement: Stored leads matched on the fingerprint
-The offline linking SHALL treat a fit acronym as it treats a telling name, so that a stored lead whose title holds a fit acronym, a development code or a telling name of a trial is strongly linked to it by the rules of `trial-report-links`. A registry number in a lead's title or address SHALL strongly link the lead to that one trial with no condition word needed.
+The offline linking SHALL link a stored lead to a trial on the trial's registry number, a development code, its acronym and the other names of its interventions, each as its own reason with its own strength, by the rules of `trial-report-links`. A registry number in a lead's title or address SHALL link the lead exactly to that one trial with no condition word needed. An acronym SHALL link only when it carries a number, and its link SHALL be named, not strong: on the working database on 2026-11-17 no stored lead held such an acronym, and of twelve links judged on acronyms without a number, one named a treatment and none a study.
 
 #### Scenario: An acronym in a headline
-- **WHEN** a stored lead's title holds "KEYNOTE-789" and a stored trial has that acronym
-- **THEN** the lead is strongly linked to that trial with the acronym recorded as the reason
+- **WHEN** a stored lead's title holds "KEYNOTE-789" and a word of the conditions of the stored trial with that acronym
+- **THEN** the lead has a named link to that trial with the acronym recorded
 
 #### Scenario: A registry number in an address
 - **WHEN** a stored lead's address holds a trial's registry number
-- **THEN** the lead is strongly linked to that trial alone
+- **THEN** the lead is linked exactly to that trial alone
 
 ### Requirement: One news search carries many trials
 The news search for a set SHALL send the fit terms of many trials in one request, as alternatives, restricted to the configured collections and outlets and to the configured period, within the source's allowance. The number of trials a request carries SHALL be a setting. A trial whose terms were sent and answered SHALL be recorded as searched at that step version whether or not anything was found.

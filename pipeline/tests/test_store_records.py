@@ -53,10 +53,17 @@ from thenwhat.db.models import (
     TrialRead,
     WorkEntry,
 )
-from thenwhat.store.form import INLINE_PAYLOAD_LIMIT, Record, content_sha256, payload_of
+from thenwhat.store.form import (
+    INLINE_PAYLOAD_LIMIT,
+    Record,
+    content_sha256,
+    key_of,
+    key_parts,
+    payload_of,
+)
 from thenwhat.store.gather import gather
-from thenwhat.store.place import place
-from thenwhat.store.records import claim_actions
+from thenwhat.store.place import Occupied, place, place_row, rows_of
+from thenwhat.store.records import claim_actions, link_lead_record
 
 STORE = Path(__file__).resolve().parents[2] / "store"
 T0 = datetime(2026, 3, 1, 9, 30, tzinfo=UTC)
@@ -140,8 +147,13 @@ def _world(session: Session) -> dict[str, Any]:
         reviewed_at=T0,
         reviewed_by="assistant",
     )
+    # Its status was derived later than the kept claim's, and it was held: a second push
+    # under its slug must not give either to the claim it went into.
     gone = _claim(
         "drug-x-tablets-for-melanoma",
+        current_status="phase_3",
+        status_updated_at=T0 + timedelta(days=5),
+        awaiting_audit_at=T0 + timedelta(days=1),
         published_at=T0,
         archived_at=T0 + timedelta(days=3),
         archive_reason="merged into drug-x-for-melanoma: same treatment",
@@ -663,6 +675,18 @@ def _world(session: Session) -> dict[str, Any]:
                 error="registry down",
                 last_attempt_at=T0,
             ),
+            # A ledger entry for a claim no longer held: counted, not sent.
+            WorkEntry(
+                record_kind="claim",
+                record_id=kept.id + 1000,
+                step="prepare",
+                step_version=4,
+                outcome="done",
+                attempts=1,
+                requests_used=0,
+                fingerprint="f4",
+                last_attempt_at=T0,
+            ),
             WorkEntry(
                 record_kind="link_lead",
                 record_id=lead.id,
@@ -708,13 +732,13 @@ def _by_kind(records: list[Record]) -> dict[str, dict[str, dict[str, Any]]]:
 @pytest.fixture
 def round_trip(session: Session) -> tuple[list[Record], list[Record]]:
     world = _world(session)
-    before = gather(session)
+    before = gather(session).records
     session.execute(text(f"TRUNCATE {TABLES} CASCADE"))
     session.expire_all()
     r2 = {payload_of(world["big_payload"]).sha256: payload_of(world["big_payload"]).text}
     place(session, before, r2)
     session.expire_all()
-    return before, gather(session)
+    return before, gather(session).records
 
 
 @pytest.mark.parametrize("kind", KINDS)
@@ -727,7 +751,7 @@ def test_each_kind_comes_back_as_the_store_keeps_it(round_trip, kind: str):
 
 def test_no_row_id_crosses_into_a_record(session: Session):
     world = _world(session)
-    records = gather(session)
+    records = gather(session).records
     ids = {str(world["kept"].id), str(world["gone"].id)}
     for record in records:
         if record.kind in ("decision", "usage"):
@@ -748,7 +772,8 @@ def test_no_row_id_crosses_into_a_record(session: Session):
 
 def test_the_awkward_cases_take_their_natural_form(session: Session):
     world = _world(session)
-    kinds = _by_kind(gather(session))
+    gathered = gather(session)
+    kinds = _by_kind(gathered.records)
 
     # A payload over the inline limit travels by checksum only.
     big = payload_of(world["big_payload"])
@@ -773,11 +798,13 @@ def test_the_awkward_cases_take_their_natural_form(session: Session):
     # A source article is keyed by its address key, not its address as written.
     assert "drug-x-for-melanoma|example.org/news/drug-x" in kinds["source_article"]
 
-    # The merged claim: its claim, its publication and its merge; the archive comes with
-    # the merge, and what it keeps for itself is not sent under a slug the store reads as
-    # the claim that stayed.
+    # The merged claim: its claim and its merge. Its status time, its audit mark, its
+    # publication and its archive are not sent, nor what it keeps for itself: the store
+    # reads its slug as the claim that stayed.
     gone = "drug-x-tablets-for-melanoma"
     assert gone in kinds["claim"]
+    assert "status_updated_at" not in kinds["claim"][gone]
+    assert "awaiting_audit_at" not in kinds["claim"][gone]
     assert kinds["action"][f"merge|{gone}"] == {
         "action": "merge",
         "slug": gone,
@@ -786,14 +813,25 @@ def test_the_awkward_cases_take_their_natural_form(session: Session):
         "decided_by": "human",
         "at": "2026-03-04T09:30:00.000000+00:00",
     }
-    assert f"publish|{gone}" in kinds["action"] and f"archive|{gone}" not in kinds["action"]
+    assert f"publish|{gone}" not in kinds["action"] and f"archive|{gone}" not in kinds["action"]
     assert not [key for key in kinds["entity"] if key.startswith(gone + "|")]
     assert not [key for key in kinds["evidence_event"] if key.startswith(gone + "|")]
 
     # Archive and audit state.
     held = kinds["claim"]["drug-y-for-melanoma"]
     assert held["awaiting_audit_at"] == "2026-03-01T09:30:00.000000+00:00"
-    assert kinds["action"]["archive|drug-y-for-melanoma"]["reason"] == "wrong intervention"
+    archive = kinds["action"]["archive|drug-y-for-melanoma"]
+    assert archive["reason"] == "wrong intervention"
+    # Postgres does not record who archived: never stored as a person's decision.
+    assert archive["decided_by"] == "assistant"
+
+    # A `|` inside a part is escaped, so the key still splits into its parts.
+    (company,) = [key for key in kinds["entity"] if "Acme" in key]
+    assert company == "drug-x-for-melanoma|company|Acme \\| Pharma"
+    assert key_parts(company) == ["drug-x-for-melanoma", "company", "Acme | Pharma"]
+
+    # What was left out is counted.
+    assert gathered.unnamed == {"work_entry": 1}
     assert kinds["claim"]["drug-z-for-melanoma"]["origin"] == "seed"
     assert kinds["claim"]["drug-x-for-melanoma"]["origin"] == "backfill"
 
@@ -820,7 +858,31 @@ def test_the_merged_claim_comes_back_merged_and_archived(round_trip, session: Se
     kept = session.scalars(select(Claim).where(Claim.slug == "drug-x-for-melanoma")).one()
     assert gone.merged_into_id == kept.id
     assert gone.archived_at == T0 + timedelta(days=3)
-    assert gone.published_at == T0
+    assert gone.published_at is None and gone.status_updated_at is None
+    assert gone.awaiting_audit_at is None
+
+
+def test_two_sets_of_parts_never_give_one_key():
+    assert key_of("a|b", "c") != key_of("a", "b|c")
+    for parts in (["a|b", "c"], ["a", "b|c"], ["x\\", "|y"], ["", ""], ["plain"]):
+        assert key_parts(key_of(*parts)) == parts
+
+
+def test_place_refuses_a_database_that_already_holds_rows(session: Session):
+    world = _world(session)
+    records = gather(session).records
+    big = payload_of(world["big_payload"])
+    with pytest.raises(Occupied, match="claim"):
+        place(session, records, {big.sha256: big.text})
+
+
+def test_a_lead_with_an_older_address_key_is_refused(session: Session):
+    _world(session)
+    lead = session.scalars(select(LinkLead).where(LinkLead.url_key_version == 2)).first()
+    assert lead is not None
+    lead.url_key_version = 1
+    with pytest.raises(ValueError, match="rekey-links"):
+        link_lead_record(lead, claim_slug=None)
 
 
 # --- the mapping and store/schema.sql cannot drift ------------------------------------
@@ -900,7 +962,7 @@ def test_every_field_is_a_column_of_the_schema_and_every_required_column_is_ther
     merge = (STORE / "merge.sql").read_text() + (STORE / "schema.sql").read_text()
     read_by_merge = set(re.findall(r"body\s*->>?\s*'(\w+)'", merge))
     seen: set[str] = set()
-    for record in gather(session):
+    for record in gather(session).records:
         fields = set(record.body)
         unread = fields - read_by_merge
         assert not unread, (
@@ -941,7 +1003,9 @@ def test_a_rename_names_the_claim_by_the_slug_it_had_and_comes_back(session: Ses
     }
     session.delete(change)
     session.flush()
-    place(session, [action])
+    # Into a database already holding the claim: row by row, as `place` would.
+    for row in rows_of(action, {}):
+        place_row(session, row)
     again = session.scalars(select(ClaimChange).where(ClaimChange.kind == "rename")).one()
     assert claim_actions(renamed, [again], {}) == [action]
 
@@ -959,7 +1023,7 @@ def test_the_records_merge_into_the_store_and_a_second_push_adds_nothing(session
     its parent (the run's counts reconcile), and the same records pushed again leave
     every table of the store as it was."""
     _world(session)
-    staged = [(r.kind, r.key, r.body) for r in gather(session)]
+    staged = [(r.kind, r.key, r.body) for r in gather(session).records]
     store = _proof().Store()
     ok, run = store.run(staged)
     assert ok, store.last_error

@@ -1,0 +1,180 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "set": {
+      "title": "Set",
+      "type": "string"
+    },
+    "registry": {
+      "const": "clinicaltrials.gov",
+      "default": "clinicaltrials.gov",
+      "title": "Registry",
+      "type": "string"
+    },
+    "records_read": {
+      "anyOf": [
+        {
+          "format": "date",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Records Read"
+    },
+    "columns": {
+      "default": [
+        "id",
+        "title",
+        "acronym",
+        "phases",
+        "state",
+        "updated",
+        "conditions",
+        "interventions",
+        "claim"
+      ],
+      "maxItems": 9,
+      "minItems": 9,
+      "prefixItems": [
+        {
+          "const": "id",
+          "type": "string"
+        },
+        {
+          "const": "title",
+          "type": "string"
+        },
+        {
+          "const": "acronym",
+          "type": "string"
+        },
+        {
+          "const": "phases",
+          "type": "string"
+        },
+        {
+          "const": "state",
+          "type": "string"
+        },
+        {
+          "const": "updated",
+          "type": "string"
+        },
+        {
+          "const": "conditions",
+          "type": "string"
+        },
+        {
+          "const": "interventions",
+          "type": "string"
+        },
+        {
+          "const": "claim",
+          "type": "string"
+        }
+      ],
+      "title": "Columns",
+      "type": "array"
+    },
+    "trials": {
+      "items": {
+        "maxItems": 9,
+        "minItems": 9,
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          {
+            "items": {
+              "enum": [
+                "early_phase_1",
+                "phase_1",
+                "phase_2",
+                "phase_3",
+                "phase_4",
+                "not_applicable"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "enum": [
+              "not_started",
+              "under_way",
+              "completed",
+              "suspended",
+              "terminated",
+              "withdrawn",
+              "unknown"
+            ],
+            "type": "string"
+          },
+          {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        ],
+        "type": "array"
+      },
+      "title": "Trials",
+      "type": "array"
+    }
+  },
+  "required": [
+    "set",
+    "records_read"
+  ],
+  "title": "TrialsListing",
+  "type": "object"
+}

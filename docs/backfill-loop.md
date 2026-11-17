@@ -48,6 +48,15 @@ Read every held claim: its article, its approved trial matches with their reason
 thenwhat audit clear <slug>…
 ```
 
+The list ends with the reads that overlap a claim that is not archived: the read drafted that claim's treatment and condition, the decision did not say the article reports it, so no claim was made and nothing was attached. Such a read is never tried again. Settle each by its lead number:
+
+```sh
+thenwhat audit attach <lead>…                 # the article is a report of that claim
+thenwhat audit dismiss <lead>… --reason "…"   # it is not
+```
+
+`audit attach` asks the page reader for the page again, under the rules of any read (a held outlet, or one asked a moment ago, is left for later and the command is run again; a refusing outlet is not asked; the request counts against the reader's allowance), and takes the headline and publication date from the page, never from the title or time the link was shared with. It reads the page once with the model for its reported statements, as any read does. Only an approved claim that is not archived is given an article; its review state is unchanged and it is put on no hold. A lead it cannot attach is said so and stays listed. `audit dismiss` attaches nothing and keeps the reason, privately.
+
 A review decision an assistant makes is recorded with `--as-assistant`.
 
 ### 4. Defects

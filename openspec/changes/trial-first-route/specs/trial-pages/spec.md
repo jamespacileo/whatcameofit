@@ -54,7 +54,7 @@ A trial page SHALL show the trial's state as one of not started, under way, comp
 - **THEN** the page reads that the registry lists the study as started and not yet finished, and the word "recruiting" is not on the page
 
 ### Requirement: A state phrase claims no more than the registry does
-The phrase for completed SHALL say that the registry lists the study as ended and that this is not a statement of what it found. The phrase for unknown SHALL say that the registry's record has not been confirmed and SHALL say nothing of the trial itself. A state phrase that carries verdict wording SHALL fail the site build.
+The phrase for completed SHALL say that the registry lists the study as ended and that this is not a statement of what it found. The phrase for unknown SHALL say that the registry's record has not been confirmed and SHALL say nothing of the trial itself. A state phrase that carries verdict wording SHALL fail the site build, and so SHALL any other fixed wording of a trial page or of a listed trial's search row that carries a word for how a trial turned out or a word of advice: "option", "available", "eligible", a word for recruiting or joining, "should", "recommend". The site's two notices, which name advice and treatment options to disclaim them, are the one exception.
 
 #### Scenario: A completed trial
 - **WHEN** a trial's record has the overall status completed
@@ -72,11 +72,15 @@ When a record's phase is the registry's "not applicable" or is empty, the page S
 - **THEN** the page reads that the registry gives no phase for this study
 
 ### Requirement: Sponsor and reason for stopping
-A lead sponsor that the registry classes as an individual SHALL NOT be shown. When a record states why a trial was stopped, the page SHALL show that statement in the registry's words, attributed to the registry record, and SHALL NOT reword it.
+A lead sponsor who is a person SHALL NOT be shown, on the page of a trial a claim cites as on the plain page. A sponsor is a person when the registry classes it as an individual, which its API writes "INDIV", or when the record's responsible party is a sponsor-investigator, whatever the class: the rule `trial-facts` uses, held once for the Worker and once for the bulk load. When a record states why a trial was stopped, the page SHALL show that statement in the registry's words, attributed to the registry record, and SHALL NOT reword it.
 
 #### Scenario: A trial sponsored by a person
 - **WHEN** a record's lead sponsor is classed as an individual
 - **THEN** the page shows no sponsor
+
+#### Scenario: A sponsor-investigator classed as other
+- **WHEN** a record's lead sponsor is classed "OTHER" and its responsible party is a sponsor-investigator
+- **THEN** the page shows no sponsor and no name of the investigator
 
 #### Scenario: A terminated trial with a stated reason
 - **WHEN** a terminated trial's record states "Sponsor decision"
@@ -152,11 +156,23 @@ For one registry identifier, a trial page and every claim page that lists the tr
 - **THEN** the export is written
 
 ### Requirement: A trial listing built into the site
-The site SHALL be built with a listing of a set of stored trials the operator names: for each, its identifier, title, state, phases and start date, and the date the records were read. The listing SHALL hold registry facts only, SHALL hold no trial outside the named set, and SHALL be fetched only when a reader searches. A search for a listed trial's identifier or for words of its title SHALL be answered with that trial's page, after any claim that matches.
+The site SHALL be built with a listing of a set of stored trials the operator names: for each, its identifier, title, acronym, phases, state, the day the registry last changed its record, its conditions, the names of its interventions, and the address of a published claim that cites it when one does; and, once for the file, the set's name and the latest day its records were read. The listing SHALL hold registry facts only, as codes and the registry's own text, SHALL hold no trial outside the named set, and SHALL be fetched only when a reader searches. A search for a listed trial's identifier, or for words of its title, its acronym, an intervention's name or a condition, SHALL be answered with that trial, after any claim that matches: a trial no claim cites leads to its trial page and carries the line that no news report is linked yet; a trial a published claim cites leads to that claim. Listed trials SHALL be ordered by a fixed rule over the words they hold, and no score SHALL be shown.
 
 #### Scenario: A search for an identifier no claim cites
 - **WHEN** a reader searches for the identifier of a listed trial that no claim cites
 - **THEN** the search answers with that trial's page
+
+#### Scenario: A search for an acronym
+- **WHEN** a reader searches for the acronym of a listed trial
+- **THEN** that trial is the first listed trial in the answer, after any claim that matches
+
+#### Scenario: Words no claim holds
+- **WHEN** a reader searches for the name of an intervention that no tracked claim holds and two listed trials test
+- **THEN** the search says nothing tracked matches and shows the two listed trials under it
+
+#### Scenario: A listed trial a claim cites
+- **WHEN** a search finds a listed trial that a published claim cites
+- **THEN** the trial's row leads to that claim and does not read that no news report is linked
 
 #### Scenario: A trial outside the named set
 - **WHEN** the listing is built for trials under way in phase 2 or 3 and a stored trial is completed in phase 1
@@ -166,8 +182,44 @@ The site SHALL be built with a listing of a set of stored trials the operator na
 - **WHEN** a reader opens a claim page and never searches
 - **THEN** the listing is not fetched
 
+### Requirement: The listing is written by its own command and staged with the export
+The pipeline SHALL write the listing by a command of its own, `thenwhat trials-listing`, for a named set, sending no request and changing nothing in the database. The listing SHALL have a schema file checked into the site, a test SHALL fail when the schema file and the pipeline's model differ, and the site build SHALL fail on a listing that does not match the schema. The listing SHALL be staged for publication by the command that stages the export, beside it, and staging SHALL refuse a listing that does not match the schema, that holds no trial, that is larger than 8 MiB, or that names a claim the staged export does not publish. A site built with no listing beside its export SHALL build, open no page for an uncited trial, and leave search as it was.
+
+Settled by the build on 2026-11-17: the set listed is `active-since-2025` (phase 2 or 3, under way or not yet started, record changed by the registry on or after 1 January 2025), which held 23,328 trials on the working database that day; its listing is one file of 7,009,433 bytes (6.68 MiB; 1.93 MB with gzip, 1.18 MB with Brotli), so it is not split.
+
+#### Scenario: An unknown set
+- **WHEN** the command is asked for a set that is not named
+- **THEN** it writes nothing and lists the sets
+
+#### Scenario: A listing written against another export
+- **WHEN** the listing names a claim as citing a trial and the staged export does not publish that claim
+- **THEN** staging is refused, the staged listing is unchanged, and the message says to write both again
+
+#### Scenario: A listing too large to be one file
+- **WHEN** a listing is larger than 8 MiB
+- **THEN** staging is refused and says to list a smaller set or split it
+
+#### Scenario: No listing
+- **WHEN** the site is built from an export with no listing beside it
+- **THEN** the build passes, a listed identifier no claim cites answers not found, and a search fetches an empty listing
+
+### Requirement: Before the store, an uncited trial's page is the plain page, read from the registry on request
+Until trial pages are answered from the store, the page of a listed trial that no published claim cites SHALL be answered by reading the trial's own record from the registry on request, as `trial-records` says, and SHALL be the plain page: the facts this capability names and nothing else. It SHALL NOT show the record's summary, an intervention's description, a planned or posted outcome, a location, a contact or who may take part. It SHALL name each intervention with the registry's word for its kind. A state the registry gives that the mapping of `trial-facts` does not hold SHALL be worded by one fixed phrase that says the page has no words for it, and SHALL NOT be guessed. A record that says results are posted and gives no date for it SHALL be worded by one fixed phrase that says results are posted. Whether a trial is cited SHALL be read from the published export, so that a trial's page and the claim pages built from that export never disagree about it.
+
+#### Scenario: A listed trial no claim cites
+- **WHEN** a reader opens the page of a listed trial that no published claim cites and the registry answers
+- **THEN** the page shows the trial's state in its fixed phrase, its phase, conditions, interventions, enrolment, sponsor, dates and whether results are posted, the line that no news report is linked yet, and no summary, outcome, location or contact
+
+#### Scenario: A state the mapping lacks
+- **WHEN** the registry gives a trial a state that is none of the mapped ones
+- **THEN** the page reads that it has no words for the state the registry gives and that the registry's record shows it
+
+#### Scenario: A trial cited since the listing was written
+- **WHEN** the listing says no claim cites a trial and the published export the site was built from holds a claim that does
+- **THEN** the trial's page lists that claim and does not read that no news report is linked
+
 ### Requirement: Uncited trial pages are kept out of search engines until the operator says otherwise
-The page of a trial that no published claim cites SHALL be marked not to be indexed and SHALL NOT be in the sitemap, until a setting the operator controls says otherwise.
+The page of a trial that no published claim cites SHALL be marked not to be indexed and SHALL NOT be in the sitemap, until a setting the operator controls says otherwise. The operator decided on 2026-11-17 that these pages are not indexed until the wording has been read on real pages; no such setting is built yet, and every trial page is marked not to be indexed.
 
 #### Scenario: The sitemap
 - **WHEN** the sitemap is built and 25,898 uncited trials are listed
