@@ -1,9 +1,12 @@
 ---
 import Base from "../layouts/Base.astro";
+import Calendar from "@lucide/astro/icons/calendar";
 import ChevronDown from "@lucide/astro/icons/chevron-down";
+import ChevronRight from "@lucide/astro/icons/chevron-right";
 import Clock from "@lucide/astro/icons/clock";
 import Copy from "@lucide/astro/icons/copy";
 import ExternalLink from "@lucide/astro/icons/external-link";
+import FileText from "@lucide/astro/icons/file-text";
 import ImageDown from "@lucide/astro/icons/image-down";
 import Info from "@lucide/astro/icons/info";
 import Bookmark from "@lucide/astro/icons/bookmark";
@@ -26,7 +29,6 @@ import SharePill from "../components/SharePill.astro";
 import Statements from "../components/Statements.astro";
 import StageTrack from "../components/StageTrack.astro";
 import TopicDrawing from "../components/TopicDrawing.astro";
-import TopicChip from "../components/TopicChip.astro";
 import TrialDetailsLink from "../components/TrialDetailsLink.astro";
 import { APPROACH_LABELS } from "../lib/approach";
 import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/export";
@@ -297,7 +299,13 @@ const sections = [
       <div class="band-main">
         <div class="above-title">
           <div class="filed">
-            <TopicChip vertical={claim.vertical} />
+            {/* Where the page sits: the topics, then this claim's topic. The drawing in the
+                side column shows the topic; these words name it. */}
+            <nav class="crumbs" aria-label="Where this page sits">
+              <a href="/topics">Topics</a>
+              <ChevronRight size={14} stroke-width={2} aria-hidden="true" />
+              <a href={`/topic/${claim.vertical}`}>{verticalTitle(claim.vertical)}</a>
+            </nav>
             {
               claim.approach && (
                 <span class="approach">
@@ -308,7 +316,12 @@ const sections = [
             }
           </div>
         </div>
-        <h1 class:list={["title", { long: claim.headline.length > 70 }]}>
+        <h1
+          class:list={[
+            "title",
+            { long: claim.headline.length > 70, longer: claim.headline.length > 110 },
+          ]}
+        >
           {
             /* A name such as "USAG-1" must not break at its hyphen. */
             claim.headline.split(" ").map((word, index) => (
@@ -319,6 +332,11 @@ const sections = [
             ))
           }
         </h1>
+
+        {/* The summary, straight under the title where the band has room for it. On a
+            phone the band keeps to the title and the status, and the sheet opens with the
+            same words instead: one of the two is drawn, never both. */}
+        <p class="band-lede" data-clamp="5" data-pagefind-ignore>{claim.summary}</p>
 
         {
           /* What kind of thing the treatment is and a gene, straight under the headline:
@@ -379,8 +397,9 @@ const sections = [
 
       </div>
       <div class="digest">
+        {/* The card's heading, in sight as a tab on the card's top edge. */}
+        <h2 class="card-tab">Where it stands</h2>
         <div class="standing">
-          <h2 class="visually-hidden">Where it stands</h2>
           <div class="label-row">
             <span class="label" data-pagefind-meta="status">{STATUS_LABELS[claim.status.code]}</span>
             <Pop id="why" label="Why this status" class="info">
@@ -468,32 +487,41 @@ const sections = [
             )
           }
           <p class="changed" data-pagefind-ignore>
-            {latestMark ? (
-              <>
-                Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
-              </>
-            ) : (
-              "No record yet"
-            )}
+            <Calendar size={15} stroke-width={1.9} aria-hidden="true" />
+            <span>
+              {latestMark ? (
+                <>
+                  Latest record <a href={`#record-${latestMark}`}>{formatDate(latestRecord)}</a>
+                </>
+              ) : (
+                "No record yet"
+              )}
+            </span>
           </p>
           {
             claim.matches && (
               <p class="changed" data-pagefind-ignore>
-                <a href={trials.length > 0 ? "#trials" : "#matched"}>
-                  {registryMatches.length === 0
-                    ? "No registry record matched"
-                    : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
-                </a>
-                {possible > 0 && (
-                  <>
-                    , <a href="#matched">{possible} possible</a>
-                  </>
-                )}
+                <FileText size={15} stroke-width={1.9} aria-hidden="true" />
+                <span>
+                  <a href={trials.length > 0 ? "#trials" : "#matched"}>
+                    {registryMatches.length === 0
+                      ? "No registry record matched"
+                      : `${counted} registry ${counted === 1 ? "record" : "records"} matched`}
+                  </a>
+                  {possible > 0 && (
+                    <>
+                      , <a href="#matched">{possible} possible</a>
+                    </>
+                  )}
+                </span>
               </p>
             )
           }
           <p class="changed" data-pagefind-ignore hidden data-remind-link>
-            <a href="#check-again">Check again later</a>
+            <Clock size={15} stroke-width={1.9} aria-hidden="true" />
+            <span>
+              <a href="#check-again">Check again later</a>
+            </span>
           </p>
         </div>
         <div class="says">

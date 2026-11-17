@@ -1,4 +1,6 @@
 @import "@fontsource-variable/figtree/wght.css";
+/* The heading face on a claim and a topic page (openspec band-structure). */
+@import "@fontsource-variable/newsreader/opsz.css";
 
 :root,
 .theme-light {
@@ -55,6 +57,9 @@
   color-scheme: light;
 
   --face: "Figtree Variable", "Helvetica Neue", Arial, sans-serif;
+  /* The heading face: a record page's title and its section headings. A news serif for
+     what was reported; the status and everything recorded stay in the page's face. */
+  --display: "Newsreader Variable", "Iowan Old Style", Georgia, serif;
   --measure: 66ch;
   --page: 60rem;
   --gutter: clamp(1rem, 4vw, 2rem);
@@ -7505,13 +7510,7 @@ body.framed {
     margin-inline-end: var(--sheet-pad);
   }
 
-  /* Beside the card the title leads: a sentence-long headline is set a step above the
-     status label, which gives up a step in turn. */
-  .band.record .title.long {
-    font-size: 1.95rem;
-    line-height: 1.18;
-  }
-
+  /* Beside the card the title leads; the status label gives up a step. */
   .band.record .digest .label {
     font-size: 1.5rem;
   }
@@ -7631,5 +7630,200 @@ body.framed {
   .clamp-more,
   .band-side {
     display: none;
+  }
+}
+
+/* The record band's structure (openspec band-structure, chosen by the operator on
+   2026-11-17 from three mocks in .impeccable/mocks/hero-serif/, "B with Newsreader"):
+   the topic as a path, the title in the heading face, the summary under it, the card's
+   heading in sight as a tab, its records as marked rows, the actions as filled pills
+   and the topic's drawing large. */
+
+/* The title, in the heading face. Three sizes by length, so a sentence-long headline
+   keeps to a few lines beside the card. */
+.band.record .title {
+  font-family: var(--display);
+  font-weight: 560;
+  font-size: clamp(1.66rem, 5.8vw, 2.62rem);
+  line-height: 1.1;
+  letter-spacing: -0.014em;
+  max-width: 24ch;
+  margin-top: 0.45rem;
+  text-wrap: balance;
+}
+
+.band.record .title.long {
+  font-size: clamp(1.6rem, 5.2vw, 2.3rem);
+  max-width: 28ch;
+}
+
+.band.record .title.longer {
+  font-size: clamp(1.5rem, 4.6vw, 1.95rem);
+  line-height: 1.14;
+  max-width: 36ch;
+}
+
+/* A record page's section headings, in the same face. */
+.sheet .bar {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: -0.005em;
+}
+
+/* The topic as a path. */
+.band.record .crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.1rem 0.35rem;
+  color: var(--navy-soft);
+}
+
+.band.record .crumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  text-decoration-color: rgb(255 255 255 / 0.4);
+  text-underline-offset: 0.2em;
+}
+
+.band.record .crumbs a:hover {
+  color: var(--on-navy-ink);
+  text-decoration-color: currentColor;
+}
+
+.band.record .crumbs svg {
+  flex: none;
+  opacity: 0.7;
+}
+
+/* The summary under the title. Its colour is the band's, so on paper it is ink. */
+.band-lede {
+  margin: 0.9rem 0 0;
+  max-width: 58ch;
+  font-size: 1.04rem;
+  line-height: 1.55;
+  color: inherit;
+  text-wrap: pretty;
+}
+
+.js [data-clamp="5"]:not(.unclamped) {
+  -webkit-line-clamp: 5;
+  line-clamp: 5;
+}
+
+.band.record .clamp-more {
+  color: var(--on-navy-ink);
+  margin-bottom: 0;
+}
+
+/* One summary is drawn: in the band where it has room, in the sheet on a phone. */
+@media (max-width: 40rem) {
+  .band.record .band-lede[data-clamp],
+  .band.record .band-lede + .clamp-more {
+    display: none;
+  }
+}
+
+@media (min-width: 40.01rem) {
+  .sheet > .lede[data-clamp],
+  .sheet > .lede[data-clamp] + .clamp-more {
+    display: none;
+  }
+}
+
+.band.record .glance-band {
+  margin-top: 0.5rem;
+}
+
+/* The card's heading, in sight: a tab on the card's own tone, standing on its top edge. */
+.band.record .digest {
+  position: relative;
+  margin-top: 2.15rem;
+  border-top-left-radius: 0;
+}
+
+.band.record .digest .card-tab {
+  position: absolute;
+  left: -1px;
+  bottom: 100%;
+  display: flex;
+  align-items: center;
+  height: 2.15rem;
+  margin: 0;
+  padding: 0 1rem;
+  border: 1px solid rgb(142 193 245 / 0.3);
+  border-bottom: 0;
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+  background: var(--band-card);
+  color: var(--on-navy-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* The card's records as rows, each with its mark. */
+.band.record .digest .changed {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem;
+}
+
+.band.record .digest .changed > svg {
+  margin-top: 0.2em;
+  color: var(--navy-soft);
+}
+
+/* The actions as filled pills, on the card's tone. */
+@media screen {
+  .band.record .band-actions .share {
+    background: var(--band-card);
+    border-color: transparent;
+  }
+
+  .band.record .band-actions .share:hover {
+    background: var(--band-card);
+    border-color: rgb(142 193 245 / 0.55);
+  }
+}
+
+@media screen and (min-width: 68.01rem) {
+  /* The card starts level with the title's column, tab and all. */
+  .band.record .digest {
+    margin-top: 2.15rem;
+  }
+
+  /* The topic's drawing, large: a mark of the band, not a badge on it. */
+  .band-grid > .band-side {
+    width: 9.5rem;
+    height: 9.5rem;
+    margin-top: 0.2rem;
+    border-radius: 0;
+    background: none;
+    color: var(--band-main);
+    place-items: start;
+  }
+
+  .band-side svg {
+    width: 9.5rem;
+    height: 9.5rem;
+    stroke-width: 1.1;
+  }
+}
+
+@media print {
+  .band.record .digest {
+    margin-top: 0;
+  }
+
+  .band.record .digest .card-tab {
+    position: static;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
   }
 }
