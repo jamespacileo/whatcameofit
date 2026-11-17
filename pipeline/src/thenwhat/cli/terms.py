@@ -1,13 +1,13 @@
 """The terms command: subject terms, the intervention kind and named genes for claims."""
 
-from datetime import UTC, datetime
 from typing import Annotated
 
 import typer
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import claim_by_slug
-from thenwhat.cli import resolve
+from thenwhat.claimsteps.terms import ClaimTerms, TermsFound
+from thenwhat.cli.claim_steps import outcome_line, run_for_claims, unfinished
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
@@ -18,13 +18,9 @@ from thenwhat.sources.opentargets import OpenTargets
 from thenwhat.terms.service import (
     Drugs,
     Genes,
-    KindTermMissing,
+    KindRun,
     Vocabulary,
     claims_without_terms,
-    link_drug,
-    link_kind,
-    link_targets,
-    link_terms,
     published_claims,
 )
 
@@ -101,8 +97,6 @@ def terms_command(
     if rescore_pending and not slugs:
         err.print("Name the claims to recheck pending terms; --all and --missing are not allowed.")
         raise typer.Exit(code=1)
-    settings = settings_or_exit()
-    failed = 0
     with entry_session() as session:
         if slugs:
             claims = [claim_by_slug(session, slug) for slug in slugs]
@@ -117,131 +111,95 @@ def terms_command(
                 else "Every published claim has a candidate subject term."
             )
             return
-        selected = [claim.slug for claim in claims]
-    # Commit each completed claim before asking for the next. A source outage must
-    # not discard earlier paid readings, decisions or reusable source records.
-    for slug in selected:
-        with entry_session() as session:
-            claim = claim_by_slug(session, slug)
-            vocabulary = make_vocabulary(session)
-            genes = make_genes(session)
-            drugs = make_drugs(session)
-            backend = resolve.make_backend(session)
-            accept, reject = settings.match_accept_above, settings.match_reject_below
-            now = datetime.now(UTC)
-            run = link_terms(
-                session,
-                claim,
-                vocabulary=vocabulary,
-                backend=backend,
-                now=now,
-                limit=settings.term_candidates_max,
-                accept_above=accept,
-                reject_below=reject,
-                rescore_pending=rescore_pending,
-            )
-            try:
-                kind = link_kind(
-                    session,
-                    claim,
-                    vocabulary=vocabulary,
-                    backend=backend,
-                    now=now,
-                    accept_above=accept,
-                    reject_below=reject,
-                )
-            except KindTermMissing as error:
-                err.print(str(error), markup=False)
-                raise typer.Exit(code=1) from error
-            targets = link_targets(
-                session,
-                claim,
-                genes=genes,
-                backend=backend,
-                now=now,
-                limit=settings.target_candidates_max,
-                accept_above=accept,
-                reject_below=reject,
-            )
-
-            approved = [t for t in run.scored if t.review_state is ReviewState.APPROVED]
-            exact = sum(term.fit is TermFit.EXACT for term in approved)
-            rejected = sum(t.review_state is ReviewState.REJECTED for t in run.scored)
-            pending = len(run.scored) - len(approved) - rejected
-            out.print(
-                f"{claim.slug}: {run.gathered} candidate subject term(s), {len(run.added)} new."
-                f" Approved by rule: {exact} exact, {len(approved) - exact} broader."
-                f" Rejected by rule: {rejected}. Pending review: {pending}.",
-                markup=False,
-            )
-            for term in approved:
-                assert term.score is not None and term.fit is not None
-                out.print(
-                    f"  approved {term.score:.2f}  {term.role.value}  {term.fit.value}"
-                    f"  {term.external_id}  {term.label}",
-                    markup=False,
-                )
-            for name in run.unresolved:
-                out.print(
-                    f"  '{name}' equals an entry term whose record the vocabulary did not"
-                    " give. It made no candidate; a later run asks again.",
-                    markup=False,
-                )
-
-            if kind.failed:
-                kind_line = "not answered"
-            elif not kind.asked:
-                kind_line = "not asked"
-            elif kind.chosen == NONE_OF_THESE:
-                kind_line = "none of these"
-            elif kind.link is None:
-                kind_line = f"{kind.chosen}, whose term is already a link for this claim"
-            else:
-                assert kind.link.score is not None
-                kind_line = (
-                    f"{kind.chosen} {kind.link.score:.2f}, {_state(kind.link.review_state)}"
-                    f" ({kind.link.external_id} {kind.link.label})"
-                )
-            genes_approved = [t for t in targets.scored if t.review_state is ReviewState.APPROVED]
-            genes_rejected = sum(t.review_state is ReviewState.REJECTED for t in targets.scored)
-            out.print(
-                f"  Kind: {kind_line}. Named genes: {targets.gathered} candidate(s),"
-                f" {len(targets.added)} new. Approved by rule: {len(genes_approved)}."
-                f" Rejected by rule: {genes_rejected}."
-                f" Pending review: {len(targets.scored) - len(genes_approved) - genes_rejected}.",
-                markup=False,
-            )
-            for term in genes_approved:
-                assert term.score is not None
-                out.print(
-                    f"  approved {term.score:.2f}  target  {term.external_id}  {term.label}",
-                    markup=False,
-                )
-
-            found = link_drug(session, claim, drugs=drugs, now=now)
-            if found.link is not None:
-                drug_line = (
-                    f"{found.link.label} ({found.link.external_id}), found by its name,"
-                    f" {'new' if found.added else 'already linked'},"
-                    f" {found.link.review_state.value}"
-                )
-            elif found.several:
-                drug_line = (
-                    f"none tied: this claim's names equal {len(found.several)} drugs'"
-                    f" names ({', '.join(found.several)})"
-                )
-            else:
-                drug_line = "none found by name"
-            out.print(f"  Drug record: {drug_line}.", markup=False)
-
-            unscored = len(run.unscored) + len(targets.unscored) + int(kind.failed)
-            if unscored:
-                failed += unscored
-                err.print(
-                    f"  {unscored} could not be scored and stay without a score."
-                    " Run this again for them.",
-                    markup=False,
-                )
-    if failed:
-        # Raised once the session has committed what was stored and logged.
+        named = {claim.id: claim.slug for claim in claims}
+    # Each claim is its own transaction: a source outage does not discard what earlier
+    # claims were given, and a claim keeps its paid decisions when a later part fails.
+    [step] = run_for_claims(
+        list(named), [ClaimTerms.name], alone=True, rescore_pending=rescore_pending
+    )
+    left = False
+    with entry_session() as session:
+        for claim_id, slug in named.items():
+            found = step.results.get(claim_id)
+            if found is not None:
+                _say_terms(slug, found)
+            if unfinished(session, [step], claim_id):
+                left = True
+                err.print(outcome_line(session, step, claim_id, slug) or slug, markup=False)
+    if left:
+        # Raised once what was stored and logged is committed.
         raise typer.Exit(code=1)
+
+
+def _say_terms(slug: str, found: TermsFound) -> None:
+    """What proposing a claim's terms gave, part by part."""
+    run, kind, targets, drug = found.terms, found.kind, found.targets, found.drug
+    if run is not None:
+        approved = [t for t in run.scored if t.review_state is ReviewState.APPROVED]
+        exact = sum(term.fit is TermFit.EXACT for term in approved)
+        rejected = sum(t.review_state is ReviewState.REJECTED for t in run.scored)
+        pending = len(run.scored) - len(approved) - rejected
+        out.print(
+            f"{slug}: {run.gathered} candidate subject term(s), {len(run.added)} new."
+            f" Approved by rule: {exact} exact, {len(approved) - exact} broader."
+            f" Rejected by rule: {rejected}. Pending review: {pending}.",
+            markup=False,
+        )
+        for term in approved:
+            assert term.score is not None and term.fit is not None
+            out.print(
+                f"  approved {term.score:.2f}  {term.role.value}  {term.fit.value}"
+                f"  {term.external_id}  {term.label}",
+                markup=False,
+            )
+        for name in run.unresolved:
+            out.print(
+                f"  '{name}' equals an entry term whose record the vocabulary did not"
+                " give. It made no candidate; a later run asks again.",
+                markup=False,
+            )
+    if isinstance(kind, KindRun) and targets is not None:
+        if kind.failed:
+            kind_line = "not answered"
+        elif not kind.asked:
+            kind_line = "not asked"
+        elif kind.chosen == NONE_OF_THESE:
+            kind_line = "none of these"
+        elif kind.link is None:
+            kind_line = f"{kind.chosen}, whose term is already a link for this claim"
+        else:
+            assert kind.link.score is not None
+            kind_line = (
+                f"{kind.chosen} {kind.link.score:.2f}, {_state(kind.link.review_state)}"
+                f" ({kind.link.external_id} {kind.link.label})"
+            )
+        genes_approved = [t for t in targets.scored if t.review_state is ReviewState.APPROVED]
+        genes_rejected = sum(t.review_state is ReviewState.REJECTED for t in targets.scored)
+        out.print(
+            f"  Kind: {kind_line}. Named genes: {targets.gathered} candidate(s),"
+            f" {len(targets.added)} new. Approved by rule: {len(genes_approved)}."
+            f" Rejected by rule: {genes_rejected}."
+            f" Pending review: {len(targets.scored) - len(genes_approved) - genes_rejected}.",
+            markup=False,
+        )
+        for term in genes_approved:
+            assert term.score is not None
+            out.print(
+                f"  approved {term.score:.2f}  target  {term.external_id}  {term.label}",
+                markup=False,
+            )
+    if drug is not None:
+        if drug.link is not None:
+            drug_line = (
+                f"{drug.link.label} ({drug.link.external_id}), found by its name,"
+                f" {'new' if drug.added else 'already linked'},"
+                f" {drug.link.review_state.value}"
+            )
+        elif drug.several:
+            drug_line = (
+                f"none tied: this claim's names equal {len(drug.several)} drugs'"
+                f" names ({', '.join(drug.several)})"
+            )
+        else:
+            drug_line = "none found by name"
+        out.print(f"  Drug record: {drug_line}.", markup=False)

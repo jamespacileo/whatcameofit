@@ -35,7 +35,7 @@ from thenwhat.resolve.stored import (
 )
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord, UnsearchableTerm
-from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.clinicaltrials import ClinicalTrials, NotSent, Searched
 
 MAX_SUMMARY_CHARACTERS = 400
 
@@ -112,11 +112,13 @@ def _plain_phase(phase: str) -> str:
 
 
 class TrialSearch(Protocol):
-    def search_trials(
-        self, intervention: str, condition: str | None = None
-    ) -> list[SourceRecord]: ...
+    def name_search(self, intervention: str, condition: str | None = None) -> Searched: ...
 
-    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]: ...
+    def phrase_search(self, phrase: str, condition: str | None) -> Searched | NotSent: ...
+
+
+# Told of each search of the registry, and of each term not sent, as it is made.
+Searches = Callable[[Searched | NotSent], None]
 
 
 def combination_search(name: str) -> str | None:
@@ -147,6 +149,7 @@ def trials_of(
     codes: Sequence[str] = (),
     substance: str | None = None,
     filed_under: Sequence[str] = (),
+    searched: Searches | None = None,
 ) -> list[SourceRecord]:
     """Every trial the registry holds under the intervention's name, its other names, its
     search phrases and its development codes. A phrase or a code is searched within the
@@ -158,31 +161,37 @@ def trials_of(
 
     A term the registry cannot search for as written is passed to `unsearchable` and the
     other terms are still searched: each term is its own search. Nothing simpler is
-    tried in its place. With no `unsearchable`, the failure is raised.
+    tried in its place. With no `unsearchable`, the failure is raised. Each search made,
+    and each term not sent, is passed to `searched`.
     """
     names = [entity.name, *entity.synonyms]
     for other in (substance, *filed_under):
         if other and name_key(other) not in {name_key(name) for name in names}:
             names.append(other)
     combined = [search for name in names if (search := combination_search(name))]
-    searches: list[Callable[[], list[SourceRecord]]] = [
+    searches: list[Callable[[], Searched | NotSent]] = [
         *(
-            (lambda term=term: trials.search_trials(term, indication))
+            (lambda term=term: trials.name_search(term, indication))
             for term in dict.fromkeys([*names, *combined])
         ),
         *(
-            (lambda phrase=phrase: trials.search_phrase(phrase, indication))
+            (lambda phrase=phrase: trials.phrase_search(phrase, indication))
             for phrase in dict.fromkeys([*entity.search_phrases, *codes])
         ),
     ]
     records: list[SourceRecord] = []
     for search in searches:
         try:
-            records += search()
+            found = search()
         except UnsearchableTerm as refused:
             if unsearchable is None:
                 raise
             unsearchable(refused)
+            continue
+        if searched is not None:
+            searched(found)
+        if isinstance(found, Searched):
+            records += found.records
     return records
 
 
@@ -200,6 +209,7 @@ def candidates_of(
     *,
     records: TrialRecords | None = None,
     wanted: Callable[[str], bool] = lambda _: True,
+    searched: Searches | None = None,
 ) -> tuple[list[SourceRecord], list[str]]:
     """Every trial that may be the intervention's: what the registry's search returns,
     then the stored trials that list the intervention and that the search did not
@@ -218,7 +228,7 @@ def candidates_of(
         session, [entity.name, *entity.synonyms], indication, codes=codes, substance=substance
     )
     found = trials_of(
-        trials, entity, indication, unsearchable, codes, substance, stored.other_names
+        trials, entity, indication, unsearchable, codes, substance, stored.other_names, searched
     )
     returned = {record.external_id for record in found}
     for record in stored.records:
@@ -256,9 +266,11 @@ def resolve_claim(
     accept_above: float = 0.0,
     unsearchable: Callable[[UnsearchableTerm], None] | None = None,
     records: TrialRecords | None = None,
+    searched: Searches | None = None,
 ) -> list[EntityMatch]:
     """Search the registries for the claim's interventions and papers and store each new
-    hit as a scored, pending candidate. Returns the candidates this run added.
+    hit as a scored, pending candidate. Returns the candidates this run added. Each
+    search of the trial registry, and each term not sent, is passed to `searched`.
 
     The stored trials that list the intervention are candidates too, each read in full
     through `records` when it is given.
@@ -300,6 +312,7 @@ def resolve_claim(
                 wanted=lambda nct_id, entity=entity: (
                     (entity.id, ClinicalTrials.name, nct_id) not in seen
                 ),
+                searched=searched,
             )
             for record in candidates:
                 consider(entity, record)

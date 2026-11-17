@@ -8,6 +8,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from claim_support import settings
 from thenwhat.claims.corrections import (
     NO_BRACKETS,
     NO_DOSE,
@@ -39,6 +40,8 @@ from thenwhat.claims.entry import (
     slug_of_claim_covering,
     unarchive_claim,
 )
+from thenwhat.claimsteps.inputs import notice_changes
+from thenwhat.claimsteps.run import claim_steps, search_due
 from thenwhat.db.models import (
     Claim,
     ClaimChange,
@@ -64,7 +67,6 @@ from thenwhat.domain import (
     StatementSpeaker,
 )
 from thenwhat.export.build import build_export
-from thenwhat.prepare import plan_claims
 from thenwhat.review.decisions import record_decision
 
 NOW = datetime(2026, 11, 16, 12, 0, tzinfo=UTC)
@@ -251,9 +253,11 @@ def test_matches_and_events_stay_and_the_kept_claims_search_is_due(session: Sess
     assert event.claim_id == duplicate.id
     assert done.to_find_again == ["clinicaltrials NCT02503202"]
     assert kept.registry_search_due_at == NOW
-    assert [plan.slug for plan in plan_claims(session, None, pending=False, due=True)] == [
-        "ervebo-ebola"
-    ]
+    # The kept claim's registry search is due; the claim merged into it is no longer
+    # prepared at all.
+    steps = claim_steps(settings())
+    notice_changes(session, steps)
+    assert search_due(session, steps, attempt_limit=3) == [kept.id]
 
 
 def test_named_papers_and_organisations_move_once(session: Session, pair):

@@ -53,20 +53,25 @@
 
 ## 7. Claim steps
 
-- [ ] 7.1 Add a migration for `registry_search` and write a record for each term searched, cut or not sent in the registry search; verify with tests for the four scenarios of "A registry search leaves a record"
-- [ ] 7.2 Add `claim_substance`, `claim_trials` and `claim_papers` as steps over claims, each all or nothing, and remove `_step`'s catch-all from `cli/resolve.py`; verify with tests for the three scenarios of "A lookup that failed is not a finished search"
-- [ ] 7.3 Add `claim_articles`, `claim_fetch`, `claim_readings` and `claim_terms` as steps with the inputs `design.md` gives; verify each with one finished and one put-off test, and that `terms` no longer loses paid decisions when its last lookup fails
-- [ ] 7.4 Keep the registry numbers and identifiers a page names with its source article, add `claim_named_records`, and take `_named_on_the_page` out of the locked section of `LinkRead._read`; verify with tests for both scenarios of "Records a page names are looked up apart from the join"
-- [ ] 7.5 Add `claim_decide` depending on substance, trials and fetch, calling `decide_prepared_lead_claim` unchanged; verify with tests for the three scenarios of "What a decision waits for"
-- [ ] 7.6 Make `thenwhat prepare` run the claim steps through the runner, take approved claims with a part due, and print the per-step report; verify with tests for the scenarios of "Preparing many claims" and "Unfinished parts of a published claim are completed", and one refusal test
-- [ ] 7.7 Report claims with no search record as never searched in `thenwhat prepare` and `thenwhat audit list`; verify with tests for both scenarios of "A claim never searched is told apart from one searched"
-- [ ] 7.8 Keep `thenwhat resolve`, `fetch`, `readings` and `terms` for a named claim as calls of the same steps; verify one success test each
+- [x] 7.1 Add a migration for `registry_search` and write a record for each term searched, cut or not sent in the registry search; verify with tests for the four scenarios of "A registry search leaves a record"
+- [x] 7.2 Add `claim_substance`, `claim_trials` and `claim_papers` as steps over claims, each all or nothing, and remove `_step`'s catch-all from `cli/resolve.py`; verify with tests for the three scenarios of "A lookup that failed is not a finished search"
+- [x] 7.3 Add `claim_articles`, `claim_fetch`, `claim_readings` and `claim_terms` as steps with the inputs `design.md` gives; verify each with one finished and one put-off test, and that `terms` no longer loses paid decisions when its last lookup fails
+  - 2026-11-17: the inputs as built. Readings read the claim's approved trial events, which hold the stored records, and the instructions' version; terms read the names and also the approved matches, since candidates come from the approved trials; fetch reads every approved match, papers included. A claim's input lives in other tables, so before each run the steps' entries are compared with what the claims hold (`claimsteps/inputs.notice_changes`) and those that differ are marked stale, as `mark_changed` does for one record.
+- [x] 7.4 Keep the registry numbers and identifiers a page names with its source article, add `claim_named_records`, and take `_named_on_the_page` out of the locked section of `LinkRead._read`; verify with tests for both scenarios of "Records a page names are looked up apart from the join"
+- [x] 7.5 Add `claim_decide` depending on substance, trials and fetch, calling `decide_prepared_lead_claim` unchanged; verify with tests for the three scenarios of "What a decision waits for"
+  - 2026-11-17: `claim_decide` also waits for `claim_articles`, so that lead-reading's "Prepare comes to an article of a stopped outlet" (the claim keeps awaiting review) still holds. It still does not wait for papers, readings or terms.
+- [x] 7.6 Make `thenwhat prepare` run the claim steps through the runner, take approved claims with a part due, and print the per-step report; verify with tests for the scenarios of "Preparing many claims" and "Unfinished parts of a published claim are completed", and one refusal test
+  - 2026-11-17: `registry_search_due_at` is no longer cleared by a search: it is the time a new search was last asked for, and a change of it makes the search due. `--due` takes the claims due for the substance lookup or the trial search.
+- [x] 7.7 Report claims with no search record as never searched in `thenwhat prepare` and `thenwhat audit list`; verify with tests for both scenarios of "A claim never searched is told apart from one searched"
+- [x] 7.8 Keep `thenwhat resolve`, `fetch`, `readings` and `terms` for a named claim as calls of the same steps; verify one success test each
+  - 2026-11-17: `thenwhat extract article` stays its own command for one named article and pasted text, on the same service as `claim_articles`; its `--unless-held`, used only by the old `prepare`, is gone. A named command exits 1 when a step it ran did not finish, `claim_papers` needing a fix while `OPENALEX_API_KEY` is unset included.
 - [ ] 7.9 On the writer, run the claim steps for fifty approved claims whose answers are stored and compare matches, events and status with what is stored; record the differences here and stop for the operator if there is any
 
 ## 8. Switch over and remove
 
 - [ ] 8.1 Update `scripts/daily-run.sh` to read the new report of `prepare`; verify a dry run of the script prints the prepared counts
 - [ ] 8.2 Delete the process-per-step runner in `cli/prepare.py`, `NOT_NEEDED_TO_DECIDE`, and what is left unused in `backfill/`; verify `vulture` reports nothing new and `make check` passes
+  - 2026-11-17: the process-per-step runner, `NOT_NEEDED_TO_DECIDE`, `plan_claims`, `steps_for`, `_step` and the read's `_named_on_the_page` are deleted, and `make check`'s Python tools pass. Not ticked: `vulture` is not a dependency of the pipeline and could not be run here.
 - [ ] 8.3 Update `docs/url-to-claim.md`, `docs/daily-run.md` and `docs/backfill-loop.md` for the claim steps, requeue and the plan's new lines; verify the commands they show run as written
 - [x] 8.4 Record the decision "one runner for leads and claims; a failure is final only when it is known to be" as an ADR in `docs/adr/`; verify it names what it replaces
 

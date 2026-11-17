@@ -61,6 +61,8 @@ from thenwhat.backfill.trial_sets import (
     require_wider_record,
     rule_of,
 )
+from thenwhat.claimsteps.inputs import CLAIM, notice_changes
+from thenwhat.claimsteps.step import ClaimStep
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
@@ -151,9 +153,23 @@ class NoClient:
         self.requests_made = 0
 
 
+def claim_steps_of(steps: list[Step]) -> list[ClaimStep]:
+    return [step for step in steps if isinstance(step, ClaimStep)]
+
+
+def under_an_allowance(step: Step) -> bool:
+    """Whether the step's requests are counted against a source's allowance. A claim's
+    preparation asks many sources, each at its own pace, under none."""
+    return asks_a_source(step) and step.record_kind != CLAIM
+
+
 def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
     """What a step asks its source through. Refuses here, before any record is
     touched, when the source could not be asked at all."""
+    if step.record_kind == CLAIM:
+        from thenwhat.cli.claim_steps import claim_sources
+
+        return claim_sources()
     if step.source == NO_SOURCE:
         return NoClient()
     if isinstance(step, LinkTriage):
@@ -171,7 +187,6 @@ def make_client(step: Step, settings: Settings, allowances: Allowances) -> Any:
             make_llm=extract.make_llm,
             make_checker=extract.make_checker,
             make_backend=resolve.make_backend,
-            make_research=resolve.make_research,
         )
     if step.source == MediaCloud.name:
         client = MediaCloud(
@@ -337,8 +352,12 @@ def plan_command() -> None:
     settings = settings_or_exit()
     with refusals():
         allowances = make_allowances(settings)
-        with open_session() as session:
-            for step in steps_for(settings):
+        steps = steps_for(settings)
+        with open_session() as session, session.begin_nested() as unchanged:
+            # Claims whose input changed are counted as due, as a run would find them,
+            # and the ledger is left as it was.
+            notice_changes(session, claim_steps_of(steps))
+            for step in steps:
                 counts = count(session, step, settings.backfill_attempt_limit)
                 total = session.scalar(select(func.count()).select_from(step.model)) or 0
                 out.print(f"{step.name} (version {step.version})", markup=False)
@@ -348,7 +367,7 @@ def plan_command() -> None:
                     f"  failed: {counts.failed:,}  due: {counts.due:,}",
                     markup=False,
                 )
-                if asks_a_source(step):
+                if under_an_allowance(step):
                     allowance = allowances.of(step.source)
                     status = allowances.status(session, step.source)
                     requests = _requests_for(step, counts.due)
@@ -370,6 +389,12 @@ def plan_command() -> None:
                             f"{allowance.period_hours:g} hours",
                             markup=False,
                         )
+                elif step.record_kind == CLAIM:
+                    out.print(
+                        "  asks the registries, literature indexes and models a claim's"
+                        " preparation needs, each at its own pace",
+                        markup=False,
+                    )
                 else:
                     out.print("  asks no source: the due records need 0 requests", markup=False)
                 if isinstance(step, LinkRead):
@@ -390,6 +415,7 @@ def plan_command() -> None:
                         "they need attention",
                         markup=False,
                     )
+            unchanged.rollback()
 
 
 def _merge(reports: list[RunReport]) -> RunReport:
@@ -436,12 +462,16 @@ def run_command(
             # the current one, and miss.
             with open_session() as session:
                 refuse_stale_keys(session)
+        if step.record_kind == CLAIM:
+            # A claim whose input changed since its entry was made is due again.
+            with open_session() as session:
+                notice_changes(session, claim_steps_of(steps_for(settings)))
         check_ready = getattr(step, "check_ready", None)
         if check_ready is not None:
             with open_session() as session:
                 check_ready(session)
         allowances = make_allowances(settings)
-        if asks_a_source(step):
+        if under_an_allowance(step):
             allowances.of(step.source)
         clients = [make_client(step, settings, allowances) for _ in range(workers)]
         share = None if limit is None else -(-limit // workers)
@@ -449,8 +479,10 @@ def run_command(
         def now() -> datetime:
             return datetime.now(UTC)
 
-        # A step that calls a model stops when the month's ceiling is reached.
-        before_call = ceiling_check(settings, now) if model_spend_of(step) else None
+        # A step that calls a model stops when the month's ceiling is reached. Most of a
+        # claim's preparation does.
+        calls_a_model = model_spend_of(step) is not None or step.record_kind == CLAIM
+        before_call = ceiling_check(settings, now) if calls_a_model else None
 
         tried: set[int] = set()
 

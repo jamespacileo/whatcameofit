@@ -97,9 +97,8 @@ from thenwhat.extract.schema import Draft
 from thenwhat.extract.service import article_from_draft, claim_from_draft, read_article
 from thenwhat.llm.client import Llm
 from thenwhat.llm.errors import BudgetExceeded, LlmError
-from thenwhat.resolve.named import candidates_named_in_article
 from thenwhat.review.decisions import record_decision
-from thenwhat.sources.base import SourceError, SystemTime, Time
+from thenwhat.sources.base import SystemTime, Time
 from thenwhat.statements.service import StatementChecker, StatementsRun
 from thenwhat.work.allowance import Allowances, held_until, holds_under
 from thenwhat.work.errors import BackfillError, CannotAsk, SpendCeilingReached
@@ -407,9 +406,6 @@ class ReadClient:
     make_llm: Callable[[Session], Llm]
     make_checker: Callable[[Session], StatementChecker]
     make_backend: Callable[[Session], Backend]
-    # The registry and the literature source, read by identifier for the trials and
-    # papers a page names. None leaves what a page names unrecorded.
-    make_research: Callable[[Session], Any] | None = None
     requests_made: int = 0
 
 
@@ -695,40 +691,6 @@ class LinkRead:
                 return None
             held.append(claim.slug)
         return f"the claim it names has enough articles: {', '.join(held)}"
-
-    def _named_on_the_page(
-        self, session: Session, claim: Claim, page: Page | None, client: ReadClient, now: datetime
-    ) -> str | None:
-        """Record the trials and papers the article's page names as candidates of the
-        claim, read by their identifiers and decided by the resolver's own rules. Being
-        named approves nothing. Returns why they were not recorded, when they were not:
-        the claim and its article stand either way."""
-        if page is None or client.make_research is None:
-            return None
-        if not (page.registry_numbers or page.dois):
-            return None
-        research = client.make_research(session)
-        try:
-            candidates_named_in_article(
-                session,
-                claim,
-                registry_numbers=page.registry_numbers,
-                # With no literature source configured, papers are left unrecorded.
-                dois=page.dois if research.papers is not None else (),
-                registry=research.registry,
-                papers=research.papers,
-                backend=client.make_backend(session),
-                now=now,
-                reject_below=self.match_reject_below,
-                accept_trial_above=self.match_accept_above,
-                accept_paper_above=self.match_accept_above,
-            )
-        except CannotAsk:
-            raise
-        except (DecisionFailed, SourceError) as failure:
-            session.flush()
-            return f"the records its page names were not recorded: {failure}"
-        return None
 
     def _claim_it_reports(
         self, session: Session, record: LinkLead, draft: Draft, client: ReadClient, now: datetime
@@ -1035,10 +997,8 @@ class LinkRead:
             existing, how = self._claim_it_reports(session, record, draft, client, now)
             if existing is not None:
                 claim = claim_by_slug(session, existing)
-                _, _, note = self._join(
-                    session, record, client, now, claim, draft, checker, retrieved, outlet, dated
-                )
-                detail = "; ".join(part for part in (established, how, note) if part) or None
+                self._join(session, record, now, claim, draft, checker, retrieved, outlet, dated)
+                detail = "; ".join(part for part in (established, how) if part) or None
                 return self._finish(record, ReadOutcome.ADDED_TO_CLAIM, detail)
 
             # A claim for the same treatment and condition, as named or once dose,
@@ -1113,15 +1073,14 @@ class LinkRead:
         article = find_article(session, extracted.claim, address)
         record.claim_id = extracted.claim.id
         record.source_article_id = article.id if article else None
-        note = self._named_on_the_page(session, extracted.claim, page, client, now)
-        detail = "; ".join(part for part in (established, note) if part) or None
-        return self._finish(record, ReadOutcome.NEW_CLAIM, detail)
+        if article is not None:
+            keep_what_the_page_names(article, page)
+        return self._finish(record, ReadOutcome.NEW_CLAIM, established)
 
     def _join(
         self,
         session: Session,
         record: LinkLead,
-        client: ReadClient,
         now: datetime,
         claim: Claim,
         draft: Draft,
@@ -1129,12 +1088,12 @@ class LinkRead:
         retrieved: Retrieved,
         outlet: str,
         dated: tuple[date, str],
-    ) -> tuple[SourceArticle, StatementsRun, str | None]:
+    ) -> tuple[SourceArticle, StatementsRun]:
         """Make the article that was read a source article of a claim that exists, and
         point the lead at both: the outlet's display name, the page's own headline and
-        publication day, the hash of its text, its reported statements, and the trials
-        and papers its page names. Returns the article, what became of its statements,
-        and why what the page names was not recorded, when it was not."""
+        publication day, the hash of its text, its reported statements, and the registry
+        numbers and DOIs its page names. Returns the article and what became of its
+        statements."""
         day, headline = dated
         article, statements = article_from_draft(
             session,
@@ -1150,8 +1109,8 @@ class LinkRead:
             now=now,
         )
         record.claim_id, record.source_article_id = claim.id, article.id
-        note = self._named_on_the_page(session, claim, retrieved.page, client, now)
-        return article, statements, note
+        keep_what_the_page_names(article, retrieved.page)
+        return article, statements
 
     def attach(
         self,
@@ -1220,18 +1179,29 @@ class LinkRead:
         except LlmError as failure:
             return NotAttached(str(failure))
         try:
-            article, statements, note = self._join(
-                session, record, client, now, claim, draft, checker, page, outlet, dated
+            article, statements = self._join(
+                session, record, now, claim, draft, checker, page, outlet, dated
             )
         except EntryError as refused:
             session.flush()
             return NotAttached(str(refused))
         attached = f"{drafted}; {NAMES_OVERLAP} {claim.slug}: attached to it {decided}"
-        self._finish(
-            record, ReadOutcome.ADDED_TO_CLAIM, "; ".join(part for part in (attached, note) if part)
-        )
+        self._finish(record, ReadOutcome.ADDED_TO_CLAIM, attached)
         session.flush()
         return Attached(claim, article, added=True, statements=statements)
+
+
+def keep_what_the_page_names(article: SourceArticle, page: Page | None) -> None:
+    """Keep with the article the registry numbers and DOIs its page names: identifiers,
+    never its text. They are looked up as candidates of the claim by a step of their own,
+    `claim_named_records`, so no registry or literature index is asked while a read holds
+    the turn that settles which claim an article reports (openspec lead-reading)."""
+    if page is None:
+        return
+    article.named_registry_numbers = sorted(
+        {*article.named_registry_numbers, *(number.upper() for number in page.registry_numbers)}
+    )
+    article.named_dois = sorted({*article.named_dois, *(doi.lower() for doi in page.dois)})
 
 
 def _date_and_headline(retrieved: Retrieved) -> tuple[date, str] | _NoPage:

@@ -1541,7 +1541,7 @@ def test_terms_exits_non_zero_when_a_candidate_stayed_without_a_score(
     result = run("terms", SLUG)
 
     assert result.exit_code == 1
-    assert "1 could not be scored and stay without a score." in result.output
+    assert "1 could not be scored and stay without a score" in result.output
     # What was scored is kept.
     assert links(session, knee_claim)["Osteoarthritis, Knee"].review_state is ReviewState.APPROVED
 

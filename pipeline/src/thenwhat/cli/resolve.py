@@ -1,7 +1,5 @@
 """Commands for a claim's entities and for proposing registry matches."""
 
-from collections.abc import Callable
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -19,42 +17,29 @@ from thenwhat.claims.entities import (
     set_origin_paper,
 )
 from thenwhat.claims.entry import EntryError, claim_by_slug
-from thenwhat.claims.stages import confirm_stage_by_rule
+from thenwhat.claimsteps.run import SUBSTANCE, TRIALS
+from thenwhat.claimsteps.search import ClaimPapers, PapersFound, TrialsFound
+from thenwhat.claimsteps.step import Research
 from thenwhat.cli import extract
+from thenwhat.cli.claim_steps import outcome_line, run_for_claims, unfinished
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.db.models import Claim, Entity, EntityMatch
-from thenwhat.decide.core import Backend, DecisionFailed, UnknownBackend, backend_named
-from thenwhat.decide.steps import latest_stage_suggestion, suggest_evidence_stage
+from thenwhat.db.models import Claim, EntityMatch
+from thenwhat.decide.core import Backend, UnknownBackend, backend_named
 from thenwhat.domain import Decider, EntityType, ReviewState
 from thenwhat.resolve.codes import Codes, Listing, Substances, give_development_codes
-from thenwhat.resolve.organisations import OrganisationRegistry, match_organisations
-from thenwhat.resolve.papers import (
-    PaperSearch,
-    RegistryNumbers,
-    TrialRegistry,
-    choose_origin,
-    find_papers,
-    rescore_papers,
-    trials_from_papers,
-)
 from thenwhat.resolve.service import (
     DoiLookup,
     RuleRedo,
-    TrialRecords,
     TrialSearch,
     fill_record_facts,
-    redo_rule_approvals,
-    rescore_claim,
-    resolve_claim,
 )
 from thenwhat.sources.base import (
     MissingContact,
     MissingKey,
     SourceError,
     TermsNotRecorded,
-    UnsearchableTerm,
 )
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
@@ -185,17 +170,6 @@ def say_codes(slug: str, answer: Codes) -> None:
             " beyond its names."
         )
     out.print(f"{slug}: {said}", markup=False)
-
-
-@dataclass(frozen=True, slots=True)
-class Research:
-    """The sources behind related papers and organisations."""
-
-    # None while OPENALEX_API_KEY is empty: paper search is then off.
-    papers: PaperSearch | None
-    numbers: RegistryNumbers
-    registry: TrialRegistry
-    organisations: OrganisationRegistry
 
 
 def make_research(session: Session) -> Research:
@@ -466,130 +440,6 @@ def entity_origin_paper(
         out.print(f"Origin paper of {claim_slug}: {paper.name}.", markup=False)
 
 
-def _related_research(
-    session: Session,
-    claim: Claim,
-    research: Research,
-    backend: Backend,
-    now: datetime,
-    reject_below: float,
-    accept_above: float,
-    rescore: bool = False,
-) -> None:
-    """Organisations, related papers, the trials those papers name and the origin paper,
-    with a line on each. A step that fails is reported, what it had written is undone,
-    and the rest goes on: the trial candidates found before this stand either way."""
-    thresholds = {"reject_below": reject_below, "accept_above": accept_above}
-
-    matched = _step(
-        session,
-        "Organisations were not looked up",
-        lambda: match_organisations(session, claim, registry=research.organisations, now=now),
-    )
-    if matched:
-        chosen = sum(match.review_state is ReviewState.APPROVED for match in matched)
-        out.print(
-            f"Matched {len(matched)} organisation(s) in ROR: {chosen} approved by rule as"
-            f" ROR's chosen record, {len(matched) - chosen} pending review."
-        )
-
-    papers = research.papers
-    if papers is None:
-        out.print("Paper search is off: OPENALEX_API_KEY is not set.")
-    else:
-        found = _step(
-            session,
-            "Papers were not searched for",
-            lambda: find_papers(
-                session, claim, papers=papers, backend=backend, now=now, **thresholds
-            ),
-        )
-        if found is not None:
-            _say_papers(found, accept_above, reject_below, _has_papers(session, claim))
-        if rescore:
-            again = _step(
-                session,
-                "Pending papers were not scored again",
-                lambda: rescore_papers(
-                    session,
-                    claim,
-                    papers=papers,
-                    backend=backend,
-                    now=now,
-                    skip=found or [],
-                    **thresholds,
-                ),
-            )
-            if again is not None:
-                noun = "paper" if len(again) == 1 else "papers"
-                decided = sum(m.review_state is not ReviewState.PENDING for m in again)
-                out.print(f"Scored {len(again)} pending {noun} again; a rule decided {decided}.")
-
-    from_papers = _step(
-        session,
-        "Approved papers were not read for registry numbers",
-        lambda: trials_from_papers(
-            session,
-            claim,
-            numbers=research.numbers,
-            registry=research.registry,
-            backend=backend,
-            now=now,
-            papers=papers,
-            **thresholds,
-        ),
-    )
-    if from_papers:
-        ids = ", ".join(match.external_id for match in from_papers)
-        out.print(f"Trial candidates from approved papers: {ids}.", markup=False)
-
-    if papers is not None:
-        origin = _step(
-            session,
-            "The origin paper was not chosen",
-            lambda: choose_origin(
-                session, claim, papers=papers, backend=backend, now=now, accept_above=accept_above
-            ),
-        )
-        if origin is not None:
-            out.print(f"Origin paper set by rule: {origin.name}.", markup=False)
-    if isinstance(papers, OpenAlex):
-        out.print(papers.usage.line(), markup=False)
-
-
-# The steps of the registry search now running that failed and were carried on past.
-STEPS_FAILED: list[str] = []
-
-
-def _step[T](session: Session, what_failed: str, work: Callable[[], T]) -> T | None:
-    """Run one step of related research in a savepoint. A decision that failed is
-    reported and its log entry kept; anything else undoes the step and is reported."""
-    try:
-        with session.begin_nested():
-            try:
-                return work()
-            except DecisionFailed as failed:
-                err.print(f"{what_failed}: {failed}", markup=False)
-                STEPS_FAILED.append(what_failed)
-                return None
-    except Exception as failed:
-        err.print(f"{what_failed}: {failed or type(failed).__name__}", markup=False)
-        STEPS_FAILED.append(what_failed)
-        return None
-
-
-def _has_papers(session: Session, claim: Claim) -> bool:
-    """Whether the claim has any paper candidate, in any state."""
-    return (
-        session.scalars(
-            select(EntityMatch.id)
-            .join(Entity, Entity.id == EntityMatch.entity_id)
-            .where(Entity.claim_id == claim.id, EntityMatch.source_name == OpenAlex.name)
-        ).first()
-        is not None
-    )
-
-
 def _say_papers(
     found: list[EntityMatch], accept_above: float, reject_below: float, has_papers: bool
 ) -> None:
@@ -617,7 +467,7 @@ def _say_papers(
 
 
 def _say_matches(
-    claim: Claim,
+    slug: str,
     added: list[EntityMatch],
     again: list[EntityMatch],
     refused: dict[str, str],
@@ -633,7 +483,7 @@ def _say_matches(
     rejected = [m for m in by_rule if m.review_state is ReviewState.REJECTED]
     approved = [m for m in by_rule if m.review_state is ReviewState.APPROVED]
     waiting = "All are pending review." if not by_rule else "The rest are pending review."
-    out.print(f"Found {len(added)} new {noun} for {claim.slug}. {waiting}")
+    out.print(f"Found {len(added)} new {noun} for {slug}. {waiting}")
     if rescore:
         candidates = "candidate" if len(again) == 1 else "candidates"
         out.print(f"Scored {len(again)} pending {candidates} again.")
@@ -662,6 +512,58 @@ def _say_matches(
         out.print(f"  {match.score:.2f}  {match.source_name}  {match.external_id}", markup=False)
 
 
+PAPERS = ClaimPapers.name
+
+
+def _say_trials(
+    slug: str, found: TrialsFound, *, rescore: bool, accept_above: float, reject_below: float
+) -> None:
+    """What the search of the trial registry found, and the evidence stage it read."""
+    for term, reason in found.refused.items():
+        err.print(
+            f"Not searched for: {ClinicalTrials.name} cannot search for '{term}': {reason}",
+            markup=False,
+        )
+    _say_matches(
+        slug,
+        found.added,
+        found.again,
+        found.refused,
+        rescore=rescore,
+        accept_above=accept_above,
+        reject_below=reject_below,
+    )
+    if found.stage is not None and found.stage_confirmed:
+        out.print(f"Evidence stage confirmed by rule: {found.stage.choice}.")
+    elif found.stage is not None and found.stage_newly_read:
+        out.print(f"Suggested evidence stage: {found.stage.choice}. Confirm it in review.")
+
+
+def _say_research(found: PapersFound, *, accept_above: float, reject_below: float) -> None:
+    """What the search for organisations and papers found."""
+    if found.organisations:
+        chosen = sum(match.review_state is ReviewState.APPROVED for match in found.organisations)
+        out.print(
+            f"Matched {len(found.organisations)} organisation(s) in ROR: {chosen} approved by"
+            f" rule as ROR's chosen record, {len(found.organisations) - chosen} pending review."
+        )
+    if found.papers is None:
+        out.print("Paper search is off: OPENALEX_API_KEY is not set.")
+    else:
+        _say_papers(found.papers, accept_above, reject_below, found.has_papers)
+    if found.again is not None:
+        noun = "paper" if len(found.again) == 1 else "papers"
+        decided = sum(match.review_state is not ReviewState.PENDING for match in found.again)
+        out.print(f"Scored {len(found.again)} pending {noun} again; a rule decided {decided}.")
+    if found.from_papers:
+        ids = ", ".join(match.external_id for match in found.from_papers)
+        out.print(f"Trial candidates from approved papers: {ids}.", markup=False)
+    if found.origin is not None:
+        out.print(f"Origin paper set by rule: {found.origin.name}.", markup=False)
+    if found.usage:
+        out.print(found.usage, markup=False)
+
+
 def resolve_command(
     claim_slug: Annotated[str, typer.Argument(help="Slug of the claim.")],
     rescore: Annotated[
@@ -684,153 +586,59 @@ def resolve_command(
         ),
     ] = False,
 ) -> None:
-    """Search the registries for a claim's interventions and papers.
+    """Search the registries for a claim's intervention and papers, now, whatever was
+    searched before: the steps `claim_substance`, `claim_trials` and `claim_papers` of
+    `thenwhat prepare`, in that order, each reported.
 
     The intervention is first looked up in the substance registry, and the development
     codes it lists for that one substance are searched for as well, within the claim's
-    indication.
+    indication. A search waits for the lookup to finish.
 
     Every hit becomes a scored candidate match. A rule rejects one scored near zero and
     approves a trial scored high; the rest wait for you to approve or reject. A trial
     scores as a match only when it tests the intervention for the claim's indication.
+    Every term searched, cut by a limit or not sent leaves a record of the search.
 
     The literature is then searched for papers about the intervention and indication.
     Each is scored, carries the reasons found by rule, and is approved by rule when it
     scores high. A registry number an approved paper states becomes a trial candidate,
     and a paper that is confidently the one first reported on becomes the origin paper.
     Institutions and companies are looked up in the organisation registry.
+
+    A step that did not finish is said, and the command exits with 1: a source that
+    failed puts it off, and `thenwhat prepare` takes it up again.
     """
     with entry_session() as session:
         claim = claim_by_slug(session, claim_slug)
-        backend = make_backend(session)
-        trials, dois = make_registries(session)
-        # A stored trial that becomes a candidate is read from the registry in full.
-        records = trials if isinstance(trials, TrialRecords) else None
-        research = make_research(session)
-        now = datetime.now(UTC)
-        settings = settings_or_exit()
-        reject_below = settings.match_reject_below
-        accept_above = settings.match_accept_above
-        refused: dict[str, str] = {}
-        STEPS_FAILED.clear()
-
-        def unsearchable(term: UnsearchableTerm) -> None:
-            """Say once that the registry cannot search for a term, and go on with the
-            claim's other terms. The term is left for the operator to reword."""
-            if term.term not in refused:
-                refused[term.term] = term.reason
-                err.print(f"Not searched for: {term}", markup=False)
-
-        codes = _step(
-            session,
-            "Development codes were not looked up",
-            lambda: give_development_codes(
-                session,
-                claim,
-                substances=make_substances(session),
-                brands=make_brands(session),
-            ),
-        )
+        claim_id, slug = claim.id, claim.slug
+    steps = run_for_claims(
+        [claim_id], [SUBSTANCE, TRIALS, PAPERS], rescore=rescore, redo_rule=redo_rule
+    )
+    settings = settings_or_exit()
+    accept_above, reject_below = settings.match_accept_above, settings.match_reject_below
+    substance, trials, papers = steps
+    with entry_session() as session:
+        codes = substance.results.get(claim_id)
         if codes is not None:
-            say_codes(claim.slug, codes)
-
-        failure: str | None = None
-        added: list[EntityMatch] = []
-        again: list[EntityMatch] = []
-        redone: RuleRedo | None = None
-        try:
-            added = resolve_claim(
-                session,
-                claim,
-                trials=trials,
-                dois=dois,
-                backend=backend,
-                now=now,
-                reject_below=reject_below,
-                accept_above=accept_above,
-                unsearchable=unsearchable,
-                records=records,
-            )
-            again = (
-                rescore_claim(
-                    session,
-                    claim,
-                    trials=trials,
-                    backend=backend,
-                    now=now,
-                    skip=added,
-                    reject_below=reject_below,
-                    accept_above=accept_above,
-                    unsearchable=unsearchable,
-                    records=records,
-                )
-                if rescore
-                else []
-            )
-            if redo_rule:
-                redone = redo_rule_approvals(
-                    session,
-                    claim,
-                    trials=trials,
-                    backend=backend,
-                    now=now,
-                    reject_below=reject_below,
-                    accept_above=accept_above,
-                    no_signal_years=settings.no_signal_years,
-                    unsearchable=unsearchable,
-                    records=records,
-                )
-            if claim.evidence_stage is None:
-                stage = latest_stage_suggestion(session, claim)
-                newly_read = stage is None
-                if stage is None:
-                    stage = suggest_evidence_stage(session, backend, claim, now=now)
-                if settings.approve_drafts_by_rule and confirm_stage_by_rule(
-                    session,
-                    claim,
-                    stage,
-                    threshold=settings.review_confidence_threshold,
-                    now=now,
-                    no_signal_years=settings.no_signal_years,
-                ):
-                    out.print(f"Evidence stage confirmed by rule: {stage.choice}.")
-                elif newly_read:
-                    out.print(f"Suggested evidence stage: {stage.choice}. Confirm it in review.")
-            _related_research(
-                session, claim, research, backend, now, reject_below, accept_above, rescore
-            )
-        except DecisionFailed as failed:
-            # Said here, exited below: the session undoes everything when it is left
-            # through an exception, an exit among them, and the logged failure, the
-            # model's recorded cost and the registries' cached answers are to be kept.
-            failure = str(failed)
-        else:
-            # The search this claim was due after a merge or a rename has been made only
-            # when every step succeeded and every name could be searched for: otherwise
-            # it stays due.
-            if not STEPS_FAILED and not refused:
-                claim.registry_search_due_at = None
-            elif claim.registry_search_due_at is not None:
-                err.print(
-                    "The registry search stays due: a step failed or a name was not searched for.",
-                    markup=False,
-                )
-            _say_matches(
-                claim,
-                added,
-                again,
-                refused,
+            say_codes(slug, codes)
+        found = trials.results.get(claim_id)
+        if found is not None:
+            _say_trials(
+                slug,
+                found,
                 rescore=rescore,
                 accept_above=accept_above,
                 reject_below=reject_below,
             )
-            if redone is not None:
-                _say_redone(claim, redone)
-    if failure is not None:
-        err.print(failure, markup=False)
-        err.print(
-            f"{len(added)} candidate match(es) were stored before the failure."
-            if added
-            else "No candidates were stored."
-        )
-        raise typer.Exit(code=1)
+            if found.redone is not None:
+                claim = claim_by_slug(session, slug)
+                _say_redone(claim, found.redone)
+        research = papers.results.get(claim_id)
+        if research is not None:
+            _say_research(research, accept_above=accept_above, reject_below=reject_below)
+        for step in steps:
+            line = outcome_line(session, step, claim_id, slug)
+            if line is not None:
+                err.print(line, markup=False)
+        if unfinished(session, steps, claim_id):
+            raise typer.Exit(code=1)

@@ -35,7 +35,7 @@ def candidates_named_in_article(
     registry_numbers: Sequence[str],
     dois: Sequence[str],
     registry: TrialRegistry,
-    papers: PaperSearch,
+    papers: PaperSearch | None,
     backend: Backend,
     now: datetime,
     reject_below: float = 0.0,
@@ -54,7 +54,7 @@ def candidates_named_in_article(
     off. If a candidate cannot be scored, none of this call's candidates are kept.
 
     A paper the page gives only by its PubMed number is not recorded: the literature
-    source is asked by DOI.
+    source is asked by DOI. With no literature source, no paper is recorded.
     """
     intervention = next(
         (e for e in entities_of(session, claim) if e.type is EntityType.INTERVENTION), None
@@ -99,7 +99,7 @@ def candidates_named_in_article(
 
     found: list[tuple[EntityMatch, SourceRecord]] = []
     for doi in dict.fromkeys(doi.lower() for doi in dois):
-        if known(PAPER_SOURCE, doi):
+        if papers is None or known(PAPER_SOURCE, doi):
             continue
         record = papers.paper(doi)
         if record is None or known(PAPER_SOURCE, record.external_id):

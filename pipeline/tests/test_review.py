@@ -10,6 +10,7 @@ import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from registry_support import ListedSearch
 from thenwhat.claims.entities import entities_of
 from thenwhat.claims.entry import EntryError, InvalidUrl, add_article, add_claim, edit_claim
 from thenwhat.db.models import (
@@ -71,7 +72,7 @@ class Backend:
         return BackendAnswer(choice, {o: 0.8 if o == choice else rest for o in options})
 
 
-class Trials:
+class Trials(ListedSearch):
     def __init__(self, *nct_ids: str) -> None:
         self.nct_ids = nct_ids
 

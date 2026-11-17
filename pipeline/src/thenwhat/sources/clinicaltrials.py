@@ -52,6 +52,39 @@ LIST_PAGE_SIZE = 1000
 
 
 @dataclass(frozen=True, slots=True)
+class Searched:
+    """One search of the registry for a term: what it reported holding, and what was
+    taken. Behavior: openspec entity-resolution, "A registry search leaves a record"."""
+
+    source_name: str
+    term: str
+    records: list[SourceRecord]
+    # How many trials the registry said it holds for the search whose records were taken.
+    reported: int
+    # The wording of the condition the search was narrowed by, if it was.
+    condition: str | None = None
+    # A limit left some of the reported trials out.
+    cut: bool = False
+
+    @property
+    def kept(self) -> int:
+        return len(self.records)
+
+
+@dataclass(frozen=True, slots=True)
+class NotSent:
+    """A term that was not searched for, and why."""
+
+    source_name: str
+    term: str
+    reason: str
+
+
+# Why a search phrase with no condition is not sent.
+PHRASE_ALONE = "a search phrase is searched within a condition only, and none was given"
+
+
+@dataclass(frozen=True, slots=True)
 class TrialPage:
     """One page of the registry's list: the trials as returned, and where the next page starts."""
 
@@ -154,7 +187,11 @@ class ClinicalTrials(Source):
         return self._record(fetched.payload, fetched.fetched_at)
 
     def search_trials(self, intervention: str, condition: str | None = None) -> list[SourceRecord]:
-        """The trials whose interventions match the term.
+        """The trials whose interventions match the term, as `name_search` takes them."""
+        return self.name_search(intervention, condition).records
+
+    def name_search(self, intervention: str, condition: str | None = None) -> Searched:
+        """The trials whose interventions match the term, with what the registry reported.
 
         A specific name returns every trial it has, across all result pages. A broad name
         (more than BROAD_NAME trials) is searched within the condition instead: first by the
@@ -172,9 +209,9 @@ class ClinicalTrials(Source):
         while next_token:
             more, _, next_token = self._page(intervention, None, next_token)
             records += more
-        return records
+        return Searched(self.name, intervention, records, reported=total)
 
-    def search_phrase(self, phrase: str, condition: str | None) -> list[SourceRecord]:
+    def phrase_search(self, phrase: str, condition: str | None) -> Searched | NotSent:
         """The trials a search phrase finds within the condition.
 
         A phrase is the registry's words for a treatment with no product name, so it is
@@ -183,15 +220,15 @@ class ClinicalTrials(Source):
         BROAD_NAME trials there, or none, identifies nothing and returns nothing.
         """
         if not condition:
-            return []
+            return NotSent(self.name, phrase, PHRASE_ALONE)
         return self._condition_trials(phrase, condition)
 
     def _condition_trials(
         self, intervention: str, condition: str, *, keep_most_relevant: bool = False
-    ) -> list[SourceRecord]:
+    ) -> Searched:
         """Discover candidates with at most two wordings, never altering scoring scope.
         A search still broad within the condition gives nothing, or, for a name, the
-        first page the registry returns there."""
+        first page the registry returns there: either way a limit left trials out."""
         wordings = [condition]
         fallback = _telling_words(condition)
         if fallback and fallback != condition:
@@ -204,10 +241,11 @@ class ClinicalTrials(Source):
                     raise
                 continue
             if within > BROAD_NAME:
-                return narrowed if keep_most_relevant else []
-            if narrowed:
-                return narrowed
-        return []
+                kept = narrowed if keep_most_relevant else []
+                return Searched(self.name, intervention, kept, within, wording, cut=True)
+            if narrowed or index == len(wordings) - 1:
+                return Searched(self.name, intervention, narrowed, within, wording)
+        return Searched(self.name, intervention, [], 0, wordings[-1])
 
     def named_trials(self, name: str, condition: str | None = None) -> list[SourceRecord]:
         """The trials that carry this name in their acronym or title, such as SURMOUNT-5.

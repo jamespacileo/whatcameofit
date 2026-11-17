@@ -119,7 +119,7 @@ def test_the_command_stops_at_the_spend_ceiling_says_so_and_exits_1(
 
     assert result.exit_code == 1
     assert "monthly ceiling of $10" in output(result)
-    assert f"The run stopped. Not read: {OTHER_TRIAL}." in output(result)
+    assert f"Not read: {OTHER_TRIAL}." in output(result)
     # What was read before the ceiling is kept.
     assert [trial_read.trial_id for trial_read in reads(session)] == [TRIAL]
 

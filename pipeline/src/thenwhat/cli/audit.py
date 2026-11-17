@@ -20,6 +20,8 @@ from thenwhat.backfill.link_read import (
 from thenwhat.backfill.link_rekey import refuse_stale_keys
 from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
 from thenwhat.claims.entry import awaiting_audit, clear_audit
+from thenwhat.claimsteps.run import never_searched
+from thenwhat.claimsteps.step import prepared
 from thenwhat.cli import backfill
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
@@ -34,7 +36,8 @@ audit_app = typer.Typer(no_args_is_help=True, help="Claims held off the site unt
 def audit_list() -> None:
     """List the claims held off the site until audited, oldest hold first, then the
     reads left unresolved because they overlap an archived claim, then those that
-    overlap a claim that is not archived."""
+    overlap a claim that is not archived, then the claims awaiting review or published
+    that were never searched: no registry search has left a record for them."""
     with entry_session() as session:
         held = awaiting_audit(session)
         for claim in held:
@@ -52,6 +55,23 @@ def audit_list() -> None:
             out.print("No claim awaits audit.")
         _list_archived_overlaps(session)
         _list_live_overlaps(session)
+        _list_never_searched(session)
+
+
+def _list_never_searched(session: Session) -> None:
+    """Claims awaiting review or published with no record of a registry search, whatever
+    status they hold: a status of no trial found means nothing for them yet. Their
+    search is due for `thenwhat prepare`."""
+    never = never_searched(session, prepared())
+    if not never:
+        return
+    for slug in never:
+        out.print(f"{slug}  never searched", markup=False)
+    noun = "claim was" if len(never) == 1 else "claims were"
+    out.print(
+        f"{len(never)} {noun} never searched: `thenwhat prepare --due` searches them.",
+        markup=False,
+    )
 
 
 def _list_archived_overlaps(session: Session) -> None:

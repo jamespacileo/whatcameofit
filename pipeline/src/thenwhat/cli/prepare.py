@@ -1,144 +1,154 @@
-"""The prepare command: everything a claim needs before review, for many claims at once."""
+"""The prepare command: every part of a claim's preparation that is due, for many claims
+at once. Behavior: openspec claim-extraction, "Preparing many claims"."""
 
-import subprocess
-import sys
-import time
-from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from typing import Annotated
 
 import typer
+from sqlalchemy import ColumnElement, and_
+from sqlalchemy.orm import Session
 
-from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
-from thenwhat.claims.entry import find_claim
+from thenwhat.claims.entry import claim_by_slug
 from thenwhat.claims.mesh_areas import suggestion_line
+from thenwhat.claimsteps.decide import ClaimDecide
+from thenwhat.claimsteps.inputs import notice_changes
+from thenwhat.claimsteps.run import (
+    StepRun,
+    claim_steps,
+    left_by,
+    never_searched,
+    search_due,
+)
+from thenwhat.claimsteps.step import named, prepared
+from thenwhat.cli.claim_steps import run_steps
 from thenwhat.cli.console import err, out
 from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
-from thenwhat.domain import ReviewState
-from thenwhat.measure import spans as measure
-from thenwhat.prepare import (
-    NOT_NEEDED_TO_DECIDE,
-    ClaimPlan,
-    claim_sharing_its_substance,
-    decide_prepared_lead_claim,
-    plan_claims,
-    steps_for,
-)
+from thenwhat.db.models import Claim
+from thenwhat.domain import ReviewState, WorkOutcome
+from thenwhat.prepare import claim_sharing_its_substance
+
+OUTCOME_WORDS = {
+    WorkOutcome.FAILED: "failed",
+    WorkOutcome.LATER: "put off",
+    WorkOutcome.NEEDS_FIX: "needs a fix",
+}
 
 
-def run_step(arguments: list[str]) -> tuple[int, str]:
-    """Run one command of this program on its own, so each has its own transaction and a
-    failure stays with its claim. Returns what it exited with and its last line."""
-    done = subprocess.run(
-        [sys.argv[0], *arguments], capture_output=True, text=True, stdin=subprocess.DEVNULL
+def step_line(run: StepRun) -> str:
+    """How many claims a step did, put off, left needing a fix and failed, how many are
+    still due, and how long it took."""
+    report = run.report
+    return (
+        f"{run.step.name}: {report.done:,} done, {report.nothing_found:,} found nothing,"
+        f" {report.later:,} put off, {report.needs_fix:,} need a fix,"
+        f" {report.failed:,} failed; {report.remaining_due:,} still due, in {run.seconds:.0f}s."
     )
-    lines = [line.strip() for line in (done.stdout + done.stderr).splitlines() if line.strip()]
-    return done.returncode, lines[-1] if lines else ""
-
-
-def _prepare(plan: ClaimPlan) -> list[str]:
-    with measure.measured("prepare", trace=measure.claim_trace(plan.slug)) as span:
-        return _prepare_measured(plan, span)
-
-
-def _prepare_measured(plan: ClaimPlan, span: measure.Running) -> list[str]:
-    started = time.monotonic()
-    report: list[str] = []
-    every_step_succeeded = True
-    for step in steps_for(plan):
-        step_started = time.monotonic()
-        exited, said = run_step(step)
-        succeeded = exited == 0
-        # An article whose outlet the page reader has stopped is left for later: not a
-        # failed step, but the claim is not decided until a later run has read it.
-        left_for_later = step[0] == "extract" and exited == LEFT_FOR_LATER
-        if step[0] not in NOT_NEEDED_TO_DECIDE:
-            every_step_succeeded = every_step_succeeded and succeeded
-        name = "read" if step[0] == "extract" else step[0]
-        # The step ran as its own process and measured itself: its time is its own.
-        span.add_inner(time.monotonic() - step_started)
-        took = f"{time.monotonic() - step_started:.0f}s"
-        if left_for_later:
-            report.append(f"  {name} left for later ({took}): {said}")
-        else:
-            report.append(
-                f"  {name} ({took}): {said}" if succeeded else f"  {name} failed ({took}): {said}"
-            )
-    with entry_session() as session:
-        claim = find_claim(session, plan.slug)
-        if claim is not None:
-            report.append(f"  {suggestion_line(session, claim)}")
-        # A claim a link lead's read drafted waits for this: its registries searched and
-        # read. Only then is it decided by the rule for drafts, so it is never published
-        # with a status no search stands behind. A failed step leaves it waiting.
-        if every_step_succeeded and settings_or_exit().approve_drafts_by_rule:
-            decided = decide_prepared_lead_claim(session, plan.slug, now=datetime.now(UTC))
-            if decided is ReviewState.APPROVED:
-                report.append(
-                    "  approved by rule, now that its registries have been searched;"
-                    " held off the site until audited"
-                )
-            elif decided is ReviewState.REJECTED:
-                claim = find_claim(session, plan.slug)
-                twin = claim_sharing_its_substance(session, claim) if claim else None
-                report.append(
-                    f"  rejected by rule: {twin} stands for the same substance and condition"
-                    if twin
-                    else "  rejected by rule: its intervention is a description, not a name"
-                )
-    return [f"{plan.slug} ({time.monotonic() - started:.0f}s)", *report]
 
 
 def prepare_command(
     slugs: Annotated[list[str] | None, typer.Argument(help="Slugs of the claims.")] = None,
     pending: Annotated[
-        bool, typer.Option("--pending", help="Every claim that awaits review.")
+        bool,
+        typer.Option(
+            "--pending",
+            help="Every claim that awaits review, and every approved claim not archived"
+            " with a part of its preparation due.",
+        ),
     ] = False,
     due: Annotated[
         bool,
         typer.Option(
             "--due",
-            help="Every claim whose registry search is due again after a merge or a rename.",
+            help="Every claim whose registry search is due again, after a merge or a"
+            " rename or because it never finished.",
         ),
     ] = False,
     workers: Annotated[
         int, typer.Option(min=1, max=8, help="How many claims to work on at once.")
     ] = 4,
 ) -> None:
-    """Get claims ready for review: read their unread articles, search the registries,
-    read the registries for matches already approved, read the stored trial records
-    into record readings, and propose subject terms, which background cards come from.
+    """Get claims ready: read their unread articles, look up their substance, search the
+    trial registry, search for papers, look up the records their articles' pages name,
+    fetch their approved records, read their trial records and propose their terms.
 
-    Claims are worked on side by side. A step that fails is reported and the claim's
-    other steps still run. An article whose outlet the page reader has said cannot be
-    asked yet is left for later, which is no failure; its claim is decided once a later
-    run has read it. Nothing is approved here beyond what those steps approve by
-    rule, with one exception: a claim that a link lead's read drafted is decided by the
-    rule for drafts once every step for it has succeeded, the terms step aside.
-
-    A merge or a rename leaves a claim's registry search due again, because the
-    intervention gained or changed a name; `--due` prepares every such claim, and the
-    search that succeeds clears it.
+    Each part is a step of the work ledger, done once for a claim's current input: a run
+    does only the parts that are due, and a run stopped anywhere is started again
+    without redoing what finished. A part whose source failed is put off and comes back
+    by itself; a source that cannot be asked at all stops that part, and the others
+    still run. A claim a link lead's read drafted is decided by the rule for drafts once
+    its articles are read, its substance looked up, its registry searched and its
+    approved records fetched. It does not wait for its papers, readings or terms, which
+    stay due until they finish. Nothing else is approved here beyond what the steps
+    approve by rule.
     """
     if not slugs and not pending and not due:
         err.print(
-            "Name the claims to prepare, or use --pending for every claim awaiting review,"
-            " or --due for every claim whose registry search is due again."
+            "Name the claims to prepare, or use --pending for every claim awaiting review"
+            " and every published claim with a part due, or --due for every claim whose"
+            " registry search is due."
         )
         raise typer.Exit(code=1)
+    settings = settings_or_exit()
+    claims: ColumnElement[bool]
     with entry_session() as session:
-        plans = plan_claims(session, slugs or None, pending=pending, due=due)
-    if not plans:
-        out.print(
-            "No claim awaits review."
-            if pending and not due
-            else "No claim awaits review or a registry search."
-            if pending
-            else "No claim's registry search is due."
-        )
-        return
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        for report in pool.map(_prepare, plans):
-            for line in report:
-                out.print(line, markup=False)
+        if slugs:
+            claims = named([claim_by_slug(session, slug).id for slug in slugs])
+        elif pending:
+            claims = prepared()
+        else:
+            steps = claim_steps(settings)
+            notice_changes(session, steps)
+            ids = search_due(session, steps, settings.backfill_attempt_limit)
+            if not ids:
+                out.print("No claim's registry search is due.")
+                return
+            claims = and_(prepared(), named(ids))
+    started = datetime.now(UTC)
+    steps = claim_steps(settings, claims=claims)
+    for run in run_steps(steps, workers=workers):
+        out.print(step_line(run), markup=False)
+        if run.report.stopped:
+            out.print(f"  stopped: {run.report.stopped}", markup=False)
+    with entry_session() as session:
+        for left in left_by(session, steps, started):
+            until = (
+                f" until {left.not_before:%Y-%m-%d %H:%M} UTC"
+                if left.outcome is WorkOutcome.LATER and left.not_before
+                else ""
+            )
+            out.print(
+                f"{left.slug}: {left.step} {OUTCOME_WORDS[left.outcome]}{until}: {left.said}",
+                markup=False,
+            )
+        for step in steps:
+            if isinstance(step, ClaimDecide):
+                _say_decided(session, step)
+        never = never_searched(session, claims)
+        if never:
+            out.print(
+                f"Never searched: {len(never):,} claim(s) have no record of a registry"
+                f" search: {', '.join(never)}.",
+                markup=False,
+            )
+
+
+def _say_decided(session: Session, step: ClaimDecide) -> None:
+    """What the rule for drafts decided for each claim, and why."""
+    for claim_id, decided in sorted(step.results.items()):
+        claim = session.get(Claim, claim_id)
+        if claim is None:
+            continue
+        if decided is ReviewState.APPROVED:
+            said = (
+                "approved by rule, now that its registries have been searched; held off the"
+                " site until audited"
+            )
+        else:
+            twin = claim_sharing_its_substance(session, claim)
+            said = (
+                f"rejected by rule: {twin} stands for the same substance and condition"
+                if twin
+                else "rejected by rule: its intervention is a description, not a name"
+            )
+        out.print(f"{claim.slug}: {said}. {suggestion_line(session, claim)}", markup=False)
