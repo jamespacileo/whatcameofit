@@ -87,7 +87,7 @@ Three pull requests, each leaving `make check` green: the status rule and regene
 ## Risks / Trade-offs
 
 - [The claim page template is being restructured while three other changes touch it] → Land the status rule first; rebase the frame work on main immediately before starting and keep it to one pull request for the claim page.
-- [Tests in `site/tests/site.test.mjs` read the current markup] → Keep the section ids and the status panel's class names where possible; update the tests that read position or order in the same commit as the markup they read.
+- [Tests in `site/tests/site.build-test.mjs` read the current markup] → Keep the section ids and the status panel's class names where possible; update the tests that read position or order in the same commit as the markup they read.
 - [Folded content and search] → Folded bodies stay in the built page, so the search index and find-in-page on a wide screen still reach them. Find-in-page will not open a folded section; accepted.
 - [The band is still tall on a phone: about 910 to 965 pixels before the content in the mocks] → The requirement sets 1,000 pixels as the limit and the status in the first screen. Cutting further means dropping the status card's fact rows on a phone, which is left as an open question.
 - [Fewer events marked as the basis may read as less evidence] → The "Why this status" note lists the same events the marks show, and the trials table still shows every trial.

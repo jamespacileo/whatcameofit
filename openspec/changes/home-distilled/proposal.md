@@ -28,4 +28,4 @@ Out of scope: the wording of the lookup band, the five tabbed lists, the section
 
 ## Impact
 
-`site/src/components/DayList.astro`, `HomeNarrow.astro`, `site/src/pages/index.astro`, `site/src/styles/global.css`, `site/tests/home-days.test.mjs`, `site/tests/site.test.mjs`, `DESIGN.md`. `StageFilter.astro` is unchanged and still draws the path on topic pages. No change to the export.
+`site/src/components/DayList.astro`, `HomeNarrow.astro`, `site/src/pages/index.astro`, `site/src/styles/global.css`, `site/tests/home-days.build-test.mjs`, `site/tests/site.build-test.mjs`, `DESIGN.md`. `StageFilter.astro` is unchanged and still draws the path on topic pages. No change to the export.

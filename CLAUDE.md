@@ -6,7 +6,8 @@ Folder: `products`. Workspace rules: `~/Projects/CLAUDE.md` (never create at roo
 worktrees via `wt`, archive via quarantine).
 
 - Run: `docker compose up --build -d`, then `docker compose run --rm pipeline thenwhat --help`
-- Test: `make check` (ruff, ty, pytest, site build). While working in one area, run only its part: `make check-pipeline`, `check-site`, `check-extension` or `check-store`. Run the full `make check` before committing a change that crosses areas. The Node tests print a dot per passing test and the full detail of each failure.
+- Test: two sets. `make check-fast` after every edit (under a minute: ruff, ty, the pipeline's tests in parallel, the site's and extension's tests that build nothing). `make check-slow` before a push (about two minutes: every test that builds the site, the store's tests, the site and extension builds). `make check` is both, and is what CI runs. One area in full: `make check-pipeline`, `check-site`, `check-extension`, `check-store`.
+- A site test that builds the site is named `*.build-test.mjs` and runs in the slow set; any other is `*.test.mjs`. A pipeline test that builds the site is marked `@pytest.mark.slow`. One pipeline test alone: `uv run --directory pipeline pytest tests/<file>::<test>`.
 - New clone or worktree: `make setup` (Node 26 from `.node-version`, pnpm 10). pnpm links packages from its shared store, so nothing is downloaded twice. Never `npm install`: the lock files are `pnpm-lock.yaml`.
 
 ## Where things are defined

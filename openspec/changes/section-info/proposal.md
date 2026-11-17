@@ -20,4 +20,4 @@ Each section of a claim page opened with a paragraph saying what the section hol
 
 ## Impact
 
-- `site/src/components/FoldHead.astro`, `Glance.astro`, `Organisations.astro`, `site/src/pages/[slug].astro`, `site/src/styles/global.css`, `site/tests/site.test.mjs`, `DESIGN.md`.
+- `site/src/components/FoldHead.astro`, `Glance.astro`, `Organisations.astro`, `site/src/pages/[slug].astro`, `site/src/styles/global.css`, `site/tests/site.build-test.mjs`, `DESIGN.md`.

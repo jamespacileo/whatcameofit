@@ -28,5 +28,5 @@ Needs the `.env` settings named in `backfill-dental-regeneration` task 1.1.
 
 ## 4. Report row
 
-- [x] 4.1 Report row leads with the status in its own column; the evidence when first reported and what the records add open on hover or focus, always open on touch, narrow screens and paper (`site/src/components/DayReport.astro`, `DayList.astro`, chosen by the operator on 2026-11-15 from three live variants); verified by `site/tests/home-days.test.mjs` and in the browser at desktop and 375px
+- [x] 4.1 Report row leads with the status in its own column; the evidence when first reported and what the records add open on hover or focus, always open on touch, narrow screens and paper (`site/src/components/DayReport.astro`, `DayList.astro`, chosen by the operator on 2026-11-15 from three live variants); verified by `site/tests/home-days.build-test.mjs` and in the browser at desktop and 375px
 - [x] 4.2 Look at the report row in the dark theme and in print; verify the closed part is open on paper (the site is light only and stays light under a dark preference; on paper the closed part is open and the status column is outlined, not filled)
