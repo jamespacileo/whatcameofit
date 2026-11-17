@@ -235,6 +235,41 @@ def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_del
     ]
 
 
+def test_restore_finishes_a_run_interrupted_after_its_first_20000_records(tmp_path: Path):
+    from thenwhat.store.build import RUN_RECORDS, apply_delta, base_of, merge_into, write_delta
+
+    restored = tmp_path / "interrupted.sqlite"
+    with sqlite3.connect(restored) as db:
+        db.executescript((STORE / "schema.sql").read_text())
+    uninterrupted = tmp_path / "uninterrupted.sqlite"
+    shutil.copyfile(restored, uninterrupted)
+    now = datetime(2026, 11, 17, tzinfo=UTC)
+    records = [
+        Record(
+            "unlisted_domain",
+            f"{i}.example|2026-11-17",
+            {"domain": f"{i}.example", "day": "2026-11-17", "asked": 1},
+        )
+        for i in range(20_001)
+    ]
+    runs = [("day", records)]
+    delta = tmp_path / "records.gz"
+    write_delta(delta, runs, base=base_of(restored, runs))
+    assert merge_into(restored, [("day", records[:RUN_RECORDS])], store_sql=STORE, now=now)[1] == [
+        "day-0"
+    ]
+    assert apply_delta(uninterrupted, delta, store_sql=STORE, now=now) == ["day-0", "day-1"]
+    assert apply_delta(restored, delta, store_sql=STORE, now=now) == ["day-1"]
+    assert apply_delta(restored, delta, store_sql=STORE, now=now) == []
+    with sqlite3.connect(restored) as recovered, sqlite3.connect(uninterrupted) as complete:
+        assert recovered.execute("SELECT count(*) FROM unlisted_domain_count").fetchone() == (
+            20001,
+        )
+        for table in ("unlisted_domain_count", "run", "merge_report"):
+            query = f"SELECT * FROM {table} ORDER BY 1, 2"
+            assert recovered.execute(query).fetchall() == complete.execute(query).fetchall()
+
+
 def test_a_delta_applies_only_in_its_order(session: Session, tmp_path: Path):
     from thenwhat.store.build import BuildFailed, apply_delta, base_of, merge_into, write_delta
 

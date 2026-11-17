@@ -356,6 +356,16 @@ def merge_into(
     try:
         # As in D1: the bulk file holds the hot rows bulk rows hang from (`REFERENCE`).
         db.execute("PRAGMA foreign_keys = ON")
+        # A downloaded bulk build predating waiting outcomes still has the old CHECK.
+        schema_check = "SELECT 1 FROM pragma_table_info('work_entry') WHERE name = 'reason'"
+        if not db.execute(schema_check).fetchone():
+            db.execute("BEGIN IMMEDIATE")
+            if not db.execute(schema_check).fetchone():
+                migration = store_sql / "ingest/migrations/0008_work_entry_waits.sql"
+                for statement in migration.read_text().split(";"):
+                    if statement.strip():
+                        db.execute(statement)
+            db.commit()
         held = merged_runs(db)
         for name, records in runs:
             for number, start in enumerate(range(0, max(len(records), 1), RUN_RECORDS)):
@@ -429,7 +439,11 @@ def apply_delta(path: Path, delta: Path, *, store_sql: Path, now: datetime) -> l
         held = merged_runs(db)
     finally:
         db.close()
-    if runs and all(f"{name}-0" in held for name, records in runs if records):
+    if all(
+        f"{name}-{batch}" in held
+        for name, records in runs
+        for batch in range((len(records) + RUN_RECORDS - 1) // RUN_RECORDS)
+    ):
         return []  # applied before
     if base_of(path, runs) != base:
         raise BuildFailed(

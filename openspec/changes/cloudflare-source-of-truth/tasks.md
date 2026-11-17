@@ -2,9 +2,9 @@
 
 ## 0. Restore, cutover and bulk completeness (P1)
 
-- [ ] 0.1 <a id="task-f37"></a>Carry the runner outcomes, reasons, retry time and first-deferred time through schema, serializer, merge and restore. Test an older store and round-trip both waiting states before and after the retry time. [F37](../../../docs/reviews/2026-11-17-code-review.md#finding-f37) · [Acceptance scenario](specs/truth-store/spec.md#scenario-waiting-work-survives-a-bulk-round-trip)
+- [x] 0.1 <a id="task-f37"></a>Carry the runner outcomes, reasons, retry time and first-deferred time through schema, serializer, merge and restore. Test an older store and round-trip both waiting states before and after the retry time. [F37](../../../docs/reviews/2026-11-17-code-review.md#finding-f37) · [Acceptance scenario](specs/truth-store/spec.md#scenario-waiting-work-survives-a-bulk-round-trip)
 
-- [ ] 0.2 <a id="task-f01"></a>Check completion across all batches. Interrupt a 20,001-record replay after batch one and compare two retries with an uninterrupted restore. [F01](../../../docs/reviews/2026-11-17-code-review.md#finding-f01) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-restore-resumes-between-batches)
+- [x] 0.2 <a id="task-f01"></a>Check completion across all batches. Interrupt a 20,001-record replay after batch one and compare two retries with an uninterrupted restore. [F01](../../../docs/reviews/2026-11-17-code-review.md#finding-f01) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-restore-resumes-between-batches)
 
 - [ ] 0.3 <a id="task-f02"></a>Initialize an index only after confirmed absence. Exercise the 503 and retry with an existing same-day delta and verify both the index and the original object's contents. [F02](../../../docs/reviews/2026-11-17-code-review.md#finding-f02) · [Acceptance scenario](specs/truth-store/spec.md#scenario-an-unreadable-restore-index-survives-an-upload)
 

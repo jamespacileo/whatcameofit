@@ -628,15 +628,18 @@ GROUP BY s.run_id, s.kind
 ;
 -- A ledger entry is kept once per record, step and version; the later attempt replaces it.
 INSERT INTO work_entry (record_kind, record_key, step, step_version, outcome, attempts, requests_used,
-                        fingerprint, stale, error, last_attempt_at, changed_run)
+                        fingerprint, stale, error, reason, reason_values, not_before, first_put_off_at,
+                        last_attempt_at, changed_run)
 SELECT s.body ->> 'record_kind', s.body ->> 'record_key', s.body ->> 'step', s.body ->> 'step_version',
        s.body ->> 'outcome', s.body ->> 'attempts', s.body ->> 'requests_used', s.body ->> 'fingerprint',
-       coalesce(s.body ->> 'stale', 0), s.body ->> 'error', s.body ->> 'last_attempt_at', s.run_id
+       coalesce(s.body ->> 'stale', 0), s.body ->> 'error', s.body ->> 'reason', s.body ->> 'reason_values',
+       s.body ->> 'not_before', s.body ->> 'first_put_off_at', s.body ->> 'last_attempt_at', s.run_id
 FROM staged s WHERE s.kind = 'work_entry'
 ON CONFLICT (record_kind, record_key, step, step_version) DO UPDATE SET
   outcome = excluded.outcome, attempts = excluded.attempts, requests_used = excluded.requests_used,
   fingerprint = excluded.fingerprint, stale = excluded.stale, error = excluded.error,
-  last_attempt_at = excluded.last_attempt_at, changed_run = excluded.changed_run
+  reason = excluded.reason, reason_values = excluded.reason_values, not_before = excluded.not_before,
+  first_put_off_at = excluded.first_put_off_at, last_attempt_at = excluded.last_attempt_at, changed_run = excluded.changed_run
 WHERE excluded.last_attempt_at > work_entry.last_attempt_at
 ;
 -- Counted before it is written: an icon is added when the store has none for the domain, and the rest are matched.
