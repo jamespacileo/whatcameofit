@@ -74,7 +74,7 @@ Read `design.md` first. Strategy numbers (S1 to S9) refer to its table. Every fi
 
 ### P2
 
-- [ ] 8.1 <a id="task-f06"></a>Use a stable checkout identity within the database identifier limit. Run same-basename checkouts concurrently and verify that cleaning up one leaves the other operational. [F06](../../../docs/reviews/2026-11-17-code-review.md#finding-f06) · [Acceptance scenario](specs/delivery-time/spec.md#scenario-identically-named-checkouts-run-concurrently)
+- [x] 8.1 <a id="task-f06"></a>Use a stable checkout identity within the database identifier limit. Run same-basename checkouts concurrently and verify that cleaning up one leaves the other operational. [F06](../../../docs/reviews/2026-11-17-code-review.md#finding-f06) · [Acceptance scenario](specs/delivery-time/spec.md#scenario-identically-named-checkouts-run-concurrently)
 
 - [ ] 8.2 <a id="task-f07"></a>Include packaging in `make check-extension`. Verify a normal build produces the artifact and an isolated packaging failure fails this target with its unit tests passing. [F07](../../../docs/reviews/2026-11-17-code-review.md#finding-f07) · [Acceptance scenario](specs/delivery-time/spec.md#scenario-the-extension-only-check-catches-a-packaging-failure)
 

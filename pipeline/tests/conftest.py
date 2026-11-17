@@ -2,6 +2,7 @@
 suite's own server, that is dropped and rebuilt from the migrations at the start of
 every test session."""
 
+import hashlib
 import json
 import os
 import re
@@ -36,8 +37,10 @@ class NotATestDatabase(RuntimeError):
 def default_test_database(checkout: Path) -> str:
     """A database name of this checkout's own, so that two checkouts running their tests
     at once on the one test server do not drop each other's."""
-    name = re.sub(r"[^a-z0-9]+", "_", checkout.name.lower()).strip("_")[:40]
-    return f"thenwhat_{name or 'checkout'}_test"
+    checkout = checkout.resolve()
+    name = re.sub(r"[^a-z0-9]+", "_", checkout.name.lower()).strip("_")[:24] or "checkout"
+    identity = hashlib.sha256(os.fsencode(checkout)).hexdigest()[:16]
+    return f"thenwhat_{name}_{identity}_test"
 
 
 def database_for_tests(environ: Mapping[str, str], checkout: Path = PIPELINE_ROOT.parent) -> URL:
@@ -59,6 +62,8 @@ def database_for_tests(environ: Mapping[str, str], checkout: Path = PIPELINE_ROO
             f"Tests drop the database they are given, so its name must end in _test: {name!r}"
             " does not. Leave TEST_DATABASE_URL unset to use the test server (make test-db-up)."
         )
+    if len(name.encode()) > 63:
+        raise NotATestDatabase("The test database name exceeds PostgreSQL's 63-byte limit.")
     working_ports = {WORKING_PORT}
     if environ.get("DB_PORT", "").isdigit():
         working_ports.add(int(environ["DB_PORT"]))
@@ -86,7 +91,12 @@ def for_worker(url: URL, environ: Mapping[str, str]) -> URL:
     if not worker:
         return url
     name = url.database or ""
-    return url.set(database=f"{name.removesuffix('_test')}_{worker}_test")
+    derived = f"{name.removesuffix('_test')}_{worker}_test"
+    if len(derived.encode()) > 63:
+        # Keep the whole checkout and worker identity even when their label cannot fit.
+        identity = hashlib.sha256(derived.encode()).hexdigest()[:32]
+        derived = f"thenwhat_{identity}_test"
+    return url.set(database=derived)
 
 
 _resolved: URL | None = None
