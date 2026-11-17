@@ -166,7 +166,21 @@ test("a payload is stored under its checksum, once, and a body that does not mat
   assert.deepEqual((await put(checksum, text)).body, { key: `payload/${checksum}`, bytes: Buffer.byteLength(text), stored: true });
   assert.equal((await put(checksum, text)).body.stored, false, "the same payload twice is kept once");
   assert.equal(await (await bucket.get(`payload/${checksum}`)).text(), text);
-  assert.equal((await put(sha("small"), "small")).status, 422, "a payload that fits a row is not an R2 object");
+  assert.equal((await put(sha("small"), "small")).status, 422, "a small payload is never an R2 object");
+  // A payload that fits a row but whose record would not fit once escaped: the record is
+  // refused for its size, and the same payload is taken as an object instead.
+  const { OBJECT_FLOOR_BYTES, MAX_RECORD_BYTES } = await import("../src/limits.mjs");
+  const awkward = "\u0001".repeat(Math.min(INLINE_PAYLOAD_BYTES, Math.ceil(MAX_RECORD_BYTES / 6) + 1000)), awkwardSum = sha(awkward);
+  assert.ok(awkward.length > OBJECT_FLOOR_BYTES && awkward.length <= INLINE_PAYLOAD_BYTES);
+  assert.equal((await stageOne("device-mini", "device", ["payload", awkwardSum, { sha256: awkwardSum, bytes: awkward.length, body: awkward }]))?.body.error, "record_too_large");
+  assert.equal((await put(awkwardSum, awkward)).status, 201);
+  assert.equal(await s.hand("awkward-object", [["payload", awkwardSum, { sha256: awkwardSum, bytes: awkward.length, r2_key: `payload/${awkwardSum}` }]]), null);
+  assert.equal((await s.drop("awkward-object")).status, 200);
+  // And one of ordinary text at the row's bound travels in its record, quotes and all.
+  const quoted = '{"a":"b"},'.repeat(Math.floor(INLINE_PAYLOAD_BYTES / 10)), quotedSum = sha(quoted);
+  assert.equal(await s.hand("quoted-inline", [["payload", quotedSum, { sha256: quotedSum, bytes: quoted.length, body: quoted }]]), null);
+  assert.equal(await s.one("SELECT length(CAST(body ->> 'body' AS BLOB)) FROM stg WHERE run_id = 'quoted-inline'"), quoted.length);
+  assert.equal((await s.drop("quoted-inline")).status, 200);
   assert.equal((await put(checksum, text, { type: "text/html" })).status, 415);
   assert.equal((await put("NOT-A-CHECKSUM", text)).status, 400);
   // A record may not name a payload that was never put, nor carry a body its checksum does not fit.

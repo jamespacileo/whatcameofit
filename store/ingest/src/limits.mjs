@@ -27,6 +27,11 @@ export const D1 = { statementBytes: 100_000, boundParameters: 100, stringBytes: 
 // schema's, read from its CHECK on payload.body when the statements are bundled.
 import { INLINE_PAYLOAD_BYTES } from "./sql.generated.mjs";
 export { INLINE_PAYLOAD_BYTES };
+// Below this a payload is never an object in the bucket: it always fits its record.
+// Between this and the row's bound a writer keeps it in its record, and may put it in
+// the bucket instead when the record would not fit once the payload is written as a JSON
+// string (a body of mostly control characters grows sixfold).
+export const OBJECT_FLOOR_BYTES = 16_384;
 // A staged record is one row of `stg`, and the row it becomes must fit a row too.
 // It is also large enough for the longest payload kept in a row once written as a JSON
 // string inside its record, which at worst doubles it (every character escaped).
