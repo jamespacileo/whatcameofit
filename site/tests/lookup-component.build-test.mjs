@@ -60,7 +60,7 @@ test("the website opts in and displays each independent claim with its own resul
   ] };
   document.querySelector("#results").scrollIntoView = () => {};
   vm.runInNewContext(script, {
-    document, URL, navigator: {}, getSelection: () => null, setTimeout,
+    document, URL, crypto, navigator: {}, getSelection: () => null, setTimeout,
     BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
     location: { href: "https://example.test/" }, history: { replaceState() {}, pushState() {} }, addEventListener() {},
@@ -96,7 +96,7 @@ async function trackedAnswer({ navigator, carried = true }) {
   results.scrollIntoView = () => {};
   const timers = [];
   vm.runInNewContext(script, {
-    document, URL, navigator, getSelection: () => null, setTimeout: (run) => timers.push(run),
+    document, URL, crypto, navigator, getSelection: () => null, setTimeout: (run) => timers.push(run),
     BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
     location: { href: "https://example.test/" }, history: { replaceState() {}, pushState() {} }, addEventListener() {},

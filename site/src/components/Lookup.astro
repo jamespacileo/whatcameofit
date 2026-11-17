@@ -139,6 +139,9 @@ const sentenceJson = sentences
     content?: string;
     meta: { title?: string; status?: string; summary?: string };
   }
+  interface IndexedHit {
+    data: () => Promise<Hit>;
+  }
   interface LookupClaim {
     headline: string;
     page: string;
@@ -878,22 +881,44 @@ const sentenceJson = sentences
     }
   }
 
-  // A search looked up, and a search cleared, is a step the Back button returns from.
-  // Narrowing an answer by topic is not: it changes the address in place.
-  function setAddress(change: (params: URLSearchParams) => void, step = false) {
+  interface SearchHistory {
+    articleKey?: string;
+    /** How many batches of claims each view had read: every claim's under "", a topic's under its name. */
+    pages?: number | Record<string, number>;
+  }
+  const articleLookups = new Map<string, string>();
+  const searchHistory = (): SearchHistory => history.state?.lookup ?? {};
+
+  function setAddress(
+    change: (params: URLSearchParams) => void,
+    view = searchHistory(),
+    step = false,
+  ) {
     const url = new URL(location.href);
     change(url.searchParams);
-    if (step && url.href !== location.href) history.pushState(null, "", url);
-    else history.replaceState(null, "", url);
+    const state = { ...history.state, lookup: view };
+    if (step) history.pushState(state, "", url);
+    else history.replaceState(state, "", url);
+  }
+
+  function startSearch(text: string) {
+    const view: SearchHistory = {};
+    if (text && readAddress(text).kind !== "none") {
+      // A pasted link stays in this page's memory. History carries only its key.
+      view.articleKey = crypto.randomUUID();
+      articleLookups.set(view.articleKey, text);
+    }
+    setAddress((params) => {
+      if (text && !view.articleKey) params.set("q", text);
+      else params.delete("q");
+      params.delete("topic");
+    }, view, true);
+    answer(text);
   }
 
   function clearSearch() {
     input.value = "";
-    setAddress((params) => {
-      params.delete("q");
-      params.delete("topic");
-    }, true);
-    answer("");
+    startSearch("");
     input.focus();
   }
 
@@ -962,6 +987,11 @@ const sentenceJson = sentences
     }
   }
 
+  interface ExactHeadline {
+    claim: LookupClaim;
+    report: SearchReport;
+  }
+
   interface Shown {
     /** Every claim the search index found, read or not. */
     total: number;
@@ -969,17 +999,17 @@ const sentenceJson = sentences
     topics: [string, number][];
     /** Draws the answer again with one topic's claims, or with all of them. */
     pick: (slug: string, from: "side" | "row") => void;
-    picked?: string;
+    picked: string;
     /** Where the reader picked a topic, to keep their place on it when it is redrawn. */
     pickedIn?: "side" | "row";
     /** A report whose headline is the search itself: its claim leads, so labelled. */
-    exact?: SearchReport;
-    /** The claim that report belongs to. */
-    lead?: LookupClaim;
+    exact?: ExactHeadline;
     /** How many of the claims on view, every one or the picked topic's, are not read yet. */
-    left?: number;
+    left: number;
     /** Reads the next of them and draws the answer again; given where any are left. */
     more?: () => Promise<void>;
+    reading: boolean;
+    unread: boolean;
     /** The answer drawn again in its place, with more in it: the page is not moved. */
     again?: boolean;
     /** Searched words that no tracked claim holds. */
@@ -997,7 +1027,7 @@ const sentenceJson = sentences
         .map(([slug, n]): [string, string, number] => [slug, index.topics[slug].title, n])
         .sort((a, b) => b[2] - a[2] || a[1].localeCompare(b[1])),
     ];
-    if (picks.length < 3) return [];
+    if (picks.length < 3 && !view.picked) return [];
     return picks.map(([slug, title, n]) => {
       const button = element("button", `${title} `, "side-pick") as HTMLButtonElement;
       button.type = "button";
@@ -1026,7 +1056,7 @@ const sentenceJson = sentences
   // the topics the matches belong to. `shown` is the claims on view: those read of
   // every claim found, or of the picked topic's.
   function searchAnswer(query: string, shown: LookupClaim[], index: Lookup, detail: SearchDetail, view: Shown) {
-    const { total, picked = "", pickedIn, exact, lead, left = 0, more, again = false, unheld = [], said } = view;
+    const { total, picked, pickedIn, exact, left, more, reading, unread, again = false, unheld = [], said } = view;
     const cut = left > 0;
     const words = searchWords(query);
     const block = element("div", undefined, "search-results");
@@ -1059,14 +1089,14 @@ const sentenceJson = sentences
       block.append(row);
     }
 
-    const [best, ...others] = shown;
-    const leads = exact !== undefined && best !== undefined && best === lead;
-    if (leads) {
+    if (exact && (!picked || exact.claim.topic === picked)) {
+      const { claim, report } = exact;
+      const others = shown.filter((match) => match !== claim);
       block.append(element("p", "A tracked report has this headline.", "exact-says"));
-      block.append(reportCard(exact, best, words, index.topics));
-      const found = foundIn(best.page, words, detail).filter((item) => item.kind !== "report" || item.report.url !== exact.url);
+      block.append(reportCard(report, claim, words, index.topics));
+      const found = foundIn(claim.page, words, detail).filter((item) => item.kind !== "report" || item.report.url !== report.url);
       const under = found.length ? [element("p", "Also found in", "matched-title"), foundList(found, words, 3)] : [];
-      block.append(standing(best, index.places, { lead: "Its claim · on record now", heading: "h3", words, under, compact: true }));
+      block.append(standing(claim, index.places, { lead: "Its claim · on record now", heading: "h3", words, under, compact: true }));
       if (others.length) {
         const jump = element("a", `${others.length} other ${others.length === 1 ? "claim" : "claims"} with these words`, "jump-others") as HTMLAnchorElement;
         jump.href = "#other-matches";
@@ -1079,7 +1109,8 @@ const sentenceJson = sentences
         list.append(...others.map((claim) => matchRow(claim, index.places, words, index.topics, detail)));
         block.append(head, list);
       }
-    } else if (best) {
+    } else if (shown.length) {
+      const [best, ...others] = shown;
       const first = element("ol", undefined, "plain hit-list");
       first.append(matchRow(best, index.places, words, index.topics, detail, true));
       block.append(first);
@@ -1097,20 +1128,19 @@ const sentenceJson = sentences
     if (cut) {
       // The next of them are drawn under these at a press; the line counts what is left.
       const where = picked ? ` in ${topic}` : "";
-      const line = element("p", `${left} more tracked ${left === 1 ? `claim${where} holds` : `claims${where} hold`} these words.`, "match-more show-more-says");
+      const message = reading ? "Reading…" : unread ? "The next claims could not be read right now."
+        : `${left} more tracked ${left === 1 ? `claim${where} holds` : `claims${where} hold`} these words.`;
+      const line = element("p", message, "match-more show-more-says");
       line.setAttribute("role", "status");
       if (more) {
         const button = element("button", `Show ${Math.min(left, SHOWN_AT_ONCE)} more`, "share show-more") as HTMLButtonElement;
         button.type = "button";
-        button.addEventListener("click", async () => {
+        button.disabled = reading;
+        button.addEventListener("click", () => {
+          if (button.disabled) return;
           button.disabled = true;
           line.textContent = "Reading…";
-          try {
-            await more();
-          } catch {
-            button.disabled = false;
-            line.textContent = "The next claims could not be read right now.";
-          }
+          void more();
         });
         block.append(button);
       }
@@ -1443,28 +1473,27 @@ const sentenceJson = sentences
   // The words a headline is compared by: letters and numbers, in lower case.
   const plain = (text: string) => text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
-  // A topic named in the page's address when it was opened, applied to its search.
-  let addressTopic = new URL(location.href).searchParams.get("topic") ?? "";
-
   // What the search index answers with: every page found, each read only when asked
   // for, and how many of them each topic holds.
-  interface IndexResult {
-    data: () => Promise<Hit>;
-  }
   interface IndexAnswer {
-    results: IndexResult[];
+    results: IndexedHit[];
     filters?: Record<string, Record<string, number>>;
   }
   interface SearchIndex {
     filters: () => Promise<unknown>;
     search: (words: string, options?: { filters: Record<string, string> }) => Promise<IndexAnswer>;
   }
-  // The claims on view: the pages the index found, how many of them have been read,
-  // and the claims read, in the order they are shown.
+  // The claims on view, every one found or one topic's: the pages the index found for
+  // them, a cursor over those read, and the claims read, in the order they are shown.
+  // A view reads one batch at a time; a batch that fails leaves its cursor in place.
   interface View {
-    results: IndexResult[];
+    slug: string;
+    results: IndexedHit[];
     read: number;
+    pages: number;
     matches: LookupClaim[];
+    pending?: Promise<LookupClaim[]>;
+    unread: boolean;
   }
 
   // Whether the index holds a word: whole, in any of its forms, or as the start of a
@@ -1479,105 +1508,186 @@ const sentenceJson = sentences
     return content.toLowerCase().split(/[^\p{L}\p{N}]+/u).some((said) => said.startsWith(word));
   }
 
-  async function search(query: string) {
+  // How many batches each view of a search had read, as its history step keeps them.
+  // A step saved before topics had their own pages holds one number, for every claim.
+  function pagesKept(kept: SearchHistory["pages"]): Record<string, number> {
+    if (typeof kept === "number") return { "": kept };
+    return kept && typeof kept === "object" ? { ...kept } : {};
+  }
+
+  async function search(query: string, topic: string, kept: Record<string, number>) {
     const asked = latest;
     show("Searching…");
     const words = searchWords(query);
     let index: Lookup;
     let detail: SearchDetail;
     let searchIndex: SearchIndex;
-    let pages: Map<string, LookupClaim>;
-    const claimOf = (hit: Hit) => pages.get(new URL(hit.url, location.origin).pathname.replace(/(\/index\.html|\.html|\/)$/, ""));
-    // The next twenty of a view's pages, read and put in order among themselves by the
-    // rule; those already on view keep their place.
-    const readNext = async (view: View) => {
-      const hits = await Promise.all(view.results.slice(view.read, view.read + SHOWN_AT_ONCE).map((result) => result.data()));
-      view.read += hits.length;
-      const fresh = ranked(
-        hits.map(claimOf).filter((claim): claim is LookupClaim => Boolean(claim) && !view.matches.includes(claim!)),
-        words,
-        detail,
-      );
-      view.matches = [...view.matches, ...fresh];
-      return fresh;
-    };
-    // Every claim page the index found; they are read and drawn twenty at a time.
-    const all: View = { results: [], read: 0, matches: [] };
-    let topics: [string, number][] = [];
-    let unheld: string[] = [];
-    // Words that are a tracked report's whole headline put its claim first.
-    let exact: SearchReport | undefined;
-    let lead: LookupClaim | undefined;
-    // One topic's claims. Where every claim found has been read they are among those;
-    // otherwise the index is asked for that topic's pages and the first twenty are read.
-    const narrowed = new Map<string, View>();
-    const viewOf = async (slug: string): Promise<View> => {
-      if (!slug) return all;
-      if (all.read >= all.results.length) return { results: [], read: 0, matches: all.matches.filter((claim) => claim.topic === slug) };
-      let view = narrowed.get(slug);
-      if (!view) {
-        const found = await searchIndex.search(query, { filters: { topic: slug } });
-        view = { results: found.results, read: 0, matches: lead?.topic === slug ? [lead] : [] };
-        await readNext(view);
-        narrowed.set(slug, view);
-      }
-      return view;
-    };
-    let picked = "";
-    let onView = all;
+    let found: IndexAnswer;
     try {
       const indexUrl = "/pagefind/pagefind.js";
       searchIndex = await import(/* @vite-ignore */ indexUrl);
       // The index counts the pages it finds by topic once its topics are read: one
       // small file, asked for with the first search.
-      const [found, loaded, held] = await Promise.all([
+      [found, index, detail] = await Promise.all([
         searchIndex.filters().then(() => searchIndex.search(query)),
         loadLookup(),
         loadDetail(),
       ]);
-      index = loaded;
-      detail = held;
-      // Only claim pages are in the search index; each is named by its page.
-      pages = new Map(Object.values(index.claims).map((claim) => [claim.page, claim]));
-      all.results = found.results;
-      topics = Object.entries(found.filters?.topic ?? {}).filter(([, count]) => count > 0);
-      // For a word it holds nowhere the index answers without it, or with a shorter
-      // word it does hold, and says nothing. Each word is asked for alone, so the
-      // answer can name the ones no claim holds.
-      const typed = [...new Set(query.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean))];
-      const [, inIndex] = await Promise.all([
-        readNext(all),
-        found.results.length > 0 ? Promise.all(typed.map((word) => holds(searchIndex, word))) : [],
-      ]);
-      unheld = typed.filter((_, at) => inIndex[at] === false);
-
-      const asWords = plain(query);
-      if (asWords.includes(" ")) {
-        for (const [slug, held] of Object.entries(detail.claims)) {
-          const report = held.reports.find((candidate) => plain(candidate.title) === asWords);
-          const claim = index.claims[slug];
-          if (!report || !claim) continue;
-          exact = report;
-          lead = claim;
-          all.matches = [claim, ...all.matches.filter((other) => other !== claim)];
-          break;
-        }
-      }
-      if (asked !== latest) return;
-      if (all.matches.length > 0) {
-        picked = topics.some(([slug]) => slug === addressTopic) ? addressTopic : "";
-        // A topic in the address that no claim found belongs to is dropped from it.
-        if (addressTopic && !picked) setAddress((params) => params.delete("topic"));
-        addressTopic = "";
-        onView = await viewOf(picked);
-      }
     } catch {
       if (asked === latest) searchFailed(query);
       return;
     }
     if (asked !== latest) return;
 
-    if (all.matches.length === 0) {
+    // Only claim pages are in the search index; each is named by its page. A page is
+    // read once, however many views ask for it; one that failed is asked for again.
+    const byPage = new Map(Object.values(index.claims).map((claim) => [claim.page, claim]));
+    const reads = new Map<IndexedHit, Promise<LookupClaim | undefined>>();
+    const readHits = (batch: IndexedHit[]) => Promise.all(batch.map((hit) => {
+      const pending = reads.get(hit);
+      if (pending) return pending;
+      const reading = hit.data().then(({ url }) => {
+        const page = new URL(url, location.origin).pathname.replace(/(\/index\.html|\.html|\/)$/, "");
+        return byPage.get(page);
+      }).catch((error) => {
+        reads.delete(hit);
+        throw error;
+      });
+      reads.set(hit, reading);
+      return reading;
+    }));
+
+    // Words that are a tracked report's whole headline put its claim first.
+    let exact: ExactHeadline | undefined;
+    const asWords = plain(query);
+    if (asWords.includes(" ")) {
+      for (const [slug, held] of Object.entries(detail.claims)) {
+        const report = held.reports.find((candidate) => plain(candidate.title) === asWords);
+        const claim = index.claims[slug];
+        if (!report || !claim) continue;
+        exact = { claim, report };
+        break;
+      }
+    }
+    // Whether the index found the exact headline's claim: then it takes one of a
+    // view's places and is counted once. Otherwise it stands above them, uncounted.
+    let exactIndexed = false;
+    // An indexed headline is brought to the front of a view before its first batch.
+    const promote = async (view: View) => {
+      if (!exact) return;
+      for (let start = 0; start < view.results.length; start += SHOWN_AT_ONCE) {
+        const batch = await readHits(view.results.slice(start, start + SHOWN_AT_ONCE));
+        const at = batch.indexOf(exact.claim);
+        if (at < 0) continue;
+        view.results.unshift(...view.results.splice(start + at, 1));
+        exactIndexed = true;
+        return;
+      }
+    };
+    const openView = async (slug: string, results: IndexedHit[]): Promise<View> => {
+      const view: View = { slug, results: [...results], read: 0, pages: 0, matches: [], unread: false };
+      if (!slug || (exactIndexed && exact?.claim.topic === slug)) await promote(view);
+      return view;
+    };
+
+    // The next twenty claims of a view, put in order among themselves by the rule;
+    // those already on view keep their place. A view has one batch on its way at most:
+    // asked again meanwhile, it answers with that one.
+    const advance = (view: View) => {
+      view.pending ??= (async () => {
+        const seen = new Set(view.matches);
+        const fresh: LookupClaim[] = [];
+        let cursor = view.read;
+        while (cursor < view.results.length && fresh.length < SHOWN_AT_ONCE) {
+          const batch = await readHits(view.results.slice(cursor, cursor + SHOWN_AT_ONCE - fresh.length));
+          cursor += batch.length;
+          for (const claim of batch) {
+            if (!claim || seen.has(claim)) continue;
+            seen.add(claim);
+            fresh.push(claim);
+          }
+        }
+        // Only a batch read whole moves the cursor and adds its claims.
+        const ordered = ranked(fresh, words, detail);
+        view.read = cursor;
+        view.pages += 1;
+        view.matches = [...view.matches, ...ordered];
+        view.unread = false;
+        return ordered;
+      })().catch((error) => {
+        view.unread = true;
+        throw error;
+      }).finally(() => {
+        view.pending = undefined;
+      });
+      return view.pending;
+    };
+
+    // Every claim page the index found, and each topic's, asked of the index the
+    // first time that topic is picked. A view is read to the depth its step kept.
+    let all: View;
+    try {
+      all = await openView("", found.results);
+    } catch {
+      if (asked === latest) searchFailed(query);
+      return;
+    }
+    if (asked !== latest) return;
+    const topics = Object.entries(found.filters?.topic ?? {}).filter(([, count]) => count > 0);
+    const opened = new Map<string, Promise<View>>([["", Promise.resolve(all)]]);
+    const readTo = async (view: View, depth: number) => {
+      while (view.pages < Math.max(depth, 1) && view.read < view.results.length) await advance(view);
+    };
+    const viewOf = async (slug: string) => {
+      let opening = opened.get(slug);
+      if (!opening) {
+        opening = searchIndex.search(query, { filters: { topic: slug } }).then((answer) => openView(slug, answer.results));
+        opened.set(slug, opening);
+        opening.catch(() => opened.delete(slug));
+      }
+      const view = await opening;
+      await readTo(view, kept[slug] ?? 1);
+      return view;
+    };
+    // How deep each view opened is read, for this step of the history. A view not
+    // opened again since the step was restored keeps the depth it had.
+    const views: View[] = [all];
+    const remember = (view: View) => {
+      if (!views.includes(view)) views.push(view);
+      for (const each of views) kept[each.slug] = Math.max(kept[each.slug] ?? 0, each.pages);
+      return { ...searchHistory(), pages: { ...kept } };
+    };
+
+    let unheld: string[] = [];
+    let picked = topics.some(([slug]) => slug === topic) && Object.hasOwn(index.topics, topic) ? topic : "";
+    let onView = all;
+    try {
+      // For a word it holds nowhere the index answers without it, or with a shorter
+      // word it does hold, and says nothing. Each word is asked for alone, so the
+      // answer can name the ones no claim holds.
+      const typed = [...new Set(query.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean))];
+      // Where the step had a topic picked, every claim's view is read to its depth
+      // only when it is picked again.
+      const [, inIndex] = await Promise.all([
+        readTo(all, picked ? 1 : kept[""] ?? 1),
+        found.results.length > 0 ? Promise.all(typed.map((word) => holds(searchIndex, word))) : [],
+      ]);
+      if (asked !== latest) return;
+      unheld = typed.filter((_, at) => inIndex[at] === false);
+      if (picked && all.matches.length > 0) onView = await viewOf(picked);
+      if (asked !== latest) return;
+    } catch {
+      if (asked === latest) searchFailed(query);
+      return;
+    }
+    if (picked && !onView.matches.length) {
+      picked = "";
+      onView = all;
+    }
+    // A topic in the address that no claim found belongs to is dropped from it.
+    if (topic && !picked) setAddress((params) => params.delete("topic"));
+
+    if (all.matches.length === 0 && !exact) {
       show(
         `Nothing tracked here matches “${query}”.`,
         "This site covers only the claims it has tracked so far. To check a story, paste the article's link into the box above.",
@@ -1590,6 +1700,10 @@ const sentenceJson = sentences
       return;
     }
 
+    // The topic last asked for. A pick or a batch that arrives after another was asked
+    // for is kept in its view and not drawn.
+    let wanted = picked;
+    let picking = 0;
     const draw = (view: View, change: Partial<Shown> = {}) => {
       onView = view;
       searchAnswer(query, view.matches, index, detail, {
@@ -1598,36 +1712,52 @@ const sentenceJson = sentences
         pick,
         picked,
         exact,
-        lead,
         unheld,
         left: view.results.length - view.read,
         more: view.read < view.results.length ? () => more(view) : undefined,
+        reading: view.pending !== undefined,
+        unread: view.unread,
         ...change,
       });
     };
     // The claims found and not yet read are drawn under those on screen, twenty at a
     // press. The reader is put on the first of them.
     const more = async (view: View) => {
-      const fresh = await readNext(view);
+      if (view.pending || asked !== latest) return;
+      let fresh: LookupClaim[];
+      const batch = advance(view);
+      try {
+        fresh = await batch;
+      } catch {
+        if (asked !== latest || view !== onView || wanted !== view.slug) return;
+        draw(view, { again: true });
+        (answerSlot ?? results).querySelector<HTMLButtonElement>(".show-more")?.focus({ preventScroll: true });
+        return;
+      }
       if (asked !== latest) return;
+      history.replaceState({ ...history.state, lookup: remember(view) }, "");
+      if (view !== onView || wanted !== view.slug) return;
       draw(view, { again: true });
-      const holder = answerSlot && !answerSlot.hidden ? answerSlot : results;
+      const holder = answerSlot ?? results;
       const link = fresh[0] && [...holder.querySelectorAll<HTMLAnchorElement>("a.hit-title")].find((title) => title.getAttribute("href") === fresh[0].page);
-      (link ?? holder.querySelector<HTMLElement>("#search-answer-title"))?.focus();
+      (link ?? holder.querySelector<HTMLElement>("#search-answer-title"))?.focus({ preventScroll: true });
     };
     // A topic picked shows that topic's claims, reading those not yet read.
     const pick = async (slug: string, from: "side" | "row") => {
+      const ticket = ++picking;
+      wanted = slug;
       let view: View;
       try {
         view = await viewOf(slug);
       } catch {
-        if (asked !== latest) return;
+        if (asked !== latest || ticket !== picking) return;
+        wanted = picked;
         draw(onView, { pickedIn: from, said: `The claims in ${index.topics[slug]?.title ?? "that topic"} could not be read right now.` });
         return;
       }
-      if (asked !== latest) return;
+      if (asked !== latest || ticket !== picking) return;
       picked = slug;
-      setAddress((params) => (slug ? params.set("topic", slug) : params.delete("topic")));
+      setAddress((params) => (slug ? params.set("topic", slug) : params.delete("topic")), remember(view));
       draw(view, { pickedIn: from });
     };
     draw(onView);
@@ -1650,40 +1780,43 @@ const sentenceJson = sentences
     }
     const read = readAddress(text);
     if (read.kind !== "none") void lookUp(text, read);
-    else void (TRIAL_ID.test(text) ? trialSearch(text) : search(text));
+    else if (TRIAL_ID.test(text)) void trialSearch(text);
+    else {
+      const topic = new URL(location.href).searchParams.get("topic") ?? "";
+      void search(text, topic, pagesKept(searchHistory().pages));
+    }
+  }
+
+  function clearAnsweredSearch() {
+    const answered = results.childElementCount > 0 || (answerSlot !== null && !answerSlot.hidden);
+    if (answered) clearSearch();
   }
 
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const text = input.value.trim();
-    setAddress((params) => {
-      // Only typed words go into the page's address. A pasted article address stays in
-      // the field: in the address it would reach the server on a reload or when shared.
-      if (text && readAddress(text).kind === "none") params.set("q", text);
-      else params.delete("q");
-      // A new search starts on every topic.
-      params.delete("topic");
-    }, true);
-    answer(text);
+    if (text) startSearch(text);
+    else clearAnsweredSearch();
   });
 
   // A field emptied by its cross, by Escape or by deleting leaves no answer behind it.
   const emptied = () => {
-    if (input.value) return;
-    const answered = results.childElementCount > 0 || (answerSlot !== null && !answerSlot.hidden);
-    if (answered) clearSearch();
+    if (!input.value) clearAnsweredSearch();
   };
   input.addEventListener("input", emptied);
   input.addEventListener("search", emptied);
 
+  function restoreSearch() {
+    const params = new URL(location.href).searchParams;
+    const text = articleLookups.get(searchHistory().articleKey ?? "") ?? params.get("q") ?? "";
+    input.value = text;
+    answer(text);
+  }
+
   // Back and Forward move between the searches looked up, each drawn again.
   addEventListener("popstate", () => {
-    const params = new URL(location.href).searchParams;
-    const text = params.get("q") ?? "";
-    input.value = text;
-    addressTopic = params.get("topic") ?? "";
     closeSuggestions();
-    answer(text);
+    restoreSearch();
   });
 
   // A pasted link is answered at once; typed words wait for the button.
@@ -1901,11 +2034,7 @@ const sentenceJson = sentences
   });
   form.addEventListener("submit", closeSuggestions);
 
-  const initial = new URL(location.href).searchParams.get("q");
-  if (initial) {
-    input.value = initial;
-    answer(initial);
-  }
+  restoreSearch();
 
   // A reader sent here to look something up lands with the field ready.
   if (location.hash === "#search") document.querySelector<HTMLInputElement>("#query")?.focus();

@@ -1,0 +1,34 @@
+---
+// One day of the calendar on the home page, with the claims first reported on it
+// (openspec landing-rows-on-demand). The page fetches the day its reader's own date
+// picks; it holds no day as built.
+import type { CalendarDay } from "../lib/anniversaries";
+import StatusCell from "./StatusCell.astro";
+
+interface Props {
+  day: CalendarDay;
+}
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+];
+const { day } = Astro.props;
+---
+
+<li class="day" data-day={day.id} data-label={`${day.day} ${MONTH_NAMES[day.month - 1]}`}>
+  <strong class="when">
+    {day.day} {MONTH_NAMES[day.month - 1].slice(0, 3)}
+  </strong>
+  <ul>
+    {day.entries.map((entry) => (
+      <li data-year={entry.year}>
+        <span class="year"><span class="visually-hidden">First reported </span>{entry.year}</span>
+        <a href={`/${entry.claim.slug}`}>{entry.claim.headline}</a>
+        <span class="status">
+          <StatusCell claim={entry.claim} />
+        </span>
+      </li>
+    ))}
+  </ul>
+</li>

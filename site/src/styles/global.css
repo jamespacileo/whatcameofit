@@ -731,6 +731,11 @@ a.chip:hover {
   color: var(--muted);
 }
 
+.approach-basis {
+  font-size: var(--text-s);
+  color: var(--muted);
+}
+
 .share {
   display: inline-flex;
   align-items: center;
@@ -853,6 +858,32 @@ a.share {
   margin: 0.6rem 0 0;
 }
 
+/* Under that: when the registries were last read and who put the page together, where
+   a reader looks for a byline. */
+.byline {
+  color: var(--muted);
+  font-size: var(--text-s);
+  margin: 0.25rem 0 0;
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+/* The credit NLM asks for wherever a MeSH category is shown. */
+.mesh-credit {
+  color: var(--muted);
+  font-size: var(--text-s);
+  margin: 1.5rem 0 0;
+  max-width: 70ch;
+}
+
+.clinical-directory {
+  margin-top: 1.25rem;
+}
+
+.clinical-claims {
+  margin-top: 2rem;
+}
+
 /* The headline a reader followed here, named before anything is said about it. */
 .reported {
   margin-top: 0.7rem;
@@ -927,6 +958,13 @@ a.share {
   .digest .changed a,
   .reported > .entry-note a {
     padding-block: 0.8rem;
+  }
+
+  /* The two links under a claim's title each sit in a sentence: padding enlarges what a
+     thumb can hit without moving the line. */
+  .what-this-is a,
+  .byline a {
+    padding-block: 0.75rem;
   }
 
   .embed-how summary {
@@ -2959,6 +2997,57 @@ span.pop > span + span {
 .pop .pop-note {
   color: var(--muted);
   font-size: var(--text-s);
+}
+
+/* The way out of a panel that holds links: a text control as tall as a fingertip, at
+   the panel's foot. Not drawn where the browser has no popover: the panel is then
+   plain content and has nothing to close. */
+.pop-close {
+  display: none;
+}
+
+@supports selector(:popover-open) {
+  .pop-close {
+    /* Held at the panel's foot while a long panel scrolls, so it is always in reach. */
+    position: sticky;
+    bottom: -0.8rem;
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    margin: 0.4rem 0 -0.8rem;
+    padding: 0;
+    border: 0;
+    border-top: 1px solid var(--rule);
+    background: var(--paper);
+    text-align: right;
+    font: inherit;
+    font-size: var(--text-s);
+    font-weight: 600;
+    color: var(--blue);
+    text-decoration: underline;
+    text-underline-offset: 0.22em;
+    cursor: pointer;
+  }
+}
+
+@media print {
+  .pop-close {
+    display: none;
+  }
+}
+
+/* On a phone a panel that holds links and a way out is set at the foot of the screen,
+   a gutter in from each edge, whatever the place of the control that opened it: beside
+   a control low on the screen it ran off the foot, and its way out with it. */
+@media (max-width: 40rem) {
+  .pop.closes {
+    position-area: none;
+    inset: auto 1rem 1rem;
+    width: auto;
+    max-width: none;
+    max-height: min(28rem, 70dvh);
+    margin: 0;
+  }
 }
 
 @media (max-width: 40rem) {
@@ -6391,6 +6480,7 @@ body.framed {
 }
 
 .band.record .what-this-is,
+.band.record .byline,
 .band.record .entry-note,
 .band.record .approach {
   color: var(--navy-soft);
@@ -6996,6 +7086,8 @@ body.framed {
   }
 
   .band.record .what-this-is,
+  .band.record .byline,
+  .band.record .claim-title .title-for,
   .band.record .entry-note,
   .band.record .approach {
     color: var(--muted);
@@ -7710,6 +7802,25 @@ body.framed {
   max-width: 36ch;
 }
 
+/* A claim page's title: the treatment in the heading face, and under it what it is for,
+   in the text face and the band's quieter ink, so the two are read as name and use. */
+.band.record .claim-title .title-what,
+.band.record .claim-title .title-for {
+  display: block;
+}
+
+.band.record .claim-title .title-for {
+  margin-top: 0.4rem;
+  max-width: 36ch;
+  font-family: var(--face);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0;
+  color: var(--navy-soft);
+  text-wrap: pretty;
+}
+
 /* A record page's section headings, in the same face. */
 .sheet .bar {
   font-family: var(--display);
@@ -8422,6 +8533,13 @@ body.framed {
   box-shadow:
     -0.85rem 0 0 var(--panel),
     0.85rem 0 0 var(--panel);
+}
+
+/* What is pressed for itself lies over the row's press: a link under a value was
+   covered by it and could not be pressed (critique of 2026-11-17). */
+.fact-sheet > div:has(.fact-open) > dd:not(.fact-more) a {
+  position: relative;
+  z-index: 1;
 }
 
 /* What a row opens to: on the page's own ground under the tinted head, to the row's
@@ -9509,6 +9627,34 @@ body.framed {
 
 .record-all > summary {
   margin-top: 0.4rem;
+}
+
+/* A moment is pressed whole: its name and its date, not the name's one line. */
+.milestones a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+/* On a phone the fold lines under a list and the brief's marked words are a fingertip
+   tall: padding, so no line moves. */
+@media (max-width: 40rem) {
+  .trials-rest > summary,
+  .papers-rest > summary {
+    min-height: 2.75rem;
+  }
+
+  .record-all > summary {
+    margin-top: 0;
+  }
+
+  .brief-term {
+    padding-block: 0.55rem;
+  }
+
+  .fact-sheet > div:has(.fact-open) > dd:not(.fact-more) a {
+    padding-block: 0.75rem;
+  }
 }
 
 .sheet .record-all,

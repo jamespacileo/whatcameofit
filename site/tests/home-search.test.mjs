@@ -53,6 +53,12 @@ let NOT_WHOLE = [];
 let MEDIA = [];
 // The pages the search index was asked to read, in the order asked.
 let pagesRead = [];
+// How a page found is read, in a test: at once unless a test holds it back or fails it.
+const readNow = async (url) => ({ url, meta: {}, content: SEARCH_LOOKUP.claims[url.replaceAll("/", "")]?.headline });
+let readHit = readNow;
+// What the index is asked before it answers, in a test: nothing held back unless a test
+// holds a search, as a slow network would.
+let beforeSearch = async () => {};
 // The search index as the built site's answers: every page found, each read only when
 // asked for, with how many of them each topic holds; narrowed to one topic on request.
 function searchIndex() {
@@ -60,12 +66,13 @@ function searchIndex() {
   return {
     filters: async () => ({}),
     search: async (words, options) => {
+      await beforeSearch(words, options);
       if (NOT_WHOLE.some((word) => words === `"${word}"`)) return { results: [], filters: {} };
       const topic = {};
       for (const url of SEARCH_HITS) if (topicOf(url)) topic[topicOf(url)] = (topic[topicOf(url)] ?? 0) + 1;
       const found = SEARCH_HITS.filter((url) => !options?.filters || topicOf(url) === options.filters.topic);
       return {
-        results: found.map((url) => ({ data: async () => { pagesRead.push(url); return { url, meta: {}, content: SEARCH_LOOKUP.claims[url.replaceAll("/", "")]?.headline }; } })),
+        results: found.map((url) => ({ data: () => { pagesRead.push(url); return readHit(url); } })),
         filters: { topic },
       };
     },
@@ -109,9 +116,27 @@ const SEARCH_DETAIL = {
   },
 };
 
-function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
-  const history = { replaceState() {}, pushState() {} };
-  const location = { href: "https://example.test/", origin: "https://example.test" };
+function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE, initial = "https://example.test/") {
+  const location = { href: initial, origin: "https://example.test" };
+  const entries = [{ state: null, url: initial }];
+  let position = 0;
+  const history = {
+    get length() { return entries.length; },
+    get state() { return entries[position].state; },
+    replaceState(state, _, url = location.href) {
+      entries[position] = { state, url: String(url) };
+      location.href = String(url);
+    },
+    pushState(state, _, url) {
+      entries.splice(++position, entries.length, { state, url: String(url) });
+      location.href = String(url);
+    },
+    go(delta) {
+      position += delta;
+      location.href = entries[position].url;
+      listeners.popstate({ state: history.state });
+    },
+  };
   // What the script listens for on the window, by event name.
   const listeners = {};
   const { document, window } = parseHTML(`<html><head><title>Example tracker</title></head><body>${body}</body></html>`);
@@ -122,7 +147,7 @@ function setup(liveAnswer = null, body = PAGE, searching = body !== PAGE) {
   const results = document.querySelector("#results");
   results.scrollIntoView = () => {};
   const context = {
-    document, URL, setTimeout, BRAND: { name: "Example tracker" }, readAddress, closestClaims,
+    document, URL, crypto, setTimeout, BRAND: { name: "Example tracker" }, readAddress, closestClaims,
     suggest, suggestParts, suggestWords, ranked, searchWords, wordPattern, wordsIn,
     LIVE, describeAnswer, refusalMessage, textWouldHelp, SUGGEST_SUBJECT, contactLink,
     NOT_AN_OPTION, NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, changedShort, findListed, listingWords, registryDate,
@@ -341,36 +366,30 @@ test("words that are a tracked report's headline lead with that report, then its
   assert.equal(digest.querySelector("h3 a").getAttribute("href"), "/sheet");
   assert.equal(answer.querySelector("#other-matches").textContent, "Other claims with these words");
   assert.match(answer.querySelector(".jump-others").textContent, /2 other claims with these words/);
+  assert.equal(answer.querySelector(".search-count span").textContent, "2 tracked claims");
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
 });
 
 test("each search looked up is a step Back returns to, and an emptied field leaves no answer", async () => {
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
   const page = setup(null, HOME);
-  const steps = [];
-  page.history.pushState = (_, __, url) => { steps.push(String(url)); page.location.href = String(url); };
-  page.history.replaceState = (_, __, url) => { page.location.href = String(url); };
   const answer = await searched(page, "tooth regrowth");
-  assert.equal(steps.length, 1);
-  assert.match(steps[0], /[?&]q=tooth\+regrowth/);
+  assert.match(page.location.href, /[?&]q=tooth\+regrowth/);
   // The line under the box leads to the answer's heading.
   assert.equal(page.results.querySelector("a").getAttribute("href"), "#search-answer-title");
   assert.equal(answer.querySelector("h2").id, "search-answer-title");
 
   // Back: the address has no words again, and the list is back in the answer's place.
-  page.location.href = "https://example.test/";
-  page.listeners.popstate();
+  page.history.go(-1);
   assert.equal(answer.hidden, true);
   assert.equal(page.results.textContent, "");
   assert.equal(page.document.querySelector("#query").value, "");
 
   // Forward: the words are in the field and answered again.
-  page.location.href = steps[0];
-  page.listeners.popstate();
+  page.history.go(1);
   for (let turn = 0; turn < 4; turn++) await settle();
   assert.equal(page.document.querySelector("#query").value, "tooth regrowth");
   assert.equal(answer.hidden, false);
-  assert.equal(steps.length, 1, "going back and forward adds no step");
 
   // The field emptied, as its cross or Escape leaves it.
   const field = page.document.querySelector("#query");
@@ -382,16 +401,14 @@ test("each search looked up is a step Back returns to, and an emptied field leav
   assert.doesNotMatch(page.location.href, /q=/);
 });
 
-test("the count is of every claim found; the rest are drawn under the first at a press", async () => {
-  // The index finds 25 claim pages. The first twenty are read: two of them are claims
-  // this page holds. The third is among the five not yet read.
-  const other = (count, from) => Array.from({ length: count }, (_, at) => `/other-${from + at}/`);
-  SEARCH_HITS = ["/germ/", "/antibody/", ...other(18, 0), "/sheet/", ...other(4, 18)];
+test("the count is of every claim found; the rest are drawn under the first at a press", async (t) => {
+  manyHits(t, 25, () => "teeth");
   const page = setup(null, HOME);
   const answer = await searched(page, "tooth regrowth");
-  assert.match(answer.querySelector(".search-count").textContent, /^First 2 of 7 tracked claims/);
-  assert.match(page.results.textContent, /^The first 2 of 7 tracked claims for “tooth regrowth” are shown below\.$/);
-  assert.equal(answer.querySelectorAll(".hit-row").length, 2);
+  assert.equal(shownCount(answer), "First 20 of 25 tracked claims");
+  assert.match(page.results.textContent, /^The first 20 of 25 tracked claims for “tooth regrowth” are shown below\.$/);
+  const first = shownClaims(answer);
+  assert.equal(first.length, 20);
   const more = answer.querySelector("button.show-more");
   assert.equal(more.textContent, "Show 5 more");
   assert.match(answer.querySelector(".show-more-says").textContent, /^5 more tracked claims hold these words\.$/);
@@ -399,11 +416,11 @@ test("the count is of every claim found; the rest are drawn under the first at a
   more.dispatchEvent(new page.window.Event("click"));
   for (let turn = 0; turn < 4; turn++) await settle();
   // Those on screen keep their order; the new one follows them, and nothing is left.
-  assert.deepEqual([...answer.querySelectorAll(".hit-row a.hit-title")].map((link) => link.getAttribute("href")), ["/germ", "/antibody", "/sheet"]);
-  assert.match(answer.querySelector(".search-count").textContent, /^3 tracked claims/);
+  assert.deepEqual(shownClaims(answer).slice(0, 20), first);
+  assert.equal(new Set(shownClaims(answer)).size, 25);
+  assert.equal(shownCount(answer), "25 tracked claims");
   assert.equal(answer.querySelector("button.show-more"), null);
-  assert.match(page.results.textContent, /^3 tracked claims for “tooth regrowth”, shown below\.$/);
-  SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
+  assert.match(page.results.textContent, /^25 tracked claims for “tooth regrowth”, shown below\.$/);
 });
 
 test("topics count every claim found, and a topic picked shows its claims, reading those not yet read", async () => {
@@ -547,14 +564,216 @@ test("the suggestions stand in the form, after its hint, and each row says what 
 test("a topic picked is kept in the page's address and cleared with the search", async () => {
   SEARCH_HITS = ["/germ/", "/antibody/", "/sheet/"];
   const page = setup(null, HOME);
-  const addresses = [];
-  page.history.replaceState = (_, __, url) => addresses.push(String(url));
   const answer = await searched(page, "tooth regrowth");
   [...answer.querySelectorAll(".search-topic-row button")][2].dispatchEvent(new page.window.Event("click"));
   await settle();
-  assert.match(addresses.at(-1), /[?&]topic=gums/);
+  assert.match(page.location.href, /[?&]topic=gums/);
   answer.querySelector("button.search-clear").dispatchEvent(new page.window.Event("click"));
-  assert.doesNotMatch(addresses.at(-1), /topic=|q=/);
+  assert.doesNotMatch(page.location.href, /topic=|q=/);
+});
+
+function manyHits(t, count, topicAt) {
+  const previous = SEARCH_HITS;
+  const claims = SEARCH_LOOKUP.claims;
+  t.after(() => {
+    SEARCH_HITS = previous;
+    SEARCH_LOOKUP.claims = claims;
+    readHit = readNow;
+  });
+  SEARCH_LOOKUP.claims = { ...claims };
+  SEARCH_HITS = Array.from({ length: count }, (_, at) => {
+    const slug = `synthetic-${at}`;
+    const page = `/${slug}`;
+    SEARCH_LOOKUP.claims[slug] = { ...claims.germ, page, topic: topicAt(at) };
+    return `${page}/`;
+  });
+}
+
+const shownCount = (answer) => answer.querySelector(".search-count span").textContent;
+const shownClaims = (answer) => [...answer.querySelectorAll("a.hit-title")].map((link) => link.getAttribute("href"));
+const click = (page, node) => node.dispatchEvent(new page.window.Event("click"));
+
+test("changing topic during Show more cannot advance the same batch twice", async (t) => {
+  manyHits(t, 62, (at) => at % 2 ? "gums" : "teeth");
+  const pending = Promise.withResolvers();
+  const nextBatch = SEARCH_HITS.slice(20, 40);
+  const reads = [];
+  readHit = async (url) => {
+    reads.push(url);
+    if (nextBatch.includes(url)) await pending.promise;
+    return { url, meta: {} };
+  };
+  const page = setup(null, HOME);
+  const answer = await searched(page, "tooth regrowth");
+  assert.equal(reads.length, 20);
+  const first = shownClaims(answer);
+  click(page, answer.querySelector(".show-more"));
+  // The topic is picked while every claim's next batch is on its way. The topic has
+  // pages of its own; the batch already asked for is the only one in flight.
+  click(page, answer.querySelector('button[data-topic="gums"]'));
+  const during = answer.querySelector(".show-more");
+  pending.resolve();
+  assert.equal(during.disabled, true);
+  click(page, during);
+  for (let turn = 0; turn < 4; turn++) await settle();
+  // Twenty of every claim, twenty more of them once, and the topic's own first twenty.
+  assert.equal(reads.length, 60);
+  assert.equal(answer.querySelector('button[data-topic="gums"]').getAttribute("aria-pressed"), "true");
+  assert.equal(shownCount(answer), "First 20 of 31 in Gum disease, of 62 tracked claims");
+  click(page, answer.querySelector('button[data-topic=""]'));
+  await settle();
+  assert.equal(reads.length, 60);
+  assert.equal(shownCount(answer), "First 40 of 62 tracked claims");
+  assert.deepEqual(shownClaims(answer).slice(0, 20), first);
+  click(page, answer.querySelector(".show-more"));
+  await settle();
+  assert.equal(shownCount(answer), "First 60 of 62 tracked claims");
+  click(page, answer.querySelector(".show-more"));
+  await settle();
+  assert.equal(shownCount(answer), "62 tracked claims");
+  assert.equal(new Set(shownClaims(answer)).size, 62);
+});
+
+test("retrying a failed batch preserves the first page and loads the same next claims", async (t) => {
+  manyHits(t, 41, () => "teeth");
+  let unavailable = true;
+  readHit = async (url) => {
+    if (unavailable && url === "/synthetic-39/") throw new Error("offline");
+    return { url, meta: {} };
+  };
+  const page = setup(null, HOME);
+  const answer = await searched(page, "tooth regrowth");
+  const first = shownClaims(answer);
+  click(page, answer.querySelector(".show-more"));
+  await settle();
+  assert.match(answer.querySelector(".show-more-says").textContent, /could not be read/);
+  assert.deepEqual(shownClaims(answer), first);
+  const retry = answer.querySelector(".show-more");
+  assert.equal(retry.disabled, false);
+  unavailable = false;
+  click(page, retry);
+  await settle();
+  assert.equal(shownCount(answer), "First 40 of 41 tracked claims");
+  assert.deepEqual(shownClaims(answer).slice(0, 20), first);
+  assert.equal(shownClaims(answer).at(-1), "/synthetic-39");
+});
+
+test("an exact headline promotes one indexed claim without increasing the count", async (t) => {
+  manyHits(t, 40, () => "teeth");
+  SEARCH_HITS[24] = "/sheet/";
+  const page = setup(null, HOME);
+  const answer = await searched(page, "cell sheets for gums");
+  assert.equal(answer.querySelector(".digest h3 a").getAttribute("href"), "/sheet");
+  assert.equal(shownCount(answer), "First 20 of 40 tracked claims");
+  const first = shownClaims(answer);
+  assert.equal(first.length, 19);
+  click(page, answer.querySelector(".show-more"));
+  await settle();
+  assert.equal(shownCount(answer), "40 tracked claims");
+  assert.deepEqual(shownClaims(answer).slice(0, 19), first);
+  assert.equal(new Set(shownClaims(answer)).size, 39);
+  assert.equal(answer.querySelectorAll('a.hit-title[href="/sheet"]').length, 0);
+});
+
+test("Back and Forward restore loaded results and a topic first found on page two", async (t) => {
+  manyHits(t, 42, (at) => at < 20 ? "teeth" : "gums");
+  const page = setup(null, HOME);
+  const answer = await searched(page, "tooth regrowth");
+  click(page, answer.querySelector(".show-more"));
+  await settle();
+  click(page, answer.querySelector('button[data-topic="gums"]'));
+  await settle();
+  click(page, answer.querySelector(".show-more"));
+  await settle();
+  const chosen = shownClaims(answer);
+  assert.equal(chosen.length, 22);
+  const filtered = page.location.href;
+  click(page, answer.querySelector(".search-clear"));
+  page.history.go(-1);
+  await settle();
+  assert.equal(page.location.href, filtered);
+  assert.deepEqual(shownClaims(answer), chosen);
+  page.history.go(1);
+  assert.equal(answer.hidden, true);
+});
+
+test("a late topic or batch never replaces a newer topic or search", async (t) => {
+  manyHits(t, 62, (at) => at % 2 ? "gums" : "teeth");
+  const gate = Promise.withResolvers();
+  beforeSearch = async (_, options) => {
+    if (options?.filters?.topic === "gums") await gate.promise;
+  };
+  t.after(() => { beforeSearch = async () => {}; });
+  const page = setup(null, HOME);
+  const answer = await searched(page, "tooth regrowth");
+  // Gum disease is asked for and held back; Mouth and teeth is asked for after it.
+  click(page, answer.querySelector('button[data-topic="gums"]'));
+  click(page, answer.querySelector('button[data-topic="teeth"]'));
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(shownCount(answer), "First 20 of 31 in Mouth and teeth, of 62 tracked claims");
+  gate.resolve();
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(answer.querySelector('button[data-topic="teeth"]').getAttribute("aria-pressed"), "true");
+  assert.equal(shownCount(answer), "First 20 of 31 in Mouth and teeth, of 62 tracked claims");
+  assert.match(page.location.href, /[?&]topic=teeth/);
+
+  // A batch asked for under one search arrives after the next search has answered.
+  const pending = Promise.withResolvers();
+  const held = SEARCH_HITS.slice(20, 40);
+  readHit = async (url) => {
+    if (held.includes(url)) await pending.promise;
+    return { url, meta: {} };
+  };
+  click(page, answer.querySelector('button[data-topic=""]'));
+  await settle();
+  click(page, answer.querySelector(".show-more"));
+  await searched(page, "gum regrowth");
+  pending.resolve();
+  for (let turn = 0; turn < 4; turn++) await settle();
+  assert.equal(answer.querySelector(".search-title").textContent, "Results for “gum regrowth”");
+  assert.equal(shownCount(answer), "First 20 of 62 tracked claims");
+  assert.equal(page.history.state.lookup.pages, undefined, "the new step keeps no depth from the old search");
+  assert.match(page.location.href, /[?&]q=gum\+regrowth/);
+});
+
+test("a shared search can open on a topic first found on page two", async (t) => {
+  manyHits(t, 42, (at) => at < 20 ? "teeth" : "gums");
+  const initial = "https://example.test/?q=tooth+regrowth&topic=gums";
+  const page = setup(null, HOME, true, initial);
+  await settle();
+  const answer = page.document.querySelector("[data-search-answer]");
+  assert.equal(page.location.href, initial);
+  assert.equal(answer.querySelector('button[data-topic="gums"]').getAttribute("aria-pressed"), "true");
+  assert.equal(shownClaims(answer)[0], "/synthetic-20");
+});
+
+test("Back and Forward redraw an article lookup without writing its link to history", async () => {
+  const article = "https://example.org/untracked-article";
+  const page = setup(null, HOME);
+  const field = page.document.querySelector("#query");
+  page.submit(article);
+  await settle();
+  assert.match(page.results.textContent, /not one we track/);
+  assert.equal(page.history.length, 2);
+  assert.equal(page.location.href, "https://example.test/");
+  assert.ok(!JSON.stringify(page.history.state).includes(article));
+
+  field.value = "";
+  field.dispatchEvent(new page.window.Event("input"));
+  assert.equal(page.results.textContent, "");
+  assert.equal(page.history.length, 3);
+  page.history.go(-1);
+  await settle();
+  assert.equal(field.value, article);
+  assert.match(page.results.textContent, /not one we track/);
+  page.history.go(-1);
+  assert.equal(field.value, "");
+  page.history.go(1);
+  await settle();
+  assert.equal(field.value, article);
+  page.history.go(1);
+  assert.equal(field.value, "");
+  assert.equal(page.results.textContent, "");
 });
 
 test("a registry identifier is answered with its trial and the claim it belongs to", async () => {

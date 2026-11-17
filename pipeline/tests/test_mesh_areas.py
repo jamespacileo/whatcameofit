@@ -1,4 +1,5 @@
-"""Suggesting a group from trials' MeSH terms: the pure table, then the claim's line."""
+"""The group suggested for a claim, from its clinical categories and the topic mapping.
+The mapping itself is tested in test_clinical_pure.py."""
 
 import json
 from collections.abc import Generator
@@ -13,9 +14,9 @@ from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
 from thenwhat.claims.entry import add_claim
-from thenwhat.claims.mesh_areas import GroupSuggestion, suggest_groups, suggestion_line
 from thenwhat.cli import app
-from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent
+from thenwhat.clinical.service import suggestion_line
+from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, TermRecord
 from thenwhat.domain import Decider, EventType, ReviewState
 
 FIXTURES = Path(__file__).parent / "fixtures" / "clinicaltrials"
@@ -26,32 +27,37 @@ def fixture(name: str) -> dict[str, Any]:
     return json.loads((FIXTURES / name).read_text())
 
 
-def test_trial_pointing_to_one_group():
-    assert suggest_groups([fixture("study_NCT02586935.json")]) == [
-        GroupSuggestion("mental-health", "Mental Disorders")
-    ]
+YEAR = "http://id.nlm.nih.gov/mesh/2026"
+# The recorded trial's two condition terms and the tops of the trees each sits in.
+DESCRIPTORS: dict[str, tuple[str, str, list[str]]] = {
+    "D007239": ("Infections", "C01", []),
+    "D004066": ("Digestive System Diseases", "C06", []),
+    "D007154": ("Immune System Diseases", "C20", []),
+    "D006509": ("Hepatitis B", "C01.925.440.435", ["D007239", "D004066"]),
+    "D000163": ("Acquired Immunodeficiency Syndrome", "C01.221.250", ["D007154", "D007239"]),
+}
 
 
-def test_trial_pointing_to_several_groups_lists_each_with_its_term():
-    suggestions = suggest_groups([fixture("study_NCT06497504_conditions.json")])
-
-    assert [(s.group, s.mesh_term) for s in suggestions] == [
-        ("gut-and-liver", "Digestive System Diseases"),
-        ("immune-system-and-allergies", "Immune System Diseases"),
-        ("infections", "Infections"),
-    ]
-
-
-def test_no_usable_term_suggests_nothing():
-    broad = {
-        "derivedSection": {
-            "conditionBrowseModule": {
-                "meshes": [{"id": "D000375", "term": "Aging"}],
-                "ancestors": [{"id": "D012816", "term": "Signs and Symptoms"}],
-            }
-        }
-    }
-    assert suggest_groups([broad, {"protocolSection": {}}]) == []
+def store_descriptors(session: Session) -> None:
+    for identifier, (label, tree, broader) in DESCRIPTORS.items():
+        session.add(
+            TermRecord(
+                source_name="mesh",
+                external_id=identifier,
+                url=f"https://id.nlm.nih.gov/mesh/{identifier}",
+                payload={
+                    "term": {
+                        "@id": f"{YEAR}/{identifier}",
+                        "label": {"@language": "en", "@value": label},
+                        "treeNumber": f"{YEAR}/{tree}",
+                        "broaderDescriptor": [f"{YEAR}/{one}" for one in broader],
+                    },
+                    "concept": None,
+                },
+                fetched_at=NOW,
+            )
+        )
+    session.flush()
 
 
 @pytest.fixture
@@ -93,6 +99,9 @@ def approve_trial(session: Session, claim: Claim, payload: dict[str, Any]) -> No
             raw_payload=payload,
             fetched_at=NOW,
             dedupe_key="registered:NCT06497504",
+            review_state=ReviewState.APPROVED,
+            reviewed_at=NOW,
+            reviewed_by=Decider.RULE,
         )
     )
     session.flush()
@@ -100,7 +109,16 @@ def approve_trial(session: Session, claim: Claim, payload: dict[str, Any]) -> No
 
 def test_line_without_approved_trials_says_why(session: Session, claim: Claim):
     assert suggestion_line(session, claim) == (
-        "Health area: no suggestion, as no trial match is approved."
+        "Health area: no suggestion, as its approved trials and papers give no category."
+    )
+
+
+def test_line_says_when_the_mesh_records_are_not_read(session: Session, claim: Claim):
+    approve_trial(session, claim, fixture("study_NCT06497504_conditions.json"))
+
+    assert suggestion_line(session, claim) == (
+        "Health area: no suggestion, as the MeSH records of its clinical categories are"
+        " not read yet; run `thenwhat clinical tree`."
     )
 
 
@@ -108,6 +126,7 @@ def test_review_list_shows_the_suggestion_and_leaves_the_vertical(
     session: Session, claim: Claim, monkeypatch: pytest.MonkeyPatch
 ):
     approve_trial(session, claim, fixture("study_NCT06497504_conditions.json"))
+    store_descriptors(session)
 
     @contextmanager
     def test_session() -> Generator[Session]:
@@ -121,8 +140,9 @@ def test_review_list_shows_the_suggestion_and_leaves_the_vertical(
 
     assert result.exit_code == 0, result.output
     assert (
-        "Health area suggested: Gut and liver (MeSH: Digestive System Diseases);"
-        " Immune system and allergies (MeSH: Immune System Diseases);"
-        " Infections (MeSH: Infections). Filed under: Infections." in result.output
+        "Health area suggested: Gut and liver (MeSH: Hepatitis B, under Digestive System"
+        " Diseases); Immune system and allergies (MeSH: Acquired Immunodeficiency Syndrome,"
+        " under Immune System Diseases); Infections (MeSH: Acquired Immunodeficiency"
+        " Syndrome, under Infections). Filed under: Infections." in result.output
     )
     assert claim.vertical == "infections"

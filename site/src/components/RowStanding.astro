@@ -168,6 +168,11 @@ const trialCount = claim.trials?.length ?? 0;
   // The detail is closed once the script runs, and kept out of the way of the keyboard
   // and a screen reader while it is closed. Without the script it stays open.
   for (const more of document.querySelectorAll<HTMLElement>("[data-row-more]")) more.inert = true;
+  // And so is the detail of a row that arrives after the page was built.
+  document.addEventListener("rows:arrive", (event) => {
+    const { rows } = (event as CustomEvent<{ rows: DocumentFragment }>).detail;
+    for (const more of rows.querySelectorAll<HTMLElement>("[data-row-more]")) more.inert = true;
+  });
   document.addEventListener("click", (event) => {
     const button = (event.target as Element).closest<HTMLButtonElement>("[data-row-open]");
     if (!button) return;

@@ -330,10 +330,14 @@ test("Scenario: Counts on the path", () => {
 test("Scenario: Anniversaries on the home page", () => {
   const html = page("index.html");
   const block = html.slice(html.indexOf("data-on-this-day"), html.indexOf('id="topics"'));
-  // Out of sight until the reader's date picks a day; every day with a report is there.
-  assert.match(html, /<section class="[^"]*\bon-this-day"[^>]*hidden/);
-  for (const day of ["05-01", "05-03", "05-04"]) assert.ok(block.includes(`data-day="${day}"`), day);
-  assert.match(block, /data-year="2019"/);
+  // Out of sight until the reader's date picks a day. The page holds which days have a
+  // report and in which years; each day's reports are a file the page fetches (openspec
+  // landing-rows-on-demand).
+  assert.match(html, /<section\s+class="[^"]*\bon-this-day"[^>]*hidden/);
+  const years = JSON.parse(block.match(/data-years="([^"]+)"/)[1].replaceAll("&quot;", '"'));
+  assert.deepEqual(Object.entries(years).map(([day]) => day), ["05-01", "05-03", "05-04"]);
+  assert.ok(!block.includes("data-day="), "a day's reports are in the page as built");
+  assert.match(page("rows/on-this-day/05-03.txt"), /<li class="day" data-day="05-03"[^>]*>[^]*data-year="2019"/);
   assert.match(block, /href="\/anniversaries"/);
 });
 
@@ -460,7 +464,7 @@ test("Scenario: No approved claims", () => {
 test("Scenario: Preview build", () => {
   // A normal build carries no preview wording and may be indexed.
   for (const file of ["index.html", "phase-claim/index.html"]) {
-    assert.doesNotMatch(page(file), /class="preview-note"|not yet been checked by a person|noindex/);
+    assert.doesNotMatch(page(file), /class="preview-note"|not yet (been )?checked by a person|noindex/);
   }
   assert.equal(JSON.parse(page("lookup.json")).claims["phase-claim"].unchecked, null);
 
@@ -479,11 +483,15 @@ test("Scenario: Preview build", () => {
     assert.match(built(file), /class="preview-note"/, file);
     assert.match(built(file), /<meta name="robots" content="noindex"/, file);
   }
-  assert.match(built("phase-claim/index.html"), /has not yet been checked by a person/);
-  // The answer comes first: the notice sits under the status panel, not above it.
+  // Said once, in the line under the title, where a reader looks for who wrote the page.
   const claimPage = built("phase-claim/index.html");
-  assert.ok(claimPage.indexOf('class="digest"') < claimPage.indexOf('class="unchecked"'));
-  assert.doesNotMatch(built("quiet-claim/index.html"), /has not yet been checked by a person/);
+  const byline = claimPage.match(/<p class="byline"[\s\S]*?<\/p>/)[0];
+  assert.match(byline, /not yet checked by a person/);
+  assert.match(byline, /Registries last checked/);
+  assert.ok(claimPage.indexOf("</h1>") < claimPage.indexOf('class="byline"'));
+  assert.ok(claimPage.indexOf('class="byline"') < claimPage.indexOf('class="digest"'));
+  assert.equal(claimPage.split("not yet checked by a person").length - 1, 1);
+  assert.doesNotMatch(built("quiet-claim/index.html"), /not yet checked by a person/);
   const lookup = JSON.parse(built("lookup.json"));
   assert.equal(lookup.preview, true);
   assert.match(lookup.claims["phase-claim"].unchecked, /not yet been checked by a person/);
@@ -612,6 +620,34 @@ test("Scenario: Claim with an approach", () => {
   assert.match(html, /<span class="approach"><span class="visually-hidden">Approach: <\/span>Gene therapy<\/span>/);
 });
 
+test("Scenario: Registry supports the approach", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(
+    html,
+    /<span class="approach-basis">The registry lists it as a genetic intervention in 2 trials\.<\/span>/,
+  );
+});
+
+test("Scenario: Approach the registry does not support, and a claim with no approach", () => {
+  // Every other claim of the fixture has no basis, with or without an approach.
+  const others = htmlFiles(dist).filter((file) => !file.endsWith(path.join("phase-claim", "index.html")));
+  assert.ok(others.length > 0);
+  for (const file of others) assert.ok(!fs.readFileSync(file, "utf8").includes('class="approach-basis"'), file);
+});
+
+test("Scenario: Registry type without site wording", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims.find((claim) => claim.slug === "phase-claim").approach_basis.type = "RADIATION";
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-registry-type-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /registry intervention types the site has no words for: RADIATION/);
+});
+
 test("Scenario: Claim without an approach", () => {
   assert.ok(!page("quiet-claim/index.html").includes('class="approach"'));
 });
@@ -725,7 +761,9 @@ test("Scenario: Summary of a topic with ended trials", () => {
 });
 
 test("Scenario: Reader follows a headline from the home page", () => {
-  const home = page("index.html");
+  // The home page's rows are those in the page as built and those it fetches when a
+  // reader asks for earlier headings (openspec landing-rows-on-demand).
+  const home = page("index.html") + page("rows/latest.txt");
   // Each headline on the home page is named, and its claim page gives the same name
   // to the same headline, shown before the status.
   const named = [...home.matchAll(/class="followed" href="\/([^"]+)" style="view-transition-name: ([^";]+)/g)];
@@ -1824,7 +1862,7 @@ test("Scenario: Records from 2021 to 2026 with none in 2024 and 2025", () => {
 test("Scenario: Four promises and seventeen records", () => {
   // Here: one promise and three records, given as two numbers wherever they are given.
   const html = page("quiet-claim/index.html");
-  assert.match(html, /class="fold-note">1 promise · 3 records · newest first</);
+  assert.match(html, /class="fold-note">1 promise · 3 records</);
   assert.match(html, /href="#timetable"[\s\S]{0,200}class="n">1 and 3</);
   const controls = html.match(/<div class="kind-tabs"[\s\S]*?<\/div>/)[0];
   assert.match(wordsOf(controls), /All\s+Promises 1\s+News reports 2\s+/);
@@ -1905,4 +1943,100 @@ test("Scenario: the home page draws one claim, reported and on record", () => {
   assert.match(card, /class="track/);
   // The home page loads the heading face ahead of need, as a claim page does.
   assert.match(html, /rel="preload" as="font" type="font\/woff2" href="[^"]*newsreader[^"]*"/);
+});
+
+test("Scenario: A claim page is titled by its claim", () => {
+  const html = page("phase-claim/index.html");
+  const title = html.match(/<h1[^>]*>[\s\S]*?<\/h1>/)[0];
+  // The treatment, "for" to a screen reader, then what it is for.
+  assert.match(title, /class="title-what">[\s\S]*phase-claim[\s\S]*agent[\s\S]*<\/span>/);
+  assert.match(title, /<span class="visually-hidden"> for <\/span>/);
+  assert.match(title, /class="title-for">example condition<\/span>/);
+  // The claim's headline is not set as the page's own title.
+  assert.doesNotMatch(title, /Synthetic claim with a started trial/);
+});
+
+// --- clinical categories (openspec site-publishing) ---------------------------------
+
+test("Scenario: Top category with claims, and one with no claim", () => {
+  const html = page("clinical/index.html");
+  // Periodontitis and Periodontal Diseases both sit under Stomatognathic Diseases: two claims.
+  assert.match(html, /<a href="\/clinical\/D009057">Stomatognathic Diseases<\/a>\s*<span class="count">\s*2/);
+  // Diabetic Retinopathy sits under two trees, so its one claim is counted under each top.
+  assert.match(html, /<a href="\/clinical\/D005128">Eye Diseases<\/a>\s*<span class="count">\s*1/);
+  assert.match(html, /<a href="\/clinical\/D004700">Endocrine System Diseases<\/a>\s*<span class="count">\s*1/);
+  // Neoplasms is in the tree and no claim falls under it.
+  assert.ok(!html.includes("Neoplasms"));
+  assert.ok(!fs.existsSync(path.join(dist, "clinical", "D009369")));
+  assert.match(html, /href="\/topics"/);
+});
+
+test("Scenario: Category in two places links to both broader categories", () => {
+  const html = page("clinical/D003930/index.html");
+  assert.match(html, /<a href="\/clinical\/D003920" data-broader[^>]*>\s*Diabetes Mellitus\s*<\/a>/);
+  assert.match(html, /<a href="\/clinical\/D012164" data-broader[^>]*>\s*Retinal Diseases\s*<\/a>/);
+  assert.match(html, /Sits under 2 broader categories: /);
+});
+
+test("Scenario: Claims at and below a category, each once, with narrower categories", () => {
+  const html = page("clinical/D010510/index.html");
+  // One claim has Periodontal Diseases itself, one the narrower Periodontitis.
+  assert.match(html, /2\s*claims in this MeSH category or one narrower/);
+  assert.equal(count(html, 'href="/phase-claim"'), 1);
+  assert.equal(count(html, 'href="/approved-claim"'), 1);
+  assert.match(html, /<a href="\/clinical\/D010518">Periodontitis<\/a>\s*<span class="count">\s*1/);
+});
+
+test("Scenario: Category from a trial and a paper, on the claim page", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(html, /<a class="entry-name" href="\/clinical\/D010518">Periodontitis<\/a>/);
+  const row = html.slice(html.indexOf('href="/clinical/D010518">Periodontitis'));
+  const source = row.slice(0, row.indexOf("</li>"));
+  assert.match(source, /trial\s*<a href="[^"]+">NCT00000002<\/a>/);
+  assert.match(source, /paper\s*<a href="[^"]+">10\.5555\/synthetic\.results<\/a>/);
+});
+
+test("Scenario: Category from the reading of the claim's own condition shows its score", () => {
+  const html = page("approved-claim/index.html");
+  const row = html.slice(html.indexOf('href="/clinical/D010510">Periodontal Diseases'));
+  const source = row.slice(0, row.indexOf("</li>"));
+  assert.match(source, /paper\s*pmid:90000009/);
+  assert.match(source, /the claim&#39;s own condition, read as this category with a score of 0\.93/);
+});
+
+test("Scenario: Claim with no category, or whose categories are not yet read, shows none", () => {
+  assert.ok(!page("quiet-claim/index.html").includes('class="clinical"'));
+});
+
+test("Scenario: Credit on every page that shows a MeSH category", () => {
+  for (const file of ["clinical/index.html", "clinical/D010510/index.html", "phase-claim/index.html"]) {
+    const html = page(file);
+    assert.match(html, /Medical Subject Headings \(MeSH\), U\.S\. National Library of Medicine/, file);
+    assert.match(html, /MeSH 2026/, file);
+    assert.match(html, /NLM does not endorse this site/, file);
+  }
+});
+
+test("Scenario: The clinical index is reachable and in the sitemap", () => {
+  assert.match(page("for/clinicians/index.html"), /href="\/clinical"/);
+  assert.match(page("topics/index.html"), /href="\/clinical"/);
+  const sitemap = page("sitemap.xml");
+  assert.match(sitemap, /\/clinical<\/loc>/);
+  for (const identifier of ["D009057", "D009059", "D010510", "D010518", "D003930", "D003920"]) {
+    assert.match(sitemap, new RegExp(`/clinical/${identifier}</loc>`));
+  }
+  assert.ok(!sitemap.includes("/clinical/D009369"));
+});
+
+test("Scenario: Export without a MeSH year stops the build", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.clinical.mesh_years = [];
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-mesh-year-"));
+  const file = path.join(directory, "export.json");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+
+  const result = build(file, path.join(directory, "dist"));
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /carries clinical categories and no MeSH year/);
 });

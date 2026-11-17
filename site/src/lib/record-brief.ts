@@ -583,6 +583,22 @@ export function digestBridge(claim: ExportedClaim): string | null {
   return `${are}${done}.${phase}`;
 }
 
+/** Said in the status card of a claim whose status is the last place before approval and
+ * that lists no approval: the site reads no regulator's records, so a report of an
+ * approval above a "Phase 3 trial" status is not read as the site contradicting it
+ * (critique of 2026-11-17, openspec mobile-claim-page). Decided by the status code and
+ * the records alone, never by a headline's wording. */
+export const APPROVALS_NOT_READ =
+  "No approval is listed here. This site does not read regulators' records, so one can exist and not be listed.";
+
+export function digestApproval(claim: ExportedClaim): string | null {
+  if (claim.status.code !== "phase_3") return null;
+  const approved = claim.events.some(
+    (event) => event.type === "regulatory_decision" && event.regulatory_outcome === "approved",
+  );
+  return approved ? null : APPROVALS_NOT_READ;
+}
+
 /** The trials' states as the status card counts them, in a fixed order. */
 const STATE_COUNT_WORDS: [string, string][] = [
   ["under_way", "under way"],
@@ -597,21 +613,35 @@ const OTHER_STATES = "in another state";
 /** For a claim whose status names a phase: how many trials are on record and where each
  * stands, so the status is not read alone ("Phase 3 trial" said the same of a claim with
  * five trials under way and of one with five stopped early; critique of 2026-11-17). A
- * count of records, never a reading of them. A Phase 4 trial has no place on the path,
- * so their number is said too. */
+ * count of records, never a reading of them. */
 function digestStates(trials: ExportedTrial[]): string {
   const count = (state: string) => trials.filter((trial) => trial.state === state).length;
-  const named = STATE_COUNT_WORDS.map(([state, words]) => [count(state), words] as const);
-  const other = trials.length - named.reduce((sum, [n]) => sum + n, 0);
-  const parts = [...named, [other, OTHER_STATES] as const]
-    .filter(([n]) => n > 0)
-    .map(([n, words]) => (trials.length === 1 ? words : `${digits(n)} ${words}`));
-  const phase4 = trials.filter((trial) => trial.phases.includes("phase_4")).length;
-  const later =
-    phase4 === 0
-      ? ""
-      : ` ${digits(phase4)} ${plural(phase4, "is a Phase 4 trial", "are Phase 4 trials")}; the path counts phases up to Phase 3.`;
-  return `${digits(trials.length)} ${plural(trials.length, "trial", "trials")} on record: ${parts.join(", ")}.${later}`;
+  const named = STATE_COUNT_WORDS.map(([state, words]) => [state, count(state), words] as const);
+  const other = trials.length - named.reduce((sum, [, n]) => sum + n, 0);
+  const said = (rows: (readonly [number, string])[]) =>
+    rows
+      .filter(([n]) => n > 0)
+      .map(([n, words]) => (trials.length === 1 ? words : `${digits(n)} ${words}`));
+  // Beside the status: where the trials that have started stand. A reader holds four
+  // numbers, not seven (critique of 2026-11-17, openspec mobile-claim-page). Where no
+  // trial is in one of those three states, every state is said, so the count is never bare.
+  const standing = said(named.filter(([state]) => STANDING_STATES.has(state)).map(([, n, words]) => [n, words] as const));
+  const parts =
+    standing.length > 0
+      ? standing
+      : said([...named.map(([, n, words]) => [n, words] as const), [other, OTHER_STATES] as const]);
+  return `${digits(trials.length)} ${plural(trials.length, "trial", "trials")} on record: ${parts.join(", ")}.`;
+}
+
+/** The states said beside a status that names a phase. The rest are in the trials' list. */
+const STANDING_STATES = new Set(["under_way", "completed", "terminated"]);
+
+/** Said where the path's places are named: a Phase 4 trial has no place on the path, so
+ * a claim with such trials and a Phase 3 status is not read as miscounted. */
+export function phase4Note(claim: ExportedClaim): string | null {
+  const phase4 = (claim.trials ?? []).filter((trial) => trial.phases.includes("phase_4")).length;
+  if (phase4 === 0) return null;
+  return `${digits(phase4)} ${plural(phase4, "trial on record is a Phase 4 trial", "trials on record are Phase 4 trials")}. The path counts phases up to Phase 3.`;
 }
 
 // A build fails rather than publish a verdict in a question, an answer or a group name.

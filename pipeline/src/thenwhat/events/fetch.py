@@ -10,6 +10,7 @@ from typing import Any, Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.claims.approach_rule import apply_rule
 from thenwhat.claims.entities import entities_of, note_sponsor
 from thenwhat.claims.status import refresh_status
 from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent
@@ -53,8 +54,8 @@ def fetch_claim(
     no_signal_years: int = 3,
     paper_max_age: timedelta = timedelta(days=30),
 ) -> list[EvidenceEvent]:
-    """Create the claim's new evidence events and re-derive its status. Returns the
-    events this run created.
+    """Create the claim's new evidence events, re-derive its status and set its approach
+    by rule. Returns the events this run created.
 
     The index record of each paper the claim lists is stored too, for its paper facts
     (openspec paper-facts): the origin paper, each approved follow-up and related
@@ -149,6 +150,9 @@ def fetch_claim(
         keep(doi=doi, pubmed_id=pubmed_id, identifier=event.external_id, held=_index_record(event))
 
     refresh_status(session, claim, as_of=now.date(), now=now, no_signal_years=no_signal_years)
+    # The approach follows the registry's types for the claim's approved trials, whose
+    # records this run has just stored (openspec health-areas). Never part of status.
+    apply_rule(session, claim)
     return created
 
 

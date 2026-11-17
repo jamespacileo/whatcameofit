@@ -39,4 +39,14 @@ const letter = (domain || name).charAt(0).toUpperCase();
     icon.addEventListener("error", fallback, { once: true });
     if (icon.complete && !icon.naturalWidth) fallback();
   }
+  // And so does one in a row that arrives after the page was built. A failed load is
+  // not passed up the page, so it is heard on its way down.
+  document.addEventListener(
+    "error",
+    (event) => {
+      const icon = event.target;
+      if (icon instanceof HTMLImageElement && icon.closest(".outlet-icon")) icon.remove();
+    },
+    true,
+  );
 </script>

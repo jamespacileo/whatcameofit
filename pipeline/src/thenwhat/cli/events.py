@@ -7,12 +7,15 @@ import typer
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import claim_by_slug
+from thenwhat.cli.clinical import make_mesh
 from thenwhat.cli.console import out
 from thenwhat.cli.entry import DATE_FORMATS, entry_session
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.clinical.service import read_tree
 from thenwhat.domain import EventType, RegulatoryOutcome, ReviewState, TrialPhase, TrialState
 from thenwhat.events.fetch import LiteratureIndex, NoticeRegistry, TrialRegistry, fetch_claim
 from thenwhat.events.manual import MANUAL_SOURCE, add_manual_event
+from thenwhat.sources.base import SourceError
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.crossref import Crossref
 from thenwhat.sources.europepmc import EuropePmc
@@ -64,6 +67,22 @@ def fetch_command(
                 markup=False,
             )
         out.print(f"Status: {claim.current_status.value}", markup=False)
+        # The claim's clinical categories are derived from the records just stored, and
+        # placed in MeSH's tree by NLM's own records. Reading those here keeps a new term
+        # from leaving the claim's categories unread in the next export. NLM not
+        # answering is said and is no failure of the fetch: the records above are kept.
+        try:
+            tree = read_tree(session, make_mesh(session), [claim])
+        except SourceError as error:
+            out.print(
+                f"MeSH records not read ({error}): its clinical categories stay not yet read"
+                " until `thenwhat clinical tree` has run.",
+                markup=False,
+            )
+        else:
+            if tree.read:
+                noun = "record" if tree.read == 1 else "records"
+                out.print(f"Read {tree.read} MeSH {noun} for its clinical categories.")
 
 
 @event_app.command("add")
