@@ -33,7 +33,7 @@ The merge SHALL match a claim by its slug, a source article by claim and address
 - **THEN** the store holds one source article and one link lead, with each share once
 
 ### Requirement: Every writer writes a record in one form
-A writer SHALL give each record its natural key and its fields in the one form the store compares, so that two writers, or one writer twice, produce the same store from the same rows. A source article's and an article lead's address key SHALL be the site's address comparison (`site/src/lib/article-key.mjs`, `pipeline/src/thenwhat/backfill/address.py`). A time SHALL be ISO-8601 in UTC to the microsecond with its offset, always the same width, because the merge orders times as text. A payload's checksum SHALL be the SHA-256 of its JSON text with keys sorted, no spaces and characters unescaped, in UTF-8, and its size the bytes of that text. An evidence event's content checksum SHALL be of its type, date, trial state, trial phases as a set, regulatory outcome and source identifier. A field with no value SHALL be left out of the record, never sent as a JSON null.
+A writer SHALL give each record its natural key and its fields in the one form the store compares, so that two writers, or one writer twice, produce the same store from the same rows. A source article's and an article lead's address key SHALL be the site's address comparison (`site/src/lib/article-key.mjs`, `pipeline/src/thenwhat/backfill/address.py`). A time SHALL be ISO-8601 in UTC to the microsecond with its offset, always the same width, because the merge orders times as text. A payload's checksum SHALL be the SHA-256 of its JSON text with keys sorted, no spaces and characters unescaped, in UTF-8, and its size the bytes of that text. An evidence event's content checksum SHALL be of its type, date, trial state, trial phases as a set, regulatory outcome and source identifier. A field with no value SHALL be left out of the record, never sent as a JSON null. A key of several parts SHALL join them with `|`, escaping a `|` or `\` inside a part with `\`, so two sets of parts never give one key. A decision whose decider was not recorded SHALL NOT be written as a person's. A link lead SHALL carry an address key of the current version, and one of an older version SHALL be refused until it is keyed again.
 
 #### Scenario: Two devices write one article
 - **WHEN** two devices hold the same article under addresses that differ only by tracking parameters
@@ -48,7 +48,7 @@ A writer SHALL give each record its natural key and its fields in the one form t
 - **THEN** the event's content checksum is the same, and the event is not kept apart as differing
 
 ### Requirement: A snapshot of the tracker can be pushed twice
-Records gathered from a whole database, as the migration and a nightly comparison gather them, SHALL leave the store as it was when pushed a second time. A snapshot SHALL NOT carry, under a merged claim's slug, what that claim keeps for itself (its intervention, matches, terms, events, failure flags and measurements) nor an archive of it, because the store reads a merged claim's slug as the claim it was merged into; the merge itself archives the claim. A snapshot SHALL NOT carry a rename, which names the claim by a slug the store never held. Decisions, spend and measurements SHALL be pushed once, by the run that made them, since a merge keeps each run's and adds measurements to the day's totals.
+Records gathered from a whole database, as the migration and a nightly comparison gather them, SHALL leave the store as it was when pushed a second time. A snapshot SHALL NOT carry, under a merged claim's slug, what that claim keeps for itself (its intervention, matches, terms, events, failure flags and measurements), its status time, its audit mark, its publication or its archive, because the store reads a merged claim's slug as the claim it was merged into; the merge itself archives the claim. A snapshot SHALL NOT carry a rename, which names the claim by a slug the store never held. Decisions, spend and measurements SHALL be pushed once, by the run that made them, since a merge keeps each run's and adds measurements to the day's totals.
 
 #### Scenario: The same snapshot pushed again
 - **WHEN** a snapshot is merged and then the same records are merged as another run
@@ -56,7 +56,11 @@ Records gathered from a whole database, as the migration and a nightly compariso
 
 #### Scenario: A merged claim in the snapshot
 - **WHEN** a snapshot holds a claim merged into another
-- **THEN** it carries the claim, its publication and its merge, and the claim that stayed gains none of its intervention, matches or events
+- **THEN** it carries the claim and its merge, and the claim that stayed gains none of its intervention, matches, events, status, audit mark or publication
+
+#### Scenario: A snapshot is taken back into a database
+- **WHEN** a snapshot's records are placed into a Postgres database that already holds rows in a table they fill
+- **THEN** nothing is written and the tables already holding rows are named, since placing has none of the merge's rules for a row already held
 
 ### Requirement: A merge is whole or not at all, and safe to repeat
 A run's merge SHALL apply all of its records or none. Merging a run already merged SHALL add and change nothing and SHALL say when it was first merged.

@@ -44,7 +44,7 @@ from thenwhat.db.models import (
     TrialRead,
     WorkEntry,
 )
-from thenwhat.store.form import KEY_JOIN, Record, amount, date_of, moment
+from thenwhat.store.form import Record, amount, date_of, key_parts, moment
 
 # --- natural references, resolved to ids by place.py -----------------------------------
 
@@ -125,7 +125,7 @@ class Row:
 
 
 def trial_ref(record_key: str) -> TrialRef:
-    registry, _, number = record_key.partition(KEY_JOIN)
+    registry, number = key_parts(record_key)
     return TrialRef(registry, number)
 
 
