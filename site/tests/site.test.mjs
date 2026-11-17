@@ -1173,7 +1173,7 @@ test("Scenario: Claim with a condition card only", () => {
   // the one press that opens the card. A short definition is not repeated in the card.
   assert.match(section, /<blockquote class="glance-words" cite="https:\/\/vocabulary\.example\/D900003">A synthetic definition of the example condition\.<\/blockquote>\s*<details class="glance-more">\s*<summary>\s*<span class="glance-more-label">\s*<span class="glance-more-words">Why this term<\/span>\s*<span class="visually-hidden"> for example condition\.<\/span>[\s\S]*?<\/span> <span>In MeSH’s words<\/span>\s*<\/summary>/);
   // A line under the heading says what a term match is, where it is first met.
-  assert.match(section, /<p class="glance-lead">Each term is shown in an outside source’s words\. A term match is how well that source’s term fits this claim; it says nothing about the treatment\.<\/p>/);
+  assert.match(section, /<p class="glance-lead" data-clamp="1">Each term is shown in an outside source’s words\. A term match is how well that source’s term fits this claim; it says nothing about the treatment\.<\/p>/);
   // The score is in sight on the row, so the card heads its reasons without repeating it.
   assert.match(section, /<p class="match-why-head">Why it matched<\/p>/);
   assert.ok(!section.includes('class="card-words"'));

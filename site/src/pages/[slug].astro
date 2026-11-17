@@ -225,6 +225,33 @@ const timetableNote = [
   plural(counts.records, "record"),
   "newest first",
 ].join(" · ");
+// A long record folds by year (openspec sheet-cohesion). This year and last stay open,
+// with any year a promise names; an older year is one line that says how many records
+// it holds and of what kinds, marks a record the status rests on, and opens to them.
+// A link to a record inside a folded year opens the year (scripts/folds.ts).
+const FOLD_OVER = 20;
+const yearFolds = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }>) =>
+  counts.records > FOLD_OVER &&
+  row.year < thisYear - 1 &&
+  row.promised.length === 0;
+const yearSaid = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }>) => {
+  const tally = new Map<string, number>();
+  for (const entry of row.recorded) {
+    const label = entry.kind === "report" ? "News report" : eventLabel(entry.event);
+    tally.set(label, (tally.get(label) ?? 0) + 1);
+  }
+  const kindsSaid = [...tally].sort((a, b) => b[1] - a[1]);
+  const shown = kindsSaid.slice(0, 3);
+  const others = kindsSaid.slice(3).reduce((n, [, count]) => n + count, 0);
+  return {
+    basis: row.recorded.some((entry) => entry.kind === "event" && entry.explains),
+    total: plural(row.recorded.length, "record"),
+    kinds: [
+      ...shown.map(([label, n]) => `${label.toLowerCase()} ${n}`),
+      ...(others > 0 ? [`other ${others}`] : []),
+    ],
+  };
+};
 // The trials table's columns, named over every group's table.
 const TRIAL_COLUMNS = ["People", "Compared with", "Main measure", "State", "Trial"];
 const posted = withResults(trials);
@@ -795,6 +822,25 @@ const sections = [
                             : "Not yet reached"}
                       </span>
                     ) : (
+                      ((entries) =>
+                        yearFolds(row) ? (
+                          <details class="year-rest">
+                            <summary>
+                              <span class="year-total">{yearSaid(row).total}</span>
+                              <span class="year-kinds">{yearSaid(row).kinds.join(" · ")}</span>
+                              {yearSaid(row).basis && (
+                                <span class="year-basis">
+                                  <BasisMark label={false} />
+                                  <span class="visually-hidden">Holds a record the status rests on.</span>
+                                </span>
+                              )}
+                              <ChevronDown size={14} stroke-width={2} aria-hidden="true" />
+                            </summary>
+                            {entries}
+                          </details>
+                        ) : (
+                          entries
+                        ))(
                       <ul class="entries">
                         {recordedLines(row.recorded).map((line) =>
                           line.kind === "report" ? (
@@ -886,7 +932,8 @@ const sections = [
                             </li>
                           ),
                         )}
-                      </ul>
+                      </ul>,
+                      )
                     )
                   }
                 </td>

@@ -7827,3 +7827,190 @@ body.framed {
     color: inherit;
   }
 }
+
+/* The sheet as one system (openspec sheet-cohesion, asked for by the operator on
+   2026-11-17 after the band: the rest of a claim page read as disorganised and hard to
+   skim). */
+
+/* A long record folds by year: an older year is one line, its count and its kinds, that
+   opens to the year's records. The fold line is the page's own (as .trials-rest). */
+.year-rest > summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.95rem;
+}
+
+.year-rest > summary::-webkit-details-marker {
+  display: none;
+}
+
+.year-total {
+  color: var(--blue);
+  font-weight: 600;
+}
+
+.year-kinds,
+.year-basis {
+  color: var(--muted);
+  font-size: var(--note-size);
+}
+
+.year-basis {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.year-rest > summary svg {
+  align-self: center;
+  color: var(--blue);
+  transition: transform 160ms var(--ease-out);
+}
+
+.year-rest[open] > summary svg {
+  transform: rotate(180deg);
+}
+
+.year-rest > summary:hover .year-total {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.year-rest[open] > summary {
+  margin-bottom: 0.6rem;
+}
+
+/* A folded year's row is as quiet as its line: the year in the row's weight, not the
+   table's largest. */
+.timetable tr:has(.year-rest:not([open])) th.year {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+/* On a phone a folded year is one compact block: the year beside its count, the kinds
+   under them. */
+@media (max-width: 40rem) {
+  .timetable tr:has(.year-rest:not([open])) {
+    display: grid;
+    grid-template-columns: 3.6rem minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .timetable tr:has(.year-rest:not([open])) > th.year,
+  .timetable tr:has(.year-rest:not([open])) > td {
+    padding-block: 0.7rem;
+  }
+
+  .timetable tr:has(.year-rest:not([open])) > th.year {
+    padding-top: 0.95rem;
+  }
+
+  .year-rest > summary {
+    min-height: 2.75rem;
+    align-content: center;
+    gap: 0 0.6rem;
+  }
+
+  .year-rest > summary .year-kinds {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+@media print {
+  .year-rest > summary svg {
+    display: none;
+  }
+}
+
+/* One container for every section of a record page: open rows between rules, as "The
+   record in brief" is drawn. A section's body starts under a 2px ink rule and ends on a
+   hairline. A table is not a rounded box, and a list starts under the same rule. */
+.sheet .table-frame,
+.sheet .trial-table {
+  border: 0;
+  border-top: 2px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  border-radius: 0;
+}
+
+.sheet .statement-list,
+.sheet .paper-list,
+.sheet .record-list,
+.sheet .organisation-list {
+  border-top: 2px solid var(--ink);
+}
+
+.sheet .statement-list > li:first-child,
+.sheet .paper-list > li:first-child,
+.sheet .record-list > li:first-child,
+.sheet .organisation-list > li:first-child {
+  border-top: 0;
+}
+
+/* A section's opening note is one muted line; "More" gives the rest (scripts/clamps.ts).
+   The same for every section, so the eye lands on the heading and then on the rows. */
+.sheet .glance-lead,
+.sheet .take-why {
+  max-width: var(--measure);
+  margin-bottom: 0.7rem;
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+
+/* At a glance: a term is its label, its value and its score. The source's words keep
+   to two lines, and the line under them says whose words they are; where the claim's
+   term is filed shows once the row is open. */
+.glance-rows .glance-words,
+.glance-rows .glance-words-long {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.glance-more:not([open]) .glance-filed {
+  display: none;
+}
+
+/* Trials: a row keeps to what tells one trial from the next. The measure is held to two
+   lines and who runs it to one; the row opens to the rest. People are set as figures. */
+.trial-row .trial-measure-words {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.trial-row .trial-measure .trial-by {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.trial-row .trial-title {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  .glance-rows .glance-words,
+  .glance-rows .glance-words-long,
+  .trial-row .trial-measure-words {
+    display: block;
+    overflow: visible;
+  }
+
+  .trial-row .trial-measure .trial-by {
+    white-space: normal;
+  }
+
+  .glance-more:not([open]) .glance-filed {
+    display: inline;
+  }
+}
