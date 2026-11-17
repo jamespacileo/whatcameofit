@@ -314,7 +314,7 @@ Built on 2026-11-17 in `store/ingest/`, with no Cloudflare account: a JavaScript
 - **A report without applying drops the run**, as `store/README.md` describes, and says what it cannot see.
 - **Six kinds of token**, least scope each (`specs/ingest-merge`, "A writer is held to its scope"). The service knows a token by its SHA-256, read from one secret; a secret holds 5 KB, so about 35 tokens.
 - **The door's checks**, none of them a rule of the tracker: content type, a stated length, the bounds, a known kind, a natural key, only fields a statement reads, and no string long enough to be an article's text.
-- **Bounds**, each under a limit read from Cloudflare's documentation that day (`docs/sources.md`): a chunk of 1.9 MB (D1 binds it as one string of at most 2 MB) or 5,000 records; a run of 20,000 records until timings on D1 set it; a payload of 8 MB; a record of 1 MB. The merge is one batch of 89 statements, the longest far under 100 KB, with one bound parameter; a batch counts as one query against the 30 seconds and against the 1,000 queries an invocation.
+- **Bounds**, each under a limit read from Cloudflare's documentation that day (`docs/sources.md`): a chunk of 1.9 MB (D1 binds it as one string of at most 2 MB) or 5,000 records; a run of 20,000 records until timings on D1 set it; a payload of 8 MB; a record of 1 MB. The merge is one batch of 98 statements, the longest far under 100 KB, with one bound parameter; a batch counts as one query against the 30 seconds and against the 1,000 queries an invocation.
 - **After a merge the service sends the Queue one message for each step with work due.** The message names the step and nothing else.
 
 What a review of the build changed, on 2026-11-17:

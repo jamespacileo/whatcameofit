@@ -5,7 +5,7 @@ The truth store's SQL: the D1 schema and the one merge path every writer uses. A
 | File | What it is |
 | --- | --- |
 | `schema.sql` | Tables, natural keys, CHECK guards, the FTS5 indexes, and the views that find a staged record's parent |
-| `merge.sql` | The merge: 89 fixed statements sent as one D1 batch, each with its conflict rule above it |
+| `merge.sql` | The merge: 98 fixed statements sent as one D1 batch, each with its conflict rule above it |
 | `preview.sql` | The report without the merge: what a run would add, match and put in conflict, counted and not tried |
 | `ingest.sql` | What surrounds a merge: registering a run, staging records, reading the report, dropping a previewed run, the work queue, slices |
 | `proof/` | A local proof in plain SQLite, and a check on D1's local engine |
