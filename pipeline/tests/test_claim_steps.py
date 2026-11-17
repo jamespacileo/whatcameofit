@@ -49,6 +49,7 @@ from thenwhat.decide.steps import INTERVENTION_KIND
 from thenwhat.domain import ClaimStatus, Decider, EntityType, ReviewState, WorkOutcome
 from thenwhat.extract.retrieve import NotNow, NotServed, PasteNeeded, Retrieved
 from thenwhat.llm.errors import ModelCannotBeAsked
+from thenwhat.measure.events import RunEnd
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceCannotBeAsked, SourceRecord
 from thenwhat.statements.service import StatementChecker
@@ -473,7 +474,7 @@ def test_the_terms_step_keeps_its_paid_decisions_when_its_last_lookup_fails(sess
 # --- Records a page names are looked up apart from the join -------------------------------------
 
 
-def test_cli_claim_steps_at_the_ceiling_only_defer_actual_model_work(
+def test_cli_claim_steps_at_the_ceiling_stop_only_work_that_needs_the_model(
     session, monkeypatch, fixture_json
 ):
     from decimal import Decimal
@@ -495,11 +496,13 @@ def test_cli_claim_steps_at_the_ceiling_only_defer_actual_model_work(
     steps = [s for s in claim_steps(config, claims=named([claim.id])) if s.name in names]
     for s in steps:
         s.after = ()
-    cli.run_steps(steps)
+    runs = by_step(cli.run_steps(steps))
     assert entry(session, "claim_fetch", claim).outcome == WorkOutcome.DONE
     assert entry(session, "claim_decide", claim).outcome == WorkOutcome.DONE
-    waiting = entry(session, "claim_readings", claim)
-    assert (waiting.outcome, waiting.reason) == (WorkOutcome.LATER, "spend_ceiling")
+    report = runs["claim_readings"].report
+    assert report.ended is RunEnd.SPEND_CEILING
+    assert report.remaining_due == 1
+    assert entry_or_none(session, "claim_readings", claim) is None
 
 
 def test_a_cited_doi_is_due_after_configuring_papers_and_requeueing(session):
