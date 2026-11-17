@@ -39,11 +39,13 @@ def make_triage(settings: Settings) -> LinkTriage:
     return LinkTriage(topic_terms=terms_of(), since=settings.lead_triage_since)
 
 
-def registered_steps(settings: Settings) -> list[Step]:
+def registered_steps(settings: Settings, year: int | None = None) -> list[Step]:
+    """Every step, as the settings give it. `year` is the calendar year the rolling set
+    of trials is chosen in, read from the clock by the command."""
     triage = make_triage(settings)
     return [
         NewsSearch(leads_per_trial=settings.leads_per_trial),
-        TrialPapers(trials_per_request=settings.pubmed_trials_per_request),
+        TrialPapers(trials_per_request=settings.pubmed_trials_per_request, year=year),
         LinkScreen(links_max=settings.lead_links_max),
         triage,
         link_read_step(settings, triage.version),

@@ -158,6 +158,22 @@ What 9.10 says: only an exact or a strong link is enough for a held lead to be r
 
 Still open of the tasks this pull request touches: 3.1's run over the working database (the screening step is at version 3, so every lead is due; the coordinating session runs it), 3.2 and 3.4 (a substance's name as telling), 4.4 (linked trials handed to preparation), 4.6 and 4.7 (working a set).
 
+The trial target set (decided by the operator on 2026-11-17; one pull request):
+
+- [x] 9.12 Add `active-or-ended-this-year` as a named rule beside the two dated sets, the year given by the command and never read inside the rule; keep the dated names working; verify tests for a trial under way in phase 1, one that ended this year, one that ended last year, the same trials chosen a year later, a dated name unchanged, and the rolling rule refused without a year
+- [x] 9.13 Let `thenwhat backfill trial-references --set` and the `pubmed_papers` step take the set, the step keeping its allowance, its off-peak rule and its stop on a failure, and asking first for trials that ended this year and trials with results posted; verify tests of the order and of a trial outside the set
+- [x] 9.14 Add `thenwhat backfill trial-coverage`: counts only, by group, of trials, results posted, a registry-listed paper, a paper found by number, a published claim, and a record not updated since before last year, with the estimate of what the paper index has still to be asked, with and without a key; verify one test of the figures, one of the estimate, and a refusal before the wider load
+- [x] 9.15 Run the counts-only commands on the working database, read-only, and record them:
+
+| Group, chosen in 2026 | Trials | Results posted | Registry-listed paper | PubMed paper by number | Cited by a published claim | Not updated since before 2025 |
+| --- | --- | --- | --- | --- | --- | --- |
+| under way | 91,003 | 1,239 | 12,225 | 2,461 | 1,104 | 7,976 |
+| completed in 2026 | 10,270 | 470 | 1,690 | 186 | 99 | 0 |
+| terminated, withdrawn or suspended in 2026 | 1,604 | 57 | 148 | 0 | 20 | 265 |
+| all | 102,877 | 1,766 | 14,063 | 2,647 | 1,223 | 8,241 |
+
+The paper index had not been asked about 80,998 trials in scope (the set and the two dated sets): about 3,240 requests at fifty trials a search, about 27 minutes at half a second apart, one off-peak night under 5,000 requests a day. `trial-references` for the set: 3,964 trials list a paper as reporting results, 10,540 have one linked by the registry, 14,063 either; 9,450 give a link, 25 of them on a listed outlet (31 links).
+
 Not in phase 1, and still open where they stand: telling names from the substance registry (3.2, 3.4), handing linked trials to preparation as candidates (4.4), papers on the trial page (8.8), fingerprints as a stored record (8.3), the batched news search (8.9 to 8.13), everything of sections 2.4 to 2.8 and 6.
 
 ## 7. Records
