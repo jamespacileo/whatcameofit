@@ -46,3 +46,5 @@ store/ingest/.dev.vars
 
 # drawn card images kept between builds
 site/.cache/
+store/ingest/wrangler.preview.jsonc
+store/ingest/.cloudflare.local.json
