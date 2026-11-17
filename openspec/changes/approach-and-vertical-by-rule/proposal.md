@@ -19,6 +19,7 @@ The site can be browsed by health area and by approach, but the published data d
 - Changing a vertical by rule. "Only an operator changes a vertical" stands.
 - Showing a confidence for the vertical on the site.
 - A condition level below the vertical, a drug class facet, and topic discovery. Each is its own change.
+- **A clinical classification beside the reader-friendly one.** The operator noted on 2026-11-17 that clinical and medical professionals may prefer a hierarchical category system of their own over groups and verticals, and that the product may come to support both. This change does not build it. It is written so as not to close it off: see `design.md`, "Keeping a clinical classification possible".
 
 ## Capabilities
 

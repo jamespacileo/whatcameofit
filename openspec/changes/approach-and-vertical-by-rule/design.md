@@ -90,6 +90,21 @@ A disagreement is one of three things, and each has one response:
 
 Before `thenwhat claim approaches` writes anything, `--dry-run` is run on the writer and two numbers are recorded in this file: how many of the 880 claims the rule would fill, and, over the 90 claims whose approach was set by hand or seed, how often the rule's answer equals the stored one. The second number is the only measure of the table's accuracy available without new labelling. If agreement is poor for one type, that row leaves the table before the first write.
 
+### 8. Keeping a clinical classification possible
+
+The operator wants to keep open a second, hierarchical classification that clinical and medical professionals would recognise, beside the groups and verticals written for general readers (noted 2026-11-17). Nothing here builds it. Three choices in this change are made with it in mind:
+
+- **Clinical codes are kept as given, and the friendly label is derived from them.** The approach basis stores the registry's own type (`DRUG`), not only the approach it maps to. The vertical check reports the MeSH term, not only the group. A later clinical view can read both without asking any source again.
+- **The reader-friendly tree is not reshaped to look clinical.** Groups and verticals stay named for readers. A clinical hierarchy would be a second tree over the same claims, not a renaming of this one.
+- **The mapping tables stay one-directional and checked in** (registry type to approach, MeSH heading to group). Each is a projection from a clinical vocabulary onto the friendly one, which is the shape a two-view system needs.
+
+What a later change would have to settle, recorded here so it is not rediscovered:
+
+- **Which vocabulary.** MeSH tree numbers are already in every stored trial record (`conditionBrowseModule`, terms and ancestors) and cost nothing. ICD-11 and SNOMED CT are what clinicians code in, and each has licence terms to check and note in `docs/sources.md` first. ATC would be the counterpart for drugs.
+- **A requirement that now forbids it.** `health-areas` says the export and the site SHALL NOT carry HRCS codes or names. Showing a clinical hierarchy means changing that requirement on purpose, not working round it.
+- **Claims with no trial** have no registry MeSH terms, so a clinical filing for them needs another deterministic source or stays empty.
+- **One claim, several clinical categories.** A claim has exactly one vertical. MeSH is a polyhierarchy, so the clinical view cannot share that rule.
+
 ## Risks / Trade-offs
 
 - **A wrong registry type sets a wrong approach** (a gene therapy registered as `DRUG` in every trial) → The basis is shown on the page, so the reader sees it is the registry's word. The operator corrects it with `claim edit`, after which the rule leaves it alone. Decision 7 measures how often before anything is published.
