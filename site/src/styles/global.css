@@ -107,7 +107,7 @@
   --text-l: 1.08rem;
   --text-xl: 1.2rem;
   --text-wordmark: 1.25rem;
-  --text-heading: 1.35rem;
+  --text-heading: 1.5rem;
   --text-status: 1.5rem;
   --label-size: var(--text-s);
   --note-size: var(--text-s);
@@ -7843,14 +7843,14 @@ body.framed {
 .sheet .table-frame,
 .sheet .trial-table {
   border: 0;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
   border-radius: 0;
 }
 
 .sheet .statement-list,
 .sheet .record-list {
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 .sheet .statement-list > li:first-child,
@@ -7915,7 +7915,7 @@ body.framed {
   position: sticky;
   top: var(--sticky-top, 0);
   z-index: 3;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 /* A group's own column names: read out, not drawn. */
@@ -8105,7 +8105,7 @@ body.framed {
 .fact-sheet {
   display: block;
   margin: 0.7rem 0 0;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 .fact-sheet > div {
@@ -8583,7 +8583,7 @@ body.framed {
    page's own ground. */
 .entry-rows {
   margin: 0.7rem 0 0;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 .entry-rows > li {
@@ -8878,7 +8878,7 @@ body.framed {
 /* One list for each order, under the section's rule and closed by a hairline. */
 .said-view {
   margin-top: 0.6rem;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
   border-bottom: 1px solid var(--rule);
 }
 
@@ -9186,7 +9186,7 @@ body.framed {
    column, its rows beside it. Papers stand under their year. */
 .year-groups {
   margin: 0.5rem 0 0;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
 }
 
 .label-group {
@@ -9402,7 +9402,7 @@ body.framed {
   gap: 1rem 2.2rem;
   margin: 0.7rem 0 0;
   padding: 1rem 0 0.3rem;
-  border-top: 2px solid var(--head-rule);
+  border-top: 1px solid var(--rule);
   font-size: var(--text-m);
 }
 
@@ -9526,6 +9526,32 @@ body.framed {
   .sheet .record-list .entry-more-ties {
     grid-column: 1 / -1;
   }
+}
+
+/* Section heads (openspec sections-funnel, after the critique of 2026-11-17: headings
+   were hard to tell from the content under them). A section starts in one way: more
+   room over its heading than anywhere inside a section, the heading a clear step over
+   the text, and the page's one 2px rule directly under it, across the sheet. Inside a
+   section a list starts on a hairline, or on the heading's rule where it comes first. */
+.sheet .fold-head {
+  margin-top: clamp(2.6rem, 7vw, 3.6rem);
+  padding-bottom: 0.55rem;
+  border-bottom: 2px solid var(--head-rule);
+}
+
+.sheet .fold-head + * {
+  margin-top: 0.85rem;
+}
+
+/* Rows that come first stand on the heading's rule. */
+.sheet .fold-head + :is(.fact-sheet, .entry-rows, .said-view, .year-groups, .table-frame, .record-list) {
+  margin-top: 0;
+  border-top: 0;
+}
+
+.sheet .fold-head + .trial-matrix {
+  margin-top: 0;
+  border-top: 0;
 }
 
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet

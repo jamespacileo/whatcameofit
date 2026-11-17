@@ -74,3 +74,10 @@ A registry record that is not a trial on the page SHALL be a row of its title, w
 - **WHEN** a reader looks at a possible record whose details are not yet read
 - **THEN** its row reads its registry number, "Details not read from the registry yet" and "Possible match: medium, 79%", and opening it gives the link to the registry
 
+
+### Requirement: A section's heading is set apart from its content
+Each section of a claim page SHALL start in the same way: more room over its heading than between any two things inside a section, a heading larger than any text under it, and a rule directly under the heading that is heavier than any rule inside the section. A section that is folded SHALL keep its heading and that rule.
+
+#### Scenario: Skimming for a section
+- **WHEN** a reader scrolls a claim page looking for "Trials on record"
+- **THEN** each section's heading stands on a full-width rule with nothing as heavy under it until the next heading
