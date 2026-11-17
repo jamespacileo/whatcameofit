@@ -2985,6 +2985,20 @@ span.pop > span + span {
   }
 }
 
+/* On a phone a panel that holds links and a way out is set at the foot of the screen,
+   a gutter in from each edge, whatever the place of the control that opened it: beside
+   a control low on the screen it ran off the foot, and its way out with it. */
+@media (max-width: 40rem) {
+  .pop.closes {
+    position-area: none;
+    inset: auto 1rem 1rem;
+    width: auto;
+    max-width: none;
+    max-height: min(28rem, 70dvh);
+    margin: 0;
+  }
+}
+
 @media (max-width: 40rem) {
   .masthead nav ul {
     gap: 0.25rem 1rem;

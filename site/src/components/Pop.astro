@@ -24,7 +24,7 @@ const Panel = inline ? "span" : "div";
   aria-label={label}
   style={`anchor-name: --${id}`}><slot name="trigger" /></button
 >
-<Panel popover id={id} class="pop" role="note" style={`position-anchor: --${id}`}>
+<Panel popover id={id} class:list={["pop", { closes: close }]} role="note" style={`position-anchor: --${id}`}>
   <slot />
   {
     close && (
