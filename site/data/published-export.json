@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-11-17T23:05:12.682849Z",
+  "generated_at": "2026-11-17T23:05:47.474347Z",
   "last_checked_at": "2026-11-17T08:13:09.235818Z",
   "preview": false,
   "sources": [
@@ -1052860,5 +1052860,113 @@
       "in_data_file": true
     }
   ],
-  "match_accept_above": 0.8
+  "match_accept_above": 0.8,
+  "clinical": {
+    "mesh_years": [
+      "2026"
+    ],
+    "nodes": [
+      {
+        "identifier": "D000091642",
+        "label": "Urogenital Diseases",
+        "tree_numbers": [
+          "C12"
+        ],
+        "broader": []
+      },
+      {
+        "identifier": "D000091662",
+        "label": "Genital Diseases",
+        "tree_numbers": [
+          "C12.100"
+        ],
+        "broader": [
+          "D000091642"
+        ]
+      },
+      {
+        "identifier": "D005832",
+        "label": "Genital Diseases, Male",
+        "tree_numbers": [
+          "C12.100.500",
+          "C12.200.294"
+        ],
+        "broader": [
+          "D000091662",
+          "D052801"
+        ]
+      },
+      {
+        "identifier": "D011469",
+        "label": "Prostatic Diseases",
+        "tree_numbers": [
+          "C12.100.500.565",
+          "C12.200.294.565"
+        ],
+        "broader": [
+          "D005832"
+        ]
+      },
+      {
+        "identifier": "D011470",
+        "label": "Prostatic Hyperplasia",
+        "tree_numbers": [
+          "C12.100.500.565.500",
+          "C12.200.294.565.500"
+        ],
+        "broader": [
+          "D011469"
+        ]
+      },
+      {
+        "identifier": "D012816",
+        "label": "Signs and Symptoms",
+        "tree_numbers": [
+          "C23.888"
+        ],
+        "broader": [
+          "D013568"
+        ]
+      },
+      {
+        "identifier": "D013568",
+        "label": "Pathological Conditions, Signs and Symptoms",
+        "tree_numbers": [
+          "C23"
+        ],
+        "broader": []
+      },
+      {
+        "identifier": "D020924",
+        "label": "Urological Manifestations",
+        "tree_numbers": [
+          "C23.888.942"
+        ],
+        "broader": [
+          "D012816"
+        ]
+      },
+      {
+        "identifier": "D052801",
+        "label": "Male Urogenital Diseases",
+        "tree_numbers": [
+          "C12.200"
+        ],
+        "broader": [
+          "D000091642"
+        ]
+      },
+      {
+        "identifier": "D059411",
+        "label": "Lower Urinary Tract Symptoms",
+        "tree_numbers": [
+          "C23.888.942.343"
+        ],
+        "broader": [
+          "D020924"
+        ]
+      }
+    ],
+    "claims_not_read": 970
+  }
 }
