@@ -113,6 +113,7 @@ export const ACTION_WORDS: Record<string, (target: string) => string> = {
   modulator: (target) => `Modulator of ${target}`,
   positive_modulator: (target) => `Positive modulator of ${target}`,
   negative_modulator: (target) => `Negative modulator of ${target}`,
+  gene_editing_negative_modulator: (target) => `Gene-editing negative modulator of ${target}`,
   positive_allosteric_modulator: (target) => `Positive allosteric modulator of ${target}`,
   negative_allosteric_modulator: (target) => `Negative allosteric modulator of ${target}`,
   binding_agent: (target) => `Binds to ${target}`,
