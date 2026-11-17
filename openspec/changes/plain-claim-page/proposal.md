@@ -28,5 +28,5 @@ None.
 - `site/src/pages/[slug].astro`: title block, provenance line in place of the unchecked box.
 - `site/src/lib/notices.ts`: provenance wording. `UNCHECKED_NOTE` stays for `lookup.json`.
 - `site/src/styles/global.css`, `DESIGN.md`, `GLOSSARY.md`: title and provenance line, recorded in the visual system.
-- `site/tests/site.test.mjs`: one test per new scenario; existing claim-page tests that read the `h1` or the unchecked box are updated.
+- `site/tests/site.build-test.mjs`: one test per new scenario; existing claim-page tests that read the `h1` or the unchecked box are updated.
 - No export shape change: `intervention.name`, `checked_by_person` and `last_checked_at` are already exported. No schema or seed regeneration.

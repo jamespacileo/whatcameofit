@@ -27,6 +27,37 @@ class PaperIndex(Protocol):
     def paper_by_pubmed_id(self, pubmed_id: str) -> SourceRecord | None: ...
 
 
+class PapersByNumber(Protocol):
+    def papers_by_pubmed_ids(self, pubmed_ids: list[str]) -> dict[str, SourceRecord | None]: ...
+
+
+def keep_papers_by_pubmed_id(
+    session: Session,
+    index: PapersByNumber,
+    numbers: list[str],
+    *,
+    now: datetime,
+    max_age: timedelta,
+) -> int:
+    """`keep_paper` for many PubMed numbers at once: the index is asked, many numbers to
+    a request, only for those with no stored record young enough. How many were due."""
+    due: list[tuple[str, PaperRecord | None]] = []
+    for number in dict.fromkeys(numbers):
+        row = stored_paper(session, pubmed_id=number)
+        if row is None or now - row.fetched_at > max_age:
+            due.append((number, row))
+    if not due:
+        return 0
+    answered = index.papers_by_pubmed_ids([number for number, _ in due])
+    for number, row in due:
+        record = answered.get(number)
+        if record is None:
+            _store_not_held(session, row, doi=None, pubmed_id=number, now=now)
+        else:
+            _store(session, row, record, doi=None, pubmed_id=number, identifier=None)
+    return len(due)
+
+
 def paper_reference(external_id: str) -> tuple[str | None, str | None]:
     """The DOI and the PubMed number in an identifier a match or an event holds."""
     if external_id.startswith("10."):

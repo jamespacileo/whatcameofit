@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import pytest
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from sqlalchemy.orm import Session
@@ -99,6 +100,7 @@ def registries(fixture_json) -> httpx.MockTransport:
     return httpx.MockTransport(answer)
 
 
+@pytest.mark.slow
 def test_seeded_example_round_trips_from_article_url_to_built_page(
     session: Session, fixture_json, fake_time, tmp_path: Path
 ):

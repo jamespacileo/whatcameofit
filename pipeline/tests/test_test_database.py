@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from conftest import NotATestDatabase, database_for_tests
+from conftest import NotATestDatabase, database_for_tests, for_worker
 
 CHECKOUT = Path("/work/d1-export-from-store-b403d7")
 
@@ -55,3 +55,15 @@ def test_a_database_not_named_as_a_test_database_is_refused(name: str):
         database_for_tests(
             {"TEST_DATABASE_URL": f"postgresql+psycopg://u:p@127.0.0.1:5434/{name}"}, CHECKOUT
         )
+
+
+def test_each_worker_of_a_parallel_run_has_a_database_of_its_own():
+    url = database_for_tests({}, CHECKOUT)
+
+    first = for_worker(url, {"PYTEST_XDIST_WORKER": "gw0"})
+    second = for_worker(url, {"PYTEST_XDIST_WORKER": "gw1"})
+
+    assert first.database == "thenwhat_d1_export_from_store_b403d7_gw0_test"
+    assert second.database == "thenwhat_d1_export_from_store_b403d7_gw1_test"
+    assert (first.host, first.port) == (url.host, url.port)
+    assert for_worker(url, {}) == url

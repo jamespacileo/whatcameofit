@@ -15,14 +15,14 @@
 
 ## 3. Surfaces
 
-- [x] 3.1 `DayReport.astro`: draw the strip and counts line under the status; stop showing the two sentences in sight. Verify: `site/tests/home-days.test.mjs` or `day-list.test.mjs` asserts the strip, the counts, and that the sentences appear only in the strip's name.
+- [x] 3.1 `DayReport.astro`: draw the strip and counts line under the status; stop showing the two sentences in sight. Verify: `site/tests/home-days.build-test.mjs` or `day-list.test.mjs` asserts the strip, the counts, and that the sentences appear only in the strip's name.
 - [x] 3.2 Home page: add the strip's key under the fields above the list. Verify: page test asserts one key before the first strip.
-- [x] 3.3 `ClaimTable.astro`: draw the strip under the status at one width on wide screens and at the row's width below the breakpoint (see design decision 9); key above the table; status label still shown. Verify: `site/tests/site.test.mjs` asserts a strip and a status label on every row of a topic, year and approved-claims table.
+- [x] 3.3 `ClaimTable.astro`: draw the strip under the status at one width on wide screens and at the row's width below the breakpoint (see design decision 9); key above the table; status label still shown. Verify: `site/tests/site.build-test.mjs` asserts a strip and a status label on every row of a topic, year and approved-claims table.
 - [x] 3.4 Check every other user of `ClaimTable` (claim page, guide entry, source page) at desktop and phone width and fix any overflow. Verify: screenshots of one page of each kind on `site-published`.
 
 ## 4. Guide and design records
 
-- [x] 4.1 Add the guide entry for the record strip on the site's own words shelf, with what it rests on and what it does not tell; make the build fail when it is missing. Verify: `site/tests/guide-and-landing.test.mjs` covers presence and the failing build.
+- [x] 4.1 Add the guide entry for the record strip on the site's own words shelf, with what it rests on and what it does not tell; make the build fail when it is missing. Verify: `site/tests/guide-and-landing.build-test.mjs` covers presence and the failing build.
 - [x] 4.2 `GLOSSARY.md`: add "record strip" and its marks. Verify: terms in code, key and guide match the glossary exactly.
 - [x] 4.3 `DESIGN.md`: add the record strip component; amend principle 3 and the "every record line says its kind in words" rule to record the operator's decision of 2026-11-15 (status label stays in sight; repeated captions move to a key and text alternatives); update the home report row and index tables entries. Verify: the three passages read consistently with the built pages.
 

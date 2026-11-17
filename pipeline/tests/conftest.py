@@ -78,6 +78,17 @@ def database_for_tests(environ: Mapping[str, str], checkout: Path = PIPELINE_ROO
     return url
 
 
+def for_worker(url: URL, environ: Mapping[str, str]) -> URL:
+    """The database of one worker of a parallel run (`pytest -n`): the run's database with
+    the worker's name in it, so that each worker drops and rebuilds its own. A run that
+    is not parallel has no worker and keeps the database as given."""
+    worker = environ.get("PYTEST_XDIST_WORKER")
+    if not worker:
+        return url
+    name = url.database or ""
+    return url.set(database=f"{name.removesuffix('_test')}_{worker}_test")
+
+
 _resolved: URL | None = None
 
 
@@ -86,7 +97,7 @@ def pytest_configure(config: pytest.Config) -> None:
     was started, and stop the run with the reason when it is not one tests may use."""
     global _resolved
     try:
-        _resolved = database_for_tests(os.environ)
+        _resolved = for_worker(database_for_tests(os.environ), os.environ)
     except NotATestDatabase as refused:
         raise pytest.UsageError(str(refused)) from None
 

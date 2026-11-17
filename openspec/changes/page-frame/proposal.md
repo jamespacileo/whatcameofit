@@ -37,7 +37,7 @@ None.
 - `site/src/pages/[slug].astro`, `site/src/pages/topic/[vertical].astro`, `site/src/layouts/`: the frame. New components for the band, the section list, a folding section and the actions column; `Trial.astro`, `ClaimTable.astro`, `StageFilter.astro`, `Paper.astro`, `Background.astro` and `Statements.astro` change.
 - `site/src/lib/timetable.ts`: newest-first order, gaps, counts of promises and records kept apart.
 - `site/src/styles/global.css`: band, ground, sheet, section list, folds, timeline, table, print. One new token for the ground behind the sheet.
-- `site/tests/site.test.mjs`: a test per new scenario; tests that read the status panel's place, the timetable's order or a trial entry's markup are updated.
+- `site/tests/site.build-test.mjs`: a test per new scenario; tests that read the status panel's place, the timetable's order or a trial entry's markup are updated.
 - `DESIGN.md`: the navy band joins the masthead and footer as an allowed solid navy block; page width 78rem with side columns; timetable order; trials as table rows; the ground token. `GLOSSARY.md` if a new term reaches site copy.
 - Other readers of `explained_by`: the "Why this status" note on the claim page lists fewer events. `lookup.json`, the extension and the open-data file are checked for use of the field.
 - No new dependency, no personal data, no network call at build or in the reader's browser.
