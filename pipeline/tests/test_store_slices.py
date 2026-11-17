@@ -23,7 +23,6 @@ from thenwhat.store.slices import (
     record_stage,
     slice_records,
 )
-from thenwhat.store.tiers import split_build
 
 NOW = datetime(2026, 11, 18, tzinfo=UTC)
 TODAY = NOW.date()
@@ -126,26 +125,52 @@ def test_a_slice_with_a_trial_not_stored_is_refused(session: Session):
         record_stage(session, made.slices[0], NOW)
 
 
-def test_a_slice_pushed_after_the_base_load_sends_only_its_state(session: Session, tmp_path: Path):
-    """The base load is the hot file of a build with the target set; the push state the
-    build seeds holds every record of it, so a slice of the set sends nothing again."""
+def test_a_slice_after_the_base_load_sends_its_trials_and_nothing_the_load_held(
+    session: Session, tmp_path: Path
+):
+    """The base load is the hot file: the push state a build seeds holds the hot tier's
+    records only, so a slice sends its trials, their payloads, papers and state, and no
+    record the load already put in D1 (a paper's record is hot)."""
     _world(session)
     file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
-    report = build(session, file, payloads=payloads, store_sql=STORE, now=NOW, trials=RULE)
-    split_build(
-        file,
-        payloads,
-        "both",
-        hot_trials=[("clinicaltrials.gov", "NCT01234567"), ("clinicaltrials.gov", "NCT07654321")],
+    report = build(session, file, payloads=payloads, store_sql=STORE, now=NOW)
+    assert "registry_trial\tclinicaltrials.gov|NCT01234567" not in report.hot_state
+    assert "registry_trial\tclinicaltrials.gov|NCT01234567" in report.state
+    trial = session.scalars(
+        select(RegistryTrial).where(RegistryTrial.external_id == "NCT01234567")
+    ).one()
+    session.add(
+        TrialPaper(
+            registry_trial_id=trial.id,
+            source_name="pubmed",
+            pubmed_id="77",
+            raw_payload={"pmid": "77", "authorString": "A B.", "abstract": "Text."},
+            fetched_at=NOW,
+        )
     )
+    session.flush()
     one_trial = RegistryTrial.external_id == "NCT01234567"
     made = plan(session, one_trial, name="test-set", year=2025, today=TODAY)
     (one,) = made.slices
     record_stage(session, one, NOW)
     records, _ = slice_records(session, one, rule="test-set", year=2025)
-    assert {record.kind for record in records} >= {"registry_trial", "payload", "trial_slice"}
-    sent = increment(records, report.state, actions=False).records
-    assert [record.kind for record in sent] == ["trial_slice"]
+    sent = increment(records, report.hot_state, actions=False).records
+    assert {record.kind for record in sent} == {
+        "registry_trial",
+        "payload",
+        "trial_paper",
+        "trial_slice",
+    }
+    # The paper keeps its byline and loses its abstract (docs/adr/0011).
+    (paper,) = [record for record in sent if record.kind == "trial_paper"]
+    (body,) = [
+        r.body for r in sent if r.kind == "payload" and r.key == paper.body["payload_sha256"]
+    ]
+    assert "abstract" not in body["body"] and "authorString" in body["body"]
+    # A store loaded afresh: the slice is taken as not in it, and pushed again.
+    one.done["in_store"], one.store = "2026-11-18T00:00:00.000000+00:00", "old-build"
+    one.forget_store()
+    assert "in_store" not in one.done and one.store == ""
 
 
 def test_slices_commands_refuse_a_stage_they_do_not_work():
@@ -157,3 +182,29 @@ def test_slices_commands_refuse_a_stage_they_do_not_work():
     assert run.exit_code == 1 and "--stage is one of" in run.output
     mark = CliRunner().invoke(app, ["backfill", "slices", "mark", "--stage", "record", "1"])
     assert mark.exit_code == 1 and "Only the page stage" in mark.output
+
+
+def test_a_build_gathers_a_trial_s_papers_without_their_abstracts(session: Session):
+    from thenwhat.store.gather import gather
+
+    _world(session)
+    trial = session.scalars(
+        select(RegistryTrial).where(RegistryTrial.external_id == "NCT01234567")
+    ).one()
+    session.add(
+        TrialPaper(
+            registry_trial_id=trial.id,
+            source_name="pubmed",
+            pubmed_id="88",
+            raw_payload={"pmid": "88", "authorString": "A B.", "abstract": "Text."},
+            fetched_at=NOW,
+        )
+    )
+    session.flush()
+    records = gather(session).records
+    (paper,) = [r for r in records if r.kind == "trial_paper"]
+    assert paper.key == "clinicaltrials.gov|NCT01234567|pubmed|88"
+    (payload,) = [
+        r for r in records if r.kind == "payload" and r.key == paper.body["payload_sha256"]
+    ]
+    assert "abstract" not in payload.body["body"] and "authorString" in payload.body["body"]

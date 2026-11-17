@@ -2,16 +2,16 @@
 (`store/slices.py`), and its coverage by group and stage."""
 
 import importlib
+import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 import httpx
 import typer
 
 from thenwhat.cli.backfill import backfill_app
 from thenwhat.cli.console import err, out
-from thenwhat.cli.export import STORE_SQL
 from thenwhat.cli.session import open_session, settings_or_exit
 from thenwhat.cli.store import TARGET_SET, _commit, target_rule
 from thenwhat.store.push import (
@@ -36,6 +36,7 @@ from thenwhat.store.slices import (
     record_stage,
     registry_papers_stage,
     slice_records,
+    state_record,
 )
 
 slices_app = typer.Typer(
@@ -126,13 +127,23 @@ def run_command(
     url: Annotated[
         str, typer.Option("--url", envvar="INGEST_URL", help="With --push: the service.")
     ] = "",
-    store_sql: Annotated[Path, typer.Option(envvar="STORE_SQL")] = STORE_SQL,
+    again: Annotated[
+        bool,
+        typer.Option(
+            "--again",
+            help="With --push: take every slice as not in the store, as for a store loaded"
+            " afresh, and push it again; only what the store lacks is sent.",
+        ),
+    ] = False,
 ) -> None:
     """Work the next slices' due stages, in order, saving the plan after each: a run
     stopped part way goes on from there. PubMed is never asked here: its stage reads what
-    the operator's off-peak step left, and waits until every trial was asked."""
-    import os
+    the operator's off-peak step left, and waits until every trial was asked.
 
+    With --push, every planned slice's state goes first, then each slice worked is pushed
+    with its trials, papers and state. A slice is in the store of the build the push state
+    names: a push state from another build (a store loaded afresh) makes every slice due
+    to be pushed again, as --again does."""
     from thenwhat.events.paper_records import keep_paper
     from thenwhat.sources.europepmc import EuropePmc
 
@@ -144,10 +155,20 @@ def run_command(
     if do_push and (state is None or not state.is_file() or not url or not token):
         err.print("--push needs --state (the build's .pushed.json), INGEST_URL and INGEST_TOKEN.")
         raise typer.Exit(code=1)
-    with_state = "CREATE TABLE trial_slice" in (store_sql / "schema.sql").read_text()
     with open_session() as session:
         made, path = _plan(session, trial_set, plan_file)
+        if do_push and state is not None:
+            store = read_state(state).get(BUILD_KEY, "")
+            for one in made.slices:
+                if again or one.store != store:
+                    one.forget_store()
         made.write(path)
+        if do_push and state is not None:
+            try:
+                _push_plan(made, state, url, token)
+            except PushFailed as fault:
+                err.print(str(fault), markup=False)
+                raise typer.Exit(code=1) from None
         index = EuropePmc(session, contact_email=settings.contact_email)
         max_age = timedelta(days=settings.paper_record_max_age_days)
         for one in chosen(made, None, slices):
@@ -175,8 +196,13 @@ def run_command(
                         " stage waits for the off-peak PubMed step.",
                         markup=False,
                     )
-                if do_push and stage in (None, "in_store") and "record" in one.done:
-                    _push_slice(session, one, made, state, url, token, with_state)
+                if (
+                    do_push
+                    and state is not None
+                    and stage in (None, "in_store")
+                    and "record" in one.done
+                ):
+                    _push_slice(session, one, made, state, url, token)
             except (SliceRefused, PushFailed) as fault:
                 made.write(path)
                 err.print(str(fault), markup=False)
@@ -188,26 +214,21 @@ def run_command(
                 f" {', '.join(sorted(one.done)) or 'nothing done'}.",
                 markup=False,
             )
-    if not with_state:
-        out.print(
-            "The store's schema has no trial_slice table yet: slice states are kept on this"
-            " device only and not pushed.",
-            markup=False,
-        )
 
 
-def _push_slice(session, one, made: Plan, state, url, token, with_state: bool) -> None:
-    records, texts = slice_records(session, one, rule=made.rule, year=made.year)
-    if not with_state:
-        records = [record for record in records if record.kind != "trial_slice"]
-    held = read_state(state)
-    with httpx.Client(
+def _client(url: str, token: str) -> httpx.Client:
+    return httpx.Client(
         transport=RetryOnBusy(),
         base_url=url,
         headers={"Authorization": f"Bearer {token}", "User-Agent": USER_AGENT},
         timeout=120,
-    ) as client:
-        report = push(
+    )
+
+
+def _push(records, texts, state: Path, url: str, token: str):
+    held = read_state(state)
+    with _client(url, token) as client:
+        return push(
             client,
             records,
             held,
@@ -218,8 +239,34 @@ def _push_slice(session, one, made: Plan, state, url, token, with_state: bool) -
             pending=pending_path(state),
             belongs={"build": held.get(BUILD_KEY, ""), "target": url},
         )
+
+
+def _push_plan(made: Plan, state: Path, url: str, token: str) -> None:
+    """Every planned slice's state, so the store's totals of the set are whole from the
+    start; sent again, only what changed goes."""
+    records = [state_record(one, rule=made.rule, year=made.year) for one in made.slices]
+    report = _push(records, {}, state, url, token)
+    out.print(
+        f"The plan's {len(made.slices)} slices: {report.handed['trial_slice']:,} states handed"
+        " over; the rest the store held already.",
+        markup=False,
+    )
+
+
+def _push_slice(session, one, made: Plan, state: Path, url: str, token: str) -> None:
+    """A slice's trials, papers and state, as one run or a few: its state says it is in
+    the store in the same merge as its trials, so the two never disagree."""
+    store = read_state(state).get(BUILD_KEY, "")
+    before = (dict(one.done), dict(one.counts), one.store)
     one.counts["in_store"] = len(one.trials)
-    one.done["in_store"] = (datetime.now(UTC)).isoformat(timespec="microseconds")
+    one.done["in_store"] = datetime.now(UTC).isoformat(timespec="microseconds")
+    one.store = store
+    records, texts = slice_records(session, one, rule=made.rule, year=made.year)
+    try:
+        report = _push(records, texts, state, url, token)
+    except PushFailed:
+        one.done, one.counts, one.store = before
+        raise
     out.print(
         f"Slice {one.number}: {sum(report.handed.values()):,} records handed over in"
         f" {report.runs} runs; the rest the store held already.",
@@ -285,3 +332,38 @@ def coverage_command(trial_set: SetName = TARGET_SET, plan_file: PlanFile = None
             f" {counted['pubmed_found']:,}; {stages}",
             markup=False,
         )
+    url, token = os.environ.get("INGEST_URL", ""), os.environ.get("INGEST_TOKEN", "")
+    if not (url and token):
+        out.print(
+            "In the store: set INGEST_URL and INGEST_TOKEN to read it from the store's own"
+            " slices (GET /progress); the counts above are this device's plan.",
+            markup=False,
+        )
+        return
+    with _client(url, token) as client:
+        answer = client.get("/progress")
+    if answer.status_code != 200:
+        err.print(f"The service did not give its progress: {answer.status_code}", markup=False)
+        raise typer.Exit(code=1)
+    for one_set in _sets(answer.json()):
+        if (one_set.get("rule"), one_set.get("year")) != (made.rule, made.year):
+            continue
+        stages = one_set.get("stages") or {}
+        out.print(
+            f"In the store, from its slices: {one_set.get('total_slices', '?')} slices,"
+            f" {one_set.get('total_trials', '?'):,} trials; "
+            + ", ".join(
+                f"{stage} {(stages.get(stage) or {}).get('trials', 0):,}" for stage in STAGES
+            ),
+            markup=False,
+        )
+
+
+def _sets(value: Any) -> list[dict[str, Any]]:
+    """The sets of a `GET /progress` answer, whatever it is wrapped in."""
+    if isinstance(value, dict):
+        for key in ("sets", "progress"):
+            if isinstance(value.get(key), list):
+                return value[key]
+        return [value]
+    return value if isinstance(value, list) else []

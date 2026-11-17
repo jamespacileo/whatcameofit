@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import PaperRecord, RegistryTrial, TrialPaper, WorkEntry
 from thenwhat.domain import WorkOutcome
-from thenwhat.sources.people import people_in
+from thenwhat.sources.people import people_in, without_abstract
 from thenwhat.store import records as r
 from thenwhat.store.form import Record, key_of, payload_of, payload_record_of, when
 
@@ -66,6 +66,15 @@ class Slice:
     # What it holds, counted: trials with results, papers listed, PubMed asked and found,
     # trials in the store.
     counts: dict[str, int] = field(default_factory=dict)
+    # The build whose store its `in_store` is true of: a store loaded afresh from another
+    # build holds none of the set's trials until the slices are pushed to it again.
+    store: str = ""
+
+    def forget_store(self) -> None:
+        """Its `in_store` belongs to another store: not done for this one."""
+        self.done.pop("in_store", None)
+        self.counts.pop("in_store", None)
+        self.store = ""
 
     def due(self) -> str | None:
         """The first stage not done, in order; `page` is only ever told."""
@@ -255,8 +264,9 @@ def slice_records(
     session: Session, one: Slice, *, rule: str, year: int
 ) -> tuple[list[Record], dict[str, str]]:
     """What a slice puts in the store: its trials with their payloads, the paper records
-    its trials' records list, and its own state; and the text of each payload too large
-    to travel in its record, by checksum."""
+    its trials' records list, the papers found by its trials' numbers (`trial_paper`,
+    without their abstracts), and its own state (`trial_slice`); and the text of each
+    payload too large to travel in its record, by checksum."""
     found: list[Record] = []
     texts: dict[str, str] = {}
     for trial in _trials(session, one):
@@ -271,20 +281,49 @@ def slice_records(
             select(PaperRecord).where(PaperRecord.pubmed_id.in_(numbers[start : start + 1000]))
         ):
             found.append(r.paper_source_record(paper))
+    trials = {trial.id: trial for trial in _trials(session, one)}
+    ids = sorted(trials)
+    for start in range(0, len(ids), 1000):
+        for paper in session.scalars(
+            select(TrialPaper)
+            .where(TrialPaper.registry_trial_id.in_(ids[start : start + 1000]))
+            .order_by(TrialPaper.id)
+        ):
+            payload = payload_of(without_abstract(paper.raw_payload))
+            if not payload.inline:
+                texts[payload.sha256] = payload.text
+            trial = trials[paper.registry_trial_id]
+            key = key_of(trial.registry_name, trial.external_id, paper.source_name, paper.pubmed_id)
+            found.append(payload_record_of(payload))
+            found.append(
+                Record(
+                    "trial_paper",
+                    key,
+                    {
+                        "registry_name": trial.registry_name,
+                        "trial_id": trial.external_id,
+                        "source_name": paper.source_name,
+                        "pubmed_id": paper.pubmed_id,
+                        "payload_sha256": payload.sha256,
+                        "fetched_at": when(paper.fetched_at),
+                    },
+                )
+            )
     found.append(state_record(one, rule=rule, year=year))
     return found, texts
 
 
 def state_record(one: Slice, *, rule: str, year: int) -> Record:
     """A slice's state as the store keeps it (`trial_slice`), for the page of progress."""
+    counted = ("with_results", "registry_papers", "pubmed_asked", "pubmed_found", "in_store")
     body = {
         "rule": rule,
-        "year": year,
-        "number": one.number,
+        "year": int(year),
+        "number": int(one.number),
         "grp": one.group,
         "trials": len(one.trials),
-        **{name: value for name, value in one.counts.items() if name != "trials"},
-        **{f"{stage}_at": at for stage, at in one.done.items()},
+        **{name: int(one.counts[name]) for name in counted if name in one.counts},
+        **{f"{stage}_at": at for stage, at in one.done.items() if at},
     }
     return Record("trial_slice", key_of(rule, year, one.number), body)
 
