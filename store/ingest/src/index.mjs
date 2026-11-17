@@ -12,6 +12,9 @@
 //   GET    /inbox?after=&limit=   records of the bulk tier that runs handed over, oldest first
 //   POST   /inbox/folded          a fold is recorded from its delta in the bucket and the build's list: {object}
 //   POST   /inbox/clear           no further than the furthest fold recorded: {through}
+//   PUT    /progress/slices       the pipeline reports how far slices of a set of trials have come
+//   GET    /progress              counts only: sets, slices by stage, last runs, rows by table
+//   GET    /progress/page         the same as a page; it holds nothing until a token is typed into it
 //   POST   /work/lease|finish|fail    the consumer's queue of due work
 //   POST   /slices/take|release       a device's work slices
 import { principal } from "./auth.mjs";
@@ -21,6 +24,8 @@ import { peopleInText } from "./people.mjs";
 import { INLINE_PAYLOAD_BYTES, MAX_LEASE, MAX_LEASE_SECONDS, MAX_R2_PAYLOADS_A_CHUNK, MAX_INBOX_RECORDS, MAX_REGISTRATION_BYTES, D1, limits } from "./limits.mjs";
 import { INGEST } from "./sql.generated.mjs";
 import * as store from "./store.mjs";
+import { progress, reportSlices } from "./progress.mjs";
+import { PAGE } from "./page.mjs";
 
 const json = (status, body) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 const refuse = (status, code, message, detail) => { throw new Refusal(status, code, message, detail); };
@@ -221,7 +226,15 @@ async function inbox(request, env, who, url, verb) {
   return json(200, await store.inbox(env.STORE, after, Math.min(limit, MAX_INBOX_RECORDS)));
 }
 
+// The progress page's shell: static, the same for everyone, with no count in it. It asks
+// /progress itself, with the token typed into it. It may load nothing from anywhere else.
+const page = () => new Response(PAGE, { status: 200, headers: {
+  "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "referrer-policy": "no-referrer", "x-frame-options": "DENY", "x-content-type-options": "nosniff",
+  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+} });
+
 async function route(request, env, ctx) {
+  if (request.method === "GET" && new URL(request.url).pathname === "/progress/page") return page();
   const who = await principal(request, env);
   // Without a token nothing answers, whatever was asked for.
   if (!who) return json(401, { error: "unauthorized" });
@@ -250,6 +263,15 @@ async function route(request, env, ctx) {
     }
     case "GET /inbox": return inbox(request, env, who, new URL(request.url), "read");
     case "POST /inbox/*": if (parts[1] === "folded") return inbox(request, env, who, new URL(request.url), "folded"); if (parts[1] === "clear") return inbox(request, env, who, new URL(request.url), "clear"); break;
+    case "GET /progress":
+      if (!who.may.includes("progress")) refuse(403, "outside_scope", `a ${who.role} token may not read the progress`);
+      return json(200, await progress(env.STORE));
+    case "PUT /progress/*": {
+      if (parts[1] !== "slices") break;
+      if (!who.may.includes("report")) refuse(403, "outside_scope", `a ${who.role} token may not report progress`);
+      const { value } = await jsonBody(request, MAX_REGISTRATION_BYTES);
+      return json(200, await reportSlices(env.STORE, value));
+    }
     case "POST /work/*": if (["lease", "finish", "fail"].includes(parts[1])) return work(request, env, who, parts[1]); break;
     case "POST /slices/*": if (["take", "release"].includes(parts[1])) return slice(request, env, who, parts[1]); break;
   }

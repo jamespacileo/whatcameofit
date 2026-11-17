@@ -21,10 +21,10 @@ export const ROLES = {
   // decision is never recorded as a person's or an assistant's: those travel only with the
   // operator's token. A claim it hands over as approved carries its audit hold, unless
   // the store already holds that claim approved and released.
-  device: { writers: ["device"], kinds: RECORDS, actions: [], deciders: ["rule", "seed"], holds: true, may: ["payload", "slice"] },
+  device: { writers: ["device"], kinds: RECORDS, actions: [], deciders: ["rule", "seed"], holds: true, may: ["payload", "slice", "report"] },
   // The daily job: a schedule has no person in it, so no person's or assistant's decision.
   // It is the bulk file's one writer, so it reads the inbox of bulk records and clears it.
-  daily: { writers: ["daily"], kinds: RECORDS, actions: [], deciders: ["rule", "seed"], may: ["payload", "inbox"] },
+  daily: { writers: ["daily"], kinds: RECORDS, actions: [], deciders: ["rule", "seed"], may: ["payload", "inbox", "report", "progress"] },
   // A reader's lookup: the lead, its reader share, the trials found, its reading, its spend.
   // No claim, no event, no match, no decision of anyone's, no action, and no tie from a
   // lead to a claim.
@@ -34,7 +34,7 @@ export const ROLES = {
   // The export: sets a published time, by rule, and nothing else.
   export: { writers: ["export"], kinds: ["action"], actions: ["publish"], deciders: ["rule"], may: [] },
   // The operator: everything a device may, the migration, and every action.
-  operator: { writers: ["operator", "migration"], kinds: KINDS, actions: ACTIONS, deciders: ["human", "assistant", "rule", "seed"], may: ["payload", "slice", "work", "inbox"] },
+  operator: { writers: ["operator", "migration"], kinds: KINDS, actions: ACTIONS, deciders: ["human", "assistant", "rule", "seed"], may: ["payload", "slice", "work", "inbox", "report", "progress"] },
 };
 
 // Compared in full whatever the first difference, so the time taken says nothing.
