@@ -650,7 +650,11 @@ test("progress is read from the slices in the store, as counts only, by the toke
 
     const { status, body } = await box.ask("GET", "/progress", { as: "daily" });
     assert.equal(status, 200);
-    assert.deepEqual(Object.keys(body).sort(), ["at", "build_id", "database_since", "groups", "rows", "runs", "sets", "stages"]);
+    assert.deepEqual(Object.keys(body).sort(), ["at", "build_id", "database_since", "groups", "role", "rows", "runs", "sets", "stages", "writers"]);
+    // The asking token's own role and the kinds of run it may register and see.
+    assert.deepEqual([body.role, body.writers], ["daily", ["daily"]]);
+    const asOperator = (await box.ask("GET", "/progress", { as: "operator" })).body;
+    assert.deepEqual([asOperator.role, asOperator.writers], ["operator", ["operator", "migration"]]);
     // No build's run is in this store, so no build is named; the database knows since when it is.
     assert.equal(body.build_id, null);
     assert.match(body.database_since, /^\d{4}-\d\d-\d\d/);

@@ -278,6 +278,8 @@ thenwhat backfill slices run --push --again --state <new state file>
 
 `slices run --push` stops when the store holds no slice of the set but the state or the plan says some were sent. `GET /progress` gives `build_id`, the build the store was loaded from, read from the ids of the build's own runs; `fresh-state` and `slices run --push` refuse a store loaded from another build than the state's. It also gives `database_since`, when the database's first migration was applied: a database that was replaced shows a new time, one restored by Time Travel does not.
 
+**A restore by Time Travel is not a reload.** The database keeps its `database_since` and the build it was loaded from, so no check catches it, and the push state goes on saying that what was pushed after the bookmark is in the store. So keep a copy of the push state with every bookmark: when a bookmark is taken, copy `<state>.pushed.json` and the slices' plan (`slices-<set>-<year>.json`) beside its id. After a restore to a bookmark, put back that bookmark's copy of the push state and the plan, and do not run `fresh-state`: it starts from the build, so the next push would send again every decision and action pushed since the build, and an action is not idempotent (a decision would be held twice). Then run `thenwhat backfill push` and `thenwhat backfill slices run --push`: they send what was pushed after the bookmark, and a slice the store no longer shows goes whole.
+
 ### The daily fold, in order
 
 A lookup's bulk records wait in D1's inbox until they are safe in R2. The order is held by the service, not by care:
