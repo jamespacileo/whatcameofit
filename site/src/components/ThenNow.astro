@@ -5,7 +5,6 @@
 // (lib/extension-page: chosen by rule, never by hand). The outlet's title is a quotation
 // with the outlet named; the status is the site's label with its place on the path.
 // Openspec home-then-now.
-import ArrowRight from "@lucide/astro/icons/arrow-right";
 import Clock from "@lucide/astro/icons/clock";
 import StageTrack from "./StageTrack.astro";
 import type { ExportedClaim } from "../lib/export";
@@ -37,7 +36,23 @@ const on = checkedAt ? yearsOn(report.published_date, checkedAt) : null;
   </div>
   <p class="then-gap">
     {on && <span>{on}</span>}
-    <ArrowRight size={18} stroke-width={1.8} aria-hidden="true" />
+    {/* From the report to the record. Each line is counted as one unit long, so it can be
+        drawn once, in order, when the page opens (DESIGN.md, Motion). */}
+    <svg
+      class="then-arrow"
+      viewBox="0 0 44 16"
+      width="44"
+      height="16"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path pathLength="1" d="M1 8h41"></path>
+      <path pathLength="1" d="m36 2 6 6-6 6"></path>
+    </svg>
   </p>
   <div class="now-well">
     <p class="now-tab">Where it stands</p>

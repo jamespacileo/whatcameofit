@@ -12,3 +12,11 @@ Under its box the home page SHALL draw one published claim, chosen by the site's
 #### Scenario: On a phone
 - **WHEN** the home page is read at 375 pixels wide
 - **THEN** the card is not drawn and a row of the list starts on the first screen
+
+### Requirement: The home page's card is drawn once, in the order it is read
+When the home page opens, the card's arrow SHALL be drawn from the report to the record and the marker SHALL then land on the claim's place with one ring, once. Every word of the card SHALL be readable from the first paint. With reduced motion asked for, with no script and on paper the card SHALL be shown in its finished state and nothing SHALL move.
+
+#### Scenario: Reduced motion
+- **WHEN** a reader who has asked for reduced motion opens the home page
+- **THEN** the arrow and the marker are drawn whole and nothing moves
+

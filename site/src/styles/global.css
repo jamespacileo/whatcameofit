@@ -8236,13 +8236,18 @@ body:has(.band.home) .bar,
   letter-spacing: -0.005em;
 }
 
+/* A section heading in the heading face is the size a record page sets it at. */
+body:has(.band.home) .bar {
+  font-size: var(--text-heading);
+}
+
 .then-now {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 19rem);
   align-items: center;
   column-gap: 1.75rem;
   max-width: 54rem;
-  margin: 2.4rem auto 0;
+  margin: 2.1rem auto 0;
   padding: 1.25rem 1.25rem 1.25rem 1.75rem;
   border: 1px solid var(--rule);
   border-radius: var(--radius);
@@ -8255,6 +8260,12 @@ body:has(.band.home) .bar,
 
 .then-now:hover {
   border-color: var(--ring);
+}
+
+/* The ring stands off the card's edge and takes its corners. */
+.then-now:focus-visible {
+  outline-offset: 4px;
+  border-radius: var(--radius);
 }
 
 .then-now p {
@@ -8275,12 +8286,17 @@ body:has(.band.home) .bar,
   line-height: 1.16;
   letter-spacing: -0.012em;
   text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 .then-now:hover .then-quote {
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.16em;
+}
+
+.then-arrow {
+  display: block;
 }
 
 .then-gap {
@@ -8303,6 +8319,9 @@ body:has(.band.home) .bar,
   position: relative;
   margin-top: 1.9rem;
   padding: 0.85rem 1.1rem 0.95rem;
+  /* No edge on the light page; a faint blue one in the dark theme, where the card's
+     own ground is nearly the well's tone. As the status card on a record band. */
+  border: 1px solid var(--band-card-rule);
   border-radius: 0 var(--radius-s) var(--radius-s) var(--radius-s);
   background: var(--band-card);
   color: var(--on-navy-ink);
@@ -8310,12 +8329,14 @@ body:has(.band.home) .bar,
 
 .now-tab {
   position: absolute;
-  left: 0;
   bottom: 100%;
   display: flex;
   align-items: center;
+  left: -1px;
   height: 1.9rem;
   padding: 0 0.95rem;
+  border: 1px solid var(--band-card-rule);
+  border-bottom: 0;
   border-radius: var(--radius-s) var(--radius-s) 0 0;
   background: var(--band-card);
   font-size: var(--text-xs);
@@ -8362,7 +8383,15 @@ body:has(.band.home) .bar,
     gap: 0.5rem;
   }
 
-  .then-gap svg {
+  /* Stacked, the arrow is short and points down, from the report to the record. */
+  .then-gap {
+    align-items: center;
+    min-height: 1.75rem;
+  }
+
+  .then-arrow {
+    width: 1.65rem;
+    height: auto;
     transform: rotate(90deg);
   }
 }
@@ -8393,5 +8422,35 @@ body:has(.band.home) .bar,
     height: auto;
     padding: 0;
     background: none;
+  }
+}
+
+/* The home page's card, once, in the order it is read (DESIGN.md, Motion): the arrow is
+   drawn from the report to the record, then the marker lands on the claim's place and
+   one ring leaves it, as on a claim page. The words are there from the first paint; the
+   drawing rests on its finished state, which is what reduced motion and paper show. */
+@media (prefers-reduced-motion: no-preference) {
+  .then-arrow path {
+    stroke-dasharray: 1 1.2;
+    animation: line-drawn 0.55s var(--ease-out) 0.35s both;
+  }
+
+  .then-arrow path + path {
+    animation-duration: 0.3s;
+    animation-delay: 0.75s;
+  }
+
+  .now-well .track .step.here {
+    position: relative;
+    animation: mark-land 0.6s var(--ease-out) 0.95s both;
+  }
+
+  .now-well .track .step.here::after {
+    content: "";
+    position: absolute;
+    inset: -1.5px;
+    border-radius: 50%;
+    border: 1.5px solid var(--blue);
+    animation: mark-ring 0.9s var(--ease-out) 1.25s both;
   }
 }
