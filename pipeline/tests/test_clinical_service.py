@@ -3,7 +3,7 @@ reports and their commands. Behavior: openspec clinical-classification."""
 
 from collections.abc import Generator
 from contextlib import contextmanager
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -440,7 +440,8 @@ def test_prepare_places_a_new_condition_term_before_first_export(
             return record
 
     claim = new_claim(session, "cream-first-export")
-    prepare(session, Sources(vocabulary=MeshWithCondition()))
+    sources = Sources(vocabulary=MeshWithCondition())
+    prepare(session, sources, at=NOW)
     approved = session.scalars(select(ClaimTerm).where(ClaimTerm.claim_id == claim.id)).all()
     assert [(t.external_id, t.review_state) for t in approved] == [
         ("D011565", ReviewState.APPROVED)
@@ -453,6 +454,17 @@ def test_prepare_places_a_new_condition_term_before_first_export(
     else:
         assert categories is None
         assert exported["clinical"]["claims_not_read"] == 1
+        # When the source recovers, normal preparation retries the ancestry even
+        # though the condition itself was approved on the preceding run.
+        parent_available = True
+        retry_at = NOW + timedelta(days=2)
+        prepare(session, sources, at=retry_at)
+        recovered_dir = tmp_path / "recovered"
+        recovered_dir.mkdir()
+        recovered = assert_same_export(session, recovered_dir, retry_at)
+        assert [c["identifier"] for c in recovered["claims"][0]["clinical_categories"]] == [
+            "D011565"
+        ]
 
 
 def test_the_comparison_counts_every_claim_once(session: Session):

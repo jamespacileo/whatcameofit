@@ -30,6 +30,7 @@ template="$root/scripts/$label.plist"
 paused="$state/paused"
 lock="$state/lock"
 latest="$state/latest.md"
+pending_loads="$state/pending-link-loads"
 
 # A setting: the environment first, then the last line for it in the .env file. The file
 # is read as text and never run. Only the names asked for here are looked at.
@@ -499,6 +500,14 @@ fi
 #    each month's file the window touches. After missed nights the gap is caught up, oldest
 #    days first. One or two queries to the public ClickHouse copy of Hacker News
 #    (docs/sources.md); spends nothing.
+if [ "$dry" = 0 ] && [ -z "$stopped" ]; then
+  if mkdir -p "$pending_loads"; then
+    export THENWHAT_PENDING_LINK_LOADS="$pending_loads"
+  else
+    trouble=1
+    stop "the months waiting to be imported could not be recorded in $pending_loads"
+  fi
+fi
 if [ -f "$root/scripts/fetch_link_files.py" ] || [ "$dry" = 1 ]; then
   [ -f "$root/scripts/fetch_link_files.py" ] || say "note: scripts/fetch_link_files.py is not in this checkout; a run would skip this step"
   run_step fetch-links uv run --env-file "$env_file" --directory "$root/pipeline" \
@@ -507,21 +516,51 @@ elif [ -z "$stopped" ]; then
   say "skip fetch-links: scripts/fetch_link_files.py is not in this checkout"
   notes="$notes- The link files were not fetched: scripts/fetch_link_files.py is not in this checkout.\\n"
 fi
+written=""
 if [ -n "$work" ] && [ -f "$work/fetch-links.out" ]; then
   written=$(sed -n 's/^Months written: \([0-9 -]*\) (.*/\1/p' "$work/fetch-links.out" | tail -n 1)
   [ -n "$written" ] && window_months=$written
 fi
-[ "$dry" = 1 ] && say "load-links runs for each month the fetch says it wrote; with no record of a fetch, these:"
+# Include a month from any earlier run that stopped after fetching it or failed to
+# import it. A month can be both pending and in the new window. Load it once.
+window_months=$(
+  {
+    for month in $window_months; do printf '%s\n' "$month"; done
+    for marker in "$pending_loads"/[0-9][0-9][0-9][0-9]-[0-1][0-9]; do
+      [ ! -f "$marker" ] || printf '%s\n' "${marker##*/}"
+    done
+  } | LC_ALL=C sort -u
+)
+[ "$dry" = 1 ] && say "load-link commands cover pending imports and the expected fetch window:"
 
 # 2. Load each month's file the fetch wrote. Sends no request. Loading a link again adds
 #    nothing.
 for window_month in $window_months; do
   hn_file="$link_files/hackernews/$window_month.parquet"
+  marker="$pending_loads/$window_month"
+  if [ "$dry" = 0 ] && [ -z "$stopped" ] && { [ -f "$hn_file" ] || [ -n "$written" ]; }; then
+    # Also cover an existing file loaded without a fetch, or a fetch that reported
+    # its files without creating markers.
+    if ! touch "$marker"; then
+      trouble=1
+      stop "the pending import of $window_month could not be recorded"
+    fi
+  fi
   if [ -f "$hn_file" ] || [ "$dry" = 1 ]; then
-    pipeline_step "load-links $window_month" backfill load-links hackernews "$hn_file" || true
+    if pipeline_step "load-links $window_month" backfill load-links hackernews "$hn_file" &&
+       [ "$dry" = 0 ] && [ -z "$stopped" ]; then
+      if ! rm -f "$marker"; then
+        trouble=1
+        say "the import of $window_month succeeded but could not be marked complete"
+      fi
+    fi
   elif [ -z "$stopped" ]; then
     say "skip load-links $window_month: $hn_file is not there"
     notes="$notes- Nothing was loaded for $window_month: there is no link file for it.\\n"
+    if [ -f "$marker" ]; then
+      trouble=1
+      failed="$failed load-links-$window_month"
+    fi
   fi
 done
 

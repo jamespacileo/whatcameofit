@@ -32,6 +32,15 @@ class SourceStop(Exception):
     attempt is counted."""
 
 
+class StopAfterProgress(SourceStop):
+    """Stop after committing earlier, completed parts of the record. The interrupted
+    part has already been rolled back and the record itself stays due."""
+
+    def __init__(self, cause: SourceStop) -> None:
+        super().__init__(str(cause))
+        self.cause = cause
+
+
 class CannotAsk(SourceStop):
     """A source or a model cannot be asked: it is paused, its allowance or quota is used
     up, its key was refused, the spend ceiling is reached, or it kept failing for causes

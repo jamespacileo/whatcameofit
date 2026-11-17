@@ -767,7 +767,9 @@ def test_no_row_id_crosses_into_a_record(session: Session):
         "link_lead:news.example.com/drug-x",
         "lookup:abc",
     }
-    assert not any(ref.endswith(tuple(ids)) for ref in refs)
+    # A registry number or statement ordinal can happen to end with the digits of a
+    # claim ID. A local decision reference carries its row ID just after the kind.
+    assert not any(ref.split(":", 2)[1] in ids for ref in refs)
 
 
 def test_the_awkward_cases_take_their_natural_form(session: Session):

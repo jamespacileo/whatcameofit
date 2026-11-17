@@ -487,7 +487,7 @@ def test_not_now_from_the_reader_is_put_off(reader: Reader):
 
     # Put off until the wait the reader stated is over. It is a put-off lead, not a
     # deferred one: the ledger holds an entry, with no attempt and no read outcome.
-    assert (report.processed, report.later, report.stopped) == (0, 1, None)
+    assert (report.processed, report.later, report.stopped) == (1, 1, None)
     assert put_off(reader, lead) == (WorkOutcome.LATER, 0, None, None)
     assert reason_of(reader, lead) == (
         "reader_not_now",

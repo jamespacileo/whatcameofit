@@ -210,7 +210,13 @@ def test_leads_of_an_outlet_added_to_the_list_are_screened_again_and_no_others(
     assert stale == {added.id, second.id}
     assert count(session, step, 3, now=NOW).due == 2
 
-    screen(session, step)
+    for remaining in (1, 0):
+        step = LinkScreen()
+        step.check_ready(session)
+        report = run_step(
+            same_session(session), step, Client(), now=lambda: NOW, attempt_limit=3, limit=1
+        )
+        assert (report.done, report.remaining_due) == (1, remaining)
 
     assert added.screen_outcome is ScreenOutcome.IN_SCOPE
     assert second.outlet_kind is OutletKind.TRADE_PRESS

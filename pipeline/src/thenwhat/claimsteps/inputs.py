@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, SourceArticle, WorkEntry
 from thenwhat.domain import TRIAL_EVENT_TYPES, EntityType, ReviewState
+from thenwhat.resolve.papers import PAPER_SOURCE
 from thenwhat.work.ledger import fingerprint
 
 CLAIM = "claim"
@@ -60,19 +61,6 @@ class Inputs:
         }
 
     @cached_property
-    def paper_dois(self) -> dict[int, list[str]]:
-        rows = self._session.execute(
-            select(Entity.claim_id, Entity.id, Entity.doi).where(
-                Entity.claim_id.in_(self._ids),
-                Entity.type == EntityType.PAPER,
-                Entity.doi.is_not(None),
-            )
-        )
-        return _grouped(
-            (claim_id, f"{entity_id}:{doi.lower()}") for claim_id, entity_id, doi in rows if doi
-        )
-
-    @cached_property
     def approved(self) -> dict[int, list[str]]:
         """Each claim's approved matches, as source and identifier."""
         rows = self._session.execute(
@@ -84,16 +72,65 @@ class Inputs:
 
     @cached_property
     def trial_events(self) -> dict[int, list[str]]:
-        """Each claim's approved trial events: the stored registry records its trial
-        readings are read from."""
-        rows = self._session.execute(
-            select(EvidenceEvent.claim_id, EvidenceEvent.id).where(
+        """The primary outcomes of the newest approved registry record per trial,
+        selected in the same order as newest_registry_record."""
+        protocol = EvidenceEvent.raw_payload["protocolSection"]
+        ranked = (
+            select(
+                EvidenceEvent.claim_id,
+                EvidenceEvent.external_id,
+                protocol["outcomesModule"]["primaryOutcomes"].label("outcomes"),
+                func.row_number()
+                .over(
+                    partition_by=(EvidenceEvent.claim_id, EvidenceEvent.external_id),
+                    order_by=(EvidenceEvent.fetched_at.desc(), EvidenceEvent.id.desc()),
+                )
+                .label("rank"),
+            )
+            .where(
                 EvidenceEvent.claim_id.in_(self._ids),
                 EvidenceEvent.review_state == ReviewState.APPROVED,
                 EvidenceEvent.type.in_(TRIAL_EVENT_TYPES),
+                func.jsonb_typeof(protocol) == "object",
+            )
+            .subquery()
+        )
+        rows = self._session.execute(
+            select(ranked.c.claim_id, ranked.c.external_id, ranked.c.outcomes).where(
+                ranked.c.rank == 1
             )
         )
-        return _grouped((row.claim_id, str(row.id)) for row in rows)
+        return _grouped(
+            (row.claim_id, fingerprint({"trial": row.external_id, "outcomes": row.outcomes}))
+            for row in rows
+        )
+
+    @cached_property
+    def paper_entities(self) -> dict[int, list[str]]:
+        """Paper DOIs the claim names and sends to Crossref."""
+        rows = self._session.execute(
+            select(Entity.claim_id, Entity.doi).where(
+                Entity.claim_id.in_(self._ids),
+                Entity.type == EntityType.PAPER,
+                Entity.doi.is_not(None),
+            )
+        )
+        return _grouped((row.claim_id, row.doi) for row in rows)
+
+    @cached_property
+    def approved_papers(self) -> dict[int, list[str]]:
+        """Related papers whose registry numbers and eligibility for origin must be read."""
+        rows = self._session.execute(
+            select(Entity.claim_id, EntityMatch.external_id)
+            .join(EntityMatch, EntityMatch.entity_id == Entity.id)
+            .where(
+                Entity.claim_id.in_(self._ids),
+                Entity.type == EntityType.INTERVENTION,
+                EntityMatch.source_name == PAPER_SOURCE,
+                EntityMatch.review_state == ReviewState.APPROVED,
+            )
+        )
+        return _grouped((row.claim_id, row.external_id) for row in rows)
 
     @cached_property
     def unread(self) -> dict[int, list[str]]:

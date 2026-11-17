@@ -5,10 +5,12 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import httpx
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from thenwhat.db.models import HttpCache
 from thenwhat.sources.base import AllowanceUsedUp, MissingKey, Source, SourceRecord
+from thenwhat.work.pause import apart
 
 API = "https://api.openalex.org"
 # What is asked for of each work. The abstract is used to score a paper and to find its
@@ -287,10 +289,14 @@ class OpenAlex(Source):
 
     def _paused(self) -> str | None:
         """Why no search may be sent now, or None when one may."""
-        pause = self._session.get(HttpCache, PAUSE_KEY)
-        if pause is None or pause.expires_at <= self._time.now():
+        pause = self._session.scalar(
+            select(HttpCache.payload).where(
+                HttpCache.request_key == PAUSE_KEY, HttpCache.expires_at > self._time.now()
+            )
+        )
+        if pause is None:
             return None
-        return str(pause.payload.get("reason") or USED_UP)
+        return str(pause.get("reason") or USED_UP)
 
     def _pause(self, reason: str, reset_in_seconds: float | None) -> None:
         """Stop searches until the allowance resets: at the time the source gave, or at
@@ -307,14 +313,18 @@ class OpenAlex(Source):
             "fetched_at": now,
             "expires_at": until,
         }
-        self._session.execute(
-            insert(HttpCache)
-            .values(request_key=PAUSE_KEY, **kept)
-            .on_conflict_do_update(index_elements=[HttpCache.request_key], set_=kept)
-        )
-        held = self._session.get(HttpCache, PAUSE_KEY)
-        if held is not None:
-            self._session.refresh(held)
+        # The current claim may roll back as soon as the provider refuses it. Keep
+        # the stop independently, including when another worker already set a later one.
+        with apart(self._session) as own:
+            own.execute(
+                insert(HttpCache)
+                .values(request_key=PAUSE_KEY, **kept)
+                .on_conflict_do_update(
+                    index_elements=[HttpCache.request_key],
+                    set_=kept,
+                    where=HttpCache.expires_at < until,
+                )
+            )
         self.usage.stopped = reason
 
 

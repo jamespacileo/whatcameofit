@@ -11,6 +11,10 @@ An evidence event SHALL have a type, an event date, a source name, a source URL,
 - **WHEN** an event is created from a fetched trial record
 - **THEN** the event stores that record's payload, without the people it names, and its fetch time
 
+#### Scenario: A newer registry record corrects the underlying trial facts
+- **WHEN** a later fetch supports the same trial event and corrects its enrollment or planned outcomes
+- **THEN** the export uses the corrected facts, the event keeps its review decision, and changed primary outcomes make its trial reading due again
+
 #### Scenario: A record that names people
 - **WHEN** a fetched trial record names an official, a site's contact and a sponsor-investigator
 - **THEN** the stored payload names none of them, and the trial's facts read from it are the same as from the record as fetched

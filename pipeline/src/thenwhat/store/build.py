@@ -389,11 +389,7 @@ def base_of(path: Path, runs: list[tuple[str, list[Record]]]) -> str:
     """What a delta is applied on top of: the merged runs of the file, other than the
     delta's own, by checksum. A restore applies a delta only on a file that has the same."""
     names = {name for name, _ in runs}
-    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
-    try:
-        held = sorted(run for run in merged_runs(db) if run.rsplit("-", 1)[0] not in names)
-    finally:
-        db.close()
+    held = sorted(run for run in merged_runs_of(path) if run.rsplit("-", 1)[0] not in names)
     return hashlib.sha256("\n".join(held).encode()).hexdigest()
 
 
@@ -429,21 +425,20 @@ def read_delta(path: Path) -> tuple[str, list[tuple[str, list[Record]]]]:
     return head["base"], list(by_run.items())
 
 
+def parts_of(name: str, records: list[Record]) -> list[str]:
+    """The names a run is merged under (`merge_into`): none for a run with no records."""
+    return [f"{name}-{number}" for number in range((len(records) + RUN_RECORDS - 1) // RUN_RECORDS)]
+
+
 def apply_delta(path: Path, delta: Path, *, store_sql: Path, now: datetime) -> list[str]:
     """Replay a delta into a downloaded bulk file under its own run names: runs the file
     already holds are skipped, and a delta whose base is not the file's is refused, so a
-    delta applied out of order or twice changes nothing it should not. The runs merged."""
+    delta applied out of order or twice changes nothing it should not. A replay stopped
+    part way through a run of many parts is finished by applying the delta again. The runs
+    merged."""
     base, runs = read_delta(delta)
-    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
-    try:
-        held = merged_runs(db)
-    finally:
-        db.close()
-    if all(
-        f"{name}-{batch}" in held
-        for name, records in runs
-        for batch in range((len(records) + RUN_RECORDS - 1) // RUN_RECORDS)
-    ):
+    held = merged_runs_of(path)
+    if runs and all(part in held for name, records in runs for part in parts_of(name, records)):
         return []  # applied before
     if base_of(path, runs) != base:
         raise BuildFailed(
@@ -451,14 +446,6 @@ def apply_delta(path: Path, delta: Path, *, store_sql: Path, now: datetime) -> l
             " before it first, in order."
         )
     return merge_into(path, runs, store_sql=store_sql, now=now)[1]
-
-
-def state_digest(state: dict[str, str]) -> str:
-    """One checksum of a state: what the bulk file held before a day's merge."""
-    digest = hashlib.sha256()
-    for key in sorted(state):
-        digest.update(f"{key}={state[key]}\n".encode())
-    return digest.hexdigest()
 
 
 def merge_day(
@@ -474,7 +461,7 @@ def merge_day(
     """The daily job's merge into the bulk file: the records new or changed since `state`,
     as one run, written as the day's delta; `state` is brought up to date and saved.
 
-    The run is named by the state before and the records chosen, and written to
+    The run is named by the file's merged runs and the records chosen, and written to
     `<file>.pending.json` with its records before it is merged. A merge that finds a run
     pending settles it first: merged in the file already, its records are taken as merged;
     not, the same run is merged; either way it goes into this day's delta too, and the
@@ -493,30 +480,81 @@ def merge_day(
 
     pending = pending_path(file)
     belongs = {"build": build_id_of(file) or ""}
-    runs: list[tuple[str, list[Record]]] = []
-    added: Counter[str] = Counter()
     held = read_pending(pending)
     if held is not None:
-        name, settled, found = held
-        check_belongs(pending, found, belongs)
+        check_belongs(pending, held[2], belongs)
+    # The day's delta so far: this merge adds to it, never replaces it. Checked before the
+    # file is touched, so a delta that is not the file's is refused, not added to.
+    runs = _day_so_far(file, delta, held[:2] if held is not None else None)
+    added: Counter[str] = Counter()
+
+    def keep(name: str, records: list[Record]) -> None:
+        # Into the day's delta: a run already there is not written twice, and a run with
+        # nothing in it only while there is nothing else.
+        nonlocal runs
+        if (not records and runs) or any(have == name for have, _ in runs):
+            return
+        runs = [run for run in runs if run[1]]
+        runs.append((name, records))
+        write_delta(delta, runs, base=base_of(file, runs))
+
+    if held is not None:
+        name, settled, _ = held
         more, _ = merge_into(file, [(name, settled)], store_sql=store_sql, now=now)
         added.update(more)
-        runs.append((name, settled))
+        # In the delta before the pending file goes: else a stop between them loses it.
+        keep(name, settled)
         state.update(state_of(settled))
         save_state(state)
         clear_pending(pending)
     chosen = increment(records, state, actions=True)
     content = sorted(f"{k}={v}" for k, v in state_of(chosen.records).items())
-    name = run_name("bulk", state_digest(state), *content)
+    # The same edit can recur after a record returns to an earlier value. Its previous
+    # contents would give both edits the same name, but their merge histories differ.
+    name = run_name("bulk", base_of(file, []), *content)
     write_pending(pending, name, chosen.records, belongs)
     more, _ = merge_into(file, [(name, chosen.records)], store_sql=store_sql, now=now)
     added.update(more)
-    runs.append((name, chosen.records))
-    write_delta(delta, runs, base=base_of(file, runs))
+    keep(name, chosen.records)
     state.update(state_of(chosen.records))
     save_state(state)
     clear_pending(pending)
     return chosen, added
+
+
+def _day_so_far(
+    file: Path, delta: Path, pending: tuple[str, list[Record]] | None
+) -> list[tuple[str, list[Record]]]:
+    """The runs of the day's delta already written, if it is this file's: each of its runs
+    merged in the file, and the file holding nothing else since its base but the pending
+    run. Anything else is refused before the file is touched."""
+    if not delta.exists():
+        return []
+    base, runs = read_delta(delta)
+    held = merged_runs_of(file)
+    missing = [
+        part for name, records in runs for part in parts_of(name, records) if part not in held
+    ]
+    if missing:
+        raise BuildFailed(
+            f"{delta} holds runs {file.name} has not merged ({', '.join(missing)}): it is"
+            " another file's delta. Move it aside or merge into the file it was made from."
+        )
+    if base_of(file, runs + ([pending] if pending is not None else [])) != base:
+        raise BuildFailed(
+            f"{delta} was made on another state of {file.name}: it is another file's or"
+            " another day's delta. Move it aside before merging."
+        )
+    return runs
+
+
+def merged_runs_of(path: Path) -> set[str]:
+    """The runs a store file at `path` holds as merged."""
+    db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        return merged_runs(db)
+    finally:
+        db.close()
 
 
 def build_id_of(path: Path) -> str | None:
