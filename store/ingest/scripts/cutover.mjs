@@ -15,10 +15,12 @@
 //    0 privacy       no person is named in either file or either payload folder
 //    1 jurisdiction  the database and the bucket are read back and must be `eu`
 //    2 config        the remote configuration, with the database's id looked up by name
-//    3 migrations
-//    4 empty         the store must hold no row; with --replace a preview store is emptied
+//    3 bookmark      D1's Time Travel bookmark, written outside the repository, before
+//                    anything is changed: a migration that fails has a point to go back to
+//    4 migrations    refused when the database applied a migration under a name the files
+//                    no longer have in that place
+//    5 empty         the store must hold no row; with --replace a preview store is emptied
 //                    (or replaced, over 200,000 rows); production is never emptied here
-//    5 bookmark      D1's Time Travel bookmark, written outside the repository
 //    6 dump          the hot file as SQL, and that SQL replayed strictly on this machine
 //    7 import
 //    8 checksum      every hot table in D1 against the build's checks
@@ -140,7 +142,27 @@ const stages = [
     say(`${database}: eu; ${bucket}: found in eu`);
   }],
   ["config", "the remote configuration, id looked up by name", async () => { if (remote) await writeConfig(); else say("local engine: the committed configuration is used"); }],
-  ["migrations", "the schema and the service's tables", async () => { await must([wrangler, ["d1", "migrations", "apply", "STORE", ...d1Wrangler]]); }],
+  ["bookmark", "the Time Travel bookmark, kept outside the repository", async () => {
+    if (!remote) return skip("local engine: no Time Travel");
+    const text = await must([wrangler, ["d1", "time-travel", "info", database, "--json"]], "the bookmark could not be read", { quiet: true });
+    const folder = join(homedir(), "Library", "Application Support", "thenwhat", "store", "bookmarks");
+    mkdirSync(folder, { recursive: true });
+    const file = join(folder, `${env}-${stamp}.json`);
+    writeFileSync(file, text.slice(text.search(/[[{]/)));
+    result.bookmark_file = file;
+    say(`bookmark written to ${file}: restore with \`wrangler d1 time-travel restore ${database} --bookmark <it>\``);
+  }],
+  ["migrations", "the schema and the service's tables", async () => {
+    // What this database has applied must be the first of the files, in their order: a
+    // migration it applied under a name the files no longer have cannot be reconciled.
+    const files = readdirSync(here("../migrations")).filter((name) => name.endsWith(".sql")).sort();
+    const has = (await query("SELECT count(*) AS n FROM sqlite_master WHERE type = 'table' AND name = 'd1_migrations'"))[0].n;
+    const applied = has ? (await query("SELECT name FROM d1_migrations ORDER BY id")).map((row) => row.name) : [];
+    say(`applied ${applied.length} of ${files.length}: ${applied.join(", ") || "none"}`);
+    const strange = applied.findIndex((name, at) => files[at] !== name);
+    if (strange >= 0) throw new Failed(`${database} applied ${applied[strange]} as its migration ${strange + 1}, where the files have ${files[strange] ?? "nothing"}: the migrations were renumbered since. Replace this database:\n  ${replaceCommands.join("\n  ")}`);
+    await must([wrangler, ["d1", "migrations", "apply", "STORE", ...d1Wrangler]]);
+  }],
   ["empty", "the store holds no row", async () => {
     const tables = (await query("SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%' AND name NOT LIKE '%_fts%'")).map((row) => row.name);
     const [counted] = await query(`SELECT ${tables.map((table) => `(SELECT count(*) FROM "${table}")`).join(" + ")} AS rows`);
@@ -156,16 +178,6 @@ const stages = [
     const info = json(await must([wrangler, ["d1", "info", database, "--json"]], "the new database could not be read", { quiet: true }));
     if (info.jurisdiction !== "eu") throw new Failed("the new database does not read back as eu");
     await must([wrangler, ["d1", "migrations", "apply", "STORE", ...d1Wrangler]]);
-  }],
-  ["bookmark", "the Time Travel bookmark, kept outside the repository", async () => {
-    if (!remote) return skip("local engine: no Time Travel");
-    const text = await must([wrangler, ["d1", "time-travel", "info", database, "--json"]], "the bookmark could not be read", { quiet: true });
-    const folder = join(homedir(), "Library", "Application Support", "thenwhat", "store", "bookmarks");
-    mkdirSync(folder, { recursive: true });
-    const file = join(folder, `${env}-${stamp}.json`);
-    writeFileSync(file, text.slice(text.search(/[[{]/)));
-    result.bookmark_file = file;
-    say(`bookmark written to ${file}: restore with \`wrangler d1 time-travel restore ${database} --bookmark <it>\``);
   }],
   ["dump", "the hot file as SQL, replayed strictly here", async () => {
     await must(node("dump-for-import", hot, join(sql, "store.sql"), "--rows-a-file", value("--rows-a-file") || "60000"));

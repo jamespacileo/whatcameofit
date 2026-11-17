@@ -6,7 +6,7 @@ import { FIELDS_OF } from "./sql.generated.mjs";
 import { KINDS } from "./kinds.mjs";
 import { INLINE_PAYLOAD_BYTES, LONGER, MAX_RECORD_BYTES, MAX_STRING_CHARS } from "./limits.mjs";
 import { sha256 } from "./hash.mjs";
-import { peopleIn, peopleInText } from "./people.mjs";
+import { forbiddenIn, forbiddenInText } from "./people.mjs";
 
 export { ACTIONS, KINDS } from "./kinds.mjs";
 
@@ -31,6 +31,12 @@ const DECIDERS = ["reviewed_by", "decided_by", "labelled_by"];
 // it. A reader's lookup leaves only the day.
 const TIME = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}\.\d{6}\+00:00)?$/;
 const isTime = (field) => field === "at" || field.endsWith("_at");
+
+// A source's record is refused when it still names a person, or holds a paper's abstract.
+function held({ people, text }, bad) {
+  if (people.length) bad(422, "personal_data", "a source's record is handed over without the people it names", { field: "body", people });
+  if (text.length) bad(422, "article_text", "a paper's record is handed over without its abstract or text: the store keeps titles and links", { field: "body", text });
+}
 
 export class Refusal extends Error {
   constructor(status, code, message, detail) { super(message); this.status = status; this.code = code; this.detail = detail; }
@@ -89,8 +95,7 @@ export async function checkRecords(records, who) {
     if (kind === "action" && !who.actions.includes(body.action)) bad(403, "outside_scope", `a ${who.role} token may not state this action`, { field: "action" });
     if (kind === "source_record" && body.body != null) {
       // A source's own record kept beside a claim: the same holds for it.
-      const people = typeof body.body === "string" ? peopleInText(body.body) : peopleIn(body.body);
-      if (people.length) bad(422, "personal_data", "a registry record is handed over without the people it names", { field: "body", people });
+      held(typeof body.body === "string" ? forbiddenInText(body.body) : forbiddenIn(body.body), bad);
     }
     if (kind === "payload") {
       if (!/^[0-9a-f]{64}$/.test(body.sha256 || "")) bad(422, "bad_checksum", "a payload is named by its SHA-256 in lower-case hex", { field: "sha256" });
@@ -98,8 +103,7 @@ export async function checkRecords(records, who) {
         const raw = encoder.encode(body.body);
         if (raw.length > INLINE_PAYLOAD_BYTES) bad(413, "payload_too_large_for_a_row", `a payload over ${INLINE_PAYLOAD_BYTES} bytes is put to /payloads first`);
         if (raw.length !== body.bytes || (await sha256(raw)) !== body.sha256) bad(422, "checksum_mismatch", "the payload is not what its checksum and size say");
-        const people = peopleInText(body.body);
-        if (people.length) bad(422, "personal_data", "a registry record is handed over without the people it names", { field: "body", people });
+        held(forbiddenInText(body.body), bad);
       } else if (body.body == null && body.r2_key === `payload/${body.sha256}`) r2.push({ at, sha256: body.sha256, bytes: body.bytes });
       else bad(422, "bad_payload", "a payload carries its body, or the key payload/<sha256> of the object put first");
     }

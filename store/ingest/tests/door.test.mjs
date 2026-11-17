@@ -579,6 +579,41 @@ test("a registry record that names a person is refused, in a record and in the b
     assert.deepEqual([answer?.status, answer?.body.error, answer?.body.detail.people], [422, "personal_data", [field]], field);
     assert.ok(!answer.text.includes("A Person") && !answer.text.includes("person@example.org"), "the refusal does not repeat who");
   }
+  // Anything else of a responsible party than its type is taken for a person's.
+  const other = structuredClone(clean);
+  other.protocolSection.sponsorCollaboratorsModule.responsibleParty.oldOrganization = "A Person's practice";
+  assert.deepEqual(peopleIn(other), ["responsible party beyond its type"]);
+  // A record that is no whole study: a registry's person keys, an email or a phone anywhere, and a paper's abstract.
+  const { forbiddenIn, ABSTRACT_KEYS, REGISTRY_PERSON_KEYS, CONTACT_KEYS, PARTY_KEPT, PERSON_CLASSES, INVESTIGATOR_FIELDS } = await import("../src/people.mjs");
+  const paper = { pmid: "111", title: "A trial of a treatment", authorString: "Person A, Person B.", authorList: { author: [{ fullName: "Person A", affiliation: "A university" }] }, fullTextUrlList: { fullTextUrl: [{ url: "https://example.org/paper" }] } };
+  assert.deepEqual(forbiddenIn(paper), { people: [], text: [] }, "a paper's byline, title and links stay");
+  for (const key of ABSTRACT_KEYS) {
+    const withText = { ...paper, nested: [{ [key]: "Background: the publisher's own words." }] };
+    assert.deepEqual(forbiddenIn(withText), { people: [], text: [key] }, key);
+    const body = JSON.stringify(withText);
+    const answer = await stageOne("device-mini", "device", ["payload", sha(body), { sha256: sha(body), bytes: Buffer.byteLength(body), body }]);
+    assert.deepEqual([answer?.status, answer?.body.error, answer?.body.detail.text], [422, "article_text", [key]], key);
+    assert.ok(!answer.text.includes("publisher's own words"));
+  }
+  const record = (body) => ["source_record", "paper|europepmc|111", { kind: "paper", source_name: "europepmc", external_id: "111", body }];
+  assert.equal((await stageOne("device-mini", "device", record({ ...paper, abstractText: "Background." })))?.body.error, "article_text");
+  assert.equal((await stageOne("device-mini", "device", record({ ...paper, correspondence: { email: "person@example.org" } })))?.body.error, "personal_data");
+  assert.equal((await stageOne("device-mini", "device", record({ part: { overallOfficials: [{ name: "A Person" }] } })))?.body.detail.people[0], "overallOfficials");
+  const fine = await s.hand("paper-fine", [record(paper)]);
+  assert.equal(fine, null);
+  assert.equal((await s.drop("paper-fine")).status, 200);
+  // The same lists as the pipeline's, which removes what the door refuses: neither may drift.
+  const python = readFileSync(here("../../../pipeline/src/thenwhat/sources/people.py"), "utf8");
+  const listed = (name) => {
+    // A constant's own lines: the one it starts on, and on to the line that closes it.
+    const lines = python.split("\n"), from = lines.findIndex((line) => line.startsWith(`${name} = `));
+    assert.ok(from >= 0, `${name} is not in the pipeline's people.py`);
+    const open = (text) => (text.match(/[({]/g) || []).length - (text.match(/[)}]/g) || []).length;
+    let text = lines[from].replace(/#.*/, "");
+    for (let at = from + 1; open(text) > 0; at += 1) text += lines[at].replace(/#.*/, "");
+    return [...text.matchAll(/"([A-Za-z_]+)"/g)].map(([, key]) => key).sort();
+  };
+  for (const [name, mine] of Object.entries({ ABSTRACT_KEYS, REGISTRY_PERSON_KEYS, CONTACT_KEYS, PARTY_KEPT, PERSON_CLASSES, INVESTIGATOR_FIELDS })) assert.deepEqual([...mine].sort(), listed(name), name);
   // The same record without people goes through, and so does a payload that is no registry record.
   const text = JSON.stringify(clean);
   assert.equal(await stageOne("lookup", "lookup", ["payload", sha(text), { sha256: sha(text), bytes: Buffer.byteLength(text), body: text }]), null);

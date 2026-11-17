@@ -248,8 +248,12 @@ The ingest service SHALL refuse a record that has a field no statement reading t
 - **WHEN** a record's title holds several thousand characters
 - **THEN** the chunk is refused and nothing is staged
 
-### Requirement: No stored registry record names a person
-The ingest service SHALL refuse a ClinicalTrials.gov record that names a person, whether it arrives in a payload record, in a source record or as a payload object: its officials and contacts, a site's contacts, the investigator a responsible party is, a sponsor or collaborator who is a person, the results' point of contact, and any email or phone. The refusal SHALL say which kinds of field were found and SHALL NOT repeat a name or a means of contact. Nothing of a refused record SHALL be stored.
+### Requirement: No stored record names a person or holds a paper's text
+The ingest service SHALL refuse a source's record that names a person, whether it arrives in a payload record, in a source record or as a payload object: in a registry's study its officials and contacts, a site's contacts, anything of the responsible party but its type, a sponsor or collaborator who is a person, the results' point of contact, and any email or phone; in any other record a registry's person keys, an email or a phone wherever they are. It SHALL refuse a paper's record that holds its abstract or text. A paper's byline is not refused. The refusal SHALL say which kinds of field were found and SHALL NOT repeat what they held. Nothing of a refused record SHALL be stored. The service's lists of such fields SHALL be the pipeline's, held equal by a test.
+
+#### Scenario: A paper with its abstract
+- **WHEN** a paper's record is handed over with its abstract
+- **THEN** it is refused, naming the field, and nothing is stored
 
 #### Scenario: A lookup hands over a record as the registry gave it
 - **WHEN** a lookup's token stages or puts a trial's record that still holds its overall officials

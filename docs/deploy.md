@@ -238,9 +238,9 @@ A build's folder is what `thenwhat store build` leaves: `store.hot.sqlite`, `sto
 | 0 | privacy | `thenwhat store prove-no-people` on both files and both payload folders. If it fails or cannot be run, nothing is sent. |
 | 1 | jurisdiction | The database's jurisdiction is read back and must be `eu`; the bucket must be found in `eu`. |
 | 2 | config | The configuration for the environment, with the database's id looked up by name, in a git-ignored file. Production's is removed at the end. |
-| 3 | migrations | All of `store/ingest/migrations/`. |
-| 4 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. |
-| 5 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`. |
+| 3 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`, before anything is changed, so a migration that fails has a point to go back to. |
+| 4 | migrations | All of `store/ingest/migrations/`. Refused when the database applied a migration under a name the files no longer have in that place (they were renumbered on 17 November 2026): such a database is replaced. |
+| 5 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. |
 | 6 | dump | The hot file as SQL (`dump-for-import.mjs`), and that SQL replayed strictly on this machine (`check-dump.mjs`). |
 | 7 | import | The files, in order, counted against the manifest (`import-folder.mjs`). |
 | 8 | checksum | Every hot table in D1 against the build's checks (`checksum-d1.mjs --checks`). No row is fetched back. |
