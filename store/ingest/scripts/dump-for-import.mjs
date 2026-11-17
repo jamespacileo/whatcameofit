@@ -8,26 +8,36 @@
 //   - no BEGIN TRANSACTION or COMMIT in the file;
 //   - a statement is at most 100,000 bytes, so rows are grouped into INSERTs under 90,000;
 //   - a file is at most 5 GiB; `--rows-a-file` splits the output into out.0001.sql, ...
-// Beside the output it writes manifest.json, each table's rows, so put the output in a
-// folder of its own.
 // And what the schema needs: a generated column is never written, so every INSERT names
 // its columns; the search tables are filled by the schema's triggers as the rows arrive,
 // so they and their shadow tables are left out; so are staged records and the tables
 // Wrangler and D1 keep for themselves.
-import { createWriteStream, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+//
+// A row too long for one statement is written in parts: an INSERT that holds the start
+// of each long value, then UPDATEs that append the rest, found by the row's primary key
+// (`content = CAST(content || X'..' AS BLOB)`, and without the cast for a text). Before such a row is written, its statements are run
+// on a scratch copy of the table and the row read back, so a CHECK that a part of a
+// value would break stops the dump here and not the load.
+//
+// Beside the output it writes manifest.json: each table's rows (rows, not statements) and
+// the files. Put the output in a folder of its own. Files are written under a name ending
+// `.partial` and named `.sql` only when the whole dump is done, with the manifest; a dump
+// that fails removes what it wrote, so a folder never looks complete when it is not.
+import { createHash } from "node:crypto";
 import { once } from "node:events";
+import { createReadStream, createWriteStream, existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { basename, dirname, join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 const [source, out] = process.argv.slice(2);
 const flag = process.argv.indexOf("--rows-a-file");
 const rowsAFile = flag > 0 ? Number(process.argv[flag + 1]) : Infinity;
-if (!source || !out) { console.error("usage: dump-for-import.mjs <store.sqlite> <out.sql> [--rows-a-file N]"); process.exit(2); }
+if (!source || !out || out.startsWith("--")) { console.error("usage: dump-for-import.mjs <store.sqlite> <out.sql> [--rows-a-file N]"); process.exit(2); }
 
 const MAX_STATEMENT_BYTES = 90_000;
 const LEFT_OUT = /^(sqlite_|_cf_|d1_migrations$|stg$|merging$|ingest_chunk$)/;
-const db = new DatabaseSync(source, { readOnly: true });
 const quote = (name) => `"${name.replaceAll('"', '""')}"`;
+const size = (text) => Buffer.byteLength(text);
 
 function literal(value) {
   if (value === null) return "NULL";
@@ -36,51 +46,160 @@ function literal(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-const virtual = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'").all().map((row) => row.name);
-const tables = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY rowid").all().map((row) => row.name)
-  .filter((name) => !LEFT_OUT.test(name) && !virtual.some((v) => name === v || name.startsWith(`${v}_`)));
-
-let file = 0, inFile = 0, stream = null, total = 0, statements = 0, longest = 0;
-const path = () => (rowsAFile === Infinity ? out : out.replace(/(\.sql)?$/, `.${String(file).padStart(4, "0")}.sql`));
-async function open() {
-  if (stream) { stream.end(); await once(stream, "finish"); }
-  file += 1; inFile = 0;
-  stream = createWriteStream(path());
-  // Parents are written before children, but a row may point at a later row of its own table.
-  stream.write("PRAGMA defer_foreign_keys = true;\n");
-}
-async function write(text) { if (!stream.write(text)) await once(stream, "drain"); }
-
-await open();
-const counts = {};
-for (const table of tables) {
-  // hidden 2 and 3 are generated columns.
-  const columns = db.prepare(`PRAGMA table_xinfo(${quote(table)})`).all().filter((column) => column.hidden === 0).map((column) => column.name);
-  const head = `INSERT INTO ${quote(table)} (${columns.map(quote).join(", ")}) VALUES\n`;
-  let rows = [], bytes = head.length;
-  const flush = async () => {
-    if (!rows.length) return;
-    const text = `${head}${rows.join(",\n")};\n`;
-    longest = Math.max(longest, Buffer.byteLength(text));
-    await write(text);
-    statements += 1; rows = []; bytes = head.length;
-  };
-  counts[table] = 0;
-  const all = db.prepare(`SELECT ${columns.map(quote).join(", ")} FROM ${quote(table)}`);
-  all.setReadBigInts(true);
-  for (const row of all.iterate()) {
-    const text = `(${columns.map((column) => literal(row[column])).join(", ")})`;
-    const size = Buffer.byteLength(text) + 2;
-    if (size + head.length > 100_000) throw new Error(`a row of ${table} is ${size} bytes: over D1's 100,000 bytes a statement`);
-    if (bytes + size > MAX_STATEMENT_BYTES) await flush();
-    if (inFile >= rowsAFile) { await flush(); await open(); }
-    rows.push(text); bytes += size; inFile += 1; total += 1; counts[table] += 1;
+// A long value cut into pieces whose literals are each at most `first`, then `rest`,
+// bytes. A text is cut between characters, never inside one.
+function pieces(value, first, rest) {
+  const parts = [];
+  if (value instanceof Uint8Array) {
+    for (let at = 0, room = first; at < value.length; room = rest) {
+      const take = Math.max(1, Math.floor((room - 3) / 2));
+      parts.push(value.subarray(at, at + take));
+      at += take;
+    }
+    return parts;
   }
-  await flush();
+  let part = "", bytes = 2, room = first;
+  for (const character of value) {
+    const cost = character === "'" ? 2 : size(character);
+    if (part && bytes + cost > room) { parts.push(part); part = ""; bytes = 2; room = rest; }
+    part += character; bytes += cost;
+  }
+  if (part) parts.push(part);
+  return parts;
 }
-stream.end();
-await once(stream, "finish");
-// What each table should hold after the load, for scripts/import-folder.mjs to count.
-const held = Object.fromEntries(Object.entries(counts).filter(([, n]) => n));
-writeFileSync(join(dirname(out), "manifest.json"), JSON.stringify({ rows: total, statements, tables: held }, null, 1) + "\n");
-console.log(JSON.stringify({ files: file, rows: total, statements, longest_statement_bytes: longest, tables: Object.fromEntries(Object.entries(counts).filter(([, n]) => n)) }));
+
+const base = basename(out).replace(/\.sql$/, "");
+const folder = dirname(out);
+const ours = (name) => name === "manifest.json" || ((name.startsWith(`${base}.`) || name === base) && /\.sql(\.partial)?$/.test(name));
+const clear = () => { for (const name of existsSync(folder) ? readdirSync(folder) : []) if (ours(name)) rmSync(join(folder, name), { force: true }); };
+
+async function dump() {
+  const db = new DatabaseSync(source, { readOnly: true });
+  const virtual = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND sql LIKE 'CREATE VIRTUAL TABLE%'").all().map((row) => row.name);
+  const tables = db.prepare("SELECT name, sql FROM sqlite_master WHERE type = 'table' ORDER BY rowid").all()
+    .filter(({ name }) => !LEFT_OUT.test(name) && !virtual.some((v) => name === v || name.startsWith(`${v}_`)));
+
+  const written = [];
+  let file = 0, inFile = 0, stream = null, total = 0, statements = 0, longest = 0, inParts = 0;
+  const name = () => (rowsAFile === Infinity ? `${base}.sql` : `${base}.${String(file).padStart(4, "0")}.sql`);
+  const close = async () => { if (stream) { stream.end(); await once(stream, "finish"); stream = null; } };
+  async function open() {
+    await close();
+    file += 1; inFile = 0;
+    written.push(name());
+    stream = createWriteStream(join(folder, `${name()}.partial`));
+    // Parents are written before children, but a row may point at a later row of its own table.
+    stream.write("PRAGMA defer_foreign_keys = true;\n");
+  }
+  async function write(text) {
+    const bytes = size(text);
+    if (bytes > 100_000) throw new Error(`a statement of ${bytes} bytes was about to be written: over D1's 100,000`);
+    longest = Math.max(longest, bytes); statements += 1;
+    if (!stream.write(text)) await once(stream, "drain");
+  }
+
+  await open();
+  const counts = {};
+  for (const { name: table, sql: created } of tables) {
+    // hidden 2 and 3 are generated columns.
+    const info = db.prepare(`PRAGMA table_xinfo(${quote(table)})`).all().filter((column) => column.hidden === 0);
+    const columns = info.map((column) => column.name);
+    const keys = info.filter((column) => column.pk > 0).map((column) => column.name);
+    const insert = `INSERT INTO ${quote(table)} (${columns.map(quote).join(", ")}) VALUES\n`;
+    const head = size(insert);
+
+    // The statements for one row that does not fit: an INSERT, then appends by primary key.
+    function inPartsOf(row) {
+      if (!keys.length) throw new Error(`a row of ${table} is too long for one statement and the table has no primary key to find it by`);
+      const where = ` WHERE ${keys.map((key) => `${quote(key)} = ${literal(row[key])}`).join(" AND ")};\n`;
+      const long = (column) => !keys.includes(column) && (typeof row[column] === "string" || row[column] instanceof Uint8Array);
+      const cost = Object.fromEntries(columns.map((column) => [column, size(literal(row[column]))]));
+      // The longest values are cut until the rest of the row fits beside their starts.
+      const cut = [];
+      const fixed = () => head + 4 + columns.reduce((sum, column) => sum + 2 + (cut.includes(column) ? 0 : cost[column]), 0);
+      for (const column of columns.filter(long).sort((a, b) => cost[b] - cost[a])) {
+        if (fixed() + cut.length * 200 <= MAX_STATEMENT_BYTES && cut.length) break;
+        cut.push(column);
+      }
+      const share = Math.floor((MAX_STATEMENT_BYTES - fixed()) / Math.max(cut.length, 1));
+      if (!cut.length || share < 16) throw new Error(`a row of ${table} is too long for one statement even with its long values cut`);
+      const parts = Object.fromEntries(cut.map((column) => {
+        const append = size(`UPDATE ${quote(table)} SET ${quote(column)} = CAST(${quote(column)} ||  AS BLOB)`) + size(where);
+        return [column, pieces(row[column], share, MAX_STATEMENT_BYTES - append)];
+      }));
+      const out = [`${insert}(${columns.map((column) => literal(cut.includes(column) ? parts[column][0] : row[column])).join(", ")});\n`];
+      for (const column of cut) {
+        // `||` gives a text even of two BLOBs, which a STRICT table refuses in a BLOB
+        // column, so a BLOB's append is cast back; the bytes are the same.
+        const blob = row[column] instanceof Uint8Array;
+        for (const part of parts[column].slice(1)) {
+          out.push(`UPDATE ${quote(table)} SET ${quote(column)} = ${blob ? "CAST(" : ""}${quote(column)} || ${literal(part)}${blob ? " AS BLOB)" : ""}${where}`);
+        }
+      }
+      // Tried on a scratch copy of the table: every step must pass its CHECKs, and the
+      // row at the end must be the row that was read.
+      const scratch = new DatabaseSync(":memory:");
+      try {
+        scratch.exec("PRAGMA foreign_keys = OFF");
+        scratch.exec(created);
+        for (const statement of out) scratch.exec(statement);
+        const select = `SELECT ${columns.map((column) => `hex(${quote(column)}) AS ${quote(column)}, typeof(${quote(column)}) AS ${quote(`type of ${column}`)}`).join(", ")} FROM ${quote(table)}`;
+        const got = scratch.prepare(select).get();
+        const want = db.prepare(`${select} WHERE ${keys.map((key) => `${quote(key)} IS ?`).join(" AND ")}`).get(...keys.map((key) => row[key]));
+        if (JSON.stringify(got) !== JSON.stringify(want)) throw new Error("written in parts, the row does not come back as it was");
+      } catch (error) {
+        throw new Error(`a row of ${table} is too long for one statement and cannot be written in parts: ${error.message}`);
+      } finally { scratch.close(); }
+      return out;
+    }
+
+    let rows = [], bytes = head;
+    const flush = async () => {
+      if (!rows.length) return;
+      await write(`${insert}${rows.join(",\n")};\n`);
+      rows = []; bytes = head;
+    };
+    counts[table] = 0;
+    const all = db.prepare(`SELECT ${columns.map(quote).join(", ")} FROM ${quote(table)}`);
+    all.setReadBigInts(true);
+    for (const row of all.iterate()) {
+      if (inFile >= rowsAFile) { await flush(); await open(); }
+      const text = `(${columns.map((column) => literal(row[column])).join(", ")})`;
+      const length = size(text) + 2;
+      if (head + length > MAX_STATEMENT_BYTES) {
+        await flush();
+        for (const statement of inPartsOf(row)) await write(statement);
+        inParts += 1;
+      } else {
+        if (bytes + length > MAX_STATEMENT_BYTES) await flush();
+        rows.push(text); bytes += length;
+      }
+      inFile += 1; total += 1; counts[table] += 1;
+    }
+    await flush();
+  }
+  await close();
+  db.close();
+
+  // Only now is the folder made to look like a dump: the files take their names and the
+  // manifest is written last.
+  const held = Object.fromEntries(Object.entries(counts).filter(([, n]) => n));
+  const files = [];
+  for (const name of written) {
+    const hash = createHash("sha256");
+    for await (const chunk of createReadStream(join(folder, `${name}.partial`))) hash.update(chunk);
+    files.push({ name, sha256: hash.digest("hex") });
+  }
+  for (const name of written) renameSync(join(folder, `${name}.partial`), join(folder, name));
+  writeFileSync(join(folder, "manifest.json"), JSON.stringify({ rows: total, statements, rows_written_in_parts: inParts, tables: held, files }, null, 1) + "\n");
+  console.log(JSON.stringify({ files: file, rows: total, statements, rows_written_in_parts: inParts, longest_statement_bytes: longest, tables: held }));
+}
+
+// What an earlier dump left under this name goes first, so old files never mix with new.
+mkdirSync(folder, { recursive: true });
+clear();
+try { await dump(); } catch (error) {
+  clear();
+  console.error(`the dump failed and left no file: ${error.message}`);
+  process.exit(1);
+}

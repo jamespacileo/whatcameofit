@@ -20,6 +20,17 @@ const to = target(process.argv);
 const named = process.argv.includes("--manifest") ? process.argv[process.argv.indexOf("--manifest") + 1] : join(folder, "manifest.json");
 const files = readdirSync(folder).filter((name) => name.endsWith(".sql")).sort();
 if (!files.length) { console.error(`no .sql file in ${folder}`); process.exit(2); }
+// A folder is loaded only when its dump finished: the manifest is written last, and a file
+// still named `.partial`, or a file the manifest does not list, means it did not.
+if (!existsSync(named)) { console.error(`no manifest at ${named}: the dump did not finish, or is not here; nothing was loaded`); process.exit(1); }
+const manifest = JSON.parse(readFileSync(named, "utf8"));
+const listed = (manifest.files || []).map((file) => file.name ?? file.file ?? file.path).filter(Boolean);
+const unfinished = readdirSync(folder).filter((name) => name.endsWith(".partial"));
+const strangers = listed.length ? [...files.filter((name) => !listed.includes(name)), ...listed.filter((name) => !files.includes(name))] : [];
+if (unfinished.length || strangers.length) {
+  console.error(`the folder is not the dump its manifest describes (${[...unfinished, ...strangers].slice(0, 5).join(", ")}); nothing was loaded`);
+  process.exit(1);
+}
 console.log(`${files.length} file(s) into the ${to.remote ? "preview database" : "local engine"}`);
 
 let written = 0, seconds = 0;
@@ -36,8 +47,7 @@ for (const name of files) {
 }
 console.log(`loaded in ${seconds.toFixed(1)} s, rows_written ${written || "not said"}`);
 
-if (!existsSync(named)) { console.error(`no manifest at ${named}: the counts were not checked`); process.exit(1); }
-const { tables } = JSON.parse(readFileSync(named, "utf8"));
+const { tables } = manifest;
 const names = Object.keys(tables).filter((name) => /^[A-Za-z0-9_]+$/.test(name));
 const [{ results: [have] }] = await execute(to, "--command", `SELECT ${names.map((name) => `(SELECT count(*) FROM "${name}") AS "${name}"`).join(", ")}`);
 const differ = names.filter((name) => have[name] !== tables[name]);

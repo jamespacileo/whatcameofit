@@ -223,6 +223,8 @@ The first load of the tracker does not go through the merge. The whole store is 
 
 What the SQL must be, from Cloudflare's import documentation read on 17 November 2026 (`docs/sources.md`): no `BEGIN TRANSACTION` or `COMMIT`; each statement at most 100,000 bytes; a file at most 5 GiB. And from the schema: every `INSERT` names its columns, because a generated column (`review_rank`) cannot be written; the search tables are filled by the schema's triggers and are not in the dump; parents come before children, with `PRAGMA defer_foreign_keys = true` at the head of each file.
 
+A row too long for one statement (an outlet's icon of 93,062 bytes is 186 KB as hex) is written in parts: an `INSERT` with the start of the long value, then `UPDATE`s that append the rest by primary key, a BLOB's cast back to BLOB. The dumper tries each such row on a scratch copy of its table first. The manifest counts rows, not statements. A dump that fails removes its files; `import-folder.mjs` loads nothing from a folder with no manifest, a `.partial` file, or files the manifest does not list.
+
 **Tried on the preview on 17 November 2026**, with a made-up store of 49,999 records (`scripts/sample-store.mjs`): 66,687 table rows in 176 statements, 14.9 MB of SQL, loaded in 2.8 s (6 s with Wrangler's own start). D1 reported 135,572 changes and 250,037 rows written, and the database was 19.0 MB afterwards. Nothing failed.
 
 - **D1 bills about 3.75 rows written for each table row** of this sample, because indexes and the search tables are written too. A load of 2 million table rows is then about 7.5 million rows written.
