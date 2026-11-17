@@ -30,6 +30,7 @@ from thenwhat.domain import WorkOutcome
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.europepmc import MAX_TRIALS_OF_ONE_PAPER
 from thenwhat.sources.pubmed import REGISTRY_NUMBER, Paper, PubMed
+from thenwhat.work.outcome import NothingFound, Reason, ReasonClass
 
 
 class PaperIndex(Protocol):
@@ -39,8 +40,13 @@ class PaperIndex(Protocol):
     def papers_carrying(self, numbers: Sequence[str]) -> tuple[list[Paper], datetime]: ...
 
 
+# The index was asked and holds no paper that names the trial's registry number.
+NO_PAPERS = Reason("no_papers", ReasonClass.FINAL, "the paper index holds no paper for it")
+
+
 class TrialPapers:
     name = "pubmed_papers"
+    reasons = (NO_PAPERS,)
     version = 1
     record_kind = "registry_trial"
     model = RegistryTrial
@@ -88,12 +94,14 @@ class TrialPapers:
     def inputs(self, record: RegistryTrial) -> dict[str, Any]:
         return {"number": record.external_id}
 
-    def run(self, session: Session, record: RegistryTrial, client: PaperIndex) -> WorkOutcome:
+    def run(
+        self, session: Session, record: RegistryTrial, client: PaperIndex
+    ) -> WorkOutcome | NothingFound:
         return self.run_many(session, [record], client)[0]
 
     def run_many(
         self, session: Session, records: Sequence[RegistryTrial], client: PaperIndex
-    ) -> list[WorkOutcome]:
+    ) -> list[WorkOutcome | NothingFound]:
         asked = {
             record.external_id.upper(): record
             for record in records
@@ -123,7 +131,7 @@ class TrialPapers:
                     )
                 )
         return [
-            WorkOutcome.DONE if record.id in found else WorkOutcome.NOTHING_FOUND
+            WorkOutcome.DONE if record.id in found else NothingFound(NO_PAPERS)
             for record in records
         ]
 

@@ -686,12 +686,16 @@ def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_non
     run, session: Session
 ):
     """Scenarios: Asking an outlet again, An outlet with nothing to retry"""
-    from thenwhat.backfill.link_read import NO_PAGE, OUTLET_REFUSES
+    from thenwhat.backfill import link_reasons as why
+    from thenwhat.backfill.link_read import LinkRead
     from thenwhat.domain import ReadOutcome, WorkOutcome
 
-    for number, detail in enumerate(
-        [f"{NO_PAGE} (the site answered 401)", f"{OUTLET_REFUSES} for 5 pages and served none"]
+    refused = {"outlet": "news.example.org", "status": 401}
+    unasked = {"outlet": "news.example.org", "pages": 5}
+    for number, (reason, values) in enumerate(
+        [(why.SITE_REFUSED, refused), (why.OUTLET_REFUSES, unasked)]
     ):
+        detail = reason.say(values)
         lead = LinkLead(
             url=f"https://news.example.org/refused-{number}",
             url_key=f"news.example.org/refused-{number}",
@@ -709,12 +713,14 @@ def test_retry_outlet_puts_its_refused_leads_back_and_refuses_an_outlet_with_non
                 record_kind="link_lead",
                 record_id=lead.id,
                 step="link_read",
-                step_version=1,
-                outcome=WorkOutcome.NOTHING_FOUND,
-                attempts=1,
+                step_version=LinkRead.version,
+                outcome=WorkOutcome.NEEDS_FIX,
+                attempts=0,
                 requests_used=1,
                 fingerprint="earlier",
                 last_attempt_at=NOW,
+                reason=reason.code,
+                reason_values=values,
             )
         )
     session.flush()

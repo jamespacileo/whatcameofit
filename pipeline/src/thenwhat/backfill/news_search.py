@@ -14,6 +14,7 @@ from thenwhat.backfill.outlet_kinds import kind_of
 from thenwhat.db.models import ArticleLead, RegistryTrial
 from thenwhat.domain import WorkOutcome
 from thenwhat.sources.base import SystemTime, Time
+from thenwhat.work.outcome import NothingFound, Reason, ReasonClass
 
 
 class NewsIndex(Protocol):
@@ -30,8 +31,13 @@ def query_for(name: str, indication: str) -> str:
     return f'"{phrase}" AND ({words})'
 
 
+# The index was asked and holds no story that names the trial's intervention.
+NO_STORIES = Reason("no_stories", ReasonClass.FINAL, "the news index holds no story for it")
+
+
 class NewsSearch:
     name = "news_search"
+    reasons = (NO_STORIES,)
     version = 1
     record_kind = "registry_trial"
     model = RegistryTrial
@@ -50,7 +56,9 @@ class NewsSearch:
     def inputs(self, record: RegistryTrial) -> dict[str, Any]:
         return {"name": record.search_name, "indication": record.search_indication}
 
-    def run(self, session: Session, record: RegistryTrial, client: NewsIndex) -> WorkOutcome:
+    def run(
+        self, session: Session, record: RegistryTrial, client: NewsIndex
+    ) -> WorkOutcome | NothingFound:
         assert record.search_name and record.search_indication  # the scope guarantees both
         query = query_for(record.search_name, record.search_indication)
         stories = client.search(query, limit=self.leads_per_trial)
@@ -73,4 +81,4 @@ class NewsSearch:
                 )
                 .on_conflict_do_nothing(constraint="uq_article_lead_trial_url")
             )
-        return WorkOutcome.DONE if stories else WorkOutcome.NOTHING_FOUND
+        return WorkOutcome.DONE if stories else NothingFound(NO_STORIES)

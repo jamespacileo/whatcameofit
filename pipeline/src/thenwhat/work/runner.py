@@ -87,7 +87,7 @@ def process_next(
     )
     if still_due is None:
         return record.id, None, None
-    return _process_record(session, step, record, client, now, put_off_span)
+    return _process_record(session, step, record, client, now, put_off_span, skip)
 
 
 # How a measurement names a record that may not be worked on now.
@@ -140,9 +140,18 @@ def _record(
     requests_used: int,
     now: datetime,
     put_off_span: timedelta,
+    skip: set[int],
 ) -> WorkOutcome:
     """Write the record's entry, and give the outcome it holds: a record put off for too
-    long is recorded as needing a fix."""
+    long is recorded as needing a fix.
+
+    A record put off until a time that has already come is kept out of the rest of this
+    run and is due for the next: a step that keeps answering so would otherwise be asked
+    for the same record without end."""
+    not_before = settled.not_before
+    if settled.outcome is WorkOutcome.LATER and (not_before is None or not_before <= now):
+        not_before = now + timedelta(seconds=1)
+        skip.add(record.id)
     return record_outcome(
         session,
         step,
@@ -153,7 +162,7 @@ def _record(
         error=settled.error,
         reason=settled.reason,
         reason_values=settled.values,
-        not_before=settled.not_before,
+        not_before=not_before,
         put_off_span=put_off_span,
     ).outcome
 
@@ -165,6 +174,7 @@ def _process_record(
     client: CountingClient,
     now: datetime,
     put_off_span: timedelta = PUT_OFF_SPAN,
+    skip: set[int] | None = None,
 ) -> Processed:
     """Run the step for one record whose row is held, and write its entry. A failure
     undoes what the step wrote for it and is recorded in the entry."""
@@ -194,6 +204,7 @@ def _process_record(
         requests_used=client.requests_made - before,
         now=now,
         put_off_span=put_off_span,
+        skip=skip if skip is not None else set(),
     )
     return record.id, outcome, settled.error
 
@@ -251,7 +262,8 @@ def process_batch(
         raise
     except Exception:  # the call failed as a whole: find the record that fails alone
         processed.extend(
-            _process_record(session, step, record, client, now, put_off_span) for record in held
+            _process_record(session, step, record, client, now, put_off_span, skip)
+            for record in held
         )
         return processed
     used = client.requests_made - before
@@ -265,6 +277,7 @@ def process_batch(
             requests_used=used if place == 0 else 0,
             now=now,
             put_off_span=put_off_span,
+            skip=skip,
         )
         processed.append((record.id, outcome, settled.error))
     return processed

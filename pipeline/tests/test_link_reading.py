@@ -85,6 +85,7 @@ from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.review.decisions import record_decision
 from thenwhat.statements.service import StatementChecker
 from thenwhat.work.allowance import Allowances
+from thenwhat.work.ledger import count
 from thenwhat.work.runner import RunReport, run_step
 
 NOW = datetime(2026, 11, 20, 10, 0, tzinfo=UTC)
@@ -246,12 +247,15 @@ class Reader:
             self.web.pages[f"{split.host}{split.path}"] = serves or page()
         return record
 
-    def read(self, limit: int | None = None) -> RunReport:
+    def read(self, limit: int | None = None, *, by_the_step_clock: bool = False) -> RunReport:
+        """One run. It is given a fixed time, unless `by_the_step_clock`: then the run's
+        time is the test's, which the step's waits are counted from, so that a lead put
+        off comes back when the test moves time on."""
         return run_step(
             same_session(self.session),
             self.step,
             self.client,
-            now=lambda: NOW,
+            now=self.time.now if by_the_step_clock else (lambda: NOW),
             attempt_limit=3,
             limit=limit,
         )
@@ -433,31 +437,53 @@ def test_a_lead_the_reader_does_not_allow_cannot_be_read_and_is_not_retried(read
     assert (reader.web.asked, reader.prompts) == ([], [])
 
 
-def test_a_lead_whose_site_cannot_be_asked_now_stays_due_and_the_run_goes_on(reader: Reader):
+def test_a_lead_whose_site_cannot_be_asked_now_is_put_off_and_the_run_goes_on(reader: Reader):
     """Scenario: Not now"""
     busy = reader.lead()
     other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
     reader.page_reader.not_now["www.theguardian.com"] = 600
+    began = reader.time.now()
 
-    report = reader.read()
+    report = reader.read(by_the_step_clock=True)
 
-    # No outcome and no attempt for the busy site's lead; the other outlet's is read.
-    assert (busy.read_outcome, report.deferred) == (None, 1)
-    assert (
-        reader.session.scalars(
-            select(WorkEntry).where(WorkEntry.step == "link_read", WorkEntry.record_id == busy.id)
-        ).all()
-        == []
+    # Put off until the wait the reader stated is over: no outcome on the lead, no
+    # attempt, the reason a code. The other outlet's lead is read.
+    assert (report.later, report.deferred, report.needs_fix) == (1, 0, 0)
+    assert (busy.read_outcome, busy.read_detail) == (None, None)
+    entry = reader.entry(busy)
+    assert (entry.outcome, entry.attempts, entry.reason) == (
+        WorkOutcome.LATER,
+        0,
+        "reader_not_now",
     )
+    assert entry.reason_values is not None and entry.reason_values["outlet"] == "theguardian.com"
+    assert entry.not_before == began + timedelta(seconds=600)
     assert other.read_outcome is ReadOutcome.NEW_CLAIM
-    assert report.remaining_due == 1
+    assert (report.remaining_due, count(reader.session, reader.step, 3, now=began).due) == (0, 0)
 
-    # A later run, once the wait the reader stated is over and the site answers, reads it.
+    # Not due while the wait lasts; due once it is over, and then, the site answering,
+    # read.
+    assert entry.not_before is not None
+    reader.time.advance(entry.not_before - timedelta(seconds=1) - reader.time.now())
+    assert count(reader.session, reader.step, 3, now=reader.time.now()).due == 0
     reader.page_reader.not_now.clear()
-    reader.time.advance(timedelta(seconds=601))
-    reader.read()
+    reader.time.advance(timedelta(seconds=1))
+    assert count(reader.session, reader.step, 3, now=reader.time.now()).due == 1
+    reader.read(by_the_step_clock=True)
 
+    # Read now: the other lead's claim has the same names, so it is left unresolved.
     assert busy.read_outcome is not None
+    entry = reader.entry(busy)
+    assert (entry.outcome, entry.attempts, entry.not_before) == (WorkOutcome.NOTHING_FOUND, 1, None)
+
+
+# Four leads of a stopped outlet: three left unasked while it is held, one that was told.
+WAITING = [
+    (WorkOutcome.LATER, 0, "outlet_held"),
+    (WorkOutcome.LATER, 0, "outlet_held"),
+    (WorkOutcome.LATER, 0, "outlet_held"),
+    (WorkOutcome.LATER, 0, "reader_not_now"),
+]
 
 
 def test_an_outlet_the_reader_has_stopped_is_not_asked_until_its_wait_is_over(reader: Reader):
@@ -472,34 +498,47 @@ def test_an_outlet_the_reader_has_stopped_is_not_asked_until_its_wait_is_over(re
     def asked_of_the_outlet() -> int:
         return sum("theguardian.com" in body["url"] for body in reader.page_reader.asked)
 
+    def waiting() -> list[tuple[WorkOutcome, int, str | None]]:
+        return sorted(
+            (
+                (entry.outcome, entry.attempts, entry.reason)
+                for entry in (reader.entry(lead) for lead in stopped)
+            ),
+            key=lambda held: held[2] or "",
+        )
+
     began = reader.time.now()
-    first = reader.read()
+    first = reader.read(by_the_step_clock=True)
 
     # One request told the pipeline; the outlet's other leads cost none. Another outlet
-    # is read as usual.
-    assert (asked_of_the_outlet(), first.deferred) == (1, 4)
+    # is read as usual. All four are put off until the wait the reader stated is over.
+    assert (asked_of_the_outlet(), first.later, first.deferred) == (1, 4, 0)
     assert other.read_outcome is ReadOutcome.NEW_CLAIM
+    assert waiting() == WAITING
+    assert {reader.entry(lead).not_before for lead in stopped} == {began + timedelta(seconds=7200)}
+    # The plan still says which outlet is held, for how long and how many leads wait.
     [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
     assert (held.outlet, held.leads) == ("theguardian.com", 4)
     assert held.until == began + timedelta(seconds=7200)
+    assert all(lead.read_outcome is None for lead in stopped)
+    assert count(reader.session, reader.step, 3, now=reader.time.now()).due == 0
 
     # The next run, an hour on, is a new step with nothing remembered: still no request,
-    # no attempt, no outcome.
+    # no attempt, no outcome, and the four are not due.
     reader.time.advance(timedelta(hours=1))
     reader.step = step(time=reader.time)
-    second = reader.read()
+    second = reader.read(by_the_step_clock=True)
 
-    assert (asked_of_the_outlet(), second.deferred, second.processed) == (1, 4, 0)
+    assert (asked_of_the_outlet(), second.later, second.processed) == (1, 0, 0)
     assert all(lead.read_outcome is None for lead in stopped)
-    assert reader.session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == [
-        reader.entry(other)
-    ]
+    assert waiting() == WAITING
 
     # After the wait the outlet is asked again and, answering, is read.
     reader.page_reader.not_now.clear()
     reader.time.advance(timedelta(hours=1, seconds=1))
+    assert count(reader.session, reader.step, 3, now=reader.time.now()).due == 4
     reader.step = step(time=reader.time)
-    reader.read()
+    reader.read(by_the_step_clock=True)
 
     assert asked_of_the_outlet() == 5
     assert all(lead.read_outcome is not None for lead in stopped)
@@ -861,8 +900,17 @@ def test_an_unsure_vertical_makes_no_claim_and_lists_the_lead(reader: Reader):
 
     report = reader.read()
 
-    assert (report.nothing_found, lead.read_outcome) == (1, ReadOutcome.NEEDS_VERTICAL)
+    assert (report.needs_fix, report.nothing_found) == (1, 0)
+    assert lead.read_outcome is ReadOutcome.NEEDS_VERTICAL
     assert "EX-1 antibody for tooth agenesis" in (lead.read_detail or "")
+    entry = reader.entry(lead)
+    assert (entry.outcome, entry.attempts, entry.reason) == (
+        WorkOutcome.NEEDS_FIX,
+        0,
+        "needs_vertical",
+    )
+    assert entry.reason_values is not None and entry.reason_values["outlet"] == "theguardian.com"
+    assert entry.not_before is None
     assert reader.session.scalars(select(Claim)).all() == []
 
 
@@ -1907,7 +1955,7 @@ def test_an_outlets_turn_is_held_from_the_look_at_its_hold_to_the_readers_answer
     """Scenario: Two workers, one stopped outlet. A second worker cannot look at the
     outlet's hold, and so cannot ask, while the first worker's request is in flight; it
     may once the answer, and any hold it brought, is kept."""
-    reader.lead()
+    lead = reader.lead()
     turn = select(
         func.pg_try_advisory_lock(OUTLET_TURN_LOCK, func.hashtext(OUTLET_HOLD + "theguardian.com"))
     )
@@ -1923,13 +1971,20 @@ def test_an_outlets_turn_is_held_from_the_look_at_its_hold_to_the_readers_answer
 
     reader.page_reader.answer = stopped
 
-    reader.read()
+    began = reader.time.now()
+
+    reader.read(by_the_step_clock=True)
 
     assert free_in_flight == [False]
     # The hold was kept, and the turn is free again for the worker that waited: it finds
-    # the hold and asks nothing.
-    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
-    assert held.outlet == "theguardian.com"
+    # the hold and asks nothing. The lead is put off until the hold ends.
+    entry = reader.entry(lead)
+    assert (entry.outcome, entry.attempts, entry.reason) == (
+        WorkOutcome.LATER,
+        0,
+        "reader_not_now",
+    )
+    assert entry.not_before == began + timedelta(seconds=3600)
     with engine.connect() as another_worker:
         assert another_worker.scalar(turn) is True
         # The lock is the connection's, and the connection goes back to a pool.
@@ -1939,65 +1994,99 @@ def test_an_outlets_turn_is_held_from_the_look_at_its_hold_to_the_readers_answer
 def test_a_wait_past_a_day_holds_the_outlet_for_a_day_and_ends_no_run(reader: Reader):
     """Scenario: A wait no reader means. Milliseconds, or a number no time can hold, is
     read as a day."""
-    reader.lead()
+    lead = reader.lead()
     reader.page_reader.not_now["www.theguardian.com"] = 1e300
     began = reader.time.now()
 
-    report = reader.read()
+    report = reader.read(by_the_step_clock=True)
 
-    assert (report.deferred, report.failed, report.stopped) == (1, 0, None)
-    [held] = held_outlets(reader.session, reader.step, 3, reader.time.now())
-    assert held.until == began + timedelta(hours=24)
+    assert (report.later, report.deferred, report.failed, report.stopped) == (1, 0, 0, None)
+    entry = reader.entry(lead)
+    assert (entry.outcome, entry.attempts, entry.reason) == (
+        WorkOutcome.LATER,
+        0,
+        "reader_not_now",
+    )
+    assert entry.not_before == began + timedelta(hours=24)
 
 
 def test_an_outlet_the_reader_cannot_get_is_left_after_three_pages(reader: Reader):
     """An outlet whose pages the reader keeps saying "not now" for, stating no wait, is
-    asked three times in a run and then left: its other leads stay due, cost no request
-    and count no attempt, and the run goes on to other outlets."""
+    asked three times in a run and then left: its other leads are put off for an hour,
+    cost no request and count no attempt, and the run goes on to other outlets."""
     blocked = [
         reader.lead(f"https://www.theguardian.com/science/2019/may/0{n}/synthetic-teeth-{n}")
         for n in range(1, 7)
     ]
     other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
     reader.page_reader.not_now["www.theguardian.com"] = 0
+    began = reader.time.now()
 
-    report = reader.read()
+    report = reader.read(by_the_step_clock=True)
 
     asked = [body["url"] for body in reader.page_reader.asked]
     assert sum("theguardian.com" in url for url in asked) == 3
-    assert report.deferred == 6
+    assert (report.later, report.deferred) == (6, 0)
     assert all(lead.read_outcome is None for lead in blocked)
     assert other.read_outcome is ReadOutcome.NEW_CLAIM
+    entries = [reader.entry(lead) for lead in blocked]
+    assert {(entry.outcome, entry.attempts, entry.reason) for entry in entries} == {
+        (WorkOutcome.LATER, 0, "reader_not_now")
+    }
+    # An hour from the moment each was put off, which the allowance's interval moves on.
+    assert all(
+        began + timedelta(hours=1) <= entry.not_before <= began + timedelta(hours=1, seconds=10)
+        for entry in entries
+        if entry.not_before is not None
+    )
 
-    # A later run starts fresh, as each run makes its own step: the outlet is asked
-    # again and, answering, is read.
+    # A later run starts fresh, as each run makes its own step, and finds them due once
+    # the hour is over: the outlet is asked again and, answering, is read.
     reader.page_reader.not_now.clear()
-    reader.step = step()
-    reader.read()
+    last = max(entry.not_before for entry in entries if entry.not_before is not None)
+    reader.time.advance(last - timedelta(seconds=1) - reader.time.now())
+    assert count(reader.session, reader.step, 3, now=reader.time.now()).due < len(blocked)
+    reader.time.advance(timedelta(seconds=1))
+    reader.step = step(time=reader.time)
+    reader.read(by_the_step_clock=True)
 
     assert all(lead.read_outcome is not None for lead in blocked)
 
 
 def test_one_outlets_pages_are_not_asked_for_back_to_back(reader: Reader):
-    """With a gap set, a second lead on an outlet asked a moment ago is left for a later
-    run, with no request and no attempt, and other outlets are read meanwhile."""
+    """With a gap set, a second lead on an outlet asked a moment ago is put off until the
+    gap has passed, with no request and no attempt, and other outlets are read
+    meanwhile."""
     reader.step = step(outlet_gap_seconds=30, time=reader.time)
     first = reader.lead("https://www.theguardian.com/science/2019/may/01/synthetic-teeth-1")
     second = reader.lead("https://www.theguardian.com/science/2019/may/02/synthetic-teeth-2")
     other = reader.lead("https://www.bbc.co.uk/news/health-synthetic-teeth")
+    began = reader.time.now()
 
-    report = reader.read()
+    report = reader.read(by_the_step_clock=True)
 
     asked = [body["url"] for body in reader.page_reader.asked]
     assert sum("theguardian.com" in url for url in asked) == 1
-    assert report.deferred == 1
+    assert (report.later, report.deferred) == (1, 0)
     assert sorted(lead.read_outcome is None for lead in (first, second)) == [False, True]
     assert other.read_outcome is not None
+    [put_off] = [lead for lead in (first, second) if lead.read_outcome is None]
+    entry = reader.entry(put_off)
+    assert (entry.outcome, entry.attempts, entry.reason) == (
+        WorkOutcome.LATER,
+        0,
+        "outlet_just_asked",
+    )
+    assert entry.reason_values is not None and entry.reason_values["outlet"] == "theguardian.com"
+    assert entry.not_before == began + timedelta(seconds=30)
 
     # Once the gap has passed, a later run asks the outlet again.
-    reader.time.advance(timedelta(seconds=31))
+    assert entry.not_before is not None
+    reader.time.advance(entry.not_before - timedelta(seconds=1) - reader.time.now())
+    assert count(reader.session, reader.step, 3, now=reader.time.now()).due == 0
+    reader.time.advance(timedelta(seconds=1))
     reader.step = step(outlet_gap_seconds=30, time=reader.time)
-    reader.read()
+    reader.read(by_the_step_clock=True)
 
     assert first.read_outcome is not None and second.read_outcome is not None
 

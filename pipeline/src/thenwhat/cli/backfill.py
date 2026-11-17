@@ -651,8 +651,12 @@ def retry_outlet_command(
     """Ask the page reader again for an outlet's leads that it refused with 401, or that
     were not asked because of those refusals. Its old refusals lapse after 30 days on
     their own; this is for an outlet known to serve the reader now."""
+    settings = settings_or_exit()
     with refusals(), open_session() as session:
-        retried = retry_outlet(session, outlet)
+        step = find_step(steps_for(settings), LinkRead.name)
+        if not isinstance(step, LinkRead):
+            raise BackfillError("The step that reads link leads is not among the steps.")
+        retried = retry_outlet(session, step, outlet)
     noun = "lead" if retried == 1 else "leads"
     out.print(
         f"{retried:,} {noun} of {outlet} are due to be read again."

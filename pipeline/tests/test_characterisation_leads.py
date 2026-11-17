@@ -1,6 +1,7 @@
-"""What each way a lead step can end writes today: characterisation tests.
+"""What each way a lead step can end writes: characterisation tests.
 
-These tests pin present behaviour for openspec change `one-work-runner`, task 1.1. One
+These tests pinned the behaviour before openspec change `one-work-runner`, task 1.1, and
+now pin it as the change leaves it (see LANDED below). One
 record per way a step can end, at the session seam, with the fakes the steps' own tests
 use: for each, the work entry's outcome, its attempts, whether the record is due again,
 and for `link_read` the lead's read outcome and the exact words of its read detail. Every
@@ -13,21 +14,24 @@ link_read
   added to claim -> test_an_article_added_to_a_claim_is_done
   new claim -> test_a_new_claim_is_done
   enough articles -> test_a_claim_with_enough_articles_finishes_the_lead
-  needs vertical -> test_no_likely_vertical_finishes_the_lead
+  needs vertical -> test_no_likely_vertical_needs_a_fix
   not one treatment -> test_not_one_treatment_finishes_the_lead
   business news -> test_business_news_finishes_the_lead
   identity unresolved -> test_an_overlap_left_unresolved_finishes_the_lead
   already tracked (no read outcome) -> test_a_lead_tracked_since_screening_is_nothing_found
-  cannot be read: the site answered 401, 403, 404, 503, 202 (one case each)
-    -> test_a_site_status_that_is_not_200_finishes_the_lead
+  cannot be read: the site answered 401, 403 (one case each)
+    -> test_a_site_that_refuses_the_reader_needs_a_fix
+  cannot be read: the site answered 404 -> test_a_page_the_site_says_is_gone_finishes_the_lead
+  put off: the site answered 503, 202 (one case each)
+    -> test_a_site_that_cannot_serve_now_is_put_off
   cannot be read: the page reader does not allow the address
     -> test_an_address_the_reader_does_not_allow_finishes_the_lead
   cannot be read: too little text, no date, no headline, no outlet name (one case each)
-    -> test_a_page_that_cannot_be_used_finishes_the_lead
+    -> test_a_page_that_cannot_be_used_needs_a_fix
   cannot be read: the outlet answered 401 for enough pages and served none
-    -> test_an_outlet_that_refuses_the_reader_finishes_the_lead
-  reader says not now -> test_not_now_from_the_reader_is_deferred
-  outlet held -> test_a_held_outlet_is_deferred
+    -> test_an_outlet_that_refuses_the_reader_needs_a_fix
+  reader says not now -> test_not_now_from_the_reader_is_put_off
+  outlet held -> test_a_held_outlet_is_put_off
   model read fails, outage -> test_a_model_outage_in_the_read_fails_the_lead
   model read fails, invalid output -> test_an_invalid_read_fails_the_lead
   spend ceiling during the read -> test_the_spend_ceiling_in_the_read_stops_the_run
@@ -46,20 +50,22 @@ news_search
   source unavailable -> test_a_news_index_that_fails_fails_the_trial
 """
 
-# CHANGES under one-work-runner:
-# test_a_site_status_that_is_not_200_finishes_the_lead[503, 202]: put off, no attempt.
-# test_a_site_status_that_is_not_200_finishes_the_lead[401, 403]: needs a fix.
-# test_a_page_that_cannot_be_used_finishes_the_lead (all four causes): needs a fix.
-# test_an_outlet_that_refuses_the_reader_finishes_the_lead: needs a fix (refused, 401).
-# test_no_likely_vertical_finishes_the_lead: needs a fix.
-# test_not_now_from_the_reader_is_deferred: Deferred becomes a recorded "later" outcome.
-# test_a_held_outlet_is_deferred: Deferred becomes a recorded "later" outcome.
+# LANDED:
+# test_a_site_that_cannot_serve_now_is_put_off[503, 202]: put off, no attempt.
+# test_a_site_that_refuses_the_reader_needs_a_fix[401, 403]: needs a fix.
+# test_a_page_that_cannot_be_used_needs_a_fix (all four causes): needs a fix.
+# test_an_outlet_that_refuses_the_reader_needs_a_fix: needs a fix (refused, 401).
+# test_no_likely_vertical_needs_a_fix: needs a fix.
+# test_not_now_from_the_reader_is_put_off: Deferred became a recorded "later" outcome.
+# test_a_held_outlet_is_put_off: Deferred became a recorded "later" outcome.
+#
+# CHANGES under one-work-runner, not yet landed:
 # test_a_model_outage_in_the_read_fails_the_lead: the outage stops the run, no attempt.
 # test_a_failed_treatment_kind_decision_fails_the_lead[unreachable]: stops the run.
 # test_a_news_index_that_fails_fails_the_trial: a source that is down may stop the run
 #   ("A provider that cannot be asked stops the run"), with no attempt counted.
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
@@ -95,7 +101,7 @@ from thenwhat.decide.steps import BUSINESS_NEWS, NOT_ONE_TREATMENT, TREATMENT_KI
 from thenwhat.domain import ReadOutcome, ScreenOutcome, WorkOutcome
 from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.llm.errors import LlmCallFailed
-from thenwhat.work.ledger import due_records
+from thenwhat.work.ledger import count, due_records
 from thenwhat.work.runner import run_step
 from thenwhat.work.steps import Step
 
@@ -132,6 +138,22 @@ def read_ended(reader: Reader, lead: LinkLead) -> tuple[Any, ...]:
     """What a read left: the entry as `ended` gives it, then the lead's read outcome and
     read detail."""
     return (*ended(reader.session, reader.step, lead), lead.read_outcome, lead.read_detail)
+
+
+def put_off(reader: Reader, lead: LinkLead) -> tuple[Any, ...]:
+    """What a put-off lead holds: the entry's outcome and attempts, then the lead's read
+    outcome and read detail. Whether it is due depends on the clock the step was given,
+    so a test asks the ledger for a time it names."""
+    outcome, attempts, _ = ended(reader.session, reader.step, lead)
+    return (outcome, attempts, lead.read_outcome, lead.read_detail)
+
+
+def reason_of(reader: Reader, lead: LinkLead) -> tuple[Any, ...]:
+    """The reason code the lead's entry holds, the values it carries, and when the lead
+    is put off until."""
+    entry = entry_of(reader.session, reader.step, lead)
+    assert entry is not None
+    return entry.reason, entry.reason_values, entry.not_before
 
 
 @pytest.fixture
@@ -183,21 +205,25 @@ def test_a_claim_with_enough_articles_finishes_the_lead(reader: Reader):
         "the claim it names has enough articles: ex-1-tooth-agenesis",
     )
     assert reader.page_reader.asked == []
+    assert reason_of(reader, lead) == ("enough_articles", {"outlet": "theguardian.com"}, None)
 
 
-def test_no_likely_vertical_finishes_the_lead(reader: Reader):
+def test_no_likely_vertical_needs_a_fix(reader: Reader):
     reader.backend.probability = 0.5
     lead = reader.lead()
 
-    reader.read()
+    report = reader.read()
 
+    assert (report.needs_fix, report.nothing_found, report.later) == (1, 0, 0)
+    # No attempt is counted, and the lead waits to be made due.
     assert read_ended(reader, lead) == (
-        WorkOutcome.NOTHING_FOUND,
-        1,
+        WorkOutcome.NEEDS_FIX,
+        0,
         False,
         ReadOutcome.NEEDS_VERTICAL,
         "EX-1 antibody for tooth agenesis; the nearest vertical was mouth-and-teeth at 0.50",
     )
+    assert reason_of(reader, lead) == ("needs_vertical", {"outlet": "theguardian.com"}, None)
 
 
 def test_not_one_treatment_finishes_the_lead(reader: Reader):
@@ -213,6 +239,7 @@ def test_not_one_treatment_finishes_the_lead(reader: Reader):
         ReadOutcome.NOT_ONE_TREATMENT,
         "EX-1 antibody for tooth agenesis; about one treatment for one condition at 0.05",
     )
+    assert reason_of(reader, lead) == ("not_one_treatment", {"outlet": "theguardian.com"}, None)
 
 
 def test_business_news_finishes_the_lead(reader: Reader):
@@ -229,6 +256,7 @@ def test_business_news_finishes_the_lead(reader: Reader):
         "EX-1 antibody for tooth agenesis; no claim to join, and about what the treatment"
         " does at 0.03",
     )
+    assert reason_of(reader, lead) == ("business_news", {"outlet": "theguardian.com"}, None)
 
 
 def test_an_overlap_left_unresolved_finishes_the_lead(reader: Reader):
@@ -247,6 +275,7 @@ def test_an_overlap_left_unresolved_finishes_the_lead(reader: Reader):
         f"EX-1 antibody for tooth agenesis; names overlap {claim.slug}, but the same"
         " treatment and condition were not established, so no claim was drafted",
     )
+    assert reason_of(reader, lead) == ("identity_unresolved", {"outlet": "theguardian.com"}, None)
 
 
 def test_a_lead_tracked_since_screening_is_nothing_found(reader: Reader):
@@ -266,27 +295,80 @@ def test_a_lead_tracked_since_screening_is_nothing_found(reader: Reader):
     # No read outcome: the lead leaves the step's scope as already tracked.
     assert read_ended(reader, lead) == (WorkOutcome.NOTHING_FOUND, 1, False, None, None)
     assert (lead.screen_outcome, lead.claim_id) == (ScreenOutcome.ALREADY_TRACKED, claim.id)
+    assert reason_of(reader, lead)[0] == "already_tracked"
 
 
 # --- link_read: a page that cannot be read -------------------------------------------------
 
 
-@pytest.mark.parametrize("status", [401, 403, 404, 503, 202])
-def test_a_site_status_that_is_not_200_finishes_the_lead(reader: Reader, status: int):
+@pytest.mark.parametrize("status", [401, 403])
+def test_a_site_that_refuses_the_reader_needs_a_fix(reader: Reader, status: int):
     lead = reader.lead(serves=None)
     reader.page_reader.site = lambda request: httpx.Response(status)
 
     report = reader.read()
 
-    assert (report.nothing_found, report.failed, report.deferred) == (1, 0, 0)
+    assert (report.needs_fix, report.nothing_found, report.later, report.deferred) == (1, 0, 0, 0)
+    assert read_ended(reader, lead) == (
+        WorkOutcome.NEEDS_FIX,
+        0,
+        False,
+        ReadOutcome.CANNOT_BE_READ,
+        f"the page could not be retrieved (the site answered {status})",
+    )
+    assert reason_of(reader, lead) == (
+        "site_refused",
+        {"outlet": "theguardian.com", "status": status},
+        None,
+    )
+    assert reader.prompts == []
+
+
+def test_a_page_the_site_says_is_gone_finishes_the_lead(reader: Reader):
+    lead = reader.lead(serves=None)
+
+    report = reader.read()
+
+    assert (report.nothing_found, report.needs_fix, report.later) == (1, 0, 0)
     assert read_ended(reader, lead) == (
         WorkOutcome.NOTHING_FOUND,
         1,
         False,
         ReadOutcome.CANNOT_BE_READ,
-        f"the page could not be retrieved (the site answered {status})",
+        "the page could not be retrieved (the site answered 404)",
+    )
+    assert reason_of(reader, lead) == (
+        "page_gone",
+        {"outlet": "theguardian.com", "status": 404},
+        None,
     )
     assert reader.prompts == []
+
+
+@pytest.mark.parametrize("status", [503, 202])
+def test_a_site_that_cannot_serve_now_is_put_off(reader: Reader, status: int):
+    lead = reader.lead(serves=None)
+    reader.page_reader.site = lambda request: httpx.Response(status)
+    began = reader.time.now()
+
+    report = reader.read(by_the_step_clock=True)
+
+    # Put off for the configured six hours: no attempt, and the lead holds nothing.
+    assert (report.later, report.needs_fix, report.nothing_found, report.deferred) == (1, 0, 0, 0)
+    assert put_off(reader, lead) == (WorkOutcome.LATER, 0, None, None)
+    assert reason_of(reader, lead) == (
+        "site_busy",
+        {"outlet": "theguardian.com", "status": status},
+        began + timedelta(hours=6),
+    )
+    assert reader.prompts == []
+
+    # Due again once the six hours have passed, not before.
+    assert count(reader.session, reader.step, LIMIT, now=began + timedelta(hours=6)).due == 1
+    assert (
+        count(reader.session, reader.step, LIMIT, now=began + timedelta(hours=6, seconds=-1)).due
+        == 0
+    )
 
 
 def test_an_address_the_reader_does_not_allow_finishes_the_lead(reader: Reader):
@@ -302,6 +384,11 @@ def test_an_address_the_reader_does_not_allow_finishes_the_lead(reader: Reader):
         ReadOutcome.CANNOT_BE_READ,
         "the page reader does not allow the address: the site's rules disallow it",
     )
+    assert reason_of(reader, lead) == (
+        "not_allowed",
+        {"outlet": "theguardian.com", "why": "the site's rules disallow it"},
+        None,
+    )
 
 
 THIN_PAGE = (
@@ -312,63 +399,75 @@ THIN_PAGE = (
 
 
 @pytest.mark.parametrize(
-    ("url", "served", "detail"),
+    ("url", "served", "detail", "code"),
     [
         pytest.param(
             "https://www.theguardian.com/science/2019/may/04/synthetic-teeth",
             THIN_PAGE,
             "too little article text",
+            "thin_page",
             id="too-little-text",
         ),
         pytest.param(
             "https://www.theguardian.com/science/2019/may/04/synthetic-teeth",
             page(published=None),
             "the page gives no publication date",
+            "no_date",
             id="no-date",
         ),
         pytest.param(
             "https://www.theguardian.com/science/2019/may/04/synthetic-teeth",
             page(headline=None),
             "the page gives no headline",
+            "no_headline",
             id="no-headline",
         ),
         pytest.param(
             "https://multiplesclerosisnewstoday.com/news/synthetic-report",
             page(),
             "its outlet has no display name",
+            "no_outlet_name",
             id="no-outlet-name",
         ),
     ],
 )
-def test_a_page_that_cannot_be_used_finishes_the_lead(
-    reader: Reader, url: str, served: str, detail: str
+def test_a_page_that_cannot_be_used_needs_a_fix(
+    reader: Reader, url: str, served: str, detail: str, code: str
 ):
     lead = reader.lead(url, serves=served)
 
-    reader.read()
+    report = reader.read()
 
+    assert (report.needs_fix, report.nothing_found, report.later) == (1, 0, 0)
     assert read_ended(reader, lead) == (
-        WorkOutcome.NOTHING_FOUND,
-        1,
+        WorkOutcome.NEEDS_FIX,
+        0,
         False,
         ReadOutcome.CANNOT_BE_READ,
         detail,
     )
+    assert reason_of(reader, lead) == (code, {"outlet": lead.outlet}, None)
     assert reader.prompts == []
 
 
-def test_an_outlet_that_refuses_the_reader_finishes_the_lead(reader: Reader):
+def test_an_outlet_that_refuses_the_reader_needs_a_fix(reader: Reader):
     refused_earlier(reader, "https://www.theguardian.com/science", 5)
     lead = reader.lead()
 
-    reader.read()
+    report = reader.read()
 
+    assert (report.needs_fix, report.nothing_found, report.later) == (1, 0, 0)
     assert read_ended(reader, lead) == (
-        WorkOutcome.NOTHING_FOUND,
-        1,
+        WorkOutcome.NEEDS_FIX,
+        0,
         False,
         ReadOutcome.CANNOT_BE_READ,
         "not asked: its outlet answered 401 to the page reader for 5 pages and served none",
+    )
+    assert reason_of(reader, lead) == (
+        "outlet_refuses",
+        {"outlet": "theguardian.com", "pages": 5},
+        None,
     )
     assert reader.client.requests_made == 0
 
@@ -376,26 +475,40 @@ def test_an_outlet_that_refuses_the_reader_finishes_the_lead(reader: Reader):
 # --- link_read: a lead that may not be asked for now ---------------------------------------
 
 
-def test_not_now_from_the_reader_is_deferred(reader: Reader):
+def test_not_now_from_the_reader_is_put_off(reader: Reader):
     lead = reader.lead()
     reader.page_reader.not_now["www.theguardian.com"] = 600
+    began = reader.time.now()
 
-    report = reader.read()
+    report = reader.read(by_the_step_clock=True)
 
-    assert (report.processed, report.deferred, report.stopped) == (0, 1, None)
-    assert read_ended(reader, lead) == (None, None, True, None, None)
+    # Put off until the wait the reader stated is over. It is a put-off lead, not a
+    # deferred one: the ledger holds an entry, with no attempt and no read outcome.
+    assert (report.processed, report.later, report.deferred, report.stopped) == (0, 1, 0, None)
+    assert put_off(reader, lead) == (WorkOutcome.LATER, 0, None, None)
+    assert reason_of(reader, lead) == (
+        "reader_not_now",
+        {"outlet": "theguardian.com"},
+        began + timedelta(seconds=600),
+    )
     assert reader.client.requests_made == 1
+    assert count(reader.session, reader.step, LIMIT, now=began).due == 0
+    assert count(reader.session, reader.step, LIMIT, now=began + timedelta(seconds=600)).due == 1
 
 
-def test_a_held_outlet_is_deferred(reader: Reader):
+def test_a_held_outlet_is_put_off(reader: Reader):
     lead = reader.lead()
-    keep(reader.client.allowances, lead.outlet, reader.time.now(), 3600)
+    until = keep(reader.client.allowances, lead.outlet, reader.time.now(), 3600)
 
-    report = reader.read()
+    report = reader.read(by_the_step_clock=True)
 
-    assert (report.processed, report.deferred, report.stopped) == (0, 1, None)
-    assert read_ended(reader, lead) == (None, None, True, None, None)
+    # Not asked at all, and put off until the hold ends.
+    assert (report.processed, report.later, report.deferred, report.stopped) == (0, 1, 0, None)
+    assert put_off(reader, lead) == (WorkOutcome.LATER, 0, None, None)
+    assert reason_of(reader, lead) == ("outlet_held", {"outlet": "theguardian.com"}, until)
     assert (reader.client.requests_made, reader.page_reader.asked) == (0, [])
+    assert count(reader.session, reader.step, LIMIT, now=reader.time.now()).due == 0
+    assert count(reader.session, reader.step, LIMIT, now=until).due == 1
 
 
 # --- link_read: the model read and the decisions --------------------------------------------

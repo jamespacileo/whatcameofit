@@ -184,6 +184,9 @@ class Settings(BaseSettings):
     # this only keeps the pipeline from sending it one outlet's pages back to back.
     # 0 turns it off.
     reader_outlet_gap_seconds: float = Field(default=30, ge=0)
+    # A lead whose site answered that it is busy, throttling or failing is asked for
+    # again after this many hours.
+    lead_site_retry_hours: float = Field(default=6, gt=0)
     # Read only leads first shared on or after this day. Unset reads leads of any date.
     # It narrows a run to a period; a lead outside it stays due for a later run.
     lead_read_since: date | None = None

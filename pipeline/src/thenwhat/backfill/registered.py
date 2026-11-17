@@ -30,6 +30,7 @@ def link_read_step(settings: Settings, triage_version: int, **options: Any) -> L
         match_reject_below=settings.match_reject_below,
         match_accept_above=settings.match_accept_above,
         outlet_gap_seconds=settings.reader_outlet_gap_seconds,
+        site_retry_hours=settings.lead_site_retry_hours,
         read_since=settings.lead_read_since,
         **options,
     )

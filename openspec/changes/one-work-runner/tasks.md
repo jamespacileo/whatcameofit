@@ -16,7 +16,7 @@
 - [x] 3.2 Add a migration for `work_entry.reason`, `reason_values`, `not_before`, `first_put_off_at` and the two new outcome values; verify it applies and reverses on the test database
 - [x] 3.3 Change the due rule and `record_outcome`: `Later` due after its time, `NeedsFix` not due, neither counts an attempt, and thirty days of one reason becomes `NeedsFix`; verify with tests for every scenario of "Ledger entry", "Due work", "Failed records" and "A record put off too long is said to need a fix"
 - [x] 3.4 Add step dependencies to the due rule; verify with tests for both scenarios of "A step can depend on another step"
-- [ ] 3.5 Add `thenwhat work requeue` with `--where` and `--dry-run`, and make `thenwhat backfill retry-outlet` call it; verify with one success and one refusal test and the three scenarios of "Records are made due by step and reason"
+- [x] 3.5 Add `thenwhat work requeue` with `--where` and `--dry-run`, and make `thenwhat backfill retry-outlet` call it; verify with one success and one refusal test and the three scenarios of "Records are made due by step and reason"
 - [x] 3.6 Show waiting records by class and reason in `thenwhat backfill plan`; verify with a test of "Planning with records waiting"
 - [x] 3.7 Add "final", "put off", "needs a fix" and "reason" to `GLOSSARY.md`; verify the terms in code, CLI output and specs match
 
@@ -42,7 +42,7 @@
 
 ## 6. Lead steps on the new outcomes
 
-- [ ] 6.1 Declare `link_read`'s reasons and return the new outcomes: transient statuses as `Later`, causes that can be put right as `NeedsFix`, what the article is as final; verify with tests for every scenario of the `lead-reading` delta except the last requirement, and the tests of 1.1 updated only where the spec changes the outcome
+- [x] 6.1 Declare `link_read`'s reasons and return the new outcomes: transient statuses as `Later`, causes that can be put right as `NeedsFix`, what the article is as final; verify with tests for every scenario of the `lead-reading` delta except the last requirement, and the tests of 1.1 updated only where the spec changes the outcome
 - [ ] 6.2 Replace `Deferred` in `link_read` with `Later` and remove `Deferred` from the runner; verify a test that a lead inside an outlet's gap is taken again in the same run once the gap has passed
 - [ ] 6.3 Make `link_lead.read_detail` and the funnel report render from the reason code; verify the funnel report test gives the same lines for the same data
 - [ ] 6.4 Write the data migration from stored `read_detail` text to codes, failing on any text with no code; verify on a copy of the 16 November database that every lead has a code and the funnel report's counts per line are unchanged

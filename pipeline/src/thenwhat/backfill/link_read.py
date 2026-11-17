@@ -17,14 +17,15 @@ for drafts, so that no claim is published with a status no search stands behind.
 
 import re
 import threading
-from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import ColumnElement, and_, exists, func, or_, select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill import link_reasons as why
 from thenwhat.backfill.address import article_key, without_tracking
 from thenwhat.backfill.link_evaluation import reading_refusal
 from thenwhat.backfill.link_screen import (
@@ -102,7 +103,8 @@ from thenwhat.sources.base import SourceError, SystemTime, Time
 from thenwhat.statements.service import StatementChecker, StatementsRun
 from thenwhat.work.allowance import Allowances, held_until, holds_under
 from thenwhat.work.errors import BackfillError, SpendCeilingReached
-from thenwhat.work.ledger import due_records
+from thenwhat.work.ledger import due_records, requeue
+from thenwhat.work.outcome import Later, NeedsFix, NothingFound, Reason, ReasonClass
 from thenwhat.work.steps import TEXT_DOOR, Deferred, Failed, ModelSpend
 
 NO_NAME = "its outlet has no display name"
@@ -126,6 +128,8 @@ OUTLET_REFUSES = "not asked: its outlet answered 401 to the page reader"
 # requests for one outlet's pages, every one answered that way, with 300 more of its
 # leads next in line: each costs a request of the reader's allowance and reads nothing.
 NOT_NOW_BEFORE_LEAVING = 3
+# How long a lead waits when the reader could not get its page now and stated no wait.
+NOT_NOW_WAIT = timedelta(hours=1)
 # A publisher that blocks automated reading by one route and the next was reached on
 # 2026-11-16 by the one route left, with 340 of its leads first in line. A steady stream
 # of one outlet's pages is the likeliest way to lose such a route.
@@ -146,6 +150,15 @@ READ_FROM_A_PAGE = (
     ReadOutcome.BUSINESS_NEWS,
     ReadOutcome.IDENTITY_UNRESOLVED,
 )
+# The reason a read outcome stands for when the read gives no other: what the article
+# turned out to be. A lead that cannot be read says which of several causes it was.
+REASON_OF = {
+    ReadOutcome.ENOUGH_ARTICLES: why.ENOUGH_ARTICLES,
+    ReadOutcome.NOT_ONE_TREATMENT: why.NOT_ONE_TREATMENT,
+    ReadOutcome.BUSINESS_NEWS: why.BUSINESS_NEWS,
+    ReadOutcome.IDENTITY_UNRESOLVED: why.IDENTITY_UNRESOLVED,
+    ReadOutcome.NEEDS_VERTICAL: why.NEEDS_VERTICAL,
+}
 # The name a lead's read is recorded under in the usage ledger, apart from articles an
 # operator has read, so the funnel can say what reading leads has cost.
 LEAD_READING = "extraction:link_lead"
@@ -285,50 +298,46 @@ class NotAttached:
 
 @dataclass(frozen=True, slots=True)
 class _NoPage:
-    """Why the page reader gave no page for a lead, or a page that cannot be used, in
-    the words a lead's detail keeps."""
+    """Why the page reader gave no page for a lead, or a page that cannot be used: the
+    reason's code with its values, and the words a lead's detail keeps."""
 
-    detail: str
+    reason: Reason
+    values: Mapping[str, Any] = field(default_factory=dict)
+
+    @property
+    def detail(self) -> str:
+        return self.reason.say(self.values)
+
+
+@dataclass(frozen=True, slots=True)
+class _NotYet:
+    """The page reader was not asked, or could not get the page now: why, and the time
+    before which the lead's outlet is not to be asked again."""
+
+    reason: Reason
+    until: datetime
+    said: str
 
 
 class NothingToRetry(BackfillError):
     pass
 
 
-def retry_outlet(session: Session, outlet: str) -> int:
-    """Put the outlet's leads that it refused with 401, or that were not asked because
-    of those refusals, back to not read, and mark their reading stale, so the next run
-    asks the page reader for them again. Returns how many. Refuses when the outlet has no
-    such lead."""
-    refused = or_(
-        LinkLead.read_detail == f"{NO_PAGE} (the site answered {REFUSED_STATUS})",
-        LinkLead.read_detail.startswith(OUTLET_REFUSES),
+def retry_outlet(session: Session, step: "LinkRead", outlet: str) -> int:
+    """Make due again the outlet's leads that it refused with 401, or that were not asked
+    because of those refusals, so the next run asks the page reader for them. Returns how
+    many. Refuses when the outlet has no such lead.
+
+    One use of making records due by their reason (openspec work-ledger): the reasons
+    are a site's refusal with the status 401 and an outlet that refuses, both narrowed to
+    the outlet."""
+    ids = requeue(
+        session, step, reason=why.SITE_REFUSED.code, values={"outlet": outlet, "status": 401}
     )
-    ids = list(
-        session.scalars(
-            select(LinkLead.id).where(
-                LinkLead.outlet == outlet,
-                LinkLead.read_outcome == ReadOutcome.CANNOT_BE_READ,
-                refused,
-            )
-        )
-    )
+    ids += requeue(session, step, reason=why.OUTLET_REFUSES.code, values={"outlet": outlet})
     if not ids:
         raise NothingToRetry(f"No lead of '{outlet}' was refused with 401 or left unasked.")
-    for lead in session.scalars(select(LinkLead).where(LinkLead.id.in_(ids))):
-        lead.read_outcome = None
-        lead.read_detail = None
-    # Marked stale, as the ledger marks a record whose inputs changed: the entry stays,
-    # with its last attempt, until the next run reads the lead again.
-    for entry in session.scalars(
-        select(WorkEntry).where(
-            WorkEntry.record_kind == LinkRead.record_kind,
-            WorkEntry.step == LinkRead.name,
-            WorkEntry.record_id.in_(ids),
-        )
-    ):
-        entry.stale = True
-    session.flush()
+    step.made_due(session, ids)
     return len(ids)
 
 
@@ -345,20 +354,40 @@ class HeldOutlet:
 def held_outlets(
     session: Session, step: "LinkRead", attempt_limit: int, now: datetime
 ) -> list[HeldOutlet]:
-    """The outlets held now that have leads due, the one with most leads first. Asks
-    nothing: the plan says what a run would leave alone."""
+    """The outlets held now that have leads waiting, due or put off for the hold, the
+    one with most leads first. Asks nothing: the plan says what a run would leave
+    alone."""
     holds = holds_under(session, OUTLET_HOLD, now)
     if not holds:
         return []
     due = dict(
         session.execute(
-            due_records(step, attempt_limit)
+            due_records(step, attempt_limit, now=now)
             .with_only_columns(LinkLead.outlet, func.count())
             .where(LinkLead.outlet.in_(holds))
             .order_by(None)
             .group_by(LinkLead.outlet)
         ).all()
     )
+    # A lead a run has already met while its outlet was held is put off, not due: it
+    # waits for the same hold, so it is counted with the leads no run has met yet.
+    outlet_of_entry = WorkEntry.reason_values["outlet"].astext
+    put_off = session.execute(
+        select(outlet_of_entry, func.count())
+        .where(
+            WorkEntry.record_kind == step.record_kind,
+            WorkEntry.step == step.name,
+            WorkEntry.step_version == step.version,
+            WorkEntry.stale.is_(False),
+            WorkEntry.outcome == WorkOutcome.LATER,
+            WorkEntry.not_before > now,
+            WorkEntry.reason.in_((why.OUTLET_HELD.code, why.READER_NOT_NOW.code)),
+            outlet_of_entry.in_(holds),
+        )
+        .group_by(outlet_of_entry)
+    ).all()
+    for outlet, leads in put_off:
+        due[outlet] = due.get(outlet, 0) + leads
     held = [HeldOutlet(outlet, holds[outlet], leads) for outlet, leads in due.items()]
     return sorted(held, key=lambda one: (-one.leads, one.outlet))
 
@@ -396,6 +425,7 @@ class LinkRead:
     model_spend = ModelSpend(input_tokens=3000, output_tokens=700, door=TEXT_DOOR)
     # Reading publishes, so a run always says how many leads it may read.
     needs_limit = True
+    reasons = why.REASONS
 
     def __init__(
         self,
@@ -413,6 +443,7 @@ class LinkRead:
         match_reject_below: float = 0.0,
         match_accept_above: float = 0.0,
         outlet_gap_seconds: float = 0.0,
+        site_retry_hours: float = 6.0,
         read_since: date | None = None,
         trial_set: str | None = None,
         only_trial_set: bool = False,
@@ -455,8 +486,19 @@ class LinkRead:
         # each outlet was last asked.
         self._outlet_gap = outlet_gap_seconds
         self._last_asked: dict[str, float] = {}
+        # How long a lead is put off when its site was busy, throttling or failing.
+        self.site_retry_wait = timedelta(hours=site_retry_hours)
         # A run's workers share this step, so they share what it knows of each outlet.
         self._outlets = threading.Lock()
+
+    def made_due(self, session: Session, lead_ids: Sequence[int]) -> None:
+        """Called when leads are made due again by their reason: what the last read said
+        of each goes, so a lead about to be read again is not still said to be
+        unreadable."""
+        for lead in session.scalars(select(LinkLead).where(LinkLead.id.in_(lead_ids))):
+            lead.read_outcome = None
+            lead.read_detail = None
+        session.flush()
 
     # --- which leads, and in what order ---------------------------------------------
 
@@ -554,12 +596,30 @@ class LinkRead:
     # --- one lead ---------------------------------------------------------------------
 
     def _finish(
-        self, record: LinkLead, outcome: ReadOutcome, detail: str | None = None
-    ) -> WorkOutcome:
+        self,
+        record: LinkLead,
+        outcome: ReadOutcome,
+        detail: str | None = None,
+        *,
+        reason: Reason | None = None,
+        values: Mapping[str, Any] | None = None,
+    ) -> WorkOutcome | NothingFound | NeedsFix:
+        """Record what became of the lead, and answer the ledger. A read that made or
+        joined a claim is done. Any other gives its reason: final when the article is
+        what it is, needs a fix when the cause can be put right. The lead's detail is
+        the reason in words unless the read has more to say."""
         record.read_outcome = outcome
-        record.read_detail = detail
-        made = outcome in (ReadOutcome.ADDED_TO_CLAIM, ReadOutcome.NEW_CLAIM)
-        return WorkOutcome.DONE if made else WorkOutcome.NOTHING_FOUND
+        if outcome in (ReadOutcome.ADDED_TO_CLAIM, ReadOutcome.NEW_CLAIM):
+            record.read_detail = detail
+            return WorkOutcome.DONE
+        reason = reason or REASON_OF.get(outcome)
+        if reason is None:
+            raise ValueError(f"A lead that is {outcome.value} needs a reason.")
+        carried = {"outlet": record.outlet, **(values or {})}
+        record.read_detail = detail if detail is not None else reason.say(carried)
+        if reason.kind is ReasonClass.NEEDS_FIX:
+            return NeedsFix(reason, carried)
+        return NothingFound(reason, carried)
 
     def _tracked_claim(self, session: Session, record: LinkLead) -> int | None:
         """The claim that has this address as a source article, looked for again now:
@@ -753,27 +813,30 @@ class LinkRead:
 
     def run(
         self, session: Session, record: LinkLead, client: ReadClient
-    ) -> WorkOutcome | Failed | Deferred:
+    ) -> WorkOutcome | Failed | NothingFound | Later | NeedsFix:
         now = self._time.now()
         claim_id = self._tracked_claim(session, record)
         if claim_id is not None:
             # No longer a lead to read: it leaves the step's scope as already tracked.
             record.screen_outcome = ScreenOutcome.ALREADY_TRACKED
             record.claim_id = claim_id
-            return WorkOutcome.NOTHING_FOUND
+            return NothingFound(why.ALREADY_TRACKED)
         enough = self._has_enough(session, record)
         if enough is not None:
-            return self._finish(record, ReadOutcome.ENOUGH_ARTICLES, enough)
+            return self._finish(
+                record, ReadOutcome.ENOUGH_ARTICLES, enough, reason=why.ENOUGH_ARTICLES
+            )
         outlet = name_of(record.outlet)
         if outlet is None:
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, NO_NAME)
+            return self._finish(record, ReadOutcome.CANNOT_BE_READ, reason=why.NO_OUTLET_NAME)
 
         refusals = self._outlet_refusals(session, record.outlet, now)
         if refusals is not None:
             return self._finish(
                 record,
                 ReadOutcome.CANNOT_BE_READ,
-                f"{OUTLET_REFUSES} for {refusals} pages and served none",
+                reason=why.OUTLET_REFUSES,
+                values={"pages": refusals},
             )
 
         # One request at a time for an outlet, in this process or any other, from the
@@ -781,23 +844,37 @@ class LinkRead:
         # another's request may be about to stop it.
         with asking(session, record.outlet):
             page = self._ask_for_the_page(session, record, client, now)
+        if isinstance(page, _NotYet):
+            # Nothing is said of the lead: it is not unreadable, it is not yet asked for.
+            return Later(page.reason, page.until, {"outlet": record.outlet})
         if isinstance(page, _NoPage):
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, page.detail)
-        if isinstance(page, Deferred):
-            return page
+            if page.reason.kind is ReasonClass.LATER:
+                # The site is busy, throttling or failing: asked again after its wait.
+                return Later(
+                    page.reason,
+                    now + self.site_retry_wait,
+                    {"outlet": record.outlet, **page.values},
+                )
+            return self._finish(
+                record, ReadOutcome.CANNOT_BE_READ, reason=page.reason, values=page.values
+            )
         return self._read(session, record, client, now, outlet, page)
 
     def _ask_for_the_page(
         self, session: Session, record: LinkLead, client: ReadClient, now: datetime
-    ) -> Retrieved | _NoPage | Deferred:
+    ) -> Retrieved | _NoPage | _NotYet:
         """The lead's page from the page reader, or why there is none: the reader gave
-        none (`_NoPage`), or the outlet may not be asked for now (`Deferred`). Nothing
+        none (`_NoPage`), or the outlet may not be asked for now (`_NotYet`). Nothing
         is written on the lead. Run while this worker holds the outlet's turn."""
         held = held_until(session, OUTLET_HOLD + record.outlet, now)
         if held is not None:
             # The reader said when this outlet may be asked again, in this run or an
             # earlier one. Until then: no request, no allowance, no attempt.
-            return Deferred(f"{OUTLET_STOPPED} {held:%Y-%m-%d %H:%M} UTC: {record.outlet}")
+            return _NotYet(
+                why.OUTLET_HELD,
+                held,
+                f"{OUTLET_STOPPED} {held:%Y-%m-%d %H:%M} UTC: {record.outlet}",
+            )
 
         # The page reader is asked for the page. Whether the outlet may be asked, and how
         # often, is the reader's to decide; the pipeline acts on its answer.
@@ -807,15 +884,19 @@ class LinkRead:
                 # The reader could not get this outlet's last pages. Its other leads are
                 # left for a later run without asking: no request, no allowance, no
                 # attempt.
-                return Deferred(f"{OUTLET_NOT_NOW}: {record.outlet}")
+                return _NotYet(
+                    why.READER_NOT_NOW, now + NOT_NOW_WAIT, f"{OUTLET_NOT_NOW}: {record.outlet}"
+                )
             asked_at = self._last_asked.get(record.outlet)
-            if (
-                self._outlet_gap > 0
-                and asked_at is not None
-                and self._time.monotonic() - asked_at < self._outlet_gap
-            ):
-                # One outlet's pages are not asked for back to back. The lead stays due.
-                return Deferred(f"{OUTLET_JUST_ASKED}: {record.outlet}")
+            since = None if asked_at is None else self._time.monotonic() - asked_at
+            if self._outlet_gap > 0 and since is not None and since < self._outlet_gap:
+                # One outlet's pages are not asked for back to back. The lead is due
+                # again once the gap has passed, in this run if it is still at work.
+                return _NotYet(
+                    why.OUTLET_JUST_ASKED,
+                    now + timedelta(seconds=self._outlet_gap - since),
+                    f"{OUTLET_JUST_ASKED}: {record.outlet}",
+                )
             self._last_asked[record.outlet] = self._time.monotonic()
         client.allowances.claim(READER)
         client.requests_made += 1
@@ -826,17 +907,18 @@ class LinkRead:
             # with no attempt counted, and the run goes on with other leads.
             with self._outlets:
                 self._not_now[record.outlet] = self._not_now.get(record.outlet, 0) + 1
+            until = now + NOT_NOW_WAIT
             if later.retry_after_seconds:
                 # Kept in its own short transaction, as a claim on an allowance is, and
                 # before the outlet's turn is given up: the next worker finds it.
-                keep(client.allowances, record.outlet, now, later.retry_after_seconds)
-            return Deferred(str(later))
+                until = keep(client.allowances, record.outlet, now, later.retry_after_seconds)
+            return _NotYet(why.READER_NOT_NOW, until, str(later))
         except NotAllowed as refused:
-            return _NoPage(f"{NOT_ALLOWED}: {refused.reason}")
+            return _NoPage(why.NOT_ALLOWED, {"why": refused.reason})
         except NotServed as missing:
-            return _NoPage(f"{NO_PAGE} (the site answered {missing.status})")
+            return _NoPage(why.reason_for_status(missing.status), {"status": missing.status})
         except ThinPage:
-            return _NoPage("too little article text")
+            return _NoPage(why.THIN_PAGE)
         # The reader got a page from this outlet: it can be asked again.
         with self._outlets:
             self._not_now.pop(record.outlet, None)
@@ -850,13 +932,13 @@ class LinkRead:
         now: datetime,
         outlet: str,
         retrieved: Retrieved,
-    ) -> WorkOutcome | Failed | Deferred:
+    ) -> WorkOutcome | Failed | NothingFound | Later | NeedsFix:
         """What the page the reader gave becomes: a source article, a new claim, or the
         reason it is neither."""
         page = retrieved.page
         dated = _date_and_headline(retrieved)
         if isinstance(dated, _NoPage):
-            return self._finish(record, ReadOutcome.CANNOT_BE_READ, dated.detail)
+            return self._finish(record, ReadOutcome.CANNOT_BE_READ, reason=dated.reason)
         day, headline = dated
 
         # The one model read. From here a failure is returned, not raised, so that the
@@ -1113,8 +1195,8 @@ class LinkRead:
             return NotAttached(f"{OUTLET_REFUSES} for {refusals} pages and served none")
         with asking(session, record.outlet):
             page = self._ask_for_the_page(session, record, client, now)
-        if isinstance(page, Deferred):
-            return page
+        if isinstance(page, _NotYet):
+            return Deferred(page.said)
         if isinstance(page, _NoPage):
             return NotAttached(page.detail)
         dated = _date_and_headline(page)
@@ -1149,8 +1231,8 @@ def _date_and_headline(retrieved: Retrieved) -> tuple[date, str] | _NoPage:
     page = retrieved.page
     day = published_day(page.published if page else None)
     if day is None:
-        return _NoPage(NO_DATE)
+        return _NoPage(why.NO_DATE)
     headline = (page.headline or "").strip() if page else ""
     if not headline:
-        return _NoPage(NO_HEADLINE)
+        return _NoPage(why.NO_HEADLINE)
     return day, headline

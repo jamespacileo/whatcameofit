@@ -346,8 +346,10 @@ def requeue(
     entries = list(
         session.scalars(
             select(WorkEntry)
+            # Every record that still exists, in the step's scope or not: one out of
+            # scope is not worked on whatever its entry says.
             .join(step.model, _entry_of(step))
-            .where(step.scope(), *wanted)
+            .where(*wanted)
             .order_by(WorkEntry.record_id)
         )
     )
