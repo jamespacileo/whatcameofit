@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NOTICES } from "../src/lib/notices.ts";
-import { FILE_LIMIT, oversizedFiles } from "./dist-size.mjs";
+import { FILE_COUNT_LIMIT, FILE_LIMIT, HOST_FILE_COUNT, countFiles, oversizedFiles } from "./dist-size.mjs";
 
 const DIST = path.resolve("dist");
 const REQUIRED = [...NOTICES, "Data sources:", "Registries"];
@@ -31,10 +31,17 @@ for (const { file, bytes } of oversizedFiles(DIST, FILE_LIMIT)) {
     `${file} is ${(bytes / 2 ** 20).toFixed(1)} MiB, over the ${FILE_LIMIT / 2 ** 20} MiB a built file may be`,
   );
 }
+// The host refuses a version of more than 20,000 files on its free plan.
+const files = countFiles(DIST);
+if (files > FILE_COUNT_LIMIT) {
+  problems.push(
+    `the build holds ${files.toLocaleString("en-GB")} files, over the ${FILE_COUNT_LIMIT.toLocaleString("en-GB")} a build may hold (the host's free plan allows ${HOST_FILE_COUNT.toLocaleString("en-GB")}; set DIST_FILE_LIMIT for a plan that allows more)`,
+  );
+}
 if (problems.length > 0) {
   console.error(`Build check failed:\n  ${problems.join("\n  ")}`);
   process.exit(1);
 }
 console.log(
-  `Build check passed: footer notices present on ${found.length} pages; no file over ${FILE_LIMIT / 2 ** 20} MiB.`,
+  `Build check passed: footer notices present on ${found.length} pages; no file over ${FILE_LIMIT / 2 ** 20} MiB; ${files.toLocaleString("en-GB")} files of the ${FILE_COUNT_LIMIT.toLocaleString("en-GB")} a build may hold.`,
 );

@@ -12,9 +12,18 @@ from thenwhat.backfill.link_load import load_links
 from thenwhat.backfill.link_readers import HACKER_NEWS, REDDIT, SharedLink
 from thenwhat.backfill.link_report import screening_report
 from thenwhat.backfill.link_screen import (
+    ACRONYM_AND_CONDITION,
+    CANDIDATE,
     CLAIM,
+    CODE_ALONE,
+    CODE_AND_CONDITION,
+    EXACT,
     FOUND_BY_NEWS_SEARCH,
+    GIVES_NUMBER,
+    NAMED,
+    OTHER_NAME_AND_CONDITION,
     REGISTRY_TRIAL,
+    STRONG,
     TITLE_NAMES_CLAIM,
     TITLE_NAMES_TRIAL,
     LinkScreen,
@@ -267,6 +276,171 @@ def test_at_most_the_configured_number_of_links_is_kept(session: Session):
     screen(session, LinkScreen(links_max=3))
 
     assert len(links(session, lead)) == 3
+
+
+# --- links on a trial's other terms (openspec trial-report-links) ---------------------
+
+
+def study(
+    session: Session,
+    number: int,
+    *,
+    condition: str,
+    name: str = "Exavir",
+    other_names: tuple[str, ...] = (),
+    acronym: str | None = None,
+    kind: str = "DRUG",
+    external_id: str | None = None,
+) -> RegistryTrial:
+    """A stored trial with the wider record: other names, an acronym, a registry number."""
+    record = trial(session, name, condition, number)
+    record.interventions = [{"type": kind, "name": name, "otherNames": list(other_names)}]
+    record.acronym = acronym
+    record.external_id = external_id or record.external_id
+    session.flush()
+    return record
+
+
+def strengths(
+    session: Session, lead: LinkLead
+) -> list[tuple[int, str | None, str | None, str | None]]:
+    """A lead's links to trials: the trial, the strength, the term and the word beside."""
+    return [
+        (link.record_id, link.strength, link.term, link.beside)
+        for link in session.scalars(
+            select(LinkLeadLink)
+            .where(LinkLeadLink.link_lead_id == lead.id, LinkLeadLink.record_kind == REGISTRY_TRIAL)
+            .order_by(LinkLeadLink.id)
+        )
+    ]
+
+
+def test_a_code_beside_its_condition_is_a_strong_link(session: Session):
+    """Scenarios: A code and its condition, A code written without its hyphen"""
+    tested = study(session, 1, condition="bladder cancer", other_names=("TARA-002",))
+    hyphen = share(
+        session, "https://www.bbc.com/news/health-20", "TARA-002 shrinks bladder tumours"
+    )
+    joined = share(
+        session, "https://www.bbc.com/news/health-21", "Bladder drug tara002 clears a trial", item=2
+    )
+
+    screen(session)
+
+    assert links(session, hyphen) == [(REGISTRY_TRIAL, tested.id, CODE_AND_CONDITION)]
+    assert strengths(session, hyphen) == [(tested.id, STRONG, "TARA-002", "bladder")]
+    assert strengths(session, joined) == [(tested.id, STRONG, "TARA-002", "bladder")]
+
+
+def test_a_code_without_the_condition_is_named_and_not_strong(session: Session):
+    """Scenario: A telling name without the condition"""
+    tested = study(session, 1, condition="bladder cancer", other_names=("TARA-002",))
+    lead = share(session, "https://www.bbc.com/news/business-22", "Maker of TARA-002 raises funds")
+
+    screen(session)
+
+    assert links(session, lead) == [(REGISTRY_TRIAL, tested.id, CODE_ALONE)]
+    assert strengths(session, lead) == [(tested.id, NAMED, "TARA-002", None)]
+
+
+def test_a_registry_number_in_the_address_or_title_is_an_exact_link(session: Session):
+    """Scenario: A lead that gives a registry number"""
+    numbered = study(session, 1, condition="psoriasis", external_id="NCT01234567")
+    study(session, 2, condition="psoriasis", external_id="NCT07654321")
+    in_address = share(session, "https://www.bbc.com/news/health-nct01234567", "A synthetic study")
+    in_title = share(
+        session, "https://www.bbc.com/news/health-23", "Study NCT01234567 reports", item=2
+    )
+
+    screen(session)
+
+    assert links(session, in_address) == [(REGISTRY_TRIAL, numbered.id, GIVES_NUMBER)]
+    assert strengths(session, in_title) == [(numbered.id, EXACT, None, None)]
+
+
+def test_an_acronym_links_only_when_it_carries_a_number(session: Session):
+    """Scenarios: An acronym with a number, A study's acronym, A common-word acronym"""
+    numbered = study(session, 1, condition="lung carcinoma", acronym="SYNTHNOTE-789")
+    study(session, 2, condition="stroke", acronym="HOPE")
+    study(session, 3, condition="stroke", acronym="RECOVERY")
+    by_acronym = share(
+        session, "https://www.bbc.com/news/health-24", "Synthnote-789 results in lung carcinoma"
+    )
+    hope = share(session, "https://www.bbc.com/news/health-25", "New hope for stroke", item=2)
+    recovery = share(
+        session, "https://www.bbc.com/news/health-26", "Recovery after stroke improves", item=3
+    )
+
+    screen(session)
+
+    assert links(session, by_acronym) == [(REGISTRY_TRIAL, numbered.id, ACRONYM_AND_CONDITION)]
+    assert strengths(session, by_acronym) == [(numbered.id, NAMED, "SYNTHNOTE-789", "lung")]
+    assert links(session, hope) == []
+    assert links(session, recovery) == []
+
+
+def test_another_name_beside_the_condition_is_a_candidate(session: Session):
+    """Scenarios: A brand name, A class of treatments, A behaviour"""
+    branded = study(session, 1, condition="psoriasis", other_names=("Brandvir", "Skin cancer drug"))
+    study(
+        session,
+        2,
+        condition="psoriasis",
+        name="Walking",
+        other_names=("Stepping",),
+        kind="BEHAVIORAL",
+    )
+    brand = share(
+        session, "https://www.bbc.com/news/health-27", "Brandvir clears psoriasis in study"
+    )
+    alone = share(session, "https://www.bbc.com/news/health-28", "Brandvir maker is sold", item=2)
+    general = share(
+        session, "https://www.bbc.com/news/health-29", "Skin cancer drug and psoriasis", item=3
+    )
+    behaviour = share(
+        session, "https://www.bbc.com/news/health-30", "Stepping eases psoriasis", item=4
+    )
+
+    screen(session)
+
+    assert links(session, brand) == [(REGISTRY_TRIAL, branded.id, OTHER_NAME_AND_CONDITION)]
+    assert strengths(session, brand) == [(branded.id, CANDIDATE, "Brandvir", "psoriasis")]
+    assert links(session, alone) == []
+    assert links(session, general) == []
+    assert links(session, behaviour) == []
+
+
+def test_a_strong_link_is_to_every_trial_and_the_present_link_keeps_its_limit(session: Session):
+    """Scenarios: Nine trials of one drug for one condition, A common name with its indication"""
+    for number in range(5):
+        study(session, number, condition="bladder cancer", other_names=("TARA-002",))
+    lead = share(
+        session, "https://www.bbc.com/news/health-31", "Exavir or TARA-002 in bladder cancer"
+    )
+
+    screen(session, LinkScreen(links_max=3))
+
+    found = [reason for _, _, reason in links(session, lead)]
+    assert found == [CODE_AND_CONDITION] * 5 + [TITLE_NAMES_TRIAL] * 3
+    assert {strength for _, strength, _, _ in strengths(session, lead)} == {STRONG, CANDIDATE}
+
+
+def test_linking_on_terms_sends_no_request_and_records_no_spend(session: Session):
+    """Scenario: Linking a million leads"""
+    study(session, 1, condition="bladder cancer", other_names=("TARA-002", "Brandvir"))
+    for number in range(20):
+        share(
+            session,
+            f"https://www.bbc.com/news/health-4{number}",
+            "TARA-002 and Brandvir in bladder cancer",
+            item=number,
+        )
+
+    client = screen(session)
+
+    assert client.requests_made == 0
+    assert session.scalars(select(LlmUsage)).all() == []
+    assert session.scalars(select(DecisionLog)).all() == []
 
 
 # --- what screening costs --------------------------------------------------------------

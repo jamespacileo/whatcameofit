@@ -294,16 +294,27 @@ export interface OpenDataIndexEntry {
   status: { code: string };
   first_reported_date: string | null;
   last_checked_at: string | null;
-  /** The address of the claim's full record. */
+  /** The address of the claim's full record, from the root of the site that served the
+   * index, so a copy of the site (a pull request's preview) leads to its own records. */
   record: string;
 }
 
+/** Names what a file is, so a tool written for the old single file, which had no marker
+ * and a `claims` list of full records, fails at once on the index. */
+export const INDEX_FORMAT = { format: "claims-index", format_version: 2 } as const;
+export const RECORD_FORMAT = { format: "claim-record", format_version: 2 } as const;
+
 export interface OpenDataIndex extends OpenDataHeader {
-  claims: OpenDataIndexEntry[];
+  format: typeof INDEX_FORMAT.format;
+  format_version: typeof INDEX_FORMAT.format_version;
+  /** One short entry per claim. Not `claims`, which held full records in format 1. */
+  entries: OpenDataIndexEntry[];
 }
 
 /** One claim's full record, with the licence, credit and sources, so the file stands alone. */
 export interface OpenDataRecord extends OpenDataHeader {
+  format: typeof RECORD_FORMAT.format;
+  format_version: typeof RECORD_FORMAT.format_version;
   claim: OpenClaim;
 }
 
@@ -317,10 +328,11 @@ function header(file: OpenData): OpenDataHeader {
   return rest;
 }
 
-export function openDataIndex(file: OpenData, siteUrl: string): OpenDataIndex {
+export function openDataIndex(file: OpenData): OpenDataIndex {
   return {
+    ...INDEX_FORMAT,
     ...header(file),
-    claims: file.claims.map((claim) => ({
+    entries: file.claims.map((claim) => ({
       slug: claim.slug,
       headline: claim.headline,
       intervention: { name: claim.intervention.name, synonyms: [...claim.intervention.synonyms] },
@@ -328,11 +340,11 @@ export function openDataIndex(file: OpenData, siteUrl: string): OpenDataIndex {
       status: { code: claim.status.code },
       first_reported_date: claim.first_reported_date,
       last_checked_at: file.last_checked_at,
-      record: siteUrl + recordPath(claim.slug),
+      record: recordPath(claim.slug),
     })),
   };
 }
 
 export function openDataRecord(file: OpenData, claim: OpenClaim): OpenDataRecord {
-  return { ...header(file), claim };
+  return { ...RECORD_FORMAT, ...header(file), claim };
 }

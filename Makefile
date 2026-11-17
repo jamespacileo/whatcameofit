@@ -1,4 +1,4 @@
-.PHONY: export-compare setup smoke-research check lint types db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check lint types db-up test scripts-test store-test store-dev site-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 DB_PORT ?= 5433
 export SITE_URL ?= https://whatcameofit.com
@@ -91,6 +91,7 @@ extension-safari: extension
 #   make export-compare
 #   make export-compare ARGS="--every 5 --report /tmp/compare.json"
 #   STORE_FILE=/path/store.db STORE_PAYLOADS=/path/objects make export-compare
+.PHONY: export-compare
 export-compare:
 	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
 
@@ -104,9 +105,20 @@ public-export:
 	docker compose exec -T pipeline sh -c 'thenwhat export --out /tmp/public-export.json >&2 && cat /tmp/public-export.json' > $(PUBLIC_EXPORT).tmp
 	mv $(PUBLIC_EXPORT).tmp $(PUBLIC_EXPORT)
 
-# Review locally, then commit this snapshot. GitHub never reads the private database.
-publish-data: public-export
+# The trial listing that stands beside the export: registry facts of one named set of
+# stored trials, for the site's search and its page of an uncited trial. The site finds it
+# by name beside the export it builds from. Sends no request.
+PUBLIC_LISTING := site/data/public-trials-listing.json
+TRIALS_SET ?= active-since-2025
+
+public-trials-listing:
+	docker compose exec -T pipeline sh -c 'thenwhat trials-listing --set $(TRIALS_SET) --out /tmp/public-trials-listing.json >&2 && cat /tmp/public-trials-listing.json' > $(PUBLIC_LISTING).tmp
+	mv $(PUBLIC_LISTING).tmp $(PUBLIC_LISTING)
+
+# Review locally, then commit these snapshots. GitHub never reads the private database.
+publish-data: public-export public-trials-listing
 	node site/scripts/stage-public-export.mjs $(PUBLIC_EXPORT) site/data/published-export.json site/data/published-topics.json
+	node site/scripts/stage-trials-listing.mjs $(PUBLIC_LISTING) site/data/published-trials-listing.json site/data/published-export.json
 
 deploy-ci-check: site/node_modules
 	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs --dry-run
@@ -129,12 +141,12 @@ pr-preview: site/node_modules
 
 # Everything a deployment does except publishing: the checks, a public build, and
 # Wrangler's own dry run.
-deploy-check: site/node_modules public-export
+deploy-check: site/node_modules public-export public-trials-listing
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs --dry-run
 
 # Publish to Cloudflare at SITE_URL's domain. Refuses a preview export and a
 # local address.
-deploy: site/node_modules public-export
+deploy: site/node_modules public-export public-trials-listing
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs
 
 # The site with its registry search, on this machine only: http://localhost:8787

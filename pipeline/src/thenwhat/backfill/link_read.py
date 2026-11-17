@@ -30,7 +30,13 @@ from thenwhat.backfill.allowance import Allowances, held_until, holds_under
 from thenwhat.backfill.errors import BackfillError, SpendCeilingReached
 from thenwhat.backfill.ledger import due_records
 from thenwhat.backfill.link_evaluation import reading_refusal
-from thenwhat.backfill.link_screen import CLAIM, REGISTRY_TRIAL, TITLE_NAMES_CLAIM
+from thenwhat.backfill.link_screen import (
+    CLAIM,
+    REGISTRY_TRIAL,
+    STRENGTH_TO_READ,
+    STRONG,
+    TITLE_NAMES_CLAIM,
+)
 from thenwhat.backfill.link_triage import is_passed
 from thenwhat.backfill.outlet_hold import OUTLET_HOLD, asking, keep
 from thenwhat.backfill.outlet_kinds import name_of
@@ -41,6 +47,7 @@ from thenwhat.backfill.topics import (
     other_names_of,
     title_names,
 )
+from thenwhat.backfill.trial_links import PHASE_3, at_least, held_and_linked, linked_to
 from thenwhat.claims.entry import (
     MAX_NAMED_CLAIMS,
     EntryError,
@@ -313,8 +320,21 @@ class LinkRead:
         match_accept_above: float = 0.0,
         outlet_gap_seconds: float = 0.0,
         read_since: date | None = None,
+        trial_set: str | None = None,
+        only_trial_set: bool = False,
+        least_strength: str = STRONG,
         time: Time | None = None,
     ) -> None:
+        # The set of trials being worked, if the operator named one (openspec
+        # trial-report-links). A held lead linked to it by an exact or strong link is
+        # read, and the leads so linked are read first, phase 3 before the rest. With
+        # `only_trial_set`, no other lead is read: only those linked to the set at
+        # `least_strength` or better. A lead triage rejected is never read.
+        self.trial_set = trial_set
+        self.only_trial_set = only_trial_set and trial_set is not None
+        self._set_strengths = at_least(least_strength)
+        if trial_set is not None:
+            linked_to(STRENGTH_TO_READ, trial_set)  # refuses a set it does not know
         self.pass_above = pass_above
         self.reject_below = reject_below
         self.triage_version = triage_version
@@ -364,7 +384,15 @@ class LinkRead:
                 LinkLead.triage_score >= self.reject_below,
             )
             readable = or_(readable, held_on_a_topic)
+        if (
+            self.trial_set is not None
+            and self.pass_above is not None
+            and self.reject_below is not None
+        ):
+            readable = or_(readable, held_and_linked(self.trial_set, self.reject_below))
         in_scope = and_(LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE, readable)
+        if self.only_trial_set:
+            in_scope = and_(in_scope, linked_to(self._set_strengths, self.trial_set))
         if self.read_since is not None:
             since = datetime.combine(self.read_since, datetime.min.time(), tzinfo=UTC)
             in_scope = and_(in_scope, LinkLead.first_shared_at >= since)
@@ -378,8 +406,10 @@ class LinkRead:
         return self._names_a_topic
 
     def order(self) -> list[ColumnElement[Any]]:
-        """After those of a topic: the leads linked to a registry trial, then the most
-        shared."""
+        """After those of a topic: the leads with an exact or strong link to a trial of
+        the set being worked, those to its phase 3 trials first; then those so linked
+        to any other trial; then the leads with any link to a registry trial; then the
+        most shared."""
         linked = exists().where(
             LinkLeadLink.link_lead_id == LinkLead.id,
             LinkLeadLink.record_kind == REGISTRY_TRIAL,
@@ -389,7 +419,17 @@ class LinkRead:
             .where(LinkShare.link_lead_id == LinkLead.id)
             .scalar_subquery()
         )
-        return [linked.desc(), shared.desc()]
+        of_the_set: list[ColumnElement[Any]] = []
+        if self.trial_set is not None:
+            of_the_set = [
+                linked_to(STRENGTH_TO_READ, self.trial_set, phase=PHASE_3).desc(),
+                linked_to(STRENGTH_TO_READ, self.trial_set).desc(),
+            ]
+            if self._set_strengths != STRENGTH_TO_READ:
+                of_the_set.append(
+                    linked_to(self._set_strengths, self.trial_set, phase=PHASE_3).desc()
+                )
+        return [*of_the_set, linked_to(STRENGTH_TO_READ).desc(), linked.desc(), shared.desc()]
 
     def check_ready(self, session: Session) -> None:
         """Refuse to read anything until triage has been measured (openspec

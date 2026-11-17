@@ -39,7 +39,7 @@ from thenwhat.backfill.link_report import IN_SCOPE_KINDS, screening_report
 from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
-from thenwhat.backfill.registered import registered_steps
+from thenwhat.backfill.registered import link_read_step, make_triage, registered_steps
 from thenwhat.backfill.registry_load import (
     TrialList,
     UnknownTrialSet,
@@ -65,6 +65,7 @@ from thenwhat.backfill.steps import (
     model_spend_of,
 )
 from thenwhat.backfill.topics import TOPICS
+from thenwhat.backfill.trial_links import CLAIMS_A_READ, at_least, plan_of
 from thenwhat.backfill.trial_references import count_references
 from thenwhat.backfill.trial_sets import SETS, count_sets
 from thenwhat.cli import session as cli_session
@@ -211,6 +212,10 @@ def _held_lines(session: Session, step: LinkRead, attempt_limit: int) -> list[st
 
 def _dollars(amount: Decimal) -> str:
     return f"${amount.quantize(Decimal('0.01'))}"
+
+
+def _dollars4(amount: Decimal) -> str:
+    return f"${amount.quantize(Decimal('0.0001'))}"
 
 
 def _spend_line(
@@ -714,6 +719,134 @@ def trial_references_command(
         )
         for domain, number in counted.domains.most_common(domains):
             out.print(f"    {domain}: {number:,}", markup=False)
+
+
+def _cost_of_a_read(session: Session, settings: Settings, step: LinkRead) -> tuple[Decimal, str]:
+    """What one read costs with every later step counted: the measured cost where a
+    week of measurements exists, and the step's own estimate otherwise."""
+    measured = measured_cost_of_a_record(session, step.name, today=datetime.now(UTC).date())
+    if measured is not None:
+        return measured.per_record, f"measured over {measured.days} days"
+    try:
+        prices = prices_for(settings, step.model_spend.door)
+    except PricesNotSet as missing:
+        raise BackfillError(f"No cost can be given for a read: {missing}.") from None
+    return cost_of(step.model_spend, prices, 1), "estimated"
+
+
+@backfill_app.command("read-set")
+def read_set_command(
+    trial_set: Annotated[
+        str, typer.Argument(help="A named set of stored trials, from `backfill trial-sets`.")
+    ],
+    limit: Annotated[
+        int | None,
+        typer.Option(min=1, help="Read at most this many leads. Without it, only the plan."),
+    ] = None,
+    strength: Annotated[
+        str,
+        typer.Option(
+            help="The weakest link read for: exact, strong (the default), named or "
+            "candidate. A held lead is read only on an exact or strong link."
+        ),
+    ] = "strong",
+) -> None:
+    """Plan, and with --limit read, the leads linked to trials of a named set.
+
+    Prints how many leads in scope are linked to the set, where triage left them, how
+    many are read, how many would be read, what that is expected to cost and send to
+    audit, and what the reads for a set have used of their monthly share. Leads linked
+    to the set's phase 3 trials are read first. A lead triage rejected is never read. It
+    reads nothing when the expected cost passes what is left of the share. A read here is
+    an ordinary read: it drafts or joins a claim, which is prepared and held awaiting
+    audit as any backfill batch is.
+    """
+    settings = settings_or_exit()
+    now = datetime.now(UTC)
+    with refusals():
+        strengths = at_least(strength)
+        step = link_read_step(
+            settings,
+            make_triage(settings).version,
+            trial_set=trial_set,
+            only_trial_set=True,
+            least_strength=strength,
+        )
+        share = settings.trial_route_monthly_usd
+        with open_session() as session:
+            plan = plan_of(
+                session,
+                trial_set,
+                strengths,
+                pass_above=settings.lead_pass_above,
+                reject_below=settings.lead_reject_below,
+                read_step=step.name,
+                now=now,
+            )
+            due = count(session, step, settings.backfill_attempt_limit).due
+            one, basis = _cost_of_a_read(session, settings, step)
+        spent = one * plan.read_this_month
+        left = max(share - spent, Decimal(0))
+        to_read = due if limit is None else min(due, limit)
+        cost = one * to_read
+        out.print(
+            f"{trial_set}: {plan.leads:,} leads in scope are linked "
+            f"({' or '.join(strengths)}) to {plan.trials:,} trials of the set",
+            markup=False,
+        )
+        out.print(
+            f"  triage: {plan.passed:,} passed, {plan.held:,} held, {plan.rejected:,} "
+            f"rejected, {plan.not_scored:,} not scored; {plan.already_read:,} already read",
+            markup=False,
+        )
+        out.print(
+            f"  would be read: {due:,}, those linked to phase 3 trials first"
+            + (f"; this run reads at most {to_read:,}" if limit is not None else ""),
+            markup=False,
+        )
+        out.print(
+            f"  expected cost: {_dollars(cost)} at {_dollars4(one)} a read ({basis}); "
+            f"about {int(to_read * CLAIMS_A_READ):,} claims to audit",
+            markup=False,
+        )
+        out.print(
+            f"  reads for this set this month: {plan.read_this_month:,}, about "
+            f"{_dollars(spent)} of the route's {_dollars(share)} share; {_dollars(left)} left",
+            markup=False,
+        )
+        if cost > left:
+            raise BackfillError(
+                f"Nothing was read: the reads are expected to cost {_dollars(cost)} and "
+                f"{_dollars(left)} is left of the route's share this month "
+                "(TRIAL_ROUTE_MONTHLY_USD). Give a smaller --limit."
+            )
+        if limit is None:
+            out.print("Nothing was read. Give --limit to read.", markup=False)
+            return
+        with open_session() as session:
+            refuse_stale_keys(session)
+            step.check_ready(session)
+        allowances = make_allowances(settings)
+        allowances.of(step.source)
+        client = make_client(step, settings, allowances)
+        report = run_step(
+            open_session,
+            step,
+            client,
+            now=lambda: datetime.now(UTC),
+            attempt_limit=settings.backfill_attempt_limit,
+            limit=to_read,
+            before_call=ceiling_check(settings, lambda: datetime.now(UTC)),
+        )
+    out.print(
+        f"{step.name} for {trial_set}: {report.done:,} done, {report.nothing_found:,} "
+        f"found nothing, {report.failed:,} failed"
+        + (f", {report.deferred:,} could not be asked for now" if report.deferred else "")
+        + f"; {report.remaining_due:,} still due. Run `thenwhat prepare --pending` next.",
+        markup=False,
+    )
+    if report.stopped:
+        out.print(f"Stopped: {report.stopped}", markup=False)
 
 
 @backfill_app.command("links")
