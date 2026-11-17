@@ -39,6 +39,34 @@ OWNERS_QUERY = (
 )
 
 
+# A place in the MeSH tree, as a descriptor's record gives it: a letter, two digits, then
+# groups of three. A descriptor may have several.
+TREE_NUMBER = re.compile(r"^https?://id\.nlm\.nih\.gov/mesh/(?:\d{4}/)?([A-Z]\d{2}(?:\.\d{3})*)$")
+
+
+def _resources(value: Any) -> list[str]:
+    """A JSON-LD link value: one address, a list of them, or nothing."""
+    if isinstance(value, str):
+        return [value]
+    return [entry for entry in value if isinstance(entry, str)] if isinstance(value, list) else []
+
+
+def tree_numbers(payload: dict[str, Any]) -> tuple[str, ...]:
+    """Where a stored descriptor record places it in the tree, in order. Empty for a
+    supplementary record, which the tree does not hold."""
+    term = payload.get("term") or {}
+    found = (TREE_NUMBER.match(address) for address in _resources(term.get("treeNumber")))
+    return tuple(sorted(match.group(1) for match in found if match is not None))
+
+
+def broader_descriptors(payload: dict[str, Any]) -> tuple[str, ...]:
+    """The descriptors a stored descriptor record names as directly broader, in order.
+    Empty at the top of a tree."""
+    term = payload.get("term") or {}
+    found = (RESOURCE.match(address) for address in _resources(term.get("broaderDescriptor")))
+    return tuple(sorted(match.group(2) for match in found if match is not None))
+
+
 @dataclass(frozen=True, slots=True)
 class LabelledTerm:
     identifier: str
@@ -121,6 +149,19 @@ class Mesh(Source):
             payload={"term": fetched.payload, "concept": concept},
             fetched_at=fetched.fetched_at,
         )
+
+    def descriptor_labelled(self, label: str) -> str | None:
+        """The identifier of the descriptor whose own label equals this one, whatever its
+        case. None when no descriptor's label does. An entry term is not a label: a
+        paper's subject heading is given by its descriptor's label, so nothing looser is
+        tried."""
+        label = " ".join(label.split())
+        if not label:
+            return None
+        found = [
+            identifier for identifier, own in self._equal(label, "descriptor") if _same(own, label)
+        ]
+        return found[0] if found else None
 
     def terms_labelled(self, name: str) -> list[LabelledTerm]:
         """The terms whose label, or one of whose entry terms, equals the name, whatever

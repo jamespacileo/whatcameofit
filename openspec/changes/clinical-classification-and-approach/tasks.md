@@ -16,23 +16,23 @@
 
 ## 3. Clinical categories
 
-- [ ] 3.1 Read Europe PMC's and NLM's terms again for republishing a paper's subject headings and record the reading in `docs/sources.md`. Verify the note states what was read, the date, and whether paper headings may be published; if not, drop 3.4 and say so in `design.md`.
-- [ ] 3.2 Add `clinical/categories.py` with the pure derivation of a claim's categories from trial and paper records, each with its sources. Verify it imports no session, clock or network.
-- [ ] 3.3 Read a trial record's direct condition terms. Verify with pure tests on recorded payloads for: a direct term is a category, an ancestor is not, two trials giving one category name both.
-- [ ] 3.4 Add the pure reader of a paper record's major-topic headings in the disease and mental-disorder trees, and include approved papers in the recompute. Verify with pure tests on recorded paper records (abstracts replaced) for: a major disease heading, a check tag, a drug heading, a non-major heading; and a session test for a claim with a paper and no trial.
+- [x] 3.1 Read Europe PMC's and NLM's terms again for republishing a paper's subject headings and record the reading in `docs/sources.md`. Verify the note states what was read, the date, and whether paper headings may be published; if not, drop 3.4 and say so in `design.md`.
+- [x] 3.2 Add `clinical/categories.py` with the pure derivation of a claim's categories from trial and paper records, each with its sources. Verify it imports no session, clock or network.
+- [x] 3.3 Read a trial record's direct condition terms. Verify with pure tests on recorded payloads for: a direct term is a category, an ancestor is not, two trials giving one category name both.
+- [x] 3.4 Add the pure reader of a paper record's major-topic headings in the disease and mental-disorder trees, and include approved papers in the recompute. Verify with pure tests on recorded paper records (abstracts replaced) for: a major disease heading, a check tag, a drug heading, a non-major heading; and a session test for a claim with a paper and no trial.
 - [ ] 3.5 Add the session reader that gathers a claim's approved trial and paper records for the derivation. Verify with session tests for: a candidate trial ignored, a category gone once its only match is rejected, a merged claim holding both claims' categories with their sources.
 - [ ] 3.6 Add "Clinical category" to `GLOSSARY.md`. Verify the term is used with that spelling in code, CLI output and site copy by a grep recorded in the task's commit message.
 
 ## 4. The MeSH tree
 
 - [ ] 4.1 Read `treeNumber` and `broaderDescriptor` in `sources/mesh.py` from the descriptor record, with a recorded fixture, and note the observed fields in `docs/sources.md`. Verify with a source-client test on the fixture, including a descriptor with two tree numbers.
-- [ ] 4.2 Add the pure tree functions: broader descriptors of a descriptor, and "at or below" by tree-number prefix. Verify with pure tests including a descriptor in two places.
+- [x] 4.2 Add the pure tree functions: broader descriptors of a descriptor, and "at or below" by tree-number prefix. Verify with pure tests including a descriptor in two places.
 - [ ] 4.3 Add `thenwhat clinical tree` to read and store the record of every category in use and each broader one, and to list missing and retired descriptors. Verify with one success and one refusal CLI test against recorded fixtures, and that a second run asks the source for nothing.
 
 ## 5. Topic mapping and comparison
 
 - [ ] 5.1 Add `clinical/topics.py` with the mapping by descriptor identifier, carrying over the 21 headings of `MESH_GROUPS`, and extend the configuration check to refuse a descriptor the stored vocabulary does not hold. Verify with configuration tests for a valid mapping and an unknown descriptor.
-- [ ] 5.2 Add the pure `derived_topics`. Verify with pure tests for: one topic covering several categories, one claim under two topics, a category no topic covers.
+- [x] 5.2 Add the pure `derived_topics`. Verify with pure tests for: one topic covering several categories, one claim under two topics, a category no topic covers.
 - [ ] 5.3 Point the advisory suggestion in `claims/mesh_areas.py` at the mapping and delete `MESH_GROUPS`. Verify the existing suggestion tests pass with the reasons now naming the claim's category.
 - [ ] 5.4 Add `thenwhat clinical compare` with `--disagreeing`, `--tsv` and `--uncovered`, and the disagreement line in the `prepare` summary. Verify with one success and one refusal CLI test, a test that the counts sum to the number of claims, and that a row carries no article text.
 - [ ] 5.5 Add `thenwhat clinical categories`, reporting how many unarchived claims have a category from trials, from papers only, and none; with a slug it lists that claim's categories and sources. Verify with one success and one refusal CLI test.
