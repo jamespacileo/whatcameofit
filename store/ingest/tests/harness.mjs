@@ -68,7 +68,7 @@ export class Service {
       resourcePersistencePath: join(service.dir, "v3"),
       cf: false,
       // The Worker's own files, the entry first: nothing is bundled, so what runs is src/.
-      modules: ["index", "auth", "check", "hash", "limits", "sql.generated", "store"]
+      modules: ["index", "auth", "check", "hash", "kinds", "limits", "sql.generated", "store"]
         .map((name) => ({ type: "ESModule", path: join(root, `src/${name}.mjs`) })),
       compatibilityDate: "2026-10-01",
       d1Databases: { STORE: "STORE" },

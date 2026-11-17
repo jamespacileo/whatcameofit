@@ -34,7 +34,7 @@ After changing `store/schema.sql`, `store/merge.sql`, `store/preview.sql` or `st
 Every request carries `Authorization: Bearer <token>`. Without a token nothing answers.
 
 1. `PUT /payloads/<sha256>` for each payload over 16 KB (`application/octet-stream`). The body is hashed; one that is not what its checksum says is refused and nothing is stored. A payload already held is not stored again.
-2. `POST /runs` with `{id, writer, commit, steps, counts, checksum}` (and `request_class` for a lookup). The service sets the time, a day only for a lookup. The device is the token's.
+2. `POST /runs` with `{id, writer, commit, steps, counts, checksum}` (and `request_class` for a lookup). The service sets the time, a day only for a lookup. Registering a run again writes nothing: it answers 200 when the run is the one registered (same writer, device, checksum, steps and counts) and 409 otherwise. The device is the token's.
 3. `POST /runs/<id>/records`, once a chunk: a JSON list of `{kind, key, body}` with the header `X-Content-SHA256`, the SHA-256 of the body sent.
 4. `POST /runs/<id>/merge`. The answer's `status` is `merged` (with the report: resolved, added, conflicts and matched for each kind), `refused` (an older step version, with the reason), `undone` (a statement failed and D1 rolled the batch back; the run still waits and can be dropped) or `not_merged` (the chunks that arrived are not the ones stated).
 5. `GET /runs/<id>` reads the report again. `DELETE /runs/<id>` drops a run that was not merged.
@@ -51,20 +51,30 @@ The secret `INGEST_TOKENS` is a JSON list of `{name, role, device?, sha256}`. Th
 
 | Role | Registers | May stage | May also |
 | --- | --- | --- | --- |
-| `device` | `device` runs, for its own device | Every kind but `action` | Put payloads, take and release slices |
+| `device` | `device` runs, for its own device | Every kind but `action`; decisions by rule or seed only; an approved claim only with its audit hold, unless the store already holds it approved and released | Put payloads, take and release slices |
 | `daily` | `daily` runs | Every kind but `action`, and no decision by a person or an assistant | Put payloads |
-| `lookup` | `lookup` runs | A link lead, its share, a payload, a registry trial, a reading, usage, an unlisted domain | Put payloads |
+| `lookup` | `lookup` runs | A link lead (with no `claim_slug`), its share, a payload, a registry trial, a reading, usage, an unlisted domain | Put payloads |
 | `consumer` | `consumer` runs | Every kind but `action`, decisions by rule only | Put payloads, lease work |
 | `export` | `export` runs | The action `publish`, by rule | Nothing |
 | `operator` | `operator` and `migration` runs | Everything, every action | All of the above |
 
 A token reaches only runs it could have registered; any other run answers as if it did not exist.
 
+A person's or an assistant's decision (`reviewed_by`, `decided_by`, `labelled_by` of `human` or `assistant`, and a `human_label`) travels only with the operator's token. A device runs scripts, and a script's decision is never recorded as a person's.
+
+## One reading of a record
+
+What is staged is the checked value written out again, never the bytes that arrived. JavaScript reads the last of a key given twice and SQLite the first, so the bytes could say one thing to the door and another to the store. A body that is not UTF-8, and a string holding half a character or a NUL, are refused for the same reason.
+
+## Times
+
+Every time in a record (`at`, and any field ending `_at`) is `YYYY-MM-DDTHH:MM:SS.ffffff+00:00`: UTC, to the microsecond, with its offset, as `pipeline/src/thenwhat/store/form.py` writes it. The merge compares times as text, so one form is the only safe one; any other is refused. A day alone (`YYYY-MM-DD`) is taken, for a reader's lookup. The service writes its own times the same way. One time is not in this form: `run.merged_at`, which `store/merge.sql` writes to the second with `Z`. Nothing compares it.
+
 ## What is refused at the door
 
 - A body with no stated length, of the wrong content type, or over its bound: a chunk of 1.9 MB or 5,000 records, a run of 20,000 records, a payload of 8 MB (settings in `wrangler.jsonc`).
-- A record of an unknown kind, without its natural key, or with a field no statement reads.
-- A string longer than 2,000 characters (200 for a reported statement, as the schema says), anywhere in a record but the fields that hold a source's structured record on the one kind they belong to. The store keeps no article text, and a refusal never repeats what was sent.
+- A record of an unknown kind, without its natural key, or with a field that no statement reading that kind of record reads.
+- A string longer than 2,000 characters (200 for a reported statement, as the schema says), anywhere in a record but the fields that hold a source's structured record on the one kind they belong to. A trial's `intervention_names`, its arms' names joined, may hold 20,000. The store keeps no article text, and a refusal never repeats what was sent.
 - A payload whose body is not what its checksum and size say, or whose R2 object was never put.
 
 Nothing is logged: not a token, not a record, not a payload.

@@ -31,6 +31,9 @@ export const MAX_RECORD_BYTES = 1_000_000;
 // article's length; the fields in src/check.mjs that hold structured data are bounded by
 // the record's size instead.
 export const MAX_STRING_CHARS = 2_000;
+// Fields a source's own record can make longer, each for one kind of record. A trial's
+// arms can be many, and their names are joined into one string.
+export const LONGER = { registry_trial: { intervention_names: 20_000 } };
 // Registering a run: its steps and counts.
 export const MAX_REGISTRATION_BYTES = 64_000;
 // Payloads kept in R2 that one chunk may name: each is looked for before it is staged.
