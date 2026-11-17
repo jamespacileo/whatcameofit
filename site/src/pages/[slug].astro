@@ -308,7 +308,7 @@ const yearSaid = (row: Extract<(typeof timetable.rows)[number], { kind: "year" }
   };
 };
 // The trials table's columns, named over every group's table.
-const TRIAL_COLUMNS = ["People", "Compared with", "Main measure", "State", "Trial"];
+const TRIAL_COLUMNS = ["People", "Phase", "State", "Results posted", "Trial"];
 const posted = withResults(trials);
 const trialsNote = [
   plural(trials.length, "trial"),
@@ -1114,7 +1114,6 @@ const sections = [
                     match={matchOf(trial.trial_id)}
                     approach={claim.approach}
                     dates={trialDates(claim.events, trial.trial_id)}
-                    showPhase={group.mixed}
                     glosses={trialGlosses.get(trial.trial_id) ?? []}
                     treatment={claim.intervention.name}
                     largest={largestSize}

@@ -6693,7 +6693,7 @@ body.framed {
 
 /* The trials table: one row to read across for each trial; a row opens to the rest. */
 .trial-table {
-  --trial-cols: minmax(0, 0.95fr) minmax(0, 1fr) minmax(0, 1.9fr) minmax(0, 0.95fr) minmax(0, 0.95fr);
+  --trial-cols: minmax(0, 1.5fr) minmax(0, 0.7fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   overflow: hidden;
@@ -7710,7 +7710,7 @@ body.framed {
    group, and stay in sight; each phase is a tinted row with its name and its count, as
    the reference draws a group; a row is two lines. */
 .sheet .trials {
-  --trial-cols-wide: 8rem minmax(0, 1.1fr) minmax(0, 1.25fr) minmax(0, 1.45fr) minmax(0, 0.9fr);
+  --trial-cols-wide: minmax(13rem, 1.5fr) 6rem minmax(0, 1.3fr) 8.5rem 8.5rem;
 }
 
 .sheet .trials .trial-table,
@@ -9177,11 +9177,35 @@ body.framed {
   translate: none;
 }
 
-/* A trial's size against the claim's largest. */
+/* A trial's size against the claim's largest: under its head count, and beside it once
+   the row is wide enough, so a row is one line. */
 .trial-lead .share-bar {
   width: auto;
   max-width: 6.5rem;
   margin: 0.4rem 0 0 1.9rem;
+}
+
+.trial-none {
+  color: var(--muted);
+}
+
+@media (min-width: 52rem) {
+  .sheet .trials .trial-lead {
+    display: grid;
+    grid-template-columns: 8.9rem minmax(2rem, 1fr);
+    column-gap: 0.6rem;
+    align-items: start;
+  }
+
+  .sheet .trials .trial-lead .share-bar {
+    max-width: none;
+    margin: 0.55rem 0 0;
+  }
+
+  .sheet .trials .trial-lead .trial-by {
+    grid-column: 1 / -1;
+    margin-left: 1.9rem;
+  }
 }
 
 /* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet

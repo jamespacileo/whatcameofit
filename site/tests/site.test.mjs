@@ -761,7 +761,7 @@ test("Scenario: Claim with one completed Phase 2 trial", () => {
   // identifier. The phase is the heading of its group; the design is in the fold.
   assert.match(
     entry,
-    /83 people\s*: more from its record\s+Compared with\s*Placebo\s+Main measure\s*[^]*?State\s*Finished\s*Results posted 1 Sep 2025\s+Trial\s*NCT00000002/,
+    /83 people\s*: more from its record\s+Phase\s*[^]*?State\s*Finished[^]*?Results posted\s*1 Sep 2025\s+Trial\s*NCT00000002/,
   );
   assert.match(entry, /Design\s+Assigned at random · Blinded/);
   // The row opens to what it measured.
@@ -908,7 +908,9 @@ test("Scenario: Outcome reported at four time points", () => {
 
 test("Scenario: Trial the registry shows as recruiting", () => {
   const trials = wordsOf(sectionOf(page("phase-claim/index.html"), "trials"));
-  assert.match(trials, /1,200 people planned\s*: more from its record\s+Compared with/);
+  // What a trial tests, where the claim's treatment is only its comparison, stays in
+  // sight under its size; then its phase.
+  assert.match(trials, /1,200 people planned\s*: more from its record\s+(It tests [^.]*\.\s+)?Phase/);
   assert.match(trials, /State\s*Under way/);
   assert.doesNotMatch(trials, /recruit|eligib|contact|location|take part|join/i);
 });
@@ -1836,7 +1838,7 @@ test("Scenario: Registry records only", () => {
 test("Scenario: Three finished trials", () => {
   const trials = sectionOf(page("phase-claim/index.html"), "trials");
   const table = trials.slice(trials.indexOf('role="table"'));
-  for (const name of ["People", "Compared with", "Main measure", "State", "Trial"]) {
+  for (const name of ["People", "Phase", "State", "Results posted", "Trial"]) {
     assert.ok(table.includes(`<span role="columnheader">${name}</span>`), `no column named ${name}`);
   }
   // A row is a row; the control that opens it says whether it is open and names what it opens.
