@@ -112,6 +112,21 @@ def pytest_configure(config: pytest.Config) -> None:
         raise pytest.UsageError(str(refused)) from None
 
 
+@pytest.hookimpl(trylast=True)
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    shard = os.environ.get("THENWHAT_PYTEST_SHARD")
+    if not shard:
+        return
+    match = re.fullmatch(r"([1-9]\d*)/([1-9]\d*)", shard)
+    if not match or int(match[1]) > int(match[2]):
+        raise pytest.UsageError("THENWHAT_PYTEST_SHARD must be an index/count such as 1/2")
+    index, count = int(match[1]) - 1, int(match[2])
+    selected = items[index::count]
+    omitted = [item for position, item in enumerate(items) if position % count != index]
+    config.hook.pytest_deselected(items=omitted)
+    items[:] = selected
+
+
 def _test_url() -> URL:
     assert _resolved is not None
     return _resolved

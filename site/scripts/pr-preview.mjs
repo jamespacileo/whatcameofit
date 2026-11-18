@@ -88,6 +88,7 @@ const settings = {
   ASTRO_TELEMETRY_DISABLED: "1",
   LOOKUP_URL: "",
 };
+delete settings.CLOUDFLARE_API_TOKEN;
 const key = buildKey(SITE_DIR, settings);
 
 if (stateOnly) {
@@ -107,7 +108,7 @@ if (stateOnly) {
 const seconds = (since) => ((Date.now() - since) / 1000).toFixed(1);
 let started = Date.now();
 console.log(`Building ${data.claims.length} claims for ${worker}.`);
-const build = spawnSync("npm", ["run", "build"], {
+const build = spawnSync("pnpm", ["run", "build"], {
   cwd: SITE_DIR,
   stdio: "inherit",
   env: settings,

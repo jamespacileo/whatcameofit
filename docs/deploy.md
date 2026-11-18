@@ -4,7 +4,11 @@ The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare
 
 ## Normal publishing workflow
 
-Changes to `main` run the complete test suite and a public deployment rehearsal in GitHub Actions. Only after those pass does GitHub deploy production and check the live home, method, sitemap and claim pages. Pull requests run the checks and get their own preview (below); they never change production. The Actions page also offers a manual run for `main`.
+GitHub Actions runs the pipeline, store, site build, and release checks in parallel. The required `Tests and build` check passes when all suites pass. A newer push cancels outstanding checks for the same pull request. Use `make check` to run the checks locally and `make deploy-ci-check` to rehearse the public build.
+
+For a new run on a same-repository PR, CI can reuse an earlier pass on that PR if the checked merge tree, release settings, runner image and UTC date match. The required check links to the earlier run and its extension artifact. Changed inputs, forks, manual reruns and pushes to `main` run the suites.
+
+On `main`, the release job archives the rehearsed site for three days. Production downloads the archive from that workflow run, verifies its SHA-256 checksum and commit, and publishes it. It then checks the live commit, a stylesheet, the Worker, the published snapshot and public pages. It retries transient failures and stale responses while the release propagates. If the archive has expired, use **Run workflow** on `main` to build a fresh one.
 
 To publish newly approved claims, run:
 
@@ -46,7 +50,9 @@ A preview differs from production in these ways, all set in `site/wrangler.previ
 
 A pull request from a fork, or from Dependabot, gets no preview: GitHub gives those runs no Cloudflare token. A data pull request's preview shows its claims at a public address before the merge, as the pull request itself already does.
 
-The preview uses the same `CLOUDFLARE_API_TOKEN` repository secret as production, which any workflow run on a branch of this repository can read. Only people with write access can push such a branch. A separate token limited to Workers Scripts, stored in its own GitHub environment, would narrow this; it is not set up.
+Previews use a separate Cloudflare account with its own `workers.dev` subdomain and an API token that can create, update and delete Workers only in that account. Set `CLOUDFLARE_PREVIEW_ACCOUNT_ID` as a repository variable and `CLOUDFLARE_PREVIEW_API_TOKEN` as a secret in the GitHub `preview` environment. Allow same-repository pull request runs to use that environment. Preview jobs are skipped until the account variable is set.
+
+When switching accounts, existing preview URLs and Workers remain in the old account. Remove those Workers there and rerun the preview workflow for any open PRs that still need a link.
 
 To publish or remove one by hand:
 
@@ -61,20 +67,24 @@ pnpm --dir site exec wrangler delete --name thenwhat-pr-12 --config site/wrangle
 
 ## GitHub configuration
 
-The repository uses a `production` environment restricted to `main`. Production deployments are serialized; a superseded revision is skipped when it reaches the deployment queue. GitHub Actions are pinned to reviewed commit revisions; Wrangler is pinned in `site/package-lock.json` and installed with `npm ci`. Main requires the `Tests and build` check and disallows force pushes and deletion; repository administrators retain GitHub's standard bypass.
+Restrict the GitHub `production` environment to `main`. Store `CLOUDFLARE_PRODUCTION_API_TOKEN` as an environment secret there before merging the workflow. Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.
+
+Production deployments are serialized. A superseded revision is skipped when it reaches the queue. Actions are pinned to commit SHAs, and Wrangler is pinned in `site/package.json` and installed using `site/pnpm-lock.yaml`.
+
+If you enable `EXPORT_FROM_STORE`, restrict the `store-rehearsal` environment to `main` and set its `CLOUDFLARE_STORE_READ_API_TOKEN` secret with read access to the configured D1 database and R2 bucket. Remove the old `STORE_READ_API_TOKEN` repository secret if present.
 
 Set these repository values in Settings → Secrets and variables → Actions:
 
 | Kind | Name | Value |
 | --- | --- | --- |
-| Secret | `CLOUDFLARE_API_TOKEN` | The dedicated production deployment token; never commit it |
-| Variable | `CLOUDFLARE_ACCOUNT_ID` | `ee6dc8763af66b85cf2333e1ea5a4d9f` |
+| Variable | `CLOUDFLARE_ACCOUNT_ID` | Production Cloudflare account |
+| Variable | `CLOUDFLARE_PREVIEW_ACCOUNT_ID` | Separate Cloudflare account for preview Workers |
 | Variable | `SUGGEST_URL` | `mailto:suggest@whatcameofit.com` once forwarding is active |
 | Variable | `CORRECTIONS_URL` | `mailto:corrections@whatcameofit.com` once forwarding is active |
 | Variable | `CHROME_STORE_URL` | The extension's Chrome Web Store listing, once it is published there |
 | Variable | `SAFARI_STORE_URL` | The extension's Mac App Store listing, once it is published there |
 
-The token permits Workers Scripts editing in Palladio, Workers Routes editing for `whatcameofit.com`, and Zone read for that domain. It expires on 12 November 2027; replace the encrypted GitHub secret before then. It has no billing, database, model-provider, or email permissions.
+Scope the production token to Workers deployment in Palladio, with Workers Routes editing and Zone read for `whatcameofit.com`. The existing token expires on 12 November 2027.
 
 Cloudflare's [GitHub Actions guide](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/) documents deployment credentials. Keep deployment credentials out of workflow logs, and out of any run a fork's pull request starts.
 
@@ -90,7 +100,16 @@ make deploy-ci       # publishes that snapshot; needs Cloudflare authentication
 
 For local authentication, run `pnpm --dir site exec wrangler login` and verify with `pnpm --dir site exec wrangler whoami` before deployment. `make deploy-check` and `make deploy` remain available: both first export directly from the running local pipeline. `SITE_URL` defaults to https://whatcameofit.com and can be overridden explicitly.
 
-Never run raw `wrangler deploy`: it bypasses the public-data checks and could publish an old preview build. ("Preview build" here means a build of unreviewed data, not a pull request preview.) All supported deploy targets validate the export, build it afresh as a public site, and check its sitemap and preview flag before invoking Wrangler.
+Publish through `make deploy-ci` so the export, sitemap and public-build checks run before Wrangler. A local invocation builds the site afresh. GitHub Actions uses the checked archive from the current run.
+
+If a production smoke check fails after publishing, inspect the failed path and the active version in Cloudflare. To restore the last good release, choose its version ID from the deployment history and roll back to it:
+
+```sh
+pnpm --dir site exec wrangler deployments list
+pnpm --dir site exec wrangler rollback <last-good-version-id>
+```
+
+Verify the home page, stylesheet and `/build-revision.txt` after rollback. An older release may predate the revision file.
 
 ## Domain and contact settings
 
