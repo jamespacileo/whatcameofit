@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 
 from thenwhat.backfill.registry_claim_plan import group_registry_trials, trial_scope
-from thenwhat.backfill.registry_scope_review import load_scope_reviews
+from thenwhat.backfill.registry_scope_review import ScopePair, ScopeReview, load_scope_reviews
 from thenwhat.clinical.mesh_xml import mesh_xml_vocabulary
 from thenwhat.store.form import payload_of
 from thenwhat.work.errors import BackfillError
@@ -582,3 +582,60 @@ def test_only_a_unique_evidenced_general_vertical_is_assigned(tmp_path: Path):
     assert unique.vertical_evidence == {"cancer": {"D000001"}}
     assert overlap.vertical is None
     assert set(overlap.vertical_evidence) == {"cancer", "lungs-and-breathing"}
+
+    def reviewed(
+        nct: str, indication: str, registered: list[str], descriptor: tuple[str, str] | None
+    ) -> tuple[tuple[str, dict[str, Any]], ScopeReview]:
+        record = study(registered, arms)
+        record["protocolSection"]["identificationModule"] = {"officialTitle": indication}
+        if descriptor is not None:
+            identifier, term = descriptor
+            record["derivedSection"] = {
+                "conditionBrowseModule": {"meshes": [{"id": identifier, "term": term}]}
+            }
+        receipt = ScopeReview(
+            nct,
+            payload_of(record).sha256,
+            "assistant:fixture",
+            (ScopePair(("Example XR",), indication, ("Example XR",), (indication,)),),
+        )
+        return (nct, record), receipt
+
+    cases = [
+        reviewed(
+            "NCT00000001",
+            "Example Neoplasm in adults after prior therapy",
+            ["Example Neoplasm", "Other Disease"],
+            ("D000001", "Example Neoplasm"),
+        ),
+        reviewed(
+            "NCT00000002",
+            "Example Neoplasm among newborns",
+            ["Example Neoplasm"],
+            None,
+        ),
+        reviewed(
+            "NCT00000003",
+            "Other Disease in adults with Example Neoplasm",
+            ["Other Disease", "Example Neoplasm"],
+            ("D000001", "Example Neoplasm"),
+        ),
+        reviewed(
+            "NCT00000004",
+            "Example Overlap in patients",
+            ["Other Disease", "Example Overlap"],
+            ("D000002", "Example Overlap"),
+        ),
+    ]
+    placed = group_registry_trials(
+        [record for record, _ in cases],
+        scope_reviews={review.trial_id: review for _, review in cases},
+        vocabulary=vocabulary,
+    )
+    groups = {group.trials[0]: group for group in placed.groups}
+    assert groups["NCT00000001"].vertical == "cancer"
+    assert groups["NCT00000002"].vertical == "cancer"
+    assert groups["NCT00000002"].condition_terms == {("D000001", "Example Neoplasm")}
+    assert not groups["NCT00000003"].vertical_evidence
+    assert groups["NCT00000004"].vertical is None
+    assert set(groups["NCT00000004"].vertical_evidence) == {"cancer", "lungs-and-breathing"}

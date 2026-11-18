@@ -102,6 +102,12 @@ A registry-drafted claim's vertical SHALL be set by rule from the condition term
 - **WHEN** a group's trials are filed under terms that point to two different groups
 - **THEN** no claim is drafted and the group is listed as not placed, with its terms
 
+#### Scenario: A registered condition has an explicit population qualifier
+- **WHEN** a proposed indication starts with a registered condition followed by an enrollment phrase such as “in adults”
+- **THEN** use descriptors with the exact registered condition name for topic evidence
+- **AND** when the registry omits its descriptor projection, an exact preferred disease or disorder label from the installed MeSH vocabulary can supply that evidence
+- **AND** preserve the full indication for grouping and hold any conflicting topic evidence
+
 ### Requirement: A registry-drafted claim is prepared and decided as any draft
 A registry-drafted claim SHALL be pending until `thenwhat prepare --pending` has searched the registries for it, and SHALL then be decided by the rule for drafts. The trials it was drafted from SHALL be candidates, scored for the claim's indication, and SHALL NOT be approved for having led to it. A draft SHALL be approved only when at least one of the trials it was drafted from is approved for it; otherwise it SHALL stay pending and be listed with the scores.
 

@@ -64,6 +64,19 @@ _MEASUREMENT_LABELS = {
     "quality of life assessment",
     "questionnaire administration",
 }
+_POPULATION_WORDS = {
+    "adolescents",
+    "adults",
+    "children",
+    "infants",
+    "men",
+    "newborns",
+    "participants",
+    "patients",
+    "people",
+    "subjects",
+    "women",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -391,6 +404,21 @@ def _regimen_key(label: str) -> tuple[str, ...]:
     return tuple(sorted(name_key(part) for part in re.split(r"\s+\+\s+", label)))
 
 
+def _condition_anchors(wanted: list[str], listed: tuple[str, ...]) -> dict[tuple[str, ...], str]:
+    """Match a registered condition as the head of an explicitly qualified population."""
+    anchors = {}
+    for label in listed:
+        words = condition_words(label)
+        if not words or wanted[: len(words)] != words:
+            continue
+        context = wanted[len(words) :]
+        if not context or (
+            len(context) >= 2 and context[0] in {"in", "among"} and context[1] in _POPULATION_WORDS
+        ):
+            anchors[tuple(words)] = label
+    return anchors
+
+
 def _record_vertical(
     group: PlanGroup,
     terms: list[tuple[str, str]],
@@ -399,10 +427,22 @@ def _record_vertical(
 ) -> None:
     group.condition_terms.update(terms)
     wanted = condition_words(group.indication)
-    exact = [identifier for identifier, label in terms if condition_words(label) == wanted]
-    selected = exact or (
-        [identifier for identifier, _ in terms] if len(listed_conditions) == 1 else []
-    )
+    selected = [identifier for identifier, label in terms if condition_words(label) == wanted]
+    if not selected:
+        anchors = _condition_anchors(wanted, listed_conditions)
+        selected = [
+            identifier for identifier, label in terms if tuple(condition_words(label)) in anchors
+        ]
+        if not terms:
+            # Exact preferred names are useful when the registry provides labels without
+            # its MeSH projection. Keep them distinct from fuzzy or title-only matches.
+            for label in anchors.values():
+                descriptor = vocabulary.labelled(label)
+                if descriptor is not None and descriptor.is_condition:
+                    selected.append(descriptor.identifier)
+                    group.condition_terms.add((descriptor.identifier, label))
+        elif not selected and len(listed_conditions) == 1:
+            selected = [identifier for identifier, _ in terms]
     if not selected or vocabulary.missing(selected):
         return
     for topic in derived_topics(selected, vocabulary):
@@ -480,7 +520,7 @@ def group_registry_trials(
                 group.alias_claim_candidates.update(
                     by_pair.get((_regimen_key(alias), condition), ())
                 )
-            if vocabulary is not None and terms:
+            if vocabulary is not None:
                 _record_vertical(group, terms, scope.registered_conditions, vocabulary)
     for group in groups.values():
         group.alias_claim_candidates.difference_update(group.exact_claim_candidates)

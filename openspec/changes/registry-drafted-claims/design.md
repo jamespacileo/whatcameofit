@@ -115,7 +115,7 @@ A claim must have one vertical and a model chooses it today from an article. A r
 
 *Instead of* asking a model to place it: that would be a second, weaker way of setting the same field, which that change already declined for the approach.
 
-The shared topic mapping and NLM hierarchy are available in `thenwhat.clinical`. The planner can use stored descriptors or the annual NLM download. With more than one registered condition, it uses descriptors matching the proposed condition's label. The plan records each supported group and its descriptors. A unique group gives the general vertical. Groups with conflicting evidence or without a supported group remain available for review.
+The shared topic mapping and NLM hierarchy are available in `thenwhat.clinical`. The planner can use stored descriptors or the annual NLM download. An exact registered condition also anchors topic evidence when the proposed indication begins with it and adds a population phrase such as “in adults”. The grouping keeps the full indication. When the registry omits its descriptor projection, an exact preferred disease or disorder label in MeSH can supply evidence for that registered condition. The plan records each supported group and its descriptors. A unique group gives the general vertical. Groups with conflicting evidence or without a supported group remain available for review.
 
 ### 6. Words come from the site, and the export carries none
 

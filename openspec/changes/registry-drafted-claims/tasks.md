@@ -59,6 +59,8 @@ The regimen-label replay used the same 27,731 cached trials. The planner exclude
 
 All 127 cached development protocols matched the identifier, update date and shared scope fields in the stored snapshot. Four assistant-reviewed receipts produced six scoped groups on the full cached replay and resolved the scope of two previously held trials. The same four records were used in a read-only drafting preview with 971 cached public claims. It took 7.90 seconds, listed one provisional draft with a receipt hash and held five groups for topic review. A separate fixture applied a reviewed draft in the test database and refused a changed arm, eligibility quote or review receipt. Model requests, registry requests and production writes were zero. The development cases remain outside the independent audit.
 
+The topic replay used 27,731 cached trials and the same NLM vocabulary. The exact condition and population rule increased uniquely placed groups from 5,583 to 5,588, with identical regimen and indication groups. Of the six reviewed development groups, two now have a single topic from the existing mapping, one has conflicting evidence and three have no evidence. The read-only drafting command selected two provisional drafts in 7.94 seconds. The new assignment places sarcopenia in Brain and nerves under the existing map. Across the cohort, 7,857 of 8,399 conflicting groups had one descriptor mapped to several topics. The subset spanning Cancer and at least one other topic covered 4,295 distinct trials without another uniquely placed group or a cached production link. These figures describe topic placement. The grouping audit remains open.
+
 ## 3. Drafting and preparation
 
 - [x] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added
@@ -116,6 +118,8 @@ Local PostgreSQL fixtures recorded a repeatable four-of-six sample and held the 
 
 - [x] 7.1 Update `CLAUDE.md`, `PRODUCT.md` and `docs/backfill-loop.md` for what a claim is, the drafting command, the order after it (`thenwhat prepare --pending`, sample, release, export), and that the daily run starts none of it; verify `make scripts-test` fails if it would
 - [x] 7.2 Note in `trial-first-route` and `headline-funnel` what this change supersedes and what it gives their routes; verify both `design.md` files name this change
-- [ ] 7.3 Regenerate `site/data/seed-export.json` if the seed's export changes, run `make check` and `openspec validate registry-drafted-claims --strict`; verify all pass
+- [x] 7.3 Regenerate `site/data/seed-export.json` if the seed's export changes, run `make check` and `openspec validate registry-drafted-claims --strict`; verify all pass
 
 The daily-run tests passed. Injecting a registry drafting command into a disposable copy made `make scripts-test` fail with the forbidden-command assertion. The check ran against the fake pipeline only.
+
+The version 3 seed matched its generated export in `make check`. The full pipeline, store, site and extension checks passed, including the browser checks and the strict validation of this change.
