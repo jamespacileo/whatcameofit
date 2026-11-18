@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from thenwhat.backfill.registry_load import trial_fields
 from thenwhat.backfill.trial_names import indication_words, name_under_test
 
 SAMPLE = json.loads(
@@ -68,6 +69,56 @@ def test_placebos_and_devices_alone_give_no_name():
     assert name_under_test([{"type": "DRUG", "name": "Placebo"}]) is None
     assert name_under_test([{"type": "DEVICE", "name": "Stentrode"}]) is None
     assert name_under_test([]) is None
+
+
+@pytest.mark.parametrize(
+    ("registered", "aliases", "expected"),
+    [
+        ("First", [], None),
+        ("Oral Home", [], None),
+        ("Combination drug therapies", [], None),
+        ("Women", [], None),
+        ("Systemic Therapy (ZX-100)", ["ZX-100"], "ZX-100"),
+        ("Systemic Therapy", ["ZX-100"], None),
+        ("Combination Therapy (COMB)", ["COMB"], None),
+        ("Maintenance therapy with placebo", [], None),
+        ("Aspirin 50 mg oral tablet", [], "Aspirin"),
+        ("Insulin", [], "Insulin"),
+    ],
+)
+def test_bulk_trial_search_name_needs_an_identifiable_intervention(
+    registered: str,
+    aliases: list[str],
+    expected: str | None,
+):
+    record = {
+        "protocolSection": {
+            "identificationModule": {"nctId": "NCT00000001"},
+            "armsInterventionsModule": {
+                "interventions": [{"type": "DRUG", "name": registered, "otherNames": aliases}]
+            },
+        }
+    }
+    assert trial_fields(record)["search_name"] == expected
+
+
+@pytest.mark.parametrize(
+    "generic",
+    [
+        {"type": "DRUG", "name": "Adjuvant therapy"},
+        {"type": "DRUG", "name": "Drug before surgery", "otherNames": ["Combination"]},
+    ],
+)
+def test_a_later_intervention_cannot_replace_a_generic_search_fragment(generic):
+    assert (
+        name_under_test(
+            [
+                generic,
+                {"type": "DRUG", "name": "ZX-100"},
+            ]
+        )
+        is None
+    )
 
 
 def test_most_sampled_trials_get_a_name_and_no_name_carries_a_dose_or_a_control():

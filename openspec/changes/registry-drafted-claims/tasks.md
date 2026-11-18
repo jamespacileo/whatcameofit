@@ -29,6 +29,8 @@ Write steps run on the one writer only. Every judgement an assistant makes is re
 
 The baseline audit found 15 correct groups out of 50. The read-only planner uses arm membership and full indications from stored records. The existing registry bulk loader can refresh those fields before the planner runs.
 
+The generic-label replay compared search names for all 27,731 cached trials against commit `d9e96d98`. It changed 51 names in 3.1 seconds. It cleared 50 fragments and recovered one code written in the registered name and its aliases. The registry planner held 46 previously proposed trials whose arms included only a schedule or role for at least one component. The pilot dictionary matched 1,464 legacy names, including established treatments such as aspirin and insulin. The targeted rule leaves those names eligible. Broader word-list coverage and the independent grouping audit remain open.
+
 The arm-aware replay proposed groups for 39 of the same 61 trials. It held 21 for condition assignment and one crossover trial for treatment sequence. Only 30 of the original 50 groups had proposals for every member. The audit gate is pending.
 
 The refreshed target set held 27,731 trials after 28 registry page requests in 26 seconds on the Mac. The planner proposed 19,451 groups covering 16,141 trial IDs. It held 11,590 for review, including 10,680 with multiple registered conditions. The verified live export linked 831 eligible trials. The production comparison found 73 proposed groups with exact name-and-indication claim candidates and 16 with registry alias candidates. These candidates await identity verification. Model spend was zero.

@@ -214,6 +214,9 @@ def test_draft_refuses_unknown_sets_and_archived_duplicates(
     refused = invoke("unknown-set", "--batch", "invalid")
     assert refused.exit_code == 1 and REGISTRY_CLAIMS_2026 in refused.output
     descriptors = eligible_set(session, tmp_path)
+    legacy = session.scalar(select(RegistryTrial).where(RegistryTrial.external_id == "NCT00000004"))
+    assert legacy is not None
+    legacy.search_name = "Home"
     archived = add_registry_claim(
         session,
         slug="archived-claim",
@@ -229,7 +232,9 @@ def test_draft_refuses_unknown_sets_and_archived_duplicates(
         REGISTRY_CLAIMS_2026, "--batch", "archive", "--mesh-descriptors", str(descriptors)
     )
     assert preview.exit_code == 0, preview.output
-    assert json.loads(preview.output)["held_groups_by_reason"]["existing_claim_unavailable"] == 1
+    report = json.loads(preview.output)
+    assert report["held_groups_by_reason"]["existing_claim_unavailable"] == 1
+    assert report["generic_stored_search_names"] == {"NCT00000004": "Home"}
 
 
 def test_draft_binds_detail_only_scope_to_the_bulk_record_and_review(

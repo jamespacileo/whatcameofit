@@ -69,6 +69,32 @@ def test_groups_by_complete_regimen_and_matches_only_a_complete_claim_name():
     assert not second.exact_claim_candidates
 
 
+def test_generic_registry_treatment_labels_require_scope_evidence():
+    def record(name: str):
+        return study(
+            ["Example Neoplasm"],
+            [{"type": "EXPERIMENTAL", "interventionNames": [f"Drug: {name}"]}],
+        )
+
+    plan = group_registry_trials(
+        [
+            ("ordinary", record("Home")),
+            ("schedule", record("Maintenance Therapy")),
+            ("named", record("Aspirin")),
+            ("full-label", record("Autologous Mesenchymal Stem Cells")),
+        ]
+    )
+
+    assert {group.regimen for group in plan.groups} == {
+        "Aspirin",
+        "Autologous Mesenchymal Stem Cells",
+    }
+    assert {trial: scope.issues for trial, scope in plan.needs_review.items()} == {
+        "ordinary": ("generic_intervention_needs_review",),
+        "schedule": ("generic_intervention_needs_review",),
+    }
+
+
 def test_plans_purposes_separately_and_reports_aliases_and_unassigned_conditions():
     arms: list[dict[str, Any]] = [{"label": "Intervention", "type": "EXPERIMENTAL"}]
     prevention = study(["Condition One"], arms, "PREVENTION")

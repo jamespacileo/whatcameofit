@@ -14,6 +14,7 @@ from thenwhat.backfill.registry_scope_review import (
     confirm_protocol_evidence,
     validate_scope_review,
 )
+from thenwhat.backfill.trial_names import generic_intervention_name
 from thenwhat.backfill.trial_sets import registry_claims_2026
 from thenwhat.claims.entry import condition_words, name_key, tidy
 from thenwhat.clinical.categories import trial_terms
@@ -329,6 +330,12 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         issues.append("control_component_needs_review")
     if alternatives:
         issues.append("alternative_regimen_needs_review")
+    if any(
+        generic_intervention_name(component)
+        for regimen in regimens.values()
+        for component in regimen.components
+    ):
+        issues.append("generic_intervention_needs_review")
     if intervention_model in {"CROSSOVER", "SEQUENTIAL"} and any(
         len(regimen.components) > 1 for regimen in regimens.values()
     ):

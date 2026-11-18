@@ -13,6 +13,7 @@ from thenwhat.backfill.link_read import CLAIM_IDENTITY_LOCK
 from thenwhat.backfill.registry_claim_plan import PlanGroup, plan_registry_claims
 from thenwhat.backfill.registry_draft_choices import DraftAction, GroupChoice, choose_drafts
 from thenwhat.backfill.registry_scope_review import ScopeReview
+from thenwhat.backfill.trial_names import generic_intervention_name
 from thenwhat.backfill.trial_sets import REGISTRY_CLAIMS_2026, registry_claims_2026
 from thenwhat.claims.audit import register_audit_batch
 from thenwhat.claims.entry import (
@@ -331,6 +332,15 @@ def prepare_draft_plan(
             .select_from(RegistryTrial)
             .where(registry_claims_2026(), RegistryTrial.search_name.is_(None))
         ),
+        "generic_stored_search_names": {
+            trial_id: name
+            for trial_id, name in session.execute(
+                select(RegistryTrial.external_id, RegistryTrial.search_name)
+                .where(registry_claims_2026(), RegistryTrial.search_name.is_not(None))
+                .order_by(RegistryTrial.external_id)
+            )
+            if name is not None and generic_intervention_name(name)
+        },
         "group_count": len(groups),
         "registry_alias_pairs": alias_pairs,
         "trials_currently_linked": len(plan.current_claim_links),

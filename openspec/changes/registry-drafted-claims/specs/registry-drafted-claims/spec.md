@@ -26,8 +26,13 @@ Says how a claim is drafted from stored registry trials when no news report exis
 A legacy search name made only of ordinary words, by the project's word list and the inflected forms of its words, SHALL NOT establish the intervention's identity. The planner SHALL record such a trial for review when it cannot identify the intervention from the registered arms and intervention description.
 
 #### Scenario: A stored name that is an ordinary word
-- **WHEN** a trial's stored name is "Home"
+- **WHEN** a trial's stored name is "Home" and its registry fields identify no specific intervention
 - **THEN** no claim is drafted for it and the report lists the name
+
+#### Scenario: A tested arm includes a schedule in place of a treatment
+- **WHEN** a component is recorded only as a schedule or role such as "Maintenance Therapy"
+- **THEN** the planner holds the trial pending scope review
+- **AND** a full registered intervention that includes a schedule or role can still establish the scope
 
 ### Requirement: Trials are grouped into one treatment for one condition by rule
 Trials SHALL be grouped by fixed rules on the verified intervention or complete regimen and the full indication. The rule SHALL preserve clinically distinct formulations and combination components. Names SHALL be compared ignoring letter case and spacing, and documented aliases SHALL be checked for equivalence. Each group SHALL draft at most one claim.
