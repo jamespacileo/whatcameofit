@@ -20,9 +20,9 @@ function htmlFiles(directory) {
   });
 }
 
-function build(exportFile, outDir) {
+function build(exportFile, outDir, env = {}) {
   return spawnSync(process.execPath, ["node_modules/astro/bin/astro.mjs", "build", "--outDir", outDir], {
-    env: { ...process.env, EXPORT_FILE: exportFile, ASTRO_TELEMETRY_DISABLED: "1" },
+    env: { ...process.env, EXPORT_FILE: exportFile, ASTRO_TELEMETRY_DISABLED: "1", ...env },
     encoding: "utf8",
   });
 }
@@ -54,6 +54,16 @@ test("Scenario: Reader opens a claim", () => {
     assert.ok(html.includes(`https://registry.example/record/${id}"`), `event ${id} has no link`);
   }
   assert.equal(count(html, 'id="record-'), 4);
+});
+
+test("the build refuses an export whose claim routes alone exceed the file limit", (t) => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-claim-floor-"));
+  t.after(() => fs.rmSync(work, { recursive: true, force: true }));
+  const out = path.join(work, "dist");
+  const result = build("data/seed-export.json", out, { DIST_FILE_LIMIT: "7" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /claims require at least 8 files before search indexing/);
+  assert.equal(fs.existsSync(path.join(out, "tooth-regrowth-usag1/index.html")), false);
 });
 
 test("Scenario: Registry evidence publishes a browsable claim before a report exists", (t) => {

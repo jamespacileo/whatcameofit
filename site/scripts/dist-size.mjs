@@ -11,6 +11,19 @@ export const HOST_FILE_COUNT = 20_000;
 /** Where the build stops. DIST_FILE_LIMIT raises it for a plan that allows more. */
 export const FILE_COUNT_LIMIT = Number(process.env.DIST_FILE_LIMIT) || 18_000;
 
+// A claim emits its page, data record, feed, embed, oEmbed, and three card images.
+// Search fragments and shared files add to this floor, so the final check still runs.
+const CLAIM_ROUTE_FILES = 8;
+
+export function assertClaimFilesFit(claims, limit = FILE_COUNT_LIMIT) {
+  const floor = claims * CLAIM_ROUTE_FILES;
+  if (floor > limit) {
+    throw new Error(
+      `The ${claims.toLocaleString("en-GB")} claims require at least ${floor.toLocaleString("en-GB")} files before search indexing. The build limit is ${limit.toLocaleString("en-GB")} files.`,
+    );
+  }
+}
+
 /** How many files are under the directory, in every folder. */
 export function countFiles(directory) {
   return fs

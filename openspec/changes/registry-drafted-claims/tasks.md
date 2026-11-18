@@ -64,6 +64,8 @@ The qualifier replay retained two previously omitted genotype restrictions and m
 
 Synthetic preparation exercised both match outcomes on the Mac. It fetched the drafting trial by identifier when name search missed it and sent it through ordinary indication scoring. A different approved trial alone left the claim pending. An approved drafting match held the claim, and export counted and excluded it. A later first article joined a published registry claim without adding a new audit hold.
 
+A local fixture verified exact-ID handoff to an existing claim without a second draft. Candidates go through normal trial scoring. PostgreSQL and the D1 store preserve queued IDs across retries. The batch command still needs to consume the handoff.
+
 ## 4. The site
 
 - [x] 4.1 Add to the export whether a report is linked and what a claim was drafted from, with no headline or summary for a claim with no article; regenerate `site/export.schema.json` and raise the schema version; verify the tests that compare both pass
@@ -78,6 +80,8 @@ Synthetic preparation exercised both match outcomes on the Mac. It fetched the d
 Storage and export were exercised with a synthetic registry-only claim on the Mac. PostgreSQL and the SQLite store produced the same claim. The audit hold excluded it from export, and linking a first article later preserved its drafting origin. The PostgreSQL migration preserved a legacy row and refused to downgrade with a registry claim present. The version 3 export built a claim page and a search entry. Fixtures and the run receipt are stored on the NVMe.
 
 The synthetic site build renders the site's fixed registry wording, the absence of a source report, and the first report after it is linked. The lookup and extension checks omit the first reported date and promises while a report is absent. The same import-time wording check rejects verdicts and offers of treatment.
+
+The capacity rehearsal built 200 synthetic additions in 47.2 seconds with 1,970 files and a 122,106-byte lookup. The 600-claim warm-cache build yielded 5,578 files and a 364,106-byte lookup. A 20,224-claim synthetic stress export plus the seed exceeded the budget before rendering, at a floor of 161,800 files. The finding is recorded in `cloudflare-source-of-truth`. The full real-cohort build remains pending.
 
 ## 5. The sampled audit
 

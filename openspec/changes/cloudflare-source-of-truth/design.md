@@ -405,3 +405,9 @@ Considered, and not taken: a mark on a trial's row saying it is of the set, with
 - **How often an approved event's content differs** under one key between two fetches. Counted during the parallel run (decision 13).
 - **Answered on 2026-11-16:** a merged claim's entities, matches and events stay with it, and the claim that stays is prepared again (decision 16). The session adding the pipeline's command is told in the shared notes.
 - **Answered on 2026-11-16:** reporting without applying is counted by `store/preview.sql`, not tried (decision 10).
+
+## Registry claim capacity finding (2026-11-18)
+
+The offline build for `registry-drafted-claims` added 200 synthetic registry-only claims to the seed. It took 47.2 seconds, emitted 1,970 files and produced a 122,106-byte lookup. The warm-cache run with 600 additions emitted 5,578 files and a 364,106-byte lookup. Each claim emits eight dedicated static files before search indexing.
+
+A stress export of 20,224 synthetic claims plus the seed was refused before page rendering. Its floor of 161,800 files exceeds both the configured 18,000-file build budget and the published 100,000-file Workers Paid ceiling. This stress size is the number of proposals from the current registry planner. Verified grouping and reuse determine the final claim count. The current asset layout cannot deliver that scale in one Worker version. [Cloudflare Workers limits](https://developers.cloudflare.com/workers/platform/limits/#static-assets)
