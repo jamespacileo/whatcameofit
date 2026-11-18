@@ -304,7 +304,10 @@ jobs:
   deploy:
     name: Deploy production
     needs: [check, site]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    # The PR-only cache lookup is skipped on main. Require the checks that ran here.
+    if: >-
+      !cancelled() && needs.check.result == 'success' && needs.site.result == 'success' &&
+      github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
