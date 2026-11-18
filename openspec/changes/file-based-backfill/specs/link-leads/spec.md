@@ -98,6 +98,10 @@ With a local trial snapshot configured, the link reader SHALL match eligible art
 - **WHEN** claim preparation hands the PMID to the literature index
 - **THEN** the index must return that exact PMID before its canonical work can enter ordinary claim matching
 
+#### Scenario: A production backfill uses trial evidence only
+- **WHEN** the operator sets `RESEARCH_PAPERS_ENABLED=false`
+- **THEN** the reader keeps publisher citations, claim preparation continues trial and organisation lookups, and the paper step records `papers_off` with literature searches, DOI lookups, and paper-to-trial lookups deferred
+
 #### Scenario: The literature index stops a batch
 - **WHEN** the configured literature index cannot finish the article's evidence check
 - **THEN** the run stops with the article still due, its recorded model spend retained, and no new claim or source article from that read
