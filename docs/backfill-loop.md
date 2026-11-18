@@ -114,6 +114,10 @@ the preview in `--verified-links`, with the reviewer and their reason. Preparati
 the nominated trials through the existing match step. Reapplying the same batch returns its
 receipt.
 
+Add `--existing-only` to both preview and apply to limit a batch to verified nominations.
+The preview lists the scores and review states of candidates already in the match queue under
+`stored_matches`. A pending match stays in that queue for a scoring or review decision.
+
 Judge the first batch in full. Record each finding with `thenwhat audit judge`. Use
 `--as-assistant` for an assistant's finding, and draw an operator check with
 `thenwhat audit spot-check --batch phase23-001 --size <count>` where applicable.

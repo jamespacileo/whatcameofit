@@ -115,15 +115,28 @@ def _trial_hashes(session: Session, trial_ids: Collection[str]) -> dict[str, str
 
 
 @dataclass(slots=True)
+class StoredMatch:
+    state: ReviewState
+    score: float
+
+
+@dataclass(slots=True)
 class ClaimCatalogue:
     trial_ids: dict[str, set[str]]
+    matches: dict[str, dict[str, StoredMatch]]
     evidence: dict[str, str]
     unavailable: dict[tuple[str, tuple[str, ...]], set[str]]
     slugs: set[str]
 
 
 def _claim_catalogue(session: Session, targets: Collection[str]) -> ClaimCatalogue:
-    catalogue = ClaimCatalogue({}, {}, defaultdict(set), set(session.scalars(select(Claim.slug))))
+    catalogue = ClaimCatalogue(
+        trial_ids={},
+        matches={},
+        evidence={},
+        unavailable=defaultdict(set),
+        slugs=set(session.scalars(select(Claim.slug))),
+    )
     catalogue.slugs.update(
         slug
         for slug in session.scalars(
@@ -132,9 +145,13 @@ def _claim_catalogue(session: Session, targets: Collection[str]) -> ClaimCatalog
         if slug is not None
     )
     approved: dict[str, list[tuple[str, Any]]] = defaultdict(list)
-    for slug, trial_id, state, facts in session.execute(
+    for slug, trial_id, state, score, facts in session.execute(
         select(
-            Claim.slug, EntityMatch.external_id, EntityMatch.review_state, EntityMatch.record_facts
+            Claim.slug,
+            EntityMatch.external_id,
+            EntityMatch.review_state,
+            EntityMatch.score,
+            EntityMatch.record_facts,
         )
         .join(Entity, Entity.claim_id == Claim.id)
         .join(EntityMatch, EntityMatch.entity_id == Entity.id)
@@ -146,6 +163,7 @@ def _claim_catalogue(session: Session, targets: Collection[str]) -> ClaimCatalog
         .order_by(Claim.slug, EntityMatch.external_id)
     ):
         catalogue.trial_ids.setdefault(slug, set()).add(trial_id)
+        catalogue.matches.setdefault(slug, {})[trial_id] = StoredMatch(state, score)
         if state is ReviewState.APPROVED:
             approved[slug].append((trial_id, facts))
     for claim, entity in session.execute(
@@ -227,6 +245,7 @@ def prepare_draft_plan(
     vocabulary: Vocabulary | None,
     links: Sequence[VerifiedLink],
     arm_evidence: Mapping[str, dict[str, Any]] | None = None,
+    existing_only: bool = False,
 ) -> DraftBatchPlan:
     if len(batch) > 60 or SLUG_PATTERN.fullmatch(batch) is None:
         raise BackfillError("Use a batch name with lowercase letters, digits and single hyphens.")
@@ -272,7 +291,7 @@ def prepare_draft_plan(
     verified = _verified_map(links, groups, candidate_hashes, catalogue.evidence)
     try:
         selected = choose_drafts(
-            groups.values(),
+            candidate_groups if existing_only else groups.values(),
             verified=verified,
             already_queued=catalogue.trial_ids,
             occupied=catalogue.slugs,
@@ -312,6 +331,8 @@ def prepare_draft_plan(
             key=lambda link: (link["group_id"], link["trial_id"]),
         ),
     }
+    if existing_only:
+        plan_content["existing_only"] = True
     if reviewed_hashes:
         plan_content["scope_review_sha256"] = reviewed_hashes
     selected_groups = {action.group_id for action in actions}
@@ -335,6 +356,7 @@ def prepare_draft_plan(
     report = {
         "set": REGISTRY_CLAIMS_2026,
         "batch": batch,
+        "existing_only": existing_only,
         "apply_plan": plan_id,
         "trial_count": plan.trial_count,
         "trials_without_stored_search_name": session.scalar(
@@ -385,6 +407,14 @@ def prepare_draft_plan(
                     if trial in candidate_hashes
                 },
                 "claim_sha256": {slug: catalogue.evidence[slug] for slug in group.existing_claims},
+                "stored_matches": {
+                    slug: {
+                        trial: asdict(match)
+                        for trial in group.trial_ids
+                        if (match := catalogue.matches.get(slug, {}).get(trial)) is not None
+                    }
+                    for slug in group.existing_claims
+                },
             }
             for group in candidate_groups
         ],
@@ -445,6 +475,7 @@ def apply_draft_plan(session: Session, plan: DraftBatchPlan, apply_plan: str) ->
             drafted.append(claim.slug)
     receipt = {
         "set": REGISTRY_CLAIMS_2026,
+        "existing_only": plan.report["existing_only"],
         "apply_plan": plan.apply_plan,
         "drafted": drafted,
         "nominated": nominated,

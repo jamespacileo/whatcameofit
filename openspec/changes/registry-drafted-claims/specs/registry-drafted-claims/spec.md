@@ -123,6 +123,12 @@ Before a group drafts a claim, it SHALL be compared with every claim that is not
 - **WHEN** a group's treatment name is a synonym of an existing claim's intervention with the same indication
 - **THEN** no claim is drafted
 
+#### Scenario: A batch is limited to existing claims
+- **WHEN** an operator requests an existing-only preview
+- **THEN** its actions are limited to verified nominations to existing claims
+- **AND** the preview shows the stored scores and review states for previously scored candidates
+- **AND** a previously scored candidate retains its stored match and decision
+
 ### Requirement: What a registry-drafted claim holds
 A claim drafted from registry records SHALL hold its intervention by name alone, its indication, the vertical the rule places it in, that it was drafted from registry records, and the registry numbers of the trials it was drafted from. It SHALL hold no source article, no promise, no reported statement, no origin paper and no evidence stage, and no headline or summary written by a model.
 

@@ -97,6 +97,8 @@ The read-only planner takes arm membership from the current registry projection 
 
 An existing claim is a candidate when its complete identity or a documented alias matches. Verify the regimen, clinical use and indication before reusing it. The plan also surfaces current published links, including links whose scope still needs review.
 
+An existing-only batch limits its actions to verified nominations. The preview shows the last stored scores and review states so a previously scored trial can be sent to review. Nomination continues to require the exact trial and claim snapshots and to use ordinary match scoring.
+
 Arm labels and clearly stated study objectives can identify reference regimens even when the registry marks them as experimental. In an add-on trial, retain the full tested combination and record the placebo or reference arm separately. When the title explicitly compares a single investigational agent and the registry designates other products as non-investigational, keep those products as background evidence.
 
 Use a treatment or prevention title to refine a named indication when it gives an explicit subtype or treatment target. Keep the stated patient context when another registered condition qualifies that target. A more detailed title naming several targets overrides abbreviated wording. When distinct tested arms name distinct cohorts for the same regimen, the planner can propose a pair for each cohort. Explicit measurements can be removed from a treatment regimen while diagnostic trials retain their diagnostic intervention.

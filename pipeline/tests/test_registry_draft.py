@@ -208,6 +208,90 @@ def test_draft_batch_reuses_a_verified_alias_and_replays_without_writing_twice(
     assert json.loads(new_batch.output)["actions"] == []
 
 
+def test_existing_only_batch_applies_verified_nominations_without_drafting(
+    session: Session, invoke, tmp_path: Path
+):
+    descriptors = eligible_set(session, tmp_path)
+    existing = add_claim(
+        session,
+        slug="existing-z-231",
+        headline="An article heading",
+        summary="An example.",
+        vertical="cancer",
+        intervention="Z-231",
+        indication="Example Neoplasm",
+    )
+    entity = session.scalar(select(Entity).where(Entity.claim_id == existing.id))
+    assert entity is not None
+    pending = EntityMatch(
+        entity_id=entity.id,
+        source_name="clinicaltrials.gov",
+        external_id="NCT00000004",
+        score=0.7,
+        record_summary="An earlier score awaiting a decision.",
+    )
+    session.add(pending)
+    session.flush()
+    args = (
+        REGISTRY_CLAIMS_2026,
+        "--batch",
+        "reuse-only",
+        "--mesh-descriptors",
+        str(descriptors),
+    )
+    ordinary = invoke(*args)
+    assert ordinary.exit_code == 0, ordinary.output
+    assert [row["operation"] for row in json.loads(ordinary.output)["actions"]] == ["draft"]
+    initial = invoke(*args, "--existing-only")
+    assert initial.exit_code == 0, initial.output
+    initial_report = json.loads(initial.output)
+    assert initial_report["actions"] == []
+    [candidate] = initial_report["existing_claim_candidates"]
+    assert candidate["stored_matches"] == {
+        existing.slug: {pending.external_id: {"state": "pending", "score": 0.7}}
+    }
+    trial_id = "NCT00000003"
+    links = tmp_path / "verified.json"
+    links.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "links": [
+                    {
+                        "group_id": candidate["group_id"],
+                        "trial_id": trial_id,
+                        "slug": existing.slug,
+                        "trial_sha256": candidate["trial_sha256"][trial_id],
+                        "claim_sha256": candidate["claim_sha256"][existing.slug],
+                        "reviewed_by": "fixture assistant",
+                        "reason": "Fixture verifies identity and indication.",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    verified = (*args, "--verified-links", str(links), "--limit", "1")
+    preview = invoke(*verified, "--existing-only")
+    assert preview.exit_code == 0, preview.output
+    report = json.loads(preview.output)
+    assert report["existing_only"] is True
+    assert [row["operation"] for row in report["actions"]] == ["nominate"]
+    assert report["remaining_actionable"] == 0
+    refused = invoke(*verified, "--apply-plan", report["apply_plan"])
+    assert refused.exit_code == 1 and "plan changed" in refused.output
+    applied = invoke(*verified, "--existing-only", "--apply-plan", report["apply_plan"])
+    assert applied.exit_code == 0, applied.output
+    receipt = json.loads(applied.output)
+    assert receipt["existing_only"] is True
+    assert receipt["drafted"] == []
+    assert receipt["nominated"] == {existing.slug: [trial_id]}
+    assert existing.registry_candidate_trial_ids == [trial_id]
+    assert session.scalars(select(Claim)).all() == [existing]
+    assert session.scalars(select(EntityMatch)).all() == [pending]
+    assert pending.review_state is ReviewState.PENDING and pending.score == 0.7
+
+
 def test_draft_refuses_unknown_sets_and_archived_duplicates(
     session: Session, invoke, tmp_path: Path
 ):

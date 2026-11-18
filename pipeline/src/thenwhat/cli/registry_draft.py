@@ -98,6 +98,9 @@ def draft_from_registry_command(
         Path | None,
         typer.Option(exists=True, dir_okay=False, help="Cached protocols cited by scope receipts."),
     ] = None,
+    existing_only: Annotated[
+        bool, typer.Option(help="Nominate verified trials to existing claims without drafting.")
+    ] = False,
 ) -> None:
     """Preview a batch from stored records, or apply a reviewed preview to the writer."""
     with refusals(), entry_session() as session:
@@ -140,6 +143,7 @@ def draft_from_registry_command(
                 arm_evidence=evidence,
                 vocabulary=vocabulary,
                 links=links,
+                existing_only=existing_only,
             )
             if apply_plan is None:
                 report = {
