@@ -172,6 +172,9 @@ class ModelStep(DemoStep):
         self.calls: list[list[str]] = []
 
     def _call(self, session: Session, records: Sequence[RegistryTrial]) -> None:
+        if self.before is not None:
+            for record in records:
+                self.before(record)
         asked = [record.external_id for record in records]
         with self._lock:
             self.calls.append(asked)

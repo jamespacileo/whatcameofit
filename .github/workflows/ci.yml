@@ -48,6 +48,10 @@ jobs:
           path: site/node_modules
           key: site-deps-${{ runner.os }}-node26-${{ hashFiles('site/pnpm-lock.yaml') }}
           lookup-only: true
+      - name: Install the browser for the site tests
+        run: |
+          pnpm --dir site install --frozen-lockfile
+          pnpm --dir site exec playwright install --with-deps --only-shell chromium
       - run: make check
       - name: Save production extension package
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

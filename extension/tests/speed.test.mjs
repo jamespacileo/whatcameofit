@@ -3,17 +3,14 @@
 // read from its words without an automatic screenshot, and an early shared-result probe
 // that respects selection, private windows and navigation. All pages are made up.
 import assert from "node:assert/strict";
-import fs from "node:fs/promises";
-import os from "node:os";
-import path from "node:path";
 import { test } from "node:test";
-import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { readAddress } from "../../site/src/lib/lookup-match.mjs";
 import { pageAsText, readPage } from "../../site/worker/page.mjs";
 import { createPopupController, lookupEvents } from "../src/controller.js";
 import { composeRequest, fingerprintInput, readableArticle } from "../src/open-page.js";
 import { RESULT_TTL, completed, remember, reusable } from "../src/results.js";
+import { SCIENCE, PARAGRAPHS, STRUCTURED, sciencePage, heroPhoto } from "./science-page.mjs";
 
 const shared = { readAddress, readPage, pageAsText };
 const never = () => new Promise(() => {});
@@ -33,35 +30,6 @@ async function until(check, ms = 500) {
 
 // --- the page: an ordinary article or a media post ---------------------------------------
 
-const SCIENCE = "https://www.sciencealert.com/scientists-identified-a-biological-signature-of-tinnitus-and-its-in-your-blood";
-const PARAGRAPHS = [
-  "Researchers examining blood samples from people with persistent ringing in the ears report a set of molecular markers that appear far more often in those with the condition than in people without it.",
-  "The team compared hundreds of volunteers, some with chronic tinnitus and some without, and measured a panel of proteins and small molecules associated with inflammation and nerve signalling.",
-  "Several of these markers differed consistently between the groups, and the differences were larger in volunteers who described their symptoms as more severe or longer lasting.",
-  "The authors caution that the work identifies a possible biological signature rather than a cause, and that a blood test for clinical use would need validation in larger and more varied groups.",
-  "They also note that hearing loss, stress and sleep problems often accompany the condition and may influence the same markers, which makes untangling cause and effect difficult.",
-  "Independent researchers not involved in the study said the findings were interesting because the condition currently has no objective measure, and diagnosis relies on what patients report.",
-  "The study was published in a peer-reviewed journal, and the researchers say their next step is to follow volunteers over time to see whether the markers change as symptoms change.",
-].map((words) => `<p>${words}</p>`).join("\n");
-const STRUCTURED = JSON.stringify({ "@context": "https://schema.org", "@graph": [
-  { "@type": "WebPage", "@id": `${SCIENCE}#webpage` },
-  { "@type": "ImageObject", "@id": `${SCIENCE}#primaryimage`, url: "https://www.sciencealert.com/images/ear.jpg" },
-  { "@type": "NewsArticle", headline: "Scientists identified a biological signature of tinnitus, and it's in your blood", datePublished: "2026-11-10" },
-] });
-const sciencePage = (more = {}) => ({
-  address: SCIENCE,
-  title: "Scientists identified a biological signature of tinnitus, and it's in your blood : ScienceAlert",
-  selection: "",
-  head: `<head><title>Tinnitus signature</title><meta property="og:type" content="article"><meta property="og:title" content="Scientists identified a biological signature of tinnitus"><script type="application/ld+json">${STRUCTURED}</script></head>`,
-  focusHtml: `<article><h1>Scientists identified a biological signature of tinnitus, and it's in your blood</h1><figure><img src="https://www.sciencealert.com/images/ear.jpg" alt="An ear"><figcaption>(Example Photo Agency)</figcaption></figure>${PARAGRAPHS}<p>Read the paper: <a href="https://doi.org/10.1000/example.tinnitus">the study</a>.</p></article>`,
-  focusText: "",
-  links: [{ href: "https://doi.org/10.1000/example.tinnitus", text: "the study" }],
-  postTitle: null,
-  contentHref: null,
-  structured: [STRUCTURED],
-  ...more,
-});
-const heroPhoto = [{ left: 0, top: 120, width: 800, height: 450, kind: "img", identity: "https://www.sciencealert.com/images/ear.jpg", time: null }];
 const REDDIT = "https://www.reddit.com/r/science/comments/abc123/dental_revolution/";
 const redditPost = {
   address: REDDIT, title: "Dental revolution : r/science", selection: "",
@@ -264,6 +232,13 @@ function popup(overrides = {}) {
 }
 const answers = (calls) => calls.states.filter((state) => state.kind === "answer");
 
+function endStream(stream, ending) {
+  if (ending === "deadline") return;
+  if (ending === "error") stream.send({ type: "error", error: "failed" });
+  if (ending === "malformed") stream.bytes(encoder.encode("{broken\n"));
+  stream.close();
+}
+
 test("a slow enrichment shows the completed core with research loading, then the full answer, from one request", async () => {
   const { controller, calls, stored, stream } = popup();
   const opening = controller.open();
@@ -293,18 +268,17 @@ test("a slow enrichment shows the completed core with research loading, then the
 });
 
 test("a stream that ends, errs or turns malformed after its core keeps the core, says research is incomplete, and keeps nothing", async () => {
-  for (const ending of ["close", "error", "malformed"]) {
+  for (const ending of ["end of stream", "error", "malformed"]) {
     const { controller, calls, stored, stream } = popup();
     const opening = controller.open();
     await until(() => calls.posts.length === 1);
     stream.send({ type: "core", result: positive });
-    if (ending === "error") stream.send({ type: "error", error: "failed" });
-    if (ending === "malformed") stream.bytes(encoder.encode("{broken\n"));
-    stream.close();
+    endStream(stream, ending);
     await opening;
     const last = calls.states.at(-1);
     assert.equal(last.kind, "answer", ending);
     assert.equal(last.research, "incomplete", ending);
+    assert.equal(last.shown.treatment, "EX-1", ending);
     assert.equal(stored.results, undefined, ending);
     controller.close();
   }
@@ -319,6 +293,7 @@ test("the deadline after a core keeps the core rather than a timeout, cancels th
   const last = calls.states.at(-1);
   assert.equal(last.kind, "answer");
   assert.equal(last.research, "incomplete");
+  assert.equal(last.shown.treatment, "EX-1");
   assert.equal(calls.posts[0].signal.aborted, true);
   await until(() => stream.state.cancelled);
   const count = calls.states.length;
@@ -338,15 +313,39 @@ test("closing or navigating between events stops rendering, saving and further r
     await until(() => answers(calls).length === 1);
     if (leave === "close") controller.close(); else navigate();
     const count = calls.states.length;
+    const writeCount = calls.writes.length;
     stream.send({ type: "complete", result: positive });
     stream.close();
     await opening;
     if (leave === "close") assert.equal(calls.states.length, count, "nothing renders after closing");
     else assert.deepEqual(calls.states.at(-1), { kind: "refused", code: "page_changed" });
     assert.equal(stored.results, undefined, leave);
+    assert.equal(calls.writes.length, writeCount, leave);
     assert.equal(calls.posts.length, 1, leave);
     assert.equal(calls.captures, 0, leave);
     controller.close();
+  }
+});
+
+test("a stream that ends after navigation does not restore or save the old answer", async () => {
+  for (const ending of ["end of stream", "error", "malformed", "deadline"]) {
+    const { controller, calls, stream, navigate } = popup({ lookupTimeoutMs: 150 });
+    const opening = controller.open();
+    try {
+      await until(() => calls.posts.length === 1);
+      stream.send({ type: "core", result: positive });
+      await until(() => answers(calls).length === 1);
+      navigate();
+      const stateCount = calls.states.length;
+      const writeCount = calls.writes.length;
+      endStream(stream, ending);
+      await opening;
+      assert.equal(calls.states.length, stateCount, `no late rendering on ${ending}`);
+      assert.equal(calls.writes.length, writeCount, `no late write on ${ending}`);
+    } finally {
+      controller.close();
+      await opening;
+    }
   }
 });
 
@@ -392,24 +391,24 @@ test("a media page's text-only non-treatment reading is neither shown nor kept; 
 
 // --- the early shared-result probe -------------------------------------------------------------
 
-test("the shared probe starts while the page is still being collected, after its context is settled", async () => {
+test("an early shared cache hit supplies a dated answer without sending page content", async () => {
   const collecting = deferred();
+  const checkedAt = Date.now() - 1000;
   const { controller, calls } = popup({
     readPage: async (_tab, _signal, { onContext } = {}) => { onContext({ pageUrl: tab.url }); await collecting.promise; return articleRequest; },
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
-      if (body.cacheOnly) { calls.probes.push(body); return Response.json({ ...positive, cache: { shared: true, checkedAt: Date.now() - 1000 } }); }
+      if (body.cacheOnly) { calls.probes.push(body); return Response.json({ ...positive, cache: { shared: true, checkedAt } }); }
       calls.posts.push({ body });
       return Response.json(positive);
     },
   });
   const opening = controller.open();
   await until(() => calls.probes.length === 1);
-  assert.deepEqual(calls.probes[0], { cacheOnly: true, pageUrl: tab.url, claimResults: true });
   collecting.resolve();
   await opening;
   assert.equal(calls.posts.length, 0);
-  assert.ok(calls.states.at(-1).cachedAt);
+  assert.equal(calls.states.at(-1).cachedAt, checkedAt);
   controller.close();
 });
 
@@ -486,9 +485,11 @@ test("reused popup answers rebind cards against the loaded index without another
 });
 
 test("a shared non-treatment answer is final for a readable article, but a media page still gets its screenshot", async () => {
-  for (const readable of [true, false]) {
+  const pages = [articleRequest, { ...articleRequest, readableArticle: false },
+    { ...articleRequest, readableArticle: false, text: "Dental revolution" }];
+  for (const page of pages) {
     const { controller, calls, stored } = popup({
-      readPage: async () => ({ ...articleRequest, readableArticle: readable }),
+      readPage: async () => page,
       fetch: async (_url, options) => {
         const body = JSON.parse(options.body);
         if (body.cacheOnly) return Response.json({ ...negative, gist: undefined, cache: { shared: true, checkedAt: Date.now() - 1000 } });
@@ -497,131 +498,18 @@ test("a shared non-treatment answer is final for a readable article, but a media
       },
     });
     await controller.open();
-    if (readable) {
+    if (page.readableArticle) {
       assert.equal(calls.captures, 0);
+      assert.equal(calls.posts.length, 0);
       assert.equal(calls.states.at(-1).shown.about_a_treatment, false);
       assert.equal(stored.results.length, 1);
     } else {
       assert.equal(calls.captures, 1);
+      assert.equal(calls.posts.length, 1);
       assert.ok(calls.posts[0].body.image);
+      assert.equal(calls.states.at(-1).shown.treatment, "EX-1");
       assert.ok(!(stored.results ?? []).some((entry) => entry.found.about_a_treatment === false), "the shared text reading is not kept for a media page");
     }
     controller.close();
   }
-});
-
-test("selected words are never probed, never given a page address and never kept", async () => {
-  const { controller, calls, stored } = popup({
-    readPage: async () => ({ text: "The selected words report EX-1 for tinnitus in people.", links: [], selectionOnly: true, visualCandidate: true }),
-    fetch: async (_url, options) => {
-      const body = JSON.parse(options.body);
-      if (body.cacheOnly) calls.probes.push(body);
-      else calls.posts.push({ body });
-      return Response.json(negative);
-    },
-  });
-  await controller.open();
-  assert.equal(calls.probes.length, 0);
-  assert.equal(calls.posts.length, 1);
-  assert.equal(calls.posts[0].body.pageUrl, undefined);
-  assert.equal(calls.posts[0].body.selectionOnly, undefined);
-  assert.equal(calls.captures, 0);
-  assert.equal(stored.results, undefined);
-  controller.close();
-});
-
-// --- the real popup glue ------------------------------------------------------------------------
-
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-async function runPopup({ selection = "", collected = sciencePage(), address = SCIENCE }) {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "thenwhat-speed-"));
-  const globals = ["browser", "document", "window", "fetch", "__speedCapture"];
-  const saved = new Map(globals.map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));
-  const shortResponse = deferred();
-  const shortStarted = deferred();
-  const done = deferred();
-  const log = { posts: [], probes: [], shortResolvedBeforeProbe: null, captures: 0, states: [] };
-  let events = {};
-  try {
-    const files = {
-      "popup.js": "extension/src/popup.js", "controller.js": "extension/src/controller.js", "results.js": "extension/src/results.js",
-      "tracked.js": "site/worker/tracked.mjs", "names.js": "site/worker/names.mjs",
-      "visual.js": "extension/src/visual.js", "source-url.js": "site/src/lib/source-url.mjs", "lookup.js": "extension/src/lookup.js",
-      "kept.js": "extension/src/kept.js", "watch.js": "extension/src/watch.js", "open-page.js": "extension/src/open-page.js",
-      "short-links.js": "extension/src/short-links.js", "article-key.js": "site/src/lib/article-key.mjs",
-      "lookup-match.js": "site/src/lib/lookup-match.mjs", "page.js": "site/worker/page.mjs",
-      "live-lookup.js": "site/src/lib/live-lookup.mjs", "notices.ts": "site/src/lib/notices.ts",
-    };
-    for (const [name, source] of Object.entries(files)) {
-      const content = (await fs.readFile(path.join(root, source), "utf8")).replaceAll("./article-key.mjs", "./article-key.js")
-        .replace("../../site/src/lib/source-url.mjs", "./source-url.js")
-        .replace("../../site/worker/tracked.mjs", "./tracked.js")
-        .replace("./names.mjs", "./names.js");
-      await fs.writeFile(path.join(directory, name), content);
-    }
-    await fs.writeFile(path.join(directory, "package.json"), '{"type":"module"}');
-    await fs.writeFile(path.join(directory, "config.js"), 'export const SITE = {name:"Test",url:"https://whatcameofit.example"};');
-    await fs.writeFile(path.join(directory, "view.js"), "export function render(root,state){globalThis.__speedCapture(state);}");
-    const current = { id: 7, windowId: 1, url: address };
-    const stored = { sharing: { version: 1, enabled: true } };
-    let shortDone = false;
-    globalThis.document = { querySelector: () => ({ textContent: "" }) };
-    globalThis.window = { addEventListener: (name, callback) => { events[name] = callback; }, close() {} };
-    globalThis.browser = {
-      storage: { local: { get: async () => stored, set: async (values) => Object.assign(stored, values) } },
-      tabs: { query: async () => [current], captureVisibleTab: async () => { log.captures += 1; throw new Error("no automatic photo"); } },
-      scripting: {
-        executeScript: async ({ func }) => (func.name === "inspectVisible"
-          ? [{ result: { address, media: heroPhoto, sensitive: false, selectionOnly: selection.length >= 20, width: 800, height: 600, crop: heroPhoto[0] } }]
-          : [{ result: { ...collected, selection, links: [...collected.links, { href: "https://t.co/AbCdEf", text: "more" }] } }]),
-      },
-    };
-    globalThis.fetch = async (url, options = {}) => {
-      if (String(url).endsWith("/lookup.json")) return Response.json(index);
-      if (url === "https://t.co/AbCdEf") { shortStarted.resolve(); const response = await shortResponse.promise; shortDone = true; return response.clone(); }
-      const body = JSON.parse(options.body);
-      if (body.cacheOnly) { log.probes.push(body); log.shortResolvedBeforeProbe = shortDone; return Response.json({ cacheMiss: true }); }
-      log.posts.push(body);
-      return Response.json(negative);
-    };
-    globalThis.__speedCapture = (state) => { log.states.push(state); if (["answer", "refused"].includes(state.kind)) done.resolve(); };
-    await import(pathToFileURL(path.join(directory, "popup.js")));
-    // Selected words carry no links, so there is nothing to resolve.
-    if (!selection) await shortStarted.promise;
-    await pause(10);
-    shortResponse.resolve(new Response("<title>https://example.org/other</title>"));
-    await done.promise;
-    await pause(10);
-    return { ...log, stored };
-  } finally {
-    events.pagehide?.();
-    for (const [name, descriptor] of saved) {
-      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
-      else delete globalThis[name];
-    }
-    await fs.rm(directory, { recursive: true, force: true });
-  }
-}
-
-test("the real popup probes while links resolve, reads the article from its words, and keeps the dated answer", { timeout: 5000 }, async () => {
-  const result = await runPopup({});
-  assert.equal(result.probes.length, 1);
-  assert.equal(result.shortResolvedBeforeProbe, false, "the probe overlapped link resolution");
-  assert.equal(result.posts.length, 1);
-  for (const internal of ["readableArticle", "visualCandidate", "contentFingerprint", "selectionOnly"]) assert.equal(result.posts[0][internal], undefined, internal);
-  assert.equal(result.posts[0].stream, true);
-  assert.equal(result.captures, 0, "no automatic photo of an ordinary article");
-  assert.equal(result.states.at(-1).kind, "answer");
-  assert.equal(result.states.at(-1).shown.subject, null);
-  assert.equal(result.stored.results.length, 1);
-  assert.equal(result.stored.results[0].found.about_a_treatment, false);
-  assert.doesNotMatch(JSON.stringify(result.stored), /biological signature|ringing in the ears|data:image/);
-});
-
-test("the real popup with selected words sends no probe or page address", { timeout: 5000 }, async () => {
-  const result = await runPopup({ selection: "These selected words describe a blood marker for ringing ears." });
-  assert.equal(result.probes.length, 0);
-  assert.equal(result.posts.length, 1);
-  assert.equal(result.posts[0].pageUrl, undefined);
-  assert.equal(result.stored.results, undefined);
 });

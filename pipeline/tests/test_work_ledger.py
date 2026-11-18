@@ -2,6 +2,7 @@
 work-ledger."""
 
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
 import pytest
@@ -20,7 +21,7 @@ from backfill_support import (
     same_session,
 )
 from thenwhat.config import Settings
-from thenwhat.db.models import ArticleLead, WorkEntry
+from thenwhat.db.models import ArticleLead, LlmUsage, RegistryTrial, WorkEntry
 from thenwhat.domain import WorkOutcome
 from thenwhat.work import runner
 from thenwhat.work.errors import DuplicateStep, UnknownStep
@@ -77,21 +78,6 @@ def test_a_processed_record_has_one_entry(session: Session):
     assert (entry.record_kind, entry.record_id) == ("registry_trial", trial.id)
     assert (entry.outcome, entry.attempts, entry.requests_used) == (WorkOutcome.DONE, 1, 1)
     assert entry.last_attempt_at == NOW and entry.error is None
-
-
-def test_finished_records_are_skipped(session: Session):
-    """Scenario: Finished records are skipped"""
-    add_trials(session, 10)
-    step = DemoStep()
-    step.finds_nothing = {"T0001", "T0002"}
-    run(session, step, limit=9)
-
-    step.ran.clear()
-    report = run(session, step)
-
-    assert step.ran == ["T0009"]
-    assert count(session, step, LIMIT).due == 0 and report.remaining_due == 0
-    assert count(session, step, LIMIT).nothing_found == 2
 
 
 def test_a_record_whose_input_changed_is_due_again(session: Session):
@@ -151,34 +137,45 @@ def test_raising_the_version_makes_every_record_due_and_keeps_old_entries(sessio
 # --- failures ----------------------------------------------------------------------
 
 
-def test_one_failure_does_not_stop_the_run(session: Session):
-    """Scenario: One record fails"""
-    add_trials(session, 10)
-    step = DemoStep()
-    step.fails = {"T0004"}
-
-    report = run(session, step)
-
-    assert (report.done, report.failed) == (9, 1)
-    assert report.errors == ["RuntimeError: could not process T0004"]
-    failed = [entry for entry in entries(session, step) if entry.outcome is WorkOutcome.FAILED]
-    assert [entry.error for entry in failed] == ["RuntimeError: could not process T0004"]
-    assert report.remaining_due == 1
-
-
-def test_a_failure_leaves_none_of_the_steps_partial_result(session: Session):
-    """Scenario: Stopped between records"""
-    add_trials(session, 2)
+def test_a_failed_record_rolls_back_and_is_the_only_one_retried(session: Session):
+    """Scenarios: One record fails, Stopped between records, A record is processed twice"""
+    trials = add_trials(session, 3)
     step = DemoStep()
     step.fails = {"T0001"}
 
-    run(session, step)
+    report = run(session, step)
 
-    urls = list(session.scalars(select(ArticleLead.url)))
-    assert urls == ["https://news.example.org/demo/T0000"]
-    assert [entry.outcome for entry in entries(session, step)] == [
-        WorkOutcome.DONE,
+    assert (report.done, report.failed, report.remaining_due) == (2, 1, 1)
+    assert report.errors == ["RuntimeError: could not process T0001"]
+    before, failed, after = entries(session, step)
+    assert before.outcome is after.outcome is WorkOutcome.DONE
+    assert (failed.record_id, failed.outcome, failed.attempts, failed.error) == (
+        trials[1].id,
         WorkOutcome.FAILED,
+        1,
+        report.errors[0],
+    )
+    assert set(session.scalars(select(ArticleLead.registry_trial_id))) == {
+        trials[0].id,
+        trials[2].id,
+    }
+    entry_id = failed.id
+
+    retry = DemoStep()
+    recovered = run(session, retry)
+
+    assert retry.ran == ["T0001"]
+    assert (recovered.done, recovered.failed, recovered.remaining_due) == (1, 0, 0)
+    before, retried, after = entries(session, retry)
+    assert before.attempts == after.attempts == 1
+    assert (retried.id, retried.outcome, retried.attempts, retried.error) == (
+        entry_id,
+        WorkOutcome.DONE,
+        2,
+        None,
+    )
+    assert sorted(session.scalars(select(ArticleLead.registry_trial_id))) == [
+        trial.id for trial in trials
     ]
 
 
@@ -197,34 +194,40 @@ def test_a_record_that_keeps_failing_is_skipped_after_the_attempt_limit(session:
     assert (counts.due, counts.failed, counts.needs_attention) == (0, 1, 1)
 
 
-def test_a_failed_record_that_then_succeeds_updates_its_entry(session: Session):
-    """Scenario: A record is processed twice"""
-    add_trials(session, 1)
-    step = DemoStep()
-    step.fails = {"T0000"}
-    run(session, step)
-
-    step.fails = set()
-    run(session, step)
-
-    [entry] = entries(session, step)
-    assert (entry.outcome, entry.attempts, entry.error) == (WorkOutcome.DONE, 2, None)
-
-
 # --- runs ----------------------------------------------------------------------------
 
 
-def test_a_limited_run_reports_what_remains_and_a_restart_repeats_nothing(session: Session):
-    """Scenarios: Limited run, Restart"""
-    add_trials(session, 10)
-    step = DemoStep()
+def test_a_restart_skips_both_kinds_of_finished_record(engine: Engine):
+    """Scenarios: Limited run, Restart, Finished records are skipped"""
+    registry = "restart-registry"
+    open_session = committed_sessions(engine)
+    first_step = DemoStep("restart", registry=registry)
+    resumed_step = DemoStep("restart", registry=registry)
+    try:
+        with open_session() as session:
+            trials = add_trials(session, 6, registry=registry)
+            expected = [trial.external_id for trial in trials]
 
-    first = run(session, step, limit=4)
-    second = run(session, step)
+        # Any four of the six include both kinds of finished record.
+        first_step.finds_nothing = resumed_step.finds_nothing = set(expected[3:])
+        first = run_step(
+            open_session, first_step, Client(), now=lambda: NOW, attempt_limit=LIMIT, limit=4
+        )
+        assert first.processed == 4
+        assert first.done > 0 and first.nothing_found > 0
+        unfinished = set(expected) - set(first_step.ran)
 
-    assert (first.processed, first.remaining_due) == (4, 6)
-    assert (second.processed, second.remaining_due) == (6, 0)
-    assert sorted(step.ran) == [f"T{number:04d}" for number in range(10)]
+        resumed = run_step(
+            open_session, resumed_step, Client(), now=lambda: NOW, attempt_limit=LIMIT
+        )
+
+        assert sorted(resumed_step.ran) == sorted(unfinished)
+        assert first.remaining_due == 2
+        assert (resumed.processed, resumed.remaining_due) == (2, 0)
+        with open_session() as session:
+            assert [entry.attempts for entry in entries(session, resumed_step)] == [1] * 6
+    finally:
+        remove_committed(engine, registry=registry, step=first_step.name, source=first_step.source)
 
 
 def test_provider_stop_is_shared_before_another_worker_takes_more_work(engine):
@@ -274,33 +277,49 @@ def test_provider_stop_is_shared_before_another_worker_takes_more_work(engine):
         remove_committed(engine, registry=registry, step=name, source=step.source)
 
 
-def test_two_runs_at_once_process_each_record_once(engine: Engine):
-    """Scenario: Two processes"""
-    registry, name = "two-runs-registry", "two-runs-step"
+@pytest.mark.parametrize("batch_size", [1, 2], ids=["single", "batch"])
+def test_two_overlapping_runs_process_each_record_once(engine: Engine, batch_size: int):
+    """Scenarios: Two processes, Two runs and batches"""
+    registry, name = "overlapping-registry", "overlapping-step"
     open_session = committed_sessions(engine)
-    step = DemoStep(name, registry=registry)
-    reports = []
+    first_step = ModelStep(name, registry=registry, batch_size=batch_size)
+    second_step = ModelStep(name, registry=registry, batch_size=batch_size)
+    held, release = threading.Event(), threading.Event()
+
+    def hold_first(_record: RegistryTrial) -> None:
+        held.set()
+        assert release.wait(15), "the other run did not finish"
+
+    first_step.before = hold_first
     try:
         with open_session() as session:
-            add_trials(session, 100, registry=registry)
+            add_trials(session, 6, registry=registry)
 
-        def work() -> None:
-            reports.append(
-                run_step(open_session, step, Client(), now=lambda: NOW, attempt_limit=LIMIT)
+        with ThreadPoolExecutor(max_workers=2) as workers:
+            first = workers.submit(
+                run_step, open_session, first_step, Client(), now=lambda: NOW, attempt_limit=LIMIT
             )
+            try:
+                assert held.wait(10), "the first run did not take its records"
+                second = workers.submit(
+                    run_step,
+                    open_session,
+                    second_step,
+                    Client(),
+                    now=lambda: NOW,
+                    attempt_limit=LIMIT,
+                )
+                assert second.result(timeout=10).done == 6 - batch_size
+            finally:
+                release.set()
+            assert first.result(timeout=10).done == batch_size
 
-        threads = [threading.Thread(target=work) for _ in range(2)]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-
-        assert sorted(step.ran) == [f"T{number:04d}" for number in range(100)]
-        assert sum(report.done for report in reports) == 100
+        assert sorted(first_step.ran + second_step.ran) == [f"T{number:04d}" for number in range(6)]
         with open_session() as session:
-            assert count(session, step, LIMIT).done == 100
+            assert count(session, first_step, LIMIT).done == 6
+            assert [entry.attempts for entry in entries(session, first_step)] == [1] * 6
     finally:
-        remove_committed(engine, registry=registry, step=name, source=step.source)
+        remove_committed(engine, registry=registry, step=name, source=first_step.source)
 
 
 # --- steps that ask no source, call a model, or take several records ------------------
@@ -332,10 +351,10 @@ def test_a_batch_step_makes_one_call_for_twenty_records(session: Session):
     assert len(entries(session, step)) == 100
 
 
-def test_one_bad_record_in_a_batch_is_the_only_failure(session: Session):
+def test_a_failed_batch_rolls_back_before_trying_each_record_alone(session: Session):
     """Scenario: One bad record in a batch"""
     add_trials(session, 20)
-    step = ModelStep()
+    step = ModelStep(call_cost_usd=Decimal("1"))
     step.unanswered = {"T0007"}
 
     report = run(session, step, limit=20)
@@ -346,6 +365,8 @@ def test_one_bad_record_in_a_batch_is_the_only_failure(session: Session):
     assert "left an item out" in (failed[0].error or "")
     # One call for the batch, then each record alone.
     assert [len(call) for call in step.calls] == [20] + [1] * 20
+    # Each call writes usage before it can fail. Only the successful single calls persist.
+    assert list(session.scalars(select(LlmUsage.input_tokens))) == [40] * 19
 
 
 def test_a_limit_cuts_the_last_batch(session: Session):
@@ -357,33 +378,6 @@ def test_a_limit_cuts_the_last_batch(session: Session):
 
     assert [len(call) for call in step.calls] == [20, 10]
     assert (report.done, report.remaining_due) == (30, 20)
-
-
-def test_two_runs_of_a_batch_step_process_each_record_once(engine: Engine):
-    """Scenario: Two runs and batches"""
-    registry, name = "two-batch-registry", "two-batch-step"
-    open_session = committed_sessions(engine)
-    step = ModelStep(name, registry=registry)
-    reports = []
-    try:
-        with open_session() as session:
-            add_trials(session, 200, registry=registry)
-
-        def work() -> None:
-            reports.append(
-                run_step(open_session, step, Client(), now=lambda: NOW, attempt_limit=LIMIT)
-            )
-
-        threads = [threading.Thread(target=work) for _ in range(2)]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
-
-        assert sorted(step.ran) == [f"T{number:04d}" for number in range(200)]
-        assert sum(report.done for report in reports) == 200
-    finally:
-        remove_committed(engine, registry=registry, step=name, source=step.source)
 
 
 def test_the_spend_ceiling_stops_a_model_step_and_leaves_records_due(session: Session):

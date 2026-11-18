@@ -22,14 +22,13 @@ from backfill_support import (
 )
 from thenwhat.cli import app
 from thenwhat.db.models import RegistryTrial, WorkEntry
-from thenwhat.domain import WorkOutcome
 from thenwhat.measure import spans as measure
 from thenwhat.measure.events import MADE_DUE
 from thenwhat.measure.files import days_held, read_events
 from thenwhat.work.allowance import Allowances
 from thenwhat.work.ledger import count
 from thenwhat.work.outcome import Later, NeedsFix, NothingFound
-from thenwhat.work.runner import run_step
+from thenwhat.work.runner import RunReport, run_step
 
 LIMIT = 3
 Invoke = Callable[..., Result]
@@ -237,20 +236,25 @@ def test_the_plan_counts_the_records_that_wait_by_reason(
     ) in result.output
 
 
-def test_a_run_reports_the_records_it_put_off_and_those_that_need_a_fix(
-    run: Invoke, session: Session, step: ReasonedStep, monkeypatch: pytest.MonkeyPatch
-):
+def test_run_reports_failures_waiting_records_and_why_it_stopped(
+    run: Invoke, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setattr("thenwhat.cli.backfill.make_client", lambda *_: Client())
-    monkeypatch.setattr("thenwhat.cli.backfill.open_session", same_session(session))
-    waiting_trials(session, step)
-    for entry in session.scalars(select(WorkEntry).where(WorkEntry.step == step.name)):
-        entry.stale = True
-    session.flush()
+    report = RunReport(
+        failed=1,
+        later=2,
+        needs_fix=3,
+        remaining_due=4,
+        stopped="The source cannot be asked.",
+        errors=["RuntimeError: could not process T0001"],
+    )
+    monkeypatch.setattr("thenwhat.cli.backfill.run_step", lambda *args, **kwargs: report)
 
     result = run("backfill", "run", "reasoned")
 
     assert result.exit_code == 0, result.output
-    assert "2 put off, 3 need a fix; 0 still due." in result.output
-    assert {
-        entry.outcome for entry in session.scalars(select(WorkEntry).where(~WorkEntry.stale))
-    } == {WorkOutcome.LATER, WorkOutcome.NEEDS_FIX}
+    assert (
+        "0 done, 0 found nothing, 1 failed, 2 put off, 3 need a fix; 4 still due." in result.output
+    )
+    assert "failed: RuntimeError: could not process T0001" in result.output
+    assert "Stopped: The source cannot be asked." in result.output

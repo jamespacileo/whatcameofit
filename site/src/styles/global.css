@@ -121,7 +121,7 @@
   --stop-2: calc(var(--stop-1) + 18rem);
   /* The type scale (openspec type-scale): seven steps for running text and four named
      roles. Every font-size in this file is one of them, a title's clamp or inherit; a
-     test holds the file to it (tests/primitives.test.mjs). Root is 17px. */
+     browser test holds the stylesheet and rendered claim to it. Root is 17px. */
   --text-micro: 0.72rem;
   --text-xs: 0.78rem;
   --text-s: 0.85rem;

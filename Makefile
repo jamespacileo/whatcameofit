@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -13,19 +13,18 @@ export TEST_DB_PORT ?= 5434
 check: check-fast check-slow
 
 # The fast set, for every edit: under a minute. Lint, types, every pipeline test that
-# builds nothing, the site's tests that build nothing, the extension's tests and the
-# daily job's script. Nothing here builds the site.
+# builds nothing, the site and extension tests that build nothing, and the daily job's script.
 check-fast: lint types test-fast scripts-test site-test extension-test
 
 # The slow set, before a commit is pushed: a few minutes. Every test that builds the
-# site (the pipeline's round trip, the site's `*.build-test.mjs`), the store's ingest
-# service, and the site and extension builds themselves.
-check-slow: test-slow store-test site-build-test site-build extension
+# site (the pipeline's round trip, the site's build tests and browser journeys), the
+# store's ingest service, the site build, and the packaged extension tests.
+check-slow: test-slow store-test site-build-test site-build extension-package-test
 
 # One area in full, fast and slow, for work that touches only that area.
 check-pipeline: lint types test
 check-site: site-test site-build-test site-build
-check-extension: extension-test extension
+check-extension: extension-test extension-package-test
 check-store: store-test
 
 lint:
@@ -88,6 +87,7 @@ site/node_modules: site/pnpm-lock.yaml
 setup:
 	sh scripts/worktree-setup.sh
 	uv sync --directory pipeline
+	$(MAKE) site-search-browser
 
 # The site's tests that build nothing (tests/*.test.mjs).
 site-test: site/node_modules
@@ -97,6 +97,12 @@ site-test: site/node_modules
 # share the site's cache folder.
 site-build-test: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run test:build
+
+site-search-browser: site/node_modules
+	PLAYWRIGHT_SKIP_BROWSER_GC=1 pnpm --dir site exec playwright install --only-shell chromium
+
+site-search-test: site/node_modules
+	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site test:search
 
 site-build: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
@@ -108,9 +114,13 @@ site-build: site/node_modules
 smoke-research: site/node_modules
 	node site/scripts/smoke-research.mjs $(if $(RECORD),--record)
 
-# The browser extension: plain JavaScript, tested with Node's own runner, then built.
+# The extension tests that run directly against source.
 extension-test: site/node_modules
 	node --test --test-reporter=dot extension/tests/*.test.mjs
+
+# The popup and background run from the normal package.
+extension-package-test: extension
+	node --test --test-reporter=dot extension/tests/*.package-test.mjs
 
 # The extension as loaded in Chrome ("Load unpacked" on extension/dist).
 extension: site/node_modules

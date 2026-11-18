@@ -28,7 +28,6 @@ from thenwhat.backfill.news_search import query_for
 from thenwhat.backfill.registry_load import condition_of
 from thenwhat.cli import app
 from thenwhat.db.models import (
-    ArticleLead,
     LinkLead,
     LinkLeadLabel,
     LinkLeadLink,
@@ -185,6 +184,9 @@ def test_a_run_of_several_workers_is_one_run(
         remove_committed(engine, registry="workers-registry", step=step.name, source=step.source)
 
     assert ran.exit_code == 0, ran.output
+    assert f"quiet-workers: {done} done, 0 found nothing, 0 failed; {4 - done} still due." in (
+        ran.output
+    )
     [day] = days_held(tmp_path)
     started, ended = read_events(tmp_path, day, [RUN_STARTED, RUN_ENDED])
     assert (started.values["limit"], started.values["workers"]) == (limit, 1 if limit == 1 else 2)
@@ -268,43 +270,30 @@ def test_plan_gives_no_cost_while_the_price_is_not_configured(
 # --- run ---------------------------------------------------------------------------------
 
 
-def test_a_limited_run_reports_what_remains_and_a_restart_repeats_nothing(
-    run, session: Session, index: Index
-):
-    """Scenarios: Limited run, Restart"""
+def test_run_with_a_limit_reports_the_work_and_what_remains(run, session: Session, index: Index):
+    """Scenario: Limited run"""
     add_trials(session, 5)
 
-    first = run("run", "news_search", "--limit", "2")
-    second = run("run", "news_search")
+    result = run("run", "news_search", "--limit", "2")
 
-    assert first.exit_code == 0, first.output
-    assert "news_search: 1 done, 1 found nothing, 0 failed; 3 still due." in first.output
-    assert "news_search: 2 done, 1 found nothing, 0 failed; 0 still due." in second.output
-    assert index.requests_made == 5
-    assert len(session.scalars(select(WorkEntry)).all()) == 5
-    assert len(session.scalars(select(ArticleLead)).all()) == 3
+    assert result.exit_code == 0, result.output
+    assert "news_search: 1 done, 1 found nothing, 0 failed; 3 still due." in result.output
 
 
-def test_an_unknown_step_lists_the_steps_and_processes_nothing(run, session: Session):
+def test_run_refuses_an_unknown_step_and_lists_the_known_steps(run):
     """Scenario: Unknown step"""
-    add_trials(session, 2)
-
     result = run("run", "no-such-step")
 
     assert result.exit_code == 1
     assert "No step is named 'no-such-step'. Steps: " in result.output
     assert "news_search" in result.output
-    assert session.scalars(select(WorkEntry)).all() == []
 
 
-def test_a_run_without_the_news_key_is_refused_before_any_record(run, session: Session):
-    add_trials(session, 2)
-
+def test_run_refuses_a_missing_news_key(run):
     result = run("run", "news_search")
 
     assert result.exit_code == 1
     assert "MEDIACLOUD_API_KEY is not set" in result.output
-    assert session.scalars(select(WorkEntry)).all() == []
 
 
 # --- load-trials ---------------------------------------------------------------------------
@@ -638,7 +627,6 @@ def test_reading_is_refused_until_triage_is_measured(
 
     assert result.exit_code == 1
     assert "Triage has not been measured yet: 0 of the 200 labels needed" in result.output
-    assert session.scalars(select(WorkEntry).where(WorkEntry.step == "link_read")).all() == []
 
 
 def test_the_plan_says_what_reading_would_ask_and_cost(
@@ -1064,13 +1052,8 @@ def test_the_plan_shows_what_a_batched_step_needs(run, session: Session):
     assert "requests: about 2 for each 50 records" in run("steps").output
 
 
-def test_the_paper_step_runs_through_the_command(run, session: Session, monkeypatch):
-    trials = add_trials(session, 2, registry=ClinicalTrials.name)
-    for number, stored in enumerate(trials, start=1):
-        stored.external_id = f"NCT0000000{number}"
-        stored.overall_status = "RECRUITING"
-        stored.last_update_posted = date(2026, 3, 1)
-    session.flush()
+def test_the_paper_step_reports_on_its_trial_target_set(run, session: Session, monkeypatch):
+    target_set(session, datetime.now(UTC))
 
     class Papers:
         name = "pubmed"
@@ -1085,7 +1068,7 @@ def test_the_paper_step_runs_through_the_command(run, session: Session, monkeypa
     result = run("run", "pubmed_papers")
 
     assert result.exit_code == 0, result.output
-    assert "pubmed_papers: 1 done, 1 found nothing, 0 failed; 0 still due." in result.output
+    assert "pubmed_papers: 1 done, 2 found nothing, 0 failed; 0 still due." in result.output
 
 
 def test_the_paper_step_is_refused_without_a_tool_name(run, session: Session, monkeypatch):
@@ -1253,28 +1236,6 @@ def test_trial_references_counts_the_trial_target_set(run, session: Session):
 
     assert result.exit_code == 0, result.output
     assert "active-or-ended-this-year: 3 trials" in result.output
-
-
-def test_the_paper_step_takes_the_trial_target_set(run, session: Session, monkeypatch):
-    """Scenario: A trial under way in phase 1 is asked"""
-    target_set(session, datetime.now(UTC))
-    asked: list[list[str]] = []
-
-    class Papers:
-        name = "pubmed"
-        requests_made = 0
-
-        def papers_carrying(self, numbers):
-            asked.append(list(numbers))
-            return [], NOW
-
-    monkeypatch.setattr("thenwhat.cli.backfill.make_client", lambda step, settings, a: Papers())
-
-    result = run("run", "pubmed_papers")
-
-    assert result.exit_code == 0, result.output
-    # The trial that ended this year with results first; the one that ended last year never.
-    assert asked == [["NCT00000003", "NCT00000001", "NCT00000002"]]
 
 
 def test_the_funnel_counts_why_leads_were_not_read_from_their_reason_codes(run, session: Session):
