@@ -1050,6 +1050,46 @@ def test_registry_scope_proposals_refuses_live_mode_without_an_explicit_cap(run,
     assert "Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD" in result.output
 
 
+def test_registry_scope_proposals_reads_arm_evidence_from_the_same_trial_version(
+    run, session: Session, tmp_path: Path
+):
+    trial = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    trial.external_id = "NCT00000001"
+    trial.overall_status = "RECRUITING"
+    trial.last_update_posted = date(2026, 3, 1)
+    trial.raw_payload = {
+        "protocolSection": {
+            "identificationModule": {
+                "nctId": trial.external_id,
+                "briefTitle": "Example XR for eye irritation",
+            },
+        }
+    }
+    session.flush()
+    path = tmp_path / "protocol-evidence.json"
+    detailed = {
+        **trial.raw_payload["protocolSection"],
+        "statusModule": {"lastUpdatePostDateStruct": {"date": "2026-03-01"}},
+        "eligibilityModule": {"eligibilityCriteria": "Adults with confirmed eye irritation."},
+    }
+    path.write_text(json.dumps({trial.external_id: {"protocolSection": detailed}}))
+
+    result = run("registry-scope-proposals", trial.external_id, "--arm-evidence", str(path))
+
+    assert result.exit_code == 0, result.output
+    packet = json.loads(result.output)["packets"][0]
+    assert {"kind": "eligibility", "text": "Adults with confirmed eye irritation."} in packet[
+        "evidence"
+    ]
+    assert "eligibilityModule" not in trial.raw_payload["protocolSection"]
+
+    detailed["statusModule"]["lastUpdatePostDateStruct"]["date"] = "2026-02-01"
+    path.write_text(json.dumps({trial.external_id: {"protocolSection": detailed}}))
+    stale = run("registry-scope-proposals", trial.external_id, "--arm-evidence", str(path))
+    assert stale.exit_code == 1
+    assert "differs from the stored trial version" in stale.output
+
+
 def test_registry_claim_plan_applies_an_evidence_receipt(run, session: Session, tmp_path: Path):
     stored = add_trials(session, 1, registry="clinicaltrials.gov")[0]
     stored.external_id = "NCT00000001"

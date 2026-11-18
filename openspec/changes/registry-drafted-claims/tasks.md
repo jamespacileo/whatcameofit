@@ -53,6 +53,8 @@ Of 11,563 unlinked trials with a proposed scope but no unique topic in the MeSH-
 
 The qualifier replay retained two previously omitted genotype restrictions and moved a broad stage proposal to review. The same 50 groups had 18 supported, 24 wrong and eight needing review. The full cached plan took 2.6 seconds, produced 20,224 groups, and left 11,021 trial scopes unresolved. One suffix rule was informed by this sample. The 45-of-50 drafting threshold still needs a fresh audit.
 
+The NVMe development set holds 120 cases from 127 trials, with earlier audit and holdout trial IDs excluded. The detailed registry pull found eligibility text for all 127 trials and arm descriptions for 109. An assistant reviewed 18 cases and found evidence absent from the bulk snapshot in 12. The arm-specific command reads the frozen protocol version, validates quoted fields against the assigned arms, and can request a second pass for omitted scope. In the offline comparison, the median packet grew from 1,363 to 5,775 characters and the 95th percentile grew from 3,278 to 14,923. Simulated native JSON calls exercised both stages and the exact-request cache. Live model accuracy and spend are pending.
+
 ## 3. Drafting and preparation
 
 - [x] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added

@@ -10,6 +10,16 @@ from pydantic_ai.models.function import FunctionModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.registry_arm_scope import (
+    OMISSION_PURPOSE,
+    ArmScopeAnswer,
+    arm_packet,
+    ground_arm_answer,
+    propose_arm_scope,
+)
+from thenwhat.backfill.registry_arm_scope import (
+    PURPOSE as ARM_PURPOSE,
+)
 from thenwhat.backfill.registry_scope_propose import (
     PURPOSE,
     ScopeAnswer,
@@ -111,3 +121,99 @@ def test_guessed_or_wrong_type_excerpts_fail_and_empty_answers_stay_unresolved()
     empty = ground_answers(packet, ScopeAnswer(pairs=[], remaining_uncertain=False))
     assert not empty.pairs
     assert empty.remaining_uncertain
+
+
+def test_arm_proposals_keep_matching_placebos_and_formulations_in_their_correct_roles(
+    session: Session, tmp_path: Path
+):
+    study = record()
+    protocol = study["protocolSection"]
+    protocol["eligibilityModule"] = {
+        "eligibilityCriteria": "Adults with at least one previous treatment."
+    }
+    tablet_arm = "Tablets with placebo-to-match injection"
+    injection_arm = "Injection with placebo-to-match tablets"
+    protocol["armsInterventionsModule"] = {
+        "armGroups": [
+            {
+                "label": label,
+                "type": "EXPERIMENTAL",
+                "interventionNames": ["Drug: Example XR", "Drug: PTM Example XR"],
+            }
+            for label in (tablet_arm, injection_arm)
+        ],
+        "interventions": [
+            {
+                "name": "Example XR",
+                "armGroupLabels": [tablet_arm],
+                "description": "Example XR tablets",
+            },
+            {
+                "name": "Example XR",
+                "armGroupLabels": [injection_arm],
+                "description": "Example XR injection",
+            },
+            {"name": "PTM Example XR", "armGroupLabels": [tablet_arm, injection_arm]},
+        ],
+    }
+    packet = arm_packet(study)
+
+    def citation(kind: str, phrase: str) -> dict:
+        source = next(
+            index
+            for index, field in enumerate(packet.evidence)
+            if field.kind == kind and phrase in field.text
+        )
+        return {"source": source, "text": phrase}
+
+    tablet = citation("intervention_description", "Example XR tablets")
+    injection = citation("intervention_description", "Example XR injection")
+    selected_pair = {
+        "arm": 0,
+        "components": [tablet],
+        "indication": citation("condition", "Multiple Sclerosis"),
+        "population": None,
+        "setting": None,
+        "formulation": tablet,
+        "sequence": None,
+        "comparator": [],
+        "background": [],
+    }
+    answer = {"pairs": [selected_pair], "remaining_uncertain": False}
+    assert packet.owners(injection["source"]) == {1}
+    for invalid in (injection, citation("intervention", "PTM Example XR")):
+        bad = {**answer, "pairs": [{**selected_pair, "components": [invalid]}]}
+        with pytest.raises(ValueError):
+            ground_arm_answer(packet, ArmScopeAnswer.model_validate(bad))
+    assert ground_arm_answer(packet, ArmScopeAnswer.model_validate(answer)).pairs[0].regimen == (
+        "Example XR tablets",
+    )
+
+    missing_arm = {"arm": 1, "slot": "formulation", "evidence": injection}
+    calls = []
+
+    def respond(_messages, info):
+        calls.append(info)
+        body = (
+            answer
+            if len(calls) == 1
+            else {"omissions": [missing_arm], "remaining_uncertain": False}
+        )
+        return ModelResponse(parts=[TextPart(json.dumps(body))])
+
+    llm = Llm(
+        session,
+        LlmSettings("openai:fixture", Decimal(10), Decimal(1), Decimal(1)),
+        model=FunctionModel(respond, model_name="arm-scope-native-json-fixture"),
+        cache=ModelCache(tmp_path),
+    )
+    proposal = propose_arm_scope(llm, packet, check_omissions=True)
+    assert propose_arm_scope(llm, packet, check_omissions=True) == proposal
+    assert len(calls) == 2
+    assert proposal.remaining_uncertain
+    assert len(proposal.pairs) == 1
+    assert proposal.omissions[0]["arm"] == 1
+    assert list(session.scalars(select(LlmUsage.purpose).order_by(LlmUsage.id))) == [
+        ARM_PURPOSE,
+        OMISSION_PURPOSE,
+    ]

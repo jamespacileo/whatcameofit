@@ -42,6 +42,7 @@ from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import link_read_step, make_triage, registered_steps
+from thenwhat.backfill.registry_arm_scope import arm_packet, propose_arm_scope
 from thenwhat.backfill.registry_claim_plan import plan_registry_claims
 from thenwhat.backfill.registry_load import (
     TrialList,
@@ -49,7 +50,7 @@ from thenwhat.backfill.registry_load import (
     condition_of,
     load_trials,
 )
-from thenwhat.backfill.registry_scope_propose import propose_scope, review_packet
+from thenwhat.backfill.registry_scope_propose import ReviewPacket, propose_scope, review_packet
 from thenwhat.backfill.registry_scope_review import load_scope_reviews
 from thenwhat.backfill.topics import TOPICS
 from thenwhat.backfill.trial_coverage import coverage_of
@@ -884,33 +885,69 @@ def registry_scope_proposals_command(
     run: Annotated[
         bool, typer.Option("--run", help="Request structured candidates using the configured cap.")
     ] = False,
+    arm_evidence: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True,
+            dir_okay=False,
+            help="Read cached protocol records keyed by NCT ID for the arm-specific review.",
+        ),
+    ] = None,
+    check_omissions: Annotated[
+        bool, typer.Option(help="In arm-evidence runs, request a second check for omitted scope.")
+    ] = False,
 ) -> None:
     """Print evidence packets for scope review or request candidates for specified trials."""
     settings = settings_or_exit()
     started = monotonic()
     budget = settings.registry_scope_monthly_budget_usd
     with refusals():
+        if check_omissions and (arm_evidence is None or not run):
+            raise BackfillError("--check-omissions requires --arm-evidence and --run.")
         if run and budget is None:
             raise BackfillError("Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD before a live scope run.")
         identifiers = tuple(dict.fromkeys(identifier.upper().strip() for identifier in trials))
         if not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
             raise BackfillError("Specify ClinicalTrials.gov trial identifiers in NCT format.")
         with open_session() as session:
-            records = dict(
-                session.execute(
-                    select(RegistryTrial.external_id, RegistryTrial.raw_payload).where(
-                        registry_claims_2026(), RegistryTrial.external_id.in_(identifiers)
-                    )
-                ).all()
-            )
+            records = {
+                identifier: (record, updated)
+                for identifier, record, updated in session.execute(
+                    select(
+                        RegistryTrial.external_id,
+                        RegistryTrial.raw_payload,
+                        RegistryTrial.last_update_posted,
+                    ).where(registry_claims_2026(), RegistryTrial.external_id.in_(identifiers))
+                )
+            }
             missing = [identifier for identifier in identifiers if identifier not in records]
             if missing:
                 raise BackfillError(
                     f"Trials absent from the eligible stored set: {', '.join(missing)}."
                 )
             try:
-                packets = [review_packet(records[identifier]) for identifier in identifiers]
-            except (KeyError, ValueError) as error:
+                if arm_evidence is None:
+                    packets = [review_packet(records[identifier][0]) for identifier in identifiers]
+                else:
+                    evidence = json.loads(arm_evidence.read_text(encoding="utf-8"))
+                    packets = []
+                    for identifier in identifiers:
+                        record = evidence[identifier]
+                        protocol = record["protocolSection"]
+                        evidence_id = protocol["identificationModule"]["nctId"]
+                        evidence_date = protocol["statusModule"]["lastUpdatePostDateStruct"]["date"]
+                        updated = records[identifier][1]
+                        if (
+                            identifier != evidence_id
+                            or updated is None
+                            or str(updated) != evidence_date
+                        ):
+                            raise ValueError(
+                                f"Cached evidence for {identifier} differs from "
+                                "the stored trial version."
+                            )
+                        packets.append(arm_packet(record))
+            except (KeyError, OSError, TypeError, ValueError) as error:
                 raise BackfillError(f"Could not prepare a scope packet: {error}") from error
             proposals = []
             failures = {}
@@ -921,7 +958,13 @@ def registry_scope_proposals_command(
                 llm = make_llm(session, budget_cap=budget)
                 for packet in packets:
                     try:
-                        proposals.append(asdict(propose_scope(llm, packet)))
+                        if isinstance(packet, ReviewPacket):
+                            proposal = propose_scope(llm, packet)
+                        else:
+                            proposal = propose_arm_scope(
+                                llm, packet, check_omissions=check_omissions
+                            )
+                        proposals.append(asdict(proposal))
                     except (SourceStop, LlmNotConfigured) as error:
                         stopped = str(error)
                         break
