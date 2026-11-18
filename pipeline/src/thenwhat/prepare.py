@@ -17,16 +17,18 @@ from thenwhat.db.models import (
     Claim,
     Entity,
     EntityArticle,
+    EntityMatch,
     EntitySubstance,
     LinkLead,
     Promise,
     ReportedStatement,
     SourceArticle,
 )
-from thenwhat.domain import Decider, EntityType, ReadOutcome, ReviewState
+from thenwhat.domain import Decider, DraftedFrom, EntityType, ReadOutcome, ReviewState
 from thenwhat.extract.names import is_a_name
 from thenwhat.resolve.service import combination_search
 from thenwhat.review.decisions import record_decision
+from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.rxnorm import not_searched
 
 
@@ -70,6 +72,42 @@ def decide_prepared_lead_claim(session: Session, slug: str, *, now: datetime) ->
     if state is ReviewState.APPROVED:
         claim.awaiting_audit_at = now
     return state
+
+
+def registry_draft_matches(session: Session, claim: Claim) -> dict[str, EntityMatch]:
+    return {
+        match.external_id: match
+        for match in session.scalars(
+            select(EntityMatch)
+            .join(Entity, Entity.id == EntityMatch.entity_id)
+            .where(
+                Entity.claim_id == claim.id,
+                Entity.type == EntityType.INTERVENTION,
+                EntityMatch.source_name == ClinicalTrials.name,
+                EntityMatch.external_id.in_(claim.drafting_trial_ids),
+            )
+        )
+    }
+
+
+def decide_prepared_registry_claim(
+    claim: Claim, matches: dict[str, EntityMatch], *, now: datetime
+) -> ReviewState | None:
+    """Approve and hold only when preparation approved a candidate from the draft."""
+    if (
+        claim.drafted_from is not DraftedFrom.REGISTRY
+        or claim.review_state is not ReviewState.PENDING
+    ):
+        return None
+    if not any(
+        match.review_state is ReviewState.APPROVED
+        for identifier, match in matches.items()
+        if identifier in claim.drafting_trial_ids
+    ):
+        return None
+    record_decision(claim, ReviewState.APPROVED, by=Decider.RULE, now=now)
+    claim.awaiting_audit_at = now
+    return ReviewState.APPROVED
 
 
 def claim_sharing_its_substance(session: Session, claim: Claim) -> str | None:

@@ -63,6 +63,9 @@ NO_TRIAL_TO_READ = Reason(
 NOTHING_TO_DECIDE = Reason(
     "nothing_to_decide", ReasonClass.FINAL, "the claim is no read's draft awaiting review"
 )
+NO_DRAFT_TRIAL_APPROVED = Reason(
+    "no_draft_trial_approved", ReasonClass.FINAL, "none of the drafting trials is approved"
+)
 
 
 class SourceNotSetUp(SourceStop):
