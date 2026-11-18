@@ -57,6 +57,16 @@ Trials SHALL be grouped by fixed rules on the verified intervention or complete 
 - **WHEN** a component label names alternative products or joins an active treatment and a control without separating their roles
 - **THEN** hold the record for scope review before grouping
 
+#### Scenario: Distinct component lists have the same display name
+- **WHEN** the regimen display name and normalized indication agree but the registered component lists differ
+- **THEN** the preview preserves both group identifiers and component lists and holds the groups before drafting
+
+#### Scenario: The registry lists one group's regimen as another group's alias
+- **WHEN** separate groups with the same normalized indication have overlapping registry names
+- **THEN** the preview lists the groups and the trial identifiers supporting each direction of the alias
+- **AND** when each group names the other, both groups require review before either can draft
+- **AND** the preview digest binds alias evidence for every selected group
+
 ### Requirement: Scope review candidates cite exact registry fields
 A scope review packet SHALL contain the stored trial's titles, condition labels, named interventions, arm assignments and planned outcome names. A structured selection SHALL copy phrases from appropriate fields. A proposal SHALL require an evidence-backed scope judgment before it becomes a review receipt. Live model requests SHALL use the configured ceiling and the shared cache.
 

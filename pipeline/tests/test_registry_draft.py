@@ -219,7 +219,7 @@ def test_draft_refuses_unknown_sets_and_archived_duplicates(
         slug="archived-claim",
         vertical="cancer",
         intervention="Alpha XR + Beta",
-        indication="Example Neoplasm",
+        indication="Example-Neoplasm",
         trial_ids=["NCT00000001"],
     )
     archived.archived_at = datetime.now(UTC)
@@ -319,3 +319,131 @@ def test_draft_binds_detail_only_scope_to_the_bulk_record_and_review(
     assert claim and claim.drafting_trial_ids == [trial_id]
     assert claim.review_state is ReviewState.PENDING
     assert stored.raw_payload == raw
+
+
+@pytest.mark.parametrize("condition", ["Example Neoplasm", "Example-Neoplasm"])
+def test_same_display_name_keeps_bundled_and_separate_regimens_for_review(
+    session: Session, invoke, tmp_path: Path, condition: str
+):
+    descriptors = eligible_set(session, tmp_path)
+    trial = session.scalar(select(RegistryTrial).where(RegistryTrial.external_id == "NCT00000002"))
+    assert trial is not None
+    record = deepcopy(trial.raw_payload)
+    record["protocolSection"]["armsInterventionsModule"]["armGroups"][0]["interventionNames"] = [
+        "Drug: Alpha XR + Beta"
+    ]
+    record["protocolSection"]["conditionsModule"]["conditions"] = [condition]
+    record["protocolSection"]["identificationModule"]["briefTitle"] = f"A study for {condition}"
+    trial.raw_payload = record
+    session.flush()
+
+    result = invoke(
+        REGISTRY_CLAIMS_2026, "--batch", "display-dupe", "--mesh-descriptors", str(descriptors)
+    )
+    assert result.exit_code == 0, result.output
+    plan = json.loads(result.output)
+    conflicts = [row for row in plan["held_groups"] if row["regimen"] == "Alpha XR + Beta"]
+    assert len({row["group_id"] for row in conflicts}) == 2
+    assert {row["reason"] for row in conflicts} == {"duplicate_regimen_indication"}
+    assert {row["indication"] for row in conflicts} == {"Example Neoplasm", condition}
+    assert {tuple(row["components"]): row["trials"] for row in conflicts} == {
+        ("Alpha XR", "Beta"): ["NCT00000001"],
+        ("Alpha XR + Beta",): ["NCT00000002"],
+    }
+    assert all(action["regimen"] != "Alpha XR + Beta" for action in plan["actions"])
+
+
+def test_reciprocal_registry_aliases_wait_for_review_of_their_full_identity(
+    session: Session, invoke, tmp_path: Path
+):
+    descriptors = eligible_set(session, tmp_path)
+    raw_by_id = {}
+    for index, (name, aliases) in enumerate(
+        [
+            ("Z-231", ["Example Tablet"]),
+            ("Example Tablet", ["Z-231"]),
+            ("Example Device", []),
+            ("Other Device", ["Example Device"]),
+        ],
+        1,
+    ):
+        trial_id = f"NCT{index:08d}"
+        trial = session.scalar(select(RegistryTrial).where(RegistryTrial.external_id == trial_id))
+        assert trial is not None
+        raw = deepcopy(trial.raw_payload)
+        raw["protocolSection"]["armsInterventionsModule"] = {
+            "armGroups": [
+                {
+                    "label": "Test Arm",
+                    "type": "EXPERIMENTAL",
+                    "interventionNames": [f"Drug: {name}"],
+                }
+            ],
+            "interventions": [
+                {"name": name, "otherNames": aliases, "armGroupLabels": ["Test Arm"]}
+            ],
+        }
+        trial.raw_payload = raw
+        raw_by_id[trial_id] = raw
+    session.flush()
+    args = (
+        REGISTRY_CLAIMS_2026,
+        "--batch",
+        "registry-aliases",
+        "--mesh-descriptors",
+        str(descriptors),
+    )
+    initial = invoke(*args)
+    assert initial.exit_code == 0, initial.output
+    plan = json.loads(initial.output)
+    assert len(plan["registry_alias_pairs"]) == 2
+    reciprocal = next(
+        row for row in plan["registry_alias_pairs"] if row["one_names_two"] and row["two_names_one"]
+    )
+    assert set(reciprocal["regimens"]) == {"Z-231", "Example Tablet"}
+    assert set(reciprocal["one_names_two"] + reciprocal["two_names_one"]) == {
+        "NCT00000001",
+        "NCT00000002",
+    }
+    assert plan["held_groups_by_reason"]["registry_alias_needs_review"] == 2
+    assert {row["regimen"] for row in plan["actions"]} == {"Example Device", "Other Device"}
+
+    limited = invoke(*args, "--limit", "1")
+    assert limited.exit_code == 0, limited.output
+    limited_plan = json.loads(limited.output)
+    assert limited_plan["actions"][0]["regimen"] == "Example Device"
+    other_id = "NCT00000004"
+    other = session.scalar(select(RegistryTrial).where(RegistryTrial.external_id == other_id))
+    assert other is not None
+    updated = deepcopy(other.raw_payload)
+    updated["protocolSection"]["armsInterventionsModule"]["interventions"][0]["otherNames"] = []
+    other.raw_payload = updated
+    session.flush()
+    stale = invoke(*args, "--limit", "1", "--apply-plan", limited_plan["apply_plan"])
+    assert stale.exit_code == 1 and "plan changed" in stale.output
+    assert not session.scalars(select(Claim)).all()
+
+    receipts = tmp_path / "scope-reviews.json"
+    trials = ("NCT00000001", "NCT00000002")
+    reviews = [
+        {
+            "trial_id": trial,
+            "registry_sha256": payload_of(raw_by_id[trial]).sha256,
+            "reviewed_by": "fixture assistant",
+            "pairs": [
+                {
+                    "regimen": ["Example Tablet"],
+                    "indication": "Example Neoplasm",
+                    "intervention_quotes": ["Example Tablet"],
+                    "indication_quotes": ["Example Neoplasm"],
+                }
+            ],
+        }
+        for trial in trials
+    ]
+    receipts.write_text(json.dumps({"schema_version": 1, "reviews": reviews}), encoding="utf-8")
+    reviewed = invoke(*args, "--reviewed-scopes", str(receipts))
+    assert reviewed.exit_code == 0, reviewed.output
+    selections = json.loads(reviewed.output)["actions"]
+    [combined] = [row for row in selections if row["regimen"] == "Example Tablet"]
+    assert combined["trial_ids"] == list(trials)

@@ -358,9 +358,11 @@ class PlanGroup:
     regimen: str
     indication: str
     purpose: str
+    components: tuple[str, ...]
     trials: list[str] = field(default_factory=list)
     exact_claim_candidates: set[str] = field(default_factory=set)
     alias_claim_candidates: set[str] = field(default_factory=set)
+    registry_aliases: dict[str, set[str]] = field(default_factory=dict)
     condition_terms: set[tuple[str, str]] = field(default_factory=set)
     vertical_evidence: dict[str, set[str]] = field(default_factory=dict)
     vertical: str | None = None
@@ -510,13 +512,16 @@ def group_registry_trials(
         for regimen, indication in pairs:
             condition = tuple(condition_words(indication))
             key = tuple(sorted(map(name_key, regimen.components))), condition, scope.purpose
-            group = groups.setdefault(key, PlanGroup(regimen.label, indication, scope.purpose))
+            group = groups.setdefault(
+                key, PlanGroup(regimen.label, indication, scope.purpose, regimen.components)
+            )
             if not group.trials or group.trials[-1] != identifier:
                 group.trials.append(identifier)
             group.exact_claim_candidates.update(
                 by_pair.get((_regimen_key(regimen.label), condition), ())
             )
             for alias in regimen.aliases:
+                group.registry_aliases.setdefault(alias, set()).add(identifier)
                 group.alias_claim_candidates.update(
                     by_pair.get((_regimen_key(alias), condition), ())
                 )

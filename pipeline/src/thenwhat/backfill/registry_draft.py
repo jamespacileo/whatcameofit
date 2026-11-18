@@ -18,6 +18,7 @@ from thenwhat.claims.audit import register_audit_batch
 from thenwhat.claims.entry import (
     SLUG_PATTERN,
     add_registry_claim,
+    condition_words,
     name_key,
     nominate_registry_trials,
 )
@@ -52,13 +53,53 @@ class VerifiedLinks(BaseModel):
 
 
 def _group_id(group: PlanGroup) -> str:
-    return payload_of(
-        {
-            "regimen": name_key(group.regimen),
-            "indication": name_key(group.indication),
-            "purpose": group.purpose,
-        }
-    ).sha256
+    identity: dict[str, Any] = {
+        "regimen": name_key(group.regimen),
+        "indication": name_key(group.indication),
+        "purpose": group.purpose,
+    }
+    # A registered component can itself contain the display separator. Keep the arm's
+    # structure in its identifier and retain the previous IDs for unambiguous labels.
+    components = tuple(map(name_key, group.components))
+    if any(" + " in component for component in components):
+        identity["components"] = sorted(components)
+    return payload_of(identity).sha256
+
+
+def _registry_alias_groups(
+    groups: Mapping[str, PlanGroup],
+) -> tuple[list[dict[str, Any]], set[str]]:
+    """Find whole registered names used as aliases by peers with the same indication."""
+    identities: dict[tuple[str, tuple[str, ...]], list[str]] = defaultdict(list)
+    for group_id, group in groups.items():
+        key = (name_key(group.regimen), tuple(condition_words(group.indication)))
+        identities[key].append(group_id)
+    evidence: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for group_id, group in groups.items():
+        condition = tuple(condition_words(group.indication))
+        for alias, trial_ids in group.registry_aliases.items():
+            for peer in identities.get((name_key(alias), condition), ()):
+                if peer != group_id:
+                    evidence[group_id, peer].update(trial_ids)
+    pair_ids = {(min(source, target), max(source, target)) for source, target in evidence}
+    pairs = []
+    reciprocal = set()
+    for one, two in sorted(pair_ids):
+        forward = sorted(evidence.get((one, two), ()))
+        reverse = sorted(evidence.get((two, one), ()))
+        if forward and reverse:
+            reciprocal.update((one, two))
+        pairs.append(
+            {
+                "group_ids": [one, two],
+                "regimens": [groups[one].regimen, groups[two].regimen],
+                "purposes": [groups[one].purpose, groups[two].purpose],
+                "indication": groups[one].indication,
+                "one_names_two": forward,
+                "two_names_one": reverse,
+            }
+        )
+    return pairs, reciprocal
 
 
 def _trial_hashes(session: Session, trial_ids: Collection[str]) -> dict[str, str]:
@@ -76,7 +117,7 @@ def _trial_hashes(session: Session, trial_ids: Collection[str]) -> dict[str, str
 class ClaimCatalogue:
     trial_ids: dict[str, set[str]]
     evidence: dict[str, str]
-    unavailable: dict[tuple[str, str], set[str]]
+    unavailable: dict[tuple[str, tuple[str, ...]], set[str]]
     slugs: set[str]
 
 
@@ -112,8 +153,9 @@ def _claim_catalogue(session: Session, targets: Collection[str]) -> ClaimCatalog
         .where(Entity.type == EntityType.INTERVENTION, Claim.merged_into_id.is_(None))
     ):
         if claim.archived_at is not None or claim.review_state is ReviewState.REJECTED:
+            indication = tuple(condition_words(claim.indication))
             for name in (entity.name, *entity.synonyms):
-                catalogue.unavailable[(name_key(name), name_key(claim.indication))].add(claim.slug)
+                catalogue.unavailable[(name_key(name), indication)].add(claim.slug)
         elif claim.slug in targets:
             catalogue.trial_ids.setdefault(claim.slug, set()).update(
                 (*claim.drafting_trial_ids, *claim.registry_candidate_trial_ids)
@@ -196,14 +238,20 @@ def prepare_draft_plan(
         for slug in group.exact_claim_candidates | group.alias_claim_candidates
     }
     catalogue = _claim_catalogue(session, targets)
-    groups = {}
-    details = {}
+    details: dict[str, PlanGroup] = {}
     for group in plan.groups:
         group_id = _group_id(group)
+        if group_id in details:
+            raise BackfillError(
+                "Registry draft groups share an identifier. Correct the group plan."
+            )
         details[group_id] = group
+    alias_pairs, reciprocal_aliases = _registry_alias_groups(details)
+    groups = {}
+    for group_id, group in details.items():
         candidates = group.exact_claim_candidates | group.alias_claim_candidates
         unavailable = catalogue.unavailable.get(
-            (name_key(group.regimen), name_key(group.indication)), set()
+            (name_key(group.regimen), tuple(condition_words(group.indication))), set()
         )
         groups[group_id] = GroupChoice(
             group_id,
@@ -214,6 +262,7 @@ def prepare_draft_plan(
             tuple(group.trials),
             tuple(sorted(candidates & catalogue.evidence.keys())),
             tuple(sorted(unavailable | (candidates - catalogue.evidence.keys()))),
+            group_id in reciprocal_aliases,
         )
     candidate_groups = [group for group in groups.values() if group.existing_claims]
     candidate_hashes = _trial_hashes(
@@ -264,6 +313,12 @@ def prepare_draft_plan(
     }
     if reviewed_hashes:
         plan_content["scope_review_sha256"] = reviewed_hashes
+    selected_groups = {action.group_id for action in actions}
+    selected_alias_pairs = [
+        pair for pair in alias_pairs if not selected_groups.isdisjoint(pair["group_ids"])
+    ]
+    if selected_alias_pairs:
+        plan_content["registry_alias_pairs"] = selected_alias_pairs
     plan_id = payload_of(plan_content).sha256
     held_counts = Counter(selected.holds.values())
     report = {
@@ -277,6 +332,7 @@ def prepare_draft_plan(
             .where(registry_claims_2026(), RegistryTrial.search_name.is_(None))
         ),
         "group_count": len(groups),
+        "registry_alias_pairs": alias_pairs,
         "trials_currently_linked": len(plan.current_claim_links),
         "trial_scope_needs_review": {key: value.issues for key, value in plan.needs_review.items()},
         "held_groups_by_reason": dict(held_counts),
@@ -284,6 +340,7 @@ def prepare_draft_plan(
             {
                 "group_id": identifier,
                 "regimen": groups[identifier].regimen,
+                "components": details[identifier].components,
                 "indication": groups[identifier].indication,
                 "reason": reason,
                 "trials": selected.remaining_trials.get(identifier, groups[identifier].trial_ids),
@@ -299,6 +356,7 @@ def prepare_draft_plan(
             {
                 "group_id": group.group_id,
                 "regimen": group.regimen,
+                "components": details[group.group_id].components,
                 "indication": group.indication,
                 "purpose": group.purpose,
                 "trial_sha256": {

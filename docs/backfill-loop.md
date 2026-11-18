@@ -90,9 +90,13 @@ thenwhat audit sample --batch phase23-001 --all
 ```
 
 Run the apply command with the same scope and MeSH options as the preview. The digest binds
-the selected actions, registry record versions and applicable scope receipts. Detailed
+the selected actions, registry record versions, applicable scope receipts and registry
+alias evidence for the selected groups. Detailed
 protocols must agree with the stored trial's identifier, update date and shared scope fields.
 A changed plan needs a new preview.
+Inspect the component lists and registry alias pairs in the preview. Groups whose
+registry records name each other wait for scope review. When both names identify the
+same regimen for the same indication, use the same verified name in their scope receipts.
 For a verified existing-claim link, supply the trial, group, claim and evidence hashes from
 the preview in `--verified-links`, with the reviewer and their reason. Preparation scores
 the nominated trials through the existing match step. Reapplying the same batch returns its

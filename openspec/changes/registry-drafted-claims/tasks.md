@@ -76,6 +76,8 @@ A local fixture verified exact-ID handoff to an existing claim without a second 
 
 The full command preview ran read-only against 27,731 cached trials and 971 claims from the November 17 export on the NVMe. It took 13.5 seconds and listed 200 provisional drafts covering 165 distinct trial IDs. It found 62 groups with existing-claim candidates and held 14,520 groups for topic review. This preview used no new registry or model requests. The grouping threshold still applies before actual drafting.
 
+The duplicate and alias replay used the same cached trials and claims. It kept all 19,815 groups visible, including two pairs with identical regimen display names and distinct component lists. Two groups were held for duplicate regimen and indication. The other pair was already held for topic review. The preview reported 67 possible alias pairs and held the 14 groups whose records named each other. Some one-way links came from comparator or combination entries. The preview took 14.1 seconds, listed 200 provisional drafts covering 166 trials, and made no registry requests, model calls or production writes. It does not satisfy the independent grouping audit.
+
 ## 4. The site
 
 - [x] 4.1 Add to the export whether a report is linked and what a claim was drafted from, with no headline or summary for a claim with no article; regenerate `site/export.schema.json` and raise the schema version; verify the tests that compare both pass

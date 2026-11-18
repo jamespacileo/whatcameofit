@@ -13,7 +13,7 @@ from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-from thenwhat.claims.entry import MAX_SLUG_LENGTH, InvalidSlug, name_key, slug_for
+from thenwhat.claims.entry import MAX_SLUG_LENGTH, InvalidSlug, condition_words, name_key, slug_for
 
 __all__ = ["GroupChoice", "DraftAction", "DraftSelection", "choose_drafts"]
 
@@ -31,6 +31,7 @@ CONFLICTING_VERTICAL = "conflicting_vertical"
 PURPOSE_REVIEW = "study_purpose_needs_review"
 CONFLICTING_PURPOSE = "conflicting_study_purpose"
 DUPLICATE_GROUP = "duplicate_regimen_indication"
+REGISTRY_ALIAS_REVIEW = "registry_alias_needs_review"
 SLUG_REVIEW = "slug_needs_review"
 
 _SLUG_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
@@ -47,6 +48,7 @@ class GroupChoice:
     trial_ids: tuple[str, ...]
     existing_claims: tuple[str, ...] = ()
     unavailable_claims: tuple[str, ...] = ()
+    reciprocal_registry_alias: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -118,6 +120,8 @@ def _checked_groups(groups: Iterable[GroupChoice]) -> tuple[GroupChoice, ...]:
             raise ValueError(
                 f"group {group.group_id!r} lists a claim as both active and unavailable"
             )
+        if not isinstance(group.reciprocal_registry_alias, bool):
+            raise ValueError(f"group {group.group_id!r} must have a boolean registry alias flag")
         checked.append(
             GroupChoice(
                 group.group_id,
@@ -128,6 +132,7 @@ def _checked_groups(groups: Iterable[GroupChoice]) -> tuple[GroupChoice, ...]:
                 trials,
                 existing,
                 unavailable,
+                group.reciprocal_registry_alias,
             )
         )
     return tuple(checked)
@@ -221,14 +226,14 @@ def _plan_existing(
     return _Plan(NOMINATE, owner, tuple(nominate), hold, tuple(unverified))
 
 
-def _draft_key(group: GroupChoice) -> tuple[str, str]:
-    return name_key(group.regimen), name_key(group.indication)
+def _draft_key(group: GroupChoice) -> tuple[str, tuple[str, ...]]:
+    return name_key(group.regimen), tuple(condition_words(group.indication))
 
 
 def _plan_draft(
     group: GroupChoice,
     cohort: tuple[GroupChoice, ...],
-    claimed_keys: Mapping[tuple[str, str], bool],
+    claimed_keys: Mapping[tuple[str, tuple[str, ...]], bool],
 ) -> tuple[_Plan, str | None]:
     """Check a group with no active claim; returns the plan and its base slug."""
 
@@ -240,6 +245,8 @@ def _plan_draft(
     key = _draft_key(group)
     if key in claimed_keys:
         return held(DUPLICATE_OF_EXISTING if claimed_keys[key] else UNAVAILABLE)
+    if group.reciprocal_registry_alias:
+        return held(REGISTRY_ALIAS_REVIEW)
     if group.purpose is None or not group.purpose.strip():
         return held(PURPOSE_REVIEW)
     if len({name_key(member.purpose or "") for member in cohort}) > 1:
@@ -267,7 +274,7 @@ def _unique_slug(group: GroupChoice, base: str, taken: set[str]) -> str | None:
     """Return ``base`` or a stable digest-suffixed variant not in ``taken``."""
     if base not in taken:
         return base
-    regimen, indication = _draft_key(group)
+    regimen, indication = name_key(group.regimen), name_key(group.indication)
     material = "\x1f".join((regimen, indication, name_key(group.purpose or ""))).encode()
     digest = hashlib.sha256(material).hexdigest()
     for size in _DIGEST_LENGTHS:
@@ -311,8 +318,8 @@ def choose_drafts(
         taken.update(slug.casefold() for slug in group.existing_claims + group.unavailable_claims)
 
     # Regimen/indication keys already bound to a claim (True if any is active).
-    claimed_keys: dict[tuple[str, str], bool] = {}
-    cohorts: dict[tuple[str, str], list[GroupChoice]] = {}
+    claimed_keys: dict[tuple[str, tuple[str, ...]], bool] = {}
+    cohorts: dict[tuple[str, tuple[str, ...]], list[GroupChoice]] = {}
     for group in ordered:
         key = _draft_key(group)
         if group.existing_claims:
