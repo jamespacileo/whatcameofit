@@ -54,6 +54,15 @@ Trials SHALL be grouped by fixed rules on the verified intervention or complete 
 - **THEN** compare them as the same indication for grouping and existing claim candidates
 - **AND** a trial with a single registered condition can retain a more specific phrase from the title when it contains the reordered condition
 
+#### Scenario: A title explicitly names the treatment setting
+- **WHEN** a title assigns a treatment line or perioperative setting directly to the resolved indication
+- **THEN** preserve the setting with the indication for grouping and use the disease for topic placement
+- **AND** hold competing settings for scope review
+
+#### Scenario: A registry condition label names a component of the regimen
+- **WHEN** a title names that label as the first item in an explicitly coordinated treatment combination
+- **THEN** that phrase does not establish the label as an indication
+
 #### Scenario: A crossover arm lists multiple interventions
 - **WHEN** membership describes a sequence of different treatments
 - **THEN** verify which regimen is tested before grouping

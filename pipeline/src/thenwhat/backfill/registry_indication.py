@@ -53,7 +53,23 @@ _WORD = re.compile(r"[^\W_]+")
 _TARGET = re.compile(
     r"\b(?:to (?:treat|prevent)|(?:treatment|prevention|management|reduction) of) $"
 )
-_TARGET_LIST = re.compile(r"^(?: and | or | as well as )")
+_TARGET_LIST = re.compile(r"^(?: and | or | plus | as well as | combined with )")
+_LINE_NAMES = ("first", "second", "third", "fourth")
+_TREATMENT_SETTING = re.compile(
+    r"(?:^|\b(?:as|for|in)\s+)(?:the\s+)?"
+    r"(?P<setting>(?:first|second|third|fourth)[\s-]+line|[1-4]L|"
+    r"perioperative|neoadjuvant|adjuvant)\s+"
+    r"(?:treatment|therapy)\s+(?:of|for|in)\s+"
+    r"(?:(?:patients|participants|subjects|adults|children)\s+with\s+)?",
+    re.IGNORECASE,
+)
+_SETTING_SUFFIX = re.compile(
+    r" \((?:(?:first|second|third|fourth)-line|perioperative|neoadjuvant|adjuvant) treatment\)$"
+)
+_SETTING_TAIL = re.compile(
+    r"^\s*(?:[,;/]|(?:and|or|plus|with|without|in|among|after|following)\b|combined\s+with\b)",
+    re.IGNORECASE,
+)
 _MIXED_ENROLMENT = re.compile(
     r"\b(?:untreated|treatment naive|previously treated|newly diagnosed) (?:and|or) $"
 )
@@ -98,6 +114,35 @@ def indication_key(label: str) -> tuple[str, ...]:
         if len(words) > size + 1 and words[-size:] == state and words[-size - 1] in _DISEASE_HEADS:
             return (*state, *words[:-size])
     return words
+
+
+def condition_without_treatment_setting(label: str) -> str:
+    """Return the disease label used for topic placement."""
+    return _SETTING_SUFFIX.sub("", label)
+
+
+def title_treatment_settings(indication: str, titles: Iterable[str]) -> dict[str, str]:
+    """Find settings that a title directly assigns to treatment of this indication."""
+    condition = condition_words(_ACRONYM.sub("", indication))
+    if not condition:
+        return {}
+    settings = {}
+    for title in titles:
+        for match in _TREATMENT_SETTING.finditer(title):
+            words = list(_WORD.finditer(title, match.end()))
+            end = len(condition)
+            if [word.group().casefold() for word in words[:end]] != condition:
+                continue
+            if words[0].start() != match.end():
+                continue
+            remainder = title[words[end - 1].end() :]
+            if _SETTING_TAIL.match(remainder):
+                continue
+            setting = "-".join(condition_words(match["setting"]))
+            if re.fullmatch(r"[1-4]l", setting):
+                setting = f"{_LINE_NAMES[int(setting[0]) - 1]}-line"
+            settings.setdefault(setting, title[match.start("setting") : words[end - 1].end()])
+    return settings
 
 
 def _within(short: tuple[str, ...], long: tuple[str, ...]) -> bool:

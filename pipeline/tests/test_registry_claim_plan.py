@@ -245,6 +245,57 @@ def test_title_refines_a_disease_with_a_reordered_qualifier():
     assert trial_scope(two_conditions).issues == ("condition_assignment_needs_review",)
 
 
+def test_title_preserves_distinct_explicit_treatment_settings():
+    arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
+    disease = "Example Carcinoma"
+    setting_titles = {
+        "first": "Example XR for the First-Line Treatment of Example Carcinoma: Phase 2",
+        "short": "Example XR for 1L therapy in participants with Example Carcinoma",
+        "second": "Example XR as second-line treatment of Example Carcinoma",
+        "plain": "Example XR in Example Carcinoma after first-line treatment",
+        "multiple": "Example XR for first-line treatment of Example Carcinoma or Example Sarcoma",
+    }
+    trials = [(identifier, study([disease], arms)) for identifier in setting_titles]
+    for identifier, record in trials:
+        record["protocolSection"]["identificationModule"] = {
+            "officialTitle": setting_titles[identifier],
+        }
+    competing = study([disease], arms)
+    competing["protocolSection"]["identificationModule"] = {
+        "briefTitle": setting_titles["first"],
+        "officialTitle": setting_titles["second"],
+    }
+    trials.append(("competing", competing))
+
+    plan = group_registry_trials(trials)
+
+    assert {group.indication: group.trials for group in plan.groups} == {
+        disease: ["plain", "multiple"],
+        f"{disease} (first-line treatment)": ["first", "short"],
+        f"{disease} (second-line treatment)": ["second"],
+    }
+    assert plan.needs_review["competing"].issues == ("treatment_setting_needs_review",)
+    assert trial_scope(trials[0][1]).indication_title_phrase == (
+        "First-Line Treatment of Example Carcinoma"
+    )
+
+
+def test_the_name_of_one_combination_component_is_not_the_indication():
+    record = study(
+        ["Example Carcinoma", "Example Solid Tumors", "Example XR", "Example Y"],
+        [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR; Example Y"]}],
+    )
+    record["protocolSection"]["identificationModule"] = {
+        "officialTitle": (
+            "Neoadjuvant Treatment of Example XR Plus Example Y in Stage II Example Carcinoma"
+        )
+    }
+    scope = trial_scope(record)
+
+    assert scope.issues == ("condition_assignment_needs_review",)
+    assert scope.indication_title_phrase is None
+
+
 def test_reordered_qualifiers_share_the_same_group_and_existing_claim_candidate():
     arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
     trials = [
@@ -685,6 +736,10 @@ def test_topic_evidence_places_unique_groups_and_the_approved_cancer_overlap(tmp
     records = []
     for identifier, label, _ in mesh[3:5]:
         given = study([label], arms)
+        if identifier == "D000001":
+            given["protocolSection"]["identificationModule"] = {
+                "officialTitle": f"Example XR for the first-line treatment of {label}",
+            }
         given["derivedSection"] = {
             "conditionBrowseModule": {"meshes": [{"id": identifier, "term": label}]}
         }
@@ -693,6 +748,7 @@ def test_topic_evidence_places_unique_groups_and_the_approved_cancer_overlap(tmp
     plan = group_registry_trials(records, vocabulary=vocabulary)
 
     unique, overlap = plan.groups
+    assert unique.indication == "Example Neoplasm (first-line treatment)"
     assert unique.vertical == "cancer"
     assert unique.vertical_evidence == {"cancer": {"D000001"}}
     assert overlap.vertical == "cancer"

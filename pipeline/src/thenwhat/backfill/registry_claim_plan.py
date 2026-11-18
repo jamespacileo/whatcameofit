@@ -9,9 +9,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.registry_indication import (
+    condition_without_treatment_setting,
     has_named_cohorts,
     indication_key,
     resolve_indication,
+    title_treatment_settings,
 )
 from thenwhat.backfill.registry_scope_review import (
     ScopeReview,
@@ -271,6 +273,14 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
     conditions, indication_title_phrase = resolve_indication(listed_conditions, titles)
     design = protocol.get("designModule", {}).get("designInfo", {})
     purpose = design.get("primaryPurpose")
+    settings = (
+        title_treatment_settings(conditions[0], titles)
+        if purpose == "TREATMENT" and len(conditions) == 1
+        else {}
+    )
+    if len(settings) == 1:
+        ((setting, indication_title_phrase),) = settings.items()
+        conditions = (f"{conditions[0]} ({setting} treatment)",)
     intervention_model = design.get("interventionModel")
     treatment = protocol.get("armsInterventionsModule", {})
     interventions = treatment.get("interventions", [])
@@ -366,6 +376,8 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         issues.append("control_component_needs_review")
     if alternatives:
         issues.append("alternative_regimen_needs_review")
+    if len(settings) > 1:
+        issues.append("treatment_setting_needs_review")
     if any(
         generic_intervention_name(component)
         for regimen in regimens.values()
@@ -474,7 +486,7 @@ def _record_vertical(
     vocabulary: Vocabulary,
 ) -> None:
     group.condition_terms.update(terms)
-    wanted = indication_key(group.indication)
+    wanted = indication_key(condition_without_treatment_setting(group.indication))
     selected = [identifier for identifier, label in terms if indication_key(label) == wanted]
     if not selected:
         anchors = _condition_anchors(wanted, listed_conditions)
