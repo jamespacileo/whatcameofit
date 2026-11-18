@@ -23,7 +23,7 @@ None.
 
 ### Modified Capabilities
 
-- `lead-reading`: which claims are offered to the same-claim decision at the read, a second same-claim decision once a drafted claim's registries are searched, and what the audit list says about claims that share an approved trial. The capability is defined by `openspec/changes/social-link-backfill`, which is not archived, so `openspec/specs/` has no `lead-reading` yet and this delta adds requirements beside that change's.
+- `lead-reading`: which claims are offered to the same-claim decision at the read, a second same-claim decision once a drafted claim's registries are searched, and what the audit list says about claims that share an approved trial. The capability is defined by `openspec/changes/archive/2026-11-18-social-link-backfill`, which is not archived, so `openspec/specs/` has no `lead-reading` yet and this delta adds requirements beside that change's.
 
 ## Impact
 

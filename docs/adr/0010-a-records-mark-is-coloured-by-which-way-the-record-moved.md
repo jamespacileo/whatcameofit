@@ -1,6 +1,6 @@
 # 10. A record's mark is coloured by which way the record moved
 
-Date: 2026-11-17. Status: accepted. Change: `openspec/changes/home-then-now`. Narrows the guardrail "No editorial verdicts".
+Date: 2026-11-17. Status: accepted. Change: `openspec/changes/archive/2026-11-18-home-then-now`. Narrows the guardrail "No editorial verdicts".
 
 ## Context
 

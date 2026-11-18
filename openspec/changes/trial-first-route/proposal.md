@@ -59,7 +59,7 @@ Not in this change:
 - `daily-run`: its existing refresh takes first the claims that cite a changed trial, and its summary counts them. This capability is created by `daily-trial-refresh`, not yet synced; the requirements here are added beside that change's and apply after it.
 - `trial-records`: which identifiers the trial page answers for, and the words it uses for a trial's state.
 
-`lead-screening` and `lead-reading` are specified in `openspec/changes/social-link-backfill`, not yet synced. This change adds to them through `trial-report-links` and changes none of their requirements; the two places they meet are named in `design.md`, decision 5.
+`lead-screening` and `lead-reading` are specified in `openspec/changes/archive/2026-11-18-social-link-backfill`, not yet synced. This change adds to them through `trial-report-links` and changes none of their requirements; the two places they meet are named in `design.md`, decision 5.
 
 ## Impact
 

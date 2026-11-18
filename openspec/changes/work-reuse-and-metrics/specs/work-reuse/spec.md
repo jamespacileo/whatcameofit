@@ -68,17 +68,6 @@ The reference file a device pulls SHALL carry the keys of stored results a run c
 - **WHEN** a device works a month another device pushed yesterday
 - **THEN** it scores and reads nothing the first device scored or read at the current versions
 
-### Requirement: The same story on several outlets is read once
-Leads on different outlets whose titles are the same after tidying, shared within a set number of days of each other, SHALL be treated as one story for reading: one is read, and when it leads to a claim the others SHALL be offered to the same-claim decision as further articles. No article SHALL be joined to a claim without that decision.
-
-#### Scenario: A wire story on five outlets
-- **WHEN** five leads on five outlets carry the same headline in one week and the first read drafts a claim
-- **THEN** one article was read, and the other four are each put to the same-claim decision
-
-#### Scenario: The same headline, a different story
-- **WHEN** the same-claim decision says a grouped article does not report the claim
-- **THEN** the article is not joined to it and is read in its own turn
-
 ### Requirement: Outlets that refuse are left alone for a while
 A writer SHALL keep, for each outlet, how often its pages could be read, and SHALL wait before asking again for a page from an outlet whose recent pages failed, for a time that grows with further failures and ends with a success.
 

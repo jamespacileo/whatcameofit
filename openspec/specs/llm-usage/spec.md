@@ -17,11 +17,16 @@ The provider and model used for language model calls SHALL come from configurati
 - **THEN** the next call uses the new model without any other change
 
 ### Requirement: Usage ledger
-Every language model call SHALL be recorded with its purpose, model, input and output token counts, cost and time.
+Every language model call SHALL be recorded with its purpose, model, input and output token counts, cost and time. Incurred usage SHALL persist independently of the transaction performing claim work, so a later rollback cannot erase paid usage or hide it from the spending ceiling.
 
 #### Scenario: Extraction call
 - **WHEN** an extraction call completes
 - **THEN** a ledger entry exists with purpose extraction, the model used, token counts and cost
+
+#### Scenario: Claim work is rolled back after a call
+- **GIVEN** a model call has incurred usage
+- **WHEN** later claim work fails and its transaction rolls back
+- **THEN** that usage remains recorded and counts towards the monthly ceiling
 
 ### Requirement: Monthly spend ceiling
 When the recorded cost for the current calendar month has reached the configured ceiling, the system SHALL refuse further language model calls until the month ends or the ceiling is raised.

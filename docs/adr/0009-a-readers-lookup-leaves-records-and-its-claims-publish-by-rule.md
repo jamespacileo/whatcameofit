@@ -4,7 +4,7 @@ Date: 2026-11-16. Status: accepted; not in effect until `openspec/changes/cloudf
 
 ## Context
 
-Until now a lookup, from the browser extension or the landing page, answered the reader and kept nothing (`openspec/changes/live-lookup`: "A lookup keeps nothing it read"). With the tracker's records in one store on Cloudflare (`0008`), the operator wants rows created and updated on demand as readers use the product.
+Until now a lookup, from the browser extension or the landing page, answered the reader and kept nothing (`openspec/changes/archive/2026-11-18-live-lookup`: "A lookup keeps nothing it read"). With the tracker's records in one store on Cloudflare (`0008`), the operator wants rows created and updated on demand as readers use the product.
 
 Anyone can ask for a lookup. So whatever a lookup may start, a stranger may start. The operator was asked on 2026-11-16 what a lookup may create, with four answers offered: drafts held for audit like a read batch (the assistant's recommendation), publication by rule with no audit hold, leads only, or nothing. The operator chose publication by rule with no audit hold.
 
