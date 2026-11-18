@@ -7,7 +7,7 @@ Defines a backfill from bulk files as a run that lives in a folder of files on a
 ## ADDED Requirements
 
 ### Requirement: A run is a folder and needs no database
-`thenwhat backfill run start` SHALL create a run folder for one platform and the bulk files named, and every stage of the run SHALL read and write files in that folder only. No stage SHALL need a database on the device. The run SHALL record its identifier, the device's name, the code's commit, the version of each step, the outlet list's version, the triage thresholds, the reference file it uses and the input files with their sizes.
+`thenwhat backfill runs start` SHALL create a run folder for one platform and the bulk files named, and every stage of the run SHALL read and write files in that folder only. No stage SHALL need a database on the device. The run SHALL record its identifier, the device's name, the code's commit, the version of each step, the outlet list's version, the triage thresholds, the reference file it uses and the input files with their sizes.
 
 #### Scenario: A device with nothing but the repository
 - **WHEN** a run is started on a device that has no database server
@@ -58,7 +58,7 @@ A lead whose model call or read fails SHALL be written as a result with the kind
 - **THEN** the lead's outcome is unreadable, it is not tried a fourth time, and the stage's report counts it
 
 ### Requirement: A run plans before it spends
-`thenwhat backfill run plan` SHALL print, for the triage and read stages, how many leads are due, the estimated cost, what the device has spent this month, and what is left under the device's ceiling. A stage that spends SHALL refuse to start while prices or the ceiling are not configured, and SHALL stop before a batch that would pass the ceiling, leaving the rest due.
+`thenwhat backfill runs plan` SHALL print, for the triage and read stages, how many leads are due, the estimated cost, what the device has spent this month, and what is left under the device's ceiling. A stage that spends SHALL refuse to start while prices or the ceiling are not configured, and SHALL stop before a batch that would pass the ceiling, leaving the rest due.
 
 #### Scenario: The ceiling is reached part way
 - **WHEN** triage reaches the device's ceiling after 300 leads

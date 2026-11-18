@@ -25,7 +25,7 @@ A reference file SHALL hold no raw payload, no decision log, no title of a lead,
 - **THEN** it holds only the records named above
 
 ### Requirement: A run names its reference file and warns when it is old
-A run SHALL record the reference file it was started with. `thenwhat backfill run start` SHALL pull a new one unless told to use the one present. A stage SHALL refuse to run in a run with no reference file, and SHALL warn when the file is older than seven days.
+A run SHALL record the reference file it was started with. `thenwhat backfill runs start` SHALL pull a new one unless told to use the one present. A stage SHALL refuse to run in a run with no reference file, and SHALL warn when the file is older than seven days.
 
 #### Scenario: Starting with no network
 - **WHEN** a run is started with no connection and told to use the reference file present
