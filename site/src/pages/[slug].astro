@@ -90,7 +90,8 @@ import {
   RESULTS_POSTED,
   phaseText,
 } from "../lib/trial-facts";
-import { FOLLOWED_SHOWN, followedName, followedReports } from "../lib/reports";
+import { FOLLOWED_SHOWN, followedName, followedReports, hasLinkedReport, reportedClaimCount } from "../lib/reports";
+import ReportFilter from "../components/ReportFilter.astro";
 import { claimPageData } from "../lib/structured";
 import ReportError from "../components/ReportError.astro";
 import { SITE } from "../../site.config.mjs";
@@ -435,6 +436,7 @@ const sections = [
   {/* The topic is kept in the search index, so a search counts its claims by topic
       without reading each one (openspec search-answer-in-step). */}
   <section class="band record" slot="band" data-pagefind-body data-pagefind-filter={`topic:${claim.vertical}`} aria-label="The claim and where it stands">
+    <span hidden data-pagefind-filter={`reported:${hasLinkedReport(claim) ? "yes" : "no"}`}></span>
     <div class="wrap band-grid">
       {/* The side column on a wide screen: the topic's drawing, large. Decoration only:
           the chip beside it names the topic. */}
@@ -1409,16 +1411,19 @@ const sections = [
             <Fragment slot="beside">
               {inTopic.length > others.length && (
                 <a href={`/topic/${claim.vertical}`}>
-                  All {inTopic.length + 1} claims in {topic.toLowerCase()}
+                  All {inTopic.length + 1} claims in {topic.toLowerCase()} · {reportedClaimCount([claim, ...inTopic])} reported
                 </a>
               )}
             </Fragment>
           </FoldHead>
           {/* A row a claim: its treatment and condition, where it stands as a place on the
               path, and when it was first reported. The rest is on the claim's own page. */}
+          {others.some((other) => !hasLinkedReport(other)) && (
+            <div data-related-report><ReportFilter /></div>
+          )}
           <ul class="plain entry-rows other-claims">
             {others.map((other) => (
-              <li>
+              <li data-no-report={!hasLinkedReport(other) ? "" : undefined}>
                 <div class="entry-lead">
                   <a class="entry-name" href={`/${other.slug}`}>{other.intervention.name}</a>
                   <span class="entry-note">{other.indication}</span>
@@ -1436,6 +1441,7 @@ const sections = [
               </li>
             ))}
           </ul>
+          <p class="entry-note" data-related-empty hidden>No reported claims in this list. <a href={`/topic/${claim.vertical}?reported=1`}>Browse reported claims in this topic</a>.</p>
         </section>
       )
     }
@@ -1668,6 +1674,33 @@ const sections = [
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { mastodonShare } from "../lib/share";
   import { FOLLOWING_ENTRY, readFollowed } from "../lib/returning";
+
+  const related = document.querySelector<HTMLElement>("[data-related-report]");
+  const relatedChoice = related?.querySelector<HTMLSelectElement>("[data-report-filter]");
+  const relatedList = related?.nextElementSibling;
+  if (relatedChoice && relatedList) {
+    const rows = [...relatedList.querySelectorAll<HTMLLIElement>("li")];
+    const empty = relatedList.nextElementSibling as HTMLElement;
+    const filter = () => {
+      const reported = relatedChoice.value === "1";
+      for (const row of rows) row.hidden = reported && row.hasAttribute("data-no-report");
+      empty.hidden = rows.some((row) => !row.hidden);
+    };
+    const restore = () => {
+      relatedChoice.value = new URL(location.href).searchParams.get("reported") === "1" ? "1" : "";
+      filter();
+    };
+    relatedChoice.closest("[data-await]")?.removeAttribute("data-await");
+    relatedChoice.addEventListener("change", () => {
+      const url = new URL(location.href);
+      if (relatedChoice.value) url.searchParams.set("reported", "1");
+      else url.searchParams.delete("reported");
+      history.replaceState(history.state, "", url);
+      filter();
+    });
+    addEventListener("popstate", restore);
+    restore();
+  }
 
   // A timetable entry leads to its trial, a trial to its papers and a paper back to its
   // trial. An entry past the first five sits in a closed fold, which not every browser

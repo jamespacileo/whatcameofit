@@ -5,6 +5,7 @@ import { formatDate } from "../lib/timetable";
 import ClaimName from "./ClaimName.astro";
 import Pager from "./Pager.astro";
 import StageFilter from "./StageFilter.astro";
+import { hasLinkedReport, reportedClaimCount } from "../lib/reports";
 import PromiseText from "./PromiseText.astro";
 import RecordStrip from "./RecordStrip.astro";
 import StripKey from "./StripKey.astro";
@@ -29,11 +30,18 @@ const { claims, caption, filter = false, name = "claims", words = false } = Astr
 const PAGE_SIZE = 25;
 // A handful of claims is read at a glance; the filter earns its place on a longer list.
 const FILTER_FROM = 6;
+const reported = reportedClaimCount(claims);
+const showStatuses = filter && claims.length >= FILTER_FROM;
 // Amber is kept for a promise that exists: with none in the list, there is no column.
 const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
 ---
 
-{filter && claims.length >= FILTER_FROM && <StageFilter claims={claims} words={words} />}
+{(showStatuses || reported < claims.length) && (
+  <StageFilter claims={claims} words={words && showStatuses} statuses={showStatuses} param="status" />
+)}
+{reported < claims.length && (
+  <p class="entry-note">{reported} of {claims.length} {claims.length === 1 ? "claim" : "claims"} {reported === 1 ? "has" : "have"} a linked report.</p>
+)}
 {
   /* What the column counts, said once above a list long enough to be skimmed. */
   claims.length >= FILTER_FROM && <p class="entry-note tested-note">{TESTED_WORDS.note}</p>
@@ -56,7 +64,7 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
       claims.map((claim, index) => {
         const promise = latestPromise(claim);
         return (
-          <tr data-status={claim.status.code} data-first={claim.first_reported_date ?? undefined} data-later={index >= PAGE_SIZE ? "" : undefined} role="row">
+          <tr data-status={claim.status.code} data-first={claim.first_reported_date ?? undefined} data-no-report={!hasLinkedReport(claim) ? "" : undefined} data-later={index >= PAGE_SIZE ? "" : undefined} role="row">
             <td role="cell" class="claim">
               <ClaimName claim={claim} />
             </td>
@@ -64,7 +72,7 @@ const anyPromise = claims.some((claim) => latestPromise(claim) !== null);
               {claim.first_reported_date ? (
                 formatDate(claim.first_reported_date)
               ) : (
-                <span class="visually-hidden">Not recorded</span>
+                hasLinkedReport(claim) ? <span class="visually-hidden">Not recorded</span> : <span class="entry-note">No linked report</span>
               )}
             </td>
             <td role="cell" class="tested" data-column={TESTED_WORDS.column}>

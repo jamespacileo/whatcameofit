@@ -8,7 +8,7 @@
 // since a record and a status side by side are easily read as one.
 import { recordKey, type RecordRow } from "../lib/day-list";
 import { confidenceLabel } from "../lib/confidence";
-import { followedReports } from "../lib/reports";
+import { followedReports, hasLinkedReport } from "../lib/reports";
 import { sourceName } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import { recordedText } from "../lib/trial-facts";
@@ -50,6 +50,7 @@ const moreId = `more-${claim.slug}-${row.date}-${event.id}`;
   data-status={claim.status.code}
   data-topic={claim.vertical}
   data-on={row.date}
+  data-no-report={!hasLinkedReport(claim) ? "" : undefined}
   data-record={recordKey(row)}
   data-follows={follows ? (first ? "first" : "") : undefined}
 >

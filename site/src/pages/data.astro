@@ -3,6 +3,7 @@ import Base from "../layouts/Base.astro";
 import { SITE } from "../../site.config.mjs";
 import { data } from "../lib/export";
 import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit, recordPath } from "../lib/open-data";
+import { reportedClaimCount } from "../lib/reports";
 import { datasetData } from "../lib/structured";
 
 const credit = dataCredit(SITE.name, SITE.url);
@@ -42,7 +43,7 @@ const description =
       <a href="/data/claims.json" download>Download the index, claims.json</a>
       <span class="entry-note">
         {data.claims.length}
-        {data.claims.length === 1 ? " claim" : " claims"}, as JSON
+        {data.claims.length === 1 ? " claim" : " claims"}, as JSON. {reportedClaimCount(data.claims)} with a linked report.
       </span>
     </li>
   </ul>

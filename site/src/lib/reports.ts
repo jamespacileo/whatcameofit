@@ -1,6 +1,14 @@
 // News reports across all claims, for lists that are not about one claim.
 import type { ExportedClaim } from "./export";
 
+export function hasLinkedReport(claim: Pick<ExportedClaim, "articles" | "has_report">): boolean {
+  return claim.has_report ?? claim.articles.length > 0;
+}
+
+export function reportedClaimCount(claims: readonly ExportedClaim[]): number {
+  return claims.filter(hasLinkedReport).length;
+}
+
 export interface Report {
   claim: ExportedClaim;
   outlet: string;
@@ -12,6 +20,7 @@ export interface Report {
 /** The newest reports first. Reports from the same day keep the order of their titles. */
 export function recentReports(claims: ExportedClaim[], limit: number): Report[] {
   return claims
+    .filter(hasLinkedReport)
     .flatMap((claim) =>
       claim.articles.map((article) => ({
         claim,

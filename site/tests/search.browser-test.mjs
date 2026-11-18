@@ -65,6 +65,26 @@ async function fixture() {
       reported_statements: [],
     });
   }
+  data.claims.push({
+    ...phase,
+    slug: "registry-fixture-gel",
+    intervention: { name: "Registry fixture gel", synonyms: [] },
+    drafted_from: "registry",
+    has_report: false,
+    headline: null,
+    summary: null,
+    first_reported_date: null,
+    articles: [],
+    promises: [],
+    reported_statements: [],
+    matches: [],
+    events: phase.events.slice(0, 1).map((event) => ({
+      ...event,
+      event_date: data.last_checked_at.slice(0, 10),
+      trial_id: "NCT09999999",
+      source_url: "https://clinicaltrials.gov/study/NCT09999999",
+    })),
+  });
   return data;
 }
 
@@ -118,7 +138,7 @@ async function openPage(t, options = {}) {
   return context.newPage();
 }
 
-const field = (page) => page.getByRole("combobox");
+const field = (page) => page.locator("#query");
 const searchHeading = (page, words) => page.getByRole("heading", { name: `Results for “${words}”`, exact: true });
 const reportLinks = (page) => page.locator("[data-search-answer]")
   .getByRole("heading", { name: /^Coralpulse report \d+$/ }).getByRole("link");
@@ -127,6 +147,73 @@ async function submit(page, words) {
   await field(page).fill(words);
   await page.getByRole("button", { name: "Look up", exact: true }).click();
 }
+
+test("reported claims combine with topic and status and survive a shared address", async (t) => {
+  const page = await openPage(t);
+  const query = "?view=claims&topic=gum-disease&status=phase_2";
+  await page.goto(origin + "/" + query);
+  const claims = page.locator("#feed-claims");
+  const registry = claims.getByRole("link", { name: "Registry fixture gel" });
+  await expect(registry).toBeVisible();
+  await expect(page.locator("[data-day-row][data-no-report]")).toHaveAttribute("data-kind", "record");
+  await expect(page.locator("[data-day-row][data-no-report][data-kind='report']")).toHaveCount(0);
+  await claims.getByLabel("News coverage").selectOption("1");
+  await expect(registry).not.toBeVisible();
+  await expect(claims.getByRole("link", { name: "Fixturamab" })).toBeVisible();
+  await expect(claims.locator("[data-claim-tally]")).toHaveText("1 claim, 1 with a linked report.");
+  const shared = page.url();
+  assert.equal(new URL(shared).searchParams.get("reported"), "1");
+  assert.equal(new URL(shared).searchParams.get("topic"), "gum-disease");
+  assert.equal(new URL(shared).searchParams.get("status"), "phase_2");
+  await expect(page.locator("#feed-reported")).toHaveValue("1");
+  await page.goto(shared);
+  await expect(registry).not.toBeVisible();
+  await expect(claims.getByRole("link", { name: "Fixturamab" })).toBeVisible();
+  await expect(page.locator("[data-day-row][data-no-report]")).not.toBeVisible();
+});
+
+test("a topic opens with the reported filter and can show registry claims again", async (t) => {
+  const page = await openPage(t, { viewport: { width: 390, height: 844 } });
+  await page.goto(origin + "/topic/gum-disease?reported=1&status=phase_2");
+  const rows = page.locator("table.index");
+  const registry = rows.getByRole("link", { name: "Registry fixture gel" });
+  await expect(rows.getByRole("link", { name: "Fixturamab" })).toBeVisible();
+  await expect(registry).not.toBeVisible();
+  const news = page.getByLabel("News coverage");
+  await expect(news).toHaveValue("1");
+  await news.selectOption("");
+  await expect(registry).toBeVisible();
+  assert.equal(new URL(page.url()).searchParams.get("status"), "phase_2");
+  await expect(page.locator(".band .lede")).toContainText("with a linked report");
+});
+
+test("reported-only search hides a registry-only result and can return to it", async (t) => {
+  const page = await openPage(t);
+  await page.goto(origin + "/?q=registry%20fixture%20gel");
+  const registry = page.locator("[data-search-answer] a.hit-title[href='/registry-fixture-gel']");
+  await expect(registry).toBeVisible();
+  await page.locator("[data-search-answer] [data-report-filter]").selectOption("1");
+  await expect(registry).not.toBeVisible();
+  await expect(page.locator("#results")).toContainText("No reported claims match");
+  assert.equal(new URL(page.url()).searchParams.get("reported"), "1");
+  await page.locator("#results [data-report-filter]").selectOption("");
+  await expect(registry).toBeVisible();
+});
+
+test("the reported filter applies to followed claims without removing a follow", async (t) => {
+  const page = await openPage(t);
+  await page.addInitScript(() => {
+    localStorage.setItem("following", JSON.stringify({
+      "registry-fixture-gel": { headline: "Registry fixture gel", status: "Phase 2 trial", since: "2026-11-10" },
+    }));
+  });
+  await page.goto(origin + "/?reported=1");
+  const following = page.locator("[data-following]");
+  await expect(following).toContainText("No reported claims among those you follow.");
+  await following.getByLabel("News coverage").selectOption("");
+  await expect(following.locator("a[href='/registry-fixture-gel']")).toBeVisible();
+  assert.ok(await page.evaluate(() => JSON.parse(localStorage.getItem("following")).hasOwnProperty("registry-fixture-gel")));
+});
 
 test("the home page's example leads to the closest claim in the built index", async (t) => {
   const page = await openPage(t);

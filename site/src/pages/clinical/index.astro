@@ -6,10 +6,13 @@ import Base from "../../layouts/Base.astro";
 import MeshCredit from "../../components/MeshCredit.astro";
 import { data } from "../../lib/export";
 import { buildTree, categoryPath, claimCount, topCategories } from "../../lib/clinical";
+import { hasLinkedReport } from "../../lib/reports";
 
 const tree = buildTree(data.clinical, data.claims);
+const reportedTree = buildTree(data.clinical, data.claims.filter(hasLinkedReport));
 const tops = topCategories(tree);
 const filed = new Set([...tree.claims.values()].flatMap((slugs) => [...slugs])).size;
+const reported = new Set([...reportedTree.claims.values()].flatMap((slugs) => [...slugs])).size;
 ---
 
 <Base
@@ -21,7 +24,7 @@ const filed = new Set([...tree.claims.values()].flatMap((slugs) => [...slugs])).
   <h1 class="title">Clinical categories</h1>
   <p class="lede">
     {`${filed} ${filed === 1 ? "claim" : "claims"}`} filed by condition using MeSH, the National Library of Medicine’s
-    vocabulary. A claim can sit under more than one category.
+    vocabulary. {reported} with a linked report. A claim can sit under more than one category.
   </p>
   <p class="what-this-is">
     Categories come from conditions listed in trial records, major subject headings on papers,
@@ -46,6 +49,7 @@ const filed = new Set([...tree.claims.values()].flatMap((slugs) => [...slugs])).
                   <span class="visually-hidden">
                     {claimCount(tree, node.identifier) === 1 ? " claim" : " claims"}
                   </span>
+                  {" · "}{claimCount(reportedTree, node.identifier)} reported
                 </span>
               </li>
             ))}

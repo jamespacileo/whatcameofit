@@ -18,7 +18,7 @@ import RestSaid from "./RestSaid.astro";
 interface Props {
   list: DayList;
   /** Every listed topic, for a row's topic name and the side column's choice. */
-  topics: { slug: string; title: string; count: number }[];
+  topics: { slug: string; title: string; count: number; reported: number }[];
   /** Where the earlier headings and the dates to come are, when there are any. */
   rest?: string;
 }
@@ -62,13 +62,13 @@ const checkedDay = { weekday: checkedWeekday, day: checkedNumber, month: checked
             <ul>
               <li>
                 <button type="button" class="side-pick" aria-pressed="true" data-topic-pick="">
-                  All topics <span class="kind-count">{topics.reduce((sum, topic) => sum + topic.count, 0)}</span>
+                  All topics <span class="kind-count">{topics.reduce((sum, topic) => sum + topic.count, 0)} · {topics.reduce((sum, topic) => sum + topic.reported, 0)} reported</span>
                 </button>
               </li>
               {topics.map((topic) => (
                 <li>
                   <button type="button" class="side-pick" aria-pressed="false" data-topic-pick={topic.slug}>
-                    {topic.title} <span class="kind-count">{topic.count}</span>
+                    {topic.title} <span class="kind-count">{topic.count} · {topic.reported} reported</span>
                   </button>
                 </li>
               ))}

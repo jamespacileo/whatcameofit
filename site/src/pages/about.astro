@@ -15,6 +15,7 @@ import { CORRECTION_SUBJECT, contactLink } from "../lib/contact.mjs";
 import { data, listedTopics } from "../lib/export";
 import { exampleClaim, firstReport } from "../lib/extension-page";
 import { UNCHECKED_NOTE } from "../lib/notices";
+import { reportedClaimCount } from "../lib/reports";
 import { STATUS_GLOSSES, STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
@@ -174,7 +175,8 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
               <span class="unbroken">{formatDate(data.last_checked_at)}</span>
             </>
           )}
-          . All of it is open: <a href="/data">the data file</a>,{" "}
+          . {reportedClaimCount(data.claims)} with a linked report.
+          {" "}See <a href="/data">the data file</a>,{" "}
           <a href="/how-it-works">the method</a> and <a href="/guide">the guide</a> to what each
           word does and does not tell you.
           {corrections && (

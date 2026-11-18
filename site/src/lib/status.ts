@@ -1,5 +1,6 @@
 // Words for statuses and events. They describe records; they never judge.
 import type { ExportedClaim, ExportedEvent, StatusCode } from "./export";
+import { hasLinkedReport } from "./reports.ts";
 
 export const STATUS_LABELS: Record<StatusCode, string> = {
   preclinical_only: "Preclinical only",
@@ -169,14 +170,23 @@ const SUMMARY_NAMES = 4;
  * One sentence on where a list's claims stand, from the count at each status alone.
  * Statuses are named in path order, then those off the path. Null for an empty list.
  */
-export function topicSummary(counts: ReadonlyMap<StatusCode, number>): string | null {
+export function topicSummary(
+  counts: ReadonlyMap<StatusCode, number>,
+  coverage?: { total: number; reported: number },
+): string | null {
   const offPath = (Object.entries(STATUS_LABELS) as [StatusCode, string][])
     .map(([code]) => code)
     .filter((code) => !STAGE_PATH.includes(code));
   const present = [...STAGE_PATH, ...offPath].filter((code) => (counts.get(code) ?? 0) > 0);
-  const total = present.reduce((sum, code) => sum + counts.get(code)!, 0);
+  const counted = present.reduce((sum, code) => sum + counts.get(code)!, 0);
+  const total = coverage?.total ?? counted;
   if (total === 0) return null;
+  const title = coverage && coverage.reported < total
+    ? `${total} ${total === 1 ? "claim" : "claims"} tracked, ${coverage.reported} with a linked report`
+    : "";
+  if (counted === 0) return `${title}.`;
   if (total === 1) {
+    if (title) return `${title}. The claim ${STATUS_CLAUSES[present[0]][0]}.`;
     return `1 reported breakthrough tracked: it ${STATUS_CLAUSES[present[0]][0]}.`;
   }
   // The sort is stable, so statuses with equal counts keep their path order.
@@ -193,7 +203,21 @@ export function topicSummary(counts: ReadonlyMap<StatusCode, number>): string | 
   if (rest > 0) parts.push(`${rest} ${rest === 1 ? "is" : "are"} at other statuses`);
   const said =
     parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+  if (title) return `${title}. ${said}.`;
   return `Of ${total} reported breakthroughs tracked, ${said}.`;
+}
+
+export function topicClaimSummary(claims: readonly ExportedClaim[]): string | null {
+  const counts = new Map<StatusCode, number>();
+  let reported = 0;
+  for (const claim of claims) {
+    const linked = hasLinkedReport(claim);
+    if (linked) reported += 1;
+    const code = claim.status.code;
+    if (code === "approved" && !linked) continue;
+    counts.set(code, (counts.get(code) ?? 0) + 1);
+  }
+  return topicSummary(counts, { total: claims.length, reported });
 }
 
 /** Which way a record moved, for the colour of its mark (docs/adr/0010): "forward" when

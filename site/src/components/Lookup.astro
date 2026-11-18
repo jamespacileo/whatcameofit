@@ -4,10 +4,12 @@
 // registry search. The home page opens with it; other pages may end with it.
 import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import Unfound from "./Unfound.astro";
+import ReportFilter from "./ReportFilter.astro";
 import { SITE } from "../../site.config.mjs";
 import { shareSentence } from "../lib/card";
 import { data } from "../lib/export";
 import { SEARCH_EXAMPLE } from "../lib/search-example";
+import { hasLinkedReport } from "../lib/reports";
 import { STATUS_LABELS } from "../lib/status";
 import { canonicalAddress } from "../lib/structured";
 
@@ -105,6 +107,9 @@ const sentenceJson = sentences
   </section>
 </template>
 {sentenceJson && <script type="application/json" id="lookup-sentences" is:inline set:html={sentenceJson} />}
+{data.claims.some((claim) => !hasLinkedReport(claim)) && (
+  <template data-search-coverage><ReportFilter /></template>
+)}
 
 <script>
   // A pasted link is compared with the site's lookup file here in the browser. It is
@@ -132,6 +137,7 @@ const sentenceJson = sentences
   const answerSlot = document.querySelector<HTMLElement>("[data-search-answer]");
   const searchTopics = document.querySelector<HTMLElement>("[data-search-topics]");
   const days = answerSlot?.closest<HTMLElement>("[data-days]") ?? null;
+  const searchCoverage = document.querySelector<HTMLTemplateElement>("[data-search-coverage]");
 
   interface Hit {
     url: string;
@@ -939,6 +945,27 @@ const sentenceJson = sentences
     return head;
   }
 
+  function coverageControl(query: string) {
+    const choice = searchCoverage?.content.firstElementChild?.cloneNode(true) as HTMLLabelElement | undefined;
+    if (!choice) return undefined;
+    const field = choice.querySelector<HTMLSelectElement>("select")!;
+    field.value = new URL(location.href).searchParams.get("reported") === "1" ? "1" : "";
+    choice.removeAttribute("data-await");
+    field.addEventListener("change", () => {
+      setAddress((params) => {
+        if (field.value) params.set("reported", "1");
+        else params.delete("reported");
+      }, {}, true);
+      const browse = document.querySelector<HTMLSelectElement>("#feed-reported");
+      if (browse) {
+        browse.value = field.value;
+        browse.dispatchEvent(new Event("change"));
+      }
+      answer(query);
+    });
+    return choice;
+  }
+
   // An answer goes in the list's place on the home page, with one line under the box
   // saying where it is; elsewhere it stands under the box. Either way a reader who
   // arrives with the words in the address is taken to it.
@@ -1072,6 +1099,8 @@ const sentenceJson = sentences
         ? `First ${shown.length} of ${shown.length + left} in ${topic}, of ${found}`
         : `${shown.length} of ${found}, in ${topic}`;
     block.append(searchHead(`Results for “${query}”`, counted));
+    const coverage = coverageControl(query);
+    if (coverage) block.append(coverage);
     if (unheld.length) block.append(element("p", unheldSays(unheld), "search-unheld"));
     if (said) {
       const line = element("p", said, "match-more");
@@ -1541,6 +1570,8 @@ const sentenceJson = sentences
     const asked = latest;
     show("Searching…");
     const words = searchWords(query);
+    const onlyReported = new URL(location.href).searchParams.get("reported") === "1";
+    const filters = onlyReported ? { reported: "yes" } : {};
     let index: Lookup;
     let detail: SearchDetail;
     let searchIndex: SearchIndex;
@@ -1551,7 +1582,7 @@ const sentenceJson = sentences
       // The index counts the pages it finds by topic once its topics are read: one
       // small file, asked for with the first search.
       [found, index, detail] = await Promise.all([
-        searchIndex.filters().then(() => searchIndex.search(query)),
+        searchIndex.filters().then(() => searchIndex.search(query, { filters })),
         loadLookup(),
         loadDetail(),
       ]);
@@ -1663,7 +1694,7 @@ const sentenceJson = sentences
     const viewOf = async (slug: string) => {
       let opening = opened.get(slug);
       if (!opening) {
-        opening = searchIndex.search(query, { filters: { topic: slug } }).then((answer) => openView(slug, answer.results));
+        opening = searchIndex.search(query, { filters: { ...filters, topic: slug } }).then((answer) => openView(slug, answer.results));
         opened.set(slug, opening);
         opening.catch(() => opened.delete(slug));
       }
@@ -1711,13 +1742,15 @@ const sentenceJson = sentences
 
     if (all.matches.length === 0 && !exact) {
       show(
-        `Nothing tracked here matches “${query}”.`,
+        onlyReported ? `No reported claims match “${query}”.` : `Nothing tracked here matches “${query}”.`,
         "This site covers only the claims it has tracked so far. To check a story, paste the article's link into the box above.",
       );
       const drawing = document.querySelector<HTMLTemplateElement>("#unfound");
       if (drawing) results.prepend(drawing.content.cloneNode(true));
       // Words were typed: the line on topics, without the one on typing.
       results.append(listedByTopic());
+      const coverage = coverageControl(query);
+      if (coverage) results.prepend(coverage);
       void showListed(query);
       return;
     }

@@ -1,0 +1,15 @@
+---
+interface Props {
+  id?: string;
+  named?: boolean;
+}
+
+const { id, named = false } = Astro.props;
+---
+<label class="pick" data-await data-report-choice>
+  <span class={named ? "pick-name" : "visually-hidden"}>News coverage</span>
+  <select id={id} data-report-filter>
+    <option value="">All claims</option>
+    <option value="1">Reported claims only</option>
+  </select>
+</label>

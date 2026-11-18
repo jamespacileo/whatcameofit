@@ -538,7 +538,7 @@ test("Scenario: No approved claims", () => {
   const result = build("data/seed-export.json", empty);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const html = fs.readFileSync(path.join(empty, "it-happened/index.html"), "utf8");
-  assert.match(html, /No tracked claim has an approval on record/);
+  assert.match(html, /No reported claim has an approval on record/);
 });
 
 test("Scenario: Preview build", (t) => {
@@ -2001,7 +2001,7 @@ test("Scenario: Topic among ten", () => {
   // Here: one topic with published claims, listed with its count and marked as this one.
   const list = page("topic/gum-disease/index.html").match(/<nav class="onpage"[\s\S]*?<\/nav>/)[0];
   assert.equal(count(list, "<li"), 1);
-  assert.match(list, /href="\/topic\/gum-disease" aria-current="page"[\s\S]*?Gum disease[\s\S]*?class="n">3</);
+  assert.match(list, /href="\/topic\/gum-disease" aria-current="page"[\s\S]*?Gum disease[\s\S]*?class="n">3 · 3 reported</);
   assert.ok(!list.includes("empty-topic"));
 });
 

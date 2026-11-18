@@ -3,6 +3,7 @@
 // or grades a claim, and none depends on the day the page is read.
 import type { ExportedClaim } from "./export";
 import { allChanges, type StatusChange } from "./changes.ts";
+import { hasLinkedReport } from "./reports.ts";
 import { latestPromise } from "./status.ts";
 
 /** Changes from one status to another, newest first. A claim's first status is not a change. */
@@ -14,7 +15,7 @@ export function statusMoves(claims: ExportedClaim[]): StatusChange[] {
 export function promisesByDate(claims: ExportedClaim[]): ExportedClaim[] {
   const due = (claim: ExportedClaim) => latestPromise(claim)!.parsed_date!;
   return claims
-    .filter((claim) => latestPromise(claim) !== null)
+    .filter((claim) => hasLinkedReport(claim) && latestPromise(claim) !== null)
     .sort((a, b) => due(a).localeCompare(due(b)) || a.headline.localeCompare(b.headline));
 }
 

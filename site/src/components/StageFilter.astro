@@ -4,7 +4,9 @@
 // narrows the table just after it; given a scope, every table inside that element.
 import type { ExportedClaim, StatusCode } from "../lib/export";
 import Search from "@lucide/astro/icons/search";
+import { hasLinkedReport } from "../lib/reports";
 import { STAGE_PATH, STATUS_LABELS } from "../lib/status";
+import ReportFilter from "./ReportFilter.astro";
 
 interface Props {
   claims: ExportedClaim[];
@@ -14,25 +16,30 @@ interface Props {
   param?: string;
   /** Also narrow by a typed word, matched against each claim's name and headline. */
   words?: boolean;
+  statuses?: boolean;
 }
 
-const { claims, scope, param, words = false } = Astro.props;
+const { claims, scope, param, words = false, statuses = true } = Astro.props;
+const showReport = claims.some((claim) => !hasLinkedReport(claim));
 const counts = new Map<StatusCode, number>();
 for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
 const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PATH.includes(code));
 ---
 
 <div class="stage-filter" data-stage-filter data-scope={scope} data-param={param}>
-  {
-    words && (
+  {(words || showReport) && (
+    <div class="claim-filter-fields">
+    {words && (
       <label class="word-field">
         <Search size={16} stroke-width={1.9} aria-hidden="true" />
         <span class="visually-hidden">Filter these claims by a word</span>
-        <input type="search" placeholder="Filter by treatment or condition" data-words />
+        <input type="search" placeholder="Find a claim" data-words />
       </label>
-    )
-  }
-  <div class="places" role="group" aria-label="Show claims by status">
+    )}
+      {showReport && <ReportFilter />}
+    </div>
+  )}
+  {statuses && <div class="places" role="group" aria-label="Show claims by status">
     {
       STAGE_PATH.map((code) => {
         const count = counts.get(code) ?? 0;
@@ -52,9 +59,9 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
         );
       })
     }
-  </div>
+  </div>}
   {
-    offPath.length > 0 && (
+    statuses && offPath.length > 0 && (
       <div class="off-path" role="group" aria-label="Statuses off the path">
         {offPath.map((code) => (
           <button
@@ -84,10 +91,19 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
   </div>
 </div>
 
+<style>
+  .claim-filter-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+  }
+</style>
+
 <script>
   // Picking a place on the path shows only the claims there; picking it again shows all.
   // Rows left out are marked "data-out"; the pager under each table shows the rest.
-  for (const filter of document.querySelectorAll<HTMLElement>("[data-stage-filter]")) {
+  for (const filter of document.querySelectorAll<HTMLElement>(".stage-filter[data-stage-filter]")) {
     const { scope, param } = filter.dataset;
     // With no scope: the first table after the filter. This component's own script
     // tag can sit between the two, so the next element is not always the table's frame.
@@ -109,11 +125,12 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
     const shown = filter.querySelector<HTMLElement>("[data-shown]")!;
     const shownText = filter.querySelector<HTMLElement>("[data-shown-text]")!;
     const input = filter.querySelector<HTMLInputElement>("[data-words]");
+    const report = filter.querySelector<HTMLSelectElement>("[data-report-filter]");
     const none = filter.querySelector<HTMLElement>("[data-none]")!;
     const noneWhat = filter.querySelector<HTMLElement>("[data-none-what]")!;
     let current: string | null = null;
 
-    const apply = (picked: string | null) => {
+    const apply = (picked: string | null, remember = true) => {
       current = picked;
       const typed = (input?.value ?? "").trim().toLowerCase();
       let label = "";
@@ -123,14 +140,31 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
         if (on) label = button.dataset.label!;
       }
       let visible = 0;
+      let reported = 0;
+      const onlyReported = report?.value === "1";
+      const counts = new Map<string, number>();
       for (const row of rows) {
+        const hasReport = !row.hasAttribute("data-no-report");
+        if (!onlyReported || hasReport) {
+          const status = row.dataset.status!;
+          counts.set(status, (counts.get(status) ?? 0) + 1);
+        }
         const out =
+          (onlyReported && !hasReport) ||
           (picked !== null && row.dataset.status !== picked) ||
           (typed !== "" && !(row.querySelector(".claim")?.textContent ?? "").toLowerCase().includes(typed));
         row.toggleAttribute("data-out", out);
-        if (!out) visible += 1;
+        if (!out) {
+          visible += 1;
+          if (hasReport) reported += 1;
+        }
       }
-      shown.hidden = (picked === null && typed === "") || visible === 0;
+      for (const button of buttons) {
+        const count = counts.get(button.dataset.status!) ?? 0;
+        button.querySelector("strong")!.textContent = String(count);
+        button.disabled = count === 0 && button.dataset.status !== picked;
+      }
+      shown.hidden = (picked === null && typed === "" && !onlyReported) || visible === 0;
       // Nothing left: the table gives way to a line that says so and names what was asked.
       none.hidden = visible > 0;
       for (const table of tables) {
@@ -138,21 +172,26 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
       }
       if (visible === 0) {
         const word = input?.value.trim() ?? "";
-        noneWhat.textContent =
-          picked === null
+        noneWhat.textContent = onlyReported
+          ? "No reported claims fit these filters."
+          : picked === null
             ? `No claim here contains “${word}”.`
             : `No claim at “${label}” contains “${word}”.`;
       }
       // Over several lists a row is not a claim, so the status is named, not counted.
       shownText.textContent = scope
         ? `Showing only: ${label}.`
-        : `Showing ${visible} of ${rows.length} claims.`;
+        : `Showing ${visible} of ${rows.length} claims. ${reported} with a linked report.`;
       for (const table of tables) table.dispatchEvent(new Event("paged:refresh"));
       dayList?.dispatchEvent(new Event("paged:refresh"));
-      if (param) {
+      if (remember && (param || report)) {
         const url = new URL(location.href);
-        if (picked) url.searchParams.set(param, picked);
-        else url.searchParams.delete(param);
+        if (param) {
+          if (picked) url.searchParams.set(param, picked);
+          else url.searchParams.delete(param);
+        }
+        if (onlyReported) url.searchParams.set("reported", "1");
+        else if (report) url.searchParams.delete("reported");
         history.replaceState(history.state, "", url);
       }
     };
@@ -175,11 +214,13 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
     for (const all of filter.querySelectorAll("[data-show-all]")) {
       all.addEventListener("click", () => {
         if (input) input.value = "";
+        if (report) report.value = "";
         pick(null);
         input?.focus();
       });
     }
     input?.addEventListener("input", () => apply(current));
+    report?.addEventListener("change", () => apply(current));
 
     // Another filter can change how many claims are at each place.
     filter.addEventListener("stage:counts", (event) => {
@@ -192,7 +233,15 @@ const offPath = Array.from(counts, ([code]) => code).filter((code) => !STAGE_PAT
       }
     });
 
-    const asked = param ? new URL(location.href).searchParams.get(param) : null;
-    if (asked && buttons.some((button) => button.dataset.status === asked)) apply(asked);
+    report?.closest("[data-report-choice]")?.removeAttribute("data-await");
+    const restore = (refresh: boolean) => {
+      const query = new URL(location.href).searchParams;
+      const asked = param ? query.get(param) : null;
+      if (report) report.value = query.get("reported") === "1" ? "1" : "";
+      const status = buttons.some((button) => button.dataset.status === asked) ? asked : null;
+      if (refresh || status || report?.value === "1") apply(status, false);
+    };
+    restore(false);
+    addEventListener("popstate", () => restore(true));
   }
 </script>

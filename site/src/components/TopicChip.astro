@@ -11,9 +11,10 @@ interface Props {
   link?: boolean;
   /** How many claims the topic tracks, shown where topics are listed. */
   count?: number;
+  reported?: number;
 }
 
-const { vertical, link = true, count } = Astro.props;
+const { vertical, link = true, count, reported } = Astro.props;
 const Tag = link ? "a" : "span";
 ---
 
@@ -25,6 +26,7 @@ const Tag = link ? "a" : "span";
       <span class="count">
         {count}
         <span class="visually-hidden">{count === 1 ? " claim tracked" : " claims tracked"}</span>
+        {reported !== undefined && <> · {reported} reported</>}
       </span>
     )
   }

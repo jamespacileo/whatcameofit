@@ -20,7 +20,7 @@ import {
   type FeedView,
 } from "../lib/home-lists";
 import { TESTED_WORDS } from "../lib/record-brief";
-import { followedNameFor } from "../lib/reports";
+import { followedNameFor, hasLinkedReport } from "../lib/reports";
 import { STATUS_LABELS, latestPromise } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
@@ -84,9 +84,9 @@ const { view, from = 0, to } = Astro.props;
 {
   view === "claims" &&
     everyClaim.slice(from, to).map((claim) => {
-      const promise = latestPromise(claim);
+      const promise = hasLinkedReport(claim) ? latestPromise(claim) : null;
       return (
-        <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={claim.first_reported_date ?? undefined}>
+        <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-on={claim.first_reported_date ?? undefined} data-no-report={!hasLinkedReport(claim) ? "" : undefined}>
           <td role="cell" class="claim">
             <ClaimName claim={claim} />
           </td>
@@ -94,7 +94,7 @@ const { view, from = 0, to } = Astro.props;
             {claim.first_reported_date ? (
               formatDate(claim.first_reported_date)
             ) : (
-              <span class="visually-hidden">Not recorded</span>
+              hasLinkedReport(claim) ? <span class="visually-hidden">Not recorded</span> : <span class="entry-note">No linked report</span>
             )}
           </td>
           <td role="cell" class="tested" data-column={TESTED_WORDS.column}>
@@ -115,7 +115,7 @@ const { view, from = 0, to } = Astro.props;
 {
   view === "moved" &&
     moves.slice(from, to).map((move) => (
-      <tr role="row" data-status={move.claim.status.code} data-topic={move.claim.vertical} data-on={move.on}>
+      <tr role="row" data-status={move.claim.status.code} data-topic={move.claim.vertical} data-on={move.on} data-no-report={!hasLinkedReport(move.claim) ? "" : undefined}>
         <td role="cell" class="claim">
           <ClaimName claim={move.claim} />
         </td>
@@ -151,7 +151,7 @@ const { view, from = 0, to } = Astro.props;
 {
   view === "quiet" &&
     quiet.slice(from, to).map((claim) => (
-      <tr role="row" data-status={claim.status.code} data-topic={claim.vertical}>
+      <tr role="row" data-status={claim.status.code} data-topic={claim.vertical} data-no-report={!hasLinkedReport(claim) ? "" : undefined}>
         <td role="cell" class="claim">
           <ClaimName claim={claim} />
         </td>

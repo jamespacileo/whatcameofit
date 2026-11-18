@@ -6,7 +6,7 @@ import { calendarByMonth } from "./anniversaries";
 import { dayList } from "./day-list";
 import { data, exportVersion, listedTopics } from "./export";
 import { longestWithoutSignal, promisesByDate, statusMoves } from "./feed";
-import { recentReports } from "./reports";
+import { hasLinkedReport, recentReports, reportedClaimCount } from "./reports";
 import { latestPromise } from "./status";
 
 /** How many rows of a tabbed list are in the page as built, and one page of its pager. */
@@ -29,7 +29,7 @@ export const everyClaim = [...data.claims].sort((a, b) => {
 // The headlines table sets the promise beside the status, as a claim page does. With no
 // dated promise among the reports there is no amber column.
 export const anyPromise = reports.some((report) => latestPromise(report.claim) !== null);
-export const anyClaimPromise = everyClaim.some((claim) => latestPromise(claim) !== null);
+export const anyClaimPromise = everyClaim.some((claim) => hasLinkedReport(claim) && latestPromise(claim) !== null);
 
 export const FEED_VIEWS = ["headlines", "claims", "moved", "promised", "quiet"] as const;
 export type FeedView = (typeof FEED_VIEWS)[number];
@@ -53,10 +53,10 @@ export const feedDates: Partial<Record<FeedView, string[]>> = {
 
 // The lists can be narrowed to one topic; the counts on the path follow the topic.
 export const topicChoices = listedTopics
-  .map((topic) => ({
-    ...topic,
-    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
-  }))
+  .map((topic) => {
+    const claims = data.claims.filter((claim) => claim.vertical === topic.slug);
+    return { ...topic, count: claims.length, reported: reportedClaimCount(claims) };
+  })
   .sort((a, b) => a.title.localeCompare(b.title));
 
 // Everything dated, under dated headings. Null when the export does not say when the
