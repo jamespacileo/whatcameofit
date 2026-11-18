@@ -4,10 +4,11 @@ Domain terms for thenwhat. Behavior is specified in `openspec/`; this file only 
 
 | Term | Meaning |
 |---|---|
-| **Claim** | One intervention for one indication, as reported in the news. The unit the site tracks. Many articles can report the same claim. |
-| **Intervention** | The drug, device or method a claim is about. Stored as the claim's intervention entity, with synonyms for its other names. |
-| **Indication** | The condition the intervention is claimed to treat. With the intervention it makes a claim's identity. |
-| **Source article** | A news article that reported a claim. Stored as URL, outlet, title and date. Its text is never stored. |
+| **Claim** | One intervention or complete regimen for one indication. The unit the site tracks. It records its drafting source, and many articles can report the same claim. |
+| **Intervention** | The drug, device, method or complete regimen a claim is about. Stored as the claim's intervention entity, with synonyms for its other names. |
+| **Indication** | The specific condition or clinical use under study, including an enrolled population or setting when it defines that use. Together with the intervention it makes a claim's identity. |
+| **Source article** | A news article linked to a claim it reports. Stored as URL, outlet, title and date. Registry-drafted claims can have no linked source article. Article text stays with the publisher. |
+| **Registry-drafted claim** | A claim drafted from registry evidence. It records the trials used for drafting and can gain linked source articles later. |
 | **Promise** | A timeline stated in a source article ("human trials by 2025"). A claim can have several, each tied to its article. |
 | **Record strip** | A small time axis beside a claim with a mark at the date of each news report, registry record, posting of results, regulator decision and dated promise. It ends at the day the registries were last checked. In a list of claims every strip shares one scale; on a claim's page the strip has the claim's own axis. Its marks are named, in these words, in a key: "Registry record", "Results posted", "Regulator decision", "News report", "Promised date", "Registries last checked". |
 | **Reading** | Something a model read from a trial's stored registry record into a fixed code, or a number with a unit, kept with the exact words it was read from. A rule checks the words are in the record before a reading is stored. The site words the code; a reading never changes a status, a match score or a trial fact. |

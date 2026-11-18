@@ -20,7 +20,7 @@ The operator decided on 2026-11-17 that every named trial is to be cited by a cl
 
 Not in this change:
 
-- A name or a condition proposed by a model for a registry-drafted claim.
+- A name or condition invented by a model. An optional review step selects verbatim registry evidence for a reviewer to check.
 - Any route that looks for news. That is `headline-funnel` and `trial-first-route`; with this change those routes attach reports to claims that exist.
 - A sponsor's release as a source article. Decided as yes on 2026-11-17 and specified in `headline-funnel`.
 - A change to how status is derived. A registry-drafted claim's status comes from its approved trial events by the rules that exist.

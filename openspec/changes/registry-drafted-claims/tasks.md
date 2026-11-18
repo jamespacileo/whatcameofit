@@ -41,6 +41,10 @@ The next arm-role replay excluded all three reference regimens from those existi
 
 The MeSH refresh loaded condition descriptors for 22,446 trials. The final cached plan proposed 20,150 groups. It found a unique general vertical for 5,666, conflicting evidence for 8,552, and insufficient evidence for 5,932. The grouping gate remains open.
 
+An offline replay selected exact registry spans for 11 records from known grouping failures. All 12 selected pairs grounded against their source fields. The replay produced 10 groups and split the four trials of one product code into three injection trials and one tablet trial. The options code uses the existing Pydantic AI native JSON client and response cache. A simulated provider verified one model response and one cache hit. The monthly live-run cap is awaiting the operator's setting.
+
+All 27,731 cached trials produced review packets. The median packet has 1,301 characters and the 95th percentile 3,321. A separate holdout has 52 trial packets from 30 proposed groups and 20 held trials, with both earlier audit samples excluded.
+
 ## 3. Drafting and preparation
 
 - [ ] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added

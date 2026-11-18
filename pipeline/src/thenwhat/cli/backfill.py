@@ -9,6 +9,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from time import monotonic
 from typing import Annotated, Any
 
 import typer
@@ -48,6 +49,7 @@ from thenwhat.backfill.registry_load import (
     condition_of,
     load_trials,
 )
+from thenwhat.backfill.registry_scope_propose import propose_scope, review_packet
 from thenwhat.backfill.registry_scope_review import load_scope_reviews
 from thenwhat.backfill.topics import TOPICS
 from thenwhat.backfill.trial_coverage import coverage_of
@@ -65,6 +67,7 @@ from thenwhat.backfill.trial_sets import (
     REGISTRY_CLAIMS_2026,
     ROLLING,
     count_sets,
+    registry_claims_2026,
     require_wider_record,
     rule_of,
 )
@@ -75,12 +78,14 @@ from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.clinical.mesh_xml import mesh_xml_vocabulary
 from thenwhat.config import Settings, SourceAllowance
+from thenwhat.db.models import RegistryTrial
 from thenwhat.domain import Decider, LeadVerdict, OutletKind, WorkOutcome
+from thenwhat.llm.errors import LlmError, LlmNotConfigured
 from thenwhat.measure import spans
 from thenwhat.measure.files import FileWriter
 from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
-from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.clinicaltrials import NCT_ID, ClinicalTrials
 from thenwhat.sources.pubmed import PubMed
 from thenwhat.work.allowance import Allowances, AllowanceStatus
 from thenwhat.work.errors import BackfillError, SourceStop
@@ -871,6 +876,69 @@ def registry_claim_plan_command(
             require_wider_record(session)
             plan = plan_registry_claims(session, scope_reviews=reviews, vocabulary=vocabulary)
     typer.echo(json.dumps({"set": REGISTRY_CLAIMS_2026, **asdict(plan)}, default=sorted))
+
+
+@backfill_app.command("registry-scope-proposals")
+def registry_scope_proposals_command(
+    trials: Annotated[list[str], typer.Argument(help="Exact ClinicalTrials.gov trial IDs.")],
+    run: Annotated[
+        bool, typer.Option("--run", help="Request structured candidates using the configured cap.")
+    ] = False,
+) -> None:
+    """Print evidence packets for scope review or request candidates for specified trials."""
+    settings = settings_or_exit()
+    started = monotonic()
+    budget = settings.registry_scope_monthly_budget_usd
+    with refusals():
+        if run and budget is None:
+            raise BackfillError("Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD before a live scope run.")
+        identifiers = tuple(dict.fromkeys(identifier.upper().strip() for identifier in trials))
+        if not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
+            raise BackfillError("Specify ClinicalTrials.gov trial identifiers in NCT format.")
+        with open_session() as session:
+            records = dict(
+                session.execute(
+                    select(RegistryTrial.external_id, RegistryTrial.raw_payload).where(
+                        registry_claims_2026(), RegistryTrial.external_id.in_(identifiers)
+                    )
+                ).all()
+            )
+            missing = [identifier for identifier in identifiers if identifier not in records]
+            if missing:
+                raise BackfillError(
+                    f"Trials absent from the eligible stored set: {', '.join(missing)}."
+                )
+            try:
+                packets = [review_packet(records[identifier]) for identifier in identifiers]
+            except (KeyError, ValueError) as error:
+                raise BackfillError(f"Could not prepare a scope packet: {error}") from error
+            proposals = []
+            failures = {}
+            stopped = None
+            if run:
+                from thenwhat.cli.extract import make_llm
+
+                llm = make_llm(session, budget_cap=budget)
+                for packet in packets:
+                    try:
+                        proposals.append(asdict(propose_scope(llm, packet)))
+                    except (SourceStop, LlmNotConfigured) as error:
+                        stopped = str(error)
+                        break
+                    except (LlmError, ValueError) as error:
+                        failures[packet.trial_id] = str(error)
+    typer.echo(
+        json.dumps(
+            {
+                "packets": [asdict(packet) for packet in packets],
+                "proposals": proposals,
+                "failures": failures,
+                "stopped": stopped,
+                "seconds": round(monotonic() - started, 3),
+            },
+            ensure_ascii=False,
+        )
+    )
 
 
 @backfill_app.command("trial-references")

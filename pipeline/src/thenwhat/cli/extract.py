@@ -2,6 +2,7 @@
 
 import sys
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
@@ -30,17 +31,18 @@ extract_app = typer.Typer(help="Draft claims from news articles.", no_args_is_he
 PASTE_HELP = "Read the article text from standard input instead of fetching it."
 
 
-def make_llm(session: Session) -> "Llm":
+def make_llm(session: Session, *, budget_cap: Decimal | None = None) -> "Llm":
     # Imported here: the model library is slow to load and most commands never need it.
     from thenwhat.llm.cache import ModelCache
     from thenwhat.llm.client import Llm, LlmSettings
 
     settings = settings_or_exit()
+    ceiling = settings.llm_monthly_budget_usd
     return Llm(
         session,
         LlmSettings(
             model=settings.llm_model,
-            monthly_budget_usd=settings.llm_monthly_budget_usd,
+            monthly_budget_usd=min(ceiling, budget_cap) if budget_cap is not None else ceiling,
             input_usd_per_mtok=settings.llm_input_usd_per_mtok,
             output_usd_per_mtok=settings.llm_output_usd_per_mtok,
         ),

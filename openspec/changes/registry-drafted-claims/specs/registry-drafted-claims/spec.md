@@ -48,6 +48,17 @@ Trials SHALL be grouped by fixed rules on the verified intervention or complete 
 - **WHEN** membership describes a sequence of different treatments
 - **THEN** verify which regimen is tested before grouping
 
+### Requirement: Scope review candidates cite exact registry fields
+A scope review packet SHALL contain the stored trial's titles, condition labels, named interventions, arm assignments and planned outcome names. A structured selection SHALL copy phrases from appropriate fields. A proposal SHALL require an evidence-backed scope judgment before it becomes a review receipt. Live model requests SHALL use the configured ceiling and the shared cache.
+
+#### Scenario: Two studies file a tablet and injection under the same product code
+- **WHEN** their registry titles state different formulations
+- **THEN** the packet supports separate candidate regimen names with verbatim evidence
+
+#### Scenario: A returned phrase is absent from the cited field
+- **WHEN** the grounding check compares the selected phrase with the packet
+- **THEN** the answer is rejected
+
 ### Requirement: A treatment and condition a claim already holds drafts no second claim
 Before a group drafts a claim, it SHALL be compared with every claim that is not archived for which the complete regimen or an alias and the indication match. When a match is verified, no claim SHALL be drafted, and the group's trials SHALL be handed to that claim as candidates for preparation to score.
 

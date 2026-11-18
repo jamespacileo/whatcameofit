@@ -1017,6 +1017,39 @@ def test_registry_claim_plan_refuses_an_unloaded_corpus(run):
     assert "No stored trial has the activity and results fields yet." in result.output
 
 
+def test_registry_scope_proposals_defaults_to_an_offline_packet(run, session: Session):
+    trial = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    trial.external_id = "NCT00000001"
+    trial.overall_status = "RECRUITING"
+    trial.raw_payload = {
+        "protocolSection": {
+            "identificationModule": {
+                "nctId": trial.external_id,
+                "briefTitle": "Example XR for eye irritation",
+            }
+        }
+    }
+    session.flush()
+
+    result = run("registry-scope-proposals", trial.external_id, trial.external_id.lower())
+
+    assert result.exit_code == 0, result.output
+    report = json.loads(result.output)
+    (packet,) = report["packets"]
+    assert packet["trial_id"] == trial.external_id
+    assert packet["evidence"] == [{"kind": "title", "text": "Example XR for eye irritation"}]
+    assert report["proposals"] == []
+
+
+def test_registry_scope_proposals_refuses_live_mode_without_an_explicit_cap(run, monkeypatch):
+    monkeypatch.delenv("REGISTRY_SCOPE_MONTHLY_BUDGET_USD", raising=False)
+
+    result = run("registry-scope-proposals", "NCT00000001", "--run")
+
+    assert result.exit_code == 1
+    assert "Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD" in result.output
+
+
 def test_registry_claim_plan_applies_an_evidence_receipt(run, session: Session, tmp_path: Path):
     stored = add_trials(session, 1, registry="clinicaltrials.gov")[0]
     stored.external_id = "NCT00000001"
