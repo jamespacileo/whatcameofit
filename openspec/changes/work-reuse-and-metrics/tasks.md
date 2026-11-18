@@ -49,8 +49,7 @@
 ## 6. Reading
 
 - [ ] 6.1 Order reads by topic, score, the outlet's rates and shares; verify a test of the order
-- [ ] 6.2 Group leads with the same tidied title on different outlets within the set number of days, read one, and put the others to the same-claim decision; verify tests for a group whose first read drafts a claim, and for a grouped article the decision turns away being read in its own turn
-- [ ] 6.3 Count near-matching titles in the stored leads and record the figure here before deciding whether grouping goes beyond exact matches
+- 6.2 and 6.3 (grouping leads that tell one story): Moved to `headline-funnel` (capability `lead-story-groups`) on 2026-11-18, when the open changes were pruned: its story groups decide the same thing by a closer measure than an exact title.
 
 ## 7. Close
 

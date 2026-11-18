@@ -6,11 +6,15 @@ Keeps a human between collected data and the public site. Draft claims, entity m
 ## Requirements
 
 ### Requirement: Review states
-Every draft claim, entity match and evidence event SHALL be in exactly one review state: pending, approved or rejected. Each decision SHALL record when it was made and whether a human, a rule or the seed loader made it.
+Every draft claim, entity match and evidence event SHALL be in exactly one review state: pending, approved or rejected. Each decision SHALL record when it was made and whether a human, a rule, the seed loader or an assistant made it. An item approved by rule SHALL be published without waiting for a person.
 
 #### Scenario: Operator approves a match
 - **WHEN** an operator approves a pending entity match
 - **THEN** the match is approved, with the decision time and a human decider recorded
+
+#### Scenario: Rule approves a match
+- **WHEN** a rule approves an entity match
+- **THEN** the match is approved, recorded as decided by a rule, and counts toward the claim's status in the next export
 
 ### Requirement: Review queue
 An operator SHALL be able to list pending items, for all claims or for one claim, by kind. Each listed item SHALL show what it asserts, its source link and its score or confidence.
@@ -97,3 +101,48 @@ An AI assistant working through the review queue SHALL record its decisions with
 #### Scenario: Operator takes over a decision
 - **WHEN** the operator approves an item the assistant had approved
 - **THEN** the decider becomes the operator and the human label is recorded
+
+### Requirement: Archive
+An operator SHALL be able to archive a published claim or source page by its slug, giving a reason, and to unarchive it. Archiving SHALL keep every record in the database. The next export SHALL leave an archived item out of every public file and SHALL list its slug and the date it was archived. The reason SHALL NOT be exported.
+
+#### Scenario: Operator takes a claim down
+- **WHEN** an operator archives a published claim with the reason "wrong trial"
+- **THEN** the claim and its events stay in the database, and the next export lists its slug and date and holds nothing else about it
+
+#### Scenario: Unknown slug
+- **WHEN** an operator archives a slug that no claim or source has
+- **THEN** the command is refused and names the slug
+
+#### Scenario: Putting it back
+- **WHEN** an operator unarchives an archived claim
+- **THEN** the next export contains the claim again
+
+### Requirement: Evidence stage can be confirmed by rule
+With draft approval by rule enabled, resolving a claim SHALL confirm its latest valid stored evidence-stage suggestion only when the stage is empty and both the chosen-stage probability and confidence meet the existing positive review threshold. Confirmation SHALL refresh status, retain the original decision and leave human labels untouched. Uncertain suggestions SHALL remain unconfirmed.
+
+#### Scenario: Confident existing human-study reading
+- **WHEN** a prepared claim has no confirmed stage and its recorded early-human reading meets the threshold
+- **THEN** resolving it confirms early human and refreshes its no-trial status without another model reading
+
+#### Scenario: Existing confirmation or rule disabled
+- **WHEN** the claim already has a confirmed stage or draft approval by rule is disabled
+- **THEN** the rule does not change its stage or human labels
+
+#### Scenario: Uncertain reading
+- **WHEN** either the chosen-stage probability or recorded confidence is below the threshold
+- **THEN** the stage remains unconfirmed and the existing suggestion is not repeatedly sent to the model
+
+### Requirement: Lower-band stage reading is shown and never used
+A stage reading that did not confirm the claim's stage, and whose chosen stage has at least the configured show probability, SHALL be exported apart from the stage with its score and the other stages it weighed. The claim's stage SHALL stay empty beside it, the reading SHALL NOT be an input to the status, and no review SHALL be required to show it. A reading under the show probability, or for a claim with a confirmed stage, SHALL NOT be exported.
+
+#### Scenario: Lower-band reading is shown and not used
+- **WHEN** a claim with no approved trial has no confirmed stage and its latest stage reading chose early human with probability 0.7, below the threshold for confirming by rule
+- **THEN** the export carries that reading with its score and the other stages it weighed, the claim's stage is empty, and the status is `no_trial_found`
+
+#### Scenario: Reading below the lower band
+- **WHEN** the latest stage reading of a claim with no confirmed stage chose its stage with probability 0.45 and the show probability is 0.5
+- **THEN** the export carries no stage reading for the claim
+
+#### Scenario: Confirmed stage
+- **WHEN** a claim's stage is confirmed, by a person, an assistant or the rule
+- **THEN** the export carries the stage and no stage reading

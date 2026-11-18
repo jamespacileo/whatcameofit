@@ -1,6 +1,6 @@
 # 1. Publish by rule; the operator takes pages down by archiving
 
-Date: 2026-11-13. Status: accepted. Change: `openspec/changes/auto-publish`.
+Date: 2026-11-13. Status: accepted. Change: `openspec/changes/archive/2026-11-18-auto-publish`.
 
 ## Context
 
