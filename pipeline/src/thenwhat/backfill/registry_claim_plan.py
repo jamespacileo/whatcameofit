@@ -8,17 +8,34 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.registry_indication import has_named_cohorts, resolve_indication
+from thenwhat.backfill.registry_scope_review import ScopeReview, validate_scope_review
 from thenwhat.backfill.trial_sets import registry_claims_2026
 from thenwhat.claims.entry import condition_words, name_key, tidy
 from thenwhat.db.models import Claim, Entity, RegistryTrial
 from thenwhat.domain import EntityType, ReviewState
 from thenwhat.events.trial_facts import trial_arms
 from thenwhat.export.trials_listing import _cited as cited_by_published_claims
+from thenwhat.store.form import payload_of
+from thenwhat.work.errors import BackfillError
 
 # A placebo can be used to blind an experimental arm. Other co-interventions, including
 # standard care, are retained if the registry identifies them as a member of that arm.
 _PLACEBO = re.compile(r"(?:intervention: )?(?:matching |matched |dummy )?placebo\b")
 _NON_TREATMENT_LABELS = {"placebo", "sham", "no treatment", "no intervention", "control"}
+_MEASUREMENT_TYPES = {"PROCEDURE", "DIAGNOSTIC_TEST", "OTHER"}
+_MEASUREMENT_LABELS = {
+    "biospecimen collection",
+    "bone marrow aspiration and biopsy",
+    "chest radiography",
+    "computed tomography",
+    "echocardiography",
+    "magnetic resonance imaging",
+    "multigated acquisition scan",
+    "positron emission tomography",
+    "quality of life assessment",
+    "questionnaire administration",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +43,7 @@ class Regimen:
     components: tuple[str, ...]
     # Names the registry attaches to the same intervention record. Used for retrieval.
     aliases: tuple[str, ...] = ()
+    assessments: tuple[str, ...] = ()
 
     @property
     def label(self) -> str:
@@ -38,6 +56,8 @@ class TrialScope:
     conditions: tuple[str, ...]
     purpose: str | None
     issues: tuple[str, ...] = ()
+    indication_title_phrase: str | None = None
+    registered_conditions: tuple[str, ...] = ()
 
 
 def trial_scope(study: dict[str, Any]) -> TrialScope:
@@ -47,12 +67,21 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
     A sponsor's wording is retained, including route and formulation.
     """
     protocol = study.get("protocolSection") or {}
-    conditions = tuple(
+    listed_conditions = tuple(
         {
             tuple(condition_words(label)): tidy(label)
             for label in protocol.get("conditionsModule", {}).get("conditions", [])
             if condition_words(label)
         }.values()
+    )
+    identification = protocol.get("identificationModule", {})
+    conditions, indication_title_phrase = resolve_indication(
+        listed_conditions,
+        (
+            title
+            for field in ("officialTitle", "briefTitle")
+            if (title := identification.get(field))
+        ),
     )
     design = protocol.get("designModule", {}).get("designInfo", {})
     purpose = design.get("primaryPurpose")
@@ -66,6 +95,7 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
 
     regimens: dict[tuple[str, ...], Regimen] = {}
     incomplete = False
+    measurement_only = False
     for arm in tested:
         # Membership can be recorded in either direction. Keep identical entries once.
         members = {name_key(name): tidy(name) for name in arm.interventions if name.strip()}
@@ -81,6 +111,18 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         if not active:
             incomplete = True
             continue
+        assessments = {
+            key: label
+            for key, label in active.items()
+            if purpose in {"TREATMENT", "PREVENTION"}
+            and names.get(key, {}).get("type") in _MEASUREMENT_TYPES
+            and " ".join(condition_words(label)) in _MEASUREMENT_LABELS
+        }
+        if active.keys() == assessments.keys():
+            measurement_only = True
+        else:
+            for key in assessments:
+                del active[key]
         key = tuple(sorted(active))
         aliases = ()
         if len(key) == 1:
@@ -91,24 +133,42 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
                     if alias.strip() and name_key(alias) != key[0]
                 )
             )
-        regimens[key] = Regimen(tuple(active[part] for part in key), aliases)
+        previous = regimens.get(key)
+        measured = set(assessments.values())
+        if previous is not None:
+            measured.update(previous.assessments)
+        regimens[key] = Regimen(
+            tuple(active[part] for part in key), aliases, tuple(sorted(measured))
+        )
 
     issues = []
     if not tested:
         issues.append("missing_tested_arm")
     elif incomplete:
         issues.append("missing_arm_interventions")
+    if measurement_only:
+        issues.append("measurement_only_arm_needs_review")
     if intervention_model in {"CROSSOVER", "SEQUENTIAL"} and any(
         len(regimen.components) > 1 for regimen in regimens.values()
     ):
         issues.append("arm_time_order_needs_review")
     if not conditions:
         issues.append("missing_indication")
-    elif len(conditions) > 1:
+    elif len(conditions) > 1 and not (
+        len(regimens) == 1
+        and has_named_cohorts(conditions, (arm.label for arm in tested if arm.label))
+    ):
         issues.append("condition_assignment_needs_review")
     if not purpose:
         issues.append("missing_primary_purpose")
-    return TrialScope(tuple(regimens.values()), conditions, purpose, tuple(issues))
+    return TrialScope(
+        tuple(regimens.values()),
+        conditions,
+        purpose,
+        tuple(issues),
+        indication_title_phrase,
+        listed_conditions,
+    )
 
 
 @dataclass(slots=True)
@@ -127,6 +187,28 @@ class RegistryClaimPlan:
     needs_review: dict[str, TrialScope]
     trial_count: int
     current_claim_links: dict[str, str]
+    applied_reviews: dict[str, str]
+    reviews_outside_plan: tuple[str, ...]
+
+
+def _evidence_strings(value: Any) -> Iterable[str]:
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _evidence_strings(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _evidence_strings(item)
+
+
+def _scope_evidence(record: dict[str, Any]) -> Iterable[str]:
+    protocol = record.get("protocolSection") or {}
+    identification = protocol.get("identificationModule") or {}
+    for title in ("briefTitle", "officialTitle"):
+        yield from _evidence_strings(identification.get(title))
+    for module in ("conditionsModule", "armsInterventionsModule", "outcomesModule"):
+        yield from _evidence_strings(protocol.get(module))
 
 
 def _regimen_key(label: str) -> tuple[str, ...]:
@@ -138,6 +220,7 @@ def group_registry_trials(
     claims: Iterable[tuple[str, str, str, list[str]]] = (),
     *,
     current_links: Mapping[str, str] | None = None,
+    scope_reviews: Mapping[str, ScopeReview] | None = None,
 ) -> RegistryClaimPlan:
     """Group only supported arm and condition pairs. Claim candidates still need checking."""
     by_pair: dict[tuple[tuple[str, ...], tuple[str, ...]], set[str]] = {}
@@ -148,21 +231,42 @@ def group_registry_trials(
     groups: dict[tuple[tuple[str, ...], tuple[str, ...], str], PlanGroup] = {}
     needs_review: dict[str, TrialScope] = {}
     current_claim_links: dict[str, str] = {}
+    applied_reviews: dict[str, str] = {}
+    reviews = scope_reviews or {}
     trial_count = 0
     for identifier, record in trials:
         trial_count += 1
         if current_links is not None and identifier in current_links:
             current_claim_links[identifier] = current_links[identifier]
         scope = trial_scope(record)
-        if scope.issues or scope.purpose is None:
+        review = reviews.get(identifier)
+        if scope.purpose is None or (scope.issues and review is None):
             needs_review[identifier] = scope
             continue
-        indication = scope.conditions[0]
-        condition = tuple(condition_words(indication))
-        for regimen in scope.regimens:
-            key = tuple(map(name_key, regimen.components)), condition, scope.purpose
+        if review is not None:
+            try:
+                validate_scope_review(
+                    review,
+                    trial_id=identifier,
+                    registry_sha256=payload_of(record).sha256,
+                    source_text=_scope_evidence(record),
+                )
+            except ValueError as error:
+                raise BackfillError(str(error)) from error
+            applied_reviews[identifier] = review.reviewed_by
+            pairs = [(Regimen(pair.regimen), pair.indication) for pair in review.pairs]
+        else:
+            pairs = [
+                (regimen, indication)
+                for indication in scope.conditions
+                for regimen in scope.regimens
+            ]
+        for regimen, indication in pairs:
+            condition = tuple(condition_words(indication))
+            key = tuple(sorted(map(name_key, regimen.components))), condition, scope.purpose
             group = groups.setdefault(key, PlanGroup(regimen.label, indication, scope.purpose))
-            group.trials.append(identifier)
+            if not group.trials or group.trials[-1] != identifier:
+                group.trials.append(identifier)
             group.exact_claim_candidates.update(
                 by_pair.get((_regimen_key(regimen.label), condition), ())
             )
@@ -173,11 +277,18 @@ def group_registry_trials(
     for group in groups.values():
         group.alias_claim_candidates.difference_update(group.exact_claim_candidates)
     return RegistryClaimPlan(
-        tuple(groups[key] for key in sorted(groups)), needs_review, trial_count, current_claim_links
+        tuple(groups[key] for key in sorted(groups)),
+        needs_review,
+        trial_count,
+        current_claim_links,
+        applied_reviews,
+        tuple(sorted(reviews.keys() - applied_reviews.keys() - needs_review.keys())),
     )
 
 
-def plan_registry_claims(session: Session) -> RegistryClaimPlan:
+def plan_registry_claims(
+    session: Session, *, scope_reviews: Mapping[str, ScopeReview] | None = None
+) -> RegistryClaimPlan:
     """Read the target cohort and active claim identities in the current database."""
     claims = session.execute(
         select(Claim.slug, Claim.indication, Entity.name, Entity.synonyms)
@@ -200,4 +311,5 @@ def plan_registry_claims(session: Session) -> RegistryClaimPlan:
         ((identifier, payload) for identifier, payload in trials),
         ((slug, indication, name, aliases) for slug, indication, name, aliases in claims),
         current_links=current_links,
+        scope_reviews=scope_reviews,
     )

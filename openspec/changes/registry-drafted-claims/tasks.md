@@ -33,6 +33,10 @@ The arm-aware replay proposed groups for 39 of the same 61 trials. It held 21 fo
 
 The refreshed target set held 27,731 trials after 28 registry page requests in 26 seconds on the Mac. The planner proposed 19,451 groups covering 16,141 trial IDs. It held 11,590 for review, including 10,680 with multiple registered conditions. The verified live export linked 831 eligible trials. The production comparison found 73 proposed groups with exact name-and-indication claim candidates and 16 with registry alias candidates. These candidates await identity verification. Model spend was zero.
 
+The next cached replay kept documented measurements outside treatment regimens, used explicitly named cohorts and preserved title-supported subtypes and patient contexts. It produced proposals for 16,719 trial IDs and held 11,012. The frozen audit supported 20 of 50 groups. Eleven still had scope errors, one was incomplete, two needed reviewer evidence and 16 had no proposal. Six scope receipts citing the cached trial records were exercised on the pilot, producing proposals for 44 of 61 trials. The grouping gate remains open.
+
+A separate dry-run comparison of nine currently unlinked trials to exact-name-and-indication claim candidates found two with matching scope. Three were controls or background treatment, two were different settings and two needed more review.
+
 ## 3. Drafting and preparation
 
 - [ ] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added

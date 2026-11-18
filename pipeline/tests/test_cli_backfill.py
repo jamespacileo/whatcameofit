@@ -45,6 +45,7 @@ from thenwhat.measure.events import RUN_ENDED, RUN_STARTED
 from thenwhat.measure.files import days_held, read_day, read_events
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import Paper
+from thenwhat.store.form import payload_of
 from thenwhat.work.allowance import Allowances
 
 
@@ -1014,6 +1015,42 @@ def test_registry_claim_plan_refuses_an_unloaded_corpus(run):
 
     assert result.exit_code == 1
     assert "No stored trial has the activity and results fields yet." in result.output
+
+
+def test_registry_claim_plan_applies_an_evidence_receipt(run, session: Session, tmp_path: Path):
+    stored = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    stored.external_id = "NCT00000001"
+    stored.overall_status = "RECRUITING"
+    stored.last_update_posted = date(2026, 3, 1)
+    stored.raw_payload = {
+        "protocolSection": {
+            "identificationModule": {"briefTitle": "Example XR for Eye Irritation"},
+            "designModule": {"designInfo": {"primaryPurpose": "TREATMENT"}},
+        }
+    }
+    session.flush()
+    receipt = {
+        "trial_id": stored.external_id,
+        "registry_sha256": payload_of(stored.raw_payload).sha256,
+        "reviewed_by": "assistant:test",
+        "pairs": [
+            {
+                "regimen": ["Example XR"],
+                "indication": "Eye Irritation",
+                "intervention_quotes": ["Example XR"],
+                "indication_quotes": ["Eye Irritation"],
+            }
+        ],
+    }
+    reviews = tmp_path / "reviews.json"
+    reviews.write_text(json.dumps({"schema_version": 1, "reviews": [receipt]}))
+
+    result = run("registry-claim-plan", "--reviewed-scopes", str(reviews))
+
+    assert result.exit_code == 0, result.output
+    plan = json.loads(result.output)
+    assert plan["applied_reviews"] == {stored.external_id: "assistant:test"}
+    assert plan["groups"][0]["indication"] == "Eye Irritation"
 
 
 def test_trial_references_counts_what_the_stored_records_list(run, session: Session):

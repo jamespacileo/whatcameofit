@@ -48,6 +48,7 @@ from thenwhat.backfill.registry_load import (
     condition_of,
     load_trials,
 )
+from thenwhat.backfill.registry_scope_review import load_scope_reviews
 from thenwhat.backfill.topics import TOPICS
 from thenwhat.backfill.trial_coverage import coverage_of
 from thenwhat.backfill.trial_links import CLAIMS_A_READ, at_least, plan_of
@@ -840,12 +841,26 @@ def trial_sets_command() -> None:
 
 
 @backfill_app.command("registry-claim-plan")
-def registry_claim_plan_command() -> None:
+def registry_claim_plan_command(
+    reviewed_scopes: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True,
+            dir_okay=False,
+            help="Apply evidence-backed scope reviews to the plan.",
+        ),
+    ] = None,
+) -> None:
     """Print the 2026 registry-claim plan as JSON. Reads stored records only."""
     settings_or_exit()
-    with refusals(), open_session() as session:
-        require_wider_record(session)
-        plan = plan_registry_claims(session)
+    with refusals():
+        try:
+            reviews = load_scope_reviews(reviewed_scopes) if reviewed_scopes is not None else None
+        except (OSError, ValueError) as error:
+            raise BackfillError(f"Could not read scope reviews: {error}") from error
+        with open_session() as session:
+            require_wider_record(session)
+            plan = plan_registry_claims(session, scope_reviews=reviews)
     typer.echo(json.dumps({"set": REGISTRY_CLAIMS_2026, **asdict(plan)}, default=sorted))
 
 

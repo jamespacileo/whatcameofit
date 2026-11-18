@@ -97,6 +97,10 @@ The read-only planner takes arm membership from the current registry projection 
 
 An existing claim is a candidate when its complete identity or a documented alias matches. Verify the regimen, clinical use and indication before reusing it. The plan also surfaces current published links, including links whose scope still needs review.
 
+Use a treatment or prevention title to refine a named indication when it gives an explicit subtype or treatment target. Keep the stated patient context when another registered condition qualifies that target. A more detailed title naming several targets overrides abbreviated wording. When distinct tested arms name distinct cohorts for the same regimen, the planner can propose a pair for each cohort. Explicit measurements can be removed from a treatment regimen while diagnostic trials retain their diagnostic intervention.
+
+For cases that need review, `thenwhat backfill registry-claim-plan --reviewed-scopes <file>` accepts a versioned JSON record of explicit regimen and indication pairs. Each pair carries verbatim registry evidence for both parts. Each review records the reviewer and the SHA-256 of the stored record. A changed record requires a fresh review. Applying a receipt changes the plan only. Match scoring, preparation, and publication audit still apply.
+
 ### 4. An ordinary-word name drafts nothing, and the fault is fixed first
 
 A third of stored names would each draft a claim for "first" or "home". The rule that works out a search name is corrected before any drafting (the same defect `headline-funnel` task 2.12 records), and the drafting step refuses such a name itself and lists it, so a real treatment with a common name ("aspirin", "insulin") is seen and can be entered by the operator.
