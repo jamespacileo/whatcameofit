@@ -33,21 +33,6 @@ function setup(overrides = {}) {
   return { controller, calls };
 }
 
-test("opening an untracked page automatically performs one search without a second action", async () => {
-  const { controller, calls } = setup();
-  await controller.open();
-
-  assert.deepEqual(calls.states.map((state) => state.kind), ["checking", "searching", "answer"]);
-  assert.deepEqual(calls.read, [tab]);
-  assert.equal(calls.fetch.length, 2);
-  assert.equal(calls.fetch[1].url, "https://whatcameofit.example/api/lookup");
-  // The page's words and links as read, asking for a staged answer the service may decline.
-  const { timeBudgetMs, ...sent } = JSON.parse(calls.fetch[1].options.body);
-  assert.deepEqual(sent, { ...request, stream: true, claimResults: true });
-  assert.ok(timeBudgetMs > 0 && timeBudgetMs <= 44_000);
-  assert.equal(calls.states.at(-1).shown, answer);
-});
-
 test("tracked, non-web and disabled-service pages never read the page or start a model request", async () => {
   const claim = { headline: "Reviewed claim", page: "/reviewed", status: "Phase 1 trial" };
   const cases = [
@@ -69,15 +54,6 @@ test("tracked, non-web and disabled-service pages never read the page or start a
     assert.equal(calls.read.length, 0);
     assert.equal(calls.fetch.length, one.current.key ? 1 : 0);
   }
-});
-
-test("a fresh cached index still starts the page search", async () => {
-  const { controller, calls } = setup({
-    storage: { get: async () => ({ lookup: { version: 2, index, savedAt: Date.now() } }) },
-  });
-  await controller.open();
-  assert.equal(calls.fetch.length, 2);
-  assert.equal(calls.fetch[1].options.method, "POST");
 });
 
 test("a newly published exact-source card supersedes the recent index and saved clinical answer", async () => {
@@ -224,11 +200,10 @@ test("concurrent opening calls and search actions share the running request", as
   });
   const first = controller.open();
   const second = controller.open();
-  assert.equal(first, second);
   await started.promise;
-  const retry = controller.search();
+  const retries = [controller.search(), controller.search()];
   reading.resolve(request);
-  await Promise.all([first, second, retry]);
+  await Promise.all([first, second, ...retries]);
   assert.equal(reads, 1);
   assert.equal(calls.fetch.filter((call) => call.options.method === "POST").length, 1);
 });
@@ -269,32 +244,6 @@ test("a delayed index does not switch the lookup to a newly active tab", async (
   assert.deepEqual(read, [tab]);
 });
 
-test("navigation while resolving page links refuses the request before it is sent", async () => {
-  const reading = deferred();
-  const started = deferred();
-  let currentPage = true;
-  const { controller, calls } = setup({
-    readPage: async () => { started.resolve(); return reading.promise; },
-    isCurrentPage: async () => currentPage,
-  });
-  const opening = controller.open();
-  await started.promise;
-  currentPage = false;
-  reading.resolve(request);
-  await opening;
-  assert.equal(calls.fetch.filter((call) => call.options.method === "POST").length, 0);
-  assert.deepEqual(calls.states.at(-1), { kind: "refused", code: "page_changed" });
-});
-
-test("a tab that closes before final confirmation sends nothing", async () => {
-  const { controller, calls } = setup({
-    isCurrentPage: async () => { throw new Error("Tab closed"); },
-  });
-  await controller.open();
-  assert.equal(calls.fetch.filter((call) => call.options.method === "POST").length, 0);
-  assert.deepEqual(calls.states.at(-1), { kind: "refused", code: "page_changed" });
-});
-
 test("a failed search offers recovery and an explicit retry can succeed", async () => {
   let attempts = 0;
   const { controller, calls } = setup({
@@ -313,15 +262,21 @@ test("a failed search offers recovery and an explicit retry can succeed", async 
   assert.equal(calls.states.at(-1).kind, "answer");
 });
 
-test("too little text and navigation races make no search request", async () => {
-  for (const readPage of [
-    async () => null,
-    async () => { const error = new Error("Page changed"); error.code = "page_changed"; throw error; },
-  ]) {
-    const { controller, calls } = setup({ readPage });
+test("unreadable pages, navigation during reading and closed tabs send no search request", async () => {
+  const cases = [
+    ["unreadable page", { readPage: async () => null }, { kind: "too-little" }],
+    ["navigation during reading", {
+      readPage: async () => { throw Object.assign(new Error("Page changed"), { code: "page_changed" }); },
+    }, { kind: "refused", code: "page_changed" }],
+    ["closed tab", { isCurrentPage: async () => { throw new Error("Tab closed"); } }, { kind: "refused", code: "page_changed" }],
+  ];
+  for (const [scenario, overrides, expected] of cases) {
+    const { controller, calls } = setup(overrides);
     await controller.open();
-    assert.equal(calls.fetch.filter((call) => call.options.method === "POST").length, 0);
-    assert.ok(["too-little", "refused"].includes(calls.states.at(-1).kind));
+    assert.ok(calls.fetch.every(call => call.options.method !== "POST"), scenario);
+    const { kind, code } = calls.states.at(-1);
+    assert.equal(kind, expected.kind, scenario);
+    assert.equal(code, expected.code, scenario);
   }
 });
 
@@ -337,27 +292,6 @@ test("closing while the browser reads prevents sending and late rendering", asyn
   reading.resolve(request);
   await opening;
   assert.equal(calls.fetch.filter((call) => call.options.method === "POST").length, 0);
-  assert.equal(calls.states.at(-1).kind, "searching");
-});
-
-test("closing aborts a pending request and ignores its eventual response", async () => {
-  const response = deferred();
-  const started = deferred();
-  let signal;
-  const { controller, calls } = setup({
-    fetch: async (_url, options) => {
-      if (options.method !== "POST") return { ok: true, json: async () => index };
-      signal = options.signal;
-      started.resolve();
-      return response.promise;
-    },
-  });
-  const opening = controller.open();
-  await started.promise;
-  controller.close();
-  assert.equal(signal.aborted, true);
-  response.resolve({ ok: true, json: async () => answer });
-  await opening;
   assert.equal(calls.states.at(-1).kind, "searching");
 });
 

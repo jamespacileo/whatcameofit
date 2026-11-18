@@ -1,5 +1,6 @@
 // The built site, checked against the scenarios in openspec site-publishing.
-// Builds once from tests/fixture-export.json (synthetic data) into a temporary directory.
+// The base export is built once. Cases that need different data share a build when
+// their inputs can coexist.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -24,6 +25,19 @@ function build(exportFile, outDir) {
     env: { ...process.env, EXPORT_FILE: exportFile, ASTRO_TELEMETRY_DISABLED: "1" },
     encoding: "utf8",
   });
+}
+
+function buildFixture(t, change) {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  change(fixture);
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-variant-"));
+  t.after(() => fs.rmSync(work, { recursive: true, force: true }));
+  const file = path.join(work, "export.json");
+  const out = path.join(work, "dist");
+  fs.writeFileSync(file, JSON.stringify(fixture));
+  const result = build(file, out);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  return (relative) => fs.readFileSync(path.join(out, relative), "utf8");
 }
 
 before(() => {
@@ -461,7 +475,7 @@ test("Scenario: No approved claims", () => {
   assert.match(html, /No tracked claim has an approval on record/);
 });
 
-test("Scenario: Preview build", () => {
+test("Scenario: Preview build", (t) => {
   // A normal build carries no preview wording and may be indexed.
   for (const file of ["index.html", "phase-claim/index.html"]) {
     assert.doesNotMatch(page(file), /class="preview-note"|not yet (been )?checked by a person|noindex/);
@@ -469,15 +483,10 @@ test("Scenario: Preview build", () => {
   assert.equal(JSON.parse(page("lookup.json")).claims["phase-claim"].unchecked, null);
 
   // A preview export marks every page, and the claim no person has checked.
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  fixture.preview = true;
-  fixture.claims.find((claim) => claim.slug === "phase-claim").checked_by_person = false;
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-preview-"));
-  const exportFile = path.join(directory, "export.json");
-  fs.writeFileSync(exportFile, JSON.stringify(fixture));
-  const result = build(exportFile, path.join(directory, "dist"));
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  const built = (file) => fs.readFileSync(path.join(directory, "dist", file), "utf8");
+  const built = buildFixture(t, (fixture) => {
+    fixture.preview = true;
+    fixture.claims.find((claim) => claim.slug === "phase-claim").checked_by_person = false;
+  });
 
   for (const file of ["index.html", "quiet-claim/index.html", "topic/gum-disease/index.html"]) {
     assert.match(built(file), /class="preview-note"/, file);
@@ -496,6 +505,82 @@ test("Scenario: Preview build", () => {
   assert.equal(lookup.preview, true);
   assert.match(lookup.claims["phase-claim"].unchecked, /not yet been checked by a person/);
   assert.equal(lookup.claims["quiet-claim"].unchecked, null);
+  assert.equal(JSON.parse(built("data/claims.json")).preview, true);
+});
+
+test("the public data page links a complete index and one record per published claim", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const index = JSON.parse(page("data/claims.json"));
+  const hasDataUrl = (value) => typeof value === "string" ? value.startsWith("data:")
+    : value !== null && typeof value === "object" && Object.values(value).some(hasDataUrl);
+
+  assert.deepEqual(index.entries.map(entry => entry.slug).sort(), fixture.claims.map(claim => claim.slug).sort());
+  assert.match(index.licence, /CC BY 4\.0/);
+  assert.equal(index.preview, false);
+  assert.equal(index.format, "claims-index");
+  assert.equal(hasDataUrl(index), false);
+  for (const entry of index.entries) {
+    assert.equal(entry.record, `/data/claims/${entry.slug}.json`);
+    const record = JSON.parse(page(entry.record.slice(1)));
+    assert.equal(record.claim.slug, entry.slug);
+    assert.equal(record.licence, index.licence);
+    assert.equal(record.credit, index.credit);
+    assert.equal(hasDataUrl(record), false);
+  }
+
+  const html = page("data/index.html");
+  assert.match(html, /href="\/data\/claims\.json"/);
+  assert.match(html, /href="\/data\/claims\/[^"]+\.json"/);
+  assert.match(html, /download the index, then each address in its <code>record<\/code> fields/);
+});
+
+test("every published claim has the card in three shapes", () => {
+  const slugs = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8")).claims.map(
+    (entry) => entry.slug,
+  );
+  for (const [folder, [width, height]] of Object.entries({ og: [1200, 630], "og/square": [1080, 1080], "og/tall": [1080, 1920] })) {
+    for (const slug of slugs) {
+      const png = fs.readFileSync(path.join(dist, folder, `${slug}.png`));
+      // A PNG states its width and height in its first chunk.
+      assert.deepEqual([png.readUInt32BE(16), png.readUInt32BE(20)], [width, height], `${folder}/${slug}`);
+    }
+  }
+});
+
+test("the link preview's alternative quotes the outlet and says it is not advice", () => {
+  const html = page("phase-claim/index.html");
+  const alt = html.match(/property="og:image:alt" content="([^"]+)"/)?.[1] ?? "";
+  assert.match(alt, /“Example report 3” \(Example Outlet 3\)/);
+  assert.match(alt, /Status now Phase 2 trial/);
+  assert.match(alt, /Not medical advice\.$/);
+});
+
+test("a claim page offers the sentence and both images", () => {
+  const html = page("phase-claim/index.html");
+  assert.match(html, /id="sentence">[^<]*First reported May 2019\.[^<]*Phase 2 trial\.[^<]*\/phase-claim</);
+  for (const shape of ["square", "tall"]) {
+    assert.ok(html.includes(`href="/og/${shape}/phase-claim.png"`), `${shape} link`);
+    assert.ok(fs.existsSync(path.join(dist, `og/${shape}/phase-claim.png`)));
+  }
+  // The snippet is the frame tag and nothing else.
+  assert.ok(/&lt;iframe src=(&quot;|&#34;|")[^&"]*\/embed\/phase-claim/.test(html), "embed snippet");
+});
+
+test("Embed shows status and links out", () => {
+  const html = page("embed/quiet-claim/index.html");
+  assert.match(html, /Preclinical only/);
+  assert.match(html, /No signal for 6 years/);
+  assert.match(html, /Not medical advice/);
+  // Its links leave the frame, and search engines are asked to pass it by.
+  assert.match(html, /<a href="[^"]*\/quiet-claim" target="_top"/);
+  assert.doesNotMatch(html, /<a (?![^>]*target="_top")[^>]*href=/);
+  assert.match(html, /<meta name="robots" content="noindex"/);
+});
+
+test("Embed asks no other host", () => {
+  const html = page("embed/quiet-claim/index.html");
+  assert.doesNotMatch(html, /<(script|link|img)[^>]+(src|href)="https?:\/\//);
+  assert.doesNotMatch(html, /document\.cookie|localStorage|sessionStorage/);
 });
 
 test("Scenario: Claim promised for 2025", () => {
@@ -598,11 +683,19 @@ test("Scenario: Offline build", () => {
 });
 
 test("an export that does not match the schema stops the build", () => {
+  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  fixture.claims[0].headline = 7;
+  fixture.claims[1].background[0].fit = "narrower";
+  fixture.claims[1].papers[0].facts.kinds = ["hologram"];
   const broken = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bad-")), "export.json");
-  fs.writeFileSync(broken, JSON.stringify({ schema_version: 2, claims: "not a list" }));
+  fs.writeFileSync(broken, JSON.stringify(fixture));
   const result = build(broken, fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-bad-")));
   assert.notEqual(result.status, 0);
-  assert.match(result.stdout + result.stderr, /does not match export\.schema\.json/);
+  const problem = result.stdout + result.stderr;
+  assert.match(problem, /does not match export\.schema\.json/);
+  assert.match(problem, /headline must be string/);
+  assert.match(problem, /background\/0\/fit must be equal to one of the allowed values \(it is "narrower"\)/);
+  assert.match(problem, /kinds\/0 must be equal to one of the allowed values \(it is "hologram"\)/);
 });
 
 test("an export from pipeline code older than the audit hold stops the build", () => {
@@ -1043,19 +1136,7 @@ test("Scenario: Claim with no paper", () => {
   assert.ok(!html.includes("Records listed"));
 });
 
-test("Scenario: Kind code without site wording", () => {
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  fixture.claims[1].papers[0].facts.kinds = ["hologram"];
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-paper-code-"));
-  const file = path.join(directory, "export.json");
-  fs.writeFileSync(file, JSON.stringify(fixture));
-
-  const result = build(file, path.join(directory, "dist"));
-
-  assert.notEqual(result.status, 0);
-});
-
-test("the build fails on a related paper's reason the site has no wording for", () => {
+test("the build names a related paper's match reason without site wording", () => {
   const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
   fixture.claims[1].papers.at(-1).roles[0].reasons = ["liked_it"];
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-paper-reason-"));
@@ -1068,25 +1149,24 @@ test("the build fails on a related paper's reason the site has no wording for", 
   assert.match(result.stdout + result.stderr, /paper reason: liked_it/);
 });
 
-test("an export made before paper facts still builds, with the matched papers as before", () => {
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  for (const claim of fixture.claims) {
-    delete claim.papers;
-    for (const trial of claim.trials ?? []) delete trial.papers;
-  }
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-no-papers-"));
-  const file = path.join(directory, "export.json");
-  fs.writeFileSync(file, JSON.stringify(fixture));
-  const out = path.join(directory, "dist");
-
-  const result = build(file, out);
-
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  const quiet = fs.readFileSync(path.join(out, "quiet-claim/index.html"), "utf8");
+test("older exports still show matched papers and registry records", (t) => {
+  const built = buildFixture(t, (fixture) => {
+    for (const claim of fixture.claims) {
+      delete claim.papers;
+      delete claim.trials;
+      for (const event of claim.events) delete event.confidence;
+    }
+  });
+  const quiet = built("quiet-claim/index.html");
   assert.match(sectionOf(quiet, "papers"), /Matched papers/);
-  const phase = fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8");
+  const phase = built("phase-claim/index.html");
   assert.ok(!phase.includes("Papers on record"));
   assert.ok(!phase.includes("Records listed"));
+  assert.ok(!phase.includes('id="trials"'));
+  const registry = sectionOf(phase, "matched");
+  assert.match(registry, /Matched registry records/);
+  assert.ok(registry.includes("NCT00000002"));
+  assert.match(wordsOf(registry), /Match to this claim: high, 94%/);
 });
 
 test("Scenario: Follow-up paper scored 0.6", () => {
@@ -1111,28 +1191,6 @@ test("Scenario: Fact code without site wording", () => {
 
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /masking/);
-});
-
-test("an export made before trial facts still builds, with the matched records as before", () => {
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  for (const claim of fixture.claims) {
-    delete claim.trials;
-    for (const event of claim.events) delete event.confidence;
-  }
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-no-trials-"));
-  const file = path.join(directory, "export.json");
-  fs.writeFileSync(file, JSON.stringify(fixture));
-  const out = path.join(directory, "dist");
-
-  const result = build(file, out);
-
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  const html = fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8");
-  assert.ok(!html.includes('id="trials"'));
-  const registry = sectionOf(html, "matched");
-  assert.match(registry, /Matched registry records/);
-  assert.ok(registry.includes("NCT00000002"));
-  assert.match(wordsOf(registry), /Match to this claim: high, 94%/);
 });
 
 // --- registry record rows (openspec registry-record-rows) ---
@@ -1162,57 +1220,31 @@ test("Scenario: Trial on ClinicalTrials.gov", () => {
   assert.match(trials, /NCT00000002 at ClinicalTrials\.gov/);
 });
 
-test("Scenario: Possible records when only a person approves a match", () => {
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  fixture.match_accept_above = null;
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-person-"));
-  const file = path.join(directory, "export.json");
-  fs.writeFileSync(file, JSON.stringify(fixture));
-  const out = path.join(directory, "dist");
-
-  const result = build(file, out);
-
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
+test("possible records include unread matches and fold extras when approval is manual", (t) => {
+  const built = buildFixture(t, (fixture) => {
+    fixture.match_accept_above = null;
+    const claim = fixture.claims.find((each) => each.slug === "phase-claim");
+    const candidate = claim.matches[1];
+    for (let n = 0; n < 4; n += 1) {
+      const id = `NCT0000009${n}`;
+      claim.matches.push({
+        ...candidate,
+        external_id: id,
+        url: `https://clinicaltrials.gov/study/${id}`,
+        score: 0.3 - n / 100,
+        record: { ...candidate.record, title: `Another registry record ${id}` },
+      });
+    }
+    candidate.record = null;
+  });
+  const registry = sectionOf(built("phase-claim/index.html"), "matched");
+  const words = wordsOf(registry);
   assert.match(words, /A record counts only once a person confirms it\./);
   assert.doesNotMatch(words, /% or more/);
-});
-
-test("Scenario: Group of more than three records", () => {
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  const claim = fixture.claims.find((each) => each.slug === "phase-claim");
-  const candidate = claim.matches[1];
-  for (let n = 0; n < 4; n += 1) {
-    claim.matches.push({ ...candidate, external_id: `NCT0000009${n}`, url: `https://clinicaltrials.gov/study/NCT0000009${n}`, score: 0.3 - n / 100 });
-  }
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-rest-"));
-  const file = path.join(directory, "export.json");
-  fs.writeFileSync(file, JSON.stringify(fixture));
-  const out = path.join(directory, "dist");
-
-  const result = build(file, out);
-
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  const registry = sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched");
   const [shown, rest] = registry.split('<details class="papers-rest record-rest">');
   assert.equal(count(shown, 'class="record-row"'), 3);
   assert.equal(count(rest, 'class="record-row"'), 2);
   assert.match(wordsOf(rest), /The other 2 of 5 records/);
-});
-
-test("Scenario: Possible record not yet read into fields", () => {
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  const claim = fixture.claims.find((each) => each.slug === "phase-claim");
-  claim.matches[1].record = null;
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-record-unread-"));
-  const file = path.join(directory, "export.json");
-  fs.writeFileSync(file, JSON.stringify(fixture));
-  const out = path.join(directory, "dist");
-
-  const result = build(file, out);
-
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  const words = wordsOf(sectionOf(fs.readFileSync(path.join(out, "phase-claim/index.html"), "utf8"), "matched"));
   assert.match(words, /Possible record: Registry record NCT00000077 Details not read from the registry yet Possible match: low, 31% Read as [^.]+\. How well [^.]+\. It says [^.]+\.[^]*?NCT00000077 at ClinicalTrials\.gov/);
   assert.doesNotMatch(words, /Synthetic trial of phase-claim agent in another condition/);
 });
@@ -1549,29 +1581,21 @@ test("Scenarios: Kind card, and Registry type as a reason", () => {
     ["Example Drugs", "CC BY-SA 3.0 Unported"],
   ]);
 
-  // Scenario: Code without site wording. An unworded molecule kind fails the build.
+  assert.deepEqual(cards[1].reasons[1], { code: "registry_lists_type", type: "DEVICE", trials: 3 });
+
+  // Scenario: Code without site wording. The build names every unworded card code.
   const unworded = structuredClone(fixture);
   unworded.claims.find((claim) => claim.slug === "phase-claim").background[2].molecule_kind = "nanobot";
+  const reasons = unworded.claims.find((claim) => claim.slug === "approved-claim").background[1].reasons;
+  reasons[0].code = "sounds_right";
+  reasons[1].type = "HOLOGRAM";
   fs.writeFileSync(file, JSON.stringify(unworded));
   const stopped = build(file, path.join(directory, "unworded"));
   assert.notEqual(stopped.status, 0);
-  assert.match(stopped.stdout + stopped.stderr, /card molecule kind: nanobot/);
-  assert.deepEqual(cards[1].reasons[1], { code: "registry_lists_type", type: "DEVICE", trials: 3 });
-
-  // An unknown fit, reason or registry type fails the build and is named.
-  for (const [change, named] of [
-    // The export's schema lists the fits, so an unknown one is refused before wording.
-    [(card) => (card.fit = "narrower"), /background\/1\/fit must be equal to one of the allowed values \(it is "narrower"\)/],
-    [(card) => (card.reasons[0].code = "sounds_right"), /card reason: sounds_right/],
-    [(card) => (card.reasons[1].type = "HOLOGRAM"), /card registry type: HOLOGRAM/],
-  ]) {
-    const broken = structuredClone(fixture);
-    change(broken.claims.find((claim) => claim.slug === "approved-claim").background[1]);
-    fs.writeFileSync(file, JSON.stringify(broken));
-    const refused = build(file, path.join(directory, "refused"));
-    assert.notEqual(refused.status, 0);
-    assert.match(refused.stdout + refused.stderr, named);
-  }
+  const problem = stopped.stdout + stopped.stderr;
+  assert.match(problem, /card molecule kind: nanobot/);
+  assert.match(problem, /card reason: sounds_right/);
+  assert.match(problem, /card registry type: HOLOGRAM/);
 });
 
 test("the method page explains kind cards", () => {

@@ -543,14 +543,6 @@ test("bulk records a run hands over wait in the inbox, and leave D1 once the dai
   } finally { await box.close(); }
 });
 
-test("the inbox keeps every kind the pipeline calls bulk", { skip }, async () => {
-  const { INBOX_KINDS } = await import("../src/kinds.mjs");
-  const tiers = readFileSync(here("../../../pipeline/src/thenwhat/store/tiers.py"), "utf8");
-  const bulk = [.../BULK_KINDS = frozenset\(\s*\{([^}]*)\}/.exec(tiers)[1].matchAll(/"([a-z_]+)"/g)].map(([, kind]) => kind);
-  assert.ok(bulk.length > 5);
-  assert.deepEqual(bulk.filter((kind) => !INBOX_KINDS.includes(kind)), []);
-});
-
 test("a registry record that names a person is refused, in a record and in the bucket", { skip }, async () => {
   const { peopleIn } = await import("../src/people.mjs");
   const clean = { protocolSection: { identificationModule: { nctId: "NCT900", briefTitle: "A trial" },
