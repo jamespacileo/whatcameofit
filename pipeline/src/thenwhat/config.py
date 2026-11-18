@@ -83,6 +83,8 @@ class Settings(CallSettings):
     llm_cache_dir: Path | None = None
     llm_monthly_budget_usd: Decimal = Decimal("13")
     registry_scope_monthly_budget_usd: Decimal | None = Field(default=None, ge=0)
+    audit_sample_size: int | None = Field(default=None, ge=1)
+    audit_max_wrong_share: Decimal | None = Field(default=None, ge=0, le=1)
     llm_input_usd_per_mtok: Decimal | None = None
     llm_output_usd_per_mtok: Decimal | None = None
 

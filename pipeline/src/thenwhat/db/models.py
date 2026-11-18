@@ -12,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Integer,
     LargeBinary,
     MetaData,
     Numeric,
@@ -112,6 +113,15 @@ class Reviewed:
     reviewed_by: Mapped[Decider | None] = mapped_column(_enum(Decider, "reviewed_by"))
 
 
+class AuditBatch(Base):
+    """The claims drafted together on the writer."""
+
+    __tablename__ = "audit_batch"
+
+    name: Mapped[str] = mapped_column(Text, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
 class Claim(Reviewed, Base):
     __tablename__ = "claim"
     __table_args__ = (
@@ -195,6 +205,8 @@ class Claim(Reviewed, Base):
     # Approved by `thenwhat prepare` for a link lead's read, and held off the site until
     # the batch it came in has been audited (`thenwhat audit clear`). Never exported.
     awaiting_audit_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    audit_batch: Mapped[str | None] = mapped_column(ForeignKey("audit_batch.name"), index=True)
+    audit_cleared_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     # The claim this one was merged into (`thenwhat claim merge`). A merged claim is
     # archived, stands for no intervention any more, and its address leads to that claim.
     merged_into_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"), index=True)
@@ -203,6 +215,52 @@ class Claim(Reviewed, Base):
     # for. Its change makes the claim due for its search steps; a search leaves it as it is.
     registry_search_due_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class AuditSample(Base):
+    __tablename__ = "audit_sample"
+    __table_args__ = (
+        CheckConstraint("cardinality(claim_ids) > 0", name="has_claims"),
+        CheckConstraint("claim_ids <@ population_ids", name="sample_in_population"),
+        CheckConstraint("spot_claim_ids <@ claim_ids", name="spot_check_in_sample"),
+        CheckConstraint(
+            "(spot_seed IS NULL) = (spot_claim_ids IS NULL)", name="spot_check_has_seed"
+        ),
+        CheckConstraint("max_wrong_share >= 0 AND max_wrong_share <= 1", name="figure_is_fraction"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    batch: Mapped[str] = mapped_column(ForeignKey("audit_batch.name"), index=True)
+    seed: Mapped[str] = mapped_column(Text)
+    population_ids: Mapped[list[int]] = mapped_column(ARRAY(Integer))
+    claim_ids: Mapped[list[int]] = mapped_column(ARRAY(Integer))
+    drawn_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    spot_seed: Mapped[str | None] = mapped_column(Text)
+    spot_claim_ids: Mapped[list[int] | None] = mapped_column(ARRAY(Integer))
+    released_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    max_wrong_share: Mapped[Decimal | None] = mapped_column(Numeric)
+
+
+class AuditJudgement(Base):
+    __tablename__ = "audit_judgement"
+    __table_args__ = (
+        CheckConstraint("judged_by IN ('human', 'assistant')", name="judged_by_a_reader"),
+        CheckConstraint(
+            "(is_right AND category IS NULL AND detail IS NULL)"
+            " OR (NOT is_right AND category IS NOT NULL AND detail IS NOT NULL)",
+            name="wrong_has_defect",
+        ),
+    )
+
+    sample_id: Mapped[int] = mapped_column(ForeignKey("audit_sample.id"), primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), primary_key=True)
+    judged_by: Mapped[Decider] = mapped_column(_enum(Decider, "judged_by"), primary_key=True)
+    reviewer: Mapped[str] = mapped_column(Text)
+    judged_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    facts_sha256: Mapped[str] = mapped_column(Text)
+    right: Mapped[bool] = mapped_column("is_right")
+    category: Mapped[str | None] = mapped_column(Text)
+    detail: Mapped[str | None] = mapped_column(Text)
 
 
 class ClaimChange(Base):

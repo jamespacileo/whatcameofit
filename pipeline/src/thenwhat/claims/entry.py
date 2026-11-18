@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.promises import parse_promise_date
 from thenwhat.claims.verticals import APPROACHES, VERTICALS
 from thenwhat.db.models import (
+    AuditBatch,
     Claim,
     ClaimChange,
     Entity,
@@ -571,11 +572,17 @@ def add_registry_claim(
     intervention: str,
     indication: str,
     trial_ids: Sequence[str],
+    audit_batch: str | None = None,
 ) -> Claim:
     """Store a pending registry claim using the recorded trials as its drafting evidence."""
     if not trial_ids:
         raise MissingField("A registry claim needs its drafting trial IDs.")
     identifiers = _stored_trial_ids(session, trial_ids)
+    if (
+        audit_batch is not None
+        and session.get(AuditBatch, audit_batch, with_for_update=True) is None
+    ):
+        raise InvalidField(f"No audit batch is named '{audit_batch}'.")
     return _add_claim(
         session,
         slug=slug,
@@ -587,6 +594,7 @@ def add_registry_claim(
         approach=None,
         drafted_from=DraftedFrom.REGISTRY,
         drafting_trial_ids=identifiers,
+        audit_batch=audit_batch,
     )
 
 
@@ -602,6 +610,7 @@ def _add_claim(
     approach: str | None,
     drafted_from: DraftedFrom,
     drafting_trial_ids: Sequence[str] = (),
+    audit_batch: str | None = None,
 ) -> Claim:
     _check_slug(slug)
     intervention = _required("intervention", intervention)
@@ -620,6 +629,7 @@ def _add_claim(
         summary=summary,
         drafted_from=drafted_from,
         drafting_trial_ids=list(drafting_trial_ids),
+        audit_batch=audit_batch,
         vertical=vertical,
         approach=approach,
         approach_decided_by=Decider.HUMAN if approach else None,
@@ -847,6 +857,9 @@ def clear_audit(session: Session, slugs: list[str]) -> list[Claim]:
     """Let claims whose audit passed be published from the next export on. Every slug is
     checked before any hold is cleared, so a refusal clears nothing."""
     claims = [claim_by_slug(session, slug) for slug in slugs]
+    batches = sorted({claim.audit_batch for claim in claims if claim.audit_batch is not None})
+    if batches:
+        raise AuditRefused(f"Use audit clear --batch for batched claims: {', '.join(batches)}.")
     not_held = [claim.slug for claim in claims if claim.awaiting_audit_at is None]
     if not_held:
         raise AuditRefused(f"Not awaiting audit: {', '.join(not_held)}. Nothing was cleared.")

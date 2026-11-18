@@ -1,6 +1,8 @@
 """Claims that `thenwhat prepare` approved and that wait for the audit of their batch,
 and the reads the audit settles: those left unresolved because they overlap a claim."""
 
+import json
+from dataclasses import asdict
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -19,7 +21,15 @@ from thenwhat.backfill.link_read import (
 )
 from thenwhat.backfill.link_rekey import refuse_stale_keys
 from thenwhat.backfill.outlet_hold import LEFT_FOR_LATER
-from thenwhat.claims.entry import awaiting_audit, clear_audit
+from thenwhat.claims.audit import (
+    AuditOpinion,
+    judge_claim,
+    release_batch,
+    sample_batch,
+    sample_slugs,
+    spot_check_batch,
+)
+from thenwhat.claims.entry import AuditRefused, awaiting_audit, clear_audit
 from thenwhat.claimsteps.run import never_searched
 from thenwhat.claimsteps.step import prepared
 from thenwhat.cli import backfill
@@ -110,11 +120,34 @@ def _list_live_overlaps(session: Session) -> None:
 
 @audit_app.command("clear")
 def audit_clear(
-    slugs: Annotated[list[str], typer.Argument(help="Slugs of the claims whose audit passed.")],
+    slugs: Annotated[
+        list[str] | None, typer.Argument(help="Slugs of legacy held claims whose audit passed.")
+    ] = None,
+    batch: Annotated[
+        str | None, typer.Option(help="Release a judged publication audit batch.")
+    ] = None,
 ) -> None:
     """Let audited claims be published from the next export on. A claim that should not
     be published is archived instead. If any slug is not awaiting audit, nothing is cleared."""
     with entry_session() as session:
+        if batch is not None:
+            if slugs:
+                raise AuditRefused("Give a batch or individual slugs.")
+            settings = settings_or_exit()
+            count = release_batch(
+                session,
+                batch,
+                max_wrong_share=settings.audit_max_wrong_share,
+                now=datetime.now(UTC),
+            )
+            noun = "claim" if count == 1 else "claims"
+            out.print(
+                f"Cleared {count} {noun} in {batch}. Export and deploy to publish.",
+                markup=False,
+            )
+            return
+        if not slugs:
+            raise AuditRefused("Give claim slugs or --batch.")
         cleared = clear_audit(session, slugs)
         noun = "claim" if len(cleared) == 1 else "claims"
         out.print(
@@ -132,6 +165,75 @@ AS_ASSISTANT = Annotated[
         help="Record the decision as an AI assistant's, not yours.",
     ),
 ]
+
+
+@audit_app.command("sample")
+def audit_sample(
+    batch: Annotated[str, typer.Option(help="Name of the held draft batch.")],
+    whole: Annotated[bool, typer.Option("--all", help="Draw every eligible held claim.")] = False,
+    fresh: Annotated[
+        bool, typer.Option(help="Draw again after addressing defects or a stale sample.")
+    ] = False,
+) -> None:
+    """Draw or retrieve the batch's publication audit."""
+    settings = settings_or_exit()
+    with entry_session() as session:
+        sample = sample_batch(
+            session,
+            batch,
+            size=settings.audit_sample_size,
+            whole=whole,
+            fresh=fresh,
+            now=datetime.now(UTC),
+        )
+        typer.echo(
+            json.dumps(
+                {
+                    "batch": batch,
+                    "sample": sample.id,
+                    "seed": sample.seed,
+                    "population": len(sample.population_ids),
+                    "claims": sample_slugs(session, sample),
+                }
+            )
+        )
+
+
+@audit_app.command("judge")
+def audit_judge(
+    sample: Annotated[int, typer.Argument(help="Recorded audit sample number.")],
+    slug: Annotated[str, typer.Argument(help="Claim selected in the sample.")],
+    right: Annotated[bool, typer.Option("--right/--wrong", help="Judgement against the evidence.")],
+    reviewer: Annotated[str, typer.Option(help="Name or handle for the reviewer.")],
+    category: Annotated[str | None, typer.Option(help="Category of a defect.")] = None,
+    detail: Annotated[str | None, typer.Option(help="Evidence for a wrong judgement.")] = None,
+    as_assistant: AS_ASSISTANT = False,
+) -> None:
+    """Record a judgement on one sampled claim with the reviewer's role."""
+    by = Decider.ASSISTANT if as_assistant else Decider.HUMAN
+    with entry_session() as session:
+        judge_claim(
+            session,
+            sample,
+            slug,
+            AuditOpinion(right, by, reviewer, category, detail),
+            now=datetime.now(UTC),
+        )
+        out.print(f"Recorded {by.value} judgement for {slug} in sample {sample}.", markup=False)
+
+
+@audit_app.command("spot-check")
+def audit_spot_check(
+    batch: Annotated[str, typer.Option(help="Batch with assistant judgements.")],
+    size: Annotated[
+        int | None, typer.Option(min=1, help="Number to draw for the operator.")
+    ] = None,
+) -> None:
+    """Draw an operator spot-check and report the recorded differences."""
+    with entry_session() as session:
+        typer.echo(json.dumps(asdict(spot_check_batch(session, batch, size=size))))
+
+
 LEAD_IDS = Annotated[
     list[int],
     typer.Argument(help="Numbers of the leads, as `thenwhat audit list` gives them."),

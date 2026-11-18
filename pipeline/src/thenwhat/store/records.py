@@ -44,7 +44,7 @@ from thenwhat.db.models import (
     TrialRead,
     WorkEntry,
 )
-from thenwhat.domain import DraftedFrom, OutletKind, ScreenOutcome
+from thenwhat.domain import Decider, DraftedFrom, OutletKind, ScreenOutcome
 from thenwhat.sources.people import sponsored_by_a_person, without_people
 from thenwhat.store.form import (
     Record,
@@ -162,6 +162,21 @@ def claim_actions(
     it in the store."""
     merged = claim.merged_into_id is not None
     actions: list[Record] = []
+    if claim.audit_cleared_at is not None and claim.awaiting_audit_at is None and not merged:
+        cleared = when(claim.audit_cleared_at)
+        actions.append(
+            Record(
+                "action",
+                key_of("audit_clear", claim.slug, cleared),
+                body(
+                    action="audit_clear",
+                    slug=claim.slug,
+                    at=cleared,
+                    detail=f"Publication audit batch {claim.audit_batch}",
+                    decided_by=Decider.RULE.value,
+                ),
+            )
+        )
     if claim.published_at is not None and not merged:
         actions.append(
             Record(

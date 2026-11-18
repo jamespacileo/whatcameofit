@@ -6,7 +6,7 @@ Write steps run on the one writer only. Every judgement an assistant makes is re
 
 - [x] 1.1 Write the ADR that a claim is one intervention or regimen for one indication and records its drafting source; record the superseded 2026-11-16 decision and affected wording in ADR 0013
 - [x] 1.2 Record the sampled release decision and the continuing approval and export rules of ADR 0007 in ADR 0014
-- [ ] 1.3 Revise Claim and Source article in `GLOSSARY.md` and add the term for a claim no report is linked to; verify the terms match the specs word for word and are used exactly in the site's phrases
+- [x] 1.3 Revise Claim and Source article in `GLOSSARY.md` and add the term for a claim no report is linked to; verify the terms match the specs word for word and are used exactly in the site's phrases
 - [ ] 1.4 Ask the operator for the share of wrong claims a sample may hold and the sample's size; record both here and in `.env.example` as settings with no default
 - [ ] 1.5 Ask the operator for the monthly ceiling for model spend while sets are prepared; record it here; verify no setting is changed before the answer
 - [x] 1.6 Verify the condition-term topic mapping is present on `main` before sections 3 to 6. The mapping and NLM hierarchy are in `thenwhat.clinical`, introduced by `843278e0` in the clinical classification work.
@@ -87,11 +87,13 @@ The capacity rehearsal built 200 synthetic additions in 47.2 seconds with 1,970 
 
 ## 5. The sampled audit
 
-- [ ] 5.1 Add `thenwhat audit sample` for a held batch: a drawn sample of the set size, recorded with its seed, the whole batch when smaller; verify tests of both and that a second call returns the same sample
-- [ ] 5.2 Record each sampled claim's judgement with who made it, an assistant's as an assistant's; verify tests of both and that a wrong claim is not released
-- [ ] 5.3 Release a batch with `thenwhat audit clear --batch` only when every sampled claim is judged and the share judged wrong is at or below the figure, and never while the figure is empty; verify tests of a sample at the figure, over it, unfinished, and with no figure
-- [ ] 5.4 Offer the operator a drawn share of an assistant's judgements and record the count that differ; verify one test of its figures
-- [ ] 5.5 Verify with a test that a release changes no review state and that a released claim says no person checked it unless a person approved it
+- [x] 5.1 Add `thenwhat audit sample` for a held batch: a drawn sample of the set size, recorded with its seed, the whole batch when smaller; verify tests of both and that a second call returns the same sample
+- [x] 5.2 Record each sampled claim's judgement with who made it, an assistant's as an assistant's; verify tests of both and that a wrong claim is not released
+- [x] 5.3 Release a batch on a partial sample with `thenwhat audit clear --batch` only when the sample is fully judged and the wrong share is at or below the configured figure. Preserve release after a whole audit. Verify tests at the figure, over it, unfinished, and with no figure.
+- [x] 5.4 Offer the operator a drawn share of an assistant's judgements and record the count that differ; verify one test of its figures
+- [x] 5.5 Verify with a test that a release changes no review state and that a released claim says no person checked it unless a person approved it
+
+Local PostgreSQL fixtures recorded a repeatable four-of-six sample and held the batch while the audit was unfinished, the allowed share was unset, or the result was above the figure. At the configured figure, five claims reached the export and the wrong claim stayed held and was archived. The existing store merge applied the same five clear actions to a SQLite copy that already held the claims. A second fixture audited an entire two-claim batch, recorded two operator disagreements separately, and applied the operator's findings. Release preserved claim, match and event approvals. The audit settings are optional with no configured values in the example. Real drafting still needs the grouping gate and the draft command needs to record each batch's membership.
 
 ## 6. The first set
 
