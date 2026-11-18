@@ -69,6 +69,33 @@ thenwhat audit dismiss <lead>… --reason "…"   # it is not
 
 A review decision an assistant makes is recorded with `--as-assistant`.
 
+### Batches drafted from registry records
+
+For `active-phase-2-3-or-completed-2026`, the grouping audit in
+`registry-drafted-claims` must support at least 45 of 50 groups before drafting.
+Keep each batch's preview and receipt on the external drive.
+
+```sh
+thenwhat draft-from-registry active-phase-2-3-or-completed-2026 --batch phase23-001 --limit 200
+thenwhat draft-from-registry active-phase-2-3-or-completed-2026 --batch phase23-001 --limit 200 --apply-plan <preview-digest>
+thenwhat prepare --pending
+thenwhat audit sample --batch phase23-001 --all
+```
+
+Run the apply command with the same scope and MeSH options as the preview. The digest binds
+the selected actions and registry record versions. A changed plan needs a new preview.
+For a verified existing-claim link, supply the trial, group, claim and evidence hashes from
+the preview in `--verified-links`, with the reviewer and their reason. Preparation scores
+the nominated trials through the existing match step. Reapplying the same batch returns its
+receipt.
+
+Judge the first batch in full. Record each finding with `thenwhat audit judge`. Use
+`--as-assistant` for an assistant's finding, and draw an operator check with
+`thenwhat audit spot-check --batch phase23-001 --size <count>` where applicable.
+After the judgments, `thenwhat audit clear --batch phase23-001` releases eligible claims
+for the export. Record the exported and searchable claim counts before starting the next batch.
+The daily run starts none of these drafting, release or publication steps.
+
 ### 4. Defects
 
 Every wrong thing found, in the audit or anywhere else, is one row on *Edge cases*: the address, the step that went wrong, a category from *Defect categories*, what happened and what should have. A defect that was archived still gets its row: the archive removes the claim, the row keeps the lesson.

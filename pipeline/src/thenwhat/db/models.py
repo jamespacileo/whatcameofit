@@ -120,6 +120,7 @@ class AuditBatch(Base):
 
     name: Mapped[str] = mapped_column(Text, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+    draft_record: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
 
 
 class Claim(Reviewed, Base):

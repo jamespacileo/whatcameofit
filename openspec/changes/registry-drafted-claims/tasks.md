@@ -58,7 +58,7 @@ The NVMe development set holds 120 cases from 127 trials, with earlier audit and
 ## 3. Drafting and preparation
 
 - [x] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added
-- [ ] 3.2 Add `thenwhat draft-from-registry` for a named set, with `--limit`; verify tests that a group an existing claim holds drafts nothing and hands its trials on as candidates, that a second run drafts nothing, and one success and one refusal of the command
+- [x] 3.2 Add `thenwhat draft-from-registry` for a named set, with `--limit`; verify tests that a group an existing claim holds drafts nothing and hands its trials on as candidates, that a second run drafts nothing, and one success and one refusal of the command
 - [x] 3.3 Have `thenwhat prepare --pending` take a registry draft: its drafting trials as candidates scored for its indication, approval only when one of them is approved, otherwise pending and listed; verify tests of both outcomes and that no trial is approved for having led to the draft
 - [x] 3.4 Hold a registry draft that preparation approves awaiting audit; verify a test that no export publishes it before release and that the export says how many it left out
 - [x] 3.5 Verify with a test that a read's same-claim decision attaches an article to a published registry-drafted claim, sets its first reported date, and does not hold it
@@ -66,7 +66,9 @@ The NVMe development set holds 120 cases from 127 trials, with earlier audit and
 
 Synthetic preparation exercised both match outcomes on the Mac. It fetched the drafting trial by identifier when name search missed it and sent it through ordinary indication scoring. A different approved trial alone left the claim pending. An approved drafting match held the claim, and export counted and excluded it. A later first article joined a published registry claim without adding a new audit hold.
 
-A local fixture verified exact-ID handoff to an existing claim without a second draft. Candidates go through normal trial scoring. PostgreSQL and the D1 store preserve queued IDs across retries. The batch command still needs to consume the handoff.
+A local fixture verified exact-ID handoff to an existing claim without a second draft. Candidates go through normal trial scoring. PostgreSQL and the D1 store preserve queued IDs across retries. The batch command applies a reviewed plan digest and records its outcome under one batch name. A verified handoff cites the exact trial and claim snapshots. Tests applied a synthetic draft and a handoff to an existing reported claim, refused changed evidence, and replayed the batch without writing again.
+
+The full command preview ran read-only against 27,731 cached trials and 971 claims from the November 17 export on the NVMe. It took 13.5 seconds and listed 200 provisional drafts covering 165 distinct trial IDs. It found 62 groups with existing-claim candidates and held 14,520 groups for topic review. This preview used no new registry or model requests. The grouping threshold still applies before actual drafting.
 
 ## 4. The site
 
