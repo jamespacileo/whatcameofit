@@ -105,6 +105,8 @@ For cases that need review, `thenwhat backfill registry-claim-plan --reviewed-sc
 
 `thenwhat backfill registry-scope-proposals <trial-id>…` assembles numbered fields from each eligible stored registry record. Its offline output is suitable for manual review. With `--run` and an explicit `REGISTRY_SCOPE_MONTHLY_BUDGET_USD`, the existing structured-output client can select candidate pairs. It copies from intervention, condition, title and arm fields, and can cite a planned outcome by its name. Each selection is checked against the cited field. The exact model cache and usage ledger apply. The configured general model ceiling remains in force. An evidence-backed candidate still needs a scope judgment before it can become a review receipt.
 
+Arm-specific packets preserve the registry's wording for inclusion criteria, exclusion criteria, unassigned eligibility text and the study population. Explicit study-wide inclusion criteria and the registered study population can support a positive enrolment citation. Exclusions and eligibility whose cohort or purpose is unclear are available for review.
+
 ### 4. An ordinary-word name drafts nothing, and the fault is fixed first
 
 A third of stored names would each draft a claim for "first" or "home". The rule that works out a search name is corrected before any drafting (the same defect `headline-funnel` task 2.12 records), and the drafting step refuses such a name itself and lists it, so a real treatment with a common name ("aspirin", "insulin") is seen and can be entered by the operator.

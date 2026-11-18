@@ -92,6 +92,11 @@ A scope review packet SHALL contain the stored trial's titles, condition labels,
 - **WHEN** the grounding check compares the selected phrase with the packet
 - **THEN** the answer is rejected
 
+#### Scenario: A term appears in an exclusion or an unassigned cohort
+- **WHEN** an arm-scoped candidate cites a protocol condition listed only in an exclusion, an unassigned cohort, or eligibility with unclear headings
+- **THEN** the packet retains the exact wording for review and rejects the citation as evidence of the enrolled population
+- **AND** an explicit study-wide inclusion criterion or registered study population can support the enrolled population
+
 #### Scenario: A reviewed pair cites a detailed cached protocol
 - **WHEN** a scope receipt cites an arm description or eligibility field from a detailed protocol
 - **THEN** the planner verifies the receipt against that protocol and checks that its identifier, update date and shared scope fields agree with the stored record

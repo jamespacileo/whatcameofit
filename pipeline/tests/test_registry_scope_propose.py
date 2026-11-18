@@ -217,3 +217,91 @@ def test_arm_proposals_keep_matching_placebos_and_formulations_in_their_correct_
         ARM_PURPOSE,
         OMISSION_PURPOSE,
     ]
+
+
+def test_arm_scope_uses_only_positive_eligibility_and_keeps_other_sections_for_review():
+    study = record()
+    criteria = (
+        "Registry overview of entry criteria.\n\n"
+        "## Key Inclusion Criteria:\n"
+        "Adults with active Multiple Sclerosis.\n\n"
+        "Cohort B: Refractory Multiple Sclerosis.\n\n"
+        "* Additional inclusion criteria for the dose escalation cohort:\n"
+        "Presence of an elevated biomarker.\n\n"
+        "**Exclusion Criteria:**\n"
+        "History of glaucoma.\n"
+    )
+    study["protocolSection"]["eligibilityModule"] = {
+        "eligibilityCriteria": criteria,
+        "studyPopulation": "Participants with prior topical therapy.",
+    }
+    packet = arm_packet(study)
+    assert (
+        "".join(field.text for field in packet.evidence if field.kind.startswith("eligibility"))
+        == criteria
+    )
+
+    def citation(kind: str, phrase: str) -> dict:
+        field = next(
+            index
+            for index, field in enumerate(packet.evidence)
+            if field.kind == kind and phrase in field.text
+        )
+        return {"source": field, "text": phrase}
+
+    pair = {
+        "arm": 0,
+        "components": [citation("intervention", "Example XR")],
+        "indication": citation("eligibility_inclusion", "active Multiple Sclerosis"),
+        "population": citation("study_population", "Participants with prior topical therapy"),
+        "setting": None,
+        "formulation": None,
+        "sequence": None,
+        "comparator": [],
+        "background": [],
+    }
+    model_answer = {"pairs": [pair], "remaining_uncertain": False}
+    grounded = ground_arm_answer(packet, ArmScopeAnswer.model_validate(model_answer))
+    assert grounded.pairs[0].indication_quotes == (
+        "active Multiple Sclerosis",
+        "Participants with prior topical therapy",
+    )
+
+    for field in (
+        citation("eligibility", "Refractory Multiple Sclerosis"),
+        citation("eligibility", "Presence of an elevated biomarker"),
+        citation("eligibility_exclusion", "History of glaucoma"),
+    ):
+        for slot in ("indication", "population", "setting", "background"):
+            rejected = {**pair, slot: [field] if slot == "background" else field}
+            with pytest.raises(ValueError, match=f"cannot support {slot}"):
+                ground_arm_answer(
+                    packet, ArmScopeAnswer.model_validate({**model_answer, "pairs": [rejected]})
+                )
+
+
+def test_unlabelled_eligibility_stays_context_until_an_explicit_section():
+    study = record()
+    study["protocolSection"]["eligibilityModule"] = {
+        "eligibilityCriteria": (
+            "History and examination.\n"
+            "Inclusion: Adults with active disease.\n"
+            "Participants meeting any exclusion criteria will be excluded from this study.\n"
+            "Concomitant glaucoma.\n"
+        ),
+    }
+
+    sections = [
+        (field.kind, field.text)
+        for field in arm_packet(study).evidence
+        if field.kind.startswith("eligibility")
+    ]
+    assert sections == [
+        ("eligibility", "History and examination.\n"),
+        ("eligibility_inclusion", "Inclusion: Adults with active disease.\n"),
+        (
+            "eligibility_exclusion",
+            "Participants meeting any exclusion criteria will be excluded from this study.\n"
+            "Concomitant glaucoma.\n",
+        ),
+    ]
