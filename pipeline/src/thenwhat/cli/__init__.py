@@ -23,6 +23,7 @@ from thenwhat.cli.readings import readings_command
 from thenwhat.cli.registry_draft import draft_from_registry_command
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
+from thenwhat.cli.runs import runs_app  # noqa: F401  registers `backfill runs`
 from thenwhat.cli.seed import seed_app
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.cli.slices import coverage_command

@@ -191,3 +191,15 @@ def test_month_form_with_merge_fills_a_past_month(fetch: Script) -> None:
 def test_a_window_outside_one_to_28_days_is_refused(fetch: Script) -> None:
     with pytest.raises(SystemExit, match="1 to 28"):
         fetch.module.main(["hackernews", "--since-last-fetch", "40"])
+
+
+def test_a_data_folder_that_is_not_there_is_refused(
+    fetch: Script, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(fetch.module, "ROOT", None)
+    unmounted = tmp_path / "Volumes" / "external" / "data"
+    monkeypatch.setenv("BACKFILL_DATA_DIR", str(unmounted))
+
+    with pytest.raises(SystemExit, match="not mounted"):
+        fetch.module.main(["hackernews", "--since-days", "3"])
+    assert not unmounted.exists()

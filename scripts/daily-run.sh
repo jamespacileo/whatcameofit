@@ -23,9 +23,11 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 env_file="${THENWHAT_ENV_FILE:-$root/.env}"
 state="${DAILY_RUN_STATE_DIR:-$HOME/Library/Application Support/thenwhat/daily-run}"
 logs="${DAILY_RUN_LOG_DIR:-$HOME/Library/Logs/thenwhat/daily-run}"
-# Where scripts/fetch_link_files.py writes and `load-links` reads. On the operator's
-# machine this is a link to a folder on an external drive.
-link_files="$root/data/link-files"
+# Where scripts/fetch_link_files.py writes and `load-links` reads: BACKFILL_DATA_DIR,
+# set below once `setting` is defined. Until it is set in .env, the checkout's
+# data/link-files, which on the operator's machine links to a folder on an external
+# drive. That fallback goes when the session-based link steps do (change
+# file-based-backfill, task 8.3).
 template="$root/scripts/$label.plist"
 paused="$state/paused"
 lock="$state/lock"
@@ -42,6 +44,9 @@ setting() {
   fi
   printf '%s' "${value:-${2-}}"
 }
+
+link_files=$(setting BACKFILL_DATA_DIR "$root/data/link-files")
+export BACKFILL_DATA_DIR="$link_files"
 
 whole_number() {
   case "$2" in

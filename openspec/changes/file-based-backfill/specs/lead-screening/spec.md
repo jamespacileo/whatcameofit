@@ -44,7 +44,7 @@ A lead whose address is the address of a source article in the reference file SH
 - **THEN** its outcome is already read elsewhere
 
 ### Requirement: Screening report
-`thenwhat backfill run report` SHALL report, by platform and community, how many shares were loaded, how many leads are in scope by outlet kind, how many are already tracked, how many are already read elsewhere, how many are linked to a claim and how many to a registry trial. It SHALL list the unlisted domains with the most link posts, and those with the most posts naming a topic word, from the run's tally.
+`thenwhat backfill runs report` SHALL report, by platform and community, how many shares were loaded, how many leads are in scope by outlet kind, how many are already tracked, how many are already read elsewhere, how many are linked to a claim and how many to a registry trial. It SHALL list the unlisted domains with the most link posts, and those with the most posts naming a topic word, from the run's tally.
 
 #### Scenario: After a load and a screening run
 - **WHEN** 50,000 leads are loaded and screened

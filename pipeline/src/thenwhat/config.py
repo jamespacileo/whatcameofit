@@ -270,6 +270,33 @@ class Settings(CallSettings):
         )
 
 
+class BackfillRunSettings(BaseSettings):
+    """What a backfill run from files reads (openspec backfill-run-files). Kept apart
+    from `Settings` because a run needs no database: none of these names one."""
+
+    model_config = SettingsConfigDict(extra="ignore", env_ignore_empty=True)
+
+    # Where the bulk files are fetched to and where run folders are made. No default:
+    # they are large and belong on a volume chosen for them, and a run refuses while
+    # either folder is missing rather than fall back to another disk.
+    backfill_data_dir: Path | None = None
+    backfill_runs_dir: Path | None = None
+    # The share of a bulk file's rows that may fail to read before its load stops, from
+    # 0 to 1. No default: the load refuses while it is empty.
+    load_error_budget: float | None = Field(default=None, ge=0, le=1)
+    # This device's name, in a run's identifier and record. The host's name when empty.
+    work_device_name: str | None = None
+    # The same setting as in `Settings`: the Reddit communities a load takes.
+    link_lead_subreddits: str = ""
+
+    def chosen_subreddits(self) -> frozenset[str]:
+        return frozenset(
+            name.strip().removeprefix("r/")
+            for name in self.link_lead_subreddits.split(",")
+            if name.strip()
+        )
+
+
 def load_settings() -> Settings:
     return Settings()
 
