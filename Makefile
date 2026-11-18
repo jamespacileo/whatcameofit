@@ -68,6 +68,7 @@ scripts-test:
 	sh -n scripts/worktree-setup.sh
 	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
 	sh scripts/tests/daily-run.test.sh
+	node --test --test-reporter=dot scripts/tests/ci-timing.test.mjs
 
 # The store's ingest service (store/ingest), driven over HTTP on D1's local engine: no
 # Cloudflare account, no network, nothing deployed. The proof's scenarios, each token's
