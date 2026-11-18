@@ -1,9 +1,11 @@
 """The backfill commands: load registry trials, see what is due, and run a step."""
 
+import json
 import sqlite3
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -39,6 +41,7 @@ from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import link_read_step, make_triage, registered_steps
+from thenwhat.backfill.registry_claim_plan import plan_registry_claims
 from thenwhat.backfill.registry_load import (
     TrialList,
     UnknownTrialSet,
@@ -58,6 +61,7 @@ from thenwhat.backfill.trial_references import count_references
 from thenwhat.backfill.trial_sets import (
     NAMES,
     NO_WIDER_RECORD,
+    REGISTRY_CLAIMS_2026,
     ROLLING,
     count_sets,
     require_wider_record,
@@ -581,7 +585,8 @@ def load_trials_command(
         typer.Option(
             help="A named set of trials: phase-3 (the default) or active-phase-2-3, "
             "interventional trials of a drug or biological, the second those under way "
-            "now; or interventional, every interventional study."
+            "now; interventional, every interventional study; or "
+            f"{REGISTRY_CLAIMS_2026}, the registry-claim cohort."
         ),
     ] = None,
     changes_only: Annotated[
@@ -770,6 +775,7 @@ SET_WORDS = {
     "completed-with-results-since-2025": (
         "completed on or after 2025-01-01 (actual date), results posted"
     ),
+    REGISTRY_CLAIMS_2026: "phase 2 or 3, under way or actually completed in 2026",
     ROLLING: (
         "under way now in any phase, or completed, terminated, withdrawn or suspended "
         "with a completion date this year"
@@ -828,9 +834,19 @@ def trial_sets_command() -> None:
     if report.without_wider_record:
         out.print(
             f"{report.without_wider_record:,} of {report.stored:,} stored trials were loaded "
-            "before these fields were asked for and are in neither set until loaded again.",
+            "before these fields were asked for and may need a refresh.",
             markup=False,
         )
+
+
+@backfill_app.command("registry-claim-plan")
+def registry_claim_plan_command() -> None:
+    """Print the 2026 registry-claim plan as JSON. Reads stored records only."""
+    settings_or_exit()
+    with refusals(), open_session() as session:
+        require_wider_record(session)
+        plan = plan_registry_claims(session)
+    typer.echo(json.dumps({"set": REGISTRY_CLAIMS_2026, **asdict(plan)}, default=sorted))
 
 
 @backfill_app.command("trial-references")

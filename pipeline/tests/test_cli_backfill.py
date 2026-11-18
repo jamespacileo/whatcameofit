@@ -2,6 +2,7 @@
 test_work_ledger.py, test_source_allowances.py, test_registry_corpus.py and
 test_news_search.py."""
 
+import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
@@ -938,8 +939,8 @@ def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
 
     assert result.exit_code == 1
     assert (
-        "No set of trials is named 'successful'. Sets: active-phase-2-3, interventional, phase-3."
-        in result.output
+        "No set of trials is named 'successful'. Sets: active-phase-2-3, "
+        "active-phase-2-3-or-completed-2026, interventional, phase-3." in result.output
     )
     assert session.scalars(select(RegistryTrial)).all() == []
 
@@ -987,6 +988,29 @@ def test_trial_sets_is_refused_until_trials_have_the_wider_record(run, session: 
     add_trials(session, 2)
 
     result = run("trial-sets")
+
+    assert result.exit_code == 1
+    assert "No stored trial has the activity and results fields yet." in result.output
+
+
+def test_registry_claim_plan_reports_eligible_older_records_for_review(run, session: Session):
+    stored = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    stored.overall_status = "RECRUITING"
+    stored.last_update_posted = date(2026, 3, 1)
+    session.flush()
+
+    result = run("registry-claim-plan")
+
+    assert result.exit_code == 0, result.output
+    plan = json.loads(result.output)
+    assert plan["set"] == "active-phase-2-3-or-completed-2026"
+    assert plan["trial_count"] == 1
+    assert plan["groups"] == []
+    assert "missing_tested_arm" in plan["needs_review"][stored.external_id]["issues"]
+
+
+def test_registry_claim_plan_refuses_an_unloaded_corpus(run):
+    result = run("registry-claim-plan")
 
     assert result.exit_code == 1
     assert "No stored trial has the activity and results fields yet." in result.output

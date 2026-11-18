@@ -108,7 +108,11 @@ def test_a_bulk_load_keeps_the_registered_design_and_arm_roles(
 ):
     registry = Registry(fixture_json)
     protocol = registry.first["studies"][0]["protocolSection"]
-    design = {"allocation": "RANDOMIZED", "interventionModel": "PARALLEL"}
+    design = {
+        "allocation": "RANDOMIZED",
+        "interventionModel": "PARALLEL",
+        "primaryPurpose": "TREATMENT",
+    }
     arms = [{"label": "Example comparator", "type": "ACTIVE_COMPARATOR"}]
     protocol.setdefault("designModule", {})["designInfo"] = design
     protocol.setdefault("armsInterventionsModule", {})["armGroups"] = arms
@@ -116,9 +120,14 @@ def test_a_bulk_load_keeps_the_registered_design_and_arm_roles(
 
     load(session, fake_time, registry)
 
-    assert {"DesignAllocation", "DesignInterventionModel", "ArmGroupLabel", "ArmGroupType"} <= set(
-        registry.asked[0]["fields"].split(",")
-    )
+    assert {
+        "DesignAllocation",
+        "DesignInterventionModel",
+        "DesignPrimaryPurpose",
+        "StudyType",
+        "ArmGroupLabel",
+        "ArmGroupType",
+    } <= set(registry.asked[0]["fields"].split(","))
     kept = next(
         t.raw_payload["protocolSection"] for t in stored(session) if t.external_id == identifier
     )

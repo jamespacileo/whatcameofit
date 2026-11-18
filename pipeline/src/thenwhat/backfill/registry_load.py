@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.trial_names import indication_words, name_under_test
+from thenwhat.backfill.trial_sets import REGISTRY_CLAIMS_2026
 from thenwhat.db.models import RegistryLoad, RegistryTrial
 from thenwhat.sources.clinicaltrials import TrialPage
 from thenwhat.sources.people import sponsored_by_a_person, without_people
@@ -39,12 +40,20 @@ ACTIVE_PHASE_2_OR_3 = (
 # intervention. Observational studies and expanded access records are not trials and are
 # left out.
 INTERVENTIONAL = "AREA[StudyType]INTERVENTIONAL"
+# The completion date type is checked locally against the stored record.
+PHASE_2_3_REGISTRY_CLAIMS = (
+    f"{INTERVENTIONAL} AND (AREA[Phase]PHASE2 OR AREA[Phase]PHASE3) AND "
+    "(AREA[OverallStatus](RECRUITING OR ACTIVE_NOT_RECRUITING OR ENROLLING_BY_INVITATION "
+    "OR NOT_YET_RECRUITING) OR (AREA[OverallStatus]COMPLETED AND "
+    "AREA[CompletionDate]RANGE[2026-01-01,2026-12-31]))"
+)
 # The sets of trials a load can be asked for by name. A set is only which trials are
 # stored: it says nothing of how any of them turned out.
 TRIAL_SETS = {
     "phase-3": PHASE_3_DRUG_OR_BIOLOGICAL,
     "active-phase-2-3": ACTIVE_PHASE_2_OR_3,
     "interventional": INTERVENTIONAL,
+    REGISTRY_CLAIMS_2026: PHASE_2_3_REGISTRY_CLAIMS,
 }
 
 

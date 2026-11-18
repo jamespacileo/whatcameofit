@@ -302,7 +302,7 @@ def read_trial(study: dict[str, Any]) -> RegistryTrial:
             primary_outcomes_total=len(planned),
             why_stopped=_text(status, "whyStopped"),
             results=_results(study),
-            arms=_arms(protocol),
+            arms=trial_arms(study),
         ),
         results_papers=_results_papers(protocol),
     )
@@ -334,7 +334,9 @@ def reported_state(state: TrialState | None) -> TrialStateCode:
     return "not_started" if state is None else REPORTED_STATES[state]
 
 
-def _arms(protocol: dict[str, Any]) -> tuple[Arm, ...]:
+def trial_arms(study: dict[str, Any]) -> tuple[Arm, ...]:
+    """The registered arms and their intervention membership, without reading outcomes."""
+    protocol = _object(study, "protocolSection")
     arms: list[Arm] = []
     for arm in _objects(protocol, "armsInterventionsModule", "armGroups"):
         kind = _code(ARM_KINDS, arm.get("type")) or "other"

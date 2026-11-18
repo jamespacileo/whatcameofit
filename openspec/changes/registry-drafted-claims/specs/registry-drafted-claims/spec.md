@@ -7,25 +7,30 @@ Says how a claim is drafted from stored registry trials when no news report exis
 ## ADDED Requirements
 
 ### Requirement: Claims are drafted for one named set of trials at a time
-`thenwhat draft-from-registry` SHALL draft claims only for trials in a set the operator names, and only for trials that have a usable treatment name by the rule that works out a trial's search name. A set SHALL say which trials are in it and nothing of how any trial turned out, and its dates SHALL be part of its name. A trial with no usable name SHALL be counted and SHALL draft nothing.
+`thenwhat draft-from-registry` SHALL draft claims for trials in the named set when registry evidence establishes the intervention or full regimen and indication. A set SHALL name its dates and SHALL say nothing of how any trial turned out.
 
-#### Scenario: A trial of a device with a description for a name
-- **WHEN** a trial in the named set lists its intervention as a description that is not a name
-- **THEN** no claim is drafted for it and it is counted as having no name
+#### Scenario: A trial with a descriptive intervention label
+- **WHEN** a trial in the named set lists its intervention as a description
+- **THEN** use the label when it identifies what was tested, and report otherwise unresolved scope for review
 
 #### Scenario: A set the command does not know
 - **WHEN** the operator names a set the command does not have
 - **THEN** nothing is drafted and the command lists its sets
 
+#### Scenario: The 2026 rollout set
+- **WHEN** the operator selects `active-phase-2-3-or-completed-2026`
+- **THEN** the set includes active Phase 2 or 3 interventional trials and those actually completed in 2026, including combined phases and all sponsor classes and results states
+- **AND** trials with unresolved scope remain in the coverage count until their scope is verified
+
 ### Requirement: A name made only of ordinary words drafts nothing
-A treatment name SHALL NOT draft a claim when it is made only of ordinary words, by the project's word list and the inflected forms of its words. Such a trial SHALL be counted with its name, so the operator can see a real treatment that was left out.
+A legacy search name made only of ordinary words, by the project's word list and the inflected forms of its words, SHALL NOT establish the intervention's identity. The planner SHALL record such a trial for review when it cannot identify the intervention from the registered arms and intervention description.
 
 #### Scenario: A stored name that is an ordinary word
 - **WHEN** a trial's stored name is "Home"
 - **THEN** no claim is drafted for it and the report lists the name
 
 ### Requirement: Trials are grouped into one treatment for one condition by rule
-Trials SHALL be grouped by fixed rules, with no model, on the treatment name and the trial's indication as the rule that works out a trial's search indication gives it. Names SHALL be compared ignoring letter case and spacing, and a name equal to another name of the same registry intervention SHALL count as the same. Each group SHALL draft at most one claim. A trial that lists several conditions SHALL be grouped once for each indication the rule gives it.
+Trials SHALL be grouped by fixed rules on the verified intervention or complete regimen and the full indication. The rule SHALL preserve clinically distinct formulations and combination components. Names SHALL be compared ignoring letter case and spacing, and documented aliases SHALL be checked for equivalence. Each group SHALL draft at most one claim.
 
 #### Scenario: Two trials of one treatment for one condition
 - **WHEN** two trials in the set test the same named treatment and the rule gives both the same indication
@@ -35,8 +40,16 @@ Trials SHALL be grouped by fixed rules, with no model, on the treatment name and
 - **WHEN** two trials test the same named treatment and the rule gives them different indications
 - **THEN** two claims are drafted
 
+#### Scenario: A trial lists several conditions
+- **WHEN** a trial lists several conditions
+- **THEN** evidence must establish each regimen and indication pairing before it is grouped
+
+#### Scenario: A crossover arm lists multiple interventions
+- **WHEN** membership describes a sequence of different treatments
+- **THEN** verify which regimen is tested before grouping
+
 ### Requirement: A treatment and condition a claim already holds drafts no second claim
-Before a group drafts a claim, it SHALL be compared with every claim that is not archived, by the rule that refuses a duplicate claim: the same indication, and an intervention equal by name or by any synonym. When such a claim exists, no claim SHALL be drafted, and the group's trials SHALL be handed to that claim as candidates for preparation to score.
+Before a group drafts a claim, it SHALL be compared with every claim that is not archived for which the complete regimen or an alias and the indication match. When a match is verified, no claim SHALL be drafted, and the group's trials SHALL be handed to that claim as candidates for preparation to score.
 
 #### Scenario: A reported claim for the same treatment and condition
 - **WHEN** a group's treatment and indication equal those of a published claim that a news article reported

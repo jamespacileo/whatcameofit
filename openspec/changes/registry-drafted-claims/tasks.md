@@ -14,10 +14,24 @@ Write steps run on the one writer only. Every judgement an assistant makes is re
 ## 2. The dry run, with nothing written
 
 - [ ] 2.1 Correct the rule that works out a search name so a name made only of ordinary words is not a name, with a regression test on a synthetic registry record, and record on the fault sheet the count of trials whose name changed; verify the count is recorded here
-- [ ] 2.2 Count, from stored records and with no request, how many trials of the first set carry the registry's condition terms, have no indication, and list more than one condition; record the table here
-- [ ] 2.3 Add the named set for industry-sponsored phase 2 and 3 trials that are under way, not yet started, or ended in 2026, with its dates in its name; verify tests that an unknown name is refused with the list
+- [x] 2.2 Count, from stored records and with no request, how many trials of the first set carry the registry's condition terms, have no indication, and list more than one condition; record the table here
+- [x] 2.3 Add `active-phase-2-3-or-completed-2026` for all eligible Phase 2 or 3 interventional trials across sponsors and results states; verify tests that an unknown name is refused with the list
 - [ ] 2.4 Group the set by rule and print the plan of `specs/registry-drafted-claims`, drafting nothing; verify tests for two trials of one pair, one treatment with two conditions, a synonym of an existing claim's intervention, a trial with no name, an ordinary-word name, and terms that point to two groups
 - [ ] 2.5 Draw fifty groups from the plan and judge whether each one's trials test one treatment for one condition; record the table here and show the operator, and stop if fewer than nine in ten are right
+
+| Nov 18 local snapshot, all 27,698 eligible trials | Count |
+| --- | ---: |
+| Registry condition vocabulary in the stored payload | 0 |
+| Stored arm membership | 0 |
+| No registered condition label | 0 |
+| No stored news search indication | 372 |
+| More than one registered condition label | 10,670 |
+
+The baseline audit found 15 correct groups out of 50. The read-only planner uses arm membership and full indications from stored records. The existing registry bulk loader can refresh those fields before the planner runs.
+
+The arm-aware replay proposed groups for 39 of the same 61 trials. It held 21 for condition assignment and one crossover trial for treatment sequence. Only 30 of the original 50 groups had proposals for every member. The audit gate is pending.
+
+The refreshed target set held 27,731 trials after 28 registry page requests in 26 seconds on the Mac. The planner proposed 19,451 groups covering 16,141 trial IDs. It held 11,590 for review, including 10,680 with multiple registered conditions. The verified live export linked 831 eligible trials. The production comparison found 73 proposed groups with exact name-and-indication claim candidates and 16 with registry alias candidates. These candidates await identity verification. Model spend was zero.
 
 ## 3. Drafting and preparation
 

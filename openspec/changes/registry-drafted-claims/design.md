@@ -25,6 +25,12 @@ Three figures were not given and are the operator's: the share of wrong claims a
 
 ### The first set
 
+The operator broadened rollout on 2026-11-18 to all active Phase 2 or 3 interventional trials and all Phase 2 or 3 interventional trials actually completed in 2026, across sponsors and results states. The named set is `active-phase-2-3-or-completed-2026`. Combined phases qualify when they include Phase 2 or 3. Trials with unresolved identities stay in the denominator.
+
+The 2026-11-18 coverage check found 25,898 active and 1,800 completed trials in the local snapshot. The live export linked 735 and 96 respectively.
+
+### Original pilot estimates
+
 Uncited trials that are under way, not yet started, or completed or terminated in 2026, with a stored search name.
 
 | | Industry, phase 2 and 3 | Other named |
@@ -52,7 +58,7 @@ The store held 2,041 claims, each with one intervention. About 20,000 of the 60,
 
 **Goals:**
 
-- Every named trial of a set is cited by a claim, or is listed with the reason it is not.
+- Every active Phase 2 or 3 interventional trial and every Phase 2 or 3 interventional trial actually completed in 2026 is cited by a production claim that is browsable and searchable.
 - A registry-drafted claim is as true as a reported one: its trials test its treatment for its condition, by the rules that already decide that.
 - No claim says more than its records. A claim with no report has no words but the site's fixed ones.
 - A reader can always tell a reported claim from one with no report, and can leave the latter out.
@@ -83,13 +89,13 @@ This reuses preparation whole, which also finds the other trials of the same tre
 
 *Instead of* making events straight from the stored record: the stored record is the bulk load's reduced one, and the claim path keeps the full payload and fetch time each event needs.
 
-### 3. Grouping uses the two rules that already exist, and is measured before it is trusted
+### 3. Grouping starts from registered arms and full indications
 
-The treatment name is the trial's search name; the condition is its search indication. Both are worked out by rule today for the news search. Using them means no new rule to keep in step, and means their faults become this change's faults: the ordinary-word names, the 129 trials with no indication, and the 2,295 that list several conditions.
+The 50-group dry run used existing news search names and indication keywords. The audit found 15 correct groups and documented the lost regimen components, flattened formulations and truncated indications. Five groups had an existing claim confirmed for all or part of their scope.
 
-So the first task after the decisions is a dry run that writes nothing: group the first set, draw fifty groups, and judge each for one thing, whether its trials test one treatment for one condition. The operator sees the table before a claim is drafted. A trial with several conditions is grouped once for each indication the rule gives it, which is right when it tests the treatment for each and is what the dry run checks.
+The read-only planner takes arm membership from the current registry projection and preserves formulation, complete combination components, full condition labels and the study purpose. A shared component cannot establish a regimen match. A record listing multiple conditions needs evidence that each proposed regimen actually addresses the corresponding indication. For older records with missing arm details and crossover or sequential designs with several assigned interventions, the plan records what needs review. Trials with missing short names can use a verified intervention description from the registry.
 
-*Instead of* the registry's condition vocabulary as the grouping key: it would group better, and the bulk load may not store it. Task 2.2 counts how many stored records carry it. If most do, a later change can regroup; claims are merged by the command that exists.
+An existing claim is a candidate when its complete identity or a documented alias matches. Verify the regimen, clinical use and indication before reusing it. The plan also surfaces current published links, including links whose scope still needs review.
 
 ### 4. An ordinary-word name drafts nothing, and the fault is fixed first
 

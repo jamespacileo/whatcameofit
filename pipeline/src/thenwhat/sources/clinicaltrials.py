@@ -42,7 +42,8 @@ LIST_FIELDS = (
     ",LeadSponsorName,CollaboratorName,CollaboratorClass,EnrollmentCount,EnrollmentType"
     ",ReferencePMID,ReferenceType,SeeAlsoLinkURL,SeeAlsoLinkLabel"
     ",PrimaryOutcomeMeasure,PrimaryOutcomeTimeFrame"
-    ",DesignAllocation,DesignInterventionModel,ArmGroupLabel,ArmGroupType"
+    ",StudyType,DesignPrimaryPurpose,DesignAllocation,DesignInterventionModel"
+    ",ArmGroupLabel,ArmGroupType"
     ",ArmGroupInterventionName,InterventionArmGroupLabel"
     # Only the type: it says when the lead sponsor is a sponsor-investigator, a person
     # whose name is then not kept. The investigator's name, title and affiliation in the
