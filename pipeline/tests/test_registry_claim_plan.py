@@ -191,6 +191,29 @@ def test_title_refines_nested_indication_but_does_not_choose_an_unrelated_condit
     assert trial_scope(single).indication_title_phrase == subtype
 
 
+def test_title_keeps_a_genotype_for_the_enrolled_population():
+    arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
+    narrow = study(["Multiple Myeloma"], arms)
+    alternatives = study(["Multiple Myeloma"], arms)
+    for given, title in (
+        (
+            narrow,
+            "Example XR in Participants With Multiple Myeloma Harboring the ABC2 Q21R Mutation",
+        ),
+        (
+            alternatives,
+            "Example XR in Participants With Multiple Myeloma With ABC2 Q21R Mutations"
+            " or Other Variants",
+        ),
+    ):
+        given["protocolSection"]["identificationModule"] = {"officialTitle": title}
+    plan = group_registry_trials([("narrow", narrow), ("alternatives", alternatives)])
+    assert {(group.indication, tuple(group.trials)) for group in plan.groups} == {
+        ("Multiple Myeloma Harboring the ABC2 Q21R Mutation", ("narrow",)),
+        ("Multiple Myeloma", ("alternatives",)),
+    }
+
+
 def test_title_with_disagreeing_subtypes_is_held_and_a_negation_does_not_narrow():
     arms: list[dict[str, Any]] = [
         {"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}
