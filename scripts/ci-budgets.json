@@ -1,0 +1,30 @@
+{
+  "$comment": "Limits and targets for CI, in seconds from the run's creation to its last job's completion (openspec/changes/fast-ci-and-deploy/specs/delivery-time/spec.md). A limit holds at p50 and p90 over the last `window` successful runs; a target is judged at p50. Change a number here only with the spec. Read by scripts/ci-timing.mjs.",
+  "window": 20,
+  "scenarios": [
+    {
+      "id": "deploying",
+      "title": "A push to main that deploys and checks the live site",
+      "limit": { "p50": 120, "p90": 180 },
+      "target": { "p50": 15 }
+    },
+    {
+      "id": "pull-request-checks",
+      "title": "Pull request checks",
+      "limit": { "p50": 120, "p90": 150 },
+      "target": { "p50": 15 }
+    },
+    {
+      "id": "preview-published",
+      "title": "A pull request preview is published (rebuilt)",
+      "limit": { "p50": 60, "p90": 90 },
+      "target": { "p50": 15 }
+    },
+    {
+      "id": "unchanged-inputs",
+      "title": "A run whose checked inputs are unchanged since a recorded pass",
+      "limit": { "p50": 30, "p90": 45 },
+      "target": { "p50": 10 }
+    }
+  ]
+}
