@@ -13,10 +13,10 @@ Read `design.md` first. Strategy numbers (S1 to S9) refer to its table. Every fi
 
 ## 1. Timing report and baseline
 
-- [ ] 1.1 Write `scripts/ci-budgets.json` with the four scenarios' limits and targets from `specs/delivery-time/spec.md`; verify each number matches the spec's four scenarios
-- [ ] 1.2 Write `scripts/ci-timing.mjs`: classify runs into scenarios, compute p50 and p90 over the last 20 successful runs, list the deciding path's steps and waiting largest first, exit non-zero on a missed limit; verify by running it against the live repository and comparing three runs' totals with `gh run view <id> --json jobs` by hand, each within 5 s
-- [ ] 1.3 Add `scripts/tests/ci-timing.test.mjs` with synthetic recorded API answers covering: a deploying run, a superseded push, parallel jobs, a gap between jobs, fewer than 20 runs, a missed p90, a missed target only; add it to `make scripts-test`; verify `make scripts-test` passes and makes no network call
-- [ ] 1.4 Split `make check` and the rehearsal into named workflow steps (one per `make` target) with no other change, so the jobs API shows each; verify the report's step list for a new run adds up to the run's wall-clock time within 5 s
+- [x] 1.1 Write `scripts/ci-budgets.json` with the four scenarios' limits and targets from `specs/delivery-time/spec.md`; verify each number matches the spec's four scenarios
+- [x] 1.2 Write `scripts/ci-timing.mjs`: classify runs into scenarios, compute p50 and p90 over the last 20 successful runs, list the deciding path's steps and waiting largest first, exit non-zero on a missed limit; verify by running it against the live repository and comparing three runs' totals with `gh run view <id> --json jobs` by hand, each within 5 s
+- [x] 1.3 Add `scripts/tests/ci-timing.test.mjs` with synthetic recorded API answers covering: a deploying run, a superseded push, parallel jobs, a gap between jobs, fewer than 20 runs, a missed p90, a missed target only; add it to `make scripts-test`; verify `make scripts-test` passes and makes no network call
+- [x] 1.4 Split `make check` and the rehearsal into named workflow steps (one per `make` target) with no other change, so the jobs API shows each; verify the report's step list for a new run adds up to the run's wall-clock time within 5 s
 - [ ] 1.5 Start the ledger with the baseline: the report's output for all four scenarios, and the proposal's table; verify the ledger's baseline p50 for pull request checks is within 30 s of the 268 s measured on 2026-11-16, or explain the difference in the ledger
 - [ ] 1.6 Measure the floor: a `workflow_dispatch` workflow with one job that only checks out, dispatched ten times at two different hours; verify the ledger holds its p50 and p90 and the time of each batch
 - [ ] 1.7 Document the report command, the budgets file and the ledger in `docs/deploy.md`; verify the command runs as written there

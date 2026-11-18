@@ -38,4 +38,4 @@
 
 ## Workflow follow-up
 
-- Archive this change after `openspec/changes/social-link-backfill` is archived, so `lead-reading` exists in `openspec/specs/` for the delta to join.
+- Archive this change after `openspec/changes/archive/2026-11-18-social-link-backfill` is archived, so `lead-reading` exists in `openspec/specs/` for the delta to join.

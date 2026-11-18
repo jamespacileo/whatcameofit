@@ -161,6 +161,8 @@ Estimate, not measured: up to ten times fewer input tokens.
 
 ### 8. The same story on many outlets is read once
 
+Moved to `headline-funnel` (capability `lead-story-groups`) on 2026-11-18, when the open changes were pruned: its story groups decide the same thing by a closer measure than an exact title. What follows is kept as the reasoning at the time.
+
 Leads whose titles match after tidying, within a few days of each other, on different outlets, are grouped. The one most likely to be readable is read. If it leads to a claim, the others are offered to the same-claim decision as further articles of that claim, which is one cheap decision each in place of a read each.
 
 Exact-title matches are 6,681 of 357,964. Near matches are not yet counted, and a near match can be a different story, which is why the same-claim decision still judges each.
@@ -176,7 +178,7 @@ Exact-title matches are 6,681 of 357,964. Near matches are not yet counted, and 
 3. The triage call's shape.
 4. Result keys, in the store's schema as it is designed.
 5. The classifier.
-6. Read ordering and grouping of the same story.
+6. Read ordering (grouping of the same story moved to `headline-funnel`).
 
 Steps 3 to 6 are each kept or dropped on what step 1 shows.
 

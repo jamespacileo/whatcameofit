@@ -22,7 +22,6 @@ Money is small at this size, about 2 cents a published claim. Time and requests 
 - **Cheaper steps decide first.** Before a model is asked about a lead, rules that cost nothing are applied, then a small classifier that runs on the device. The model is asked only about what they leave undecided. **BREAKING** for `lead-triage`: not every in-scope lead is scored by the decision step.
 - **The triage call is reshaped** so the fixed wording is not paid for with every headline. How much it saves is measured before it replaces the present call.
 - **Reads are ordered by what they are likely to yield**, and an outlet that keeps refusing the reader is left alone for a while.
-- **The same story on many outlets is read once**, and the others are offered as further articles of the claim it made.
 
 Not in this change:
 
@@ -42,7 +41,7 @@ Not in this change:
 
 ### Modified Capabilities
 
-None by delta. `lead-triage` (in `openspec/changes/social-link-backfill`, not yet synced) says every in-scope lead is scored; `lead-prefilter` narrows which leads reach it, and the delta to `lead-triage` is written when that spec is synced.
+None by delta. `lead-triage` (in `openspec/changes/archive/2026-11-18-social-link-backfill`, not yet synced) says every in-scope lead is scored; `lead-prefilter` narrows which leads reach it, and the delta to `lead-triage` is written when that spec is synced.
 
 ## Impact
 

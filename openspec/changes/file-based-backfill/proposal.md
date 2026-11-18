@@ -43,7 +43,7 @@ Not in this change:
 - `link-leads`: a load writes the leads on listed outlets to the run's files, tallies the rest, reconciles, quarantines and has a dry run.
 - `lead-screening`: the outlet rule is applied at the load, screening reads the reference file, and its report takes unlisted domains from the tally.
 
-`link-leads` and `lead-screening` are specified in `openspec/changes/social-link-backfill`, which is not yet synced to `openspec/specs`. This change's deltas are written against that text and apply after it is synced.
+`link-leads` and `lead-screening` are specified in `openspec/changes/archive/2026-11-18-social-link-backfill`, which is not yet synced to `openspec/specs`. This change's deltas are written against that text and apply after it is synced.
 
 ## Impact
 

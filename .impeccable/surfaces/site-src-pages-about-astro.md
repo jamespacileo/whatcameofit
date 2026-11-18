@@ -7,7 +7,7 @@ related_targets: ["site/src/lib/about.ts"]
 
 # About page
 
-Scope: `/about`. Mode: Persuade. Behaviour: `openspec/changes/landing-pages-and-guide`.
+Scope: `/about`. Mode: Persuade. Behaviour: `openspec/changes/archive/2026-11-18-landing-pages-and-guide`.
 
 Reader: someone arriving from an announcement, a journalist's link or a forum post, who has never seen the site and doubts it; also anyone asking who is behind it. Job: believe the follow-up gap is real, see that the site describes records by rule and judges nothing, and look up a headline. Proof: one published claim from the export, drawn at page scale, and one cited finding. Constraints: no mission statement, founder story or project timeline; no number the export does not hold; under two screens on a laptop.
 

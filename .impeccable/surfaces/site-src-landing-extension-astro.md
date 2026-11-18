@@ -7,7 +7,7 @@ related_targets: ["site/src/components/PopupDemo.astro"]
 
 # Extension page
 
-Scope: `/extension`, built only when a store address is configured. Mode: Persuade. Behaviour: `openspec/changes/landing-pages-and-guide`.
+Scope: `/extension`, built only when a store address is configured. Mode: Persuade. Behaviour: `openspec/changes/archive/2026-11-18-landing-pages-and-guide`.
 
 Reader: someone who followed the "website" link from a store listing and is deciding whether to trust a new extension, or a reader of the site who reads health news often. Job: install it knowing what it sends. Proof: the popup itself, drawn in the page from the export, never a screenshot. Constraints: no testimonial, rating, count of installs or press mark; nothing about data that the privacy page does not say; no drawn article body.
 
