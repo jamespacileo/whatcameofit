@@ -4,7 +4,7 @@ Write steps run on the one writer only. Every count below is taken read-only fir
 
 ## 1. Decisions and records
 
-- [ ] 1.1 Record the operator's answer to design decision 1 (a trial's narrower population groups under the registry's descriptor); stop and revise the `claims` delta if the answer is no; verify the answer and its date are written in `design.md`
+- [x] 1.1 Record the operator's answer to design decision 1 (a trial's narrower population groups under the registry's descriptor); stop and revise the `claims` delta if the answer is no; verify the answer and its date are written in `design.md`
 - [ ] 1.2 Write the ADR that a claim's identity is a shared intervention record and a shared condition record, naming the lines of `GLOSSARY.md`, `CLAUDE.md` and `registry-drafted-claims` it changes; verify the ADR number follows the last in `docs/adr/`
 - [ ] 1.3 Revise Intervention and Indication in `GLOSSARY.md` and add Condition and Tested intervention; verify each term is used exactly in the specs of this change
 

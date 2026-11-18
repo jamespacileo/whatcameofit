@@ -32,7 +32,7 @@ See `proposal.md` for why. What exists that this rests on, read from `main` on 2
 
 A claim's condition record is the descriptor its approved exact condition term names. A trial's conditions are the descriptors the registry lists in `conditionBrowseModule`, excluding ancestors the registry adds as browse leaves. The population a trial enrols within that descriptor (a marker, a stage, a line of treatment) is shown on the trial's row of the claim and is not part of the claim's identity.
 
-This is the reading the operator was asked to confirm on 2026-11-18: that a trial in HER2-positive metastatic breast cancer belongs to the claim for its drug and breast neoplasms. MeSH itself has narrower descriptors for some populations (for example triple negative breast neoplasms); when the registry files a trial under one, the trial's key is that narrower descriptor and it groups there.
+Decided by the operator on 2026-11-18: a trial in a narrower population, such as HER2-positive metastatic breast cancer, belongs to the claim for its drug and the registry's descriptor (breast neoplasms), with the narrower population shown on the trial's row. MeSH itself has narrower descriptors for some populations (for example triple negative breast neoplasms); when the registry files a trial under one, the trial's key is that narrower descriptor and it groups there.
 
 *Instead of* the eligibility criteria as part of the key: that is what the detailed review of `registry-drafted-claims` tested, and it made almost every trial its own claim. *Instead of* the search indication words: they drop the very words that tell populations apart and were never meant as a key.
 
