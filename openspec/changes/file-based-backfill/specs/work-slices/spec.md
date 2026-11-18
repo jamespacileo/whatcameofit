@@ -25,7 +25,7 @@ A work slice SHALL be one platform, one community and one calendar month. The tr
 - **THEN** the slice is listed as free
 
 ### Requirement: A run takes the slices its files cover
-`thenwhat backfill run start` SHALL take the slices its input files cover and SHALL warn, naming the device, for each one another device holds. It SHALL start all the same when the operator says so.
+`thenwhat backfill runs start` SHALL take the slices its input files cover and SHALL warn, naming the device, for each one another device holds. It SHALL start all the same when the operator says so.
 
 #### Scenario: A month another device is working
 - **WHEN** a run is started over a month another device holds
