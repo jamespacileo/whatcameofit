@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
+from rich.text import Text
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
@@ -114,7 +115,7 @@ def test_claim_add_without_first_article_creates_no_claim(run, session: Session)
     result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth")
 
     assert result.exit_code == 2
-    assert "--article-url" in result.output
+    assert "--article-url" in Text.from_ansi(result.output).plain
     assert claim_count(session) == 0
 
 
