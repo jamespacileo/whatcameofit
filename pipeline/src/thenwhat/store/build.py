@@ -360,6 +360,7 @@ def merge_into(
         migrations = (
             ("work_entry", "reason", "0008_work_entry_waits.sql"),
             ("claim", "drafting_trial_ids", "0009_registry_claim_origin.sql"),
+            ("claim", "registry_candidate_trial_ids", "0010_registry_candidate_trial_ids.sql"),
         )
         for table, column, filename in migrations:
             schema_check = "SELECT 1 FROM pragma_table_info(?) WHERE name = ?"

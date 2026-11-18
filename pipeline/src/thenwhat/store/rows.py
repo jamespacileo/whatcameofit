@@ -156,7 +156,11 @@ def _reviewed(b: Mapping[str, Any]) -> dict[str, Any]:
 def claim_row(record: Record) -> Row:
     """A claim's own fields. Its origin is not a Postgres column."""
     b = record.body
-    provenance = {key: b[key] for key in ("drafted_from", "drafting_trial_ids") if key in b}
+    provenance = {
+        key: b[key]
+        for key in ("drafted_from", "drafting_trial_ids", "registry_candidate_trial_ids")
+        if key in b
+    }
     return Row(
         Claim,
         {"slug": b["slug"]},

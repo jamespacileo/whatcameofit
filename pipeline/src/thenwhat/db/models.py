@@ -161,6 +161,10 @@ class Claim(Reviewed, Base):
     drafting_trial_ids: Mapped[list[str]] = mapped_column(
         ARRAY(Text), default=list, server_default="{}"
     )
+    # IDs nominated for verification by a registry plan. They carry no approval or drafting origin.
+    registry_candidate_trial_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
     vertical: Mapped[str] = mapped_column(Text)
     # One of the configured approaches, or none. Never part of status.
     approach: Mapped[str | None] = mapped_column(Text)

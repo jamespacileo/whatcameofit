@@ -210,7 +210,7 @@ def candidates_of(
     records: TrialRecords | None = None,
     wanted: Callable[[str], bool] = lambda _: True,
     searched: Searches | None = None,
-    drafting_trial_ids: Sequence[str] = (),
+    direct_trial_ids: Sequence[str] = (),
 ) -> tuple[list[SourceRecord], list[str]]:
     """Every trial that may be the intervention's: what the registry's search returns,
     then the stored trials that list the intervention and that the search did not
@@ -221,8 +221,8 @@ def candidates_of(
     A stored trial holds fewer fields than a search result, so one that is `wanted` is
     read from the registry in full through `records` before it is returned; one the
     registry no longer answers for is left out. With no `records` it is returned as
-    stored. The trials a registry claim was drafted from are fetched by ID when the
-    preceding searches miss them, then scored alongside the other candidates.
+    stored. Drafting trials and trials nominated by the registry plan are fetched by ID
+    when searches miss them, then scored alongside the other candidates.
     """
     codes = development_codes(session, entity)
     substance = substance_name(session, entity)
@@ -241,7 +241,7 @@ def candidates_of(
             found.append(full)
             returned.add(full.external_id)
     if records is not None:
-        for identifier in drafting_trial_ids:
+        for identifier in direct_trial_ids:
             if identifier not in returned and wanted(identifier):
                 full = records.fetch_trial(identifier)
                 if full is not None:
@@ -324,7 +324,9 @@ def resolve_claim(
                     (entity.id, ClinicalTrials.name, nct_id) not in seen
                 ),
                 searched=searched,
-                drafting_trial_ids=claim.drafting_trial_ids,
+                direct_trial_ids=sorted(
+                    set(claim.drafting_trial_ids + claim.registry_candidate_trial_ids)
+                ),
             )
             for record in candidates:
                 consider(entity, record)
@@ -489,7 +491,9 @@ def rescore_claim(
             wanted=lambda nct_id, known=(pending, rejected_by_rule): any(
                 (ClinicalTrials.name, nct_id) in matches for matches in known
             ),
-            drafting_trial_ids=claim.drafting_trial_ids,
+            direct_trial_ids=sorted(
+                set(claim.drafting_trial_ids + claim.registry_candidate_trial_ids)
+            ),
         )
         names = [
             entity.name,
@@ -605,7 +609,9 @@ def redo_rule_approvals(
             unsearchable,
             records=records,
             wanted=lambda nct_id, approved=approved: (ClinicalTrials.name, nct_id) in approved,
-            drafting_trial_ids=claim.drafting_trial_ids,
+            direct_trial_ids=sorted(
+                set(claim.drafting_trial_ids + claim.registry_candidate_trial_ids)
+            ),
         )
         for record in candidates:
             match = approved.pop((record.source_name, record.external_id), None)

@@ -186,6 +186,8 @@ def place_row(session: Session, row: Row) -> Base:
         session.add(found)
     else:
         for column, value in values.items():
+            if column == "registry_candidate_trial_ids" and isinstance(found, Claim):
+                value = sorted(set(found.registry_candidate_trial_ids).union(value))
             setattr(found, column, value)
         for column, value in keep.items():
             if getattr(found, column) is None:

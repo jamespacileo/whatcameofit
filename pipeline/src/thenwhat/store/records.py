@@ -131,6 +131,7 @@ def claim_record(claim: Claim, *, origin: str) -> Record:
             summary=claim.summary,
             drafted_from=_text(claim.drafted_from),
             drafting_trial_ids=claim.drafting_trial_ids or [],
+            registry_candidate_trial_ids=claim.registry_candidate_trial_ids or [],
             vertical=claim.vertical,
             approach=claim.approach,
             indication=claim.indication,

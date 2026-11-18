@@ -518,21 +518,10 @@ def add_claim(
     )
 
 
-def add_registry_claim(
-    session: Session,
-    *,
-    slug: str,
-    vertical: str,
-    intervention: str,
-    indication: str,
-    trial_ids: Sequence[str],
-) -> Claim:
-    """Store a pending registry claim using the recorded trials as its drafting evidence."""
+def _stored_trial_ids(session: Session, trial_ids: Sequence[str]) -> list[str]:
     identifiers = sorted({identifier.strip().upper() for identifier in trial_ids})
-    if not identifiers:
-        raise MissingField("A registry claim needs its drafting trial IDs.")
     if not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
-        raise InvalidField("Drafting trials must be ClinicalTrials.gov identifiers.")
+        raise InvalidField("Registry trials must have ClinicalTrials.gov identifiers.")
     stored = set(
         session.scalars(
             select(RegistryTrial.external_id).where(
@@ -543,7 +532,50 @@ def add_registry_claim(
     )
     if missing := set(identifiers) - stored:
         listed = ", ".join(sorted(missing))
-        raise InvalidField(f"Drafting trial records missing from the registry: {listed}.")
+        raise InvalidField(f"Trial records missing from the registry: {listed}.")
+    return identifiers
+
+
+def nominate_registry_trials(
+    session: Session, slug: str, trial_ids: Sequence[str]
+) -> tuple[str, ...]:
+    """Queue a verified group's exact registry IDs for ordinary matching on its claim."""
+    claim = session.scalar(
+        select(Claim)
+        .where(Claim.slug == slug)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if claim is None:
+        raise ClaimNotFound(f"No claim has the slug '{slug}'.")
+    if (
+        claim.review_state is ReviewState.REJECTED
+        or claim.archived_at is not None
+        or claim.merged_into_id is not None
+    ):
+        raise InvalidField(f"Claim '{slug}' cannot accept registry candidates.")
+    identifiers = _stored_trial_ids(session, trial_ids)
+    queued = set(claim.registry_candidate_trial_ids)
+    added = tuple(sorted(set(identifiers) - queued - set(claim.drafting_trial_ids)))
+    if added:
+        claim.registry_candidate_trial_ids = sorted(queued.union(added))
+        session.flush()
+    return added
+
+
+def add_registry_claim(
+    session: Session,
+    *,
+    slug: str,
+    vertical: str,
+    intervention: str,
+    indication: str,
+    trial_ids: Sequence[str],
+) -> Claim:
+    """Store a pending registry claim using the recorded trials as its drafting evidence."""
+    if not trial_ids:
+        raise MissingField("A registry claim needs its drafting trial IDs.")
+    identifiers = _stored_trial_ids(session, trial_ids)
     return _add_claim(
         session,
         slug=slug,

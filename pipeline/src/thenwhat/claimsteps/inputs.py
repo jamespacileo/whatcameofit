@@ -70,6 +70,17 @@ class Inputs:
         return {row.id: sorted(row.drafting_trial_ids) for row in rows}
 
     @cached_property
+    def registry_candidate_trial_ids(self) -> dict[int, list[str]]:
+        rows = self._session.execute(
+            select(Claim.id, Claim.registry_candidate_trial_ids).where(Claim.id.in_(self._ids))
+        )
+        return {
+            row.id: sorted(row.registry_candidate_trial_ids)
+            for row in rows
+            if row.registry_candidate_trial_ids
+        }
+
+    @cached_property
     def approved(self) -> dict[int, list[str]]:
         """Each claim's approved matches, as source and identifier."""
         rows = self._session.execute(

@@ -137,7 +137,12 @@ class ClaimTrials(ClaimStep):
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
         names = _names(inputs, claim_id)
         drafting = inputs.drafting_trial_ids.get(claim_id)
-        return {**names, "drafting_trial_ids": drafting} if drafting else names
+        nominated = inputs.registry_candidate_trial_ids.get(claim_id)
+        if drafting:
+            names = {**names, "drafting_trial_ids": drafting}
+        if nominated:
+            names = {**names, "registry_candidate_trial_ids": nominated}
+        return names
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
