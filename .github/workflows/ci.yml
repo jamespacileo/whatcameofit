@@ -94,16 +94,21 @@ jobs:
       fail-fast: false
       matrix:
         suite:
-          - { name: Pipeline tests 1, target: check-pipeline-fast, python: true, python_shard: '1/2' }
-          - { name: Pipeline tests 2, target: test-fast, python: true, python_shard: '2/2' }
-          - { name: Pipeline round trip, target: test-slow, python: true, lockfile: site/pnpm-lock.yaml }
-          - { name: Store tests, target: check-store, lockfile: store/ingest/pnpm-lock.yaml }
-          - { name: Site build tests 1, target: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '1/3' }
-          - { name: Site build tests 2 and browser search, target: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '2/3', browser_search: true }
-          - { name: Site build tests 3, target: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '3/3' }
-          - { name: 'Site, extension and shell tests', target: check-release-inputs, lockfile: site/pnpm-lock.yaml }
+          - { name: Pipeline tests 1, targets: 'lint types test-fast', python: true, python_shard: '1/2' }
+          - { name: Pipeline tests 2, targets: test-fast, python: true, python_shard: '2/2' }
+          - { name: Pipeline round trip, targets: test-slow, python: true, lockfile: site/pnpm-lock.yaml }
+          - { name: Store tests, targets: check-store, lockfile: store/ingest/pnpm-lock.yaml }
+          - { name: Site build tests 1, targets: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '1/3' }
+          - { name: Site build tests 2 and browser search, targets: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '2/3', browser_search: true }
+          - { name: Site build tests 3, targets: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '3/3' }
+          - { name: 'Site, extension and shell tests', targets: 'site-test site-build check-extension scripts-test', lockfile: site/pnpm-lock.yaml }
     env:
       UV_LOCKED: "1"
+      SITE_TEST_SHARD: ${{ matrix.suite.shard }}
+      THENWHAT_PYTEST_SHARD: ${{ matrix.suite.python_shard }}
+      STORE_TEST_CONCURRENCY: "3"
+      # Padded so that one target name never matches inside another.
+      TARGETS: ' ${{ matrix.suite.targets }} '
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -125,20 +130,45 @@ jobs:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: ${{ matrix.suite.lockfile }}
-      - name: Run suite
-        env:
-          TARGET: ${{ matrix.suite.target }}
-          SITE_TEST_SHARD: ${{ matrix.suite.shard }}
-          THENWHAT_PYTEST_SHARD: ${{ matrix.suite.python_shard }}
-          STORE_TEST_CONCURRENCY: "3"
-        run: make "$TARGET"
+      # One step per make target, so GitHub's records time each one
+      # (scripts/ci-timing.mjs). A suite runs its targets in this order.
+      - name: make lint
+        if: contains(env.TARGETS, ' lint ')
+        run: make lint
+      - name: make types
+        if: contains(env.TARGETS, ' types ')
+        run: make types
+      - name: make test-fast
+        if: contains(env.TARGETS, ' test-fast ')
+        run: make test-fast
+      - name: make test-slow
+        if: contains(env.TARGETS, ' test-slow ')
+        run: make test-slow
+      - name: make check-store
+        if: contains(env.TARGETS, ' check-store ')
+        run: make check-store
+      - name: make site-build-test
+        if: contains(env.TARGETS, ' site-build-test ')
+        run: make site-build-test
+      - name: make site-test
+        if: contains(env.TARGETS, ' site-test ')
+        run: make site-test
+      - name: make site-build
+        if: contains(env.TARGETS, ' site-build ')
+        run: make site-build
+      - name: make check-extension
+        if: contains(env.TARGETS, ' check-extension ')
+        run: make check-extension
+      - name: make scripts-test
+        if: contains(env.TARGETS, ' scripts-test ')
+        run: make scripts-test
       - name: Run site browser tests in Chromium
         if: matrix.suite.browser_search == true
         run: |
           pnpm --dir site exec playwright install --with-deps --only-shell chromium
           make site-search-test
       - name: Save production extension package
-        if: matrix.suite.target == 'check-release-inputs'
+        if: contains(env.TARGETS, ' check-extension ')
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: whatcameofit-extension
