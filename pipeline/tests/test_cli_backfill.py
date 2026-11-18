@@ -2,11 +2,13 @@
 test_work_ledger.py, test_source_allowances.py, test_registry_corpus.py and
 test_news_search.py."""
 
+import json
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
@@ -44,6 +46,7 @@ from thenwhat.measure.events import RUN_ENDED, RUN_STARTED
 from thenwhat.measure.files import days_held, read_day, read_events
 from thenwhat.sources.clinicaltrials import ClinicalTrials
 from thenwhat.sources.pubmed import Paper
+from thenwhat.store.form import payload_of
 from thenwhat.work.allowance import Allowances
 
 
@@ -938,8 +941,8 @@ def test_load_trials_refuses_a_set_it_does_not_know(run, session: Session):
 
     assert result.exit_code == 1
     assert (
-        "No set of trials is named 'successful'. Sets: active-phase-2-3, interventional, phase-3."
-        in result.output
+        "No set of trials is named 'successful'. Sets: active-phase-2-3, "
+        "active-phase-2-3-or-completed-2026, interventional, phase-3." in result.output
     )
     assert session.scalars(select(RegistryTrial)).all() == []
 
@@ -990,6 +993,255 @@ def test_trial_sets_is_refused_until_trials_have_the_wider_record(run, session: 
 
     assert result.exit_code == 1
     assert "No stored trial has the activity and results fields yet." in result.output
+
+
+def test_registry_claim_plan_reports_eligible_older_records_for_review(run, session: Session):
+    stored = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    stored.overall_status = "RECRUITING"
+    stored.last_update_posted = date(2026, 3, 1)
+    session.flush()
+
+    result = run("registry-claim-plan")
+
+    assert result.exit_code == 0, result.output
+    plan = json.loads(result.output)
+    assert plan["set"] == "active-phase-2-3-or-completed-2026"
+    assert plan["trial_count"] == 1
+    assert plan["groups"] == []
+    assert "missing_tested_arm" in plan["needs_review"][stored.external_id]["issues"]
+
+
+def test_registry_claim_plan_refuses_an_unloaded_corpus(run):
+    result = run("registry-claim-plan")
+
+    assert result.exit_code == 1
+    assert "No stored trial has the activity and results fields yet." in result.output
+
+
+def test_registry_scope_proposals_defaults_to_an_offline_packet(run, session: Session):
+    trial = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    trial.external_id = "NCT00000001"
+    trial.overall_status = "RECRUITING"
+    trial.raw_payload = {
+        "protocolSection": {
+            "identificationModule": {
+                "nctId": trial.external_id,
+                "briefTitle": "Example XR for eye irritation",
+            }
+        }
+    }
+    session.flush()
+
+    result = run("registry-scope-proposals", trial.external_id, trial.external_id.lower())
+
+    assert result.exit_code == 0, result.output
+    report = json.loads(result.output)
+    (packet,) = report["packets"]
+    assert packet["trial_id"] == trial.external_id
+    assert packet["evidence"] == [{"kind": "title", "text": "Example XR for eye irritation"}]
+    assert report["proposals"] == []
+
+
+def test_registry_scope_proposals_refuses_live_mode_without_an_explicit_cap(run, monkeypatch):
+    monkeypatch.delenv("REGISTRY_SCOPE_MONTHLY_BUDGET_USD", raising=False)
+
+    result = run("registry-scope-proposals", "NCT00000001", "--run")
+
+    assert result.exit_code == 1
+    assert "Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD" in result.output
+
+
+def test_registry_scope_evidence_resumes_pages_and_rechecks_cached_versions(
+    run, session: Session, monkeypatch, fake_time, tmp_path: Path
+):
+    trials = add_trials(session, 52, registry="clinicaltrials.gov")
+    detailed = {}
+    for index, trial in enumerate(trials, 1):
+        trial.external_id = f"NCT{index:08d}"
+        trial.overall_status = "RECRUITING"
+        trial.last_update_posted = date(2026, 3, 1)
+        protocol = {
+            "identificationModule": {
+                "nctId": trial.external_id,
+                "briefTitle": "Example XR for eye irritation",
+            },
+            "statusModule": {"lastUpdatePostDateStruct": {"date": "2026-03-01"}},
+        }
+        trial.raw_payload = {"protocolSection": protocol}
+        detailed[trial.external_id] = {
+            "protocolSection": {
+                **protocol,
+                "eligibilityModule": {
+                    "eligibilityCriteria": (
+                        "Inclusion Criteria:\nAdults with confirmed eye irritation.\n"
+                        "Contact: a person at private@example.test"
+                    )
+                },
+                "contactsLocationsModule": {"centralContacts": [{"name": "Private contact"}]},
+            },
+            "resultsSection": {"record": "Do not retain the results."},
+        }
+    session.flush()
+
+    calls = []
+    refuse_second = True
+
+    def registry(request: httpx.Request) -> httpx.Response:
+        identifiers = request.url.params["filter.ids"].split(",")
+        calls.append(identifiers)
+        fields = set(request.url.params["fields"].split(","))
+        assert {"EligibilityCriteria", "ArmGroupDescription"} <= fields
+        assert "ContactsLocationsModule" not in fields
+        if len(calls) == 2 and refuse_second:
+            return httpx.Response(403)
+        return httpx.Response(200, json={"studies": [detailed[nct] for nct in identifiers]})
+
+    monkeypatch.setattr(
+        "thenwhat.cli.backfill.make_registry",
+        lambda lookups, settings: ClinicalTrials(
+            lookups,
+            contact_email=settings.contact_email,
+            transport=httpx.MockTransport(registry),
+            time=fake_time,
+        ),
+    )
+    ids = tmp_path / "trials.txt"
+    ids.write_text("\n".join(trial.external_id for trial in trials), encoding="utf-8")
+    target = tmp_path / "evidence" / "protocols.json"
+    command = ("registry-scope-evidence", str(ids), "--output", str(target))
+    partial = run(*command)
+    assert partial.exit_code == 0, partial.output
+    receipt = json.loads(partial.output)
+    assert (receipt["fetched"], receipt["cached"], receipt["pending"]) == (50, 0, 2)
+    assert receipt["pending_ids"] == [trial.external_id for trial in trials[-2:]]
+    assert receipt["stopped"]
+    assert [len(batch) for batch in calls] == [50, 2]
+    saved = json.loads(target.read_text(encoding="utf-8"))
+    first = trials[0]
+    evidence = saved[first.external_id]
+    assert set(evidence) == {"protocolSection"}
+    assert "contactsLocationsModule" not in evidence["protocolSection"]
+    assert "private@example.test" not in json.dumps(evidence)
+
+    refuse_second = False
+    resumed = run(*command)
+    assert resumed.exit_code == 0, resumed.output
+    receipt = json.loads(resumed.output)
+    assert (receipt["fetched"], receipt["cached"], receipt["pending"]) == (2, 50, 0)
+    assert calls[-1] == [trial.external_id for trial in trials[-2:]]
+
+    packed = run("registry-scope-proposals", first.external_id, "--arm-evidence", str(target))
+    assert packed.exit_code == 0, packed.output
+    fields = json.loads(packed.output)["packets"][0]["evidence"]
+    assert any(field["kind"] == "eligibility_inclusion" for field in fields)
+
+    original = target.read_bytes()
+    cache_hit = run(*command)
+    assert cache_hit.exit_code == 0, cache_hit.output
+    assert json.loads(cache_hit.output)["cached"] == 52
+    assert len(calls) == 3
+    assert target.read_bytes() == original
+
+    first.last_update_posted = date(2026, 3, 2)
+    first.raw_payload = {
+        "protocolSection": {
+            **first.raw_payload["protocolSection"],
+            "statusModule": {"lastUpdatePostDateStruct": {"date": "2026-03-02"}},
+        },
+    }
+    session.flush()
+    drift = run(*command)
+    assert drift.exit_code == 0, drift.output
+    receipt = json.loads(drift.output)
+    assert receipt["pending"] == 1
+    assert receipt["pending_ids"] == [first.external_id]
+    assert "differs from the stored trial version" in receipt["issues"][first.external_id]
+    assert calls[-1] == [first.external_id]
+    assert target.read_bytes() == original
+
+
+def test_registry_scope_proposals_reads_arm_evidence_from_the_same_trial_version(
+    run, session: Session, tmp_path: Path
+):
+    trial = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    trial.external_id = "NCT00000001"
+    trial.overall_status = "RECRUITING"
+    trial.last_update_posted = date(2026, 3, 1)
+    trial.raw_payload = {
+        "protocolSection": {
+            "identificationModule": {
+                "nctId": trial.external_id,
+                "briefTitle": "Example XR for eye irritation",
+            },
+        }
+    }
+    session.flush()
+    path = tmp_path / "protocol-evidence.json"
+    detailed: dict[str, Any] = {
+        **trial.raw_payload["protocolSection"],
+        "statusModule": {"lastUpdatePostDateStruct": {"date": "2026-03-01"}},
+        "eligibilityModule": {"eligibilityCriteria": "Adults with confirmed eye irritation."},
+    }
+    path.write_text(json.dumps({trial.external_id: {"protocolSection": detailed}}))
+
+    result = run("registry-scope-proposals", trial.external_id, "--arm-evidence", str(path))
+
+    assert result.exit_code == 0, result.output
+    packet = json.loads(result.output)["packets"][0]
+    assert {"kind": "eligibility", "text": "Adults with confirmed eye irritation."} in packet[
+        "evidence"
+    ]
+    assert "eligibilityModule" not in trial.raw_payload["protocolSection"]
+
+    original_title = detailed["identificationModule"]["briefTitle"]
+    detailed["identificationModule"]["briefTitle"] = "Different study wording on the same day"
+    path.write_text(json.dumps({trial.external_id: {"protocolSection": detailed}}))
+    changed_title = run("registry-scope-proposals", trial.external_id, "--arm-evidence", str(path))
+    assert changed_title.exit_code == 1
+    assert "differs from the stored trial version in titles" in changed_title.output
+
+    detailed["identificationModule"]["briefTitle"] = original_title
+    detailed["statusModule"]["lastUpdatePostDateStruct"]["date"] = "2026-02-01"
+    path.write_text(json.dumps({trial.external_id: {"protocolSection": detailed}}))
+    stale = run("registry-scope-proposals", trial.external_id, "--arm-evidence", str(path))
+    assert stale.exit_code == 1
+    assert "differs from the stored trial version" in stale.output
+
+
+def test_registry_claim_plan_applies_an_evidence_receipt(run, session: Session, tmp_path: Path):
+    stored = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    stored.external_id = "NCT00000001"
+    stored.overall_status = "RECRUITING"
+    stored.last_update_posted = date(2026, 3, 1)
+    stored.raw_payload = {
+        "protocolSection": {
+            "identificationModule": {"briefTitle": "Example XR for Eye Irritation"},
+            "designModule": {"designInfo": {"primaryPurpose": "TREATMENT"}},
+        }
+    }
+    session.flush()
+    receipt = {
+        "trial_id": stored.external_id,
+        "registry_sha256": payload_of(stored.raw_payload).sha256,
+        "reviewed_by": "assistant:test",
+        "pairs": [
+            {
+                "regimen": ["Example XR"],
+                "indication": "Eye Irritation",
+                "intervention_quotes": ["Example XR"],
+                "indication_quotes": ["Eye Irritation"],
+            }
+        ],
+    }
+    reviews = tmp_path / "reviews.json"
+    reviews.write_text(json.dumps({"schema_version": 1, "reviews": [receipt]}))
+
+    result = run("registry-claim-plan", "--reviewed-scopes", str(reviews))
+
+    assert result.exit_code == 0, result.output
+    plan = json.loads(result.output)
+    assert plan["applied_reviews"] == {stored.external_id: "assistant:test"}
+    assert plan["groups"][0]["indication"] == "Eye Irritation"
 
 
 def test_trial_references_counts_what_the_stored_records_list(run, session: Session):

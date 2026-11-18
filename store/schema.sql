@@ -157,6 +157,13 @@ CREATE TABLE claim (
   created_at           TEXT NOT NULL,
   added_run            TEXT NOT NULL REFERENCES run (id),
   changed_run          TEXT NOT NULL REFERENCES run (id),
+  drafted_from         TEXT CHECK (drafted_from IN ('article', 'registry', 'operator')),
+  drafting_trial_ids   TEXT NOT NULL DEFAULT '[]' CHECK (
+                         json_type(drafting_trial_ids) = 'array'
+                         AND (drafted_from IS 'registry') = (json_array_length(drafting_trial_ids) > 0)),
+  -- The registry trials a writer nominates as the claim's candidates, by number: each once,
+  -- in order. They only gather; no later record takes one away.
+  registry_candidate_trial_ids TEXT NOT NULL DEFAULT '[]' CHECK (json_type(registry_candidate_trial_ids) = 'array'),
   CHECK ((review_state = 'pending') = (reviewed_at IS NULL) AND (reviewed_at IS NULL) = (reviewed_by IS NULL)),
   CHECK ((archived_at IS NULL) = (archive_reason IS NULL)),
   CHECK (merged_into IS NULL OR (archived_at IS NOT NULL AND merged_into <> id))

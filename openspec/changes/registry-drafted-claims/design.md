@@ -25,6 +25,12 @@ Three figures were not given and are the operator's: the share of wrong claims a
 
 ### The first set
 
+The operator broadened rollout on 2026-11-18 to all active Phase 2 or 3 interventional trials and all Phase 2 or 3 interventional trials actually completed in 2026, across sponsors and results states. The named set is `active-phase-2-3-or-completed-2026`. Combined phases qualify when they include Phase 2 or 3. Trials with unresolved identities stay in the denominator.
+
+The 2026-11-18 coverage check found 25,898 active and 1,800 completed trials in the local snapshot. The live export linked 735 and 96 respectively.
+
+### Original pilot estimates
+
 Uncited trials that are under way, not yet started, or completed or terminated in 2026, with a stored search name.
 
 | | Industry, phase 2 and 3 | Other named |
@@ -52,7 +58,7 @@ The store held 2,041 claims, each with one intervention. About 20,000 of the 60,
 
 **Goals:**
 
-- Every named trial of a set is cited by a claim, or is listed with the reason it is not.
+- Every active Phase 2 or 3 interventional trial and every Phase 2 or 3 interventional trial actually completed in 2026 is cited by a production claim that is browsable and searchable.
 - A registry-drafted claim is as true as a reported one: its trials test its treatment for its condition, by the rules that already decide that.
 - No claim says more than its records. A claim with no report has no words but the site's fixed ones.
 - A reader can always tell a reported claim from one with no report, and can leave the latter out.
@@ -83,13 +89,31 @@ This reuses preparation whole, which also finds the other trials of the same tre
 
 *Instead of* making events straight from the stored record: the stored record is the bulk load's reduced one, and the claim path keeps the full payload and fetch time each event needs.
 
-### 3. Grouping uses the two rules that already exist, and is measured before it is trusted
+### 3. Grouping starts from registered arms and full indications
 
-The treatment name is the trial's search name; the condition is its search indication. Both are worked out by rule today for the news search. Using them means no new rule to keep in step, and means their faults become this change's faults: the ordinary-word names, the 129 trials with no indication, and the 2,295 that list several conditions.
+The 50-group dry run used existing news search names and indication keywords. The audit found 15 correct groups and documented the lost regimen components, flattened formulations and truncated indications. Five groups had an existing claim confirmed for all or part of their scope.
 
-So the first task after the decisions is a dry run that writes nothing: group the first set, draw fifty groups, and judge each for one thing, whether its trials test one treatment for one condition. The operator sees the table before a claim is drafted. A trial with several conditions is grouped once for each indication the rule gives it, which is right when it tests the treatment for each and is what the dry run checks.
+The read-only planner takes arm membership from the current registry projection and preserves formulation, complete combination components, full condition labels and the study purpose. A shared component cannot establish a regimen match. A record listing multiple conditions needs evidence that each proposed regimen actually addresses the corresponding indication. For older records with missing arm details and crossover or sequential designs with several assigned interventions, the plan records what needs review. Trials with missing short names can use a verified intervention description from the registry.
 
-*Instead of* the registry's condition vocabulary as the grouping key: it would group better, and the bulk load may not store it. Task 2.2 counts how many stored records carry it. If most do, a later change can regroup; claims are merged by the command that exists.
+An existing claim is a candidate when its complete identity or a documented alias matches. Verify the regimen, clinical use and indication before reusing it. The plan also surfaces current published links, including links whose scope still needs review.
+
+An existing-only batch limits its actions to verified nominations. The preview shows the last stored scores and review states so a previously scored trial can be sent to review. Nomination continues to require the exact trial and claim snapshots and to use ordinary match scoring.
+
+Arm labels and clearly stated study objectives can identify reference regimens even when the registry marks them as experimental. In an add-on trial, retain the full tested combination and record the placebo or reference arm separately. When the title explicitly compares a single investigational agent and the registry designates other products as non-investigational, keep those products as background evidence.
+
+Use a treatment or prevention title to refine a named indication when it gives an explicit subtype or treatment target. Keep the stated patient context when another registered condition qualifies that target. A more detailed title naming several targets overrides abbreviated wording. When distinct tested arms name distinct cohorts for the same regimen, the planner can propose a pair for each cohort. Explicit measurements can be removed from a treatment regimen while diagnostic trials retain their diagnostic intervention.
+
+When the title directly links the resolved indication to a treatment line or a perioperative, neoadjuvant or adjuvant setting, keep that setting with the indication. The original phrase remains available for review and topic placement uses the disease label. Conflicting settings require review. A registered condition at the start of a title's named combination cannot establish the disease being treated.
+
+For cases that need review, `thenwhat backfill registry-claim-plan --reviewed-scopes <file>` accepts a versioned JSON record of explicit regimen and indication pairs. Each pair carries verbatim registry evidence for both parts. Each review records the reviewer and the SHA-256 of the stored record. A changed record requires a fresh review. Applying a receipt changes the plan only. Match scoring, preparation, and publication audit still apply.
+
+`thenwhat backfill registry-scope-proposals <trial-id>…` assembles numbered fields from each eligible stored registry record. Its offline output is suitable for manual review. With `--run` and an explicit `REGISTRY_SCOPE_MONTHLY_BUDGET_USD`, the existing structured-output client can select candidate pairs. It copies from intervention, condition, title and arm fields, and can cite a planned outcome by its name. Each selection is checked against the cited field. The exact model cache and usage ledger apply. The configured general model ceiling remains in force. An evidence-backed candidate still needs a scope judgment before it can become a review receipt.
+
+Arm-specific packets preserve the registry's wording for inclusion criteria, exclusion criteria, unassigned eligibility text and the study population. Explicit study-wide inclusion criteria and the registered study population can support a positive enrolment citation. Exclusions and eligibility whose cohort or purpose is unclear are available for review.
+
+The `registry-scope-evidence` backfill command reads exact identifiers from a batch file, confirms they belong to the eligible cohort and requests detailed protocol fields in pages of up to 50 through the shared ClinicalTrials.gov client. It retains the fields needed for review in a private JSON cache. Each retained record must agree with the exact stored trial version. A repeat run reads only missing or mismatched records and reports pending records and source issues. Proposals and drafting previews consume the same file.
+
+The planner and drafting preview can use that cache directly. A complete arm description can establish separate regimens when it names one explicit choice and the full membership of each alternative is accounted for. Conditional switches and incomplete assignments go to scope review with the exact arm wording. The draft preview digest binds the detailed protocol hashes. The operational sequence and current evidence are tracked in the [rollout handoff](handoff.md).
 
 ### 4. An ordinary-word name drafts nothing, and the fault is fixed first
 
@@ -97,11 +121,11 @@ A third of stored names would each draft a claim for "first" or "home". The rule
 
 ### 5. A vertical by rule, or no draft
 
-A claim must have one vertical and a model chooses it today from an article. A registry-drafted claim has no article. The vertical is the general vertical of the group its trials' condition terms point to, by the mapping `approach-and-vertical-by-rule` builds. When the terms point to no group or to two, no claim is drafted and the group is listed.
+A claim must have one vertical and a model chooses it today from an article. A registry-drafted claim uses the general vertical its trials' condition terms point to under the shared MeSH mapping. On 2026-11-18 the operator chose Cancer when a single MeSH disease descriptor supports both Cancer and an anatomical topic. The specific descriptor must account for every supported topic. Broader descriptors from its own hierarchy can confirm the placement. Distinct competing descriptors and overlaps solely with non-anatomical topics stay in topic review.
 
 *Instead of* asking a model to place it: that would be a second, weaker way of setting the same field, which that change already declined for the approach.
 
-This makes this change depend on that one's mapping, and on the stored record carrying condition terms (task 2.2).
+The shared topic mapping and NLM hierarchy are available in `thenwhat.clinical`. The planner can use stored descriptors or the annual NLM download. An exact registered condition also anchors topic evidence when the proposed indication begins with it and adds a population phrase such as “in adults”. The grouping keeps the full indication. When the registry omits its descriptor projection, an exact preferred disease or disorder label in MeSH can supply evidence for that registered condition. The plan records each supported group and its descriptors. The drafting preview binds the evidence for its Cancer placements to the digest. Claim preparation requires approved trial matches, and release requires the batch audit.
 
 ### 6. Words come from the site, and the export carries none
 

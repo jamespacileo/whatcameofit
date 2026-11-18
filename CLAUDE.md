@@ -1,6 +1,6 @@
 # thenwhat
 
-Public tracker of what happened to reported medical breakthroughs. The unit is a **claim** (one intervention for one indication), not an article. `thenwhat` is a codename; brand strings live in one config file.
+Public tracker of the evidence for medical claims. A **claim** covers one intervention or complete regimen for one indication and can be drafted from registry evidence before a news report exists. `thenwhat` is a codename. Brand strings live in one config file.
 
 Folder: `products`. Workspace rules: `~/Projects/CLAUDE.md` (never create at root,
 worktrees via `wt`, archive via quarantine).
@@ -48,6 +48,7 @@ worktrees via `wt`, archive via quarantine).
 - Prepare many claims with `thenwhat prepare`, not one command per step per claim.
 - A claim that a link lead's read drafts stays pending until `thenwhat prepare --pending` has searched its registries, then is approved by rule. Run it after every read run and before any export.
 - A claim `prepare` approves for a read is held awaiting audit, and no export publishes it until `thenwhat audit clear` releases it (`docs/adr/0007-a-read-batch-waits-for-its-audit.md`). The audit archives what is wrong and clears the rest.
+- Run registry claim batches explicitly. Preview `thenwhat draft-from-registry` and apply the reviewed plan, then run `thenwhat prepare --pending`, audit the batch, release it and export. The daily run starts no registry drafting, batch audit, release or export. See `docs/backfill-loop.md` and the `registry-drafted-claims` change.
 - Two claims for one intervention and indication are merged with `thenwhat claim merge`, never fixed by archiving one. A wrong intervention name is corrected with `thenwhat entity rename`, not `claim edit`: it checks the entry rules and marks the registry search due. After either, run `thenwhat prepare --due` before the export (change `claim-merge-and-rename`).
 - A review decision you make yourself is recorded with `--as-assistant`. The claim is published like any other, and the export marks it `checked_by_person: false`.
 

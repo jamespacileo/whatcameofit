@@ -9,6 +9,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
+from rich.text import Text
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner, Result
 
@@ -79,22 +80,42 @@ CLAIM_ADD = [
     "--indication",
     "enamel loss",
 ]
+FIRST_ARTICLE = [
+    "--article-url",
+    ARTICLE_URL,
+    "--article-outlet",
+    "Example News",
+    "--article-title",
+    "Gel regrows enamel",
+    "--article-published",
+    "2019-08-30",
+]
 
 
 def test_claim_add_creates_the_claim(run, session: Session):
-    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth")
+    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth", *FIRST_ARTICLE)
 
     assert result.exit_code == 0, result.output
     assert "enamel-gel" in result.output
-    assert find_claim(session, "enamel-gel") is not None
+    claim = find_claim(session, "enamel-gel")
+    assert claim is not None and claim.first_reported_date == date(2019, 8, 30)
+    assert [article.url for article in articles_of(session, claim)] == [ARTICLE_URL]
 
 
 def test_claim_add_refusal_explains_and_exits_1(run, session: Session):
-    result = run(*CLAIM_ADD, "--vertical", "hair-regrowth-typo")
+    result = run(*CLAIM_ADD, "--vertical", "hair-regrowth-typo", *FIRST_ARTICLE)
 
     assert result.exit_code == 1
     assert "Valid verticals: ageing, bones-joints-and-muscles, brain-and-nerves" in result.output
     assert "mouth-and-teeth" in result.output
+    assert claim_count(session) == 0
+
+
+def test_claim_add_without_first_article_creates_no_claim(run, session: Session):
+    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth")
+
+    assert result.exit_code == 2
+    assert "--article-url" in Text.from_ansi(result.output).plain
     assert claim_count(session) == 0
 
 
@@ -218,7 +239,14 @@ def test_claim_import_csv_refusal_names_the_row_and_exits_1(run, session: Sessio
 
 
 def test_claim_add_stores_the_approach(run, session: Session):
-    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth", "--approach", "tissue-regeneration")
+    result = run(
+        *CLAIM_ADD,
+        "--vertical",
+        "mouth-and-teeth",
+        "--approach",
+        "tissue-regeneration",
+        *FIRST_ARTICLE,
+    )
 
     assert result.exit_code == 0, result.output
     claim = find_claim(session, "enamel-gel")
@@ -226,7 +254,9 @@ def test_claim_add_stores_the_approach(run, session: Session):
 
 
 def test_claim_add_refuses_an_unknown_approach(run, session: Session):
-    result = run(*CLAIM_ADD, "--vertical", "mouth-and-teeth", "--approach", "miracle")
+    result = run(
+        *CLAIM_ADD, "--vertical", "mouth-and-teeth", "--approach", "miracle", *FIRST_ARTICLE
+    )
 
     assert result.exit_code == 1
     assert "Unknown approach 'miracle'. Valid approaches: drug, vaccine" in result.output

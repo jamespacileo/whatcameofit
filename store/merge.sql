@@ -53,13 +53,22 @@ ON CONFLICT (sha256) DO NOTHING
 INSERT INTO claim (slug, headline, summary, vertical, approach, indication, first_reported_date,
                    evidence_stage, current_status, overlay_years, status_updated_at, origin,
                    review_state, reviewed_at, reviewed_by, awaiting_audit_at, created_at,
-                   added_run, changed_run)
-SELECT s.body ->> 'slug', s.body ->> 'headline', s.body ->> 'summary', s.body ->> 'vertical',
+                   added_run, changed_run, drafted_from, drafting_trial_ids, registry_candidate_trial_ids)
+SELECT s.body ->> 'slug',
+       CASE WHEN s.body ->> 'drafted_from' = 'registry' THEN coalesce(s.body ->> 'headline', '')
+            ELSE s.body ->> 'headline' END,
+       CASE WHEN s.body ->> 'drafted_from' = 'registry' THEN coalesce(s.body ->> 'summary', '')
+            ELSE s.body ->> 'summary' END,
+       s.body ->> 'vertical',
        s.body ->> 'approach', s.body ->> 'indication', s.body ->> 'first_reported_date',
        s.body ->> 'evidence_stage', coalesce(s.body ->> 'current_status', 'no_trial_found'),
        s.body ->> 'overlay_years', s.body ->> 'status_updated_at', s.body ->> 'origin',
        coalesce(s.body ->> 'review_state', 'pending'), s.body ->> 'reviewed_at', s.body ->> 'reviewed_by',
-       s.body ->> 'awaiting_audit_at', s.body ->> 'created_at', s.run_id, s.run_id
+       s.body ->> 'awaiting_audit_at', s.body ->> 'created_at', s.run_id, s.run_id,
+       s.body ->> 'drafted_from', coalesce(s.body -> 'drafting_trial_ids', '[]'),
+       (SELECT json_group_array(value) FROM (
+          SELECT DISTINCT j.value FROM json_each(coalesce(s.body -> 'registry_candidate_trial_ids', '[]')) j
+          WHERE j.value IS NOT NULL ORDER BY j.value))
 FROM staged s
 WHERE s.kind = 'claim'
   AND NOT EXISTS (SELECT 1 FROM claim_alias a WHERE a.slug = s.body ->> 'slug')
@@ -84,6 +93,22 @@ UPDATE claim SET current_status = s.body ->> 'current_status', overlay_years = s
 FROM staged_of_claim s
 WHERE s.kind = 'claim' AND claim.id = s.claim_id AND claim.added_run <> s.run_id
   AND s.body ->> 'status_updated_at' > coalesce(claim.status_updated_at, '')
+;
+-- A claim's candidate trials only gather: those a run nominates are added to those held,
+-- each once and in order, whatever the run's decision. A run that adds none changes nothing.
+UPDATE claim SET registry_candidate_trial_ids = (
+  SELECT json_group_array(value) FROM (
+    SELECT o.value FROM json_each(claim.registry_candidate_trial_ids) o
+    UNION
+    SELECT j.value
+    FROM staged_of_claim s, json_each(coalesce(s.body -> 'registry_candidate_trial_ids', '[]')) j
+    WHERE s.kind = 'claim' AND s.claim_id = claim.id AND j.value IS NOT NULL
+    ORDER BY 1)),
+  changed_run = (SELECT run_id FROM merging)
+WHERE EXISTS (
+  SELECT 1 FROM staged_of_claim s, json_each(coalesce(s.body -> 'registry_candidate_trial_ids', '[]')) j
+  WHERE s.kind = 'claim' AND s.claim_id = claim.id AND j.value IS NOT NULL
+    AND j.value NOT IN (SELECT o.value FROM json_each(claim.registry_candidate_trial_ids) o))
 ;
 -- A source article is added when its claim has none at that address; one held is left.
 INSERT INTO source_article (claim_id, url_key, url, outlet, title, published_date, content_hash,

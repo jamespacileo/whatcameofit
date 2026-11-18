@@ -33,9 +33,9 @@ A claim is one intervention for one indication. Adding a second claim for the sa
 ```sh
 thenwhat claim add example-enamel-gel \
   --headline "Gel regrows tooth enamel" --vertical dental-regeneration \
-  --intervention "Enamel gel" --indication "enamel loss"
-thenwhat article add example-enamel-gel --url https://example.org/article \
-  --outlet "Example News" --title "Gel regrows enamel" --published 2019-08-30
+  --intervention "Enamel gel" --indication "enamel loss" \
+  --article-url https://example.org/article --article-outlet "Example News" \
+  --article-title "Gel regrows enamel" --article-published 2019-08-30
 thenwhat promise add example-enamel-gel --article-url https://example.org/article \
   --text "human trials within five years"
 thenwhat claim rename-slug example-enamel-gel example-enamel

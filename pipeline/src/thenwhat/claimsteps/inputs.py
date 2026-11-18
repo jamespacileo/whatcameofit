@@ -17,7 +17,7 @@ from sqlalchemy import func, or_, select, tuple_
 from sqlalchemy.orm import Session
 
 from thenwhat.db.models import Claim, Entity, EntityMatch, EvidenceEvent, SourceArticle, WorkEntry
-from thenwhat.domain import TRIAL_EVENT_TYPES, EntityType, ReviewState
+from thenwhat.domain import TRIAL_EVENT_TYPES, DraftedFrom, EntityType, ReviewState
 from thenwhat.resolve.papers import PAPER_SOURCE
 from thenwhat.work.ledger import fingerprint
 
@@ -58,6 +58,26 @@ class Inputs:
                 "search_asked_at": row.registry_search_due_at,
             }
             for row in rows
+        }
+
+    @cached_property
+    def drafting_trial_ids(self) -> dict[int, list[str]]:
+        rows = self._session.execute(
+            select(Claim.id, Claim.drafting_trial_ids).where(
+                Claim.id.in_(self._ids), Claim.drafted_from == DraftedFrom.REGISTRY
+            )
+        )
+        return {row.id: sorted(row.drafting_trial_ids) for row in rows}
+
+    @cached_property
+    def registry_candidate_trial_ids(self) -> dict[int, list[str]]:
+        rows = self._session.execute(
+            select(Claim.id, Claim.registry_candidate_trial_ids).where(Claim.id.in_(self._ids))
+        )
+        return {
+            row.id: sorted(row.registry_candidate_trial_ids)
+            for row in rows
+            if row.registry_candidate_trial_ids
         }
 
     @cached_property

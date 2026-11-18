@@ -14,6 +14,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from backfill_support import same_session
+from claim_support import trial as synthetic_trial
 from reader_support import SyntheticReader, retriever
 from thenwhat.backfill.article_evidence import ArticleMatches
 from thenwhat.backfill.link_funnel import funnel
@@ -42,10 +43,12 @@ from thenwhat.backfill.link_screen import (
     TITLE_NAMES_CLAIM,
 )
 from thenwhat.backfill.outlet_hold import OUTLET_HOLD, OUTLET_TURN_LOCK
+from thenwhat.backfill.registry_load import store_trial
 from thenwhat.backfill.trial_links import SetPlan, UnknownStrength, at_least, plan_of
 from thenwhat.claims.entry import (
     add_article,
     add_claim,
+    add_registry_claim,
     archive_claim,
     articles_of,
     slug_for,
@@ -75,6 +78,7 @@ from thenwhat.decide.steps import (
 )
 from thenwhat.domain import (
     Decider,
+    DraftedFrom,
     LeadVerdict,
     OutletKind,
     ReadOutcome,
@@ -441,6 +445,34 @@ def test_an_article_for_a_tracked_claim_is_added_and_the_claim_is_left_as_review
     assert (claim.review_state, claim.reviewed_by) == (ReviewState.APPROVED, Decider.HUMAN)
     assert reader.session.scalars(select(Claim)).all() == [claim]
     assert len(reader.backend.same_claim_asked) == 1
+
+
+def test_a_first_report_joins_a_published_registry_claim_without_holding_it(reader: Reader):
+    record = synthetic_trial("NCT00000001")
+    store_trial(reader.session, [], record.source_name, record.payload, NOW)
+    claim = add_registry_claim(
+        reader.session,
+        slug="ex-1-tooth-agenesis",
+        vertical="mouth-and-teeth",
+        intervention="EX-1 antibody",
+        indication="tooth agenesis",
+        trial_ids=[record.external_id],
+    )
+    record_decision(claim, ReviewState.APPROVED, by=Decider.RULE, now=NOW)
+    reader.backend.same_claim = claim.slug
+    lead = reader.lead()
+
+    report = reader.read()
+
+    assert report.failed == 0
+    assert (lead.read_outcome, lead.claim_id) == (ReadOutcome.ADDED_TO_CLAIM, claim.id)
+    assert len(articles_of(reader.session, claim)) == 1
+    assert claim.first_reported_date == date(2019, 5, 4)
+    assert claim.drafted_from is DraftedFrom.REGISTRY
+    assert claim.drafting_trial_ids == [record.external_id]
+    assert claim.review_state is ReviewState.APPROVED
+    assert claim.awaiting_audit_at is None
+    assert reader.session.scalars(select(Claim)).all() == [claim]
 
 
 def test_a_lead_whose_article_became_tracked_is_not_fetched_or_read(reader: Reader):

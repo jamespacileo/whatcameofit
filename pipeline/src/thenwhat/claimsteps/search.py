@@ -30,7 +30,7 @@ from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
 from thenwhat.db.models import Claim, Entity, EntityMatch, EntitySubstance, RegistrySearch
 from thenwhat.decide.core import Backend, Decision, DecisionFailed
 from thenwhat.decide.steps import latest_stage_suggestion, suggest_evidence_stage
-from thenwhat.domain import WorkOutcome
+from thenwhat.domain import DraftedFrom, WorkOutcome
 from thenwhat.llm.errors import LlmError
 from thenwhat.resolve.codes import give_development_codes, intervention_of
 from thenwhat.resolve.organisations import match_organisations
@@ -135,7 +135,14 @@ class ClaimTrials(ClaimStep):
         self.redo_rule = redo_rule
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return _names(inputs, claim_id)
+        names = _names(inputs, claim_id)
+        drafting = inputs.drafting_trial_ids.get(claim_id)
+        nominated = inputs.registry_candidate_trial_ids.get(claim_id)
+        if drafting:
+            names = {**names, "drafting_trial_ids": drafting}
+        if nominated:
+            names = {**names, "registry_candidate_trial_ids": nominated}
+        return names
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
@@ -211,7 +218,9 @@ class ClaimTrials(ClaimStep):
     ) -> None:
         """Read the claim's evidence stage when none is confirmed, reusing a stored
         reading, and let the rule confirm it when drafts are decided by rule."""
-        if claim.evidence_stage is not None:
+        if claim.evidence_stage is not None or (
+            claim.drafted_from is DraftedFrom.REGISTRY and claim.first_reported_date is None
+        ):
             return
         stage = latest_stage_suggestion(session, claim)
         found.stage_newly_read = stage is None

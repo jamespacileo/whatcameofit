@@ -12,6 +12,7 @@ const claim = (slug, extra = {}) => ({
   slug,
   headline: `Claim ${slug}`,
   first_reported_date: extra.first ?? "2020-01-01",
+  articles: [{ url: "https://example.org/report" }],
   promises: (extra.promises ?? []).map((parsed_date) => ({ parsed_date, description: "trials", article_url: "" })),
   status: { code: "phase_1", overlay_years: extra.quiet ?? null, history: extra.history },
 });
@@ -37,6 +38,7 @@ test("Scenario: Promises in order of their date", () => {
     // A claim is placed by its latest dated promise.
     claim("two", { promises: ["2021-01-01", "2027-06-30"] }),
     claim("early", { promises: ["2020-06-30"] }),
+    { ...claim("registry-only", { promises: ["2020-02-01"] }), articles: [], has_report: false },
   ]);
   assert.deepEqual(listed.map((item) => item.slug), ["early", "two", "late"]);
 });

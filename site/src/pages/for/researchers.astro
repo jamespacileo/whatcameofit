@@ -8,6 +8,7 @@ import { CLAIM_FIELDS } from "../../lib/audiences";
 import { CORRECTION_SUBJECT, contactLink } from "../../lib/contact.mjs";
 import { data, listedTopics } from "../../lib/export";
 import { DATA_LICENCE, DATA_LICENCE_URL } from "../../lib/open-data";
+import { reportedClaimCount } from "../../lib/reports";
 import { siteOpenData } from "../../lib/site-open-data";
 import { formatDate } from "../../lib/timetable";
 
@@ -35,7 +36,7 @@ const count = data.claims.length;
         <dd>
           {count}{" "}
           {count === 1 ? "claim" : "claims"} in {listedTopics.length}{" "}
-          {listedTopics.length === 1 ? "topic" : "topics"}, as JSON
+          {listedTopics.length === 1 ? "topic" : "topics"}, as JSON. {reportedClaimCount(data.claims)} with a linked report.
         </dd>
       </div>
       <div>

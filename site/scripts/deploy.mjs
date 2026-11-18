@@ -13,6 +13,8 @@ import path from "node:path";
 
 import { besideProblems } from "./listing-checks.mjs";
 import { deployProblems } from "./deploy-checks.mjs";
+import { countFiles, FILE_COUNT_LIMIT, FILE_LIMIT, oversizedFiles } from "./dist-size.mjs";
+import { prepareSiteRelease, releaseSettings } from "./site-release-deploy.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
 const dist = path.join(SITE_DIR, "dist");
@@ -55,6 +57,7 @@ const problems = [...deployProblems({ data, siteUrl }), ...besideProblems(export
 if (problems.length > 0) stop(problems);
 
 const domain = new URL(siteUrl).hostname;
+const siteRelease = releaseSettings();
 if ((reuse || revision !== undefined) && !/^[a-f0-9]{40}$/.test(revision ?? "")) {
   stop(["BUILD_REVISION must be a full Git commit SHA."]);
 }
@@ -73,6 +76,7 @@ if (!reuse) {
     LOOKUP_URL: lookup ? "/api/lookup" : "",
   };
   delete env.CLOUDFLARE_API_TOKEN;
+  env.SITE_RELEASE_BUILD = siteRelease ? "1" : "";
   console.log(`Building ${data.claims.length} claims for ${siteUrl}.`);
   run("pnpm", ["run", "build"], env);
   if (revision) fs.writeFileSync(revisionFile, `${revision}\n`);
@@ -92,6 +96,12 @@ if (!fs.existsSync(path.join(dist, "sitemap.xml"))) {
 }
 
 const wranglerArgs = ["deploy", "--domain", domain];
+if (siteRelease) {
+  const config = prepareSiteRelease({ settings: siteRelease, siteDir: SITE_DIR, dist, dryRun, run });
+  wranglerArgs.push("--config", config);
+} else if (reuse && (countFiles(dist) > FILE_COUNT_LIMIT || oversizedFiles(dist, FILE_LIMIT).length)) {
+  stop(["The checked build exceeds the static file limits. Configure SITE_FILES_BUCKET for a split release."]);
+}
 if (lookup) {
   wranglerArgs.push("--var", `LLM_MODEL:${process.env.LLM_MODEL}`, "--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
   for (const name of ["LLM_BASE_URL", "DECISION_BACKEND", "DECISIONS_MODEL"]) {

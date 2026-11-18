@@ -40,6 +40,16 @@ class NamedBy(StrEnum):
     REGISTRY = "registry"
 
 
+class DraftedFrom(StrEnum):
+    """What a claim was drafted from: a news article, registry records, or an operator's
+    entry. Set once when the claim is drafted and never changed after (openspec claims).
+    Empty for a claim stored before it was recorded."""
+
+    ARTICLE = "article"
+    REGISTRY = "registry"
+    OPERATOR = "operator"
+
+
 class TermRole(StrEnum):
     """What a subject term is proposed as for a claim."""
 

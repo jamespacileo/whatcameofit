@@ -20,9 +20,9 @@ function htmlFiles(directory) {
   });
 }
 
-function build(exportFile, outDir) {
+function build(exportFile, outDir, env = {}) {
   return spawnSync(process.execPath, ["node_modules/astro/bin/astro.mjs", "build", "--outDir", outDir], {
-    env: { ...process.env, EXPORT_FILE: exportFile, ASTRO_TELEMETRY_DISABLED: "1" },
+    env: { ...process.env, EXPORT_FILE: exportFile, ASTRO_TELEMETRY_DISABLED: "1", ...env },
     encoding: "utf8",
   });
 }
@@ -54,6 +54,75 @@ test("Scenario: Reader opens a claim", () => {
     assert.ok(html.includes(`https://registry.example/record/${id}"`), `event ${id} has no link`);
   }
   assert.equal(count(html, 'id="record-'), 4);
+});
+
+test("the build refuses an export whose claim routes alone exceed the file limit", (t) => {
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-claim-floor-"));
+  t.after(() => fs.rmSync(work, { recursive: true, force: true }));
+  const out = path.join(work, "dist");
+  const result = build("data/seed-export.json", out, { DIST_FILE_LIMIT: "7" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /claims require at least 8 files before search indexing/);
+  assert.equal(fs.existsSync(path.join(out, "tooth-regrowth-usag1/index.html")), false);
+  const split = build("data/seed-export.json", out, { DIST_FILE_LIMIT: "7", SITE_RELEASE_BUILD: "1" });
+  assert.equal(split.status, 0, split.stdout + split.stderr);
+  assert.ok(fs.existsSync(path.join(out, "tooth-regrowth-usag1/index.html")));
+});
+
+test("Scenario: Registry evidence publishes a browsable claim before a report exists", (t) => {
+  const built = buildFixture(t, (fixture) => {
+    const exemplar = fixture.claims.find((claim) => claim.slug === "phase-claim");
+    fixture.schema_version = 3;
+    const registryClaim = {
+      ...exemplar,
+      slug: "registry-scope-example",
+      headline: null,
+      summary: null,
+      drafted_from: "registry",
+      has_report: false,
+      intervention: { name: "Example gel", synonyms: [] },
+      indication: "synthetic enamel loss",
+      first_reported_date: null,
+      articles: [],
+      promises: [],
+      reported_statements: [],
+    };
+    const firstReport = exemplar.articles[0];
+    fixture.claims = [registryClaim, {
+      ...registryClaim,
+      slug: "registry-scope-with-report",
+      headline: firstReport.title,
+      has_report: true,
+      first_reported_date: firstReport.published_date,
+      articles: [firstReport],
+    }];
+  });
+
+  const page = built("registry-scope-example/index.html");
+  assert.match(page, /Registered trials of Example gel for synthetic enamel loss/);
+  assert.match(page, /Trial registries list studies of Example gel for synthetic enamel loss/);
+  assert.equal(count(page, "No news report is linked to this claim yet."), 1);
+  assert.doesNotMatch(page, /<time[^>]*>[^<]*First report/);
+  const lookup = JSON.parse(built("lookup.json"));
+  const extensionClaim = lookup.claims["registry-scope-example"];
+  assert.equal(extensionClaim.headline, "Registered trials of Example gel for synthetic enamel loss");
+  assert.equal(extensionClaim.first_reported, null);
+  assert.equal(extensionClaim.latest_promise, null);
+  assert.ok(Object.values(lookup.articles).some((slugs) => slugs.includes("registry-scope-with-report")));
+  assert.ok(!Object.values(lookup.articles).some((slugs) => slugs.includes("registry-scope-example")));
+  const record = JSON.parse(built("data/claims/registry-scope-example.json")).claim;
+  assert.equal(record.drafted_from, "registry");
+  assert.equal(record.has_report, false);
+  assert.deepEqual(record.articles, []);
+  assert.equal(record.first_reported_date, null);
+  assert.deepEqual(record.promises, []);
+  assert.deepEqual(record.reported_statements, []);
+  const reportedPage = built("registry-scope-with-report/index.html");
+  assert.doesNotMatch(reportedPage, /No news report is linked to this claim yet/);
+  const reported = JSON.parse(built("data/claims/registry-scope-with-report.json")).claim;
+  assert.equal(reported.drafted_from, "registry");
+  assert.equal(reported.has_report, true);
+  assert.equal(reported.first_reported_date, reported.articles[0].published_date);
 });
 
 test("Scenario: Unknown slug", () => {
@@ -472,7 +541,7 @@ test("Scenario: No approved claims", () => {
   const result = build("data/seed-export.json", empty);
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const html = fs.readFileSync(path.join(empty, "it-happened/index.html"), "utf8");
-  assert.match(html, /No tracked claim has an approval on record/);
+  assert.match(html, /No reported claim has an approval on record/);
 });
 
 test("Scenario: Preview build", (t) => {
@@ -705,7 +774,7 @@ test("an export from pipeline code older than the audit hold stops the build", (
   fs.writeFileSync(old, JSON.stringify({ ...fixture, schema_version: 1 }));
   const result = build(old, fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-old-")));
   assert.notEqual(result.status, 0);
-  assert.match(result.stdout + result.stderr, /has schema version 1; this site reads version 2/);
+  assert.match(result.stdout + result.stderr, /has schema version 1; this site reads versions 2 and 3/);
 });
 
 test("Scenario: Claim with an approach", () => {
@@ -1935,7 +2004,7 @@ test("Scenario: Topic among ten", () => {
   // Here: one topic with published claims, listed with its count and marked as this one.
   const list = page("topic/gum-disease/index.html").match(/<nav class="onpage"[\s\S]*?<\/nav>/)[0];
   assert.equal(count(list, "<li"), 1);
-  assert.match(list, /href="\/topic\/gum-disease" aria-current="page"[\s\S]*?Gum disease[\s\S]*?class="n">3</);
+  assert.match(list, /href="\/topic\/gum-disease" aria-current="page"[\s\S]*?Gum disease[\s\S]*?class="n">3 · 3 reported</);
   assert.ok(!list.includes("empty-topic"));
 });
 

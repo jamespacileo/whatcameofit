@@ -17,8 +17,8 @@ import {
   type CardFact,
   type TopicCardContent,
 } from "./card";
-import { data, type ExportedClaim, type ExportedVertical, type StatusCode } from "./export";
-import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText, topicSummary } from "./status";
+import { data, type ExportedClaim, type ExportedVertical } from "./export";
+import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText, topicClaimSummary } from "./status";
 import { topicDrawing } from "./topic-drawing";
 
 const INK = "#0f1f38";
@@ -505,9 +505,7 @@ function drawTopic(vertical: ExportedVertical, card: TopicCardContent): Node {
 
 /** What a topic's card says, from the topic's own published claims. */
 export function topicCardFor(vertical: ExportedVertical, claims: ExportedClaim[]): TopicCardContent {
-  const counts = new Map<StatusCode, number>();
-  for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
-  const summary = topicSummary(counts);
+  const summary = topicClaimSummary(claims);
   if (!summary) throw new Error(`The topic ${vertical.slug} has no published claim to draw a card for.`);
   return topicCardContent(vertical.title, summary, data.last_checked_at);
 }

@@ -4,6 +4,7 @@
 // that day, never by the day it is built or read.
 import type { ExportedClaim, ExportedEvent, StatusCode } from "./export";
 import { changesOf } from "./changes.ts";
+import { hasLinkedReport } from "./reports.ts";
 import { latestPromise } from "./status.ts";
 
 /** Day headings: this many days up to the day of the last check. */
@@ -145,8 +146,9 @@ export function dayList(claims: ExportedClaim[], lastChecked: string | null): Da
   const toCome: PromiseRow[] = [];
   for (const claim of claims) {
     // A report dated after the last check has no heading to stand under.
-    rows.push(...reportRows(claim).filter((row) => row.date <= checked));
     rows.push(...recordRows(claim, recordsFrom, checked));
+    if (!hasLinkedReport(claim)) continue;
+    rows.push(...reportRows(claim).filter((row) => row.date <= checked));
     const promise = latestPromise(claim);
     if (promise) {
       const row: PromiseRow = { kind: "promise", date: promise.parsed_date!, claim, promise };
@@ -161,6 +163,7 @@ export function dayList(claims: ExportedClaim[], lastChecked: string | null): Da
   const week = Array.from({ length: WEEK_DAYS }, (_, index) => {
     const date = shiftDay(checked, index - (WEEK_DAYS - 1));
     const reports = claims
+      .filter(hasLinkedReport)
       .flatMap((claim) => claim.articles)
       .filter((article) => article.published_date === date).length;
     return { date, reports };
@@ -191,6 +194,7 @@ export function olderClaim(claims: ExportedClaim[], day: string): ReportRow | nu
       (claim) =>
         claim.first_reported_date !== null &&
         claim.first_reported_date < yearStart &&
+        hasLinkedReport(claim) &&
         claim.articles.length > 0,
     )
     .sort(

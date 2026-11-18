@@ -52,6 +52,8 @@ SETS = {
     "completed-with-results-since-2025": completed_with_results_since_2025,
 }
 
+REGISTRY_CLAIMS_2026 = "active-phase-2-3-or-completed-2026"
+
 # The trial target set, decided by the operator on 2026-11-17: every trial under way
 # now, whatever its phase, and every trial that ended in the current calendar year. It
 # rolls with the year, so its rule takes the year and no clock is read here: a command
@@ -61,7 +63,7 @@ SETS = {
 ROLLING = "active-or-ended-this-year"
 ENDED = ("COMPLETED", "TERMINATED", "WITHDRAWN", "SUSPENDED")
 NOT_COMPLETED = ("TERMINATED", "WITHDRAWN", "SUSPENDED")
-NAMES = (*SETS, ROLLING)
+NAMES = (*SETS, ROLLING, REGISTRY_CLAIMS_2026)
 
 
 def under_way() -> ColumnElement[bool]:
@@ -81,6 +83,23 @@ def ended_in(year: int, statuses: tuple[str, ...] = ENDED) -> ColumnElement[bool
 
 def active_or_ended_in(year: int) -> ColumnElement[bool]:
     return or_(under_way(), ended_in(year))
+
+
+def registry_claims_2026() -> ColumnElement[bool]:
+    """Phase 2 or 3 in the interventional corpus, across all sponsors and result states."""
+    study_type = RegistryTrial.raw_payload["protocolSection"]["designModule"]["studyType"]
+    return and_(
+        RegistryTrial.registry_name == "clinicaltrials.gov",
+        RegistryTrial.phases.overlap(["PHASE2", "PHASE3"]),
+        or_(study_type.as_string().is_(None), study_type.as_string() == "INTERVENTIONAL"),
+        or_(
+            under_way(),
+            and_(
+                ended_in(2026, ("COMPLETED",)),
+                RegistryTrial.completion_date_type == "ACTUAL",
+            ),
+        ),
+    )
 
 
 def groups_of(year: int) -> dict[str, ColumnElement[bool]]:
@@ -119,6 +138,8 @@ def rule_of(name: str, year: int | None = None) -> Callable[[], ColumnElement[bo
         if year is None:
             raise YearNotGiven(f"The set '{ROLLING}' is chosen by the year, and none was given.")
         return lambda: active_or_ended_in(year)
+    if name == REGISTRY_CLAIMS_2026:
+        return registry_claims_2026
     if name not in SETS:
         raise UnknownSet(f"No set of stored trials is named '{name}'. Sets: {', '.join(NAMES)}.")
     return SETS[name]
@@ -157,7 +178,11 @@ class SetsReport:
 def count_sets(session: Session, year: int | None = None) -> SetsReport:
     """Count the dated sets, and the rolling set too when its year is given."""
     counts: list[SetCount] = []
-    rules = dict(SETS) | ({ROLLING: rule_of(ROLLING, year)} if year is not None else {})
+    rules = (
+        dict(SETS)
+        | {REGISTRY_CLAIMS_2026: registry_claims_2026}
+        | ({ROLLING: rule_of(ROLLING, year)} if year is not None else {})
+    )
     for name, rule in rules.items():
         counted = SetCount(name)
         rows = session.execute(

@@ -29,6 +29,8 @@ The operator's answers of 2026-11-17 are in `design.md`, "What the operator deci
 - [ ] 2.10 Score one day's kept leads with triage, then judge forty it passed and twenty-five it rejected; record the table here, and stop to tell the operator if fewer than half of the passed are treatment reports
 - [ ] 2.11 Read one batch of about 200 through the loop of `docs/backfill-loop.md`: read, `thenwhat prepare --pending`, audit, clear; record here the reads, failures on the page, claims drafted and joined, trials newly cited, cost and hours
 - [ ] 2.12 Record on the fault sheet that stored search names include ordinary words, add a regression test with a synthetic registry record at the seam that works out a search name, and stop the news search sending such a name; verify the count of trials whose name changed is recorded here
+
+The registry rollout replay changed 51 of 27,731 stored-name derivations for recognized vague labels. It cleared 50 and retained one code documented in the same registered intervention. News search rechecks a known vague label on older rows before sending a request. The wider ordinary-word check remains open.
 - [ ] 2.13 Mark by rule a source article on the website an approved organisation record gives for the sponsor of one of the claim's approved trials (`specs/site-publishing`); verify tests for a subdomain of that website, a company page with no organisation record, and that an agent's hint sets no mark
 - [ ] 2.14 Load the second headline corpus for the months the article list is not loaded for, asking for the five fields by name; verify a test that fails if any other column is read, and record here the leads kept by outlet kind
 

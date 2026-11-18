@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from thenwhat.backfill.mediacloud import Story
 from thenwhat.backfill.outlet_kinds import kind_of
+from thenwhat.backfill.trial_names import generic_intervention_name, name_under_test
 from thenwhat.db.models import ArticleLead, RegistryTrial
 from thenwhat.domain import WorkOutcome
 from thenwhat.sources.base import (
@@ -38,6 +39,9 @@ def query_for(name: str, indication: str) -> str:
 
 # The index was asked and holds no story that names the trial's intervention.
 NO_STORIES = Reason("no_stories", ReasonClass.FINAL, "the news index holds no story for it")
+NO_INTERVENTION_NAME = Reason(
+    "no_intervention_name", ReasonClass.FINAL, "the registry gives no specific intervention name"
+)
 
 
 # The index did not answer for this trial: a timeout, a passing fault. The trial is
@@ -51,9 +55,16 @@ SEARCH_AGAIN_AFTER = timedelta(hours=1)
 UNANSWERED_BEFORE_STOPPING = 3
 
 
+def _search_name(record: RegistryTrial) -> str | None:
+    name = record.search_name
+    if name is not None and generic_intervention_name(name):
+        return name_under_test(record.interventions or [])
+    return name
+
+
 class NewsSearch:
     name = "news_search"
-    reasons = (NO_STORIES, INDEX_DID_NOT_ANSWER)
+    reasons = (NO_STORIES, NO_INTERVENTION_NAME, INDEX_DID_NOT_ANSWER)
     version = 1
     record_kind = "registry_trial"
     model = RegistryTrial
@@ -67,18 +78,20 @@ class NewsSearch:
         self._unanswered = 0
 
     def scope(self) -> ColumnElement[bool]:
-        """Trials that name an intervention and a condition. A trial whose interventions
-        are only a placebo or a description has no name and is never searched."""
+        """Trials with a stored name and indication. Legacy names are checked before use."""
         return RegistryTrial.search_name.is_not(None) & RegistryTrial.search_indication.is_not(None)
 
     def inputs(self, record: RegistryTrial) -> dict[str, Any]:
-        return {"name": record.search_name, "indication": record.search_indication}
+        return {"name": _search_name(record), "indication": record.search_indication}
 
     def run(
         self, session: Session, record: RegistryTrial, client: NewsIndex
     ) -> WorkOutcome | NothingFound | Later:
-        assert record.search_name and record.search_indication  # the scope guarantees both
-        query = query_for(record.search_name, record.search_indication)
+        assert record.search_indication  # the scope checks the stored indication
+        name = _search_name(record)
+        if name is None:
+            return NothingFound(NO_INTERVENTION_NAME)
+        query = query_for(name, record.search_indication)
         try:
             stories = client.search(query, limit=self.leads_per_trial)
         except SourceCannotBeAsked:

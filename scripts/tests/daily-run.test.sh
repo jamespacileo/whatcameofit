@@ -73,7 +73,7 @@ job() {
 never() {
   # news_search is left out too: a trial the daily load changes becomes due for it, and
   # thousands of requests to Media Cloud are not this job's to start.
-  if grep -E 'audit clear|thenwhat (archive|unarchive|export)|publish-data|git |news_search' "$1" >/dev/null; then
+  if grep -E 'audit (sample|judge|spot-check|clear)|thenwhat (draft-from-registry|archive|unarchive|export)|publish-data|git |news_search' "$1" >/dev/null; then
     fail "$2: a forbidden command appears"
   fi
 }

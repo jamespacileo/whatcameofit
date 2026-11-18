@@ -50,10 +50,10 @@ test("the migrations in order make store/schema.sql, and the bundled statements 
   execFileSync(process.execPath, [here("../scripts/generate.mjs"), "--check"], { stdio: "pipe" });
 });
 
-test("every bundled statement is inside D1's limits for a statement, and the merge is the store's 101", { skip }, async () => {
+test("every bundled statement is inside D1's limits for a statement, and the merge is the store's 102", { skip }, async () => {
   const { MERGE, PREVIEW, INGEST } = await import("../src/sql.generated.mjs");
   const { D1 } = await import("../src/limits.mjs");
-  assert.equal(MERGE.length, 101);
+  assert.equal(MERGE.length, 102);
   for (const sql of [...MERGE, ...PREVIEW, ...Object.values(INGEST)]) {
     assert.ok(Buffer.byteLength(sql) < D1.statementBytes);
     assert.ok(new Set(sql.match(/\?\d+/g) || []).size <= D1.boundParameters);
@@ -415,6 +415,24 @@ test("a field is taken only on a kind that reads it, a lookup ties no lead to a 
   const trial = { registry_name: "clinicaltrials.gov", external_id: "NCT77", title: "t", intervention_names: "Drug: arm; ".repeat(400) };
   assert.equal(await stageOne("device-mini", "device", ["registry_trial", "clinicaltrials.gov|NCT77", trial]), null);
   assert.equal((await stageOne("device-mini", "device", ["registry_trial", "clinicaltrials.gov|NCT78", { ...trial, external_id: "NCT78", title: trial.intervention_names }]))?.body.error, "field_too_long");
+});
+
+test("the store adds exact registry candidates without changing an existing claim's decision", { skip }, async () => {
+  for (const ids of ["NCT00000001", { entry: "NCT00000001" }, ["not-a-trial"]]) {
+    const refused = await stageOne("device-mini", "device", claim("nominated", { registry_candidate_trial_ids: ids }));
+    assert.deepEqual([refused?.status, refused?.body.error], [422, "bad_trial_ids"]);
+  }
+
+  const published = claim("nominated", { registry_candidate_trial_ids: ["NCT00000002"] });
+  assert.equal((await push([published])).body.status, "merged");
+  const review = await s.one("SELECT review_state FROM claim WHERE slug = 'nominated'");
+  assert.equal((await push([claim("nominated", {
+    registry_candidate_trial_ids: ["NCT00000001", "NCT00000001"],
+  })])).body.status, "merged");
+  assert.equal((await push([published])).body.status, "merged");
+  const candidates = await s.one("SELECT registry_candidate_trial_ids FROM claim WHERE slug = 'nominated'");
+  assert.deepEqual(JSON.parse(candidates), ["NCT00000001", "NCT00000002"]);
+  assert.equal(await s.one("SELECT review_state FROM claim WHERE slug = 'nominated'"), review);
 });
 
 test("registering a run again writes nothing, before its merge or after", { skip }, async () => {

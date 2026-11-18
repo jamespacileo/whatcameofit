@@ -4,6 +4,7 @@
 // name or moves a term. Openspec site-publishing: "Clinical category page".
 import Base from "../../layouts/Base.astro";
 import ClaimTable from "../../components/ClaimTable.astro";
+import { hasLinkedReport, reportedClaimCount } from "../../lib/reports";
 import MeshCredit from "../../components/MeshCredit.astro";
 import { data } from "../../lib/export";
 import {
@@ -30,6 +31,7 @@ const broader = node.broader
   .filter((one) => one !== undefined)
   .sort((a, b) => a.label.localeCompare(b.label));
 const narrower = narrowerWithClaims(tree, node.identifier);
+const reportedSlugs = new Set(data.claims.filter(hasLinkedReport).map((claim) => claim.slug));
 const slugs = tree.claims.get(node.identifier) ?? new Set<string>();
 const claims = data.claims
   .filter((claim) => slugs.has(claim.slug))
@@ -51,6 +53,7 @@ const claims = data.claims
   <h1 class="title">{node.label}</h1>
   <p class="lede">
     {`${claims.length} ${claims.length === 1 ? "claim" : "claims"} in this MeSH category or one narrower.`}
+    {" "}{reportedClaimCount(claims)} with a linked report.
     {claims.length > 1 && " Newest first."}
   </p>
   {
@@ -86,6 +89,7 @@ const claims = data.claims
                   <span class="visually-hidden">
                     {claimCount(tree, one.identifier) === 1 ? " claim" : " claims"}
                   </span>
+                  {" · "}{[...(tree.claims.get(one.identifier) ?? [])].filter((slug) => reportedSlugs.has(slug)).length} reported
                 </span>
               </li>
             ))}

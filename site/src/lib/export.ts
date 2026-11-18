@@ -4,11 +4,13 @@ import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { assertClaimFilesFit, SPLIT_RELEASE } from "../../scripts/dist-size.mjs";
 import { unlabelledApproaches, unwordedRegistryTypes } from "./approach";
 import { clinicalProblems, type Clinical, type ClinicalCategory } from "./clinical";
 import { unlabelledPaperCodes } from "./paper-facts";
 import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
 import { unwordedStatementCodes, type ExportedStatement } from "./statements";
+import { REGISTRY_CLAIM_WORDING } from "./registry-claim-wording";
 import { unlabelledTrialCodes } from "./trial-facts";
 import { unwordedOrganisationCodes, type ExportedOrganisation } from "./organisations";
 
@@ -220,6 +222,8 @@ export interface ExportedClaim {
   slug: string;
   headline: string;
   summary: string;
+  drafted_from?: "article" | "registry" | "operator" | null;
+  has_report?: boolean | null;
   vertical: string;
   /** The kind of intervention, as a code the site words; null when none is recorded. */
   approach: string | null;
@@ -321,9 +325,24 @@ export interface Export {
   match_accept_above?: number | null;
 }
 
-// 2: the pipeline leaves claims awaiting audit out (docs/adr/0007). An export from
-// pipeline code older than that hold says 1 and is refused.
-const SUPPORTED_SCHEMA_VERSION = 2;
+// Version 2 introduced the audit hold. Version 3 also carries registry-drafted claims.
+const SUPPORTED_SCHEMA_VERSIONS = [2, 3];
+
+type SourceClaim = Omit<ExportedClaim, "headline" | "summary"> & {
+  headline: string | null;
+  summary: string | null;
+};
+
+function wordClaim(claim: SourceClaim): ExportedClaim {
+  const hasReport = claim.has_report ?? claim.articles.length > 0;
+  const { intervention, indication } = claim;
+  return {
+    ...claim,
+    headline: claim.headline ?? REGISTRY_CLAIM_WORDING.headline(intervention.name, indication),
+    summary: claim.summary ?? (hasReport ? "" : REGISTRY_CLAIM_WORDING.summary(intervention.name, indication)),
+    has_report: hasReport,
+  };
+}
 
 function exportPath(): string {
   const configured = process.env.EXPORT_FILE;
@@ -362,11 +381,12 @@ function load(): { data: Export; exportVersion: string } {
       .join("\n");
     throw new Error(`The export at ${file} does not match export.schema.json:\n${problems}`);
   }
-  if (content.schema_version !== SUPPORTED_SCHEMA_VERSION) {
+  if (!SUPPORTED_SCHEMA_VERSIONS.includes(content.schema_version)) {
     throw new Error(
-      `The export at ${file} has schema version ${content.schema_version}; this site reads version ${SUPPORTED_SCHEMA_VERSION}.`,
+      `The export at ${file} has schema version ${content.schema_version}; this site reads versions 2 and 3.`,
     );
   }
+  if (!SPLIT_RELEASE) assertClaimFilesFit(content.claims.length);
   const unlabelled = unlabelledApproaches(
     (content as Export).claims.map((claim) => claim.approach),
   );
@@ -428,7 +448,10 @@ function load(): { data: Export; exportVersion: string } {
       `The export at ${file} has reported statement codes the site has no words for: ${unwordedStatements.join(", ")}. Add them to src/lib/statements.ts.`,
     );
   }
-  return { data: content as Export, exportVersion: createHash("sha256").update(raw).digest("hex").slice(0, 24) };
+  return {
+    data: { ...content, claims: (content.claims as SourceClaim[]).map(wordClaim) } as Export,
+    exportVersion: createHash("sha256").update(raw).digest("hex").slice(0, 24),
+  };
 }
 
 export const { data, exportVersion } = load();

@@ -82,6 +82,15 @@ KINDS_OF_PRODUCT = frozenset(
 DESCRIBES = frozenset(
     ["before", "after", "during", "in", "for", "of", "to", "then", "infiltration", "finding"]
 )
+# Standalone labels that name only a role, schedule or population. Longer registered
+# labels can still identify the intervention, even when they begin with these words.
+_UNIDENTIFIED_INTERVENTION = re.compile(
+    r"(?:first|more|homes?|(?:wo)?m[ae]n|participants?|patients?|"
+    r"(?:adjuvant|autologous|combination|consolidation|endocrine|experimental|hormone|"
+    r"induction|investigational|maintenance|systemic|pre[- ]treatment|post[- ]treatment)"
+    r"(?: (?:(?:drug|medical) )?(?:arms?|groups?|regimens?|treatments?|therap(?:y|ies)))?)",
+    re.IGNORECASE,
+)
 MAX_NAME_WORDS = 3
 MIN_NAME_LENGTH = 4
 MORE_GENERIC_CONDITION_WORDS = frozenset(
@@ -124,6 +133,11 @@ MORE_GENERIC_CONDITION_WORDS = frozenset(
 MAX_INDICATION_WORDS = 3
 
 
+def generic_intervention_name(text: str) -> bool:
+    """Whether the entire label identifies no specific intervention on its own."""
+    return _UNIDENTIFIED_INTERVENTION.fullmatch(" ".join(text.split())) is not None
+
+
 def name_under_test(interventions: list[dict[str, Any]]) -> str | None:
     """The first intervention that reads as the name of what the trial tests, without
     dose, form or route. None when every entry is a control or a description."""
@@ -133,10 +147,29 @@ def name_under_test(interventions: list[dict[str, Any]]) -> str | None:
         written = intervention.get("name") or ""
         if NOT_UNDER_TEST.search(written):
             continue
-        for candidate in (written, *(intervention.get("otherNames") or [])):
-            name = _name_alone(candidate)
-            if name is not None:
-                return name
+        aliases = intervention.get("otherNames") or []
+        for label in (written, *aliases):
+            name = _name_candidate(label)
+            if name is None:
+                continue
+            if generic_intervention_name(name):
+                return _registered_code(written, aliases)
+            return name
+    return None
+
+
+def _registered_code(written: str, aliases: list[str]) -> str | None:
+    """Recover a code written in the name itself when its other words are generic."""
+    # Alternate names can list the comparator, and a later intervention can be
+    # background treatment. A code in both fields ties it to this intervention.
+    written_aliases = {match[1:-1].strip().casefold() for match in BRACKETS.findall(written)}
+    for alias in aliases:
+        key = alias.strip().casefold()
+        if key not in written_aliases or not any(character.isdigit() for character in key):
+            continue
+        name = _name_alone(alias)
+        if name is not None and name.casefold() == key:
+            return name
     return None
 
 
@@ -147,6 +180,11 @@ def name_alone(written: str) -> str | None:
 
 
 def _name_alone(written: str) -> str | None:
+    name = _name_candidate(written)
+    return name if name is not None and not generic_intervention_name(name) else None
+
+
+def _name_candidate(written: str) -> str | None:
     if NOT_UNDER_TEST.search(written):
         return None
     text = BRACKETS.sub(" ", written)

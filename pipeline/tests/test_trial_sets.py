@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from backfill_support import NOW
 from thenwhat.backfill.trial_sets import (
+    REGISTRY_CLAIMS_2026,
     ROLLING,
     UnknownSet,
     YearNotGiven,
@@ -117,7 +118,8 @@ def test_counting_the_sets_by_phase_with_the_day_they_were_loaded(session: Sessi
 
     report = count_sets(session)
 
-    active, completed = report.sets
+    active, completed, registry_claims = report.sets
+    assert (registry_claims.name, registry_claims.total) == (REGISTRY_CLAIMS_2026, 0)
     assert (active.name, active.total) == ("active-since-2025", 4)
     assert active.by_phase == {("PHASE2",): 1, ("PHASE2", "PHASE3"): 1, ("PHASE3",): 2}
     assert active.loaded_first == active.loaded_last == NOW.date()
@@ -181,4 +183,35 @@ def test_counting_the_sets_counts_the_rolling_set_when_given_its_year(session: S
     assert [counted.name for counted in count_sets(session).sets] == [
         "active-since-2025",
         "completed-with-results-since-2025",
+        REGISTRY_CLAIMS_2026,
     ]
+
+
+def test_registry_claims_set_all_sponsors_and_actual_completions_without_results(session: Session):
+    registry = {"registry_name": "clinicaltrials.gov"}
+    trial(session, "A1", **registry, phases=["PHASE1", "PHASE2"], last_update_posted=None)
+    trial(
+        session,
+        "A2",
+        **registry,
+        overall_status="NOT_YET_RECRUITING",
+        sponsor_class="OTHER",
+        search_name=None,
+    )
+    completed = {**registry, "overall_status": "COMPLETED", "completion_date": "2026-06"}
+    trial(session, "C1", **completed, completion_date_type="ACTUAL", phases=["PHASE2", "PHASE3"])
+    trial(session, "X1", **completed, completion_date_type="ESTIMATED")
+    trial(session, "X2", **registry, overall_status="TERMINATED", completion_date="2026-03")
+    trial(session, "X3", **registry, phases=["PHASE1"])
+    trial(
+        session, "X4", **{**completed, "completion_date": "2025-12"}, completion_date_type="ACTUAL"
+    )
+    trial(
+        session,
+        "X5",
+        **registry,
+        raw_payload={"protocolSection": {"designModule": {"studyType": "OBSERVATIONAL"}}},
+    )
+    trial(session, "X6")
+
+    assert in_set(session, rule_of(REGISTRY_CLAIMS_2026)) == ["A1", "A2", "C1"]

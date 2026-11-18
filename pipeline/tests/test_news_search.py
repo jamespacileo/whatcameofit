@@ -72,6 +72,28 @@ def test_the_query_is_the_name_as_a_phrase_with_any_telling_word():
     )
 
 
+def test_legacy_generic_search_names_use_a_registered_alias_or_skip_the_request(
+    session: Session, fake_time
+):
+    skipped, recovered = add_trials(session, 2)
+    skipped.search_name = "Home"
+    skipped.interventions = [{"type": "DRUG", "name": "Home"}]
+    recovered.search_name = "Maintenance"
+    recovered.interventions = [
+        {"type": "DRUG", "name": "Maintenance therapy (ZX-100)", "otherNames": ["ZX-100"]}
+    ]
+    session.flush()
+
+    index = Index()
+    _, report = search(session, index, fake_time)
+
+    assert index.queries == [query_for("ZX-100", "condition")]
+    assert report.nothing_found == 2
+    entries = session.scalars(select(WorkEntry).order_by(WorkEntry.record_id)).all()
+    assert entries[0].requests_used == 0
+    assert entries[1].requests_used == 1
+
+
 def test_coverage_found_is_stored_as_leads_and_the_entry_is_done(session: Session, fake_time):
     """Scenario: A trial with coverage"""
     [trial] = add_trials(session, 1)

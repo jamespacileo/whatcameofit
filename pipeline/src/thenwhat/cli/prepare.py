@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import typer
-from sqlalchemy import ColumnElement, and_
+from sqlalchemy import ColumnElement, and_, select
 from sqlalchemy.orm import Session
 
 from thenwhat.claims.entry import claim_by_slug
@@ -26,8 +26,8 @@ from thenwhat.cli.entry import entry_session
 from thenwhat.cli.session import settings_or_exit
 from thenwhat.clinical.service import prepared_line, suggestion_line
 from thenwhat.db.models import Claim
-from thenwhat.domain import ReviewState, WorkOutcome
-from thenwhat.prepare import claim_sharing_its_substance
+from thenwhat.domain import DraftedFrom, ReviewState, WorkOutcome
+from thenwhat.prepare import claim_sharing_its_substance, registry_draft_matches
 
 OUTCOME_WORDS = {
     WorkOutcome.FAILED: "failed",
@@ -125,6 +125,7 @@ def prepare_command(
         for step in steps:
             if isinstance(step, ClaimDecide):
                 _say_decided(session, step)
+        _say_pending_registry_drafts(session, claims)
         handled = handled_since(session, steps, started)
         if handled:
             out.print(prepared_line(session, handled), markup=False)
@@ -156,3 +157,25 @@ def _say_decided(session: Session, step: ClaimDecide) -> None:
                 else "rejected by rule: its intervention is a description, not a name"
             )
         out.print(f"{claim.slug}: {said}. {suggestion_line(session, claim)}", markup=False)
+
+
+def _say_pending_registry_drafts(session: Session, scope: ColumnElement[bool]) -> None:
+    for claim in session.scalars(
+        select(Claim)
+        .where(
+            scope,
+            Claim.drafted_from == DraftedFrom.REGISTRY,
+            Claim.review_state == ReviewState.PENDING,
+        )
+        .order_by(Claim.slug)
+    ):
+        matches = registry_draft_matches(session, claim)
+        details = []
+        for identifier in claim.drafting_trial_ids:
+            match = matches.get(identifier)
+            if match is None:
+                details.append(f"{identifier} has no score")
+            else:
+                reason = f" ({', '.join(match.reasons)})" if match.reasons else ""
+                details.append(f"{identifier} {match.score:.2f} {match.review_state.value}{reason}")
+        out.print(f"{claim.slug}: pending registry draft. {', '.join(details)}.", markup=False)

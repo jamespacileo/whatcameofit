@@ -12,6 +12,7 @@ from sqlalchemy import (
     ForeignKey,
     ForeignKeyConstraint,
     Index,
+    Integer,
     LargeBinary,
     MetaData,
     Numeric,
@@ -26,6 +27,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
+    DraftedFrom,
     EntityType,
     EventType,
     EvidenceStage,
@@ -111,6 +113,16 @@ class Reviewed:
     reviewed_by: Mapped[Decider | None] = mapped_column(_enum(Decider, "reviewed_by"))
 
 
+class AuditBatch(Base):
+    """The claims drafted together on the writer."""
+
+    __tablename__ = "audit_batch"
+
+    name: Mapped[str] = mapped_column(Text, primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+    draft_record: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
+
+
 class Claim(Reviewed, Base):
     __tablename__ = "claim"
     __table_args__ = (
@@ -135,12 +147,35 @@ class Claim(Reviewed, Base):
             "approach_basis IS NULL OR approach_decided_by = 'rule'",
             name="approach_basis_is_a_rules",
         ),
+        CheckConstraint(
+            "drafted_from IS DISTINCT FROM 'registry' OR cardinality(drafting_trial_ids) > 0",
+            name="registry_draft_has_trials",
+        ),
+        CheckConstraint(
+            "drafted_from IS NOT DISTINCT FROM 'registry' OR (cardinality(drafting_trial_ids) = 0"
+            " AND headline IS NOT NULL AND summary IS NOT NULL)",
+            name="non_registry_draft_has_text",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     slug: Mapped[str] = mapped_column(Text, unique=True)
-    headline: Mapped[str] = mapped_column(Text)
-    summary: Mapped[str] = mapped_column(Text)
+    # Empty only for a claim drafted from registry records, which may gain them later.
+    headline: Mapped[str | None] = mapped_column(Text)
+    summary: Mapped[str | None] = mapped_column(Text)
+    # What the claim was drafted from. Set once and never changed, even when the claim
+    # later gains an article or a trial. Empty for a claim stored before it was recorded,
+    # whose origin is not guessed.
+    drafted_from: Mapped[DraftedFrom | None] = mapped_column(_enum(DraftedFrom, "drafted_from"))
+    # The registry trial IDs a claim drafted from registry records was drafted from: at
+    # least one for such a claim, none for any other.
+    drafting_trial_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
+    # IDs nominated for verification by a registry plan. They carry no approval or drafting origin.
+    registry_candidate_trial_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
     vertical: Mapped[str] = mapped_column(Text)
     # One of the configured approaches, or none. Never part of status.
     approach: Mapped[str | None] = mapped_column(Text)
@@ -171,6 +206,8 @@ class Claim(Reviewed, Base):
     # Approved by `thenwhat prepare` for a link lead's read, and held off the site until
     # the batch it came in has been audited (`thenwhat audit clear`). Never exported.
     awaiting_audit_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    audit_batch: Mapped[str | None] = mapped_column(ForeignKey("audit_batch.name"), index=True)
+    audit_cleared_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     # The claim this one was merged into (`thenwhat claim merge`). A merged claim is
     # archived, stands for no intervention any more, and its address leads to that claim.
     merged_into_id: Mapped[int | None] = mapped_column(ForeignKey("claim.id"), index=True)
@@ -179,6 +216,52 @@ class Claim(Reviewed, Base):
     # for. Its change makes the claim due for its search steps; a search leaves it as it is.
     registry_search_due_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP, server_default=func.now())
+
+
+class AuditSample(Base):
+    __tablename__ = "audit_sample"
+    __table_args__ = (
+        CheckConstraint("cardinality(claim_ids) > 0", name="has_claims"),
+        CheckConstraint("claim_ids <@ population_ids", name="sample_in_population"),
+        CheckConstraint("spot_claim_ids <@ claim_ids", name="spot_check_in_sample"),
+        CheckConstraint(
+            "(spot_seed IS NULL) = (spot_claim_ids IS NULL)", name="spot_check_has_seed"
+        ),
+        CheckConstraint("max_wrong_share >= 0 AND max_wrong_share <= 1", name="figure_is_fraction"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    batch: Mapped[str] = mapped_column(ForeignKey("audit_batch.name"), index=True)
+    seed: Mapped[str] = mapped_column(Text)
+    population_ids: Mapped[list[int]] = mapped_column(ARRAY(Integer))
+    claim_ids: Mapped[list[int]] = mapped_column(ARRAY(Integer))
+    drawn_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    spot_seed: Mapped[str | None] = mapped_column(Text)
+    spot_claim_ids: Mapped[list[int] | None] = mapped_column(ARRAY(Integer))
+    released_at: Mapped[datetime | None] = mapped_column(TIMESTAMP)
+    max_wrong_share: Mapped[Decimal | None] = mapped_column(Numeric)
+
+
+class AuditJudgement(Base):
+    __tablename__ = "audit_judgement"
+    __table_args__ = (
+        CheckConstraint("judged_by IN ('human', 'assistant')", name="judged_by_a_reader"),
+        CheckConstraint(
+            "(is_right AND category IS NULL AND detail IS NULL)"
+            " OR (NOT is_right AND category IS NOT NULL AND detail IS NOT NULL)",
+            name="wrong_has_defect",
+        ),
+    )
+
+    sample_id: Mapped[int] = mapped_column(ForeignKey("audit_sample.id"), primary_key=True)
+    claim_id: Mapped[int] = mapped_column(ForeignKey("claim.id"), primary_key=True)
+    judged_by: Mapped[Decider] = mapped_column(_enum(Decider, "judged_by"), primary_key=True)
+    reviewer: Mapped[str] = mapped_column(Text)
+    judged_at: Mapped[datetime] = mapped_column(TIMESTAMP)
+    facts_sha256: Mapped[str] = mapped_column(Text)
+    right: Mapped[bool] = mapped_column("is_right")
+    category: Mapped[str | None] = mapped_column(Text)
+    detail: Mapped[str | None] = mapped_column(Text)
 
 
 class ClaimChange(Base):

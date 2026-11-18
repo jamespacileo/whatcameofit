@@ -356,12 +356,19 @@ def merge_into(
     try:
         # As in D1: the bulk file holds the hot rows bulk rows hang from (`REFERENCE`).
         db.execute("PRAGMA foreign_keys = ON")
-        # A downloaded bulk build predating waiting outcomes still has the old CHECK.
-        schema_check = "SELECT 1 FROM pragma_table_info('work_entry') WHERE name = 'reason'"
-        if not db.execute(schema_check).fetchone():
+        # A downloaded bulk build may predate the current merge schema.
+        migrations = (
+            ("work_entry", "reason", "0008_work_entry_waits.sql"),
+            ("claim", "drafting_trial_ids", "0009_registry_claim_origin.sql"),
+            ("claim", "registry_candidate_trial_ids", "0010_registry_candidate_trial_ids.sql"),
+        )
+        for table, column, filename in migrations:
+            schema_check = "SELECT 1 FROM pragma_table_info(?) WHERE name = ?"
+            if db.execute(schema_check, (table, column)).fetchone():
+                continue
             db.execute("BEGIN IMMEDIATE")
-            if not db.execute(schema_check).fetchone():
-                migration = store_sql / "ingest/migrations/0008_work_entry_waits.sql"
+            if not db.execute(schema_check, (table, column)).fetchone():
+                migration = store_sql / "ingest/migrations" / filename
                 for statement in migration.read_text().split(";"):
                     if statement.strip():
                         db.execute(statement)

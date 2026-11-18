@@ -39,8 +39,12 @@ A claim's first reported date SHALL equal the earliest published date among its 
 ## ADDED Requirements
 
 ### Requirement: A claim records what it was drafted from
-Every claim SHALL record what it was drafted from: a news article, registry records, or an operator's entry. The record SHALL NOT change when the claim later gains an article or a trial.
+A new claim SHALL record what it was drafted from: a news article, registry records, or an operator's entry. A legacy claim MAY have no recorded drafting source when the earlier schema did not capture it. The record SHALL NOT change when the claim later gains an article or a trial.
 
 #### Scenario: A registry-drafted claim gains an article
 - **WHEN** a claim drafted from registry records gains its first source article
 - **THEN** it still records that it was drafted from registry records
+
+#### Scenario: Upgrade a legacy claim without recorded provenance
+- **WHEN** the migration encounters a claim whose drafting source was never recorded
+- **THEN** the source is left unknown and its headline and summary are preserved

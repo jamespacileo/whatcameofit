@@ -180,7 +180,7 @@ On 2026-11-17, after this change was first drafted, the operator answered twelve
 | Which trials first? | Industry-sponsored, phase 2 and 3 |
 | What closing the gap means | A claim for every named trial, drafted from the registry record where no report exists (`registry-drafted-claims`) |
 
-The last answer changes what these routes are for. With `registry-drafted-claims`, a named trial is cited by a claim whether or not anything reports it, so a route here does not draft most claims: it finds a report and the same-claim decision attaches it to the claim that exists. A trial is due for a route while no claim that cites it has a report linked, not while no claim cites it. The routes still draft a claim when a report names a treatment and condition no claim holds.
+The 2026-11-18 decision in `registry-drafted-claims` broadened the rollout to all active Phase 2 or 3 interventional trials and all Phase 2 or 3 trials actually completed in 2026. Registry evidence can establish a claim before a report exists. The headline funnel finds reports for these claims and the same-claim decision attaches each matching report. A trial is due for a news route while none of its citing claims has a linked report. A report that establishes a new treatment and condition can still start an article-drafted claim through the existing route.
 
 Decisions 10 and 11 follow from the first answer.
 

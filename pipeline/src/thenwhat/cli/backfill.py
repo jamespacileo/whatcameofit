@@ -1,12 +1,15 @@
 """The backfill commands: load registry trials, see what is due, and run a step."""
 
+import json
 import sqlite3
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from time import monotonic
 from typing import Annotated, Any
 
 import typer
@@ -39,11 +42,19 @@ from thenwhat.backfill.link_topics import coverage
 from thenwhat.backfill.link_triage import DecisionClient, LinkTriage, Standing
 from thenwhat.backfill.mediacloud import MediaCloud
 from thenwhat.backfill.registered import link_read_step, make_triage, registered_steps
+from thenwhat.backfill.registry_arm_scope import arm_packet, propose_arm_scope
+from thenwhat.backfill.registry_claim_plan import plan_registry_claims
 from thenwhat.backfill.registry_load import (
-    TrialList,
     UnknownTrialSet,
     condition_of,
     load_trials,
+)
+from thenwhat.backfill.registry_scope_evidence import StoredTrial, cache_scope_evidence
+from thenwhat.backfill.registry_scope_propose import ReviewPacket, propose_scope, review_packet
+from thenwhat.backfill.registry_scope_review import (
+    confirm_protocol_evidence,
+    load_protocol_evidence,
+    load_scope_reviews,
 )
 from thenwhat.backfill.topics import TOPICS
 from thenwhat.backfill.trial_coverage import coverage_of
@@ -58,8 +69,10 @@ from thenwhat.backfill.trial_references import count_references
 from thenwhat.backfill.trial_sets import (
     NAMES,
     NO_WIDER_RECORD,
+    REGISTRY_CLAIMS_2026,
     ROLLING,
     count_sets,
+    registry_claims_2026,
     require_wider_record,
     rule_of,
 )
@@ -68,13 +81,16 @@ from thenwhat.claimsteps.step import ClaimStep
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.clinical.mesh_xml import mesh_xml_vocabulary
 from thenwhat.config import Settings, SourceAllowance
+from thenwhat.db.models import RegistryTrial
 from thenwhat.domain import Decider, LeadVerdict, OutletKind, WorkOutcome
+from thenwhat.llm.errors import LlmError, LlmNotConfigured
 from thenwhat.measure import spans
 from thenwhat.measure.files import FileWriter
 from thenwhat.measure.report import measured_cost_of_a_record
 from thenwhat.sources.base import SourceError
-from thenwhat.sources.clinicaltrials import ClinicalTrials
+from thenwhat.sources.clinicaltrials import NCT_ID, ClinicalTrials
 from thenwhat.sources.pubmed import PubMed
 from thenwhat.work.allowance import Allowances, AllowanceStatus
 from thenwhat.work.errors import BackfillError, SourceStop
@@ -146,7 +162,7 @@ def make_allowances(settings: Settings) -> Allowances:
     return Allowances(open_session, settings.allowances())
 
 
-def make_registry(session: Session, settings: Settings) -> TrialList:
+def make_registry(session: Session, settings: Settings) -> ClinicalTrials:
     return ClinicalTrials(session, contact_email=settings.contact_email)
 
 
@@ -581,7 +597,8 @@ def load_trials_command(
         typer.Option(
             help="A named set of trials: phase-3 (the default) or active-phase-2-3, "
             "interventional trials of a drug or biological, the second those under way "
-            "now; or interventional, every interventional study."
+            "now; interventional, every interventional study; or "
+            f"{REGISTRY_CLAIMS_2026}, the registry-claim cohort."
         ),
     ] = None,
     changes_only: Annotated[
@@ -770,6 +787,7 @@ SET_WORDS = {
     "completed-with-results-since-2025": (
         "completed on or after 2025-01-01 (actual date), results posted"
     ),
+    REGISTRY_CLAIMS_2026: "phase 2 or 3, under way or actually completed in 2026",
     ROLLING: (
         "under way now in any phase, or completed, terminated, withdrawn or suspended "
         "with a completion date this year"
@@ -828,9 +846,188 @@ def trial_sets_command() -> None:
     if report.without_wider_record:
         out.print(
             f"{report.without_wider_record:,} of {report.stored:,} stored trials were loaded "
-            "before these fields were asked for and are in neither set until loaded again.",
+            "before these fields were asked for and may need a refresh.",
             markup=False,
         )
+
+
+@backfill_app.command("registry-claim-plan")
+def registry_claim_plan_command(
+    reviewed_scopes: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True,
+            dir_okay=False,
+            help="Apply evidence-backed scope reviews to the plan.",
+        ),
+    ] = None,
+    mesh_descriptors: Annotated[
+        Path | None,
+        typer.Option(exists=True, dir_okay=False, help="Read an annual NLM MeSH descriptor file."),
+    ] = None,
+    arm_evidence: Annotated[
+        Path | None,
+        typer.Option(exists=True, dir_okay=False, help="Version-matched detailed protocol cache."),
+    ] = None,
+) -> None:
+    """Print the 2026 registry-claim plan as JSON. Reads stored records only."""
+    settings_or_exit()
+    with refusals():
+        try:
+            reviews = load_scope_reviews(reviewed_scopes) if reviewed_scopes is not None else None
+            evidence = load_protocol_evidence(arm_evidence) if arm_evidence is not None else None
+        except (OSError, ValueError) as error:
+            raise BackfillError(f"Could not read scope reviews: {error}") from error
+        try:
+            vocabulary = mesh_xml_vocabulary(mesh_descriptors) if mesh_descriptors else None
+        except (OSError, ValueError, SyntaxError) as error:
+            raise BackfillError(f"Could not read MeSH descriptors: {error}") from error
+        with open_session() as session:
+            require_wider_record(session)
+            plan = plan_registry_claims(
+                session, scope_reviews=reviews, vocabulary=vocabulary, arm_evidence=evidence
+            )
+    typer.echo(json.dumps({"set": REGISTRY_CLAIMS_2026, **asdict(plan)}, default=sorted))
+
+
+def _scope_trial_ids(trials: list[str]) -> tuple[str, ...]:
+    identifiers = tuple(dict.fromkeys(identifier.upper().strip() for identifier in trials))
+    if not identifiers or not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
+        raise BackfillError("Specify ClinicalTrials.gov trial identifiers in NCT format.")
+    return identifiers
+
+
+def _stored_scope_trials(
+    session: Session,
+    identifiers: tuple[str, ...],
+) -> dict[str, StoredTrial]:
+    records = {
+        identifier: (record, updated)
+        for identifier, record, updated in session.execute(
+            select(
+                RegistryTrial.external_id,
+                RegistryTrial.raw_payload,
+                RegistryTrial.last_update_posted,
+            ).where(registry_claims_2026(), RegistryTrial.external_id.in_(identifiers))
+        )
+    }
+    missing = [identifier for identifier in identifiers if identifier not in records]
+    if missing:
+        raise BackfillError(f"Trials absent from the eligible stored set: {', '.join(missing)}.")
+    return {identifier: records[identifier] for identifier in identifiers}
+
+
+@backfill_app.command("registry-scope-evidence")
+def registry_scope_evidence_command(
+    trials_file: Annotated[
+        Path, typer.Argument(exists=True, dir_okay=False, help="One eligible NCT ID per line.")
+    ],
+    output: Annotated[
+        Path, typer.Option("--output", dir_okay=False, help="Private protocol cache on disk.")
+    ],
+) -> None:
+    """Fetch version-matched protocol evidence in bounded batches, or resume the cache."""
+    settings = settings_or_exit()
+    started = monotonic()
+    with refusals(), open_session() as session:
+        try:
+            identifiers = _scope_trial_ids(trials_file.read_text(encoding="utf-8").split())
+            records = _stored_scope_trials(session, identifiers)
+            report = cache_scope_evidence(make_registry(session, settings), records, output)
+        except (OSError, ValueError) as error:
+            raise BackfillError(f"Could not cache registry scope evidence: {error}") from error
+    typer.echo(
+        json.dumps(
+            {
+                **asdict(report),
+                "pending": len(report.pending_ids),
+                "seconds": round(monotonic() - started, 3),
+            }
+        )
+    )
+
+
+@backfill_app.command("registry-scope-proposals")
+def registry_scope_proposals_command(
+    trials: Annotated[list[str], typer.Argument(help="Exact ClinicalTrials.gov trial IDs.")],
+    run: Annotated[
+        bool, typer.Option("--run", help="Request structured candidates using the configured cap.")
+    ] = False,
+    arm_evidence: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True,
+            dir_okay=False,
+            help="Read cached protocol records keyed by NCT ID for the arm-specific review.",
+        ),
+    ] = None,
+    check_omissions: Annotated[
+        bool, typer.Option(help="In arm-evidence runs, request a second check for omitted scope.")
+    ] = False,
+) -> None:
+    """Print evidence packets for scope review or request candidates for specified trials."""
+    settings = settings_or_exit()
+    started = monotonic()
+    budget = settings.registry_scope_monthly_budget_usd
+    with refusals():
+        if check_omissions and (arm_evidence is None or not run):
+            raise BackfillError("--check-omissions requires --arm-evidence and --run.")
+        if run and budget is None:
+            raise BackfillError("Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD before a live scope run.")
+        identifiers = _scope_trial_ids(trials)
+        with open_session() as session:
+            records = _stored_scope_trials(session, identifiers)
+            try:
+                if arm_evidence is None:
+                    packets = [review_packet(records[identifier][0]) for identifier in identifiers]
+                else:
+                    evidence = load_protocol_evidence(arm_evidence)
+                    packets = []
+                    for identifier in identifiers:
+                        record = evidence[identifier]
+                        stored, updated = records[identifier]
+                        confirm_protocol_evidence(
+                            identifier,
+                            stored,
+                            record,
+                            stored_update=str(updated) if updated else None,
+                        )
+                        packets.append(arm_packet(record))
+            except (KeyError, OSError, TypeError, ValueError) as error:
+                raise BackfillError(f"Could not prepare a scope packet: {error}") from error
+            proposals = []
+            failures = {}
+            stopped = None
+            if run:
+                from thenwhat.cli.extract import make_llm
+
+                llm = make_llm(session, budget_cap=budget)
+                for packet in packets:
+                    try:
+                        if isinstance(packet, ReviewPacket):
+                            proposal = propose_scope(llm, packet)
+                        else:
+                            proposal = propose_arm_scope(
+                                llm, packet, check_omissions=check_omissions
+                            )
+                        proposals.append(asdict(proposal))
+                    except (SourceStop, LlmNotConfigured) as error:
+                        stopped = str(error)
+                        break
+                    except (LlmError, ValueError) as error:
+                        failures[packet.trial_id] = str(error)
+    typer.echo(
+        json.dumps(
+            {
+                "packets": [asdict(packet) for packet in packets],
+                "proposals": proposals,
+                "failures": failures,
+                "stopped": stopped,
+                "seconds": round(monotonic() - started, 3),
+            },
+            ensure_ascii=False,
+        )
+    )
 
 
 @backfill_app.command("trial-references")

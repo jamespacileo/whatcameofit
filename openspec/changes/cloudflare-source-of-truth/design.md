@@ -405,3 +405,13 @@ Considered, and not taken: a mark on a trial's row saying it is of the set, with
 - **How often an approved event's content differs** under one key between two fetches. Counted during the parallel run (decision 13).
 - **Answered on 2026-11-16:** a merged claim's entities, matches and events stay with it, and the claim that stays is prepared again (decision 16). The session adding the pipeline's command is told in the shared notes.
 - **Answered on 2026-11-16:** reporting without applying is counted by `store/preview.sql`, not tried (decision 10).
+
+## Registry claim capacity finding (2026-11-18)
+
+The offline build for `registry-drafted-claims` added 200 synthetic registry-only claims to the seed. It took 47.2 seconds, emitted 1,970 files and produced a 122,106-byte lookup. The warm-cache run with 600 additions emitted 5,578 files and a 364,106-byte lookup. Each claim emits eight dedicated static files before search indexing.
+
+A stress export of 20,224 synthetic claims plus the seed was refused before page rendering. Its floor of 161,800 files exceeds both the configured 18,000-file build budget and the published 100,000-file Workers Paid ceiling. This stress size is the number of proposals from the current registry planner. Verified grouping and reuse determine the final claim count. The single static bundle cannot deliver that scale in one Worker version. [Cloudflare Workers limits](https://developers.cloudflare.com/workers/platform/limits/#static-assets)
+
+The split-release rehearsal keeps claim pages built. Claim files, Pagefind files and oversized generated topic and row lists are copied by content checksum into a separate bucket for generated public files. The rest of the site and a sharded address-to-checksum manifest stay in the same Worker version. The deploy command verifies the referenced objects before deploying that version. A rollback selects its earlier manifest and lookup and uses the objects retained in the bucket. The preview has a separate bucket and serves its staged files with noindex.
+
+On the Mac, the synthetic full-size rehearsal produced 182,295 files and 5,177,433,324 bytes before staging. The checked Worker assets held 394 files and 123,439,697 bytes. The object files were deduplicated to 121,677 files and 1,353,794,193 bytes in the NVMe stage. The amount deduplicated reflects the repeated synthetic card designs. The local Worker served the two oversized lists by their built addresses, and a separate 201-claim rehearsal verified browser search and all eight claim-file addresses. Production object storage, cloud transfer time and the full real export remain to be verified.

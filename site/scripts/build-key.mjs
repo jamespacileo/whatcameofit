@@ -19,6 +19,8 @@ export const SETTINGS = [
   "EXPORT_FILE",
   "PUBLISHED_TOPICS_FILE",
   "CONTACT_EMAIL",
+  "PREVIEW_SITE_FILES_BUCKET",
+  "PREVIEW_SITE_FILES_JURISDICTION",
 ];
 
 // Files under site/ that no copy is made from: the tests and the notes.

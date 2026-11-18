@@ -13,14 +13,17 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.promises import parse_promise_date
 from thenwhat.claims.verticals import APPROACHES, VERTICALS
 from thenwhat.db.models import (
+    AuditBatch,
     Claim,
     ClaimChange,
     Entity,
     EntitySubstance,
     Promise,
+    RegistryTrial,
     SourceArticle,
 )
-from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.domain import Decider, DraftedFrom, EntityType, ReviewState
+from thenwhat.sources.clinicaltrials import NCT_ID, ClinicalTrials
 from thenwhat.sources.rxnorm import not_searched
 
 MAX_SLUG_LENGTH = 60
@@ -331,7 +334,7 @@ class NamedClaim:
     slug: str
     intervention: str
     indication: str
-    summary: str
+    summary: str | None
 
 
 def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]:
@@ -492,12 +495,124 @@ def add_claim(
     indication: str,
     summary: str = "",
     approach: str | None = None,
+    drafted_from: str = DraftedFrom.OPERATOR,
 ) -> Claim:
     """Create a claim and its intervention entity. One claim per intervention and indication.
 
     An approach given here is recorded as a person's; the seed loader says otherwise."""
+    try:
+        origin = DraftedFrom(drafted_from)
+    except ValueError as error:
+        raise InvalidField(f"Unknown claim drafting source {drafted_from!r}.") from error
+    if origin is DraftedFrom.REGISTRY:
+        raise InvalidField("Use the registry drafting path for a claim with trial evidence.")
+    return _add_claim(
+        session,
+        slug=slug,
+        headline=_required("headline", headline),
+        summary=tidy(summary),
+        vertical=vertical,
+        intervention=intervention,
+        indication=indication,
+        approach=approach,
+        drafted_from=origin,
+    )
+
+
+def _stored_trial_ids(session: Session, trial_ids: Sequence[str]) -> list[str]:
+    identifiers = sorted({identifier.strip().upper() for identifier in trial_ids})
+    if not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
+        raise InvalidField("Registry trials must have ClinicalTrials.gov identifiers.")
+    stored = set(
+        session.scalars(
+            select(RegistryTrial.external_id).where(
+                RegistryTrial.registry_name == ClinicalTrials.name,
+                RegistryTrial.external_id.in_(identifiers),
+            )
+        )
+    )
+    if missing := set(identifiers) - stored:
+        listed = ", ".join(sorted(missing))
+        raise InvalidField(f"Trial records missing from the registry: {listed}.")
+    return identifiers
+
+
+def nominate_registry_trials(
+    session: Session, slug: str, trial_ids: Sequence[str]
+) -> tuple[str, ...]:
+    """Queue a verified group's exact registry IDs for ordinary matching on its claim."""
+    claim = session.scalar(
+        select(Claim)
+        .where(Claim.slug == slug)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+    if claim is None:
+        raise ClaimNotFound(f"No claim has the slug '{slug}'.")
+    if (
+        claim.review_state is ReviewState.REJECTED
+        or claim.archived_at is not None
+        or claim.merged_into_id is not None
+    ):
+        raise InvalidField(f"Claim '{slug}' cannot accept registry candidates.")
+    identifiers = _stored_trial_ids(session, trial_ids)
+    queued = set(claim.registry_candidate_trial_ids)
+    added = tuple(sorted(set(identifiers) - queued - set(claim.drafting_trial_ids)))
+    if added:
+        claim.registry_candidate_trial_ids = sorted(queued.union(added))
+        session.flush()
+    return added
+
+
+def add_registry_claim(
+    session: Session,
+    *,
+    slug: str,
+    vertical: str,
+    intervention: str,
+    indication: str,
+    trial_ids: Sequence[str],
+    audit_batch: str | None = None,
+) -> Claim:
+    """Store a pending registry claim using the recorded trials as its drafting evidence."""
+    if not trial_ids:
+        raise MissingField("A registry claim needs its drafting trial IDs.")
+    identifiers = _stored_trial_ids(session, trial_ids)
+    if (
+        audit_batch is not None
+        and session.get(AuditBatch, audit_batch, with_for_update=True) is None
+    ):
+        raise InvalidField(f"No audit batch is named '{audit_batch}'.")
+    return _add_claim(
+        session,
+        slug=slug,
+        headline=None,
+        summary=None,
+        vertical=vertical,
+        intervention=intervention,
+        indication=indication,
+        approach=None,
+        drafted_from=DraftedFrom.REGISTRY,
+        drafting_trial_ids=identifiers,
+        audit_batch=audit_batch,
+    )
+
+
+def _add_claim(
+    session: Session,
+    *,
+    slug: str,
+    headline: str | None,
+    summary: str | None,
+    vertical: str,
+    intervention: str,
+    indication: str,
+    approach: str | None,
+    drafted_from: DraftedFrom,
+    drafting_trial_ids: Sequence[str] = (),
+    audit_batch: str | None = None,
+) -> Claim:
     _check_slug(slug)
-    headline = _required("headline", headline)
     intervention = _required("intervention", intervention)
     indication = _required("indication", indication)
     _check_vertical(vertical)
@@ -511,7 +626,10 @@ def add_claim(
     claim = Claim(
         slug=slug,
         headline=headline,
-        summary=tidy(summary),
+        summary=summary,
+        drafted_from=drafted_from,
+        drafting_trial_ids=list(drafting_trial_ids),
+        audit_batch=audit_batch,
         vertical=vertical,
         approach=approach,
         approach_decided_by=Decider.HUMAN if approach else None,
@@ -739,6 +857,9 @@ def clear_audit(session: Session, slugs: list[str]) -> list[Claim]:
     """Let claims whose audit passed be published from the next export on. Every slug is
     checked before any hold is cleared, so a refusal clears nothing."""
     claims = [claim_by_slug(session, slug) for slug in slugs]
+    batches = sorted({claim.audit_batch for claim in claims if claim.audit_batch is not None})
+    if batches:
+        raise AuditRefused(f"Use audit clear --batch for batched claims: {', '.join(batches)}.")
     not_held = [claim.slug for claim in claims if claim.awaiting_audit_at is None]
     if not_held:
         raise AuditRefused(f"Not awaiting audit: {', '.join(not_held)}. Nothing was cleared.")

@@ -69,6 +69,65 @@ thenwhat audit dismiss <lead>… --reason "…"   # it is not
 
 A review decision an assistant makes is recorded with `--as-assistant`.
 
+### Batches drafted from registry records
+
+For `active-phase-2-3-or-completed-2026`, the grouping audit in
+`registry-drafted-claims` must support at least 45 of 50 groups before drafting.
+Keep each batch's preview and receipt on the external drive.
+
+A registry-drafted claim covers one intervention or complete regimen for one indication.
+It can go through this workflow before a news report is linked.
+For a reviewed scope that cites a detailed protocol, pass `--reviewed-scopes` with
+`--arm-evidence` to `thenwhat backfill registry-claim-plan` and `thenwhat draft-from-registry`.
+Put one eligible NCT identifier per line in a batch file. Fetch the detailed protocols into
+a private cache on the external drive.
+
+```sh
+thenwhat backfill registry-scope-evidence <batch-file> --output <protocol-cache-on-external-drive>
+```
+
+The command reports completed pages, cached and fetched records, pending IDs and any
+version mismatches. Repeat it with the same files to resume. It requests only records
+whose detailed evidence is missing or differs from the stored trial.
+The cache is also accepted by `thenwhat backfill registry-scope-proposals --arm-evidence`.
+Pass `--arm-evidence` to the planner or drafting preview to check arm descriptions directly.
+When a scope receipt is available, also pass `--reviewed-scopes`. Use the same evidence files
+for preview and apply.
+
+```sh
+thenwhat draft-from-registry active-phase-2-3-or-completed-2026 --batch phase23-001 --limit 200
+thenwhat draft-from-registry active-phase-2-3-or-completed-2026 --batch phase23-001 --limit 200 --apply-plan <preview-digest>
+thenwhat prepare --pending
+thenwhat audit sample --batch phase23-001 --all
+```
+
+Run the apply command with the same scope and MeSH options as the preview. The digest binds
+the selected actions, registry record versions, checked protocol hashes, applicable scope
+receipts and registry alias evidence for the selected groups. Detailed
+protocols must agree with the stored trial's identifier, update date and shared scope fields.
+A changed plan needs a new preview.
+Inspect the component lists and registry alias pairs in the preview. Groups whose
+registry records name each other wait for scope review. When both names identify the
+same regimen for the same indication, use the same verified name in their scope receipts.
+For a selected Cancer placement with multiple supported topics, inspect the MeSH descriptor
+and its topics in `primary_cancer_topic_evidence`. The preview digest binds that evidence.
+For a verified existing-claim link, supply the trial, group, claim and evidence hashes from
+the preview in `--verified-links`, with the reviewer and their reason. Preparation scores
+the nominated trials through the existing match step. Reapplying the same batch returns its
+receipt.
+
+Add `--existing-only` to both preview and apply to limit a batch to verified nominations.
+The preview lists the scores and review states of candidates already in the match queue under
+`stored_matches`. A pending match stays in that queue for a scoring or review decision.
+
+Judge the first batch in full. Record each finding with `thenwhat audit judge`. Use
+`--as-assistant` for an assistant's finding, and draw an operator check with
+`thenwhat audit spot-check --batch phase23-001 --size <count>` where applicable.
+After the judgments, `thenwhat audit clear --batch phase23-001` releases eligible claims
+for the export. Record the exported and searchable claim counts before starting the next batch.
+The daily run starts no registry drafting, batch audit, release or export. Its shared
+preparation step can prepare drafts already in the store.
+
 ### 4. Defects
 
 Every wrong thing found, in the audit or anywhere else, is one row on *Edge cases*: the address, the step that went wrong, a category from *Defect categories*, what happened and what should have. A defect that was archived still gets its row: the archive removes the claim, the row keeps the lesson.

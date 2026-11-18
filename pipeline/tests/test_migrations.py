@@ -40,6 +40,9 @@ EXPECTED_TABLES = {
     "link_lead_link",
     "link_lead_label",
     "claim_change",
+    "audit_batch",
+    "audit_sample",
+    "audit_judgement",
 }
 
 # The migration that records where an entity was named (openspec organisations).

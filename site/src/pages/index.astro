@@ -6,6 +6,7 @@ import FeedRows from "../components/FeedRows.astro";
 import HomeNarrow from "../components/HomeNarrow.astro";
 import Lookup from "../components/Lookup.astro";
 import Pager from "../components/Pager.astro";
+import ReportFilter from "../components/ReportFilter.astro";
 import RestSaid from "../components/RestSaid.astro";
 import ThenNow from "../components/ThenNow.astro";
 import TopicChip from "../components/TopicChip.astro";
@@ -32,6 +33,7 @@ import {
 } from "../lib/home-lists";
 import { siteData } from "../lib/structured";
 import { TESTED_WORDS } from "../lib/record-brief";
+import { hasLinkedReport, reportedClaimCount } from "../lib/reports";
 import { formatDate } from "../lib/timetable";
 
 // Each list's first rows are in the page; the rest are fetched when a reader asks for
@@ -41,11 +43,7 @@ import { formatDate } from "../lib/timetable";
 const suggest = contactLink(SITE.suggestUrl, "", SUGGEST_SUBJECT);
 
 // The home page names the topics with the most claims; the rest are one link away.
-const topTopics = listedTopics
-  .map((topic) => ({
-    ...topic,
-    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
-  }))
+const topTopics = [...topicChoices]
   .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
   .slice(0, 12);
 
@@ -58,7 +56,8 @@ for (const claim of data.claims) {
 }
 const years = Array.from(perYear).sort((a, b) => b[0].localeCompare(a[0]));
 
-const approvals = data.claims.filter((claim) => claim.status.code === "approved").length;
+const reported = reportedClaimCount(data.claims);
+const approvals = data.claims.filter((claim) => hasLinkedReport(claim) && claim.status.code === "approved").length;
 
 // The front page is one set of lists over the same claims, each in an order a reader
 // comes back for. A list with nothing in it is not offered.
@@ -104,7 +103,7 @@ const example = exampleClaim(data.claims);
               <a href="/topics">
                 {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
               </a>
-              .
+              . {reported} with a linked report.
             </p>
           )}
         </div>
@@ -126,7 +125,7 @@ const example = exampleClaim(data.claims);
         <a href="/topics">
           {listedTopics.length} {listedTopics.length === 1 ? "topic" : "topics"}
         </a>
-        . <a href="/it-happened">Approvals on record</a>: {approvals} of {data.claims.length}.
+        . {reported} with a linked report. <a href="/it-happened">Approvals on record</a>: {approvals} of {reported} reported.
         {data.last_checked_at && (
           <>
             {" "}Registries last checked <span class="unbroken">{formatDate(data.last_checked_at)}</span>.
@@ -139,7 +138,9 @@ const example = exampleClaim(data.claims);
   {/* The claims this reader follows, read from this browser's own storage by the script. */}
   <section class="home-section following" id="following" hidden data-following>
     <h2 class="bar">Following</h2>
+    {reported < data.claims.length && <ReportFilter />}
     <ul class="plain" data-following-list></ul>
+    <p class="entry-note" hidden data-following-empty>No reported claims among those you follow.</p>
     <p class="entry-note">Kept in this browser only.</p>
     <p class="visually-hidden" role="status" data-following-said></p>
   </section>
@@ -181,7 +182,7 @@ const example = exampleClaim(data.claims);
           <ul>
             <li>
               <a href="#feed-claims" data-open-view="claims">
-                Every claim <span class="kind-count">{data.claims.length}</span>
+                Every claim <span class="kind-count">{data.claims.length} · {reported} reported</span>
               </a>
             </li>
             {moves.length > 0 && (
@@ -273,8 +274,12 @@ const example = exampleClaim(data.claims);
     everyClaim.length > 0 && (
       <section class="feed-panel" id="feed-claims" data-view="claims" data-rest={restOf("claims")} data-rest-for="narrowing">
       <h2 class="bar">Every claim tracked</h2>
+      <div class="claim-browse-controls">
+        <p class="entry-note" data-claim-tally>{everyClaim.length} {everyClaim.length === 1 ? "claim" : "claims"}, {reported} with a linked report.</p>
+        {reported < everyClaim.length && <ReportFilter id="claims-reported" />}
+      </div>
       <p class="entry-note tested-note">
-        One row for each reported breakthrough, newest report first. {TESTED_WORDS.note}
+        One row per claim, newest report first. {TESTED_WORDS.note}
       </p>
       <div class="table-frame">
       <table role="table" class="index">
@@ -448,7 +453,7 @@ const example = exampleClaim(data.claims);
     {
       topTopics.map((topic) => (
         <li>
-          <TopicChip vertical={topic.slug} count={topic.count} />
+          <TopicChip vertical={topic.slug} count={topic.count} reported={topic.reported} />
         </li>
       ))
     }
@@ -593,6 +598,7 @@ const example = exampleClaim(data.claims);
       frame: panel.querySelector<HTMLElement>(".table-frame"),
       none: panel.querySelector<HTMLElement>("[data-none]"),
       count: feed.querySelector<HTMLElement>(`#tab-${panel.dataset.view} .count`),
+      tally: panel.querySelector<HTMLElement>("[data-claim-tally]"),
     }));
     const left = (row: HTMLTableRowElement) =>
       !row.getAttributeNames().some((name) => name.startsWith("data-out"));
@@ -603,8 +609,13 @@ const example = exampleClaim(data.claims);
         // While the rest of a list is not in the page its rows cannot be counted: the
         // tab keeps the list's own number, and the list says it is not whole.
         if (waiting(list.panel)) return;
-        const total = [...body.rows].filter(left).length;
+        const visible = [...body.rows].filter(left);
+        const total = visible.length;
         if (list.count) list.count.textContent = String(total);
+        if (list.tally) {
+          const withReport = visible.filter((row) => !row.hasAttribute("data-no-report")).length;
+          list.tally.textContent = `${total} ${total === 1 ? "claim" : "claims"}, ${withReport} with a linked report.`;
+        }
         if (list.frame) list.frame.hidden = total === 0;
         if (list.none) list.none.hidden = total > 0;
       };
@@ -651,11 +662,13 @@ const example = exampleClaim(data.claims);
           row.toggleAttribute("data-out-topic", choice.value !== "" && row.dataset.topic !== choice.value);
         }
       });
-      const asked = new URL(location.href).searchParams.get("topic") ?? "";
-      if (asked && asked in counts) {
-        choice.value = asked;
-        narrow(asked);
-      }
+      const restore = () => {
+        const asked = new URL(location.href).searchParams.get("topic") ?? "";
+        choice.value = Object.hasOwn(counts, asked) ? asked : "";
+        narrow(choice.value);
+      };
+      if (new URL(location.href).searchParams.has("topic")) restore();
+      addEventListener("popstate", restore);
     }
   }
 
@@ -839,6 +852,8 @@ const example = exampleClaim(data.claims);
   if (following && store) {
     const list = following.querySelector<HTMLElement>("[data-following-list]")!;
     const said = following.querySelector<HTMLElement>("[data-following-said]")!;
+    const report = following.querySelector<HTMLSelectElement>("[data-report-filter]");
+    const empty = following.querySelector<HTMLElement>("[data-following-empty]")!;
     const followed = readFollowed(store.getItem(FOLLOWING_ENTRY));
     const hint = document.querySelector<HTMLElement>("[data-follow-hint]");
     if (hint) hint.hidden = Object.keys(followed).length > 0;
@@ -848,10 +863,21 @@ const example = exampleClaim(data.claims);
       if (className) node.className = className;
       return node;
     };
-    const draw = (listed: Parameters<typeof followedRows>[1]) => {
+    type FollowedLookup = Record<string, { headline: string; page: string; status: string; first_reported?: string | null }>;
+    let latestLookup: FollowedLookup = {};
+    const draw = (listed: FollowedLookup = latestLookup) => {
+      latestLookup = listed;
       const rows = followedRows(followed, listed);
+      const onlyReported = new URL(location.href).searchParams.get("reported") === "1";
+      const visible = rows.filter((row) => !onlyReported || listed[row.slug]?.first_reported !== null);
+      if (report) {
+        report.value = onlyReported ? "1" : "";
+        const choice = report.closest("[data-report-choice]")!;
+        choice.toggleAttribute("data-await", !rows.some((row) => listed[row.slug]?.first_reported === null));
+      }
+      empty.hidden = !rows.length || visible.length > 0;
       list.replaceChildren(
-        ...rows.map((row) => {
+        ...visible.map((row) => {
           const item = element("li");
           if (row.page) {
             const link = element("a", row.headline) as HTMLAnchorElement;
@@ -899,6 +925,14 @@ const example = exampleClaim(data.claims);
         }
       }
     };
+    report?.addEventListener("change", () => {
+      const browse = document.querySelector<HTMLSelectElement>("#feed-reported");
+      if (!browse) return;
+      browse.value = report.value;
+      browse.dispatchEvent(new Event("change"));
+    });
+    addEventListener("report:change", () => draw());
+    addEventListener("popstate", () => draw());
     if (Object.keys(followed).length > 0) {
       fetch("/lookup.json")
         .then((response) => response.json())
@@ -915,6 +949,16 @@ const example = exampleClaim(data.claims);
 </script>
 
 <style is:global>
+  .claim-browse-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+  }
+
+  .claim-browse-controls .entry-note {
+    margin-block: 0;
+  }
   /* Global, not scoped: scoping would mark every element of the page, and the
      lookup's answers are drawn by script. */
   .suggest {

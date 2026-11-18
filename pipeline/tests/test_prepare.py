@@ -6,6 +6,7 @@ entity-resolution and lead-reading."""
 
 from collections.abc import Generator
 from contextlib import contextmanager
+from pathlib import Path
 
 import pytest
 from sqlalchemy import select
@@ -15,20 +16,31 @@ from typer.testing import CliRunner
 from backfill_support import same_session
 from claim_support import (
     NOW,
+    Backend,
     Registry,
     Sources,
     drafted_by_a_read,
     new_claim,
     trial,
 )
+from thenwhat.backfill.registry_load import store_trial
 from thenwhat.claims.corrections import rename_intervention
-from thenwhat.claims.entry import awaiting_audit, find_claim
+from thenwhat.claims.entry import (
+    InvalidField,
+    add_registry_claim,
+    awaiting_audit,
+    find_claim,
+    nominate_registry_trials,
+)
 from thenwhat.cli import app
-from thenwhat.db.models import Entity, LinkLead, SourceArticle
+from thenwhat.db.models import Entity, EntityMatch, LinkLead, SourceArticle
+from thenwhat.decide.core import BackendAnswer
+from thenwhat.decide.steps import OTHER_INDICATION
 from thenwhat.domain import Decider, OutletKind, ReadOutcome, ReviewState
 from thenwhat.extract.retrieve import NotNow
 from thenwhat.prepare import decide_prepared_lead_claim
 from thenwhat.review.decisions import record_decision
+from thenwhat.sources.clinicaltrials import Searched
 
 
 @pytest.fixture
@@ -87,6 +99,107 @@ def test_prepare_works_through_every_step_and_decides_a_reads_draft(run, session
     drafted = find_claim(session, "drafted-one")
     assert drafted is not None and drafted.review_state is ReviewState.APPROVED
     assert drafted.awaiting_audit_at is not None
+
+
+@pytest.mark.parametrize("same_indication", [True, False])
+def test_prepare_scores_the_drafting_trial_by_id_and_holds_only_an_approved_draft(
+    run, session: Session, sources: Sources, tmp_path: Path, same_indication: bool
+):
+    drafting = trial("NCT00000001")
+    other = trial("NCT00000002")
+    drafting.payload["protocolSection"]["identificationModule"]["briefTitle"] = "Draft study"
+    other.payload["protocolSection"]["identificationModule"]["briefTitle"] = "Other result"
+
+    class ByNumber(Registry):
+        def name_search(self, intervention: str, condition: str | None = None) -> Searched:
+            self._ask(intervention)
+            return Searched(drafting.source_name, intervention, [other], 1)
+
+    class Match(Backend):
+        def answer(self, step: str, state: str, options: list[str]) -> BackendAnswer:
+            if not same_indication and "Draft study" in state and OTHER_INDICATION in options:
+                return BackendAnswer(
+                    OTHER_INDICATION,
+                    {option: 0.85 if option == OTHER_INDICATION else 0.05 for option in options},
+                )
+            return super().answer(step, state, options)
+
+    sources.registry = ByNumber([drafting, other])
+    sources.backend = Match()
+    store_trial(session, [], drafting.source_name, drafting.payload, NOW)
+    claim = add_registry_claim(
+        session,
+        slug="registry-draft-one",
+        vertical="mouth-and-teeth",
+        intervention="EX-1",
+        indication="tooth agenesis",
+        trial_ids=[drafting.external_id],
+    )
+
+    result = run("prepare", "--pending", "--workers", "1")
+
+    assert result.exit_code == 0, result.output
+    assert drafting.external_id in sources.registry.asked
+    matches = {match.external_id: match for match in session.scalars(select(EntityMatch))}
+    assert matches[other.external_id].review_state is ReviewState.APPROVED
+    if same_indication:
+        assert matches[drafting.external_id].review_state is ReviewState.APPROVED
+        assert claim.review_state is ReviewState.APPROVED
+        assert claim.awaiting_audit_at is not None
+        exported = run("export", "--out", str(tmp_path / "claims.json"))
+        assert exported.exit_code == 0, exported.output
+        assert "Exported 0 claims" in said(exported)
+        assert "1 approved claim was left out: awaiting audit" in said(exported)
+    else:
+        assert matches[drafting.external_id].score == pytest.approx(0.05)
+        assert matches[drafting.external_id].review_state is not ReviewState.APPROVED
+        assert claim.review_state is ReviewState.PENDING
+        assert claim.awaiting_audit_at is None
+        assert "registry-draft-one: pending registry draft. NCT00000001 0.05" in said(result)
+    assert claim.evidence_stage is None
+
+
+def test_prepare_matches_a_queued_exact_trial_on_an_existing_published_claim(
+    run, session: Session, sources: Sources
+):
+    record = trial("NCT00000009")
+
+    class ByNumber(Registry):
+        def name_search(self, intervention: str, condition: str | None = None) -> Searched:
+            self._ask(intervention)
+            return Searched(record.source_name, intervention, [], 0)
+
+    sources.registry = ByNumber([record])
+    store_trial(session, [], record.source_name, record.payload, NOW)
+    claim = new_claim(session, "existing-claim", "https://news.example.org/2019/example")
+    record_decision(claim, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    assert run("prepare", "--pending", "--workers", "1").exit_code == 0
+    assert record.external_id not in sources.registry.asked
+
+    with pytest.raises(InvalidField, match="NCT00000008"):
+        nominate_registry_trials(session, claim.slug, [record.external_id, "NCT00000008"])
+    assert claim.registry_candidate_trial_ids == []
+    assert nominate_registry_trials(session, claim.slug, [record.external_id.lower()]) == (
+        record.external_id,
+    )
+    assert nominate_registry_trials(session, claim.slug, [record.external_id]) == ()
+    assert session.scalars(select(EntityMatch)).all() == []
+
+    result = run("prepare", "--pending", "--workers", "1")
+
+    assert result.exit_code == 0, result.output
+    assert "claim_trials: 1 done" in said(result)
+    assert record.external_id in sources.registry.asked
+    [match] = session.scalars(select(EntityMatch)).all()
+    assert (match.external_id, match.review_state, match.reviewed_by) == (
+        record.external_id,
+        ReviewState.APPROVED,
+        Decider.RULE,
+    )
+    assert claim.reviewed_by is Decider.HUMAN and claim.awaiting_audit_at is None
+    assert claim.drafting_trial_ids == []
+    assert run("prepare", "--pending", "--workers", "1").exit_code == 0
+    assert session.scalars(select(EntityMatch)).all() == [match]
 
 
 def test_prepare_with_no_claims_named_explains_and_exits_1(run):

@@ -8,9 +8,10 @@ import SectionList from "../../components/SectionList.astro";
 import SharePill from "../../components/SharePill.astro";
 import { topicCardAlt } from "../../lib/card";
 import { topicCardFor } from "../../lib/card-image";
-import { data, listedTopics, type StatusCode } from "../../lib/export";
+import { data, listedTopics } from "../../lib/export";
+import { reportedClaimCount } from "../../lib/reports";
 import { topicSentence } from "../../lib/share";
-import { topicSummary } from "../../lib/status";
+import { topicClaimSummary } from "../../lib/status";
 import { canonicalAddress } from "../../lib/structured";
 
 export function getStaticPaths() {
@@ -25,25 +26,27 @@ const claims = data.claims
   .filter((claim) => claim.vertical === vertical.slug)
   .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
 // Where the topic's claims stand, said once in plain words before the list.
-const counts = new Map<StatusCode, number>();
-for (const claim of claims) counts.set(claim.status.code, (counts.get(claim.status.code) ?? 0) + 1);
-const summary = topicSummary(counts);
+const summary = topicClaimSummary(claims);
+const mixed = reportedClaimCount(claims) < claims.length;
 // A topic with a claim has a link-preview card of its own, built from the same summary.
 const card = claims.length > 0 ? `/og/topic/${vertical.slug}.png` : undefined;
 // The other topics with published claims, each with its count; this one marked.
-const topics = listedTopics.map((topic) => ({
-  href: `/topic/${topic.slug}`,
-  name: topic.title,
-  count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
-  current: topic.slug === vertical.slug,
-}));
+const topics = listedTopics.map((topic) => {
+  const members = data.claims.filter((claim) => claim.vertical === topic.slug);
+  return {
+    href: `/topic/${topic.slug}`,
+    name: topic.title,
+    count: `${members.length} · ${reportedClaimCount(members)} reported`,
+    current: topic.slug === vertical.slug,
+  };
+});
 const sentence =
   summary && topicSentence(summary, data.last_checked_at, canonicalAddress(`/topic/${vertical.slug}`));
 ---
 
 <Base
   title={vertical.title}
-  description={`Reported breakthroughs in ${vertical.title.toLowerCase()} and where each stands now.`}
+  description={`Tracked claims in ${vertical.title.toLowerCase()} and where each stands now.`}
   current="topics"
   image={card}
   imageAlt={card && topicCardAlt(topicCardFor(vertical, claims))}
@@ -62,12 +65,12 @@ const sentence =
         <h1 class="title">{vertical.title}</h1>
         {/* A reader arriving from a shared link has not seen the home page. */}
         <p class="what-this-is" data-pagefind-ignore>
-          Reported breakthroughs in {vertical.title.toLowerCase()}, and where the public records show
+          {mixed ? "Tracked claims" : "Reported breakthroughs"} in {vertical.title.toLowerCase()}, and where the public records show
           each stands now. <a href="/how-it-works">How a status is set</a>
         </p>
         <p class="lede">
           {summary ?? "0 reported breakthroughs tracked."}
-          {claims.length > 1 && " Newest first."}
+          {claims.length > 1 && (mixed ? " Newest reports first." : " Newest first.")}
         </p>
         {
           /* Ways to pass the topic on and to hear when one of its claims moves: in the

@@ -1,5 +1,7 @@
 # Proposal
 
+The [rollout handoff](handoff.md) records current evidence and the outstanding gates for this change.
+
 ## Why
 
 A claim exists today only when a news article reported it. On 2026-11-17 the production database held 467,064 registry trials and 2,041 claims, and 1,741 of the 102,053 trials that are under way or ended in 2026 were cited by a claim: 1.7%. Searching for news cannot close that, because most trials have no report (`headline-funnel`, `design.md`).
@@ -9,19 +11,19 @@ The operator decided on 2026-11-17 that every named trial is to be cited by a cl
 ## What Changes
 
 - **A claim can be drafted from registry records, with no source article.** **BREAKING** for `claims`: a claim no longer needs a source article, and its first reported date may be empty. The glossary line for Claim and an ADR say so.
-- **One claim per treatment and condition, as now.** Trials are grouped by rule on the intervention's name and the trial's indication. A trial whose treatment and condition an existing claim already holds is cited by that claim; no second claim is made.
+- **One claim per intervention or full regimen and indication.** Grouping starts with the trial's registered treatment arms and full condition labels. A trial whose regimen and indication an existing claim is verified to hold is cited by that claim.
+- **The registry can establish a primary topic.** Cancer is the primary topic when the same MeSH disease descriptor supports Cancer and an anatomical topic. Competing disease descriptors go to topic review.
 - **A registry-drafted claim is prepared like any draft.** `thenwhat prepare` searches the registries for it and approves by rule. The trial it was drafted from is a candidate, scored for the claim's indication, and is not approved for having led to it. A draft whose own trial is not approved is not approved.
 - **Its wording is fixed.** The claim page says, in one fixed line, that no news report is linked to the claim yet. Its headline and summary are worded by the site from the intervention and the indication, never by a model. It is never worded as a treatment a reader can get.
 - **Lists can be narrowed to reported claims.** Wherever claims are listed, a reader can show only claims a report is linked to, and counts say how many of each there are.
 - **When a report arrives, the claim is an ordinary claim.** The same-claim decision attaches the article, the first reported date is set, and the fixed line goes.
 - **A batch is cleared on a drawn sample.** **BREAKING** for the audit of ADR 0007: a held batch may be released when a sample the pipeline draws is judged and its share of wrong claims is at or below a figure the operator sets. A new ADR amends 0007.
-- **Named trials only, one set at a time.** Trials with no usable treatment name keep their plain page. The first set is industry-sponsored phase 2 and 3: 8,755 trials, 7,341 treatment-and-condition pairs.
+- **All active Phase 2 or 3 interventional trials and Phase 2 or 3 trials completed in 2026.** Include all sponsors, intervention kinds and results states. Plan the named set in batches. Trials that need further identity or indication evidence remain visible in the coverage gap and are resolved before linking.
 - **Every trial keeps its own page.** The trial page of `trial-first-route` stays, and leads with the claims that cite the trial, as it already does.
 
 Not in this change:
 
-- Trials with no usable name: devices, procedures, behavioural programmes, a description in place of a name (57,530 of the uncited).
-- A name or a condition proposed by a model for a registry-drafted claim.
+- A name or condition invented by a model. An optional review step selects verbatim registry evidence for a reviewer to check.
 - Any route that looks for news. That is `headline-funnel` and `trial-first-route`; with this change those routes attach reports to claims that exist.
 - A sponsor's release as a source article. Decided as yes on 2026-11-17 and specified in `headline-funnel`.
 - A change to how status is derived. A registry-drafted claim's status comes from its approved trial events by the rules that exist.

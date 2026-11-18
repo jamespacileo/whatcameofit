@@ -20,6 +20,7 @@ from thenwhat.cli.measure import measure_command, start_measuring
 from thenwhat.cli.outlets import outlets_command
 from thenwhat.cli.prepare import prepare_command
 from thenwhat.cli.readings import readings_command
+from thenwhat.cli.registry_draft import draft_from_registry_command
 from thenwhat.cli.resolve import entity_app, resolve_command
 from thenwhat.cli.review import review_app
 from thenwhat.cli.runs import runs_app  # noqa: F401  registers `backfill runs`
@@ -41,6 +42,7 @@ app.add_typer(extract_app, name="extract")
 app.add_typer(entity_app, name="entity")
 app.command("resolve")(resolve_command)
 app.command("prepare")(prepare_command)
+app.command("draft-from-registry")(draft_from_registry_command)
 app.command("terms")(terms_command)
 app.command("statements")(statements_command)
 app.command("readings")(readings_command)

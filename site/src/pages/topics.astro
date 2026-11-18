@@ -4,12 +4,13 @@
 // gives any topic a group, and under their first letters when it gives none.
 import Base from "../layouts/Base.astro";
 import { data, listedTopics } from "../lib/export";
+import { reportedClaimCount } from "../lib/reports";
 
 const topics = listedTopics
-  .map((topic) => ({
-    ...topic,
-    count: data.claims.filter((claim) => claim.vertical === topic.slug).length,
-  }))
+  .map((topic) => {
+    const claims = data.claims.filter((claim) => claim.vertical === topic.slug);
+    return { ...topic, count: claims.length, reported: reportedClaimCount(claims) };
+  })
   .sort((a, b) => a.title.localeCompare(b.title));
 
 interface Section {
@@ -66,6 +67,7 @@ function byGroup(): Section[] {
 const grouped = topics.some((topic) => topic.group);
 const sections = grouped ? byGroup() : byLetter();
 const claimCount = topics.reduce((sum, topic) => sum + topic.count, 0);
+const reported = topics.reduce((sum, topic) => sum + topic.reported, 0);
 // The clinical index exists only when a published claim has a category.
 const hasClinical = data.claims.some((claim) => (claim.clinical_categories ?? []).length > 0);
 ---
@@ -80,7 +82,7 @@ const hasClinical = data.claims.some((claim) => (claim.clinical_categories ?? []
   <h1 class="title">Topics</h1>
   <p class="lede">
     {topics.length} {topics.length === 1 ? "topic" : "topics"}, {claimCount}{" "}
-    {claimCount === 1 ? "claim" : "claims"} tracked.
+    {claimCount === 1 ? "claim" : "claims"} tracked. {reported} with a linked report.
   </p>
   {
     hasClinical && (
@@ -117,6 +119,7 @@ const hasClinical = data.claims.some((claim) => (claim.clinical_categories ?? []
                 <span class="count">
                   {topic.count}
                   <span class="visually-hidden">{topic.count === 1 ? " claim" : " claims"}</span>
+                  {" · "}{topic.reported} reported
                 </span>
               </li>
             ))}

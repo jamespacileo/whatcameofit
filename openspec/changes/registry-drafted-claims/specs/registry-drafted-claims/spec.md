@@ -7,25 +7,35 @@ Says how a claim is drafted from stored registry trials when no news report exis
 ## ADDED Requirements
 
 ### Requirement: Claims are drafted for one named set of trials at a time
-`thenwhat draft-from-registry` SHALL draft claims only for trials in a set the operator names, and only for trials that have a usable treatment name by the rule that works out a trial's search name. A set SHALL say which trials are in it and nothing of how any trial turned out, and its dates SHALL be part of its name. A trial with no usable name SHALL be counted and SHALL draft nothing.
+`thenwhat draft-from-registry` SHALL draft claims for trials in the named set when registry evidence establishes the intervention or full regimen and indication. A set SHALL name its dates and SHALL say nothing of how any trial turned out.
 
-#### Scenario: A trial of a device with a description for a name
-- **WHEN** a trial in the named set lists its intervention as a description that is not a name
-- **THEN** no claim is drafted for it and it is counted as having no name
+#### Scenario: A trial with a descriptive intervention label
+- **WHEN** a trial in the named set lists its intervention as a description
+- **THEN** use the label when it identifies what was tested, and report otherwise unresolved scope for review
 
 #### Scenario: A set the command does not know
 - **WHEN** the operator names a set the command does not have
 - **THEN** nothing is drafted and the command lists its sets
 
+#### Scenario: The 2026 rollout set
+- **WHEN** the operator selects `active-phase-2-3-or-completed-2026`
+- **THEN** the set includes active Phase 2 or 3 interventional trials and those actually completed in 2026, including combined phases and all sponsor classes and results states
+- **AND** trials with unresolved scope remain in the coverage count until their scope is verified
+
 ### Requirement: A name made only of ordinary words drafts nothing
-A treatment name SHALL NOT draft a claim when it is made only of ordinary words, by the project's word list and the inflected forms of its words. Such a trial SHALL be counted with its name, so the operator can see a real treatment that was left out.
+A legacy search name made only of ordinary words, by the project's word list and the inflected forms of its words, SHALL NOT establish the intervention's identity. The planner SHALL record such a trial for review when it cannot identify the intervention from the registered arms and intervention description.
 
 #### Scenario: A stored name that is an ordinary word
-- **WHEN** a trial's stored name is "Home"
+- **WHEN** a trial's stored name is "Home" and its registry fields identify no specific intervention
 - **THEN** no claim is drafted for it and the report lists the name
 
+#### Scenario: A tested arm includes a schedule in place of a treatment
+- **WHEN** a component is recorded only as a schedule or role such as "Maintenance Therapy"
+- **THEN** the planner holds the trial pending scope review
+- **AND** a full registered intervention that includes a schedule or role can still establish the scope
+
 ### Requirement: Trials are grouped into one treatment for one condition by rule
-Trials SHALL be grouped by fixed rules, with no model, on the treatment name and the trial's indication as the rule that works out a trial's search indication gives it. Names SHALL be compared ignoring letter case and spacing, and a name equal to another name of the same registry intervention SHALL count as the same. Each group SHALL draft at most one claim. A trial that lists several conditions SHALL be grouped once for each indication the rule gives it.
+Trials SHALL be grouped by fixed rules on the verified intervention or complete regimen and the full indication. The rule SHALL preserve clinically distinct formulations and combination components. Names SHALL be compared ignoring letter case and spacing, and documented aliases SHALL be checked for equivalence. Each group SHALL draft at most one claim.
 
 #### Scenario: Two trials of one treatment for one condition
 - **WHEN** two trials in the set test the same named treatment and the rule gives both the same indication
@@ -35,8 +45,90 @@ Trials SHALL be grouped by fixed rules, with no model, on the treatment name and
 - **WHEN** two trials test the same named treatment and the rule gives them different indications
 - **THEN** two claims are drafted
 
+#### Scenario: A trial lists several conditions
+- **WHEN** a trial lists several conditions
+- **THEN** evidence must establish each regimen and indication pairing before it is grouped
+
+#### Scenario: A registered disease qualifier follows the disease name
+- **WHEN** two verified indications differ only in whether a recognized disease qualifier precedes or follows the same disease name
+- **THEN** compare them as the same indication for grouping and existing claim candidates
+- **AND** a trial with a single registered condition can retain a more specific phrase from the title when it contains the reordered condition
+
+#### Scenario: A title explicitly names the treatment setting
+- **WHEN** a title assigns a treatment line or perioperative setting directly to the resolved indication
+- **THEN** preserve the setting with the indication for grouping and use the disease for topic placement
+- **AND** hold competing settings for scope review
+
+#### Scenario: A registry condition label names a component of the regimen
+- **WHEN** a title names that label as the first item in an explicitly coordinated treatment combination
+- **THEN** that phrase does not establish the label as an indication
+
+#### Scenario: A crossover arm lists multiple interventions
+- **WHEN** membership describes a sequence of different treatments
+- **THEN** verify which regimen is tested before grouping
+
+#### Scenario: The registry identifies a separate inactive control
+- **WHEN** the registry explicitly identifies an assigned component as a placebo or sham
+- **THEN** exclude it from the active regimen
+- **AND** keep a control-only arm out of the test arms even if it is marked experimental
+
+#### Scenario: One component label mixes alternatives or roles
+- **WHEN** a component label names alternative products or joins an active treatment and a control without separating their roles
+- **THEN** hold the record for scope review before grouping
+
+#### Scenario: A single listed arm includes alternatives
+- **WHEN** its label identifies an optional component among the listed treatments or its title explicitly assigns separate regimens to different treatment lines
+- **THEN** hold the trial for review of each complete regimen before grouping
+
+#### Scenario: A version-matched arm description explicitly assigns alternatives
+- **WHEN** the protocol for the stored trial version names one unambiguous choice and fully identifies the registered members of both regimens for one indication
+- **THEN** keep the alternative regimens separate and record the exact arm wording
+- **AND** conditional switches and incomplete assignments remain in scope review
+- **AND** the drafting preview digest binds the version-checked protocols used in planning
+
+#### Scenario: Distinct component lists have the same display name
+- **WHEN** the regimen display name and normalized indication agree but the registered component lists differ
+- **THEN** the preview preserves both group identifiers and component lists and holds the groups before drafting
+
+#### Scenario: The registry lists one group's regimen as another group's alias
+- **WHEN** separate groups with the same normalized indication have overlapping registry names
+- **THEN** the preview lists the groups and the trial identifiers supporting each direction of the alias
+- **AND** when each group names the other, both groups require review before either can draft
+- **AND** the preview digest binds alias evidence for every selected group
+
+### Requirement: Scope review candidates cite exact registry fields
+A scope review packet SHALL contain the stored trial's titles, condition labels, named interventions, arm assignments and planned outcome names. A structured selection SHALL copy phrases from appropriate fields. A proposal SHALL require an evidence-backed scope judgment before it becomes a review receipt. Live model requests SHALL use the configured ceiling and the shared cache.
+
+#### Scenario: Two studies file a tablet and injection under the same product code
+- **WHEN** their registry titles state different formulations
+- **THEN** the packet supports separate candidate regimen names with verbatim evidence
+
+#### Scenario: A returned phrase is absent from the cited field
+- **WHEN** the grounding check compares the selected phrase with the packet
+- **THEN** the answer is rejected
+
+#### Scenario: A term appears in an exclusion or an unassigned cohort
+- **WHEN** an arm-scoped candidate cites a protocol condition listed only in an exclusion, an unassigned cohort, or eligibility with unclear headings
+- **THEN** the packet retains the exact wording for review and rejects the citation as evidence of the enrolled population
+- **AND** an explicit study-wide inclusion criterion or registered study population can support the enrolled population
+
+#### Scenario: A reviewed pair cites a detailed cached protocol
+- **WHEN** a scope receipt cites an arm description or eligibility field from a detailed protocol
+- **THEN** the planner verifies the receipt against that protocol and checks that its identifier, update date and shared scope fields agree with the stored record
+- **AND** a batch that selects the pair binds its receipt into the preview digest
+
+#### Scenario: A detailed protocol changes
+- **WHEN** a detailed protocol cited by a receipt changes, or its shared fields differ from the stored record
+- **THEN** the planner refuses the receipt before any group in the batch is drafted
+
+#### Scenario: A detailed-protocol batch is resumed
+- **WHEN** a backfill reads a batch of eligible exact trial IDs with a partially populated private protocol cache
+- **THEN** cached records that agree with the stored trial version are reused
+- **AND** missing records are requested in batches of at most 50 IDs through the shared registry client
+- **AND** version mismatches remain pending and successfully checked protocols are available for scope review
+
 ### Requirement: A treatment and condition a claim already holds drafts no second claim
-Before a group drafts a claim, it SHALL be compared with every claim that is not archived, by the rule that refuses a duplicate claim: the same indication, and an intervention equal by name or by any synonym. When such a claim exists, no claim SHALL be drafted, and the group's trials SHALL be handed to that claim as candidates for preparation to score.
+Before a group drafts a claim, it SHALL be compared with every claim that is not archived for which the complete regimen or an alias and the indication match. When a match is verified, no claim SHALL be drafted, and the group's trials SHALL be handed to that claim as candidates for preparation to score.
 
 #### Scenario: A reported claim for the same treatment and condition
 - **WHEN** a group's treatment and indication equal those of a published claim that a news article reported
@@ -46,6 +138,12 @@ Before a group drafts a claim, it SHALL be compared with every claim that is not
 - **WHEN** a group's treatment name is a synonym of an existing claim's intervention with the same indication
 - **THEN** no claim is drafted
 
+#### Scenario: A batch is limited to existing claims
+- **WHEN** an operator requests an existing-only preview
+- **THEN** its actions are limited to verified nominations to existing claims
+- **AND** the preview shows the stored scores and review states for previously scored candidates
+- **AND** a previously scored candidate retains its stored match and decision
+
 ### Requirement: What a registry-drafted claim holds
 A claim drafted from registry records SHALL hold its intervention by name alone, its indication, the vertical the rule places it in, that it was drafted from registry records, and the registry numbers of the trials it was drafted from. It SHALL hold no source article, no promise, no reported statement, no origin paper and no evidence stage, and no headline or summary written by a model.
 
@@ -54,11 +152,24 @@ A claim drafted from registry records SHALL hold its intervention by name alone,
 - **THEN** it records both registry numbers and that it was drafted from registry records, and it has no source article
 
 ### Requirement: A draft the rule cannot place in a vertical is not made
-A registry-drafted claim's vertical SHALL be set by rule from the condition terms the registry files its trials under. When those terms point to no group, or to more than one, no claim SHALL be drafted, and the group SHALL be listed with its terms. No model SHALL be asked.
+A registry-drafted claim's vertical SHALL be set by rule from its registry condition terms and the MeSH vocabulary. Groups with no topic or unresolved competing evidence SHALL wait for topic review. Topic placement SHALL use these sources without a model.
 
-#### Scenario: Terms that point to two groups
-- **WHEN** a group's trials are filed under terms that point to two different groups
-- **THEN** no claim is drafted and the group is listed as not placed, with its terms
+#### Scenario: Independent terms point to competing topics
+- **WHEN** distinct disease descriptors support competing topics
+- **THEN** the group waits for topic review and the preview lists its terms
+
+#### Scenario: A registered condition has an explicit population qualifier
+- **WHEN** a proposed indication starts with a registered condition followed by an enrollment phrase such as “in adults”
+- **THEN** use descriptors with the exact registered condition name for topic evidence
+- **AND** when the registry omits its descriptor projection, an exact preferred disease or disorder label from the installed MeSH vocabulary can supply that evidence
+- **AND** preserve the full indication for grouping and hold topic conflicts that the primary-topic rule cannot resolve
+
+### Requirement: One tumor descriptor can establish Cancer as the primary vertical
+A MeSH descriptor that places a disease in both Cancer and an anatomical topic SHALL establish Cancer as the primary vertical when the descriptor supports every candidate topic and all other supporting descriptors are its ancestors.
+
+#### Scenario: The same tumor descriptor supports Cancer and an anatomical topic
+- **WHEN** a group uses the primary Cancer vertical rule
+- **THEN** the preview lists the exact descriptor and all supported topics and binds them to its digest
 
 ### Requirement: A registry-drafted claim is prepared and decided as any draft
 A registry-drafted claim SHALL be pending until `thenwhat prepare --pending` has searched the registries for it, and SHALL then be decided by the rule for drafts. The trials it was drafted from SHALL be candidates, scored for the claim's indication, and SHALL NOT be approved for having led to it. A draft SHALL be approved only when at least one of the trials it was drafted from is approved for it; otherwise it SHALL stay pending and be listed with the scores.

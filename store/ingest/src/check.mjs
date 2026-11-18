@@ -91,6 +91,12 @@ export async function checkRecords(records, who) {
       if (body[field] != null && !who.deciders.includes(body[field])) bad(403, "outside_scope", `a ${who.role} token may not record this decider's decision`, { field });
     }
     if (body.human_label != null && !who.deciders.includes("human")) bad(403, "outside_scope", `a ${who.role} token may not record a person's label`, { field: "human_label" });
+    if (kind === "claim" && Object.hasOwn(body, "registry_candidate_trial_ids")) {
+      const ids = body.registry_candidate_trial_ids;
+      if (!Array.isArray(ids) || !ids.every((id) => typeof id === "string" && /^NCT[0-9]{8}$/.test(id))) {
+        bad(422, "bad_trial_ids", "registry candidates must be a list of ClinicalTrials.gov identifiers", { field: "registry_candidate_trial_ids" });
+      }
+    }
     if (who.holds && kind === "claim" && body.review_state === "approved" && body.awaiting_audit_at == null) unheld.push({ at, slug: body.slug });
     if (kind === "action" && !who.actions.includes(body.action)) bad(403, "outside_scope", `a ${who.role} token may not state this action`, { field: "action" });
     if (kind === "source_record" && body.body != null) {
