@@ -1,6 +1,6 @@
 # 5. The page reader runs at home, and the lookup service may ask it
 
-Date: 2026-11-15. Status: accepted; not in effect until a change moves `site/worker` onto the reader. Change: `openspec/changes/firecrawl-page-reader`.
+Date: 2026-11-15. Status: accepted; not in effect until a change moves `site/worker` onto the reader. Change: `openspec/changes/archive/2026-11-18-firecrawl-page-reader`.
 
 ## Context
 
@@ -21,7 +21,7 @@ The operator decided on 2026-11-15. On hosting: "it's an education/academic proj
 
 ## What does not change
 
-The pipeline and the database stay private. The published site is still static files built from the export. The reader keeps no article text (`openspec/changes/firecrawl-page-reader`, design decision 8).
+The pipeline and the database stay private. The published site is still static files built from the export. The reader keeps no article text (`openspec/changes/archive/2026-11-18-firecrawl-page-reader`, design decision 8).
 
 ## Consequences
 

@@ -349,7 +349,7 @@ Contrast, measured on 2026-11-12: text on white 16.5:1, blue on white 9.9:1, blu
 
 The design reviewer judged this look on 2026-11-11 from captures of the claim, home, topic, approved and not-found pages at 1280 and 375 pixels wide, hover and focus states, and the printed claim page. It accepted the topic page, hover and focus, and asked for the fixes that are now in: the phone timetable's amber, the navigation's topic link, source names, date breaks, the footnote target size, two wording changes and the print layout.
 
-The finish reviewer judged the extension page on 2026-11-14 from captures at 1440 and 390 pixels wide, the whole page and the first screen at each (`.impeccable/review/`). What it asked for is in the commits that followed; for the verdict, see the change's notes (`openspec/changes/landing-pages-and-guide/`). No capture of keyboard focus, hover, the printed page or a forced palette is kept.
+The finish reviewer judged the extension page on 2026-11-14 from captures at 1440 and 390 pixels wide, the whole page and the first screen at each (`.impeccable/review/`). What it asked for is in the commits that followed; for the verdict, see the change's notes (`openspec/changes/archive/2026-11-18-landing-pages-and-guide/`). No capture of keyboard focus, hover, the printed page or a forced palette is kept.
 
 Not yet judged:
 

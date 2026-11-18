@@ -1,6 +1,6 @@
 # 2. Share-alike drug facts are shown on claim pages and kept out of the data file
 
-Date: 2026-11-14. Status: accepted. Change: `openspec/changes/knowledge-cards`, task 6.1.
+Date: 2026-11-14. Status: accepted. Change: `openspec/changes/archive/2026-11-18-knowledge-cards`, task 6.1.
 
 ## Context
 

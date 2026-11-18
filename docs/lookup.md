@@ -1,6 +1,6 @@
 # Lookup: from a piece of text to trial records
 
-`thenwhat lookup` takes the address of a news article, or pasted text, and returns the ClinicalTrials.gov records it is most likely about, likeliest first. It is the engine for answering "what came of this?" for an article the site does not track yet. Behaviour is specified in `openspec/changes/live-lookup`.
+`thenwhat lookup` takes the address of a news article, or pasted text, and returns the ClinicalTrials.gov records it is most likely about, likeliest first. It is the engine for answering "what came of this?" for an article the site does not track yet. Behaviour is specified in `openspec/changes/archive/2026-11-18-live-lookup`.
 
 ```sh
 docker compose exec pipeline thenwhat lookup https://example.org/news/some-article
@@ -97,11 +97,11 @@ The model now reads the article while the linked papers and any stated registry 
 
 A lookup of ScienceAlert's [tinnitus biomarker report](https://www.sciencealert.com/scientists-identified-a-biological-signature-of-tinnitus-and-its-in-your-blood) exposed an unnecessary wait: the model identified no specific treatment, but the service waited for all linked-paper requests before returning that identification. Timed production probes using the same article text took 32.8 seconds with public-page verification, 31.9 seconds with paper links but no publisher verification, and 2.7 seconds with text alone. These are single diagnostic runs, not a performance benchmark. Europe PMC returned HTTP 500 in separate local probes.
 
-The correction in `openspec/changes/visible-content-lookup` returns a non-treatment identification without waiting for paper or stated-record requests. Publisher, paper and registry calls have deadlines covering headers and bodies. Independent public verification has a shorter deadline; if it fails, browser text can still be read, but its result stays private to that reader. The popup has a 45-second overall lookup deadline and an explicit retry, including page reading and automatic screenshot fallback. Timeout means an incomplete search, never that no research exists.
+The correction in `openspec/changes/archive/2026-11-18-visible-content-lookup` returns a non-treatment identification without waiting for paper or stated-record requests. Publisher, paper and registry calls have deadlines covering headers and bodies. Independent public verification has a shorter deadline; if it fails, browser text can still be read, but its result stays private to that reader. The popup has a 45-second overall lookup deadline and an explicit retry, including page reading and automatic screenshot fallback. Timeout means an incomplete search, never that no research exists.
 
 A linked paper that passes its deadline, or fails, is not dropped in silence. The answer counts the papers not looked up, the site and the popup say beside the list that a trial such a paper reports may be missing, and that answer is kept out of the shared results library and the popup's saved results, so the next lookup asks again. Europe PMC answered the same papers in under 0.3 seconds a minute after taking 17 to 25 seconds over them.
 
-The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The service fix was deployed through [PR #94](https://github.com/jamespacileo/whatcameofit/pull/94), and Safari 0.9.2 (11) was installed locally. On the same article, an explicit fresh search including automatic screenshot fallback had reached its result by the 9.4-second UI observation. This was a single observed check, not a performance guarantee. See `openspec/changes/visible-content-lookup/latency-verification.md` for the release evidence; no App Store submission was made.
+The diagnostic tests use stalled synthetic sources, including sources that ignore cancellation, and check that late completions cannot update the popup or its saved results. The service fix was deployed through [PR #94](https://github.com/jamespacileo/whatcameofit/pull/94), and Safari 0.9.2 (11) was installed locally. On the same article, an explicit fresh search including automatic screenshot fallback had reached its result by the 9.4-second UI observation. This was a single observed check, not a performance guarantee. See `openspec/changes/archive/2026-11-18-visible-content-lookup/latency-verification.md` for the release evidence; no App Store submission was made.
 
 ## Posts on social media
 
@@ -136,7 +136,7 @@ Limits: Reddit could not be opened in the browser used for this try, so its page
 - **A reviewed test set.** The numbers above rest on the assistant's approvals. A few hundred article and trial pairs checked by a person, across many outlets, would make them trustworthy. Which outlets can be read is now recorded in [outlets.md](outlets.md), for the outlets that have a tracked article.
 - **Drug-name synonyms** from an open source, checked for its terms first.
 - **Posts on X and Reddit.** Both need the operator to register: Reddit an approved app, X a paid developer account. Until then a reader pastes the post's text.
-- **The five decisions in `openspec/changes/live-lookup/design.md`:** whether an unreviewed answer may be shown publicly, where the lookup runs, how a blocked article is read, social posts by address, and the promise that a pasted link is not tracked.
+- **The five decisions in `openspec/changes/archive/2026-11-18-live-lookup/design.md`:** whether an unreviewed answer may be shown publicly, where the lookup runs, how a blocked article is read, social posts by address, and the promise that a pasted link is not tracked.
 
 ## Visible content and on-demand results (13 November 2026)
 

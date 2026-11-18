@@ -2,7 +2,7 @@
 
 ## Why
 
-The project's records live in one private Postgres database. The public site is a static build from a JSON export of it, committed to the repository (`docs/deploy.md`). The Worker that answers a reader's lookup computes its answer and keeps nothing (`openspec/changes/live-lookup`).
+The project's records live in one private Postgres database. The public site is a static build from a JSON export of it, committed to the repository (`docs/deploy.md`). The Worker that answers a reader's lookup computes its answer and keeps nothing (`openspec/changes/archive/2026-11-18-live-lookup`).
 
 On 2026-11-16 the operator said this is not the intended shape:
 
@@ -42,7 +42,7 @@ Not in this change:
 ### Modified Capabilities
 
 - `deployment`: the build takes its export from the truth store; the committed snapshot is no longer what is deployed.
-- `live-lookup`: a lookup keeps structured public records of the article and the trials found, and still keeps no text and nothing of the reader. This capability is specified in `openspec/changes/live-lookup`, not yet synced; the delta is written against that text.
+- `live-lookup`: a lookup keeps structured public records of the article and the trials found, and still keeps no text and nothing of the reader. This capability is specified in `openspec/changes/archive/2026-11-18-live-lookup`, not yet synced; the delta is written against that text.
 
 `site-publishing` is not modified: the publication gate and the build from the export alone stand as written.
 

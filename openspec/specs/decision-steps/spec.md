@@ -76,3 +76,76 @@ Checking a reported statement against its article SHALL go through the decision 
 #### Scenario: Backend failure
 - **WHEN** the backend fails for one statement
 - **THEN** the failure is logged and that statement is not stored
+
+### Requirement: The term check is a decision step
+Checking a candidate subject term against a claim SHALL go through the decision interface as its own step, with the three options the knowledge-cards capability defines. The state judged SHALL be the claim's headline, summary, intervention names and indication with the term's label and definition. Its log record SHALL refer to the claim and the term.
+
+#### Scenario: Ten candidates for one claim
+- **WHEN** ten candidate terms for one claim are checked
+- **THEN** ten log records exist for the step, each referring to the claim and one term
+
+#### Scenario: Backend failure
+- **WHEN** the backend fails for one candidate
+- **THEN** the failure is logged and that candidate stays without a score and is not approved
+
+### Requirement: Choosing an intervention's kind is a decision step
+Choosing the kind of a claim's intervention SHALL go through the decision interface as its own step, with one option for each kind on the project's list and one for none of them. The state judged SHALL be the claim's headline, summary and intervention names. Its log record SHALL refer to the claim.
+
+#### Scenario: One claim
+- **WHEN** a kind is chosen for one claim's intervention
+- **THEN** one log record exists for the step, referring to the claim, with the probability of each kind
+
+#### Scenario: Backend failure
+- **WHEN** the backend fails for a claim
+- **THEN** the failure is logged, no kind link is stored and the claim is tried again on the next run
+
+### Requirement: The named-gene check is a decision step
+Checking a gene named in a claim's intervention SHALL go through the decision interface as its own step, with the two options the knowledge-cards capability defines. The state judged SHALL be the claim's headline, summary and intervention names with the word that matched, the gene's symbol and its name. Its log record SHALL refer to the claim and the gene.
+
+#### Scenario: Two candidate genes for one claim
+- **WHEN** two candidate genes for one claim are checked
+- **THEN** two log records exist for the step, each referring to the claim and one gene
+
+### Requirement: A backend that answers without writing text
+The pipeline SHALL offer a second decision backend, named `openai-decisions`, that puts every item of a step to OpenAI's Decisions API in one request: the step's shared introduction as the evidence and each item as its own question, with each option described in the question's own words. It SHALL take as many items per request as the API allows, in place of the twenty a general model is given. Which backend answers SHALL be set by `DECISION_BACKEND`; the callers and the decision log SHALL NOT change with it.
+
+#### Scenario: Many items, one call
+- **WHEN** sixty candidate records are scored with the `openai-decisions` backend
+- **THEN** one request is sent, each record gets its own choice, probabilities and log entry, and the log names the backend and its model
+
+#### Scenario: Unusable answer
+- **WHEN** the API declines to answer one item of a request
+- **THEN** every item is logged, the declined one with an error, and the step fails without a substituted answer
+
+### Requirement: Decision calls are counted and capped like every other model call
+A call to the Decisions API SHALL be recorded in the usage ledger with its input tokens at the price set in `DECISIONS_INPUT_USD_PER_MTOK`, and SHALL be refused once the month's recorded cost has reached the ceiling. No call SHALL be made while the model, its price or the provider's credential is not configured. A failed call SHALL be reported by its status and SHALL NOT repeat anything that was sent.
+
+#### Scenario: Usage recorded
+- **WHEN** a request of three questions is answered using 709 input tokens at 0.10 dollars per million
+- **THEN** one ledger entry records 709 input tokens, no output tokens and that cost
+
+#### Scenario: Not configured
+- **WHEN** the backend is chosen and its price is not set
+- **THEN** the step fails saying which setting is missing, and no request is sent
+
+### Requirement: A model call is retried within bounds
+A call to a backend that fails for a cause that passes, a timeout, a too-many-requests answer or a server error, SHALL be retried a bounded number of times with increasing delay, honouring a wait the backend states up to the configured ceiling. This SHALL hold for every backend. A result the backend gave that is invalid SHALL NOT be retried under this rule: it fails as before.
+
+#### Scenario: The backend asks for a short wait
+- **WHEN** a backend answers too-many-requests and states a wait of five seconds
+- **THEN** the call is made again no sooner than five seconds later, and the decision is given if that attempt succeeds
+
+#### Scenario: An invalid result
+- **WHEN** a backend returns a result that fails validation
+- **THEN** the decision fails as an invalid result and this rule makes no further attempt
+
+### Requirement: A backend that cannot be asked is not a failed decision
+When retries are exhausted, the key is refused, the quota is used up or the spend ceiling is reached, the caller SHALL be told the backend cannot be asked, apart from a decision that failed. No decision SHALL be logged as made. The step that asked SHALL stop as the work ledger says, with no attempt counted against its record.
+
+#### Scenario: The quota is used up
+- **WHEN** a backend answers that the account's quota is used up
+- **THEN** the caller is told the backend cannot be asked, and the record being decided is not recorded as failed
+
+#### Scenario: One item of a batch gets no answer
+- **WHEN** a backend answers a batch and leaves one item out
+- **THEN** that item alone fails as a decision, and the backend is not treated as one that cannot be asked

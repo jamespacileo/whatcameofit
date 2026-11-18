@@ -1,6 +1,6 @@
 # 4. An uncertain reading is shown with its score; it is not held for review and never sets a status
 
-Date: 2026-11-15. Status: accepted. Change: `openspec/changes/social-link-backfill`. Extends ADR 0001.
+Date: 2026-11-15. Status: accepted. Change: `openspec/changes/archive/2026-11-18-social-link-backfill`. Extends ADR 0001.
 
 ## Context
 

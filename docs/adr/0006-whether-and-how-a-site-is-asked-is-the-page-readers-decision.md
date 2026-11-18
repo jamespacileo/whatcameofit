@@ -1,6 +1,6 @@
 # 6. Whether and how a site is asked is the page reader's decision
 
-Date: 2026-11-15. Status: accepted; takes effect when `openspec/changes/firecrawl-page-reader` is applied. Until then the pipeline reads robots.txt itself, as `CLAUDE.md` says. Change: `openspec/changes/firecrawl-page-reader`.
+Date: 2026-11-15. Status: accepted; takes effect when `openspec/changes/archive/2026-11-18-firecrawl-page-reader` is applied. Until then the pipeline reads robots.txt itself, as `CLAUDE.md` says. Change: `openspec/changes/archive/2026-11-18-firecrawl-page-reader`.
 
 ## Context
 
