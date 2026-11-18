@@ -1051,6 +1051,115 @@ def test_registry_scope_proposals_refuses_live_mode_without_an_explicit_cap(run,
     assert "Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD" in result.output
 
 
+def test_registry_scope_evidence_resumes_pages_and_rechecks_cached_versions(
+    run, session: Session, monkeypatch, fake_time, tmp_path: Path
+):
+    trials = add_trials(session, 52, registry="clinicaltrials.gov")
+    detailed = {}
+    for index, trial in enumerate(trials, 1):
+        trial.external_id = f"NCT{index:08d}"
+        trial.overall_status = "RECRUITING"
+        trial.last_update_posted = date(2026, 3, 1)
+        protocol = {
+            "identificationModule": {
+                "nctId": trial.external_id,
+                "briefTitle": "Example XR for eye irritation",
+            },
+            "statusModule": {"lastUpdatePostDateStruct": {"date": "2026-03-01"}},
+        }
+        trial.raw_payload = {"protocolSection": protocol}
+        detailed[trial.external_id] = {
+            "protocolSection": {
+                **protocol,
+                "eligibilityModule": {
+                    "eligibilityCriteria": (
+                        "Inclusion Criteria:\nAdults with confirmed eye irritation.\n"
+                        "Contact: a person at private@example.test"
+                    )
+                },
+                "contactsLocationsModule": {"centralContacts": [{"name": "Private contact"}]},
+            },
+            "resultsSection": {"record": "Do not retain the results."},
+        }
+    session.flush()
+
+    calls = []
+    refuse_second = True
+
+    def registry(request: httpx.Request) -> httpx.Response:
+        identifiers = request.url.params["filter.ids"].split(",")
+        calls.append(identifiers)
+        fields = set(request.url.params["fields"].split(","))
+        assert {"EligibilityCriteria", "ArmGroupDescription"} <= fields
+        assert "ContactsLocationsModule" not in fields
+        if len(calls) == 2 and refuse_second:
+            return httpx.Response(403)
+        return httpx.Response(200, json={"studies": [detailed[nct] for nct in identifiers]})
+
+    monkeypatch.setattr(
+        "thenwhat.cli.backfill.make_registry",
+        lambda lookups, settings: ClinicalTrials(
+            lookups,
+            contact_email=settings.contact_email,
+            transport=httpx.MockTransport(registry),
+            time=fake_time,
+        ),
+    )
+    ids = tmp_path / "trials.txt"
+    ids.write_text("\n".join(trial.external_id for trial in trials), encoding="utf-8")
+    target = tmp_path / "evidence" / "protocols.json"
+    command = ("registry-scope-evidence", str(ids), "--output", str(target))
+    partial = run(*command)
+    assert partial.exit_code == 0, partial.output
+    receipt = json.loads(partial.output)
+    assert (receipt["fetched"], receipt["cached"], receipt["pending"]) == (50, 0, 2)
+    assert receipt["pending_ids"] == [trial.external_id for trial in trials[-2:]]
+    assert receipt["stopped"]
+    assert [len(batch) for batch in calls] == [50, 2]
+    saved = json.loads(target.read_text(encoding="utf-8"))
+    first = trials[0]
+    evidence = saved[first.external_id]
+    assert set(evidence) == {"protocolSection"}
+    assert "contactsLocationsModule" not in evidence["protocolSection"]
+    assert "private@example.test" not in json.dumps(evidence)
+
+    refuse_second = False
+    resumed = run(*command)
+    assert resumed.exit_code == 0, resumed.output
+    receipt = json.loads(resumed.output)
+    assert (receipt["fetched"], receipt["cached"], receipt["pending"]) == (2, 50, 0)
+    assert calls[-1] == [trial.external_id for trial in trials[-2:]]
+
+    packed = run("registry-scope-proposals", first.external_id, "--arm-evidence", str(target))
+    assert packed.exit_code == 0, packed.output
+    fields = json.loads(packed.output)["packets"][0]["evidence"]
+    assert any(field["kind"] == "eligibility_inclusion" for field in fields)
+
+    original = target.read_bytes()
+    cache_hit = run(*command)
+    assert cache_hit.exit_code == 0, cache_hit.output
+    assert json.loads(cache_hit.output)["cached"] == 52
+    assert len(calls) == 3
+    assert target.read_bytes() == original
+
+    first.last_update_posted = date(2026, 3, 2)
+    first.raw_payload = {
+        "protocolSection": {
+            **first.raw_payload["protocolSection"],
+            "statusModule": {"lastUpdatePostDateStruct": {"date": "2026-03-02"}},
+        },
+    }
+    session.flush()
+    drift = run(*command)
+    assert drift.exit_code == 0, drift.output
+    receipt = json.loads(drift.output)
+    assert receipt["pending"] == 1
+    assert receipt["pending_ids"] == [first.external_id]
+    assert "differs from the stored trial version" in receipt["issues"][first.external_id]
+    assert calls[-1] == [first.external_id]
+    assert target.read_bytes() == original
+
+
 def test_registry_scope_proposals_reads_arm_evidence_from_the_same_trial_version(
     run, session: Session, tmp_path: Path
 ):

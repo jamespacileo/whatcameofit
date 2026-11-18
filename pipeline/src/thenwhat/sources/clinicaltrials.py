@@ -13,6 +13,7 @@ from thenwhat.sources.base import (
     SourceError,
     SourceRecord,
     UnsearchableTerm,
+    require_contact,
 )
 
 API = "https://clinicaltrials.gov/api/v2"
@@ -54,6 +55,16 @@ LIST_FIELDS = (
 )
 # The most trials the registry returns in one page.
 LIST_PAGE_SIZE = 1000
+# The exact-ID projection used to build private, version-checked scope packets.
+SCOPE_PAGE_SIZE = 50
+SCOPE_FIELDS = (
+    "NCTId,BriefTitle,OfficialTitle,LastUpdatePostDate,Condition,StudyType,"
+    "DesignPrimaryPurpose,DesignInterventionModel,ArmGroupLabel,ArmGroupType,"
+    "ArmGroupDescription,ArmGroupInterventionName,InterventionType,InterventionName,"
+    "InterventionOtherName,InterventionArmGroupLabel,InterventionDescription,"
+    "EligibilityCriteria,MinimumAge,MaximumAge,HealthyVolunteers,"
+    "PrimaryOutcomeMeasure"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -308,6 +319,29 @@ class ClinicalTrials(Source):
         response = self._request(f"{API}/studies", params)
         payload = response.json() if response is not None else {}
         return TrialPage(payload.get("studies", []), payload.get("nextPageToken"), self._time.now())
+
+    def scope_page(self, identifiers: tuple[str, ...]) -> TrialPage:
+        """Read one exact-ID batch of protocol fields for registry scope review."""
+        if not 1 <= len(identifiers) <= SCOPE_PAGE_SIZE or not all(
+            NCT_ID.fullmatch(identifier) for identifier in identifiers
+        ):
+            raise ValueError(f"Give between 1 and {SCOPE_PAGE_SIZE} exact NCT identifiers.")
+        require_contact(self._contact)
+        response = self._request(
+            f"{API}/studies",
+            {"filter.ids": ",".join(identifiers), "fields": SCOPE_FIELDS, "pageSize": "100"},
+        )
+        try:
+            payload = response.json() if response is not None else {}
+        except ValueError as error:
+            raise SourceError("The exact registry scope lookup returned invalid JSON.") from error
+        if not isinstance(payload, dict) or not isinstance(
+            studies := payload.get("studies", []), list
+        ):
+            raise SourceError("The exact registry scope lookup returned an invalid list.")
+        if payload.get("nextPageToken"):
+            raise SourceError("The exact registry scope lookup returned an unexpected second page.")
+        return TrialPage(studies, None, self._time.now())
 
     def _page(
         self, intervention: str, condition: str | None, page_token: str | None

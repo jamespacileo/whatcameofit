@@ -107,6 +107,8 @@ For cases that need review, `thenwhat backfill registry-claim-plan --reviewed-sc
 
 Arm-specific packets preserve the registry's wording for inclusion criteria, exclusion criteria, unassigned eligibility text and the study population. Explicit study-wide inclusion criteria and the registered study population can support a positive enrolment citation. Exclusions and eligibility whose cohort or purpose is unclear are available for review.
 
+The `registry-scope-evidence` backfill command reads exact identifiers from a batch file, confirms they belong to the eligible cohort and requests detailed protocol fields in pages of up to 50 through the shared ClinicalTrials.gov client. It retains the fields needed for review in a private JSON cache. Each retained record must agree with the exact stored trial version. A repeat run reads only missing or mismatched records and reports pending records and source issues. Proposals and drafting previews consume the same file.
+
 ### 4. An ordinary-word name drafts nothing, and the fault is fixed first
 
 A third of stored names would each draft a claim for "first" or "home". The rule that works out a search name is corrected before any drafting (the same defect `headline-funnel` task 2.12 records), and the drafting step refuses such a name itself and lists it, so a real treatment with a common name ("aspirin", "insulin") is seen and can be entered by the operator.

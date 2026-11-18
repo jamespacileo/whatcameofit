@@ -45,11 +45,11 @@ from thenwhat.backfill.registered import link_read_step, make_triage, registered
 from thenwhat.backfill.registry_arm_scope import arm_packet, propose_arm_scope
 from thenwhat.backfill.registry_claim_plan import plan_registry_claims
 from thenwhat.backfill.registry_load import (
-    TrialList,
     UnknownTrialSet,
     condition_of,
     load_trials,
 )
+from thenwhat.backfill.registry_scope_evidence import StoredTrial, cache_scope_evidence
 from thenwhat.backfill.registry_scope_propose import ReviewPacket, propose_scope, review_packet
 from thenwhat.backfill.registry_scope_review import (
     confirm_protocol_evidence,
@@ -162,7 +162,7 @@ def make_allowances(settings: Settings) -> Allowances:
     return Allowances(open_session, settings.allowances())
 
 
-def make_registry(session: Session, settings: Settings) -> TrialList:
+def make_registry(session: Session, settings: Settings) -> ClinicalTrials:
     return ClinicalTrials(session, contact_email=settings.contact_email)
 
 
@@ -892,6 +892,63 @@ def registry_claim_plan_command(
     typer.echo(json.dumps({"set": REGISTRY_CLAIMS_2026, **asdict(plan)}, default=sorted))
 
 
+def _scope_trial_ids(trials: list[str]) -> tuple[str, ...]:
+    identifiers = tuple(dict.fromkeys(identifier.upper().strip() for identifier in trials))
+    if not identifiers or not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
+        raise BackfillError("Specify ClinicalTrials.gov trial identifiers in NCT format.")
+    return identifiers
+
+
+def _stored_scope_trials(
+    session: Session,
+    identifiers: tuple[str, ...],
+) -> dict[str, StoredTrial]:
+    records = {
+        identifier: (record, updated)
+        for identifier, record, updated in session.execute(
+            select(
+                RegistryTrial.external_id,
+                RegistryTrial.raw_payload,
+                RegistryTrial.last_update_posted,
+            ).where(registry_claims_2026(), RegistryTrial.external_id.in_(identifiers))
+        )
+    }
+    missing = [identifier for identifier in identifiers if identifier not in records]
+    if missing:
+        raise BackfillError(f"Trials absent from the eligible stored set: {', '.join(missing)}.")
+    return {identifier: records[identifier] for identifier in identifiers}
+
+
+@backfill_app.command("registry-scope-evidence")
+def registry_scope_evidence_command(
+    trials_file: Annotated[
+        Path, typer.Argument(exists=True, dir_okay=False, help="One eligible NCT ID per line.")
+    ],
+    output: Annotated[
+        Path, typer.Option("--output", dir_okay=False, help="Private protocol cache on disk.")
+    ],
+) -> None:
+    """Fetch version-matched protocol evidence in bounded batches, or resume the cache."""
+    settings = settings_or_exit()
+    started = monotonic()
+    with refusals(), open_session() as session:
+        try:
+            identifiers = _scope_trial_ids(trials_file.read_text(encoding="utf-8").split())
+            records = _stored_scope_trials(session, identifiers)
+            report = cache_scope_evidence(make_registry(session, settings), records, output)
+        except (OSError, ValueError) as error:
+            raise BackfillError(f"Could not cache registry scope evidence: {error}") from error
+    typer.echo(
+        json.dumps(
+            {
+                **asdict(report),
+                "pending": len(report.pending_ids),
+                "seconds": round(monotonic() - started, 3),
+            }
+        )
+    )
+
+
 @backfill_app.command("registry-scope-proposals")
 def registry_scope_proposals_command(
     trials: Annotated[list[str], typer.Argument(help="Exact ClinicalTrials.gov trial IDs.")],
@@ -919,25 +976,9 @@ def registry_scope_proposals_command(
             raise BackfillError("--check-omissions requires --arm-evidence and --run.")
         if run and budget is None:
             raise BackfillError("Set REGISTRY_SCOPE_MONTHLY_BUDGET_USD before a live scope run.")
-        identifiers = tuple(dict.fromkeys(identifier.upper().strip() for identifier in trials))
-        if not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
-            raise BackfillError("Specify ClinicalTrials.gov trial identifiers in NCT format.")
+        identifiers = _scope_trial_ids(trials)
         with open_session() as session:
-            records = {
-                identifier: (record, updated)
-                for identifier, record, updated in session.execute(
-                    select(
-                        RegistryTrial.external_id,
-                        RegistryTrial.raw_payload,
-                        RegistryTrial.last_update_posted,
-                    ).where(registry_claims_2026(), RegistryTrial.external_id.in_(identifiers))
-                )
-            }
-            missing = [identifier for identifier in identifiers if identifier not in records]
-            if missing:
-                raise BackfillError(
-                    f"Trials absent from the eligible stored set: {', '.join(missing)}."
-                )
+            records = _stored_scope_trials(session, identifiers)
             try:
                 if arm_evidence is None:
                     packets = [review_packet(records[identifier][0]) for identifier in identifiers]

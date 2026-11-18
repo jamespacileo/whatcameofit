@@ -106,6 +106,12 @@ A scope review packet SHALL contain the stored trial's titles, condition labels,
 - **WHEN** a detailed protocol cited by a receipt changes, or its shared fields differ from the stored record
 - **THEN** the planner refuses the receipt before any group in the batch is drafted
 
+#### Scenario: A detailed-protocol batch is resumed
+- **WHEN** a backfill reads a batch of eligible exact trial IDs with a partially populated private protocol cache
+- **THEN** cached records that agree with the stored trial version are reused
+- **AND** missing records are requested in batches of at most 50 IDs through the shared registry client
+- **AND** version mismatches remain pending and successfully checked protocols are available for scope review
+
 ### Requirement: A treatment and condition a claim already holds drafts no second claim
 Before a group drafts a claim, it SHALL be compared with every claim that is not archived for which the complete regimen or an alias and the indication match. When a match is verified, no claim SHALL be drafted, and the group's trials SHALL be handed to that claim as candidates for preparation to score.
 

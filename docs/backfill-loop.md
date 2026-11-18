@@ -79,7 +79,17 @@ A registry-drafted claim covers one intervention or complete regimen for one ind
 It can go through this workflow before a news report is linked.
 For a reviewed scope that cites a detailed protocol, pass `--reviewed-scopes` with
 `--arm-evidence` to `thenwhat backfill registry-claim-plan` and `thenwhat draft-from-registry`.
-The evidence file is the same cached protocol file used by `registry-scope-proposals`.
+Put one eligible NCT identifier per line in a batch file. Fetch the detailed protocols into
+a private cache on the external drive.
+
+```sh
+thenwhat backfill registry-scope-evidence <batch-file> --output <protocol-cache-on-external-drive>
+```
+
+The command reports completed pages, cached and fetched records, pending IDs and any
+version mismatches. Repeat it with the same files to resume. It requests only records
+whose detailed evidence is missing or differs from the stored trial.
+The cache is also accepted by `thenwhat backfill registry-scope-proposals --arm-evidence`.
 Use the same two files in the preview and apply commands.
 
 ```sh
