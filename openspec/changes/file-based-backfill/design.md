@@ -35,7 +35,7 @@ Measured on 2026-11-16 on the Hacker News files: 599,262 link posts; 535,124 on 
 
 ### 1. A run is a folder
 
-`BACKFILL_RUNS_DIR/<run id>/`, created by `thenwhat backfill run start <platform> <files…>`:
+`BACKFILL_RUNS_DIR/<run id>/`, created by `thenwhat backfill runs start <platform> <files…>` (`runs`, because `backfill run <step>` is the work ledger's command and stays for the registry-first route; the other run commands below are under `runs` too):
 
 | File | Written by | Holds |
 | --- | --- | --- |
@@ -107,7 +107,7 @@ A stale file costs a wasted call, never a wrong record: the merge decides agains
 
 ### 6. The spend ceiling is checked against two sums
 
-Before each batch a stage adds the usage lines in the run folder to the month's usage the reference file reported for this device and for all writers, and stops when the next batch would pass the ceiling. `thenwhat backfill run plan` prints the estimate first, as `backfill plan` does today. The truth store's plan remains where the month's total is seen (`cloudflare-source-of-truth`, `specs/ingest-merge`).
+Before each batch a stage adds the usage lines in the run folder to the month's usage the reference file reported for this device and for all writers, and stops when the next batch would pass the ceiling. `thenwhat backfill runs plan` prints the estimate first, as `backfill plan` does today. The truth store's plan remains where the month's total is seen (`cloudflare-source-of-truth`, `specs/ingest-merge`).
 
 Two devices working at once can together pass a ceiling each respects alone. The ceiling a device is given is therefore its own share, set in its `.env`.
 
