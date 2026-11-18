@@ -224,6 +224,23 @@ const listActions = {
 const claim = { headline: "Reviewed claim", page: "/reviewed", status: "Phase 1 trial", place: 3, meaning: "Meaning." };
 const trackedState = { kind: "tracked", claims: [claim], places: 6, notices: [], lastChecked: null, savedAt: null };
 
+test("a registry claim shows evidence without inventing a first report or a promise", () => {
+  const root = new Element("main");
+  const registry = {
+    ...claim,
+    headline: "Registered trials of Example gel for synthetic enamel loss",
+    first_reported: null,
+    latest_promise: null,
+  };
+  render(root, { ...trackedState, claims: [registry] }, site, actions);
+  assert.match(root.textContent, /Registered trials of Example gel for synthetic enamel loss/);
+  assert.doesNotMatch(root.textContent, /First reported|Promised/i);
+
+  const reported = { ...registry, first_reported: "18 Nov 2026" };
+  render(root, { ...trackedState, claims: [reported] }, site, actions);
+  assert.match(root.textContent, /First reported.*18 Nov 2026/i);
+});
+
 test("the lists are offered under an answer, and not while the page is being read", () => {
   const root = new Element("main");
   render(root, trackedState, site, listActions, kept);

@@ -36,6 +36,7 @@ import { claimPaths, data, verticalTitle, type ExportedClaim } from "../lib/expo
 import { statusSlug } from "../lib/guide";
 import { BRIEF_TITLE, digestApproval, digestBridge, phase4Note, recordBrief } from "../lib/record-brief";
 import { UNCHECKED_BYLINE } from "../lib/notices";
+import { REGISTRY_CLAIM_WORDING } from "../lib/registry-claim-wording";
 import { statementsHeading } from "../lib/statements";
 import {
   EVIDENCE_STAGES,
@@ -780,7 +781,7 @@ const sections = [
 
     {claim.summary && <p class="lede" data-clamp="3" data-pagefind-meta="summary">{claim.summary}</p>}
     {claim.drafted_from === "registry" && !claim.has_report &&
-      <p class="lede">No news report is linked to this claim yet.</p>}
+      <p class="lede">{REGISTRY_CLAIM_WORDING.report}</p>}
 
     {/* For a reader who follows this claim and last saw it at another status: filled in
         by the script, so a change noted on the home page is confirmed where they land. */}

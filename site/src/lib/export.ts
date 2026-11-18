@@ -9,6 +9,7 @@ import { clinicalProblems, type Clinical, type ClinicalCategory } from "./clinic
 import { unlabelledPaperCodes } from "./paper-facts";
 import { unwordedCardCodes, type ExportedCard, type ExportedCardSource } from "./background";
 import { unwordedStatementCodes, type ExportedStatement } from "./statements";
+import { REGISTRY_CLAIM_WORDING } from "./registry-claim-wording";
 import { unlabelledTrialCodes } from "./trial-facts";
 import { unwordedOrganisationCodes, type ExportedOrganisation } from "./organisations";
 
@@ -332,11 +333,13 @@ type SourceClaim = Omit<ExportedClaim, "headline" | "summary"> & {
 };
 
 function wordClaim(claim: SourceClaim): ExportedClaim {
+  const hasReport = claim.has_report ?? claim.articles.length > 0;
+  const { intervention, indication } = claim;
   return {
     ...claim,
-    headline: claim.headline ?? `Research on ${claim.intervention.name} for ${claim.indication}`,
-    summary: claim.summary ?? "",
-    has_report: claim.has_report ?? claim.articles.length > 0,
+    headline: claim.headline ?? REGISTRY_CLAIM_WORDING.headline(intervention.name, indication),
+    summary: claim.summary ?? (hasReport ? "" : REGISTRY_CLAIM_WORDING.summary(intervention.name, indication)),
+    has_report: hasReport,
   };
 }
 

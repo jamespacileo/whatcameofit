@@ -47,6 +47,12 @@ All 27,731 cached trials produced review packets. The median packet has 1,301 ch
 
 The cached matching-placebo replay checked all 27,731 eligible records, removed 6 reference-arm memberships, and proposed 20,146 groups. It took 6.4 seconds and made no requests. An exact-name candidate for ulcerative colitis had been proposed from an add-on trial's reference arm. The current rule retains the full tested combination. The grouping gate remains open.
 
+A fresh fixed-seed scope audit drew 50 groups covering 57 trial records, excluding 174 trial IDs from earlier audits and the reserved holdout. An assistant supported 16 groups, found 27 scope errors, and held seven for more evidence. The existing receipt path accepted seven verified corrections from their exact registry excerpts. The audit used no requests and the 45-of-50 gate remains open.
+
+Of 11,563 unlinked trials with a proposed scope but no unique topic in the MeSH-enriched plan, 6,482 have a group for which one MeSH descriptor supports more than one topic. This includes tumor descriptors that support both cancer and an organ group.
+
+The qualifier replay retained two previously omitted genotype restrictions and moved a broad stage proposal to review. The same 50 groups had 18 supported, 24 wrong and eight needing review. The full cached plan took 2.6 seconds, produced 20,224 groups, and left 11,021 trial scopes unresolved. One suffix rule was informed by this sample. The 45-of-50 drafting threshold still needs a fresh audit.
+
 ## 3. Drafting and preparation
 
 - [x] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added
@@ -61,8 +67,8 @@ Synthetic preparation exercised both match outcomes on the Mac. It fetched the d
 ## 4. The site
 
 - [x] 4.1 Add to the export whether a report is linked and what a claim was drafted from, with no headline or summary for a claim with no article; regenerate `site/export.schema.json` and raise the schema version; verify the tests that compare both pass
-- [ ] 4.2 Word a claim with no report from fixed phrases in the site's own files, and extend the build's wording check to these phrases and to words of advice; verify tests that the build fails on a verdict word and on a word that offers the treatment to a reader
-- [ ] 4.3 Show the fixed line on a claim with no report and none of date first reported, promises or reported statements; verify tests of a claim with no report, the same claim after an article is linked, and the extension's view
+- [x] 4.2 Word a claim with no report from fixed phrases in the site's own files, and extend the build's wording check to these phrases and to words of advice; verify tests that the build fails on a verdict word and on a word that offers the treatment to a reader
+- [x] 4.3 Show the fixed line on a claim with no report and none of date first reported, promises or reported statements; verify tests of a claim with no report, the same claim after an article is linked, and the extension's view
 - [ ] 4.4 Let every list of claims be narrowed to reported claims, kept in the address and working with the status and topic narrowing; verify tests on the Claims list, a topic page and the home page's lists
 - [ ] 4.5 State how many claims a report is linked to wherever the site counts claims, and keep claims with no report out of rows whose subject is a report; verify tests of the home page's count and of the day-by-day list
 - [ ] 4.6 Build a preview from an export holding the 200 claims of 3.6 and show the operator the home page, one topic page and three claim pages; record here whether lists open on every claim or on reported claims
@@ -70,6 +76,8 @@ Synthetic preparation exercised both match outcomes on the Mac. It fetched the d
 - [ ] 4.8 Deploy a pull request preview and read twenty pages of claims with no report with the operator; record here anything reworded
 
 Storage and export were exercised with a synthetic registry-only claim on the Mac. PostgreSQL and the SQLite store produced the same claim. The audit hold excluded it from export, and linking a first article later preserved its drafting origin. The PostgreSQL migration preserved a legacy row and refused to downgrade with a registry claim present. The version 3 export built a claim page and a search entry. Fixtures and the run receipt are stored on the NVMe.
+
+The synthetic site build renders the site's fixed registry wording, the absence of a source report, and the first report after it is linked. The lookup and extension checks omit the first reported date and promises while a report is absent. The same import-time wording check rejects verdicts and offers of treatment.
 
 ## 5. The sampled audit
 

@@ -60,7 +60,7 @@ test("Scenario: Registry evidence publishes a browsable claim before a report ex
   const built = buildFixture(t, (fixture) => {
     const exemplar = fixture.claims.find((claim) => claim.slug === "phase-claim");
     fixture.schema_version = 3;
-    fixture.claims = [{
+    const registryClaim = {
       ...exemplar,
       slug: "registry-scope-example",
       headline: null,
@@ -73,18 +73,43 @@ test("Scenario: Registry evidence publishes a browsable claim before a report ex
       articles: [],
       promises: [],
       reported_statements: [],
+    };
+    const firstReport = exemplar.articles[0];
+    fixture.claims = [registryClaim, {
+      ...registryClaim,
+      slug: "registry-scope-with-report",
+      headline: firstReport.title,
+      has_report: true,
+      first_reported_date: firstReport.published_date,
+      articles: [firstReport],
     }];
   });
 
   const page = built("registry-scope-example/index.html");
-  assert.match(page, /Research on Example gel for synthetic enamel loss/);
+  assert.match(page, /Registered trials of Example gel for synthetic enamel loss/);
+  assert.match(page, /Trial registries list studies of Example gel for synthetic enamel loss/);
   assert.equal(count(page, "No news report is linked to this claim yet."), 1);
   assert.doesNotMatch(page, /<time[^>]*>[^<]*First report/);
-  assert.ok(JSON.parse(built("lookup.json")).claims["registry-scope-example"]);
+  const lookup = JSON.parse(built("lookup.json"));
+  const extensionClaim = lookup.claims["registry-scope-example"];
+  assert.equal(extensionClaim.headline, "Registered trials of Example gel for synthetic enamel loss");
+  assert.equal(extensionClaim.first_reported, null);
+  assert.equal(extensionClaim.latest_promise, null);
+  assert.ok(Object.values(lookup.articles).some((slugs) => slugs.includes("registry-scope-with-report")));
+  assert.ok(!Object.values(lookup.articles).some((slugs) => slugs.includes("registry-scope-example")));
   const record = JSON.parse(built("data/claims/registry-scope-example.json")).claim;
   assert.equal(record.drafted_from, "registry");
   assert.equal(record.has_report, false);
   assert.deepEqual(record.articles, []);
+  assert.equal(record.first_reported_date, null);
+  assert.deepEqual(record.promises, []);
+  assert.deepEqual(record.reported_statements, []);
+  const reportedPage = built("registry-scope-with-report/index.html");
+  assert.doesNotMatch(reportedPage, /No news report is linked to this claim yet/);
+  const reported = JSON.parse(built("data/claims/registry-scope-with-report.json")).claim;
+  assert.equal(reported.drafted_from, "registry");
+  assert.equal(reported.has_report, true);
+  assert.equal(reported.first_reported_date, reported.articles[0].published_date);
 });
 
 test("Scenario: Unknown slug", () => {
