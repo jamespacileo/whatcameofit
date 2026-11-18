@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from thenwhat.backfill.link_read import CLAIM_IDENTITY_LOCK
 from thenwhat.backfill.registry_claim_plan import PlanGroup, plan_registry_claims
 from thenwhat.backfill.registry_draft_choices import DraftAction, GroupChoice, choose_drafts
+from thenwhat.backfill.registry_indication import indication_key
 from thenwhat.backfill.registry_scope_review import ScopeReview
 from thenwhat.backfill.trial_names import generic_intervention_name
 from thenwhat.backfill.trial_sets import REGISTRY_CLAIMS_2026, registry_claims_2026
@@ -19,7 +20,6 @@ from thenwhat.claims.audit import register_audit_batch
 from thenwhat.claims.entry import (
     SLUG_PATTERN,
     add_registry_claim,
-    condition_words,
     name_key,
     nominate_registry_trials,
 )
@@ -73,11 +73,11 @@ def _registry_alias_groups(
     """Find whole registered names used as aliases by peers with the same indication."""
     identities: dict[tuple[str, tuple[str, ...]], list[str]] = defaultdict(list)
     for group_id, group in groups.items():
-        key = (name_key(group.regimen), tuple(condition_words(group.indication)))
+        key = (name_key(group.regimen), indication_key(group.indication))
         identities[key].append(group_id)
     evidence: dict[tuple[str, str], set[str]] = defaultdict(set)
     for group_id, group in groups.items():
-        condition = tuple(condition_words(group.indication))
+        condition = indication_key(group.indication)
         for alias, trial_ids in group.registry_aliases.items():
             for peer in identities.get((name_key(alias), condition), ()):
                 if peer != group_id:
@@ -154,7 +154,7 @@ def _claim_catalogue(session: Session, targets: Collection[str]) -> ClaimCatalog
         .where(Entity.type == EntityType.INTERVENTION, Claim.merged_into_id.is_(None))
     ):
         if claim.archived_at is not None or claim.review_state is ReviewState.REJECTED:
-            indication = tuple(condition_words(claim.indication))
+            indication = indication_key(claim.indication)
             for name in (entity.name, *entity.synonyms):
                 catalogue.unavailable[(name_key(name), indication)].add(claim.slug)
         elif claim.slug in targets:
@@ -252,7 +252,7 @@ def prepare_draft_plan(
     for group_id, group in details.items():
         candidates = group.exact_claim_candidates | group.alias_claim_candidates
         unavailable = catalogue.unavailable.get(
-            (name_key(group.regimen), tuple(condition_words(group.indication))), set()
+            (name_key(group.regimen), indication_key(group.indication)), set()
         )
         groups[group_id] = GroupChoice(
             group_id,

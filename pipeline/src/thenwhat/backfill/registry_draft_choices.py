@@ -13,7 +13,8 @@ from collections.abc import Collection, Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-from thenwhat.claims.entry import MAX_SLUG_LENGTH, InvalidSlug, condition_words, name_key, slug_for
+from thenwhat.backfill.registry_indication import indication_key
+from thenwhat.claims.entry import MAX_SLUG_LENGTH, InvalidSlug, name_key, slug_for
 
 __all__ = ["GroupChoice", "DraftAction", "DraftSelection", "choose_drafts"]
 
@@ -227,7 +228,7 @@ def _plan_existing(
 
 
 def _draft_key(group: GroupChoice) -> tuple[str, tuple[str, ...]]:
-    return name_key(group.regimen), tuple(condition_words(group.indication))
+    return name_key(group.regimen), indication_key(group.indication)
 
 
 def _plan_draft(

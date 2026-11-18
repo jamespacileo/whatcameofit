@@ -217,6 +217,54 @@ def test_title_refines_nested_indication_but_does_not_choose_an_unrelated_condit
     assert trial_scope(single).indication_title_phrase == subtype
 
 
+def test_title_refines_a_disease_with_a_reordered_qualifier():
+    arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
+    label = "Ovarian Cancer Recurrent"
+    refined = study([label], arms)
+    refined["protocolSection"]["identificationModule"] = {
+        "officialTitle": (
+            "Example XR for the Treatment of Platinum-resistant Recurrent Ovarian Cancer"
+        )
+    }
+    unqualified = study([label], arms)
+    unqualified["protocolSection"]["identificationModule"] = {
+        "officialTitle": "Example XR in Ovarian Cancer"
+    }
+    negated = study([label], arms)
+    negated["protocolSection"]["identificationModule"] = {
+        "officialTitle": "Example XR in Non-Recurrent Ovarian Cancer"
+    }
+    two_conditions = study([label, "Ovarian Cancer"], arms)
+    two_conditions["protocolSection"]["identificationModule"] = {
+        "officialTitle": "Example XR in Advanced or Recurrent Ovarian Cancer"
+    }
+
+    assert trial_scope(refined).conditions == ("Platinum-resistant Recurrent Ovarian Cancer",)
+    assert trial_scope(unqualified).conditions == (label,)
+    assert trial_scope(negated).conditions == (label,)
+    assert trial_scope(two_conditions).issues == ("condition_assignment_needs_review",)
+
+
+def test_reordered_qualifiers_share_the_same_group_and_existing_claim_candidate():
+    arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
+    trials = [
+        ("one", study(["Ovarian Cancer Recurrent"], arms)),
+        ("two", study(["Recurrent Ovarian Cancer"], arms)),
+        ("three", study(["Ovarian Cancer"], arms)),
+        ("four", study(["Ovarian Cancer Non-Recurrent"], arms)),
+    ]
+    plan = group_registry_trials(
+        trials, [("existing", "Recurrent Ovarian Cancer", "Example XR", [])]
+    )
+
+    assert not plan.needs_review
+    assert {tuple(group.trials): group.exact_claim_candidates for group in plan.groups} == {
+        ("one", "two"): {"existing"},
+        ("three",): set(),
+        ("four",): set(),
+    }
+
+
 def test_title_keeps_a_genotype_for_the_enrolled_population():
     arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
     narrow = study(["Multiple Myeloma"], arms)
@@ -514,6 +562,44 @@ def test_unresolved_component_labels_stay_out_of_the_grouping_plan(
     else:
         assert plan.groups[0].regimen == label
         assert not plan.needs_review
+
+
+def test_an_arm_with_optional_treatments_needs_review_of_its_complete_regimen():
+    record = study(
+        ["Ovarian Cancer"],
+        [
+            {
+                "type": "EXPERIMENTAL",
+                "label": "Example XR + Backbone ± Optional Drug",
+                "interventionNames": ["Drug: Example XR", "Drug: Backbone", "Drug: Optional Drug"],
+            },
+        ],
+    )
+
+    plan = group_registry_trials([("trial", record)])
+
+    assert not plan.groups
+    assert plan.needs_review["trial"].issues == ("alternative_regimen_needs_review",)
+
+
+def test_distinct_line_regimens_named_in_the_title_hold_one_flattened_arm():
+    record = study(
+        ["Colorectal Cancer Metastatic"],
+        [
+            {
+                "type": "EXPERIMENTAL",
+                "interventionNames": ["Drug: Example XR plus Backbone"],
+            },
+        ],
+    )
+    record["protocolSection"]["identificationModule"] = {
+        "officialTitle": (
+            "Example XR Plus Backbone as First-line / Example XR as Second-line "
+            "in Participants With Metastatic Colorectal Cancer"
+        ),
+    }
+
+    assert trial_scope(record).issues == ("alternative_regimen_needs_review",)
 
 
 def test_control_label_and_explicit_dose_escalation_are_used_as_reference_evidence():

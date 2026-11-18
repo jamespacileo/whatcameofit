@@ -11,7 +11,7 @@ from thenwhat.claims.entry import condition_words, tidy
 _STATUS = (
     r"newly diagnosed|previously (?:un)?treated|untreated|treatment naive|"
     r"relapsing(?: remitting)?|(?:primary |secondary )?progressive|recurrent|"
-    r"relapsed(?:(?: or)? refractory)?|refractory"
+    r"relapsed(?:(?: or)? refractory)?|platinum resistant|refractory"
 )
 _EXTENT = (
     r"(?:locally |regionally )?advanced|metastatic|(?:un)?resectable|(?:in)?operable|"
@@ -62,6 +62,42 @@ _PATIENT_CONTEXT = re.compile(
     r"\b[^,:;()]+",
     re.IGNORECASE,
 )
+_TRAILING_STATE = (
+    ("relapsed", "or", "refractory"),
+    ("platinum", "resistant"),
+    ("unresectable",),
+    ("metastatic",),
+    ("refractory",),
+    ("recurrent",),
+    ("localized",),
+    ("advanced",),
+    ("relapsed",),
+)
+_DISEASE_HEADS = frozenset(
+    {
+        "cancer",
+        "carcinoma",
+        "disease",
+        "leukemia",
+        "lymphoma",
+        "myeloma",
+        "neoplasm",
+        "sarcoma",
+        "syndrome",
+        "tumor",
+        "tumour",
+    }
+)
+
+
+def indication_key(label: str) -> tuple[str, ...]:
+    """Compare a disease with its stated qualifier in either registered word order."""
+    words = tuple(condition_words(label))
+    for state in _TRAILING_STATE:
+        size = len(state)
+        if len(words) > size + 1 and words[-size:] == state and words[-size - 1] in _DISEASE_HEADS:
+            return (*state, *words[:-size])
+    return words
 
 
 def _within(short: tuple[str, ...], long: tuple[str, ...]) -> bool:
@@ -124,6 +160,10 @@ def resolve_indication(
     if not labels:
         return labels, None
     words = {label: tuple(condition_words(_ACRONYM.sub("", label))) for label in labels}
+    if len(labels) == 1:
+        # Reordering one target can expose its exact qualification in the title.
+        # Distinct registered labels still need evidence for their relationships.
+        words[labels[0]] = indication_key(_ACRONYM.sub("", labels[0]))
     title_phrases: dict[tuple[str, ...], str] = {}
     named_targets: dict[tuple[str, ...], str] = {}
     target_list = False
@@ -241,7 +281,7 @@ def resolve_indication(
                 return tuple(distinct), None
         return labels, None
     key, label = strongest[0]
-    if len(labels) == 1 and key == next(iter(words.values())):
+    if len(labels) == 1 and key == tuple(condition_words(_ACRONYM.sub("", labels[0]))):
         return labels, None
     return (label,), label
 

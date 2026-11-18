@@ -8,7 +8,11 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from thenwhat.backfill.registry_indication import has_named_cohorts, resolve_indication
+from thenwhat.backfill.registry_indication import (
+    has_named_cohorts,
+    indication_key,
+    resolve_indication,
+)
 from thenwhat.backfill.registry_scope_review import (
     ScopeReview,
     confirm_protocol_evidence,
@@ -43,6 +47,12 @@ _CONTROL_SUFFIX = re.compile(r"\((?:placebo|sham)\)$")
 _MATCHED_SHORT = re.compile(r"^ptm\s")
 _MATCHED_DEFINITION = re.compile(r"\bplacebo[- ]to[- ]match\s*\(ptm\)", re.IGNORECASE)
 _ALTERNATIVE = re.compile(r"\s+or\s+")
+_OPTIONAL_ARM_TREATMENT = re.compile(r"±|\+\s*/\s*-|\bwith or without\b", re.IGNORECASE)
+_DISTINCT_LINE_REGIMENS = re.compile(
+    r"\bas (?P<first>first|second|third)[ -]line\s*/[^.;/]{2,120}\s+"
+    r"as (?P<second>first|second|third)[ -]line\b",
+    re.IGNORECASE,
+)
 _NUMBER = r"\d+(?:\.\d+)?"
 _NUMERIC_CHOICE = re.compile(
     rf"\b(?:{_NUMBER} or {_NUMBER}|"
@@ -142,6 +152,11 @@ def _has_alternatives(key: str) -> bool:
     return _ALTERNATIVE.search(_NUMERIC_CHOICE.sub(" ", key)) is not None
 
 
+def _has_distinct_line_regimens(title: str) -> bool:
+    match = _DISTINCT_LINE_REGIMENS.search(title)
+    return match is not None and match["first"].casefold() != match["second"].casefold()
+
+
 def _escalated_intervention(title: str, names: Iterable[str]) -> str | None:
     anchor = _DOSE_ESCALATION.search(name_key(title))
     if anchor is None:
@@ -228,9 +243,9 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
     protocol = study.get("protocolSection") or {}
     listed_conditions = tuple(
         {
-            tuple(condition_words(label)): tidy(label)
+            key: tidy(label)
             for label in protocol.get("conditionsModule", {}).get("conditions", [])
-            if condition_words(label)
+            if (key := indication_key(label))
         }.values()
     )
     identification = protocol.get("identificationModule", {})
@@ -270,7 +285,9 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
     incomplete = False
     measurement_only = False
     mixed_control = False
-    alternatives = False
+    alternatives = len(tested_assignments) == 1 and any(
+        _has_distinct_line_regimens(title) for title in titles
+    )
     for index, active in enumerate(active_assignments):
         if index in reference:
             continue
@@ -294,6 +311,9 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
             del active[key]
         mixed_control |= any(_CONTROL_MARKER.search(name) for name in active)
         alternatives |= any(_has_alternatives(name) for name in active)
+        alternatives |= len(active) > 1 and bool(
+            _OPTIONAL_ARM_TREATMENT.search(assignments[index][0].label or "")
+        )
         key = tuple(sorted(active))
         aliases = ()
         if len(key) == 1:
@@ -413,18 +433,20 @@ def _regimen_key(label: str) -> tuple[str, ...]:
     return tuple(sorted(name_key(part) for part in re.split(r"\s+\+\s+", label)))
 
 
-def _condition_anchors(wanted: list[str], listed: tuple[str, ...]) -> dict[tuple[str, ...], str]:
+def _condition_anchors(
+    wanted: tuple[str, ...], listed: tuple[str, ...]
+) -> dict[tuple[str, ...], str]:
     """Match a registered condition as the head of an explicitly qualified population."""
     anchors = {}
     for label in listed:
-        words = condition_words(label)
+        words = indication_key(label)
         if not words or wanted[: len(words)] != words:
             continue
         context = wanted[len(words) :]
         if not context or (
             len(context) >= 2 and context[0] in {"in", "among"} and context[1] in _POPULATION_WORDS
         ):
-            anchors[tuple(words)] = label
+            anchors[words] = label
     return anchors
 
 
@@ -435,13 +457,11 @@ def _record_vertical(
     vocabulary: Vocabulary,
 ) -> None:
     group.condition_terms.update(terms)
-    wanted = condition_words(group.indication)
-    selected = [identifier for identifier, label in terms if condition_words(label) == wanted]
+    wanted = indication_key(group.indication)
+    selected = [identifier for identifier, label in terms if indication_key(label) == wanted]
     if not selected:
         anchors = _condition_anchors(wanted, listed_conditions)
-        selected = [
-            identifier for identifier, label in terms if tuple(condition_words(label)) in anchors
-        ]
+        selected = [identifier for identifier, label in terms if indication_key(label) in anchors]
         if not terms:
             # Exact preferred names are useful when the registry provides labels without
             # its MeSH projection. Keep them distinct from fuzzy or title-only matches.
@@ -470,7 +490,7 @@ def group_registry_trials(
     """Group only supported arm and condition pairs. Claim candidates still need checking."""
     by_pair: dict[tuple[tuple[str, ...], tuple[str, ...]], set[str]] = {}
     for slug, indication, intervention, aliases in claims:
-        condition = tuple(condition_words(indication))
+        condition = indication_key(indication)
         for name in (intervention, *aliases):
             by_pair.setdefault((_regimen_key(name), condition), set()).add(slug)
     groups: dict[tuple[tuple[str, ...], tuple[str, ...], str], PlanGroup] = {}
@@ -517,7 +537,7 @@ def group_registry_trials(
             ]
         terms = trial_terms(record) if vocabulary is not None else []
         for regimen, indication in pairs:
-            condition = tuple(condition_words(indication))
+            condition = indication_key(indication)
             key = tuple(sorted(map(name_key, regimen.components))), condition, scope.purpose
             group = groups.setdefault(
                 key, PlanGroup(regimen.label, indication, scope.purpose, regimen.components)

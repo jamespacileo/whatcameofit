@@ -49,6 +49,11 @@ Trials SHALL be grouped by fixed rules on the verified intervention or complete 
 - **WHEN** a trial lists several conditions
 - **THEN** evidence must establish each regimen and indication pairing before it is grouped
 
+#### Scenario: A registered disease qualifier follows the disease name
+- **WHEN** two verified indications differ only in whether a recognized disease qualifier precedes or follows the same disease name
+- **THEN** compare them as the same indication for grouping and existing claim candidates
+- **AND** a trial with a single registered condition can retain a more specific phrase from the title when it contains the reordered condition
+
 #### Scenario: A crossover arm lists multiple interventions
 - **WHEN** membership describes a sequence of different treatments
 - **THEN** verify which regimen is tested before grouping
@@ -61,6 +66,10 @@ Trials SHALL be grouped by fixed rules on the verified intervention or complete 
 #### Scenario: One component label mixes alternatives or roles
 - **WHEN** a component label names alternative products or joins an active treatment and a control without separating their roles
 - **THEN** hold the record for scope review before grouping
+
+#### Scenario: A single listed arm includes alternatives
+- **WHEN** its label identifies an optional component among the listed treatments or its title explicitly assigns separate regimens to different treatment lines
+- **THEN** hold the trial for review of each complete regimen before grouping
 
 #### Scenario: Distinct component lists have the same display name
 - **WHEN** the regimen display name and normalized indication agree but the registered component lists differ
