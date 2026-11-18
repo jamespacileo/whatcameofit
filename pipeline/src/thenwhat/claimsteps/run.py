@@ -63,6 +63,7 @@ def claim_steps(
     trials.after = (substance,)
     papers = ClaimPapers(
         papers_enabled=settings.research_papers_enabled and bool(settings.openalex_api_key),
+        papers_disabled=not settings.research_papers_enabled,
         reject_below=reject_below,
         accept_above=accept_above,
         rescore=rescore,

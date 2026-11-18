@@ -308,6 +308,7 @@ class ClaimPapers(ClaimStep):
         reject_below: float,
         accept_above: float,
         papers_enabled: bool,
+        papers_disabled: bool = False,
         rescore: bool = False,
         **step: Any,
     ) -> None:
@@ -316,14 +317,18 @@ class ClaimPapers(ClaimStep):
         self.accept_above = accept_above
         self.rescore = rescore
         self.papers_enabled = papers_enabled
+        self.papers_disabled = papers_disabled
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return {
+        values = {
             **_names(inputs, claim_id),
             "paper_entities": inputs.paper_entities.get(claim_id, []),
             "approved_papers": inputs.approved_papers.get(claim_id, []),
             "papers_enabled": self.papers_enabled,
         }
+        if self.papers_disabled:
+            values["papers_disabled"] = True
+        return values
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
@@ -399,13 +404,18 @@ class ClaimPapers(ClaimStep):
                     accept_above=self.accept_above,
                 )
 
-        unfinished = run_parts(session, (lookup_dois, organisations, search, numbers, origin), now)
+        parts = (
+            (organisations,)
+            if self.papers_disabled
+            else (lookup_dois, organisations, search, numbers, origin)
+        )
+        unfinished = run_parts(session, parts, now)
         if unfinished is not None:
             return unfinished
         if isinstance(papers, OpenAlex):
             found.usage = papers.usage.line()
         self.results[claim.id] = found
-        if papers is None:
+        if self.papers_disabled or papers is None:
             return NeedsFix(PAPERS_OFF)
         return WorkOutcome.DONE
 

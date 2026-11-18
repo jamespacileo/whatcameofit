@@ -47,7 +47,9 @@ ARTICLE_UNREADABLE = Reason(
     " `thenwhat extract article --paste`",
 )
 PAPERS_OFF = Reason(
-    "papers_off", ReasonClass.NEEDS_FIX, "paper search is off: OPENALEX_API_KEY is not set"
+    "papers_off",
+    ReasonClass.NEEDS_FIX,
+    "paper search is off because it was disabled or OPENALEX_API_KEY is unset",
 )
 KIND_TERM_MISSING = Reason("kind_term_missing", ReasonClass.NEEDS_FIX, "{said}")
 

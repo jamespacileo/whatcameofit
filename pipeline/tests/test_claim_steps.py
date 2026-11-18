@@ -722,6 +722,35 @@ def test_crossref_outage_does_not_block_trial_receipt_or_decision(session: Sessi
     assert claim.review_state is ReviewState.APPROVED
 
 
+def test_disabling_papers_defers_doi_lookup_until_enabled(session: Session):
+    class DoiRegistry(Registry):
+        asked_dois: list[str]
+
+        def __init__(self) -> None:
+            super().__init__()
+            self.asked_dois = []
+
+        def work(self, doi: str) -> SourceRecord | None:
+            self.asked_dois.append(doi)
+            return None
+
+    claim = new_claim(session)
+    doi = "10.1000/named"
+    add_entity(session, claim.slug, type=EntityType.PAPER, name="A paper", doi=doi)
+    registry = DoiRegistry()
+    sources = Sources(registry=registry)
+    names = (*SEARCH, PAPERS)
+
+    prepare(session, sources, names=names, research_papers_enabled=False)
+
+    assert entry(session, PAPERS, claim).reason == "papers_off"
+    assert registry.asked_dois == []
+
+    prepare(session, sources, names=names, at=LATER, research_papers_enabled=True)
+
+    assert registry.asked_dois == [doi]
+
+
 def test_last_source_pause_keeps_earlier_paid_term_decisions(session: Session):
     class UnavailableDrug(Targets):
         def drugs_named(self, name: str) -> list[SourceRecord]:
