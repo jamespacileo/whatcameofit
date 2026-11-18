@@ -57,6 +57,18 @@ The qualifier replay retained two previously omitted genotype restrictions and m
 
 The condition-order replay compared all 27,731 cached trials with commit `1001fb73` in 5.0 seconds. It changed the indication wording or labels for 55 trials and held 34 previously proposed trials when the arm or title described optional treatments or separate regimens by treatment line. Case P02 from the earlier audit now retains the exact phrase “Platinum-resistant Recurrent Ovarian Cancer” with the same registered regimen. Trials with distinct registered conditions still require evidence to assign them. This replay did not rerun the independent audit and used no registry requests, model calls or production writes.
 
+A fresh grouping audit at `d11a5b47` drew 50 groups with seed `18473` from 19,084 available groups, excluding 657 trial IDs from previous reviews, rule development and held-out sets. The sample comprised 52 distinct trials. An assistant checked the official and brief titles, registered intervention names, arm assignments and condition labels. Eligibility text and arm descriptions were absent from the sampled bulk records.
+
+| Group judgment | Count |
+| --- | ---: |
+| Supported by the cached registry evidence | 16 |
+| Wrong indication only | 18 |
+| Wrong regimen only | 2 |
+| Wrong regimen and indication | 7 |
+| Further evidence needed | 7 |
+
+The result missed the 45-of-50 threshold. Even if further review supported all seven unresolved groups, the sample would reach 23 of 50. Twelve assistant-reviewed corrections citing exact registry fields passed the existing scope receipt checks. The full-cohort read-only replay took 14.9 seconds. Two corrected scopes appeared as provisional drafts with their receipt hashes. The other ten remained held for topic placement. These corrections are excluded from this audit's score. The sample, judgments and receipts are on the NVMe under `fresh-drafting-gate-audit`. Registry requests, paid model calls and production writes were zero.
+
 The NVMe development set holds 120 cases from 127 trials, with earlier audit and holdout trial IDs excluded. The detailed registry pull found eligibility text for all 127 trials and arm descriptions for 109. An assistant reviewed 18 cases and found evidence absent from the bulk snapshot in 12. The arm-specific command reads the frozen protocol version, validates quoted fields against the assigned arms, and can request a second pass for omitted scope. In the offline comparison, the median packet grew from 1,363 to 5,775 characters and the 95th percentile grew from 3,278 to 14,923. Simulated native JSON calls exercised both stages and the exact-request cache. Live model accuracy and spend are pending.
 
 The regimen-label replay used the same 27,731 cached trials. The planner excluded separate explicit placebo and sham entries, kept control-only arms out of the tested arms, and held ambiguous mixed labels and alternatives. It restored proposals for 98 previously held trials, revised 14 trials' proposals, and held 269 trials that previously had proposals. There were 19,815 groups and 11,192 held trials. The plan ran in 2.22 seconds with no registry requests, model calls or production writes. An assistant checked 12 newly proposed trials. The registry supported the treatment arms in all 12, and each proposal still needed an enrollment, regimen or setting correction. On the previous 50-group audit the change only affected two groups already requiring review. A fresh audit must still pass the gate.
