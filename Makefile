@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-site-build check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-build extension-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -6,6 +6,7 @@ export SITE_URL ?= https://whatcameofit.com
 # so that two checkouts do not collide (pipeline/tests/conftest.py); set
 # TEST_DATABASE_URL to name another, on that server, ending in _test.
 export TEST_DB_PORT ?= 5434
+STORE_TEST_CONCURRENCY ?= 1
 
 # Everything CI runs: the fast set, then the slow set. Needs Docker for the test
 # database; no internet access is needed once dependencies and the Postgres image are
@@ -20,13 +21,17 @@ check-fast: lint types test-fast scripts-test site-test extension-test
 # The slow set, before a commit is pushed: a few minutes. Every test that builds the
 # site (the pipeline's round trip, the site's `*.build-test.mjs`), the store's ingest
 # service, and the site and extension builds themselves.
-check-slow: test-slow store-test site-build-test site-build extension
+check-slow: test-slow store-test check-site-build extension
 
 # One area in full, fast and slow, for work that touches only that area.
-check-pipeline: lint types test
-check-site: site-test site-build-test site-build
+.PHONY: check-pipeline-fast check-release-inputs
+check-pipeline: check-pipeline-fast test-slow
+check-pipeline-fast: lint types test-fast
+check-site: site-test check-site-build
+check-site-build: site-build-test site-build
 check-extension: extension-test extension
 check-store: store-test
+check-release-inputs: site-test site-build extension-test extension scripts-test
 
 lint:
 	uv run --directory pipeline ruff check .
@@ -73,7 +78,7 @@ store/ingest/node_modules: store/ingest/pnpm-lock.yaml
 	sh scripts/worktree-setup.sh store/ingest
 
 store-test: store/ingest/node_modules
-	pnpm --dir store/ingest test
+	cd store/ingest && node --test --test-reporter=dot --test-concurrency="$(STORE_TEST_CONCURRENCY)" tests/*.test.mjs
 
 # The ingest service on this machine only: http://localhost:8787. Tokens come from
 # store/ingest/.dev.vars (see .dev.vars.example); the store is a file under .wrangler/.
@@ -96,7 +101,7 @@ site-test: site/node_modules
 # The site's tests that build the site (tests/*.build-test.mjs). One at a time: builds
 # share the site's cache folder.
 site-build-test: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run test:build
+	cd site && ASTRO_TELEMETRY_DISABLED=1 node --test --test-reporter=dot --test-concurrency=1 $(if $(SITE_TEST_SHARD),--test-shard="$(SITE_TEST_SHARD)") tests/*.build-test.mjs
 
 site-build: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
@@ -215,7 +220,7 @@ deploy-ci-check: site/node_modules
 	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs --dry-run
 
 deploy-ci: site/node_modules
-	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs
+	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs $(if $(filter 1,$(DEPLOY_REUSE_BUILD)),--reuse-build)
 
 # One pull request's copy of the site, on its own Worker thenwhat-pr-<number> at a
 # workers.dev address. Never production. GitHub runs this for every pull request.
