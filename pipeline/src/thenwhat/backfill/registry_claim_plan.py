@@ -27,7 +27,7 @@ from thenwhat.work.errors import BackfillError
 # standard care, are retained if the registry identifies them as a member of that arm.
 _PLACEBO = re.compile(r"(?:intervention: )?(?:matching |matched |dummy )?placebo\b")
 _NAMED_PLACEBO = re.compile(
-    r"[\w(). -]+ placebo(?: (?:tablets?|capsules?|injections?|oral solution))?"
+    r"(?P<intervention>[\w(). -]+) placebo(?: (?:tablets?|capsules?|injections?|oral solution))?"
 )
 _NON_TREATMENT_LABELS = {"placebo", "sham", "no treatment", "no intervention", "control"}
 _CONTROL_LABEL = re.compile(r"^control(?: (?:arm|group))?$")
@@ -115,12 +115,21 @@ def _reference_arms(
     focus = _escalated_intervention(title, names) if model == "PARALLEL" else None
     reference = set()
     for index, (label, active) in enumerate(profile):
+        named_placebos = {
+            placeholder["intervention"].strip()
+            for member in assignments[index][1]
+            if (placeholder := _NAMED_PLACEBO.fullmatch(member))
+        }
         placebo_on_background = (
             model == "PARALLEL"
             and active
-            and _PLACEBO.match(label)
             and any(
-                active < peer and not _PLACEBO.match(peer_label) for peer_label, peer in profile
+                active < peer
+                and (
+                    (_PLACEBO.match(label) and not _PLACEBO.match(peer_label))
+                    or peer - active <= named_placebos
+                )
+                for peer_label, peer in profile
             )
         )
         outside_escalation = focus is not None and bool(active) and focus not in active

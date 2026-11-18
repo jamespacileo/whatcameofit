@@ -45,18 +45,22 @@ An offline replay selected exact registry spans for 11 records from known groupi
 
 All 27,731 cached trials produced review packets. The median packet has 1,301 characters and the 95th percentile 3,321. A separate holdout has 52 trial packets from 30 proposed groups and 20 held trials, with both earlier audit samples excluded.
 
+The cached matching-placebo replay checked all 27,731 eligible records, removed 6 reference-arm memberships, and proposed 20,146 groups. It took 6.4 seconds and made no requests. An exact-name candidate for ulcerative colitis had been proposed from an add-on trial's reference arm. The current rule retains the full tested combination. The grouping gate remains open.
+
 ## 3. Drafting and preparation
 
-- [ ] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added
+- [x] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added
 - [ ] 3.2 Add `thenwhat draft-from-registry` for a named set, with `--limit`; verify tests that a group an existing claim holds drafts nothing and hands its trials on as candidates, that a second run drafts nothing, and one success and one refusal of the command
-- [ ] 3.3 Have `thenwhat prepare --pending` take a registry draft: its drafting trials as candidates scored for its indication, approval only when one of them is approved, otherwise pending and listed; verify tests of both outcomes and that no trial is approved for having led to the draft
-- [ ] 3.4 Hold a registry draft that preparation approves awaiting audit; verify a test that no export publishes it before release and that the export says how many it left out
-- [ ] 3.5 Verify with a test that a read's same-claim decision attaches an article to a published registry-drafted claim, sets its first reported date, and does not hold it
+- [x] 3.3 Have `thenwhat prepare --pending` take a registry draft: its drafting trials as candidates scored for its indication, approval only when one of them is approved, otherwise pending and listed; verify tests of both outcomes and that no trial is approved for having led to the draft
+- [x] 3.4 Hold a registry draft that preparation approves awaiting audit; verify a test that no export publishes it before release and that the export says how many it left out
+- [x] 3.5 Verify with a test that a read's same-claim decision attaches an article to a published registry-drafted claim, sets its first reported date, and does not hold it
 - [ ] 3.6 Draft and prepare 200 claims of the first set, then audit every one; record here the drafts, the share approved, the share left pending and why, the duplicates found, the registry requests and the decision step's cost, and show the operator
+
+Synthetic preparation exercised both match outcomes on the Mac. It fetched the drafting trial by identifier when name search missed it and sent it through ordinary indication scoring. A different approved trial alone left the claim pending. An approved drafting match held the claim, and export counted and excluded it. A later first article joined a published registry claim without adding a new audit hold.
 
 ## 4. The site
 
-- [ ] 4.1 Add to the export whether a report is linked and what a claim was drafted from, with no headline or summary for a claim with no article; regenerate `site/export.schema.json` and raise the schema version; verify the tests that compare both pass
+- [x] 4.1 Add to the export whether a report is linked and what a claim was drafted from, with no headline or summary for a claim with no article; regenerate `site/export.schema.json` and raise the schema version; verify the tests that compare both pass
 - [ ] 4.2 Word a claim with no report from fixed phrases in the site's own files, and extend the build's wording check to these phrases and to words of advice; verify tests that the build fails on a verdict word and on a word that offers the treatment to a reader
 - [ ] 4.3 Show the fixed line on a claim with no report and none of date first reported, promises or reported statements; verify tests of a claim with no report, the same claim after an article is linked, and the extension's view
 - [ ] 4.4 Let every list of claims be narrowed to reported claims, kept in the address and working with the status and topic narrowing; verify tests on the Claims list, a topic page and the home page's lists
@@ -64,6 +68,8 @@ All 27,731 cached trials produced review packets. The median packet has 1,301 ch
 - [ ] 4.6 Build a preview from an export holding the 200 claims of 3.6 and show the operator the home page, one topic page and three claim pages; record here whether lists open on every claim or on reported claims
 - [ ] 4.7 Build the site from an export holding the whole first set as drafted in the plan, and record here the build time, the output's size and the size of `lookup.json`; report the figures to `cloudflare-source-of-truth` and stop if the build does not fit
 - [ ] 4.8 Deploy a pull request preview and read twenty pages of claims with no report with the operator; record here anything reworded
+
+Storage and export were exercised with a synthetic registry-only claim on the Mac. PostgreSQL and the SQLite store produced the same claim. The audit hold excluded it from export, and linking a first article later preserved its drafting origin. The PostgreSQL migration preserved a legacy row and refused to downgrade with a registry claim present. The version 3 export built a claim page and a search entry. Fixtures and the run receipt are stored on the NVMe.
 
 ## 5. The sampled audit
 

@@ -348,6 +348,39 @@ def test_reference_arms_preserve_the_complete_active_regimen():
     ]
 
 
+@pytest.mark.parametrize("placebo, is_reference", [("Example XR", True), ("Unrelated", False)])
+def test_a_placebo_for_the_added_product_identifies_its_reference_arm(
+    placebo: str, is_reference: bool
+):
+    given = study(
+        ["Ocular Redness"],
+        [
+            {
+                "type": "EXPERIMENTAL",
+                "label": "Example XR + Background Therapy",
+                "interventionNames": ["Drug: Example XR", "Drug: Background Therapy"],
+            },
+            {
+                "type": "EXPERIMENTAL",
+                "label": f"Background Therapy + {placebo} Placebo",
+                "interventionNames": ["Drug: Background Therapy", f"Drug: {placebo} Placebo"],
+            },
+        ],
+    )
+    given["protocolSection"]["designModule"]["designInfo"]["interventionModel"] = "PARALLEL"
+
+    scope = trial_scope(given)
+
+    assert scope.reference_arms == (
+        (f"Background Therapy + {placebo} Placebo",) if is_reference else ()
+    )
+    assert [regimen.components for regimen in scope.regimens] == (
+        [("Background Therapy", "Example XR")]
+        if is_reference
+        else [("Background Therapy", "Example XR"), ("Background Therapy",)]
+    )
+
+
 def test_product_prefixed_placebo_is_excluded_from_a_double_dummy_regimen():
     record = study(
         ["Eye Irritation"],
