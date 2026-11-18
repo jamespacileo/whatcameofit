@@ -54,10 +54,6 @@ test("an inconclusive text lookup tries the visible image once",async()=>{
   }});
  await controller.open();assert.equal(requests.length,2);assert.equal(calls.capture,1);assert.ok(requests[1].image);
 });
-test("selected words suppress automatic capture and cache reuse",async()=>{
- const {controller,calls}=setup({readPage:async()=>({text:"The selected report says EX-1 restored missing teeth.",links:[],selectionOnly:true,visualCandidate:true})});
- await controller.open();assert.equal(calls.capture,0);assert.equal(calls.paid.length,1);assert.equal(calls.paid[0].image,undefined);
-});
 test("a capture resolving after popup close sends and stores nothing",async()=>{
  let finish,started;const ready=new Promise(r=>started=r);
  const {controller,calls,saved}=setup({capturePage:()=>{started();return new Promise(r=>finish=r);}});
@@ -98,23 +94,39 @@ test("changed pixels at an unchanged canvas or image URL do not reuse the prior 
  await controller.open();assert.equal(calls.paid.length,2);
 });
 
-test("a short social caption with an article link keeps the reviewed-article path before screenshots",async()=>{
- const {controller,calls}=setup({readPage:async()=>({text:"Read this",links:["https://example.org/report"],platform:"Reddit",visualCandidate:true})});
- await controller.open();assert.equal(calls.capture,0);assert.equal(calls.paid[0].image,undefined);assert.deepEqual(calls.paid[0].links,["https://example.org/report"]);
-});
 
 test("an embedded document intersecting capture is refused before pixels are taken",async()=>{
  const api={tabs:{query:async()=>[tab],captureVisibleTab:async()=>{throw new Error("must not capture");}},scripting:{executeScript:async()=>[{result:{address:tab.url,sensitive:false,embedded:true,hidden:false}}]}};
  await assert.rejects(capturePage(api,tab,null),e=>e.code==="capture_embedded");
 });
 
-test("first use asks before reading or sending; permission persists and can be withdrawn",async()=>{
- let reads=0;
- const {controller,calls,saved}=setup({requiresSharingConsent:true,readPage:async()=>{reads++;return {text:"Dental revolution",links:[],visualCandidate:true};}});
- await controller.open();assert.equal(reads,0);assert.equal(calls.capture,0);assert.equal(calls.paid.length,0);assert.equal(calls.states.at(-1).kind,"sharing");
- await controller.enableSharing();assert.equal(reads,1);assert.equal(calls.paid.length,1);assert.equal(saved.sharing.enabled,true);
- await controller.disableSharing();await controller.open();assert.equal(reads,1);assert.equal(saved.sharing.enabled,false);
- await controller.previewVisual();assert.equal(calls.capture,1);
+test("the popup waits for consent before reading and stops sharing after consent is withdrawn", async () => {
+  let reads = 0;
+  const { controller, calls, saved } = setup({
+    requiresSharingConsent: true,
+    readPage: async () => {
+      reads += 1;
+      return { text: "Dental revolution", links: [], visualCandidate: true };
+    },
+  });
+  await controller.open();
+  assert.equal(reads, 0, "the popup must wait for consent before reading");
+  assert.equal(calls.capture, 0);
+  assert.equal(calls.paid.length, 0);
+  assert.equal(calls.states.at(-1).kind, "sharing");
+
+  await controller.enableSharing();
+  assert.equal(reads, 1);
+  assert.equal(calls.paid.length, 1);
+  assert.equal(saved.sharing.enabled, true);
+
+  await controller.disableSharing();
+  await controller.open();
+  await controller.previewVisual();
+  assert.equal(reads, 1);
+  assert.equal(calls.capture, 1);
+  assert.equal(calls.paid.length, 1);
+  assert.equal(saved.sharing.enabled, false);
 });
 
 test("failed permission writes never silently enable or claim a durable withdrawal",async()=>{

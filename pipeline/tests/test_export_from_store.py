@@ -8,7 +8,7 @@ import hashlib
 import json
 import sqlite3
 import subprocess
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -26,20 +26,30 @@ from test_export import (
     EARLIER,
     NOW,
     SLUG,
+    StageReading,
     add_event,
     add_match,
     add_origin_paper,
     add_registry_events,
+    add_related,
+    add_statement,
+    add_term,
+    autism_tree,
     new_claim,
     study,
 )
+from test_organisations import Registry, nottingham
+from test_record_readings import ANSWER, OUTCOMES, Scripted, read, study_with
 from thenwhat.claims.corrections import merge_claims, rename_intervention
-from thenwhat.claims.entry import add_article, archive_claim, clear_audit
+from thenwhat.claims.entities import note_named_organisation
+from thenwhat.claims.entry import add_article, archive_claim, articles_of, clear_audit
 from thenwhat.cli import app
 from thenwhat.db.models import OutletIcon
+from thenwhat.decide.steps import suggest_evidence_stage
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
+    EntityType,
     EventType,
     EvidenceStage,
     RegulatoryOutcome,
@@ -53,6 +63,7 @@ from thenwhat.export.parallel import compare_with_store
 from thenwhat.export.rehearsal import against, problems
 from thenwhat.export.store_fetch import FetchFailed, fetch_store
 from thenwhat.export.store_records import TABLES_READ, StoreFault, StoreRecords
+from thenwhat.resolve.organisations import match_organisations
 from thenwhat.review.queue import confirm_stage, flag_failure
 from thenwhat.seed.load import load_seed
 
@@ -75,7 +86,71 @@ def test_seeded_example_is_the_same_from_the_store(session: Session, tmp_path: P
     [claim] = export["claims"]
     assert claim["slug"] == "tooth-regrowth-usag1"
     assert claim["events"] and claim["trials"] and claim["articles"]
-    assert export["outlets"]
+    assert claim["promises"] and claim["papers"]
+    assert export["outlets"] and export["verticals"]
+
+
+def test_report_context_is_the_same_from_either_store(
+    session: Session, tmp_path: Path, fixture_json: Callable[[str], dict[str, Any]]
+) -> None:
+    claim = new_claim(session)
+    add_statement(session, claim, "The report described tooth regrowth.", ReviewState.APPROVED)
+    add_statement(session, claim, "Rejected statement.", ReviewState.REJECTED)
+    add_term(session, claim, "D000002", "Anodontia")
+    add_related(session, claim, "W4400000001", 0.85, ReviewState.APPROVED)
+    suggest_evidence_stage(session, StageReading(0.7), claim, now=NOW)
+    [article] = articles_of(session, claim)
+    name = "University of Nottingham"
+    note_named_organisation(session, claim, article, name, EntityType.INSTITUTION)
+    match_organisations(
+        session, claim, registry=Registry({name: [nottingham(fixture_json)]}), now=NOW
+    )
+
+    export = claim_in(assert_same_export(session, tmp_path, NOW))
+
+    [statement] = export["reported_statements"]
+    assert (statement["text"], statement["article_url"]) == (
+        "The report described tooth regrowth.",
+        ARTICLE,
+    )
+    [card] = export["background"]
+    assert card["label"] == "Anodontia"
+    [paper] = export["papers"]
+    assert paper["identifier"] == "openalex:W4400000001"
+    assert paper["roles"][0]["role"] == "related"
+    assert export["evidence_stage_reading"]["stage"] == "early_human"
+    [organisation] = export["organisations"]
+    assert organisation["record"]["external_id"] == "01ee9ar58"
+    assert organisation["roles"][0]["article_urls"] == [ARTICLE]
+
+
+def test_trial_readings_are_the_same_for_current_and_changed_registry_records(
+    session: Session, tmp_path: Path, fixture_json: Callable[[str], dict[str, Any]]
+) -> None:
+    claim = new_claim(session)
+    add_match(session, claim, "NCT02586935", 0.95, ReviewState.APPROVED)
+    add_registry_events(session, claim, study_with(fixture_json, OUTCOMES), fetched_at=EARLIER)
+    autism_tree(session)
+    read(session, claim, Scripted(ANSWER))
+
+    export = claim_in(assert_same_export(session, tmp_path / "current", NOW))
+
+    [trial] = export["trials"]
+    assert len(trial["readings"]) == 4
+    assert [category["identifier"] for category in export["clinical_categories"]] == [
+        "D000067877",
+        "D001321",
+    ]
+
+    time_frame = "Baseline and week 8 after starting stimulation"
+    changed = [OUTCOMES[0] | {"timeFrame": time_frame}, OUTCOMES[1]]
+    add_registry_events(
+        session, claim, study_with(fixture_json, changed, results_posted=True), fetched_at=NOW
+    )
+
+    [trial] = claim_in(assert_same_export(session, tmp_path / "changed", NOW))["trials"]
+    assert trial["facts"]["primary_outcomes"][0]["time_frame"] == time_frame
+    assert trial["readings"] == []
 
 
 def test_archived_claim_is_listed_the_same(session: Session, tmp_path: Path):

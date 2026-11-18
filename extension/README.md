@@ -114,7 +114,7 @@ As of 13 November 2026, 0.9.0 (9) is Waiting for Review. The [0.9.1 preview](htt
 - `test-corpus/`: public pages for checking lookups by hand (its own README).
 - `dev/`: a page showing every popup state side by side. `node extension/build.mjs --dev`, then serve `extension/dist` and open `states.html`.
 
-Tests run with `node --test extension/tests/*.test.mjs` after `make setup` (also part of `make check`). Synthetic YouTube fixtures use LinkeDOM to exercise real selectors without live network calls. The explicit glob discovers the test files on Node 24.
+`make check-extension` runs the source tests and builds `extension/dist` once for the popup and background tests. The packaged tests use the manifest entry points, the popup HTML and renderer, and simulated browser APIs and network responses. `make extension-test` runs the source tests alone and fits in `make check-fast`. The packaged tests also run in `make check-slow` and `make check-release-inputs`.
 
 ### Popup sizing regression
 

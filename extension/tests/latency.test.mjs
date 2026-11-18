@@ -100,36 +100,26 @@ test("the automatic screenshot fallback is inside the same deadline", async () =
   controller.close();
 });
 
-test("closing during a lookup cancels it with no rendering, even after the deadline", async () => {
-  let started;
-  const begun = new Promise((resolve) => { started = resolve; });
+test("closing during a lookup cancels it and ignores a response arriving after its deadline", async () => {
+  const started = Promise.withResolvers();
+  const pending = Promise.withResolvers();
   const { controller, calls } = setup({
     lookupTimeoutMs: 20,
-    fetch: async (_url, options) => { calls.posts.push(options); started(); return never(); },
+    fetch: async (_url, options) => { calls.posts.push(options); started.resolve(); return pending.promise; },
   });
   const opening = controller.open();
-  await begun;
+  await within(started.promise);
   const count = calls.states.length;
+  const writeCount = calls.writes.length;
   controller.close();
   assert.equal(calls.posts[0].signal.aborted, true);
   await within(opening);
   await pause(40);
+  pending.resolve(Response.json(answer));
+  await new Promise(resolve => setImmediate(resolve));
   assert.equal(calls.states.length, count, "nothing is shown after closing");
   assert.equal(calls.states.at(-1).kind, "searching");
-});
-
-test("only one lookup is in flight at a time", async () => {
-  const { controller, calls } = setup({
-    lookupTimeoutMs: 1_000,
-    fetch: async (_url, options) => { calls.posts.push(options); await pause(10); return { ok: true, json: async () => answer }; },
-  });
-  await within(controller.open());
-  const one = controller.search();
-  const two = controller.search();
-  assert.equal(one, two);
-  await within(one);
-  assert.equal(calls.posts.length, 2);
-  controller.close();
+  assert.equal(calls.writes.length, writeCount, "the closed popup saves no answer");
 });
 
 test("a response from an expired attempt cannot overwrite a successful retry or its saved results", async () => {

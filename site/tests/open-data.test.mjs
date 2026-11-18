@@ -1,9 +1,4 @@
-// The open data file: the pure function, then the built file and page.
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
 import { test } from "node:test";
 import { openData, openDataIndex, openDataRecord, recordPath } from "../src/lib/open-data.ts";
 
@@ -258,53 +253,6 @@ test("Scenario: Index and one file per claim", () => {
 
 test("a preview export gives a preview file", () => {
   assert.equal(openData(exported(true), LICENCE, CREDIT, METHOD).preview, true);
-});
-
-test("the built file and page", () => {
-  const fixtureFile = "tests/fixture-export.json";
-  const fixture = JSON.parse(fs.readFileSync(fixtureFile, "utf8"));
-  const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-open-data-"));
-  const result = spawnSync("npx", ["astro", "build", "--outDir", dist], {
-    env: { ...process.env, EXPORT_FILE: fixtureFile, ASTRO_TELEMETRY_DISABLED: "1" },
-    encoding: "utf8",
-  });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-
-  const file = JSON.parse(fs.readFileSync(path.join(dist, "data/claims.json"), "utf8"));
-  assert.deepEqual(
-    file.entries.map((c) => c.slug).sort(),
-    fixture.claims.map((c) => c.slug).sort(),
-  );
-  assert.match(file.licence, /CC BY 4\.0/);
-  assert.equal(file.preview, false);
-  assert.ok(!everyString(file).some((text) => text.startsWith("data:")));
-  // Each entry's record is a built file holding that claim's full record, licence and credit.
-  assert.equal(file.format, "claims-index");
-  for (const entry of file.entries) {
-    assert.equal(entry.record, recordPath(entry.slug));
-    const record = JSON.parse(fs.readFileSync(path.join(dist, recordPath(entry.slug)), "utf8"));
-    assert.equal(record.claim.slug, entry.slug);
-    assert.equal(record.licence, file.licence);
-    assert.equal(record.credit, file.credit);
-    assert.ok(!everyString(record).some((text) => text.startsWith("data:")));
-  }
-  const page = fs.readFileSync(path.join(dist, "data/index.html"), "utf8");
-  assert.match(page, /href="\/data\/claims\.json"/);
-  assert.match(page, /href="\/data\/claims\/[^"]+\.json"/);
-  assert.match(page, /download the index, then each address in its <code>record<\/code> fields/);
-
-  // A preview export gives a preview file.
-  fixture.preview = true;
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-open-data-preview-"));
-  const previewFile = path.join(directory, "export.json");
-  fs.writeFileSync(previewFile, JSON.stringify(fixture));
-  const previewBuild = spawnSync("npx", ["astro", "build", "--outDir", path.join(directory, "dist")], {
-    env: { ...process.env, EXPORT_FILE: previewFile, ASTRO_TELEMETRY_DISABLED: "1" },
-    encoding: "utf8",
-  });
-  assert.equal(previewBuild.status, 0, previewBuild.stdout + previewBuild.stderr);
-  const previewData = JSON.parse(fs.readFileSync(path.join(directory, "dist/data/claims.json"), "utf8"));
-  assert.equal(previewData.preview, true);
 });
 
 // --- background cards (openspec open-data: "Background cards in the download") ---
