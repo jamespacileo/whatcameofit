@@ -82,6 +82,21 @@ Every check that ran before this capability existed SHALL, on every run, either 
 - **WHEN** a changed file is not listed as an input of any check and is not listed as read by none
 - **THEN** every check runs
 
+#### Scenario: Identically named checkouts run concurrently
+
+- **WHEN** two distinct checkout paths ending in thenwhat run tests on the same test server
+- **THEN** each run creates, uses and cleans up its own database independently
+
+#### Scenario: The extension-only check catches a packaging failure
+
+- **WHEN** extension packaging fails while its unit tests pass
+- **THEN** the documented full extension-only check fails at the build step
+
+#### Scenario: The fast site suite leaves builds to the build suite
+
+- **WHEN** the fast and build-test suites are run separately
+- **THEN** the fast suite makes no site build and the build-test suite exercises the home-row build assertions
+
 ### Requirement: Deliberately broken changes still fail
 A fixed set of deliberately broken changes SHALL exist, at least one for each check: lint, types, pipeline tests, script tests, site tests, site build, extension tests, and the deployment rehearsal. Applied one at a time, each SHALL make the checks fail. The set SHALL be run after every change to how the checks are scheduled, skipped or reused.
 

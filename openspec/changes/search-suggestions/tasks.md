@@ -8,3 +8,11 @@
 - [ ] 6 Conditions written several ways in the published claims ("Alzheimer's disease", "Alzheimer disease", "Alzheimer’s disease") are offered as separate rows. Bringing them to one name is the pipeline's, not this change's.
 
 Not checked: a screen reader's reading of the rows; a row taken by Enter in a real browser (the keys were sent by script); forced colours; the box on pages other than the home page.
+
+## 7. Suggestion behavior during index loading
+
+### P2
+
+- [x] 7.1 <a id="task-f27"></a>Refresh eligible suggestions on detail arrival even when the first pass found no rows. Delay the detail file and test the unchanged ID, changed input and explicit dismissal. [F27](../../../docs/reviews/2026-11-17-code-review.md#finding-f27) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-a-complete-trial-number-is-typed-before-detail-arrives)
+
+- [x] 7.2 <a id="task-f28"></a>Keep the active suggestion through a redraw. Test delayed detail with a reordered list, check the active descendant, and press Enter. [F28](../../../docs/reviews/2026-11-17-code-review.md#finding-f28) · [Acceptance scenario](specs/site-publishing/spec.md#scenario-the-keyboard-selection-survives-a-detail-refresh)

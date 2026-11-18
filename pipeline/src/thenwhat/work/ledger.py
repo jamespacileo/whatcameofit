@@ -8,7 +8,21 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, and_, exists, func, not_, or_, select
+from sqlalchemy import (
+    ColumnElement,
+    Integer,
+    Select,
+    and_,
+    any_,
+    bindparam,
+    exists,
+    func,
+    not_,
+    or_,
+    select,
+    update,
+)
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Session, aliased
 
 from thenwhat.db.models import WorkEntry
@@ -168,11 +182,21 @@ class StepCounts:
 
 
 def count(
-    session: Session, step: Step, attempt_limit: int, *, now: datetime | None = None
+    session: Session,
+    step: Step,
+    attempt_limit: int,
+    *,
+    now: datetime | None = None,
+    changed_inputs: ColumnElement[bool] | None = None,
 ) -> StepCounts:
     """Where a step stands. Entries are counted through their record, so an entry whose
     record is gone or out of scope is never counted as work done."""
     current = and_(WorkEntry.id.is_not(None), WorkEntry.stale.is_(False))
+
+    due = _is_due(attempt_limit, now)
+    if changed_inputs is not None:
+        current = and_(current, not_(changed_inputs))
+        due = or_(due, changed_inputs)
 
     def tally(condition: ColumnElement[bool]) -> Any:
         return func.count().filter(condition)
@@ -183,7 +207,7 @@ def count(
             tally(and_(current, WorkEntry.outcome == WorkOutcome.DONE)),
             tally(and_(current, WorkEntry.outcome == WorkOutcome.NOTHING_FOUND)),
             tally(and_(current, WorkEntry.outcome == WorkOutcome.FAILED)),
-            tally(and_(_is_due(attempt_limit, now), *_earlier_finished(step))),
+            tally(and_(due, *_earlier_finished(step))),
             tally(
                 and_(
                     current,
@@ -343,19 +367,26 @@ def requeue(
         wanted.append(WorkEntry.reason == reason)
         if values:
             wanted.append(WorkEntry.reason_values.contains(dict(values)))
-    entries = list(
-        session.scalars(
-            select(WorkEntry)
-            # Every record that still exists, in the step's scope or not: one out of
-            # scope is not worked on whatever its entry says.
-            .join(step.model, _entry_of(step))
-            .where(*wanted)
-            .order_by(WorkEntry.record_id)
-        )
+    # Lock the same records first as a worker taking a batch. The step can then
+    # clear its lead outcomes in this transaction without racing the next retry.
+    candidates = (
+        select(WorkEntry.id, WorkEntry.record_id)
+        .join(step.model, _entry_of(step))
+        .where(*wanted)
+        .order_by(WorkEntry.record_id)
     )
-    if not dry_run:
-        for entry in entries:
-            entry.stale = True
-            entry.attempts = 0
-        session.flush()
-    return [entry.record_id for entry in entries]
+    if dry_run:
+        return [row.record_id for row in session.execute(candidates)]
+    entry_ids = list(session.scalars(candidates.with_for_update(of=step.model)))
+    if not entry_ids:
+        return []
+    # A worker could have finished while the record lock was being acquired.
+    changed = session.scalars(
+        update(WorkEntry)
+        .where(
+            WorkEntry.id == any_(bindparam("entry_ids", entry_ids, type_=ARRAY(Integer))), *wanted
+        )
+        .values(stale=True, attempts=0)
+        .returning(WorkEntry.record_id)
+    )
+    return sorted(changed)

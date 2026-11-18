@@ -60,6 +60,21 @@ The store SHALL be restorable to its state at a chosen time within the last 30 d
 - **WHEN** a run is found to have merged wrong records
 - **THEN** the operator can restore the store to the point recorded before that run
 
+#### Scenario: Waiting work survives a bulk round trip
+
+- **WHEN** a writer exports claim work in the later and needs_fix states and the bulk store is restored
+- **THEN** both outcomes retain their reason, reason values and applicable retry timestamps. The same entries become eligible at the same times
+
+#### Scenario: A restore resumes between batches
+
+- **WHEN** a 20,001-record delta is interrupted after its first 20,000 records commit
+- **THEN** retry applies the missing record and all 20,001 exist exactly once, including after a second retry
+
+#### Scenario: An unreadable restore index survives an upload
+
+- **WHEN** the bucket returns 503 while reading an existing delta index
+- **THEN** the upload fails with the index and all earlier objects intact. A subsequent successful retry appends the new delta once
+
 ### Requirement: The store is kept in two tiers
 The store SHALL be kept as a hot tier in D1, holding every table something on Cloudflare reads, and a bulk tier kept as one SQLite file of the same schema in R2, holding the rest. No row of the hot tier SHALL reference a row of the bulk tier; a hot record that names a bulk one SHALL name it by its natural key as text. A payload SHALL be kept in each tier whose rows point at it. A load of either tier SHALL be verified by one checksum a table, computed by the same single statement on the store file and on the loaded store, without reading the rows back.
 
@@ -78,6 +93,24 @@ The store SHALL be kept as a hot tier in D1, holding every table something on Cl
 #### Scenario: The bulk tier restored
 - **WHEN** the bulk file is downloaded and its deltas are replayed in order
 - **THEN** each table's checksum equals that of the file the daily job merged in place
+
+#### Scenario: The daily bulk merge runs twice
+- **WHEN** the job runs again with the same day's delta path
+- **THEN** that delta still contains every change since the day's starting point, including changes written before a restart
+
+#### Scenario: A restore stops between batches
+- **WHEN** a restore commits the first batch of a delta and stops
+- **THEN** replaying the delta applies all remaining batches once
+
+#### Scenario: A source document is missing at cutover
+
+- **WHEN** a build references an external payload missing from both the upload and the destination, or the available object has the wrong hash
+- **THEN** cutover identifies the reference and stops before switching stores. An existing destination object with the correct hash satisfies the reference
+
+#### Scenario: A trial paper is the only change
+
+- **WHEN** a paper is added to a registry trial after a successful bulk build and the other sources are unchanged
+- **THEN** the normal rebuild includes the paper and produces the same paper records as a full build
 
 ### Requirement: Every record says where it came from
 Every record the store holds SHALL carry the run that first added it and the run that last changed it. A run SHALL record the kind of writer, the device or the class of reader request, the code's commit and the time.
@@ -143,6 +176,10 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 - **WHEN** the comparison is run against the working database
 - **THEN** the database is read in a read-only transaction that is rolled back, nothing is written to it, and the store file it makes is removed unless it is asked to be kept
 
+#### Scenario: An article discrepancy and another change on one claim
+- **WHEN** the store kept the first of two source articles at a shared address key and the same claim also has an unexpected status or a changed title on a retained article
+- **THEN** the comparison identifies the remaining change and exits with an error even with `--allow-named`
+
 #### Scenario: A difference the comparison can explain
 - **WHEN** a claim differs because the database holds two of its source articles at one address key, or only in the order of its intervention's other names
 - **THEN** the claim is listed with that cause, the comparison still exits with an error, and with `--allow-named` it exits successfully only when every difference has a named cause
@@ -155,6 +192,10 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 - **WHEN** the comparison is given the name of the D1 database (`--d1`)
 - **THEN** the rows an export reads are fetched with read-only queries into a store file, a payload object the local folder lacks is fetched from the bucket named, every payload is checked against its checksum, and the comparison is of that file
 
+#### Scenario: D1 changes while its pages are being copied
+- **WHEN** a transaction commits on D1 between the first and last page of the copy
+- **THEN** the export reports that the copy must be retried and preserves the previous local snapshot
+
 #### Scenario: A store that holds only the hot tier
 - **WHEN** the store file or database holds only the tables an export reads (no registry trial, lead, share, ledger entry, usage or measure)
 - **THEN** the export is the same as from a store that holds every table, a trial's facts on a claim's page coming from the raw payload of the claim's own evidence event, and a comparison against the database reads no other table
@@ -162,6 +203,11 @@ The export SHALL be assembled by one piece of code that asks a reader for record
 #### Scenario: A store missing what an export reads
 - **WHEN** the store lacks a table or a column the export reads
 - **THEN** the export is refused before anything is read, naming each missing table and column
+
+#### Scenario: A duplicate article accompanies a status change
+
+- **WHEN** exports differ on an explained duplicate article and on a status change from Phase 3 to approved for the same claim
+- **THEN** the comparison explains the article difference, reports the status difference separately and fails the rehearsal
 
 ### Requirement: A deployment can rehearse taking its export from the store
 Until the cut-over, CI SHALL be able to take an export from the store, hold it to the schema the site reads and to the checks a published snapshot must pass, and report how its claims compare with the committed snapshot. The rehearsal SHALL be off unless a repository setting turns it on, SHALL only read the store, and SHALL change nothing the site is built or deployed from: the committed snapshot remains the source.

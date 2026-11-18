@@ -80,6 +80,7 @@ class Paper:
     trial_numbers: tuple[str, ...]
     # The record as kept: no abstract and no author.
     raw: dict[str, Any]
+    doi: str | None = None
 
 
 def is_off_peak(moment: datetime) -> bool:
@@ -135,7 +136,15 @@ def read_papers(xml: str) -> list[Paper]:
             ],
             "databanks": databanks,
         }
-        papers.append(Paper(pubmed_id, tuple(dict.fromkeys(numbers)), raw))
+        doi = next(
+            (
+                value
+                for item in article.findall("PubmedData/ArticleIdList/ArticleId")
+                if item.get("IdType") == "doi" and (value := _text(item))
+            ),
+            None,
+        )
+        papers.append(Paper(pubmed_id, tuple(dict.fromkeys(numbers)), raw, doi))
     return papers
 
 
@@ -182,10 +191,52 @@ class PubMed:
         when they were fetched. One search, then one fetch for each 200 papers."""
         if not numbers:
             return [], self._time.now()
-        answer = self._post(
-            "esearch.fcgi",
-            {"term": search_term(numbers), "retmax": str(SEARCH_MAX), "retmode": "json"},
-        )
+        ids, count = self._search(search_term(numbers), limit=SEARCH_MAX)
+        if count > len(ids):
+            raise TooManyPapers(
+                f"{self.name} holds {count} papers for {len(numbers)} trials, more than one "
+                "answer returns. Lower PUBMED_TRIALS_PER_REQUEST and run the step again."
+            )
+        return self.papers_by_ids(ids), self._time.now()
+
+    def papers_by_ids(self, ids: Sequence[str]) -> list[Paper]:
+        """Fetch deduplicated bibliographic records through the shared PubMed allowance."""
+        ids = list(dict.fromkeys(ids))
+        if any(not identifier.isascii() or not identifier.isdecimal() for identifier in ids):
+            raise ValueError("PubMed identifiers must contain only decimal digits.")
+        papers: list[Paper] = []
+        for start in range(0, len(ids), FETCH_MAX):
+            asked = ids[start : start + FETCH_MAX]
+            fetched = self._post("efetch.fcgi", {"id": ",".join(asked), "retmode": "xml"})
+            try:
+                received = read_papers(fetched.text)
+            except ElementTree.ParseError:
+                raise IndexUnavailable(
+                    f"{self.name} answered a fetch in a form this client does not know."
+                ) from None
+            if {paper.pubmed_id for paper in received} != set(asked):
+                raise IndexUnavailable(
+                    f"{self.name} did not return the requested papers. Its trials stay due."
+                )
+            papers.extend(received)
+        return papers
+
+    def ranked_ids(self, term: str, *, limit: int) -> list[str]:
+        """The leading IDs for an article query, in PubMed's relevance order."""
+        if not 1 <= limit <= SEARCH_MAX:
+            raise ValueError(f"PubMed result limit must be between 1 and {SEARCH_MAX}.")
+        if not term.strip():
+            return []
+        ids, _ = self._search(term, limit=limit, by_relevance=True)
+        return ids
+
+    def _search(
+        self, term: str, *, limit: int, by_relevance: bool = False
+    ) -> tuple[list[str], int]:
+        fields = {"term": term, "retmax": str(limit), "retmode": "json"}
+        if by_relevance:
+            fields["sort"] = "relevance"
+        answer = self._post("esearch.fcgi", fields)
         try:
             found = answer.json()["esearchresult"]
             ids = [str(one) for one in found["idlist"]]
@@ -194,23 +245,7 @@ class PubMed:
             raise IndexUnavailable(
                 f"{self.name} answered a search in a form this client does not know."
             ) from None
-        if count > len(ids):
-            raise TooManyPapers(
-                f"{self.name} holds {count} papers for {len(numbers)} trials, more than one "
-                "answer returns. Lower PUBMED_TRIALS_PER_REQUEST and run the step again."
-            )
-        papers: list[Paper] = []
-        for start in range(0, len(ids), FETCH_MAX):
-            fetched = self._post(
-                "efetch.fcgi", {"id": ",".join(ids[start : start + FETCH_MAX]), "retmode": "xml"}
-            )
-            try:
-                papers += read_papers(fetched.text)
-            except ElementTree.ParseError:
-                raise IndexUnavailable(
-                    f"{self.name} answered a fetch in a form this client does not know."
-                ) from None
-        return papers, self._time.now()
+        return ids, count
 
     def _post(self, utility: str, fields: dict[str, str]) -> httpx.Response:
         """One request, by POST so a long list of numbers is never an address, counted

@@ -19,7 +19,7 @@ from thenwhat.events.draft import EventDraft
 from thenwhat.events.paper_records import keep_paper, note_paper, paper_reference
 from thenwhat.events.papers import follow_up_confidence, follow_up_event, retraction_event
 from thenwhat.events.trial import trial_events
-from thenwhat.events.trial_facts import Sponsor, read_trial
+from thenwhat.events.trial_facts import Sponsor, is_registry_record, read_trial
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.clinicaltrials import ClinicalTrials
@@ -47,7 +47,7 @@ def fetch_claim(
     claim: Claim,
     *,
     trials: TrialRegistry,
-    literature: LiteratureIndex,
+    literature: LiteratureIndex | None,
     notices: NoticeRegistry,
     threshold: float,
     now: datetime,
@@ -77,7 +77,8 @@ def fetch_claim(
     created: list[EvidenceEvent] = []
 
     def keep(**paper: Any) -> None:
-        keep_paper(session, literature, now=now, max_age=paper_max_age, **paper)
+        if literature is not None:
+            keep_paper(session, literature, now=now, max_age=paper_max_age, **paper)
 
     def store(draft: EventDraft, match: EntityMatch | None) -> None:
         event = _store(session, claim, draft, match, threshold, now)
@@ -106,7 +107,7 @@ def fetch_claim(
 
     origin_entity = next((entity for entity in entities if entity.is_origin_paper), None)
     origin_match = next(iter(approved.get(origin_entity.id, [])), None) if origin_entity else None
-    if origin_entity is not None and origin_match is not None:
+    if literature is not None and origin_entity is not None and origin_match is not None:
         origin_doi = origin_match.external_id
         origin = literature.paper(origin_doi)
         names = [
@@ -199,12 +200,24 @@ def _store(
     now: datetime,
 ) -> EvidenceEvent | None:
     """Store the draft unless the claim already has an event for the same fact."""
-    exists = session.scalars(
-        select(EvidenceEvent.id).where(
-            EvidenceEvent.claim_id == claim.id, EvidenceEvent.dedupe_key == draft.dedupe_key
-        )
+    existing = session.scalars(
+        select(EvidenceEvent)
+        .where(EvidenceEvent.claim_id == claim.id, EvidenceEvent.dedupe_key == draft.dedupe_key)
+        .with_for_update()
     ).first()
-    if exists is not None:
+    if existing is not None:
+        # A registry can correct the underlying study without creating another event.
+        # Keep the reviewed fact and its provenance intact when the new record
+        # no longer supports the same date or phase, or the event was entered by hand.
+        if (
+            draft.type in TRIAL_EVENT_TYPES
+            and draft.fetched_at > existing.fetched_at
+            and is_registry_record(existing.raw_payload)
+            and existing.event_date == draft.event_date
+            and set(existing.trial_phases or ()) == set(draft.trial_phases)
+        ):
+            existing.raw_payload = draft.raw_payload
+            existing.fetched_at = draft.fetched_at
         return None
     event = event_row(claim, draft, match)
     if not draft.always_review and draft.confidence >= threshold:

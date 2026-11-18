@@ -181,3 +181,11 @@ Not in phase 1, and still open where they stand: telling names from the substanc
 - [ ] 7.1 Revise `CLAUDE.md`'s guardrails and layout: a trial page, the daily load and what it never starts; verify no line still says a registry trial is never shown
 - [ ] 7.2 When `social-link-backfill` is synced, fold the held-on-a-strong-link case and the reading order into `lead-reading`; verify `openspec validate` passes for both
 - [ ] 7.3 Add fingerprint, fit term and the two sets to `GLOSSARY.md`, and revise "Results paper" if papers that carry the number are shown; verify the terms match `specs/trial-coverage`
+
+## 10. Cached registry privacy and listing consistency
+
+### P2
+
+- [x] 10.1 <a id="task-f12"></a>Cover the legacy field in sanitization and cached-record detection. Use the same synthetic record in pipeline, Worker and old-cache tests. [F12](../../../docs/reviews/2026-11-17-code-review.md#finding-f12) · [Acceptance scenario](specs/trial-records/spec.md#scenario-a-legacy-investigator-affiliation-appears-in-a-record)
+
+- [x] 10.2 <a id="task-f13"></a>Tie part URLs to the manifest version or reload the manifest and retry on version loss. Exercise ID and word search on an open page across two differently partitioned deployments. [F13](../../../docs/reviews/2026-11-17-code-review.md#finding-f13) · [Acceptance scenario](specs/trial-pages/spec.md#scenario-a-deployment-moves-a-trial-between-parts)

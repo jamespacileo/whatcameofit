@@ -48,6 +48,11 @@ OUTLET_REFUSES = Reason(
 )
 NO_DATE = Reason("no_date", NEEDS_FIX, "the page gives no publication date")
 NO_HEADLINE = Reason("no_headline", NEEDS_FIX, "the page gives no headline")
+OUTSIDE_PUBLICATION_WINDOW = Reason(
+    "outside_publication_window",
+    NEEDS_FIX,
+    "the publisher's date {day} falls outside {first} through {last}",
+)
 THIN_PAGE = Reason("thin_page", NEEDS_FIX, "too little article text")
 NO_OUTLET_NAME = Reason("no_outlet_name", NEEDS_FIX, "its outlet has no display name")
 NEEDS_VERTICAL = Reason("needs_vertical", NEEDS_FIX, "no vertical was likely enough")
@@ -68,6 +73,7 @@ REASONS = (
     OUTLET_REFUSES,
     NO_DATE,
     NO_HEADLINE,
+    OUTSIDE_PUBLICATION_WINDOW,
     THIN_PAGE,
     NO_OUTLET_NAME,
     NEEDS_VERTICAL,

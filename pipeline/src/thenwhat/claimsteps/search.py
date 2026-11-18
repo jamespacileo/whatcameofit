@@ -24,6 +24,7 @@ from thenwhat.claimsteps.reasons import (
     attempt,
     model_failed,
     put_off,
+    run_parts,
 )
 from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
 from thenwhat.db.models import Claim, Entity, EntityMatch, EntitySubstance, RegistrySearch
@@ -139,7 +140,7 @@ class ClaimTrials(ClaimStep):
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
         backend = sources.make_backend(session)
-        trials, dois = sources.make_registries(session)
+        trials, _ = sources.make_registries(session)
         # A stored trial that becomes a candidate is read from the registry in full.
         records = trials if isinstance(trials, TrialRecords) else None
         found = TrialsFound()
@@ -155,7 +156,7 @@ class ClaimTrials(ClaimStep):
                 session,
                 claim,
                 trials=trials,
-                dois=dois,
+                dois=None,
                 backend=backend,
                 now=now,
                 unsearchable=unsearchable,
@@ -279,6 +280,7 @@ def keep_search(
 class PapersFound:
     """What the search for a claim's papers and organisations found."""
 
+    by_doi: list[EntityMatch] = field(default_factory=list)
     organisations: list[EntityMatch] = field(default_factory=list)
     # None while paper search is off.
     papers: list[EntityMatch] | None = None
@@ -301,15 +303,32 @@ class ClaimPapers(ClaimStep):
     reasons = (SOURCE_FAILED, PAPERS_OFF)
 
     def __init__(
-        self, *, reject_below: float, accept_above: float, rescore: bool = False, **step: Any
+        self,
+        *,
+        reject_below: float,
+        accept_above: float,
+        papers_enabled: bool,
+        papers_disabled: bool = False,
+        rescore: bool = False,
+        **step: Any,
     ) -> None:
         super().__init__(**step)
         self.reject_below = reject_below
         self.accept_above = accept_above
         self.rescore = rescore
+        self.papers_enabled = papers_enabled
+        self.papers_disabled = papers_disabled
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return _names(inputs, claim_id)
+        values = {
+            **_names(inputs, claim_id),
+            "paper_entities": inputs.paper_entities.get(claim_id, []),
+            "approved_papers": inputs.approved_papers.get(claim_id, []),
+            "papers_enabled": self.papers_enabled,
+        }
+        if self.papers_disabled:
+            values["papers_disabled"] = True
+        return values
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
@@ -317,6 +336,19 @@ class ClaimPapers(ClaimStep):
         backend = sources.make_backend(session)
         papers = research.papers
         found = PapersFound()
+
+        def lookup_dois() -> None:
+            _, dois = sources.make_registries(session)
+            found.by_doi = resolve_claim(
+                session,
+                claim,
+                trials=None,
+                dois=dois,
+                backend=backend,
+                now=now,
+                reject_below=self.reject_below,
+                accept_above=self.accept_above,
+            )
 
         def organisations() -> None:
             found.organisations = match_organisations(
@@ -372,16 +404,18 @@ class ClaimPapers(ClaimStep):
                     accept_above=self.accept_above,
                 )
 
-        for part in (organisations, search, numbers, origin):
-            answer = attempt(session, part)
-            if isinstance(answer, SourceError):
-                return put_off(answer, now)
-            if isinstance(answer, DecisionFailed | LlmError):
-                return model_failed(answer)
+        parts = (
+            (organisations,)
+            if self.papers_disabled
+            else (lookup_dois, organisations, search, numbers, origin)
+        )
+        unfinished = run_parts(session, parts, now)
+        if unfinished is not None:
+            return unfinished
         if isinstance(papers, OpenAlex):
             found.usage = papers.usage.line()
         self.results[claim.id] = found
-        if papers is None:
+        if self.papers_disabled or papers is None:
             return NeedsFix(PAPERS_OFF)
         return WorkOutcome.DONE
 

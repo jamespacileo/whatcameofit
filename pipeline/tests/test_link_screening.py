@@ -28,7 +28,9 @@ from thenwhat.backfill.link_screen import (
     TITLE_NAMES_TRIAL,
     LinkScreen,
 )
+from thenwhat.backfill.registered import registered_steps
 from thenwhat.claims.entry import add_article, add_claim
+from thenwhat.config import Settings
 from thenwhat.db.models import (
     ArticleLead,
     Claim,
@@ -67,6 +69,23 @@ def screen(session: Session, step: LinkScreen | None = None) -> Client:
     client = Client()
     run_step(same_session(session), step or LinkScreen(), client, now=lambda: NOW, attempt_limit=3)
     return client
+
+
+def test_sequential_batch_screens_only_leads_first_shared_on_that_day(session: Session):
+    older = share(session, "https://bbc.com/news/older")
+    older.first_shared_at = datetime(2019, 5, 3, 23, 59, tzinfo=UTC)
+    selected = share(session, "https://bbc.com/news/selected")
+    newer = share(session, "https://bbc.com/news/newer")
+    newer.first_shared_at = datetime(2019, 5, 5, 0, 0, tzinfo=UTC)
+    session.flush()
+
+    settings = Settings(database_url="unused", lead_batch_day=WHEN.date())
+    step = next(step for step in registered_steps(settings) if isinstance(step, LinkScreen))
+    screen(session, step)
+
+    assert selected.screen_outcome is ScreenOutcome.IN_SCOPE
+    assert older.screen_outcome is None
+    assert newer.screen_outcome is None
 
 
 def links(session: Session, lead: LinkLead) -> list[tuple[str, int, str]]:
@@ -154,6 +173,32 @@ def test_a_domain_added_to_the_list_puts_its_leads_in_scope_on_the_next_screenin
     assert other.screen_outcome is ScreenOutcome.UNLISTED_OUTLET
 
 
+def test_bounded_rescreening_advances_over_three_changed_leads(session, monkeypatch):
+    leads = [
+        share(session, f"https://health.example.org/news/story-{n}", item=n) for n in (1, 2, 3)
+    ]
+    step = LinkScreen()
+    screen(session, step)
+    monkeypatch.setattr("thenwhat.backfill.link_screen.kind_of", lambda _: OutletKind.TRADE_PRESS)
+    ids = [lead.id for lead in leads]
+    for expected in (ids[:2], ids[2:], []):
+        step.check_ready(session)
+        before = set(
+            session.scalars(
+                select(LinkLead.id).where(LinkLead.outlet_kind == OutletKind.TRADE_PRESS)
+            )
+        )
+        report = run_step(
+            same_session(session), step, Client(), now=lambda: NOW, attempt_limit=3, limit=2
+        )
+        after = set(
+            session.scalars(
+                select(LinkLead.id).where(LinkLead.outlet_kind == OutletKind.TRADE_PRESS)
+            )
+        )
+        assert report.done == len(expected) and sorted(after - before) == expected
+
+
 def test_leads_of_an_outlet_added_to_the_list_are_screened_again_and_no_others(
     session: Session, monkeypatch
 ):
@@ -184,7 +229,13 @@ def test_leads_of_an_outlet_added_to_the_list_are_screened_again_and_no_others(
     assert stale == {added.id, second.id}
     assert count(session, step, 3, now=NOW).due == 2
 
-    screen(session, step)
+    for remaining in (1, 0):
+        step = LinkScreen()
+        step.check_ready(session)
+        report = run_step(
+            same_session(session), step, Client(), now=lambda: NOW, attempt_limit=3, limit=1
+        )
+        assert (report.done, report.remaining_due) == (1, remaining)
 
     assert added.screen_outcome is ScreenOutcome.IN_SCOPE
     assert second.outlet_kind is OutletKind.TRADE_PRESS

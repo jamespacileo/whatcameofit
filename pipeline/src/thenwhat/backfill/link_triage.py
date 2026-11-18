@@ -15,6 +15,11 @@ from typing import Any
 from sqlalchemy import ColumnElement, and_, case, false, func, select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.headline_evidence import (
+    EVIDENCE_TRIAGE_VERSION,
+    QUESTIONS,
+    score_evidence_headlines,
+)
 from thenwhat.backfill.topics import title_names
 from thenwhat.db.models import DecisionLog, LinkLead
 from thenwhat.decide.core import Backend, DecisionFailed
@@ -132,10 +137,17 @@ class LinkTriage:
         *,
         topic_terms: Sequence[str] = (),
         since: date | None = None,
+        use_evidence_rule: bool = False,
+        window: tuple[date, date] | None = None,
     ) -> None:
         self._time = time or SystemTime()
+        self._use_evidence_rule = use_evidence_rule
+        if use_evidence_rule:
+            self.version = EVIDENCE_TRIAGE_VERSION
+            self.model_spend = ModelSpend(input_tokens=1000)
         # Only leads first shared on or after this day are scored; None scores any.
         self.since = since
+        self._window = window
         # The words of the operator's topics. Leads whose title names one are scored
         # first, so a topic need not wait for every older lead.
         self._names_a_topic = title_names(topic_terms)
@@ -148,10 +160,16 @@ class LinkTriage:
     def scope(self) -> ColumnElement[bool]:
         """Leads that screening left in scope: on a listed outlet and not yet tracked."""
         in_scope = LinkLead.screen_outcome == ScreenOutcome.IN_SCOPE
-        if self.since is None:
+        since = self.since
+        if self._window is not None:
+            first, last = self._window
+            since = max(first, since) if since is not None else first
+            through = datetime.combine(last, datetime.max.time(), tzinfo=UTC)
+            in_scope = and_(in_scope, LinkLead.first_shared_at <= through)
+        if since is None:
             return in_scope
-        since = datetime.combine(self.since, datetime.min.time(), tzinfo=UTC)
-        return and_(in_scope, LinkLead.first_shared_at >= since)
+        beginning = datetime.combine(since, datetime.min.time(), tzinfo=UTC)
+        return and_(in_scope, LinkLead.first_shared_at >= beginning)
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         return {
@@ -161,7 +179,24 @@ class LinkTriage:
         }
 
     def _text(self, record: LinkLead) -> str:
+        if self._use_evidence_rule:
+            return record.title
         return headline_text(record.title, record.outlet, record.first_shared_at.year)
+
+    def _score(
+        self,
+        session: Session,
+        client: DecisionClient,
+        records: Sequence[LinkLead],
+        now: datetime,
+    ) -> list[float]:
+        score = score_evidence_headlines if self._use_evidence_rule else triage_headlines
+        return score(
+            session,
+            client.backend(session),
+            headlines=[(record.id, self._text(record)) for record in records],
+            now=now,
+        )
 
     def _keep(self, record: LinkLead, score: float) -> WorkOutcome:
         record.triage_score = score
@@ -174,12 +209,7 @@ class LinkTriage:
         """Score one lead. With no usable answer the lead keeps no score, and the logged
         failure and the call's cost are kept."""
         try:
-            [score] = triage_headlines(
-                session,
-                client.backend(session),
-                headlines=[(record.id, self._text(record))],
-                now=self._time.now(),
-            )
+            [score] = self._score(session, client, [record], self._time.now())
         except DecisionFailed as failure:
             _stop_if_unreachable(failure)
             session.flush()
@@ -194,32 +224,31 @@ class LinkTriage:
         each alone. Nothing is rolled back: every decision and every cost stays logged."""
         now = self._time.now()
         try:
-            scores = triage_headlines(
-                session,
-                client.backend(session),
-                headlines=[(record.id, self._text(record)) for record in records],
-                now=now,
-            )
+            scores = self._score(session, client, records, now)
         except DecisionFailed as failure:
             _stop_if_unreachable(failure)
             session.flush()
             if len(records) == 1:
                 return [Failed(str(failure))]
-            answered = dict(
-                session.execute(
-                    select(DecisionLog.input_ref, DecisionLog.output).where(
-                        DecisionLog.step == LEAD_TRIAGE,
-                        DecisionLog.created_at == now,
-                        DecisionLog.output.is_not(None),
-                        DecisionLog.input_ref.in_([lead_ref(record.id) for record in records]),
-                    )
-                ).all()
+            steps = tuple(QUESTIONS) if self._use_evidence_rule else (LEAD_TRIAGE,)
+            option = "relevant" if self._use_evidence_rule else TREATMENT_REPORT
+            answered: dict[str, dict[str, float]] = {}
+            rows = session.execute(
+                select(DecisionLog.input_ref, DecisionLog.step, DecisionLog.output).where(
+                    DecisionLog.step.in_(steps),
+                    DecisionLog.created_at == now,
+                    DecisionLog.output.is_not(None),
+                    DecisionLog.input_ref.in_([lead_ref(record.id) for record in records]),
+                )
             )
+            for reference, step, output in rows:
+                if output is not None:
+                    answered.setdefault(reference, {})[step] = output["probabilities"][option]
             outcomes: list[WorkOutcome | Failed] = []
             for record in records:
-                given = answered.get(lead_ref(record.id))
-                if given is not None:
-                    outcomes.append(self._keep(record, given["probabilities"][TREATMENT_REPORT]))
+                given = answered.get(lead_ref(record.id), {})
+                if len(given) == len(steps):
+                    outcomes.append(self._keep(record, sum(given.values()) / len(steps)))
                 else:
                     outcomes.append(self.run(session, record, client))
             return outcomes

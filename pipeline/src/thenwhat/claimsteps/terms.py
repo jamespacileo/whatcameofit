@@ -9,22 +9,23 @@ back, which asks again only for what is still unscored.
 from dataclasses import dataclass
 from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.claimsteps.inputs import Inputs
 from thenwhat.claimsteps.reasons import (
     KIND_TERM_MISSING,
+    MESH_UNRESOLVED,
     SOURCE_FAILED,
-    attempt,
-    model_failed,
-    put_off,
+    SOURCE_RETRY,
+    run_parts,
 )
 from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
-from thenwhat.db.models import Claim
-from thenwhat.decide.core import DecisionFailed
-from thenwhat.domain import WorkOutcome
-from thenwhat.llm.errors import LlmError
-from thenwhat.sources.base import SourceError
+from thenwhat.clinical.service import read_tree, stored_vocabulary
+from thenwhat.db.models import Claim, ClaimTerm
+from thenwhat.domain import ReviewState, TermFit, TermRole, WorkOutcome
+from thenwhat.export.records import PostgresRecords
+from thenwhat.sources.base import MissingContact, SourceError
 from thenwhat.terms.service import (
     DrugRun,
     KindRun,
@@ -36,7 +37,7 @@ from thenwhat.terms.service import (
     link_targets,
     link_terms,
 )
-from thenwhat.work.outcome import NeedsFix
+from thenwhat.work.outcome import Later, NeedsFix
 from thenwhat.work.steps import Failed
 
 
@@ -48,6 +49,7 @@ class TermsFound:
     kind: KindRun | KindTermMissing | None = None
     targets: TargetsRun | None = None
     drug: DrugRun | None = None
+    tree_error: SourceError | None = None
 
     @property
     def unscored(self) -> int:
@@ -65,7 +67,8 @@ class ClaimTerms(ClaimStep):
     scored near zero; the rest wait for review. Nothing here changes a status."""
 
     name = "claim_terms"
-    reasons = (SOURCE_FAILED, KIND_TERM_MISSING)
+    version = 2
+    reasons = (SOURCE_FAILED, KIND_TERM_MISSING, MESH_UNRESOLVED)
 
     def __init__(
         self,
@@ -109,6 +112,29 @@ class ClaimTerms(ClaimStep):
                 reject_below=self.reject_below,
             )
 
+        def ancestry() -> None:
+            approved = list(
+                session.scalars(
+                    select(ClaimTerm.external_id).where(
+                        ClaimTerm.claim_id == claim.id,
+                        ClaimTerm.source_name == "mesh",
+                        ClaimTerm.review_state == ReviewState.APPROVED,
+                        ClaimTerm.role == TermRole.CONDITION,
+                        ClaimTerm.fit == TermFit.EXACT,
+                    )
+                )
+            )
+            if approved and stored_vocabulary(PostgresRecords(session)).missing(approved):
+                try:
+                    read_tree(session, sources.make_mesh(session), [claim], mapping={})
+                except MissingContact as error:
+                    # The optional ancestry lookup has no configured contact. Keep the
+                    # completed term decisions and report the pending tree to the operator.
+                    found.tree_error = error
+                except SourceError as error:
+                    found.tree_error = error
+                    raise
+
         def kind() -> None:
             try:
                 found.kind = link_kind(
@@ -138,14 +164,15 @@ class ClaimTerms(ClaimStep):
         def drug() -> None:
             found.drug = link_drug(session, claim, drugs=sources.make_drugs(session), now=now)
 
-        for part in (terms, kind, targets, drug):
-            answer = attempt(session, part)
-            if isinstance(answer, SourceError):
-                return put_off(answer, now)
-            if isinstance(answer, DecisionFailed | LlmError):
-                return model_failed(answer)
+        unfinished = run_parts(session, (terms, kind, targets, drug, ancestry), now)
+        if unfinished is not None:
+            return unfinished
         if found.unscored:
             return Failed(f"{found.unscored} could not be scored and stay without a score")
+        if found.terms and found.terms.unresolved:
+            return Later(
+                MESH_UNRESOLVED, now + SOURCE_RETRY, {"names": ", ".join(found.terms.unresolved)}
+            )
         if isinstance(found.kind, KindTermMissing):
             return NeedsFix(KIND_TERM_MISSING, {"said": str(found.kind)})
         return WorkOutcome.DONE

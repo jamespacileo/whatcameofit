@@ -230,6 +230,45 @@ def test_the_rule_reads_only_approved_trials(session: Session):
     assert claim.approach is None
 
 
+def test_editor_who_commits_during_a_fetch_keeps_ownership(engine):
+    from sqlalchemy import delete
+
+    with Session(engine) as setup:
+        claim = new_claim(setup, slug="two-session-owner")
+        approve_trial(setup, claim, trial("NCT11111111", ("DRUG", "EX-1")))
+        claim_id = claim.id
+        setup.commit()
+    try:
+        with Session(engine) as fetch, Session(engine) as editor:
+            held = fetch.get(Claim, claim_id)
+            assert held is not None and held.approach is None
+            edited = editor.get(Claim, claim_id)
+            assert edited is not None
+            edited.approach, edited.approach_decided_by = "gene-therapy", Decider.HUMAN
+            editor.commit()
+            assert apply_rule(fetch, held).approach == "drug"
+            fetch.commit()
+        with Session(engine) as check:
+            final = check.get(Claim, claim_id)
+            assert final is not None
+            assert (final.approach, final.approach_decided_by, final.approach_basis) == (
+                "gene-therapy",
+                Decider.HUMAN,
+                None,
+            )
+    finally:
+        with Session(engine) as cleanup:
+            cleanup.execute(delete(EvidenceEvent).where(EvidenceEvent.claim_id == claim_id))
+            cleanup.execute(
+                delete(EntityMatch).where(
+                    EntityMatch.entity_id.in_(select(Entity.id).where(Entity.claim_id == claim_id))
+                )
+            )
+            cleanup.execute(delete(Entity).where(Entity.claim_id == claim_id))
+            cleanup.execute(delete(Claim).where(Claim.id == claim_id))
+            cleanup.commit()
+
+
 def test_the_rule_keeps_an_approach_a_person_set(session: Session):
     claim = new_claim(session, approach="gene-therapy")
     approve_trial(session, claim, trial("NCT00000001", ("DRUG", "EX-1")))

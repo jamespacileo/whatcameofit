@@ -10,9 +10,10 @@ import threading
 from collections import defaultdict
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from datetime import UTC, date, datetime
 from typing import Any
 
-from sqlalchemy import ColumnElement, delete, func, select, true, update
+from sqlalchemy import ColumnElement, delete, func, select, true, tuple_, update
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.address import article_key
@@ -344,14 +345,19 @@ class LinkScreen:
     # Screening costs nothing per lead, so many are saved in one transaction.
     batch_size = 500
 
-    def __init__(self, links_max: int = 10) -> None:
+    def __init__(self, links_max: int = 10, *, batch_day: date | None = None) -> None:
         self.links_max = links_max
+        self.batch_day = batch_day
         self._stored: Stored | None = None
         self._lock = threading.Lock()
 
     def scope(self) -> ColumnElement[bool]:
-        """Every link lead is screened."""
-        return true()
+        """Screen all leads, or leads first shared in the selected UTC batch."""
+        if self.batch_day is None:
+            return true()
+        first = datetime.combine(self.batch_day, datetime.min.time(), tzinfo=UTC)
+        last = datetime.combine(self.batch_day, datetime.max.time(), tzinfo=UTC)
+        return LinkLead.first_shared_at.between(first, last)
 
     def inputs(self, record: LinkLead) -> dict[str, Any]:
         # The kind of the lead's outlet is read too: a lead is screened again when its
@@ -362,19 +368,23 @@ class LinkScreen:
             "kind": kind_of(record.outlet).value,
         }
 
-    def check_ready(self, session: Session) -> None:
-        """Before a run: make due the leads of every outlet whose listing has changed
+    def changed_inputs(self, session: Session) -> ColumnElement[bool] | None:
+        """Identify leads whose outlet classification has changed
         since they were screened, and no other lead (openspec lead-screening). The list
         is checked in, so nothing says when it changed: each outlet's stored kind is
         compared with the kind the list gives it now."""
         changed = [
-            outlet
+            (outlet, kind)
             for outlet, kind in session.execute(
-                select(LinkLead.outlet, LinkLead.outlet_kind).distinct()
+                select(LinkLead.outlet, LinkLead.outlet_kind).where(self.scope()).distinct()
             )
             if kind_of(outlet) is not kind
         ]
-        if not changed:
+        return tuple_(LinkLead.outlet, LinkLead.outlet_kind).in_(changed) if changed else None
+
+    def check_ready(self, session: Session) -> None:
+        changed = self.changed_inputs(session)
+        if changed is None:
             return
         session.execute(
             update(WorkEntry)
@@ -382,7 +392,7 @@ class LinkScreen:
                 WorkEntry.record_kind == self.record_kind,
                 WorkEntry.step == self.name,
                 WorkEntry.step_version == self.version,
-                WorkEntry.record_id.in_(select(LinkLead.id).where(LinkLead.outlet.in_(changed))),
+                WorkEntry.record_id.in_(select(LinkLead.id).where(self.scope(), changed)),
             )
             .values(stale=True)
         )

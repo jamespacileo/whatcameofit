@@ -29,7 +29,7 @@ check-pipeline: check-pipeline-fast test-slow
 check-pipeline-fast: lint types test-fast
 check-site: site-test check-site-build
 check-site-build: site-build-test site-build
-check-extension: extension-test
+check-extension: extension-test extension
 check-store: store-test
 check-release-inputs: site-test site-build extension-test extension scripts-test
 

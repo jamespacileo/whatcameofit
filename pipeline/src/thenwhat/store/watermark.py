@@ -49,6 +49,7 @@ HOT_SOURCES = (
 )
 BULK_SOURCES = (
     "registry_trial",
+    "trial_paper",
     "registry_load",
     "article_lead",
     "link_lead",

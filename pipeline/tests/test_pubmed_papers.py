@@ -117,6 +117,18 @@ def test_one_search_carries_many_numbers_and_each_papers_record_is_read_back(
     assert len(by_number[THREE_NUMBERS].trial_numbers) == 3
 
 
+def test_ranked_article_search_keeps_a_bounded_ordered_result(session: Session, fake_time):
+    service = Service(search={"esearchresult": {"count": "420", "idlist": ["8291", "7420"]}})
+    client = pubmed(session, fake_time, service)
+
+    assert client.ranked_ids("Examplevir[Title/Abstract]", limit=2) == ["8291", "7420"]
+    assert client.ranked_ids(" ", limit=2) == []
+    assert len(service.requests) == 1
+    assert service.fields(0)["term"] == "Examplevir[Title/Abstract]"
+    assert service.fields(0)["sort"] == "relevance"
+    assert service.fields(0)["retmax"] == "2"
+
+
 def test_what_is_kept_of_a_paper_has_no_abstract_and_no_author():
     papers = read_papers((FIXTURES / "efetch_completed_sample.xml").read_text())
 
@@ -262,6 +274,28 @@ def test_the_plan_counts_requests_by_the_batch():
 
     assert (step.requests_for(26_469), step.requests_for(1), step.requests_for(0)) == (1060, 2, 0)
     assert step.records_for(100) == 2500
+
+
+def test_a_fetch_that_loses_a_searched_pmid_leaves_the_trials_due(session: Session, fake_time):
+    class ErrorDocument(Service):
+        def __call__(self, request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("efetch.fcgi"):
+                return httpx.Response(200, text="<eFetchResult><ERROR>busy</ERROR></eFetchResult>")
+            return super().__call__(request)
+
+    trials(session, WITH_ONE)
+    step = TrialPapers(trials_per_request=1)
+    service = ErrorDocument(search={"esearchresult": {"count": "1", "idlist": ["123"]}})
+    report = run_step(
+        same_session(session),
+        step,
+        pubmed(session, fake_time, service),
+        now=lambda: NOW,
+        attempt_limit=3,
+    )
+
+    assert report.stopped and "did not return the requested papers" in report.stopped
+    assert (report.nothing_found, report.failed, report.remaining_due) == (0, 0, 1)
 
 
 def test_off_peak_is_the_weekend_or_nine_at_night_to_five_in_the_morning_eastern():

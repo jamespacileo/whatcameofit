@@ -6,7 +6,7 @@ from collections.abc import Callable, Generator, Mapping
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, cast
+from typing import Any, NamedTuple, cast
 
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,7 @@ from thenwhat.domain import WorkOutcome
 from thenwhat.measure import events
 from thenwhat.measure import spans as measure
 from thenwhat.measure.events import RunEnd
-from thenwhat.work.errors import SourceStop, SpendCeilingReached
+from thenwhat.work.errors import SourceStop, SpendCeilingReached, StopAfterProgress
 from thenwhat.work.ledger import PUT_OFF_SPAN, count, due_records, record_outcome, take_due
 from thenwhat.work.outcome import Later, NeedsFix, NothingFound, ReasonClass, check_declared
 from thenwhat.work.steps import (
@@ -28,9 +28,15 @@ from thenwhat.work.steps import (
 OpenSession = Callable[[], AbstractContextManager[Session]]
 # How many failures' errors a run's report carries. The ledger keeps every one.
 ERRORS_KEPT = 50
+
+
 # A record's id, its outcome and its error. The outcome is None for a record that
 # another run finished first.
-Processed = tuple[int, WorkOutcome | None, str | None]
+class Processed(NamedTuple):
+    record_id: int
+    outcome: WorkOutcome | None
+    error: str | None
+    before_work: bool = False
 
 
 @dataclass(slots=True)
@@ -41,6 +47,7 @@ class RunReport:
     # Records put off until a time, and records that wait for something to be fixed:
     # each has an entry that says why, and neither counts an attempt.
     later: int = 0
+    before_work: int = 0
     needs_fix: int = 0
     remaining_due: int = 0
     # Why the run ended before its records ran out, in words for the operator.
@@ -54,7 +61,14 @@ class RunReport:
 
     @property
     def processed(self) -> int:
-        return self.done + self.nothing_found + self.failed + self.needs_fix
+        return (
+            self.done
+            + self.nothing_found
+            + self.failed
+            + self.needs_fix
+            + self.later
+            - self.before_work
+        )
 
 
 @dataclass(slots=True, eq=False)
@@ -66,6 +80,27 @@ class Run:
     step: str
     reports: list[RunReport] = field(default_factory=list)
     not_written: int = 0
+
+    # Published before the triggering transaction releases its record to a sibling.
+    stop: tuple[type[SourceStop], str] | None = None
+
+    def check_running(self) -> None:
+        if self.stop is not None:
+            kind, detail = self.stop
+            raise kind(detail)
+
+    @contextmanager
+    def stop_together(self) -> Generator[None]:
+        self.check_running()
+        try:
+            yield
+        except SourceStop as interrupted:
+            stop = interrupted.cause if isinstance(interrupted, StopAfterProgress) else interrupted
+            self.stop = (
+                SpendCeilingReached if isinstance(stop, SpendCeilingReached) else SourceStop,
+                str(stop),
+            )
+            raise
 
     def why(self) -> RunEnd:
         """Why the run ended: a source or the ceiling that stopped any worker, else the
@@ -127,6 +162,7 @@ def process_next(
     skip: set[int],
     put_off_span: timedelta = PUT_OFF_SPAN,
     run: str | None = None,
+    check_running: Callable[[], None] | None = None,
 ) -> Processed | None:
     """Process one due record that no other run is holding, in the caller's transaction.
 
@@ -138,11 +174,13 @@ def process_next(
     a record that another run finished first.
     """
     taken = take_due(session, step, attempt_limit, size=1, skip=skip, now=now)
+    if check_running is not None:
+        check_running()
     if not taken:
         return None
     record = taken[0]
     if record.id in skip:
-        return record.id, None, None
+        return Processed(record.id, None, None)
     # Another run may have finished this record between this query's view of the ledger
     # and the moment its row lock was free. The lock is now held, so look again.
     still_due = session.scalar(
@@ -151,7 +189,7 @@ def process_next(
         .with_only_columns(step.model.id)
     )
     if still_due is None:
-        return record.id, None, None
+        return Processed(record.id, None, None)
     return _process_record(session, step, record, client, now, put_off_span, skip, run)
 
 
@@ -184,6 +222,7 @@ class _Settled:
     reason: str | None = None
     values: Mapping[str, Any] | None = None
     not_before: datetime | None = None
+    before_work: bool = False
 
 
 def _settle(step: Step, answer: Any) -> _Settled:
@@ -197,7 +236,11 @@ def _settle(step: Step, answer: Any) -> _Settled:
         code, values = answer.reason.code, answer.values
         if isinstance(answer, Later):
             return _Settled(
-                WorkOutcome.LATER, reason=code, values=values, not_before=answer.not_before
+                WorkOutcome.LATER,
+                reason=code,
+                values=values,
+                not_before=answer.not_before,
+                before_work=answer.before_work,
             )
         if isinstance(answer, NeedsFix):
             return _Settled(WorkOutcome.NEEDS_FIX, reason=code, values=values)
@@ -241,6 +284,20 @@ def _record(
     ).outcome
 
 
+@contextmanager
+def _keep_completed_parts[T](transaction: AbstractContextManager[T]) -> Generator[T]:
+    """A multipart step can stop after completing earlier parts. Commit those parts
+    without writing a final ledger entry, then pass the stop on to the run."""
+    stop = None
+    with transaction as value:
+        try:
+            yield value
+        except StopAfterProgress as caught:
+            stop = caught
+    if stop is not None:
+        raise stop
+
+
 def _process_record(
     session: Session,
     step: Step,
@@ -259,7 +316,7 @@ def _process_record(
         step.name, version=step.version, trace=_trace_of(record), run=run
     ) as span:
         try:
-            with session.begin_nested():
+            with _keep_completed_parts(session.begin_nested()):
                 answer = step.run(session, record, client)
                 settled = _settle(step, answer)
         except SourceStop:
@@ -280,7 +337,7 @@ def _process_record(
             skip=skip if skip is not None else set(),
         )
         span.ended(outcome.value, outcome_class=_CLASS_OF[outcome], reason=settled.reason)
-    return record.id, outcome, settled.error
+    return Processed(record.id, outcome, settled.error, settled.before_work)
 
 
 def process_batch(
@@ -294,6 +351,7 @@ def process_batch(
     size: int,
     put_off_span: timedelta = PUT_OFF_SPAN,
     run: str | None = None,
+    check_running: Callable[[], None] | None = None,
 ) -> list[Processed] | None:
     """Process up to `size` due records in one call of the step, in the caller's
     transaction, so their results and entries are saved together or not at all.
@@ -304,6 +362,8 @@ def process_batch(
     or None when nothing is due.
     """
     records = take_due(session, step, attempt_limit, size=size, skip=skip, now=now)
+    if check_running is not None:
+        check_running()
     if not records:
         return None
     still_due = set(
@@ -315,7 +375,7 @@ def process_batch(
     )
     held = [record for record in records if record.id in still_due and record.id not in skip]
     processed: list[Processed] = [
-        (record.id, None, None)
+        Processed(record.id, None, None)
         for record in records
         if record.id not in still_due or record.id in skip
     ]
@@ -338,7 +398,7 @@ def process_batch(
         except SourceStop:
             raise
         except Exception as failure:  # the call failed as a whole
-            span.ended(measure.FAILED, outcome_class=measure.FAILED)
+            span.ended(measure.BATCH_RETRY)
             span.span.error_kind = type(failure).__name__
             answers = None
         if answers is not None:
@@ -358,7 +418,7 @@ def process_batch(
                     skip=skip,
                 )
                 recorded.append(outcome)
-                processed.append((record.id, outcome, settled.error))
+                processed.append(Processed(record.id, outcome, settled.error, settled.before_work))
             by_outcome = Counter(recorded)
             most = by_outcome.most_common(1)[0][0]
             reasons = {settled.reason for settled in answers}
@@ -424,9 +484,10 @@ def run_step(
     size = batch_size_of(step)
     while limit is None or report.processed < limit:
         try:
-            with open_session() as session:
+            with _keep_completed_parts(open_session()) as session, run.stop_together():
                 if before_call is not None:
                     before_call(session)
+                    run.check_running()
                 if size == 1:
                     one = process_next(
                         session,
@@ -437,6 +498,7 @@ def run_step(
                         skip=tried,
                         put_off_span=put_off_span,
                         run=run.id,
+                        check_running=run.check_running,
                     )
                     processed = None if one is None else [one]
                 else:
@@ -451,13 +513,15 @@ def run_step(
                         size=room,
                         put_off_span=put_off_span,
                         run=run.id,
+                        check_running=run.check_running,
                     )
                 # Remember retryable records before releasing their row locks, so
                 # another worker in this run cannot pick them immediately.
-                for record_id, outcome, _ in processed or []:
-                    if outcome is WorkOutcome.FAILED:
-                        tried.add(record_id)
-        except SourceStop as stop:
+                for record in processed or []:
+                    if record.outcome is WorkOutcome.FAILED:
+                        tried.add(record.record_id)
+        except SourceStop as interrupted:
+            stop = interrupted.cause if isinstance(interrupted, StopAfterProgress) else interrupted
             report.stopped = str(stop)
             report.ended = (
                 RunEnd.SPEND_CEILING if isinstance(stop, SpendCeilingReached) else RunEnd.CANNOT_ASK
@@ -466,7 +530,9 @@ def run_step(
         if processed is None:
             report.ended = RunEnd.NOTHING_DUE
             break
-        for record_id, outcome, error in processed:
+        for record in processed:
+            record_id, outcome, error = record.record_id, record.outcome, record.error
+            report.before_work += int(record.before_work)
             if outcome is None:
                 continue
             if outcome is WorkOutcome.DONE:

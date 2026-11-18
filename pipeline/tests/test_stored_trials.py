@@ -247,6 +247,20 @@ def test_a_listed_name_is_not_looked_for_in_titles(session: Session):
     assert found(session, "zentalimab") == ["NCT00000001"]
 
 
+def test_title_fallback_limits_eligible_trials_after_checking_the_indication(session: Session):
+    for i in range(1, 103):
+        store(
+            session,
+            f"NCT{i:08d}",
+            title="A trial of testmab",
+            conditions=("Psoriasis" if i == 102 else "Hypertension",),
+        )
+        if i == 20:
+            assert len(found(session, "testmab", indication="psoriasis")) == 20
+    assert found(session, "testmab", indication="psoriasis") == ["NCT00000102"]
+    assert found(session, "testmab", indication="hypertension") == []
+
+
 def test_a_broad_name_is_narrowed_to_the_indication_and_given_up_when_still_broad(
     session: Session,
 ):
@@ -541,3 +555,26 @@ def test_rescore_leaves_a_rejection_a_person_made(session: Session):
 
     assert again == []
     assert trial_matches(session)["NCT00000001"].reviewed_by is Decider.HUMAN
+
+
+def test_two_forms_in_one_trial_supply_only_one_vote_for_a_brand(session):
+    claim = zentalimab_claim(session)
+    brand = "Zentalimab"
+    generic = "Marivol"
+    forms = [entry(generic, brand), entry("Marivol hydrochloride", brand)]
+    unrelated = "NCT00000002"
+    studies = {"NCT00000001": forms, unrelated: [entry(generic)]}
+
+    def add(number, entries):
+        store(session, number, *entries)
+        return payload(number, "In full", ["Tooth Agenesis"], entries)
+
+    full = {number: add(number, entries) for number, entries in studies.items()}
+    registry = FakeTrials({}, full)
+    assert unrelated not in found(session, brand)
+    resolve(session, claim, registry, ReadsTheRecord())
+    assert unrelated not in trial_matches(session)
+    full["NCT00000003"] = add("NCT00000003", [entry("Marivol hydrochloride", brand)])
+    assert unrelated in found(session, brand)
+    resolve(session, claim, registry, ReadsTheRecord())
+    assert unrelated in trial_matches(session)

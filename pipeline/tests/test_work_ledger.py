@@ -227,6 +227,53 @@ def test_a_limited_run_reports_what_remains_and_a_restart_repeats_nothing(sessio
     assert sorted(step.ran) == [f"T{number:04d}" for number in range(10)]
 
 
+def test_provider_stop_is_shared_before_another_worker_takes_more_work(engine):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from thenwhat.work.errors import SourceStop
+
+    registry, name = "provider-stop-registry", "provider-stop-step"
+    open_session = committed_sessions(engine)
+    both_claimed = threading.Barrier(2, timeout=10)
+    finish = threading.Event()
+
+    class Step(DemoStep):
+        def run(self, session, record, client):
+            if not finish.is_set():
+                both_claimed.wait()
+                if client is unavailable:
+                    raise SourceStop("provider unavailable")
+                assert finish.wait(10)
+            return super().run(session, record, client)
+
+    step, unavailable = Step(name, registry=registry), Client()
+    try:
+        with open_session() as session:
+            add_trials(session, 5, registry=registry)
+        with (
+            runner.measured_run(name, limit=None, workers=2) as shared,
+            ThreadPoolExecutor(2) as pool,
+        ):
+
+            def worker(client):
+                return run_step(
+                    open_session, step, client, now=lambda: NOW, attempt_limit=LIMIT, run=shared
+                )
+
+            stopped, sibling = pool.submit(worker, unavailable), pool.submit(worker, Client())
+            try:
+                assert stopped.result(timeout=12).stopped == "provider unavailable"
+            finally:
+                finish.set()
+            assert sibling.result(timeout=12).done == 1
+        with open_session() as session:
+            assert count(session, step, LIMIT).due == 4
+            [completed] = entries(session, step)
+            assert completed.attempts == 1 and completed.outcome == WorkOutcome.DONE
+    finally:
+        remove_committed(engine, registry=registry, step=name, source=step.source)
+
+
 def test_two_runs_at_once_process_each_record_once(engine: Engine):
     """Scenario: Two processes"""
     registry, name = "two-runs-registry", "two-runs-step"

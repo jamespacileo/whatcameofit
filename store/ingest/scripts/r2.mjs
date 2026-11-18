@@ -4,7 +4,7 @@
 // bucket is named: `--remote --production <bucket>`. No access key is made or read.
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { createReadStream, existsSync, readFileSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync, rmSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 
@@ -34,6 +34,12 @@ export function bucket(argv) {
   const where = remote ? ["--remote", "--jurisdiction", "eu"] : ["--local", "--persist-to", persist];
   const wrangler = (...args) => run(here("../node_modules/.bin/wrangler"), ["r2", "object", ...args, ...where, "--config", config],
     { cwd: here(".."), env: { ...process.env, CI: "1", WRANGLER_SEND_METRICS: "false" }, maxBuffer: 16 * 1024 * 1024 });
+  // Wrangler's answer for a key the bucket does not hold. A bucket that is not there is
+  // not an absent key.
+  const absent = (error) => {
+    const text = `${error.stderr || ""}\n${error.stdout || ""}`;
+    return /specified key does not exist|NoSuchKey/i.test(text) && !/NoSuchBucket|specified bucket does not exist|bucket[^\n]*not found/i.test(text);
+  };
   // Wrangler's last words on a failure, without the paths it was given.
   const said = (error) => String(error.stderr || error.stdout || error.message).split("\n").filter((line) => /error|not found|fail|denied|limit|exist/i.test(line)).slice(-2).join(" ").slice(0, 300) || "failed";
   async function put(key, path, attempts = 4) {
@@ -44,9 +50,21 @@ export function bucket(argv) {
       }
     }
   }
-  // False when the bucket has no such object.
-  async function get(key, path) {
-    try { await wrangler("get", `${name}/${key}`, "--file", path); return true; } catch { return false; }
+  // True when the object was fetched to `path`; false only when Wrangler says the bucket
+  // has no such key. Anything else (503, a refused login, a bucket that is not found, a
+  // Wrangler that did not run) is tried again and then thrown, never taken for "not
+  // there": a list read as absent during an outage would be written back without its
+  // entries.
+  async function get(key, path, attempts = 3) {
+    for (let attempt = 1; ; attempt += 1) {
+      rmSync(path, { force: true });
+      try { await wrangler("get", `${name}/${key}`, "--file", path); return true; } catch (error) {
+        rmSync(path, { force: true });
+        if (absent(error)) return false;
+        if (attempt >= attempts) throw new Error(`could not read ${key}: ${said(error)}`);
+        await new Promise((resolve) => setTimeout(resolve, (/429|too many|rate/i.test(String(error.stderr || error.message)) ? 5000 : 1000) * 2 ** (attempt - 1)));
+      }
+    }
   }
   // Removes one object; removing one that is not there is not a failure. A refusal for
   // asking too fast (429) is waited out, longer each time.

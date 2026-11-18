@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from thenwhat.claims.entities import add_entity, entities_of, set_origin_paper
 from thenwhat.claims.entry import InvalidField, InvalidUrl, MissingField, add_claim
 from thenwhat.claims.status import refresh_status
+from thenwhat.claimsteps.evidence import ClaimReadings
 from thenwhat.config import Settings
 from thenwhat.db.models import Claim, EntityMatch, EvidenceEvent, PaperRecord
 from thenwhat.domain import (
@@ -26,6 +27,7 @@ from thenwhat.domain import (
 )
 from thenwhat.events.fetch import fetch_claim
 from thenwhat.events.manual import DuplicateEvent, add_manual_event
+from thenwhat.export.build import build_export
 from thenwhat.review.decisions import record_decision
 from thenwhat.sources.base import SourceRecord
 from thenwhat.sources.crossref import Notice
@@ -40,15 +42,16 @@ NCT = "NCT02586935"
 
 
 class Trials:
-    def __init__(self, studies: dict[str, dict[str, Any]]) -> None:
+    def __init__(self, studies: dict[str, dict[str, Any]], *, fetched_at: datetime = NOW) -> None:
         self.studies = studies
+        self.fetched_at = fetched_at
 
     def fetch_trial(self, nct_id: str) -> SourceRecord | None:
         study = self.studies.get(nct_id)
         if study is None:
             return None
         url = f"https://clinicaltrials.gov/study/{nct_id}"
-        return SourceRecord("clinicaltrials.gov", nct_id, url, study, NOW)
+        return SourceRecord("clinicaltrials.gov", nct_id, url, study, self.fetched_at)
 
 
 def paper(doi: str, title: str, authors: list[str], abstract: str = "", on: str = "2020-05-01"):
@@ -232,6 +235,37 @@ def test_second_fetch_with_no_registry_change_creates_nothing(session: Session, 
 
     assert again == []
     assert len(events(session)) == 3
+
+
+def test_later_registry_correction_reaches_public_facts_without_a_new_event(session, study):
+    claim = new_claim(session)
+    with_trial(session, claim)
+    record_decision(claim, ReviewState.APPROVED, by=Decider.HUMAN, now=NOW)
+    study["protocolSection"]["designModule"]["enrollmentInfo"] = {"count": 100, "type": "ACTUAL"}
+    original = Trials({NCT: study})
+    created = fetch(session, claim, trials=original)
+    reviewed = [(event.id, event.review_state, event.reviewed_at) for event in created]
+    reading = ClaimReadings(at_once=1)
+    inputs = reading.inputs(claim)
+
+    updated = copy.deepcopy(study)
+    updated["protocolSection"]["designModule"]["enrollmentInfo"]["count"] = 120
+    later = NOW + timedelta(days=1)
+    assert fetch(session, claim, trials=Trials({NCT: updated}, fetched_at=later)) == []
+    assert reading.inputs(claim) == inputs
+    # An old cached response arriving later must not replace the correction.
+    assert fetch(session, claim, trials=original) == []
+    assert [(e.id, e.review_state, e.reviewed_at) for e in created] == reviewed
+    facts = build_export(session, now=later).claims[0].trials[0].facts
+    assert facts and facts.participants and facts.participants.count == 120
+
+    updated = copy.deepcopy(updated)
+    updated["protocolSection"]["outcomesModule"]["primaryOutcomes"] = [{"measure": "New endpoint"}]
+    assert (
+        fetch(session, claim, trials=Trials({NCT: updated}, fetched_at=later + timedelta(days=1)))
+        == []
+    )
+    assert reading.inputs(claim) != inputs
 
 
 def test_trial_the_registry_no_longer_has_is_skipped(session: Session):

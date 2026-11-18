@@ -189,6 +189,11 @@ Settled by the build on 2026-11-17: the set listed is `active-since-2025` (phase
 
 Changed on 2026-11-17, when the operator made the listed set one rolling set (under way or not yet started now, or ended in the current calendar year): 102,877 trials by that rule on the working database that day, a listing of 29,090,078 bytes (27.7 MiB; 8.7 MB with gzip, 5.8 MB with Brotli), more than Cloudflare takes as one file. The command's default set is now that one, `active-or-ended-this-year`, read by name from the pipeline's named sets with the calendar year the command reads from the clock. The pipeline still writes one file; the site's build cuts it into parts (next requirement), and the single-file limit of 8 MiB became a limit of 64 MiB on the whole.
 
+#### Scenario: Staging a changed listing
+
+- **WHEN** the operator stages an export with a newly generated trial listing
+- **THEN** the site build receives the matching listing from that staging operation and generates its manifest and parts together.
+
 ### Requirement: The listing is served in parts
 The site's build SHALL cut the listing, in registry-number order, into parts of about one mebibyte, each a listing in itself by the same schema, and SHALL serve a manifest that names the set, the day its records were read, the number of trials, and for each part its address and its first and last registry numbers. No file a reader fetches SHALL hold the whole listing, and every listed trial SHALL be in exactly one part. A search for a registry number SHALL fetch the manifest and the one part that could hold the number. A search by words SHALL read every part; where the listing has more than two parts it SHALL do so only when the reader asks, by a control that states how many trials would be searched, and SHALL then answer later searches from what was read. The manifest and the parts SHALL be served marked not to be indexed.
 
@@ -207,6 +212,11 @@ The site's build SHALL cut the listing, in registry-number order, into parts of 
 #### Scenario: A small listing
 - **WHEN** the listing has one or two parts
 - **THEN** a search by words reads it at once, as before
+
+#### Scenario: A deployment moves a trial between parts
+
+- **WHEN** an open page holds a manifest from before NCT00000003 moved from part 01 to part 02
+- **THEN** the ID lookup still finds that trial and a word search uses one complete listing generation, including when old parts are unavailable
 
 ### Requirement: The registry's state is shown with the day the record last changed
 A plain trial page SHALL state, directly under the trial's state, the day the registry last changed the record, or that the registry does not state one; a listed trial's row in a search SHALL show that day beside its state. The method page SHALL say that a state is the registry's own as of that day and that a record can be listed as not finished and not have been changed for years. On 2026-11-17, 7,976 of the trials the registry listed as under way or not yet started had a record it had not changed since before 2025.

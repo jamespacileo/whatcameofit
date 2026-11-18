@@ -62,29 +62,17 @@ def read_only(session: Session) -> None:
     session.execute(text("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY"))
 
 
-def shared_address_keys(session: Session) -> dict[str, str]:
-    """By slug, the cause a claim's two exports may differ for when the database holds
-    two of its source articles at one address key: the store holds one article of a
-    claim at an address key (`store/schema.sql`), so it keeps the first and gives it the
-    statements and promises of both."""
-    slug: dict[int, str] = {
-        claim_id: claim_slug
-        for claim_id, claim_slug in session.execute(select(Claim.id, Claim.slug))
-    }
-    seen: set[tuple[int, str]] = set()
-    shared: dict[str, list[str]] = {}
-    for claim_id, url in session.execute(
-        select(SourceArticle.claim_id, SourceArticle.url).order_by(SourceArticle.id)
+def shared_address_keys(session: Session) -> dict[str, dict[str, str]]:
+    """Each duplicate URL and the first article's URL that the store's copy retains."""
+    kept: dict[tuple[str, str], str] = {}
+    duplicates: dict[str, dict[str, str]] = {}
+    for slug, url in session.execute(
+        select(Claim.slug, SourceArticle.url).join(SourceArticle).order_by(SourceArticle.id)
     ):
-        key = article_key(url) or url
-        if (claim_id, key) in seen:
-            shared.setdefault(slug[claim_id], []).append(key)
-        seen.add((claim_id, key))
-    return {
-        claim: "the data: the database holds two source articles of this claim at one"
-        f" address key ({', '.join(sorted(set(keys)))}); the store keeps the first"
-        for claim, keys in shared.items()
-    }
+        first = kept.setdefault((slug, article_key(url) or url), url)
+        if first != url:
+            duplicates.setdefault(slug, {})[url] = first
+    return duplicates
 
 
 def every_nth(session: Session, every: int) -> list[Claim]:

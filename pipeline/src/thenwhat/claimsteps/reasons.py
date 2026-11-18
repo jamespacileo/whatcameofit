@@ -2,7 +2,7 @@
 the claim: put off, stopped, or failed. Behavior: openspec work-ledger, "An outcome says
 whether the record comes back"."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -17,7 +17,13 @@ from thenwhat.sources.base import (
     SourceThrottled,
     TermsNotRecorded,
 )
-from thenwhat.work.errors import CannotAsk, ModelUnreachable, SourceStop, SpendCeilingReached
+from thenwhat.work.errors import (
+    CannotAsk,
+    ModelUnreachable,
+    SourceStop,
+    SpendCeilingReached,
+    StopAfterProgress,
+)
 from thenwhat.work.outcome import Later, Reason, ReasonClass
 from thenwhat.work.steps import Failed
 
@@ -26,7 +32,9 @@ SOURCE_RETRY = timedelta(hours=1)
 
 # --- put off: the claim comes back by itself ---------------------------------------------
 SOURCE_FAILED = Reason("source_failed", ReasonClass.LATER, "a source did not answer: {error}")
-SPEND_CEILING = Reason("spend_ceiling", ReasonClass.LATER, "{said} Not read: {unread}.")
+MESH_UNRESOLVED = Reason(
+    "mesh_unresolved", ReasonClass.LATER, "MeSH could not resolve entry terms for {names}"
+)
 OUTLET_HELD = Reason(
     "outlet_held", ReasonClass.LATER, "the page reader cannot ask {outlet} for an article yet"
 )
@@ -39,7 +47,9 @@ ARTICLE_UNREADABLE = Reason(
     " `thenwhat extract article --paste`",
 )
 PAPERS_OFF = Reason(
-    "papers_off", ReasonClass.NEEDS_FIX, "paper search is off: OPENALEX_API_KEY is not set"
+    "papers_off",
+    ReasonClass.NEEDS_FIX,
+    "paper search is off because it was disabled or OPENALEX_API_KEY is unset",
 )
 KIND_TERM_MISSING = Reason("kind_term_missing", ReasonClass.NEEDS_FIX, "{said}")
 
@@ -101,6 +111,8 @@ def attempt[T](
         with session.begin_nested():
             try:
                 return work()
+            except BudgetExceeded as budget:
+                raise SpendCeilingReached(str(budget), until=budget.until) from budget
             except CannotAsk:
                 # A source or a model that cannot be asked says nothing of this claim:
                 # it stops the run, and is never turned into an answer for the claim.
@@ -111,3 +123,20 @@ def attempt[T](
         raise
     except SourceError as failed:
         return failed
+
+
+def run_parts(
+    session: Session, parts: Iterable[Callable[[], None]], now: datetime
+) -> Later | Failed | None:
+    """Run each independent part in a savepoint. A later part's failure leaves earlier
+    completed parts available on retry, including decisions already paid for."""
+    for part in parts:
+        try:
+            answer = attempt(session, part)
+            if isinstance(answer, SourceError):
+                return put_off(answer, now)
+            if isinstance(answer, DecisionFailed | LlmError):
+                return model_failed(answer)
+        except SourceStop as stop:
+            raise StopAfterProgress(stop) from stop
+    return None

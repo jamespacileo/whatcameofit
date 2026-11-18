@@ -1,4 +1,5 @@
 // The site's only input: the pipeline's export, validated before anything is built.
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
@@ -341,9 +342,10 @@ function valueAt(content: unknown, pointer: string): unknown {
     .reduce<unknown>((value, part) => (value as Record<string, unknown> | undefined)?.[part], content);
 }
 
-function load(): Export {
+function load(): { data: Export; exportVersion: string } {
   const file = exportPath();
-  const content = JSON.parse(fs.readFileSync(file, "utf8"));
+  const raw = fs.readFileSync(file, "utf8");
+  const content = JSON.parse(raw);
   const schema = JSON.parse(fs.readFileSync(path.resolve("export.schema.json"), "utf8"));
   const ajv = new Ajv2020({ allErrors: true });
   addFormats(ajv);
@@ -426,10 +428,10 @@ function load(): Export {
       `The export at ${file} has reported statement codes the site has no words for: ${unwordedStatements.join(", ")}. Add them to src/lib/statements.ts.`,
     );
   }
-  return content as Export;
+  return { data: content as Export, exportVersion: createHash("sha256").update(raw).digest("hex").slice(0, 24) };
 }
 
-export const data: Export = load();
+export const { data, exportVersion } = load();
 
 /** Topics that have at least one published claim. Only these are linked from menus and lists. */
 export const listedTopics = data.verticals.filter((vertical) =>

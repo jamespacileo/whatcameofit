@@ -11,15 +11,16 @@ from typing import Any
 
 import httpx
 import pytest
-from sqlalchemy import select
+from sqlalchemy import Engine, delete, select
 from sqlalchemy.orm import Session
 
-from thenwhat.db.models import HttpCache
+from thenwhat.db.models import HttpCache, SourceAllowanceUse
 from thenwhat.resolve.codes import one_substance
 from thenwhat.sources import mesh, openalex, opentargets, ror
 from thenwhat.sources.base import (
     AllowanceUsedUp,
     MissingKey,
+    SourceCannotBeAsked,
     SourceError,
     SourceUnavailable,
     UnsearchableTerm,
@@ -903,6 +904,28 @@ def test_one_paper_is_looked_up_by_its_doi(session: Session, fake_time, fixture_
     assert source.usage.searches_sent == 0
 
 
+def test_one_paper_can_be_looked_up_by_exact_pubmed_id_without_a_doi(
+    session: Session, fake_time, fixture_json
+):
+    work = fixture_json("openalex/work_704541.json")
+    work["doi"] = None
+    work["ids"] = {"pmid": "https://pubmed.ncbi.nlm.nih.gov/12345/"}
+    source, replay = papers(session, fake_time, lambda request: work)
+
+    record = source.paper("pmid:12345")
+
+    assert record is not None
+    assert record.external_id == work["id"].removeprefix(openalex.WORK_PREFIX)
+    assert openalex.describe(record).pubmed_id == "12345"
+    assert source.paper("pmid:54321") is None
+    assert source.paper("pmid:not-a-number") is None
+    assert [request.url.path for request in replay.requests] == [
+        "/works/pmid:12345",
+        "/works/pmid:54321",
+    ]
+    assert source.usage.searches_sent == 0
+
+
 def test_literature_search_without_a_key_sends_nothing_and_names_the_setting(
     session: Session, fake_time
 ):
@@ -956,6 +979,44 @@ def test_used_up_allowance_stops_the_run_without_a_retry(session: Session, fake_
     assert len(replay.requests) == 1
     assert fake_time.slept == []
     assert "used up" in source.usage.line()
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_a_refused_openalex_key_stops_the_record_run(session: Session, fake_time, status):
+    source, replay = papers(session, fake_time, lambda request: httpx.Response(status))
+
+    with pytest.raises(SourceCannotBeAsked, match=f"openalex refused access .*{status}"):
+        source.search_papers(TERMS, CONDITION)
+
+    assert len(replay.requests) == 1
+
+
+@pytest.mark.parametrize("prepaid", [False, True])
+def test_openalex_quota_pause_survives_claim_rollback_and_restart(
+    engine: Engine, fake_time, fixture_json, prepaid
+):
+    answer = (
+        found_with(fixture_json, prepaid="5")
+        if prepaid
+        else httpx.Response(402, json={}, headers=allowance(remaining="0"))
+    )
+    try:
+        with Session(engine) as first:
+            source, replay = papers(first, fake_time, lambda request: answer)
+            with pytest.raises(AllowanceUsedUp), first.begin(), first.begin_nested():
+                source.search_papers(["first"], CONDITION)
+                source.search_papers(["second"], CONDITION)
+        with Session(engine) as restarted:
+            source, again = papers(restarted, fake_time, lambda request: answer)
+            with pytest.raises(AllowanceUsedUp):
+                source.search_papers(["next claim"], CONDITION)
+        assert (len(replay.requests), len(again.requests)) == (1, 0)
+    finally:
+        with Session(engine) as session, session.begin():
+            session.execute(delete(HttpCache).where(HttpCache.request_key == openalex.PAUSE_KEY))
+            session.execute(
+                delete(SourceAllowanceUse).where(SourceAllowanceUse.source_name == OpenAlex.name)
+            )
 
 
 def test_the_last_search_of_the_allowance_stops_every_client_until_it_resets(

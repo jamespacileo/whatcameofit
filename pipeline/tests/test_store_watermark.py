@@ -8,7 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from test_store_records import STORE, _world
-from thenwhat.db.models import Claim, LinkShare
+from thenwhat.db.models import Claim, LinkShare, RegistryTrial, TrialPaper
 from thenwhat.store.build import build
 from thenwhat.store.gather import Gathered, stream
 from thenwhat.store.tiers import BULK_KINDS, HOT, split_build, tier_path
@@ -67,6 +67,30 @@ def test_watermarks_move_with_any_write_and_the_id_with_the_data(session: Sessio
     assert not bulk_unchanged({"sql": "other", "marks": after_claim}, after_claim, digest)
 
 
+def test_adding_or_correcting_a_trial_paper_invalidates_bulk_reuse(session: Session):
+    _world(session)
+    tables = HOT_SOURCES + BULK_SOURCES
+    before = watermarks(session, tables)
+    trial_id = session.scalars(select(RegistryTrial.id)).first()
+    paper = TrialPaper(
+        registry_trial_id=trial_id,
+        source_name="pubmed",
+        pubmed_id="123",
+        raw_payload={"title": "Original title"},
+        fetched_at=datetime(2026, 11, 17, tzinfo=UTC),
+    )
+    session.add(paper)
+    session.flush()
+    added = watermarks(session, tables)
+    assert not bulk_unchanged({"sql": "same", "marks": before}, added, "same")
+
+    # PostgreSQL assigns a new xmin to an update in a later subtransaction.
+    with session.begin_nested():
+        paper.raw_payload = {"title": "Corrected title"}
+    corrected = watermarks(session, tables)
+    assert not bulk_unchanged({"sql": "same", "marks": added}, corrected, "same")
+
+
 def test_a_hot_build_is_moved_into_place_with_its_objects(session: Session, tmp_path: Path):
     world = _world(session)
     file, payloads = tmp_path / "store.sqlite", tmp_path / "payloads"
@@ -102,3 +126,59 @@ def test_the_build_digest_moves_with_the_code_that_forms_records(tmp_path: Path,
     people = copy / "sources" / "people.py"
     people.write_text(people.read_text() + "\n# a change to what is stripped\n")
     assert sql_digest(STORE) != before
+
+
+def test_paper_only_change_is_in_the_normal_and_fresh_build(
+    session: Session, tmp_path: Path, monkeypatch
+):
+    import sqlite3
+    from contextlib import nullcontext
+
+    from typer.testing import CliRunner
+
+    from thenwhat.cli import app
+    from thenwhat.db.models import RegistryTrial, TrialPaper
+    from thenwhat.store.tiers import BULK
+
+    _world(session)
+    monkeypatch.setattr("thenwhat.cli.store.reading_session", lambda: nullcontext(session))
+    file = tmp_path / "store.sqlite"
+    args = [
+        "store",
+        "build",
+        str(file),
+        "--payloads",
+        str(tmp_path / "objects"),
+        "--store-sql",
+        str(STORE),
+    ]
+
+    def run(*flags):
+        result = CliRunner().invoke(app, [*args, *flags])
+        assert result.exit_code == 0, result.output
+
+    def papers():
+        with sqlite3.connect(tier_path(file, BULK)) as db:
+            return db.execute(
+                "SELECT pubmed_id, payload_sha256 FROM trial_paper ORDER BY pubmed_id"
+            ).fetchall()
+
+    run()
+    before = papers()
+    trial = session.scalars(select(RegistryTrial).order_by(RegistryTrial.id)).first()
+    assert trial is not None
+    session.add(
+        TrialPaper(
+            registry_trial_id=trial.id,
+            source_name="pubmed",
+            pubmed_id="123456789",
+            raw_payload={"id": "123456789"},
+            fetched_at=datetime(2026, 11, 17, tzinfo=UTC),
+        )
+    )
+    session.flush()
+    run()
+    rebuilt = papers()
+    assert len(rebuilt) == len(before) + 1 and any(row[0] == "123456789" for row in rebuilt)
+    run("--fresh")
+    assert papers() == rebuilt

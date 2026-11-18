@@ -17,6 +17,11 @@ While two or more letters of words stand in the search box, and scripts run, the
 - **WHEN** a reader pastes the address of an article
 - **THEN** nothing is offered and the address is looked up as before
 
+#### Scenario: A complete trial number is typed before detail arrives
+
+- **WHEN** a reader types NCT04510194 before search details load and leaves the field focused with the same input
+- **THEN** the matching trial appears when its detail arrives without another keystroke. Dismissed suggestions stay dismissed
+
 ### Requirement: A suggested row says what it is and what is behind it
 A row SHALL show what it names with the typed words marked where they start a word, and beside it: for a topic and a condition, how many claims; for a treatment, what it is for and its claim's status in the site's words; for a report, its outlet and date; for a trial, its identifier first, then its title and its phase. A report's title SHALL stand between quotation marks. A trial SHALL be listed as a record and never worded as a treatment to take. A condition SHALL be one row however many claims are for it.
 
@@ -45,3 +50,8 @@ The down key SHALL choose the first row and then the next, the up key the one be
 #### Scenario: Escape
 - **WHEN** rows are shown and the reader presses Escape
 - **THEN** the rows close and "lung" stays in the box
+
+#### Scenario: The keyboard selection survives a detail refresh
+
+- **WHEN** a reader types lung and selects the first suggestion with Down before detail data arrives
+- **THEN** if that suggestion still exists it stays selected by identity and Enter opens it, even if its row position changed

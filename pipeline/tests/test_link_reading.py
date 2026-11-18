@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from backfill_support import same_session
 from reader_support import SyntheticReader, retriever
+from thenwhat.backfill.article_evidence import ArticleMatches
 from thenwhat.backfill.link_funnel import funnel
 from thenwhat.backfill.link_read import (
     CLAIM_IDENTITY_LOCK,
@@ -59,6 +60,7 @@ from thenwhat.db.models import (
     LinkShare,
     LlmUsage,
     RegistryTrial,
+    SourceArticle,
     WorkEntry,
 )
 from thenwhat.decide.core import BackendAnswer
@@ -85,6 +87,7 @@ from thenwhat.llm.client import Llm, LlmSettings
 from thenwhat.review.decisions import record_decision
 from thenwhat.statements.service import StatementChecker
 from thenwhat.work.allowance import Allowances
+from thenwhat.work.errors import CannotAsk
 from thenwhat.work.ledger import count
 from thenwhat.work.runner import RunReport, run_step
 
@@ -382,6 +385,42 @@ def test_the_articles_text_is_stored_nowhere_and_it_is_read_once(reader: Reader)
     assert (again.processed, len(reader.prompts)) == (0, 1)
 
 
+def test_a_backfill_window_checks_the_share_and_the_publisher_date(reader: Reader):
+    first, last = date(2019, 5, 4), date(2019, 5, 9)
+    reader.step = step(time=reader.time, window=(first, last))
+    outside = reader.lead("https://www.bbc.com/news/future", shared_at=WHEN + timedelta(days=4))
+    old_page = reader.lead(
+        "https://www.bbc.com/news/archived",
+        shared_at=WHEN + timedelta(days=3, hours=13),
+        serves=page(published="2019-05-03T11:00:00Z"),
+    )
+
+    report = reader.read()
+
+    assert report.processed == 1
+    assert outside.read_outcome is None
+    assert old_page.claim_id is None
+    assert reader.prompts == []
+    assert reader.entry(old_page).reason == "outside_publication_window"
+
+
+def test_a_daily_batch_keeps_an_earlier_publisher_date_in_the_full_window(reader: Reader):
+    reader.step = step(
+        time=reader.time,
+        window=(date(2019, 5, 4), date(2019, 5, 9)),
+        batch_day=WHEN.date(),
+    )
+    in_batch = reader.lead()
+    next_day = reader.lead("https://www.bbc.com/news/next", shared_at=WHEN + timedelta(days=1))
+
+    report = reader.read()
+
+    assert report.processed == 1
+    assert next_day.read_outcome is None
+    article = reader.session.get(SourceArticle, in_batch.source_article_id)
+    assert article is not None and article.published_date == date(2019, 5, 4)
+
+
 # --- a claim that exists ---------------------------------------------------------------
 
 
@@ -441,6 +480,24 @@ def test_with_a_threshold_unset_nothing_is_in_scope(reader: Reader):
     reader.step = step(pass_above=None)
 
     assert reader.read().processed == 0
+
+
+def test_a_calibrated_read_uses_only_scores_from_its_own_triage_version(reader: Reader):
+    reader.lead("https://example.com/old-score", score=0.9)
+    current = reader.lead("https://example.com/current-score", score=0.8)
+    below = reader.lead("https://example.com/below-cutoff", score=0.78)
+    current.triage_version = below.triage_version = 2
+    reader.session.flush()
+    calibrated = step(
+        pass_above=0.7883,
+        reject_below=0.7883,
+        triage_version=2,
+        use_current_triage_only=True,
+    )
+
+    assert list(reader.session.scalars(select(LinkLead.id).where(calibrated.scope()))) == [
+        current.id
+    ]
 
 
 def test_a_lead_the_reader_does_not_allow_cannot_be_read_and_is_not_retried(reader: Reader):
@@ -1147,6 +1204,47 @@ def test_evidence_on_a_topic_becomes_a_claim(reader: Reader):
     reader.read()
 
     assert lead.read_outcome is ReadOutcome.NEW_CLAIM
+
+
+def test_a_backfill_read_keeps_verified_ids_for_claim_preparation(reader: Reader):
+    calls = []
+
+    def match_article(session, retrieved, headline, outlet, published):
+        calls.append((headline, published))
+        assert MARKER in retrieved.text
+        return ArticleMatches(("NCT00001111",), ("10.5555/research",), ("2345", "3456"))
+
+    reader.client.match_article = match_article
+    lead = reader.lead()
+
+    reader.read()
+
+    assert calls == [(HEADLINE, date(2019, 5, 4))]
+    assert reader.client.requests_made == 1
+    article = reader.session.get(SourceArticle, lead.source_article_id)
+    assert article is not None
+    assert article.matched_registry_numbers == ["NCT00001111"]
+    assert article.matched_dois == ["10.5555/research"]
+    assert article.matched_pubmed_ids == ["2345", "3456"]
+    assert article.named_registry_numbers == []
+    assert article.named_dois == []
+    claim = reader.session.get(Claim, lead.claim_id)
+    assert claim is not None and claim.review_state is ReviewState.PENDING
+
+
+def test_evidence_source_pause_keeps_the_read_due_and_its_cost(reader: Reader):
+    def match_article(session, retrieved, headline, outlet, published):
+        raise CannotAsk("PubMed allowance used")
+
+    reader.client.match_article = match_article
+    lead = reader.lead()
+
+    report = reader.read()
+
+    assert report.stopped == "PubMed allowance used"
+    assert lead.read_outcome is None
+    assert reader.session.scalars(select(Claim)).all() == []
+    assert reader.session.scalar(select(func.count()).select_from(LlmUsage)) == 1
 
 
 def test_business_news_on_no_topic_starts_no_claim(reader: Reader):

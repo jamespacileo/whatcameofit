@@ -4,7 +4,7 @@
 // row is the same wherever it is drawn and the counts on the page are the lists' own.
 import { calendarByMonth } from "./anniversaries";
 import { dayList } from "./day-list";
-import { data, listedTopics } from "./export";
+import { data, exportVersion, listedTopics } from "./export";
 import { longestWithoutSignal, promisesByDate, statusMoves } from "./feed";
 import { recentReports } from "./reports";
 import { latestPromise } from "./status";
@@ -78,8 +78,8 @@ export const calendarDays = calendarByMonth(data.claims).flatMap((month) => mont
 export function restOf(list: FeedView | "latest"): string | undefined {
   const later =
     list === "latest" ? daysLaterRows + daysLater.toCome.length : feedTotals[list] - PAGE_SIZE;
-  return later > 0 ? `/rows/${list}.txt` : undefined;
+  return later > 0 ? `/rows/${list}.${exportVersion}.txt` : undefined;
 }
 
 /** Where one calendar day's first reports are. */
-export const anniversaryRows = (id: string) => `/rows/on-this-day/${id}.txt`;
+export const anniversaryRows = (id: string) => `/rows/on-this-day/${id}.${exportVersion}.txt`;

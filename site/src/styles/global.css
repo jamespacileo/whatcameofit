@@ -3331,9 +3331,15 @@ span.pop > span + span {
 
 /* The home page's lists: one shown at a time, picked by a tab. Where scripts run,
    only the first is in sight until the tabs take over. */
-@media (scripting: enabled) {
+@media screen and (scripting: enabled) {
   .feed:not(.tabbed) .feed-panel ~ .feed-panel {
     display: none;
+  }
+}
+
+@media print {
+  .feed .feed-panel[hidden] {
+    display: block !important;
   }
 }
 
@@ -7087,7 +7093,6 @@ body.framed {
 
   .band.record .what-this-is,
   .band.record .byline,
-  .band.record .claim-title .title-for,
   .band.record .entry-note,
   .band.record .approach {
     color: var(--muted);
@@ -7819,6 +7824,12 @@ body.framed {
   letter-spacing: 0;
   color: var(--navy-soft);
   text-wrap: pretty;
+}
+
+@media print {
+  .band.record .claim-title .title-for {
+    color: #46566b;
+  }
 }
 
 /* A record page's section headings, in the same face. */

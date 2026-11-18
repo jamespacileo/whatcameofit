@@ -297,7 +297,7 @@ test("Scenario: Promise beside the record", () => {
 test("Scenario: Claim with three trials", () => {
   const words = (slug) => wordsOf(rowsOf(claimsPanel()).find((row) => row.includes(`href="/${slug}`)));
   // The count, the largest size and whether results are posted: never what was found.
-  assert.match(words("phase-claim"), /In 7 trials\s+1,200 people in the largest\. Results posted by 1 of 7/);
+  assert.match(words("phase-claim"), /7 trials on record\s+1,200 people planned in the largest\. Results posted by 1 of 7/);
   assert.match(words("quiet-claim"), /None on record\s+The first report was about a study in animals/);
   assert.match(claimsPanel(), /counts the trials on record; it does not say what they found\./);
   assert.doesNotMatch(wordsOf(claimsPanel()), /p\s*[=<]|\d\.\d/);
@@ -337,7 +337,7 @@ test("Scenario: Anniversaries on the home page", () => {
   const years = JSON.parse(block.match(/data-years="([^"]+)"/)[1].replaceAll("&quot;", '"'));
   assert.deepEqual(Object.entries(years).map(([day]) => day), ["05-01", "05-03", "05-04"]);
   assert.ok(!block.includes("data-day="), "a day's reports are in the page as built");
-  assert.match(page("rows/on-this-day/05-03.txt"), /<li class="day" data-day="05-03"[^>]*>[^]*data-year="2019"/);
+  assert.match(page(block.match(/data-rows="([^"]+)"/)[1].replace("DAY", "05-03")), /<li class="day" data-day="05-03"[^>]*>[^]*data-year="2019"/);
   assert.match(block, /href="\/anniversaries"/);
 });
 
@@ -763,7 +763,8 @@ test("Scenario: Summary of a topic with ended trials", () => {
 test("Scenario: Reader follows a headline from the home page", () => {
   // The home page's rows are those in the page as built and those it fetches when a
   // reader asks for earlier headings (openspec landing-rows-on-demand).
-  const home = page("index.html") + page("rows/latest.txt");
+  const initial = page("index.html");
+  const home = initial + page(initial.match(/data-day-list data-rest="([^"]+)"/)[1]);
   // Each headline on the home page is named, and its claim page gives the same name
   // to the same headline, shown before the status.
   const named = [...home.matchAll(/class="followed" href="\/([^"]+)" style="view-transition-name: ([^";]+)/g)];
@@ -873,7 +874,7 @@ const briefOf = (slug) => wordsOf(sectionOf(page(`${slug}/index.html`), "brief")
 test("Scenario: Three trials, the largest of 1,200", () => {
   const html = page("phase-claim/index.html");
   // Said once, in the section: the facts under the digest no longer count the trials.
-  assert.match(briefOf("phase-claim"), /Tested in people\? In 7 trials\. 1,200 people in the largest/);
+  assert.match(briefOf("phase-claim"), /Tested in people\? 7 trials on record\. 1,200 people planned in the largest/);
   assert.match(briefOf("phase-claim"), /The largest number is a planned size, not people who took part\./);
   assert.doesNotMatch(html, /Trials in people/);
   assert.doesNotMatch(html, /7 on record/);
@@ -887,7 +888,7 @@ test("Scenario: Claim with trials", () => {
   // rows, how it was tested before where the records stand now, with no group names.
   assert.match(
     brief.replace(/\s+/g, " ").replace(/ ([.,])/g, "$1"),
-    /Tested in 7 trials, the largest planned for 1,200 people\. One record names a placebo\. 1 of 7 has posted results, on 1 Sep 2025\. One is under way\. No approval is listed, and regulators' records are not read\./,
+    /7 trials on record, the largest planned for 1,200 people\. One record names a placebo\. 1 of 7 has posted results, on 1 Sep 2025\. One is under way\. No approval is listed, and regulators' records are not read\./,
   );
   assert.ok(brief.indexOf("Compared with a placebo?") < brief.indexOf("Results posted to the registry?"));
   assert.doesNotMatch(brief, /How it was tested|Where the records stand now/);
@@ -901,7 +902,7 @@ test("Scenario: Claim with trials", () => {
   // No approval is said by what the site reads, not as "none on record".
   assert.match(brief, /Approved by a regulator\? None listed\. Regulators' records are not read/);
   // The largest trial states no main measure, so that question has nothing to ask.
-  assert.doesNotMatch(brief, /What did the largest trial measure/);
+  assert.doesNotMatch(brief, /What did the largest trial (?:plan to )?measure/);
 });
 
 test("Scenario: Every answer opens to something", () => {
@@ -1971,6 +1972,13 @@ test("Scenario: Top category with claims, and one with no claim", () => {
   assert.match(html, /href="\/topics"/);
 });
 
+test("Clinical browsing explains registry, paper and model sources", () => {
+  const index = wordsOf(page("clinical/index.html"));
+  const category = wordsOf(page("clinical/D010510/index.html"));
+  assert.match(index, /conditions listed in trial records, major subject headings on papers, or an approved model reading/);
+  assert.match(category, /listed in a trial record, indexed as a major subject on a paper, or identified by an approved model reading/);
+});
+
 test("Scenario: Category in two places links to both broader categories", () => {
   const html = page("clinical/D003930/index.html");
   assert.match(html, /<a href="\/clinical\/D003920" data-broader[^>]*>\s*Diabetes Mellitus\s*<\/a>/);
@@ -2039,4 +2047,57 @@ test("Scenario: Export without a MeSH year stops the build", () => {
 
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /carries clinical categories and no MeSH year/);
+});
+
+test("report dates, non-trial marks, and Phase 4 notes follow the record on both status paths", async (t) => {
+  const { parseHTML } = await import("linkedom");
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-claim-history-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const data = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+  const base = data.claims.find((claim) => claim.slug === "phase-claim");
+  const off = structuredClone(base);
+  off.slug = "off-path-trial";
+  off.status.code = "terminated";
+  off.trials[0].phases = ["phase_4"];
+  off.promises = [];
+  off.first_reported_date = "2024-04-12";
+  off.articles[0].published_date = off.first_reported_date;
+  const event = (id, type, date, state = null) => ({
+    ...base.events[0], id, type, event_date: date, trial_state: state,
+    source_url: `https://registry.example/record/${id}`,
+  });
+  off.events = [
+    event(1, "retraction", "2021-08-10"),
+    event(2, "trial_status_change", "2021-09-01", "completed"),
+    event(3, "trial_registered", "2024-02-15"),
+    // Older records make the timetable long enough to fold the 2021 row.
+    ...Array.from({ length: 18 }, (_, j) => event(j + 4, "trial_registered", "2020-02-01")),
+  ];
+  const on = structuredClone(off);
+  on.slug = "on-path-trial";
+  on.status.code = base.status.code;
+  on.articles.push({ ...on.articles[0], url: "https://news.example/follow-up", published_date: "2024-05-01" });
+  data.claims = [off, on, base];
+  const src = path.join(dir, "records.json"), out = path.join(dir, "dist");
+  fs.writeFileSync(src, JSON.stringify(data));
+  const result = build(src, out);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const doc = (claim) => parseHTML(fs.readFileSync(path.join(out, claim.slug, "index.html"), "utf8")).document;
+  const ended = doc(off), started = doc(on);
+  for (const [page, date] of [[ended, "12 Apr 2024"], [started, "1 May 2024"]]) {
+    const link = page.querySelector(".changed a[href='#latest-report']");
+    assert.equal(link.textContent.replaceAll("\u00a0", " "), date);
+    assert.equal(page.querySelector(link.getAttribute("href")).dataset.kind, "report");
+    assert.match(page.querySelector("#why").textContent, /1 trial on record is a Phase 4 trial/);
+  }
+  assert.doesNotMatch(ended.querySelector(".milestones").textContent, /Latest record/);
+  assert.match(started.querySelector(".milestones").textContent.replaceAll("\u00a0", " "), /Latest record1 May 2024/);
+  assert.equal(ended.querySelector("#why .pop-path"), null);
+  assert.ok(started.querySelector("#why .pop-path"));
+  assert.doesNotMatch(doc(base).querySelector("#why").textContent, /Phase 4 trial/);
+  const year = ended.querySelector("#year-2021");
+  assert.equal(year.querySelectorAll(".year-marks [data-state=completed]").length, 1);
+  assert.equal(year.querySelectorAll(".year-marks svg").length, 1);
+  assert.match(year.querySelector("summary").textContent, /retraction notice 1/i);
+  assert.match(ended.querySelector(".year-key").textContent, /Retraction/);
 });

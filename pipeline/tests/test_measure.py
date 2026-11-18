@@ -416,3 +416,26 @@ def test_fewer_days_than_a_week_gives_no_measured_cost(session: Session):
 
     assert measured_cost_of_a_record(session, "link_triage", today=today) is None
     assert measured_cost_of_a_record(session, "link_read", today=today) is None
+
+
+def test_failed_batch_attempt_does_not_count_twenty_extra_finished_records(session, recorded):
+    from backfill_support import ModelStep
+    from test_work_ledger import run
+    from thenwhat.measure.live import view_of
+
+    add_trials(session, 20)
+    step = ModelStep()
+    step.unanswered = {"T0007"}
+    ledger = run(session, step, limit=20)
+    view = view_of(recorded, AT, paused={}, spent_usd=Decimal(0), ceiling_usd=Decimal(1))
+    [batch] = [span for span in recorded if span.outcome == measure.BATCH_RETRY]
+    assert batch.batch == 20 and batch.error_kind
+    assert (ledger.done, ledger.failed) == (19, 1)
+    for window in view.windows:
+        assert window.records == ledger.done + ledger.failed
+        assert window.finished_a_minute == {
+            "done": 19 / window.minutes,
+            "failed": 1 / window.minutes,
+        }
+    assert view.windows
+    assert sum(total.records for total in totals_of(recorded).values()) == 20

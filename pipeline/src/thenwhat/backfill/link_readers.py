@@ -1,4 +1,4 @@
-"""Reading a platform's bulk file of posts into shared links, one reader per platform.
+"""Reading bulk files of posts or article listings into link leads.
 Behavior: openspec link-leads.
 
 A reader takes from a post only what a link lead keeps: the address it links to, the
@@ -10,7 +10,7 @@ import io
 import json
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, time
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -20,6 +20,7 @@ from thenwhat.work.errors import BackfillError
 
 HACKER_NEWS = "hackernews"
 REDDIT = "reddit"
+GDELT_GAL = "gdelt-gal"
 
 # The only columns asked of a Hacker News file, so the author's name and the item's
 # text are never read from disk.
@@ -53,6 +54,7 @@ class Skip(StrEnum):
     NO_TITLE = "no title"
     UNUSABLE = "unusable address"
     OTHER_COMMUNITY = "not a chosen community"
+    INVALID_LISTING = "invalid article listing"
 
 
 @dataclass(frozen=True, slots=True)
@@ -85,7 +87,7 @@ def _on_own_platform(platform: str, url: str) -> bool:
         host = (urlsplit(url).hostname or "").lower()
     except ValueError:
         return False
-    return any(host == own or host.endswith("." + own) for own in OWN_HOSTS[platform])
+    return any(host == own or host.endswith("." + own) for own in OWN_HOSTS.get(platform, ()))
 
 
 def _moment(value: object) -> datetime:
@@ -179,6 +181,48 @@ def reddit_rows(path: Path) -> Iterator[dict[str, Any]]:
             yield {field: submission.get(field) for field in REDDIT_FIELDS}
 
 
+def gdelt_links(path: Path) -> Iterator[SharedLink | Skip]:
+    """Read the staged GDELT GAL metadata file, using its UTC day as the lead date."""
+    with path.open(encoding="utf-8") as stream:
+        for line in stream:
+            if not line.strip():
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                yield Skip.INVALID_LISTING
+                continue
+            if not isinstance(row, dict) or row.get("source") != GDELT_GAL:
+                yield Skip.INVALID_LISTING
+                continue
+            published = row.get("date")
+            if not isinstance(published, str):
+                yield Skip.INVALID_LISTING
+                continue
+            try:
+                day = date.fromisoformat(published)
+            except ValueError:
+                yield Skip.INVALID_LISTING
+                continue
+            address = row.get("url")
+            headline = row.get("title")
+            if not (isinstance(address, str) and isinstance(headline, str)):
+                yield Skip.INVALID_LISTING
+                continue
+            link = _link(GDELT_GAL, address, headline)
+            if isinstance(link, Skip):
+                yield link
+                continue
+            url, title = link
+            yield SharedLink(
+                url=url,
+                community=GDELT_GAL,
+                shared_at=datetime.combine(day, time.min, tzinfo=UTC),
+                score=0,
+                title=title,
+            )
+
+
 def posts_of(
     platform: str, path: Path, *, communities: frozenset[str]
 ) -> Iterator[SharedLink | Skip]:
@@ -187,6 +231,8 @@ def posts_of(
     divided into communities, when none is chosen."""
     if platform == HACKER_NEWS:
         return (read_hacker_news(row) for row in hacker_news_rows(path))
+    if platform == GDELT_GAL:
+        return gdelt_links(path)
     if platform == REDDIT:
         if not communities:
             raise NoCommunities(
@@ -196,5 +242,6 @@ def posts_of(
         read = reddit_reader(communities)
         return (read(row) for row in reddit_rows(path))
     raise UnknownPlatform(
-        f"No reader exists for the platform '{platform}'. Platforms: {HACKER_NEWS}, {REDDIT}."
+        f"No reader exists for the platform '{platform}'. "
+        f"Platforms: {HACKER_NEWS}, {REDDIT}, {GDELT_GAL}."
     )

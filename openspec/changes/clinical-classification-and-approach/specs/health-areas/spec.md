@@ -51,6 +51,11 @@ The rule SHALL change a claim's approach only when the approach is empty or was 
 - **WHEN** a rule set a claim's approach to drug from 2 trials and a third approved trial also lists the type drug
 - **THEN** the approach stays drug and its basis counts 3 trials
 
+#### Scenario: An editor commits while a rule is fetching
+
+- **WHEN** a fetch starts with a rule-owned approach and a person saves gene therapy before the rule tries to write drug
+- **THEN** the committed approach, its human owner and its basis survive the later write
+
 ### Requirement: Claims the rule could not give an approach are listed
 The pipeline SHALL list, on request, each claim that has approved trials and no approach, with the reason the rule set none: the types found with their trial counts, or that no approved trial lists the intervention by an equal name.
 

@@ -2,6 +2,7 @@
 
 import sys
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
 import typer
@@ -31,6 +32,7 @@ PASTE_HELP = "Read the article text from standard input instead of fetching it."
 
 def make_llm(session: Session) -> "Llm":
     # Imported here: the model library is slow to load and most commands never need it.
+    from thenwhat.llm.cache import ModelCache
     from thenwhat.llm.client import Llm, LlmSettings
 
     settings = settings_or_exit()
@@ -42,6 +44,7 @@ def make_llm(session: Session) -> "Llm":
             input_usd_per_mtok=settings.llm_input_usd_per_mtok,
             output_usd_per_mtok=settings.llm_output_usd_per_mtok,
         ),
+        cache=ModelCache(settings.llm_cache_dir) if settings.llm_cache_dir is not None else None,
     )
 
 
@@ -131,6 +134,103 @@ def _article_text(url: str, paste: bool) -> Retrieved:
         ) from None
     except ReaderUnavailable as down:
         raise EntryError(str(down)) from None
+
+
+@extract_app.command("evidence-search")
+def evidence_search_command(
+    url: Annotated[str, typer.Argument(help="URL of the news article.")],
+    store: Annotated[
+        Path, typer.Option(exists=True, dir_okay=False, readable=True, help="Local trial database.")
+    ],
+    title: Annotated[str, typer.Option(help="Headline when the reader supplies none.")] = "",
+    outlet: Annotated[str, typer.Option(help="Name of the publisher.")] = "",
+    published: Annotated[
+        datetime | None, typer.Option(formats=DATE_FORMATS, help="Article date, YYYY-MM-DD.")
+    ] = None,
+    queries: Annotated[int, typer.Option(min=1, max=4, help="Maximum queries.")] = 4,
+    paste: Annotated[bool, typer.Option("--paste", help=PASTE_HELP)] = False,
+    papers: Annotated[bool, typer.Option("--papers/--no-papers")] = True,
+    verify: Annotated[bool, typer.Option(help="Score exact article-to-record matches.")] = False,
+    trial_aliases: Annotated[
+        Path | None,
+        typer.Option(
+            exists=True, dir_okay=False, readable=True, help="Cited sponsor product aliases."
+        ),
+    ] = None,
+) -> None:
+    """Plan searches and retrieve trial or paper candidates for an article."""
+    import json
+    import sqlite3
+    from contextlib import closing
+
+    from pydantic import TypeAdapter, ValidationError
+
+    from thenwhat.cli.resolve import make_backend
+    from thenwhat.cli.session import open_session
+    from thenwhat.decide.core import DecisionFailed
+    from thenwhat.extract.evidence_search import find_evidence
+    from thenwhat.extract.evidence_verification import TrialProductAlias, verify_evidence
+    from thenwhat.extract.page import published_day
+    from thenwhat.llm.errors import LlmError
+    from thenwhat.sources.pubmed import PubMed
+    from thenwhat.work.allowance import Allowances
+
+    settings = settings_or_exit()
+    try:
+        aliases = (
+            TypeAdapter(list[TrialProductAlias]).validate_json(trial_aliases.read_bytes())
+            if trial_aliases is not None and verify
+            else []
+        )
+        article = _article_text(url, paste)
+        page = article.page
+        when = (
+            published.date()
+            if published is not None
+            else (published_day(page.published) if page else None)
+        )
+        index = (
+            PubMed(
+                contact_email=settings.contact_email,
+                tool=settings.pubmed_tool,
+                api_key=settings.pubmed_api_key,
+                allowances=Allowances(open_session, settings.allowances()),
+            )
+            if papers
+            else None
+        )
+        headline = (page.headline if page else None) or title
+        with (
+            closing(sqlite3.connect(store.resolve().as_uri() + "?mode=ro", uri=True)) as trials,
+            open_session() as session,
+        ):
+            result = find_evidence(
+                make_llm(session),
+                article,
+                headline=headline,
+                outlet=outlet,
+                published=when,
+                trial_store=trials,
+                pubmed=index,
+                max_queries=queries,
+            )
+            payload = result.model_dump(mode="json")
+            if verify:
+                verification = verify_evidence(
+                    session,
+                    make_backend(session),
+                    article,
+                    result,
+                    trial_store=trials,
+                    pubmed=index,
+                    headline=headline,
+                    product_aliases=aliases,
+                )
+                payload["verification"] = verification.model_dump(mode="json")
+    except (DecisionFailed, EntryError, LlmError, OSError, ValidationError, sqlite3.Error) as error:
+        err.print(str(error), markup=False)
+        raise typer.Exit(1) from None
+    out.print(json.dumps(payload, indent=2), markup=False)
 
 
 @extract_app.command("new")

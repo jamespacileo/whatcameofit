@@ -37,7 +37,7 @@ A claim page's status panel SHALL link to the page's reminders where they can be
 - **THEN** the topic page links a feed holding those changes, newest first
 
 ### Requirement: The digest counts the trials' states under a status that names a phase
-When a claim's status is not Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record and how many are under way, finished and stopped early, leaving out a state no trial has. Where no trial is in one of those three states, it SHALL count every state instead, so the count never stands bare. Where any trial on record is a Phase 4 trial, the panel that names the path's places SHALL say how many and that the path counts phases up to Phase 3; the digest SHALL NOT. The sentence SHALL be a count of records and SHALL NOT say what the counts mean.
+When a claim's status is not Trial registered and it has trials on record, the digest panel SHALL say, after what the status means, how many trials are on record and how many are under way, finished and stopped early, leaving out a state no trial has. Where no trial is in one of those three states, it SHALL count every state instead, so the count never stands bare. For any claim with a Phase 4 trial, the status panel SHALL give the number of Phase 4 trials and explain that the path counts phases up to Phase 3. This applies even when the current status is off the path. The digest SHALL omit this note. The sentence SHALL be a count of records and SHALL NOT say what the counts mean.
 
 #### Scenario: Most trials stopped early
 - **WHEN** a reader opens a claim whose status is Phase 3 trial and which has 9 trials on record, 3 finished and 6 stopped early
@@ -50,6 +50,11 @@ When a claim's status is not Trial registered and it has trials on record, the d
 #### Scenario: Phase 4 trials on record
 - **WHEN** a claim whose status is Phase 3 trial has 47 trials on record, 24 of them Phase 4
 - **THEN** the panel that opens from the status says, under the path's places, that 24 trials on record are Phase 4 trials and that the path counts phases up to Phase 3
+
+#### Scenario: A Phase 4 trial is present with an off-path status
+
+- **WHEN** the claim has a Phase 4 trial but its current status does not display the six-stage path
+- **THEN** the status panel still gives the count of Phase 4 trials and explains that the path ends at Phase 3
 
 ## ADDED Requirements
 
@@ -93,3 +98,8 @@ The panel that opens from the status SHALL name at most the three latest records
 #### Scenario: Closing the panel on a phone
 - **WHEN** a reader on a phone has opened the panel
 - **THEN** a "Close" control is in sight at its foot and closes it
+
+#### Scenario: One press closes a hovered status panel
+
+- **WHEN** a reader with a hover-capable pointer opens the status panel and presses Close once
+- **THEN** the panel closes on that press. The opening control can still reopen it

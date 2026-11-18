@@ -54,6 +54,7 @@ entity_app = typer.Typer(help="Add entities, synonyms and the origin paper.", no
 
 
 def make_backend(session: Session) -> Backend:
+    from thenwhat.llm.cache import ModelCache
     from thenwhat.llm.decisions import Decisions, DecisionsSettings
 
     settings = settings_or_exit()
@@ -66,6 +67,7 @@ def make_backend(session: Session) -> Backend:
             monthly_budget_usd=settings.llm_monthly_budget_usd,
             input_usd_per_mtok=settings.decisions_input_usd_per_mtok,
         ),
+        cache=ModelCache(settings.llm_cache_dir) if settings.llm_cache_dir is not None else None,
     )
     try:
         return backend_named(settings.decision_backend, extract.make_llm(session), decisions)
@@ -178,7 +180,7 @@ def make_research(session: Session) -> Research:
     return Research(
         papers=(
             OpenAlex(session, contact_email=contact, api_key=settings.openalex_api_key)
-            if settings.openalex_api_key
+            if settings.research_papers_enabled and settings.openalex_api_key
             else None
         ),
         numbers=EuropePmc(session, contact_email=contact),
@@ -539,8 +541,20 @@ def _say_trials(
         out.print(f"Suggested evidence stage: {found.stage.choice}. Confirm it in review.")
 
 
-def _say_research(found: PapersFound, *, accept_above: float, reject_below: float) -> None:
+def _say_research(
+    slug: str, found: PapersFound, *, accept_above: float, reject_below: float
+) -> None:
     """What the search for organisations and papers found."""
+    if found.by_doi:
+        _say_matches(
+            slug,
+            found.by_doi,
+            [],
+            {},
+            rescore=False,
+            accept_above=accept_above,
+            reject_below=reject_below,
+        )
     if found.organisations:
         chosen = sum(match.review_state is ReviewState.APPROVED for match in found.organisations)
         out.print(
@@ -635,7 +649,7 @@ def resolve_command(
                 _say_redone(claim, found.redone)
         research = papers.results.get(claim_id)
         if research is not None:
-            _say_research(research, accept_above=accept_above, reject_below=reject_below)
+            _say_research(slug, research, accept_above=accept_above, reject_below=reject_below)
         for step in steps:
             line = outcome_line(session, step, claim_id, slug)
             if line is not None:

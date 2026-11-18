@@ -234,6 +234,51 @@ def test_the_day_s_bulk_records_merge_into_the_bulk_file_and_replay_from_the_del
     ]
 
 
+def test_restore_finishes_a_run_interrupted_after_its_first_20000_records(tmp_path: Path):
+    from thenwhat.store.build import RUN_RECORDS, apply_delta, base_of, merge_into, write_delta
+
+    restored = tmp_path / "interrupted.sqlite"
+    with sqlite3.connect(restored) as db:
+        db.executescript((STORE / "schema.sql").read_text())
+    uninterrupted = tmp_path / "uninterrupted.sqlite"
+    shutil.copyfile(restored, uninterrupted)
+    now = datetime(2026, 11, 17, tzinfo=UTC)
+    records = [
+        Record(
+            "unlisted_domain",
+            f"{i}.example|2026-11-17",
+            {"domain": f"{i}.example", "day": "2026-11-17", "asked": 1},
+        )
+        for i in range(20_001)
+    ]
+    runs = [("day", records)]
+    delta = tmp_path / "records.gz"
+    write_delta(delta, runs, base=base_of(restored, runs))
+    assert merge_into(restored, [("day", records[:RUN_RECORDS])], store_sql=STORE, now=now)[1] == [
+        "day-0"
+    ]
+    first_merge = "SELECT merged_at FROM run WHERE id = 'day-0'"
+    with sqlite3.connect(restored) as partial:
+        original_time = partial.execute(first_merge).fetchone()[0]
+        assert original_time
+    assert apply_delta(uninterrupted, delta, store_sql=STORE, now=now) == ["day-0", "day-1"]
+    assert apply_delta(restored, delta, store_sql=STORE, now=now) == ["day-1"]
+    assert apply_delta(restored, delta, store_sql=STORE, now=now) == []
+    with sqlite3.connect(restored) as recovered, sqlite3.connect(uninterrupted) as complete:
+        assert recovered.execute("SELECT count(*) FROM unlisted_domain_count").fetchone() == (
+            20001,
+        )
+        assert recovered.execute(first_merge).fetchone()[0] == original_time
+        # Each database records the real time it merged each batch.
+        for query in (
+            "SELECT * FROM unlisted_domain_count ORDER BY domain, day",
+            "SELECT * FROM merge_report ORDER BY run_id, kind",
+            "SELECT id, writer, device, request_class, commit_sha, registered_at, stated_checksum,"
+            " restore_bookmark, status, refusal, merged_at IS NOT NULL FROM run ORDER BY id",
+        ):
+            assert recovered.execute(query).fetchall() == complete.execute(query).fetchall()
+
+
 def test_a_delta_applies_only_in_its_order(session: Session, tmp_path: Path):
     from thenwhat.store.build import BuildFailed, apply_delta, base_of, merge_into, write_delta
 
@@ -496,8 +541,8 @@ def test_a_record_going_a_b_a_is_merged_each_day_and_replays(session: Session, t
     state = dict(report.state)
     when = datetime(2026, 11, 18, tzinfo=UTC)
     deltas = []
-    # Day three's record is day one's, byte for byte.
-    for day, (score, version) in enumerate(((0.9, 4), (0.5, 5), (0.9, 4))):
+    # Both records and their transitions recur byte for byte.
+    for day, (score, version) in enumerate(((0.9, 4), (0.5, 5), (0.9, 4), (0.5, 5))):
         body = {**lead.body, "triage_score": score, "triage_version": version}
         changed = Record("link_lead", lead.key, body)
         deltas.append(tmp_path / f"d{day}.jsonl.gz")
@@ -506,12 +551,59 @@ def test_a_record_going_a_b_a_is_merged_each_day_and_replays(session: Session, t
     held = {
         r for (r,) in sqlite3.connect(bulk).execute("SELECT id FROM run WHERE id LIKE 'bulk-%'")
     }
-    assert len(held) == 3
+    assert len(held) == 4
     for delta in deltas:
         assert apply_delta(restored, delta, store_sql=STORE, now=when), delta.name
     assert [c.sha256 for c in checksums(restored, BULK)] == [
         c.sha256 for c in checksums(bulk, BULK)
     ]
+
+
+@pytest.mark.parametrize("batch_sizes", [(3,), (3, 3), (3, 4)], ids=["interrupted", "noop", "more"])
+def test_same_day_archive_resumes_a_partial_restore(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, batch_sizes
+):
+    from thenwhat.store import build as store_build
+
+    bulk, restored = tmp_path / "bulk.sqlite", tmp_path / "restored.sqlite"
+    with sqlite3.connect(bulk) as db:
+        db.executescript((STORE / "schema.sql").read_text())
+    shutil.copyfile(bulk, restored)
+    when = datetime(2026, 11, 18, tzinfo=UTC)
+    delta, state = tmp_path / "day.gz", {}
+    records = [
+        Record(
+            "registry_load",
+            f"example|{i}",
+            {
+                "registry_name": "example",
+                "condition": str(i),
+                "loaded_from": when.isoformat(),
+                "completed_at": when.isoformat(),
+            },
+        )
+        for i in range(4)
+    ]
+    monkeypatch.setattr(store_build, "RUN_RECORDS", 2)
+    for size in batch_sizes:
+        store_build.merge_day(bulk, records[:size], state, delta=delta, store_sql=STORE, now=when)
+
+    merge = store_build.merge_run
+
+    def interrupt(db, name, records, **kw):
+        if name.endswith("-1"):
+            raise InterruptedError
+        return merge(db, name, records, **kw)
+
+    with monkeypatch.context() as fault:
+        fault.setattr(store_build, "merge_run", interrupt)
+        with pytest.raises(InterruptedError):
+            store_build.apply_delta(restored, delta, store_sql=STORE, now=when)
+    with sqlite3.connect(restored) as db:
+        assert db.execute("SELECT count(*) FROM registry_load").fetchone() == (2,)
+    assert store_build.apply_delta(restored, delta, store_sql=STORE, now=when)
+    assert store_build.apply_delta(restored, delta, store_sql=STORE, now=when) == []
+    assert checksums(restored, BULK) == checksums(bulk, BULK)
 
 
 def test_a_crash_after_a_merge_then_new_records_merge_each_once(session: Session, tmp_path: Path):

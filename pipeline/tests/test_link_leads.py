@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 from backfill_support import NOW, same_session
 from thenwhat.backfill.link_load import LoadReport, load_links
 from thenwhat.backfill.link_readers import (
+    GDELT_GAL,
     HACKER_NEWS,
     REDDIT,
     NoCommunities,
@@ -135,6 +136,38 @@ def test_a_community_is_matched_whatever_its_letter_case():
 
     assert isinstance(link, SharedLink) and link.community == "science"
     assert link.item_number is None
+
+
+def test_gdelt_file_loads_metadata_and_replay_deduplicates(session: Session, tmp_path: Path):
+    path = tmp_path / "gdelt.jsonl"
+    listing = {
+        "source": GDELT_GAL,
+        "date": "2026-08-17",
+        "url": ARTICLE,
+        "title": "  A synthetic trial report  ",
+    }
+    path.write_text(
+        "\n".join(
+            (
+                json.dumps(listing),
+                "not json",
+                json.dumps({**listing, "date": "invalid"}),
+                json.dumps({**listing, "url": ""}),
+            )
+        ),
+        encoding="utf-8",
+    )
+
+    first = load(session, GDELT_GAL, posts_of(GDELT_GAL, path, communities=frozenset()))
+    second = load(session, GDELT_GAL, posts_of(GDELT_GAL, path, communities=frozenset()))
+
+    [lead] = leads(session)
+    [share] = shares(session)
+    assert lead.title == "A synthetic trial report"
+    assert lead.first_shared_at == datetime(2026, 8, 17, tzinfo=UTC)
+    assert (share.platform, share.community, share.score) == (GDELT_GAL, GDELT_GAL, 0)
+    assert (first.read, first.new_leads, second.already_stored) == (4, 1, 1)
+    assert first.skipped == {Skip.INVALID_LISTING: 2, Skip.NO_LINK: 1}
 
 
 # --- storing -----------------------------------------------------------------------

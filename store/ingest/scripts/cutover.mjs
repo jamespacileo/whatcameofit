@@ -27,7 +27,9 @@
 //    6 dump          the hot file as SQL, and that SQL replayed strictly on this machine
 //    7 import
 //    8 checksum      every hot table in D1 against the build's checks
-//    9 payloads      the payload objects of both tiers
+//    9 payloads      the payload objects of both tiers, then every object either file
+//                    refers to proved in the bucket by its key and SHA-256 (a missing
+//                    payload folder passes only when the bucket's bytes are proved)
 //   10 bulk          the bulk file, in parts, with its manifest
 //   11 verify        the bulk manifest read back and held to the file
 //   12 export        local only: the export from the hot file against the working database
@@ -39,7 +41,7 @@
 // beside it: each stage's seconds, the rows D1 says were written, the build's id.
 // `--dry-run` prints the plan and runs nothing.
 import { spawn } from "node:child_process";
-import { createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { createWriteStream, existsSync, mkdirSync, opendirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -66,6 +68,13 @@ if (!production && value("--confirm") && value("--confirm") !== database) stop(`
 
 const hot = value("--hot") || join(dir, "store.hot.sqlite"), bulk = value("--bulk") || join(dir, "store.bulk.sqlite");
 const payloads = value("--payloads") ? [value("--payloads")] : ["hot", "bulk"].map((tier) => join(dir, "payloads", tier)).filter((path) => existsSync(path));
+const absentPayloads = value("--payloads") ? [] : ["hot", "bulk"].map((tier) => join(dir, "payloads", tier)).filter((path) => !existsSync(path));
+// Whether a payload folder holds any object to send (upload-payloads.mjs refuses one that does not).
+const holdsObjects = (folder) => {
+  const at = existsSync(join(folder, "payload")) ? join(folder, "payload") : folder;
+  const listing = opendirSync(at);
+  try { for (let entry = listing.readSync(); entry; entry = listing.readSync()) if (/^[0-9a-f]{64}$/.test(entry.name)) return true; return false; } finally { listing.closeSync(); }
+};
 const checks = join(dir, "checks.json");
 const out = join(dir, "cutover");
 const stamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 15);
@@ -219,13 +228,22 @@ const stages = [
     if (!existsSync(checks)) await must(thenwhat("store", "checksum", hot, "--tier", "hot", "--checks", checks), "the build's checks could not be made");
     await must(node("checksum-d1", "--checks", checks, "--file", hot, ...d1));
   }],
-  ["payloads", "the payload objects of both tiers", async () => {
+  ["payloads", "the payload objects of both tiers, each one referenced proved in the bucket", async () => {
     let objects = 0;
-    for (const folder of payloads) {
-      const text = await must(node("upload-payloads", folder, ...r2, ...(remote ? [] : ["--state", join(work, `payloads-${objects}.json`)])));
+    for (const [n, folder] of payloads.entries()) {
+      if (!holdsObjects(folder)) { say(`${folder}: no payload object to send`); continue; }
+      const text = await must(node("upload-payloads", folder, ...r2, ...(remote ? [] : ["--state", join(work, `payloads-${n}.json`)])));
       objects += Number(/^(\d+) objects/m.exec(text)?.[1] || 0);
     }
+    for (const folder of absentPayloads) say(`${folder} is not there: what the files refer to must already be in the bucket, and is proved there`);
+    // Sent or not, every object the hot or the bulk file refers to is read back from the
+    // bucket and held to its key and checksum: a missing folder, a stale note of what was
+    // uploaded, or an object that differs stops the cut-over here.
+    const text = await must(node("prove-payloads", "--hot", hot, "--bulk", bulk, ...payloads.flatMap((folder) => ["--payloads", folder]), ...r2),
+      "a payload object the build refers to is missing from the bucket, differs from its checksum, or could not be read");
     result.payload_objects = objects;
+    const referenced = /^(\d+) payload object\(s\) referenced/m.exec(text);
+    result.payload_objects_referenced = referenced ? Number(referenced[1]) : null;
   }],
   ["bulk", "the bulk file, in parts, with its manifest", async () => {
     // A rebuild may keep an unchanged bulk file, under the build that made it. If the
@@ -261,7 +279,7 @@ if (has("--dry-run")) {
   for (const [n, [name, what]] of stages.entries()) console.log(`${String(n).padStart(2)} ${name.padEnd(13)} ${what}`);
   console.log(`hot file      ${hot}${existsSync(hot) ? "" : "   (MISSING)"}`);
   console.log(`bulk file     ${bulk}${existsSync(bulk) ? "" : "   (MISSING)"}`);
-  console.log(`payloads      ${payloads.join(", ") || "(none found)"}`);
+  console.log(`payloads      ${payloads.join(", ") || "(none found)"}${absentPayloads.length ? `; not there: ${absentPayloads.join(", ")} (allowed only when the bucket holds every object the files refer to, proved)` : ""}`);
   console.log(`checks        ${checks}${existsSync(checks) ? "" : "   (will be made)"}`);
   console.log(`log, result   ${out}/`);
   if (production) console.log(`production: --confirm ${database} was given; each script gets --production; a store that is not empty stops the run`);

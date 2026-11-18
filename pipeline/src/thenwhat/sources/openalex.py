@@ -5,10 +5,12 @@ from datetime import date, datetime, timedelta
 from typing import Any
 
 import httpx
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from thenwhat.db.models import HttpCache
 from thenwhat.sources.base import AllowanceUsedUp, MissingKey, Source, SourceRecord
+from thenwhat.work.pause import apart
 
 API = "https://api.openalex.org"
 # What is asked for of each work. The abstract is used to score a paper and to find its
@@ -98,7 +100,6 @@ def describe(record: SourceRecord) -> PaperRecord:
     except ValueError:
         published_date = None
     source = (work.get("primary_location") or {}).get("source") or {}
-    pubmed = str((work.get("ids") or {}).get("pmid") or "").rstrip("/").rsplit("/", 1)[-1]
     return PaperRecord(
         title=str(work.get("title") or ""),
         year=work.get("publication_year"),
@@ -106,7 +107,7 @@ def describe(record: SourceRecord) -> PaperRecord:
         kind=str(work.get("type") or ""),
         journal=str(source.get("display_name") or ""),
         doi=_doi(work),
-        pubmed_id=pubmed if pubmed.isdigit() else None,
+        pubmed_id=_pubmed_id(work),
         authors=tuple(
             Author(
                 name=str((authorship.get("author") or {}).get("display_name") or ""),
@@ -119,6 +120,11 @@ def describe(record: SourceRecord) -> PaperRecord:
         ),
         abstract=_abstract(work.get("abstract_inverted_index")),
     )
+
+
+def _pubmed_id(work: dict[str, Any]) -> str | None:
+    value = str((work.get("ids") or {}).get("pmid") or "").rstrip("/").rsplit("/", 1)[-1]
+    return value if value.isascii() and value.isdecimal() else None
 
 
 def _doi(work: dict[str, Any]) -> str | None:
@@ -210,18 +216,22 @@ class OpenAlex(Source):
         ]
 
     def paper(self, external_id: str) -> SourceRecord | None:
-        """The paper a candidate match points to: by its DOI, or by OpenAlex's own
-        identifier when it has none. None if OpenAlex does not have it. Looking one
+        """Read a paper by DOI, PubMed ID or OpenAlex ID. Looking one
         work up costs nothing, so it is still asked once the day's searches are spent."""
         self._require_key()
+        pubmed_id = external_id.removeprefix("pmid:") if external_id.startswith("pmid:") else None
         if external_id.startswith("10."):
             known_as = f"doi:{external_id}"
-        elif external_id[:1] == "W" and external_id[1:].isdigit():
+        elif (external_id[:1] == "W" and external_id[1:].isdigit()) or (
+            pubmed_id and pubmed_id.isascii() and pubmed_id.isdecimal()
+        ):
             known_as = external_id
         else:
             return None
         fetched = self._get(f"{API}/works/{known_as}", {"select": FIELDS})
-        return self._record(fetched.payload, fetched.fetched_at) if fetched else None
+        if fetched is None or (pubmed_id is not None and _pubmed_id(fetched.payload) != pubmed_id):
+            return None
+        return self._record(fetched.payload, fetched.fetched_at)
 
     def _record(self, work: dict[str, Any], fetched_at: datetime) -> SourceRecord | None:
         own = str(work.get("id") or "").removeprefix(WORK_PREFIX)
@@ -287,10 +297,14 @@ class OpenAlex(Source):
 
     def _paused(self) -> str | None:
         """Why no search may be sent now, or None when one may."""
-        pause = self._session.get(HttpCache, PAUSE_KEY)
-        if pause is None or pause.expires_at <= self._time.now():
+        pause = self._session.scalar(
+            select(HttpCache.payload).where(
+                HttpCache.request_key == PAUSE_KEY, HttpCache.expires_at > self._time.now()
+            )
+        )
+        if pause is None:
             return None
-        return str(pause.payload.get("reason") or USED_UP)
+        return str(pause.get("reason") or USED_UP)
 
     def _pause(self, reason: str, reset_in_seconds: float | None) -> None:
         """Stop searches until the allowance resets: at the time the source gave, or at
@@ -307,14 +321,18 @@ class OpenAlex(Source):
             "fetched_at": now,
             "expires_at": until,
         }
-        self._session.execute(
-            insert(HttpCache)
-            .values(request_key=PAUSE_KEY, **kept)
-            .on_conflict_do_update(index_elements=[HttpCache.request_key], set_=kept)
-        )
-        held = self._session.get(HttpCache, PAUSE_KEY)
-        if held is not None:
-            self._session.refresh(held)
+        # The current claim may roll back as soon as the provider refuses it. Keep
+        # the stop independently, including when another worker already set a later one.
+        with apart(self._session) as own:
+            own.execute(
+                insert(HttpCache)
+                .values(request_key=PAUSE_KEY, **kept)
+                .on_conflict_do_update(
+                    index_elements=[HttpCache.request_key],
+                    set_=kept,
+                    where=HttpCache.expires_at < until,
+                )
+            )
         self.usage.stopped = reason
 
 

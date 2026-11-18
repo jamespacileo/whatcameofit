@@ -9,11 +9,13 @@ from typing import Any
 from sqlalchemy import ColumnElement, select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.link_reasons import SITE_BUSY, reason_for_status
 from thenwhat.backfill.outlet_hold import OutletHeld, retrieve_unless_held
 from thenwhat.claimsteps.inputs import Inputs, names_a_record
 from thenwhat.claimsteps.reasons import (
     ARTICLE_UNREADABLE,
     OUTLET_HELD,
+    PAPERS_OFF,
     SOURCE_FAILED,
     SOURCE_RETRY,
     SourceNotSetUp,
@@ -25,7 +27,7 @@ from thenwhat.claimsteps.step import Answer, ClaimSources, ClaimStep
 from thenwhat.db.models import Claim, SourceArticle
 from thenwhat.decide.core import DecisionFailed
 from thenwhat.domain import ReviewState, WorkOutcome
-from thenwhat.extract.retrieve import NotNow, PasteNeeded
+from thenwhat.extract.retrieve import NotNow, NotServed, PasteNeeded
 from thenwhat.llm.errors import LlmError
 from thenwhat.resolve.named import candidates_named_in_article
 from thenwhat.sources.base import SourceError
@@ -45,7 +47,12 @@ class ClaimArticles(ClaimStep):
     are read. The article's text is used for the read only and never stored."""
 
     name = "claim_articles"
-    reasons = (OUTLET_HELD, ARTICLE_UNREADABLE)
+    version = 2
+    reasons = (OUTLET_HELD, ARTICLE_UNREADABLE, SITE_BUSY, SOURCE_FAILED)
+
+    def __init__(self, *, site_retry_wait: timedelta, **step: Any) -> None:
+        super().__init__(**step)
+        self.site_retry_wait = site_retry_wait
 
     def condition(self) -> ColumnElement[bool]:
         # A decided claim is never redrafted.
@@ -87,7 +94,12 @@ class ClaimArticles(ClaimStep):
                 left.append(Later(OUTLET_HELD, now + wait, {"outlet": article.outlet}))
                 continue
             except PasteNeeded as needed:
-                left.append(NeedsFix(ARTICLE_UNREADABLE, {"said": str(needed)}))
+                if isinstance(needed, NotServed) and reason_for_status(needed.status) == SITE_BUSY:
+                    left.append(
+                        Later(SITE_BUSY, now + self.site_retry_wait, {"status": needed.status})
+                    )
+                else:
+                    left.append(NeedsFix(ARTICLE_UNREADABLE, {"said": str(needed)}))
                 continue
             read = attempt(
                 session,
@@ -118,29 +130,43 @@ def _first_left(left: list[Unread]) -> Any:
 
 
 class ClaimNamedRecords(ClaimStep):
-    """Record the trials and papers the claim's articles' pages name as candidates of the
-    claim, read by their identifiers and decided by the resolver's own rules. Being named
-    approves nothing. A registry or a literature index that fails leaves the article and
-    the claim as they are, and the claim comes back for this step."""
+    """Record the trials and papers the claim's articles' pages name, and those matched
+    exactly to its articles, as candidates of the claim, read by their identifiers and
+    decided by the resolver's own rules. Being named or matched approves nothing.
+    A registry or literature error leaves the claim due again for this step."""
 
     name = "claim_named_records"
-    reasons = (SOURCE_FAILED,)
+    reasons = (SOURCE_FAILED, PAPERS_OFF)
 
-    def __init__(self, *, reject_below: float, accept_above: float, **step: Any) -> None:
+    def __init__(
+        self, *, reject_below: float, accept_above: float, papers_enabled: bool, **step: Any
+    ) -> None:
         super().__init__(**step)
         self.reject_below = reject_below
         self.accept_above = accept_above
+        self.papers_enabled = papers_enabled
 
     def condition(self) -> ColumnElement[bool]:
         return names_a_record()
 
     def read(self, inputs: Inputs, claim_id: int) -> dict[str, Any]:
-        return {"named": inputs.named.get(claim_id, [])}
+        read: dict[str, Any] = {
+            "named": inputs.named.get(claim_id, []),
+            "papers_enabled": self.papers_enabled,
+        }
+        # Only a claim with matches reads them, so the input of one without is as before.
+        matched = inputs.matched.get(claim_id)
+        if matched:
+            read["matched"] = matched
+        return read
 
     def work(self, session: Session, claim: Claim, sources: ClaimSources) -> Answer:
         now = self.now()
         numbers: list[str] = []
         dois: list[str] = []
+        matched_numbers: list[str] = []
+        matched_dois: list[str] = []
+        matched_pmids: list[str] = []
         for article in session.scalars(
             select(SourceArticle)
             .where(SourceArticle.claim_id == claim.id)
@@ -148,16 +174,25 @@ class ClaimNamedRecords(ClaimStep):
         ):
             numbers += article.named_registry_numbers
             dois += article.named_dois
+            matched_numbers += article.matched_registry_numbers
+            matched_dois += article.matched_dois
+            matched_pmids += article.matched_pubmed_ids
         research = sources.make_research(session)
         backend = sources.make_backend(session)
+        unasked: list[str] = []
+        unasked_pmids: list[str] = []
         added = attempt(
             session,
             lambda: candidates_named_in_article(
                 session,
                 claim,
                 registry_numbers=numbers,
-                # With no literature source configured, papers are left unrecorded.
-                dois=dois if research.papers is not None else (),
+                dois=dois,
+                verified_registry_numbers=matched_numbers,
+                verified_dois=matched_dois,
+                verified_pmids=matched_pmids,
+                unasked_dois=unasked,
+                unasked_pmids=unasked_pmids,
                 registry=research.registry,
                 papers=research.papers,
                 backend=backend,
@@ -172,4 +207,9 @@ class ClaimNamedRecords(ClaimStep):
         if isinstance(added, DecisionFailed | LlmError):
             return model_failed(added)
         self.results[claim.id] = added
+        if unasked or unasked_pmids:
+            values = {"dois": unasked}
+            if unasked_pmids:
+                values["pmids"] = unasked_pmids
+            return NeedsFix(PAPERS_OFF, values)
         return WorkOutcome.DONE

@@ -18,6 +18,7 @@ candidate the registry's search returns.
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from itertools import chain, islice
 from typing import Any
 
 from sqlalchemy import Text, cast, func, or_, select
@@ -186,7 +187,7 @@ def _mentioning(session: Session, keys: Sequence[str]) -> list[StoredTrial]:
     return [StoredTrial(*row) for row in rows]
 
 
-def _titled(session: Session, keys: Sequence[str]) -> list[StoredTrial]:
+def _titled(session: Session, keys: Sequence[str], indication: str | None) -> list[StoredTrial]:
     """The stored trials that carry one of the keys as a whole word in their title or
     acronym, or, for a key with a digit in it, whose sponsor's study identifier starts
     with it: "BNT211-01". Only a development code opens a study identifier, and reading
@@ -206,22 +207,21 @@ def _titled(session: Session, keys: Sequence[str]) -> list[StoredTrial]:
             ("protocolSection", "identificationModule", "orgStudyIdInfo", "id")
         ].astext
         places.append(func.lower(func.coalesce(study_id, "")).op("~")(rf"^({codes})([^a-z0-9]|$)"))
-    rows = session.execute(
-        select(
-            RegistryTrial.external_id,
-            RegistryTrial.title,
-            RegistryTrial.conditions,
-            RegistryTrial.interventions,
-        )
+    query = (
+        select(RegistryTrial.external_id, RegistryTrial.title, RegistryTrial.conditions)
         .where(RegistryTrial.registry_name == ClinicalTrials.name, or_(*places))
         .order_by(RegistryTrial.external_id)
-        .limit(BROAD_NAME + 1)
+        .execution_options(yield_per=BROAD_NAME + 1)
     )
-    return [StoredTrial(*row) for row in rows]
+    with session.execute(query) as rows:
+        return _within(
+            (StoredTrial(number, title, conditions, []) for number, title, conditions in rows),
+            indication,
+        )
 
 
-def filed_names(trials: Sequence[StoredTrial], key: str) -> dict[str, tuple[str, int]]:
-    """Each name the stored trials file this name under, with how many trials do: an
+def _filings(trials: Sequence[StoredTrial], key: str) -> dict[str, tuple[str, set[str]]]:
+    """Each name the stored trials file this name under, with the IDs of the trials that do. An
     entry that lists the name among its other names is filed under the entry's own
     name, a dose, form or route aside. An entry that joins several products, or whose
     own name is a description, says nothing."""
@@ -240,7 +240,7 @@ def filed_names(trials: Sequence[StoredTrial], key: str) -> dict[str, tuple[str,
             alone = name_alone(written)
             if alone is not None:
                 found.setdefault(name_key(alone), (alone, set()))[1].add(trial.external_id)
-    return {filed: (name, len(ids)) for filed, (name, ids) in found.items()}
+    return found
 
 
 def filed_under(trials: Sequence[StoredTrial], key: str) -> str | None:
@@ -254,12 +254,15 @@ def filed_under(trials: Sequence[StoredTrial], key: str) -> str | None:
     in it: a single entry can list anything ("growth factor" as another name of one
     product), and a code is filed with its generic name by the one trial of a new drug.
     """
-    found = filed_names(trials, key)
-    filing = sum(count for _, count in found.values())
+    return _unambiguous_name(_filings(trials, key))
+
+
+def _unambiguous_name(found: dict[str, tuple[str, set[str]]]) -> str | None:
+    filing = {trial for _, ids in found.values() for trial in ids}
     for base, (name, _) in found.items():
         if all(other == base or other.startswith((f"{base} ", f"{base}-")) for other in found):
             is_a_code = bool(re.search(r"\d", base))
-            return name if filing >= MIN_TRIALS_FILING or is_a_code else None
+            return name if len(filing) >= MIN_TRIALS_FILING or is_a_code else None
     return None
 
 
@@ -271,17 +274,24 @@ def _telling(indication: str | None) -> set[str]:
     }
 
 
-def _within(trials: list[StoredTrial], indication: str | None) -> list[StoredTrial]:
+def _within(trials: Iterable[StoredTrial], indication: str | None) -> list[StoredTrial]:
     """At most BROAD_NAME trials: all of them when they are few, else those whose
     conditions or title share a telling word with the indication, or none when the name
     is broad even there. Every trial kept is read from the registry and scored, and a
     trial for another condition is no match for the claim."""
-    if len(trials) <= SPECIFIC_NAME:
-        return trials
+    remaining = iter(trials)
+    first = list(islice(remaining, SPECIFIC_NAME + 1))
+    if len(first) <= SPECIFIC_NAME:
+        return first
     telling = _telling(indication)
-    narrowed = [
-        trial for trial in trials if telling & _telling(" ".join([*trial.conditions, trial.title]))
-    ]
+    if not telling:
+        return []
+    eligible = (
+        trial
+        for trial in chain(first, remaining)
+        if telling & _telling(" ".join([*trial.conditions, trial.title]))
+    )
+    narrowed = list(islice(eligible, BROAD_NAME + 1))
     return narrowed if len(narrowed) <= BROAD_NAME else []
 
 
@@ -326,11 +336,11 @@ def stored_trials(
     also: dict[str, list[str]] = {}
     for key in asked:
         listing = [trial for trial in mentioning if trial.lists([key])]
-        names_filed = filed_names(listing, key)
+        names_filed = _filings(listing, key)
         also[key] = [
-            other for other, (_, trials) in names_filed.items() if trials >= MIN_TRIALS_FILING
+            other for other, (_, trials) in names_filed.items() if len(trials) >= MIN_TRIALS_FILING
         ]
-        one = filed_under(listing, key)
+        one = _unambiguous_name(names_filed)
         if one is not None:
             also[key].append(claim_key(one))
             if claim_key(one) not in asked:
@@ -357,7 +367,7 @@ def stored_trials(
         for trial in _within(listing, indication):
             found.setdefault(trial.external_id, trial)
     unlisted = [key for key in whole if not any(trial.lists([key]) for trial in mentioning)]
-    for trial in _within(_titled(session, unlisted), indication):
+    for trial in _titled(session, unlisted, indication):
         found.setdefault(trial.external_id, trial)
 
     wanted = sorted(found)

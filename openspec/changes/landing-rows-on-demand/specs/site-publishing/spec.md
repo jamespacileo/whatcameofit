@@ -36,6 +36,16 @@ The rest of each home page list SHALL be published as a file of rows, drawn as t
 - **WHEN** the No signal list has four rows
 - **THEN** no file of rows is published for it
 
+#### Scenario: Retry completes the original action
+
+- **WHEN** an initial request fails after Next or after opening an older date heading and the reader presses Try again
+- **THEN** a successful retry advances the requested page or opens the requested heading once, without another press
+
+#### Scenario: A deployment changes the home list order
+
+- **WHEN** a reader holds the first ten rows while a new export inserts a row ahead of them
+- **THEN** paging either continues the original export or restarts coherently on the new export. The displayed sequence has no omissions or duplicates from mixing versions
+
 ### Requirement: A file of rows is not a page
 A file of rows SHALL hold rows only, and search engines SHALL be asked not to index it.
 
@@ -53,6 +63,11 @@ While a list's rows are being fetched the list SHALL say so in words and SHALL b
 #### Scenario: Rows that do not arrive
 - **WHEN** a list's file of rows cannot be fetched
 - **THEN** the list says "The rest of this list did not load." with a control to try again, keeps showing its first rows, and does not say that nothing matches
+
+#### Scenario: Printing after selecting a different tab
+
+- **WHEN** one of the five home lists is active and later rows have never been fetched
+- **THEN** print includes first rows and the applicable partial-list notice for each of the five lists
 
 ## MODIFIED Requirements
 
@@ -84,6 +99,11 @@ Every row of every other list of claims SHALL be in the page as built: with scri
 #### Scenario: Scripting off on a topic page
 - **WHEN** a topic page with 60 claims is opened with scripting off
 - **THEN** all 60 claims are listed
+
+#### Scenario: A filter changes while Next is pending
+
+- **WHEN** the reader presses Next and selects Phase 3 before the outstanding rows arrive
+- **THEN** the filtered list opens on rows 1–10 of 702 and its stored page number matches the visible page
 
 ### Requirement: The day-by-day list opens on its day headings
 With scripting on, the day-by-day list SHALL first show its day headings, and SHALL show earlier headings a batch at a time from one control directly under the list that says how many rows remain. The rows under its day headings SHALL be in the page as built. The earlier headings and the promised dates still to come SHALL be fetched the first time a reader asks for a span wider than the past week, for promised dates, or for an address that names an earlier heading. With scripting off, and in print while they are not in the page, the list SHALL show its day headings and SHALL say how many earlier rows and how many promised dates still to come are not shown, and that every claim is also listed under its topic, with a link to the topics. An address that names a heading SHALL show the list opened as far as that heading.

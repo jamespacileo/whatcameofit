@@ -513,6 +513,10 @@ A route's hit is a link lead or an article lead with the reason it was found, an
 
 A search is planned and run by the operator for a set. No load and no daily run starts one, which is decision 10 and `daily-trial-refresh` said again.
 
+The local evidence-search pilot uses complete registry study names as candidates, including multiword names with different spacing or hyphenation. The article needs nearby corroboration from the intervention or condition. When a candidate gets a study-specific excerpt, it prefers a reported finding tied to that study over an enrollment or future phase update. A nearby finding explicitly tied to a different candidate does not supply that excerpt. These rules preserve the pilot's fixed Decisions acceptance threshold.
+
+A small sponsor with an explicitly reported phase can supply additional candidates when its registry records use an older code or a broader condition. A cited sponsor disclosure can clarify a product rename during verification. The rename is attached only to a candidate with the same sponsor and registered name when the article uses the newer name. The verifier still decides whether the reported regimen and cohort belong to that protocol.
+
 ### 15. Papers on a trial page
 
 Decision 2 said a trial page states registry facts. A paper the registry record names is one, and a paper whose own record carries the trial's number is a fact of the paper index. Both are listed on the trial page under two fixed headings, with paper facts as `paper-facts` gives them and a link, and nothing about what a paper found. A paper never removes the line that no news report is linked.

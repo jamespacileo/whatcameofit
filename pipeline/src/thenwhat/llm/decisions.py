@@ -10,7 +10,7 @@ and an API that cannot be asked is told apart from a failed call (`ModelCannotBe
 
 import os
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -19,6 +19,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from thenwhat.config import load_call_settings
+from thenwhat.llm.cache import ModelCache, request_key
 from thenwhat.llm.errors import LlmCallFailed, LlmNotConfigured, ModelCannotBeAsked
 from thenwhat.llm.ledger import check_ceiling, record_usage
 from thenwhat.work.calls import CallRules, Calls, NotAnswered, Passing, passes, stated_wait
@@ -72,14 +73,17 @@ class Decisions:
         now: Callable[[], datetime] = lambda: datetime.now(UTC),
         credential: str | None = None,
         time: Time | None = None,
+        cache: ModelCache | None = None,
     ) -> None:
         self._session = session
         self._settings = settings
         self._now = now
         self._credential = credential
-        self._client = httpx.Client(transport=transport, timeout=120.0)
+        self._transport = transport
+        self._client: httpx.Client | None = None
         # What a delay before another attempt is slept on.
         self._time = time or SystemTime()
+        self._cache = cache
 
     @property
     def model_name(self) -> str | None:
@@ -109,7 +113,6 @@ class Decisions:
 
         answers: list[Chosen | None] = []
         for start in range(0, len(questions), MAX_QUESTIONS):
-            check_ceiling(self._session, self._now(), settings.monthly_budget_usd)
             asked = questions[start : start + MAX_QUESTIONS]
             answers += self._ask(purpose, credential, evidence, asked)
         return answers
@@ -136,7 +139,33 @@ class Decisions:
             ],
         }
 
+        if self._cache is None:
+            return self._send(purpose, credential, body, len(questions))
+        key = request_key("decisions", [API, body])
+        with self._cache.locked([key]):
+            cached = self._cache.get(key)
+            if cached is not None:
+                return [Chosen(**answer) for answer in cached]
+            answers = self._send(purpose, credential, body, len(questions))
+            complete = [
+                asdict(answer)
+                for answer, question in zip(answers, questions, strict=True)
+                if _cacheable(answer, question) and answer is not None
+            ]
+            if len(complete) == len(questions):
+                self._cache.put(key, complete)
+            return answers
+
+    def _send(
+        self, purpose: str, credential: str, body: dict[str, Any], question_count: int
+    ) -> list[Chosen | None]:
+        settings = self._settings
+        assert settings.model is not None and settings.input_usd_per_mtok is not None
+        check_ceiling(self._session, self._now(), settings.monthly_budget_usd)
+
         def attempt() -> httpx.Response:
+            if self._client is None:
+                self._client = httpx.Client(transport=self._transport, timeout=120.0)
             try:
                 response = self._client.post(
                     f"{API}/decisions",
@@ -184,7 +213,20 @@ class Decisions:
             now=self._now(),
         )
         by_name = {answer.get("name"): answer for answer in answered.get("answers") or []}
-        return [_chosen(by_name.get(f"item-{number}")) for number in range(1, len(questions) + 1)]
+        return [_chosen(by_name.get(f"item-{number}")) for number in range(1, question_count + 1)]
+
+
+def _cacheable(answer: Chosen | None, question: Choice) -> bool:
+    """A refused or malformed choice can be asked again."""
+    options = {value for value, _ in question.options}
+    return (
+        answer is not None
+        and answer.choice in options
+        and set(answer.probabilities) == options
+        and 0 <= answer.confidence <= 1
+        and all(0 <= probability <= 1 for probability in answer.probabilities.values())
+        and abs(sum(answer.probabilities.values()) - 1) <= 0.1
+    )
 
 
 def _quota_used_up(response: httpx.Response) -> bool:

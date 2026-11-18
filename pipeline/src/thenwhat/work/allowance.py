@@ -13,7 +13,7 @@ from thenwhat.config import SourceAllowance
 from thenwhat.db.models import SourceAllowanceUse
 from thenwhat.work.clock import SystemTime, Time, when
 from thenwhat.work.errors import NoAllowance, SourcePaused
-from thenwhat.work.pause import keep, let_in, paused_until
+from thenwhat.work.pause import finish_wait, keep, let_in, paused_until
 
 OpenSession = Callable[[], AbstractContextManager[Session]]
 
@@ -73,6 +73,9 @@ class Allowances:
         wait = (turn - now).total_seconds()
         if wait > 0:
             self._time.sleep(wait)
+            finish_wait(
+                self._open_session, source, reserved_at=now, now=self._time.now(), counted=True
+            )
 
     def refused(self, source: str, retry_after_seconds: float | None = None) -> SourcePaused:
         """Record that the source answered "too many requests". Returns the error to
