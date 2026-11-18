@@ -89,6 +89,8 @@ The reported-only choice persisted in the address and combined with status and t
 
 The capacity rehearsal built 200 synthetic additions in 47.2 seconds with 1,970 files and a 122,106-byte lookup. The 600-claim warm-cache build yielded 5,578 files and a 364,106-byte lookup. A 20,224-claim synthetic stress export plus the seed exceeded the budget before rendering, at a floor of 161,800 files. The finding is recorded in `cloudflare-source-of-truth`. The full real-cohort build remains pending.
 
+The split-release rehearsal built 20,224 synthetic additions plus the seed on the Mac using 64 repeated card designs. Astro took 120.56 seconds, Pagefind indexed 20,225 pages in 28.23 seconds, and NVMe staging took 34.41 seconds. Of 182,295 generated files, 394 remained in the Worker bundle, under its 18,000-file budget. The lookup was 12,141,512 bytes. The concentrated topic page and the home claims list exceeded 20 MiB and were served from the local object store at their original addresses. Both responses matched the staged checksums. A separate 201-claim browser run found and opened an object-backed registry claim through Pagefind. Wrangler validated the split configuration in dry-run mode. These runs made no production writes. The 200-claim review and full build from audited real claims remain pending.
+
 ## 5. The sampled audit
 
 - [x] 5.1 Add `thenwhat audit sample` for a held batch: a drawn sample of the set size, recorded with its seed, the whole batch when smaller; verify tests of both and that a second call returns the same sample

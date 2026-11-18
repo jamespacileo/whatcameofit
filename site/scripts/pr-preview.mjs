@@ -20,6 +20,7 @@ import path from "node:path";
 
 import { buildKey } from "./build-key.mjs";
 import { deployProblems, pullRequestWorker } from "./deploy-checks.mjs";
+import { prepareSiteRelease, releaseSettings } from "./site-release-deploy.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
 const dryRun = process.argv.includes("--dry-run");
@@ -66,6 +67,7 @@ function stop(lines) {
 
 const worker = pullRequestWorker(process.env.PR_NUMBER);
 if (!worker) stop(["PR_NUMBER is not set to a pull request's number, for example PR_NUMBER=12."]);
+const siteRelease = releaseSettings(true);
 
 const exportFile = path.resolve(SITE_DIR, process.env.EXPORT_FILE ?? "data/published-export.json");
 if (!fs.existsSync(exportFile)) stop([`No export at ${exportFile}.`]);
@@ -87,6 +89,7 @@ const settings = {
   EXPORT_FILE: exportFile,
   ASTRO_TELEMETRY_DISABLED: "1",
   LOOKUP_URL: "",
+  SITE_RELEASE_BUILD: siteRelease ? "1" : "",
 };
 delete settings.CLOUDFLARE_API_TOKEN;
 const key = buildKey(SITE_DIR, settings);
@@ -124,7 +127,14 @@ fs.appendFileSync(path.join(SITE_DIR, "dist/_headers"), "\n/*\n  X-Robots-Tag: n
 // What this copy was made from, so the next push can tell whether it is still current.
 if (key) fs.writeFileSync(path.join(SITE_DIR, "dist", KEY_FILE), `${key}\n`);
 
-const args = ["deploy", "--config", "wrangler.preview.jsonc", "--name", worker];
+const config = siteRelease ? prepareSiteRelease({
+  settings: siteRelease, siteDir: SITE_DIR, dist: path.join(SITE_DIR, "dist"), noindex: true, dryRun,
+  run(command, args) {
+    const result = spawnSync(command, args, { cwd: SITE_DIR, stdio: "inherit" });
+    if (result.status !== 0) stop([`${command} failed while staging the site files.`]);
+  },
+}) : "wrangler.preview.jsonc";
+const args = ["deploy", "--config", config, "--name", worker];
 // The contact address is how the trial reader presents itself to the registry.
 if (process.env.CONTACT_EMAIL) args.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
 if (dryRun) args.push("--dry-run");

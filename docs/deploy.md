@@ -111,6 +111,14 @@ pnpm --dir site exec wrangler rollback <last-good-version-id>
 
 Verify the home page, stylesheet and `/build-revision.txt` after rollback. An older release may predate the revision file.
 
+### Split releases for large claim sets
+
+Build the same static site from the reviewed export. With `SITE_FILES_BUCKET` set, the local deploy command stages the generated claim pages, records, feeds, embeds, images and Pagefind files in a private R2 bucket. Topic pages and home list files that exceed the static per-file budget go there too. Their public addresses are unchanged. The Worker assets hold the rest of the site and a manifest that refers to the staged files by checksum. A Worker rollback restores its own manifest and lookup together.
+
+Use a bucket dedicated to generated public site files. Set `SITE_FILES_JURISDICTION` if the bucket has a jurisdiction, and configure an [rclone remote for R2](https://developers.cloudflare.com/r2/examples/rclone/) with access to that bucket. Set `SITE_FILES_REMOTE` to the remote's name. The uploader checks the objects before deploying the Worker and keeps earlier versions' objects for rollback. A dry run stages and checks the Worker bundle locally without contacting the bucket. `SITE_FILES_STAGE_DIR` can point to an existing folder on the external NVMe. `CARD_STORE` can also point to the NVMe to keep rendered card images there between builds.
+
+Pull request previews use `PREVIEW_SITE_FILES_BUCKET`, `PREVIEW_SITE_FILES_REMOTE` and, where applicable, `PREVIEW_SITE_FILES_JURISDICTION`. Give the preview a separate bucket. Staged preview files carry the same noindex instruction as the rest of the preview. The hosted CI workflows still use the ordinary asset bundle until their split-release storage and credentials are configured.
+
 ## Domain and contact settings
 
 `site/public/_headers` sets the response headers Cloudflare sends with every page and file: no content-type sniffing, a limited referrer, and HTTPS only for a year. It sets nothing that forbids framing, because the embed is made to be framed.

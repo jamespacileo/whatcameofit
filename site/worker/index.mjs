@@ -22,6 +22,7 @@ import { bounded } from "./public-cache.mjs";
 import { makeResearch } from "./research.mjs";
 import { eventStream, serverTiming, stageTimes } from "./stream.mjs";
 import { handleTrial } from "./trials.mjs";
+import { releaseFile } from "./site-release.mjs";
 
 const PATH = "/api/lookup";
 // What a reader's browser may send with text it read: this many links, each this long.
@@ -155,7 +156,7 @@ export async function handle(request, env, tools) {
         });
       }
     }
-    return env.ASSETS.fetch(request);
+    return await releaseFile(request, here, env) ?? env.ASSETS.fetch(request);
   }
   if (request.method !== "POST") return refuse(405, "method");
   if (!env.OPENAI_API_KEY || !env.LLM_MODEL || !env.CONTACT_EMAIL) return refuse(503, "not_set_up");

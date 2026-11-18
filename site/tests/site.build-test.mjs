@@ -64,6 +64,9 @@ test("the build refuses an export whose claim routes alone exceed the file limit
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /claims require at least 8 files before search indexing/);
   assert.equal(fs.existsSync(path.join(out, "tooth-regrowth-usag1/index.html")), false);
+  const split = build("data/seed-export.json", out, { DIST_FILE_LIMIT: "7", SITE_RELEASE_BUILD: "1" });
+  assert.equal(split.status, 0, split.stdout + split.stderr);
+  assert.ok(fs.existsSync(path.join(out, "tooth-regrowth-usag1/index.html")));
 });
 
 test("Scenario: Registry evidence publishes a browsable claim before a report exists", (t) => {

@@ -10,6 +10,8 @@ export const FILE_LIMIT = 20 * 2 ** 20;
 export const HOST_FILE_COUNT = 20_000;
 /** Where the build stops. DIST_FILE_LIMIT raises it for a plan that allows more. */
 export const FILE_COUNT_LIMIT = Number(process.env.DIST_FILE_LIMIT) || 18_000;
+// A split release is counted after its claim files have been staged separately.
+export const SPLIT_RELEASE = process.env.SITE_RELEASE_BUILD === "1";
 
 // A claim emits its page, data record, feed, embed, oEmbed, and three card images.
 // Search fragments and shared files add to this floor, so the final check still runs.

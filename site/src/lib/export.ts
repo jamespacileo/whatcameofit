@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { assertClaimFilesFit } from "../../scripts/dist-size.mjs";
+import { assertClaimFilesFit, SPLIT_RELEASE } from "../../scripts/dist-size.mjs";
 import { unlabelledApproaches, unwordedRegistryTypes } from "./approach";
 import { clinicalProblems, type Clinical, type ClinicalCategory } from "./clinical";
 import { unlabelledPaperCodes } from "./paper-facts";
@@ -386,7 +386,7 @@ function load(): { data: Export; exportVersion: string } {
       `The export at ${file} has schema version ${content.schema_version}; this site reads versions 2 and 3.`,
     );
   }
-  assertClaimFilesFit(content.claims.length);
+  if (!SPLIT_RELEASE) assertClaimFilesFit(content.claims.length);
   const unlabelled = unlabelledApproaches(
     (content as Export).claims.map((claim) => claim.approach),
   );
