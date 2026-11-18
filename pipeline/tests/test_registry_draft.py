@@ -369,6 +369,63 @@ def test_draft_digest_binds_the_descriptor_used_for_the_primary_cancer_topic(
     assert not session.scalars(select(Claim)).all()
 
 
+def test_draft_previews_versioned_arm_alternatives_without_a_manual_scope_receipt(
+    session: Session, invoke, tmp_path: Path
+):
+    descriptors = eligible_set(session, tmp_path)
+    trial_id = "NCT00000003"
+    stored = session.scalar(select(RegistryTrial).where(RegistryTrial.external_id == trial_id))
+    assert stored is not None
+    raw = deepcopy(stored.raw_payload)
+    protocol = raw["protocolSection"]
+    protocol["statusModule"] = {"lastUpdatePostDateStruct": {"date": "2026-11-16"}}
+    protocol["designModule"]["designInfo"]["interventionModel"] = "PARALLEL"
+    protocol["armsInterventionsModule"] = {
+        "armGroups": [
+            {
+                "type": "EXPERIMENTAL",
+                "label": "Study treatment",
+                "interventionNames": ["Drug: Fixed Z-231", "Drug: Example XR", "Drug: Example Y"],
+            }
+        ],
+        "interventions": [{"name": "Example XR", "otherNames": ["X-001, RX-1"]}],
+    }
+    stored.raw_payload = raw
+    session.flush()
+    detailed = deepcopy(raw)
+    arm = detailed["protocolSection"]["armsInterventionsModule"]["armGroups"][0]
+    arm["description"] = "Fixed Z-231 + (X-001 or Example Y)"
+    protocols = tmp_path / "protocols.json"
+    protocols.write_text(json.dumps({trial_id: detailed}), encoding="utf-8")
+    args = (
+        REGISTRY_CLAIMS_2026,
+        "--batch",
+        "described-arm",
+        "--mesh-descriptors",
+        str(descriptors),
+    )
+    preview = invoke(*args, "--arm-evidence", str(protocols))
+    assert preview.exit_code == 0, preview.output
+    report = json.loads(preview.output)
+    assert report["protocol_scope_sha256"] == {trial_id: payload_of(detailed).sha256}
+    assert report["described_arm_choices"][trial_id][0][1]["description"] == arm["description"]
+    assert {
+        action["regimen"] for action in report["actions"] if trial_id in action["trial_ids"]
+    } == {"Example XR + Fixed Z-231", "Example Y + Fixed Z-231"}
+    digest = report["apply_plan"]
+    wrong_mode = invoke(*args, "--apply-plan", digest)
+    assert wrong_mode.exit_code == 1 and "plan changed" in wrong_mode.output
+
+    arm["description"] += "."
+    protocols.write_text(json.dumps({trial_id: detailed}), encoding="utf-8")
+    revised = invoke(*args, "--arm-evidence", str(protocols))
+    assert revised.exit_code == 0, revised.output
+    assert json.loads(revised.output)["actions"] == report["actions"]
+    changed = invoke(*args, "--arm-evidence", str(protocols), "--apply-plan", digest)
+    assert changed.exit_code == 1 and "plan changed" in changed.output
+    assert not session.scalars(select(Claim)).all()
+
+
 def test_draft_binds_detail_only_scope_to_the_bulk_record_and_review(
     session: Session, invoke, tmp_path: Path
 ):

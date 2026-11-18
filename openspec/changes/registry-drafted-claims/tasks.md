@@ -2,6 +2,8 @@
 
 Write steps run on the one writer only. Every judgement an assistant makes is recorded as an assistant's, and the operator spot-checks a share.
 
+See the [rollout handoff](handoff.md) for the current release status and the order of the remaining work.
+
 ## 1. Decisions and records before any build
 
 - [x] 1.1 Write the ADR that a claim is one intervention or regimen for one indication and records its drafting source; record the superseded 2026-11-16 decision and affected wording in ADR 0013
@@ -82,6 +84,8 @@ The `registry-scope-evidence` command fetched the same 52 frozen audit protocols
 The treatment-setting replay compared the same 27,731 trials and 1,126 published claims. It retained explicitly named settings for 347 trials and moved one trial to indication review. One registry condition list included a drug named in a title's combination. The rule now refuses that fragment as a disease. Another trial's group display changed only in letter case. Three trials in the earlier diagnostic were affected. The revised plan took 3.51 seconds and changed no existing-claim candidates or published links.
 
 A fixed-seed sample of 20 changed trials excluded 718 previously selected IDs. One exact-ID registry page fetched all 20 protocols in 0.23 seconds. The initial change was supported for the treatment setting of 19 trials. After the named drug fragment was held, the replay preserved all 19 supported settings. Four of the 20 had full scope supported, and the other 16 needed regimen or population review. Five scope corrections were verified against exact protocol excerpts and replayed. Two received a topic. The artifacts are on the NVMe under `title-treatment-setting`. This sample informed the rule and the independent 45-of-50 gate remains open. Model calls and production writes were zero.
+
+The detailed-arm replay used 213 cached protocols and a fixed-seed sample of 100 fresh unlinked trials with previously proposed combination regimens. It checked all 313 versions. One previously flattened arm split into two complete alternatives for review. Four cached cases and five fresh cases went to scope review for conditional switches, optional components or other unresolved assignments. An assistant checked the exact descriptions and supported all five fresh holds. The cohort plan took 3.89 seconds. The registry returned the fresh protocols in two exact-ID pages in 0.77 seconds. The replay reused the same 27,731 eligible trials and 1,126 published claims. The grouping gate remains open. Model calls and production writes were zero. The receipts are on the NVMe under `described-regimen-choices`.
 
 The NVMe development set holds 120 cases from 127 trials, with earlier audit and holdout trial IDs excluded. The detailed registry pull found eligibility text for all 127 trials and arm descriptions for 109. An assistant reviewed 18 cases and found evidence absent from the bulk snapshot in 12. The arm-specific command reads the frozen protocol version, validates quoted fields against the assigned arms, and can request a second pass for omitted scope. In the offline comparison, the median packet grew from 1,363 to 5,775 characters and the 95th percentile grew from 3,278 to 14,923. Simulated native JSON calls exercised both stages and the exact-request cache. Live model accuracy and spend are pending.
 

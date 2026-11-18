@@ -113,6 +113,8 @@ Arm-specific packets preserve the registry's wording for inclusion criteria, exc
 
 The `registry-scope-evidence` backfill command reads exact identifiers from a batch file, confirms they belong to the eligible cohort and requests detailed protocol fields in pages of up to 50 through the shared ClinicalTrials.gov client. It retains the fields needed for review in a private JSON cache. Each retained record must agree with the exact stored trial version. A repeat run reads only missing or mismatched records and reports pending records and source issues. Proposals and drafting previews consume the same file.
 
+The planner and drafting preview can use that cache directly. A complete arm description can establish separate regimens when it names one explicit choice and the full membership of each alternative is accounted for. Conditional switches and incomplete assignments go to scope review with the exact arm wording. The draft preview digest binds the detailed protocol hashes. The operational sequence and current evidence are tracked in the [rollout handoff](handoff.md).
+
 ### 4. An ordinary-word name drafts nothing, and the fault is fixed first
 
 A third of stored names would each draft a claim for "first" or "home". The rule that works out a search name is corrected before any drafting (the same defect `headline-funnel` task 2.12 records), and the drafting step refuses such a name itself and lists it, so a real treatment with a common name ("aspirin", "insulin") is seen and can be entered by the operator.

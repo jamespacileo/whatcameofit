@@ -80,6 +80,12 @@ Trials SHALL be grouped by fixed rules on the verified intervention or complete 
 - **WHEN** its label identifies an optional component among the listed treatments or its title explicitly assigns separate regimens to different treatment lines
 - **THEN** hold the trial for review of each complete regimen before grouping
 
+#### Scenario: A version-matched arm description explicitly assigns alternatives
+- **WHEN** the protocol for the stored trial version names one unambiguous choice and fully identifies the registered members of both regimens for one indication
+- **THEN** keep the alternative regimens separate and record the exact arm wording
+- **AND** conditional switches and incomplete assignments remain in scope review
+- **AND** the drafting preview digest binds the version-checked protocols used in planning
+
 #### Scenario: Distinct component lists have the same display name
 - **WHEN** the regimen display name and normalized indication agree but the registered component lists differ
 - **THEN** the preview preserves both group identifiers and component lists and holds the groups before drafting

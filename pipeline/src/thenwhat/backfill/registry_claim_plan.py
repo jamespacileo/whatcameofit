@@ -1,6 +1,7 @@
 """Propose regimen and indication groups from stored registry records, without drafting."""
 
 import re
+from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -8,6 +9,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from thenwhat.backfill.registry_arm_choices import DescribedChoice, described_choice
 from thenwhat.backfill.registry_indication import (
     condition_without_treatment_setting,
     has_named_cohorts,
@@ -130,6 +132,7 @@ class TrialScope:
     indication_title_phrase: str | None = None
     registered_conditions: tuple[str, ...] = ()
     reference_arms: tuple[str, ...] = ()
+    arm_choices: tuple[tuple[str, DescribedChoice], ...] = ()
 
 
 def _members_of(arm: Arm, interventions: Mapping[str, dict[str, Any]]) -> dict[str, str]:
@@ -283,6 +286,10 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         conditions = (f"{conditions[0]} ({setting} treatment)",)
     intervention_model = design.get("interventionModel")
     treatment = protocol.get("armsInterventionsModule", {})
+    descriptions: dict[str, list[str]] = defaultdict(list)
+    for raw_arm in treatment.get("armGroups", []):
+        if (label := raw_arm.get("label")) and isinstance(text := raw_arm.get("description"), str):
+            descriptions[label].append(text)
     interventions = treatment.get("interventions", [])
     names = {name_key(item["name"]): item for item in interventions if item.get("name")}
     arms = trial_arms(study)
@@ -311,6 +318,7 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
     incomplete = False
     measurement_only = False
     mixed_control = False
+    arm_choices = []
     alternatives = len(tested_assignments) == 1 and any(
         _has_distinct_line_regimens(title) for title in titles
     )
@@ -340,30 +348,49 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         alternatives |= len(active) > 1 and bool(
             _OPTIONAL_ARM_TREATMENT.search(assignments[index][0].label or "")
         )
-        key = tuple(sorted(active))
-        aliases = ()
-        if len(key) == 1:
-            aliases = tuple(
-                dict.fromkeys(
-                    tidy(alias)
-                    for alias in names.get(key[0], {}).get("otherNames", [])
-                    if alias.strip()
-                    and name_key(alias) != key[0]
-                    and " ".join(condition_words(alias)) != _SUPPORTIVE_LABEL
+        arm_label = assignments[index][0].label or ""
+        arm_texts = descriptions.get(arm_label, [])
+        choices = [
+            choice
+            for text in arm_texts
+            if (
+                choice := described_choice(
+                    text,
+                    {key: names.get(key, {}).get("otherNames") or () for key in active},
+                    may_separate=len(arm_texts) == 1
+                    and intervention_model in {"PARALLEL", "SINGLE_GROUP"}
+                    and len(conditions) == 1,
                 )
             )
-        previous = regimens.get(key)
-        measured = set(assessments.values())
-        supportive = set(background.values())
-        if previous is not None:
-            measured.update(previous.assessments)
-            supportive.update(previous.background)
-        regimens[key] = Regimen(
-            tuple(active[part] for part in key),
-            aliases,
-            tuple(sorted(measured)),
-            tuple(sorted(supportive)),
-        )
+            is not None
+        ]
+        arm_choices.extend((arm_label, choice) for choice in choices)
+        alternatives |= any(not choice.variants for choice in choices)
+        variants = choices[0].variants if choices else ()
+        for key in variants or (tuple(sorted(active)),):
+            aliases = ()
+            if len(key) == 1:
+                aliases = tuple(
+                    dict.fromkeys(
+                        tidy(alias)
+                        for alias in names.get(key[0], {}).get("otherNames") or ()
+                        if alias.strip()
+                        and name_key(alias) != key[0]
+                        and " ".join(condition_words(alias)) != _SUPPORTIVE_LABEL
+                    )
+                )
+            previous = regimens.get(key)
+            measured = set(assessments.values())
+            supportive = set(background.values())
+            if previous is not None:
+                measured.update(previous.assessments)
+                supportive.update(previous.background)
+            regimens[key] = Regimen(
+                tuple(active[part] for part in key),
+                aliases,
+                tuple(sorted(measured)),
+                tuple(sorted(supportive)),
+            )
 
     issues = []
     if not tested_assignments:
@@ -405,6 +432,7 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         indication_title_phrase,
         listed_conditions,
         tuple(assignments[index][0].label or "" for index in sorted(reference)),
+        tuple(arm_choices),
     )
 
 
@@ -433,6 +461,9 @@ class RegistryClaimPlan:
     applied_reviews: dict[str, str]
     reviewed_record_hashes: dict[str, str]
     reviews_outside_plan: tuple[str, ...]
+    protocol_scope_sha256: dict[str, str]
+    protocol_record_hashes: dict[str, str]
+    described_arm_choices: dict[str, tuple[tuple[str, DescribedChoice], ...]]
 
 
 def _evidence_strings(value: Any) -> Iterable[str]:
@@ -543,13 +574,27 @@ def group_registry_trials(
     current_claim_links: dict[str, str] = {}
     applied_reviews: dict[str, str] = {}
     reviewed_record_hashes: dict[str, str] = {}
+    protocol_scope_hashes: dict[str, str] = {}
+    protocol_record_hashes: dict[str, str] = {}
+    described_arm_choices = {}
     reviews = scope_reviews or {}
+    protocols = arm_evidence or {}
     trial_count = 0
     for identifier, record in trials:
         trial_count += 1
         if current_links is not None and identifier in current_links:
             current_claim_links[identifier] = current_links[identifier]
-        scope = trial_scope(record)
+        detail = protocols.get(identifier)
+        if detail is not None:
+            try:
+                confirm_protocol_evidence(identifier, record, detail)
+            except ValueError as error:
+                raise BackfillError(str(error)) from error
+            protocol_scope_hashes[identifier] = payload_of(detail).sha256
+            protocol_record_hashes[identifier] = payload_of(record).sha256
+        scope = trial_scope(detail if detail is not None else record)
+        if scope.arm_choices:
+            described_arm_choices[identifier] = scope.arm_choices
         review = reviews.get(identifier)
         if scope.purpose is None or (scope.issues and review is None):
             needs_review[identifier] = scope
@@ -559,10 +604,9 @@ def group_registry_trials(
             stored_digest = payload_of(record).sha256
             digest = stored_digest
             try:
-                if digest != review.registry_sha256 and arm_evidence and identifier in arm_evidence:
-                    source = arm_evidence[identifier]
-                    confirm_protocol_evidence(identifier, record, source)
-                    digest = payload_of(source).sha256
+                if digest != review.registry_sha256 and detail is not None:
+                    source = detail
+                    digest = protocol_scope_hashes[identifier]
                 validate_scope_review(
                     review,
                     trial_id=identifier,
@@ -616,6 +660,9 @@ def group_registry_trials(
         applied_reviews,
         reviewed_record_hashes,
         tuple(sorted(reviews.keys() - applied_reviews.keys() - needs_review.keys())),
+        protocol_scope_hashes,
+        protocol_record_hashes,
+        described_arm_choices,
     )
 
 

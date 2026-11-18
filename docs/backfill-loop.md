@@ -90,7 +90,9 @@ The command reports completed pages, cached and fetched records, pending IDs and
 version mismatches. Repeat it with the same files to resume. It requests only records
 whose detailed evidence is missing or differs from the stored trial.
 The cache is also accepted by `thenwhat backfill registry-scope-proposals --arm-evidence`.
-Use the same two files in the preview and apply commands.
+Pass `--arm-evidence` to the planner or drafting preview to check arm descriptions directly.
+When a scope receipt is available, also pass `--reviewed-scopes`. Use the same evidence files
+for preview and apply.
 
 ```sh
 thenwhat draft-from-registry active-phase-2-3-or-completed-2026 --batch phase23-001 --limit 200
@@ -100,8 +102,8 @@ thenwhat audit sample --batch phase23-001 --all
 ```
 
 Run the apply command with the same scope and MeSH options as the preview. The digest binds
-the selected actions, registry record versions, applicable scope receipts and registry
-alias evidence for the selected groups. Detailed
+the selected actions, registry record versions, checked protocol hashes, applicable scope
+receipts and registry alias evidence for the selected groups. Detailed
 protocols must agree with the stored trial's identifier, update date and shared scope fields.
 A changed plan needs a new preview.
 Inspect the component lists and registry alias pairs in the preview. Groups whose

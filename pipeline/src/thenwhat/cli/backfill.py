@@ -867,7 +867,7 @@ def registry_claim_plan_command(
     ] = None,
     arm_evidence: Annotated[
         Path | None,
-        typer.Option(exists=True, dir_okay=False, help="Cached protocols cited by scope receipts."),
+        typer.Option(exists=True, dir_okay=False, help="Version-matched detailed protocol cache."),
     ] = None,
 ) -> None:
     """Print the 2026 registry-claim plan as JSON. Reads stored records only."""
@@ -875,8 +875,6 @@ def registry_claim_plan_command(
     with refusals():
         try:
             reviews = load_scope_reviews(reviewed_scopes) if reviewed_scopes is not None else None
-            if arm_evidence is not None and reviewed_scopes is None:
-                raise ValueError("--arm-evidence requires --reviewed-scopes.")
             evidence = load_protocol_evidence(arm_evidence) if arm_evidence is not None else None
         except (OSError, ValueError) as error:
             raise BackfillError(f"Could not read scope reviews: {error}") from error

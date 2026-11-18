@@ -633,6 +633,41 @@ def test_an_arm_with_optional_treatments_needs_review_of_its_complete_regimen():
     assert plan.needs_review["trial"].issues == ("alternative_regimen_needs_review",)
 
 
+@pytest.mark.parametrize(
+    ("description", "needs_review"),
+    [
+        ("Example XR with or without Example Y in the first cycle", True),
+        ("If Example XR is not tolerated, Example Y may be used as an alternative", True),
+        ("After four cycles, participants may switch to Example Y", True),
+        ("Both Example XR and Example Y are given on Day 1 or Day 2", False),
+        ("Both Example XR and Example Y are given with or without food", False),
+    ],
+)
+def test_described_choices_stay_visible_without_inventing_arm_assignments(
+    description: str, needs_review: bool
+):
+    record = study(
+        ["Example Neoplasm"],
+        [
+            {
+                "type": "EXPERIMENTAL",
+                "label": "Test treatment",
+                "interventionNames": ["Drug: Example XR", "Drug: Example Y"],
+                "description": description,
+            }
+        ],
+    )
+    scope = trial_scope(record)
+
+    assert ("alternative_regimen_needs_review" in scope.issues) is needs_review
+    if needs_review:
+        [(arm, evidence)] = scope.arm_choices
+        assert arm == "Test treatment" and evidence.description == description
+        assert not evidence.variants
+    else:
+        assert len(scope.regimens) == 1 and not scope.arm_choices
+
+
 def test_distinct_line_regimens_named_in_the_title_hold_one_flattened_arm():
     record = study(
         ["Colorectal Cancer Metastatic"],

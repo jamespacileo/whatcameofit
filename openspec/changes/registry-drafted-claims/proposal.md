@@ -1,5 +1,7 @@
 # Proposal
 
+The [rollout handoff](handoff.md) records current evidence and the outstanding gates for this change.
+
 ## Why
 
 A claim exists today only when a news article reported it. On 2026-11-17 the production database held 467,064 registry trials and 2,041 claims, and 1,741 of the 102,053 trials that are under way or ended in 2026 were cited by a claim: 1.7%. Searching for news cannot close that, because most trials have no report (`headline-funnel`, `design.md`).

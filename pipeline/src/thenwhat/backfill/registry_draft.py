@@ -313,6 +313,13 @@ def prepare_draft_plan(
         raise BackfillError(
             "A reviewed trial changed while building the plan. Generate a new plan."
         )
+    if any(
+        record_hashes[trial] != plan.protocol_record_hashes[trial]
+        for trial in selected_ids & plan.protocol_record_hashes.keys()
+    ):
+        raise BackfillError(
+            "A protocol-matched trial changed while building the plan. Generate a new plan."
+        )
     nominated_keys = {
         (action.group_id, trial_id)
         for action in actions
@@ -335,6 +342,8 @@ def prepare_draft_plan(
         plan_content["existing_only"] = True
     if reviewed_hashes:
         plan_content["scope_review_sha256"] = reviewed_hashes
+    if plan.protocol_scope_sha256:
+        plan_content["protocol_scope_sha256"] = plan.protocol_scope_sha256
     selected_groups = {action.group_id for action in actions}
     selected_alias_pairs = [
         pair for pair in alias_pairs if not selected_groups.isdisjoint(pair["group_ids"])
@@ -377,6 +386,11 @@ def prepare_draft_plan(
         "registry_alias_pairs": alias_pairs,
         "trials_currently_linked": len(plan.current_claim_links),
         "trial_scope_needs_review": {key: value.issues for key, value in plan.needs_review.items()},
+        "described_arm_choices": {
+            trial: [(arm, asdict(choice)) for arm, choice in choices]
+            for trial, choices in plan.described_arm_choices.items()
+        },
+        "protocol_scope_sha256": plan.protocol_scope_sha256,
         "held_groups_by_reason": dict(held_counts),
         "held_groups": [
             {
@@ -481,6 +495,7 @@ def apply_draft_plan(session: Session, plan: DraftBatchPlan, apply_plan: str) ->
         "nominated": nominated,
         "actions": [asdict(action) for action in plan.actions],
         "scope_review_sha256": plan.report["scope_review_sha256"],
+        "protocol_scope_sha256": plan.report["protocol_scope_sha256"],
         "verified_links": [link.model_dump() for link in plan.verified],
     }
     batch.draft_record = receipt

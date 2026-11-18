@@ -96,7 +96,7 @@ def draft_from_registry_command(
     ] = None,
     arm_evidence: Annotated[
         Path | None,
-        typer.Option(exists=True, dir_okay=False, help="Cached protocols cited by scope receipts."),
+        typer.Option(exists=True, dir_okay=False, help="Version-matched detailed protocol cache."),
     ] = None,
     existing_only: Annotated[
         bool, typer.Option(help="Nominate verified trials to existing claims without drafting.")
@@ -119,8 +119,6 @@ def draft_from_registry_command(
                 reviews = (
                     load_scope_reviews(reviewed_scopes) if reviewed_scopes is not None else None
                 )
-                if arm_evidence is not None and reviewed_scopes is None:
-                    raise ValueError("--arm-evidence requires --reviewed-scopes.")
                 evidence = (
                     load_protocol_evidence(arm_evidence) if arm_evidence is not None else None
                 )
