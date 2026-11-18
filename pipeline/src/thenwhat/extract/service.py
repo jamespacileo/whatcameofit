@@ -30,7 +30,7 @@ from thenwhat.claims.entry import (
     promises_of,
 )
 from thenwhat.db.models import Claim, Entity, SourceArticle
-from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.domain import Decider, DraftedFrom, EntityType, ReviewState
 from thenwhat.extract.names import is_a_name, is_a_search_phrase
 from thenwhat.extract.schema import MAX_SEARCH_PHRASES, Draft
 from thenwhat.llm.client import Llm
@@ -156,6 +156,7 @@ def claim_from_draft(
             intervention=draft.intervention,
             indication=draft.indication,
             summary=draft.summary,
+            drafted_from=DraftedFrom.ARTICLE,
         )
         article = add_article(
             session, slug, url=url, outlet=outlet, title=title, published_date=published_date

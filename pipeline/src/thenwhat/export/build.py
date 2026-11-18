@@ -43,6 +43,7 @@ from thenwhat.domain import (
     TRIAL_EVENT_TYPES,
     ClaimStatus,
     Decider,
+    DraftedFrom,
     EntityType,
     EventType,
     EvidenceStage,
@@ -108,9 +109,9 @@ from thenwhat.terms.genes import TARGET_REASON_CODES
 from thenwhat.terms.kinds import KIND_REASON_CODES, registry_types
 from thenwhat.terms.records import read_record
 
-# 2: claims awaiting audit are left out (ADR 0007). The site reads only this version, so
-# an export written by code that does not know the hold is refused, not published.
-SCHEMA_VERSION = 2
+# 3: a registry-drafted claim can lack a report and its wording. The audit hold
+# introduced in version 2 continues to exclude held claims.
+SCHEMA_VERSION = 3
 # Registries the clients read. Always listed, as their terms ask for attribution.
 SOURCES = [
     ("ClinicalTrials.gov", "https://clinicaltrials.gov/"),
@@ -652,8 +653,10 @@ class ExportedApproachBasis(Strict):
 
 class ExportedClaim(Strict):
     slug: str
-    headline: str
-    summary: str
+    headline: str | None
+    summary: str | None
+    drafted_from: DraftedFrom | None = None
+    has_report: bool | None = None
     vertical: str
     # The kind of intervention, as a configured approach code. The site owns its wording.
     approach: str | None
@@ -1458,11 +1461,18 @@ def build_export(
                 if trial.facts and trial.facts.sponsor and trial.facts.sponsor.name
             },
         )
+        headline, summary = claim.headline, claim.summary
+        if claim.drafted_from is DraftedFrom.REGISTRY and not articles:
+            headline = summary = None
+        elif headline is None and articles:
+            headline = articles[0].title
         claims.append(
             ExportedClaim(
                 slug=claim.slug,
-                headline=claim.headline,
-                summary=claim.summary,
+                headline=headline,
+                summary=summary,
+                drafted_from=claim.drafted_from,
+                has_report=bool(articles),
                 vertical=claim.vertical,
                 approach=claim.approach,
                 approach_basis=_approach_basis(

@@ -317,7 +317,7 @@ def decide_item(
         claim = session.get(Claim, item_id)
         if claim is None:
             raise ItemNotFound(f"There is no claim with id {item_id}.")
-        if state is ReviewState.APPROVED and not claim.summary.strip():
+        if state is ReviewState.APPROVED and not (claim.summary or "").strip():
             raise EntryError(
                 f"Claim '{claim.slug}' has no summary. Add one with `claim edit` before approving."
             )

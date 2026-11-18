@@ -119,6 +119,8 @@ export function openData(
       slug: claim.slug,
       headline: claim.headline,
       summary: claim.summary,
+      drafted_from: claim.drafted_from,
+      has_report: claim.has_report,
       vertical: claim.vertical,
       intervention: { name: claim.intervention.name, synonyms: [...claim.intervention.synonyms] },
       indication: claim.indication,

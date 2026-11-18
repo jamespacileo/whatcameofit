@@ -26,6 +26,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
+    DraftedFrom,
     EntityType,
     EventType,
     EvidenceStage,
@@ -135,12 +136,31 @@ class Claim(Reviewed, Base):
             "approach_basis IS NULL OR approach_decided_by = 'rule'",
             name="approach_basis_is_a_rules",
         ),
+        CheckConstraint(
+            "drafted_from IS DISTINCT FROM 'registry' OR cardinality(drafting_trial_ids) > 0",
+            name="registry_draft_has_trials",
+        ),
+        CheckConstraint(
+            "drafted_from IS NOT DISTINCT FROM 'registry' OR (cardinality(drafting_trial_ids) = 0"
+            " AND headline IS NOT NULL AND summary IS NOT NULL)",
+            name="non_registry_draft_has_text",
+        ),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     slug: Mapped[str] = mapped_column(Text, unique=True)
-    headline: Mapped[str] = mapped_column(Text)
-    summary: Mapped[str] = mapped_column(Text)
+    # Empty only for a claim drafted from registry records, which may gain them later.
+    headline: Mapped[str | None] = mapped_column(Text)
+    summary: Mapped[str | None] = mapped_column(Text)
+    # What the claim was drafted from. Set once and never changed, even when the claim
+    # later gains an article or a trial. Empty for a claim stored before it was recorded,
+    # whose origin is not guessed.
+    drafted_from: Mapped[DraftedFrom | None] = mapped_column(_enum(DraftedFrom, "drafted_from"))
+    # The registry trial IDs a claim drafted from registry records was drafted from: at
+    # least one for such a claim, none for any other.
+    drafting_trial_ids: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), default=list, server_default="{}"
+    )
     vertical: Mapped[str] = mapped_column(Text)
     # One of the configured approaches, or none. Never part of status.
     approach: Mapped[str | None] = mapped_column(Text)

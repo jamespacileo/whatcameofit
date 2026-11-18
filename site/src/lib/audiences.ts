@@ -11,11 +11,13 @@ export type Audience = (typeof AUDIENCES)[number];
 export const CLAIM_FIELDS: Record<string, string> = {
   slug: "The claim's address on this site.",
   headline: "A short description of the claim, written by this site.",
-  summary: "One or two sentences on what was reported.",
+  summary: "One or two sentences on what was reported, when a summary is available.",
+  drafted_from: "How the claim began: from a news article, registry records or operator entry. Older claims may have no recorded origin.",
+  has_report: "Whether a source article is linked to the claim.",
   vertical: "The topic the claim is filed under.",
   approach: "The kind of treatment, such as drug or gene therapy, where one is recorded.",
   intervention: "The treatment's name and its other names.",
-  indication: "The condition the treatment was reported to treat.",
+  indication: "The condition for which the intervention is being tracked.",
   first_reported_date: "The date of the earliest news report read.",
   evidence_stage: "The kind of study the first reports described.",
   status:

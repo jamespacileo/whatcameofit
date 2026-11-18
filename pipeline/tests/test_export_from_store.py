@@ -19,6 +19,7 @@ import pytest
 from sqlalchemy.orm import Session
 from typer.testing import CliRunner
 
+from backfill_support import add_trials
 from store_support import STORE_SQL, assert_same_export, both_exports, store_of
 from test_export import (
     ARTICLE,
@@ -42,13 +43,20 @@ from test_organisations import Registry, nottingham
 from test_record_readings import ANSWER, OUTCOMES, Scripted, read, study_with
 from thenwhat.claims.corrections import merge_claims, rename_intervention
 from thenwhat.claims.entities import note_named_organisation
-from thenwhat.claims.entry import add_article, archive_claim, articles_of, clear_audit
+from thenwhat.claims.entry import (
+    add_article,
+    add_registry_claim,
+    archive_claim,
+    articles_of,
+    clear_audit,
+)
 from thenwhat.cli import app
 from thenwhat.db.models import OutletIcon
 from thenwhat.decide.steps import suggest_evidence_stage
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
+    DraftedFrom,
     EntityType,
     EventType,
     EvidenceStage,
@@ -64,6 +72,7 @@ from thenwhat.export.rehearsal import against, problems
 from thenwhat.export.store_fetch import FetchFailed, fetch_store
 from thenwhat.export.store_records import TABLES_READ, StoreFault, StoreRecords
 from thenwhat.resolve.organisations import match_organisations
+from thenwhat.review.decisions import record_decision
 from thenwhat.review.queue import confirm_stage, flag_failure
 from thenwhat.seed.load import load_seed
 
@@ -88,6 +97,57 @@ def test_seeded_example_is_the_same_from_the_store(session: Session, tmp_path: P
     assert claim["events"] and claim["trials"] and claim["articles"]
     assert claim["promises"] and claim["papers"]
     assert export["outlets"] and export["verticals"]
+
+
+def test_registry_origin_survives_export_from_either_store_and_the_first_report(
+    session: Session, tmp_path: Path
+):
+    trial = add_trials(session, 1, registry="clinicaltrials.gov")[0]
+    trial.external_id = "NCT00000001"
+    session.flush()
+    claim = add_registry_claim(
+        session,
+        slug="registry-only",
+        vertical="mouth-and-teeth",
+        intervention="Example enamel gel",
+        indication="enamel loss",
+        trial_ids=[trial.external_id],
+    )
+    assert claim.review_state is ReviewState.PENDING
+    assert not articles_of(session, claim)
+    assert claim.headline is None and claim.summary is None and claim.first_reported_date is None
+    record_decision(claim, ReviewState.APPROVED, by=Decider.RULE, now=EARLIER)
+    claim.awaiting_audit_at = EARLIER
+    add_event(
+        session,
+        claim.slug,
+        trial_phases=[TrialPhase.PHASE_2],
+        external_id=trial.external_id,
+        source_url=f"https://clinicaltrials.gov/study/{trial.external_id}",
+    )
+    assert assert_same_export(session, tmp_path / "held", NOW)["claims"] == []
+
+    clear_audit(session, [claim.slug])
+    [published] = assert_same_export(session, tmp_path / "released", NOW)["claims"]
+    assert published["articles"] == [] and published["first_reported_date"] is None
+    assert published["headline"] is None and published["summary"] is None
+    assert published["drafted_from"] == "registry" and published["has_report"] is False
+    assert [entry["trial_id"] for entry in published["trials"]] == [trial.external_id]
+
+    add_article(
+        session,
+        claim.slug,
+        url=ARTICLE,
+        outlet="Example News",
+        title="First report",
+        published_date=date(2026, 11, 18),
+    )
+    [reported] = assert_same_export(session, tmp_path / "reported", NOW)["claims"]
+    assert reported["has_report"] is True and reported["drafted_from"] == "registry"
+    assert reported["first_reported_date"] == "2026-11-18"
+    assert reported["headline"] == "First report"
+    assert claim.drafted_from is DraftedFrom.REGISTRY
+    assert claim.drafting_trial_ids == [trial.external_id]
 
 
 def test_report_context_is_the_same_from_either_store(

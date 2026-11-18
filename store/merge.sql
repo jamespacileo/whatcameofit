@@ -53,13 +53,19 @@ ON CONFLICT (sha256) DO NOTHING
 INSERT INTO claim (slug, headline, summary, vertical, approach, indication, first_reported_date,
                    evidence_stage, current_status, overlay_years, status_updated_at, origin,
                    review_state, reviewed_at, reviewed_by, awaiting_audit_at, created_at,
-                   added_run, changed_run)
-SELECT s.body ->> 'slug', s.body ->> 'headline', s.body ->> 'summary', s.body ->> 'vertical',
+                   added_run, changed_run, drafted_from, drafting_trial_ids)
+SELECT s.body ->> 'slug',
+       CASE WHEN s.body ->> 'drafted_from' = 'registry' THEN coalesce(s.body ->> 'headline', '')
+            ELSE s.body ->> 'headline' END,
+       CASE WHEN s.body ->> 'drafted_from' = 'registry' THEN coalesce(s.body ->> 'summary', '')
+            ELSE s.body ->> 'summary' END,
+       s.body ->> 'vertical',
        s.body ->> 'approach', s.body ->> 'indication', s.body ->> 'first_reported_date',
        s.body ->> 'evidence_stage', coalesce(s.body ->> 'current_status', 'no_trial_found'),
        s.body ->> 'overlay_years', s.body ->> 'status_updated_at', s.body ->> 'origin',
        coalesce(s.body ->> 'review_state', 'pending'), s.body ->> 'reviewed_at', s.body ->> 'reviewed_by',
-       s.body ->> 'awaiting_audit_at', s.body ->> 'created_at', s.run_id, s.run_id
+       s.body ->> 'awaiting_audit_at', s.body ->> 'created_at', s.run_id, s.run_id,
+       s.body ->> 'drafted_from', coalesce(s.body -> 'drafting_trial_ids', '[]')
 FROM staged s
 WHERE s.kind = 'claim'
   AND NOT EXISTS (SELECT 1 FROM claim_alias a WHERE a.slug = s.body ->> 'slug')

@@ -44,7 +44,7 @@ from thenwhat.db.models import (
     TrialRead,
     WorkEntry,
 )
-from thenwhat.domain import OutletKind, ScreenOutcome
+from thenwhat.domain import DraftedFrom, OutletKind, ScreenOutcome
 from thenwhat.sources.people import sponsored_by_a_person, without_people
 from thenwhat.store.form import (
     Record,
@@ -106,8 +106,9 @@ def natural_ref(ref: str, names: Names) -> str:
 
 
 def claim_origin(claim: Claim, *, from_link_lead: bool) -> str:
-    """Where a claim began. Postgres does not record it: a seeded claim is the seed's,
-    one a link lead is tied to came from a backfill's read, any other was entered."""
+    """Which store workflow supplied a claim, distinct from its drafting evidence."""
+    if claim.drafted_from == DraftedFrom.REGISTRY:
+        return "registry"
     if _text(claim.reviewed_by) == "seed":
         return "seed"
     return "backfill" if from_link_lead else "entry"
@@ -128,6 +129,8 @@ def claim_record(claim: Claim, *, origin: str) -> Record:
             slug=claim.slug,
             headline=claim.headline,
             summary=claim.summary,
+            drafted_from=_text(claim.drafted_from),
+            drafting_trial_ids=claim.drafting_trial_ids or [],
             vertical=claim.vertical,
             approach=claim.approach,
             indication=claim.indication,

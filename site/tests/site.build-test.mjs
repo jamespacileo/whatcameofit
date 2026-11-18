@@ -56,6 +56,37 @@ test("Scenario: Reader opens a claim", () => {
   assert.equal(count(html, 'id="record-'), 4);
 });
 
+test("Scenario: Registry evidence publishes a browsable claim before a report exists", (t) => {
+  const built = buildFixture(t, (fixture) => {
+    const exemplar = fixture.claims.find((claim) => claim.slug === "phase-claim");
+    fixture.schema_version = 3;
+    fixture.claims = [{
+      ...exemplar,
+      slug: "registry-scope-example",
+      headline: null,
+      summary: null,
+      drafted_from: "registry",
+      has_report: false,
+      intervention: { name: "Example gel", synonyms: [] },
+      indication: "synthetic enamel loss",
+      first_reported_date: null,
+      articles: [],
+      promises: [],
+      reported_statements: [],
+    }];
+  });
+
+  const page = built("registry-scope-example/index.html");
+  assert.match(page, /Research on Example gel for synthetic enamel loss/);
+  assert.equal(count(page, "No news report is linked to this claim yet."), 1);
+  assert.doesNotMatch(page, /<time[^>]*>[^<]*First report/);
+  assert.ok(JSON.parse(built("lookup.json")).claims["registry-scope-example"]);
+  const record = JSON.parse(built("data/claims/registry-scope-example.json")).claim;
+  assert.equal(record.drafted_from, "registry");
+  assert.equal(record.has_report, false);
+  assert.deepEqual(record.articles, []);
+});
+
 test("Scenario: Unknown slug", () => {
   assert.match(page("404.html"), /No page at this address/);
   // The path with no place marked: six places, none of them the marker.
@@ -705,7 +736,7 @@ test("an export from pipeline code older than the audit hold stops the build", (
   fs.writeFileSync(old, JSON.stringify({ ...fixture, schema_version: 1 }));
   const result = build(old, fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-site-old-")));
   assert.notEqual(result.status, 0);
-  assert.match(result.stdout + result.stderr, /has schema version 1; this site reads version 2/);
+  assert.match(result.stdout + result.stderr, /has schema version 1; this site reads versions 2 and 3/);
 });
 
 test("Scenario: Claim with an approach", () => {

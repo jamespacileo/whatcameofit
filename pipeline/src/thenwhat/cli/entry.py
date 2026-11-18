@@ -58,13 +58,19 @@ def claim_add(
     vertical: Annotated[str, typer.Option(help="Topic area, for example mouth-and-teeth.")],
     intervention: Annotated[str, typer.Option(help="The drug, device or method.")],
     indication: Annotated[str, typer.Option(help="The condition it is claimed to treat.")],
+    article_url: Annotated[str, typer.Option(help="URL of the first source article.")],
+    article_outlet: Annotated[str, typer.Option(help="Outlet of the first source article.")],
+    article_title: Annotated[str, typer.Option(help="Title of the first source article.")],
+    article_published: Annotated[
+        datetime, typer.Option(formats=DATE_FORMATS, help="Source article date (YYYY-MM-DD).")
+    ],
     summary: Annotated[str, typer.Option(help="Summary in your own words.")] = "",
     approach: Annotated[
         str, typer.Option(help="Kind of intervention, for example drug or gene-therapy.")
     ] = "",
 ) -> None:
-    """Add a claim: one intervention for one indication."""
-    with entry_session() as session:
+    """Add a claim and its first source article."""
+    with entry_session() as session, session.begin_nested():
         claim = add_claim(
             session,
             slug=slug,
@@ -74,6 +80,14 @@ def claim_add(
             indication=indication,
             summary=summary,
             approach=approach,
+        )
+        add_article(
+            session,
+            claim.slug,
+            url=article_url,
+            outlet=article_outlet,
+            title=article_title,
+            published_date=article_published.date(),
         )
         out.print(f"Added claim {claim.slug}.", markup=False)
 

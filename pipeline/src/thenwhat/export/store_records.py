@@ -52,6 +52,7 @@ from thenwhat.decide.steps import ENTITY_MATCH, EVIDENCE_STAGE, PAPER_MATCH
 from thenwhat.domain import (
     ClaimStatus,
     Decider,
+    DraftedFrom,
     EntityType,
     EventType,
     EvidenceStage,
@@ -312,11 +313,19 @@ class StoreRecords:
     # --- claims ---------------------------------------------------------------------
 
     def _claim(self, row: sqlite3.Row) -> Claim:
+        provenance = dict(row)
+        source = provenance.get("drafted_from")
+        origin = DraftedFrom(source) if source is not None else None
+        headline, summary = row["headline"], row["summary"]
+        if origin is DraftedFrom.REGISTRY:
+            headline, summary = headline or None, summary or None
         return Claim(
             id=row["id"],
             slug=row["slug"],
-            headline=row["headline"],
-            summary=row["summary"],
+            headline=headline,
+            summary=summary,
+            drafted_from=origin,
+            drafting_trial_ids=json.loads(provenance.get("drafting_trial_ids", "[]")),
             vertical=row["vertical"],
             approach=row["approach"],
             indication=row["indication"],

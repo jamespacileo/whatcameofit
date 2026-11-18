@@ -18,9 +18,11 @@ from thenwhat.db.models import (
     Entity,
     EntitySubstance,
     Promise,
+    RegistryTrial,
     SourceArticle,
 )
-from thenwhat.domain import Decider, EntityType, ReviewState
+from thenwhat.domain import Decider, DraftedFrom, EntityType, ReviewState
+from thenwhat.sources.clinicaltrials import NCT_ID, ClinicalTrials
 from thenwhat.sources.rxnorm import not_searched
 
 MAX_SLUG_LENGTH = 60
@@ -331,7 +333,7 @@ class NamedClaim:
     slug: str
     intervention: str
     indication: str
-    summary: str
+    summary: str | None
 
 
 def named_claims(session: Session, claim_ids: Sequence[int]) -> list[NamedClaim]:
@@ -492,12 +494,84 @@ def add_claim(
     indication: str,
     summary: str = "",
     approach: str | None = None,
+    drafted_from: str = DraftedFrom.OPERATOR,
 ) -> Claim:
     """Create a claim and its intervention entity. One claim per intervention and indication.
 
     An approach given here is recorded as a person's; the seed loader says otherwise."""
+    try:
+        origin = DraftedFrom(drafted_from)
+    except ValueError as error:
+        raise InvalidField(f"Unknown claim drafting source {drafted_from!r}.") from error
+    if origin is DraftedFrom.REGISTRY:
+        raise InvalidField("Use the registry drafting path for a claim with trial evidence.")
+    return _add_claim(
+        session,
+        slug=slug,
+        headline=_required("headline", headline),
+        summary=tidy(summary),
+        vertical=vertical,
+        intervention=intervention,
+        indication=indication,
+        approach=approach,
+        drafted_from=origin,
+    )
+
+
+def add_registry_claim(
+    session: Session,
+    *,
+    slug: str,
+    vertical: str,
+    intervention: str,
+    indication: str,
+    trial_ids: Sequence[str],
+) -> Claim:
+    """Store a pending registry claim using the recorded trials as its drafting evidence."""
+    identifiers = sorted({identifier.strip().upper() for identifier in trial_ids})
+    if not identifiers:
+        raise MissingField("A registry claim needs its drafting trial IDs.")
+    if not all(NCT_ID.fullmatch(identifier) for identifier in identifiers):
+        raise InvalidField("Drafting trials must be ClinicalTrials.gov identifiers.")
+    stored = set(
+        session.scalars(
+            select(RegistryTrial.external_id).where(
+                RegistryTrial.registry_name == ClinicalTrials.name,
+                RegistryTrial.external_id.in_(identifiers),
+            )
+        )
+    )
+    if missing := set(identifiers) - stored:
+        listed = ", ".join(sorted(missing))
+        raise InvalidField(f"Drafting trial records missing from the registry: {listed}.")
+    return _add_claim(
+        session,
+        slug=slug,
+        headline=None,
+        summary=None,
+        vertical=vertical,
+        intervention=intervention,
+        indication=indication,
+        approach=None,
+        drafted_from=DraftedFrom.REGISTRY,
+        drafting_trial_ids=identifiers,
+    )
+
+
+def _add_claim(
+    session: Session,
+    *,
+    slug: str,
+    headline: str | None,
+    summary: str | None,
+    vertical: str,
+    intervention: str,
+    indication: str,
+    approach: str | None,
+    drafted_from: DraftedFrom,
+    drafting_trial_ids: Sequence[str] = (),
+) -> Claim:
     _check_slug(slug)
-    headline = _required("headline", headline)
     intervention = _required("intervention", intervention)
     indication = _required("indication", indication)
     _check_vertical(vertical)
@@ -511,7 +585,9 @@ def add_claim(
     claim = Claim(
         slug=slug,
         headline=headline,
-        summary=tidy(summary),
+        summary=summary,
+        drafted_from=drafted_from,
+        drafting_trial_ids=list(drafting_trial_ids),
         vertical=vertical,
         approach=approach,
         approach_decided_by=Decider.HUMAN if approach else None,

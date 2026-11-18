@@ -436,7 +436,8 @@ def test_overlong_summary_fails_validation(session: Session):
 
 
 def test_summary_of_exactly_500_characters_is_accepted(session: Session):
-    assert len(draft(session, DRAFT | {"summary": "x" * 500}).summary) == 500
+    summary = draft(session, DRAFT | {"summary": "x" * 500}).summary
+    assert summary is not None and len(summary) == 500
 
 
 # --- retention -------------------------------------------------------------------

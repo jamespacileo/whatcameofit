@@ -494,7 +494,7 @@ const sections = [
         {/* The summary, straight under the title where the band has room for it. On a
             phone the band keeps to the title and the status, and the sheet opens with the
             same words instead: one of the two is drawn, never both. */}
-        <p class="band-lede" data-clamp="5" data-pagefind-ignore>{claim.summary}</p>
+        {claim.summary && <p class="band-lede" data-clamp="5" data-pagefind-ignore>{claim.summary}</p>}
 
         {
           /* What kind of thing the treatment is and a gene, straight under the headline:
@@ -778,7 +778,9 @@ const sections = [
       )
     }
 
-    <p class="lede" data-clamp="3" data-pagefind-meta="summary">{claim.summary}</p>
+    {claim.summary && <p class="lede" data-clamp="3" data-pagefind-meta="summary">{claim.summary}</p>}
+    {claim.drafted_from === "registry" && !claim.has_report &&
+      <p class="lede">No news report is linked to this claim yet.</p>}
 
     {/* For a reader who follows this claim and last saw it at another status: filled in
         by the script, so a change noted on the home page is confirmed where they land. */}

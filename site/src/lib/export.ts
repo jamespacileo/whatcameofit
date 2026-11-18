@@ -220,6 +220,8 @@ export interface ExportedClaim {
   slug: string;
   headline: string;
   summary: string;
+  drafted_from?: "article" | "registry" | "operator" | null;
+  has_report?: boolean | null;
   vertical: string;
   /** The kind of intervention, as a code the site words; null when none is recorded. */
   approach: string | null;
@@ -321,9 +323,22 @@ export interface Export {
   match_accept_above?: number | null;
 }
 
-// 2: the pipeline leaves claims awaiting audit out (docs/adr/0007). An export from
-// pipeline code older than that hold says 1 and is refused.
-const SUPPORTED_SCHEMA_VERSION = 2;
+// Version 2 introduced the audit hold. Version 3 also carries registry-drafted claims.
+const SUPPORTED_SCHEMA_VERSIONS = [2, 3];
+
+type SourceClaim = Omit<ExportedClaim, "headline" | "summary"> & {
+  headline: string | null;
+  summary: string | null;
+};
+
+function wordClaim(claim: SourceClaim): ExportedClaim {
+  return {
+    ...claim,
+    headline: claim.headline ?? `Research on ${claim.intervention.name} for ${claim.indication}`,
+    summary: claim.summary ?? "",
+    has_report: claim.has_report ?? claim.articles.length > 0,
+  };
+}
 
 function exportPath(): string {
   const configured = process.env.EXPORT_FILE;
@@ -362,9 +377,9 @@ function load(): { data: Export; exportVersion: string } {
       .join("\n");
     throw new Error(`The export at ${file} does not match export.schema.json:\n${problems}`);
   }
-  if (content.schema_version !== SUPPORTED_SCHEMA_VERSION) {
+  if (!SUPPORTED_SCHEMA_VERSIONS.includes(content.schema_version)) {
     throw new Error(
-      `The export at ${file} has schema version ${content.schema_version}; this site reads version ${SUPPORTED_SCHEMA_VERSION}.`,
+      `The export at ${file} has schema version ${content.schema_version}; this site reads versions 2 and 3.`,
     );
   }
   const unlabelled = unlabelledApproaches(
@@ -428,7 +443,10 @@ function load(): { data: Export; exportVersion: string } {
       `The export at ${file} has reported statement codes the site has no words for: ${unwordedStatements.join(", ")}. Add them to src/lib/statements.ts.`,
     );
   }
-  return { data: content as Export, exportVersion: createHash("sha256").update(raw).digest("hex").slice(0, 24) };
+  return {
+    data: { ...content, claims: (content.claims as SourceClaim[]).map(wordClaim) } as Export,
+    exportVersion: createHash("sha256").update(raw).digest("hex").slice(0, 24),
+  };
 }
 
 export const { data, exportVersion } = load();

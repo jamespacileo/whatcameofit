@@ -16,6 +16,16 @@
       "title": "ClaimStatus",
       "type": "string"
     },
+    "DraftedFrom": {
+      "description": "What a claim was drafted from: a news article, registry records, or an operator's\nentry. Set once when the claim is drafted and never changed after (openspec claims).\nEmpty for a claim stored before it was recorded.",
+      "enum": [
+        "article",
+        "registry",
+        "operator"
+      ],
+      "title": "DraftedFrom",
+      "type": "string"
+    },
     "EventType": {
       "enum": [
         "followup_paper",
@@ -528,12 +538,49 @@
           "type": "string"
         },
         "headline": {
-          "title": "Headline",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Headline"
         },
         "summary": {
-          "title": "Summary",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Summary"
+        },
+        "drafted_from": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftedFrom"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "has_report": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Has Report"
         },
         "vertical": {
           "title": "Vertical",

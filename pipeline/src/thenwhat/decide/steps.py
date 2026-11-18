@@ -220,6 +220,8 @@ def _intervention_text(session: Session, claim: Claim) -> str:
         coded = f" (development codes: {', '.join(codes)})" if codes else ""
         names = f"\nIntervention: {intervention.name}{also}{coded}."
     summary = f"\n{claim.summary}" if claim.summary else ""
+    if claim.headline is None:
+        return f"{summary}{names}".strip()
     return f"Claim: {claim.headline}{summary}{names}"
 
 
@@ -867,7 +869,9 @@ def same_claim_state(
 ) -> str:
     """Bounded identity context from our summaries, never the source article's text."""
 
-    def bounded(value: str) -> str:
+    def bounded(value: str | None) -> str:
+        if value is None:
+            return "none"
         return value if len(value) <= 500 else value[:486] + " [truncated]"
 
     listed = "\n".join(
