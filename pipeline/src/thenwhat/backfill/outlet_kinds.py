@@ -11,6 +11,10 @@ from urllib.parse import urlsplit
 
 from thenwhat.domain import OutletKind
 
+# Raised whenever a domain is added to or taken off a list, so a backfill run records
+# which lists it applied (openspec backfill-run-files).
+OUTLET_LIST_VERSION = 1
+
 GENERAL_NEWS = frozenset(
     [
         "abcnews.go.com",

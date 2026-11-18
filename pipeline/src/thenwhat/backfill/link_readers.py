@@ -167,18 +167,33 @@ def hacker_news_rows(path: Path) -> Iterator[dict[str, Any]]:
                 yield row
 
 
-def reddit_rows(path: Path) -> Iterator[dict[str, Any]]:
-    """The submissions of one zstandard-compressed file, one JSON object a line. Each
-    line is reduced at once to the fields a lead needs; nothing else of it is kept."""
+def reddit_lines(path: Path) -> Iterator[tuple[int, str]]:
+    """The non-empty lines of one zstandard-compressed file, each with its line number
+    counted from 1."""
     import zstandard
 
     with path.open("rb") as compressed:
         reader = zstandard.ZstdDecompressor(max_window_size=ZSTD_WINDOW).stream_reader(compressed)
-        for line in io.TextIOWrapper(reader, encoding="utf-8", errors="replace"):
-            if not line.strip():
-                continue
-            submission = json.loads(line)
-            yield {field: submission.get(field) for field in REDDIT_FIELDS}
+        text = io.TextIOWrapper(reader, encoding="utf-8", errors="replace")
+        for number, line in enumerate(text, start=1):
+            if line.strip():
+                yield number, line
+
+
+def reddit_submission(line: str) -> dict[str, Any]:
+    """One line of a Reddit file reduced at once to the fields a lead needs; nothing else
+    of it is kept. Raises when the line is not a JSON object."""
+    submission = json.loads(line)
+    if not isinstance(submission, dict):
+        raise TypeError("not an object")
+    return {field: submission.get(field) for field in REDDIT_FIELDS}
+
+
+def reddit_rows(path: Path) -> Iterator[dict[str, Any]]:
+    """The submissions of one zstandard-compressed file, one JSON object a line. Each
+    line is reduced at once to the fields a lead needs; nothing else of it is kept."""
+    for _number, line in reddit_lines(path):
+        yield reddit_submission(line)
 
 
 def gdelt_links(path: Path) -> Iterator[SharedLink | Skip]:
