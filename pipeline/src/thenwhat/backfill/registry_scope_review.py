@@ -20,6 +20,8 @@ __all__ = [
     "SCHEMA_VERSION",
     "ScopePair",
     "ScopeReview",
+    "confirm_protocol_evidence",
+    "load_protocol_evidence",
     "load_scope_reviews",
     "validate_scope_review",
 ]
@@ -52,6 +54,85 @@ class ScopeReview:
     registry_sha256: str
     reviewed_by: str
     pairs: tuple[ScopePair, ...]
+
+
+def load_protocol_evidence(path: Path) -> dict[str, dict[str, Any]]:
+    """Read cached detailed protocols keyed by their registry identifiers."""
+    records = json.loads(
+        path.read_text(encoding="utf-8"),
+        object_pairs_hook=_reject_duplicate_keys,
+        parse_constant=_reject_constant,
+    )
+    if not isinstance(records, dict) or not all(
+        _NCT_RE.fullmatch(identifier)
+        and isinstance(record, dict)
+        and isinstance(record.get("protocolSection"), dict)
+        for identifier, record in records.items()
+    ):
+        raise ValueError("Expected cached protocol records keyed by NCT identifier.")
+    return records
+
+
+def _scope_fields(protocol: dict[str, Any]) -> dict[str, Any]:
+    """Study fields shared by the bulk and detailed registry requests."""
+    identity = protocol.get("identificationModule") or {}
+    design = protocol.get("designModule") or {}
+    assignment = design.get("designInfo") or {}
+    treatment = protocol.get("armsInterventionsModule") or {}
+    return {
+        "titles": (identity.get("briefTitle"), identity.get("officialTitle")),
+        "conditions": (protocol.get("conditionsModule") or {}).get("conditions") or [],
+        "study_type": design.get("studyType"),
+        "purpose": assignment.get("primaryPurpose"),
+        "intervention_model": assignment.get("interventionModel"),
+        "arms": [
+            {field: arm.get(field) for field in ("label", "type", "interventionNames")}
+            for arm in treatment.get("armGroups") or []
+        ],
+        "interventions": [
+            {field: item.get(field) for field in ("name", "type", "otherNames", "armGroupLabels")}
+            for item in treatment.get("interventions") or []
+        ],
+    }
+
+
+def _posted_date(protocol: dict[str, Any]) -> str | None:
+    status = protocol.get("statusModule") or {}
+    return (status.get("lastUpdatePostDateStruct") or {}).get("date")
+
+
+def confirm_protocol_evidence(
+    trial_id: str,
+    stored: dict[str, Any],
+    detailed: dict[str, Any],
+    *,
+    stored_update: str | None = None,
+) -> None:
+    """Require the same NCT, update date and shared scope before using detailed evidence."""
+    try:
+        bulk = stored.get("protocolSection") or {}
+        full = detailed.get("protocolSection") or {}
+        bulk_id = (bulk.get("identificationModule") or {}).get("nctId")
+        full_id = (full.get("identificationModule") or {}).get("nctId")
+        bulk_date = _posted_date(bulk) or stored_update
+        full_date = _posted_date(full)
+        before, after = _scope_fields(bulk), _scope_fields(full)
+    except (AttributeError, TypeError) as error:
+        raise ValueError(f"Malformed cached protocol for {trial_id}.") from error
+    if (
+        bulk_id != trial_id
+        or full_id != trial_id
+        or not bulk_date
+        or bulk_date != full_date
+        or (stored_update is not None and stored_update != bulk_date)
+    ):
+        raise ValueError(f"Cached evidence for {trial_id} differs from the stored trial version.")
+    changed = [field for field in before if before[field] != after[field]]
+    if changed:
+        raise ValueError(
+            f"Cached evidence for {trial_id} differs from the stored trial version "
+            f"in {', '.join(changed)}."
+        )
 
 
 def _normalize(text: str) -> str:

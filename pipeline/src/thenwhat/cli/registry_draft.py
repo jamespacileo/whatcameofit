@@ -18,7 +18,7 @@ from thenwhat.backfill.registry_draft import (
     lock_drafting,
     prepare_draft_plan,
 )
-from thenwhat.backfill.registry_scope_review import load_scope_reviews
+from thenwhat.backfill.registry_scope_review import load_protocol_evidence, load_scope_reviews
 from thenwhat.backfill.trial_sets import REGISTRY_CLAIMS_2026, require_wider_record
 from thenwhat.cli.backfill import make_allowances, refusals
 from thenwhat.cli.entry import entry_session
@@ -94,6 +94,10 @@ def draft_from_registry_command(
     apply_plan: Annotated[
         str | None, typer.Option(help="Apply the exact SHA-256 printed by a reviewed preview.")
     ] = None,
+    arm_evidence: Annotated[
+        Path | None,
+        typer.Option(exists=True, dir_okay=False, help="Cached protocols cited by scope receipts."),
+    ] = None,
 ) -> None:
     """Preview a batch from stored records, or apply a reviewed preview to the writer."""
     with refusals(), entry_session() as session:
@@ -112,6 +116,11 @@ def draft_from_registry_command(
                 reviews = (
                     load_scope_reviews(reviewed_scopes) if reviewed_scopes is not None else None
                 )
+                if arm_evidence is not None and reviewed_scopes is None:
+                    raise ValueError("--arm-evidence requires --reviewed-scopes.")
+                evidence = (
+                    load_protocol_evidence(arm_evidence) if arm_evidence is not None else None
+                )
                 vocabulary = mesh_xml_vocabulary(mesh_descriptors) if mesh_descriptors else None
                 links = (
                     VerifiedLinks.model_validate_json(verified_links.read_bytes()).links
@@ -128,6 +137,7 @@ def draft_from_registry_command(
                 batch,
                 limit=limit,
                 scope_reviews=reviews,
+                arm_evidence=evidence,
                 vocabulary=vocabulary,
                 links=links,
             )

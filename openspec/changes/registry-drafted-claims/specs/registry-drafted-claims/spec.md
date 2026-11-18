@@ -68,6 +68,15 @@ A scope review packet SHALL contain the stored trial's titles, condition labels,
 - **WHEN** the grounding check compares the selected phrase with the packet
 - **THEN** the answer is rejected
 
+#### Scenario: A reviewed pair cites a detailed cached protocol
+- **WHEN** a scope receipt cites an arm description or eligibility field from a detailed protocol
+- **THEN** the planner verifies the receipt against that protocol and checks that its identifier, update date and shared scope fields agree with the stored record
+- **AND** a batch that selects the pair binds its receipt into the preview digest
+
+#### Scenario: A detailed protocol changes
+- **WHEN** a detailed protocol cited by a receipt changes, or its shared fields differ from the stored record
+- **THEN** the planner refuses the receipt before any group in the batch is drafted
+
 ### Requirement: A treatment and condition a claim already holds drafts no second claim
 Before a group drafts a claim, it SHALL be compared with every claim that is not archived for which the complete regimen or an alias and the indication match. When a match is verified, no claim SHALL be drafted, and the group's trials SHALL be handed to that claim as candidates for preparation to score.
 

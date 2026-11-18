@@ -183,10 +183,13 @@ def prepare_draft_plan(
     scope_reviews: Mapping[str, ScopeReview] | None,
     vocabulary: Vocabulary | None,
     links: Sequence[VerifiedLink],
+    arm_evidence: Mapping[str, dict[str, Any]] | None = None,
 ) -> DraftBatchPlan:
     if len(batch) > 60 or SLUG_PATTERN.fullmatch(batch) is None:
         raise BackfillError("Use a batch name with lowercase letters, digits and single hyphens.")
-    plan = plan_registry_claims(session, scope_reviews=scope_reviews, vocabulary=vocabulary)
+    plan = plan_registry_claims(
+        session, scope_reviews=scope_reviews, vocabulary=vocabulary, arm_evidence=arm_evidence
+    )
     targets = {
         slug
         for group in plan.groups
@@ -232,6 +235,15 @@ def prepare_draft_plan(
     record_hashes = _trial_hashes(session, selected_ids)
     if record_hashes.keys() != selected_ids:
         raise BackfillError("A proposed trial left the eligible set. Generate a new plan.")
+    reviewed_hashes = {
+        trial: payload_of(asdict(review)).sha256
+        for trial, review in (scope_reviews or {}).items()
+        if trial in selected_ids and trial in plan.applied_reviews
+    }
+    if any(record_hashes[trial] != plan.reviewed_record_hashes[trial] for trial in reviewed_hashes):
+        raise BackfillError(
+            "A reviewed trial changed while building the plan. Generate a new plan."
+        )
     nominated_keys = {
         (action.group_id, trial_id)
         for action in actions
@@ -240,18 +252,19 @@ def prepare_draft_plan(
     }
     used_links = tuple(link for link in links if (link.group_id, link.trial_id) in nominated_keys)
     action_rows = [asdict(action) for action in actions]
-    plan_id = payload_of(
-        {
-            "set": REGISTRY_CLAIMS_2026,
-            "batch": batch,
-            "actions": action_rows,
-            "records": record_hashes,
-            "verified": sorted(
-                (link.model_dump() for link in used_links),
-                key=lambda link: (link["group_id"], link["trial_id"]),
-            ),
-        }
-    ).sha256
+    plan_content: dict[str, Any] = {
+        "set": REGISTRY_CLAIMS_2026,
+        "batch": batch,
+        "actions": action_rows,
+        "records": record_hashes,
+        "verified": sorted(
+            (link.model_dump() for link in used_links),
+            key=lambda link: (link["group_id"], link["trial_id"]),
+        ),
+    }
+    if reviewed_hashes:
+        plan_content["scope_review_sha256"] = reviewed_hashes
+    plan_id = payload_of(plan_content).sha256
     held_counts = Counter(selected.holds.values())
     report = {
         "set": REGISTRY_CLAIMS_2026,
@@ -298,6 +311,7 @@ def prepare_draft_plan(
             for group in candidate_groups
         ],
         "actions": action_rows,
+        "scope_review_sha256": reviewed_hashes,
         "remaining_actionable": selected.remaining_actionable,
     }
     return DraftBatchPlan(batch, actions, plan_id, report, used_links)
@@ -356,6 +370,7 @@ def apply_draft_plan(session: Session, plan: DraftBatchPlan, apply_plan: str) ->
         "drafted": drafted,
         "nominated": nominated,
         "actions": [asdict(action) for action in plan.actions],
+        "scope_review_sha256": plan.report["scope_review_sha256"],
         "verified_links": [link.model_dump() for link in plan.verified],
     }
     batch.draft_record = receipt

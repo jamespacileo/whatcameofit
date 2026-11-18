@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import httpx
 import pytest
@@ -1067,7 +1068,7 @@ def test_registry_scope_proposals_reads_arm_evidence_from_the_same_trial_version
     }
     session.flush()
     path = tmp_path / "protocol-evidence.json"
-    detailed = {
+    detailed: dict[str, Any] = {
         **trial.raw_payload["protocolSection"],
         "statusModule": {"lastUpdatePostDateStruct": {"date": "2026-03-01"}},
         "eligibilityModule": {"eligibilityCriteria": "Adults with confirmed eye irritation."},
@@ -1083,6 +1084,14 @@ def test_registry_scope_proposals_reads_arm_evidence_from_the_same_trial_version
     ]
     assert "eligibilityModule" not in trial.raw_payload["protocolSection"]
 
+    original_title = detailed["identificationModule"]["briefTitle"]
+    detailed["identificationModule"]["briefTitle"] = "Different study wording on the same day"
+    path.write_text(json.dumps({trial.external_id: {"protocolSection": detailed}}))
+    changed_title = run("registry-scope-proposals", trial.external_id, "--arm-evidence", str(path))
+    assert changed_title.exit_code == 1
+    assert "differs from the stored trial version in titles" in changed_title.output
+
+    detailed["identificationModule"]["briefTitle"] = original_title
     detailed["statusModule"]["lastUpdatePostDateStruct"]["date"] = "2026-02-01"
     path.write_text(json.dumps({trial.external_id: {"protocolSection": detailed}}))
     stale = run("registry-scope-proposals", trial.external_id, "--arm-evidence", str(path))

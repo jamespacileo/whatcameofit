@@ -75,6 +75,13 @@ For `active-phase-2-3-or-completed-2026`, the grouping audit in
 `registry-drafted-claims` must support at least 45 of 50 groups before drafting.
 Keep each batch's preview and receipt on the external drive.
 
+A registry-drafted claim covers one intervention or complete regimen for one indication.
+It can go through this workflow before a news report is linked.
+For a reviewed scope that cites a detailed protocol, pass `--reviewed-scopes` with
+`--arm-evidence` to `thenwhat backfill registry-claim-plan` and `thenwhat draft-from-registry`.
+The evidence file is the same cached protocol file used by `registry-scope-proposals`.
+Use the same two files in the preview and apply commands.
+
 ```sh
 thenwhat draft-from-registry active-phase-2-3-or-completed-2026 --batch phase23-001 --limit 200
 thenwhat draft-from-registry active-phase-2-3-or-completed-2026 --batch phase23-001 --limit 200 --apply-plan <preview-digest>
@@ -83,7 +90,9 @@ thenwhat audit sample --batch phase23-001 --all
 ```
 
 Run the apply command with the same scope and MeSH options as the preview. The digest binds
-the selected actions and registry record versions. A changed plan needs a new preview.
+the selected actions, registry record versions and applicable scope receipts. Detailed
+protocols must agree with the stored trial's identifier, update date and shared scope fields.
+A changed plan needs a new preview.
 For a verified existing-claim link, supply the trial, group, claim and evidence hashes from
 the preview in `--verified-links`, with the reviewer and their reason. Preparation scores
 the nominated trials through the existing match step. Reapplying the same batch returns its
@@ -94,7 +103,8 @@ Judge the first batch in full. Record each finding with `thenwhat audit judge`. 
 `thenwhat audit spot-check --batch phase23-001 --size <count>` where applicable.
 After the judgments, `thenwhat audit clear --batch phase23-001` releases eligible claims
 for the export. Record the exported and searchable claim counts before starting the next batch.
-The daily run starts none of these drafting, release or publication steps.
+The daily run starts no registry drafting, batch audit, release or export. Its shared
+preparation step can prepare drafts already in the store.
 
 ### 4. Defects
 

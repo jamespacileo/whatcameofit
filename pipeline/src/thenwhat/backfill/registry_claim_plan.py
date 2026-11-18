@@ -9,7 +9,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from thenwhat.backfill.registry_indication import has_named_cohorts, resolve_indication
-from thenwhat.backfill.registry_scope_review import ScopeReview, validate_scope_review
+from thenwhat.backfill.registry_scope_review import (
+    ScopeReview,
+    confirm_protocol_evidence,
+    validate_scope_review,
+)
 from thenwhat.backfill.trial_sets import registry_claims_2026
 from thenwhat.claims.entry import condition_words, name_key, tidy
 from thenwhat.clinical.categories import trial_terms
@@ -356,6 +360,7 @@ class RegistryClaimPlan:
     trial_count: int
     current_claim_links: dict[str, str]
     applied_reviews: dict[str, str]
+    reviewed_record_hashes: dict[str, str]
     reviews_outside_plan: tuple[str, ...]
 
 
@@ -377,6 +382,9 @@ def _scope_evidence(record: dict[str, Any]) -> Iterable[str]:
         yield from _evidence_strings(identification.get(title))
     for module in ("conditionsModule", "armsInterventionsModule", "outcomesModule"):
         yield from _evidence_strings(protocol.get(module))
+    eligibility = protocol.get("eligibilityModule") or {}
+    for key in ("eligibilityCriteria", "studyPopulation", "minimumAge", "maximumAge"):
+        yield from _evidence_strings(eligibility.get(key))
 
 
 def _regimen_key(label: str) -> tuple[str, ...]:
@@ -407,6 +415,7 @@ def group_registry_trials(
     *,
     current_links: Mapping[str, str] | None = None,
     scope_reviews: Mapping[str, ScopeReview] | None = None,
+    arm_evidence: Mapping[str, dict[str, Any]] | None = None,
     vocabulary: Vocabulary | None = None,
 ) -> RegistryClaimPlan:
     """Group only supported arm and condition pairs. Claim candidates still need checking."""
@@ -419,6 +428,7 @@ def group_registry_trials(
     needs_review: dict[str, TrialScope] = {}
     current_claim_links: dict[str, str] = {}
     applied_reviews: dict[str, str] = {}
+    reviewed_record_hashes: dict[str, str] = {}
     reviews = scope_reviews or {}
     trial_count = 0
     for identifier, record in trials:
@@ -431,16 +441,24 @@ def group_registry_trials(
             needs_review[identifier] = scope
             continue
         if review is not None:
+            source = record
+            stored_digest = payload_of(record).sha256
+            digest = stored_digest
             try:
+                if digest != review.registry_sha256 and arm_evidence and identifier in arm_evidence:
+                    source = arm_evidence[identifier]
+                    confirm_protocol_evidence(identifier, record, source)
+                    digest = payload_of(source).sha256
                 validate_scope_review(
                     review,
                     trial_id=identifier,
-                    registry_sha256=payload_of(record).sha256,
-                    source_text=_scope_evidence(record),
+                    registry_sha256=digest,
+                    source_text=_scope_evidence(source),
                 )
             except ValueError as error:
                 raise BackfillError(str(error)) from error
             applied_reviews[identifier] = review.reviewed_by
+            reviewed_record_hashes[identifier] = stored_digest
             pairs = [(Regimen(pair.regimen), pair.indication) for pair in review.pairs]
         else:
             pairs = [
@@ -474,6 +492,7 @@ def group_registry_trials(
         trial_count,
         current_claim_links,
         applied_reviews,
+        reviewed_record_hashes,
         tuple(sorted(reviews.keys() - applied_reviews.keys() - needs_review.keys())),
     )
 
@@ -482,6 +501,7 @@ def plan_registry_claims(
     session: Session,
     *,
     scope_reviews: Mapping[str, ScopeReview] | None = None,
+    arm_evidence: Mapping[str, dict[str, Any]] | None = None,
     vocabulary: Vocabulary | None = None,
 ) -> RegistryClaimPlan:
     """Read the target cohort and active claim identities in the current database."""
@@ -512,5 +532,6 @@ def plan_registry_claims(
         ((slug, indication, name, aliases) for slug, indication, name, aliases in claims),
         current_links=current_links,
         scope_reviews=scope_reviews,
+        arm_evidence=arm_evidence,
         vocabulary=vocabulary,
     )

@@ -3,6 +3,7 @@
 import json
 from collections.abc import Generator
 from contextlib import contextmanager
+from copy import deepcopy
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -17,9 +18,10 @@ from test_registry_claim_plan import study
 from thenwhat.backfill.trial_sets import REGISTRY_CLAIMS_2026
 from thenwhat.claims.entry import add_article, add_claim, add_registry_claim, articles_of
 from thenwhat.cli import app
-from thenwhat.db.models import AuditBatch, Claim, Entity, EntityMatch, LlmUsage
+from thenwhat.db.models import AuditBatch, Claim, Entity, EntityMatch, LlmUsage, RegistryTrial
 from thenwhat.domain import Decider, DraftedFrom, EntityType, ReviewState
 from thenwhat.review.decisions import record_decision
+from thenwhat.store.form import payload_of
 
 
 @pytest.fixture
@@ -228,3 +230,92 @@ def test_draft_refuses_unknown_sets_and_archived_duplicates(
     )
     assert preview.exit_code == 0, preview.output
     assert json.loads(preview.output)["held_groups_by_reason"]["existing_claim_unavailable"] == 1
+
+
+def test_draft_binds_detail_only_scope_to_the_bulk_record_and_review(
+    session: Session, invoke, tmp_path: Path
+):
+    descriptors = eligible_set(session, tmp_path)
+    trial_id = "NCT00000003"
+    stored = session.scalar(select(RegistryTrial).where(RegistryTrial.external_id == trial_id))
+    assert stored is not None
+    raw = deepcopy(stored.raw_payload)
+    raw["protocolSection"]["statusModule"] = {"lastUpdatePostDateStruct": {"date": "2026-11-16"}}
+    stored.raw_payload = raw
+    session.flush()
+    detailed = deepcopy(raw)
+    condition = "Example Neoplasm in adults who have completed prior therapy"
+    detailed["protocolSection"]["eligibilityModule"] = {"eligibilityCriteria": condition}
+    evidence_file = tmp_path / "protocols.json"
+    evidence_file.write_text(json.dumps({trial_id: detailed}), encoding="utf-8")
+
+    review = {
+        "trial_id": trial_id,
+        "registry_sha256": payload_of(detailed).sha256,
+        "reviewed_by": "fixture assistant",
+        "pairs": [
+            {
+                "regimen": ["Z-231"],
+                "indication": condition,
+                "intervention_quotes": ["Z-231"],
+                "indication_quotes": [condition],
+            }
+        ],
+    }
+    receipt = tmp_path / "review.json"
+    receipt.write_text(json.dumps({"schema_version": 1, "reviews": [review]}), encoding="utf-8")
+    args = (
+        REGISTRY_CLAIMS_2026,
+        "--batch",
+        "detail-review",
+        "--mesh-descriptors",
+        str(descriptors),
+        "--reviewed-scopes",
+        str(receipt),
+    )
+    missing = invoke(*args)
+    assert missing.exit_code == 1 and "registry_sha256" in missing.output
+    args += ("--arm-evidence", str(evidence_file))
+    preview = invoke(*args)
+    assert preview.exit_code == 0, preview.output
+    plan = json.loads(preview.output)
+    digest = plan["apply_plan"]
+    assert plan["scope_review_sha256"].keys() == {trial_id}
+    assert any(
+        action["trial_ids"] == [trial_id] and action["indication"] == condition
+        for action in plan["actions"]
+    )
+    assert session.get(AuditBatch, "detail-review") is None
+    assert stored.raw_payload == raw
+
+    altered = deepcopy(detailed)
+    altered["protocolSection"]["armsInterventionsModule"]["armGroups"][0]["interventionNames"] = [
+        "Drug: Z-999"
+    ]
+    evidence_file.write_text(json.dumps({trial_id: altered}), encoding="utf-8")
+    stale = invoke(*args, "--apply-plan", digest)
+    assert stale.exit_code == 1 and "stored trial version" in stale.output
+
+    altered = deepcopy(detailed)
+    altered["protocolSection"]["eligibilityModule"]["eligibilityCriteria"] += " Changed text."
+    evidence_file.write_text(json.dumps({trial_id: altered}), encoding="utf-8")
+    changed_detail = invoke(*args, "--apply-plan", digest)
+    assert changed_detail.exit_code == 1 and "registry_sha256" in changed_detail.output
+    evidence_file.write_text(json.dumps({trial_id: detailed}), encoding="utf-8")
+
+    review["reviewed_by"] = "different fixture reviewer"
+    receipt.write_text(json.dumps({"schema_version": 1, "reviews": [review]}), encoding="utf-8")
+    superseded = invoke(*args, "--apply-plan", digest)
+    assert superseded.exit_code == 1 and "plan changed" in superseded.output
+    assert not session.scalars(select(Claim)).all()
+
+    review["reviewed_by"] = "fixture assistant"
+    receipt.write_text(json.dumps({"schema_version": 1, "reviews": [review]}), encoding="utf-8")
+    applied = invoke(*args, "--apply-plan", digest)
+    assert applied.exit_code == 0, applied.output
+    report = json.loads(applied.output)
+    assert report["scope_review_sha256"] == plan["scope_review_sha256"]
+    claim = session.scalar(select(Claim).where(Claim.indication == condition))
+    assert claim and claim.drafting_trial_ids == [trial_id]
+    assert claim.review_state is ReviewState.PENDING
+    assert stored.raw_payload == raw

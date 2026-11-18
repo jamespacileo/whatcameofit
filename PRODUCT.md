@@ -20,7 +20,7 @@ People who remember a headline ("scientists regrow teeth") and want to know what
 
 ## Product Purpose
 
-News reports medical breakthroughs that are rarely followed up. thenwhat keeps a page for each claim (one intervention for one indication) showing where it stands now and the dated, sourced evidence that says so. Success is a reader leaving with a correct picture of the evidence and a link to check it.
+News reports medical breakthroughs that are rarely followed up. thenwhat keeps a page for each claim showing where it stands now and the dated, sourced evidence that says so. A claim covers one intervention or complete regimen for one indication. Registry evidence can establish a claim before a news report exists. Success is a reader leaving with a correct picture of the evidence and a link to check it.
 
 ## Positioning
 
@@ -29,6 +29,7 @@ The unit is the claim, not the article, and the status is derived by fixed rules
 ## Operating Context
 
 - Readers follow source links out to trial registries, journals and regulators; those links are the product's proof.
+- Registry-drafted batches are prepared, audited and released before they appear in an export. Readers can narrow claim lists to claims with a linked news report.
 - A page is often shared as a link preview, so each claim has a status card image.
 - Data comes from ClinicalTrials.gov, Europe PMC and Crossref. Their terms require attribution and a visible date for when the data was processed.
 

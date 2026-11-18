@@ -51,7 +51,11 @@ from thenwhat.backfill.registry_load import (
     load_trials,
 )
 from thenwhat.backfill.registry_scope_propose import ReviewPacket, propose_scope, review_packet
-from thenwhat.backfill.registry_scope_review import load_scope_reviews
+from thenwhat.backfill.registry_scope_review import (
+    confirm_protocol_evidence,
+    load_protocol_evidence,
+    load_scope_reviews,
+)
 from thenwhat.backfill.topics import TOPICS
 from thenwhat.backfill.trial_coverage import coverage_of
 from thenwhat.backfill.trial_links import CLAIMS_A_READ, at_least, plan_of
@@ -861,12 +865,19 @@ def registry_claim_plan_command(
         Path | None,
         typer.Option(exists=True, dir_okay=False, help="Read an annual NLM MeSH descriptor file."),
     ] = None,
+    arm_evidence: Annotated[
+        Path | None,
+        typer.Option(exists=True, dir_okay=False, help="Cached protocols cited by scope receipts."),
+    ] = None,
 ) -> None:
     """Print the 2026 registry-claim plan as JSON. Reads stored records only."""
     settings_or_exit()
     with refusals():
         try:
             reviews = load_scope_reviews(reviewed_scopes) if reviewed_scopes is not None else None
+            if arm_evidence is not None and reviewed_scopes is None:
+                raise ValueError("--arm-evidence requires --reviewed-scopes.")
+            evidence = load_protocol_evidence(arm_evidence) if arm_evidence is not None else None
         except (OSError, ValueError) as error:
             raise BackfillError(f"Could not read scope reviews: {error}") from error
         try:
@@ -875,7 +886,9 @@ def registry_claim_plan_command(
             raise BackfillError(f"Could not read MeSH descriptors: {error}") from error
         with open_session() as session:
             require_wider_record(session)
-            plan = plan_registry_claims(session, scope_reviews=reviews, vocabulary=vocabulary)
+            plan = plan_registry_claims(
+                session, scope_reviews=reviews, vocabulary=vocabulary, arm_evidence=evidence
+            )
     typer.echo(json.dumps({"set": REGISTRY_CLAIMS_2026, **asdict(plan)}, default=sorted))
 
 
@@ -929,23 +942,17 @@ def registry_scope_proposals_command(
                 if arm_evidence is None:
                     packets = [review_packet(records[identifier][0]) for identifier in identifiers]
                 else:
-                    evidence = json.loads(arm_evidence.read_text(encoding="utf-8"))
+                    evidence = load_protocol_evidence(arm_evidence)
                     packets = []
                     for identifier in identifiers:
                         record = evidence[identifier]
-                        protocol = record["protocolSection"]
-                        evidence_id = protocol["identificationModule"]["nctId"]
-                        evidence_date = protocol["statusModule"]["lastUpdatePostDateStruct"]["date"]
-                        updated = records[identifier][1]
-                        if (
-                            identifier != evidence_id
-                            or updated is None
-                            or str(updated) != evidence_date
-                        ):
-                            raise ValueError(
-                                f"Cached evidence for {identifier} differs from "
-                                "the stored trial version."
-                            )
+                        stored, updated = records[identifier]
+                        confirm_protocol_evidence(
+                            identifier,
+                            stored,
+                            record,
+                            stored_update=str(updated) if updated else None,
+                        )
                         packets.append(arm_packet(record))
             except (KeyError, OSError, TypeError, ValueError) as error:
                 raise BackfillError(f"Could not prepare a scope packet: {error}") from error
