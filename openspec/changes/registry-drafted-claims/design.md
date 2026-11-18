@@ -97,6 +97,8 @@ The read-only planner takes arm membership from the current registry projection 
 
 An existing claim is a candidate when its complete identity or a documented alias matches. Verify the regimen, clinical use and indication before reusing it. The plan also surfaces current published links, including links whose scope still needs review.
 
+Arm labels and clearly stated study objectives can identify reference regimens even when the registry marks them as experimental. In an add-on trial, retain the full tested combination and record the placebo or reference arm separately. When the title explicitly compares a single investigational agent and the registry designates other products as non-investigational, keep those products as background evidence.
+
 Use a treatment or prevention title to refine a named indication when it gives an explicit subtype or treatment target. Keep the stated patient context when another registered condition qualifies that target. A more detailed title naming several targets overrides abbreviated wording. When distinct tested arms name distinct cohorts for the same regimen, the planner can propose a pair for each cohort. Explicit measurements can be removed from a treatment regimen while diagnostic trials retain their diagnostic intervention.
 
 For cases that need review, `thenwhat backfill registry-claim-plan --reviewed-scopes <file>` accepts a versioned JSON record of explicit regimen and indication pairs. Each pair carries verbatim registry evidence for both parts. Each review records the reviewer and the SHA-256 of the stored record. A changed record requires a fresh review. Applying a receipt changes the plan only. Match scoring, preparation, and publication audit still apply.
@@ -111,7 +113,7 @@ A claim must have one vertical and a model chooses it today from an article. A r
 
 *Instead of* asking a model to place it: that would be a second, weaker way of setting the same field, which that change already declined for the approach.
 
-This makes this change depend on that one's mapping, and on the stored record carrying condition terms (task 2.2).
+The shared topic mapping and NLM hierarchy are available in `thenwhat.clinical`. The planner can use stored descriptors or the annual NLM download. With more than one registered condition, it uses descriptors matching the proposed condition's label. The plan records each supported group and its descriptors. A unique group gives the general vertical. Groups with conflicting evidence or without a supported group remain available for review.
 
 ### 6. Words come from the site, and the export carries none
 

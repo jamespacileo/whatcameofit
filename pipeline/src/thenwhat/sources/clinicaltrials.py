@@ -28,7 +28,8 @@ SEARCH_FIELDS = (
     ",ArmGroupLabel,ArmGroupType,ArmGroupDescription,ArmGroupInterventionName"
 )
 # What a bulk load keeps of each trial: what identifies it, its activity and results
-# dates, its sponsor, size, treatment arms, references and planned primary outcome. Never its
+# dates, its sponsor, size, treatment arms, condition descriptors, references and planned primary
+# outcome. Never its
 # descriptions, eligibility, locations, contacts, results sections or reference
 # citations. Each date is asked with its type, so that actual and anticipated dates are
 # told apart.
@@ -45,6 +46,7 @@ LIST_FIELDS = (
     ",StudyType,DesignPrimaryPurpose,DesignAllocation,DesignInterventionModel"
     ",ArmGroupLabel,ArmGroupType"
     ",ArmGroupInterventionName,InterventionArmGroupLabel"
+    ",ConditionBrowseModule"
     # Only the type: it says when the lead sponsor is a sponsor-investigator, a person
     # whose name is then not kept. The investigator's name, title and affiliation in the
     # same module are never asked for.

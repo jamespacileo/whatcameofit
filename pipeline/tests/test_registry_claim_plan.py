@@ -8,6 +8,7 @@ import pytest
 
 from thenwhat.backfill.registry_claim_plan import group_registry_trials, trial_scope
 from thenwhat.backfill.registry_scope_review import load_scope_reviews
+from thenwhat.clinical.mesh_xml import mesh_xml_vocabulary
 from thenwhat.store.form import payload_of
 from thenwhat.work.errors import BackfillError
 
@@ -319,3 +320,141 @@ def test_reviewed_pairs_stay_linked_to_their_source_record_and_never_cross_join(
     given["protocolSection"]["identificationModule"] = {"officialTitle": "Updated record"}
     with pytest.raises(BackfillError, match=identifier):
         group_registry_trials([(identifier, given)], scope_reviews=reviews)
+
+
+def test_reference_arms_preserve_the_complete_active_regimen():
+    given = study(
+        ["Ocular Redness"],
+        [
+            {
+                "type": "EXPERIMENTAL",
+                "label": "Investigational Arm",
+                "interventionNames": ["Drug: Example XR", "Drug: Background Therapy"],
+            },
+            {
+                "type": "EXPERIMENTAL",
+                "label": "Placebo + Background Therapy",
+                "interventionNames": ["Drug: Placebo", "Drug: Background Therapy"],
+            },
+        ],
+    )
+    given["protocolSection"]["designModule"]["designInfo"]["interventionModel"] = "PARALLEL"
+
+    scope = trial_scope(given)
+
+    assert scope.reference_arms == ("Placebo + Background Therapy",)
+    assert [regimen.components for regimen in scope.regimens] == [
+        ("Background Therapy", "Example XR")
+    ]
+
+
+def test_product_prefixed_placebo_is_excluded_from_a_double_dummy_regimen():
+    record = study(
+        ["Eye Irritation"],
+        [
+            {
+                "type": "EXPERIMENTAL",
+                "interventionNames": [
+                    "Drug: Study Product tablets",
+                    "Drug: Study Product placebo tablets",
+                ],
+            }
+        ],
+    )
+
+    (regimen,) = trial_scope(record).regimens
+    assert regimen.components == ("Study Product tablets",)
+
+
+def test_control_label_and_explicit_dose_escalation_are_used_as_reference_evidence():
+    arms: list[dict[str, Any]] = [
+        {
+            "type": "ACTIVE_COMPARATOR",
+            "label": "Control group",
+            "interventionNames": ["Drug: Drug A"],
+        },
+        {"type": "ACTIVE_COMPARATOR", "label": "Dose group", "interventionNames": ["Drug: Drug B"]},
+    ]
+    control = study(["Eye Irritation"], arms)
+    assert [regimen.components for regimen in trial_scope(control).regimens] == [("Drug B",)]
+
+    for arm in arms:
+        arm["type"] = "EXPERIMENTAL"
+    arms[0]["label"] = "Drug A"
+    doses = study(["Eye Irritation"], arms)
+    doses["protocolSection"]["designModule"]["designInfo"]["interventionModel"] = "PARALLEL"
+    doses["protocolSection"]["identificationModule"] = {
+        "officialTitle": (
+            "Evaluation of Different Dose Escalation Regimens for Drug B in Eye Irritation"
+        )
+    }
+
+    assert trial_scope(doses).reference_arms == ("Drug A",)
+    assert [regimen.components for regimen in trial_scope(doses).regimens] == [("Drug B",)]
+
+
+def test_explicit_noninvestigational_product_is_kept_as_background_evidence():
+    arms: list[dict[str, Any]] = [
+        {
+            "type": "EXPERIMENTAL",
+            "interventionNames": ["Drug: Study Drug", "Drug: Premedication"],
+        },
+        {"type": "ACTIVE_COMPARATOR", "interventionNames": ["Drug: Control Drug"]},
+    ]
+    given = study(["Eye Irritation"], arms)
+    given["protocolSection"]["identificationModule"] = {
+        "officialTitle": "An Evaluation of Study Drug Versus Control Drug for Eye Irritation"
+    }
+    given["protocolSection"]["armsInterventionsModule"]["interventions"] = [
+        {
+            "name": "Premedication",
+            "type": "DRUG",
+            "otherNames": ["Non-Investigational Medicinal Product"],
+        }
+    ]
+
+    (regimen,) = trial_scope(given).regimens
+    assert regimen.components == ("Study Drug",)
+    assert regimen.background == ("Premedication",)
+
+    given["protocolSection"]["identificationModule"]["officialTitle"] = (
+        "An Evaluation of Study Drug + Premedication Versus Control Drug for Eye Irritation"
+    )
+    (regimen,) = trial_scope(given).regimens
+    assert regimen.components == ("Premedication", "Study Drug")
+
+
+def test_only_a_unique_evidenced_general_vertical_is_assigned(tmp_path: Path):
+    file = tmp_path / "desc2026.xml"
+    mesh = [
+        ("D009369", "Neoplasms", ["C04"]),
+        ("D012140", "Respiratory Tract Diseases", ["C08"]),
+        ("D000001", "Example Neoplasm", ["C04.200"]),
+        ("D000002", "Example Overlap", ["C04.300", "C08.300"]),
+    ]
+    elements = []
+    for identifier, label, trees in mesh:
+        placements = "".join(f"<TreeNumber>{code}</TreeNumber>" for code in trees)
+        elements.append(
+            f"<DescriptorRecord><DescriptorUI>{identifier}</DescriptorUI>"
+            f"<DescriptorName><String>{label}</String></DescriptorName>"
+            f"<TreeNumberList>{placements}</TreeNumberList></DescriptorRecord>"
+        )
+    file.write_text("<DescriptorRecordSet>" + "".join(elements) + "</DescriptorRecordSet>")
+    vocabulary = mesh_xml_vocabulary(file)
+    arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
+    records = []
+    for identifier, label, _ in mesh[2:]:
+        given = study([label], arms)
+        given["derivedSection"] = {
+            "conditionBrowseModule": {"meshes": [{"id": identifier, "term": label}]}
+        }
+        records.append((identifier, given))
+
+    plan = group_registry_trials(records, vocabulary=vocabulary)
+
+    unique, overlap = plan.groups
+    assert unique.vertical == "cancer"
+    assert unique.vertical_evidence == {"cancer": {"D000001"}}
+    assert overlap.vertical is None
+    assert set(overlap.vertical_evidence) == {"cancer", "lungs-and-breathing"}

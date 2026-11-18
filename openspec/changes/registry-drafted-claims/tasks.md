@@ -4,12 +4,12 @@ Write steps run on the one writer only. Every judgement an assistant makes is re
 
 ## 1. Decisions and records before any build
 
-- [ ] 1.1 Write the ADR that a claim is one intervention for one indication, reported or not, that it records what it was drafted from, and that it supersedes the 2026-11-16 decision for named trials; verify it names the glossary line and the lines of `CLAUDE.md`, `PRODUCT.md` and `trial-first-route` it changes
-- [ ] 1.2 Write the ADR that amends 0007: a held batch may be released on a sample the pipeline draws, at or below the operator's figure; verify it says what of 0007 does not change
+- [x] 1.1 Write the ADR that a claim is one intervention or regimen for one indication and records its drafting source; record the superseded 2026-11-16 decision and affected wording in ADR 0013
+- [x] 1.2 Record the sampled release decision and the continuing approval and export rules of ADR 0007 in ADR 0014
 - [ ] 1.3 Revise Claim and Source article in `GLOSSARY.md` and add the term for a claim no report is linked to; verify the terms match the specs word for word and are used exactly in the site's phrases
 - [ ] 1.4 Ask the operator for the share of wrong claims a sample may hold and the sample's size; record both here and in `.env.example` as settings with no default
 - [ ] 1.5 Ask the operator for the monthly ceiling for model spend while sets are prepared; record it here; verify no setting is changed before the answer
-- [ ] 1.6 Apply sections 3 to 6 only after `approach-and-vertical-by-rule` has built the mapping from condition terms to groups; verify that task is done on `main`
+- [x] 1.6 Verify the condition-term topic mapping is present on `main` before sections 3 to 6. The mapping and NLM hierarchy are in `thenwhat.clinical`, introduced by `843278e0` in the clinical classification work.
 
 ## 2. The dry run, with nothing written
 
@@ -36,6 +36,10 @@ The refreshed target set held 27,731 trials after 28 registry page requests in 2
 The next cached replay kept documented measurements outside treatment regimens, used explicitly named cohorts and preserved title-supported subtypes and patient contexts. It produced proposals for 16,719 trial IDs and held 11,012. The frozen audit supported 20 of 50 groups. Eleven still had scope errors, one was incomplete, two needed reviewer evidence and 16 had no proposal. Six scope receipts citing the cached trial records were exercised on the pilot, producing proposals for 44 of 61 trials. The grouping gate remains open.
 
 A separate dry-run comparison of nine currently unlinked trials to exact-name-and-indication claim candidates found two with matching scope. Three were controls or background treatment, two were different settings and two needed more review.
+
+The next arm-role replay excluded all three reference regimens from those existing-claim candidates. It corrected one more group in the frozen sample, giving 21 of 50 supported. A separate draw of 50 from the full cohort's proposed groups found 16 supported, 28 scope errors and six needing further evidence. That draw preceded a targeted fix for product-prefixed placebo labels.
+
+The MeSH refresh loaded condition descriptors for 22,446 trials. The final cached plan proposed 20,150 groups. It found a unique general vertical for 5,666, conflicting evidence for 8,552, and insufficient evidence for 5,932. The grouping gate remains open.
 
 ## 3. Drafting and preparation
 

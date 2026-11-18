@@ -73,6 +73,7 @@ from thenwhat.claimsteps.step import ClaimStep
 from thenwhat.cli import session as cli_session
 from thenwhat.cli.console import err, out
 from thenwhat.cli.session import settings_or_exit
+from thenwhat.clinical.mesh_xml import mesh_xml_vocabulary
 from thenwhat.config import Settings, SourceAllowance
 from thenwhat.domain import Decider, LeadVerdict, OutletKind, WorkOutcome
 from thenwhat.measure import spans
@@ -850,6 +851,10 @@ def registry_claim_plan_command(
             help="Apply evidence-backed scope reviews to the plan.",
         ),
     ] = None,
+    mesh_descriptors: Annotated[
+        Path | None,
+        typer.Option(exists=True, dir_okay=False, help="Read an annual NLM MeSH descriptor file."),
+    ] = None,
 ) -> None:
     """Print the 2026 registry-claim plan as JSON. Reads stored records only."""
     settings_or_exit()
@@ -858,9 +863,13 @@ def registry_claim_plan_command(
             reviews = load_scope_reviews(reviewed_scopes) if reviewed_scopes is not None else None
         except (OSError, ValueError) as error:
             raise BackfillError(f"Could not read scope reviews: {error}") from error
+        try:
+            vocabulary = mesh_xml_vocabulary(mesh_descriptors) if mesh_descriptors else None
+        except (OSError, ValueError, SyntaxError) as error:
+            raise BackfillError(f"Could not read MeSH descriptors: {error}") from error
         with open_session() as session:
             require_wider_record(session)
-            plan = plan_registry_claims(session, scope_reviews=reviews)
+            plan = plan_registry_claims(session, scope_reviews=reviews, vocabulary=vocabulary)
     typer.echo(json.dumps({"set": REGISTRY_CLAIMS_2026, **asdict(plan)}, default=sorted))
 
 

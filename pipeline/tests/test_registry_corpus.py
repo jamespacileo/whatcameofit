@@ -127,6 +127,7 @@ def test_a_bulk_load_keeps_the_registered_design_and_arm_roles(
         "StudyType",
         "ArmGroupLabel",
         "ArmGroupType",
+        "ConditionBrowseModule",
     } <= set(registry.asked[0]["fields"].split(","))
     kept = next(
         t.raw_payload["protocolSection"] for t in stored(session) if t.external_id == identifier
