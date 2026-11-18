@@ -48,6 +48,15 @@ Trials SHALL be grouped by fixed rules on the verified intervention or complete 
 - **WHEN** membership describes a sequence of different treatments
 - **THEN** verify which regimen is tested before grouping
 
+#### Scenario: The registry identifies a separate inactive control
+- **WHEN** the registry explicitly identifies an assigned component as a placebo or sham
+- **THEN** exclude it from the active regimen
+- **AND** keep a control-only arm out of the test arms even if it is marked experimental
+
+#### Scenario: One component label mixes alternatives or roles
+- **WHEN** a component label names alternative products or joins an active treatment and a control without separating their roles
+- **THEN** hold the record for scope review before grouping
+
 ### Requirement: Scope review candidates cite exact registry fields
 A scope review packet SHALL contain the stored trial's titles, condition labels, named interventions, arm assignments and planned outcome names. A structured selection SHALL copy phrases from appropriate fields. A proposal SHALL require an evidence-backed scope judgment before it becomes a review receipt. Live model requests SHALL use the configured ceiling and the shared cache.
 

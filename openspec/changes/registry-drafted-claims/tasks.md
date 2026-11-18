@@ -55,6 +55,8 @@ The qualifier replay retained two previously omitted genotype restrictions and m
 
 The NVMe development set holds 120 cases from 127 trials, with earlier audit and holdout trial IDs excluded. The detailed registry pull found eligibility text for all 127 trials and arm descriptions for 109. An assistant reviewed 18 cases and found evidence absent from the bulk snapshot in 12. The arm-specific command reads the frozen protocol version, validates quoted fields against the assigned arms, and can request a second pass for omitted scope. In the offline comparison, the median packet grew from 1,363 to 5,775 characters and the 95th percentile grew from 3,278 to 14,923. Simulated native JSON calls exercised both stages and the exact-request cache. Live model accuracy and spend are pending.
 
+The regimen-label replay used the same 27,731 cached trials. The planner excluded separate explicit placebo and sham entries, kept control-only arms out of the tested arms, and held ambiguous mixed labels and alternatives. It restored proposals for 98 previously held trials, revised 14 trials' proposals, and held 269 trials that previously had proposals. There were 19,815 groups and 11,192 held trials. The plan ran in 2.22 seconds with no registry requests, model calls or production writes. An assistant checked 12 newly proposed trials. The registry supported the treatment arms in all 12, and each proposal still needed an enrollment, regimen or setting correction. On the previous 50-group audit the change only affected two groups already requiring review. A fresh audit must still pass the gate.
+
 ## 3. Drafting and preparation
 
 - [x] 3.1 Let a claim record what it was drafted from, and let a claim drafted from registry records have no source article, headline, summary or first reported date, in a new migration; verify tests that a claim entered by an operator with no article is still refused and that the record does not change when an article is added
@@ -111,5 +113,5 @@ Local PostgreSQL fixtures recorded a repeatable four-of-six sample and held the 
 ## 7. Records
 
 - [ ] 7.1 Update `CLAUDE.md`, `PRODUCT.md` and `docs/backfill-loop.md` for what a claim is, the drafting command, the order after it (`thenwhat prepare --pending`, sample, release, export), and that the daily run starts none of it; verify `make scripts-test` fails if it would
-- [ ] 7.2 Note in `trial-first-route` and `headline-funnel` what this change supersedes and what it gives their routes; verify both `design.md` files name this change
+- [x] 7.2 Note in `trial-first-route` and `headline-funnel` what this change supersedes and what it gives their routes; verify both `design.md` files name this change
 - [ ] 7.3 Regenerate `site/data/seed-export.json` if the seed's export changes, run `make check` and `openspec validate registry-drafted-claims --strict`; verify all pass

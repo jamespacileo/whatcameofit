@@ -1,5 +1,11 @@
 # Design
 
+## Registry-drafted claims
+
+`registry-drafted-claims` supersedes the earlier decision that a trial with no linked news can only have a plain registry page. Its rollout set includes active Phase 2 or 3 interventional trials and Phase 2 or 3 trials actually completed in 2026. Verified registry evidence establishes one full regimen and indication per claim. Verified existing claims receive the trial as a candidate for the usual preparation and scoring. Each trial keeps its registry page and lists the published claims that cite it.
+
+The news route finds reports to attach through the same-claim step. A citing claim can exist while the trial is still due for a news route because none of its citing claims has a linked report. The paper route can still contribute papers to the trial's page. The registry load still hands changed cited trials to the existing refresh step. Drafting and release of registry claims run as explicit batches.
+
 ## Context
 
 Measured on 2026-11-16 on the working database (Postgres 16 in Compose, database `thenwhat`, Alembic revision `0026`, 2,882 MB), with read-only transactions through `psql`. Other sessions were writing while this was read, so counts moved slightly between queries. Two figures come from the registry itself, asked that day for counts and two pages of 1,000 records with a generic client name.

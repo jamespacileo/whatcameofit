@@ -29,6 +29,20 @@ _PLACEBO = re.compile(r"(?:intervention: )?(?:matching |matched |dummy )?placebo
 _NAMED_PLACEBO = re.compile(
     r"(?P<intervention>[\w(). -]+) placebo(?: (?:tablets?|capsules?|injections?|oral solution))?"
 )
+_SHAM = re.compile(r"(?:intervention: )?sham\b")
+_CONTROL_MARKER = re.compile(r"\b(?:placebo|sham)\b|^ptm\s")
+_CONTROL_JOIN = re.compile(
+    r"[+&;]|\b(?:and|or|plus|with|versus|vs)\b|\b(?:placebo|sham)\s*/|/\s*(?:placebo|sham)\b"
+)
+_CONTROL_SUFFIX = re.compile(r"\((?:placebo|sham)\)$")
+_MATCHED_SHORT = re.compile(r"^ptm\s")
+_MATCHED_DEFINITION = re.compile(r"\bplacebo[- ]to[- ]match\s*\(ptm\)", re.IGNORECASE)
+_ALTERNATIVE = re.compile(r"\s+or\s+")
+_NUMBER = r"\d+(?:\.\d+)?"
+_NUMERIC_CHOICE = re.compile(
+    rf"\b(?:{_NUMBER} or {_NUMBER}|"
+    rf"{_NUMBER}\s*(?P<unit>mg|mcg|µg|ug|g|ml|iu|units?) or {_NUMBER}\s*(?P=unit))\b"
+)
 _NON_TREATMENT_LABELS = {"placebo", "sham", "no treatment", "no intervention", "control"}
 _CONTROL_LABEL = re.compile(r"^control(?: (?:arm|group))?$")
 _DOSE_ESCALATION = re.compile(r"\bdose[- ]escalation regimens? (?:for|of) ")
@@ -81,14 +95,33 @@ def _members_of(arm: Arm, interventions: Mapping[str, dict[str, Any]]) -> dict[s
     return members
 
 
-def _active_members(members: Mapping[str, str]) -> dict[str, str]:
+def _is_control(key: str, *, matched_short: bool) -> bool:
+    if key in _NON_TREATMENT_LABELS:
+        return True
+    if _CONTROL_JOIN.search(key):
+        return False
+    return any(
+        (
+            _PLACEBO.match(key),
+            _NAMED_PLACEBO.fullmatch(key),
+            _SHAM.match(key),
+            _CONTROL_SUFFIX.search(key),
+            matched_short and _MATCHED_SHORT.match(key),
+        )
+    )
+
+
+def _active_members(members: Mapping[str, str], *, matched_short: bool) -> dict[str, str]:
     return {
         key: label
         for key, label in members.items()
-        if key not in _NON_TREATMENT_LABELS
-        and not _PLACEBO.match(key)
-        and not _NAMED_PLACEBO.fullmatch(key)
+        if not _is_control(key, matched_short=matched_short)
     }
+
+
+def _has_alternatives(key: str) -> bool:
+    # A choice of amounts in the same unit doesn't name two components.
+    return _ALTERNATIVE.search(_NUMERIC_CHOICE.sub(" ", key)) is not None
 
 
 def _escalated_intervention(title: str, names: Iterable[str]) -> str | None:
@@ -106,10 +139,14 @@ def _escalated_intervention(title: str, names: Iterable[str]) -> str | None:
 
 
 def _reference_arms(
-    assignments: list[tuple[Arm, dict[str, str]]], title: str, model: str | None
+    assignments: list[tuple[Arm, dict[str, str]]],
+    active_assignments: list[dict[str, str]],
+    title: str,
+    model: str | None,
 ) -> set[int]:
     profile = [
-        (name_key(arm.label or ""), set(_active_members(members))) for arm, members in assignments
+        (name_key(arm.label or ""), set(active))
+        for (arm, _), active in zip(assignments, active_assignments, strict=True)
     ]
     names = {key for _, active in profile for key in active}
     focus = _escalated_intervention(title, names) if model == "PARALLEL" else None
@@ -133,7 +170,13 @@ def _reference_arms(
             )
         )
         outside_escalation = focus is not None and bool(active) and focus not in active
-        if _CONTROL_LABEL.fullmatch(label) or placebo_on_background or outside_escalation:
+        only_controls = bool(assignments[index][1]) and not active
+        if (
+            _CONTROL_LABEL.fullmatch(label)
+            or only_controls
+            or placebo_on_background
+            or outside_escalation
+        ):
             reference.add(index)
     return reference
 
@@ -187,8 +230,19 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
     experimental = [arm for arm in arms if arm.kind == "experimental"]
     tested = experimental or [arm for arm in arms if arm.kind == "active_comparator"]
     assignments = [(arm, _members_of(arm, names)) for arm in tested]
+    matched_short = any(
+        _MATCHED_DEFINITION.search(arm.get(field) or "")
+        for arm in treatment.get("armGroups", [])
+        for field in ("label", "description")
+    )
+    active_assignments = [
+        _active_members(members, matched_short=matched_short) for _, members in assignments
+    ]
     reference = _reference_arms(
-        assignments, identification.get("officialTitle") or "", intervention_model
+        assignments,
+        active_assignments,
+        identification.get("officialTitle") or "",
+        intervention_model,
     )
     tested_assignments = [
         entry for index, entry in enumerate(assignments) if index not in reference
@@ -197,8 +251,11 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
     regimens: dict[tuple[str, ...], Regimen] = {}
     incomplete = False
     measurement_only = False
-    for _, members in tested_assignments:
-        active = _active_members(members)
+    mixed_control = False
+    alternatives = False
+    for index, active in enumerate(active_assignments):
+        if index in reference:
+            continue
         if not active:
             incomplete = True
             continue
@@ -217,6 +274,8 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         background = _documented_background(active, names, titles)
         for key in background:
             del active[key]
+        mixed_control |= any(_CONTROL_MARKER.search(name) for name in active)
+        alternatives |= any(_has_alternatives(name) for name in active)
         key = tuple(sorted(active))
         aliases = ()
         if len(key) == 1:
@@ -249,6 +308,10 @@ def trial_scope(study: dict[str, Any]) -> TrialScope:
         issues.append("missing_arm_interventions")
     if measurement_only:
         issues.append("measurement_only_arm_needs_review")
+    if mixed_control:
+        issues.append("control_component_needs_review")
+    if alternatives:
+        issues.append("alternative_regimen_needs_review")
     if intervention_model in {"CROSSOVER", "SEQUENTIAL"} and any(
         len(regimen.components) > 1 for regimen in regimens.values()
     ):

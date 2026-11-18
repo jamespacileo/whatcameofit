@@ -422,6 +422,74 @@ def test_product_prefixed_placebo_is_excluded_from_a_double_dummy_regimen():
     assert regimen.components == ("Study Product tablets",)
 
 
+def test_separate_control_entries_are_excluded_even_in_an_experimental_arm():
+    arms = [
+        {
+            "type": "EXPERIMENTAL",
+            "label": "Procedure",
+            "interventionNames": ["Procedure: Example Procedure", "Other: Saline (Placebo)"],
+        },
+        {
+            "type": "EXPERIMENTAL",
+            "label": "Sham arm",
+            "interventionNames": ["Procedure: Sham Procedure"],
+        },
+    ]
+
+    scope = trial_scope(study(["Eye Irritation"], arms))
+
+    assert scope.reference_arms == ("Sham arm",)
+    assert [regimen.components for regimen in scope.regimens] == [("Example Procedure",)]
+    assert not scope.issues
+
+
+def test_placebo_shorthand_requires_the_registry_to_define_it():
+    arms: list[dict[str, Any]] = [
+        {
+            "type": "EXPERIMENTAL",
+            "label": "Combination",
+            "interventionNames": ["Drug: Example XR", "Drug: PTM Example Immediate"],
+        }
+    ]
+    record = study(["Eye Irritation"], arms)
+    unresolved = group_registry_trials([("unknown", record)])
+    assert not unresolved.groups
+    assert unresolved.needs_review["unknown"].issues == ("control_component_needs_review",)
+
+    arms[0]["description"] = "Example XR and placebo-to-match (PTM) Example Immediate."
+    resolved = group_registry_trials([("defined", record)])
+    assert resolved.groups[0].regimen == "Example XR"
+    assert not resolved.needs_review
+
+
+@pytest.mark.parametrize(
+    ("label", "issues"),
+    [
+        ("Placebo + Study Product", ("control_component_needs_review",)),
+        ("Placebo/Study Product", ("control_component_needs_review",)),
+        ("Study Product vs Saline (Placebo)", ("control_component_needs_review",)),
+        ("Product One or Product Two", ("alternative_regimen_needs_review",)),
+        ("Study Product Doses 1 or 2 QD", ()),
+        ("Study Product (25mg or 40mg)", ()),
+        ("Product One 25 mg or Product Two 40 mg", ("alternative_regimen_needs_review",)),
+    ],
+)
+def test_unresolved_component_labels_stay_out_of_the_grouping_plan(
+    label: str, issues: tuple[str, ...]
+):
+    record = study(
+        ["Eye Irritation"], [{"type": "EXPERIMENTAL", "interventionNames": [f"Drug: {label}"]}]
+    )
+    plan = group_registry_trials([("trial", record)])
+
+    if issues:
+        assert not plan.groups
+        assert plan.needs_review["trial"].issues == issues
+    else:
+        assert plan.groups[0].regimen == label
+        assert not plan.needs_review
+
+
 def test_control_label_and_explicit_dose_escalation_are_used_as_reference_evidence():
     arms: list[dict[str, Any]] = [
         {
