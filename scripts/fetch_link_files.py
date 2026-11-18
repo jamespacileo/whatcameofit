@@ -7,7 +7,10 @@
     uv run python ../scripts/fetch_link_files.py hackernews --since-last-fetch 3
     uv run python ../scripts/fetch_link_files.py reddit 2025-01 2026-11 science longevity
 
-Files land in data/link-files/, which is not committed. A file already there is kept,
+Files land in the folder BACKFILL_DATA_DIR names, under hackernews/ and reddit/. It has
+no default: the files are large and belong on a volume chosen for them, and the script
+refuses while the folder is missing, so an unmounted volume never sends them to another
+disk. A file already there is kept,
 so a stopped run is simply started again; `--merge` fetches a Hacker News month that
 already has a file again and merges it in, keeping every row already there.
 
@@ -42,7 +45,8 @@ import pyarrow.compute as pc
 import pyarrow.parquet as pq
 import zstandard
 
-ROOT = Path(__file__).resolve().parent.parent / "data" / "link-files"
+# The folder the files are fetched to: BACKFILL_DATA_DIR, read by `main`. Tests set it.
+ROOT: Path | None = None
 CLIENT_NAME = "link-backfill/1.0"
 
 ARCHIVE = "https://huggingface.co/datasets/open-index/hacker-news"
@@ -177,7 +181,7 @@ def hacker_news_from_clickhouse(client: httpx.Client, month: str, target: Path) 
 
 
 def fetch_hacker_news(first: str, last: str, merge: bool = False) -> None:
-    folder = ROOT / "hackernews"
+    folder = data_root() / "hackernews"
     folder.mkdir(parents=True, exist_ok=True)
     this_month = f"{date.today():%Y-%m}"
     with httpx.Client(headers={"User-Agent": CLIENT_NAME}, timeout=120) as client:
@@ -259,7 +263,7 @@ def fetch_hacker_news_window(start: datetime, end: datetime | None, now: datetim
     month's file the window touches. The record of the last fetch moves on to the
     window's end only when the window starts at or before it, so a later, narrower
     window never hides a gap. Returns the months written, oldest first."""
-    folder = ROOT / "hackernews"
+    folder = data_root() / "hackernews"
     folder.mkdir(parents=True, exist_ok=True)
     through = end or now
     touched = months(f"{start:%Y-%m}", f"{through:%Y-%m}")
@@ -317,7 +321,7 @@ def reddit_page(client: httpx.Client, community: str, after: int, before: int) -
 
 
 def fetch_reddit(first: str, last: str, communities: list[str]) -> None:
-    folder = ROOT / "reddit"
+    folder = data_root() / "reddit"
     folder.mkdir(parents=True, exist_ok=True)
     start = int(datetime.fromisoformat(f"{first}-01").replace(tzinfo=UTC).timestamp())
     end = int(datetime.fromisoformat(f"{next_month(last)}-01").replace(tzinfo=UTC).timestamp())
@@ -354,6 +358,25 @@ def fetch_reddit(first: str, last: str, communities: list[str]) -> None:
             say(f"r/{community}: {posts} submissions, {links} of them links")
 
 
+def data_root() -> Path:
+    """The folder BACKFILL_DATA_DIR names. It must already exist: it is never created,
+    because on a volume that is not mounted that would put the files on another disk."""
+    if ROOT is not None:
+        return ROOT
+    value = os.environ.get("BACKFILL_DATA_DIR", "").strip()
+    if not value:
+        raise SystemExit(
+            "BACKFILL_DATA_DIR is not set. Name the folder the bulk files are fetched to."
+        )
+    folder = Path(value).expanduser()
+    if not folder.is_dir():
+        raise SystemExit(
+            f"BACKFILL_DATA_DIR is {folder}, which is not there. If it is on an external "
+            "volume, the volume is not mounted. Nothing was fetched."
+        )
+    return folder
+
+
 def days_argument(text: str) -> int:
     days = int(text) if text.isdigit() else 0
     if not 1 <= days <= 28:
@@ -364,12 +387,13 @@ def days_argument(text: str) -> int:
 def main(arguments: list[str] | None = None, now: datetime | None = None) -> None:
     arguments = sys.argv[1:] if arguments is None else arguments
     now = now or datetime.now(UTC)
+    data_root()
     if arguments[:2] == ["hackernews", "--since-days"] and len(arguments) == 3:
         start = midnight(now) - timedelta(days=days_argument(arguments[2]))
         fetch_hacker_news_window(start, None, now)
         return
     if arguments[:2] == ["hackernews", "--since-last-fetch"] and len(arguments) == 3:
-        last = read_last_fetch(ROOT / "hackernews")
+        last = read_last_fetch(data_root() / "hackernews")
         start, end = window_from_last_fetch(last, now, days_argument(arguments[2]))
         fetch_hacker_news_window(start, end, now)
         return
