@@ -16,6 +16,7 @@ The registry already files every trial under coded terms: MeSH descriptors for i
 - **A trial's coded terms by rule.** On load, each stored trial gains its condition descriptors and the agent its experimental arm adds over its comparator arm, from the raw payload, with no request and no model. A trial whose experimental arm adds more than one agent, or that has no arms or no descriptor, gets none and is listed with the reason.
 - **A claim–trial link to the stored trial.** A match of a registry trial points to the stored trial by key, as well as naming it. The population a trial enrols (for example HER2-positive, second line) is shown on the trial's row of the claim, not in the claim's identity.
 - **Coverage is a query.** "Which stored trials no claim cites" is answered by a join on keys, with a reason for each uncited trial: no coded pair, a pair no claim holds, or a pair whose claim has not approved the trial.
+- **Pages for interventions and conditions.** Each intervention with a published claim gets a page at `/intervention/{slug}`: its names, its card, its claims by condition and their trials. A condition's page is the clinical category page that already exists at `/clinical/{descriptor}`, which gains the condition's card and the interventions with a claim for it. The claim page links to both.
 - **An article stays optional only where `registry-drafted-claims` says.** That change already specifies a claim drafted from registry records with no source article or first reported date, and records what a claim was drafted from. This change does not restate it; it gives such a claim the keys it is identified by.
 - **Existing claims are given records from what they hold.** A claim's approved exact condition term and its intervention entity's substance become its records, in a new migration. A claim with neither keeps working on free text and is listed for the operator.
 
@@ -36,12 +37,14 @@ Not in this change:
 
 - `claims`: claim identity and the duplicate rule are decided on the shared records.
 - `entity-resolution`: an intervention's names and synonyms belong to the shared intervention record, not to one claim.
+- `site-publishing`: an intervention page, the clinical category page as a condition's page, and links to both from the claim page.
 - `registry-corpus`: a stored trial carries its coded condition and added-agent terms, and a claim's match points to the stored trial.
 
 ## Impact
 
 - **Database**: new tables `condition` and `intervention`; new columns `claim.condition_id`, `claim.intervention_id`, `entity.intervention_id`, `entity_match.registry_trial_id`; a table of each trial's coded terms. New Alembic migrations, since production holds claims. The same shape in `store/schema.sql` and a D1 migration under `store/ingest/migrations/`, so `cloudflare-source-of-truth` carries it.
 - **Pipeline**: `claims/` duplicate check and `claim merge`/`entity rename`; `backfill/registry_load.py` works out a trial's coded terms on load; `resolve/` reads synonyms from the shared record; a `thenwhat coverage` report.
-- **Export**: a claim carries its condition and intervention keys. `site/export.schema.json` is regenerated and its version rises. No wording changes.
+- **Export**: a claim carries its condition and intervention keys, and the export lists intervention records with their slugs and names. `site/export.schema.json` is regenerated and its version rises.
+- **Site**: a new `/intervention/[slug]` page; `/clinical/[descriptor]` gains a card and an interventions list; the claim page gains two links; the sitemap and the redirects for merged slugs. Build time and page count measured, since every intervention with a claim adds a page.
 - **Other changes**: `registry-drafted-claims` (decision 3 and its grouping requirement superseded: it groups on the coded pair, and its duplicate check is this change's; its artifacts are revised by a task here once the work in progress on it is merged); `cloudflare-source-of-truth` (the merge's natural keys gain condition and intervention); `knowledge-cards` (an approved exact condition term now sets the claim's condition record).
 - **Documents**: `GLOSSARY.md` (Intervention, Indication, Condition), an ADR that a claim's identity is the pair of shared records.

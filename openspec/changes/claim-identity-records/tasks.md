@@ -30,13 +30,19 @@ Write steps run on the one writer only. Every count below is taken read-only fir
 - [ ] 4.3 Extend `thenwhat entity rename` and `thenwhat claim merge` to intervention records; verify tests that a rename keyed on a name gains a substance key without a second record, and that merging two records moves their claims
 - [ ] 4.4 Point `entity_match` to the stored trial by key on preparation and backfill existing matches; verify tests of a match to a stored trial and to a trial stored later
 
-## 5. Coverage and export
+## 5. Coverage
 
 - [ ] 5.1 Add `thenwhat coverage --set <name>` that counts cited trials and gives each uncited trial one reason from the fixed list, read-only; verify one success and one refusal, and a test of each reason
-- [ ] 5.2 Add each claim's condition and intervention keys to the export, regenerate `site/export.schema.json` and raise its version, regenerate `site/data/seed-export.json` if it changes; verify the schema and seed tests pass
-- [ ] 5.3 Run the coverage report read-only on production for the active phase 2 and 3 set; record the figures here beside the 3.0% of `proposal.md`
+- [ ] 5.2 Run the coverage report read-only on production for the active phase 2 and 3 set; record the figures here beside the 3.0% of `proposal.md`
 
-## 6. The change it unblocks
+## 6. Intervention and condition pages
 
-- [ ] 6.1 Revise `registry-drafted-claims` so its groups are the coded pair and its duplicate check is this change's, superseding its design decision 3 and its grouping requirement; verify `openspec validate registry-drafted-claims --strict` passes
-- [ ] 6.2 Update `CLAUDE.md` working rules for the duplicate check and the coverage command, and run `make check` and `openspec validate claim-identity-records --strict`; verify all pass
+- [ ] 6.1 Export intervention records with their slug, names, codes and card, and each claim's condition and intervention keys; regenerate `site/export.schema.json` and the seed export; verify the schema and seed tests pass
+- [ ] 6.2 Add `/intervention/[slug]` showing names, card, claims by condition and their trials once each, with the claim page's wording guardrails; verify site tests of a drug with two claims sharing a trial, a drug with no card, no page for an intervention with no published claim, and that the build's wording check covers the page
+- [ ] 6.3 Add the condition's card and the list of interventions with a claim for exactly that condition to `/clinical/[descriptor]`, link the claim page's intervention and indication, list intervention pages in the sitemap and send a merged record's slug to the kept page; verify site tests of each scenario in the `site-publishing` delta
+- [ ] 6.4 Build the site from the production export and record here the number of intervention pages, the build time and the output's size; verify the figures are recorded and shown to the operator
+
+## 7. The change it unblocks
+
+- [ ] 7.1 Revise `registry-drafted-claims` so its groups are the coded pair and its duplicate check is this change's, superseding its design decision 3 and its grouping requirement; verify `openspec validate registry-drafted-claims --strict` passes
+- [ ] 7.2 Update `CLAUDE.md` working rules for the duplicate check and the coverage command, and run `make check` and `openspec validate claim-identity-records --strict`; verify all pass

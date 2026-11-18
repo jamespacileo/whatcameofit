@@ -24,7 +24,7 @@ See `proposal.md` for why. What exists that this rests on, read from `main` on 2
 
 - A combination of agents as one intervention record.
 - Records for papers, people, institutions or companies.
-- Any wording on the site. The export carries keys; the site shows the indication label it shows today.
+- A page for a condition or intervention with no published claim. A page with nothing on record would be thin, and the trial corpus is not evidence (`registry-corpus`).
 
 ## Decisions
 
@@ -60,12 +60,21 @@ The added agent is the set of interventions an experimental arm lists minus thos
 
 Each schema step lands as an Alembic migration and as a D1 migration under `store/ingest/migrations/` with `store/schema.sql` updated, and the merge's natural keys gain the two records (condition by descriptor, intervention by its key). The existing comparison of the two stores' exports covers it.
 
+### 7. A condition's page is the clinical category page; an intervention gets a new page
+
+`/clinical/{descriptor}` already lists the published claims at or below a MeSH descriptor, with broader and narrower categories (`clinical-classification-and-approach`). A condition record is that descriptor, so a second condition page would show the same claims under two addresses. That page gains the condition's card and a list of the interventions with a claim for exactly that condition.
+
+No page lists claims by intervention today, so `/intervention/{slug}` is new. Its slug is made once from the name, because a drug gains brand names and codes over time and a link to it should keep working. It reuses the card `knowledge-cards` already exports and the claim and trial rows the site already has. Its wording follows the claim page's guardrails: no verdict, no availability, no "for whom", and no trial offered to the reader.
+
+*Instead of* a `/condition/{slug}` page with a friendlier address: it would duplicate the clinical page. If a reader-friendly address is wanted later, it can lead to the descriptor's page.
+
 ## Risks / Trade-offs
 
 - [Many trials have no single added agent] → Counted per reason in task 2.4 before any grouping uses the keys. If the share is large, combinations become their own change; they are listed, not guessed.
 - [Existing claims without an approved exact condition term] → They keep the text rule and are listed by `thenwhat coverage`. `knowledge-cards` approval by rule fills most; the rest are the operator's.
 - [Two existing claims turn out to share a pair] → The backfill reports them and does not set the second claim's keys; each is merged with `thenwhat claim merge` before the unique index is added.
 - [A synonym now reaches every claim of a drug] → Intended. The search is still within each claim's indication, and every claim it touches is marked due for a search.
+- [Pages by the thousand once registry-drafted claims publish] → One page per intervention with a published claim; the build is measured in task 6.4 and reported to `cloudflare-source-of-truth` with the claim pages' figures.
 - [D1 and Postgres drift] → Same pull request for both; the export comparison fails if they differ.
 
 ## Migration Plan
