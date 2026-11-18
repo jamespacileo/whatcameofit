@@ -320,6 +320,16 @@ def prepare_draft_plan(
     ]
     if selected_alias_pairs:
         plan_content["registry_alias_pairs"] = selected_alias_pairs
+    cancer_topic_evidence = {
+        group_id: {
+            "descriptor": group.primary_cancer_descriptor,
+            "topics": {topic: sorted(ids) for topic, ids in group.vertical_evidence.items()},
+        }
+        for group_id, group in details.items()
+        if group_id in selected_groups and group.primary_cancer_descriptor is not None
+    }
+    if cancer_topic_evidence:
+        plan_content["primary_cancer_topic_evidence"] = cancer_topic_evidence
     plan_id = payload_of(plan_content).sha256
     held_counts = Counter(selected.holds.values())
     report = {
@@ -379,6 +389,7 @@ def prepare_draft_plan(
             for group in candidate_groups
         ],
         "actions": action_rows,
+        "primary_cancer_topic_evidence": cancer_topic_evidence,
         "scope_review_sha256": reviewed_hashes,
         "remaining_actionable": selected.remaining_actionable,
     }

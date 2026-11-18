@@ -88,6 +88,22 @@ _POPULATION_WORDS = {
     "subjects",
     "women",
 }
+# Topic groups covering an organ or anatomical system. An overlap solely with
+# infection, allergy or another non-anatomical group awaits topic review.
+_ORGAN_TOPIC_GROUPS = frozenset(
+    {
+        "bones-joints-and-muscles",
+        "brain-and-nerves",
+        "diabetes-and-hormones",
+        "eyes-and-ears",
+        "gut-and-liver",
+        "heart-and-circulation",
+        "kidneys-and-bladder",
+        "lungs-and-breathing",
+        "mouth-and-teeth",
+        "skin-and-hair",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -393,6 +409,7 @@ class PlanGroup:
     condition_terms: set[tuple[str, str]] = field(default_factory=set)
     vertical_evidence: dict[str, set[str]] = field(default_factory=dict)
     vertical: str | None = None
+    primary_cancer_descriptor: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -474,8 +491,24 @@ def _record_vertical(
             selected = [identifier for identifier, _ in terms]
     if not selected or vocabulary.missing(selected):
         return
-    for topic in derived_topics(selected, vocabulary):
-        group.vertical_evidence.setdefault(topic.group, set()).add(topic.category)
+    for identifier in sorted(set(selected)):
+        for topic in derived_topics((identifier,), vocabulary):
+            group.vertical_evidence.setdefault(topic.group, set()).add(identifier)
+
+
+def _primary_cancer_descriptor(
+    evidence: Mapping[str, set[str]], vocabulary: Vocabulary
+) -> str | None:
+    """One tumor descriptor supports the full overlap and every other term is broader."""
+    if "cancer" not in evidence or _ORGAN_TOPIC_GROUPS.isdisjoint(evidence):
+        return None
+    descriptors = set().union(*evidence.values())
+    for identifier in sorted(evidence["cancer"]):
+        if all(identifier in supported for supported in evidence.values()) and (
+            descriptors <= vocabulary.at_or_above(identifier)
+        ):
+            return identifier
+    return None
 
 
 def group_registry_trials(
@@ -558,6 +591,11 @@ def group_registry_trials(
         group.alias_claim_candidates.difference_update(group.exact_claim_candidates)
         if len(group.vertical_evidence) == 1:
             group.vertical = next(iter(group.vertical_evidence))
+        elif vocabulary is not None and group.vertical_evidence:
+            descriptor = _primary_cancer_descriptor(group.vertical_evidence, vocabulary)
+            if descriptor is not None:
+                group.vertical = "cancer"
+                group.primary_cancer_descriptor = descriptor
     return RegistryClaimPlan(
         tuple(groups[key] for key in sorted(groups)),
         needs_review,

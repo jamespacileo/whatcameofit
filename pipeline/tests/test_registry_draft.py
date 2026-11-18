@@ -237,6 +237,54 @@ def test_draft_refuses_unknown_sets_and_archived_duplicates(
     assert report["generic_stored_search_names"] == {"NCT00000004": "Home"}
 
 
+def test_draft_digest_binds_the_descriptor_used_for_the_primary_cancer_topic(
+    session: Session, invoke, tmp_path: Path
+):
+    descriptors = eligible_set(session, tmp_path)
+    initial_xml = descriptors.read_text(encoding="utf-8")
+    overlap_xml = initial_xml.replace(
+        "<TreeNumber>C04.200</TreeNumber>",
+        "<TreeNumber>C04.200</TreeNumber><TreeNumber>C08.200</TreeNumber>",
+    ).replace(
+        "</DescriptorRecordSet>",
+        "<DescriptorRecord><DescriptorUI>D012140</DescriptorUI>"
+        "<DescriptorName><String>Respiratory Tract Diseases</String></DescriptorName>"
+        "<TreeNumberList><TreeNumber>C08</TreeNumber></TreeNumberList></DescriptorRecord>"
+        "</DescriptorRecordSet>",
+    )
+    descriptors.write_text(overlap_xml, encoding="utf-8")
+    args = (
+        REGISTRY_CLAIMS_2026,
+        "--batch",
+        "primary-cancer",
+        "--mesh-descriptors",
+        str(descriptors),
+    )
+
+    preview = invoke(*args)
+    assert preview.exit_code == 0, preview.output
+    planned = json.loads(preview.output)
+    assert planned["actions"]
+    assert planned["primary_cancer_topic_evidence"] == {
+        action["group_id"]: {
+            "descriptor": "D000001",
+            "topics": {"cancer": ["D000001"], "lungs-and-breathing": ["D000001"]},
+        }
+        for action in planned["actions"]
+    }
+    assert {action["vertical"] for action in planned["actions"]} == {"cancer"}
+
+    descriptors.write_text(initial_xml, encoding="utf-8")
+    changed = invoke(*args)
+    assert changed.exit_code == 0, changed.output
+    revised = json.loads(changed.output)
+    assert revised["actions"] == planned["actions"]
+    assert not revised["primary_cancer_topic_evidence"]
+    stale = invoke(*args, "--apply-plan", planned["apply_plan"])
+    assert stale.exit_code == 1 and "plan changed" in stale.output
+    assert not session.scalars(select(Claim)).all()
+
+
 def test_draft_binds_detail_only_scope_to_the_bulk_record_and_review(
     session: Session, invoke, tmp_path: Path
 ):

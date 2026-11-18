@@ -97,6 +97,8 @@ A changed plan needs a new preview.
 Inspect the component lists and registry alias pairs in the preview. Groups whose
 registry records name each other wait for scope review. When both names identify the
 same regimen for the same indication, use the same verified name in their scope receipts.
+For a selected Cancer placement with multiple supported topics, inspect the MeSH descriptor
+and its topics in `primary_cancer_topic_evidence`. The preview digest binds that evidence.
 For a verified existing-claim link, supply the trial, group, claim and evidence hashes from
 the preview in `--verified-links`, with the reviewer and their reason. Preparation scores
 the nominated trials through the existing match step. Reapplying the same batch returns its

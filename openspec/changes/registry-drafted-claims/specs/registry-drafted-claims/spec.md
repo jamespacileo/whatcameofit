@@ -120,17 +120,24 @@ A claim drafted from registry records SHALL hold its intervention by name alone,
 - **THEN** it records both registry numbers and that it was drafted from registry records, and it has no source article
 
 ### Requirement: A draft the rule cannot place in a vertical is not made
-A registry-drafted claim's vertical SHALL be set by rule from the condition terms the registry files its trials under. When those terms point to no group, or to more than one, no claim SHALL be drafted, and the group SHALL be listed with its terms. No model SHALL be asked.
+A registry-drafted claim's vertical SHALL be set by rule from its registry condition terms and the MeSH vocabulary. Groups with no topic or unresolved competing evidence SHALL wait for topic review. Topic placement SHALL use these sources without a model.
 
-#### Scenario: Terms that point to two groups
-- **WHEN** a group's trials are filed under terms that point to two different groups
-- **THEN** no claim is drafted and the group is listed as not placed, with its terms
+#### Scenario: Independent terms point to competing topics
+- **WHEN** distinct disease descriptors support competing topics
+- **THEN** the group waits for topic review and the preview lists its terms
 
 #### Scenario: A registered condition has an explicit population qualifier
 - **WHEN** a proposed indication starts with a registered condition followed by an enrollment phrase such as “in adults”
 - **THEN** use descriptors with the exact registered condition name for topic evidence
 - **AND** when the registry omits its descriptor projection, an exact preferred disease or disorder label from the installed MeSH vocabulary can supply that evidence
-- **AND** preserve the full indication for grouping and hold any conflicting topic evidence
+- **AND** preserve the full indication for grouping and hold topic conflicts that the primary-topic rule cannot resolve
+
+### Requirement: One tumor descriptor can establish Cancer as the primary vertical
+A MeSH descriptor that places a disease in both Cancer and an anatomical topic SHALL establish Cancer as the primary vertical when the descriptor supports every candidate topic and all other supporting descriptors are its ancestors.
+
+#### Scenario: The same tumor descriptor supports Cancer and an anatomical topic
+- **WHEN** a group uses the primary Cancer vertical rule
+- **THEN** the preview lists the exact descriptor and all supported topics and binds them to its digest
 
 ### Requirement: A registry-drafted claim is prepared and decided as any draft
 A registry-drafted claim SHALL be pending until `thenwhat prepare --pending` has searched the registries for it, and SHALL then be decided by the rule for drafts. The trials it was drafted from SHALL be candidates, scored for the claim's indication, and SHALL NOT be approved for having led to it. A draft SHALL be approved only when at least one of the trials it was drafted from is approved for it; otherwise it SHALL stay pending and be listed with the scores.

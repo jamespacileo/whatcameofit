@@ -111,11 +111,11 @@ A third of stored names would each draft a claim for "first" or "home". The rule
 
 ### 5. A vertical by rule, or no draft
 
-A claim must have one vertical and a model chooses it today from an article. A registry-drafted claim has no article. The vertical is the general vertical of the group its trials' condition terms point to, by the mapping `approach-and-vertical-by-rule` builds. When the terms point to no group or to two, no claim is drafted and the group is listed.
+A claim must have one vertical and a model chooses it today from an article. A registry-drafted claim uses the general vertical its trials' condition terms point to under the shared MeSH mapping. On 2026-11-18 the operator chose Cancer when a single MeSH disease descriptor supports both Cancer and an anatomical topic. The specific descriptor must account for every supported topic. Broader descriptors from its own hierarchy can confirm the placement. Distinct competing descriptors and overlaps solely with non-anatomical topics stay in topic review.
 
 *Instead of* asking a model to place it: that would be a second, weaker way of setting the same field, which that change already declined for the approach.
 
-The shared topic mapping and NLM hierarchy are available in `thenwhat.clinical`. The planner can use stored descriptors or the annual NLM download. An exact registered condition also anchors topic evidence when the proposed indication begins with it and adds a population phrase such as “in adults”. The grouping keeps the full indication. When the registry omits its descriptor projection, an exact preferred disease or disorder label in MeSH can supply evidence for that registered condition. The plan records each supported group and its descriptors. A unique group gives the general vertical. Groups with conflicting evidence or without a supported group remain available for review.
+The shared topic mapping and NLM hierarchy are available in `thenwhat.clinical`. The planner can use stored descriptors or the annual NLM download. An exact registered condition also anchors topic evidence when the proposed indication begins with it and adds a population phrase such as “in adults”. The grouping keeps the full indication. When the registry omits its descriptor projection, an exact preferred disease or disorder label in MeSH can supply evidence for that registered condition. The plan records each supported group and its descriptors. The drafting preview binds the evidence for its Cancer placements to the digest. Claim preparation requires approved trial matches, and release requires the batch audit.
 
 ### 6. Words come from the site, and the export carries none
 

@@ -10,6 +10,7 @@ The operator decided on 2026-11-17 that every named trial is to be cited by a cl
 
 - **A claim can be drafted from registry records, with no source article.** **BREAKING** for `claims`: a claim no longer needs a source article, and its first reported date may be empty. The glossary line for Claim and an ADR say so.
 - **One claim per intervention or full regimen and indication.** Grouping starts with the trial's registered treatment arms and full condition labels. A trial whose regimen and indication an existing claim is verified to hold is cited by that claim.
+- **The registry can establish a primary topic.** Cancer is the primary topic when the same MeSH disease descriptor supports Cancer and an anatomical topic. Competing disease descriptors go to topic review.
 - **A registry-drafted claim is prepared like any draft.** `thenwhat prepare` searches the registries for it and approves by rule. The trial it was drafted from is a candidate, scored for the claim's indication, and is not approved for having led to it. A draft whose own trial is not approved is not approved.
 - **Its wording is fixed.** The claim page says, in one fixed line, that no news report is linked to the claim yet. Its headline and summary are worded by the site from the intervention and the indication, never by a model. It is never worded as a treatment a reader can get.
 - **Lists can be narrowed to reported claims.** Wherever claims are listed, a reader can show only claims a report is linked to, and counts say how many of each there are.

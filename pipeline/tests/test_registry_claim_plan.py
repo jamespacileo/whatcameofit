@@ -660,13 +660,16 @@ def test_explicit_noninvestigational_product_is_kept_as_background_evidence():
     assert regimen.components == ("Premedication", "Study Drug")
 
 
-def test_only_a_unique_evidenced_general_vertical_is_assigned(tmp_path: Path):
+def test_topic_evidence_places_unique_groups_and_the_approved_cancer_overlap(tmp_path: Path):
     file = tmp_path / "desc2026.xml"
     mesh = [
         ("D009369", "Neoplasms", ["C04"]),
         ("D012140", "Respiratory Tract Diseases", ["C08"]),
+        ("D007239", "Infections", ["C01"]),
         ("D000001", "Example Neoplasm", ["C04.200"]),
-        ("D000002", "Example Overlap", ["C04.300", "C08.300"]),
+        ("D000002", "Example Overlap", ["C04.200.300", "C08.300"]),
+        ("D000003", "Independent Lung Disease", ["C08.400"]),
+        ("D000004", "Example Infection Overlap", ["C04.400", "C01.400"]),
     ]
     elements = []
     for identifier, label, trees in mesh:
@@ -680,7 +683,7 @@ def test_only_a_unique_evidenced_general_vertical_is_assigned(tmp_path: Path):
     vocabulary = mesh_xml_vocabulary(file)
     arms = [{"type": "EXPERIMENTAL", "interventionNames": ["Drug: Example XR"]}]
     records = []
-    for identifier, label, _ in mesh[2:]:
+    for identifier, label, _ in mesh[3:5]:
         given = study([label], arms)
         given["derivedSection"] = {
             "conditionBrowseModule": {"meshes": [{"id": identifier, "term": label}]}
@@ -692,7 +695,8 @@ def test_only_a_unique_evidenced_general_vertical_is_assigned(tmp_path: Path):
     unique, overlap = plan.groups
     assert unique.vertical == "cancer"
     assert unique.vertical_evidence == {"cancer": {"D000001"}}
-    assert overlap.vertical is None
+    assert overlap.vertical == "cancer"
+    assert overlap.primary_cancer_descriptor == "D000002"
     assert set(overlap.vertical_evidence) == {"cancer", "lungs-and-breathing"}
 
     def reviewed(
@@ -738,6 +742,12 @@ def test_only_a_unique_evidenced_general_vertical_is_assigned(tmp_path: Path):
             ["Other Disease", "Example Overlap"],
             ("D000002", "Example Overlap"),
         ),
+        reviewed(
+            "NCT00000005",
+            "Example Infection Overlap",
+            ["Example Infection Overlap"],
+            ("D000004", "Example Infection Overlap"),
+        ),
     ]
     placed = group_registry_trials(
         [record for record, _ in cases],
@@ -749,5 +759,35 @@ def test_only_a_unique_evidenced_general_vertical_is_assigned(tmp_path: Path):
     assert groups["NCT00000002"].vertical == "cancer"
     assert groups["NCT00000002"].condition_terms == {("D000001", "Example Neoplasm")}
     assert not groups["NCT00000003"].vertical_evidence
-    assert groups["NCT00000004"].vertical is None
+    assert groups["NCT00000004"].vertical == "cancer"
     assert set(groups["NCT00000004"].vertical_evidence) == {"cancer", "lungs-and-breathing"}
+    assert groups["NCT00000005"].vertical is None
+    assert set(groups["NCT00000005"].vertical_evidence) == {"cancer", "infections"}
+
+    different_evidence = study(["Example Overlap"], arms)
+    different_evidence["derivedSection"] = {
+        "conditionBrowseModule": {"meshes": [{"id": "D000003", "term": "Independent Lung Disease"}]}
+    }
+    concurrent = group_registry_trials(
+        [records[1], ("independent", different_evidence)], vocabulary=vocabulary
+    )
+    assert concurrent.groups[0].vertical is None
+    assert concurrent.groups[0].vertical_evidence["lungs-and-breathing"] == {"D000002", "D000003"}
+
+    broad_context = study(["Example Overlap"], arms)
+    broad_context["derivedSection"] = {
+        "conditionBrowseModule": {
+            "meshes": [
+                {"id": "D000001", "term": "Example Neoplasm"},
+                {"id": "D000002", "term": "Example Overlap"},
+            ]
+        }
+    }
+    # Both registry terms apply when neither label exactly matches the condition.
+    no_exact = broad_context["derivedSection"]["conditionBrowseModule"]["meshes"][1]
+    no_exact["term"] = "Example Condition Naming Variant"
+    (supported,) = group_registry_trials(
+        [("with-broad-term", broad_context)], vocabulary=vocabulary
+    ).groups
+    assert supported.primary_cancer_descriptor == "D000002"
+    assert supported.vertical_evidence["cancer"] == {"D000001", "D000002"}
