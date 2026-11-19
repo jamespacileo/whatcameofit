@@ -1,0 +1,21 @@
+---
+// An intervention's page on the pair path: its names and every pair for it.
+import ListingPage from "./ListingPage.astro";
+import { interventionListings } from "../lib/pairs";
+
+export function getStaticPaths() {
+  return interventionListings().map((listing) => ({ params: { intervention: listing.slug }, props: { listing } }));
+}
+
+const { listing } = Astro.props;
+---
+
+<ListingPage
+  title={listing.name}
+  kind="intervention"
+  description={`Where the public trial records show ${listing.name} stands, for each condition it is tested for.`}
+  pairs={listing.pairs}
+>
+  {listing.approach && <p>Kind of treatment: {listing.approach}.</p>}
+  {listing.otherNames.length > 0 && <p data-names>Also known as {listing.otherNames.join(", ")}.</p>}
+</ListingPage>

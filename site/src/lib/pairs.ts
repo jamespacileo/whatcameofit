@@ -65,6 +65,7 @@ export interface PairView {
   interventionSlug: string;
   condition: string;
   conditionId: string;
+  conditionSlug: string;
   statusCode: string;
   status: string;
   gloss: string;
@@ -112,6 +113,7 @@ export function pairView(page: any): PairView {
     interventionSlug: row.intervention.slug,
     condition: row.descriptor.label,
     conditionId: row.condition.descriptor_id,
+    conditionSlug: row.condition.slug,
     statusCode: row.status.code,
     status: STATUS_LABELS[row.status.code as keyof typeof STATUS_LABELS],
     gloss: STATUS_GLOSSES[row.status.code as keyof typeof STATUS_GLOSSES],
@@ -160,4 +162,163 @@ export function pairView(page: any): PairView {
 /** The pair pages this build makes, by address. Empty when it reads no bundle. */
 export function pairPages(): Record<string, any> {
   return pairBundle()?.pages.PairPage ?? {};
+}
+
+// Listing pages (openspec pairs-site, task 3.2). Every list is worked out here from the pair
+// pages themselves, not taken from a listing file's own `pairs`: the lab will give a pair
+// the most specific MeSH term its trials are filed under, so a category or condition lists
+// the pairs whose condition sits at or beneath it in the MeSH tree.
+
+export interface PairRow {
+  address: string;
+  intervention: string;
+  condition: string;
+  statusCode: string;
+  status: string;
+  trials: number;
+  asOf: string;
+  checkedByPerson: boolean;
+}
+
+export function pairRow(page: any): PairRow {
+  const { row } = page;
+  return {
+    address: row.pair.address,
+    intervention: shownName(row.intervention.preferred_name),
+    condition: row.descriptor.label,
+    statusCode: row.status.code,
+    status: STATUS_LABELS[row.status.code as keyof typeof STATUS_LABELS],
+    trials: page.trials.length,
+    asOf: row.status.as_of,
+    checkedByPerson: page.checked_by_person,
+  };
+}
+
+const byName = (a: PairRow, b: PairRow) =>
+  a.intervention.localeCompare(b.intervention) || a.condition.localeCompare(b.condition);
+
+/** Whether a MeSH tree number is the given one or beneath it. */
+function atOrBeneath(treeNumber: string, top: string): boolean {
+  return treeNumber === top || treeNumber.startsWith(`${top}.`);
+}
+
+/** The pairs whose condition sits at or beneath any of the given tree numbers. */
+export function pairsBeneath(treeNumbers: string[]): PairRow[] {
+  return Object.values(pairPages())
+    .filter((page) =>
+      page.row.descriptor.tree_numbers.some((number: string) => treeNumbers.some((top) => atOrBeneath(number, top))),
+    )
+    .map(pairRow)
+    .sort(byName);
+}
+
+export interface ConditionListing {
+  slug: string;
+  descriptorId: string;
+  label: string;
+  treeNumbers: string[];
+  pairs: PairRow[];
+}
+
+/** One listing a condition that a pair is for, with every pair at or beneath it. */
+export function conditionListings(): ConditionListing[] {
+  const conditions = new Map<string, any>();
+  for (const page of Object.values(pairPages())) {
+    conditions.set(page.row.condition.slug, { slug: page.row.condition.slug, ...page.row.descriptor });
+  }
+  return [...conditions.values()]
+    .map((condition) => ({
+      slug: condition.slug,
+      descriptorId: condition.descriptor_id,
+      label: condition.label,
+      treeNumbers: condition.tree_numbers,
+      pairs: pairsBeneath(condition.tree_numbers),
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+export interface InterventionListing {
+  slug: string;
+  name: string;
+  otherNames: string[];
+  approach: string | null;
+  pairs: PairRow[];
+}
+
+/** One listing an intervention the bundle has a page for, with its pairs. */
+export function interventionListings(): InterventionListing[] {
+  const pages = Object.values(pairPages());
+  return Object.values(pairBundle()?.pages.PairInterventionPage ?? {})
+    .map((file: any) => {
+      const preferred = file.intervention.preferred_name;
+      return {
+        slug: file.intervention.slug,
+        name: shownName(preferred),
+        otherNames: [
+          ...new Set(
+            file.names
+              .filter((name: any) => name.role !== "preferred" && name.name.toLowerCase() !== preferred.toLowerCase())
+              .map((name: any) => shownName(name.name)),
+          ),
+        ] as string[],
+        approach: file.approach?.approach ? APPROACH_LABELS[file.approach.approach] : null,
+        pairs: pages
+          .filter((page) => page.row.intervention.id === file.intervention.id)
+          .map(pairRow)
+          .sort(byName),
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export interface TopicListing {
+  slug: string;
+  title: string;
+  pairs: PairRow[];
+}
+
+/** One listing a topic of the bundle's topics page, with the pairs the lab filed under it. */
+export function topicListings(): TopicListing[] {
+  const topics = Object.values(pairBundle()?.pages.PairTopicsPage ?? {})[0];
+  if (!topics) return [];
+  const pages = Object.values(pairPages());
+  return topics.verticals
+    .map((vertical: any) => ({
+      slug: vertical.slug,
+      title: vertical.title,
+      pairs: pages
+        .filter((page) => page.row.filing.vertical === vertical.slug)
+        .map(pairRow)
+        .sort(byName),
+    }))
+    .sort((a: TopicListing, b: TopicListing) => a.title.localeCompare(b.title));
+}
+
+export interface CategoryListing {
+  descriptorId: string;
+  label: string;
+  treeNumbers: string[];
+  broader: { descriptorId: string; label: string }[];
+  narrower: { descriptorId: string; label: string; count: number }[];
+  pairs: PairRow[];
+}
+
+/** One listing a clinical category the bundle has a page for, with every pair at or
+ * beneath it. A narrower category with no pair beneath it is left out. */
+export function categoryListings(): CategoryListing[] {
+  const files = Object.values(pairBundle()?.pages.PairClinicalCategoryPage ?? {});
+  const known = new Set(files.map((file: any) => file.descriptor.descriptor_id));
+  const short = (descriptor: any) => ({ descriptorId: descriptor.descriptor_id, label: descriptor.label });
+  return files
+    .map((file: any) => ({
+      descriptorId: file.descriptor.descriptor_id,
+      label: file.descriptor.label,
+      treeNumbers: file.descriptor.tree_numbers,
+      broader: file.broader.filter((one: any) => known.has(one.descriptor_id)).map(short),
+      narrower: file.narrower
+        .map((one: any) => ({ ...short(one), count: pairsBeneath(one.tree_numbers).length }))
+        .filter((one: any) => one.count > 0 && known.has(one.descriptorId)),
+      pairs: pairsBeneath(file.descriptor.tree_numbers),
+    }))
+    .sort((a: CategoryListing, b: CategoryListing) => a.label.localeCompare(b.label));
 }

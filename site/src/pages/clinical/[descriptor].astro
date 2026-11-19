@@ -14,8 +14,11 @@ import {
   listedCategories,
   narrowerWithClaims,
 } from "../../lib/clinical";
+import { pairBundleFolder } from "../../lib/pairs";
 
 export function getStaticPaths() {
+  // A build that reads a bundle lists pairs on this address (src/pair/CategoryRoute.astro).
+  if (pairBundleFolder()) return [];
   const tree = buildTree(data.clinical, data.claims);
   return listedCategories(tree).map((node) => ({
     params: { descriptor: node.identifier },

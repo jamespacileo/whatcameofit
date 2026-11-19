@@ -1,6 +1,8 @@
-// The pair page (openspec pairs-site, task 3.1), built from tests/bundle: real pair pages the
-// lab's own pipeline test writes from its recorded slice. The claims site is built beside it
-// from tests/fixture-export.json, and a build given no bundle makes no pair page.
+// The pair page and the pages that list pairs (openspec pairs-site, tasks 3.1 and 3.2), built
+// from tests/bundle: real pair pages the lab's own pipeline test writes from its recorded
+// slice. The claims site is built beside it from tests/fixture-export.json, and a build given
+// no bundle makes no pair page. A third build drops the ancestor pair the lab will stop
+// making, to show the listings roll pairs up the MeSH tree themselves.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -14,6 +16,13 @@ import { STATUS_LABELS } from "../src/lib/status.ts";
 
 const withBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-"));
 const without = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-off-"));
+const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowest-"));
+// The bundle as the lab will cut it: a pair only at the most specific MeSH term, so no pair
+// for acoziborole and "Infections" itself.
+const ANCESTOR = "acoziborole--infections";
+const narrowestBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-narrowest-"));
+fs.cpSync("tests/bundle", narrowestBundle, { recursive: true });
+for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(narrowestBundle, folder, `${ANCESTOR}.json`));
 const pages = readBundle("tests/bundle").pages.PairPage;
 const TWO_TRIALS = "acoziborole--infections";
 
@@ -28,8 +37,21 @@ function page(dir, address) {
   return parseHTML(fs.readFileSync(path.join(dir, address, "index.html"), "utf8")).document;
 }
 
+/** The pairs a listing page lists, by address. */
+function listed(dir, address) {
+  return [...page(dir, address).querySelectorAll("[data-pair]")].map((row) => row.dataset.pair).sort();
+}
+
+const isBeneath = (file, tops) =>
+  file.row.descriptor.tree_numbers.some((number) => tops.some((top) => number === top || number.startsWith(`${top}.`)));
+const addresses = (files) => files.map((file) => file.row.pair.address).sort();
+
 before(() => {
-  for (const [dir, env] of [[withBundle, { PAIRS_BUNDLE: "tests/bundle" }], [without, { PAIRS_BUNDLE: "" }]]) {
+  for (const [dir, env] of [
+    [withBundle, { PAIRS_BUNDLE: "tests/bundle" }],
+    [without, { PAIRS_BUNDLE: "" }],
+    [narrowest, { PAIRS_BUNDLE: narrowestBundle }],
+  ]) {
     const result = build(dir, env);
     assert.equal(result.status, 0, result.stdout + result.stderr);
   }
@@ -73,7 +95,55 @@ test("a pair no person checked says so, and one a person checked does not", () =
   for (const [address] of checked) assert.equal(page(withBundle, address).querySelector("[data-pair-unchecked]"), null);
 });
 
-test("a build given no bundle makes no pair page", () => {
+test("a condition's page lists every pair for it or a condition beneath it, each with its status", () => {
+  const conditions = new Map(Object.values(pages).map((file) => [file.row.condition.slug, file.row.descriptor]));
+  for (const [slug, descriptor] of conditions) {
+    const expected = Object.values(pages).filter((file) => isBeneath(file, descriptor.tree_numbers));
+    assert.deepEqual(listed(withBundle, `condition/${slug}`), addresses(expected), slug);
+    const document = page(withBundle, `condition/${slug}`);
+    for (const file of expected) {
+      const row = document.querySelector(`[data-pair="${file.row.pair.address}"]`);
+      assert.match(row.textContent, new RegExp(STATUS_LABELS[file.row.status.code]));
+      assert.ok(row.querySelector(`a[href="/${file.row.pair.address}"]`));
+    }
+  }
+});
+
+test("an intervention's page lists every pair for it", () => {
+  for (const file of Object.values(readBundle("tests/bundle").pages.PairInterventionPage)) {
+    const expected = Object.values(pages).filter((one) => one.row.intervention.id === file.intervention.id);
+    assert.ok(expected.length > 0);
+    assert.deepEqual(listed(withBundle, `intervention/${file.intervention.slug}`), addresses(expected));
+  }
+});
+
+test("a topic's page lists the pairs filed under it, and a category's the pairs at or beneath it", () => {
+  const bundle = readBundle("tests/bundle");
+  for (const file of Object.values(bundle.pages.PairTopicPage)) {
+    const expected = Object.values(pages).filter((one) => one.row.filing.vertical === file.vertical.slug);
+    assert.deepEqual(listed(withBundle, `topic/${file.vertical.slug}`), addresses(expected));
+  }
+  for (const file of Object.values(bundle.pages.PairClinicalCategoryPage)) {
+    const expected = Object.values(pages).filter((one) => isBeneath(one, file.descriptor.tree_numbers));
+    // The lab's own list for the category agrees with the site's roll-up.
+    assert.deepEqual(addresses(expected), file.pairs.map((one) => one.pair.address).sort());
+    assert.deepEqual(listed(withBundle, `clinical/${file.descriptor.descriptor_id}`), addresses(expected));
+  }
+});
+
+test("with no pair at an ancestor term, the category and topic still list the pairs beneath it", () => {
+  const beneath = ["acoziborole--trypanosomiasis", "acoziborole--trypanosomiasis-african"];
+  assert.deepEqual(listed(narrowest, "clinical/D007239"), beneath);
+  assert.deepEqual(listed(narrowest, "topic/infections"), beneath);
+  assert.ok(!fs.existsSync(path.join(narrowest, ANCESTOR)));
+  assert.ok(!fs.existsSync(path.join(narrowest, "condition", "infections")));
+});
+
+test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));
+  assert.ok(!fs.existsSync(path.join(without, "intervention")));
+  assert.ok(!fs.existsSync(path.join(without, "condition")));
+  assert.match(page(without, "topic/gum-disease").querySelector("h1").textContent, /gum/i);
+  assert.equal(page(without, "topic/gum-disease").querySelector("[data-pair-table]"), null);
 });

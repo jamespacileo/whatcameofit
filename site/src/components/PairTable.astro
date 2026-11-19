@@ -1,0 +1,58 @@
+---
+// A list of pairs: each with its intervention, condition, status and how many trials.
+import type { PairRow } from "../lib/pairs";
+import { formatDate } from "../lib/timetable";
+
+interface Props {
+  pairs: PairRow[];
+  caption: string;
+}
+
+const { pairs, caption } = Astro.props;
+---
+
+{
+  pairs.length === 0 ? (
+    <p>No pair is listed here yet.</p>
+  ) : (
+    <table class="pair-table" data-pair-table>
+      <caption class="visually-hidden">{caption}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Treatment and condition</th>
+          <th scope="col">Where it stands</th>
+          <th scope="col">Trials</th>
+        </tr>
+      </thead>
+      <tbody>
+        {pairs.map((pair) => (
+          <tr data-pair={pair.address}>
+            <th scope="row">
+              <a href={`/${pair.address}`}>
+                {pair.intervention} for {pair.condition.toLowerCase()}
+              </a>
+            </th>
+            <td data-status={pair.statusCode}>
+              {pair.status}, as of {formatDate(pair.asOf)}
+              {!pair.checkedByPerson && <span class="note"> (not yet checked by a person)</span>}
+            </td>
+            <td>{pair.trials}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+}
+
+<style>
+  .pair-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .pair-table th,
+  .pair-table td {
+    text-align: left;
+    padding: 0.4rem 0.6rem 0.4rem 0;
+    vertical-align: top;
+  }
+</style>

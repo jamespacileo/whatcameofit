@@ -1,0 +1,22 @@
+---
+// A condition's page on the pair path: every pair for it or for a condition beneath it in MeSH.
+import ListingPage from "./ListingPage.astro";
+import { conditionListings } from "../lib/pairs";
+
+export function getStaticPaths() {
+  return conditionListings().map((listing) => ({ params: { condition: listing.slug }, props: { listing } }));
+}
+
+const { listing } = Astro.props;
+---
+
+<ListingPage
+  title={listing.label}
+  kind="condition"
+  description={`Treatments tested for ${listing.label.toLowerCase()}, and where the public trial records show each stands.`}
+  pairs={listing.pairs}
+>
+  <p class="what-this-is">
+    MeSH term {listing.descriptorId}. Lists this condition and the narrower ones beneath it. A condition is not a diagnosis.
+  </p>
+</ListingPage>
