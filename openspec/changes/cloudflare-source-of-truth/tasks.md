@@ -2,6 +2,9 @@
 
 ## 0. Restore, cutover and bulk completeness (P1)
 
+> Superseded on 2026-11-19 by `openspec/changes/pairs-site`: the operator dropped claims, and the site is built from the lab's page bundle. The open tasks of this section are not to be built.
+
+
 - [x] 0.1 <a id="task-f37"></a>Carry the runner outcomes, reasons, retry time and first-deferred time through schema, serializer, merge and restore. Test an older store and round-trip both waiting states before and after the retry time. [F37](../../../docs/reviews/2026-11-17-code-review.md#finding-f37) · [Acceptance scenario](specs/truth-store/spec.md#scenario-waiting-work-survives-a-bulk-round-trip)
 
 - [x] 0.2 <a id="task-f01"></a>Check completion across all batches. Interrupt a 20,001-record replay after batch one and compare two retries with an uninterrupted restore. [F01](../../../docs/reviews/2026-11-17-code-review.md#finding-f01) · [Acceptance scenario](specs/truth-store/spec.md#scenario-a-restore-resumes-between-batches)
@@ -70,6 +73,9 @@ Ships: `thenwhat` can write any record in natural-key form, push it, and export 
 
 ## 5. Phase 3: migration and the parallel run
 
+> Superseded on 2026-11-19 by `openspec/changes/pairs-site`: the operator dropped claims, and the site is built from the lab's page bundle. The open tasks of this section are not to be built.
+
+
 Ships: the store holds every record, checked each night against Postgres, which is still the source. Needs phases 1 and 2.
 
 - [ ] 5.1 **[operator]** Create the production D1 database, bucket and Queue in the European Union jurisdiction and set the ingest service's secrets; verify the deployment check passes
@@ -78,6 +84,9 @@ Ships: the store holds every record, checked each night against Postgres, which 
 - [ ] 5.4 Compare each night an export from Postgres with one from the store, the counts by kind, and 1,000 trials field by field, and count the evidence kept apart that day; verify the comparison's result is recorded each night and any difference is explained here
 
 ## 6. Phase 4: the build reads the store
+
+> Superseded on 2026-11-19 by `openspec/changes/pairs-site`: the operator dropped claims, and the site is built from the lab's page bundle. The open tasks of this section are not to be built.
+
 
 Ships: the site is built from the store, and the committed snapshot is no longer the source. Needs 7 nights of phase 3 with no difference.
 

@@ -1,6 +1,6 @@
 # 14. A held backfill batch can use a drawn audit
 
-Date 2026-11-18. Status accepted. Amends [ADR 0007](0007-a-read-batch-waits-for-its-audit.md) through `openspec/changes/registry-drafted-claims`.
+Date 2026-11-18. Status accepted. Amends [ADR 0007](0007-a-read-batch-waits-for-its-audit.md) through `openspec/changes/archive/2026-11-19-registry-drafted-claims`.
 
 ## Decision
 

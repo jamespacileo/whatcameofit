@@ -8,7 +8,7 @@ Sections 1 and 2 need only the lab's step S9 and its bundle command. Section 5 w
 - [ ] 1.2 Write the deltas that revise or remove the claim-keyed requirements of `claims`, `open-data`, `anniversaries`, `source-pages`, `sharing`, `landing-pages`, `health-areas`, `clinical-classification` and `deployment`, against the pair page models as merged at the lab's S9; verify `openspec validate pairs-site --strict`
 - [ ] 1.3 Read Cloudflare's current limits and prices for files in a deployment, R2 and KV, and note them, dated, in `docs/sources.md`; with the rehearsal's count of pair pages, fix the line of `design.md` decision 2
 - [ ] 1.4 Write the ADR for the bundle and on-request pages, and name the `CLAUDE.md` lines it supersedes
-- [ ] 1.5 **[operator]** Close `registry-drafted-claims`, `file-based-backfill`, `claim-identity-records` and `same-story-candidates` as superseded, and strike sections 0, 5 and 6 of `cloudflare-source-of-truth`
+- [x] 1.5 Done 2026-11-19 at the operator's word: `registry-drafted-claims`, `file-based-backfill`, `claim-identity-records` and `same-story-candidates` moved to `openspec/changes/archive/2026-11-19-*`, each with a `SUPERSEDED.md` and without folding its deltas; sections 0, 5 and 6 of `cloudflare-source-of-truth` marked superseded
 - [ ] 1.6 Add pair, bundle and address to `GLOSSARY.md` and retire claim's entry to history; verify the terms match the specs
 
 ## 2. The bundle in the build
