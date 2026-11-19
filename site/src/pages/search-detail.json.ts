@@ -9,8 +9,42 @@ import { outletDomain, outletIconPath } from "../lib/outlets";
 import { sourceName } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 import { PHASE_WORDS } from "../lib/trial-facts";
+import { pairBundleFolder, pairPages } from "../lib/pairs";
+
+/** The same on the pair path (openspec pairs-site): each pair's first report, where the lab
+ * holds one, and its trials, keyed by the pair's address. */
+function pairDetail(): Record<string, unknown> {
+  const pairs: Record<string, unknown> = {};
+  for (const [address, page] of Object.entries(pairPages())) {
+    const report = page.row.first_report;
+    const domain = report ? outletDomain(report.url) : null;
+    pairs[address] = {
+      reports: report
+        ? [
+            {
+              title: report.title,
+              outlet: report.outlet.trim() || domain,
+              domain,
+              icon: outletIconPath(domain!) ?? null,
+              url: report.url,
+              date: report.published ? formatDate(report.published) : null,
+            },
+          ]
+        : [],
+      trials: page.trials.map((trial: any) => ({
+        id: trial.nct_id,
+        title: trial.facts.title,
+        registry: "ClinicalTrials.gov",
+        url: `https://clinicaltrials.gov/study/${trial.nct_id}`,
+        phases: (trial.facts.phases ?? []).map((phase: string) => PHASE_WORDS[phase] ?? phase),
+      })),
+    };
+  }
+  return pairs;
+}
 
 export const GET: APIRoute = () => {
+  if (pairBundleFolder()) return Response.json({ schema_version: 1, claims: pairDetail() });
   const claims: Record<string, unknown> = {};
   for (const claim of data.claims) {
     claims[claim.slug] = {

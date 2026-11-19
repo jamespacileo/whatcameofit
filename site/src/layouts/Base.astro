@@ -9,6 +9,7 @@ import { CARD_NOTICE } from "../lib/card";
 import { AUDIENCES } from "../lib/audiences";
 import { THEME_COLOR, brandAsset } from "../lib/brand";
 import { data, listedTopics } from "../lib/export";
+import { pairBundleFolder, topicsIndex } from "../lib/pairs";
 import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
 import "../lib/public-build";
@@ -76,7 +77,8 @@ const imageUrl = new URL(brandAsset(image ?? "/brand-card.png"), Astro.site).hre
 // What the site's own card says, for a reader who cannot see it.
 const imageText = image ? imageAlt : `${SITE.name} ${SITE.tagline}. ${CARD_NOTICE}.`;
 // One topic is linked by name. With several, the item leads to the list of them all.
-const topics = listedTopics;
+// A build that reads a bundle (openspec pairs-site) links the pairs' topics.
+const topics = pairBundleFolder() ? topicsIndex() : listedTopics;
 const topicLink =
   topics.length === 1
     ? { href: `/topic/${topics[0].slug}`, label: topics[0].title, here: "page" as const }
