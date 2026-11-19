@@ -34,6 +34,8 @@ const pairPages = {
         // bundle; the claim versions of these two routes then make no page.
         injectRoute({ pattern: "/topic/[topic]", entrypoint: "./src/pair/TopicRoute.astro" });
         injectRoute({ pattern: "/clinical/[category]", entrypoint: "./src/pair/CategoryRoute.astro" });
+        injectRoute({ pattern: "/data/pairs/[address].json", entrypoint: "./src/pair/pair-record.json.ts" });
+        injectRoute({ pattern: "/data/pairs.json", entrypoint: "./src/pair/pairs-index.json.ts" });
       }
     },
   },

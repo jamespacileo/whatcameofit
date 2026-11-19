@@ -5,7 +5,11 @@
 import path from "node:path";
 import { APPROACH_LABELS } from "./approach.ts";
 import { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES, readBundle, type Bundle } from "./bundle.ts";
-import { STATUS_GLOSSES, STATUS_LABELS } from "./status.ts";
+import { articleKey } from "./article-key.mjs";
+import { UNCHECKED_NOTE } from "./notices.ts";
+import { DATA_LICENCE, dataCredit } from "./open-data.ts";
+import { STAGE_PATH, STATUS_GLOSSES, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "./status.ts";
+import { formatDate } from "./timetable.ts";
 import { PHASE_WORDS, TRIAL_STATE_WORDS } from "./trial-facts.ts";
 
 /** The bundle folder this build reads, or null when it builds no pair page. */
@@ -381,4 +385,86 @@ export function pairChanges(): PairChange[] {
       }));
     })
     .sort((a, b) => (a.on === b.on ? a.title.localeCompare(b.title) : a.on < b.on ? 1 : -1));
+}
+
+// The lookup file and open data on the pair path (openspec pairs-site, task 3.3).
+
+/** One pair as the lookup file words it: the keys the released extension reads, as
+ * `lookupClaim` gives them for a claim, so the extension needs no release at the cutover. */
+export function pairLookup(page: any) {
+  const view = pairView(page);
+  const report = page.row.first_report;
+  return {
+    headline: `${view.intervention} for ${view.condition.toLowerCase()}`,
+    page: `/${view.address}`,
+    status: view.status,
+    meaning: STATUS_MEANINGS[view.statusCode as keyof typeof STATUS_MEANINGS],
+    place: STAGE_PATH.indexOf(view.statusCode as (typeof STAGE_PATH)[number]) + 1 || null,
+    no_signal: overlayText(page.row.status.overlay_years),
+    first_reported: report?.published ? formatDate(report.published) : null,
+    latest_promise: null,
+    unchecked: view.checkedByPerson ? null : UNCHECKED_NOTE,
+    names: [view.intervention, ...view.otherNames],
+    indication: view.condition,
+    terms: [view.condition, ...(report ? [report.title] : [])].join(" "),
+    // The site's search answer reads the topic; the extension does not.
+    topic: page.row.filing.vertical,
+  };
+}
+
+/** The lookup file's `articles` and `claims` on the pair path: every pair by its address,
+ * and each pair's first report by its address in comparison form, where the lab holds one. */
+export function pairLookupMaps(): { articles: Record<string, string[]>; claims: Record<string, unknown> } {
+  const articles: Record<string, string[]> = {};
+  const claims: Record<string, unknown> = {};
+  for (const page of Object.values(pairPages())) {
+    const address = page.row.pair.address;
+    claims[address] = pairLookup(page);
+    const url = page.row.first_report?.url;
+    const compared = url ? articleKey(url) : null;
+    if (compared === null) continue;
+    const addresses = (articles[compared] ??= []);
+    if (!addresses.includes(address)) addresses.push(address);
+  }
+  return { articles, claims };
+}
+
+export const PAIR_RECORD_FORMAT = { format: "pair-record", format_version: 1 } as const;
+export const PAIR_INDEX_FORMAT = { format: "pairs-index", format_version: 1 } as const;
+
+const PAIR_SOURCES = [
+  { name: "ClinicalTrials.gov", url: "https://clinicaltrials.gov/" },
+  { name: "Medical Subject Headings (MeSH)", url: "https://www.nlm.nih.gov/mesh/" },
+];
+
+function pairDataHeader(siteName: string, siteUrl: string) {
+  return { licence: DATA_LICENCE, credit: dataCredit(siteName, siteUrl), sources: PAIR_SOURCES };
+}
+
+/** One pair's open data record: the lab's data file for it as written, with the licence,
+ * credit and sources, so the file stands alone. */
+export function pairDataRecord(address: string, siteName: string, siteUrl: string) {
+  const file = pairBundle()?.pages.PairDataFile?.[address];
+  if (!file) throw new Error(`The bundle holds no data file for the pair ${address}.`);
+  return { ...PAIR_RECORD_FORMAT, ...pairDataHeader(siteName, siteUrl), pair: file.pair };
+}
+
+/** The index of the pairs' open data records. */
+export function pairDataIndex(siteName: string, siteUrl: string) {
+  return {
+    ...PAIR_INDEX_FORMAT,
+    ...pairDataHeader(siteName, siteUrl),
+    entries: Object.keys(pairBundle()?.pages.PairDataFile ?? {})
+      .sort()
+      .map((address) => {
+        const row = pairRow(pairPages()[address]);
+        return {
+          address,
+          intervention: row.intervention,
+          condition: row.condition,
+          status: { code: row.statusCode },
+          record: `/data/pairs/${address}.json`,
+        };
+      }),
+  };
 }

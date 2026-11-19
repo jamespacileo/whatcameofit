@@ -10,6 +10,47 @@ import "../lib/public-build";
 import { sourcesOf } from "../lib/sources";
 import { canonicalAddress } from "../lib/structured";
 import { EXTENSION_OFFERED } from "../../site.config.mjs";
+import {
+  categoryListings,
+  clinicalTops,
+  conditionListings,
+  interventionListings,
+  pairBundleFolder,
+  pairPages,
+  topicsIndex,
+} from "../lib/pairs";
+
+/** The pages of the site's own, which every build makes. */
+function sitePages(): string[] {
+  return [
+    "/how-it-works",
+    "/guide",
+    ...guide.map((entry) => `/guide/${entry.slug}`),
+    "/about",
+    ...AUDIENCES.map((audience) => `/for/${audience}`),
+    ...(EXTENSION_OFFERED ? ["/extension"] : []),
+    "/privacy",
+    "/data",
+  ];
+}
+
+/** In a build that reads a bundle (openspec pairs-site): pair addresses and the pages that
+ * list pairs, and no claim's page. */
+function pairSitePages(): string[] {
+  return [
+    "/",
+    "/topics",
+    ...topicsIndex().map((topic) => `/topic/${topic.slug}`),
+    ...(clinicalTops().length > 0 ? ["/clinical"] : []),
+    ...categoryListings()
+      .filter((listing) => listing.pairs.length > 0)
+      .map((listing) => categoryPath(listing.descriptorId)),
+    ...interventionListings().map((listing) => `/intervention/${listing.slug}`),
+    ...conditionListings().map((listing) => `/condition/${listing.slug}`),
+    ...Object.keys(pairPages()).sort().map((address) => `/${address}`),
+    ...sitePages(),
+  ];
+}
 
 function publicPages(): string[] {
   const categories = listedCategories(buildTree(data.clinical, data.claims));
@@ -47,7 +88,7 @@ export const GET: APIRoute = () => {
   if (data.preview) {
     return new Response(null, { status: 404, statusText: "A preview build has no sitemap" });
   }
-  const entries = publicPages().map(
+  const entries = (pairBundleFolder() ? pairSitePages() : publicPages()).map(
     (page) => `  <url><loc>${escapeXml(canonicalAddress(page))}</loc></url>`,
   );
   const body = [
