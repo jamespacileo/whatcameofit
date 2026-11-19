@@ -1,6 +1,6 @@
 # 13. A claim can start with a registry record
 
-Date 2026-11-18. Status accepted. Implementation is tracked in `openspec/changes/registry-drafted-claims`.
+Date 2026-11-18. Status accepted. Implementation is tracked in `openspec/changes/archive/2026-11-19-registry-drafted-claims`.
 
 ## Context
 

@@ -48,7 +48,7 @@ Cost, read from the providers' pages that day: on the paid Workers plan the oper
 
 - Whether a reader's lookup leaves records, what it may create, and when it is processed. Decided later the same day in `0009`.
 - Where subscriber emails will live in Phase 2.
-- How a device processes a dataset (`openspec/changes/file-based-backfill`).
+- How a device processes a dataset (`openspec/changes/archive/2026-11-19-file-based-backfill`).
 
 ## Consequences
 
