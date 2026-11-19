@@ -217,6 +217,33 @@ test("the sitemap lists pair addresses and the pages that list pairs, and no cla
   for (const address of Object.keys(pages)) assert.ok(!locations(without).includes(`/${address}`));
 });
 
+test("the home page opens with the lookup box, then the latest changes, topics and treatments of pairs", () => {
+  const document = page(withBundle, "");
+  assert.ok(document.querySelector("#lookup-title"));
+  const latest = [...document.querySelectorAll('[data-home="changes"] [data-pair]')].map((item) => item.dataset.pair);
+  const changes = Object.values(pages).flatMap((file) => file.history.map((change) => ({ on: change.on, address: file.row.pair.address })));
+  assert.equal(latest.length, Math.min(10, changes.length));
+  for (const address of latest) assert.ok(pages[address], address);
+  const topics = [...document.querySelectorAll('[data-home="topics"] [data-topic]')].map((item) => item.dataset.topic);
+  assert.deepEqual(topics.sort(), [...new Set(Object.values(pages).map((file) => file.row.filing.vertical))].sort());
+  const treatments = [...document.querySelectorAll('[data-home="treatments"] [data-intervention]')].map((item) => item.dataset.intervention);
+  assert.deepEqual(treatments.sort(), [...new Set(Object.values(pages).map((file) => file.row.intervention.slug))].sort());
+  // The claims home is left out whole, with its scripts.
+  assert.equal(page(without, "").querySelector("[data-home]"), null);
+  assert.ok(fs.readFileSync(path.join(without, "index.html"), "utf8").length > fs.readFileSync(path.join(withBundle, "index.html"), "utf8").length);
+});
+
+test("the search detail file gives each pair its trials, by the pair's address", () => {
+  const detail = JSON.parse(fs.readFileSync(path.join(withBundle, "search-detail.json"), "utf8"));
+  assert.deepEqual(Object.keys(detail.claims).sort(), Object.keys(pages).sort());
+  for (const [address, file] of Object.entries(pages)) {
+    assert.deepEqual(detail.claims[address].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
+    assert.equal(detail.claims[address].reports.length, file.row.first_report ? 1 : 0);
+  }
+  const claimsDetail = JSON.parse(fs.readFileSync(path.join(without, "search-detail.json"), "utf8"));
+  for (const address of Object.keys(pages)) assert.equal(claimsDetail.claims[address], undefined);
+});
+
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));

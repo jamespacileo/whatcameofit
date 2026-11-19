@@ -1,0 +1,82 @@
+---
+// The home page on the pair path: the lookup box, then the latest status changes, the topics
+// and the treatments followed. The first version shows no reports (design decision 6).
+import Base from "../layouts/Base.astro";
+import Lookup from "../components/Lookup.astro";
+import { SITE } from "../../site.config.mjs";
+import { STATUS_LABELS } from "../lib/status";
+import { interventionListings, pairChanges, topicsIndex } from "../lib/pairs";
+import { formatDate } from "../lib/timetable";
+
+const LATEST = 10;
+const changes = pairChanges().slice(0, LATEST);
+const topics = topicsIndex();
+const interventions = interventionListings().filter((listing) => listing.pairs.length > 0);
+const label = (code: string) => STATUS_LABELS[code as keyof typeof STATUS_LABELS];
+---
+
+<Base current="home">
+  <section class="band home" slot="band" aria-labelledby="lookup-title">
+    <div class="wrap">
+      <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>
+      <p class="lede">{SITE.description}</p>
+      <Lookup />
+    </div>
+  </section>
+
+  <section aria-labelledby="latest" data-home="changes">
+    <h2 class="bar sheet-title" id="latest">Latest status changes</h2>
+    {
+      changes.length === 0 ? (
+        <p>No status has changed yet.</p>
+      ) : (
+        <ol class="home-changes">
+          {changes.map((change) => (
+            <li data-pair={change.address}>
+              {formatDate(change.on)}: <a href={`/${change.address}`}>{change.title}</a>,{" "}
+              {change.before ? `${label(change.before)} to ${label(change.code)}` : `first set: ${label(change.code)}`}
+            </li>
+          ))}
+        </ol>
+      )
+    }
+    <p><a href="/changes.xml">Status changes feed</a></p>
+  </section>
+
+  <section aria-labelledby="home-topics" data-home="topics">
+    <h2 class="bar sheet-title" id="home-topics">Topics</h2>
+    <ul class="home-list">
+      {
+        topics.map((topic) => (
+          <li data-topic={topic.slug}>
+            <a href={`/topic/${topic.slug}`}>{topic.title}</a> ({topic.count})
+          </li>
+        ))
+      }
+    </ul>
+    <p><a href="/topics">Every topic</a> · <a href="/clinical">Clinical categories</a></p>
+  </section>
+
+  <section aria-labelledby="home-treatments" data-home="treatments">
+    <h2 class="bar sheet-title" id="home-treatments">Treatments followed</h2>
+    <ul class="home-list">
+      {
+        interventions.map((listing) => (
+          <li data-intervention={listing.slug}>
+            <a href={`/intervention/${listing.slug}`}>{listing.name}</a> ({listing.pairs.length})
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Base>
+
+<style>
+  .home-changes,
+  .home-list {
+    padding-left: 1.2em;
+  }
+  section[data-home] {
+    margin-block: 2rem;
+  }
+</style>
