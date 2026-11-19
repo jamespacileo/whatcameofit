@@ -5,6 +5,10 @@
 import Base from "../layouts/Base.astro";
 import { data, listedTopics } from "../lib/export";
 import { reportedClaimCount } from "../lib/reports";
+import TopicsIndex from "../pair/TopicsIndex.astro";
+import { pairBundleFolder } from "../lib/pairs";
+// A build that reads a bundle lists pairs here (openspec pairs-site).
+const pairIndex = pairBundleFolder() !== null;
 
 const topics = listedTopics
   .map((topic) => {
@@ -72,6 +76,10 @@ const reported = topics.reduce((sum, topic) => sum + topic.reported, 0);
 const hasClinical = data.claims.some((claim) => (claim.clinical_categories ?? []).length > 0);
 ---
 
+{
+  pairIndex ? (
+    <TopicsIndex />
+  ) : (
 <Base
   title="Topics"
   description={grouped
@@ -130,6 +138,8 @@ const hasClinical = data.claims.some((claim) => (claim.clinical_categories ?? []
     }
   </div>
 </Base>
+  )
+}
 
 <script>
   // Typing narrows the list in place, by a topic's name or its group's: a group

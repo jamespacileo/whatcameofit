@@ -139,6 +139,35 @@ test("with no pair at an ancestor term, the category and topic still list the pa
   assert.ok(!fs.existsSync(path.join(narrowest, "condition", "infections")));
 });
 
+test("the topics page counts the pairs filed under each topic, and the clinical index starts at the top categories", () => {
+  const bundle = readBundle("tests/bundle");
+  const document = page(withBundle, "topics");
+  assert.ok(document.querySelector('[data-listing="topics"]'));
+  const counts = Map.groupBy(Object.values(pages), (file) => file.row.filing.vertical);
+  const shown = [...document.querySelectorAll("[data-topic]")];
+  assert.deepEqual(shown.map((item) => item.dataset.topic).sort(), [...counts.keys()].sort());
+  for (const item of shown) {
+    assert.equal(item.querySelector(".count").firstChild.textContent.trim(), String(counts.get(item.dataset.topic).length));
+  }
+  const categories = Object.values(bundle.pages.PairClinicalCategoryPage);
+  const known = new Set(categories.map((file) => file.descriptor.descriptor_id));
+  const tops = categories
+    .filter((file) => !file.broader.some((one) => known.has(one.descriptor_id)))
+    .map((file) => file.descriptor.descriptor_id);
+  const listedTops = [...page(withBundle, "clinical").querySelectorAll("[data-category]")].map((item) => item.dataset.category);
+  assert.deepEqual(listedTops.sort(), tops.sort());
+});
+
+test("the changes feed has an entry for each change in each pair's history, linking the pair", () => {
+  const xml = fs.readFileSync(path.join(withBundle, "changes.xml"), "utf8");
+  const links = [...xml.matchAll(/<entry>[\s\S]*?<link href="([^"]+)"\/>/g)].map((match) => new URL(match[1]).pathname.slice(1));
+  const expected = Object.values(pages).flatMap((file) => file.history.map(() => file.row.pair.address));
+  assert.deepEqual(links.sort(), expected.sort());
+  for (const file of Object.values(pages)) {
+    for (const change of file.history) assert.ok(xml.includes(STATUS_LABELS[change.after]), change.after);
+  }
+});
+
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));
@@ -146,4 +175,8 @@ test("a build given no bundle makes no pair page, and keeps the claims' listings
   assert.ok(!fs.existsSync(path.join(without, "condition")));
   assert.match(page(without, "topic/gum-disease").querySelector("h1").textContent, /gum/i);
   assert.equal(page(without, "topic/gum-disease").querySelector("[data-pair-table]"), null);
+  assert.equal(page(without, "topics").querySelector("[data-listing]"), null);
+  assert.equal(page(without, "clinical").querySelector("[data-listing]"), null);
+  const feed = fs.readFileSync(path.join(without, "changes.xml"), "utf8");
+  for (const address of Object.keys(pages)) assert.ok(!feed.includes(`/${address}"`), address);
 });
