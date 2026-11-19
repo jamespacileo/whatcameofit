@@ -15,11 +15,14 @@ Sections 1 and 2 need only the lab's step S9 and its bundle command. Section 5 w
 
 - [x] 2.1 Done 2026-11-19: the pair pages and schemas the lab's own pipeline test writes from its recorded slice (branch `track-pairs-s9`, 12 pairs), committed under `site/tests/bundle/`. To be cut again when S9 merges. Was: The small bundle from the lab, committed under `site/tests/bundle/`; verify it holds no article text and each file fits its schema
 - [x] 2.1a Done 2026-11-19: migration `0011_pairs.sql` and `store/ingest/scripts/load-pairs.mjs`; `tests/pairs-load.test.mjs` loads the small bundle on D1's local engine, reads a page back as written, and shows a load stopped early changes nothing a reader sees
-- [ ] 2.1b **[operator's machine]** Apply migration 0011 to the preview database and load the small bundle (`node scripts/load-pairs.mjs <folder> --remote`); verify the counts the command prints equal the local ones, and note the time and rows written
+- [x] 2.1b Done 2026-11-19 on the operator's machine, preview only: restore bookmark `0000000d-00000000-00005128-6f9a9d6e93f7b1c2397ae4982c34b693` noted first; migrations 0008 to 0011 applied in 1.8 s (0008 rebuilds `work_entry`, which held no row); `load-pairs.mjs --remote` loaded bundle `555633f514ca6c04` in 2.4 s with the local counts (12 pairs, 60 page parts). Production was not touched
 - [ ] 2.1c Export the current version from D1 to a bundle folder for the build; verify it equals the folder that was loaded
 - [ ] 2.2 Types and compiled validators generated from the bundle's schemas; verify a test that a file with a missing field is refused by name
 - [ ] 2.3 The build reads a bundle folder: manifest, checksum, counts; verify tests for a missing file and a wrong checksum
 - [ ] 2.4 Status and event wording keyed by the bundle's codes; verify the build stops on a code with no wording and on verdict wording
+
+- [x] 2.2a Done 2026-11-19: `site/src/lib/bundle.ts` reads a bundle folder, checks each file against its schema and each code against the site's wording, and gives a claim's address its pair's; `tests/bundle.test.mjs` on the small bundle. Compiled validators for the Worker and generated types are still 2.2
+- [ ] 2.5 **[lab]** `PairOrigin.created_at` is written with no offset, which its schema calls a date-time; the site reads both spellings until the lab writes one. Remove the allowance in `bundle.ts` then
 
 ## 3. Pages
 
