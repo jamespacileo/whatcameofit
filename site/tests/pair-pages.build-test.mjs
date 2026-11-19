@@ -1,4 +1,4 @@
-// The pair page and the pages that list pairs (openspec pairs-site, tasks 3.1 and 3.2), built
+// The pair page and the pages that list pairs (openspec pairs-site, tasks 3.1 to 3.3), built
 // from tests/bundle: real pair pages the lab's own pipeline test writes from its recorded
 // slice. The claims site is built beside it from tests/fixture-export.json, and a build given
 // no bundle makes no pair page. A third build drops the ancestor pair the lab will stop
@@ -13,6 +13,9 @@ import { parseHTML } from "linkedom";
 import { readBundle } from "../src/lib/bundle.ts";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
+import { SITE } from "../site.config.mjs";
+// The released extension's own decision of what its popup shows, run on the built file.
+import { stateFor } from "../../extension/src/lookup.js";
 
 const withBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-"));
 const without = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-off-"));
@@ -166,6 +169,52 @@ test("the changes feed has an entry for each change in each pair's history, link
   for (const file of Object.values(pages)) {
     for (const change of file.history) assert.ok(xml.includes(STATUS_LABELS[change.after]), change.after);
   }
+});
+
+test("the lookup file lists every pair by its address, in the shape the released extension reads", () => {
+  const lookup = JSON.parse(fs.readFileSync(path.join(withBundle, "lookup.json"), "utf8"));
+  const claimsLookup = JSON.parse(fs.readFileSync(path.join(without, "lookup.json"), "utf8"));
+  assert.deepEqual(Object.keys(lookup).sort(), Object.keys(claimsLookup).sort());
+  assert.deepEqual(Object.keys(lookup.claims).sort(), Object.keys(pages).sort());
+  const claimKeys = Object.keys(Object.values(claimsLookup.claims)[0]).sort();
+  for (const entry of Object.values(lookup.claims)) assert.deepEqual(Object.keys(entry).sort(), claimKeys);
+  const site = new URL(SITE.url).host;
+  for (const [address, file] of Object.entries(pages)) {
+    const state = stateFor(`${site}/${address}`, { index: lookup, savedAt: null }, site);
+    assert.equal(state.kind, "tracked", address);
+    assert.deepEqual(state.claims.map((entry) => entry.page), [`/${address}`]);
+    assert.equal(state.claims[0].status, STATUS_LABELS[file.row.status.code]);
+    assert.equal(state.claims[0].unchecked === null, file.checked_by_person, address);
+  }
+  // A page of the site that is no pair's, and an article no pair came from.
+  assert.equal(stateFor(`${site}/how-it-works`, { index: lookup, savedAt: null }, site).kind, "no-page");
+  assert.equal(stateFor("news.example.org/story", { index: lookup, savedAt: null }, site).kind, "untracked");
+});
+
+test("each pair's open data record is the lab's data file as written, with the licence", () => {
+  const files = readBundle("tests/bundle").pages.PairDataFile;
+  const index = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs.json"), "utf8"));
+  assert.deepEqual(index.entries.map((entry) => entry.address), Object.keys(files).sort());
+  for (const [address, file] of Object.entries(files)) {
+    const record = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs", `${address}.json`), "utf8"));
+    assert.equal(record.format, "pair-record");
+    assert.match(record.licence, /CC BY 4\.0/);
+    assert.deepEqual(record.pair, file.pair);
+  }
+  assert.ok(!fs.existsSync(path.join(without, "data", "pairs")));
+});
+
+test("the sitemap lists pair addresses and the pages that list pairs, and no claim's page", () => {
+  const locations = (dir) =>
+    [...fs.readFileSync(path.join(dir, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname);
+  const listed = new Set(locations(withBundle));
+  for (const address of Object.keys(pages)) assert.ok(listed.has(`/${address}`), address);
+  for (const file of Object.values(readBundle("tests/bundle").pages.PairInterventionPage)) {
+    assert.ok(listed.has(`/intervention/${file.intervention.slug}`));
+  }
+  assert.ok(!listed.has("/approved-claim"));
+  assert.ok(locations(without).includes("/approved-claim"));
+  for (const address of Object.keys(pages)) assert.ok(!locations(without).includes(`/${address}`));
 });
 
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
