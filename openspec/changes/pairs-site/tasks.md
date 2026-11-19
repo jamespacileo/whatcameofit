@@ -27,6 +27,8 @@ Sections 1 and 2 need only the lab's step S9 and its bundle command. Section 5 w
 ## 3. Pages
 
 - [ ] 3.1 The pair page at `/{address}`, from `PairPage`; verify a build test for a pair with two trials and one with a model-keyed intervention
+- [x] 3.1a Done 2026-11-19: `site/src/pair/PairRoute.astro` and `site/src/lib/pairs.ts`: the pair page at `/{address}` with its status, the events that set it, each trial (state, phases, people, dates, arms, results posted, papers, its events), the history of the status, other names and the registries searched; "not yet checked by a person" where `checked_by_person` is false. Built only when `PAIRS_BUNDLE` names a bundle folder, so the claims site is unchanged and a merge to main publishes no pair page until the cutover. `tests/pair-pages.build-test.mjs` builds the small bundle beside the claims fixture, and a build with no bundle. Still open in 3.1: the model-keyed intervention, because the small bundle has none (every intervention is keyed by substance) and `PairPage` carries no score (3.1b)
+- [ ] 3.1b **[lab]** Give `PairPage` the chooser's score and reasons for an intervention it keyed, and for a trial matched below the sure band, so the page can show them as decision 7 and `docs/adr/0001` and `0004` require; cut the small bundle with one such pair
 - [ ] 3.2 Intervention, condition, topic, topics, clinical index and category pages and the changes feed, from their page models
 - [ ] 3.3 Home, search index, sitemap, open-data files, cards, embeds and `lookup.json` on pairs; verify the extension's tests against the new index
 - [ ] 3.4 Remove the pages and feeds of `design.md` decision 6 and every claim-only module; verify no source file reads `export.json`
@@ -39,6 +41,7 @@ Sections 1 and 2 need only the lab's step S9 and its bundle command. Section 5 w
 - [ ] 4.3 Redirects from the moved-addresses file, 410 for archived claims kept; verify a test for each and for a slug equal to its address
 - [ ] 4.4 `make deploy`: read the current version, export its bundle, check it, build, deploy; `docs/deploy.md` says how to publish and how to roll back; verify a rehearsal in dry-run mode
 - [ ] 4.5 A pull request's preview builds the preview database's bundle; verify one preview
+  - The preview database is migrated through 0011 and holds bundle `555633f514ca6c04` as its current version (2.1b, 2026-11-19), ready for 2.1c's export and this preview
 
 ## 5. Cutover
 
