@@ -1,0 +1,195 @@
+{
+ "intervention": {
+  "id": "substance:2IOR2OO3GW",
+  "key_kind": "substance",
+  "key_value": "2IOR2OO3GW",
+  "preferred_name": "ACOZIBOROLE",
+  "slug": "acoziborole",
+  "components": []
+ },
+ "names": [
+  {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "name": "ACOZIBOROLE",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:2IOR2OO3GW",
+  "approach": "drug",
+  "basis": "registry_intervention_type",
+  "registry_type": "DRUG",
+  "trials": 4
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "key": "substance:2IOR2OO3GW|D007239",
+    "address": "acoziborole--infections",
+    "nct_ids": [
+     "NCT05256017",
+     "NCT05433350"
+    ],
+    "checked_by_person": true
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D007239",
+    "slug": "infections"
+   },
+   "descriptor": {
+    "descriptor_id": "D007239",
+    "label": "Infections",
+    "tree_numbers": [
+     "C01"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05256017|started|2021-12-30",
+     "NCT05256017|registered|2022-02-25",
+     "NCT05433350|registered|2022-06-27",
+     "NCT05433350|started|2022-07-09"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "claim_slug": "acoziborole-gambiense-sleeping-sickness",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "key": "substance:2IOR2OO3GW|D014352",
+    "address": "acoziborole--trypanosomiasis",
+    "nct_ids": [
+     "NCT07789743"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014352",
+    "slug": "trypanosomiasis"
+   },
+   "descriptor": {
+    "descriptor_id": "D014352",
+    "label": "Trypanosomiasis",
+    "tree_numbers": [
+     "C01.610.752.300.900"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT07789743|started|2024-03-15",
+     "NCT07789743|registered|2026-08-27"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014353",
+    "key": "substance:2IOR2OO3GW|D014353",
+    "address": "acoziborole--trypanosomiasis-african",
+    "nct_ids": [
+     "NCT03087955",
+     "NCT05256017",
+     "NCT05433350"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014353",
+    "slug": "trypanosomiasis-african"
+   },
+   "descriptor": {
+    "descriptor_id": "D014353",
+    "label": "Trypanosomiasis, African",
+    "tree_numbers": [
+     "C01.610.752.300.900.719",
+     "C01.920.937"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014353",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT03087955|started|2016-10-11",
+     "NCT03087955|registered|2017-03-23",
+     "NCT05256017|started|2021-12-30",
+     "NCT05256017|registered|2022-02-25",
+     "NCT05433350|registered|2022-06-27",
+     "NCT05433350|started|2022-07-09"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014353",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ]
+}

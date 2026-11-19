@@ -1,0 +1,16 @@
+{
+ "vertical": {
+  "slug": "dementia",
+  "title": "Dementia",
+  "group": "brain-and-nerves",
+  "covers": [
+   "D003704"
+  ]
+ },
+ "group": {
+  "slug": "brain-and-nerves",
+  "title": "Brain and nerves"
+ },
+ "pairs": [],
+ "retired": []
+}

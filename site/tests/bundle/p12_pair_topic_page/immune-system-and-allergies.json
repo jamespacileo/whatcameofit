@@ -1,0 +1,21 @@
+{
+ "vertical": {
+  "slug": "immune-system-and-allergies",
+  "title": "Immune system and allergies",
+  "group": "immune-system-and-allergies",
+  "covers": [
+   "D007154"
+  ]
+ },
+ "group": {
+  "slug": "immune-system-and-allergies",
+  "title": "Immune system and allergies"
+ },
+ "pairs": [],
+ "retired": [
+  {
+   "slug": "allergies",
+   "successor": "immune-system-and-allergies"
+  }
+ ]
+}

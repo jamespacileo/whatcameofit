@@ -1,0 +1,294 @@
+{
+ "groups": [
+  {
+   "slug": "ageing",
+   "title": "Ageing"
+  },
+  {
+   "slug": "bones-joints-and-muscles",
+   "title": "Bones, joints and muscles"
+  },
+  {
+   "slug": "brain-and-nerves",
+   "title": "Brain and nerves"
+  },
+  {
+   "slug": "cancer",
+   "title": "Cancer"
+  },
+  {
+   "slug": "diabetes-and-hormones",
+   "title": "Diabetes, weight and hormones"
+  },
+  {
+   "slug": "eyes-and-ears",
+   "title": "Eyes and ears"
+  },
+  {
+   "slug": "gut-and-liver",
+   "title": "Gut and liver"
+  },
+  {
+   "slug": "heart-and-circulation",
+   "title": "Heart, blood and circulation"
+  },
+  {
+   "slug": "immune-system-and-allergies",
+   "title": "Immune system and allergies"
+  },
+  {
+   "slug": "infections",
+   "title": "Infections"
+  },
+  {
+   "slug": "kidneys-and-bladder",
+   "title": "Kidneys and bladder"
+  },
+  {
+   "slug": "lungs-and-breathing",
+   "title": "Lungs and breathing"
+  },
+  {
+   "slug": "mental-health",
+   "title": "Mental health"
+  },
+  {
+   "slug": "mouth-and-teeth",
+   "title": "Mouth and teeth"
+  },
+  {
+   "slug": "pregnancy-and-fertility",
+   "title": "Pregnancy and fertility"
+  },
+  {
+   "slug": "skin-and-hair",
+   "title": "Skin and hair"
+  }
+ ],
+ "verticals": [
+  {
+   "slug": "ageing",
+   "title": "Ageing",
+   "group": "ageing",
+   "covers": [
+    "D000375"
+   ]
+  },
+  {
+   "slug": "bones-joints-and-muscles",
+   "title": "Bones, joints and muscles",
+   "group": "bones-joints-and-muscles",
+   "covers": [
+    "D009140",
+    "D014947"
+   ]
+  },
+  {
+   "slug": "brain-and-nerves",
+   "title": "Brain and nerves",
+   "group": "brain-and-nerves",
+   "covers": [
+    "D009422"
+   ]
+  },
+  {
+   "slug": "cancer",
+   "title": "Cancer",
+   "group": "cancer",
+   "covers": [
+    "D009369"
+   ]
+  },
+  {
+   "slug": "diabetes-and-hormones",
+   "title": "Diabetes, weight and hormones",
+   "group": "diabetes-and-hormones",
+   "covers": [
+    "D009750",
+    "D004700"
+   ]
+  },
+  {
+   "slug": "eyes-and-ears",
+   "title": "Eyes and ears",
+   "group": "eyes-and-ears",
+   "covers": [
+    "D005128",
+    "D004427"
+   ]
+  },
+  {
+   "slug": "gut-and-liver",
+   "title": "Gut and liver",
+   "group": "gut-and-liver",
+   "covers": [
+    "D004066"
+   ]
+  },
+  {
+   "slug": "heart-and-circulation",
+   "title": "Heart, blood and circulation",
+   "group": "heart-and-circulation",
+   "covers": [
+    "D002318",
+    "D006425"
+   ]
+  },
+  {
+   "slug": "immune-system-and-allergies",
+   "title": "Immune system and allergies",
+   "group": "immune-system-and-allergies",
+   "covers": [
+    "D007154"
+   ]
+  },
+  {
+   "slug": "infections",
+   "title": "Infections",
+   "group": "infections",
+   "covers": [
+    "D007239"
+   ]
+  },
+  {
+   "slug": "kidneys-and-bladder",
+   "title": "Kidneys and bladder",
+   "group": "kidneys-and-bladder",
+   "covers": [
+    "D007674",
+    "D014570"
+   ]
+  },
+  {
+   "slug": "lungs-and-breathing",
+   "title": "Lungs and breathing",
+   "group": "lungs-and-breathing",
+   "covers": [
+    "D012140"
+   ]
+  },
+  {
+   "slug": "mental-health",
+   "title": "Mental health",
+   "group": "mental-health",
+   "covers": [
+    "D001523"
+   ]
+  },
+  {
+   "slug": "mouth-and-teeth",
+   "title": "Mouth and teeth",
+   "group": "mouth-and-teeth",
+   "covers": [
+    "D009057"
+   ]
+  },
+  {
+   "slug": "pregnancy-and-fertility",
+   "title": "Pregnancy and fertility",
+   "group": "pregnancy-and-fertility",
+   "covers": [
+    "D011248",
+    "D007246"
+   ]
+  },
+  {
+   "slug": "skin-and-hair",
+   "title": "Skin and hair",
+   "group": "skin-and-hair",
+   "covers": [
+    "D017437"
+   ]
+  },
+  {
+   "slug": "dementia",
+   "title": "Dementia",
+   "group": "brain-and-nerves",
+   "covers": [
+    "D003704"
+   ]
+  },
+  {
+   "slug": "gum-disease",
+   "title": "Gum disease",
+   "group": "mouth-and-teeth",
+   "covers": [
+    "D010510"
+   ]
+  }
+ ],
+ "filings": [
+  {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "condition_id": "D007239",
+   "vertical": "infections",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "condition_id": "D014352",
+   "vertical": "infections",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "condition_id": "D014353",
+   "vertical": "infections",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D017563",
+   "vertical": "lungs-and-breathing",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D045743",
+   "vertical": "skin-and-hair",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009133",
+   "vertical": "brain-and-nerves",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009134",
+   "vertical": "brain-and-nerves",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009468",
+   "vertical": "brain-and-nerves",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009765",
+   "vertical": "diabetes-and-hormones",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D014897",
+   "vertical": "brain-and-nerves",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D020879",
+   "vertical": "brain-and-nerves",
+   "basis": "one_derived_topic"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D050177",
+   "vertical": "diabetes-and-hormones",
+   "basis": "one_derived_topic"
+  }
+ ]
+}

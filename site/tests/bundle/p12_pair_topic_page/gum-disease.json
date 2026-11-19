@@ -1,0 +1,16 @@
+{
+ "vertical": {
+  "slug": "gum-disease",
+  "title": "Gum disease",
+  "group": "mouth-and-teeth",
+  "covers": [
+   "D010510"
+  ]
+ },
+ "group": {
+  "slug": "mouth-and-teeth",
+  "title": "Mouth and teeth"
+ },
+ "pairs": [],
+ "retired": []
+}

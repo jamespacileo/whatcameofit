@@ -1,0 +1,16 @@
+{
+ "vertical": {
+  "slug": "mental-health",
+  "title": "Mental health",
+  "group": "mental-health",
+  "covers": [
+   "D001523"
+  ]
+ },
+ "group": {
+  "slug": "mental-health",
+  "title": "Mental health"
+ },
+ "pairs": [],
+ "retired": []
+}

@@ -1,0 +1,22 @@
+{
+ "vertical": {
+  "slug": "bones-joints-and-muscles",
+  "title": "Bones, joints and muscles",
+  "group": "bones-joints-and-muscles",
+  "covers": [
+   "D009140",
+   "D014947"
+  ]
+ },
+ "group": {
+  "slug": "bones-joints-and-muscles",
+  "title": "Bones, joints and muscles"
+ },
+ "pairs": [],
+ "retired": [
+  {
+   "slug": "pain",
+   "successor": "bones-joints-and-muscles"
+  }
+ ]
+}

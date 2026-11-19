@@ -1,0 +1,153 @@
+{
+ "pair": {
+  "row": {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "key": "substance:2IOR2OO3GW|D014352",
+    "address": "acoziborole--trypanosomiasis",
+    "nct_ids": [
+     "NCT07789743"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014352",
+    "slug": "trypanosomiasis"
+   },
+   "descriptor": {
+    "descriptor_id": "D014352",
+    "label": "Trypanosomiasis",
+    "tree_numbers": [
+     "C01.610.752.300.900"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT07789743|started|2024-03-15",
+     "NCT07789743|registered|2026-08-27"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  "names": [
+   {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "name": "ACOZIBOROLE",
+    "origin": "substance_registry",
+    "role": "preferred",
+    "searchable": true
+   }
+  ],
+  "checked_by_person": false,
+  "trials": [
+   {
+    "nct_id": "NCT07789743",
+    "arms": [
+     "treatment of seropositives"
+    ],
+    "claim_arm": "treatment of seropositives",
+    "facts": {
+     "nct_id": "NCT07789743",
+     "as_of": "2026-08-27",
+     "title": "Stop Transmission of Gambiense Human African Trypanosomiasis",
+     "phases": [
+      "phase_3"
+     ],
+     "overall_status": "recruiting",
+     "participants": {
+      "count": 2500,
+      "actual": false
+     },
+     "start": {
+      "day": "2024-03-15",
+      "basis": "registry_date"
+     },
+     "primary_completion": {
+      "day": "2026-12-30",
+      "basis": "registry_date_estimated"
+     },
+     "completion": {
+      "day": "2027-12-30",
+      "basis": "registry_date_estimated"
+     },
+     "allocation": "NA",
+     "masking": "NONE",
+     "primary_purpose": "TREATMENT",
+     "healthy_volunteers": false,
+     "minimum_age": "11 Years",
+     "maximum_age": null,
+     "sponsor_name": null,
+     "sponsor_class": null,
+     "primary_outcomes": null,
+     "why_stopped": null,
+     "results": null
+    },
+    "events": [
+     {
+      "key": "NCT07789743|started|2024-03-15",
+      "nct_id": "NCT07789743",
+      "kind": "started",
+      "day": "2024-03-15",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_3"
+      ],
+      "update_key": "NCT07789743@2026-08-27"
+     },
+     {
+      "key": "NCT07789743|registered|2026-08-27",
+      "nct_id": "NCT07789743",
+      "kind": "registered",
+      "day": "2026-08-27",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_3"
+      ],
+      "update_key": "NCT07789743@2026-08-27"
+     }
+    ],
+    "paper_ids": [],
+    "findings": null
+   }
+  ],
+  "approach": {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "approach": "drug",
+   "basis": "registry_intervention_type",
+   "registry_type": "DRUG",
+   "trials": 4
+  },
+  "history": [
+   {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "before": null,
+    "after": "phase_3",
+    "on": "2026-11-18",
+    "observed_in_run": "983da113c2c5"
+   }
+  ],
+  "checked": []
+ }
+}

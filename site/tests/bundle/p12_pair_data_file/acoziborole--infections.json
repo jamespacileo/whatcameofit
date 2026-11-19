@@ -1,0 +1,274 @@
+{
+ "pair": {
+  "row": {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "key": "substance:2IOR2OO3GW|D007239",
+    "address": "acoziborole--infections",
+    "nct_ids": [
+     "NCT05256017",
+     "NCT05433350"
+    ],
+    "checked_by_person": true
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D007239",
+    "slug": "infections"
+   },
+   "descriptor": {
+    "descriptor_id": "D007239",
+    "label": "Infections",
+    "tree_numbers": [
+     "C01"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05256017|started|2021-12-30",
+     "NCT05256017|registered|2022-02-25",
+     "NCT05433350|registered|2022-06-27",
+     "NCT05433350|started|2022-07-09"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "claim_slug": "acoziborole-gambiense-sleeping-sickness",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  "names": [
+   {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "name": "ACOZIBOROLE",
+    "origin": "substance_registry",
+    "role": "preferred",
+    "searchable": true
+   }
+  ],
+  "checked_by_person": true,
+  "trials": [
+   {
+    "nct_id": "NCT05256017",
+    "arms": [
+     "Acoziborole"
+    ],
+    "claim_arm": "Acoziborole",
+    "facts": {
+     "nct_id": "NCT05256017",
+     "as_of": "2025-03-20",
+     "title": "Safety and Tolerability Study of Acoziborole in g-HAT Seropositive Subjects",
+     "phases": [
+      "phase_2",
+      "phase_3"
+     ],
+     "overall_status": "completed",
+     "participants": {
+      "count": 1208,
+      "actual": true
+     },
+     "start": {
+      "day": "2021-12-30",
+      "basis": "registry_date"
+     },
+     "primary_completion": {
+      "day": "2023-08-03",
+      "basis": "registry_date"
+     },
+     "completion": {
+      "day": "2023-08-03",
+      "basis": "registry_date"
+     },
+     "allocation": "RANDOMIZED",
+     "masking": "QUADRUPLE",
+     "primary_purpose": "TREATMENT",
+     "healthy_volunteers": false,
+     "minimum_age": "15 Years",
+     "maximum_age": null,
+     "sponsor_name": null,
+     "sponsor_class": null,
+     "primary_outcomes": null,
+     "why_stopped": null,
+     "results": null
+    },
+    "events": [
+     {
+      "key": "NCT05256017|started|2021-12-30",
+      "nct_id": "NCT05256017",
+      "kind": "started",
+      "day": "2021-12-30",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2",
+       "phase_3"
+      ],
+      "update_key": "NCT05256017@2025-03-20"
+     },
+     {
+      "key": "NCT05256017|registered|2022-02-25",
+      "nct_id": "NCT05256017",
+      "kind": "registered",
+      "day": "2022-02-25",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2",
+       "phase_3"
+      ],
+      "update_key": "NCT05256017@2025-03-20"
+     },
+     {
+      "key": "NCT05256017|completed|2023-08-03",
+      "nct_id": "NCT05256017",
+      "kind": "completed",
+      "day": "2023-08-03",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2",
+       "phase_3"
+      ],
+      "update_key": "NCT05256017@2025-03-20"
+     },
+     {
+      "key": "NCT05256017|results_posted|2025-03-20",
+      "nct_id": "NCT05256017",
+      "kind": "results_posted",
+      "day": "2025-03-20",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2",
+       "phase_3"
+      ],
+      "update_key": "NCT05256017@2025-03-20"
+     }
+    ],
+    "paper_ids": [],
+    "findings": null
+   },
+   {
+    "nct_id": "NCT05433350",
+    "arms": [
+     "Acoziborole"
+    ],
+    "claim_arm": "Acoziborole",
+    "facts": {
+     "nct_id": "NCT05433350",
+     "as_of": "2026-04-06",
+     "title": "Pharmacokinetic, Efficacy, Safety and Tolerability Study of a Single Dose of Acoziborole in g-HAT Paediatric Patients",
+     "phases": [
+      "phase_2",
+      "phase_3"
+     ],
+     "overall_status": "completed",
+     "participants": {
+      "count": 35,
+      "actual": true
+     },
+     "start": {
+      "day": "2022-07-09",
+      "basis": "registry_date"
+     },
+     "primary_completion": {
+      "day": "2026-03-31",
+      "basis": "registry_date"
+     },
+     "completion": {
+      "day": "2026-03-31",
+      "basis": "registry_date"
+     },
+     "allocation": "NA",
+     "masking": "NONE",
+     "primary_purpose": "TREATMENT",
+     "healthy_volunteers": false,
+     "minimum_age": "1 Year",
+     "maximum_age": "14 Years",
+     "sponsor_name": null,
+     "sponsor_class": null,
+     "primary_outcomes": null,
+     "why_stopped": null,
+     "results": null
+    },
+    "events": [
+     {
+      "key": "NCT05433350|registered|2022-06-27",
+      "nct_id": "NCT05433350",
+      "kind": "registered",
+      "day": "2022-06-27",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2",
+       "phase_3"
+      ],
+      "update_key": "NCT05433350@2026-04-06"
+     },
+     {
+      "key": "NCT05433350|started|2022-07-09",
+      "nct_id": "NCT05433350",
+      "kind": "started",
+      "day": "2022-07-09",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2",
+       "phase_3"
+      ],
+      "update_key": "NCT05433350@2026-04-06"
+     },
+     {
+      "key": "NCT05433350|completed|2026-03-31",
+      "nct_id": "NCT05433350",
+      "kind": "completed",
+      "day": "2026-03-31",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2",
+       "phase_3"
+      ],
+      "update_key": "NCT05433350@2026-04-06"
+     }
+    ],
+    "paper_ids": [],
+    "findings": null
+   }
+  ],
+  "approach": {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "approach": "drug",
+   "basis": "registry_intervention_type",
+   "registry_type": "DRUG",
+   "trials": 4
+  },
+  "history": [
+   {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "before": null,
+    "after": "phase_2",
+    "on": "2026-11-18",
+    "observed_in_run": "983da113c2c5"
+   }
+  ],
+  "checked": []
+ }
+}

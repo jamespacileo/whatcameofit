@@ -1,0 +1,17 @@
+{
+ "vertical": {
+  "slug": "kidneys-and-bladder",
+  "title": "Kidneys and bladder",
+  "group": "kidneys-and-bladder",
+  "covers": [
+   "D007674",
+   "D014570"
+  ]
+ },
+ "group": {
+  "slug": "kidneys-and-bladder",
+  "title": "Kidneys and bladder"
+ },
+ "pairs": [],
+ "retired": []
+}

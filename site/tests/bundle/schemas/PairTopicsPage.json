@@ -1,0 +1,128 @@
+{
+ "$defs": {
+  "FilingBasis": {
+   "description": "How a claim's vertical was set.",
+   "enum": [
+    "one_derived_topic",
+    "narrowest_derived_topic",
+    "person"
+   ],
+   "title": "FilingBasis",
+   "type": "string"
+  },
+  "Group": {
+   "additionalProperties": false,
+   "description": "A body system or disease area a reader recognises, such as mouth and teeth.",
+   "properties": {
+    "slug": {
+     "title": "Slug",
+     "type": "string"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    }
+   },
+   "required": [
+    "slug",
+    "title"
+   ],
+   "title": "Group",
+   "type": "object"
+  },
+  "PairFiling": {
+   "additionalProperties": false,
+   "description": "The one vertical a pair is filed under, and how: `ClaimFiling` keyed on the pair.",
+   "properties": {
+    "basis": {
+     "$ref": "#/$defs/FilingBasis"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "vertical": {
+     "title": "Vertical",
+     "type": "string"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "vertical",
+    "basis"
+   ],
+   "title": "PairFiling",
+   "type": "object"
+  },
+  "Vertical": {
+   "additionalProperties": false,
+   "description": "A topic a claim is filed under, such as gum disease, and the descriptors it covers.\n\nA group's general vertical shares its slug and title.",
+   "properties": {
+    "covers": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Covers",
+     "type": "array"
+    },
+    "group": {
+     "title": "Group",
+     "type": "string"
+    },
+    "slug": {
+     "title": "Slug",
+     "type": "string"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    }
+   },
+   "required": [
+    "slug",
+    "title",
+    "group",
+    "covers"
+   ],
+   "title": "Vertical",
+   "type": "object"
+  }
+ },
+ "additionalProperties": false,
+ "description": "Every topic, with each shown pair's filing: `TopicsPage` on the pair path.",
+ "properties": {
+  "filings": {
+   "items": {
+    "$ref": "#/$defs/PairFiling"
+   },
+   "title": "Filings",
+   "type": "array"
+  },
+  "groups": {
+   "items": {
+    "$ref": "#/$defs/Group"
+   },
+   "title": "Groups",
+   "type": "array"
+  },
+  "verticals": {
+   "items": {
+    "$ref": "#/$defs/Vertical"
+   },
+   "title": "Verticals",
+   "type": "array"
+  }
+ },
+ "required": [
+  "groups",
+  "verticals",
+  "filings"
+ ],
+ "title": "PairTopicsPage",
+ "type": "object"
+}

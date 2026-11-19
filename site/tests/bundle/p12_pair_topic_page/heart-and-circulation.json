@@ -1,0 +1,17 @@
+{
+ "vertical": {
+  "slug": "heart-and-circulation",
+  "title": "Heart, blood and circulation",
+  "group": "heart-and-circulation",
+  "covers": [
+   "D002318",
+   "D006425"
+  ]
+ },
+ "group": {
+  "slug": "heart-and-circulation",
+  "title": "Heart, blood and circulation"
+ },
+ "pairs": [],
+ "retired": []
+}

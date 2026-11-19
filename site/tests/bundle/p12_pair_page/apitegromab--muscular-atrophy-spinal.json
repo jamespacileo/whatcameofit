@@ -1,0 +1,332 @@
+{
+ "row": {
+  "pair": {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009134",
+   "key": "substance:UZ54216N0Y|D009134",
+   "address": "apitegromab--muscular-atrophy-spinal",
+   "nct_ids": [
+    "NCT03921528",
+    "NCT05156320",
+    "NCT05626855"
+   ],
+   "checked_by_person": false
+  },
+  "intervention": {
+   "id": "substance:UZ54216N0Y",
+   "key_kind": "substance",
+   "key_value": "UZ54216N0Y",
+   "preferred_name": "APITEGROMAB",
+   "slug": "apitegromab",
+   "components": []
+  },
+  "condition": {
+   "descriptor_id": "D009134",
+   "slug": "muscular-atrophy-spinal"
+  },
+  "descriptor": {
+   "descriptor_id": "D009134",
+   "label": "Muscular Atrophy, Spinal",
+   "tree_numbers": [
+    "C10.574.562.500",
+    "C10.228.854.468",
+    "C10.668.467.500"
+   ]
+  },
+  "status": {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009134",
+   "code": "phase_3",
+   "overlay_years": null,
+   "explained_by": [
+    "NCT05156320|registered|2021-12-14",
+    "NCT05156320|started|2022-04-14",
+    "NCT05626855|registered|2022-11-25",
+    "NCT05626855|started|2023-04-17"
+   ],
+   "as_of": "2026-11-18"
+  },
+  "filing": {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009134",
+   "vertical": "brain-and-nerves",
+   "basis": "one_derived_topic"
+  },
+  "origin": null,
+  "first_report": null
+ },
+ "names": [
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "name": "APITEGROMAB",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  }
+ ],
+ "checked_by_person": false,
+ "trials": [
+  {
+   "nct_id": "NCT03921528",
+   "arms": [
+    "Cohort 1",
+    "Cohort 2",
+    "Cohort 3"
+   ],
+   "claim_arm": null,
+   "facts": {
+    "nct_id": "NCT03921528",
+    "as_of": "2024-12-02",
+    "title": "An Active Treatment Study of SRK-015 in Patients With Type 2 or Type 3 Spinal Muscular Atrophy",
+    "phases": [
+     "phase_2"
+    ],
+    "overall_status": "completed",
+    "participants": {
+     "count": 58,
+     "actual": true
+    },
+    "start": {
+     "day": "2019-04-22",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2021-01-19",
+     "basis": "registry_date"
+    },
+    "completion": {
+     "day": "2024-02-28",
+     "basis": "registry_date"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "2 Years",
+    "maximum_age": "21 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT03921528|registered|2019-04-19",
+     "nct_id": "NCT03921528",
+     "kind": "registered",
+     "day": "2019-04-19",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT03921528@2024-12-02"
+    },
+    {
+     "key": "NCT03921528|started|2019-04-22",
+     "nct_id": "NCT03921528",
+     "kind": "started",
+     "day": "2019-04-22",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT03921528@2024-12-02"
+    },
+    {
+     "key": "NCT03921528|results_posted|2022-11-17",
+     "nct_id": "NCT03921528",
+     "kind": "results_posted",
+     "day": "2022-11-17",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT03921528@2024-12-02"
+    },
+    {
+     "key": "NCT03921528|completed|2024-02-28",
+     "nct_id": "NCT03921528",
+     "kind": "completed",
+     "day": "2024-02-28",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT03921528@2024-12-02"
+    }
+   ],
+   "paper_ids": [],
+   "findings": null
+  },
+  {
+   "nct_id": "NCT05156320",
+   "arms": [
+    "Main Efficacy Population (Apitegromab 10 mg/kg)",
+    "Main Efficacy Population (Apitegromab 20 mg/kg)",
+    "Exploratory Subpopulation (Apitegromab)"
+   ],
+   "claim_arm": null,
+   "facts": {
+    "nct_id": "NCT05156320",
+    "as_of": "2026-01-22",
+    "title": "Efficacy and Safety of Apitegromab in Patients With Later-Onset Spinal Muscular Atrophy Treated With Nusinersen or Risdiplam",
+    "phases": [
+     "phase_3"
+    ],
+    "overall_status": "completed",
+    "participants": {
+     "count": 188,
+     "actual": true
+    },
+    "start": {
+     "day": "2022-04-14",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2024-12-18",
+     "basis": "registry_date"
+    },
+    "completion": {
+     "day": "2024-12-18",
+     "basis": "registry_date"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "QUADRUPLE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "2 Years",
+    "maximum_age": "21 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT05156320|registered|2021-12-14",
+     "nct_id": "NCT05156320",
+     "kind": "registered",
+     "day": "2021-12-14",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_3"
+     ],
+     "update_key": "NCT05156320@2026-01-22"
+    },
+    {
+     "key": "NCT05156320|started|2022-04-14",
+     "nct_id": "NCT05156320",
+     "kind": "started",
+     "day": "2022-04-14",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_3"
+     ],
+     "update_key": "NCT05156320@2026-01-22"
+    },
+    {
+     "key": "NCT05156320|completed|2024-12-18",
+     "nct_id": "NCT05156320",
+     "kind": "completed",
+     "day": "2024-12-18",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_3"
+     ],
+     "update_key": "NCT05156320@2026-01-22"
+    }
+   ],
+   "paper_ids": [],
+   "findings": null
+  },
+  {
+   "nct_id": "NCT05626855",
+   "arms": [
+    "Treatment Period"
+   ],
+   "claim_arm": "Treatment Period",
+   "facts": {
+    "nct_id": "NCT05626855",
+    "as_of": "2026-09-01",
+    "title": "Long-Term Safety & Efficacy of Apitegromab in Patients With SMA Who Completed Previous Trials of Apitegromab",
+    "phases": [
+     "phase_3"
+    ],
+    "overall_status": "active_not_recruiting",
+    "participants": {
+     "count": 238,
+     "actual": true
+    },
+    "start": {
+     "day": "2023-04-17",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2026-11-01",
+     "basis": "registry_date_estimated"
+    },
+    "completion": {
+     "day": "2029-05-02",
+     "basis": "registry_date_estimated"
+    },
+    "allocation": "NA",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "2 Years",
+    "maximum_age": null,
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT05626855|registered|2022-11-25",
+     "nct_id": "NCT05626855",
+     "kind": "registered",
+     "day": "2022-11-25",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_3"
+     ],
+     "update_key": "NCT05626855@2026-09-01"
+    },
+    {
+     "key": "NCT05626855|started|2023-04-17",
+     "nct_id": "NCT05626855",
+     "kind": "started",
+     "day": "2023-04-17",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_3"
+     ],
+     "update_key": "NCT05626855@2026-09-01"
+    }
+   ],
+   "paper_ids": [],
+   "findings": null
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:UZ54216N0Y",
+  "approach": null,
+  "basis": "registry_intervention_type",
+  "registry_type": null,
+  "trials": 4
+ },
+ "history": [
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009134",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  }
+ ],
+ "checked": []
+}

@@ -1,0 +1,74 @@
+{
+ "vertical": {
+  "slug": "lungs-and-breathing",
+  "title": "Lungs and breathing",
+  "group": "lungs-and-breathing",
+  "covers": [
+   "D012140"
+  ]
+ },
+ "group": {
+  "slug": "lungs-and-breathing",
+  "title": "Lungs and breathing"
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "key": "substance:ON09TCS5H3|D017563",
+    "address": "tulisokibart--lung-diseases-interstitial",
+    "nct_ids": [
+     "NCT05270668"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:ON09TCS5H3",
+    "key_kind": "substance",
+    "key_value": "ON09TCS5H3",
+    "preferred_name": "Tulisokibart",
+    "slug": "tulisokibart",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D017563",
+    "slug": "lung-diseases-interstitial"
+   },
+   "descriptor": {
+    "descriptor_id": "D017563",
+    "label": "Lung Diseases, Interstitial",
+    "tree_numbers": [
+     "C08.381.483"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "code": "phase_2",
+    "overlay_years": 4,
+    "explained_by": [
+     "NCT05270668|registered|2022-03-08",
+     "NCT05270668|started|2022-03-29"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "vertical": "lungs-and-breathing",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "claim_slug": "tulisokibart-systemic-sclerosis-associated-interstitial-lung",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  }
+ ],
+ "retired": []
+}

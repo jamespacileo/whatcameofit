@@ -16,10 +16,10 @@ A run over the active phase 2 and 3 trials (about 26,000) will make tens of thou
 ## What Changes
 
 - **The site reads a bundle of page files.** One JSON file per page, one JSON Schema per page model, and a manifest with a checksum, counts by page model, the versions of the steps that made it and when. **BREAKING** for `site-publishing`: `site/data/export.json` and `site/export.schema.json` go.
-- **The bundle lives in R2 under its version**, and one pointer names the current version. Publishing and rolling back are each one write of the pointer.
+- **The bundle is loaded into D1**, the store's database, under its version (the checksum of its files). The operator chose D1 on 2026-11-19, in place of the R2 folder first proposed. Each page file is kept whole for the one read a page is rendered from, and pairs, interventions, conditions, trials and status changes are kept as rows for lists and search. A version becomes the current one only at the end of its load, and the version before is kept, so going back is one statement.
 - **Types and validators are generated from the bundle's schemas** when the site is built. A page model the site does not know, or a file that does not fit its schema, fails the build.
 - **A pair has a page at `/{address}`**, replacing the claim page. It shows the intervention, the condition, the status with the events that produced it, each supporting trial with its arms, facts, events, papers and posted results, and the history of the status.
-- **Main pages are built ahead; other pair pages are rendered on request.** The Worker reads the pair's file from the current bundle by its address, renders it with the same template, and the answer is cached for a day. A reader cannot tell the two apart.
+- **Main pages are built ahead; other pair pages are rendered on request.** The Worker reads the pair's file from D1 by its address, renders it with the same template, and the answer is cached for a day. A reader cannot tell the two apart.
 - **Every claim address answers.** A claim whose pair is published redirects to it (301). A claim with no coded pair keeps its page until the operator decides it. An archived claim still answers 410.
 - **Intervention, condition, topic and clinical category pages list pairs.** The condition page is new.
 - **`lookup.json` keeps the keys the extension reads**, generated from pairs, so the extension needs no release at the cutover.
@@ -51,7 +51,7 @@ The claim-keyed requirements of `claims`, `open-data`, `anniversaries`, `source-
 ## Impact
 
 - **Decisions to record (ADRs):** the site's input is the lab's bundle; a pair page may be rendered on request from a public file; `CLAUDE.md`'s line "Its only input is the pipeline's JSON export at `site/data/export.json`" is superseded.
-- **Code:** `site/src/pages`, `site/src/lib`, `site/worker` (redirects, on-request pages, an R2 binding), `site/scripts/deploy.mjs`, `site/wrangler.jsonc`. `pipeline/` publishes nothing after the cutover and is frozen.
+- **Code:** `site/src/pages`, `site/src/lib`, `site/worker` (redirects, on-request pages, a D1 binding), `store/ingest` (migration `0011_pairs.sql`, `scripts/load-pairs.mjs`), `site/scripts/deploy.mjs`, `site/wrangler.jsonc`. `pipeline/` publishes nothing after the cutover and is frozen.
 - **Other changes:** `cloudflare-source-of-truth` loses its migration, parallel-run and store-export tasks (its sections 0, 5 and 6) and keeps D1, the ingest service and records from lookups for the lookup port. `trial-first-route`'s trial page is served by the pair bundle's trial rows; its other sections are the lab's now. `registry-drafted-claims`, `file-based-backfill`, `claim-identity-records` and `same-story-candidates` were closed as superseded by pairs on 2026-11-19, at the operator's word.
-- **Cost:** R2 holds well under 1 GB; reads sit inside the Workers Paid plan's allowance at present traffic. To be read from Cloudflare's pages and noted in `docs/sources.md` before the binding is added.
+- **Cost:** D1's limits and prices are in `docs/sources.md` (read 2026-11-17): 10 GB a database, 50 million rows written a month included. A bundle of 30,000 pairs is on the order of a million rows a load, so a daily load fits; the full run's count replaces this estimate.
 - **Readers:** every claim address changes once. Shared links and search results keep working through redirects.

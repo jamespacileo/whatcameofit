@@ -1,0 +1,303 @@
+{
+ "vertical": {
+  "slug": "brain-and-nerves",
+  "title": "Brain and nerves",
+  "group": "brain-and-nerves",
+  "covers": [
+   "D009422"
+  ]
+ },
+ "group": {
+  "slug": "brain-and-nerves",
+  "title": "Brain and nerves"
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009133",
+    "key": "substance:UZ54216N0Y|D009133",
+    "address": "apitegromab--muscular-atrophy",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009133",
+    "slug": "muscular-atrophy"
+   },
+   "descriptor": {
+    "descriptor_id": "D009133",
+    "label": "Muscular Atrophy",
+    "tree_numbers": [
+     "C23.300.070.500",
+     "C23.888.592.608.612",
+     "C10.597.613.612"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009133",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009133",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009134",
+    "key": "substance:UZ54216N0Y|D009134",
+    "address": "apitegromab--muscular-atrophy-spinal",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009134",
+    "slug": "muscular-atrophy-spinal"
+   },
+   "descriptor": {
+    "descriptor_id": "D009134",
+    "label": "Muscular Atrophy, Spinal",
+    "tree_numbers": [
+     "C10.574.562.500",
+     "C10.228.854.468",
+     "C10.668.467.500"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009134",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009134",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "key": "substance:UZ54216N0Y|D009468",
+    "address": "apitegromab--neuromuscular-diseases",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009468",
+    "slug": "neuromuscular-diseases"
+   },
+   "descriptor": {
+    "descriptor_id": "D009468",
+    "label": "Neuromuscular Diseases",
+    "tree_numbers": [
+     "C10.668"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "claim_slug": "isembyld-spinal-muscular-atrophy",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D020879",
+    "key": "substance:UZ54216N0Y|D020879",
+    "address": "apitegromab--neuromuscular-manifestations",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D020879",
+    "slug": "neuromuscular-manifestations"
+   },
+   "descriptor": {
+    "descriptor_id": "D020879",
+    "label": "Neuromuscular Manifestations",
+    "tree_numbers": [
+     "C23.888.592.608",
+     "C10.597.613"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D020879",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D020879",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "key": "substance:UZ54216N0Y|D014897",
+    "address": "apitegromab--spinal-muscular-atrophies-of-childhood",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014897",
+    "slug": "spinal-muscular-atrophies-of-childhood"
+   },
+   "descriptor": {
+    "descriptor_id": "D014897",
+    "label": "Spinal Muscular Atrophies of Childhood",
+    "tree_numbers": [
+     "C10.574.562.500.750",
+     "C10.228.854.468.800",
+     "C10.668.467.500.750",
+     "C16.320.400.765",
+     "C10.574.500.812"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ],
+ "retired": []
+}
