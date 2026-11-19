@@ -28,6 +28,12 @@ const pairPages = {
     "astro:config:setup": ({ injectRoute }) => {
       if (process.env.PAIRS_BUNDLE) {
         injectRoute({ pattern: "/[address]", entrypoint: "./src/pair/PairRoute.astro" });
+        injectRoute({ pattern: "/intervention/[intervention]", entrypoint: "./src/pair/InterventionRoute.astro" });
+        injectRoute({ pattern: "/condition/[condition]", entrypoint: "./src/pair/ConditionRoute.astro" });
+        // A topic's and a clinical category's page list pairs in a build that reads a
+        // bundle; the claim versions of these two routes then make no page.
+        injectRoute({ pattern: "/topic/[topic]", entrypoint: "./src/pair/TopicRoute.astro" });
+        injectRoute({ pattern: "/clinical/[category]", entrypoint: "./src/pair/CategoryRoute.astro" });
       }
     },
   },

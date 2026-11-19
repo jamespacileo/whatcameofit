@@ -1,0 +1,22 @@
+---
+// A topic's page on the pair path: the pairs the lab filed under it.
+import ListingPage from "./ListingPage.astro";
+import { topicListings } from "../lib/pairs";
+
+export function getStaticPaths() {
+  return topicListings().map((listing) => ({ params: { topic: listing.slug }, props: { listing } }));
+}
+
+const { listing } = Astro.props;
+---
+
+<ListingPage
+  title={listing.title}
+  kind="topic"
+  description={`Treatments followed in ${listing.title.toLowerCase()}, and where the public trial records show each stands.`}
+  pairs={listing.pairs}
+  crumbs={[
+    { name: "Topics", path: "/topics" },
+    { name: listing.title, path: `/topic/${listing.slug}` },
+  ]}
+/>

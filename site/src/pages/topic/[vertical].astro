@@ -13,8 +13,11 @@ import { reportedClaimCount } from "../../lib/reports";
 import { topicSentence } from "../../lib/share";
 import { topicClaimSummary } from "../../lib/status";
 import { canonicalAddress } from "../../lib/structured";
+import { pairBundleFolder } from "../../lib/pairs";
 
 export function getStaticPaths() {
+  // A build that reads a bundle lists pairs on this address (src/pair/TopicRoute.astro).
+  if (pairBundleFolder()) return [];
   return data.verticals.map((vertical) => ({
     params: { vertical: vertical.slug },
     props: { vertical },
