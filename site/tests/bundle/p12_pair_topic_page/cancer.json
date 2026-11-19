@@ -1,0 +1,16 @@
+{
+ "vertical": {
+  "slug": "cancer",
+  "title": "Cancer",
+  "group": "cancer",
+  "covers": [
+   "D009369"
+  ]
+ },
+ "group": {
+  "slug": "cancer",
+  "title": "Cancer"
+ },
+ "pairs": [],
+ "retired": []
+}

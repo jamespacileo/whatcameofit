@@ -1,0 +1,775 @@
+{
+ "changes": [
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D050177",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D020879",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D014897",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009765",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009468",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009134",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009133",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D045743",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D017563",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "condition_id": "D014353",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "condition_id": "D014352",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  },
+  {
+   "intervention_id": "substance:2IOR2OO3GW",
+   "condition_id": "D007239",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  }
+ ],
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "key": "substance:2IOR2OO3GW|D007239",
+    "address": "acoziborole--infections",
+    "nct_ids": [
+     "NCT05256017",
+     "NCT05433350"
+    ],
+    "checked_by_person": true
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D007239",
+    "slug": "infections"
+   },
+   "descriptor": {
+    "descriptor_id": "D007239",
+    "label": "Infections",
+    "tree_numbers": [
+     "C01"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05256017|started|2021-12-30",
+     "NCT05256017|registered|2022-02-25",
+     "NCT05433350|registered|2022-06-27",
+     "NCT05433350|started|2022-07-09"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D007239",
+    "claim_slug": "acoziborole-gambiense-sleeping-sickness",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "key": "substance:2IOR2OO3GW|D014352",
+    "address": "acoziborole--trypanosomiasis",
+    "nct_ids": [
+     "NCT07789743"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014352",
+    "slug": "trypanosomiasis"
+   },
+   "descriptor": {
+    "descriptor_id": "D014352",
+    "label": "Trypanosomiasis",
+    "tree_numbers": [
+     "C01.610.752.300.900"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT07789743|started|2024-03-15",
+     "NCT07789743|registered|2026-08-27"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014352",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014353",
+    "key": "substance:2IOR2OO3GW|D014353",
+    "address": "acoziborole--trypanosomiasis-african",
+    "nct_ids": [
+     "NCT03087955",
+     "NCT05256017",
+     "NCT05433350"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:2IOR2OO3GW",
+    "key_kind": "substance",
+    "key_value": "2IOR2OO3GW",
+    "preferred_name": "ACOZIBOROLE",
+    "slug": "acoziborole",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014353",
+    "slug": "trypanosomiasis-african"
+   },
+   "descriptor": {
+    "descriptor_id": "D014353",
+    "label": "Trypanosomiasis, African",
+    "tree_numbers": [
+     "C01.610.752.300.900.719",
+     "C01.920.937"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014353",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT03087955|started|2016-10-11",
+     "NCT03087955|registered|2017-03-23",
+     "NCT05256017|started|2021-12-30",
+     "NCT05256017|registered|2022-02-25",
+     "NCT05433350|registered|2022-06-27",
+     "NCT05433350|started|2022-07-09"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:2IOR2OO3GW",
+    "condition_id": "D014353",
+    "vertical": "infections",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "key": "substance:ON09TCS5H3|D017563",
+    "address": "tulisokibart--lung-diseases-interstitial",
+    "nct_ids": [
+     "NCT05270668"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:ON09TCS5H3",
+    "key_kind": "substance",
+    "key_value": "ON09TCS5H3",
+    "preferred_name": "Tulisokibart",
+    "slug": "tulisokibart",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D017563",
+    "slug": "lung-diseases-interstitial"
+   },
+   "descriptor": {
+    "descriptor_id": "D017563",
+    "label": "Lung Diseases, Interstitial",
+    "tree_numbers": [
+     "C08.381.483"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "code": "phase_2",
+    "overlay_years": 4,
+    "explained_by": [
+     "NCT05270668|registered|2022-03-08",
+     "NCT05270668|started|2022-03-29"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "vertical": "lungs-and-breathing",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017563",
+    "claim_slug": "tulisokibart-systemic-sclerosis-associated-interstitial-lung",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "key": "substance:ON09TCS5H3|D045743",
+    "address": "tulisokibart--scleroderma-diffuse",
+    "nct_ids": [
+     "NCT05270668"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:ON09TCS5H3",
+    "key_kind": "substance",
+    "key_value": "ON09TCS5H3",
+    "preferred_name": "Tulisokibart",
+    "slug": "tulisokibart",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D045743",
+    "slug": "scleroderma-diffuse"
+   },
+   "descriptor": {
+    "descriptor_id": "D045743",
+    "label": "Scleroderma, Diffuse",
+    "tree_numbers": [
+     "C17.300.799.602",
+     "C17.800.784.602"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "code": "phase_2",
+    "overlay_years": 4,
+    "explained_by": [
+     "NCT05270668|registered|2022-03-08",
+     "NCT05270668|started|2022-03-29"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "vertical": "skin-and-hair",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009133",
+    "key": "substance:UZ54216N0Y|D009133",
+    "address": "apitegromab--muscular-atrophy",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009133",
+    "slug": "muscular-atrophy"
+   },
+   "descriptor": {
+    "descriptor_id": "D009133",
+    "label": "Muscular Atrophy",
+    "tree_numbers": [
+     "C23.300.070.500",
+     "C23.888.592.608.612",
+     "C10.597.613.612"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009133",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009133",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009134",
+    "key": "substance:UZ54216N0Y|D009134",
+    "address": "apitegromab--muscular-atrophy-spinal",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009134",
+    "slug": "muscular-atrophy-spinal"
+   },
+   "descriptor": {
+    "descriptor_id": "D009134",
+    "label": "Muscular Atrophy, Spinal",
+    "tree_numbers": [
+     "C10.574.562.500",
+     "C10.228.854.468",
+     "C10.668.467.500"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009134",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009134",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "key": "substance:UZ54216N0Y|D009468",
+    "address": "apitegromab--neuromuscular-diseases",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009468",
+    "slug": "neuromuscular-diseases"
+   },
+   "descriptor": {
+    "descriptor_id": "D009468",
+    "label": "Neuromuscular Diseases",
+    "tree_numbers": [
+     "C10.668"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009468",
+    "claim_slug": "isembyld-spinal-muscular-atrophy",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "key": "substance:UZ54216N0Y|D009765",
+    "address": "apitegromab--obesity",
+    "nct_ids": [
+     "NCT06445075"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009765",
+    "slug": "obesity"
+   },
+   "descriptor": {
+    "descriptor_id": "D009765",
+    "label": "Obesity",
+    "tree_numbers": [
+     "C18.654.726.750.500",
+     "C23.888.144.699.500"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT06445075|started|2024-05-21",
+     "NCT06445075|registered|2024-06-06"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "vertical": "diabetes-and-hormones",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "claim_slug": "apitegromab-obesity",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "key": "substance:UZ54216N0Y|D014897",
+    "address": "apitegromab--spinal-muscular-atrophies-of-childhood",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014897",
+    "slug": "spinal-muscular-atrophies-of-childhood"
+   },
+   "descriptor": {
+    "descriptor_id": "D014897",
+    "label": "Spinal Muscular Atrophies of Childhood",
+    "tree_numbers": [
+     "C10.574.562.500.750",
+     "C10.228.854.468.800",
+     "C10.668.467.500.750",
+     "C16.320.400.765",
+     "C10.574.500.812"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D020879",
+    "key": "substance:UZ54216N0Y|D020879",
+    "address": "apitegromab--neuromuscular-manifestations",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D020879",
+    "slug": "neuromuscular-manifestations"
+   },
+   "descriptor": {
+    "descriptor_id": "D020879",
+    "label": "Neuromuscular Manifestations",
+    "tree_numbers": [
+     "C23.888.592.608",
+     "C10.597.613"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D020879",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D020879",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D050177",
+    "key": "substance:UZ54216N0Y|D050177",
+    "address": "apitegromab--overweight",
+    "nct_ids": [
+     "NCT06445075"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D050177",
+    "slug": "overweight"
+   },
+   "descriptor": {
+    "descriptor_id": "D050177",
+    "label": "Overweight",
+    "tree_numbers": [
+     "G07.100.175.313.699",
+     "C23.888.144.699",
+     "C18.654.726.750",
+     "E01.370.600.115.450.375.699",
+     "G07.100.100.160.120.699"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D050177",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT06445075|started|2024-05-21",
+     "NCT06445075|registered|2024-06-06"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D050177",
+    "vertical": "diabetes-and-hormones",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ]
+}

@@ -1,0 +1,170 @@
+{
+ "row": {
+  "pair": {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009765",
+   "key": "substance:UZ54216N0Y|D009765",
+   "address": "apitegromab--obesity",
+   "nct_ids": [
+    "NCT06445075"
+   ],
+   "checked_by_person": false
+  },
+  "intervention": {
+   "id": "substance:UZ54216N0Y",
+   "key_kind": "substance",
+   "key_value": "UZ54216N0Y",
+   "preferred_name": "APITEGROMAB",
+   "slug": "apitegromab",
+   "components": []
+  },
+  "condition": {
+   "descriptor_id": "D009765",
+   "slug": "obesity"
+  },
+  "descriptor": {
+   "descriptor_id": "D009765",
+   "label": "Obesity",
+   "tree_numbers": [
+    "C18.654.726.750.500",
+    "C23.888.144.699.500"
+   ]
+  },
+  "status": {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009765",
+   "code": "phase_2",
+   "overlay_years": null,
+   "explained_by": [
+    "NCT06445075|started|2024-05-21",
+    "NCT06445075|registered|2024-06-06"
+   ],
+   "as_of": "2026-11-18"
+  },
+  "filing": {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009765",
+   "vertical": "diabetes-and-hormones",
+   "basis": "one_derived_topic"
+  },
+  "origin": {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009765",
+   "claim_slug": "apitegromab-obesity",
+   "drafted_from": "seed",
+   "drafted_by_run": "9f5f39ee6a19",
+   "created_at": "2026-11-19T23:21:58.239029"
+  },
+  "first_report": null
+ },
+ "names": [
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "name": "APITEGROMAB",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  }
+ ],
+ "checked_by_person": false,
+ "trials": [
+  {
+   "nct_id": "NCT06445075",
+   "arms": [
+    "Cohort 1"
+   ],
+   "claim_arm": "Cohort 1",
+   "facts": {
+    "nct_id": "NCT06445075",
+    "as_of": "2026-01-23",
+    "title": "Efficacy and Safety of Apitegromab for the Treatment of Adults Who Are Overweight or Obese",
+    "phases": [
+     "phase_2"
+    ],
+    "overall_status": "completed",
+    "participants": {
+     "count": 102,
+     "actual": true
+    },
+    "start": {
+     "day": "2024-05-21",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2025-03-04",
+     "basis": "registry_date"
+    },
+    "completion": {
+     "day": "2025-06-17",
+     "basis": "registry_date"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "QUADRUPLE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": true,
+    "minimum_age": "18 Years",
+    "maximum_age": "65 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT06445075|started|2024-05-21",
+     "nct_id": "NCT06445075",
+     "kind": "started",
+     "day": "2024-05-21",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT06445075@2026-01-23"
+    },
+    {
+     "key": "NCT06445075|registered|2024-06-06",
+     "nct_id": "NCT06445075",
+     "kind": "registered",
+     "day": "2024-06-06",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT06445075@2026-01-23"
+    },
+    {
+     "key": "NCT06445075|completed|2025-06-17",
+     "nct_id": "NCT06445075",
+     "kind": "completed",
+     "day": "2025-06-17",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT06445075@2026-01-23"
+    }
+   ],
+   "paper_ids": [],
+   "findings": null
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:UZ54216N0Y",
+  "approach": null,
+  "basis": "registry_intervention_type",
+  "registry_type": null,
+  "trials": 4
+ },
+ "history": [
+  {
+   "intervention_id": "substance:UZ54216N0Y",
+   "condition_id": "D009765",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "983da113c2c5"
+  }
+ ],
+ "checked": []
+}

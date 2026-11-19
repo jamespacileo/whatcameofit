@@ -1,0 +1,2076 @@
+{
+ "$defs": {
+  "Approach": {
+   "description": "The kind of intervention a claim reports. Never part of status.",
+   "enum": [
+    "drug",
+    "vaccine",
+    "gene_therapy",
+    "cell_therapy",
+    "tissue_regeneration",
+    "transplant",
+    "device",
+    "surgery_or_procedure",
+    "diet_or_lifestyle"
+   ],
+   "title": "Approach",
+   "type": "string"
+  },
+  "ApproachBasis": {
+   "description": "What an approach was set on.",
+   "enum": [
+    "registry_intervention_type",
+    "person"
+   ],
+   "title": "ApproachBasis",
+   "type": "string"
+  },
+  "ArmRole": {
+   "description": "An arm's role, as the registry codes it.",
+   "enum": [
+    "experimental",
+    "active_comparator",
+    "placebo_comparator",
+    "sham_comparator",
+    "no_intervention",
+    "other"
+   ],
+   "title": "ArmRole",
+   "type": "string"
+  },
+  "ClaimStatusCode": {
+   "description": "Where a claim stands. The site words each code; none is a verdict.",
+   "enum": [
+    "preclinical_only",
+    "no_trial_found",
+    "trial_registered",
+    "phase_1",
+    "phase_2",
+    "phase_3",
+    "approved",
+    "failed",
+    "terminated",
+    "retracted"
+   ],
+   "title": "ClaimStatusCode",
+   "type": "string"
+  },
+  "ComparisonKind": {
+   "description": "What a posted comparison compares, by its groups' arms.",
+   "enum": [
+    "treated_vs_comparator",
+    "within_group",
+    "other"
+   ],
+   "title": "ComparisonKind",
+   "type": "string"
+  },
+  "Condition": {
+   "additionalProperties": false,
+   "description": "One condition a claim or a trial pair stands for, with its own page.\n\nKeyed on its MeSH descriptor, so a condition's id is the descriptor's id. Its label and\ntree numbers are the descriptor's, read from `MeshDescriptor`, never copied here.",
+   "properties": {
+    "descriptor_id": {
+     "title": "Descriptor Id",
+     "type": "string"
+    },
+    "slug": {
+     "title": "Slug",
+     "type": "string"
+    }
+   },
+   "required": [
+    "descriptor_id",
+    "slug"
+   ],
+   "title": "Condition",
+   "type": "object"
+  },
+  "DayBasis": {
+   "description": "How an event's day is known.",
+   "enum": [
+    "registry_date",
+    "registry_date_estimated",
+    "seen_in_update"
+   ],
+   "title": "DayBasis",
+   "type": "string"
+  },
+  "DraftedFrom": {
+   "description": "What a claim was drafted from. Set once and never changed.",
+   "enum": [
+    "registry",
+    "article",
+    "post",
+    "person",
+    "seed"
+   ],
+   "title": "DraftedFrom",
+   "type": "string"
+  },
+  "DueCode": {
+   "description": "Which fact holds of a completed trial's results. A fact, never a breach: which trials\nthe law covers cannot be read from the record.",
+   "enum": [
+    "results_posted",
+    "results_submitted_not_posted",
+    "no_results_a_year_after_completion"
+   ],
+   "title": "DueCode",
+   "type": "string"
+  },
+  "FilingBasis": {
+   "description": "How a claim's vertical was set.",
+   "enum": [
+    "one_derived_topic",
+    "narrowest_derived_topic",
+    "person"
+   ],
+   "title": "FilingBasis",
+   "type": "string"
+  },
+  "GroupArmBasis": {
+   "description": "How a result group was joined to an arm.",
+   "enum": [
+    "title",
+    "agent"
+   ],
+   "title": "GroupArmBasis",
+   "type": "string"
+  },
+  "Intervention": {
+   "additionalProperties": false,
+   "description": "One drug, device, method or complete regimen, shared by every claim about it.\n\n`id` is `<key_kind>:<key_value>`, made once by the step that creates the record. A\nregimen lists its agents in `components`; one agent has none.",
+   "properties": {
+    "components": {
+     "default": [],
+     "items": {
+      "type": "string"
+     },
+     "title": "Components",
+     "type": "array"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "key_kind": {
+     "$ref": "#/$defs/InterventionKeyKind"
+    },
+    "key_value": {
+     "title": "Key Value",
+     "type": "string"
+    },
+    "preferred_name": {
+     "title": "Preferred Name",
+     "type": "string"
+    },
+    "slug": {
+     "title": "Slug",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "key_kind",
+    "key_value",
+    "preferred_name",
+    "slug"
+   ],
+   "title": "Intervention",
+   "type": "object"
+  },
+  "InterventionApproach": {
+   "additionalProperties": false,
+   "description": "An intervention's approach, on what basis, and the registry type it was read from.\n\nThe approach is the intervention's own, not each pair's. It is None when the registry\ntypes of its trials disagree. A rule never replaces a person's.",
+   "properties": {
+    "approach": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Approach"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "basis": {
+     "$ref": "#/$defs/ApproachBasis"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "registry_type": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Registry Type"
+    },
+    "trials": {
+     "title": "Trials",
+     "type": "integer"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "approach",
+    "basis",
+    "registry_type",
+    "trials"
+   ],
+   "title": "InterventionApproach",
+   "type": "object"
+  },
+  "InterventionKeyKind": {
+   "description": "Where an intervention's key comes from, best first.",
+   "enum": [
+    "substance",
+    "mesh",
+    "registry_name",
+    "regimen"
+   ],
+   "title": "InterventionKeyKind",
+   "type": "string"
+  },
+  "InterventionName": {
+   "additionalProperties": false,
+   "description": "One name of an intervention, with who gives it.\n\n`searchable` is true only when a substance registry, RxNorm or MeSH gives the name, or a\nregistry name equals one they give. Only searchable names find headlines and trials.",
+   "properties": {
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "origin": {
+     "$ref": "#/$defs/NameOrigin"
+    },
+    "role": {
+     "$ref": "#/$defs/NameRole"
+    },
+    "searchable": {
+     "title": "Searchable",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "name",
+    "origin",
+    "role",
+    "searchable"
+   ],
+   "title": "InterventionName",
+   "type": "object"
+  },
+  "Lead": {
+   "additionalProperties": false,
+   "description": "One article address, in the form the site compares addresses, kept once.\n\n`title` is the headline it was first seen with: a headline, never article text.",
+   "properties": {
+    "first_seen": {
+     "format": "date-time",
+     "title": "First Seen",
+     "type": "string"
+    },
+    "outlet": {
+     "title": "Outlet",
+     "type": "string"
+    },
+    "published": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Published"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    },
+    "url": {
+     "title": "Url",
+     "type": "string"
+    },
+    "url_key": {
+     "title": "Url Key",
+     "type": "string"
+    }
+   },
+   "required": [
+    "url_key",
+    "url",
+    "outlet",
+    "title",
+    "published",
+    "first_seen"
+   ],
+   "title": "Lead",
+   "type": "object"
+  },
+  "MeshDescriptor": {
+   "additionalProperties": false,
+   "description": "A MeSH descriptor as the lab keeps it: its label and its places in the tree.",
+   "properties": {
+    "descriptor_id": {
+     "title": "Descriptor Id",
+     "type": "string"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "tree_numbers": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Tree Numbers",
+     "type": "array"
+    }
+   },
+   "required": [
+    "descriptor_id",
+    "label",
+    "tree_numbers"
+   ],
+   "title": "MeshDescriptor",
+   "type": "object"
+  },
+  "NameOrigin": {
+   "description": "Who gives a name for an intervention.",
+   "enum": [
+    "substance_registry",
+    "rxnorm",
+    "mesh_label",
+    "mesh_entry_term",
+    "registry_intervention",
+    "registry_other_name",
+    "article",
+    "person"
+   ],
+   "title": "NameOrigin",
+   "type": "string"
+  },
+  "NameRole": {
+   "description": "What kind of name it is. A development code or search phrase is never shown as a name.",
+   "enum": [
+    "preferred",
+    "generic",
+    "brand",
+    "development_code",
+    "search_phrase",
+    "other"
+   ],
+   "title": "NameRole",
+   "type": "string"
+  },
+  "OutcomeKind": {
+   "description": "Whether an outcome is the trial's primary one, as registered or posted.",
+   "enum": [
+    "primary",
+    "secondary",
+    "other",
+    "post_hoc"
+   ],
+   "title": "OutcomeKind",
+   "type": "string"
+  },
+  "OverallStatus": {
+   "description": "A trial's recruitment status as ClinicalTrials.gov states it. Shown, never a status.",
+   "enum": [
+    "not_yet_recruiting",
+    "recruiting",
+    "enrolling_by_invitation",
+    "active_not_recruiting",
+    "suspended",
+    "terminated",
+    "completed",
+    "withdrawn",
+    "unknown",
+    "available",
+    "no_longer_available",
+    "temporarily_not_available",
+    "approved_for_marketing",
+    "withheld"
+   ],
+   "title": "OverallStatus",
+   "type": "string"
+  },
+  "Pair": {
+   "additionalProperties": false,
+   "description": "A tracked (intervention, condition), derived each run. Never written by a batch.\n\n`key` is `<intervention_id>|<condition_id>`, the row key. `address` is the public one,\n`<intervention slug>--<condition slug>`, kept apart so two pairs with one address are\nboth tracked. `checked_by_person` is true while a person's decision on one of its\ntrials still counts.",
+   "properties": {
+    "address": {
+     "title": "Address",
+     "type": "string"
+    },
+    "checked_by_person": {
+     "title": "Checked By Person",
+     "type": "boolean"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "nct_ids": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Nct Ids",
+     "type": "array"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "key",
+    "address",
+    "nct_ids",
+    "checked_by_person"
+   ],
+   "title": "Pair",
+   "type": "object"
+  },
+  "PairFiling": {
+   "additionalProperties": false,
+   "description": "The one vertical a pair is filed under, and how: `ClaimFiling` keyed on the pair.",
+   "properties": {
+    "basis": {
+     "$ref": "#/$defs/FilingBasis"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "vertical": {
+     "title": "Vertical",
+     "type": "string"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "vertical",
+    "basis"
+   ],
+   "title": "PairFiling",
+   "type": "object"
+  },
+  "PairOrigin": {
+   "additionalProperties": false,
+   "description": "What a migrated claim was, for the open-data export. Written once, from the claims.",
+   "properties": {
+    "claim_slug": {
+     "title": "Claim Slug",
+     "type": "string"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "created_at": {
+     "format": "date-time",
+     "title": "Created At",
+     "type": "string"
+    },
+    "drafted_by_run": {
+     "title": "Drafted By Run",
+     "type": "string"
+    },
+    "drafted_from": {
+     "$ref": "#/$defs/DraftedFrom"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "claim_slug",
+    "drafted_from",
+    "drafted_by_run",
+    "created_at"
+   ],
+   "title": "PairOrigin",
+   "type": "object"
+  },
+  "PairPage": {
+   "additionalProperties": false,
+   "description": "The page of one tracked pair: `ClaimPage` keyed on the pair, by its address. Reports,\npromises, statements, cards, failure flags and regulators' decisions come with S10.",
+   "properties": {
+    "approach": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/InterventionApproach"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "checked": {
+     "items": {
+      "$ref": "#/$defs/RegistryCheck"
+     },
+     "title": "Checked",
+     "type": "array"
+    },
+    "checked_by_person": {
+     "title": "Checked By Person",
+     "type": "boolean"
+    },
+    "history": {
+     "items": {
+      "$ref": "#/$defs/PairStatusChange"
+     },
+     "title": "History",
+     "type": "array"
+    },
+    "names": {
+     "items": {
+      "$ref": "#/$defs/InterventionName"
+     },
+     "title": "Names",
+     "type": "array"
+    },
+    "row": {
+     "$ref": "#/$defs/PairRow"
+    },
+    "trials": {
+     "items": {
+      "$ref": "#/$defs/PairTrialRow"
+     },
+     "title": "Trials",
+     "type": "array"
+    }
+   },
+   "required": [
+    "row",
+    "names",
+    "checked_by_person",
+    "trials",
+    "approach",
+    "history",
+    "checked"
+   ],
+   "title": "PairPage",
+   "type": "object"
+  },
+  "PairRow": {
+   "additionalProperties": false,
+   "description": "A pair as a list shows it: `ClaimRow` keyed on the pair, with what a migrated claim\nwas, for the open-data export.",
+   "properties": {
+    "condition": {
+     "$ref": "#/$defs/Condition"
+    },
+    "descriptor": {
+     "$ref": "#/$defs/MeshDescriptor"
+    },
+    "filing": {
+     "$ref": "#/$defs/PairFiling"
+    },
+    "first_report": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Lead"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "intervention": {
+     "$ref": "#/$defs/Intervention"
+    },
+    "origin": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/PairOrigin"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "pair": {
+     "$ref": "#/$defs/Pair"
+    },
+    "status": {
+     "$ref": "#/$defs/PairStatus"
+    }
+   },
+   "required": [
+    "pair",
+    "intervention",
+    "condition",
+    "descriptor",
+    "status",
+    "filing",
+    "origin",
+    "first_report"
+   ],
+   "title": "PairRow",
+   "type": "object"
+  },
+  "PairStatus": {
+   "additionalProperties": false,
+   "description": "A pair's status as of a day, with the events that explain it: `ClaimStatus` keyed on\nthe pair, by the same rules.",
+   "properties": {
+    "as_of": {
+     "format": "date",
+     "title": "As Of",
+     "type": "string"
+    },
+    "code": {
+     "$ref": "#/$defs/ClaimStatusCode"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "explained_by": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Explained By",
+     "type": "array"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "overlay_years": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Overlay Years"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "code",
+    "overlay_years",
+    "explained_by",
+    "as_of"
+   ],
+   "title": "PairStatus",
+   "type": "object"
+  },
+  "PairStatusChange": {
+   "additionalProperties": false,
+   "description": "A change of a pair's status between two runs: what a follower is told. The run that\nobserved it is a field of its own, so a change migrated from a claim's keeps its run.",
+   "properties": {
+    "after": {
+     "$ref": "#/$defs/ClaimStatusCode"
+    },
+    "before": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/ClaimStatusCode"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "observed_in_run": {
+     "title": "Observed In Run",
+     "type": "string"
+    },
+    "on": {
+     "format": "date",
+     "title": "On",
+     "type": "string"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "before",
+    "after",
+    "on",
+    "observed_in_run"
+   ],
+   "title": "PairStatusChange",
+   "type": "object"
+  },
+  "PairTrialRow": {
+   "additionalProperties": false,
+   "description": "One trial of a pair as its page shows it: the experimental arms that add the pair's\nintervention, the one arm when there is exactly one (`claim_arm` in the export), the\ntrial's facts, events, papers and findings.",
+   "properties": {
+    "arms": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Arms",
+     "type": "array"
+    },
+    "claim_arm": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Claim Arm"
+    },
+    "events": {
+     "items": {
+      "$ref": "#/$defs/TrialEvent"
+     },
+     "title": "Events",
+     "type": "array"
+    },
+    "facts": {
+     "$ref": "#/$defs/TrialFacts"
+    },
+    "findings": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/TrialFindingsRow"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "paper_ids": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Paper Ids",
+     "type": "array"
+    }
+   },
+   "required": [
+    "nct_id",
+    "arms",
+    "claim_arm",
+    "facts",
+    "events",
+    "paper_ids"
+   ],
+   "title": "PairTrialRow",
+   "type": "object"
+  },
+  "Participants": {
+   "additionalProperties": false,
+   "description": "How many take part, and whether that is the count enrolled or the count planned.\n\n`actual` is empty when the registry gives the count and not which it is.",
+   "properties": {
+    "actual": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Actual"
+    },
+    "count": {
+     "title": "Count",
+     "type": "integer"
+    }
+   },
+   "required": [
+    "count",
+    "actual"
+   ],
+   "title": "Participants",
+   "type": "object"
+  },
+  "PlannedOutcome": {
+   "additionalProperties": false,
+   "description": "A primary outcome the record plans to measure.",
+   "properties": {
+    "measure": {
+     "title": "Measure",
+     "type": "string"
+    },
+    "time_frame": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Time Frame"
+    }
+   },
+   "required": [
+    "measure",
+    "time_frame"
+   ],
+   "title": "PlannedOutcome",
+   "type": "object"
+  },
+  "PostedComparison": {
+   "additionalProperties": false,
+   "description": "One comparison the sponsor posted for an outcome, carried as written.",
+   "properties": {
+    "design": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Design"
+    },
+    "estimate": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Estimate"
+    },
+    "estimate_kind": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Estimate Kind"
+    },
+    "group_ids": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Group Ids",
+     "type": "array"
+    },
+    "interval_pct": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Interval Pct"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "kind": {
+     "$ref": "#/$defs/ComparisonKind"
+    },
+    "lower": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Lower"
+    },
+    "method": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Method"
+    },
+    "outcome_key": {
+     "title": "Outcome Key",
+     "type": "string"
+    },
+    "p_value": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "P Value"
+    },
+    "upper": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Upper"
+    }
+   },
+   "required": [
+    "key",
+    "outcome_key",
+    "kind",
+    "group_ids",
+    "design",
+    "method",
+    "p_value",
+    "estimate_kind",
+    "estimate",
+    "interval_pct",
+    "lower",
+    "upper"
+   ],
+   "title": "PostedComparison",
+   "type": "object"
+  },
+  "PostedEvent": {
+   "additionalProperties": false,
+   "description": "One adverse event in one group, as the record lists it.",
+   "properties": {
+    "affected": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Affected"
+    },
+    "assessment": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Assessment"
+    },
+    "at_risk": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "At Risk"
+    },
+    "events": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Events"
+    },
+    "group_id": {
+     "title": "Group Id",
+     "type": "string"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "organ_system": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Organ System"
+    },
+    "serious": {
+     "title": "Serious",
+     "type": "boolean"
+    },
+    "term": {
+     "title": "Term",
+     "type": "string"
+    }
+   },
+   "required": [
+    "key",
+    "nct_id",
+    "serious",
+    "term",
+    "organ_system",
+    "assessment",
+    "group_id",
+    "events",
+    "affected",
+    "at_risk"
+   ],
+   "title": "PostedEvent",
+   "type": "object"
+  },
+  "PostedHarms": {
+   "additionalProperties": false,
+   "description": "One adverse-event group's totals: who died, had a serious or another event, of how\nmany at risk. `frequency_threshold` is the share below which other events are not listed.",
+   "properties": {
+    "deaths_affected": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Deaths Affected"
+    },
+    "deaths_at_risk": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Deaths At Risk"
+    },
+    "frequency_threshold": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Frequency Threshold"
+    },
+    "group_id": {
+     "title": "Group Id",
+     "type": "string"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "other_affected": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Other Affected"
+    },
+    "other_at_risk": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Other At Risk"
+    },
+    "serious_affected": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Serious Affected"
+    },
+    "serious_at_risk": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Serious At Risk"
+    },
+    "time_frame": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Time Frame"
+    }
+   },
+   "required": [
+    "key",
+    "nct_id",
+    "group_id",
+    "deaths_affected",
+    "deaths_at_risk",
+    "serious_affected",
+    "serious_at_risk",
+    "other_affected",
+    "other_at_risk",
+    "frequency_threshold",
+    "time_frame"
+   ],
+   "title": "PostedHarms",
+   "type": "object"
+  },
+  "PostedOutcome": {
+   "additionalProperties": false,
+   "description": "One outcome a trial posted, with every group's figures.\n\n`key` is the trial's number and the outcome's place in the record. `as_of` is the day of\nthe record's last update.",
+   "properties": {
+    "as_of": {
+     "format": "date",
+     "title": "As Of",
+     "type": "string"
+    },
+    "dispersion_type": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Dispersion Type"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "kind": {
+     "$ref": "#/$defs/OutcomeKind"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "param_type": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Param Type"
+    },
+    "time_frame": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Time Frame"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    },
+    "unit": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Unit"
+    },
+    "values": {
+     "items": {
+      "$ref": "#/$defs/PostedValue"
+     },
+     "title": "Values",
+     "type": "array"
+    }
+   },
+   "required": [
+    "key",
+    "nct_id",
+    "kind",
+    "title",
+    "time_frame",
+    "unit",
+    "param_type",
+    "dispersion_type",
+    "values",
+    "as_of"
+   ],
+   "title": "PostedOutcome",
+   "type": "object"
+  },
+  "PostedValue": {
+   "additionalProperties": false,
+   "description": "One group's figure for one row of a posted outcome, as written.\n\n`group_title` is the registry's own name for the group, kept with the figure whether or\nnot the group is joined to an arm. `analysed` is the count in the group's denominator:\nthe row's own when it has one, else the outcome's.",
+   "properties": {
+    "analysed": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Analysed"
+    },
+    "category_title": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Category Title"
+    },
+    "class_title": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Class Title"
+    },
+    "group_id": {
+     "title": "Group Id",
+     "type": "string"
+    },
+    "group_title": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Group Title"
+    },
+    "lower": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Lower"
+    },
+    "spread": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Spread"
+    },
+    "upper": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Upper"
+    },
+    "value": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Value"
+    }
+   },
+   "required": [
+    "group_id",
+    "group_title",
+    "class_title",
+    "category_title",
+    "analysed",
+    "value",
+    "spread",
+    "lower",
+    "upper"
+   ],
+   "title": "PostedValue",
+   "type": "object"
+  },
+  "RegisteredOutcome": {
+   "additionalProperties": false,
+   "description": "One outcome a trial registered, as written: what it measures and when.",
+   "properties": {
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "kind": {
+     "$ref": "#/$defs/OutcomeKind"
+    },
+    "measure": {
+     "title": "Measure",
+     "type": "string"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "time_frame": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Time Frame"
+    }
+   },
+   "required": [
+    "key",
+    "nct_id",
+    "kind",
+    "measure",
+    "time_frame"
+   ],
+   "title": "RegisteredOutcome",
+   "type": "object"
+  },
+  "RegistryCheck": {
+   "additionalProperties": false,
+   "description": "The last day a registry's updates were read through, for \"registries last checked\".",
+   "properties": {
+    "checked_through": {
+     "format": "date",
+     "title": "Checked Through",
+     "type": "string"
+    },
+    "registry": {
+     "title": "Registry",
+     "type": "string"
+    }
+   },
+   "required": [
+    "registry",
+    "checked_through"
+   ],
+   "title": "RegistryCheck",
+   "type": "object"
+  },
+  "ResultGroup": {
+   "additionalProperties": false,
+   "description": "One group's value for a posted outcome, as the registry writes it.",
+   "properties": {
+    "analysed": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Analysed"
+    },
+    "spread": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Spread"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    },
+    "value": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Value"
+    }
+   },
+   "required": [
+    "title",
+    "analysed",
+    "value",
+    "spread"
+   ],
+   "title": "ResultGroup",
+   "type": "object"
+  },
+  "ResultGroupArm": {
+   "additionalProperties": false,
+   "description": "Which arm of the trial one result group is.\n\nThe registry numbers groups within each posted outcome and within the adverse events\n(`OG000`, `EG000`) and joins none to an arm. `outcome_key` is the outcome the group is\nof, empty for a group of the adverse events.",
+   "properties": {
+    "arm_label": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Arm Label"
+    },
+    "basis": {
+     "$ref": "#/$defs/GroupArmBasis"
+    },
+    "group_id": {
+     "title": "Group Id",
+     "type": "string"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "outcome_key": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Outcome Key"
+    },
+    "role": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/ArmRole"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    }
+   },
+   "required": [
+    "key",
+    "nct_id",
+    "outcome_key",
+    "group_id",
+    "title",
+    "arm_label",
+    "role",
+    "basis"
+   ],
+   "title": "ResultGroupArm",
+   "type": "object"
+  },
+  "ResultOutcome": {
+   "additionalProperties": false,
+   "description": "One posted outcome, with each group's value.",
+   "properties": {
+    "groups": {
+     "items": {
+      "$ref": "#/$defs/ResultGroup"
+     },
+     "title": "Groups",
+     "type": "array"
+    },
+    "time_frame": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Time Frame"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    },
+    "unit": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Unit"
+    }
+   },
+   "required": [
+    "title",
+    "time_frame",
+    "unit",
+    "groups"
+   ],
+   "title": "ResultOutcome",
+   "type": "object"
+  },
+  "ResultsDue": {
+   "additionalProperties": false,
+   "description": "Whether a trial whose primary completion has passed has results, as of a day.",
+   "properties": {
+    "as_of": {
+     "format": "date",
+     "title": "As Of",
+     "type": "string"
+    },
+    "code": {
+     "$ref": "#/$defs/DueCode"
+    },
+    "days_since_completion": {
+     "title": "Days Since Completion",
+     "type": "integer"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "primary_completion": {
+     "format": "date",
+     "title": "Primary Completion",
+     "type": "string"
+    }
+   },
+   "required": [
+    "nct_id",
+    "primary_completion",
+    "code",
+    "days_since_completion",
+    "as_of"
+   ],
+   "title": "ResultsDue",
+   "type": "object"
+  },
+  "TrialDate": {
+   "additionalProperties": false,
+   "description": "A date the sponsor gave the registry for the trial, and how it is known.\n\n`day` is as the registry writes it, a day or a month with no day: `2027-03-15`, `2027-03`.\n`basis` is empty when the registry does not say whether the date is actual or expected.",
+   "properties": {
+    "basis": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/DayBasis"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "day": {
+     "title": "Day",
+     "type": "string"
+    }
+   },
+   "required": [
+    "day",
+    "basis"
+   ],
+   "title": "TrialDate",
+   "type": "object"
+  },
+  "TrialEvent": {
+   "additionalProperties": false,
+   "description": "One event of a trial's record. The trial's own, once, read by every claim citing it.",
+   "properties": {
+    "day": {
+     "format": "date",
+     "title": "Day",
+     "type": "string"
+    },
+    "day_basis": {
+     "$ref": "#/$defs/DayBasis"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "kind": {
+     "$ref": "#/$defs/TrialEventKind"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "phases": {
+     "items": {
+      "$ref": "#/$defs/TrialPhase"
+     },
+     "title": "Phases",
+     "type": "array"
+    },
+    "update_key": {
+     "title": "Update Key",
+     "type": "string"
+    }
+   },
+   "required": [
+    "key",
+    "nct_id",
+    "kind",
+    "day",
+    "day_basis",
+    "phases",
+    "update_key"
+   ],
+   "title": "TrialEvent",
+   "type": "object"
+  },
+  "TrialEventKind": {
+   "description": "Something that happened to a trial's record, on a day.",
+   "enum": [
+    "registered",
+    "started",
+    "suspended",
+    "completed",
+    "terminated",
+    "withdrawn",
+    "results_posted",
+    "phase_changed"
+   ],
+   "title": "TrialEventKind",
+   "type": "string"
+  },
+  "TrialFacts": {
+   "additionalProperties": false,
+   "description": "What the record states of the trial itself. Shown with its date; never part of status.\n\nThe sponsor is named only when the registry's class says it is an organisation. The\nsponsor, the planned outcomes, why it stopped and the results are empty until the stage\nthat asks the registry for them: empty means not read, never none.",
+   "properties": {
+    "allocation": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Allocation"
+    },
+    "as_of": {
+     "format": "date",
+     "title": "As Of",
+     "type": "string"
+    },
+    "completion": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/TrialDate"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "healthy_volunteers": {
+     "anyOf": [
+      {
+       "type": "boolean"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Healthy Volunteers"
+    },
+    "masking": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Masking"
+    },
+    "maximum_age": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Maximum Age"
+    },
+    "minimum_age": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Minimum Age"
+    },
+    "nct_id": {
+     "title": "Nct Id",
+     "type": "string"
+    },
+    "overall_status": {
+     "$ref": "#/$defs/OverallStatus"
+    },
+    "participants": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Participants"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "phases": {
+     "items": {
+      "$ref": "#/$defs/TrialPhase"
+     },
+     "title": "Phases",
+     "type": "array"
+    },
+    "primary_completion": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/TrialDate"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "primary_outcomes": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/$defs/PlannedOutcome"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Primary Outcomes"
+    },
+    "primary_purpose": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Primary Purpose"
+    },
+    "results": {
+     "anyOf": [
+      {
+       "items": {
+        "$ref": "#/$defs/ResultOutcome"
+       },
+       "type": "array"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Results"
+    },
+    "sponsor_class": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Sponsor Class"
+    },
+    "sponsor_name": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Sponsor Name"
+    },
+    "start": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/TrialDate"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "title": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Title"
+    },
+    "why_stopped": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Why Stopped"
+    }
+   },
+   "required": [
+    "nct_id",
+    "as_of",
+    "title",
+    "phases",
+    "overall_status",
+    "participants",
+    "start",
+    "primary_completion",
+    "completion",
+    "allocation",
+    "masking",
+    "primary_purpose",
+    "healthy_volunteers",
+    "minimum_age",
+    "maximum_age"
+   ],
+   "title": "TrialFacts",
+   "type": "object"
+  },
+  "TrialFindingsRow": {
+   "additionalProperties": false,
+   "description": "What a trial posted and registered, as its row shows it: posted primary outcomes\nfirst, then secondary; the sponsor's comparisons; which arm each group is; each group's\nharms; serious events; the registered outcomes; and whether results are due.",
+   "properties": {
+    "arms": {
+     "items": {
+      "$ref": "#/$defs/ResultGroupArm"
+     },
+     "title": "Arms",
+     "type": "array"
+    },
+    "comparisons": {
+     "items": {
+      "$ref": "#/$defs/PostedComparison"
+     },
+     "title": "Comparisons",
+     "type": "array"
+    },
+    "due": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/ResultsDue"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "harms": {
+     "items": {
+      "$ref": "#/$defs/PostedHarms"
+     },
+     "title": "Harms",
+     "type": "array"
+    },
+    "outcomes": {
+     "items": {
+      "$ref": "#/$defs/PostedOutcome"
+     },
+     "title": "Outcomes",
+     "type": "array"
+    },
+    "registered": {
+     "items": {
+      "$ref": "#/$defs/RegisteredOutcome"
+     },
+     "title": "Registered",
+     "type": "array"
+    },
+    "serious_events": {
+     "items": {
+      "$ref": "#/$defs/PostedEvent"
+     },
+     "title": "Serious Events",
+     "type": "array"
+    }
+   },
+   "required": [
+    "outcomes",
+    "comparisons",
+    "arms",
+    "harms",
+    "serious_events",
+    "registered",
+    "due"
+   ],
+   "title": "TrialFindingsRow",
+   "type": "object"
+  },
+  "TrialPhase": {
+   "description": "A phase as the registry codes it.",
+   "enum": [
+    "early_phase_1",
+    "phase_1",
+    "phase_2",
+    "phase_3",
+    "phase_4",
+    "not_applicable"
+   ],
+   "title": "TrialPhase",
+   "type": "string"
+  }
+ },
+ "additionalProperties": false,
+ "description": "The open-data file of one tracked pair: everything its page shows.",
+ "properties": {
+  "pair": {
+   "$ref": "#/$defs/PairPage"
+  }
+ },
+ "required": [
+  "pair"
+ ],
+ "title": "PairDataFile",
+ "type": "object"
+}

@@ -1,0 +1,154 @@
+{
+ "pair": {
+  "row": {
+   "pair": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "key": "substance:ON09TCS5H3|D045743",
+    "address": "tulisokibart--scleroderma-diffuse",
+    "nct_ids": [
+     "NCT05270668"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:ON09TCS5H3",
+    "key_kind": "substance",
+    "key_value": "ON09TCS5H3",
+    "preferred_name": "Tulisokibart",
+    "slug": "tulisokibart",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D045743",
+    "slug": "scleroderma-diffuse"
+   },
+   "descriptor": {
+    "descriptor_id": "D045743",
+    "label": "Scleroderma, Diffuse",
+    "tree_numbers": [
+     "C17.300.799.602",
+     "C17.800.784.602"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "code": "phase_2",
+    "overlay_years": 4,
+    "explained_by": [
+     "NCT05270668|registered|2022-03-08",
+     "NCT05270668|started|2022-03-29"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "vertical": "skin-and-hair",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  "names": [
+   {
+    "intervention_id": "substance:ON09TCS5H3",
+    "name": "Tulisokibart",
+    "origin": "substance_registry",
+    "role": "preferred",
+    "searchable": true
+   }
+  ],
+  "checked_by_person": false,
+  "trials": [
+   {
+    "nct_id": "NCT05270668",
+    "arms": [
+     "Tulisokibart"
+    ],
+    "claim_arm": "Tulisokibart",
+    "facts": {
+     "nct_id": "NCT05270668",
+     "as_of": "2026-09-22",
+     "title": "Phase 2 Safety and Efficacy Study of Tulisokibart (MK-7240/PRA023) in Subjects With Systemic Sclerosis Associated With Interstitial Lung Disease (SSc-ILD) (MK-7240-007)",
+     "phases": [
+      "phase_2"
+     ],
+     "overall_status": "active_not_recruiting",
+     "participants": {
+      "count": 154,
+      "actual": true
+     },
+     "start": {
+      "day": "2022-03-29",
+      "basis": "registry_date"
+     },
+     "primary_completion": {
+      "day": "2026-04-16",
+      "basis": "registry_date"
+     },
+     "completion": {
+      "day": "2026-11-16",
+      "basis": "registry_date_estimated"
+     },
+     "allocation": "RANDOMIZED",
+     "masking": "QUADRUPLE",
+     "primary_purpose": "TREATMENT",
+     "healthy_volunteers": false,
+     "minimum_age": "18 Years",
+     "maximum_age": null,
+     "sponsor_name": null,
+     "sponsor_class": null,
+     "primary_outcomes": null,
+     "why_stopped": null,
+     "results": null
+    },
+    "events": [
+     {
+      "key": "NCT05270668|registered|2022-03-08",
+      "nct_id": "NCT05270668",
+      "kind": "registered",
+      "day": "2022-03-08",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2"
+      ],
+      "update_key": "NCT05270668@2026-09-22"
+     },
+     {
+      "key": "NCT05270668|started|2022-03-29",
+      "nct_id": "NCT05270668",
+      "kind": "started",
+      "day": "2022-03-29",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2"
+      ],
+      "update_key": "NCT05270668@2026-09-22"
+     }
+    ],
+    "paper_ids": [],
+    "findings": null
+   }
+  ],
+  "approach": {
+   "intervention_id": "substance:ON09TCS5H3",
+   "approach": "drug",
+   "basis": "registry_intervention_type",
+   "registry_type": "DRUG",
+   "trials": 2
+  },
+  "history": [
+   {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "before": null,
+    "after": "phase_2",
+    "on": "2026-11-18",
+    "observed_in_run": "983da113c2c5"
+   }
+  ],
+  "checked": []
+ }
+}

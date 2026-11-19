@@ -1,0 +1,22 @@
+{
+ "vertical": {
+  "slug": "eyes-and-ears",
+  "title": "Eyes and ears",
+  "group": "eyes-and-ears",
+  "covers": [
+   "D005128",
+   "D004427"
+  ]
+ },
+ "group": {
+  "slug": "eyes-and-ears",
+  "title": "Eyes and ears"
+ },
+ "pairs": [],
+ "retired": [
+  {
+   "slug": "sight-and-hearing",
+   "successor": "eyes-and-ears"
+  }
+ ]
+}

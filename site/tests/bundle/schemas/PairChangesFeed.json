@@ -1,0 +1,481 @@
+{
+ "$defs": {
+  "ClaimStatusCode": {
+   "description": "Where a claim stands. The site words each code; none is a verdict.",
+   "enum": [
+    "preclinical_only",
+    "no_trial_found",
+    "trial_registered",
+    "phase_1",
+    "phase_2",
+    "phase_3",
+    "approved",
+    "failed",
+    "terminated",
+    "retracted"
+   ],
+   "title": "ClaimStatusCode",
+   "type": "string"
+  },
+  "Condition": {
+   "additionalProperties": false,
+   "description": "One condition a claim or a trial pair stands for, with its own page.\n\nKeyed on its MeSH descriptor, so a condition's id is the descriptor's id. Its label and\ntree numbers are the descriptor's, read from `MeshDescriptor`, never copied here.",
+   "properties": {
+    "descriptor_id": {
+     "title": "Descriptor Id",
+     "type": "string"
+    },
+    "slug": {
+     "title": "Slug",
+     "type": "string"
+    }
+   },
+   "required": [
+    "descriptor_id",
+    "slug"
+   ],
+   "title": "Condition",
+   "type": "object"
+  },
+  "DraftedFrom": {
+   "description": "What a claim was drafted from. Set once and never changed.",
+   "enum": [
+    "registry",
+    "article",
+    "post",
+    "person",
+    "seed"
+   ],
+   "title": "DraftedFrom",
+   "type": "string"
+  },
+  "FilingBasis": {
+   "description": "How a claim's vertical was set.",
+   "enum": [
+    "one_derived_topic",
+    "narrowest_derived_topic",
+    "person"
+   ],
+   "title": "FilingBasis",
+   "type": "string"
+  },
+  "Intervention": {
+   "additionalProperties": false,
+   "description": "One drug, device, method or complete regimen, shared by every claim about it.\n\n`id` is `<key_kind>:<key_value>`, made once by the step that creates the record. A\nregimen lists its agents in `components`; one agent has none.",
+   "properties": {
+    "components": {
+     "default": [],
+     "items": {
+      "type": "string"
+     },
+     "title": "Components",
+     "type": "array"
+    },
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "key_kind": {
+     "$ref": "#/$defs/InterventionKeyKind"
+    },
+    "key_value": {
+     "title": "Key Value",
+     "type": "string"
+    },
+    "preferred_name": {
+     "title": "Preferred Name",
+     "type": "string"
+    },
+    "slug": {
+     "title": "Slug",
+     "type": "string"
+    }
+   },
+   "required": [
+    "id",
+    "key_kind",
+    "key_value",
+    "preferred_name",
+    "slug"
+   ],
+   "title": "Intervention",
+   "type": "object"
+  },
+  "InterventionKeyKind": {
+   "description": "Where an intervention's key comes from, best first.",
+   "enum": [
+    "substance",
+    "mesh",
+    "registry_name",
+    "regimen"
+   ],
+   "title": "InterventionKeyKind",
+   "type": "string"
+  },
+  "Lead": {
+   "additionalProperties": false,
+   "description": "One article address, in the form the site compares addresses, kept once.\n\n`title` is the headline it was first seen with: a headline, never article text.",
+   "properties": {
+    "first_seen": {
+     "format": "date-time",
+     "title": "First Seen",
+     "type": "string"
+    },
+    "outlet": {
+     "title": "Outlet",
+     "type": "string"
+    },
+    "published": {
+     "anyOf": [
+      {
+       "format": "date",
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Published"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    },
+    "url": {
+     "title": "Url",
+     "type": "string"
+    },
+    "url_key": {
+     "title": "Url Key",
+     "type": "string"
+    }
+   },
+   "required": [
+    "url_key",
+    "url",
+    "outlet",
+    "title",
+    "published",
+    "first_seen"
+   ],
+   "title": "Lead",
+   "type": "object"
+  },
+  "MeshDescriptor": {
+   "additionalProperties": false,
+   "description": "A MeSH descriptor as the lab keeps it: its label and its places in the tree.",
+   "properties": {
+    "descriptor_id": {
+     "title": "Descriptor Id",
+     "type": "string"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "tree_numbers": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Tree Numbers",
+     "type": "array"
+    }
+   },
+   "required": [
+    "descriptor_id",
+    "label",
+    "tree_numbers"
+   ],
+   "title": "MeshDescriptor",
+   "type": "object"
+  },
+  "Pair": {
+   "additionalProperties": false,
+   "description": "A tracked (intervention, condition), derived each run. Never written by a batch.\n\n`key` is `<intervention_id>|<condition_id>`, the row key. `address` is the public one,\n`<intervention slug>--<condition slug>`, kept apart so two pairs with one address are\nboth tracked. `checked_by_person` is true while a person's decision on one of its\ntrials still counts.",
+   "properties": {
+    "address": {
+     "title": "Address",
+     "type": "string"
+    },
+    "checked_by_person": {
+     "title": "Checked By Person",
+     "type": "boolean"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "nct_ids": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Nct Ids",
+     "type": "array"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "key",
+    "address",
+    "nct_ids",
+    "checked_by_person"
+   ],
+   "title": "Pair",
+   "type": "object"
+  },
+  "PairFiling": {
+   "additionalProperties": false,
+   "description": "The one vertical a pair is filed under, and how: `ClaimFiling` keyed on the pair.",
+   "properties": {
+    "basis": {
+     "$ref": "#/$defs/FilingBasis"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "vertical": {
+     "title": "Vertical",
+     "type": "string"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "vertical",
+    "basis"
+   ],
+   "title": "PairFiling",
+   "type": "object"
+  },
+  "PairOrigin": {
+   "additionalProperties": false,
+   "description": "What a migrated claim was, for the open-data export. Written once, from the claims.",
+   "properties": {
+    "claim_slug": {
+     "title": "Claim Slug",
+     "type": "string"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "created_at": {
+     "format": "date-time",
+     "title": "Created At",
+     "type": "string"
+    },
+    "drafted_by_run": {
+     "title": "Drafted By Run",
+     "type": "string"
+    },
+    "drafted_from": {
+     "$ref": "#/$defs/DraftedFrom"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "claim_slug",
+    "drafted_from",
+    "drafted_by_run",
+    "created_at"
+   ],
+   "title": "PairOrigin",
+   "type": "object"
+  },
+  "PairRow": {
+   "additionalProperties": false,
+   "description": "A pair as a list shows it: `ClaimRow` keyed on the pair, with what a migrated claim\nwas, for the open-data export.",
+   "properties": {
+    "condition": {
+     "$ref": "#/$defs/Condition"
+    },
+    "descriptor": {
+     "$ref": "#/$defs/MeshDescriptor"
+    },
+    "filing": {
+     "$ref": "#/$defs/PairFiling"
+    },
+    "first_report": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Lead"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "intervention": {
+     "$ref": "#/$defs/Intervention"
+    },
+    "origin": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/PairOrigin"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "pair": {
+     "$ref": "#/$defs/Pair"
+    },
+    "status": {
+     "$ref": "#/$defs/PairStatus"
+    }
+   },
+   "required": [
+    "pair",
+    "intervention",
+    "condition",
+    "descriptor",
+    "status",
+    "filing",
+    "origin",
+    "first_report"
+   ],
+   "title": "PairRow",
+   "type": "object"
+  },
+  "PairStatus": {
+   "additionalProperties": false,
+   "description": "A pair's status as of a day, with the events that explain it: `ClaimStatus` keyed on\nthe pair, by the same rules.",
+   "properties": {
+    "as_of": {
+     "format": "date",
+     "title": "As Of",
+     "type": "string"
+    },
+    "code": {
+     "$ref": "#/$defs/ClaimStatusCode"
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "explained_by": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Explained By",
+     "type": "array"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "overlay_years": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Overlay Years"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "code",
+    "overlay_years",
+    "explained_by",
+    "as_of"
+   ],
+   "title": "PairStatus",
+   "type": "object"
+  },
+  "PairStatusChange": {
+   "additionalProperties": false,
+   "description": "A change of a pair's status between two runs: what a follower is told. The run that\nobserved it is a field of its own, so a change migrated from a claim's keeps its run.",
+   "properties": {
+    "after": {
+     "$ref": "#/$defs/ClaimStatusCode"
+    },
+    "before": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/ClaimStatusCode"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "condition_id": {
+     "title": "Condition Id",
+     "type": "string"
+    },
+    "intervention_id": {
+     "title": "Intervention Id",
+     "type": "string"
+    },
+    "observed_in_run": {
+     "title": "Observed In Run",
+     "type": "string"
+    },
+    "on": {
+     "format": "date",
+     "title": "On",
+     "type": "string"
+    }
+   },
+   "required": [
+    "intervention_id",
+    "condition_id",
+    "before",
+    "after",
+    "on",
+    "observed_in_run"
+   ],
+   "title": "PairStatusChange",
+   "type": "object"
+  }
+ },
+ "additionalProperties": false,
+ "description": "The feed of the shown pairs' status changes, latest first.",
+ "properties": {
+  "changes": {
+   "items": {
+    "$ref": "#/$defs/PairStatusChange"
+   },
+   "title": "Changes",
+   "type": "array"
+  },
+  "pairs": {
+   "items": {
+    "$ref": "#/$defs/PairRow"
+   },
+   "title": "Pairs",
+   "type": "array"
+  }
+ },
+ "required": [
+  "changes",
+  "pairs"
+ ],
+ "title": "PairChangesFeed",
+ "type": "object"
+}

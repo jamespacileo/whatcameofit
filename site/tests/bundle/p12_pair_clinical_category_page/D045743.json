@@ -1,0 +1,73 @@
+{
+ "descriptor": {
+  "descriptor_id": "D045743",
+  "label": "Scleroderma, Diffuse",
+  "tree_numbers": [
+   "C17.300.799.602",
+   "C17.800.784.602"
+  ]
+ },
+ "broader": [
+  {
+   "descriptor_id": "D017437",
+   "label": "Skin and Connective Tissue Diseases",
+   "tree_numbers": [
+    "C17"
+   ]
+  }
+ ],
+ "narrower": [],
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "key": "substance:ON09TCS5H3|D045743",
+    "address": "tulisokibart--scleroderma-diffuse",
+    "nct_ids": [
+     "NCT05270668"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:ON09TCS5H3",
+    "key_kind": "substance",
+    "key_value": "ON09TCS5H3",
+    "preferred_name": "Tulisokibart",
+    "slug": "tulisokibart",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D045743",
+    "slug": "scleroderma-diffuse"
+   },
+   "descriptor": {
+    "descriptor_id": "D045743",
+    "label": "Scleroderma, Diffuse",
+    "tree_numbers": [
+     "C17.300.799.602",
+     "C17.800.784.602"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "code": "phase_2",
+    "overlay_years": 4,
+    "explained_by": [
+     "NCT05270668|registered|2022-03-08",
+     "NCT05270668|started|2022-03-29"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D045743",
+    "vertical": "skin-and-hair",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ]
+}

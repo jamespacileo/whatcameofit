@@ -13,11 +13,26 @@ A bundle SHALL hold one JSON file for each page, at `<page model>/<key>.json`, o
 - **WHEN** the manifest counts 120 pair pages and 119 files are present
 - **THEN** the build stops and names the page model and both counts
 
+### Requirement: A bundle is loaded into the store under its version
+A bundle SHALL be loaded into the store's database under its version, each page file kept as written and the pairs, interventions, conditions, trials and status changes it names kept as rows. A version SHALL become the current one only when its load has finished, and the version before SHALL be kept.
+
+#### Scenario: A load stops half way
+- **WHEN** a bundle's load stops before its last statements
+- **THEN** the current version is the one it was, with every row it had
+
+#### Scenario: A page file is read back
+- **WHEN** a pair's page is read from the store by its address
+- **THEN** it equals the file the lab wrote
+
+#### Scenario: A third bundle is loaded
+- **WHEN** two versions are held and a third is loaded
+- **THEN** the store holds the third and the one before it, and no row of the first
+
 ### Requirement: The site is built from one bundle version
-The build SHALL read the version the pointer names, check the bundle's checksum against its manifest, and record that version in the built site. Pages built ahead and pages rendered on request SHALL read the same version for the life of a deployment.
+The build SHALL read the store's current version, check the bundle's checksum against its manifest, and record that version in the built site. Pages built ahead and pages rendered on request SHALL read the same version for the life of a deployment.
 
 #### Scenario: A newer bundle is published after a deployment
-- **WHEN** a bundle is published and the pointer moved while a deployment is live
+- **WHEN** a bundle is loaded and made current while a deployment is live
 - **THEN** the live site's pages, built and on request, still show the version it was built from
 
 #### Scenario: The checksum does not match

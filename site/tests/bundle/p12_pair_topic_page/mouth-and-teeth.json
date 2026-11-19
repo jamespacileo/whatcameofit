@@ -1,0 +1,21 @@
+{
+ "vertical": {
+  "slug": "mouth-and-teeth",
+  "title": "Mouth and teeth",
+  "group": "mouth-and-teeth",
+  "covers": [
+   "D009057"
+  ]
+ },
+ "group": {
+  "slug": "mouth-and-teeth",
+  "title": "Mouth and teeth"
+ },
+ "pairs": [],
+ "retired": [
+  {
+   "slug": "dental-regeneration",
+   "successor": "mouth-and-teeth"
+  }
+ ]
+}

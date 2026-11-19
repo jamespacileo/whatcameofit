@@ -1,0 +1,135 @@
+{
+ "vertical": {
+  "slug": "diabetes-and-hormones",
+  "title": "Diabetes, weight and hormones",
+  "group": "diabetes-and-hormones",
+  "covers": [
+   "D009750",
+   "D004700"
+  ]
+ },
+ "group": {
+  "slug": "diabetes-and-hormones",
+  "title": "Diabetes, weight and hormones"
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "key": "substance:UZ54216N0Y|D009765",
+    "address": "apitegromab--obesity",
+    "nct_ids": [
+     "NCT06445075"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D009765",
+    "slug": "obesity"
+   },
+   "descriptor": {
+    "descriptor_id": "D009765",
+    "label": "Obesity",
+    "tree_numbers": [
+     "C18.654.726.750.500",
+     "C23.888.144.699.500"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT06445075|started|2024-05-21",
+     "NCT06445075|registered|2024-06-06"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "vertical": "diabetes-and-hormones",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D009765",
+    "claim_slug": "apitegromab-obesity",
+    "drafted_from": "seed",
+    "drafted_by_run": "9f5f39ee6a19",
+    "created_at": "2026-11-19T23:21:58.239029"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D050177",
+    "key": "substance:UZ54216N0Y|D050177",
+    "address": "apitegromab--overweight",
+    "nct_ids": [
+     "NCT06445075"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D050177",
+    "slug": "overweight"
+   },
+   "descriptor": {
+    "descriptor_id": "D050177",
+    "label": "Overweight",
+    "tree_numbers": [
+     "G07.100.175.313.699",
+     "C23.888.144.699",
+     "C18.654.726.750",
+     "E01.370.600.115.450.375.699",
+     "G07.100.100.160.120.699"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D050177",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT06445075|started|2024-05-21",
+     "NCT06445075|registered|2024-06-06"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D050177",
+    "vertical": "diabetes-and-hormones",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ],
+ "retired": [
+  {
+   "slug": "diabetes-and-metabolism",
+   "successor": "diabetes-and-hormones"
+  }
+ ]
+}

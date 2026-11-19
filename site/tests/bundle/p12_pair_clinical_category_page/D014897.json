@@ -1,0 +1,99 @@
+{
+ "descriptor": {
+  "descriptor_id": "D014897",
+  "label": "Spinal Muscular Atrophies of Childhood",
+  "tree_numbers": [
+   "C10.574.562.500.750",
+   "C10.228.854.468.800",
+   "C10.668.467.500.750",
+   "C16.320.400.765",
+   "C10.574.500.812"
+  ]
+ },
+ "broader": [
+  {
+   "descriptor_id": "D009134",
+   "label": "Muscular Atrophy, Spinal",
+   "tree_numbers": [
+    "C10.574.562.500",
+    "C10.228.854.468",
+    "C10.668.467.500"
+   ]
+  },
+  {
+   "descriptor_id": "D009422",
+   "label": "Nervous System Diseases",
+   "tree_numbers": [
+    "C10"
+   ]
+  },
+  {
+   "descriptor_id": "D009468",
+   "label": "Neuromuscular Diseases",
+   "tree_numbers": [
+    "C10.668"
+   ]
+  }
+ ],
+ "narrower": [],
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "key": "substance:UZ54216N0Y|D014897",
+    "address": "apitegromab--spinal-muscular-atrophies-of-childhood",
+    "nct_ids": [
+     "NCT03921528",
+     "NCT05156320",
+     "NCT05626855"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:UZ54216N0Y",
+    "key_kind": "substance",
+    "key_value": "UZ54216N0Y",
+    "preferred_name": "APITEGROMAB",
+    "slug": "apitegromab",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D014897",
+    "slug": "spinal-muscular-atrophies-of-childhood"
+   },
+   "descriptor": {
+    "descriptor_id": "D014897",
+    "label": "Spinal Muscular Atrophies of Childhood",
+    "tree_numbers": [
+     "C10.574.562.500.750",
+     "C10.228.854.468.800",
+     "C10.668.467.500.750",
+     "C16.320.400.765",
+     "C10.574.500.812"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05156320|registered|2021-12-14",
+     "NCT05156320|started|2022-04-14",
+     "NCT05626855|registered|2022-11-25",
+     "NCT05626855|started|2023-04-17"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": {
+    "intervention_id": "substance:UZ54216N0Y",
+    "condition_id": "D014897",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ]
+}
