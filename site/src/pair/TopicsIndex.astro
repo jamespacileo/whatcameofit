@@ -1,0 +1,61 @@
+---
+// The topics page on the pair path: every topic with a pair filed under it, by group.
+// It keeps the claims page's markup, so its filter script works on both.
+import Base from "../layouts/Base.astro";
+import { clinicalTops, topicsIndex, type TopicEntry } from "../lib/pairs";
+
+const topics = topicsIndex();
+const groups = new Map<string, { id: string; heading: string; topics: TopicEntry[] }>();
+for (const topic of topics) {
+  const key = topic.group?.slug ?? "other";
+  const section = groups.get(key) ?? { id: `group-${key}`, heading: topic.group?.title ?? "Other topics", topics: [] };
+  section.topics.push(topic);
+  groups.set(key, section);
+}
+const sections = [...groups.values()].sort((a, b) => a.heading.localeCompare(b.heading));
+const pairCount = topics.reduce((sum, topic) => sum + topic.count, 0);
+---
+
+<Base title="Topics" description="Every topic with a treatment and condition followed, by area." current="topics">
+  <h1 class="title" data-listing="topics">Topics</h1>
+  <p class="lede">
+    {topics.length} {topics.length === 1 ? "topic" : "topics"}, {pairCount}{" "}
+    {pairCount === 1 ? "treatment and condition" : "treatments and conditions"} followed through the public trial records.
+  </p>
+  {
+    clinicalTops().length > 0 && (
+      <p class="what-this-is">
+        The same by standard medical category: <a href="/clinical">clinical categories (MeSH)</a>.
+      </p>
+    )
+  }
+
+  <div class="directory grouped" data-directory>
+    <div class="directory-tools">
+      <label class="visually-hidden" for="topic-filter">Find a topic</label>
+      <input id="topic-filter" type="search" autocomplete="off" placeholder="Find a topic" />
+      <nav class="letters" aria-label="Jump to a group">
+        {sections.map(({ id, heading }) => <a href={`#${id}`}>{heading}</a>)}
+      </nav>
+    </div>
+    <p class="none" role="status" data-none hidden>No topic matches.</p>
+    {
+      sections.map(({ id, heading, topics }) => (
+        <section class="letter" id={id} aria-labelledby={`heading-${id}`} data-match={heading}>
+          <h2 id={`heading-${id}`}>{heading}</h2>
+          <ul>
+            {topics.map((topic) => (
+              <li data-topic={topic.slug}>
+                <a href={`/topic/${topic.slug}`}>{topic.title}</a>
+                <span class="count">
+                  {topic.count}
+                  <span class="visually-hidden">{topic.count === 1 ? " pair" : " pairs"}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</Base>

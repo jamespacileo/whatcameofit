@@ -322,3 +322,63 @@ export function categoryListings(): CategoryListing[] {
     }))
     .sort((a: CategoryListing, b: CategoryListing) => a.label.localeCompare(b.label));
 }
+
+export interface TopicEntry {
+  slug: string;
+  title: string;
+  group: { slug: string; title: string } | null;
+  count: number;
+}
+
+/** The topics page on the pair path: each topic with a pair filed under it, with its group
+ * from the bundle's topics page. */
+export function topicsIndex(): TopicEntry[] {
+  const topics = Object.values(pairBundle()?.pages.PairTopicsPage ?? {})[0];
+  if (!topics) return [];
+  const groups = new Map(topics.groups.map((group: any) => [group.slug, group]));
+  const counts = new Map(topicListings().map((listing) => [listing.slug, listing.pairs.length]));
+  return topics.verticals
+    .filter((vertical: any) => (counts.get(vertical.slug) ?? 0) > 0)
+    .map((vertical: any) => {
+      const group: any = vertical.group ? groups.get(vertical.group) : null;
+      return {
+        slug: vertical.slug,
+        title: vertical.title,
+        group: group ? { slug: group.slug, title: group.title } : null,
+        count: counts.get(vertical.slug) ?? 0,
+      };
+    })
+    .sort((a: TopicEntry, b: TopicEntry) => a.title.localeCompare(b.title));
+}
+
+/** The clinical index on the pair path: the categories with no broader one in the bundle,
+ * each with the pairs at or beneath it. */
+export function clinicalTops(): { descriptorId: string; label: string; count: number }[] {
+  return categoryListings()
+    .filter((listing) => listing.broader.length === 0 && listing.pairs.length > 0)
+    .map((listing) => ({ descriptorId: listing.descriptorId, label: listing.label, count: listing.pairs.length }));
+}
+
+export interface PairChange {
+  address: string;
+  title: string;
+  on: string;
+  code: string;
+  before: string | null;
+}
+
+/** Every pair's status changes, from its own history, newest first; on one day, by title. */
+export function pairChanges(): PairChange[] {
+  return Object.values(pairPages())
+    .flatMap((page) => {
+      const title = `${shownName(page.row.intervention.preferred_name)} for ${page.row.descriptor.label.toLowerCase()}`;
+      return page.history.map((change: any) => ({
+        address: page.row.pair.address,
+        title,
+        on: change.on,
+        code: change.after,
+        before: change.before,
+      }));
+    })
+    .sort((a, b) => (a.on === b.on ? a.title.localeCompare(b.title) : a.on < b.on ? 1 : -1));
+}

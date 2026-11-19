@@ -1,0 +1,43 @@
+---
+// The clinical index on the pair path: the top categories with a pair at or beneath them.
+import Base from "../layouts/Base.astro";
+import MeshCredit from "../components/MeshCredit.astro";
+import { categoryPath } from "../lib/clinical";
+import { clinicalTops } from "../lib/pairs";
+
+const tops = clinicalTops();
+---
+
+<Base
+  title="Clinical categories"
+  description="Treatments and conditions followed, by MeSH category, the U.S. National Library of Medicine's hierarchy of conditions."
+  current="topics"
+  breadcrumbs={[{ name: "Clinical categories", path: "/clinical" }]}
+>
+  <h1 class="title" data-listing="clinical">Clinical categories</h1>
+  <p class="what-this-is">
+    Each treatment and condition is filed under the MeSH term its trials give, and listed under every category above
+    that term. A category is not a diagnosis and not advice. The same in everyday names are on the{" "}
+    <a href="/topics">topics page</a>.
+  </p>
+  {
+    tops.length === 0 ? (
+      <p>No treatment and condition has a clinical category yet.</p>
+    ) : (
+      <div class="directory grouped clinical-directory">
+        <section class="letter" aria-labelledby="clinical-top">
+          <h2 id="clinical-top">Top categories</h2>
+          <ul>
+            {tops.map((top) => (
+              <li data-category={top.descriptorId}>
+                <a href={categoryPath(top.descriptorId)}>{top.label}</a>
+                <span class="count">{top.count}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    )
+  }
+  <MeshCredit />
+</Base>

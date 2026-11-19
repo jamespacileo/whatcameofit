@@ -7,6 +7,10 @@ import MeshCredit from "../../components/MeshCredit.astro";
 import { data } from "../../lib/export";
 import { buildTree, categoryPath, claimCount, topCategories } from "../../lib/clinical";
 import { hasLinkedReport } from "../../lib/reports";
+import ClinicalIndex from "../../pair/ClinicalIndex.astro";
+import { pairBundleFolder } from "../../lib/pairs";
+// A build that reads a bundle lists pairs here (openspec pairs-site).
+const pairIndex = pairBundleFolder() !== null;
 
 const tree = buildTree(data.clinical, data.claims);
 const reportedTree = buildTree(data.clinical, data.claims.filter(hasLinkedReport));
@@ -15,6 +19,10 @@ const filed = new Set([...tree.claims.values()].flatMap((slugs) => [...slugs])).
 const reported = new Set([...reportedTree.claims.values()].flatMap((slugs) => [...slugs])).size;
 ---
 
+{
+  pairIndex ? (
+    <ClinicalIndex />
+  ) : (
 <Base
   title="Clinical categories"
   description="Tracked claims by MeSH category, the U.S. National Library of Medicine's hierarchy of conditions."
@@ -61,3 +69,5 @@ const reported = new Set([...reportedTree.claims.values()].flatMap((slugs) => [.
 
   <MeshCredit />
 </Base>
+  )
+}
