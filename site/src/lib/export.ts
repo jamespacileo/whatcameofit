@@ -1,6 +1,7 @@
 // The site's only input: the pipeline's export, validated before anything is built.
 import { createHash } from "node:crypto";
 import fs from "node:fs";
+import { claimIsBuilt } from "./pairs.ts";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
@@ -463,7 +464,14 @@ export const listedTopics = data.verticals.filter((vertical) =>
 
 /** One address per published claim, each given its claim: getStaticPaths for every claim route. */
 export function claimPaths() {
-  return data.claims.map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+  // In a pairs build a claim that leads to its pair is not built (pairs.ts, claimsWithAPair).
+  return builtClaims().map((claim) => ({ params: { slug: claim.slug }, props: { claim } }));
+}
+
+/** The claims a build makes pages and files for: every published claim, less, in a build that
+ * reads a bundle, those whose address now leads to their pair. */
+export function builtClaims(): ExportedClaim[] {
+  return data.claims.filter((claim) => claimIsBuilt(claim.slug));
 }
 
 export function verticalTitle(slug: string): string {
