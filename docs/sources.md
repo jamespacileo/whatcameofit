@@ -518,6 +518,19 @@ Read on 2026-11-14 for a proposed backfill that starts from article addresses pe
 
 Successful public ClinicalTrials.gov responses and Europe PMC trial-number mappings may be reused for up to 24 hours under versioned hashed query keys. A paper with no indexed record is kept for one hour. Cache reads and writes are bounded and fall back to the source on failure; source failures and timeouts are never cached as successful empty answers. Paper abstracts, news text, images, credentials and reader identifiers are not retained. Concurrent identical requests within a source client share work without one caller’s cancellation cancelling another caller.
 
+## Cloudflare Workers static assets: files per deployment (20 November 2026)
+
+Read on 2026-11-20 for the site's file budget (openspec `pairs-site`, task 1.3), from the "Static Assets" table of `developers.cloudflare.com/workers/platform/limits/` (page dated 2026-11-19), with `workers/static-assets/` (2026-11-12), `workers/static-assets/billing-and-limitations/` (2026-11-12) and `workers/static-assets/redirects/` (2026-08-25):
+
+- **Files per Worker version:** 20,000 on Workers Free, 100,000 on Workers Paid. The higher count needs Wrangler 4.34.0 or later (the site uses 4.161.0). The limit is per version: every file of one deployment counts.
+- **One file:** at most 25 MiB on either plan.
+- **`_redirects`:** 2,000 static and 100 dynamic rules (2,100 in all), 1,000 characters a rule, on either plan, and not applied to requests the Worker answers. The site's moved and archived claim addresses are answered by the Worker from `gone.json`, so this limit does not bound them.
+- **`_headers`:** 100 rules, 2,000 characters a line.
+- **Not stated:** a cap on the total size of a deployment's assets, on files per upload, or on the asset manifest. Storing assets costs nothing extra.
+- **Versions kept:** the 100 most recent; only those can be deployed or rolled back to.
+- **The account's plan:** no Wrangler command shows it. Two facts put the Palladio account on Workers Paid: the preview D1 database took more than the Free plan's 100,000 rows written in a day and still accepted writes (17 November 2026), and `thenwhat-store-preview` holds 686 MB (20 November 2026), over the Free plan's 500 MB a database. The dashboard (Workers & Pages, Plans) is the operator's to confirm.
+- **What the build allows:** `site/scripts/dist-size.mjs` stops a build at 18,000 files (the Free plan's 20,000, less a tenth). The same tenth below Workers Paid's 100,000 is 90,000 (`DIST_FILE_LIMIT`), which the repository does not set until the operator confirms the plan.
+
 ## Cloudflare limits the ingest service is built inside (17 November 2026)
 
 Read on 2026-11-17 from `developers.cloudflare.com`, for `store/ingest`. The figures are also in `store/ingest/src/limits.mjs`, beside the bounds set from them. Prices and the remaining products are in `openspec/changes/cloudflare-source-of-truth/design.md`, decision 15, read the day before.
