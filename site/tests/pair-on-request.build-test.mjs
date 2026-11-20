@@ -207,7 +207,10 @@ test("no file is built per pair: every pair's page is made on request from D1, k
     assert.match(document.querySelector("title").textContent, new RegExp(page.row.descriptor.label.split(",")[0], "i"));
     assert.equal(document.querySelectorAll("[data-trial]").length, page.trials.length);
     for (const trial of page.trials) {
-      const shown = document.querySelector(`[data-trial="${trial.nct_id}"]`);
+      // A trial's record: its own entry, or in a trials table the row under its own.
+      const row = document.querySelector(`[data-trial="${trial.nct_id}"]`);
+      const shown = row.matches("tr") ? row.nextElementSibling : row;
+      if (row.matches("tr")) assert.ok(shown.matches(".trials-record"), `${address} ${trial.nct_id}`);
       assert.equal(shown.querySelectorAll("[data-outcome]").length, trial.findings?.outcomes.length ?? 0, `${address} ${trial.nct_id}`);
       assert.equal(shown.querySelectorAll("[data-paper]").length, trial.paper_ids.length, `${address} ${trial.nct_id}`);
     }

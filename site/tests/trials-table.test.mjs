@@ -30,6 +30,20 @@ test("every trial of every pair is in the table once, under its group, groups in
   }
 });
 
+test("a row's record holds the trial's posted outcomes and papers, written open for a page with no script", () => {
+  const view = views.find((one) => one.trials.some((trial) => trial.outcomes.length > 0));
+  assert.ok(view, "the fixture has a trial with posted outcomes");
+  const document = parseHTML(`<main>${trialsTable(view.trials)}</main>`).document;
+  for (const trial of view.trials) {
+    const record = document.querySelector(`tr[data-trial="${trial.nctId}"]`).nextElementSibling;
+    assert.ok(record.matches(".trials-record"));
+    assert.equal(record.querySelectorAll("[data-outcome]").length, trial.outcomes.length, trial.nctId);
+    assert.equal(record.querySelectorAll("[data-paper]").length, trial.papers.length, trial.nctId);
+    assert.ok(record.querySelector("details").hasAttribute("open"), "open with no script");
+  }
+  assert.ok(view.trials.some((trial) => trial.outcomes.length > 0));
+});
+
 test("a trial that posted results leads, whatever its phase; one with no phase comes last", () => {
   const trial = (over) => ({ nctId: "NCT0", title: null, state: "Finished", phases: null, phaseCodes: [], participants: null, start: null, primaryCompletion: null, arms: [], pairArm: null, whyStopped: null, events: [], papers: [], resultsPosted: false, outcomes: [], registryUrl: "https://clinicaltrials.gov/study/NCT0", ...over });
   const groups = trialGroups([

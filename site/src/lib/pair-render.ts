@@ -119,7 +119,10 @@ export function trialRecord(trial: PairTrialView): string {
 }
 
 export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): string {
-  const trials = view.trials.map((trial) =>
+  // From a few trials up, the trials read across as a table (lib/trials-table.ts), each row
+  // opening to the same record; fewer stay as entries of their own. Only the one used is made.
+  const asTable = view.trials.length >= TRIALS_TABLE_FROM;
+  const trials = asTable ? [trialsTable(view.trials)] : view.trials.map((trial) =>
     [
       `<article class="pair-trial" data-trial="${escape(trial.nctId)}">`,
       `<h3><a href="${escape(trial.registryUrl)}" rel="external">${escape(trial.nctId)}</a>`,
@@ -141,9 +144,7 @@ export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): 
       view.explainedBy.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}, ${escape(event.nctId)}</li>`),
     ),
     sheetHeading("The trials", "trials"),
-    // From a few trials up, the trials read across as a table (lib/trials-table.ts), each row
-    // opening to the same record; fewer stay as entries of their own.
-    ...(view.trials.length >= TRIALS_TABLE_FROM ? [trialsTable(view.trials)] : trials),
+    ...trials,
     sheetHeading("How the status changed", "history"),
     eventList(
       " data-pair-history",
