@@ -110,14 +110,19 @@ export function claimSlugsOf(row: any): string[] {
  * whose slug is its pair's address moves nowhere and is left out. A Map, not an object: a
  * slug is any text, and "constructor" is one an object already has. */
 export function movedAddresses(pairPages: any[]): Map<string, string> {
-  const moved = new Map<string, string>();
+  // Every pair each slug reaches, its own address among them: a slug that is a pair's own
+  // address and is listed by another pair too reaches two, and so goes to neither.
+  const reached = new Map<string, Set<string>>();
   for (const page of pairPages) {
-    const address = page.row.pair.address;
     for (const slug of new Set(claimSlugsOf(page.row))) {
-      if (!slug || slug === address) continue;
-      // A claim that reaches several pairs goes to none of them: a 301 names one successor.
-      moved.set(slug, moved.has(slug) ? "" : address);
+      if (!slug) continue;
+      if (!reached.has(slug)) reached.set(slug, new Set());
+      reached.get(slug)!.add(page.row.pair.address);
     }
   }
-  return new Map([...moved].filter(([, address]) => address));
+  // A claim that reaches several pairs goes to none of them: a 301 names one successor. One
+  // whose slug is its pair's address moves nowhere.
+  return new Map(
+    [...reached].filter(([slug, pairs]) => pairs.size === 1 && !pairs.has(slug)).map(([slug, pairs]) => [slug, [...pairs][0]]),
+  );
 }
