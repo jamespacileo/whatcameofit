@@ -109,6 +109,9 @@ jobs:
           STATE: ${{ (steps.state.outputs.published == 'true' || steps.preview.outcome == 'success') && 'published' || 'failed' }}
           PREVIEW_URL: ${{ steps.preview.outputs.url || steps.state.outputs.url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          # Set when the copy was built from a bundle of pair pages (openspec pairs-site).
+          PAIRS_COUNT: ${{ steps.preview.outputs.pairs_count || steps.state.outputs.pairs_count }}
+          PAIRS_VERSION: ${{ steps.preview.outputs.pairs }}
         run: |
           node site/scripts/pr-preview-comment.mjs > comment.md
           comments="repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments"
