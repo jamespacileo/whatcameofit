@@ -12,6 +12,7 @@ import { SITE } from "../site.config.mjs";
 /** A pair's address: two slugs joined by a double hyphen. */
 const ADDRESS = /^\/([a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*)$/;
 const VERSION = /data-pair-version="([0-9a-f]{16})"/;
+const MESH_EDITION = /data-mesh-edition="([^"]*)"/;
 export const SHELL_PATH = "/pair-shell";
 const DAY_SECONDS = 86400;
 // Said when a pair's file does not pass its check: nothing of the file is shown.
@@ -29,24 +30,43 @@ export function recordAddress(pathname) {
   return RECORD.exec(pathname)?.[1] ?? null;
 }
 
-/** The frame the build left and the bundle version it read, or null on a deployment without. */
-async function builtVersion(env, url) {
+/**
+ * The frame the build left, with what a page made in it needs, or null on a deployment without:
+ * - `version`, the bundle version the build read, the only one the Worker reads pages of;
+ * - `build`, a digest of the frame, which a cached page is keyed by: a redeploy with the same
+ *   bundle but another frame (a renderer, style or asset change) never answers an older page;
+ * - `robots`, the frame's own X-Robots-Tag: a preview's `_headers` mark every asset noindex, and
+ *   a page made here carries the same mark as the files beside it;
+ * - `meshEdition`, the MeSH vocabulary's year as the build states it.
+ */
+export async function builtVersion(env, url) {
   const frame = await env.ASSETS.fetch(new Request(new URL(SHELL_PATH, url)));
   if (!frame.ok) return null;
   const shell = await frame.text();
   const version = VERSION.exec(shell)?.[1];
-  return version ? { shell, version } : null;
+  if (!version) return null;
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(shell)));
+  const build = [...digest.slice(0, 8)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const meshEdition = (MESH_EDITION.exec(shell)?.[1] ?? "").replaceAll("&amp;", "&").replaceAll("&#39;", "'").replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">");
+  return { shell, version, build, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
+}
+
+/** The headers of a page or file made here: its type and caching, and the frame's robots mark. */
+export function madeHeaders(built, type, cacheControl) {
+  const headers = new Headers({ "Content-Type": type, "Cache-Control": cacheControl });
+  if (built.robots) headers.set("X-Robots-Tag", built.robots);
+  return headers;
 }
 
 /** What `bundleFile` gives for a file the version does not hold: distinct from any parsed body,
  * JSON `null` included, so every body found is checked. */
 export const ABSENT = Symbol("absent");
 
-const FILE_SQL = "SELECT body FROM pair_page WHERE version = ?1 AND model = ?2 AND key = ?3 ORDER BY part";
+export const FILE_SQL = "SELECT body FROM pair_page WHERE version = ?1 AND model = ?2 AND key = ?3 ORDER BY part";
 
 /** A file's parts as read, joined and parsed: the parsed file, undefined when it does not parse,
  * or ABSENT when there are none. */
-function parsedFile(results) {
+export function parsedFile(results) {
   if (!results.length) return ABSENT;
   try {
     return JSON.parse(results.map((row) => row.body).join(""));
@@ -56,18 +76,32 @@ function parsedFile(results) {
 }
 
 /** One file of the bundle as the loader kept it, its parts joined. */
-async function bundleFile(env, version, model, key) {
+export async function bundleFile(env, version, model, key) {
   const { results } = await env.PAIRS.prepare(FILE_SQL).bind(version, model, key).all();
   return parsedFile(results);
 }
 
-function fill(shell, { title, description, address, band, sheet }) {
+/** The frame with a page's parts in their places. Each part is put in by a function, so it goes
+ * in as written: a replacement string would read "$$" or "$&" in it as patterns. */
+export function fill(shell, { title, description, address, band, sheet }) {
   return shell
-    .replaceAll("__PAIR_TITLE__", escape(title))
-    .replaceAll("__PAIR_DESCRIPTION__", escape(description))
-    .replaceAll("__PAIR_ADDRESS__", escape(address))
-    .replace("<!--pair-band-->", band)
-    .replace("<!--pair-sheet-->", sheet);
+    .replaceAll("__PAIR_TITLE__", () => escape(title))
+    .replaceAll("__PAIR_DESCRIPTION__", () => escape(description))
+    .replaceAll("__PAIR_ADDRESS__", () => escape(address))
+    .replace("<!--pair-band-->", () => band)
+    .replace("<!--pair-sheet-->", () => sheet);
+}
+
+/** The error page for a file that failed its check: nothing of the file is shown. */
+export function unreadablePage(built, address) {
+  const page = fill(built.shell, {
+    title: "Page not shown",
+    description: UNREADABLE,
+    address,
+    band: `<section class="band record"><div class="wrap"><h1 class="title">Page not shown</h1><p class="lede" data-pair-unreadable>${escape(UNREADABLE)}</p></div></section>`,
+    sheet: "",
+  });
+  return new Response(page, { status: 500, headers: madeHeaders(built, "text/html; charset=utf-8", "no-store") });
 }
 
 /**
@@ -87,7 +121,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   if (!built) return null;
   const { shell, version } = built;
 
-  const key = new Request(new URL(`/__pair/${version}/${address}`, url));
+  const key = new Request(new URL(`/__pair/${version}/${built.build}/${address}`, url));
   const kept = cache ? await cache.match(key) : undefined;
   if (kept) return kept;
 
@@ -109,14 +143,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
     published = new Set(pairs.results.map((row) => row.address));
   }
   if (!valid || (intervention !== ABSENT && !(typeof validateIntervention === "function" && validateIntervention(intervention)))) {
-    const page = fill(shell, {
-      title: "Page not shown",
-      description: UNREADABLE,
-      address,
-      band: `<section class="band record"><div class="wrap"><h1 class="title">Page not shown</h1><p class="lede" data-pair-unreadable>${escape(UNREADABLE)}</p></div></section>`,
-      sheet: "",
-    });
-    return new Response(page, { status: 500, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" } });
+    return unreadablePage(built, address);
   }
 
   const view = pairView(file);
@@ -127,9 +154,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
     band: renderPairBand(view),
     sheet: renderPairSheet(view, narrowerPairs(file, intervention === ABSENT ? null : intervention, published)),
   });
-  const answer = new Response(page, {
-    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": `public, max-age=${DAY_SECONDS}` },
-  });
+  const answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });
   if (cache) await cache.put(key, answer.clone());
   return answer;
 }
@@ -151,20 +176,17 @@ export async function pairRecord(request, env, validate, cache) {
   const built = await builtVersion(env, url);
   if (!built) return null;
 
-  const key = new Request(new URL(`/__pair-record/${built.version}/${address}`, url));
+  const key = new Request(new URL(`/__pair-record/${built.version}/${built.build}/${address}`, url));
   const kept = cache ? await cache.match(key) : undefined;
   if (kept) return kept;
 
   const file = await bundleFile(env, built.version, "PairDataFile", address);
   if (file === ABSENT) return null;
   if (!validate(file)) {
-    return new Response(JSON.stringify({ error: UNREADABLE }), {
-      status: 500,
-      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
-    });
+    return new Response(JSON.stringify({ error: UNREADABLE }), { status: 500, headers: madeHeaders(built, "application/json; charset=utf-8", "no-store") });
   }
   const answer = new Response(pairRecordText(file, SITE.name, SITE.url), {
-    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": `public, max-age=${DAY_SECONDS}` },
+    headers: madeHeaders(built, "application/json; charset=utf-8", `public, max-age=${DAY_SECONDS}`),
   });
   if (cache) await cache.put(key, answer.clone());
   return answer;

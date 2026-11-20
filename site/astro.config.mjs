@@ -34,10 +34,9 @@ const pairPages = {
       injectRoute({ pattern: "/[address]", entrypoint: "./src/pair/PairRoute.astro" });
       // The frame the Worker fills for a pair page made on request (worker/pairs.mjs).
       injectRoute({ pattern: "/pair-shell", entrypoint: "./src/pair/PairShell.astro" });
-      injectRoute({ pattern: "/intervention/[intervention]", entrypoint: "./src/pair/InterventionRoute.astro" });
       injectRoute({ pattern: "/condition/[condition]", entrypoint: "./src/pair/ConditionRoute.astro" });
-      injectRoute({ pattern: "/topic/[topic]", entrypoint: "./src/pair/TopicRoute.astro" });
-      injectRoute({ pattern: "/clinical/[category]", entrypoint: "./src/pair/CategoryRoute.astro" });
+      // An intervention's, a topic's and a clinical category's page are the Worker's, made on
+      // request from the lab's page files (worker/listings.mjs).
       injectRoute({ pattern: "/data/pairs/[address].json", entrypoint: "./src/pair/pair-record.json.ts" });
       injectRoute({ pattern: "/data/pairs.json", entrypoint: "./src/pair/pairs-index.json.ts" });
       injectRoute({ pattern: "/og/[address].png", entrypoint: "./src/pair/card-wide.png.ts" });

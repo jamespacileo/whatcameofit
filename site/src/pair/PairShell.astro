@@ -5,13 +5,18 @@
 // version the Worker reads pages of. The Worker never serves the frame itself.
 import Base from "../layouts/Base.astro";
 import { pairBundleVersion } from "../lib/pairs";
+import { data } from "../lib/export";
+import { meshEdition } from "../lib/clinical";
 import "./pair.css";
 
 const version = pairBundleVersion();
+// The MeSH vocabulary's year, for the credit a category page made on request carries. The
+// build states it from the claims export today, as components/MeshCredit.astro does.
+const edition = meshEdition(data.clinical?.mesh_years ?? []);
 ---
 
 <Base title="__PAIR_TITLE__" description="__PAIR_DESCRIPTION__" canonicalPath="/__PAIR_ADDRESS__" framed>
   <Fragment slot="band" set:html="<!--pair-band-->" />
   <Fragment set:html="<!--pair-sheet-->" />
-  <template data-pair-version={version}></template>
+  <template data-pair-version={version} data-mesh-edition={edition}></template>
 </Base>

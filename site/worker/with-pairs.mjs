@@ -3,9 +3,12 @@
 // (worker/pairs.mjs), and so for a pair's open data record. Only a pull request's preview uses it (wrangler.preview.jsonc and the
 // PAIRS binding it is given); production's Worker is worker/index.mjs alone until the cutover.
 // The validators are those the build wrote from the bundle's schemas (scripts/bundle-code.mjs).
-import { validatePairDataFile, validatePairInterventionPage, validatePairPage } from "../.bundle-code/validators.mjs";
+import * as validators from "../.bundle-code/validators.mjs";
 import { handle } from "./index.mjs";
+import { listingOf, listingPage } from "./listings.mjs";
 import { SHELL_PATH, pairAddress, pairPage, pairRecord, recordAddress } from "./pairs.mjs";
+
+const { validatePairDataFile, validatePairInterventionPage, validatePairPage } = validators;
 
 export async function handleWithPairs(request, env, cache = globalThis.caches?.default ?? null) {
   const url = new URL(request.url);
@@ -18,6 +21,8 @@ export async function handleWithPairs(request, env, cache = globalThis.caches?.d
   if (pairAddress(url.pathname)) return (await pairPage(request, env, validatePairPage, cache, validatePairInterventionPage)) ?? answer;
   // A pair's open data record the build did not write (task 1.3).
   if (recordAddress(url.pathname)) return (await pairRecord(request, env, validatePairDataFile, cache)) ?? answer;
+  // An intervention's, clinical category's or topic's page: every one is made here.
+  if (listingOf(url.pathname)) return (await listingPage(request, env, validators, cache)) ?? answer;
   return answer;
 }
 
