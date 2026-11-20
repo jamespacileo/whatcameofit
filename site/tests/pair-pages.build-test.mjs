@@ -231,8 +231,9 @@ test("the sitemap is an index of files for the site's pages, its listings and it
   const index = fs.readFileSync(path.join(withBundle, "sitemap.xml"), "utf8");
   assert.match(index, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
   const files = [...index.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname);
-  assert.deepEqual(files, ["/sitemaps/pages.xml", "/sitemaps/listings.xml", "/sitemaps/pairs.xml"]);
-  const pairs = fs.readFileSync(path.join(withBundle, "sitemaps", "pairs.xml"), "utf8");
+  // At the site's root, so every page each lists is within its folder.
+  assert.deepEqual(files, ["/sitemap-pages.xml", "/sitemap-listings.xml", "/sitemap-pairs.xml"]);
+  const pairs = fs.readFileSync(path.join(withBundle, "sitemap-pairs.xml"), "utf8");
   assert.deepEqual([...pairs.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname), Object.keys(pages).sort().map((address) => `/${address}`));
   // Past the limit a kind is split into numbered files, each at most the limit, every address once.
   const addresses = Object.keys(pages).sort().map((address) => `/${address}`);
@@ -240,6 +241,8 @@ test("the sitemap is an index of files for the site's pages, its listings and it
   assert.deepEqual(split.map((file) => file.name), Array.from({ length: Math.ceil(addresses.length / 4) }, (_, at) => `pairs-${at + 1}`));
   assert.ok(split.every((file) => file.pages.length <= 4));
   assert.deepEqual(split.flatMap((file) => file.pages), addresses);
+  // A kind with no page has no file: a sitemap file holds at least one address.
+  assert.deepEqual(inFiles("listings", []), []);
   assert.equal(SITEMAP_LIMIT, 50000);
   for (const name of ["sitemap.xml", ...files.map((file) => file.slice(1))]) {
     const text = fs.readFileSync(path.join(withBundle, name), "utf8");
