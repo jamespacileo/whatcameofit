@@ -66,7 +66,7 @@ function renderOutcomes(outcomes: PairTrialView["outcomes"]): string {
         `<table><thead><tr><th scope="col">Group</th><th scope="col">Analysed</th><th scope="col">Value</th></tr></thead><tbody>`,
         ...outcome.rows.map(
           (row) =>
-            `<tr><th scope="row">${escape(row.group)}${row.part ? `<br><span class="note">${escape(row.part)}</span>` : ""}</th><td>${escape(row.analysed ?? "")}</td><td>${escape(row.value)}</td></tr>`,
+            `<tr><th scope="row">${escape(row.group)}${row.part ? `<br><span class="note">${escape(row.part)}</span>` : ""}</th><td>${escape(row.analysed ?? "")}</td><td><span class="pair-value">${escape(row.estimate)}</span>${row.spread === null ? "" : ` <span class="pair-spread">(${escape(row.spread)})</span>`}</td></tr>`,
         ),
         `</tbody></table>`,
         outcome.comparisons.length ? `<ul class="pair-comparisons">${outcome.comparisons.map((text) => `<li data-comparison>${escape(text)}</li>`).join("")}</ul>` : "",
