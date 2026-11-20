@@ -1,5 +1,7 @@
 # 12. One runner for leads and claims, and a failure is final only when it is known to be
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-17. Status: accepted with `openspec/changes/archive/2026-11-18-one-work-runner`, which the operator asked to be written on 17 November 2026 and then to be applied. Proposed by the assistant; the choices marked below as the assistant's were put to the operator in the proposal's summary and not overruled. Touches 0006 and 0007.
 
 ## Context

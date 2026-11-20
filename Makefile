@@ -1,73 +1,31 @@
-.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-site-build check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
-# Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
-# database's server. They drop and recreate one database there, named after this checkout
-# so that two checkouts do not collide (pipeline/tests/conftest.py); set
-# TEST_DATABASE_URL to name another, on that server, ending in _test.
-export TEST_DB_PORT ?= 5434
 STORE_TEST_CONCURRENCY ?= 1
 
-# Everything CI runs: the fast set, then the slow set. Needs Docker for the test
-# database; no internet access is needed once dependencies and the Postgres image are
-# present.
+# Everything CI runs: the fast set, then the slow set. No internet access is needed once
+# dependencies are present.
 check: check-fast check-slow
 
-# The fast set, for every edit: under a minute. Lint, types, every pipeline test that
-# builds nothing, the site and extension tests that build nothing, and the daily job's script.
-check-fast: lint types test-fast scripts-test site-test extension-test
+# The fast set, for every edit: under a minute. The site and extension tests that build
+# nothing, and the scripts' tests.
+check-fast: scripts-test site-test extension-test
 
 # The slow set, before a commit is pushed: a few minutes. Every test that builds the
-# site (the pipeline's round trip, the site's build tests and browser journeys), the
-# store's ingest service, the site build, and the packaged extension tests.
-check-slow: test-slow store-test check-site-build extension-package-test
+# site (the site's build tests and browser journeys), the store's ingest service, the
+# site build, and the packaged extension tests.
+check-slow: store-test check-site-build extension-package-test
 
 # One area in full, fast and slow, for work that touches only that area.
-.PHONY: check-pipeline-fast check-release-inputs
-check-pipeline: check-pipeline-fast test-slow
-check-pipeline-fast: lint types test-fast
+.PHONY: check-release-inputs
 check-site: site-test check-site-build
 check-site-build: site-build-test site-search-test site-build
 check-extension: extension-test extension-package-test
 check-store: store-test
 check-release-inputs: site-test site-build check-extension scripts-test
 
-lint:
-	uv run --directory pipeline ruff check .
-	uv run --directory pipeline ruff format --check .
-	uv run --directory pipeline lint-imports
-
-types:
-	uv run --directory pipeline ty check
-
-db-up:
-	docker compose up -d --wait db
-
-test-db-up:
-	docker compose up -d --wait test-db
-
-# The pipeline's tests, fast then slow.
-test: test-fast test-slow
-
-# One worker per core, each on a database of its own (pipeline/tests/conftest.py).
-test-fast: test-db-up
-	uv run --directory pipeline pytest -q -n auto -m "not slow and not benchmark"
-
-# Tests marked `slow` build the site, so the site's dependencies must be installed.
-test-slow: test-db-up site/node_modules
-	uv run --directory pipeline pytest -q -m "slow and not benchmark"
-
-# The daily job's script, against a stand-in for the pipeline: no database, no network.
-# What measuring costs a step that asks no source: at most a twentieth of its time
-# (openspec processing-metrics). Minutes long, so not part of `make check`.
-benchmark: test-db-up
-	uv run --directory pipeline pytest -m benchmark
-
 scripts-test:
-	sh -n scripts/daily-run.sh
 	sh -n scripts/worktree-setup.sh
-	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
-	sh scripts/tests/daily-run.test.sh
 	node --test --test-reporter=dot scripts/tests/ci-timing.test.mjs
 
 # The store's ingest service (store/ingest), driven over HTTP on D1's local engine: no
@@ -92,7 +50,6 @@ site/node_modules: site/pnpm-lock.yaml
 # Everything a new checkout or worktree needs before `make check`.
 setup:
 	sh scripts/worktree-setup.sh
-	uv sync --directory pipeline
 	$(MAKE) site-search-browser
 
 # The site's tests that build nothing (tests/*.test.mjs).
@@ -139,19 +96,6 @@ extension-safari: extension
 
 # Publishing. See docs/deploy.md. SITE_URL must be the public address:
 #   SITE_URL=https://example.org make deploy-check
-# Hold the export the truth store gives to the one the database gives, and exit with 1
-# when they differ (openspec truth-store, "The two exports are compared"). The cut-over
-# waits on seven nights of this in a row. DATABASE_URL names the database, which is only
-# read. With STORE_FILE (and STORE_PAYLOADS, the folder of its payload objects) the
-# store's export is read from that snapshot; without it a store file is first made from
-# the database through store/merge.sql, which shows the store can hold the records.
-#   make export-compare
-#   make export-compare ARGS="--every 5 --report /tmp/compare.json"
-#   STORE_FILE=/path/store.db STORE_PAYLOADS=/path/objects make export-compare
-.PHONY: export-compare
-export-compare:
-	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
-
 # The cut-over of the store, one command and one order (store/ingest/scripts/cutover.mjs,
 # docs/deploy.md): the build proved free of people, the jurisdiction read back, migrations,
 # the store found empty, the bookmark noted, the hot file dumped, replayed here, loaded

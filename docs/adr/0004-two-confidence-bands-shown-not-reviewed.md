@@ -1,5 +1,7 @@
 # 4. An uncertain reading is shown with its score; it is not held for review and never sets a status
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-15. Status: accepted. Change: `openspec/changes/archive/2026-11-18-social-link-backfill`. Extends ADR 0001.
 
 ## Context

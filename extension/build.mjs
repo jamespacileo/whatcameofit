@@ -92,7 +92,7 @@ const manifest = {
   // popup read an untracked page for its automatic registry search. The site's
   // own address is the one place the extension may fetch from or send to.
   // "alarms" and "notifications" let the background check refresh the lookup file twice
-  // a day and tell the reader when a followed claim moves or a reminder is due.
+  // a day and tell the reader when a followed page moves or a reminder is due.
   permissions: ["activeTab", "scripting", "storage", "alarms", "notifications"],
   background: { service_worker: "background.js", type: "module" },
   // The site, and the shorteners whose links the popup opens to learn where they lead
