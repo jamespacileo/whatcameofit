@@ -26,6 +26,13 @@ const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowes
 // for acoziborole and "Infections" itself.
 const ANCESTOR = "acoziborole--infections";
 const narrowestBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-narrowest-"));
+// A pair filed under no topic, as lab pull request 119 writes one: tulisokibart for hidradenitis
+// suppurativa, its page, data file and intervention page and the schemas copied unchanged from
+// the lab's own page test on that branch (tests/pipelines/test_pages.py, its recorded slice).
+const UNFILED = "tulisokibart--hidradenitis-suppurativa";
+// Pairs added to the bundle after its listing files were cut: the lab's own category lists
+// predate them, so the site's roll-up is held to those lists without them.
+const ADDED_AFTER_CUT = new Set([UNFILED]);
 fs.cpSync("tests/bundle", narrowestBundle, { recursive: true });
 for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(narrowestBundle, folder, `${ANCESTOR}.json`));
 writeManifest(narrowestBundle, { madeAt: "2026-11-20T00:00:00Z" });
@@ -130,20 +137,23 @@ test("an intervention's page lists every pair for it", () => {
 test("a topic's page lists the pairs filed under it, and a category's the pairs at or beneath it", () => {
   const bundle = readBundle("tests/bundle");
   for (const file of Object.values(bundle.pages.PairTopicPage)) {
-    const expected = Object.values(pages).filter((one) => one.row.filing.vertical === file.vertical.slug);
+    const expected = Object.values(pages).filter((one) => one.row.filing?.vertical === file.vertical.slug);
     assert.deepEqual(listed(withBundle, `topic/${file.vertical.slug}`), addresses(expected));
   }
   for (const file of Object.values(bundle.pages.PairClinicalCategoryPage)) {
     const expected = Object.values(pages).filter((one) => isBeneath(one, file.descriptor.tree_numbers));
     // The lab's own list for the category agrees with the site's roll-up.
-    assert.deepEqual(addresses(expected), file.pairs.map((one) => one.pair.address).sort());
+    assert.deepEqual(addresses(expected).filter((address) => !ADDED_AFTER_CUT.has(address)), file.pairs.map((one) => one.pair.address).sort());
     assert.deepEqual(listed(withBundle, `clinical/${file.descriptor.descriptor_id}`), addresses(expected));
   }
 });
 
 test("with no pair at an ancestor term, the category and topic still list the pairs beneath it", () => {
   const beneath = ["acoziborole--trypanosomiasis", "acoziborole--trypanosomiasis-african"];
-  assert.deepEqual(listed(narrowest, "clinical/D007239"), beneath);
+  // The category also lists any other pair beneath C01, filed or not.
+  const underInfections = Object.values(pages).filter((file) => file.row.pair.address !== ANCESTOR && isBeneath(file, ["C01"]));
+  assert.deepEqual(listed(narrowest, "clinical/D007239"), addresses(underInfections));
+  assert.ok(beneath.every((address) => listed(narrowest, "clinical/D007239").includes(address)));
   assert.deepEqual(listed(narrowest, "topic/infections"), beneath);
   assert.ok(!fs.existsSync(path.join(narrowest, ANCESTOR)));
   assert.ok(!fs.existsSync(path.join(narrowest, "condition", "infections")));
@@ -153,7 +163,7 @@ test("the topics page counts the pairs filed under each topic, and the clinical 
   const bundle = readBundle("tests/bundle");
   const document = page(withBundle, "topics");
   assert.ok(document.querySelector('[data-listing="topics"]'));
-  const counts = Map.groupBy(Object.values(pages), (file) => file.row.filing.vertical);
+  const counts = Map.groupBy(Object.values(pages).filter((file) => file.row.filing), (file) => file.row.filing.vertical);
   const shown = [...document.querySelectorAll("[data-topic]")];
   assert.deepEqual(shown.map((item) => item.dataset.topic).sort(), [...counts.keys()].sort());
   for (const item of shown) {
@@ -237,7 +247,7 @@ test("the home page opens with the lookup box, then the latest changes, topics a
   assert.equal(latest.length, Math.min(10, changes.length));
   for (const address of latest) assert.ok(pages[address], address);
   const topics = [...document.querySelectorAll('[data-home="topics"] [data-topic]')].map((item) => item.dataset.topic);
-  assert.deepEqual(topics.sort(), [...new Set(Object.values(pages).map((file) => file.row.filing.vertical))].sort());
+  assert.deepEqual(topics.sort(), [...new Set(Object.values(pages).filter((file) => file.row.filing).map((file) => file.row.filing.vertical))].sort());
   const treatments = [...document.querySelectorAll('[data-home="treatments"] [data-intervention]')].map((item) => item.dataset.intervention);
   assert.deepEqual(treatments.sort(), [...new Set(Object.values(pages).map((file) => file.row.intervention.slug))].sort());
   // The claims home is left out whole, with its scripts.
@@ -347,6 +357,28 @@ test("the footer's Data page describes the pairs' files and its link opens the p
   assert.ok(fs.existsSync(path.join(withBundle, example)), example);
   // Without a bundle the page is the claims' as before.
   assert.ok(page(without, "data").querySelector('a[href="/data/claims.json"]'));
+});
+
+test("a pair filed under no topic still has its page, and is reached from every list but a topic's", () => {
+  const file = pages[UNFILED];
+  assert.equal(file.row.filing, null, "the lab wrote this pair with no topic");
+  assert.ok(builtAhead(file), "the unfiled pair is one built ahead, so its page is a file of the build");
+  const document = page(withBundle, UNFILED);
+  assert.equal(document.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
+  assert.ok(listed(withBundle, `intervention/${file.row.intervention.slug}`).includes(UNFILED));
+  assert.ok(listed(withBundle, `condition/${file.row.condition.slug}`).includes(UNFILED));
+  // On no topic's page, and not counted on the topics page.
+  for (const name of fs.readdirSync(path.join(withBundle, "topic"))) assert.ok(!listed(withBundle, `topic/${name}`).includes(UNFILED), name);
+  const counted = [...page(withBundle, "topics").querySelectorAll("[data-topic]")].reduce((sum, item) => sum + Number(item.querySelector(".count").firstChild.textContent), 0);
+  assert.equal(counted, Object.values(pages).filter((one) => one.row.filing).length);
+  // Search and the lookup file hold it, with no topic.
+  const lookup = JSON.parse(fs.readFileSync(path.join(withBundle, "lookup.json"), "utf8"));
+  assert.equal(lookup.claims[UNFILED].page, `/${UNFILED}`);
+  assert.equal(lookup.claims[UNFILED].topic, null);
+  const detail = JSON.parse(fs.readFileSync(path.join(withBundle, "search-detail.json"), "utf8"));
+  assert.deepEqual(detail.claims[UNFILED].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
+  const sitemap = fs.readFileSync(path.join(withBundle, "sitemap.xml"), "utf8");
+  assert.match(sitemap, new RegExp(`/${UNFILED}</loc>`));
 });
 
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {

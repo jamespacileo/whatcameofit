@@ -171,7 +171,9 @@ export function topicListings(): TopicListing[] {
       slug: vertical.slug,
       title: vertical.title,
       pairs: pages
-        .filter((page) => page.row.filing.vertical === vertical.slug)
+        // A pair filed under no topic is listed on no topic's page; it is reached from its
+        // intervention's and condition's pages, search and the lookup file.
+        .filter((page) => page.row.filing?.vertical === vertical.slug)
         .map(pairRow)
         .sort(byName),
     }))
@@ -288,7 +290,7 @@ export function pairLookup(page: any) {
     indication: view.condition,
     terms: [view.condition, ...(report ? [report.title] : [])].join(" "),
     // The site's search answer reads the topic; the extension does not.
-    topic: page.row.filing.vertical,
+    topic: page.row.filing?.vertical ?? null,
   };
 }
 
