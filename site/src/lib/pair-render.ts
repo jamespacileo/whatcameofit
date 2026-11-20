@@ -2,7 +2,7 @@
 // renderer for the page built ahead and the page the Worker makes on request, so the two are
 // the same for the same file. Every value read from a page file goes through `escape`.
 import { UNCHECKED_BYLINE } from "./notices.ts";
-import type { PairTrialView, PairView } from "./pair-view.ts";
+import type { NarrowerPair, PairTrialView, PairView } from "./pair-view.ts";
 import { assertNoOutcomeVerdict } from "./trial-facts.ts";
 import { formatDate } from "./timetable.ts";
 import { registryDate } from "./trial-page.mjs";
@@ -76,7 +76,12 @@ function renderOutcomes(outcomes: PairTrialView["outcomes"]): string {
 }
 
 /** The body of the page: why the status, the trials, the history and the treatment. */
-export function renderPairSheet(view: PairView): string {
+/** The line that names the same treatment's pairs for narrower conditions. */
+export const NARROWER_LEAD = "Also followed for narrower conditions:";
+
+assertNoOutcomeVerdict([NARROWER_LEAD]);
+
+export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): string {
   const trials = view.trials.map((trial) =>
     [
       `<article class="pair-trial" data-trial="${escape(trial.nctId)}">`,
@@ -113,6 +118,11 @@ export function renderPairSheet(view: PairView): string {
   );
   return [
     `<div class="frame no-rail"><div class="sheet">`,
+    narrower.length
+      ? `<p class="note" data-pair-narrower>${escape(NARROWER_LEAD)} ${narrower
+          .map((pair) => `<a href="/${escape(pair.address)}" data-narrower="${escape(pair.address)}">${escape(pair.condition)}</a>`)
+          .join(", ")}</p>`
+      : "",
     `<h2 class="bar sheet-title" id="why">Why this status</h2><ol class="pair-events" data-pair-explained>`,
     ...view.explainedBy.map(
       (event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}, ${escape(event.nctId)}</li>`,

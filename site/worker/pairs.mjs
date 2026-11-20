@@ -5,6 +5,7 @@
 // so a new deployment needs no purge.
 import { pairView } from "../src/lib/pair-view.ts";
 import { escape, pairDescription, renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
+import { narrowerPairs } from "../src/lib/pair-view.ts";
 import { pairRecordText } from "../src/lib/pair-record.ts";
 import { SITE } from "../site.config.mjs";
 
@@ -37,20 +38,27 @@ async function builtVersion(env, url) {
   return version ? { shell, version } : null;
 }
 
-/** One file of the bundle as the loader kept it, its parts joined: the parsed file, undefined
- * when it does not parse, or null when the version holds no such file. */
-async function bundleFile(env, version, model, key) {
-  const { results } = await env.PAIRS.prepare(
-    "SELECT body FROM pair_page WHERE version = ?1 AND model = ?2 AND key = ?3 ORDER BY part",
-  )
-    .bind(version, model, key)
-    .all();
-  if (!results.length) return null;
+/** What `bundleFile` gives for a file the version does not hold: distinct from any parsed body,
+ * JSON `null` included, so every body found is checked. */
+export const ABSENT = Symbol("absent");
+
+const FILE_SQL = "SELECT body FROM pair_page WHERE version = ?1 AND model = ?2 AND key = ?3 ORDER BY part";
+
+/** A file's parts as read, joined and parsed: the parsed file, undefined when it does not parse,
+ * or ABSENT when there are none. */
+function parsedFile(results) {
+  if (!results.length) return ABSENT;
   try {
     return JSON.parse(results.map((row) => row.body).join(""));
   } catch {
     return undefined;
   }
+}
+
+/** One file of the bundle as the loader kept it, its parts joined. */
+async function bundleFile(env, version, model, key) {
+  const { results } = await env.PAIRS.prepare(FILE_SQL).bind(version, model, key).all();
+  return parsedFile(results);
 }
 
 function fill(shell, { title, description, address, band, sheet }) {
@@ -69,8 +77,9 @@ function fill(shell, { title, description, address, band, sheet }) {
  * @param {{ ASSETS: { fetch: (request: Request) => Promise<Response> }, PAIRS?: any }} env
  * @param {(file: unknown) => boolean} validate the compiled validator of `PairPage`
  * @param {{ match: Function, put: Function } | null} cache
+ * @param {(file: unknown) => boolean} validateIntervention the compiled validator of `PairInterventionPage`
  */
-export async function pairPage(request, env, validate, cache) {
+export async function pairPage(request, env, validate, cache, validateIntervention) {
   const url = new URL(request.url);
   const address = pairAddress(url.pathname);
   if (!address || !env.PAIRS || typeof validate !== "function") return null;
@@ -83,8 +92,23 @@ export async function pairPage(request, env, validate, cache) {
   if (kept) return kept;
 
   const file = await bundleFile(env, version, "PairPage", address);
-  if (file === null) return null;
-  if (!validate(file)) {
+  if (file === ABSENT) return null;
+  let intervention = ABSENT;
+  let published = new Set();
+  const valid = validate(file);
+  if (valid) {
+    // The same treatment's narrower pairs: its intervention page file (by the table's key) and
+    // the addresses of its pairs in this version (the pair_by_intervention index), in one round
+    // trip, as the built page reads the same file and the bundle's own pair pages. A version with
+    // no such file lists none; a file that fails its check stops the page.
+    const [listing, pairs] = await env.PAIRS.batch([
+      env.PAIRS.prepare(FILE_SQL).bind(version, "PairInterventionPage", file.row.intervention.slug),
+      env.PAIRS.prepare("SELECT address FROM pair WHERE version = ?1 AND intervention_id = ?2").bind(version, file.row.intervention.id),
+    ]);
+    intervention = parsedFile(listing.results);
+    published = new Set(pairs.results.map((row) => row.address));
+  }
+  if (!valid || (intervention !== ABSENT && !(typeof validateIntervention === "function" && validateIntervention(intervention)))) {
     const page = fill(shell, {
       title: "Page not shown",
       description: UNREADABLE,
@@ -101,7 +125,7 @@ export async function pairPage(request, env, validate, cache) {
     description: pairDescription(view),
     address,
     band: renderPairBand(view),
-    sheet: renderPairSheet(view),
+    sheet: renderPairSheet(view, narrowerPairs(file, intervention === ABSENT ? null : intervention, published)),
   });
   const answer = new Response(page, {
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": `public, max-age=${DAY_SECONDS}` },
@@ -132,7 +156,7 @@ export async function pairRecord(request, env, validate, cache) {
   if (kept) return kept;
 
   const file = await bundleFile(env, built.version, "PairDataFile", address);
-  if (file === null) return null;
+  if (file === ABSENT) return null;
   if (!validate(file)) {
     return new Response(JSON.stringify({ error: UNREADABLE }), {
       status: 500,
