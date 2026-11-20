@@ -19,6 +19,30 @@ const MIGRATIONS = path.resolve(SITE_DIR, "../store/ingest/migrations");
 export const PREVIEW_PAIRS_DATABASE = "thenwhat-pairs-pr-preview";
 /** The bundle a preview loads unless PREVIEW_PAIRS_BUNDLE names another folder. */
 export const PREVIEW_PAIRS_BUNDLE = path.join(SITE_DIR, "tests/bundle");
+/** How many bundle versions the previews' database keeps, newest loads first. A preview makes
+ * its pair pages not built ahead from D1 at the version its build recorded in /pair-shell, for
+ * as long as it is up (and, once pair records are served on request, those records too). The
+ * store's own rule (the current version and the one before) dropped an older open pull
+ * request's version after two newer loads, and those pages then answered 404 (review of PR
+ * 383). A preview's version changes only when a pull request changes its bundle, so ten
+ * distinct bundles while one pull request is open is far more than happens. A version is known
+ * only to the Worker built from it, so keeping exactly the live previews' versions would mean
+ * asking every open preview at each load; a count is the smaller rule.
+ *
+ * Size: the committed small bundle is about 0.1 MB a version. A bundle of the rehearsal's size
+ * is about 100 MB a version, and the incoming version is written before old ones are dropped,
+ * so ten of those need about 1.1 GB: within the 10 GB a D1 database holds on Workers Paid, but
+ * not the 500 MB of the Free plan (docs/sources.md). The preview account's plan is the
+ * operator's; PREVIEW_PAIRS_KEEP sets a smaller count (at least 2) for a smaller database.
+ * Production keeps the store's rule. */
+export const PREVIEW_KEPT_VERSIONS = previewKept(process.env.PREVIEW_PAIRS_KEEP);
+
+function previewKept(value) {
+  if (value === undefined || value === "") return 10;
+  const count = Number(value);
+  if (!Number.isInteger(count) || count < 2) throw new Error(`PREVIEW_PAIRS_KEEP must be a whole number of at least 2, not ${value}`);
+  return count;
+}
 const HOW = 'see docs/deploy.md, "Pair pages in a preview"';
 
 export function wrangler(args) {
@@ -99,7 +123,7 @@ export function loadPairsBundle({ config, database, bundle, local = false, persi
   const where = local ? ["--local", ...(persistTo ? ["--persist-to", persistTo] : [])] : ["--remote"];
   const migrated = wrangler(["d1", "migrations", "apply", database.name, ...where, "--config", config]);
   if (migrated.status !== 0) throw new Error(`the migrations did not apply to ${database.name}: ${lastError(`${migrated.stdout}${migrated.stderr}`)}`);
-  const load = statements(bundle);
+  const load = statements(bundle, { keep: PREVIEW_KEPT_VERSIONS });
   const held = wrangler(["d1", "execute", database.name, ...where, "--config", config, "--json", "--command",
     `SELECT current FROM pair_bundle WHERE version = '${load.version}'`]);
   if (held.status !== 0) throw new Error(`${database.name} could not be read: ${lastError(`${held.stdout}${held.stderr}`)}`);
