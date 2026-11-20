@@ -108,15 +108,15 @@ const readConfig = (file) => JSON.parse(fs.readFileSync(file, "utf8").replace(/^
  *   Worker is never asked: seen in `wrangler dev`, tests/worker-first.build-test.mjs.
  * - The Worker runs first (WORKER_FIRST) only where a file of the address exists and the Worker
  *   must answer instead: the frames it fills, never served themselves, and the trial reader's
- *   template; and its registry search and trial pages, so they never reach a file. `*` matches
- *   across "/", and a "!" pattern wins over the others
+ *   template; and its registry search and trial pages, so they never reach a file. A built
+ *   file under /_astro/ matches none of these, so it is served without the Worker, and a missing
+ *   one reaches the Worker for the site's not-found page. `*` matches across "/"
  *   (https://developers.cloudflare.com/workers/static-assets/binding/#run_worker_first).
  */
 export const WORKER_FIRST = [
   "/pair-shell", "/pair-shell/*", "/embed-shell", "/embed-shell/*",
   "/trial-reader", "/trial-reader/*", "/trial-reader.html",
   "/api/*", "/trials/*",
-  "!/_astro/*",
 ];
 
 export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" }) {

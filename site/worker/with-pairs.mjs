@@ -40,28 +40,39 @@ function onRequest(pathname) {
   return null;
 }
 
-/** The site's not-found page, with the status and headers of the answer it stands in for. */
+/**
+ * The site's not-found page for an answer that has none: in a deployment with pairs the files
+ * give none of their own (not_found_handling "none", so an address no file has reaches this
+ * Worker). It keeps the answer's headers; an answer with no caching policy takes the page's,
+ * which asks again before reusing it, so a 404 is never kept after the page appears.
+ */
 async function notFoundPage(request, env, answer) {
+  if (answer.headers.get("Content-Type")?.startsWith("text/html")) return answer;
   const page = await env.ASSETS.fetch(new Request(new URL("/404", request.url)));
   if (!page.ok) return answer;
   await answer.body?.cancel();
   const headers = new Headers(answer.headers);
   headers.set("Content-Type", page.headers.get("Content-Type") ?? "text/html; charset=utf-8");
+  if (!headers.has("Cache-Control")) headers.set("Cache-Control", page.headers.get("Cache-Control") ?? "public, max-age=0, must-revalidate");
   return new Response(page.body, { status: 404, headers });
 }
+
+// The methods an address the Worker makes answers. A file answers others with 405 itself; an
+// address no file has reaches the Worker whatever the method, so it says the same here.
+const READ = new Set(["GET", "HEAD"]);
 
 export async function handleWithPairs(request, env, cache = globalThis.caches?.default ?? null) {
   const url = new URL(request.url);
   // The frames are the Worker's to fill, never pages of their own.
   if ([SHELL_PATH, EMBED_SHELL_PATH].some((frame) => url.pathname === frame || url.pathname === `${frame}/`)) {
-    const hidden = await handle(new Request(new URL("/__no-such-page__", url), request), env);
-    return hidden.headers.get("Content-Type")?.startsWith("text/html") ? hidden : notFoundPage(request, env, hidden);
+    return notFoundPage(request, env, await handle(new Request(new URL("/__no-such-page__", url), request), env));
   }
-  let answer = await handle(request, env);
+  const answer = await handle(request, env);
   if (answer.status !== 404) return answer;
-  // A deployment with pairs gives the files no not-found page of their own (not_found_handling
-  // "none", so an address no file has reaches this Worker): the site's is sent here.
-  if (!answer.headers.get("Content-Type")?.startsWith("text/html")) answer = await notFoundPage(request, env, answer);
+  if (!READ.has(request.method)) {
+    await answer.body?.cancel();
+    return new Response(null, { status: 405, headers: { Allow: "GET, HEAD", "Cache-Control": "no-store" } });
+  }
   const alias = ALIAS.exec(url.pathname)?.[1];
   if (alias) {
     await answer.body?.cancel();
@@ -70,17 +81,18 @@ export async function handleWithPairs(request, env, cache = globalThis.caches?.d
   // Every pair's page, record, embed, oEmbed description and card address, and every listing,
   // is made here; any other path that the assets do not hold answers their not-found page.
   const make = onRequest(url.pathname);
-  if (!make) return answer;
+  if (!make) return notFoundPage(request, env, answer);
   const made = await make(request, env, cache);
   if (made instanceof Response) return made;
   // No frame or store, or a dependency of the page that failed: the asset's answer, kept nowhere.
-  if (!made?.notHeld) return answer;
+  if (!made?.notHeld) return notFoundPage(request, env, answer);
   // The query string is never part of a key: an address is one page however it is asked for.
   const built = await builtFor(request, env);
-  const headers = new Headers(answer.headers);
+  const page = await notFoundPage(request, env, answer);
+  const headers = new Headers(page.headers);
   headers.set("Cache-Control", `public, max-age=${MISSING_SECONDS}`);
   if (built?.robots) headers.set("X-Robots-Tag", built.robots);
-  const notFound = new Response(answer.body, { status: 404, headers });
+  const notFound = new Response(page.body, { status: 404, headers });
   if (cache && request.method === "GET") await cache.put(made.notHeld, notFound.clone());
   return notFound;
 }
