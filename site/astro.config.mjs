@@ -31,6 +31,8 @@ const pairPages = {
         // The validators and types of the bundle's page models (decision 1), for the Worker.
         await writeBundleCode(process.env.PAIRS_BUNDLE, ".bundle-code");
         injectRoute({ pattern: "/[address]", entrypoint: "./src/pair/PairRoute.astro" });
+        // The frame the Worker fills for a pair page made on request (worker/pairs.mjs).
+        injectRoute({ pattern: "/pair-shell", entrypoint: "./src/pair/PairShell.astro" });
         injectRoute({ pattern: "/intervention/[intervention]", entrypoint: "./src/pair/InterventionRoute.astro" });
         injectRoute({ pattern: "/condition/[condition]", entrypoint: "./src/pair/ConditionRoute.astro" });
         // A topic's and a clinical category's page list pairs in a build that reads a

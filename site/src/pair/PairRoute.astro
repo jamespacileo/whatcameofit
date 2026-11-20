@@ -1,201 +1,30 @@
 ---
-// The pair page at /{address} (openspec pairs-site, pair-pages). Added to the build only
-// when it reads a bundle (astro.config.mjs), so the claims site is unchanged without one.
+// The pair page at /{address} (openspec pairs-site, pair-pages), for the pairs built ahead
+// (decision 2). Its content is lib/pair-render.ts's, which the Worker also uses for the page
+// it makes on request from the shell (PairShell.astro), so the two are the same.
 import Base from "../layouts/Base.astro";
-import { UNCHECKED_BYLINE } from "../lib/notices";
 import { cardAlt } from "../lib/card";
 import { pairCardFor } from "../lib/card-image";
-import { pairPages, pairView } from "../lib/pairs";
-import { formatDate } from "../lib/timetable";
+import { pairDescription, renderPairBand, renderPairSheet } from "../lib/pair-render";
+import { builtAheadPages, pairView } from "../lib/pairs";
+import "./pair.css";
 
 export function getStaticPaths() {
-  return Object.entries(pairPages()).map(([address, page]) => ({
-    params: { address },
-    props: { view: pairView(page) },
-  }));
+  return Object.entries(builtAheadPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
 }
 
-const { view } = Astro.props;
-const card = cardAlt(pairCardFor(pairPages()[view.address]));
-const title = `${view.intervention} for ${view.condition.toLowerCase()}`;
-const trialCount = view.trials.length === 1 ? "1 registered trial" : `${view.trials.length} registered trials`;
+const { page } = Astro.props;
+const view = pairView(page);
 ---
 
 <Base
-  title={title}
-  description={`${view.status}: where the public records show ${view.intervention} for ${view.condition.toLowerCase()} stands, from ${trialCount}.`}
+  title={view.title}
+  description={pairDescription(view)}
   image={`/og/${view.address}.png`}
-  imageAlt={card}
+  imageAlt={cardAlt(pairCardFor(page))}
   oembed={`/oembed/${view.address}.json`}
   framed
 >
-  <section class="band record" slot="band" aria-label="This pair and where it stands">
-    <div class="wrap band-grid">
-      <div class="band-main">
-        <nav class="crumbs" aria-label="The treatment and the condition">
-          <a href={`/intervention/${view.interventionSlug}`} data-pair-intervention>{view.intervention}</a>
-          {" · "}
-          <a href={`/condition/${view.conditionSlug}`} data-pair-condition>{view.condition}</a>
-        </nav>
-        <h1 class="title">{title}</h1>
-        <p class="what-this-is" data-pagefind-ignore>
-          A treatment and a condition, followed through the public trial records. Not medical advice.
-          <a href="/how-it-works">How a status is set</a>
-        </p>
-        <p class="lede" data-pair-status={view.statusCode}>
-          <strong>{view.status}</strong>. {view.gloss}. As of {formatDate(view.asOf)}, from {trialCount}.
-        </p>
-        {
-          !view.checkedByPerson && (
-            <p class="byline" data-pair-unchecked>
-              {UNCHECKED_BYLINE[0]} {UNCHECKED_BYLINE[1]}
-            </p>
-          )
-        }
-      </div>
-    </div>
-  </section>
-
-  <div class="frame no-rail">
-    <div class="sheet">
-      <h2 class="bar sheet-title" id="why">Why this status</h2>
-      <ol class="pair-events" data-pair-explained>
-        {
-          view.explainedBy.map((event) => (
-            <li data-event={event.key}>
-              {formatDate(event.day)}
-              {event.estimated && " (expected)"}: {event.label}, {event.nctId}
-            </li>
-          ))
-        }
-      </ol>
-
-      <h2 class="bar sheet-title" id="trials">The trials</h2>
-      {
-        view.trials.map((trial) => (
-          <article class="pair-trial" data-trial={trial.nctId}>
-            <h3>
-              <a href={trial.registryUrl} rel="external">
-                {trial.nctId}
-              </a>
-              {trial.title && <span>: {trial.title}</span>}
-            </h3>
-            <dl>
-              <dt>State</dt>
-              <dd>{trial.state}</dd>
-              {trial.phases && (
-                <>
-                  <dt>Phase</dt>
-                  <dd>{trial.phases}</dd>
-                </>
-              )}
-              {trial.participants && (
-                <>
-                  <dt>People</dt>
-                  <dd>{trial.participants}</dd>
-                </>
-              )}
-              {trial.start && (
-                <>
-                  <dt>Started</dt>
-                  <dd>{formatDate(trial.start)}</dd>
-                </>
-              )}
-              {trial.primaryCompletion && (
-                <>
-                  <dt>Primary completion</dt>
-                  <dd>{formatDate(trial.primaryCompletion)}</dd>
-                </>
-              )}
-              {trial.arms.length > 0 && (
-                <>
-                  <dt>Arms</dt>
-                  <dd>
-                    {trial.arms.map((arm, index) => (
-                      <>
-                        {index > 0 && ", "}
-                        {arm === trial.pairArm ? <strong>{arm}</strong> : arm}
-                      </>
-                    ))}
-                  </dd>
-                </>
-              )}
-              {trial.whyStopped && (
-                <>
-                  <dt>Why it stopped, in the record</dt>
-                  <dd>{trial.whyStopped}</dd>
-                </>
-              )}
-              <dt>Results</dt>
-              <dd>{trial.resultsPosted ? "Posted on the registry" : "None posted"}</dd>
-              {trial.papers > 0 && (
-                <>
-                  <dt>Papers</dt>
-                  <dd>{trial.papers === 1 ? "1 paper" : `${trial.papers} papers`}</dd>
-                </>
-              )}
-            </dl>
-            <ol class="pair-events">
-              {trial.events.map((event) => (
-                <li data-event={event.key}>
-                  {formatDate(event.day)}
-                  {event.estimated && " (expected)"}: {event.label}
-                </li>
-              ))}
-            </ol>
-          </article>
-        ))
-      }
-
-      <h2 class="bar sheet-title" id="history">How the status changed</h2>
-      <ol class="pair-events" data-pair-history>
-        {
-          view.history.map((change) => (
-            <li>
-              {formatDate(change.on)}: {change.before ? `${change.before} to ${change.after}` : `First set: ${change.after}`}
-            </li>
-          ))
-        }
-      </ol>
-
-      {
-        (view.otherNames.length > 0 || view.approach) && (
-          <>
-            <h2 class="bar sheet-title" id="about">About the treatment</h2>
-            {view.approach && <p>Kind of treatment: {view.approach}.</p>}
-            {view.otherNames.length > 0 && <p data-pair-names>Also known as {view.otherNames.join(", ")}.</p>}
-          </>
-        )
-      }
-
-      {
-        view.registryChecks.length > 0 && (
-          <p class="note" data-pair-checks>
-            Registries searched:{" "}
-            {view.registryChecks.map((check) => `${check.registry}, through ${formatDate(check.through)}`).join("; ")}.
-          </p>
-        )
-      }
-    </div>
-  </div>
+  <Fragment slot="band" set:html={renderPairBand(view)} />
+  <Fragment set:html={renderPairSheet(view)} />
 </Base>
-
-<style>
-  .pair-events {
-    padding-left: 1.2em;
-  }
-  .pair-trial {
-    margin-block: 1.5rem;
-  }
-  .pair-trial dl {
-    display: grid;
-    grid-template-columns: max-content 1fr;
-    gap: 0.25rem 1rem;
-  }
-  .pair-trial dt {
-    font-weight: 600;
-  }
-  .pair-trial dd {
-    margin: 0;
-  }
-</style>

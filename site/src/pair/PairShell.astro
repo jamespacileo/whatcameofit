@@ -1,0 +1,17 @@
+---
+// The frame of a pair page the Worker makes on request (worker/pairs.mjs): the site's layout
+// with marked places for the page's title, description, address and content, which the Worker
+// fills from lib/pair-render.ts. It records the bundle version this build read, the only
+// version the Worker reads pages of. The Worker never serves the frame itself.
+import Base from "../layouts/Base.astro";
+import { pairBundleVersion } from "../lib/pairs";
+import "./pair.css";
+
+const version = pairBundleVersion();
+---
+
+<Base title="__PAIR_TITLE__" description="__PAIR_DESCRIPTION__" canonicalPath="/__PAIR_ADDRESS__" framed>
+  <Fragment slot="band" set:html="<!--pair-band-->" />
+  <Fragment set:html="<!--pair-sheet-->" />
+  <template data-pair-version={version}></template>
+</Base>

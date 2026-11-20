@@ -12,6 +12,7 @@ import { before, test } from "node:test";
 import { parseHTML } from "linkedom";
 import { readBundle } from "../src/lib/bundle.ts";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
+import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
@@ -27,6 +28,9 @@ const narrowestBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-n
 fs.cpSync("tests/bundle", narrowestBundle, { recursive: true });
 for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(narrowestBundle, folder, `${ANCESTOR}.json`));
 const pages = readBundle("tests/bundle").pages.PairPage;
+// The pairs whose page, card and embed the build makes (decision 2); the rest are made on
+// request by the Worker (tests/pair-on-request.build-test.mjs).
+const built = Object.fromEntries(Object.entries(pages).filter(([, file]) => builtAhead(file)));
 const TWO_TRIALS = "acoziborole--infections";
 
 function build(outDir, env = {}) {
@@ -60,9 +64,10 @@ before(() => {
   }
 });
 
-test("every pair of the bundle has a page at its address, beside the claims site", () => {
-  assert.ok(Object.keys(pages).length > 0);
-  for (const [address, file] of Object.entries(pages)) {
+test("every pair built ahead has a page at its address, beside the claims site", () => {
+  assert.ok(Object.keys(built).length > 0);
+  for (const address of Object.keys(pages)) assert.equal(fs.existsSync(path.join(withBundle, address)), address in built, address);
+  for (const [address, file] of Object.entries(built)) {
     const document = page(withBundle, address);
     assert.match(document.querySelector("h1").textContent, new RegExp(file.row.descriptor.label, "i"), address);
     assert.equal(document.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
@@ -89,8 +94,8 @@ test("a pair with two trials shows both, and lists the events that set its statu
 });
 
 test("a pair no person checked says so, and one a person checked does not", () => {
-  const checked = Object.entries(pages).filter(([, file]) => file.checked_by_person);
-  const unchecked = Object.entries(pages).filter(([, file]) => !file.checked_by_person);
+  const checked = Object.entries(built).filter(([, file]) => file.checked_by_person);
+  const unchecked = Object.entries(built).filter(([, file]) => !file.checked_by_person);
   assert.ok(checked.length > 0 && unchecked.length > 0);
   for (const [address] of unchecked) {
     assert.match(page(withBundle, address).querySelector("[data-pair-unchecked]").textContent, new RegExp(UNCHECKED_BYLINE[1]));
@@ -244,10 +249,10 @@ test("the search detail file gives each pair its trials, by the pair's address",
   for (const address of Object.keys(pages)) assert.equal(claimsDetail.claims[address], undefined);
 });
 
-test("each pair has its cards and embed, and its page names them", () => {
+test("each pair built ahead has its cards and embed, and its page names them", () => {
   const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
   const sizes = { "": [1200, 630], "square/": [1080, 1080], "tall/": [1080, 1350] };
-  for (const [address, file] of Object.entries(pages)) {
+  for (const [address, file] of Object.entries(built)) {
     for (const [folder] of Object.entries(sizes)) {
       const image = fs.readFileSync(path.join(withBundle, "og", `${folder}${address}.png`));
       assert.ok(image.subarray(0, 4).equals(PNG), `${folder}${address}`);

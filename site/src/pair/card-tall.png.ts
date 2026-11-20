@@ -2,10 +2,10 @@
 // lib/card-image.ts.
 import type { APIRoute } from "astro";
 import { pairCardPng } from "../lib/card-image";
-import { pairPages } from "../lib/pairs";
+import { builtAheadPages } from "../lib/pairs";
 
 export function getStaticPaths() {
-  return Object.entries(pairPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
+  return Object.entries(builtAheadPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
 }
 
 export const GET: APIRoute = async ({ props }) =>
