@@ -27,6 +27,62 @@
   {
    "pair": {
     "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017497",
+    "key": "substance:ON09TCS5H3|D017497",
+    "address": "tulisokibart--hidradenitis-suppurativa",
+    "nct_ids": [
+     "NCT06956235"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:ON09TCS5H3",
+    "key_kind": "substance",
+    "key_value": "ON09TCS5H3",
+    "preferred_name": "Tulisokibart",
+    "slug": "tulisokibart",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D017497",
+    "slug": "hidradenitis-suppurativa"
+   },
+   "descriptor": {
+    "descriptor_id": "D017497",
+    "label": "Hidradenitis Suppurativa",
+    "tree_numbers": [
+     "C01.800.720.420",
+     "C17.800.946.315.320",
+     "C01.830.499",
+     "C01.150.252.819.420",
+     "C17.800.838.765.420"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017497",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT06956235|registered|2025-05-04",
+     "NCT06956235|started|2025-06-09"
+    ],
+    "as_of": "2026-11-18"
+   },
+   "filing": null,
+   "origin": {
+    "intervention_id": "substance:ON09TCS5H3",
+    "condition_id": "D017497",
+    "claim_slug": "tulisokibart-hidradenitis-suppurativa",
+    "drafted_from": "seed",
+    "drafted_by_run": "ff9ba21ecea8",
+    "created_at": "2026-11-20T13:25:30.320291"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:ON09TCS5H3",
     "condition_id": "D017563",
     "key": "substance:ON09TCS5H3|D017563",
     "address": "tulisokibart--lung-diseases-interstitial",
@@ -76,8 +132,8 @@
     "condition_id": "D017563",
     "claim_slug": "tulisokibart-systemic-sclerosis-associated-interstitial-lung",
     "drafted_from": "seed",
-    "drafted_by_run": "9f5f39ee6a19",
-    "created_at": "2026-11-19T23:21:58.239029"
+    "drafted_by_run": "ff9ba21ecea8",
+    "created_at": "2026-11-20T13:25:30.320291"
    },
    "first_report": null
   },

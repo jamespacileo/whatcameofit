@@ -591,7 +591,14 @@
      "$ref": "#/$defs/MeshDescriptor"
     },
     "filing": {
-     "$ref": "#/$defs/PairFiling"
+     "anyOf": [
+      {
+       "$ref": "#/$defs/PairFiling"
+      },
+      {
+       "type": "null"
+      }
+     ]
     },
     "first_report": {
      "anyOf": [
