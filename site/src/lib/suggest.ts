@@ -13,12 +13,12 @@ export interface SuggestClaim {
 }
 
 export interface SuggestIndex {
-  claims: Record<string, SuggestClaim>;
+  pairs: Record<string, SuggestClaim>;
   topics: Record<string, { title: string; count: number }>;
 }
 
 export interface SuggestDetail {
-  claims: Record<
+  pairs: Record<
     string,
     {
       reports: { title: string; outlet: string; date: string | null }[];
@@ -83,7 +83,7 @@ function matcher(words: string[]) {
 /** Text that begins with the first typed word comes before text that holds it later. */
 const leads = (text: string, words: string[]) => (text.toLowerCase().startsWith(words[0]) ? 0 : 1);
 
-const claimsText = (count: number) => `${count} ${count === 1 ? "claim" : "claims"}`;
+const claimsText = (count: number) => `${count} ${count === 1 ? "page" : "pages"}`;
 
 /** Newest first; an undated report last. Dates are as the site writes them. */
 const byDate = (a: string | null, b: string | null) => (Date.parse(b ?? "") || 0) - (Date.parse(a ?? "") || 0);
@@ -101,7 +101,7 @@ export function suggest(text: string, index: SuggestIndex, detail: SuggestDetail
     .sort(([, a], [, b]) => leads(a.title, words) - leads(b.title, words) || b.count - a.count || a.title.localeCompare(b.title))
     .map(([slug, topic]) => ({ kind: "topic", text: topic.title, meta: claimsText(topic.count), href: `/topic/${slug}` }));
 
-  const claims = Object.values(index.claims);
+  const claims = Object.values(index.pairs);
 
   // One row for a claim: its treatment by its first name. Where the words are only in
   // another of its names, that name follows, so the row says why it is offered.
@@ -137,7 +137,7 @@ export function suggest(text: string, index: SuggestIndex, detail: SuggestDetail
     const reports: (Suggestion & { date: string | null })[] = [];
     const trials = new Map<string, Suggestion & { byId: number }>();
     for (const claim of claims) {
-      const held = detail.claims[claim.page.slice(1)];
+      const held = detail.pairs[claim.page.slice(1)];
       if (!held) continue;
       for (const report of held.reports) {
         if (!has(report.title)) continue;

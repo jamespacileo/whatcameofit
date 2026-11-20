@@ -13,7 +13,7 @@ export interface OrderedClaim {
 
 /** The titles of each claim's reports, keyed by the claim's slug. */
 export interface OrderDetail {
-  claims: Record<string, { reports: { title: string }[] } | undefined>;
+  pairs: Record<string, { reports: { title: string }[] } | undefined>;
 }
 
 /** The words of a search, for marking where they stand in a match. Short words are
@@ -57,7 +57,7 @@ export function holdsPhrase(text: string, words: string[]): boolean {
  * them, in the claim's own headline first, then in a report's headline, then in the
  * treatment and what it is claimed for. */
 export function matchWeight(claim: OrderedClaim, words: string[], detail: OrderDetail): number {
-  const titles = detail.claims[claim.page.slice(1)]?.reports.map((report) => report.title) ?? [];
+  const titles = detail.pairs[claim.page.slice(1)]?.reports.map((report) => report.title) ?? [];
   let weight = 0;
   if (holdsPhrase(claim.headline, words)) weight += 6;
   if (holdsAll(claim.headline, words)) weight += 4;

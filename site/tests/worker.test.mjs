@@ -13,6 +13,7 @@ import { makeModel } from "../worker/model.mjs";
 import { pageAsText, readPage } from "../worker/page.mjs";
 import { makePapers } from "../worker/papers.mjs";
 import { makeRegistry } from "../worker/registry.mjs";
+import { readLookupFile } from "../src/lib/lookup-file.mjs";
 
 const TEXT = "Scientists say EX-1, also called Toothgrow, regrew teeth in people born without them.";
 const READING = {
@@ -63,11 +64,15 @@ function fakeModel(reading = READING) {
   };
 }
 
-const INDEX = {
-  claims: {
-    "tooth-regrowth-ex1": { headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1", names: ["Anti-USAG-1 antibody", "toothgrow"], indication: "tooth agenesis" },
+// The lookup file as the site serves it, and as the Worker holds it once read.
+const INDEX_FILE = {
+  format: "lookup", format_version: 2,
+  articles: {},
+  pairs: {
+    "tooth-regrowth-ex1": { title: "Antibody regrows teeth", names: ["Anti-USAG-1 antibody", "toothgrow"], condition: "tooth agenesis" },
   },
 };
+const INDEX = readLookupFile(INDEX_FILE);
 
 // --- lookup -------------------------------------------------------------------------
 
@@ -421,7 +426,7 @@ test("tracked cards require the same condition and complete regimen without extr
       read: async () => { reads++; return { ...READING, intervention, indication, other_names: aliases, known_names: ["EX-1", "EX-2"] }; },
       score: async () => { scores++; return []; },
     };
-    const found = await lookUp({ text: TEXT, model, registry: fakeRegistry({}), index: { claims } });
+    const found = await lookUp({ text: TEXT, model, registry: fakeRegistry({}), index: { pairs: claims } });
     assert.deepEqual(found.tracked.map(one => one.slug), expected);
     assert.deepEqual([reads, scores], [1, 0], "card association adds no paid call");
   }
@@ -764,8 +769,8 @@ test("the public endpoint explains exhausted budgets and leaves static pages ava
     OPENAI_API_KEY: "test-key", LLM_MODEL: "example-model", CONTACT_EMAIL: "ops@example.test",
     LOOKUP_PER_READER: { limit: async () => ({ success: true }) },
     LOOKUP_IN_ALL: { limit: async () => ({ success: true }) },
-    ASSETS: { fetch: async (request) => new URL(request.url).pathname === "/lookup.json"
-      ? Response.json({ claims: {} }) : new Response("Reviewed claim") },
+    ASSETS: { fetch: async (request) => new URL(request.url).pathname === "/lookup/2.json"
+      ? Response.json({ format: "lookup", format_version: 2, articles: {}, pairs: {} }) : new Response("Reviewed claim") },
   };
   const response = await handle(new Request("https://example.test/api/lookup", { method: "POST", body: JSON.stringify({ text: TEXT }) }), env, {
     model: { read: async () => { throw Object.assign(new Error("synthetic echo"), { code: "budget_exhausted" }); } }, registry: {},
@@ -902,7 +907,7 @@ test("an article that does not load, or a local address, is not read", async () 
 function env(overrides = {}) {
   const limiter = (allowed) => ({ limit: async () => ({ success: allowed }) });
   return {
-    ASSETS: { fetch: async (request) => (new URL(request.url).pathname === "/lookup.json" ? Response.json(INDEX) : new Response("a page")) },
+    ASSETS: { fetch: async (request) => (new URL(request.url).pathname === "/lookup/2.json" ? Response.json(INDEX_FILE) : new Response("a page")) },
     LOOKUP_PER_READER: limiter(true),
     LOOKUP_IN_ALL: limiter(true),
     OPENAI_API_KEY: "test-key",

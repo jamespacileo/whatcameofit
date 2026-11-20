@@ -61,7 +61,7 @@ test("the example's claim outweighs every other claim for its words", () => {
   const example = searchExample(claims);
   const words = searchWords(example.words);
   const asMatch = (item) => ({ headline: item.headline, page: `/${item.slug}`, names: [item.intervention.name], indication: item.indication });
-  const detail = { claims: Object.fromEntries(claims.map((item) => [item.slug, { reports: item.articles }])) };
+  const detail = { pairs: Object.fromEntries(claims.map((item) => [item.slug, { reports: item.articles }])) };
   // Whatever order the search index gives them in, the rule puts the example's claim first.
   const order = ranked([asMatch(claims[1]), asMatch(claims[0])], words, detail);
   assert.equal(order[0].page, "/found");

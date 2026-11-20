@@ -7,7 +7,7 @@ import { previousResult, storeResult } from "../worker/results.mjs";
 const image={dataUrl:"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jBzQAAAAASUVORK5CYII=",width:1,height:1};
 const found={about_a_treatment:true,treatment:"EX-patch",condition:"missing teeth",gist:"Do not cache this prose",candidates:[]};
 const registry={search:async()=>[],fetch:async()=>null,named:async()=>[]};
-const env={OPENAI_API_KEY:"test",LLM_MODEL:"configured",CONTACT_EMAIL:"test@example.org",LOOKUP_PER_READER:{limit:async()=>({success:true})},LOOKUP_IN_ALL:{limit:async()=>({success:true})},ASSETS:{fetch:async()=>Response.json({claims:{},articles:{}})}};
+const env={OPENAI_API_KEY:"test",LLM_MODEL:"configured",CONTACT_EMAIL:"test@example.org",LOOKUP_PER_READER:{limit:async()=>({success:true})},LOOKUP_IN_ALL:{limit:async()=>({success:true})},ASSETS:{fetch:async()=>Response.json({format:"lookup",format_version:2,pairs:{},articles:{}})}};
 test("image-only Reddit claim is read visually without asking Reddit or treating a media URL as an article",async()=>{
  let read=0;const response=await handle(new Request("https://whatcameofit.example/api/lookup",{method:"POST",body:JSON.stringify({text:"Dental revolution",platform:"Reddit",links:["https://preview.redd.it/image.png"],image,pageUrl:"https://www.reddit.com/r/science/comments/abc/title/?token=secret"})}),env,
  {model:{read:async(text,options)=>{read++;assert.deepEqual(options.image,image);assert.equal(options.pageUrl,null);return {...found,intervention:"EX-patch",indication:"missing teeth"};},score:async()=>[]},registry,fetch:async()=>{throw new Error("must not fetch Reddit");}});
