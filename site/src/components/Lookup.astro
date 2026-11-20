@@ -7,13 +7,14 @@ import Unfound from "./Unfound.astro";
 import { SITE } from "../../site.config.mjs";
 import { shareSentence } from "../lib/card";
 import { SEARCH_EXAMPLE } from "../lib/search-example";
-import { builtAheadPages, pairView } from "../lib/pairs";
+import { featuredPages, pairView } from "../lib/pairs";
+import { brandAsset } from "../lib/brand";
 import { canonicalAddress } from "../lib/structured";
 
 interface Props {
   /** The words over the field. */
   label?: string;
-  /** Carry each built-ahead pair's sentence and card, so its answer offers them to pass on. */
+  /** Carry each featured pair's sentence and the site's card, so its answer offers them to pass on. */
   sentences?: boolean;
 }
 
@@ -31,19 +32,19 @@ const hint = SITE.lookupUrl
 // (`searchExample`). With no such pair the field offers a link alone.
 const placeholder = SEARCH_EXAMPLE ? `https://… or ${SEARCH_EXAMPLE.words}` : "https://…";
 
-// Keyed by the pair's page, as the lookup file names it: the pairs whose card the build
-// draws (`builtAhead`). "<" is escaped so that no text in the data can close the script
-// element.
+// Keyed by the pair's page, as the lookup file names it: the pairs pages carry as examples
+// (`featured`), each with the site's card, since no pair has a picture of its own. "<" is
+// escaped so that no text in the data can close the script element.
 const sentenceJson = sentences
   ? JSON.stringify(
       Object.fromEntries(
-        Object.values(builtAheadPages())
+        Object.values(featuredPages())
           .map(pairView)
           .map((pair) => [
             `/${pair.address}`,
             {
               sentence: shareSentence(pair.title, pair.status, pair.asOf, canonicalAddress(`/${pair.address}`)),
-              card: `/og/${pair.address}.png`,
+              card: brandAsset("/brand-card.png"),
             },
           ]),
       ),
@@ -151,6 +152,7 @@ const sentenceJson = sentences
     unchecked: string | null;
     names: string[];
     indication: string;
+    terms?: string;
     topic: string;
   }
   interface Topic {
@@ -1527,6 +1529,44 @@ const sentenceJson = sentences
     filters: () => Promise<unknown>;
     search: (words: string, options?: { filters: Record<string, string> }) => Promise<IndexAnswer>;
   }
+  // The search over the pairs (openspec pairs-site, design decision 2 and task 4.6). No page is
+  // built per pair, so there is no Pagefind index of them: the lookup file and the search detail
+  // hold every pair, and are what the box reads. A pair is found when each word of the search
+  // starts a word of its headline, its names, its condition, its terms or its trials' numbers
+  // and titles; a word in quotation marks must be a whole word. It answers as Pagefind did:
+  // every pair found, each read when asked for, and how many each topic holds.
+  function pairIndex(index: Lookup, detail: SearchDetail): SearchIndex {
+    const words = (text: string) => text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    const entries = Object.entries(index.claims).map(([slug, claim]) => {
+      const trials = detail.claims[slug]?.trials ?? [];
+      const content = [claim.headline, ...(claim.names ?? []), claim.indication, claim.terms ?? "", ...trials.flatMap((trial) => [trial.id, trial.title ?? ""])]
+        .filter(Boolean)
+        .join(" ");
+      return { claim, content, said: words(content) };
+    });
+    return {
+      filters: async () => undefined,
+      search: async (query, options) => {
+        const whole = /^".*"$/.test(query.trim());
+        const asked = words(query);
+        const { topic, reported } = options?.filters ?? {};
+        const found = entries.filter(
+          (entry) =>
+            (reported !== "yes" || entry.claim.first_reported) &&
+            asked.every((word) => (whole ? entry.said.includes(word) : entry.said.some((said) => said.startsWith(word)))),
+        );
+        const counts: Record<string, number> = {};
+        for (const entry of found) if (entry.claim.topic) counts[entry.claim.topic] = (counts[entry.claim.topic] ?? 0) + 1;
+        return {
+          results: found
+            .filter((entry) => !topic || entry.claim.topic === topic)
+            .map((entry) => ({ data: async () => ({ url: entry.claim.page, content: entry.content, meta: { title: entry.claim.headline } }) })),
+          filters: { topic: counts },
+        };
+      },
+    };
+  }
+
   // The claims on view, every one found or one topic's: the pages the index found for
   // them, a cursor over those read, and the claims read, in the order they are shown.
   // A view reads one batch at a time; a batch that fails leaves its cursor in place.
@@ -1570,23 +1610,17 @@ const sentenceJson = sentences
     let searchIndex: SearchIndex;
     let found: IndexAnswer;
     try {
-      const indexUrl = "/pagefind/pagefind.js";
-      searchIndex = await import(/* @vite-ignore */ indexUrl);
-      // The index counts the pages it finds by topic once its topics are read: one
-      // small file, asked for with the first search.
-      [found, index, detail] = await Promise.all([
-        searchIndex.filters().then(() => searchIndex.search(query, { filters })),
-        loadLookup(),
-        loadDetail(),
-      ]);
+      [index, detail] = await Promise.all([loadLookup(), loadDetail()]);
+      searchIndex = pairIndex(index, detail);
+      found = await searchIndex.search(query, { filters });
     } catch {
       if (asked === latest) searchFailed(query);
       return;
     }
     if (asked !== latest) return;
 
-    // Only claim pages are in the search index; each is named by its page. A page is
-    // read once, however many views ask for it; one that failed is asked for again.
+    // Each pair found is named by its page. A page is read once, however many views ask for
+    // it; one that failed is asked for again.
     const byPage = new Map(Object.values(index.claims).map((claim) => [claim.page, claim]));
     const reads = new Map<IndexedHit, Promise<LookupClaim | undefined>>();
     const readHits = (batch: IndexedHit[]) => Promise.all(batch.map((hit) => {

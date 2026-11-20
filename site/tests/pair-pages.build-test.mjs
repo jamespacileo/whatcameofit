@@ -13,7 +13,9 @@ import { parseHTML } from "linkedom";
 import { readBundle } from "../src/lib/bundle.ts";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
-import { builtAhead } from "../src/lib/pair-view.ts";
+import { narrowerPairs, pairView } from "../src/lib/pair-view.ts";
+import { renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
+import { embedTitle, renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
@@ -33,9 +35,20 @@ fs.cpSync("tests/bundle", narrowestBundle, { recursive: true });
 for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(narrowestBundle, folder, `${ANCESTOR}.json`));
 writeManifest(narrowestBundle, { madeAt: "2026-11-20T00:00:00Z" });
 const pages = readBundle("tests/bundle").pages.PairPage;
-// The pairs whose page, card and embed the build makes (decision 2); the rest are made on
-// request by the Worker (tests/pair-on-request.build-test.mjs).
-const built = Object.fromEntries(Object.entries(pages).filter(([, file]) => builtAhead(file)));
+// No file is built per pair (task 4.6): the Worker makes every pair's page with the shared
+// renderer, and tests/pair-on-request.build-test.mjs holds its page to it. These tests read a
+// pair's page as that renderer writes it.
+const interventionFiles = readBundle("tests/bundle").pages.PairInterventionPage;
+function pairDocument(address) {
+  const file = pages[address];
+  const view = pairView(file);
+  const narrower = narrowerPairs(file, interventionFiles[file.row.intervention.slug] ?? null, new Set(Object.keys(pages)));
+  return parseHTML(`<!doctype html><html><body>${renderPairBand(view)}${renderPairSheet(view, narrower)}</body></html>`).document;
+}
+function embedDocument(address) {
+  const view = pairView(pages[address]);
+  return parseHTML(`<!doctype html><html><body><article>${renderEmbedArticle(view, SITE.name, SITE.url)}<footer><p>${renderEmbedRegistries(view)}</p></footer></article></body></html>`).document;
+}
 const TWO_TRIALS = "acoziborole--infections";
 
 function build(outDir, env = {}) {
@@ -72,11 +85,17 @@ before(() => {
   }
 });
 
-test("every pair built ahead has a page at its address", () => {
-  assert.ok(Object.keys(built).length > 0);
-  for (const address of Object.keys(pages)) assert.equal(fs.existsSync(path.join(withBundle, address)), address in built, address);
-  for (const [address, file] of Object.entries(built)) {
-    const document = page(withBundle, address);
+test("no pair's page, record, card, embed or oEmbed file is built, and each pair's page names its pair", () => {
+  for (const address of Object.keys(pages)) {
+    for (const file of [address, `data/pairs/${address}.json`, `og/${address}.png`, `og/square/${address}.png`, `og/tall/${address}.png`, `embed/${address}`, `oembed/${address}.json`]) {
+      assert.ok(!fs.existsSync(path.join(withBundle, file)), file);
+    }
+  }
+  // The two frames the Worker fills are built.
+  assert.ok(fs.existsSync(path.join(withBundle, "pair-shell", "index.html")));
+  assert.ok(fs.existsSync(path.join(withBundle, "embed-shell", "index.html")));
+  for (const [address, file] of Object.entries(pages)) {
+    const document = pairDocument(address);
     assert.match(document.querySelector("h1").textContent, new RegExp(file.row.descriptor.label, "i"), address);
     assert.equal(document.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
     assert.match(document.querySelector("[data-pair-status]").textContent, new RegExp(STATUS_LABELS[file.row.status.code]));
@@ -86,7 +105,7 @@ test("every pair built ahead has a page at its address", () => {
 test("a pair with two trials shows both, and lists the events that set its status", () => {
   const file = pages[TWO_TRIALS];
   assert.equal(file.trials.length, 2);
-  const document = page(withBundle, TWO_TRIALS);
+  const document = pairDocument(TWO_TRIALS);
   const trials = [...document.querySelectorAll("[data-trial]")].map((element) => element.dataset.trial);
   assert.deepEqual(trials.sort(), file.trials.map((trial) => trial.nct_id).sort());
   for (const trial of file.trials) {
@@ -100,13 +119,13 @@ test("a pair with two trials shows both, and lists the events that set its statu
 });
 
 test("a pair no person checked says so, and one a person checked does not", () => {
-  const checked = Object.entries(built).filter(([, file]) => file.checked_by_person);
-  const unchecked = Object.entries(built).filter(([, file]) => !file.checked_by_person);
+  const checked = Object.entries(pages).filter(([, file]) => file.checked_by_person);
+  const unchecked = Object.entries(pages).filter(([, file]) => !file.checked_by_person);
   assert.ok(checked.length > 0 && unchecked.length > 0);
   for (const [address] of unchecked) {
-    assert.match(page(withBundle, address).querySelector("[data-pair-unchecked]").textContent, new RegExp(UNCHECKED_BYLINE[1]));
+    assert.match(pairDocument(address).querySelector("[data-pair-unchecked]").textContent, new RegExp(UNCHECKED_BYLINE[1]));
   }
-  for (const [address] of checked) assert.equal(page(withBundle, address).querySelector("[data-pair-unchecked]"), null);
+  for (const [address] of checked) assert.equal(pairDocument(address).querySelector("[data-pair-unchecked]"), null);
 });
 
 test("a condition's page lists every pair for it or a condition beneath it, each with its status", () => {
@@ -192,17 +211,9 @@ test("each pair's open data record is the lab's data file as written, with the l
   const files = readBundle("tests/bundle").pages.PairDataFile;
   const index = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs.json"), "utf8"));
   assert.deepEqual(index.entries.map((entry) => entry.address), Object.keys(files).sort());
-  // The build writes the record of a pair it builds ahead; the Worker serves the rest from D1
-  // (task 1.3, tests/pair-on-request.build-test.mjs).
-  for (const [address, file] of Object.entries(files)) {
-    const written = path.join(withBundle, "data", "pairs", `${address}.json`);
-    assert.equal(fs.existsSync(written), builtAhead(pages[address]), address);
-    if (!builtAhead(pages[address])) continue;
-    const record = JSON.parse(fs.readFileSync(written, "utf8"));
-    assert.equal(record.format, "pair-record");
-    assert.match(record.licence, /CC BY 4\.0/);
-    assert.deepEqual(record.pair, file.pair);
-  }
+  // The build writes no record: the Worker serves each from D1 (task 4.6), and
+  // tests/pair-on-request.build-test.mjs holds each one to the lab's data file with the licence.
+  for (const address of Object.keys(files)) assert.ok(!fs.existsSync(path.join(withBundle, "data", "pairs", `${address}.json`)), address);
 });
 
 test("the sitemap lists pair addresses and the pages that list pairs", () => {
@@ -239,28 +250,19 @@ test("the search detail file gives each pair its trials, by the pair's address",
   }
 });
 
-test("each pair built ahead has its cards and embed, and its page names them", () => {
-  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
-  const sizes = { "": [1200, 630], "square/": [1080, 1080], "tall/": [1080, 1350] };
-  for (const [address, file] of Object.entries(built)) {
-    for (const [folder] of Object.entries(sizes)) {
-      const image = fs.readFileSync(path.join(withBundle, "og", `${folder}${address}.png`));
-      assert.ok(image.subarray(0, 4).equals(PNG), `${folder}${address}`);
-    }
-    const wide = fs.readFileSync(path.join(withBundle, "og", `${address}.png`));
-    assert.deepEqual([wide.readUInt32BE(16), wide.readUInt32BE(20)], sizes[""]);
-    const embed = page(withBundle, `embed/${address}`);
-    assert.equal(embed.querySelector('meta[name="robots"]').getAttribute("content"), "noindex");
+test("each pair's embed names its status, as the Worker makes it, and no card is drawn per pair", () => {
+  for (const [address, file] of Object.entries(pages)) {
+    const embed = embedDocument(address);
     assert.equal(embed.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
     assert.match(embed.querySelector("[data-pair-status]").textContent, new RegExp(STATUS_LABELS[file.row.status.code]));
-    const oembed = JSON.parse(fs.readFileSync(path.join(withBundle, "oembed", `${address}.json`), "utf8"));
-    assert.match(oembed.html, new RegExp(`/embed/${address}"`));
-    assert.match(oembed.thumbnail_url, new RegExp(`/og/${address}\\.png$`));
-    const document = page(withBundle, address);
-    assert.match(document.querySelector('meta[property="og:image"]').getAttribute("content"), new RegExp(`/og/${address}\\.png`));
-    assert.match(document.querySelector('meta[property="og:image:alt"]').getAttribute("content"), /Not medical advice/);
-    assert.match(document.querySelector('link[type="application/json+oembed"]').getAttribute("href"), new RegExp(`/oembed/${address}\\.json$`));
+    assert.match(embed.querySelector("h1").textContent, new RegExp(embedTitle(pairView(file)).slice(0, 20).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
+  // The embed's frame is noindex and carries the footer notices; the Worker fills the rest.
+  const frame = page(withBundle, "embed-shell");
+  assert.equal(frame.querySelector('meta[name="robots"]').getAttribute("content"), "noindex");
+  assert.ok(frame.body.innerHTML.includes("<!--embed-article-->") && frame.body.innerHTML.includes("<!--embed-registries-->"));
+  // No picture is drawn per pair: the build's images are the site's own.
+  assert.ok(!fs.existsSync(path.join(withBundle, "og")));
 });
 
 test("a build that reads a bundle writes the validators and types of its page models", () => {
@@ -283,7 +285,7 @@ test("a trial's papers are linked by their identifiers, and nothing of a paper's
   const file = pages["ambroxol--dementia"];
   const trial = file.trials.find((one) => one.paper_ids.length > 0);
   assert.ok(trial, "the bundle holds a trial with papers");
-  const document = page(withBundle, "ambroxol--dementia");
+  const document = pairDocument("ambroxol--dementia");
   const links = [...document.querySelectorAll(`[data-trial="${trial.nct_id}"] [data-paper]`)];
   assert.deepEqual(links.map((link) => link.dataset.paper), trial.paper_ids);
   for (const link of links) {
@@ -296,15 +298,15 @@ test("a trial's papers are linked by their identifiers, and nothing of a paper's
 });
 
 test("no pair page shows a value it could not read", () => {
-  for (const address of Object.keys(built)) {
-    assert.doesNotMatch(page(withBundle, address).body.textContent, /\bundefined\b|\bnull\b|NaN/, address);
+  for (const address of Object.keys(pages)) {
+    assert.doesNotMatch(pairDocument(address).body.textContent, /\bundefined\b|\bnull\b|NaN/, address);
+    assert.doesNotMatch(embedDocument(address).body.textContent, /\bundefined\b|\bnull\b|NaN/, address);
   }
 });
 
 test("the bundle holds a trial with posted outcomes and comparisons", () => {
-  // curcumin--gastritis-atrophic: trial NCT02782949, from the lab's rehearsal. It is made on
-  // request here (one trial, no claim origin); tests/pair-on-request.build-test.mjs builds it
-  // ahead too and checks its results on the built page and on the page made on request.
+  // curcumin--gastritis-atrophic: trial NCT02782949, from the lab's rehearsal.
+  // tests/pair-on-request.build-test.mjs checks its results on the page made on request.
   const curcumin = pages["curcumin--gastritis-atrophic"].trials[0].findings;
   assert.ok(curcumin.outcomes.length > 0 && curcumin.comparisons.length > 0);
 });
@@ -321,9 +323,9 @@ test("the footer's Data page describes the pairs' files and its link opens the p
   assert.equal(index.entries.length, Object.keys(pages).length);
   assert.equal(Number(data.querySelector("[data-pair-count]").dataset.pairCount), index.entries.length);
   assert.match(data.querySelector("[data-pair-count]").textContent, new RegExp(`${index.entries.length} treatments and conditions`));
-  // The example record it names is a file of the build.
+  // The example record it names is one the index lists; the Worker serves it from D1.
   const example = [...data.querySelectorAll("a")].map((a) => a.getAttribute("href")).find((href) => href?.startsWith("/data/pairs/"));
-  assert.ok(fs.existsSync(path.join(withBundle, example)), example);
+  assert.ok(index.entries.some((entry) => entry.record === example), example);
 });
 
 test("the site has no It happened or Anniversaries page, and links neither", () => {
@@ -357,8 +359,7 @@ test("the site has no It happened or Anniversaries page, and links neither", () 
 test("a pair filed under no topic still has its page, its condition's listing, search and the lookup file", () => {
   const file = pages[UNFILED];
   assert.equal(file.row.filing, null, "the lab wrote this pair with no topic");
-  assert.ok(builtAhead(file), "the unfiled pair is one built ahead, so its page is a file of the build");
-  const document = page(withBundle, UNFILED);
+  const document = pairDocument(UNFILED);
   assert.equal(document.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
   assert.ok(listed(withBundle, `condition/${file.row.condition.slug}`).includes(UNFILED));
   // Not counted on the topics page; tests/pair-on-request.build-test.mjs holds that no topic's
@@ -407,8 +408,8 @@ test("no page built from the bundle shows one of its codes where its words belon
   assert.ok(codes.has("phase_2") && codes.has("results_posted") && codes.has("gene_therapy"));
   const htmlPages = [
     "index.html",
-    ...Object.keys(built).flatMap((address) => [`${address}/index.html`, `embed/${address}/index.html`]),
-    // The listings the Worker makes are held to the same in tests/pair-on-request.build-test.mjs.
+    // Pairs' pages and embeds, and listings, are the Worker's: checked below as it writes them,
+    // and in tests/pair-on-request.build-test.mjs as it serves them.
     ...["condition", "clinical"].flatMap((folder) =>
       fs
         .readdirSync(path.join(withBundle, folder), { recursive: true })
@@ -416,9 +417,11 @@ test("no page built from the bundle shows one of its codes where its words belon
         .map((name) => path.join(folder, name)),
     ),
   ];
-  assert.ok(htmlPages.length > Object.keys(built).length * 2);
-  for (const file of htmlPages) {
-    const { document } = parseHTML(fs.readFileSync(path.join(withBundle, file), "utf8"));
+  const documents = [
+    ...htmlPages.map((file) => [file, parseHTML(fs.readFileSync(path.join(withBundle, file), "utf8")).document]),
+    ...Object.keys(pages).flatMap((address) => [[`/${address}`, pairDocument(address)], [`/embed/${address}`, embedDocument(address)]]),
+  ];
+  for (const [file, document] of documents) {
     for (const element of document.querySelectorAll("script, style, template")) element.remove();
     const text = document.body.textContent;
     for (const code of codes) assert.ok(!text.includes(code), `${file} shows the code ${code}`);

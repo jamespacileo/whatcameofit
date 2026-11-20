@@ -83,8 +83,11 @@ export async function bundleFile(env, version, model, key) {
 
 /** The frame with a page's parts in their places. Each part is put in by a function, so it goes
  * in as written: a replacement string would read "$$" or "$&" in it as patterns. */
-export function fill(shell, { title, description, address, band, sheet }) {
-  return shell
+// The frame's oEmbed link (PairShell.astro): kept for a pair's page, removed for a listing's.
+const OEMBED_LINK = /<link[^>]*type="application\/json\+oembed"[^>]*>/;
+
+export function fill(shell, { title, description, address, band, sheet, oembed = false }) {
+  return (oembed ? shell : shell.replace(OEMBED_LINK, ""))
     .replaceAll("__PAIR_TITLE__", () => escape(title))
     .replaceAll("__PAIR_DESCRIPTION__", () => escape(description))
     .replaceAll("__PAIR_ADDRESS__", () => escape(address))
@@ -152,6 +155,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
     description: pairDescription(view),
     address,
     band: renderPairBand(view),
+    oembed: true,
     sheet: renderPairSheet(view, narrowerPairs(file, intervention === ABSENT ? null : intervention, published)),
   });
   const answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });

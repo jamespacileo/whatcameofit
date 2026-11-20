@@ -78,7 +78,8 @@ test("Scenario: One store is configured", () => {
 test("Scenario: The extension is installable", () => {
   const example = examplePair(pairs);
   // A topic's page is made on request by the Worker; the built topics page stands for the listings.
-  for (const file of ["index.html", `${example.row.pair.address}/index.html`, "topics/index.html", "how-it-works/index.html"]) {
+  // A pair's page is made on request into the pair frame, whose footer is a built page's.
+  for (const file of ["index.html", "pair-shell/index.html", "topics/index.html", "how-it-works/index.html"]) {
     assert.ok(chrome(file).includes('href="/extension"'), `${file} does not link the extension page`);
   }
 });

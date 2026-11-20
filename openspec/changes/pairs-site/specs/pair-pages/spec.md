@@ -20,16 +20,24 @@ A pair page SHALL show whether a person checked the pair, and the score and reas
 - **WHEN** the pair's intervention was keyed by a decision model at 0.93
 - **THEN** the page shows the score and that no person checked it
 
-### Requirement: A page rendered on request equals the page built ahead
-The site SHALL decide by one rule over the bundle which pair pages are built ahead. Every other pair page SHALL be rendered on request from the pair's file in the deployment's bundle version, with the same template, and cached for no longer than a day. The two SHALL give the same page for the same file.
+### Requirement: Every pair's files are rendered on request
+The build SHALL make no file per pair. Every pair's page, open data record, embed and oEmbed description SHALL be rendered on request from the pair's file in the deployment's bundle version, by the shared renderers, into the frames the build leaves, and cached for no longer than a day. A pair's card addresses SHALL answer with the site's own card. The build's file count SHALL not grow with the number of pairs.
 
-#### Scenario: A pair with one trial and no claim origin
-- **WHEN** a reader opens such a pair's address
-- **THEN** the page is rendered from its file and reads as a built page would
+#### Scenario: Any pair
+- **WHEN** a reader opens a pair's address, its record, its embed or its oEmbed description
+- **THEN** each is made from the pair's file, with the page's canonical address, preview and oEmbed link, and the embed's footer notices
 
-#### Scenario: The same file, both ways
-- **WHEN** one pair's file is rendered at build and on request in a test
+#### Scenario: The shared renderer is the page
+- **WHEN** one pair's file is rendered by the shared renderer and served on request in a test
 - **THEN** the two pages' contents are equal
+
+#### Scenario: A pair's picture
+- **WHEN** a pair's card address is asked for
+- **THEN** the site's own card answers, and no picture is drawn per pair
+
+#### Scenario: Searching by a treatment's name
+- **WHEN** a reader searches the lookup box for a treatment's name
+- **THEN** the pairs are found from the lookup file and the search detail, with no index built per pair
 
 #### Scenario: A file that does not fit its schema
 - **WHEN** the file read on request fails its validator
