@@ -2,6 +2,8 @@
 
 <!-- impeccable:product-schema 1 -->
 
+> **Written while the site tracked claims.** Claims were removed on 2026-11-20: the site now follows treatment and condition pairs, one page a pair, built from the lab's bundle. Where this file says "claim" or "claim page", or describes following, reminders, anniversaries, source pages, report statements or the record strip, it describes pages that no longer exist. It is to be rewritten against the pair pages once their design settles; until then `GLOSSARY.md`, `CLAUDE.md` and `openspec/changes/pairs-site` are the current word.
+
 > Written without an interview: the operator asked for the remaining work to be finished unattended. Everything here comes from `SPEC.md` and the decisions recorded in `openspec/`. Lines marked **Assumed** were inferred and should be confirmed or corrected.
 
 ## Platform

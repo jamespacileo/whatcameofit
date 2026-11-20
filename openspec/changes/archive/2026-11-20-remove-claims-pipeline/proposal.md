@@ -8,11 +8,12 @@ The operator dropped claims on 2026-11-19 for tracked treatment and condition pa
 
 - **BREAKING** The Python pipeline (`pipeline/`), its seed data, export schema, daily and backfill jobs, Docker setup and CI suites are removed (pull request 402).
 - The specs of capabilities that only the pipeline implemented are removed from `openspec/specs/`, since no code in this repository has that behavior any more: `article-leads`, `claim-extraction`, `daily-run`, `decision-steps`, `entity-resolution`, `evidence-events`, `knowledge-cards`, `lead-evaluation`, `lead-reading`, `lead-screening`, `lead-triage`, `link-leads`, `llm-usage`, `organisations`, `paper-facts`, `processing-metrics`, `record-readings`, `registry-corpus`, `related-research`, `reported-statements`, `review`, `source-allowances`, `source-clients`, `status-derivation`, `trial-facts` and `work-ledger`. Their text stays in git history. One requirement of `related-research`, "Public on-demand research context", describes the lookup service and the extension, not the pipeline, and was moved to `live-lookup`. A pair's status is derived in the lab by the same rules, which the site's method page states.
+- The specs `claims`, `anniversaries` and `source-pages` are removed too: the claim record, the anniversaries pages and feed, and the source pages no longer exist in the site (pull request 400).
 - The open changes that built on the pipeline are closed as superseded: `headline-funnel`, `idempotent-runs-and-one-address`, `trial-first-route` and `work-reuse-and-metrics`.
 
 ## What Does Not Change Here
 
-- The site's specs that still name claims (`claims`, `open-data`, `anniversaries`, `source-pages`, `sharing`, `landing-pages`, `health-areas`, `clinical-classification`, `deployment`, and parts of `site-publishing`) are revised by `pairs-site` task 1.2, against the pair page models.
+- The site's specs that still name claims (`open-data`, `sharing`, `landing-pages`, `health-areas`, `clinical-classification`, `deployment`, and parts of `site-publishing`) are revised by `pairs-site` task 1.2, against the pair page models.
 - `cloudflare-source-of-truth` (the store) stays open until the store's claim tables are settled at the cutover.
 - The released extension's wire format, including the `claims` key of `lookup.json`, is unchanged.
 
