@@ -162,14 +162,27 @@ export async function handle(request, env, tools) {
     // A claim that leads to its pair (`pair: true` in gone.json, written only by a build that
     // reads a bundle, openspec pairs-site 3.4a): the build made none of its files, and each
     // file's address leads to the pair's own. Its page's address is handled below.
-    const asset = claimAsset(here.pathname);
+    // A saved alias ("/<slug>/index.html", "/embed/<slug>.html") is read as the address, but
+    // only for a claim that leads to its pair; every other path is the asset binding's as before.
+    const plain = here.pathname.replace(/\/index\.html$/, "").replace(/\.html$/, "") || "/";
+    const asset = claimAsset(plain);
     if (asset) {
       const { to, pair } = (await goneList(env.ASSETS, here.origin)).get(asset.slug) ?? {};
       const target = to && pair ? asset.at(to) : null;
-      if (target && target !== here.pathname) {
+      if (target && target !== plain) {
         return new Response(null, {
           status: 301,
           headers: { Location: new URL(`${target}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=300" },
+        });
+      }
+    }
+    if (plain !== here.pathname) {
+      const aliased = plain.replace(/^\/+/, "");
+      const { to, pair } = aliased && !aliased.includes("/") ? ((await goneList(env.ASSETS, here.origin)).get(aliased) ?? {}) : {};
+      if (to && pair && to !== aliased) {
+        return new Response(null, {
+          status: 301,
+          headers: { Location: new URL(`/${to}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=300" },
         });
       }
     }

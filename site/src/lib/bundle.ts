@@ -81,13 +81,14 @@ export function readBundle(folder: string): Bundle {
 /** Where a claim's address goes now: the address of the pair that came from it. A claim
  * whose slug is its pair's address moves nowhere and is left out. */
 export function movedAddresses(pairPages: any[]): Record<string, string> {
-  const moved: Record<string, string> = {};
+  // A Map, so a slug spelled like an object's own property ("constructor") is a slug like any other.
+  const moved = new Map<string, string>();
   for (const page of pairPages) {
     const slug = page.row.origin?.claim_slug;
     const address = page.row.pair.address;
     if (!slug || slug === address) continue;
     // One claim can stand behind several pairs; its address goes to none of them by rule.
-    moved[slug] = slug in moved ? "" : address;
+    moved.set(slug, moved.has(slug) ? "" : address);
   }
-  return Object.fromEntries(Object.entries(moved).filter(([, address]) => address));
+  return Object.fromEntries([...moved].filter(([, address]) => address));
 }

@@ -7,7 +7,6 @@
 // published address broken, so the build fails and names it.
 import fs from "node:fs";
 import path from "node:path";
-import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
 
@@ -54,19 +53,13 @@ const gone = [
 // stands behind more than one pair, moves nowhere (`movedAddresses`).
 if (process.env.PAIRS_BUNDLE) {
   const listed = new Set(gone.map((entry) => entry.slug));
-  const pairs = Object.values(readBundle(path.resolve(process.env.PAIRS_BUNDLE)).pages.PairPage ?? {});
   // `pair: true` marks a claim that leads to its pair, whose page and files the build does not
   // make (src/lib/pairs.ts, claimsWithAPair): the Worker sends its files' addresses to the
   // pair's too. A claim whose slug is its pair's address is listed so, and is not redirected.
-  const single = new Map();
-  for (const page of pairs) {
-    const slug = page.row.origin?.claim_slug;
-    if (slug) single.set(slug, single.has(slug) ? null : page.row.pair.address);
-  }
-  const moved = movedAddresses(pairs);
-  for (const [slug, to] of single) {
-    if (to === null || listed.has(slug)) continue;
-    if (to !== slug && moved[slug] !== to) throw new Error(`The rule for ${slug} disagrees with movedAddresses: ${to} and ${moved[slug]}.`);
+  // The build's own rule, so the claims it leaves out and the claims sent to a pair are one set.
+  const { claimsWithAPair } = await import("../src/lib/pairs.ts");
+  for (const [slug, to] of claimsWithAPair()) {
+    if (listed.has(slug)) continue;
     gone.push({ slug, to, pair: true });
   }
 }

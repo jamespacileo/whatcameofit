@@ -364,6 +364,11 @@ export function claimsWithAPair(): Map<string, string> {
       if (slug) bySlug.set(slug, [...(bySlug.get(slug) ?? []), page.row.pair.address]);
     }
     claimsLeadingToPairs = new Map([...bySlug].filter(([, addresses]) => addresses.length === 1).map(([slug, [address]]) => [slug, address]));
+    // The claim's record leads to the pair's, which is the pair's data file: a bundle without it
+    // would send the old record's address to a missing page, so the build stops, naming it.
+    const records = pairBundle()?.pages.PairDataFile ?? {};
+    const missing = [...claimsLeadingToPairs.values()].filter((address) => !Object.hasOwn(records, address));
+    if (missing.length) throw new Error(`The bundle has no data file for ${missing.join(", ")}, the pair a claim leads to: its record's address would lead nowhere.`);
   }
   return claimsLeadingToPairs;
 }

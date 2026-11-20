@@ -345,16 +345,49 @@ test("a claim with a pair is not built, and every file of it leads to the pair's
     assert.equal(response.status, 301, from);
     assert.equal(new URL(response.headers.get("Location")).pathname, to, from);
     // And the pair's own file answers.
-    assert.equal((await get(to)).status, 200, to);
+    const target = await get(to);
+    assert.equal(target.status, 200, to);
+    await target.body?.cancel();
   }
 });
 
 test("a claim with no pair is built and answers as before, and an archived one is still gone", async () => {
   assert.equal(moved[UNMATCHED], undefined);
   for (const pathname of [`/${UNMATCHED}`, `/data/claims/${UNMATCHED}.json`, `/embed/${UNMATCHED}`, `/oembed/${UNMATCHED}.json`, `/og/${UNMATCHED}.png`, `/changes/${UNMATCHED}.xml`]) {
-    assert.equal((await get(pathname)).status, 200, pathname);
+    const response = await get(pathname);
+    assert.equal(response.status, 200, pathname);
+    await response.body?.cancel();
   }
   const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "claims.json"), "utf8"));
   assert.ok(index.entries.some((entry) => entry.slug === UNMATCHED));
   assert.equal((await get(`/${ARCHIVED}`)).status, 410);
+});
+
+test("a saved alias of a claim with a pair leads to the pair, and other aliases are the files'", async () => {
+  const address = moved[MATCHED];
+  for (const [from, to] of [[`/${MATCHED}/index.html`, `/${address}`], [`/embed/${MATCHED}.html`, `/embed/${address}`], [`/embed/${MATCHED}/index.html`, `/embed/${address}`]]) {
+    const response = await get(from);
+    assert.equal(response.status, 301, from);
+    assert.equal(new URL(response.headers.get("Location")).pathname, to, from);
+  }
+  // An unmatched claim's alias is the asset binding's, as before.
+  const unmatched = await get(`/${UNMATCHED}/index.html`);
+  assert.equal(unmatched.status, 200);
+  await unmatched.body?.cancel();
+});
+
+test("the researchers' page counts the claims the download holds", () => {
+  const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "claims.json"), "utf8"));
+  const text = parseHTML(fs.readFileSync(path.join(dist, "for", "researchers", "index.html"), "utf8")).document.body.textContent;
+  assert.match(text, new RegExp(`(^|\\D)${index.entries.length} claims? in`));
+});
+
+test("a claim whose pair has no data file stops the build, naming the pair", () => {
+  const address = moved[MATCHED];
+  const broken = copyBundle({});
+  fs.rmSync(path.join(broken, "p12_pair_data_file", `${address}.json`));
+  const script = `const { claimsWithAPair } = await import(${JSON.stringify(new URL("../src/lib/pairs.ts", import.meta.url).href)}); claimsWithAPair();`;
+  const run = spawnSync(process.execPath, ["--input-type=module", "-e", script], { env: { ...process.env, PAIRS_BUNDLE: broken }, encoding: "utf8" });
+  assert.notEqual(run.status, 0);
+  assert.match(run.stderr, new RegExp(`no data file for ${address}`));
 });

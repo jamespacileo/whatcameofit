@@ -155,3 +155,13 @@ test("verdict wording in any table of the pair path's words is refused", () => {
     /Verdict wording "abandoned"/,
   );
 });
+
+test("a claim slug spelled like an object's own property leads to its pair like any other", () => {
+  const dir = copy((page) => { page.row.origin = { ...(page.row.origin ?? {}), claim_slug: "constructor", drafted_from: "seed", drafted_by_run: "run", created_at: "2026-11-19T00:00:00", intervention_id: page.row.pair.intervention_id, condition_id: page.row.pair.condition_id }; });
+  try {
+    const pages = Object.values(readBundle(dir).pages.PairPage);
+    assert.equal(movedAddresses(pages).constructor, address);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

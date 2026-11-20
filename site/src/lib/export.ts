@@ -387,7 +387,9 @@ function load(): { data: Export; exportVersion: string } {
       `The export at ${file} has schema version ${content.schema_version}; this site reads versions 2 and 3.`,
     );
   }
-  if (!SPLIT_RELEASE) assertClaimFilesFit(content.claims.length);
+  // A build that reads a bundle makes no files for a claim that leads to its pair, so this lower
+// bound would count files it never writes; scripts/check-dist.mjs counts the build itself.
+if (!SPLIT_RELEASE && !process.env.PAIRS_BUNDLE) assertClaimFilesFit(content.claims.length);
   const unlabelled = unlabelledApproaches(
     (content as Export).claims.map((claim) => claim.approach),
   );

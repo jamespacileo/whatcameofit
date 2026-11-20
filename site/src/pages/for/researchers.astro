@@ -6,7 +6,7 @@ import { SITE } from "../../../site.config.mjs";
 import Audience from "../../layouts/Audience.astro";
 import { CLAIM_FIELDS } from "../../lib/audiences";
 import { CORRECTION_SUBJECT, contactLink } from "../../lib/contact.mjs";
-import { data, listedTopics } from "../../lib/export";
+import { builtClaims, data, listedTopics } from "../../lib/export";
 import { DATA_LICENCE, DATA_LICENCE_URL } from "../../lib/open-data";
 import { reportedClaimCount } from "../../lib/reports";
 import { siteOpenData } from "../../lib/site-open-data";
@@ -16,7 +16,10 @@ const file = siteOpenData();
 // The fields are read from the records as built, so the list cannot name one it lacks.
 const fields = Object.keys(file.claims[0] ?? CLAIM_FIELDS);
 const corrections = contactLink(SITE.correctionsUrl, "", CORRECTION_SUBJECT);
-const count = data.claims.length;
+// What the download holds: in a pairs build, the claims that do not lead to a pair.
+const offered = builtClaims();
+const count = offered.length;
+const offeredTopics = listedTopics.filter((topic) => offered.some((claim) => claim.vertical === topic.slug));
 ---
 
 <Audience
@@ -35,8 +38,8 @@ const count = data.claims.length;
         <dt>Holds</dt>
         <dd>
           {count}{" "}
-          {count === 1 ? "claim" : "claims"} in {listedTopics.length}{" "}
-          {listedTopics.length === 1 ? "topic" : "topics"}, as JSON. {reportedClaimCount(data.claims)} with a linked report.
+          {count === 1 ? "claim" : "claims"} in {offeredTopics.length}{" "}
+          {offeredTopics.length === 1 ? "topic" : "topics"}, as JSON. {reportedClaimCount(offered)} with a linked report.
         </dd>
       </div>
       <div>
