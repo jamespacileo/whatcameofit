@@ -6,6 +6,7 @@ import { SITE } from "../../site.config.mjs";
 import { CARD_NOTICE, clip, monthAndYear } from "../lib/card";
 import { NOTICES } from "../lib/notices";
 import { builtAheadPages, pairView } from "../lib/pairs";
+import { formatDate } from "../lib/timetable";
 
 export function getStaticPaths() {
   return Object.entries(builtAheadPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
@@ -41,7 +42,9 @@ const page = `${SITE.url}/${view.address}`;
       </p>
       <footer>
         {NOTICES.map((notice) => <p>{notice}</p>)}
-        <p>Data sources: ClinicalTrials.gov, Medical Subject Headings (MeSH).</p>
+        <p>
+          Data sources: ClinicalTrials.gov, Medical Subject Headings (MeSH). Registries last checked {formatDate(view.asOf)}.
+        </p>
       </footer>
     </article>
   </body>

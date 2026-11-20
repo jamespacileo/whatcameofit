@@ -298,3 +298,8 @@ test("a build given no bundle makes no pair page, and keeps the claims' listings
   const feed = fs.readFileSync(path.join(without, "changes.xml"), "utf8");
   for (const address of Object.keys(pages)) assert.ok(!feed.includes(`/${address}"`), address);
 });
+
+test("the build check, which every published build runs, passes a build that holds pairs", () => {
+  const check = spawnSync("node", ["scripts/check-dist.mjs"], { env: { ...process.env, DIST_DIR: withBundle }, encoding: "utf8" });
+  assert.equal(check.status, 0, check.stderr);
+});
