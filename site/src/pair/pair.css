@@ -28,3 +28,114 @@
   padding: 0.4rem 0.6rem 0.4rem 0;
   vertical-align: top;
 }
+
+/* A pair's trials as a table (lib/trials-table.ts; DESIGN.md, "Trials table"): each group's
+   heading with its count in grey, then a framed table with the quiet head every table has; a
+   row opens to the trial's record. No colour marks a state or a phase. */
+.trials-group {
+  margin-top: 1.5rem;
+}
+.trials-group-head {
+  margin: 0 0 0.5rem;
+  font-size: var(--text-l);
+}
+.trials-group-head .count {
+  font-size: var(--text-s);
+  font-weight: 400;
+  color: var(--muted);
+}
+.trials-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--rule);
+  border-radius: 0.85rem;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.trials-table th,
+.trials-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--row-pad) 0.85rem;
+  border-top: 1px solid var(--row-rule);
+}
+/* The trial and its title take the width; the short columns keep their words whole. */
+.trials-table tbody th {
+  width: 100%;
+  overflow-wrap: anywhere;
+}
+.trials-table td {
+  white-space: nowrap;
+}
+.trials-table .trials-record td {
+  white-space: normal;
+}
+.trials-table thead th {
+  font-size: var(--label-size);
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--table-head);
+  border-top: 0;
+  padding-block: 0.5rem;
+}
+.trials-table tbody th {
+  font-weight: 600;
+}
+.trials-title {
+  display: block;
+  font-weight: 400;
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+.trials-record td {
+  border-top: 0;
+  padding-top: 0;
+}
+.trials-record summary {
+  cursor: pointer;
+  color: var(--blue);
+  font-weight: 600;
+  font-size: var(--text-m);
+}
+/* On a phone the head is hidden and each value carries its column's name. */
+@media (max-width: 40rem) {
+  .trials-table thead {
+    display: none;
+  }
+  .trials-table tr,
+  .trials-table th,
+  .trials-table td {
+    display: block;
+  }
+  .trials-table tbody th {
+    width: auto;
+  }
+  .trials-table td {
+    white-space: normal;
+  }
+  .trials-table tbody td::before {
+    content: attr(data-label) ": ";
+    color: var(--muted);
+    font-size: var(--label-size);
+  }
+  .trials-table .trials-record td::before {
+    content: none;
+  }
+  .trials-table th,
+  .trials-table td {
+    padding-block: 0.3rem;
+    border-top: 0;
+  }
+  .trials-table tbody tr[data-trial] {
+    border-top: 1px solid var(--row-rule);
+    padding-top: 0.5rem;
+  }
+}
+@media print {
+  .trials-table {
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+}

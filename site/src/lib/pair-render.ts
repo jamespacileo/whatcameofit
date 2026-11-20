@@ -78,37 +78,46 @@ export const NARROWER_LEAD = "Also followed for narrower conditions:";
 
 assertNoOutcomeVerdict([NARROWER_LEAD]);
 
+/** A trial's record as the page gives it: its facts, its dated events and its posted results.
+ * The trial's own heading is the caller's (a pair page's article, a trials table's row). */
+export function trialRecord(trial: PairTrialView): string {
+  return [
+    `<dl>`,
+    fact("State", escape(trial.state)),
+    fact("Phase", trial.phases && escape(trial.phases)),
+    fact("People", trial.participants && escape(trial.participants)),
+    fact("Started", trial.start && escape(registryDay(trial.start))),
+    fact("Primary completion", trial.primaryCompletion && escape(registryDay(trial.primaryCompletion))),
+    fact(
+      "Arms",
+      trial.arms.length
+        ? trial.arms.map((arm) => (arm === trial.pairArm ? `<strong>${escape(arm)}</strong>` : escape(arm))).join(", ")
+        : null,
+    ),
+    fact("Why it stopped, in the record", trial.whyStopped && escape(trial.whyStopped)),
+    fact("Results", trial.resultsPosted ? "Posted on the registry" : "None posted"),
+    fact(
+      "Papers",
+      trial.papers.length
+        ? trial.papers
+            .map((paper) => (paper.url ? `<a href="${escape(paper.url)}" rel="external" data-paper="${escape(paper.id)}">${escape(paper.label)}</a>` : `<span data-paper="${escape(paper.id)}">${escape(paper.label)}</span>`))
+            .join(", ")
+        : null,
+    ),
+    `</dl>`,
+    eventList("", trial.events.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}</li>`)),
+    trial.outcomes.length ? renderOutcomes(trial.outcomes) : "",
+  ].join("");
+}
+
 export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): string {
   const trials = view.trials.map((trial) =>
     [
       `<article class="pair-trial" data-trial="${escape(trial.nctId)}">`,
       `<h3><a href="${escape(trial.registryUrl)}" rel="external">${escape(trial.nctId)}</a>`,
       trial.title ? `<span>: ${escape(trial.title)}</span>` : "",
-      `</h3><dl>`,
-      fact("State", escape(trial.state)),
-      fact("Phase", trial.phases && escape(trial.phases)),
-      fact("People", trial.participants && escape(trial.participants)),
-      fact("Started", trial.start && escape(registryDay(trial.start))),
-      fact("Primary completion", trial.primaryCompletion && escape(registryDay(trial.primaryCompletion))),
-      fact(
-        "Arms",
-        trial.arms.length
-          ? trial.arms.map((arm) => (arm === trial.pairArm ? `<strong>${escape(arm)}</strong>` : escape(arm))).join(", ")
-          : null,
-      ),
-      fact("Why it stopped, in the record", trial.whyStopped && escape(trial.whyStopped)),
-      fact("Results", trial.resultsPosted ? "Posted on the registry" : "None posted"),
-      fact(
-        "Papers",
-        trial.papers.length
-          ? trial.papers
-              .map((paper) => (paper.url ? `<a href="${escape(paper.url)}" rel="external" data-paper="${escape(paper.id)}">${escape(paper.label)}</a>` : `<span data-paper="${escape(paper.id)}">${escape(paper.label)}</span>`))
-              .join(", ")
-          : null,
-      ),
-      `</dl>`,
-      eventList("", trial.events.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}</li>`)),
-      trial.outcomes.length ? renderOutcomes(trial.outcomes) : "",
+      `</h3>`,
+      trialRecord(trial),
       `</article>`,
     ].join(""),
   );

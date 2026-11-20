@@ -15,6 +15,7 @@ import { renderListingBand, renderListingSheet } from "../src/lib/listing-render
 import { renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
 import { meshEdition } from "../src/lib/clinical.ts";
 import { SITE } from "../site.config.mjs";
+import { trialsTable } from "../src/lib/trials-table.ts";
 
 export const GOLDENS = fileURLToPath(new URL("./goldens", import.meta.url));
 const BUNDLE = fileURLToPath(new URL("./bundle", import.meta.url));
@@ -32,6 +33,7 @@ export function renderedGoldens() {
     const view = pairView(file);
     const narrower = narrowerPairs(file, files.PairInterventionPage[file.row.intervention.slug] ?? null, published);
     out.set(`pairs/${address}.html`, `${renderPairBand(view)}\n${renderPairSheet(view, narrower)}\n`);
+    out.set(`trials/${address}.html`, `${trialsTable(view.trials)}\n`);
     out.set(`embeds/${address}.html`, `${renderEmbedArticle(view, SITE.name, SITE.url)}\n${renderEmbedRegistries(view)}\n`);
   }
   const listings = [

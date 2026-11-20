@@ -162,6 +162,8 @@ export interface PairTrialView {
   title: string | null;
   state: string;
   phases: string | null;
+  /** The phase codes as the registry gives them (`TrialPhase`), for grouping by phase. */
+  phaseCodes: string[];
   participants: string | null;
   start: string | null;
   primaryCompletion: string | null;
@@ -250,6 +252,7 @@ export function pairView(page: any): PairView {
         title: facts.title,
         state: TRIAL_STATE_WORDS[PAIR_TRIAL_STATES[facts.overall_status]],
         phases: phases.length ? phases.join(" and ") : null,
+        phaseCodes: facts.phases ?? [],
         participants: facts.participants
           ? `${facts.participants.count.toLocaleString("en-GB")} ${facts.participants.actual ? "taking part" : "planned"}`
           : null,
