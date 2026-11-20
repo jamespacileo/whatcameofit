@@ -63,7 +63,9 @@ export function previewComment({ state, url, worker, sha, repoUrl, runUrl, accou
     ].join("\n");
   }
 
-  const lines = [MARKER, "### Preview", "", `**${url}**`, "", `**Pages:** ${links(url, PAGES)}`, "", `**Files:** ${links(url, FILES)}`];
+  // A copy built from a bundle has no Anniversaries page (openspec pairs-site, task 5.7).
+  const pages = pairs ? PAGES.filter(([, at]) => at !== "/anniversaries") : PAGES;
+  const lines = [MARKER, "### Preview", "", `**${url}**`, "", `**Pages:** ${links(url, pages)}`, "", `**Files:** ${links(url, FILES)}`];
   if (added?.length && !pairs) {
     lines.push("", `**Claims this pull request adds (${added.length}):**`);
     for (const slug of added.slice(0, LISTED)) lines.push(`- [${slug}](${url}/${slug})`);
