@@ -20,6 +20,7 @@ import { categoryListing, interventionListing, topicListing } from "../src/lib/l
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { shownName } from "../src/lib/pair-view.ts";
 import { meshEdition } from "../src/lib/clinical.ts";
+import { canonicalAddress } from "../src/lib/structured.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
@@ -411,6 +412,7 @@ function bundleCodes() {
   return codes;
 }
 
+const builtFooter = () => parseHTML(fs.readFileSync(path.join(dist, "about", "index.html"), "utf8")).document.querySelector("footer.colophon").outerHTML;
 const listedOn = (document) => [...document.querySelectorAll("[data-pair]")].map((row) => row.dataset.pair).sort();
 const filedIn = (file) => [...new Set(file.pairs.map((row) => row.pair.address))].filter((address) => address in pages).sort();
 const squash = (text) => text.replace(/\s+/g, " ").trim();
@@ -431,6 +433,10 @@ test("no listing page is built, and the Worker makes each from its file with the
     assert.equal(made.querySelector(".frame").outerHTML, sheet.querySelector(".frame").outerHTML, pathname);
     assert.equal(made.querySelector("title").textContent.startsWith(view.title), true, pathname);
     assert.deepEqual(listedOn(made), view.rows.map((row) => row.address).sort(), pathname);
+    // Its own canonical address, and the footer a built page carries (its notices and the site's
+    // links, the extension page's among them when the build offers it).
+    assert.equal(made.querySelector('link[rel="canonical"]').getAttribute("href"), canonicalAddress(pathname), pathname);
+    assert.equal(made.querySelector("footer.colophon").outerHTML, builtFooter(), pathname);
     // No code of the bundle where its words belong.
     for (const element of made.querySelectorAll("script, style, template")) element.remove();
     for (const code of bundleCodes()) assert.ok(!made.body.textContent.includes(code), `${pathname} shows the code ${code}`);
