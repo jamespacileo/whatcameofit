@@ -61,6 +61,12 @@ export const PAIR_EVENT_LABELS: Record<string, string> = {
  * same: they name a kind of treatment only, never whether it works or anyone can get it. */
 export const PAIR_APPROACH_LABELS: Record<string, string> = {
   drug: "Drug",
+  // The lab's kinds for the registry's intervention types that named none (lab pull request
+  // 133). Each names what the intervention is, never what it is for: the registry codes a
+  // clinic's message as behavioural and a diagnostic scan as radiation, so neither is a therapy.
+  biologic: "Biologic",
+  behavioural: "Behavioural",
+  radiation: "Radiation",
   vaccine: "Vaccine",
   gene_therapy: "Gene therapy",
   cell_therapy: "Cell therapy",
