@@ -180,17 +180,17 @@ function words(text) {
  * Tracked claims whose names or reports share words with the words in an address.
  * A guess for the reader to check, never a statement that the article is tracked.
  *
- * @param {{ claims: Record<string, { headline: string, names?: string[], terms?: string }> }} index
+ * @param {{ pairs: Record<string, { headline: string, names?: string[], terms?: string }> }} index the lookup file as read by src/lib/lookup-file.mjs
  * @param {string} address
  * @returns {{ slug: string, claim: object, shared: string[] }[]} closest first
  */
-export function closestClaims(index, address, limit = 5) {
+export function closestPairs(index, address, limit = 5) {
   const url = parse(address);
   if (!url) return [];
   const asked = new Set(words(decodeURIComponent(url.pathname)));
   if (asked.size === 0) return [];
 
-  const claims = Object.entries(index.claims).map(([slug, claim]) => ({
+  const claims = Object.entries(index.pairs).map(([slug, claim]) => ({
     slug,
     claim,
     names: new Set(words((claim.names ?? []).join(" "))),

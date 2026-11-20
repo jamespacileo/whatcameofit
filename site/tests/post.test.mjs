@@ -166,7 +166,7 @@ const STUDY = {
     statusModule: { overallStatus: "RECRUITING" },
   },
 };
-const INDEX = { articles: { "news.example.org/tracked-story": ["tooth-regrowth-ex1"] }, claims: { "tooth-regrowth-ex1": { headline: "Antibody regrows teeth", page: "/tooth-regrowth-ex1", names: [] } } };
+const INDEX = { format: "lookup", format_version: 2, articles: { "news.example.org/tracked-story": ["tooth-regrowth-ex1"] }, pairs: { "tooth-regrowth-ex1": { title: "Antibody regrows teeth", names: [] } } };
 
 function service(pages) {
   const net = web(pages);

@@ -36,7 +36,7 @@ const reading = { about_a_treatment: true, intervention: "EX-1", indication: "ti
 const scoreAll = async (_intro, records) => records.map(() => ({ answer: "match", probabilities: { match: 0.9 } }));
 const model = (read = reading) => ({ read: async () => read, score: scoreAll });
 const quiet = { fetch: async () => null, named: async () => [], search: async () => [] };
-const index = { claims: {} };
+const index = { pairs: {} };
 const memory = () => {
   const values = new Map();
   const puts = [];
@@ -220,7 +220,7 @@ const env = (store) => ({
   OPENAI_API_KEY: "test-only", LLM_MODEL: "test-only", CONTACT_EMAIL: "test@example.org",
   LOOKUP_PER_READER: { limit: async () => ({ success: true }) },
   LOOKUP_IN_ALL: { limit: async () => ({ success: true }) },
-  ASSETS: { fetch: async () => Response.json({ claims: {}, articles: {} }) },
+  ASSETS: { fetch: async () => Response.json({ format: "lookup", format_version: 2, pairs: {}, articles: {} }) },
   ...(store ? { LOOKUP_RESULTS: store } : {}),
 });
 const post = (body) => new Request("https://service.example.org/api/lookup", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
@@ -321,12 +321,12 @@ test("shared answers use current exact-identity cards without repeating their cl
       candidates: [{ id: "NCT00000001", score: 0.9 }], papers_unchecked: 0 };
     await storeResult(store, "https://news.example.org/new-card", saved, true, checkedAt);
     let reads = 0;
-    const claims = {
-      current: { names: ["EX-2 and EX-1"], indication: saved.condition, headline: "Current card", page: "/current" },
-      component: { names: ["EX-1"], indication: saved.condition, headline: "Component", page: "/component" },
-      other: { names: saved.names, indication: "first-line tinnitus", headline: "Other setting", page: "/other" },
+    const pairs = {
+      current: { names: ["EX-2 and EX-1"], condition: saved.condition, title: "Current card" },
+      component: { names: ["EX-1"], condition: saved.condition, title: "Component" },
+      other: { names: saved.names, condition: "first-line tinnitus", title: "Other setting" },
     };
-    const settings = { ...env(store), ASSETS: { fetch: async () => { reads++; return Response.json({ claims }); } } };
+    const settings = { ...env(store), ASSETS: { fetch: async () => { reads++; return Response.json({ format: "lookup", format_version: 2, articles: {}, pairs }); } } };
     const noWork = { model: { read: () => assert.fail("cached reading must be reused") }, registry: { search: () => assert.fail("cached trials must be reused") } };
     const body = { pageUrl: "https://news.example.org/new-card", ...(cacheOnly ? { cacheOnly: true } : { text: "Synthetic report" }) };
     const found = await (await handle(post(body), settings, noWork)).json();
@@ -335,7 +335,7 @@ test("shared answers use current exact-identity cards without repeating their cl
     assert.equal(found.cache.checkedAt, checkedAt);
     assert.equal(reads, 1);
     assert.equal(store.puts.length, 1, "rebinding does not extend the saved answer's lifetime");
-    claims.current.indication = "first-line tinnitus";
+    pairs.current.condition = "first-line tinnitus";
     const changed = await (await handle(post(body), settings, noWork)).json();
     assert.deepEqual(changed.tracked, [], "a changed condition removes the earlier association");
   }

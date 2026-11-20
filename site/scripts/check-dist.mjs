@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { NOTICES } from "../src/lib/notices.ts";
-import { FILE_COUNT_LIMIT, FILE_LIMIT, HOST_FILE_COUNT, countFiles, oversizedFiles } from "./dist-size.mjs";
+import { FILE_COUNT_LIMIT, FILE_LIMIT, HOST_FILE_COUNT, SEARCH_GZIP_LIMIT, countFiles, heavySearchFiles, oversizedFiles } from "./dist-size.mjs";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
 const REQUIRED = [...NOTICES, "Data sources:"];
@@ -29,6 +29,12 @@ if (found.length === 0) problems.push("no pages were built");
 for (const { file, bytes } of oversizedFiles(DIST, FILE_LIMIT)) {
   problems.push(
     `${file} is ${(bytes / 2 ** 20).toFixed(1)} MiB, over the ${FILE_LIMIT / 2 ** 20} MiB a built file may be`,
+  );
+}
+// The lookup box's word search downloads these; see dist-size.mjs for the limit's reason.
+for (const { file, bytes } of heavySearchFiles(DIST)) {
+  problems.push(
+    `${file} is ${(bytes / 2 ** 20).toFixed(1)} MiB with gzip, over the ${SEARCH_GZIP_LIMIT / 2 ** 20} MiB the search may download in one file`,
   );
 }
 // The host refuses a version of more than 20,000 files on its free plan.

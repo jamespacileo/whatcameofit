@@ -4,7 +4,7 @@
 // text. Its keys are the ones the released extension reads (`claims` is every pair, keyed by
 // address), so the extension needs no release.
 import type { APIRoute } from "astro";
-import { bundleMadeAt, pairLookupMaps, topicsIndex } from "../lib/pairs";
+import { bundleMadeAt, pairLookupMaps } from "../lib/pairs";
 import { NOTICES } from "../lib/notices";
 import { STAGE_PATH } from "../lib/status";
 import { SITE } from "../../site.config.mjs";
@@ -23,8 +23,6 @@ export const GET: APIRoute = () => {
     // The browser extension reads it here, so it need not be rebuilt when that changes.
     live: SITE.lookupUrl,
     places: STAGE_PATH.length,
-    // Each listed topic's name and how many it holds.
-    topics: Object.fromEntries(topicsIndex().map((topic) => [topic.slug, { title: topic.title, count: topic.count }])),
     articles,
     claims,
   };

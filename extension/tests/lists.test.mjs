@@ -43,7 +43,7 @@ test("a checked page joins the reader's list, in the browser's own storage", asy
   assert.deepEqual(store.recent[0].answer.claims, [{ headline: "Reviewed claim", page: "/reviewed", status: "Trial registered" }]);
   assert.equal(calls.shown.at(-1).kept.recent, 1);
   // The lookup file is the only thing asked for.
-  assert.deepEqual(calls.fetch, ["https://whatcameofit.example/lookup.json"]);
+  assert.deepEqual(calls.fetch, ["https://whatcameofit.example/lookup/2.json"]);
 });
 
 test("a tab that is not a web page is not kept", async () => {

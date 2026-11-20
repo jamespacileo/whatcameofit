@@ -6,6 +6,8 @@ import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
 import { featured, pairView, shownName } from "./pair-view.ts";
 import { categoryListing, interventionListing, topicListing, type ListingView } from "./listing-view.ts";
+import { conditionCard, type CardView } from "./card-view.ts";
+import { exploreIndex, type ExploreIndex } from "./explore.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
 import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
@@ -220,6 +222,15 @@ export function categoryListings(): CategoryListing[] {
     .sort((a: CategoryListing, b: CategoryListing) => a.label.localeCompare(b.label));
 }
 
+/** A condition's knowledge card, built ahead: its places in MeSH, named from every descriptor
+ * the bundle's clinical category files hold, each step linked when it has a page. */
+export function conditionCardOf(descriptor: { descriptor_id: string; label: string; tree_numbers: string[] }): CardView {
+  const files = Object.values(pairBundle().pages.PairClinicalCategoryPage ?? {});
+  const categories = new Set(files.map((file: any) => file.descriptor.descriptor_id));
+  const known = files.flatMap((file: any) => [file.descriptor, ...file.broader, ...file.narrower]);
+  return conditionCard(descriptor, known, (id) => (categories.has(id) ? `/clinical/${id}` : undefined));
+}
+
 export interface TopicEntry {
   slug: string;
   title: string;
@@ -282,47 +293,85 @@ export function pairChanges(): PairChange[] {
 
 // The lookup file and open data on the pair path (openspec pairs-site, task 3.3).
 
-/** One pair as the lookup file words it: the keys the released extension reads, as
- * the lookup file has always given them, so the extension needs no release at the cutover. */
-export function pairLookup(page: any) {
+/** One pair in the site's words, every field either version of the lookup file gives. */
+function pairWords(page: any) {
   const view = pairView(page);
   const report = page.row.first_report;
   return {
-    headline: `${view.intervention} for ${view.condition.toLowerCase()}`,
-    page: `/${view.address}`,
+    title: `${view.intervention} for ${view.condition.toLowerCase()}`,
     status: view.status,
     meaning: STATUS_MEANINGS[view.statusCode as keyof typeof STATUS_MEANINGS],
     place: STAGE_PATH.indexOf(view.statusCode as (typeof STAGE_PATH)[number]) + 1 || null,
     no_signal: overlayText(page.row.status.overlay_years),
     first_reported: report?.published ? formatDate(report.published) : null,
-    latest_promise: null,
     unchecked: view.checkedByPerson ? null : UNCHECKED_NOTE,
     names: [view.intervention, ...view.otherNames],
-    indication: view.condition,
+    condition: view.condition,
     terms: [view.condition, ...(report ? [report.title] : [])].join(" "),
-    // The site's search answer reads the topic; the extension does not.
     topic: page.row.filing?.vertical ?? null,
+  };
+}
+
+/** One pair as the lookup file words it, in version 2 (`/lookup/2.json`): keyed by its
+ * address, so its page (`/<address>`) is not repeated, and with the words every pair of a
+ * status shares given once in the file (`meanings`, `unchecked_note`), not on each pair. */
+export function pairLookupEntry(page: any) {
+  const { meaning, unchecked, ...words } = pairWords(page);
+  return { ...words, unchecked: unchecked !== null };
+}
+
+/** One pair as version 1 of the lookup file (`/lookup.json`) words it: the keys the released
+ * extension reads, as the file gave them while the site tracked claims, so the extension needs
+ * no release. Only what that extension reads: not the search's `terms` or `topic`. */
+export function pairLookup(page: any) {
+  const entry = pairWords(page);
+  return {
+    headline: entry.title,
+    page: `/${page.row.pair.address}`,
+    status: entry.status,
+    meaning: entry.meaning,
+    place: entry.place,
+    no_signal: entry.no_signal,
+    first_reported: entry.first_reported,
+    latest_promise: null,
+    unchecked: entry.unchecked,
+    names: entry.names,
+    indication: entry.condition,
   };
 }
 
 export type PairLookup = ReturnType<typeof pairLookup>;
 
-/** The lookup file's `articles` and `claims`: every pair by its address,
- * and each pair's first report by its address in comparison form, where the lab holds one. */
-export function pairLookupMaps(): { articles: Record<string, string[]>; claims: Record<string, unknown> } {
+/** Each pair's first report by its address in comparison form, where the lab holds one,
+ * to the addresses of the pairs it reports. The same in both versions of the lookup file. */
+function articleMap(): Record<string, string[]> {
   const articles: Record<string, string[]> = {};
-  const claims: Record<string, unknown> = {};
   for (const page of Object.values(pairPages())) {
     const address = page.row.pair.address;
-    claims[address] = pairLookup(page);
     const url = page.row.first_report?.url;
     const compared = url ? articleKey(url) : null;
     if (compared === null) continue;
     const addresses = (articles[compared] ??= []);
     if (!addresses.includes(address)) addresses.push(address);
   }
-  return { articles, claims };
+  return articles;
 }
+
+/** Version 1's `articles` and `claims`: every pair by its address. */
+export function pairLookupMaps(): { articles: Record<string, string[]>; claims: Record<string, unknown> } {
+  const claims: Record<string, unknown> = {};
+  for (const page of Object.values(pairPages())) claims[page.row.pair.address] = pairLookup(page);
+  return { articles: articleMap(), claims };
+}
+
+/** Version 2's `articles` and `pairs`: every pair by its address. */
+export function pairLookupIndex(): { articles: Record<string, string[]>; pairs: Record<string, PairLookupEntry> } {
+  const pairs: Record<string, PairLookupEntry> = {};
+  for (const page of Object.values(pairPages())) pairs[page.row.pair.address] = pairLookupEntry(page);
+  return { articles: articleMap(), pairs };
+}
+
+export type PairLookupEntry = ReturnType<typeof pairLookupEntry>;
 
 export { PAIR_RECORD_FORMAT };
 export const PAIR_INDEX_FORMAT = { format: "pairs-index", format_version: 1 } as const;
@@ -345,4 +394,10 @@ export function pairDataIndex(siteName: string, siteUrl: string) {
         };
       }),
   };
+}
+
+/** The explore page's file: the published pairs with their places in each tree. */
+export function exploreFile(): ExploreIndex {
+  const bundle = pairBundle().pages;
+  return exploreIndex(pairPages(), Object.values(bundle.PairClinicalCategoryPage ?? {}), Object.values(bundle.PairTopicsPage ?? {})[0]);
 }

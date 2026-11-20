@@ -1,5 +1,5 @@
 // From a piece of text to ranked trial records. Pure orchestration: the model, the
-// registry and the index of tracked claims are passed in. Behaviour: openspec live-lookup.
+// registry and the index of pairs (site/src/lib/lookup-file.mjs) are passed in. Behaviour: openspec live-lookup.
 // The same steps as the pipeline's thenwhat.lookup.service; keep the two in step.
 //
 // The answer carries codes and registry fields only. The site words them.
@@ -174,7 +174,7 @@ async function paperNumbers(page, papers, signal, { allowanceMs, spacingMs }) {
 }
 
 /**
- * @param {{ text: string, model: object, registry: object, index: { claims: object },
+ * @param {{ text: string, model: object, registry: object, index: { pairs: object },
  *   page?: object, papers?: object, onCore?: (core: object) => void, timings?: object }} given
  *   `page` is what the article's page says of itself (worker/page.mjs) and `papers` looks
  *   up the trial of a linked paper. `onCore` is given the answer once every clinical

@@ -11,6 +11,7 @@ import {
   unfollow as withoutFollowed,
 } from "./kept.js";
 import { CACHE_VERSION, stateFor } from "./lookup.js";
+import { fetchIndex, readIndex } from "./index-file.js";
 import { remember, reusable, savedFor } from "./results.js";
 import { fingerprint, publicWebUrl } from "./visual.js";
 import { remind as withReminder, reminderDay, unremind as withoutReminder } from "./watch.js";
@@ -175,21 +176,16 @@ export function createPopupController({ storage, fetch, site, readTab, readPage,
     if (closed) return { index: null, savedAt: null };
     // Publication can add or remove a card while a clinical answer is still reusable.
     // Revalidate before either path, transferring no body when the index is unchanged.
-    const etag = saved?.version === CACHE_VERSION && typeof saved.etag === "string" ? saved.etag : null;
+    const current = saved?.version === CACHE_VERSION ? saved : null;
     try {
-      const refreshed = await bounded(indexTimeoutMs, abort.signal, async (signal) => {
-        const response = await fetch(`${site.url}/lookup.json`, {
-          cache: "no-store", signal, ...(etag ? { headers: { "If-None-Match": etag } } : {}),
-        });
-        if (response.status === 304 && etag) return { index: saved.index, etag };
-        if (!response.ok) throw new Error(`status ${response.status}`);
-        return { index: await response.json(), etag: response.headers?.get("ETag") ?? null };
-      });
+      const refreshed = await bounded(indexTimeoutMs, abort.signal, (signal) => fetchIndex(fetch, site.url, { saved: current, signal }));
       if (closed) return { index: null, savedAt: null };
       await storage.set({ lookup: { version: CACHE_VERSION, ...refreshed, savedAt: Date.now() } }).catch(() => {});
-      return { index: refreshed.index, savedAt: null };
+      return { index: readIndex(refreshed.file), savedAt: null };
     } catch {
-      return saved ? { index: saved.index, savedAt: saved.savedAt } : { index: null, savedAt: null };
+      // A copy saved before version 3 holds version 1 under `index`.
+      const kept = readIndex(saved?.file ?? saved?.index);
+      return kept ? { index: kept, savedAt: saved.savedAt } : { index: null, savedAt: null };
     }
   }
 

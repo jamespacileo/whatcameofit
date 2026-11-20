@@ -61,6 +61,12 @@ export const PAIR_EVENT_LABELS: Record<string, string> = {
  * same: they name a kind of treatment only, never whether it works or anyone can get it. */
 export const PAIR_APPROACH_LABELS: Record<string, string> = {
   drug: "Drug",
+  // The lab's kinds for the registry's intervention types that named none (lab pull request
+  // 133). Each names what the intervention is, never what it is for: the registry codes a
+  // clinic's message as behavioural and a diagnostic scan as radiation, so neither is a therapy.
+  biologic: "Biologic",
+  behavioural: "Behavioural",
+  radiation: "Radiation",
   vaccine: "Vaccine",
   gene_therapy: "Gene therapy",
   cell_therapy: "Cell therapy",
@@ -70,6 +76,16 @@ export const PAIR_APPROACH_LABELS: Record<string, string> = {
   surgery_or_procedure: "Surgery or procedure",
   diet_or_lifestyle: "Diet or lifestyle",
 };
+
+/** The name of each tree a treatment or condition can be browsed by (design "Browsing by
+ * hierarchy, picking several, and knowledge cards", https://claude.ai/artifact/7Ge7Qvqct18XkwheBMKWTN).
+ * MeSH names no levels of its own, so the condition tree is named for what its top level sorts
+ * by. */
+export const TREE_LABELS = {
+  mesh: "Body system",
+  approach: "Kind of treatment",
+  topic: "Health topic",
+} as const;
 
 /** A registry a pair's search read (`RegistryCheck.registry`), by the source name the
  * pipeline gives ClinicalTrials.gov (`SOURCE_NAMES` in `status.ts`). The schema types the
@@ -101,6 +117,7 @@ export const PAIR_WORDING: Record<string, Record<string, string>> = {
   approach: PAIR_APPROACH_LABELS,
   registry: PAIR_REGISTRY_NAMES,
   "outcome kind": PAIR_OUTCOME_KIND_WORDS,
+  tree: TREE_LABELS,
 };
 
 /** Throws, naming the words, when any table holds verdict wording ("dead", "abandoned", ...). */

@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { modelOf, movedAddresses, readBundle, unwordedPairCodes } from "../src/lib/bundle.ts";
 import { bundleVersion, writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { pairView } from "../src/lib/pair-view.ts";
-import { labShapeCopy } from "./lab-shape.mjs";
+import { NEW_APPROACHES, labShapeCopy } from "./lab-shape.mjs";
 import { assertPairWordingNeutral, PAIR_WORDING, UNWORDED_TRIAL_STATES } from "../src/lib/pair-wording.ts";
 
 const folder = fileURLToPath(new URL("./bundle", import.meta.url));
@@ -254,6 +254,42 @@ test("in the lab's new shape, a claim's address goes to the pair its claim_slugs
     const pages = readBundle(dir).pages.PairPage;
     assert.equal(pages["apitegromab--neuromuscular-diseases"].row.origin.claim_slug, FOLLOWED);
     assert.equal(movedAddresses(Object.values(pages)).get(FOLLOWED), "apitegromab--muscular-atrophy-spinal");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("in the lab's new shape, a pair of each new approach is read and worded as what it is", () => {
+  const pairs = [];
+  const dir = labShapeCopy((page, at) => {
+    const approach = NEW_APPROACHES[pairs.length];
+    if (approach && page.approach) {
+      page.approach = { ...page.approach, approach };
+      pairs.push([at, approach]);
+    }
+  });
+  try {
+    assert.equal(pairs.length, NEW_APPROACHES.length);
+    const pages = readBundle(dir).pages.PairPage;
+    const words = Object.fromEntries(pairs.map(([at, approach]) => [approach, pairView(pages[at]).approach]));
+    assert.deepEqual(words, { biologic: "Biologic", behavioural: "Behavioural", radiation: "Radiation" });
+    // Each names what the intervention is: the registry codes a clinic's message as behavioural
+    // and a diagnostic scan as radiation.
+    for (const word of Object.values(words)) assert.doesNotMatch(word, /therap|treatment/i, word);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("in the lab's new shape, a status with the highest phase reached is read, and nothing of it is shown yet", () => {
+  const dir = labShapeCopy();
+  try {
+    const now = readBundle(dir).pages.PairPage;
+    const before = readBundle(folder).pages.PairPage;
+    for (const [at, page] of Object.entries(now)) {
+      assert.equal(page.row.status.highest_phase, "phase_2", at);
+      assert.deepEqual(pairView(page), pairView(before[at]), at);
+    }
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
