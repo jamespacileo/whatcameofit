@@ -12,6 +12,12 @@ import { EMBED_SHELL_PATH, shareAnswer, shareOf } from "./shares.mjs";
 
 const { validatePairDataFile, validatePairInterventionPage, validatePairPage } = validators;
 
+// The saved forms of a pair's page and embed address that the static files answered while they
+// were built (Cloudflare's html_handling: "/<pair>/", "/<pair>/index.html", and the embed's):
+// each leads to the bare address, keeping its query. Nothing is read to answer it.
+const PAIR = "[a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*";
+const ALIAS = new RegExp(`^/((?:embed/)?${PAIR})(?:/|/index\\.html|\\.html)$`);
+
 export async function handleWithPairs(request, env, cache = globalThis.caches?.default ?? null) {
   const url = new URL(request.url);
   // The frames are the Worker's to fill, never pages of their own.
@@ -20,6 +26,11 @@ export async function handleWithPairs(request, env, cache = globalThis.caches?.d
   }
   const answer = await handle(request, env);
   if (answer.status !== 404) return answer;
+  const alias = ALIAS.exec(url.pathname)?.[1];
+  if (alias) {
+    await answer.body?.cancel();
+    return new Response(null, { status: 301, headers: { Location: new URL(`/${alias}${url.search}`, url).href, "Cache-Control": "public, max-age=86400" } });
+  }
   if (pairAddress(url.pathname)) return (await pairPage(request, env, validatePairPage, cache, validatePairInterventionPage)) ?? answer;
   // A pair's open data record the build did not write (task 1.3).
   if (recordAddress(url.pathname)) return (await pairRecord(request, env, validatePairDataFile, cache)) ?? answer;

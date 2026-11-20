@@ -1531,40 +1531,74 @@ const sentenceJson = sentences
   }
   // The search over the pairs (openspec pairs-site, design decision 2 and task 4.6). No page is
   // built per pair, so there is no Pagefind index of them: the lookup file and the search detail
-  // hold every pair, and are what the box reads. A pair is found when each word of the search
-  // starts a word of its headline, its names, its condition, its terms or its trials' numbers
-  // and titles; a word in quotation marks must be a whole word. It answers as Pagefind did:
-  // every pair found, each read when asked for, and how many each topic holds.
+  // hold every pair, and are what the box reads. It answers as Pagefind did: every pair found,
+  // each read when asked for, and how many each topic holds.
+  // - A pair is found when each word starts a word of one of its fields; a search in quotation
+  //   marks must appear whole and in order within one field.
+  // - A word no pair holds is left out, as Pagefind left it out, and the box names it (`holds`).
+  // - The pairs found come closest first, by the field each word was found in: the headline and
+  //   names, then the condition and its terms, then the trials' numbers and titles. They are
+  //   put in that order before the first twenty are read, so a closer pair is never held back.
+  // The index is worked out once for the lookup file and search detail the page holds.
+  const pairIndexes = new WeakMap<Lookup, { detail: SearchDetail; searchIndex: SearchIndex }>();
   function pairIndex(index: Lookup, detail: SearchDetail): SearchIndex {
+    const kept = pairIndexes.get(index);
+    if (kept?.detail === detail) return kept.searchIndex;
     const words = (text: string) => text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-    const entries = Object.entries(index.claims).map(([slug, claim]) => {
+    const entries = Object.entries(index.claims).map(([slug, claim], order) => {
       const trials = detail.claims[slug]?.trials ?? [];
-      const content = [claim.headline, ...(claim.names ?? []), claim.indication, claim.terms ?? "", ...trials.flatMap((trial) => [trial.id, trial.title ?? ""])]
-        .filter(Boolean)
-        .join(" ");
-      return { claim, content, said: words(content) };
+      const fields = [
+        [claim.headline, ...(claim.names ?? [])],
+        [claim.indication, claim.terms ?? ""],
+        trials.flatMap((trial) => [trial.id, trial.title ?? ""]),
+      ].map((texts) => texts.filter(Boolean).join(" "));
+      return { claim, order, content: fields.filter(Boolean).join(" "), fields: fields.map(words) };
     });
-    return {
+    const startsAWord = (field: string[], word: string) => field.some((said) => said.startsWith(word));
+    const inOrder = (field: string[], phrase: string[]) =>
+      field.some((_, at) => phrase.every((word, step) => field[at + step] === word));
+    const searchIndex: SearchIndex = {
       filters: async () => undefined,
       search: async (query, options) => {
-        const whole = /^".*"$/.test(query.trim());
+        const quoted = /^".*"$/.test(query.trim());
         const asked = words(query);
+        const held = quoted ? asked : asked.filter((word) => entries.some((entry) => entry.fields.some((field) => startsAWord(field, word))));
         const { topic, reported } = options?.filters ?? {};
-        const found = entries.filter(
-          (entry) =>
-            (reported !== "yes" || entry.claim.first_reported) &&
-            asked.every((word) => (whole ? entry.said.includes(word) : entry.said.some((said) => said.startsWith(word)))),
-        );
+        const scored: { entry: (typeof entries)[number]; closeness: number }[] = [];
+        if (held.length > 0) {
+          for (const entry of entries) {
+            if (reported === "yes" && !entry.claim.first_reported) continue;
+            let closeness: number | null;
+            if (quoted) {
+              const field = entry.fields.findIndex((one) => inOrder(one, held));
+              closeness = field < 0 ? null : field;
+            } else {
+              closeness = 0;
+              for (const word of held) {
+                const field = entry.fields.findIndex((one) => startsAWord(one, word));
+                if (field < 0) {
+                  closeness = null;
+                  break;
+                }
+                closeness += field;
+              }
+            }
+            if (closeness !== null) scored.push({ entry, closeness });
+          }
+        }
+        scored.sort((a, b) => a.closeness - b.closeness || a.entry.order - b.entry.order);
         const counts: Record<string, number> = {};
-        for (const entry of found) if (entry.claim.topic) counts[entry.claim.topic] = (counts[entry.claim.topic] ?? 0) + 1;
+        for (const { entry } of scored) if (entry.claim.topic) counts[entry.claim.topic] = (counts[entry.claim.topic] ?? 0) + 1;
         return {
-          results: found
-            .filter((entry) => !topic || entry.claim.topic === topic)
-            .map((entry) => ({ data: async () => ({ url: entry.claim.page, content: entry.content, meta: { title: entry.claim.headline } }) })),
+          results: scored
+            .filter(({ entry }) => !topic || entry.claim.topic === topic)
+            .map(({ entry }) => ({ data: async () => ({ url: entry.claim.page, content: entry.content, meta: { title: entry.claim.headline } }) })),
           filters: { topic: counts },
         };
       },
     };
+    pairIndexes.set(index, { detail, searchIndex });
+    return searchIndex;
   }
 
   // The claims on view, every one found or one topic's: the pages the index found for

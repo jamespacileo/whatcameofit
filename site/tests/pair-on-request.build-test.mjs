@@ -28,7 +28,7 @@ import { embedTitle, oembedOf, renderEmbedArticle, renderEmbedRegistries } from 
 import { SITE } from "../site.config.mjs";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
-import { UNREADABLE } from "../worker/pairs.mjs";
+import { SITE_HEADERS, UNREADABLE } from "../worker/pairs.mjs";
 
 const MARKUP = 'A <script>alert("x")</script> & <b>bold</b> study';
 const ON_REQUEST = "acoziborole--trypanosomiasis";
@@ -107,6 +107,8 @@ const pages = Object.fromEntries(
 const hidden = new Set();
 // Appended to the frame, to stand for a redeploy with the same bundle and another frame.
 let frameChange = "";
+// A frame as another deployment would have it: each rewrites the built frame's text.
+const frameEdits = { "/pair-shell": (text) => text, "/embed-shell": (text) => text };
 let mf;
 
 /** The built files, as the asset binding serves them: a page at its address, else the 404 page. */
@@ -118,7 +120,10 @@ function assets(request) {
     const file = path.join(dist, candidate);
     if (!hidden.has(clean) && fs.existsSync(file) && fs.statSync(file).isFile()) {
       const type = file.endsWith(".html") ? "text/html; charset=utf-8" : file.endsWith(".json") ? "application/json" : "application/octet-stream";
-      const body = clean === "/pair-shell" ? fs.readFileSync(file, "utf8") + frameChange : fs.readFileSync(file);
+      const body =
+        clean === "/pair-shell" ? frameEdits[clean](fs.readFileSync(file, "utf8")) + frameChange
+        : clean === "/embed-shell" ? frameEdits[clean](fs.readFileSync(file, "utf8"))
+        : fs.readFileSync(file);
       // As a preview's _headers mark every asset (scripts/pr-preview.mjs).
       return new Response(body, { headers: { "Content-Type": type, "X-Robots-Tag": "noindex" } });
     }
@@ -596,6 +601,78 @@ test("a listing file stored as JSON null is checked, and gives the error page", 
     await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairTopicPage' AND key = ?2").bind(version, row.key).run();
     for (const part of kept) await db.prepare("INSERT INTO pair_page (version, model, key, part, body) VALUES (?1, 'PairTopicPage', ?2, ?3, ?4)").bind(version, row.key, part.part, part.body).run();
   }
+});
+
+test("every address a page made here names is the build's, read from its frame, whatever the Worker's own setting", async () => {
+  // A deployment built for another address: the frame says so, and the Worker follows it.
+  const built = new URL(canonicalAddress("/")).origin;
+  frameEdits["/pair-shell"] = (text) => text.replaceAll(built, "https://records.example.org");
+  try {
+    const oembed = await (await getFresh(`/oembed/${ON_REQUEST}.json`)).json();
+    assert.match(oembed.html, new RegExp(`https://records\\.example\\.org/embed/${ON_REQUEST}`));
+    assert.equal(oembed.provider_url, "https://records.example.org/");
+    const record = await (await getFresh(`/data/pairs/${ON_REQUEST}.json`)).text();
+    assert.ok(record.includes("https://records.example.org") && !record.includes(built), "the record names the build's address only");
+    const embed = await (await getFresh(`/embed/${ON_REQUEST}`)).text();
+    assert.ok(embed.includes(`https://records.example.org/${ON_REQUEST}`));
+  } finally {
+    frameEdits["/pair-shell"] = (text) => text;
+  }
+});
+
+test("a response made here carries the site's own headers, the ones public/_headers gives every file", async () => {
+  // The "/*" rule of public/_headers, as Cloudflare reads it.
+  const lines = fs.readFileSync("public/_headers", "utf8").split("\n");
+  const at = lines.findIndex((line) => line.trim() === "/*");
+  const rule = {};
+  for (const line of lines.slice(at + 1)) {
+    if (!/^\s+\S/.test(line)) break;
+    const colon = line.indexOf(":");
+    rule[line.slice(0, colon).trim()] = line.slice(colon + 1).trim();
+  }
+  assert.deepEqual(SITE_HEADERS, rule);
+  for (const pathname of [`/${ON_REQUEST}`, `/data/pairs/${ON_REQUEST}.json`, `/embed/${ON_REQUEST}`, `/oembed/${ON_REQUEST}.json`, `/og/${ON_REQUEST}.png`, "/topic/infections"]) {
+    const response = await getFresh(pathname);
+    for (const [name, value] of Object.entries(rule)) assert.equal(response.headers.get(name), value, `${pathname} ${name}`);
+    await response.body?.cancel();
+  }
+});
+
+test("the saved forms of a pair's page and embed address lead to the bare address, keeping the query", async () => {
+  for (const [saved, bare] of [
+    [`/${ON_REQUEST}/`, `/${ON_REQUEST}`],
+    [`/${ON_REQUEST}/index.html`, `/${ON_REQUEST}`],
+    [`/${ON_REQUEST}.html`, `/${ON_REQUEST}`],
+    [`/embed/${ON_REQUEST}/`, `/embed/${ON_REQUEST}`],
+    [`/embed/${ON_REQUEST}.html`, `/embed/${ON_REQUEST}`],
+    [`/embed/${ON_REQUEST}/index.html`, `/embed/${ON_REQUEST}`],
+  ]) {
+    const response = await get(`${saved}?from=saved`);
+    assert.equal(response.status, 301, saved);
+    assert.equal(new URL(response.headers.get("Location")).pathname + new URL(response.headers.get("Location")).search, `${bare}?from=saved`, saved);
+  }
+});
+
+test("an embed kept for one embed frame is not answered for another with the same bundle", async () => {
+  const before = await (await get(`/embed/${ON_REQUEST}`)).text();
+  assert.ok(!before.includes("<!--another-embed-frame-->"));
+  frameEdits["/embed-shell"] = (text) => text.replace("</body>", "<!--another-embed-frame--></body>");
+  try {
+    assert.ok((await (await get(`/embed/${ON_REQUEST}`)).text()).includes("<!--another-embed-frame-->"));
+  } finally {
+    frameEdits["/embed-shell"] = (text) => text;
+  }
+});
+
+test("an embed whose file fails its check is refused in the embed's own frame, with its footer notices", async () => {
+  // BROKEN's file was made to fail its check by an earlier test.
+  const response = await getFresh(`/embed/${BROKEN}`);
+  assert.equal(response.status, 500);
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  const document = await documentOf(response);
+  assert.equal(document.querySelector("[data-pair-unreadable]").textContent, UNREADABLE);
+  assert.ok(document.querySelector("footer").textContent.includes("Data sources:"));
+  assert.doesNotMatch(document.body.textContent, /APITEGROMAB/i);
 });
 
 test("a pair names the same treatment's pairs for narrower conditions", async () => {

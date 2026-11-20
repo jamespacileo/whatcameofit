@@ -47,8 +47,19 @@ export async function shareAnswer(request, env, validate, cache) {
   if (!built) return null;
   const card = OG_IMAGE.exec(built.shell)?.[1];
   if (!card) return null;
+  // An embed is written into its own frame, so its key holds that frame's digest too: a deploy
+  // that changes only the embed's frame never answers an older embed.
+  let frame = null;
+  let frameDigest = "";
+  if (share.kind === "embed") {
+    const answer = await env.ASSETS.fetch(new Request(new URL(EMBED_SHELL_PATH, url)));
+    if (!answer.ok) return null;
+    frame = await answer.text();
+    const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(frame)));
+    frameDigest = `-${[...digest.slice(0, 8)].map((byte) => byte.toString(16).padStart(2, "0")).join("")}`;
+  }
 
-  const key = new Request(new URL(`/__share/${built.version}/${built.build}${url.pathname}`, url));
+  const key = new Request(new URL(`/__share/${built.version}/${built.build}${frameDigest}${url.pathname}`, url));
   const kept = cache ? await cache.match(key) : undefined;
   if (kept) return kept;
 
@@ -67,21 +78,26 @@ export async function shareAnswer(request, env, validate, cache) {
     const file = await bundleFile(env, built.version, "PairPage", share.address);
     if (file === ABSENT) return null;
     if (!validate(file)) {
-      const body = share.kind === "oembed" ? JSON.stringify({ error: UNREADABLE }) : `<!doctype html><title>${escape(UNREADABLE)}</title><p>${escape(UNREADABLE)}</p>`;
-      return new Response(body, { status: 500, headers: madeHeaders(built, share.kind === "oembed" ? "application/json; charset=utf-8" : "text/html; charset=utf-8", "no-store") });
+      if (share.kind === "oembed") {
+        return new Response(JSON.stringify({ error: UNREADABLE }), { status: 500, headers: madeHeaders(built, "application/json; charset=utf-8", "no-store") });
+      }
+      // The refusal in the embed's own frame, with its footer notices, and nothing of the file.
+      const refused = frame
+        .replaceAll("__EMBED_TITLE__", () => "Page not shown")
+        .replace("<!--embed-article-->", () => `<h1>Page not shown</h1><p data-pair-unreadable>${escape(UNREADABLE)}</p>`)
+        .replace("<!--embed-registries-->", () => "");
+      return new Response(refused, { status: 500, headers: madeHeaders(built, "text/html; charset=utf-8", "no-store") });
     }
     const view = pairView(file);
     if (share.kind === "oembed") {
-      answer = new Response(JSON.stringify(oembedOf(view, SITE.name, SITE.url, card)), {
+      answer = new Response(JSON.stringify(oembedOf(view, SITE.name, built.siteUrl, card)), {
         headers: madeHeaders(built, "application/json+oembed; charset=utf-8", `public, max-age=${DAY_SECONDS}`),
       });
     } else {
-      const frame = await env.ASSETS.fetch(new Request(new URL(EMBED_SHELL_PATH, url)));
-      if (!frame.ok) return null;
       // Each part goes in by a function, so a "$" in a name is shown as written.
-      const page = (await frame.text())
+      const page = frame
         .replaceAll("__EMBED_TITLE__", () => escape(embedTitle(view)))
-        .replace("<!--embed-article-->", () => renderEmbedArticle(view, SITE.name, SITE.url))
+        .replace("<!--embed-article-->", () => renderEmbedArticle(view, SITE.name, built.siteUrl))
         .replace("<!--embed-registries-->", () => renderEmbedRegistries(view));
       answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });
     }

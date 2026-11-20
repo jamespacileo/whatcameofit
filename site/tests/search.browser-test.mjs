@@ -31,7 +31,7 @@ before(async () => {
     TRIALS_LISTING_FILE: path.join(site, "tests/fixture-trials-listing.json"),
   };
   execFileSync(process.execPath, ["node_modules/astro/bin/astro.mjs", "build", "--outDir", dist], { cwd: site, env });
-  execFileSync("node_modules/.bin/pagefind", ["--site", dist], { cwd: site, env });
+  // The box searches the lookup file and the search detail: no index is built (design decision 2).
   browser = await chromium.launch();
 });
 
@@ -120,6 +120,38 @@ test("words nothing holds say so and lead to the topics", async (t) => {
   await expect(page.getByText("Nothing tracked here matches “zzzzqq”.")).toBeVisible();
   await expect(page.locator('#results a[href="/topics"]')).toBeVisible();
   await expect(page.locator("#results")).not.toContainText(/claim/i);
+});
+
+// The search over the pairs reads the lookup file and the search detail (design decision 2):
+// it answers as the index did.
+test("a word no pair holds is named and left out, and the rest are still found", async (t) => {
+  const page = await openPage(t);
+  await page.goto(origin);
+  await submit(page, "lung cancercancer");
+  await expect(searchHeading(page, "lung cancercancer")).toBeVisible();
+  await expect(page.locator("#results .search-unheld")).toContainText("cancercancer");
+  await expect(page.locator('#results a[href="/tulisokibart--lung-diseases-interstitial"]').first()).toBeVisible();
+});
+
+test("the closest pair comes first: a word in a headline before one in a trial's title", async (t) => {
+  // "overweight" is apitegromab--overweight's condition, and a word in a trial title of
+  // apitegromab--obesity, which comes first in the bundle.
+  const page = await openPage(t);
+  await page.goto(origin);
+  await submit(page, "overweight");
+  await expect(searchHeading(page, "overweight")).toBeVisible();
+  await expect(page.locator("#results h3 a[href]").first()).toHaveAttribute("href", "/apitegromab--overweight");
+});
+
+test("a search of no words finds nothing, and words in quotation marks must come in order", async (t) => {
+  const page = await openPage(t);
+  await page.goto(origin);
+  await submit(page, "???");
+  await expect(page.getByText("Nothing tracked here matches “???”.")).toBeVisible();
+  await submit(page, '"diseases lung"');
+  await expect(page.getByText("Nothing tracked here matches “\"diseases lung\"”.")).toBeVisible();
+  await submit(page, '"lung diseases"');
+  await expect(page.locator('#results a[href="/tulisokibart--lung-diseases-interstitial"]').first()).toBeVisible();
 });
 
 test("an article the site does not track is sent nowhere until the reader asks", async (t) => {
