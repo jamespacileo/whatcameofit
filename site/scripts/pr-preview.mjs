@@ -139,12 +139,27 @@ const args = ["deploy", "--config", config, "--name", worker];
 if (process.env.CONTACT_EMAIL) args.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
 if (dryRun) args.push("--dry-run");
 started = Date.now();
-const sent = spawnSync(process.execPath, [path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js"), ...args], {
-  cwd: SITE_DIR,
-  stdio: ["inherit", "pipe", "inherit"],
-  encoding: "utf8",
-});
-process.stdout.write(sent.stdout ?? "");
+// A pull request's first publish creates its Worker. Cloudflare can answer a call Wrangler
+// makes right after the upload with "This Worker does not exist on your account. [code:
+// 10007]" before it has registered the new Worker (seen on pull requests 368 and 369). Only
+// that answer is sent again, after a wait; the upload is idempotent, so a second send uploads
+// nothing already there. Any other failure stops at once.
+const NOT_YET_REGISTERED = /\[code: 10007\]/;
+const ATTEMPTS = 3;
+const WAIT_MS = 5_000;
+let sent;
+for (let attempt = 1; ; attempt += 1) {
+  sent = spawnSync(process.execPath, [path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js"), ...args], {
+    cwd: SITE_DIR,
+    stdio: ["inherit", "pipe", "pipe"],
+    encoding: "utf8",
+  });
+  process.stdout.write(sent.stdout ?? "");
+  process.stderr.write(sent.stderr ?? "");
+  if (sent.status === 0 || attempt === ATTEMPTS || !NOT_YET_REGISTERED.test(`${sent.stdout}${sent.stderr}`)) break;
+  console.log(`Cloudflare had not yet registered ${worker} (code 10007). Sending again in ${(WAIT_MS * attempt) / 1000} s, attempt ${attempt + 1} of ${ATTEMPTS}.`);
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, WAIT_MS * attempt);
+}
 if (sent.status !== 0) stop([`Wrangler failed. ${worker} was not updated by this step.`]);
 console.log(`${dryRun ? "Checked" : "Sent"} in ${seconds(started)} s.`);
 
