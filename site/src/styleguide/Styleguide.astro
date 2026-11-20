@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { band, bandTitle, basisMark, crumbs, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -56,7 +56,7 @@ const strips = pairs.map((page) => pairView(page)).map((one) => ({ view: one, st
 const stripped = strips.sort((a, b) => Number(b.strip!.counts.results > 0) - Number(a.strip!.counts.results > 0) || b.strip!.marks.length - a.strip!.marks.length || a.view.address.localeCompare(b.view.address))[0] ?? null;
 
 /** Each block: its name in lib/blocks.ts, what it is for, and what it draws here. */
-const blocks: { name: string; about: string; html: string; framed?: boolean }[] = [
+const blocks: { name: string; about: string; html: string; framed?: boolean; railed?: boolean }[] = [
   {
     name: "band",
     about: "The navy record band at the head of a record page.",
@@ -102,6 +102,23 @@ const blocks: { name: string; about: string; html: string; framed?: boolean }[] 
       ? `<p>${escape(stripped.view.title)}</p>${recordStrip(stripped.view)}${stripKey(stripKinds(stripped.strip!))}`
       : `<p>No pair in this bundle has a day its registries were last checked, so none has a strip.</p>`,
   },
+  {
+    name: "sectionList",
+    about: "The sections of a page beside its sheet, the one in view marked; one row of chips on a narrow screen. Not on a pair page yet.",
+    framed: true,
+    railed: true,
+    html: view
+      ? renderPairSheet(view, narrower).replace(
+          `<div class="frame no-rail"><div class="sheet">`,
+          `<div class="frame">${sectionList("On this page", [
+            { id: "why", name: "Why this status" },
+            { id: "trials", name: "The trials", count: view.trials.length },
+            { id: "history", name: "How the status changed" },
+            ...(view.otherNames.length > 0 || view.approach ? [{ id: "about", name: "About the treatment" }] : []),
+          ])}<div class="sheet">`,
+        )
+      : NO_PAIR,
+  },
   { name: "basisMark", about: "Marks a record the status rests on: the blue diamond, named once in a key.", html: `<p>${basisMark(false)} Basis of status</p>` },
   {
     name: "embedFooter",
@@ -121,8 +138,10 @@ const pieces: { name: string; html: string; framed?: boolean }[] = [
     : []),
 ];
 
-/** A sample's own ids, so two samples never share one and a link reaches the one it names. */
-const namespaced = (html: string, prefix: string) => html.replace(/ id="([^"]+)"/g, (_, id) => ` id="${prefix}-${id}"`);
+/** A sample's own ids, so two samples never share one and a link reaches the one it names: its
+ * links within itself follow. */
+const namespaced = (html: string, prefix: string) =>
+  html.replace(/ id="([^"]+)"/g, (_, id) => ` id="${prefix}-${id}"`).replace(/ href="#([^"]+)"/g, (_, id) => ` href="#${prefix}-${id}"`);
 ---
 
 <Base title="Styleguide" description="The building blocks of the site's pages, drawn with the bundle this build reads." noindex>
@@ -131,7 +150,7 @@ const namespaced = (html: string, prefix: string) => html.replace(/ id="([^"]+)"
     The building blocks of the site's pages (<code>site/src/lib/blocks.ts</code>) and the pieces the pages make of them, drawn with
     bundle {bundle.version}, {pairs.length} pairs. Built for staging and pull request previews only.
   </p>
-  <nav aria-label="On this page">
+  <nav aria-label="Styleguide contents">
     <ul>
       {blocks.map((block) => <li><a href={`#block-${block.name}`}>{block.name}</a></li>)}
       {pieces.map((piece, index) => <li><a href={`#piece-${index}`}>{piece.name}</a></li>)}
@@ -143,7 +162,7 @@ const namespaced = (html: string, prefix: string) => html.replace(/ id="([^"]+)"
       <section class="styleguide-entry" id={`block-${block.name}`} data-block={block.name}>
         <h3><code>{block.name}</code></h3>
         <p class="styleguide-text">{block.about}</p>
-        <div class:list={["styleguide-sample", { framed: block.framed }]}>
+        <div class:list={["styleguide-sample", { framed: block.framed, railed: block.railed }]}>
           <Fragment set:html={namespaced(block.html, `block-${block.name}`)} />
         </div>
       </section>
@@ -166,6 +185,10 @@ const namespaced = (html: string, prefix: string) => html.replace(/ id="([^"]+)"
   }
 </Base>
 
+<script>
+  import "../scripts/section-list";
+</script>
+
 <style>
   .styleguide-text {
     max-width: var(--measure);
@@ -181,6 +204,10 @@ const namespaced = (html: string, prefix: string) => html.replace(/ id="([^"]+)"
   }
   /* A record page's pieces at the width the page gives them: the band and the frame set their
      own measure. */
+  /* A sample with a section list scrolls with the page, so the list stays sticky to it. */
+  .styleguide-sample.railed {
+    overflow: visible;
+  }
   .styleguide-sample.framed {
     background: var(--ground);
     padding: 0;

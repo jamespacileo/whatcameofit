@@ -162,3 +162,30 @@ export function stageTrack(code: string, { ends = false, named = false, off = fa
 export function basisMark(label = true): string {
   return `<span class="basis-mark"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.4 6 6 11.4 0.6 6z"></path></svg>${label ? `<span class="visually-hidden">basis of status</span>` : ""}</span>`;
 }
+
+export interface SectionItem {
+  /** A section of this page, by its id. */
+  id: string;
+  name: string;
+  /** What the section holds, counted, when that helps a reader choose ("4 trials"). */
+  count?: string | number | null;
+}
+
+/**
+ * The sections of a page, by name, with what each holds (DESIGN.md, "Section list"; the claim
+ * pages' section rail, recovered): beside the sheet on a wide screen, one row of chips that
+ * stays at the top on a narrow one. scripts/section-list.ts marks the section in view; with no
+ * script it is a plain list of links. It takes the frame's first column, so a page that shows
+ * it is framed with a rail (`<div class="frame">`, not `no-rail`).
+ */
+export function sectionList(label: string, items: SectionItem[]): string {
+  return [
+    `<nav class="onpage" aria-label="${escape(label)}" data-pagefind-ignore>`,
+    `<p class="onpage-title" aria-hidden="true">${escape(label)}</p><ul class="onpage-list">`,
+    ...items.map(
+      (item) =>
+        `<li><a href="#${escape(encodeURIComponent(item.id))}"><span>${escape(item.name)}</span>${item.count != null && item.count !== "" ? `<span class="n">${escape(item.count)}</span>` : ""}</a></li>`,
+    ),
+    `</ul></nav>`,
+  ].join("");
+}
