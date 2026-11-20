@@ -9,6 +9,7 @@ import addFormats from "ajv-formats";
 import { APPROACH_LABELS } from "./approach.ts";
 import { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES } from "./pair-view.ts";
 import { STATUS_LABELS } from "./status.ts";
+import { checkManifest } from "../../../store/ingest/scripts/bundle-manifest.mjs";
 import { PHASE_WORDS } from "./trial-facts.ts";
 
 const PREFIX = "p12_";
@@ -26,18 +27,28 @@ export function modelOf(folder: string): string {
 export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
 
 export interface Bundle {
+  /** The bundle's version: the first 16 hex digits of the checksum its manifest states. */
+  version: string;
+  /** The manifest as the lab wrote it (`store/ingest/scripts/bundle-manifest.mjs`). */
+  manifest: Record<string, any>;
   /** Page model name to its pages, by key (a pair page's key is its address). */
   pages: Record<string, Record<string, any>>;
   /** Page models the bundle holds that have no schema in it: nothing of theirs is read. */
   withoutSchema: string[];
 }
 
-/** Read a bundle folder. Throws, naming the file, when one does not fit its schema, and
- * naming the codes when a pair page carries one the site has no words for. */
+/** Read a bundle folder. Throws, naming the page model and both counts when the manifest's
+ * counts differ from the files, when the files' checksum is not the manifest's, naming the
+ * file when one does not fit its schema, and naming the codes when a pair page carries one
+ * the site has no words for. Every page is built from what this returns, so a build stops
+ * on any of these before it writes a page. */
 export function readBundle(folder: string): Bundle {
   if (!fs.existsSync(path.join(folder, SCHEMAS))) {
     throw new Error(`${folder} holds no ${SCHEMAS}/ folder: it is not a bundle of page files.`);
   }
+  // The manifest first (openspec pairs-site, task 2.3): a folder cut short in a copy, or
+  // changed after the lab wrote it, is refused whole rather than published in part.
+  const { version, manifest } = checkManifest(folder);
   const ajv = new Ajv2020({ allErrors: false, strict: false });
   addFormats(ajv);
   // The lab writes some times with no offset (`PairOrigin.created_at`), which the schema
@@ -74,7 +85,7 @@ export function readBundle(folder: string): Bundle {
   if (unworded.length) {
     throw new Error(`The bundle carries codes the site has no words for: ${unworded.join(", ")}.`);
   }
-  return { pages, withoutSchema };
+  return { version, manifest, pages, withoutSchema };
 }
 
 /** Codes on pair pages that the site has no words for, as "kind: code", each once. */

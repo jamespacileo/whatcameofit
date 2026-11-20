@@ -11,6 +11,7 @@ import path from "node:path";
 import { before, test } from "node:test";
 import { parseHTML } from "linkedom";
 import { readBundle } from "../src/lib/bundle.ts";
+import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
@@ -27,6 +28,7 @@ const ANCESTOR = "acoziborole--infections";
 const narrowestBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-narrowest-"));
 fs.cpSync("tests/bundle", narrowestBundle, { recursive: true });
 for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(narrowestBundle, folder, `${ANCESTOR}.json`));
+writeManifest(narrowestBundle, { madeAt: "2026-11-20T00:00:00Z" });
 const pages = readBundle("tests/bundle").pages.PairPage;
 // The pairs whose page, card and embed the build makes (decision 2); the rest are made on
 // request by the Worker (tests/pair-on-request.build-test.mjs).

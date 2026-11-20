@@ -5,7 +5,6 @@
 import path from "node:path";
 import { APPROACH_LABELS } from "./approach.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
-import { bundleVersion } from "../../../store/ingest/scripts/load-pairs.mjs";
 import { builtAhead, pairView, shownName } from "./pair-view.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
@@ -33,10 +32,9 @@ export function pairBundle(): Bundle | null {
 export { builtAhead, pairView, shownName, type PairEventView, type PairTrialView, type PairView } from "./pair-view.ts";
 
 /** The version of the bundle this build reads: the checksum `load-pairs.mjs` loads it into
- * D1 under. Null when the build reads no bundle. */
+ * D1 under, as its manifest states and `readBundle` checked. Null when the build reads no bundle. */
 export function pairBundleVersion(): string | null {
-  const folder = pairBundleFolder();
-  return folder ? bundleVersion(folder) : null;
+  return pairBundle()?.version ?? null;
 }
 
 /** Every pair the bundle holds, by address. Empty when the build reads no bundle. */

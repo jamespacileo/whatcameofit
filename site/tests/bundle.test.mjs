@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { modelOf, movedAddresses, readBundle, unwordedPairCodes } from "../src/lib/bundle.ts";
+import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 
 const folder = fileURLToPath(new URL("./bundle", import.meta.url));
 const address = "apitegromab--muscular-atrophy-spinal";
@@ -18,6 +19,8 @@ function copy(change) {
   const page = JSON.parse(readFileSync(file, "utf8"));
   change(page);
   writeFileSync(file, JSON.stringify(page));
+  // A changed copy gets its own manifest, so each test below reaches the check it is about.
+  writeManifest(dir, { madeAt: "2026-11-20T00:00:00Z" });
   return dir;
 }
 
@@ -63,4 +66,58 @@ test("a claim's address goes to its pair's only when one pair came from it", () 
     else assert.equal(moved[slug], undefined, slug);
   }
   assert.ok(bySlug.size > 0);
+});
+
+// The manifest (openspec pairs-site, task 2.3): its counts and checksum are checked before any
+// page is read, so a build stops before it writes one.
+function copyAsIs(change) {
+  const dir = mkdtempSync(join(tmpdir(), "thenwhat-bundle-"));
+  cpSync(folder, dir, { recursive: true });
+  change(dir);
+  return dir;
+}
+
+test("the bundle's manifest states its version, checksum and counts, and the read gives them", () => {
+  const bundle = readBundle(folder);
+  assert.equal(bundle.version, "230ee727aab2d32c");
+  assert.equal(bundle.manifest.checksum.slice("sha256:".length, "sha256:".length + 16), bundle.version);
+  for (const [model, pages] of Object.entries(bundle.pages)) assert.equal(bundle.manifest.counts[model], Object.keys(pages).length, model);
+});
+
+test("a file missing from what the manifest counts stops the read, naming the page model and both counts", () => {
+  const dir = copyAsIs((at) => rmSync(join(at, "p12_pair_page", `${address}.json`)));
+  try {
+    assert.throws(() => readBundle(dir), /the manifest counts 12 PairPage files and 11 are present/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a file changed after the manifest was made stops the read on the checksum", () => {
+  const dir = copyAsIs((at) => {
+    const file = join(at, "p12_pair_page", `${address}.json`);
+    const page = JSON.parse(readFileSync(file, "utf8"));
+    page.row.intervention.preferred_name = "SOMETHING ELSE";
+    writeFileSync(file, JSON.stringify(page));
+  });
+  try {
+    assert.throws(() => readBundle(dir), /checksum sha256:[0-9a-f]{64} differs from the manifest's sha256:230ee727/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a folder with no manifest, or one without an offset on its time, is refused", () => {
+  const none = copyAsIs((at) => rmSync(join(at, "manifest.json")));
+  const local = copyAsIs((at) => {
+    const manifest = JSON.parse(readFileSync(join(at, "manifest.json"), "utf8"));
+    writeFileSync(join(at, "manifest.json"), JSON.stringify({ ...manifest, made_at: "2026-11-20T12:00:00" }));
+  });
+  try {
+    assert.throws(() => readBundle(none), /holds no manifest\.json/);
+    assert.throws(() => readBundle(local), /no valid made_at/);
+  } finally {
+    rmSync(none, { recursive: true, force: true });
+    rmSync(local, { recursive: true, force: true });
+  }
 });

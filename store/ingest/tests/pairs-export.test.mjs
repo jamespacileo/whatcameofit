@@ -32,6 +32,7 @@ after(async () => { if (s) await s.close(); });
 function filesOf(folder) {
   const out = {};
   for (const sub of readdirSync(folder).sort()) {
+    if (sub.endsWith(".json")) { out[sub] = JSON.parse(readFileSync(join(folder, sub), "utf8")); continue; }
     for (const name of readdirSync(join(folder, sub)).sort()) out[`${sub}/${name}`] = JSON.parse(readFileSync(join(folder, sub, name), "utf8"));
   }
   return out;
@@ -51,6 +52,13 @@ test("the current version is written back as the folder it was loaded from", { s
   assert.deepEqual(filesOf(out), filesOf(bundle));
   assert.equal(bundleVersion(out), load.version);
   await assert.rejects(exportBundle(read, out), /exists/);
+});
+
+test("a version loaded without its manifest is not written back", { skip }, async () => {
+  await s.db.prepare("DELETE FROM pair_page WHERE version = ? AND model = '$manifest'").bind(load.version).run();
+  const out = scratch();
+  await assert.rejects(exportBundle(read, out), /was loaded without a manifest\.json/);
+  assert.equal(existsSync(out), false);
 });
 
 test("a version with a part missing is refused, and nothing is left behind", { skip }, async () => {

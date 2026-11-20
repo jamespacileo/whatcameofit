@@ -1,0 +1,15 @@
+{
+ "format": "pairs-bundle",
+ "format_version": 1,
+ "made_at": "2026-11-20T12:40:53.616Z",
+ "checksum": "sha256:230ee727aab2d32cd1b0969001a5822533f1a11657ed93cb8b0a83c0215c47ae",
+ "counts": {
+  "PairChangesFeed": 1,
+  "PairClinicalCategoryPage": 12,
+  "PairDataFile": 12,
+  "PairInterventionPage": 3,
+  "PairPage": 12,
+  "PairTopicPage": 18,
+  "PairTopicsPage": 1
+ }
+}
