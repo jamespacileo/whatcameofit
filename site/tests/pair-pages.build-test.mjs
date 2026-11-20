@@ -244,6 +244,34 @@ test("the search detail file gives each pair its trials, by the pair's address",
   for (const address of Object.keys(pages)) assert.equal(claimsDetail.claims[address], undefined);
 });
 
+test("each pair has its cards and embed, and its page names them", () => {
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+  const sizes = { "": [1200, 630], "square/": [1080, 1080], "tall/": [1080, 1350] };
+  for (const [address, file] of Object.entries(pages)) {
+    for (const [folder] of Object.entries(sizes)) {
+      const image = fs.readFileSync(path.join(withBundle, "og", `${folder}${address}.png`));
+      assert.ok(image.subarray(0, 4).equals(PNG), `${folder}${address}`);
+    }
+    const wide = fs.readFileSync(path.join(withBundle, "og", `${address}.png`));
+    assert.deepEqual([wide.readUInt32BE(16), wide.readUInt32BE(20)], sizes[""]);
+    const embed = page(withBundle, `embed/${address}`);
+    assert.equal(embed.querySelector('meta[name="robots"]').getAttribute("content"), "noindex");
+    assert.equal(embed.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
+    assert.match(embed.querySelector("[data-pair-status]").textContent, new RegExp(STATUS_LABELS[file.row.status.code]));
+    const oembed = JSON.parse(fs.readFileSync(path.join(withBundle, "oembed", `${address}.json`), "utf8"));
+    assert.match(oembed.html, new RegExp(`/embed/${address}"`));
+    assert.match(oembed.thumbnail_url, new RegExp(`/og/${address}\\.png$`));
+    const document = page(withBundle, address);
+    assert.match(document.querySelector('meta[property="og:image"]').getAttribute("content"), new RegExp(`/og/${address}\\.png`));
+    assert.match(document.querySelector('meta[property="og:image:alt"]').getAttribute("content"), /Not medical advice/);
+    assert.match(document.querySelector('link[type="application/json+oembed"]').getAttribute("href"), new RegExp(`/oembed/${address}\\.json$`));
+  }
+  for (const address of Object.keys(pages)) {
+    assert.ok(!fs.existsSync(path.join(without, "og", `${address}.png`)), address);
+    assert.ok(!fs.existsSync(path.join(without, "embed", address)), address);
+  }
+});
+
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));

@@ -99,6 +99,30 @@ export interface TopicCardContent {
   checked: string | null;
 }
 
+/** What a pair's card says (openspec pairs-site): the pair's name in place of a report's
+ * title, its status, how many trials it rests on, and the day the status was worked out.
+ * The first version holds no reports, so the card quotes none. */
+export function pairCardContent(
+  headline: string,
+  statusLabel: string,
+  note: string | null,
+  trials: number,
+  asOf: string,
+): CardContent {
+  return {
+    quote: null,
+    outlet: null,
+    headline,
+    status: statusLabel,
+    note,
+    facts: [
+      { label: LABELS.status, value: statusLabel },
+      { label: "Trials", value: String(trials) },
+      { label: LABELS.checked, value: monthAndYear(asOf) },
+    ],
+  };
+}
+
 /** A topic's card names its one date with the same word as a claim's card. */
 export const CHECKED_LABEL = LABELS.checked;
 

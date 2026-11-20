@@ -3,6 +3,8 @@
 // when it reads a bundle (astro.config.mjs), so the claims site is unchanged without one.
 import Base from "../layouts/Base.astro";
 import { UNCHECKED_BYLINE } from "../lib/notices";
+import { cardAlt } from "../lib/card";
+import { pairCardFor } from "../lib/card-image";
 import { pairPages, pairView } from "../lib/pairs";
 import { formatDate } from "../lib/timetable";
 
@@ -14,6 +16,7 @@ export function getStaticPaths() {
 }
 
 const { view } = Astro.props;
+const card = cardAlt(pairCardFor(pairPages()[view.address]));
 const title = `${view.intervention} for ${view.condition.toLowerCase()}`;
 const trialCount = view.trials.length === 1 ? "1 registered trial" : `${view.trials.length} registered trials`;
 ---
@@ -21,6 +24,9 @@ const trialCount = view.trials.length === 1 ? "1 registered trial" : `${view.tri
 <Base
   title={title}
   description={`${view.status}: where the public records show ${view.intervention} for ${view.condition.toLowerCase()} stands, from ${trialCount}.`}
+  image={`/og/${view.address}.png`}
+  imageAlt={card}
+  oembed={`/oembed/${view.address}.json`}
   framed
 >
   <section class="band record" slot="band" aria-label="This pair and where it stands">

@@ -36,6 +36,11 @@ const pairPages = {
         injectRoute({ pattern: "/clinical/[category]", entrypoint: "./src/pair/CategoryRoute.astro" });
         injectRoute({ pattern: "/data/pairs/[address].json", entrypoint: "./src/pair/pair-record.json.ts" });
         injectRoute({ pattern: "/data/pairs.json", entrypoint: "./src/pair/pairs-index.json.ts" });
+        injectRoute({ pattern: "/og/[address].png", entrypoint: "./src/pair/card-wide.png.ts" });
+        injectRoute({ pattern: "/og/square/[address].png", entrypoint: "./src/pair/card-square.png.ts" });
+        injectRoute({ pattern: "/og/tall/[address].png", entrypoint: "./src/pair/card-tall.png.ts" });
+        injectRoute({ pattern: "/embed/[address]", entrypoint: "./src/pair/EmbedRoute.astro" });
+        injectRoute({ pattern: "/oembed/[address].json", entrypoint: "./src/pair/oembed.json.ts" });
       }
     },
   },
