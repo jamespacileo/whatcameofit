@@ -96,22 +96,26 @@ export function readBundle(folder: string): Bundle {
   return { version, manifest, pages, withoutSchema };
 }
 
-/** Where an old claim address goes now: the address of the one pair it leads to. A claim
+/** The published claims' slugs whose addresses reach this pair. A row the lab wrote after its
+ * pull request 125 lists them (`claim_slugs`): its own claim's, and those whose trials moved to it,
+ * so that when a person merged two claims both old slugs lead to the one pair. A row of a
+ * bundle cut before that has no such list, and reaches its origin's claim only. Remove the
+ * second branch once tests/bundle is recut. */
+export function claimSlugsOf(row: any): string[] {
+  if (Array.isArray(row.claim_slugs)) return row.claim_slugs;
+  return row.origin?.claim_slug ? [row.origin.claim_slug] : [];
+}
+
+/** Where an old claim address goes now: the address of the one pair it reaches. A claim
  * whose slug is its pair's address moves nowhere and is left out. A Map, not an object: a
- * slug is any text, and "constructor" is one an object already has.
- *
- * A pair names its claims in `row.claim_slugs` (the lab's pull request 125): every published
- * claim whose address leads to it, so that when a person merged two claims both old slugs
- * lead to the one pair. `row.origin.claim_slug` names only one of them, and is read only from
- * a bundle made before that field. */
+ * slug is any text, and "constructor" is one an object already has. */
 export function movedAddresses(pairPages: any[]): Map<string, string> {
   const moved = new Map<string, string>();
   for (const page of pairPages) {
     const address = page.row.pair.address;
-    const slugs: string[] = Array.isArray(page.row.claim_slugs) ? page.row.claim_slugs : [page.row.origin?.claim_slug];
-    for (const slug of new Set(slugs)) {
+    for (const slug of new Set(claimSlugsOf(page.row))) {
       if (!slug || slug === address) continue;
-      // One claim can stand behind several pairs; its address goes to none of them by rule.
+      // A claim that reaches several pairs goes to none of them: a 301 names one successor.
       moved.set(slug, moved.has(slug) ? "" : address);
     }
   }
