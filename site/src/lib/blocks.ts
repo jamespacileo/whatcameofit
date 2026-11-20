@@ -107,3 +107,10 @@ export function meshCredit(edition: string): string {
 
 /** The sources the pair pages' records come from, by name, for a line that cannot link them. */
 export const sourceNames = (sources: { name: string }[]) => sources.map((source) => source.name).join(", ");
+
+/** An embed's footer: the notices every page carries, then the data sources by name with
+ * `registriesHtml` (when the registries were read) after them. The embed's frame
+ * (pair/EmbedShell.astro) and the styleguide write it alike. */
+export function embedFooter(notices: readonly string[], sources: { name: string }[], registriesHtml: string): string {
+  return `<footer>${notices.map((notice) => `<p>${escape(notice)}</p>`).join("")}<p>Data sources: ${escape(sourceNames(sources))}.${registriesHtml}</p></footer>`;
+}

@@ -24,6 +24,10 @@ const registryDay = (value: string) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? form
 
 const when = (day: string, estimated: boolean) => `${escape(registryDay(day))}${estimated ? " (expected)" : ""}`;
 
+/** An event's date as a page gives it: as precise as the registry gave it, and "(expected)"
+ * when the registry expects it rather than records it. HTML. */
+export const eventWhen = when;
+
 /** The band at the head of the page: the pair, where it stands, and who checked it. */
 export function renderPairBand(view: PairView): string {
   // The search index (Pagefind) reads only pages marked as a body, so only pair pages are
