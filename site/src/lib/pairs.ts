@@ -3,7 +3,7 @@
 // build is given a bundle folder in PAIRS_BUNDLE. A build without one is the claims site
 // alone, so a merge to main publishes no pair page.
 import path from "node:path";
-import { APPROACH_LABELS } from "./approach.ts";
+import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
 import { builtAhead, pairView, shownName } from "./pair-view.ts";
 import { articleKey } from "./article-key.mjs";
@@ -145,7 +145,7 @@ export function interventionListings(): InterventionListing[] {
               .map((name: any) => shownName(name.name)),
           ),
         ] as string[],
-        approach: file.approach?.approach ? APPROACH_LABELS[file.approach.approach] : null,
+        approach: file.approach?.approach ? PAIR_APPROACH_LABELS[file.approach.approach] : null,
         pairs: pages
           .filter((page) => page.row.intervention.id === file.intervention.id)
           .map(pairRow)

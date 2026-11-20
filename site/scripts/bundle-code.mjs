@@ -16,7 +16,8 @@ import { compile } from "json-schema-to-typescript";
 
 // The formats the lab's schemas name, as patterns, so the compiled code carries them itself.
 // A time is read with or without an offset: the lab writes `PairOrigin.created_at` with none
-// (task 2.5), as `readBundle` also allows.
+// (task 2.5), as `readBundle` also allows. Both allowances go when tests/bundle-strict.test.mjs
+// finds no failing file.
 const FORMATS = {
   date: /^\d{4}-\d{2}-\d{2}$/,
   "date-time": /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/i,
