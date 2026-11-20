@@ -1,0 +1,129 @@
+name: Staging
+
+# main's work on staging.whatcameofit.com (docs/deploy.md, "Staging"). Runs after CI and deploy
+# has passed on a push to main, or when the operator starts it by hand on main, and never for a
+# pull request: there is no pull_request or pull_request_target trigger, and
+# site/tests/staging-workflow.test.mjs fails if one appears. The token lives in the `staging`
+# environment, which releases it to main only. Nothing here runs a pull request's code.
+on:
+  workflow_run:
+    workflows: ["CI and deploy"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time. A run started while one is publishing waits, and every waiting run is
+# kept (queue: max, up to 100), so a late CI run for an older commit cannot push the tip's run
+# out of the queue. Queue order is not commit order, so the tip guard below still skips any run
+# that is not main's tip when its turn comes.
+# https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency
+concurrency:
+  group: staging
+  cancel-in-progress: false
+  queue: max
+
+env:
+  ASTRO_TELEMETRY_DISABLED: "1"
+  CI_NODE_VERSION: "26.13.1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  off:
+    name: Staging is not switched on
+    if: vars.STAGING_ENABLED != 'on'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "::notice::Staging is off. Set the repository variable STAGING_ENABLED to on once the staging environment holds CLOUDFLARE_STAGING_API_TOKEN and STAGING_PAIRS_DATABASE_ID (docs/deploy.md, Staging). Nothing was deployed."
+
+  publish:
+    name: Publish staging
+    # A green CI run of a push to main, or a run started by hand on main.
+    if: >-
+      vars.STAGING_ENABLED == 'on' &&
+      github.repository == 'jamespacileo/whatcameofit' &&
+      ((github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        github.event.workflow_run.head_repository.full_name == github.repository) ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: staging
+    steps:
+      # Only main's tip is published. After CI, the run's commit must still be the tip: a CI run
+      # that finished late, or was run again, for an older commit is skipped, not published over
+      # a newer deployment. By hand, the tip is published. The expressions reach the shell as
+      # quoted variables (env), never as script text.
+      - name: Publish main's tip only
+        id: tip
+        env:
+          EVENT: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          REMOTE: https://github.com/${{ github.repository }}.git
+        run: |
+          tip=$(git ls-remote "$REMOTE" refs/heads/main | cut -f1)
+          if [ -z "$tip" ]; then echo "::error::main's tip could not be read from $REMOTE."; exit 1; fi
+          if [ "$EVENT" = "workflow_run" ] && [ "$RUN_SHA" != "$tip" ]; then
+            echo "::notice::Staging was skipped: this CI run is for $RUN_SHA, and main is now at $tip, which its own run publishes."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Publishing main's tip, $tip."
+            echo "sha=$tip" >> "$GITHUB_OUTPUT"
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: steps.tip.outputs.current == 'true'
+        with:
+          ref: ${{ steps.tip.outputs.sha }}
+          persist-credentials: false
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: steps.tip.outputs.current == 'true'
+        with:
+          package_json_file: site/package.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: steps.tip.outputs.current == 'true'
+        with:
+          node-version: ${{ env.CI_NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      # Dependencies are installed before any token is in reach: an install script never sees one.
+      - name: Install dependencies
+        if: steps.tip.outputs.current == 'true'
+        run: make site/node_modules
+      - name: See that staging is set up
+        id: ready
+        if: steps.tip.outputs.current == 'true'
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_STAGING_API_TOKEN }}
+          DATABASE_ID: ${{ vars.STAGING_PAIRS_DATABASE_ID }}
+        run: |
+          missing=()
+          [ -n "$TOKEN" ] || missing+=("the secret CLOUDFLARE_STAGING_API_TOKEN")
+          [ -n "$DATABASE_ID" ] || missing+=("the variable STAGING_PAIRS_DATABASE_ID")
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::notice::Staging was skipped: the staging environment has no $(IFS=,; echo "${missing[*]}" | sed 's/,/ and no /g'). Nothing was deployed."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build, publish and check staging
+        if: steps.ready.outputs.ready == 'true'
+        run: make deploy-staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_STAGING_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          STAGING_PAIRS_DATABASE_ID: ${{ vars.STAGING_PAIRS_DATABASE_ID }}
+          STAGING_URL: ${{ vars.STAGING_URL || 'https://staging.whatcameofit.com' }}
+          BUILD_REVISION: ${{ steps.tip.outputs.sha }}
+          SUGGEST_URL: ${{ vars.SUGGEST_URL }}
+          CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}

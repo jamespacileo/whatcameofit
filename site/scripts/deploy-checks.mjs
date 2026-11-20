@@ -37,6 +37,46 @@ export function pullRequestWorker(number) {
 }
 
 /**
+ * The site's _headers with every file marked noindex: the line goes into the existing rule for
+ * "/*", because Cloudflare keys rules by their path and a second "/*" rule replaces the first,
+ * which would drop the security headers it sets. A file with no "/*" rule gets one.
+ * @param {string} text
+ */
+export function withNoindex(text) {
+  const lines = text.split("\n");
+  const at = lines.findIndex((line) => line.trim() === "/*");
+  if (at === -1) return `${text.replace(/\n*$/, "\n")}\n/*\n  X-Robots-Tag: noindex\n`;
+  let end = at + 1;
+  while (end < lines.length && /^\s+\S/.test(lines[end])) end += 1;
+  if (lines.slice(at + 1, end).some((line) => /^\s*X-Robots-Tag:/i.test(line))) return text;
+  lines.splice(end, 0, "  X-Robots-Tag: noindex");
+  return lines.join("\n");
+}
+
+/** Production's address and staging's Worker (docs/deploy.md, "Staging"). */
+export const PRODUCTION_URL = "https://whatcameofit.com";
+export const STAGING_WORKER = "thenwhat-staging";
+
+/**
+ * Why a staging deployment must not go ahead: one sentence each, all at once. Staging reads a
+ * preview database only, is never the cutover, and never answers at production's address.
+ */
+export function stagingProblems({ siteUrl, database, cutover }) {
+  const problems = [];
+  if (cutover) problems.push("--staging never takes --cutover: staging is not production.");
+  if (!database) problems.push("Staging is built from a database: set PAIRS_DATABASE to one whose name ends in -preview.");
+  else if (!database.endsWith("-preview")) problems.push(`Staging reads only a database whose name ends in -preview, not ${database}.`);
+  try {
+    if (siteUrl && new URL(siteUrl).hostname === new URL(PRODUCTION_URL).hostname) {
+      problems.push(`SITE_URL is production's address (${siteUrl}). Staging answers at its own, such as https://staging.whatcameofit.com.`);
+    }
+  } catch {
+    // addressProblem names an address that does not parse.
+  }
+  return problems;
+}
+
+/**
  * Why the site must not be deployed to this address: one sentence each, all at once.
  * An empty list means the deployment may go ahead.
  */

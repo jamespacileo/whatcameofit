@@ -21,7 +21,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { buildKey } from "./build-key.mjs";
-import { deployProblems, publishAgain, pullRequestWorker } from "./deploy-checks.mjs";
+import { deployProblems, publishAgain, pullRequestWorker, withNoindex } from "./deploy-checks.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
 const dryRun = process.argv.includes("--dry-run");
@@ -161,7 +161,8 @@ if (build.status !== 0) stop(["The site did not build."]);
 console.log(`Built in ${seconds(started)} s.`);
 
 // A copy is for the people reviewing the change, never for a search engine.
-fs.appendFileSync(path.join(SITE_DIR, "dist/_headers"), "\n/*\n  X-Robots-Tag: noindex\n");
+// Into the existing "/*" rule: a second one would replace it and drop the security headers.
+fs.writeFileSync(path.join(SITE_DIR, "dist/_headers"), withNoindex(fs.readFileSync(path.join(SITE_DIR, "dist/_headers"), "utf8")));
 // What this copy was made from, so the next push can tell whether it is still current.
 if (key) fs.writeFileSync(path.join(SITE_DIR, "dist", KEY_FILE), `${key}\n`);
 

@@ -248,7 +248,8 @@ const topicLink =
               ))
             }. Records are shown as the registries gave them; summaries are ours.
           </p>
-          <p>
+          {/* Marked, so a page made on request is not told it changed when only this date did (worker/pairs.mjs, contentTag). */}
+          <p data-records-gathered>
             {`Records gathered ${formatDate(bundleMadeAt())}. We will check again.`}
           </p>
         </div>

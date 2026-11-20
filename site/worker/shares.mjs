@@ -11,7 +11,7 @@ import { embedTitle, oembedOf, renderEmbedArticle, renderEmbedRegistries } from 
 import { escape } from "../src/lib/pair-render.ts";
 import { pairView } from "../src/lib/pair-view.ts";
 import { SITE } from "../site.config.mjs";
-import { ABSENT, UNREADABLE, builtFor, bundleFile, madeHeaders, notHeld } from "./pairs.mjs";
+import { ABSENT, UNREADABLE, builtFor, bundleFile, contentTag, digestOf, fromCache, madeHeaders, notHeld, notModified, unchanged } from "./pairs.mjs";
 
 export const EMBED_SHELL_PATH = "/embed-shell";
 const DAY_SECONDS = 86400;
@@ -61,7 +61,7 @@ export async function shareAnswer(request, env, validate, cache) {
 
   const key = new Request(new URL(`/__share/${built.version}/${built.build}${frameDigest}${url.pathname}`, url));
   const kept = cache ? await cache.match(key) : undefined;
-  if (kept) return kept;
+  if (kept) return fromCache(request, built, kept);
 
   let answer;
   if (share.kind === "card") {
@@ -73,7 +73,14 @@ export async function shareAnswer(request, env, validate, cache) {
     const where = new URL(card);
     const image = await env.ASSETS.fetch(new Request(new URL(`${where.pathname}${where.search}`, url)));
     if (!image.ok) return null;
-    answer = new Response(image.body, { headers: madeHeaders(built, "image/png", `public, max-age=${DAY_SECONDS}`) });
+    // The site's own card, tagged by its pixels: its address's revision follows the mark, not
+    // the card's layout, so a redrawn card at the same address must get a new tag.
+    const bytes = new Uint8Array(await image.arrayBuffer());
+    const tag = await contentTag(built, "card", await digestOf(bytes));
+    if (unchanged(request, tag)) return notModified(built, tag, `public, max-age=${DAY_SECONDS}`);
+    const headers = madeHeaders(built, "image/png", `public, max-age=${DAY_SECONDS}`);
+    headers.set("ETag", tag);
+    answer = new Response(bytes, { headers });
   } else {
     const file = await bundleFile(env, built.version, "PairPage", share.address);
     if (file === ABSENT) return notHeld(key);
@@ -88,18 +95,24 @@ export async function shareAnswer(request, env, validate, cache) {
         .replace("<!--embed-registries-->", () => "");
       return new Response(refused, { status: 500, headers: madeHeaders(built, "text/html; charset=utf-8", "no-store") });
     }
+    // Answered before anything is written: an asker who holds it is told so.
+    const tag = await contentTag(built, share.kind, file, share.kind === "oembed" ? card : frame);
+    const caching = `public, max-age=${DAY_SECONDS}`;
+    if (unchanged(request, tag)) return notModified(built, tag, caching);
     const view = pairView(file);
     if (share.kind === "oembed") {
-      answer = new Response(JSON.stringify(oembedOf(view, SITE.name, built.siteUrl, card)), {
-        headers: madeHeaders(built, "application/json+oembed; charset=utf-8", `public, max-age=${DAY_SECONDS}`),
-      });
+      const headers = madeHeaders(built, "application/json+oembed; charset=utf-8", caching);
+      headers.set("ETag", tag);
+      answer = new Response(JSON.stringify(oembedOf(view, SITE.name, built.siteUrl, card)), { headers });
     } else {
       // Each part goes in by a function, so a "$" in a name is shown as written.
       const page = frame
         .replaceAll("__EMBED_TITLE__", () => escape(embedTitle(view)))
         .replace("<!--embed-article-->", () => renderEmbedArticle(view, SITE.name, built.siteUrl))
         .replace("<!--embed-registries-->", () => renderEmbedRegistries(view));
-      answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });
+      const headers = madeHeaders(built, "text/html; charset=utf-8", caching);
+      headers.set("ETag", tag);
+      answer = new Response(page, { headers });
     }
   }
   if (cache) await cache.put(key, answer.clone());

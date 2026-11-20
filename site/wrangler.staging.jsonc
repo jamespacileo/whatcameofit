@@ -1,0 +1,32 @@
+// Staging: main's work, for the operator to see before a release (docs/deploy.md, "Staging").
+// The thenwhat-staging Worker in the main account, which the operator created, published by
+// `make deploy-staging` after every green run of CI on main, from the preview store's current
+// bundle (scripts/deploy.mjs --staging binds it as PAIRS and serves worker/with-pairs.mjs).
+// Published as a version and a deployment, which change no trigger: its custom domain
+// (staging.whatcameofit.com) and workers.dev address are set in the dashboard, so this file
+// names neither. Every file is marked noindex. Production is wrangler.jsonc and is not touched
+// by anything here.
+{
+  "name": "thenwhat-staging",
+  "compatibility_date": "2026-10-01",
+  "main": "./worker/index.mjs",
+  "observability": { "enabled": false },
+  // Every response the Worker gives carries X-Robots-Tag: noindex (worker/with-pairs.mjs);
+  // the files served without it carry the same from _headers.
+  "vars": { "ROBOTS_NOINDEX": "1" },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "drop-trailing-slash",
+    "run_worker_first": ["/*", "!/_astro/*", "!/pagefind/*"]
+  },
+  // Its own counters, so staging never uses up production's.
+  "ratelimits": [
+    { "name": "TRIAL_RECORD_READS", "namespace_id": "4123", "simple": { "limit": 60, "period": 60 } },
+    { "name": "LISTED_TRIAL_READS", "namespace_id": "4124", "simple": { "limit": 30, "period": 60 } }
+  ]
+  // Deliberately absent: a route or custom domain (the operator attaches staging's), the
+  // LOOKUP_RESULTS namespace, the lookup's rate limits and every secret. /api/lookup therefore
+  // answers "not set up", and nothing staging does can reach production's saved results.
+}
