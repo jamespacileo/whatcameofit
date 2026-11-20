@@ -17,6 +17,7 @@ import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { movedAddresses } from "../src/lib/bundle.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
+import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
 import { UNREADABLE } from "../worker/pairs.mjs";
 
 const MARKUP = 'A <script>alert("x")</script> & <b>bold</b> study';
@@ -25,6 +26,9 @@ const BUILT_WITH_MARKUP = "apitegromab--obesity";
 const COMPARED = "apitegromab--neuromuscular-diseases";
 const BROKEN = "apitegromab--overweight";
 const KEPT = "tulisokibart--scleroderma-diffuse";
+// The one pair with posted results; given a claim origin here so that it is also built ahead.
+const WITH_RESULTS = "curcumin--gastritis-atrophic";
+const ORIGIN = JSON.parse(fs.readFileSync(`tests/bundle/p12_pair_page/${BUILT_WITH_MARKUP}.json`, "utf8")).row.origin;
 
 function copyBundle(change) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-on-request-"));
@@ -47,6 +51,22 @@ const SAME_ADDRESS = BUILT_WITH_MARKUP;
 const bundle = copyBundle({
   [ON_REQUEST]: withMarkup,
   [BUILT_WITH_MARKUP]: (page) => { withMarkup(page); page.row.origin.claim_slug = SAME_ADDRESS; },
+  [WITH_RESULTS]: (page) => {
+    page.row.origin = { ...ORIGIN, claim_slug: WITH_RESULTS };
+    // An estimate with its interval and no p value, as the lab's NCT05256017 posts one.
+    const { findings } = page.trials[0];
+    findings.comparisons.push({
+      key: `${findings.outcomes[0].key}|099`, outcome_key: findings.outcomes[0].key, kind: "treated_vs_comparator",
+      group_ids: ["OG000"], design: null, method: null, p_value: null,
+      estimate_kind: "Risk Difference (RD)", estimate: "-1.5", interval_pct: "95", lower: "-7.2", upper: "3.7",
+    });
+    // A one-sided interval: only its lower bound is posted.
+    findings.comparisons.push({
+      key: `${findings.outcomes[0].key}|098`, outcome_key: findings.outcomes[0].key, kind: "treated_vs_comparator",
+      group_ids: ["OG001"], design: null, method: null, p_value: null,
+      estimate_kind: "Mean Difference (Final Values)", estimate: "0.4", interval_pct: "97.5", lower: "-0.2", upper: null,
+    });
+  },
 });
 // The claims export, with the first moved claim also archived: its address still answers 410.
 const moved = movedAddresses(Object.values(Object.fromEntries(
@@ -152,7 +172,41 @@ test("a pair not built ahead is made on request from D1, kept a day", async () =
     assert.match(document.querySelector("[data-pair-status]").textContent, new RegExp(STATUS_LABELS[page.row.status.code]));
     assert.match(document.querySelector("title").textContent, new RegExp(page.row.descriptor.label.split(",")[0], "i"));
     assert.equal(document.querySelectorAll("[data-trial]").length, page.trials.length);
+    // Posted results and papers are shown on a page made on request as on a built one.
+    for (const trial of page.trials) {
+      const shown = document.querySelector(`[data-trial="${trial.nct_id}"]`);
+      assert.equal(shown.querySelectorAll("[data-outcome]").length, trial.findings?.outcomes.length ?? 0, `${address} ${trial.nct_id}`);
+      assert.equal(shown.querySelectorAll("[data-paper]").length, trial.paper_ids.length, `${address} ${trial.nct_id}`);
+    }
   }
+});
+
+test("a trial's posted results are shown as the registry wrote them, built ahead and made on request", async () => {
+  const file = pages[WITH_RESULTS];
+  assert.ok(builtAhead(file));
+  const built = parseHTML(fs.readFileSync(path.join(dist, WITH_RESULTS, "index.html"), "utf8")).document;
+  hidden.add(`/${WITH_RESULTS}`);
+  let made;
+  try {
+    const response = await get(`/${WITH_RESULTS}`);
+    assert.equal(response.status, 200);
+    made = await documentOf(response);
+  } finally {
+    hidden.delete(`/${WITH_RESULTS}`);
+  }
+  assert.equal(made.querySelector(".frame").outerHTML, built.querySelector(".frame").outerHTML);
+  const [trial] = file.trials;
+  const section = built.querySelector(`[data-trial="${trial.nct_id}"] [data-results]`);
+  assert.equal(section.querySelectorAll("[data-outcome]").length, trial.findings.outcomes.length);
+  assert.equal(section.querySelectorAll("[data-comparison]").length, trial.findings.comparisons.length);
+  // A comparison says which groups it covers, by the outcome's own group titles.
+  assert.match(section.textContent, /p = 0\.3990, Wilcoxon Rank-Sum test \(superiority test\)\. Posted for: Arm I \(Curcumin\), Arm II \(Placebo\)/);
+  // An estimate and its interval are kept, and are not called a comparison with no p value.
+  const estimate = [...section.querySelectorAll("[data-comparison]")].find((line) => /Risk Difference/.test(line.textContent));
+  assert.equal(estimate.textContent, "Risk Difference (RD) -1.5, 95% interval -7.2 to 3.7. Posted for: Arm I (Curcumin)");
+  const oneSided = [...section.querySelectorAll("[data-comparison]")].find((line) => /Mean Difference/.test(line.textContent));
+  assert.equal(oneSided.textContent, "Mean Difference (Final Values) 0.4, 97.5% interval from -0.2. Posted for: Arm II (Placebo)");
+  assertNoOutcomeVerdict([section.textContent]);
 });
 
 test("the same file gives the same page built ahead and made on request", async () => {
@@ -168,6 +222,36 @@ test("the same file gives the same page built ahead and made on request", async 
   } finally {
     hidden.delete(`/${COMPARED}`);
   }
+});
+
+test("a pair's open data record is written by the build only with its page, and served from D1 otherwise", async () => {
+  // Task 1.3: one record a pair would pass the deployment's file limit at full size.
+  for (const [address, page] of Object.entries(pages)) {
+    assert.equal(fs.existsSync(path.join(dist, "data", "pairs", `${address}.json`)), builtAhead(page), address);
+  }
+  const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "pairs.json"), "utf8"));
+  assert.equal(index.entries.length, Object.keys(pages).length);
+  for (const entry of index.entries) {
+    const response = await get(entry.record);
+    assert.equal(response.status, 200, entry.record);
+    assert.match(response.headers.get("Content-Type"), /application\/json/);
+    const record = await response.json();
+    assert.equal(record.format, "pair-record");
+    assert.equal(record.pair.row.pair.address, entry.address);
+  }
+  // The record made on request is the build's own text for the same file.
+  const recordPath = `/data/pairs/${COMPARED}.json`;
+  const built = fs.readFileSync(path.join(dist, recordPath.slice(1)), "utf8");
+  hidden.add(recordPath);
+  try {
+    const response = await get(recordPath);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("Cache-Control"), /max-age=86400/);
+    assert.equal(await response.text(), built);
+  } finally {
+    hidden.delete(recordPath);
+  }
+  assert.equal((await get("/data/pairs/no-such--pair.json")).status, 404);
 });
 
 test("a title holding markup is shown as text, built ahead and made on request", async () => {

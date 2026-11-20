@@ -202,8 +202,13 @@ test("each pair's open data record is the lab's data file as written, with the l
   const files = readBundle("tests/bundle").pages.PairDataFile;
   const index = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs.json"), "utf8"));
   assert.deepEqual(index.entries.map((entry) => entry.address), Object.keys(files).sort());
+  // The build writes the record of a pair it builds ahead; the Worker serves the rest from D1
+  // (task 1.3, tests/pair-on-request.build-test.mjs).
   for (const [address, file] of Object.entries(files)) {
-    const record = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs", `${address}.json`), "utf8"));
+    const written = path.join(withBundle, "data", "pairs", `${address}.json`);
+    assert.equal(fs.existsSync(written), builtAhead(pages[address]), address);
+    if (!builtAhead(pages[address])) continue;
+    const record = JSON.parse(fs.readFileSync(written, "utf8"));
     assert.equal(record.format, "pair-record");
     assert.match(record.licence, /CC BY 4\.0/);
     assert.deepEqual(record.pair, file.pair);
@@ -292,6 +297,37 @@ test("every page of a build that reads a bundle carries the footer notices the b
   // The check `pnpm run build` runs after Astro; a pull request's preview stops on it.
   const check = spawnSync(process.execPath, ["scripts/check-dist.mjs"], { env: { ...process.env, DIST_DIR: withBundle }, encoding: "utf8" });
   assert.equal(check.status, 0, check.stdout + check.stderr);
+});
+
+test("a trial's papers are linked by their identifiers, and nothing of a paper's text is shown", () => {
+  // ambroxol--dementia: trial NCT02914366 and its two papers, from the lab's rehearsal.
+  const file = pages["ambroxol--dementia"];
+  const trial = file.trials.find((one) => one.paper_ids.length > 0);
+  assert.ok(trial, "the bundle holds a trial with papers");
+  const document = page(withBundle, "ambroxol--dementia");
+  const links = [...document.querySelectorAll(`[data-trial="${trial.nct_id}"] [data-paper]`)];
+  assert.deepEqual(links.map((link) => link.dataset.paper), trial.paper_ids);
+  for (const link of links) {
+    assert.equal(link.getAttribute("href"), `https://doi.org/${link.dataset.paper}`);
+    assert.equal(link.textContent, `doi:${link.dataset.paper}`);
+  }
+  // Its start is given to the month only, and is shown so, with no day made up.
+  assert.equal(trial.facts.start.day, "2015-11");
+  assert.match(document.querySelector(`[data-trial="${trial.nct_id}"]`).textContent, /Started\s*Nov 2015/);
+});
+
+test("no pair page shows a value it could not read", () => {
+  for (const address of Object.keys(built)) {
+    assert.doesNotMatch(page(withBundle, address).body.textContent, /\bundefined\b|\bnull\b|NaN/, address);
+  }
+});
+
+test("the bundle holds a trial with posted outcomes and comparisons", () => {
+  // curcumin--gastritis-atrophic: trial NCT02782949, from the lab's rehearsal. It is made on
+  // request here (one trial, no claim origin); tests/pair-on-request.build-test.mjs builds it
+  // ahead too and checks its results on the built page and on the page made on request.
+  const curcumin = pages["curcumin--gastritis-atrophic"].trials[0].findings;
+  assert.ok(curcumin.outcomes.length > 0 && curcumin.comparisons.length > 0);
 });
 
 test("the footer's Data page describes the pairs' files and its link opens the pairs' index", () => {

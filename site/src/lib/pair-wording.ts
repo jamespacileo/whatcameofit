@@ -5,7 +5,7 @@
 // stops on a code with none (`unwordedPairCodes`, read by `readBundle`), and on any table
 // here holding verdict wording (`assertPairWordingNeutral`, run when this module loads).
 import { assertNeutral, STATUS_GLOSSES, STATUS_LABELS } from "./status.ts";
-import { PHASE_WORDS, TRIAL_STATE_WORDS } from "./trial-facts.ts";
+import { PHASE_WORDS, TRIAL_STATE_WORDS, assertNoOutcomeVerdict } from "./trial-facts.ts";
 
 /** A pair's status (`ClaimStatusCode`): the same codes and words as a claim's status. */
 export { STATUS_GLOSSES as PAIR_STATUS_GLOSSES, STATUS_LABELS as PAIR_STATUS_LABELS };
@@ -78,6 +78,17 @@ export const PAIR_REGISTRY_NAMES: Record<string, string> = {
   "clinicaltrials.gov": "ClinicalTrials.gov",
 };
 
+/** Which of a trial's measures a posted outcome is (`OutcomeKind`), as the registry classes
+ * it (https://clinicaltrials.gov/policy/results-definitions, "Outcome Measure Type"). */
+export const PAIR_OUTCOME_KIND_WORDS: Record<string, string> = {
+  primary: "Primary outcome",
+  secondary: "Secondary outcome",
+  other: "Other outcome",
+  post_hoc: "Post hoc outcome",
+};
+
+assertNoOutcomeVerdict(Object.values(PAIR_OUTCOME_KIND_WORDS));
+
 /** Every table of words this module holds, by the kind of code it words. */
 export const PAIR_WORDING: Record<string, Record<string, string>> = {
   status: STATUS_LABELS,
@@ -89,6 +100,7 @@ export const PAIR_WORDING: Record<string, Record<string, string>> = {
   event: PAIR_EVENT_LABELS,
   approach: PAIR_APPROACH_LABELS,
   registry: PAIR_REGISTRY_NAMES,
+  "outcome kind": PAIR_OUTCOME_KIND_WORDS,
 };
 
 /** Throws, naming the words, when any table holds verdict wording ("dead", "abandoned", ...). */
@@ -119,6 +131,7 @@ export function unwordedPairCodes(pairPages: any[], interventionPages: any[] = [
       need("trial state", trial.facts.overall_status);
       for (const phase of trial.facts.phases ?? []) need("phase", phase);
       for (const event of trial.events) need("event", event.kind);
+      for (const outcome of trial.findings?.outcomes ?? []) need("outcome kind", outcome.kind);
     }
     for (const check of page.checked) need("registry", check.registry);
   }

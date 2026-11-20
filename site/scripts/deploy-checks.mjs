@@ -62,3 +62,26 @@ export function deployProblems({ data, siteUrl }) {
 
   return problems;
 }
+
+const NOT_YET_REGISTERED = /\[code: 10007\]/;
+const HALF_REGISTERED = /Cannot read properties of null \(reading 'tag'\)/;
+
+/**
+ * Whether a failed preview publish is sent again, from what Wrangler printed, and whether this
+ * publish has now seen Cloudflare not yet know the new Worker.
+ *
+ * A pull request's first publish creates its Worker, and Cloudflare can answer "This Worker
+ * does not exist on your account. [code: 10007]" before it has registered it (pull requests
+ * 368 and 369). The next send can then find it half registered: Wrangler reads
+ * `default_environment.script.tag` from /workers/services/{name} with no null check and stops
+ * with "Cannot read properties of null (reading 'tag')" (pull request 383, run 44738112545).
+ * Wrangler 4.165 reads the field the same way, so an upgrade does not help. That second answer
+ * is sent again only after a 10007 in the same publish; from any other cause it stops at once.
+ * @param {string} said Wrangler's output of one send
+ * @param {boolean} unregistered whether an earlier send of this publish got a 10007
+ */
+export function publishAgain(said, unregistered) {
+  const missing = NOT_YET_REGISTERED.test(said);
+  const seen = unregistered || missing;
+  return { again: missing || (seen && HALF_REGISTERED.test(said)), unregistered: seen };
+}

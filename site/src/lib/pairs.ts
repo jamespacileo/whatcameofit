@@ -8,7 +8,7 @@ import { readBundle, type Bundle } from "./bundle.ts";
 import { builtAhead, pairView, shownName } from "./pair-view.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
-import { DATA_LICENCE, dataCredit } from "./open-data.ts";
+import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
@@ -309,24 +309,18 @@ export function pairLookupMaps(): { articles: Record<string, string[]>; claims: 
   return { articles, claims };
 }
 
-export const PAIR_RECORD_FORMAT = { format: "pair-record", format_version: 1 } as const;
+export { PAIR_RECORD_FORMAT };
 export const PAIR_INDEX_FORMAT = { format: "pairs-index", format_version: 1 } as const;
 
-const PAIR_SOURCES = [
-  { name: "ClinicalTrials.gov", url: "https://clinicaltrials.gov/" },
-  { name: "Medical Subject Headings (MeSH)", url: "https://www.nlm.nih.gov/mesh/" },
-];
-
-function pairDataHeader(siteName: string, siteUrl: string) {
-  return { licence: DATA_LICENCE, credit: dataCredit(siteName, siteUrl), sources: PAIR_SOURCES };
-}
-
-/** One pair's open data record: the lab's data file for it as written, with the licence,
- * credit and sources, so the file stands alone. */
-export function pairDataRecord(address: string, siteName: string, siteUrl: string) {
-  const file = pairBundle()?.pages.PairDataFile?.[address];
-  if (!file) throw new Error(`The bundle holds no data file for the pair ${address}.`);
-  return { ...PAIR_RECORD_FORMAT, ...pairDataHeader(siteName, siteUrl), pair: file.pair };
+/** The pairs whose open data record the build writes: those whose page it builds ahead, and
+ * a data file with no page. Every other record is served on request from D1
+ * (worker/pairs.mjs), so a full bundle does not take a file per pair in the deployment,
+ * whose file limit it would pass (task 1.3; docs/sources.md, Workers static assets). */
+export function builtAheadRecords(): string[] {
+  const pages = pairPages();
+  return Object.keys(pairBundle()?.pages.PairDataFile ?? {})
+    .filter((address) => !pages[address] || builtAhead(pages[address]))
+    .sort();
 }
 
 /** The index of the pairs' open data records. */

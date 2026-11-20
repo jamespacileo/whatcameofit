@@ -20,7 +20,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { buildKey } from "./build-key.mjs";
-import { deployProblems, pullRequestWorker } from "./deploy-checks.mjs";
+import { deployProblems, publishAgain, pullRequestWorker } from "./deploy-checks.mjs";
 import { prepareSiteRelease, releaseSettings } from "./site-release-deploy.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
@@ -192,13 +192,14 @@ if (dryRun) args.push("--dry-run");
 started = Date.now();
 // A pull request's first publish creates its Worker. Cloudflare can answer a call Wrangler
 // makes right after the upload with "This Worker does not exist on your account. [code:
-// 10007]" before it has registered the new Worker (seen on pull requests 368 and 369). Only
-// that answer is sent again, after a wait; the upload is idempotent, so a second send uploads
-// nothing already there. Any other failure stops at once.
-const NOT_YET_REGISTERED = /\[code: 10007\]/;
-const ATTEMPTS = 3;
+// 10007]" before it has registered the new Worker. That answer, and the half-registered one
+// that can follow it, are sent again after a wait (`publishAgain` in deploy-checks.mjs says
+// which and why); the upload is idempotent, so a second send uploads nothing already there.
+// Any other failure stops at once.
+const ATTEMPTS = 4;
 const WAIT_MS = 5_000;
 let sent;
+let unregistered = false;
 for (let attempt = 1; ; attempt += 1) {
   sent = spawnSync(process.execPath, [path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js"), ...args], {
     cwd: SITE_DIR,
@@ -207,8 +208,10 @@ for (let attempt = 1; ; attempt += 1) {
   });
   process.stdout.write(sent.stdout ?? "");
   process.stderr.write(sent.stderr ?? "");
-  if (sent.status === 0 || attempt === ATTEMPTS || !NOT_YET_REGISTERED.test(`${sent.stdout}${sent.stderr}`)) break;
-  console.log(`Cloudflare had not yet registered ${worker} (code 10007). Sending again in ${(WAIT_MS * attempt) / 1000} s, attempt ${attempt + 1} of ${ATTEMPTS}.`);
+  const answer = publishAgain(`${sent.stdout}${sent.stderr}`, unregistered);
+  unregistered = answer.unregistered;
+  if (sent.status === 0 || attempt === ATTEMPTS || !answer.again) break;
+  console.log(`Cloudflare had not yet registered ${worker}. Sending again in ${(WAIT_MS * attempt) / 1000} s, attempt ${attempt + 1} of ${ATTEMPTS}.`);
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, WAIT_MS * attempt);
 }
 if (sent.status !== 0) stop([`Wrangler failed. ${worker} was not updated by this step.`]);
