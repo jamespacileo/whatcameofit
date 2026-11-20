@@ -1,0 +1,69 @@
+---
+// The open data page on the pair path (openspec pairs-site): the index of every pair's record
+// at /data/pairs.json and one file per pair at /data/pairs/{address}.json.
+import Base from "../layouts/Base.astro";
+import { SITE } from "../../site.config.mjs";
+import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit } from "../lib/open-data";
+import { pairDataIndex } from "../lib/pairs";
+import { canonicalAddress } from "../lib/structured";
+
+const index = pairDataIndex(SITE.name, SITE.url);
+const count = index.entries.length;
+const example = index.entries[0]?.record;
+const description =
+  "Every treatment and condition the site follows, with its status and the trial records behind it, as JSON you can download and reuse: an index of every pair, and one file per pair.";
+const structured = {
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  name: `${SITE.name} treatments and conditions`,
+  description,
+  url: canonicalAddress("/data"),
+  license: DATA_LICENCE_URL,
+  isAccessibleForFree: true,
+  inLanguage: "en-GB",
+  size: `${count} treatments and conditions`,
+  distribution: {
+    "@type": "DataDownload",
+    encodingFormat: "application/json",
+    contentUrl: canonicalAddress("/data/pairs.json"),
+    description: "An index of every pair. Each entry gives the address of the pair's full record, one file per pair.",
+  },
+};
+---
+
+<Base title="Data" description={description} structured={structured} breadcrumbs={[{ name: "Data", path: "/data" }]}>
+  <h1 class="title">Data</h1>
+  <p class="lede">
+    Every treatment and condition the site follows, with its status, the events that produced it and the
+    registered trials behind it, as JSON you can download, cite and build on.
+  </p>
+
+  <h2 class="bar">The files</h2>
+  <ul class="plain">
+    <li>
+      <a href="/data/pairs.json" download data-open-data="pairs">Download the index, pairs.json</a>
+      <span class="entry-note" data-pair-count={count}>
+        {count}
+        {count === 1 ? " treatment and condition" : " treatments and conditions"}, as JSON.
+      </span>
+    </li>
+  </ul>
+  <p>
+    The index's <code>entries</code> list every pair with its address, treatment, condition and status
+    code. Each entry's <code>record</code> is the address of that pair's full record on this site, such as{" "}
+    {example ? <a href={example}><code>{example}</code></a> : <code>/data/pairs/&lt;address&gt;.json</code>}.
+    Each record carries the licence and credit line too, so it can be used on its own.
+  </p>
+  <p>
+    To get everything, download the index, then each address in its <code>record</code> fields. Each file
+    names its kind in <code>format</code> and <code>format_version</code>: <code>pairs-index</code> and{" "}
+    <code>pair-record</code>, version 1.
+  </p>
+  <p>The files hold public trial records only, and no article text.</p>
+
+  <h2 class="bar">Licence and credit</h2>
+  <p>
+    The data is offered under <a href={DATA_LICENCE_URL}>{DATA_LICENCE}</a>.
+  </p>
+  <p>Credit: {dataCredit(SITE.name, SITE.url)}</p>
+</Base>
