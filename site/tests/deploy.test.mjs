@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { test } from "node:test";
-import { deployProblems, pullRequestWorker } from "../scripts/deploy-checks.mjs";
+import { deployProblems, publishAgain, pullRequestWorker } from "../scripts/deploy-checks.mjs";
 import { MARKER, addedClaims, previewComment } from "../scripts/pr-preview-comment.mjs";
 
 const PUBLIC = "https://tracker.example.org";
@@ -125,4 +125,20 @@ test("a failed build says so in the same comment and offers no address", () => {
   assert.ok(body.startsWith(MARKER));
   assert.match(body, /not updated/i);
   assert.doesNotMatch(body, /workers\.dev/);
+});
+
+// Wrangler's own lines from pull request 383's first preview publish (run 44738112545).
+const NOT_REGISTERED = "✘ [ERROR] A request to the Cloudflare API (/accounts/0/workers/workers/thenwhat-pr-383) failed.\n\n  This Worker does not exist on your account. [code: 10007]";
+const NULL_TAG = "✘ [ERROR] Cannot read properties of null (reading 'tag')";
+
+test("a first preview publish is sent again while Cloudflare has not yet registered its Worker", () => {
+  const first = publishAgain(NOT_REGISTERED, false);
+  assert.deepEqual(first, { again: true, unregistered: true });
+  // The send after it found the Worker half registered: sent again too.
+  assert.deepEqual(publishAgain(NULL_TAG, first.unregistered), { again: true, unregistered: true });
+});
+
+test("the null tag answer with no 10007 before it, or any other failure, stops the publish", () => {
+  assert.deepEqual(publishAgain(NULL_TAG, false), { again: false, unregistered: false });
+  assert.equal(publishAgain("✘ [ERROR] Authentication error [code: 10000]", true).again, false);
 });
