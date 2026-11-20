@@ -210,9 +210,17 @@ test("the Worker marks every kind of answer noindex in staging's configuration, 
   // Past the rate limit, 429: staging's binding at a limit of one, so the second request is over.
   assert.equal(stagingOptions.ratelimits.ON_REQUEST_LIMIT?.namespace_id, "4132");
   await mf.setOptions(convertV4MiniflareOptions({ ...stagingOptions, ratelimits: { ON_REQUEST_LIMIT: { namespace_id: "4132", simple: { limit: 1, period: 60 } } } }));
-  const asker = { headers: { "CF-Connecting-IP": "192.0.2.7" }, redirect: "manual" };
-  await (await mf.dispatchFetch(`${ORIGIN}${page}`, asker)).body?.cancel();
-  const refused = await mf.dispatchFetch(`${ORIGIN}${page}`, asker);
+  // Miniflare counts in fixed minutes of the clock: two requests that cross one are asked again.
+  let refused;
+  for (let attempt = 1; ; attempt += 1) {
+    const window = Math.floor(Date.now() / 60_000);
+    const asker = { headers: { "CF-Connecting-IP": `192.0.2.${attempt}` }, redirect: "manual" };
+    await (await mf.dispatchFetch(`${ORIGIN}${page}`, asker)).body?.cancel();
+    refused = await mf.dispatchFetch(`${ORIGIN}${page}`, asker);
+    if (Math.floor(Date.now() / 60_000) === window) break;
+    await refused.body?.cancel();
+    assert.ok(attempt < 3, "the limiter's window kept changing");
+  }
   assert.equal(refused.status, 429);
   assert.equal(refused.headers.get("Retry-After"), "60");
   assert.equal(refused.headers.get("X-Robots-Tag"), "noindex", `${page} (429)`);

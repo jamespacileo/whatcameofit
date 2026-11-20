@@ -7,7 +7,7 @@
 import * as validators from "../.bundle-code/validators.mjs";
 import { handle } from "./index.mjs";
 import { listingOf, listingPage } from "./listings.mjs";
-import { SHELL_PATH, builtFor, pairAddress, pairPage, pairRecord, recordAddress } from "./pairs.mjs";
+import { SHELL_PATH, SITE_HEADERS, builtFor, madeHeaders, pairAddress, pairPage, pairRecord, recordAddress } from "./pairs.mjs";
 import { EMBED_SHELL_PATH, shareAnswer, shareOf } from "./shares.mjs";
 
 const { validatePairDataFile, validatePairInterventionPage, validatePairPage } = validators;
@@ -78,14 +78,16 @@ const RETRY_SECONDS = 60;
 // the request is answered and the fault is logged. The deploy checks refuse a configuration with
 // pairs that lacks the binding (limitProblems in scripts/pairs-preview.mjs), so a deployment
 // never goes without it.
-async function overLimit(request, env) {
+// Counted by the asker's address on each hostname: pull request previews share one namespace,
+// and a reviewer's requests to one preview never count against another.
+async function overLimit(request, env, url) {
   if (!env.ON_REQUEST_LIMIT) {
     console.warn("ON_REQUEST_LIMIT is not bound: answering without a rate limit");
     return false;
   }
   const asker = request.headers.get("CF-Connecting-IP") ?? "unknown";
   try {
-    const { success } = await env.ON_REQUEST_LIMIT.limit({ key: asker });
+    const { success } = await env.ON_REQUEST_LIMIT.limit({ key: `${url.hostname} ${asker}` });
     return !success;
   } catch (error) {
     console.warn(`ON_REQUEST_LIMIT failed, answering without a rate limit: ${error?.message ?? error}`);
@@ -123,12 +125,14 @@ export async function handleWithPairs(request, env, cache = globalThis.caches?.d
   // is made here; any other path that the assets do not hold answers their not-found page.
   const make = onRequest(url.pathname);
   if (!make) return notFoundPage(request, env, answer);
-  if (await overLimit(request, env)) {
+  if (await overLimit(request, env, url)) {
     await answer.body?.cancel();
-    return new Response("Too many requests. Please slow down and try again shortly.", {
-      status: 429,
-      headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": String(RETRY_SECONDS), "Cache-Control": "no-store" },
-    });
+    // The site's headers and the deployment's robots mark, as on the pages themselves; the frame
+    // is a file, so nothing is read from D1.
+    const built = await builtFor(request, env);
+    const headers = built ? madeHeaders(built, "text/plain; charset=utf-8", "no-store") : new Headers({ ...SITE_HEADERS, "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+    headers.set("Retry-After", String(RETRY_SECONDS));
+    return new Response("Too many requests. Please slow down and try again shortly.", { status: 429, headers });
   }
   const made = await make(request, env, cache);
   if (made instanceof Response) return made;
