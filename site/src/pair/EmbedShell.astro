@@ -7,7 +7,7 @@
 import "../styles/global.css";
 import { SITE } from "../../site.config.mjs";
 import { NOTICES } from "../lib/notices";
-import { sourceNames } from "../lib/blocks";
+import { embedFooter } from "../lib/blocks";
 import { PAIR_SOURCES } from "../lib/pair-record";
 import { rendererDigest } from "../lib/renderer-digest";
 ---
@@ -25,11 +25,8 @@ import { rendererDigest } from "../lib/renderer-digest";
   <body class="embed">
     <article>
       <Fragment set:html="<!--embed-article-->" />
-      <footer>
-        {NOTICES.map((notice) => <p>{notice}</p>)}
-        {/* The sources by name, from the list every page's footer links (layouts/Base.astro). */}
-        <p>Data sources: {sourceNames(PAIR_SOURCES)}.<Fragment set:html="<!--embed-registries-->" /></p>
-      </footer>
+      {/* The notices, and the sources by name from the list every page's footer links (layouts/Base.astro). */}
+      <Fragment set:html={embedFooter(NOTICES, PAIR_SOURCES, "<!--embed-registries-->")} />
     </article>
   </body>
 </html>

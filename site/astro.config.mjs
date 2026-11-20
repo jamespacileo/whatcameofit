@@ -48,6 +48,10 @@ const pairPages = {
       // The explore page and its one file, filtered in the reader's browser (task 6.2).
       injectRoute({ pattern: "/explore", entrypoint: "./src/pair/Explore.astro" });
       injectRoute({ pattern: "/data/explore.json", entrypoint: "./src/pair/explore.json.ts" });
+      // The styleguide: every shared block drawn with this build's bundle. Built only when asked
+      // for (STYLEGUIDE=1: staging and pull request previews), never for production, whose
+      // deploy stops if it is there (scripts/deploy.mjs).
+      if (process.env.STYLEGUIDE === "1") injectRoute({ pattern: "/styleguide", entrypoint: "./src/styleguide/Styleguide.astro" });
     },
   },
 };

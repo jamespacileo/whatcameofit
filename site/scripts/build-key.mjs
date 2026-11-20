@@ -19,6 +19,7 @@ export const SETTINGS = [
   "PAIRS_BUNDLE",
   "TRIALS_LISTING_FILE",
   "CONTACT_EMAIL",
+  "STYLEGUIDE",
 ];
 
 // Files under site/ that no copy is made from: the tests and the notes. tests/bundle is

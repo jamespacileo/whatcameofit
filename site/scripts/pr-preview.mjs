@@ -98,6 +98,8 @@ const settings = {
   PAIRS_BUNDLE: bundle,
   ASTRO_TELEMETRY_DISABLED: "1",
   LOOKUP_URL: "",
+  // A preview shows the styleguide; production never builds it (scripts/deploy.mjs).
+  STYLEGUIDE: "1",
 };
 delete settings.CLOUDFLARE_API_TOKEN;
 const key = buildKey(SITE_DIR, settings);
