@@ -27,7 +27,7 @@ export interface ListingLink {
 }
 
 export interface ListingView {
-  kind: "intervention" | "category" | "topic";
+  kind: "intervention" | "category" | "topic" | "condition";
   path: string;
   title: string;
   description: string;
@@ -133,5 +133,22 @@ export function topicListing(file: any, published: Set<string>): ListingView {
     linkGroups: [],
     card: null,
     rows: rowsOf(file.pairs, published),
+  };
+}
+
+/** A condition's page, which the build makes (pair/ConditionRoute.astro): every pair for the
+ * condition or one beneath it in MeSH, drawn by the same renderer as the listings the Worker
+ * makes, so it carries the same band and sheet. */
+export function conditionListing(listing: { slug: string; label: string; pairs: ListingRow[] }, card: CardView): ListingView {
+  return {
+    kind: "condition",
+    path: `/condition/${listing.slug}`,
+    title: listing.label,
+    description: `Treatments tested for ${listing.label.toLowerCase()}, and where the public trial records show each stands.`,
+    crumbs: [],
+    notes: ["Lists this condition and the narrower ones beneath it. A condition is not a diagnosis."],
+    linkGroups: [],
+    card,
+    rows: listing.pairs,
   };
 }
