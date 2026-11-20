@@ -29,7 +29,8 @@ jobs:
     if: vars.PRODUCTION_PUBLISHING != 'on'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "::notice::Production publishing is paused (PRODUCTION_PUBLISHING is not on). ${{ github.ref_name }} was not published."
+      # The tag's name is input: it reaches the shell as a quoted variable, never as script text.
+      - run: echo "::notice::Production publishing is paused (PRODUCTION_PUBLISHING is not on). $GITHUB_REF_NAME was not published."
 
   publish:
     name: Publish ${{ github.ref_name }} to production
@@ -54,7 +55,7 @@ jobs:
       - name: The tag is a commit of main
         run: |
           git fetch --no-tags origin main
-          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::${{ github.ref_name }} is not a commit of main. Nothing was published."; exit 1; }
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not a commit of main. Nothing was published."; exit 1; }
       - name: Publish
         run: make deploy ARGS=--cutover
         env:

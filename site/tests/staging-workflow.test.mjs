@@ -4,6 +4,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 import { test } from "node:test";
 import { parse } from "yaml";
 
@@ -27,7 +29,10 @@ test("staging runs only after CI on main or by hand on main, never for a pull re
   // The token reaches only the steps after the checkout of main's commit, and no step checks out
   // anything else.
   const checkout = publish.steps.find((step) => String(step.uses).startsWith("actions/checkout@"));
-  assert.equal(checkout.with.ref, "${{ github.event.workflow_run.head_sha || github.sha }}");
+  // The commit checked out is the one the tip guard found to be main's tip.
+  assert.equal(publish.steps[0].id, "tip");
+  assert.equal(checkout.with.ref, "${{ steps.tip.outputs.sha }}");
+  assert.equal(checkout.if, "steps.tip.outputs.current == 'true'");
   assert.equal(checkout.with["persist-credentials"], false);
   const withToken = publish.steps.filter((step) => JSON.stringify(step).includes("secrets."));
   assert.deepEqual(withToken.map((step) => step.name), ["See that staging is set up", "Build, publish and check staging"]);
@@ -71,4 +76,51 @@ test("staging refuses production's database, production's address and the cutove
     assert.match(run.stderr, refusal);
     assert.doesNotMatch(run.stdout, /Building/);
   }
+});
+
+test("no run step of staging or release puts an expression into shell text", () => {
+  // A tag's name, a commit or an event's field reaches a script as a quoted variable set in
+  // env, never as text GitHub writes into the script, which would run whatever it holds.
+  for (const name of ["staging.yml", "release.yml"]) {
+    for (const [id, job] of Object.entries(workflow(name).jobs)) {
+      for (const step of job.steps) {
+        if (step.run) assert.ok(!step.run.includes("${{"), `${name} ${id} "${step.name ?? step.run.slice(0, 40)}" puts an expression into its script`);
+      }
+    }
+  }
+});
+
+/** A git remote whose main is at the commit returned, on this machine. */
+function remoteWithMain() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-staging-tip-"));
+  const git = (...args) => spawnSync("git", args, { cwd: dir, encoding: "utf8", env: { ...process.env, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@example.org", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@example.org" } });
+  git("init", "-q", "-b", "main");
+  git("commit", "-q", "--allow-empty", "-m", "older");
+  const older = git("rev-parse", "HEAD").stdout.trim();
+  git("commit", "-q", "--allow-empty", "-m", "tip");
+  return { remote: dir, older, tip: git("rev-parse", "HEAD").stdout.trim() };
+}
+
+/** The tip guard's own script, run as the job runs it, with its outputs. */
+function guard(env) {
+  const script = workflow("staging.yml").jobs.publish.steps[0].run;
+  const output = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-staging-output-")), "output");
+  fs.writeFileSync(output, "");
+  const run = spawnSync("bash", ["-e", "-c", script], { encoding: "utf8", env: { ...process.env, GITHUB_OUTPUT: output, ...env } });
+  return { run, outputs: Object.fromEntries(fs.readFileSync(output, "utf8").trim().split("\n").filter(Boolean).map((line) => line.split("="))) };
+}
+
+test("staging publishes main's tip only: an older CI run is skipped, and a run by hand takes the tip", () => {
+  const { remote, older, tip } = remoteWithMain();
+  const late = guard({ EVENT: "workflow_run", RUN_SHA: older, REMOTE: remote });
+  assert.equal(late.run.status, 0, late.run.stderr);
+  assert.deepEqual(late.outputs, { current: "false" });
+  assert.match(late.run.stdout, new RegExp(`Staging was skipped: this CI run is for ${older}, and main is now at ${tip}`));
+  const current = guard({ EVENT: "workflow_run", RUN_SHA: tip, REMOTE: remote });
+  assert.deepEqual(current.outputs, { sha: tip, current: "true" });
+  const byHand = guard({ EVENT: "workflow_dispatch", RUN_SHA: "", REMOTE: remote });
+  assert.deepEqual(byHand.outputs, { sha: tip, current: "true" });
+  // A remote that cannot be read stops the run: nothing is published on a guess.
+  const unread = guard({ EVENT: "workflow_run", RUN_SHA: tip, REMOTE: path.join(remote, "missing") });
+  assert.notEqual(unread.run.status, 0);
 });

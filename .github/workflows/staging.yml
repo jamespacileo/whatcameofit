@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+# One publish at a time. A run started while one is publishing waits; GitHub keeps one waiting
+# run per group, so a newer one replaces an older waiting run, which is cancelled. The
+# publishing run is never cancelled. The tip guard below then skips any run that is not main's
+# tip, so an old run finishing late or run again never replaces a newer deployment.
 concurrency:
   group: staging
   cancel-in-progress: false
@@ -51,20 +55,45 @@ jobs:
     timeout-minutes: 25
     environment: staging
     steps:
+      # Only main's tip is published. After CI, the run's commit must still be the tip: a CI run
+      # that finished late, or was run again, for an older commit is skipped, not published over
+      # a newer deployment. By hand, the tip is published. The expressions reach the shell as
+      # quoted variables (env), never as script text.
+      - name: Publish main's tip only
+        id: tip
+        env:
+          EVENT: ${{ github.event_name }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          REMOTE: https://github.com/${{ github.repository }}.git
+        run: |
+          tip=$(git ls-remote "$REMOTE" refs/heads/main | cut -f1)
+          if [ -z "$tip" ]; then echo "::error::main's tip could not be read from $REMOTE."; exit 1; fi
+          if [ "$EVENT" = "workflow_run" ] && [ "$RUN_SHA" != "$tip" ]; then
+            echo "::notice::Staging was skipped: this CI run is for $RUN_SHA, and main is now at $tip, which its own run publishes."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Publishing main's tip, $tip."
+            echo "sha=$tip" >> "$GITHUB_OUTPUT"
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        if: steps.tip.outputs.current == 'true'
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ steps.tip.outputs.sha }}
           persist-credentials: false
       - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        if: steps.tip.outputs.current == 'true'
         with:
           package_json_file: site/package.json
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        if: steps.tip.outputs.current == 'true'
         with:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: site/pnpm-lock.yaml
       - name: See that staging is set up
         id: ready
+        if: steps.tip.outputs.current == 'true'
         env:
           TOKEN: ${{ secrets.CLOUDFLARE_STAGING_API_TOKEN }}
           DATABASE_ID: ${{ vars.STAGING_PAIRS_DATABASE_ID }}
@@ -86,7 +115,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           STAGING_PAIRS_DATABASE_ID: ${{ vars.STAGING_PAIRS_DATABASE_ID }}
           STAGING_URL: ${{ vars.STAGING_URL || 'https://staging.whatcameofit.com' }}
-          BUILD_REVISION: ${{ github.event.workflow_run.head_sha || github.sha }}
+          BUILD_REVISION: ${{ steps.tip.outputs.sha }}
           SUGGEST_URL: ${{ vars.SUGGEST_URL }}
           CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
           CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
