@@ -10,7 +10,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { KEPT_VERSIONS, statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { writeBundleCode } from "../scripts/bundle-code.mjs";
-import { PREVIEW_KEPT_VERSIONS, PREVIEW_PAIRS_BUNDLE, PREVIEW_PAIRS_DATABASE, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
+import { ON_REQUEST_LIMITS, PREVIEW_KEPT_VERSIONS, PREVIEW_PAIRS_BUNDLE, PREVIEW_PAIRS_DATABASE, limitProblems, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
 
 const WRANGLER = path.resolve("node_modules/wrangler/bin/wrangler.js");
 // A stand-in id: the local engine keys its file by it and asks Cloudflare nothing.
@@ -105,4 +105,39 @@ test("Wrangler accepts the copy's Worker with pairs and its binding, in a dry ru
   const bundled = fs.readdirSync(out).filter((name) => name.endsWith(".js")).map((name) => fs.readFileSync(path.join(out, name), "utf8")).join("\n");
   assert.match(bundled, /FROM pair_page WHERE version = \?1/);
   assert.match(bundled, /validatePairPage/);
+});
+
+// The rate limit on pages made on request (openspec pairs-site task 4.6g): every deployment's
+// configuration carries it, and the deploy checks refuse one that does not.
+test("every deployment with pairs is given the limit, in a namespace of its own Worker's", () => {
+  for (const [worker, base] of [["thenwhat", "wrangler.jsonc"], ["thenwhat-staging", "wrangler.staging.jsonc"], ["thenwhat-pr", "wrangler.preview.jsonc"]]) {
+    const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-limit-config-"));
+    const config = JSON.parse(fs.readFileSync(pairsConfig({ base, database: { name: "thenwhat-limit-preview", id: "00000000-0000-0000-0000-000000000000" }, scratch, worker }), "utf8"));
+    const binding = config.ratelimits.find((one) => one.name === "ON_REQUEST_LIMIT");
+    assert.deepEqual(binding, { name: "ON_REQUEST_LIMIT", namespace_id: ON_REQUEST_LIMITS[worker], simple: { limit: 600, period: 60 } });
+    // Its own namespace: no other limit of the site shares its counts.
+    assert.equal(config.ratelimits.filter((one) => one.namespace_id === binding.namespace_id).length, 1);
+  }
+  assert.equal(new Set(Object.values(ON_REQUEST_LIMITS)).size, Object.keys(ON_REQUEST_LIMITS).length);
+});
+
+test("the deploy checks refuse a configuration with pairs that lacks the rate limit, or gives it another Worker's namespace", () => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-limit-refusal-"));
+  const database = { name: "thenwhat-limit-preview", id: "00000000-0000-0000-0000-000000000000" };
+  for (const [worker, base] of [["thenwhat", "wrangler.jsonc"], ["thenwhat-staging", "wrangler.staging.jsonc"], ["thenwhat-pr", "wrangler.preview.jsonc"]]) {
+    const file = pairsConfig({ base, database, scratch: path.join(scratch, worker), worker });
+    assert.deepEqual(limitProblems(file), [], worker);
+    const config = JSON.parse(fs.readFileSync(file, "utf8"));
+    const without = path.join(scratch, `${worker}-without.json`);
+    fs.writeFileSync(without, JSON.stringify({ ...config, ratelimits: config.ratelimits.filter((one) => one.name !== "ON_REQUEST_LIMIT") }));
+    assert.match(limitProblems(without).join("\n"), /binds the pairs database but not ON_REQUEST_LIMIT/, worker);
+    const shared = path.join(scratch, `${worker}-shared.json`);
+    const other = Object.values(ON_REQUEST_LIMITS).find((id) => id !== ON_REQUEST_LIMITS[worker]);
+    fs.writeFileSync(shared, JSON.stringify({ ...config, ratelimits: config.ratelimits.map((one) => (one.name === "ON_REQUEST_LIMIT" ? { ...one, namespace_id: other } : one)) }));
+    assert.match(limitProblems(shared).join("\n"), new RegExp(`namespace ${other}, not ${worker}'s own`), worker);
+  }
+  // A configuration with no pairs database is the claims site's, which makes no page on request.
+  const claims = path.join(scratch, "claims.json");
+  fs.writeFileSync(claims, JSON.stringify({ name: "thenwhat" }));
+  assert.deepEqual(limitProblems(claims), []);
 });

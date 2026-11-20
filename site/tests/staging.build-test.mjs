@@ -14,7 +14,7 @@ import { build as bundleWorker } from "esbuild";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { findDeployDatabase } from "../scripts/pairs-deploy.mjs";
-import { loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
+import { WORKER_FIRST, limitProblems, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
 import { checkStaging, smokeAddresses } from "../scripts/staging-smoke.mjs";
 
 const BUNDLE = path.resolve("tests/bundle");
@@ -24,6 +24,10 @@ const ORIGIN = "https://staging.whatcameofit.com";
 const REVISION = "0123456789abcdef0123456789abcdef01234567";
 let run;
 let mf;
+// The Worker's options in staging's configuration, its rate limit among them.
+let stagingOptions;
+// The configuration pairsConfig gives staging, as deploy.mjs --staging is given it.
+let stagingConfig;
 
 /** The built files, as the asset binding serves them: a page at its address, else the 404 page. */
 function assets(request) {
@@ -43,6 +47,7 @@ function assets(request) {
 before(async () => {
   const database = findDeployDatabase(DATABASE, { localState: path.join(scratch, "state") });
   const config = pairsConfig({ base: "wrangler.staging.jsonc", database, scratch, worker: "thenwhat-staging" });
+  stagingConfig = config;
   loadPairsBundle({ config, database, bundle: BUNDLE, local: true, persistTo: database.persistTo });
   run = spawnSync(process.execPath, ["scripts/deploy.mjs", "--staging", "--dry-run"], {
     encoding: "utf8",
@@ -76,15 +81,17 @@ before(async () => {
     write: false,
   });
   const staging = JSON.parse(fs.readFileSync(config, "utf8"));
-  mf = new Miniflare(convertV4MiniflareOptions({
+  stagingOptions = {
     modules: true,
     script: worker.outputFiles[0].text,
     compatibilityDate: "2026-10-01",
     cf: false,
     bindings: staging.vars,
     d1Databases: ["PAIRS"],
+    ratelimits: Object.fromEntries(staging.ratelimits.map(({ name, namespace_id, simple }) => [name, { namespace_id, simple }])),
     serviceBindings: { ASSETS: assets },
-  }));
+  };
+  mf = new Miniflare(convertV4MiniflareOptions(stagingOptions));
   const db = await mf.getD1Database("PAIRS");
   const migration = fs.readFileSync("../store/ingest/migrations/0011_pairs.sql", "utf8")
     .split("\n").filter((line) => !line.trim().startsWith("--")).join("\n")
@@ -95,6 +102,14 @@ before(async () => {
 
 after(async () => {
   if (mf) await mf.dispose();
+});
+
+test("staging's configuration runs the Worker first only where pairsConfig says, with the rate limit in staging's namespace", () => {
+  const staging = JSON.parse(fs.readFileSync(stagingConfig, "utf8"));
+  assert.equal(staging.name, "thenwhat-staging");
+  assert.deepEqual(staging.assets.run_worker_first, WORKER_FIRST);
+  assert.equal(staging.assets.not_found_handling, "none");
+  assert.deepEqual(limitProblems(stagingConfig), []);
 });
 
 test("a staging dry run checks a version of thenwhat-staging with the preview store, and names no domain", () => {
@@ -192,6 +207,24 @@ test("the Worker marks every kind of answer noindex in staging's configuration, 
   assert.equal(posted.status, 405);
   assert.equal(posted.headers.get("X-Robots-Tag"), "noindex", `${missing} (405)`);
   await posted.body?.cancel();
+  // Past the rate limit, 429: staging's binding at a limit of one, so the second request is over.
+  assert.equal(stagingOptions.ratelimits.ON_REQUEST_LIMIT?.namespace_id, "4132");
+  await mf.setOptions(convertV4MiniflareOptions({ ...stagingOptions, ratelimits: { ON_REQUEST_LIMIT: { namespace_id: "4132", simple: { limit: 1, period: 60 } } } }));
+  // Miniflare counts in fixed minutes of the clock: two requests that cross one are asked again.
+  let refused;
+  for (let attempt = 1; ; attempt += 1) {
+    const window = Math.floor(Date.now() / 60_000);
+    const asker = { headers: { "CF-Connecting-IP": `192.0.2.${attempt}` }, redirect: "manual" };
+    await (await mf.dispatchFetch(`${ORIGIN}${page}`, asker)).body?.cancel();
+    refused = await mf.dispatchFetch(`${ORIGIN}${page}`, asker);
+    if (Math.floor(Date.now() / 60_000) === window) break;
+    await refused.body?.cancel();
+    assert.ok(attempt < 3, "the limiter's window kept changing");
+  }
+  assert.equal(refused.status, 429);
+  assert.equal(refused.headers.get("Retry-After"), "60");
+  assert.equal(refused.headers.get("X-Robots-Tag"), "noindex", `${page} (429)`);
+  await refused.body?.cancel();
   // The same Worker without staging's variable, as production's configuration has none.
   await mf.setOptions(convertV4MiniflareOptions({
     modules: true,

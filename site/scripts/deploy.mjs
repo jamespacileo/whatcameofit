@@ -159,6 +159,14 @@ if (pairs) {
   if (recorded !== pairs.version) stop([`The built site records bundle ${recorded ?? "none"}, not ${pairs.version}.`]);
 }
 
+// A configuration with pairs carries the rate limit on pages made on request, or is not
+// published: the Worker answers without a limit when the binding is missing.
+if (pairs) {
+  const { limitProblems } = await import("./pairs-preview.mjs");
+  const unlimited = limitProblems(pairs.config);
+  if (unlimited.length > 0) stop(unlimited);
+}
+
 const wranglerArgs = ["deploy", "--domain", domain];
 if (pairs) wranglerArgs.push("--config", pairs.config);
 if (lookup && !staging) {
