@@ -46,10 +46,25 @@ test("a trial that posted results leads, whatever its phase; one with no phase c
   ]);
 });
 
-test("no phase is worded as an approval, and the table names no colour or verdict", () => {
+test("no words the table writes itself say approved or how a trial turned out, and nothing is styled inline", () => {
   for (const words of Object.values(TRIAL_GROUPS)) assert.doesNotMatch(words, /approv/i);
   for (const view of views) {
-    const html = trialsTable(view.trials);
-    assert.doesNotMatch(html, /approved|style=|color/i, view.address);
+    const document = parseHTML(`<main>${trialsTable(view.trials)}</main>`).document;
+    // The site's own words: group headings, column heads, each row's results cell and the
+    // record's summary; the registry's titles and records are its words, not the site's.
+    const own = [
+      ...[...document.querySelectorAll(".trials-group-head, thead th, summary")].map((element) => element.textContent),
+      ...[...document.querySelectorAll('tr[data-trial] > td[data-label="Results"]')].map((element) => element.textContent),
+    ];
+    for (const words of own) assert.doesNotMatch(words, /approv|success|fail|positive|negative|work/i, `${view.address}: ${words}`);
+    assert.equal(document.querySelectorAll("[style]").length, 0, view.address);
+  }
+});
+
+test("each record's control names its trial for a screen reader", () => {
+  for (const view of views) {
+    const document = parseHTML(`<main>${trialsTable(view.trials)}</main>`).document;
+    const names = [...document.querySelectorAll(".trials-record summary")].map((summary) => summary.textContent);
+    assert.deepEqual(names, view.trials.map((trial) => `Its record: ${trial.nctId}`), view.address);
   }
 });

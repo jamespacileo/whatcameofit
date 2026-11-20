@@ -60,7 +60,8 @@ for (const order of document.querySelectorAll<HTMLElement>("[data-said-order]"))
 }
 
 // Paper has no press: why each term matched prints open, then goes back as it was.
-const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why, .entry-more .match-why, .record-all")];
+// A trial's record in a trials table (lib/trials-table.ts) prints open too.
+const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why, .entry-more .match-why, .record-all, .trials-record details")];
 addEventListener("beforeprint", () => {
   for (const why of whys) {
     why.toggleAttribute("data-was-open", why.open);

@@ -118,7 +118,8 @@
 
 /* A pair's trials as a table (lib/trials-table.ts; DESIGN.md, "Trials table"): each group's
    heading with its count in grey, then a framed table with the quiet head every table has; a
-   row opens to the trial's record. No colour marks a state or a phase. */
+   row opens to the trial's record. No colour marks a state or a phase. Every rule reaches the
+   table's own rows and cells only (">"), never a posted-results table inside a record. */
 .trials-group {
   margin-top: 1.5rem;
 }
@@ -140,25 +141,14 @@
   overflow: hidden;
   font-variant-numeric: tabular-nums lining-nums;
 }
-.trials-table th,
-.trials-table td {
+.trials-table > * > tr > th,
+.trials-table > * > tr > td {
   text-align: left;
   vertical-align: top;
   padding: var(--row-pad) 0.85rem;
   border-top: 1px solid var(--row-rule);
 }
-/* The trial and its title take the width; the short columns keep their words whole. */
-.trials-table tbody th {
-  width: 100%;
-  overflow-wrap: anywhere;
-}
-.trials-table td {
-  white-space: nowrap;
-}
-.trials-table .trials-record td {
-  white-space: normal;
-}
-.trials-table thead th {
+.trials-table > thead > tr > th {
   font-size: var(--label-size);
   font-weight: 600;
   color: var(--muted);
@@ -166,8 +156,12 @@
   border-top: 0;
   padding-block: 0.5rem;
 }
-.trials-table tbody th {
+/* The trial and its title keep a readable width; the short columns wrap between their words,
+   never inside one. */
+.trials-table > tbody > tr > th {
   font-weight: 600;
+  min-width: 14rem;
+  overflow-wrap: anywhere;
 }
 .trials-title {
   display: block;
@@ -175,7 +169,7 @@
   font-size: var(--note-size);
   color: var(--muted);
 }
-.trials-record td {
+.trials-table > tbody > .trials-record > td {
   border-top: 0;
   padding-top: 0;
 }
@@ -187,38 +181,33 @@
 }
 /* On a phone the head is hidden and each value carries its column's name. */
 @media (max-width: 40rem) {
-  .trials-table thead {
+  .trials-table > thead {
     display: none;
   }
-  .trials-table tr,
-  .trials-table th,
-  .trials-table td {
+  .trials-table > tbody > tr,
+  .trials-table > tbody > tr > th,
+  .trials-table > tbody > tr > td {
     display: block;
   }
-  .trials-table tbody th {
-    width: auto;
+  .trials-table > tbody > tr > th {
+    min-width: 0;
   }
-  .trials-table td {
-    white-space: normal;
-  }
-  .trials-table tbody td::before {
+  .trials-table > tbody > tr[data-trial] > td::before {
     content: attr(data-label) ": ";
     color: var(--muted);
     font-size: var(--label-size);
   }
-  .trials-table .trials-record td::before {
-    content: none;
-  }
-  .trials-table th,
-  .trials-table td {
+  .trials-table > tbody > tr > th,
+  .trials-table > tbody > tr > td {
     padding-block: 0.3rem;
     border-top: 0;
   }
-  .trials-table tbody tr[data-trial] {
+  .trials-table > tbody > tr[data-trial] {
     border-top: 1px solid var(--row-rule);
     padding-top: 0.5rem;
   }
 }
+/* On paper the table has no frame, and every record prints open (scripts/folds.ts). */
 @media print {
   .trials-table {
     border: 0;

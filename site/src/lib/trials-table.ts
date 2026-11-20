@@ -63,7 +63,7 @@ function trialRows(trial: PairTrialView): string {
     cell("State", escape(trial.state)),
     cell("Results", trial.resultsPosted ? "Posted" : "None posted"),
     `</tr>`,
-    `<tr class="trials-record"><td colspan="${COLUMNS.length}"><details><summary>Its record</summary>${trialRecord(trial)}</details></td></tr>`,
+    `<tr class="trials-record"><td colspan="${COLUMNS.length}"><details><summary>Its record<span class="visually-hidden">: ${escape(trial.nctId)}</span></summary>${trialRecord(trial)}</details></td></tr>`,
   ].join("");
 }
 
