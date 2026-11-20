@@ -7,7 +7,7 @@
 import { assertNeutral, STATUS_GLOSSES, STATUS_LABELS } from "./status.ts";
 import { PHASE_WORDS, TRIAL_STATE_WORDS, assertNoOutcomeVerdict } from "./trial-facts.ts";
 
-/** A pair's status (`ClaimStatusCode`): the same codes and words as a claim's status. */
+/** A pair's status (the bundle's `StatusCode`, `ClaimStatusCode` before lab pull request 129). */
 export { STATUS_GLOSSES as PAIR_STATUS_GLOSSES, STATUS_LABELS as PAIR_STATUS_LABELS };
 
 /** A trial's phase (`TrialPhase`): the same codes and words as a claim's trial. */
