@@ -25,9 +25,10 @@ const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowes
 // for acoziborole and "Infections" itself.
 const ANCESTOR = "acoziborole--infections";
 const narrowestBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-narrowest-"));
-// A pair filed under no topic: the lab is to make `PairRow.filing` optional, every cleared pair
-// getting a page whether or not a topic covers it. Until its bundle carries that, the schemas
-// here are copies that allow a null filing, as an optional Pydantic field is written.
+// A pair filed under no topic: lab pull request 119 makes `PairRow.filing` `PairFiling | None`,
+// every cleared pair getting a page whether or not a topic covers it. Until a bundle cut from
+// it is committed, the schemas here are copies changed exactly as that branch emits them: the
+// field stays required and may be null.
 const UNFILED = "apitegromab--muscular-atrophy";
 const unfiled = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-unfiled-"));
 const unfiledBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-unfiled-"));
@@ -37,8 +38,7 @@ for (const name of fs.readdirSync(path.join(unfiledBundle, "schemas"))) {
   const schema = JSON.parse(fs.readFileSync(file, "utf8"));
   const row = schema.$defs?.PairRow;
   if (!row) continue;
-  row.properties.filing = { anyOf: [{ $ref: "#/$defs/PairFiling" }, { type: "null" }], default: null };
-  row.required = row.required.filter((field) => field !== "filing");
+  row.properties.filing = { anyOf: [{ $ref: "#/$defs/PairFiling" }, { type: "null" }] };
   fs.writeFileSync(file, JSON.stringify(schema));
 }
 for (const folder of ["p12_pair_page", "p12_pair_data_file"]) {
