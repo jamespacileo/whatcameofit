@@ -14,7 +14,7 @@ import { build as bundleWorker } from "esbuild";
 import { parseHTML } from "linkedom";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
-import { ON_REQUEST_LIMITS, pairsConfig } from "../scripts/pairs-preview.mjs";
+import { ON_REQUEST_LIMITS, limitProblems, pairsConfig } from "../scripts/pairs-preview.mjs";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 import { categoryListing, interventionListing, topicListing } from "../src/lib/listing-view.ts";
@@ -991,4 +991,49 @@ test("every deployment with pairs is given the limit, in a namespace of its own 
     assert.equal(config.ratelimits.filter((one) => one.namespace_id === binding.namespace_id).length, 1);
   }
   assert.equal(new Set(Object.values(ON_REQUEST_LIMITS)).size, Object.keys(ON_REQUEST_LIMITS).length);
+});
+
+test("the deploy checks refuse a configuration with pairs that lacks the rate limit, or gives it another Worker's namespace", () => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-limit-refusal-"));
+  const database = { name: "thenwhat-limit-preview", id: "00000000-0000-0000-0000-000000000000" };
+  for (const [worker, base] of [["thenwhat", "wrangler.jsonc"], ["thenwhat-staging", "wrangler.staging.jsonc"], ["thenwhat-pr", "wrangler.preview.jsonc"]]) {
+    const file = pairsConfig({ base, database, scratch: path.join(scratch, worker), worker });
+    assert.deepEqual(limitProblems(file), [], worker);
+    const config = JSON.parse(fs.readFileSync(file, "utf8"));
+    const without = path.join(scratch, `${worker}-without.json`);
+    fs.writeFileSync(without, JSON.stringify({ ...config, ratelimits: config.ratelimits.filter((one) => one.name !== "ON_REQUEST_LIMIT") }));
+    assert.match(limitProblems(without).join("\n"), /binds the pairs database but not ON_REQUEST_LIMIT/, worker);
+    const shared = path.join(scratch, `${worker}-shared.json`);
+    const other = Object.values(ON_REQUEST_LIMITS).find((id) => id !== ON_REQUEST_LIMITS[worker]);
+    fs.writeFileSync(shared, JSON.stringify({ ...config, ratelimits: config.ratelimits.map((one) => (one.name === "ON_REQUEST_LIMIT" ? { ...one, namespace_id: other } : one)) }));
+    assert.match(limitProblems(shared).join("\n"), new RegExp(`namespace ${other}, not ${worker}'s own`), worker);
+  }
+  // A configuration with no pairs database is the claims site's, which makes no page on request.
+  const claims = path.join(scratch, "claims.json");
+  fs.writeFileSync(claims, JSON.stringify({ name: "thenwhat" }));
+  assert.deepEqual(limitProblems(claims), []);
+});
+
+test("a fault of the limiter never takes a page down: a limit() that throws answers the page", async () => {
+  const worker = await bundleWorker({ entryPoints: ["worker/with-pairs.mjs"], bundle: true, format: "esm", platform: "browser", conditions: ["workerd", "worker", "browser"], target: "es2022", write: false });
+  const faulty = new Miniflare(convertV4MiniflareOptions({
+    modules: [
+      { type: "ESModule", path: "entry.mjs", contents: `import site from "./site.mjs";
+export default { fetch(request, env, ctx) { return site.fetch(request, { ...env, ON_REQUEST_LIMIT: { limit() { throw new Error("limiter unavailable"); } } }, ctx); } };` },
+      { type: "ESModule", path: "site.mjs", contents: worker.outputFiles[0].text },
+    ],
+    compatibilityDate: "2026-10-01",
+    d1Databases: ["PAIRS"],
+    serviceBindings: { ASSETS: assets },
+  }));
+  try {
+    const db = await faulty.getD1Database("PAIRS");
+    for (const sql of migration()) await db.prepare(sql).run();
+    await load(db, bundle);
+    const response = await faulty.dispatchFetch(`https://faulty.test/${ON_REQUEST}`, { headers: { "CF-Connecting-IP": "192.0.2.9" } });
+    assert.equal(response.status, 200);
+    await response.body?.cancel();
+  } finally {
+    await faulty.dispose();
+  }
 });

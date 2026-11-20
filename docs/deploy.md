@@ -204,6 +204,8 @@ Two limits stand between a flood of requests and the pages the Worker makes from
 
 **In the Worker** (done in code): the `ON_REQUEST_LIMIT` rate limiting binding, which `pairsConfig` gives every deployment with pairs, each Worker its own namespace (production 4131, staging 4132, previews 4133). 600 requests a minute from one address, per Cloudflare location, on the addresses the Worker makes (a pair's page, record, embed, oEmbed and card addresses, and the listings); past it, 429 with `Retry-After: 60`. Files of the site are never counted. The binding's counts are approximate and per location ([rate limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)).
 
+A fault of the limiter never takes pages down: with the binding missing, or a `limit()` call that throws, the Worker answers the request and logs one line (`ON_REQUEST_LIMIT is not bound` or `ON_REQUEST_LIMIT failed`). The guard is at deploy time instead: `deploy.mjs` (staging and the cutover) and `pr-preview.mjs` refuse a configuration that binds the pairs database without `ON_REQUEST_LIMIT` in its own Worker's namespace at the site's limit (`limitProblems` in `scripts/pairs-preview.mjs`), and nothing is published.
+
 **At the zone** (the operator's, in the dashboard; nothing in this repository changes it): one rate limiting rule, as the Free plan allows: one rule, counted by IP, a 10-second period and a 10-second mitigation timeout, with Path and Verified Bot as the fields an expression may use ([rate limiting rules](https://developers.cloudflare.com/waf/rate-limiting-rules/)). Security › WAF › Rate limiting rules › Create rule:
 
 - **Rule name:** `Pages made on request`

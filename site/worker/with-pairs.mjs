@@ -74,11 +74,23 @@ const READ = new Set(["GET", "HEAD"]);
  */
 const RETRY_SECONDS = 60;
 
+// A fault of the limiter never takes pages down: with no binding, or a limit() call that throws,
+// the request is answered and the fault is logged. The deploy checks refuse a configuration with
+// pairs that lacks the binding (limitProblems in scripts/pairs-preview.mjs), so a deployment
+// never goes without it.
 async function overLimit(request, env) {
-  if (!env.ON_REQUEST_LIMIT) return false;
+  if (!env.ON_REQUEST_LIMIT) {
+    console.warn("ON_REQUEST_LIMIT is not bound: answering without a rate limit");
+    return false;
+  }
   const asker = request.headers.get("CF-Connecting-IP") ?? "unknown";
-  const { success } = await env.ON_REQUEST_LIMIT.limit({ key: asker });
-  return !success;
+  try {
+    const { success } = await env.ON_REQUEST_LIMIT.limit({ key: asker });
+    return !success;
+  } catch (error) {
+    console.warn(`ON_REQUEST_LIMIT failed, answering without a rate limit: ${error?.message ?? error}`);
+    return false;
+  }
 }
 
 /**
