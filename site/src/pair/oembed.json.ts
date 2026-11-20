@@ -2,12 +2,12 @@
 // embeds finds the pair's embed. The pair page announces it.
 import type { APIRoute } from "astro";
 import { SITE } from "../../site.config.mjs";
-import { pairPages, pairView } from "../lib/pairs";
+import { builtAheadPages, pairView } from "../lib/pairs";
 import { EMBED_SIZE, embedSnippet } from "../lib/share";
 import { canonicalAddress } from "../lib/structured";
 
 export function getStaticPaths() {
-  return Object.entries(pairPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
+  return Object.entries(builtAheadPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
 }
 
 export const GET: APIRoute = ({ props }) => {

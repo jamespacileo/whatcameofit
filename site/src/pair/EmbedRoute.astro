@@ -5,10 +5,10 @@ import "../styles/global.css";
 import { SITE } from "../../site.config.mjs";
 import { CARD_NOTICE, clip, monthAndYear } from "../lib/card";
 import { NOTICES } from "../lib/notices";
-import { pairPages, pairView } from "../lib/pairs";
+import { builtAheadPages, pairView } from "../lib/pairs";
 
 export function getStaticPaths() {
-  return Object.entries(pairPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
+  return Object.entries(builtAheadPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
 }
 
 const view = pairView(Astro.props.page);

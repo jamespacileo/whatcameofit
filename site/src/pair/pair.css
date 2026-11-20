@@ -1,0 +1,18 @@
+/* The pair page's own rules, for the page built ahead and the one made on request alike. */
+.pair-events {
+  padding-left: 1.2em;
+}
+.pair-trial {
+  margin-block: 1.5rem;
+}
+.pair-trial dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+.pair-trial dt {
+  font-weight: 600;
+}
+.pair-trial dd {
+  margin: 0;
+}

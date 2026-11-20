@@ -7,8 +7,9 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { APPROACH_LABELS } from "./approach.ts";
-import { assertNeutral, STATUS_LABELS } from "./status.ts";
-import { PHASE_WORDS, TRIAL_STATE_WORDS } from "./trial-facts.ts";
+import { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES } from "./pair-view.ts";
+import { STATUS_LABELS } from "./status.ts";
+import { PHASE_WORDS } from "./trial-facts.ts";
 
 const PREFIX = "p12_";
 const SCHEMAS = "schemas";
@@ -22,32 +23,7 @@ export function modelOf(folder: string): string {
     .join("");
 }
 
-/** The registry's state of a trial, as the lab codes it, in the site's own states. A code
- * absent here has no wording: the build stops on it. */
-export const PAIR_TRIAL_STATES: Record<string, keyof typeof TRIAL_STATE_WORDS> = {
-  not_yet_recruiting: "not_started",
-  recruiting: "under_way",
-  enrolling_by_invitation: "under_way",
-  active_not_recruiting: "under_way",
-  suspended: "suspended",
-  terminated: "terminated",
-  completed: "completed",
-  withdrawn: "withdrawn",
-  unknown: "unknown",
-};
-
-export const PAIR_EVENT_LABELS: Record<string, string> = {
-  registered: "Trial registered",
-  started: "Trial started",
-  suspended: "Trial suspended",
-  completed: "Trial completed",
-  terminated: "Trial terminated",
-  withdrawn: "Trial withdrawn",
-  results_posted: "Trial results posted",
-  phase_changed: "Trial phase changed",
-};
-
-assertNeutral(Object.values(PAIR_EVENT_LABELS));
+export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
 
 export interface Bundle {
   /** Page model name to its pages, by key (a pair page's key is its address). */

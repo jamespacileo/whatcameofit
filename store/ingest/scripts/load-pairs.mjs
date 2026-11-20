@@ -41,12 +41,18 @@ export function files(folder) {
   return out;
 }
 
+// A bundle's version: the checksum of its page files. The site's build records the same
+// version, the only one its Worker reads pages of (openspec pairs-site).
+export function bundleVersion(folder, pages = files(folder)) {
+  const hash = createHash("sha256");
+  for (const [name, key, text] of pages) hash.update(`${name}/${key}\n${text}\n`);
+  return hash.digest("hex").slice(0, 16);
+}
+
 // The statements that load a bundle, its version and its counts. Each statement is one line.
 export function statements(folder, { loadedAt = new Date().toISOString() } = {}) {
   const pages = files(folder);
-  const hash = createHash("sha256");
-  for (const [name, key, text] of pages) hash.update(`${name}/${key}\n${text}\n`);
-  const version = hash.digest("hex").slice(0, 16);
+  const version = bundleVersion(folder, pages);
   const rows = Object.fromEntries(TABLES.map((table) => [table, new Map()]));
   const put = (table, key, row) => rows[table].set(key, { version, ...row });
 
