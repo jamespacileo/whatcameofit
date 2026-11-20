@@ -11,7 +11,8 @@ The site SHALL be built from one bundle of page files only, with no access to a 
 
 #### Scenario: A page rendered on request
 - **WHEN** the Worker renders a pair page
-- **THEN** it reads that pair's file from the deployment's bundle version and nothing else
+- **THEN** it reads, from the deployment's bundle version only, that pair's file, the page file of the pair's intervention, and the addresses of that intervention's pairs, and nothing else
+- **AND** with no intervention page file in that version the page names no narrower pairs, and an intervention page file that fails its check gives the error page
 
 ## REMOVED Requirements
 

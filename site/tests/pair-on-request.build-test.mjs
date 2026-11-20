@@ -394,3 +394,28 @@ test("an intervention page that fails its check stops a page made on request", a
   assert.equal(response.status, 500);
   assert.equal(parseHTML(await response.text()).document.querySelector("[data-pair-unreadable]").textContent, UNREADABLE);
 });
+
+test("a narrower pair the version holds no page for is not linked, and a stored null is checked", async () => {
+  const db = await mf.getD1Database("PAIRS");
+  const version = statements(bundle).version;
+  // A slice without the African form's page: its intervention listing still names it.
+  await db.prepare("DELETE FROM pair WHERE version = ?1 AND address = 'acoziborole--trypanosomiasis-african'").bind(version).run();
+  hidden.add("/acoziborole--infections");
+  try {
+    const made = await get("/acoziborole--infections");
+    assert.equal(made.status, 200);
+    const named = [...parseHTML(await made.text()).document.querySelectorAll("[data-narrower]")].map((link) => link.dataset.narrower);
+    assert.deepEqual(named, ["acoziborole--trypanosomiasis"]);
+  } finally {
+    hidden.delete("/acoziborole--infections");
+  }
+  // An intervention page file stored as JSON null is a body like any other, and fails its check.
+  await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart' AND part > 0").bind(version).run();
+  await db.prepare("UPDATE pair_page SET body = 'null' WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart'").bind(version).run();
+  hidden.add("/tulisokibart--lung-diseases-interstitial");
+  try {
+    assert.equal((await get("/tulisokibart--lung-diseases-interstitial")).status, 500);
+  } finally {
+    hidden.delete("/tulisokibart--lung-diseases-interstitial");
+  }
+});
