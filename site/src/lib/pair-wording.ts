@@ -78,6 +78,7 @@ export const PAIR_APPROACH_LABELS: Record<string, string> = {
 export const TREE_LABELS = {
   mesh: "Body system",
   approach: "Kind of treatment",
+  topic: "Health topic",
 } as const;
 
 /** A registry a pair's search read (`RegistryCheck.registry`), by the source name the

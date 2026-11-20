@@ -93,7 +93,7 @@ Sections 1 and 2 need only the lab's step S9 and its bundle command. Section 5 w
 Design: "Browsing by hierarchy, picking several, and knowledge cards" (https://claude.ai/artifact/7Ge7Qvqct18XkwheBMKWTN). The operator decided on 2026-11-20 (16:55) to show WHO ATC with its credit, and to ship the explore page before drug classes while their research starts at once.
 
 - [x] 6.1 A knowledge card on condition, clinical category and treatment pages, from today's page files; no MeSH id or tree number on any page
-- [ ] 6.2 The explore page over today's trees (body system, health topic, kind of treatment), filtered in the browser from one built file
+- [x] 6.2 The explore page over today's trees (body system, health topic, kind of treatment), filtered in the browser from one built file
 - [ ] 6.3 **[lab]** One tree file per tree and a node file per node, with `HierarchyNode` and `HierarchyLink` rows in the link-table shape (MeSH ancestors and kind of treatment first; the pairs refactor, due 2026-11-21)
 - [ ] 6.4 The treatments and conditions index pages and node pages on request, read from 6.3's files
 - [ ] 6.5 **[lab]** Drug-class trees (ATC, FDA class and mechanism, MeSH pharmacological action), measured for coverage first (change `intervention-classes`), and a card model keyed on any subject
