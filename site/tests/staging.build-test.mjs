@@ -14,7 +14,7 @@ import { build as bundleWorker } from "esbuild";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { findDeployDatabase } from "../scripts/pairs-deploy.mjs";
-import { loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
+import { WORKER_FIRST, limitProblems, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
 import { checkStaging, smokeAddresses } from "../scripts/staging-smoke.mjs";
 
 const BUNDLE = path.resolve("tests/bundle");
@@ -26,6 +26,8 @@ let run;
 let mf;
 // The Worker's options in staging's configuration, its rate limit among them.
 let stagingOptions;
+// The configuration pairsConfig gives staging, as deploy.mjs --staging is given it.
+let stagingConfig;
 
 /** The built files, as the asset binding serves them: a page at its address, else the 404 page. */
 function assets(request) {
@@ -45,6 +47,7 @@ function assets(request) {
 before(async () => {
   const database = findDeployDatabase(DATABASE, { localState: path.join(scratch, "state") });
   const config = pairsConfig({ base: "wrangler.staging.jsonc", database, scratch, worker: "thenwhat-staging" });
+  stagingConfig = config;
   loadPairsBundle({ config, database, bundle: BUNDLE, local: true, persistTo: database.persistTo });
   run = spawnSync(process.execPath, ["scripts/deploy.mjs", "--staging", "--dry-run"], {
     encoding: "utf8",
@@ -99,6 +102,14 @@ before(async () => {
 
 after(async () => {
   if (mf) await mf.dispose();
+});
+
+test("staging's configuration runs the Worker first only where pairsConfig says, with the rate limit in staging's namespace", () => {
+  const staging = JSON.parse(fs.readFileSync(stagingConfig, "utf8"));
+  assert.equal(staging.name, "thenwhat-staging");
+  assert.deepEqual(staging.assets.run_worker_first, WORKER_FIRST);
+  assert.equal(staging.assets.not_found_handling, "none");
+  assert.deepEqual(limitProblems(stagingConfig), []);
 });
 
 test("a staging dry run checks a version of thenwhat-staging with the preview store, and names no domain", () => {

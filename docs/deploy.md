@@ -212,15 +212,13 @@ A fault of the limiter never takes pages down: with the binding missing, or a `l
 - **If incoming requests match** (Edit expression):
 
   ```text
-  (http.request.uri.path contains "--" or starts_with(http.request.uri.path, "/intervention/") or starts_with(http.request.uri.path, "/clinical/") or starts_with(http.request.uri.path, "/topic/") or starts_with(http.request.uri.path, "/data/pairs/") or starts_with(http.request.uri.path, "/embed/") or starts_with(http.request.uri.path, "/oembed/") or starts_with(http.request.uri.path, "/og/")) and not cf.bot_management.verified_bot
+  (http.request.uri.path contains "--" or http.request.uri.path contains "/intervention/" or http.request.uri.path contains "/clinical/" or http.request.uri.path contains "/topic/" or http.request.uri.path contains "/data/pairs/" or http.request.uri.path contains "/embed/" or http.request.uri.path contains "/oembed/" or http.request.uri.path contains "/og/") and not cf.bot_management.verified_bot
   ```
 
-  `contains "--"` matches a pair's address (`/<treatment>--<condition>`); verified bots (Googlebot, Bingbot and the like) are never counted.
+  `contains "--"` matches a pair's address (`/<treatment>--<condition>`); no file of the build has any of these in its path outside the families named. Verified bots (Googlebot, Bingbot and the like) are never counted: `cf.bot_management.verified_bot` needs Bot Management elsewhere, "except in rate limiting rules, where this field is available on all plans" ([the field](https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.bot_management.verified_bot/)).
 - **With the same characteristics:** IP.
-- **When rate exceeds:** 100 requests per 10 seconds (ten a second from one address).
-- **Then take action:** Block, for 10 seconds. A rate limiting rule's block answers 429 by default; if the builder offers a response status, keep 429.
-
-If the expression builder refuses `starts_with` on the Free plan, the same rule with `contains` in its place (`http.request.uri.path contains "/intervention/"` and so on) counts the same addresses.
+- **When rate exceeds:** 100 requests per 10 seconds (ten a second from one address). The threshold is ours: a person's page load asks for a few of these addresses at most (its scripts, styles and images are files at other paths), so a person browsing stays far below it. 10 seconds is the only period, and the only mitigation timeout, the Free plan offers ([availability](https://developers.cloudflare.com/waf/rate-limiting-rules/)).
+- **Then take action:** Block, for 10 seconds. Block's response code defaults to 429 ([parameters](https://developers.cloudflare.com/waf/rate-limiting-rules/parameters/)); if the builder offers a response status, keep 429.
 
 ## GitHub configuration
 
