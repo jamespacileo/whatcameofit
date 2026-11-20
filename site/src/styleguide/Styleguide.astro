@@ -16,6 +16,7 @@ import { categoryListing, interventionListing, topicListing } from "../lib/listi
 import { renderListingBand, renderListingSheet } from "../lib/listing-render";
 import { renderEmbedArticle, renderEmbedRegistries } from "../lib/embed-render";
 import { renderCard } from "../lib/card-render";
+import { trialsTable } from "../lib/trials-table";
 import { SITE } from "../../site.config.mjs";
 import "../pair/pair.css";
 
@@ -76,6 +77,11 @@ const blocks: { name: string; about: string; html: string; framed?: boolean }[] 
   },
   { name: "pairTable", about: "A list of pairs: each pair's page, where it stands and its trials.", html: sheet([pairTable("Pairs in the styleguide", rows)]) },
   { name: "meshCredit", about: "The credit NLM's terms ask for wherever a MeSH category is shown.", html: sheet([meshCredit(edition)]) },
+  {
+    name: "trialsTable",
+    about: "A pair's trials as a table (lib/trials-table.ts): results posted first, then by furthest phase; each row opens to its record. Not on a pair page yet.",
+    html: view ? sheet([trialsTable(view.trials)]) : NO_PAIR,
+  },
   {
     name: "embedFooter",
     about: "The footer of an embed: the notices every page carries and the data sources by name.",
