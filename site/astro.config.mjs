@@ -46,6 +46,14 @@ const pairPages = {
         injectRoute({ pattern: "/og/tall/[address].png", entrypoint: "./src/pair/card-tall.png.ts" });
         injectRoute({ pattern: "/embed/[address]", entrypoint: "./src/pair/EmbedRoute.astro" });
         injectRoute({ pattern: "/oembed/[address].json", entrypoint: "./src/pair/oembed.json.ts" });
+      } else {
+        // "It happened" and Anniversaries list claims by their reports, which the first pairs
+        // bundle does not carry, so a build that reads one leaves them out (operator's launch
+        // scope, 2026-11-20; openspec pairs-site tasks 5.6 and 5.7). Their addresses answer 404.
+        injectRoute({ pattern: "/it-happened", entrypoint: "./src/claim-pages/it-happened.astro" });
+        injectRoute({ pattern: "/anniversaries", entrypoint: "./src/claim-pages/anniversaries.astro" });
+        injectRoute({ pattern: "/anniversaries.xml", entrypoint: "./src/claim-pages/anniversaries.xml.ts" });
+        injectRoute({ pattern: "/rows/on-this-day/[day].txt", entrypoint: "./src/claim-pages/rows/on-this-day/[day].txt.ts" });
       }
     },
   },
