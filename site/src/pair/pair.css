@@ -215,3 +215,230 @@
     overflow: visible;
   }
 }
+
+/* The record strip (lib/record-strip.ts): a pair's dated records on one time axis. A kind of
+   mark differs by shape and by where it sits against the axis. The axis is one weight along
+   its whole length: a stretch with no mark is never faded or broken. */
+.record-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 1rem;
+}
+.strip-line {
+  display: block;
+  overflow: visible;
+  color: var(--ink);
+}
+/* Room at each end for a mark that falls on the first or the last day. */
+.strip-frame {
+  display: block;
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 40rem;
+  margin-inline: 6px;
+}
+.strip-frame .strip-line {
+  width: 100%;
+}
+.strip-years {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: var(--text-s);
+  font-variant-numeric: tabular-nums;
+}
+.strip-years span:last-child {
+  transform: translateX(6px);
+}
+.strip-years span:first-child {
+  transform: translateX(-6px);
+}
+.strip-axis {
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+.strip-notch {
+  stroke: var(--ring);
+  stroke-width: 1;
+}
+.strip-record {
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.strip-results {
+  fill: currentColor;
+}
+.strip-check {
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+.strip-key {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: var(--text-m);
+}
+.strip-key ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 1.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.strip-key li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+/* A drawing's ink is not swapped by the system, so each mark is given the system's text colour. */
+@media (forced-colors: active) {
+  .strip-axis,
+  .strip-record,
+  .strip-check,
+  .strip-notch {
+    stroke: CanvasText;
+  }
+  .strip-results {
+    fill: CanvasText;
+  }
+}
+
+
+/* The section list (lib/blocks.ts, sectionList; the claim pages' rail, recovered): the frame's
+   first column on a wide screen, sticky as the sheet scrolls; one row of chips that stays at
+   the top below 68rem, where the frame's side columns give way. The section in view is marked
+   (scripts/section-list.ts). */
+.onpage {
+  grid-column: 1;
+  position: sticky;
+  top: 0;
+  max-height: 100vh;
+  overflow: auto;
+  padding: 1.5rem 0 2rem;
+}
+.onpage-title {
+  margin: 0;
+  padding: 0 0.6rem 0.5rem;
+  font-size: var(--text-s);
+  font-weight: 700;
+  color: var(--muted);
+}
+.onpage-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.onpage a {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.42rem 0.6rem;
+  border-radius: 0.5rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: var(--text-m);
+  line-height: 1.3;
+  transition:
+    background-color 120ms,
+    color 120ms;
+}
+.onpage a .n {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: var(--text-s);
+  white-space: nowrap;
+}
+.onpage a:hover {
+  background: var(--tint);
+}
+.onpage a[aria-current] {
+  background: var(--paper);
+  box-shadow: 0 0 0 1px var(--rule);
+  color: var(--blue);
+  font-weight: 700;
+}
+@media (max-width: 68rem) {
+  .frame:not(.no-rail) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .frame:not(.no-rail) > * {
+    grid-row: auto;
+    grid-column: 1;
+  }
+  .onpage {
+    z-index: 5;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    background: var(--ground);
+    border-bottom: 1px solid var(--rule);
+  }
+  .onpage-title {
+    display: none;
+  }
+  .onpage-list {
+    display: flex;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding: 0.5rem var(--gutter);
+    scrollbar-width: none;
+  }
+  .onpage-list::-webkit-scrollbar {
+    display: none;
+  }
+  .onpage-list li {
+    flex: none;
+  }
+  .onpage a {
+    min-height: 2.75rem;
+    align-items: center;
+    white-space: nowrap;
+    padding-inline: 0.85rem;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--paper);
+  }
+  .onpage a .n {
+    margin-left: 0.1rem;
+  }
+  /* More names off either end of the row: that end fades. */
+  .onpage::before,
+  .onpage::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    bottom: 1px;
+    width: 3rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 150ms;
+  }
+  .onpage::before {
+    left: 0;
+    background: linear-gradient(to right, var(--ground) 20%, transparent);
+  }
+  .onpage::after {
+    right: 0;
+    background: linear-gradient(to left, var(--ground) 20%, transparent);
+  }
+  .onpage[data-more~="start"]::before,
+  .onpage[data-more~="end"]::after {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .onpage a,
+  .onpage::before,
+  .onpage::after {
+    transition: none;
+  }
+}
+@media print {
+  .onpage {
+    display: none;
+  }
+}

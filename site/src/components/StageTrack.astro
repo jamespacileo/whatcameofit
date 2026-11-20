@@ -1,7 +1,8 @@
 ---
-// Where a status sits on the path from laboratory to approval: six places, one marked.
-// It shows a position, not progress: a pair can reach a place without passing the others.
-import { STAGE_PATH, type StatusCode } from "../lib/status";
+// Where a status sits on the path from laboratory to approval: six places, one marked. The
+// shared block (lib/blocks.ts, stageTrack), as the styleguide draws it.
+import { stageTrack } from "../lib/blocks";
+import type { StatusCode } from "../lib/status";
 
 interface Props {
   code: StatusCode;
@@ -12,49 +13,7 @@ interface Props {
   off?: boolean;
 }
 
-// Short enough to sit under a dot; the full labels are STATUS_LABELS.
-const PLACE_NAMES: Record<string, string> = {
-  preclinical_only: "Pre\u00adclinical",
-  trial_registered: "Regis\u00adtered",
-  phase_1: "Phase 1",
-  phase_2: "Phase 2",
-  phase_3: "Phase 3",
-  approved: "Approved",
-};
-
 const { code, ends = false, named = false, off = false } = Astro.props;
-const place = STAGE_PATH.indexOf(code);
-const name = `Place ${place + 1} of ${STAGE_PATH.length} on the path from preclinical to approved`;
 ---
 
-{
-  place >= 0 && named && (
-    <span class="track named" role="img" aria-label={name}>
-      {STAGE_PATH.map((stage, index) => (
-        <span class:list={["place", { here: index === place }]}>{PLACE_NAMES[stage]}</span>
-      ))}
-    </span>
-  )
-}
-{
-  place >= 0 && !named && (
-    <span class:list={["track", { ends }]}>
-      <span class="steps" role="img" aria-label={name}>
-        {STAGE_PATH.map((_, index) => <span class:list={["step", { here: index === place }]} />)}
-      </span>
-      {ends && (
-        /* The same words a screen reader is given for the dots above. */
-        <span class="ends" aria-hidden="true">
-          Place {place + 1} of {STAGE_PATH.length}, from preclinical to approved
-        </span>
-      )}
-    </span>
-  )
-}
-{
-  place < 0 && off && !named && (
-    <span class="track off" role="img" aria-label="Not a place on the path from preclinical to approved">
-      <span class="off-mark" />
-    </span>
-  )
-}
+<Fragment set:html={stageTrack(code, { ends, named, off })} />

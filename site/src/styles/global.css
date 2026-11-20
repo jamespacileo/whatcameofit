@@ -4572,6 +4572,11 @@ body.framed {
     color: var(--muted);
   }
 
+  /* The band's lede is white on screen; on paper the band has no ground. */
+  .band.record .lede {
+    color: var(--ink);
+  }
+
   .band.record .digest {
     border-color: var(--rule);
   }
@@ -6011,6 +6016,21 @@ body:has(.band.home) .bar {
 .knowledge-card dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+/* On a record band the card is a pale panel, as the status card is: its own ink and blue
+   links, never the band's white lettering (DESIGN.md, "on-navy-ink" is for the navy grounds). */
+.band.record .knowledge-card {
+  color: var(--ink);
+}
+.band.record .knowledge-card a {
+  color: var(--blue);
+}
+.band.record .knowledge-card :focus-visible {
+  outline-color: var(--blue);
+}
+.band.record .knowledge-card ::selection {
+  background: var(--tag);
+  color: var(--ink);
 }
 @media (max-width: 30rem) {
   .knowledge-card dl {
