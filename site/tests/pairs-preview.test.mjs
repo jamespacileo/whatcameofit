@@ -58,9 +58,10 @@ test("a preview loads its bundle into the pairs database once, after the store's
   assert.deepEqual(rows, [{ version: first.version, current: 1, pairs: fs.readdirSync(path.join(PREVIEW_PAIRS_BUNDLE, "p12_pair_page")).length }]);
 });
 
-test("the previews' database keeps an older preview's version after newer loads", () => {
+test("the previews' database keeps an older preview's version after newer loads", (t) => {
   // Three distinct bundles, as three pull requests that each changed the bundle would load.
   const dir = scratch();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const persistTo = path.join(dir, "state");
   const config = pairsConfig({ base: "wrangler.preview.jsonc", database, scratch: dir });
   const versions = [];

@@ -101,7 +101,9 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
     ...TABLES.flatMap((table) => [...rows[table].values()].map((row) => insert(table, row))),
     `UPDATE pair_bundle SET current = 0 WHERE current = 1 AND version <> ${quote(version)}`,
     `UPDATE pair_bundle SET current = 1 WHERE version = ${quote(version)}`,
-    ...TABLES.map((table) => `DELETE FROM ${table} WHERE version NOT IN ${kept}`),
+    // Only the versions that fall out are deleted, each table by its key's first column, so a
+    // load reads the rows it removes and not the history it keeps.
+    ...TABLES.map((table) => `DELETE FROM ${table} WHERE version IN (SELECT version FROM pair_bundle WHERE version NOT IN ${kept})`),
     `DELETE FROM pair_bundle WHERE version NOT IN (SELECT version FROM (${kept.slice(1, -1)}))`,
   ];
   return { version, manifest, counts, sql };
