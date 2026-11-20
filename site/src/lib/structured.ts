@@ -4,7 +4,6 @@
 // fact-check, review and rating types each state a verdict, so ClaimReview, Review and
 // Rating are never used.
 import { SITE } from "../../site.config.mjs";
-import type { ExportedClaim } from "./export";
 
 /** A page's address on the public site, written as the site links it: no trailing slash. */
 export function canonicalAddress(pathname: string): string {
@@ -64,54 +63,6 @@ export function breadcrumbData(trail: Crumb[]): Structured {
       name: crumb.name,
       item: canonicalAddress(crumb.path),
     })),
-  };
-}
-
-export function claimPageData(
-  claim: ExportedClaim,
-  lastCheckedAt: string | null,
-  description?: string,
-): Structured {
-  return {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: claim.headline,
-    url: canonicalAddress(`/${claim.slug}`),
-    ...(description ? { description } : {}),
-    inLanguage: "en-GB",
-    image: canonicalAddress(`/og/${claim.slug}.png`),
-    ...(claim.first_reported_date ? { datePublished: claim.first_reported_date } : {}),
-    ...(lastCheckedAt ? { dateModified: lastCheckedAt } : {}),
-    isPartOf: { "@type": "WebSite", "@id": SITE_ID, name: SITE.name, url: canonicalAddress("/") },
-    publisher: publisher(),
-  };
-}
-
-/** The open data file, described for dataset search. */
-export function datasetData(options: {
-  description: string;
-  licence: string;
-  claimCount: number;
-  dateModified: string;
-}): Structured {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
-    name: `${SITE.name} claims`,
-    description: options.description,
-    url: canonicalAddress("/data"),
-    license: options.licence,
-    isAccessibleForFree: true,
-    inLanguage: "en-GB",
-    dateModified: options.dateModified,
-    creator: publisher(),
-    size: `${options.claimCount} claims`,
-    distribution: {
-      "@type": "DataDownload",
-      encodingFormat: "application/json",
-      contentUrl: canonicalAddress("/data/claims.json"),
-      description: "An index of every claim. Each entry gives the address of the claim's full record, one file per claim.",
-    },
   };
 }
 

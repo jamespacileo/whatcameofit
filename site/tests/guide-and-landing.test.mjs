@@ -1,14 +1,11 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
 import { test } from "node:test";
 import { yearStrip } from "../src/lib/about.ts";
-import { CLAIM_FIELDS, pickClaims } from "../src/lib/audiences.ts";
-import { APPLIES, assertNoAdvice, claimsAtWork, guideProblems, readEntry, shelfEntries, statusSlug } from "../src/lib/guide.ts";
-import { DATA_LICENCE, openData } from "../src/lib/open-data.ts";
+import { pickPairs } from "../src/lib/audiences.ts";
+import { assertNoAdvice, guideProblems, readEntry, shelfEntries, statusSlug } from "../src/lib/guide.ts";
 import { topicSentence } from "../src/lib/share.ts";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../src/lib/status.ts";
 
-const fixture = JSON.parse(fs.readFileSync(new URL("./fixture-export.json", import.meta.url), "utf8"));
 const codes = Object.keys(STATUS_LABELS);
 
 const TEXT = `## In the records\n\n${"A registry holds a record of the trial. ".repeat(12)}\n\n## What it does not tell you\n\n${"It does not say what the trial found. ".repeat(12)}`;
@@ -27,11 +24,7 @@ const entry = (slug, front = {}, text = TEXT) =>
     },
     text,
   );
-// The statuses' entries and the one the record strip's key links to.
-const statusEntries = () => [
-  ...codes.map((code) => entry(statusSlug(code), { shelf: "status", status: code })),
-  entry("record-strip"),
-];
+const statusEntries = () => codes.map((code) => entry(statusSlug(code), { shelf: "status", status: code }));
 const problemsWith = (...extra) => guideProblems([...statusEntries(), ...extra]);
 
 test("a complete set of entries passes, and a status without an entry is named", () => {
@@ -39,12 +32,6 @@ test("a complete set of entries passes, and a status without an entry is named",
   const missing = guideProblems(statusEntries().filter((held) => held.status !== "retracted"));
   assert.equal(missing.length, 1);
   assert.match(missing[0], /Origin paper retracted.*has no guide entry/);
-});
-
-test("Scenario: Guide entry missing", () => {
-  const without = guideProblems(statusEntries().filter((held) => held.slug !== "record-strip"));
-  assert.equal(without.length, 1);
-  assert.match(without[0], /no entry "record-strip"/);
 });
 
 test("an entry on how research is recorded needs a source with the day it was checked", () => {
@@ -83,22 +70,11 @@ test("a status entry takes its words from the status wording, and statuses run a
   assert.deepEqual(order.slice(0, STAGE_PATH.length), STAGE_PATH);
 });
 
-test("an entry lists up to three claims its word applies to, newest report first", () => {
-  const claims = fixture.claims;
-  const work = claimsAtWork(entry("claim", { applies: "claims" }), claims);
-  assert.equal(work.total, claims.length);
-  assert.ok(work.shown.length <= 3);
-  const dates = work.shown.map((claim) => claim.first_reported_date ?? "");
-  assert.deepEqual(dates, [...dates].sort().reverse());
-  assert.equal(claimsAtWork(entry("origin-paper"), claims), null);
-  for (const code of codes) assert.ok(APPLIES[code], `no set of claims for ${code}`);
-});
-
-test("the journalists' search finds a claim by every word typed, and nothing for a blank", () => {
-  const claims = [{ words: "aspirin dentine repair" }, { words: "usag-1 tooth regrowth" }];
-  assert.deepEqual(pickClaims(claims, "Tooth  regrowth"), [claims[1]]);
-  assert.deepEqual(pickClaims(claims, "tooth aspirin"), []);
-  assert.deepEqual(pickClaims(claims, "  "), []);
+test("the journalists' search finds a pair by every word typed, and nothing for a blank", () => {
+  const pairs = [{ words: "aspirin dentine repair" }, { words: "usag-1 tooth regrowth" }];
+  assert.deepEqual(pickPairs(pairs, "Tooth  regrowth"), [pairs[1]]);
+  assert.deepEqual(pickPairs(pairs, "tooth aspirin"), []);
+  assert.deepEqual(pickPairs(pairs, "  "), []);
 });
 
 test("the copied topic sentence is the summary, the checked month and the address", () => {
@@ -108,26 +84,14 @@ test("the copied topic sentence is the summary, the checked month and the addres
   );
 });
 
-test("the about page's years join the empty ones and mark the promised and checked years", () => {
-  const claim = {
-    first_reported_date: "2019-05-01",
-    articles: [{ url: "https://example.org/a", published_date: "2019-05-01" }],
-    events: [{ event_date: "2022-03-01" }, { event_date: "2022-09-01" }],
-    promises: [{ description: "Trials by 2027", parsed_date: "2027-01-01", article_url: "https://example.org/a" }],
-  };
-  const strip = yearStrip(claim, "2026-11-13");
+test("the about page's years join the empty ones and mark the year the records were gathered", () => {
+  const pair = { trials: [{ events: [{ day: "2019-05-01" }] }, { events: [{ day: "2022-03-01" }, { day: "2022-09-01" }] }] };
+  const strip = yearStrip(pair, "2026-11-13T00:00:00Z");
   assert.deepEqual(
     strip.map((cell) => (cell.kind === "gap" ? `${cell.from}-${cell.to}` : cell.year)),
-    [2019, "2020-2021", 2022, "2023-2025", 2026, 2027],
+    [2019, "2020-2021", 2022, "2023-2025", 2026],
   );
+  assert.equal(strip[0].records, 1);
   assert.equal(strip[2].records, 2);
-  assert.equal(strip[0].reports, 1);
-  assert.ok(strip[4].checked && strip[5].promised);
-});
-
-test("every field of a claim in the data file has words on the researchers' page", () => {
-  const file = openData(fixture, DATA_LICENCE, "credit", "https://example.org/how-it-works");
-  for (const field of Object.keys(file.claims[0])) {
-    assert.ok(CLAIM_FIELDS[field], `the data file's field ${field} is not described`);
-  }
+  assert.ok(strip[4].checked);
 });

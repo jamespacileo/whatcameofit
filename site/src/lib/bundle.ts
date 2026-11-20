@@ -96,16 +96,24 @@ export function readBundle(folder: string): Bundle {
   return { version, manifest, pages, withoutSchema };
 }
 
-/** Where a claim's address goes now: the address of the pair that came from it. A claim
- * whose slug is its pair's address moves nowhere and is left out. */
-export function movedAddresses(pairPages: any[]): Record<string, string> {
-  const moved: Record<string, string> = {};
+/** Where an old claim address goes now: the address of the one pair it leads to. A claim
+ * whose slug is its pair's address moves nowhere and is left out. A Map, not an object: a
+ * slug is any text, and "constructor" is one an object already has.
+ *
+ * A pair names its claims in `row.claim_slugs` (the lab's pull request 125): every published
+ * claim whose address leads to it, so that when a person merged two claims both old slugs
+ * lead to the one pair. `row.origin.claim_slug` names only one of them, and is read only from
+ * a bundle made before that field. */
+export function movedAddresses(pairPages: any[]): Map<string, string> {
+  const moved = new Map<string, string>();
   for (const page of pairPages) {
-    const slug = page.row.origin?.claim_slug;
     const address = page.row.pair.address;
-    if (!slug || slug === address) continue;
-    // One claim can stand behind several pairs; its address goes to none of them by rule.
-    moved[slug] = slug in moved ? "" : address;
+    const slugs: string[] = Array.isArray(page.row.claim_slugs) ? page.row.claim_slugs : [page.row.origin?.claim_slug];
+    for (const slug of new Set(slugs)) {
+      if (!slug || slug === address) continue;
+      // One claim can stand behind several pairs; its address goes to none of them by rule.
+      moved.set(slug, moved.has(slug) ? "" : address);
+    }
   }
-  return Object.fromEntries(Object.entries(moved).filter(([, address]) => address));
+  return new Map([...moved].filter(([, address]) => address));
 }

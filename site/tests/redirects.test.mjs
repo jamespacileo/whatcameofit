@@ -1,74 +1,81 @@
-// Retired topic addresses: the redirect file, and the build's refusal to drop a
-// published topic without one. Runs scripts/redirects.mjs on its own against a variant
-// of tests/fixture-export.json.
+// What the addresses of the claims the site once tracked answer now: the list the Worker
+// reads (dist/gone.json) and the renamed topics' redirect file. Runs scripts/redirects.mjs
+// on its own against tests/bundle and the frozen list in data/retired-addresses.json.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
+import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 
-function run({ retired = [], published = null, archived = undefined, moved = undefined }) {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-redirects-"));
-  const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-  fixture.retired_verticals = retired;
-  if (archived) fixture.archived = archived;
-  if (moved) fixture.moved = moved;
-  const exportFile = path.join(directory, "export.json");
-  fs.writeFileSync(exportFile, JSON.stringify(fixture));
-  const record = path.join(directory, "published-topics.json");
-  if (published) fs.writeFileSync(record, JSON.stringify(published));
-  const dist = path.join(directory, "dist");
-  fs.mkdirSync(dist);
+const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
+
+function run(bundle = "tests/bundle") {
+  const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-redirects-"));
   const result = spawnSync("node", ["scripts/redirects.mjs"], {
-    env: { ...process.env, EXPORT_FILE: exportFile, PUBLISHED_TOPICS_FILE: record, DIST_DIR: dist },
+    env: { ...process.env, PAIRS_BUNDLE: bundle, DIST_DIR: dist },
     encoding: "utf8",
   });
-  const file = path.join(dist, "_redirects");
   const goneFile = path.join(dist, "gone.json");
-  const gone = fs.existsSync(goneFile) ? JSON.parse(fs.readFileSync(goneFile, "utf8")) : null;
-  return { result, redirects: fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null, gone };
+  const file = path.join(dist, "_redirects");
+  return {
+    result,
+    gone: fs.existsSync(goneFile) ? JSON.parse(fs.readFileSync(goneFile, "utf8")) : null,
+    redirects: fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null,
+  };
 }
 
-test("Scenario: Vertical renamed after launch", () => {
-  const { result, redirects } = run({
-    retired: [{ slug: "dental-regeneration", successor: "gum-disease" }],
-    published: ["dental-regeneration", "empty-topic"],
-  });
+test("a claim one published pair came from leads to that pair, and every other claim address is gone", () => {
+  const { result, gone } = run();
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.equal(redirects, "/topic/dental-regeneration /topic/gum-disease 301\n");
+  const by = new Map(gone.map((entry) => [entry.slug, entry]));
+  assert.deepEqual(by.get("ambroxol-parkinsons-disease-dementia"), { slug: "ambroxol-parkinsons-disease-dementia", to: "ambroxol--dementia" });
+  // Every address the site once served is listed once, and none is left without an answer.
+  assert.equal(new Set(gone.map((entry) => entry.slug)).size, gone.length);
+  for (const slug of retired.pages) assert.ok(by.has(slug), slug);
+  for (const entry of gone) assert.ok(entry.to || entry.on || entry.gone === true, entry.slug);
+  // A claim with no pair in this bundle answers gone, with no date to give.
+  assert.ok(gone.some((entry) => entry.gone === true));
 });
 
-test("Scenario: Retired vertical with no record", () => {
-  const { result } = run({ published: ["dental-regeneration", "gum-disease"] });
+test("a claim the operator archived stays gone, with the day it was taken down", () => {
+  const { gone } = run();
+  for (const { slug, on } of retired.archived) {
+    assert.deepEqual(gone.find((entry) => entry.slug === slug), { slug, on });
+  }
+});
+
+test("a claim merged into another goes where the claim it became goes", () => {
+  const { gone } = run();
+  const by = new Map(gone.map((entry) => [entry.slug, entry]));
+  for (const { slug, to } of retired.moved) {
+    const after = by.get(to);
+    assert.deepEqual(by.get(slug), after.to ? { slug, to: after.to } : { slug, gone: true });
+  }
+});
+
+test("a topic renamed while claims were tracked keeps its redirect", () => {
+  const { redirects } = run();
+  assert.match(redirects, /^\/topic\/dental-regeneration \/topic\/mouth-and-teeth 301$/m);
+  assert.equal(redirects.trim().split("\n").length, retired.topics.length);
+});
+
+test("the build stops when a pair an old address leads to has no data file", () => {
+  const bundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-redirects-bundle-"));
+  fs.cpSync("tests/bundle", bundle, { recursive: true });
+  const folder = fs.readdirSync(bundle).find((name) => name.endsWith("pair_data_file"));
+  fs.rmSync(path.join(bundle, folder, "ambroxol--dementia.json"));
+  writeManifest(bundle, { madeAt: "2026-11-20T00:00:00Z" });
+  const { result, gone } = run(bundle);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /neither current nor retired: dental-regeneration\./);
+  assert.match(result.stderr, /ambroxol-parkinsons-disease-dementia leads to the pair ambroxol--dementia, which has no data file/);
+  assert.equal(gone, null);
 });
 
-test("before launch nothing is recorded and no redirect file is written", () => {
-  const { result, redirects } = run({});
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.equal(redirects, null);
-});
-
-test("the previously published transplant topic leads to the health-area directory", () => {
-  const { result, redirects } = run({ published: ["transplants"] });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.equal(redirects, "/topic/transplants /topics 301\n");
-});
-
-test("archived claims are listed for the Worker, and the list is written even when empty", () => {
-  const archived = run({ archived: [{ slug: "quiet-claim", on: "2026-11-14" }] });
-  assert.equal(archived.result.status, 0, archived.result.stdout + archived.result.stderr);
-  assert.deepEqual(archived.gone, [{ slug: "quiet-claim", on: "2026-11-14" }]);
-  assert.deepEqual(run({}).gone, []);
-});
-
-test("a merged or renamed claim's address is listed with the slug it leads to", () => {
-  const { result, gone } = run({
-    archived: [{ slug: "quiet-claim", on: "2026-11-14" }],
-    moved: [{ slug: "vsv-ebov", to: "ervebo" }],
-  });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.deepEqual(gone, [{ slug: "quiet-claim", on: "2026-11-14" }, { slug: "vsv-ebov", to: "ervebo" }]);
+test("without a bundle nothing is written", () => {
+  const { result, gone } = run("");
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /No bundle/);
+  assert.equal(gone, null);
 });

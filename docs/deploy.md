@@ -2,9 +2,23 @@
 
 The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare Worker in the Palladio account. Source code is public at https://github.com/jamespacileo/whatcameofit. The pipeline, review database, local preview and provider keys stay on the private machine.
 
-## Publishing from main is paused
+## The site is built from the bundle of pairs, and nothing publishes it but the cutover
 
-Decided by the operator on 20 November 2026: claims are being removed from the site (openspec `pairs-site`, task 3.4), so a merge to `main` no longer publishes to production. The `Deploy production` job runs only when the repository variable `PUBLISH_PRODUCTION` is `true`, and it is not set. Production keeps serving its last deployment, the claims site, until the cutover ("Pair pages in production", below), which the operator starts. The checks, the build rehearsal and pull request previews run as before. To undo the pause, set `PUBLISH_PRODUCTION` to `true`; what follows describes publishing as it was until then.
+Decided by the operator on 20 November 2026: claims are removed from the site (openspec `pairs-site`, task 3.4). The site's only input is a bundle of pairs. There is no claims export, no committed snapshot (`site/data/published-export.json` is gone) and no `Deploy production` job: a merge to `main` runs the checks, the build rehearsal and pull request previews, and publishes nothing. Production keeps serving its last deployment, the claims site, until the cutover ("Pair pages in production", below), which the operator starts.
+
+What the commands do now:
+
+```sh
+make deploy-ci-check        # rehearses the public build from site/tests/bundle; no account, nothing published
+make deploy-check           # rehearses from PAIRS_DATABASE's current bundle (thenwhat-store by default)
+make deploy ARGS=--cutover  # publishes, once the operator has said the cutover can go ahead
+```
+
+A bundle folder alone (`PAIRS_BUNDLE`, no database) is only ever a dry run: `deploy.mjs` refuses to publish one. A pull request's preview is built from `site/tests/bundle` unless `PREVIEW_PAIRS_BUNDLE` names another folder; without the preview account's pairs database it holds the pages built ahead only.
+
+Addresses the site served while it tracked claims are frozen in `site/data/retired-addresses.json`. The build writes what each answers to `dist/gone.json`, and the Worker answers from it: a claim that one published pair lists (the bundle's `claim_slugs`, or `origin.claim_slug` in a bundle made before that field) leads to the pair with a 301, with its embed, cards, oEmbed and data record; every other claim address answers 410 Gone, as does `/data/claims.json`. No file is built for any of them.
+
+The sections "Normal publishing workflow", "Local checks and emergency deployment" and the split release below describe publishing from the claims snapshot as it was. They are kept for the record until this file is rewritten for the cutover, and their commands (`make publish-data`, `make deploy-ci`, `SITE_FILES_BUCKET`) no longer exist.
 
 ## Normal publishing workflow
 
@@ -121,7 +135,7 @@ On this machine without Cloudflare, `site/tests/pairs-deploy.build-test.mjs` run
 **Publish** only at the cutover, after the operator says it can go ahead (task 5.2). Without `--cutover`, deploy.mjs refuses to publish with pair pages before building anything:
 
 ```sh
-EXPORT_FILE=data/published-export.json PAIRS_DATABASE=thenwhat-store node site/scripts/deploy.mjs --cutover
+PAIRS_DATABASE=thenwhat-store node site/scripts/deploy.mjs --cutover
 ```
 
 A checked CI build (`--reuse-build`) holds no bundle, so it is refused with `PAIRS_DATABASE`.

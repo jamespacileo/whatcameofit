@@ -1,7 +1,8 @@
-// Search and claim styling use the same built, indexed fixture.
+// The lookup box in a browser, on the site built and indexed from tests/bundle (real pair
+// pages from the lab's recorded slice) and the synthetic trial listing.
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
@@ -10,93 +11,21 @@ import { chromium, expect } from "@playwright/test";
 
 const site = fileURLToPath(new URL("../", import.meta.url));
 const origin = "http://localhost";
-const article = "https://uk.news.example.org/3";
-const example = "Fixturamab was reported to start a trial";
 const lookup = "/api/lookup";
+// A pair of the bundle with one trial, and a trial two pairs hold.
+const PAIR = { address: "ambroxol--dementia", title: "Ambroxol for dementia", word: "ambroxol", status: "Trial registered" };
+const SHARED_TRIAL = { id: "NCT05256017", pairs: ["acoziborole--infections", "acoziborole--trypanosomiasis-african"] };
 let work;
 let dist;
 let browser;
 
-async function fixture() {
-  const data = JSON.parse(await readFile(new URL("./fixture-export.json", import.meta.url), "utf8"));
-  const phase = data.claims.find(({ slug }) => slug === "phase-claim");
-  phase.intervention.name = "Fixturamab";
-  phase.headline = example;
-  phase.background.push({
-    kind: "drug",
-    fit: "exact",
-    label: "Fixturamab",
-    definition: null,
-    url: "https://targets.example/drug/synthetic",
-    source: "opentargets",
-    external_id: "synthetic",
-    version: null,
-    score: null,
-    molecule_kind: "antibody",
-    reasons: [{ code: "drug_name_equals_name", name: "fixturamab" }],
-    decided_by: "rule",
-    read_at: "2026-11-14T09:00:00Z",
-  });
-  data.card_sources.push({
-    name: "opentargets",
-    title: "Example Targets",
-    credit: "Example Targets",
-    licence: "CC0 1.0",
-    url: "https://targets.example/",
-    terms_url: "https://targets.example/terms",
-    in_data_file: true,
-  });
-
-  data.verticals.push({ slug: "skin", title: "Skin conditions" });
-  const quiet = data.claims.find(({ slug }) => slug === "quiet-claim");
-  for (let number = 1; number <= 42; number++) {
-    const slug = `coralpulse-${number}`;
-    const headline = `Coralpulse report ${number}`;
-    data.claims.push({
-      ...quiet,
-      slug,
-      headline,
-      intervention: { name: `Coralpulse compound ${number}`, synonyms: [] },
-      vertical: number <= 22 ? "gum-disease" : "skin",
-      articles: [{ ...quiet.articles[0], title: headline, url: `https://news.example.org/${slug}` }],
-      events: [],
-      promises: [],
-      matches: [],
-      reported_statements: [],
-    });
-  }
-  data.claims.push({
-    ...phase,
-    slug: "registry-fixture-gel",
-    intervention: { name: "Registry fixture gel", synonyms: [] },
-    drafted_from: "registry",
-    has_report: false,
-    headline: null,
-    summary: null,
-    first_reported_date: null,
-    articles: [],
-    promises: [],
-    reported_statements: [],
-    matches: [],
-    events: phase.events.slice(0, 1).map((event) => ({
-      ...event,
-      event_date: data.last_checked_at.slice(0, 10),
-      trial_id: "NCT09999999",
-      source_url: "https://clinicaltrials.gov/study/NCT09999999",
-    })),
-  });
-  return data;
-}
-
 before(async () => {
   work = await mkdtemp(path.join(os.tmpdir(), "thenwhat-built-search-"));
   dist = path.join(work, "dist");
-  const exportFile = path.join(work, "export.json");
-  await writeFile(exportFile, JSON.stringify(await fixture()));
   const env = {
     ...process.env,
     ASTRO_TELEMETRY_DISABLED: "1",
-    EXPORT_FILE: exportFile,
+    PAIRS_BUNDLE: path.join(site, "tests/bundle"),
     LOOKUP_URL: lookup,
     LISTED_TRIAL_PAGES: "1",
     TRIALS_LISTING_FILE: path.join(site, "tests/fixture-trials-listing.json"),
@@ -114,7 +43,7 @@ after(async () => {
   }
 });
 
-// Serve the fixture's actual assets under a secure local origin. Any other request
+// Serve the build's actual assets under a secure local origin. Any other request
 // is blocked, including a visit to a provider or a source article.
 async function openPage(t, options = {}) {
   const context = await browser.newContext({
@@ -140,204 +69,74 @@ async function openPage(t, options = {}) {
 
 const field = (page) => page.locator("#query");
 const searchHeading = (page, words) => page.getByRole("heading", { name: `Results for “${words}”`, exact: true });
-const reportLinks = (page) => page.locator("[data-search-answer]")
-  .getByRole("heading", { name: /^Coralpulse report \d+$/ }).getByRole("link");
 
 async function submit(page, words) {
   await field(page).fill(words);
   await page.getByRole("button", { name: "Look up", exact: true }).click();
 }
 
-test("reported claims combine with topic and status and survive a shared address", async (t) => {
+test("the home page's example leads to the pair it names, with its status and its trial", async (t) => {
   const page = await openPage(t);
-  const query = "?view=claims&topic=gum-disease&status=phase_2";
-  await page.goto(origin + "/" + query);
-  const claims = page.locator("#feed-claims");
-  const registry = claims.getByRole("link", { name: "Registry fixture gel" });
-  await expect(registry).toBeVisible();
-  await expect(page.locator("[data-day-row][data-no-report]")).toHaveAttribute("data-kind", "record");
-  await expect(page.locator("[data-day-row][data-no-report][data-kind='report']")).toHaveCount(0);
-  await claims.getByLabel("News coverage").selectOption("1");
-  await expect(registry).not.toBeVisible();
-  await expect(claims.getByRole("link", { name: "Fixturamab" })).toBeVisible();
-  await expect(claims.locator("[data-claim-tally]")).toHaveText("1 claim, 1 with a linked report.");
-  const shared = page.url();
-  assert.equal(new URL(shared).searchParams.get("reported"), "1");
-  assert.equal(new URL(shared).searchParams.get("topic"), "gum-disease");
-  assert.equal(new URL(shared).searchParams.get("status"), "phase_2");
-  await expect(page.locator("#feed-reported")).toHaveValue("1");
-  await page.goto(shared);
-  await expect(registry).not.toBeVisible();
-  await expect(claims.getByRole("link", { name: "Fixturamab" })).toBeVisible();
-  await expect(page.locator("[data-day-row][data-no-report]")).not.toBeVisible();
+  await page.goto(origin);
+  // The example the box offers is a treatment the bundle holds.
+  const placeholder = await field(page).getAttribute("placeholder");
+  const example = placeholder.replace("https://… or ", "");
+  assert.notEqual(example, placeholder);
+  await submit(page, example);
+  await expect(searchHeading(page, example)).toBeVisible();
+  await expect(page.locator("#results a[href]").first()).toHaveAttribute("href", /^\/[a-z0-9-]+--[a-z0-9-]+$/);
 });
 
-test("a topic opens with the reported filter and can show registry claims again", async (t) => {
-  const page = await openPage(t, { viewport: { width: 390, height: 844 } });
-  await page.goto(origin + "/topic/gum-disease?reported=1&status=phase_2");
-  const rows = page.locator("table.index");
-  const registry = rows.getByRole("link", { name: "Registry fixture gel" });
-  await expect(rows.getByRole("link", { name: "Fixturamab" })).toBeVisible();
-  await expect(registry).not.toBeVisible();
-  const news = page.getByLabel("News coverage");
-  await expect(news).toHaveValue("1");
-  await news.selectOption("");
-  await expect(registry).toBeVisible();
-  assert.equal(new URL(page.url()).searchParams.get("status"), "phase_2");
-  await expect(page.locator(".band .lede")).toContainText("with a linked report");
+test("a treatment's name finds its pair, counted in pages and never called a claim", async (t) => {
+  const page = await openPage(t);
+  await page.goto(origin);
+  await submit(page, PAIR.word);
+  await expect(searchHeading(page, PAIR.word)).toBeVisible();
+  await expect(page.getByText("1 page", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: PAIR.title, exact: true }).getByRole("link")).toHaveAttribute("href", `/${PAIR.address}`);
+  await expect(page.locator("#results").getByText(PAIR.status, { exact: true }).first()).toBeVisible();
+  await expect(page.locator("#results")).not.toContainText(/claim/i);
+  // The search is in the address, so it can be shared and reopened.
+  await page.reload();
+  await expect(page.getByRole("heading", { name: PAIR.title, exact: true })).toBeVisible();
 });
 
-test("reported-only search hides a registry-only result and can return to it", async (t) => {
+test("a registry number leads to every pair that holds the trial", async (t) => {
   const page = await openPage(t);
-  await page.goto(origin + "/?q=registry%20fixture%20gel");
-  const registry = page.locator("[data-search-answer] a.hit-title[href='/registry-fixture-gel']");
-  await expect(registry).toBeVisible();
-  await page.locator("[data-search-answer] [data-report-filter]").selectOption("1");
-  await expect(registry).not.toBeVisible();
-  await expect(page.locator("#results")).toContainText("No reported claims match");
-  assert.equal(new URL(page.url()).searchParams.get("reported"), "1");
-  await page.locator("#results [data-report-filter]").selectOption("");
-  await expect(registry).toBeVisible();
+  await page.goto(origin);
+  await submit(page, SHARED_TRIAL.id);
+  await expect(page.getByText("On record on 2 pages", { exact: true })).toBeVisible();
+  for (const address of SHARED_TRIAL.pairs) {
+    await expect(page.locator(`#results a[href="/${address}"]`).first()).toBeVisible();
+  }
+  await expect(page.locator("#results")).toContainText("A trial on record is not a treatment option.");
+  await expect(page.locator("#results")).not.toContainText(/claim/i);
 });
 
-test("the reported filter applies to followed claims without removing a follow", async (t) => {
+test("words nothing holds say so and lead to the topics", async (t) => {
   const page = await openPage(t);
-  await page.addInitScript(() => {
-    localStorage.setItem("following", JSON.stringify({
-      "registry-fixture-gel": { headline: "Registry fixture gel", status: "Phase 2 trial", since: "2026-11-10" },
-    }));
+  await page.goto(origin);
+  await submit(page, "zzzzqq");
+  await expect(page.getByText("Nothing tracked here matches “zzzzqq”.")).toBeVisible();
+  await expect(page.locator('#results a[href="/topics"]')).toBeVisible();
+  await expect(page.locator("#results")).not.toContainText(/claim/i);
+});
+
+test("an article the site does not track is sent nowhere until the reader asks", async (t) => {
+  const page = await openPage(t);
+  const requests = [];
+  await page.route(`${origin}${lookup}`, (route) => {
+    requests.push(route.request().url());
+    return route.abort();
   });
-  await page.goto(origin + "/?reported=1");
-  const following = page.locator("[data-following]");
-  await expect(following).toContainText("No reported claims among those you follow.");
-  await following.getByLabel("News coverage").selectOption("");
-  await expect(following.locator("a[href='/registry-fixture-gel']")).toBeVisible();
-  assert.ok(await page.evaluate(() => JSON.parse(localStorage.getItem("following")).hasOwnProperty("registry-fixture-gel")));
-});
-
-test("the home page's example leads to the closest claim in the built index", async (t) => {
-  const page = await openPage(t);
-  await page.goto(origin);
-  await expect(field(page)).toHaveAttribute("placeholder", "https://… or fixturamab");
-  await submit(page, "fixturamab");
-  await expect(searchHeading(page, "fixturamab")).toBeVisible();
-  await expect(page.getByText("Closest match", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: example, exact: true }).getByRole("link")).toHaveAttribute("href", "/phase-claim");
-  await expect(page.getByText(/No tracked claim holds/)).toHaveCount(0);
-});
-
-test("topic counts include later results, and browser history restores the loaded topic", async (t) => {
-  const page = await openPage(t);
-  await page.goto(origin);
-  await submit(page, "coralpulse");
-  await expect(page.getByText("First 20 of 42 tracked claims", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Gum disease 22" }).click();
-  await expect(page.getByText("First 20 of 22 in Gum disease, of 42 tracked claims", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Show 2 more" }).click();
-  await expect(reportLinks(page)).toHaveCount(22);
-  const names = await reportLinks(page).allTextContents();
-  assert.equal(new Set(names).size, 22);
-
-  await page.getByRole("button", { name: "Clear search" }).click();
-  await expect(page).toHaveURL(`${origin}/`);
-  await page.goBack();
-  await expect(page).toHaveURL(`${origin}/?q=coralpulse&topic=gum-disease`);
-  await expect(page.getByRole("button", { name: "Gum disease 22" })).toHaveAttribute("aria-pressed", "true");
-  await expect(reportLinks(page)).toHaveText(names);
-  await page.goForward();
-  await expect(searchHeading(page, "coralpulse")).toHaveCount(0);
-  await expect(field(page)).toHaveValue("");
-});
-
-test("a failed page of results preserves the first page and can be retried", async (t) => {
-  const page = await openPage(t);
-  await page.goto(origin);
-  await submit(page, "coralpulse");
-  await expect(page.getByText("First 20 of 42 tracked claims", { exact: true })).toBeVisible();
-  const first = await reportLinks(page).allTextContents();
-  const fragments = "**/pagefind/fragment/*";
-  const unavailable = (route) => route.abort();
-  await page.route(fragments, unavailable);
-  const more = page.getByRole("button", { name: "Show 20 more" });
-  await more.click();
-  await expect(page.getByRole("status").filter({ hasText: "The next claims could not be read right now." })).toBeVisible();
-  await expect(reportLinks(page)).toHaveText(first);
-  await page.unroute(fragments, unavailable);
-  await more.click();
-  await expect(page.getByText("First 40 of 42 tracked claims", { exact: true })).toBeVisible();
-  const expanded = await reportLinks(page).allTextContents();
-  assert.equal(new Set(expanded).size, 40);
-  assert.deepEqual(expanded.slice(0, 20), first);
-});
-
-test("an older topic response cannot overwrite the newer selection", { timeout: 20_000 }, async (t) => {
-  const page = await openPage(t);
-  const started = Promise.withResolvers();
-  const release = Promise.withResolvers();
-  const delivered = Promise.withResolvers();
-  await page.exposeFunction("holdGumDisease", () => {
-    started.resolve();
-    return release.promise;
-  });
-  await page.exposeFunction("gumDiseaseDelivered", () => delivered.resolve());
-  // Keep real index results. Hold only the older topic at the index's public API.
-  // Warm its fragments so that the next browser task runs after its possible redraw.
-  await page.route(`${origin}/pagefind/pagefind.js`, (route) => route.fulfill({
-    contentType: "text/javascript",
-    body: `
-      import * as index from "./built-index.js";
-      export const filters = index.filters;
-      export async function search(words, options) {
-        const answer = await index.search(words, options);
-        if (options?.filters?.topic !== "gum-disease") return answer;
-        const results = await Promise.all(answer.results.map(hit => hit.data()));
-        await holdGumDisease();
-        setTimeout(() => void gumDiseaseDelivered(), 0);
-        return { ...answer, results: results.map(result => ({ data: async () => result })) };
-      }
-    `,
-  }));
-  await page.route(`${origin}/pagefind/built-index.js`, (route) => route.fulfill({
-    path: path.join(dist, "pagefind/pagefind.js"),
-  }));
-
-  await page.goto(origin);
-  await submit(page, "coralpulse");
-  await expect(searchHeading(page, "coralpulse")).toBeVisible();
-  await page.getByRole("button", { name: "Gum disease 22" }).click();
-  await started.promise;
-  const skin = page.getByRole("button", { name: "Skin conditions 20" });
-  await skin.click();
-  const chosenCount = page.getByText("20 of 42 tracked claims, in Skin conditions", { exact: true });
-  await expect(chosenCount).toBeVisible();
-  release.resolve();
-  await delivered.promise;
-
-  assert.equal(new URL(page.url()).searchParams.get("topic"), "skin");
-  await expect(skin).toHaveAttribute("aria-pressed", "true");
-  await expect(chosenCount).toBeVisible();
-});
-
-test("a tracked article stays private through history and can be shared from the clinicians' page", async (t) => {
-  const page = await openPage(t);
-  const pathToPage = `${origin}/for/clinicians`;
-  await page.goto(pathToPage);
-  await submit(page, article);
-  const claim = page.getByRole("heading", { name: example, exact: true });
-  await expect(claim).toBeVisible();
-  await expect(page.getByText("Phase 2 trial", { exact: true }).first()).toBeVisible();
-  await expect(page).toHaveURL(new RegExp(`${pathToPage}/?$`));
-  assert.doesNotMatch(await page.evaluate(() => JSON.stringify(history.state)), /uk\.news\.example\.org/);
-  await page.goBack();
-  await expect(field(page)).toHaveValue("");
-  await expect(claim).toHaveCount(0);
-  await page.goForward();
-  await expect(field(page)).toHaveValue(article);
-  await expect(claim).toBeVisible();
-  await expect(page.getByRole("link", { name: "Card to post" })).toHaveAttribute("href", "/og/phase-claim.png");
-  await page.getByRole("button", { name: "Copy sentence" }).click();
-  await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
-  assert.match(await page.evaluate(() => navigator.clipboard.readText()), /Fixturamab.*Phase 2 trial/);
+  await page.goto(`${origin}/for/clinicians`);
+  await submit(page, "https://news.example.org/a-report-we-do-not-track");
+  await expect(page.getByText(/This article is not one we track/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Search the trial registry" })).toBeVisible();
+  assert.deepEqual(requests, []);
+  // The address typed stays out of the page's own address and history.
+  assert.doesNotMatch(page.url(), /news\.example\.org/);
+  assert.doesNotMatch(await page.evaluate(() => JSON.stringify(history.state)), /news\.example\.org/);
 });
 
 test("live article search waits for consent and keeps independent results and confidence separate", async (t) => {
@@ -385,241 +184,6 @@ test("an identifier and ordinary words both find trials in the built listing", a
   await expect(page.getByText(/Nothing tracked here matches/)).toBeVisible();
   await expect(trial).toBeVisible();
   await expect(page.getByRole("link", { name: /Zetamab with standard care in synthetic kidney condition/ })).toBeVisible();
-});
-
-async function holdSearchDetail(page) {
-  const requested = Promise.withResolvers();
-  const released = Promise.withResolvers();
-  await page.route("**/search-detail.json", async (route) => {
-    requested.resolve();
-    await released.promise;
-    await route.fallback();
-  });
-  return { requested: requested.promise, release: released.resolve };
-}
-
-test("delayed search details respect the current query and dismissal", { timeout: 20_000 }, async (t) => {
-  for (const action of ["keep", "replace", "dismiss"]) {
-    const page = await openPage(t);
-    const detail = await holdSearchDetail(page);
-    try {
-      await page.goto(origin);
-      await field(page).fill("NCT00000002");
-      await detail.requested;
-      const trial = page.getByRole("option", { name: /^NCT00000002/ });
-      await expect(trial).toBeHidden();
-      if (action === "replace") await field(page).fill("Coralpulse");
-      if (action === "dismiss") await field(page).press("Escape");
-      const arriving = page.waitForResponse("**/search-detail.json");
-      detail.release();
-      await (await arriving).finished();
-      if (action === "keep") {
-        await expect(trial).toBeVisible();
-      } else if (action === "replace") {
-        await expect(page.getByRole("option", { name: /Coralpulse report/ }).first()).toBeVisible();
-        await expect(trial).toBeHidden();
-      } else {
-        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-        await expect(field(page)).toHaveAttribute("aria-expanded", "false");
-      }
-    } finally {
-      detail.release();
-    }
-  }
-});
-
-test("a selected keyboard suggestion stays selected when detail adds options", { timeout: 20_000 }, async (t) => {
-  const page = await openPage(t);
-  const detail = await holdSearchDetail(page);
-  try {
-    await page.goto(origin);
-    await field(page).fill("Coralpulse");
-    await detail.requested;
-    const all = page.getByRole("option", { name: /Search everything for “Coralpulse”/ });
-    await expect(all).toBeVisible();
-    await field(page).press("ArrowUp");
-    await expect(all).toHaveAttribute("aria-selected", "true");
-    const previousId = await all.getAttribute("id");
-    detail.release();
-    await expect(page.getByRole("option", { name: /Coralpulse report/ }).first()).toBeVisible();
-    await expect(all).not.toHaveAttribute("id", previousId);
-    await expect(all).toHaveAttribute("aria-selected", "true");
-    await expect(field(page)).toHaveAttribute("aria-activedescendant", await all.getAttribute("id"));
-  } finally {
-    detail.release();
-  }
-});
-
-test("a listing search stays on one release when trial parts change", { timeout: 25_000 }, async (t) => {
-  const { columns } = JSON.parse(await readFile(new URL("./fixture-trials-listing.json", import.meta.url), "utf8"));
-  const first = "NCT09000001", target = "NCT09000003";
-  const title = (name, id) => `Zetamab ${name} ${id}`;
-  function listing(name, ids) {
-    const bodies = new Map();
-    const parts = ids.map((id, at) => {
-      const file = `/trials-listing/${name}-${at}.json`;
-      bodies.set(file, { columns, trials: [[id, title(name, id), null, [], "under_way", null, [], [], null]] });
-      return { file, first: id, last: id, trials: 1 };
-    });
-    return { name, ids, bodies, manifest: { set: "active-since-2025", columns, total: ids.length, parts } };
-  }
-  const older = listing("older", [first, target]);
-  const newer = listing("newer", ["NCT09000000", first, target]);
-
-  for (const keep of [false, true]) {
-    let current = older;
-    const byId = await openPage(t);
-    const byWords = await openPage(t);
-    for (const page of [byId, byWords]) {
-      await page.route(/\/trials-listing(?:\/[^/]+)?\.json$/, (route) => {
-        const { pathname } = new URL(route.request().url());
-        if (pathname === "/trials-listing.json") return route.fulfill({ json: current.manifest });
-        const json = current.bodies.get(pathname) ?? (keep && older.bodies.get(pathname));
-        return json ? route.fulfill({ json }) : route.fulfill({ status: 404 });
-      });
-      await page.goto(origin);
-      await submit(page, first);
-      await expect(page.getByRole("link", { name: title(older.name, first) })).toBeVisible();
-    }
-
-    current = newer;
-    const expected = keep ? older : newer;
-    await submit(byId, target);
-    await expect(byId.getByRole("link", { name: title(expected.name, target) })).toBeVisible();
-
-    await submit(byWords, "zetamab");
-    if (!keep) {
-      const searchAll = byWords.getByRole("button", { name: /search.*trials/i });
-      await expect(searchAll).toBeVisible();
-      await expect(byWords.locator(".listed-title")).toHaveCount(0);
-      await searchAll.click();
-    }
-    await expect(byWords.locator(".listed-title")).toHaveCount(expected.ids.length);
-    assert.deepEqual((await byWords.locator(".listed-title").allTextContents()).sort(),
-      expected.ids.map((id) => title(expected.name, id)).sort());
-  }
-});
-
-const rowSpace = { "padding-top": "var(--row-pad)", "padding-bottom": "var(--row-pad)" };
-const divider = "1px solid var(--row-rule)";
-const panel = { padding: "var(--panel-pad)", "border-radius": "var(--radius-s)" };
-const label = { "font-size": "var(--label-size)" };
-const note = { "font-size": "var(--note-size)" };
-const tableHead = {
-  ...label,
-  "font-weight": "600",
-  color: "var(--muted)",
-  "background-color": "var(--table-head)",
-};
-
-// Resolve the shared values through the browser too, so a change to the entire scale
-// can pass. Giving an individual row its own value is observable when the scale moves.
-async function checkRenderedStyles(page, samples, scale = {}) {
-  const readings = await page.evaluate(({ samples, scale }) => {
-    for (const [token, value] of Object.entries(scale)) {
-      document.documentElement.style.setProperty(token, value);
-    }
-    const reference = document.body.appendChild(document.createElement("div"));
-    const readings = samples.flatMap(([name, selector, properties]) => {
-      const target = [...document.querySelectorAll(selector)].find((node) => node.getClientRects().length);
-      if (!target) throw new Error(`No rendered ${name} (${selector})`);
-      const actual = getComputedStyle(target);
-      return Object.entries(properties).map(([property, value]) => {
-        reference.style.cssText = "position: absolute; visibility: hidden";
-        reference.style.setProperty(property, value);
-        return [
-          `${name} ${property}`,
-          actual.getPropertyValue(property),
-          getComputedStyle(reference).getPropertyValue(property),
-        ];
-      });
-    });
-    reference.remove();
-    return readings;
-  }, { samples, scale });
-  for (const [name, actual, expected] of readings) assert.equal(actual, expected, name);
-}
-
-test("rendered claim rows, labels and panels share their scale", async (t) => {
-  // In the supported no-script view the reader sees the section and trial details
-  // together. Open the native result disclosure to include its table divider.
-  const page = await openPage(t, { javaScriptEnabled: false, viewport: { width: 1440, height: 900 } });
-  await page.goto(`${origin}/phase-claim`);
-  await page.evaluate(() => {
-    document.querySelector("table.result-table").closest("details")?.setAttribute("open", "");
-    document.querySelector("#about-glance").showPopover();
-  });
-  const samples = [
-    ["Fact row", "#glance-drug", { ...rowSpace, "border-bottom": divider }],
-    ["Entry row", ".entry-rows > li:not(:last-child)", { ...rowSpace, "border-bottom": divider }],
-    ["Trial row", ".trial-group .trial-row", rowSpace],
-    ["Timetable cell", ".timetable tbody td", { ...rowSpace, "border-top": divider }],
-    ["Posted result cell", ".result-table tbody td", { "border-top": divider }],
-    ["Fact label", ".fact-sheet dt", { "font-size": "var(--text-m)" }],
-    ["Registry label", ".record-fields dt", label],
-    ["Trial label", ".trial-facts dt", label],
-    ["Match disclosure", ".fact-more .match-why-head", label],
-    ["Entry note", ".trial-meta", note],
-    ["Timetable source note", ".record .origin", note],
-    ["Glance note", ".glance-note", note],
-    ["Trial panel", ".trial-facts", panel],
-    ["Drug facts panel", ".card-facts", panel],
-  ];
-  await checkRenderedStyles(page, samples);
-  await checkRenderedStyles(page, samples, {
-    "--row-pad": "21px",
-    "--row-rule": "rgb(90, 100, 110)",
-    "--panel-pad": "18px 23px",
-    "--radius-s": "16px",
-    "--text-m": "16px",
-    "--label-size": "15px",
-    "--note-size": "14px",
-  });
-  await page.evaluate(() => {
-    document.documentElement.style.setProperty("--label-col", "164px");
-  });
-  await expect(page.locator("#glance-drug")).toHaveCSS("grid-template-columns", /^164px /);
-});
-
-test("timetable, trial and index headings use the same muted table treatment in both themes", async (t) => {
-  const page = await openPage(t, { viewport: { width: 1440, height: 900 } });
-  for (const colorScheme of ["light", "dark"]) {
-    await page.emulateMedia({ colorScheme });
-    await page.goto(`${origin}/phase-claim`);
-    await checkRenderedStyles(page, [
-      ["Timetable heading", ".timetable thead th", tableHead],
-      ["Trial heading", ".trial-columns-top", tableHead],
-    ]);
-    await page.goto(`${origin}/topic/gum-disease`);
-    await checkRenderedStyles(page, [["Index heading", ".index thead th", tableHead]]);
-  }
-});
-
-test("rendered claim text stays on a compact type scale on desktop and mobile", async (t) => {
-  const page = await openPage(t);
-  for (const width of [1440, 375]) {
-    await page.setViewportSize({ width, height: 900 });
-    await page.goto(`${origin}/phase-claim`);
-    const sizes = await page.locator("main").evaluate((main) => {
-      const seen = {};
-      const text = document.createTreeWalker(main, NodeFilter.SHOW_TEXT);
-      const range = document.createRange();
-      for (let node = text.nextNode(); node; node = text.nextNode()) {
-        const element = node.parentElement;
-        const words = node.textContent.trim();
-        if (!words || element.closest("script, style, svg, .visually-hidden")) continue;
-        range.selectNodeContents(node);
-        const style = getComputedStyle(element);
-        if (!range.getClientRects().length || style.visibility !== "visible") continue;
-        seen[style.fontSize] ??= words.slice(0, 65);
-      }
-      return seen;
-    });
-    assert.ok(Object.keys(sizes).length > 1, `${width}px: no claim text was measured`);
-    const tooSmall = Object.entries(sizes).filter(([size]) => parseFloat(size) < 12);
-    assert.deepEqual(tooSmall, [], `${width}px: readable claim text is at least 12px`);
-    assert.ok(Object.keys(sizes).length <= 10, `${width}px: ${JSON.stringify(sizes)}`);
-  }
 });
 
 test("the shared stylesheet defines one scale and uses it for font declarations", async (t) => {

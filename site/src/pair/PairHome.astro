@@ -5,6 +5,7 @@ import Base from "../layouts/Base.astro";
 import Lookup from "../components/Lookup.astro";
 import { SITE } from "../../site.config.mjs";
 import { STATUS_LABELS } from "../lib/status";
+import { siteData } from "../lib/structured";
 import { interventionListings, pairChanges, topicsIndex } from "../lib/pairs";
 import { formatDate } from "../lib/timetable";
 
@@ -15,7 +16,7 @@ const interventions = interventionListings().filter((listing) => listing.pairs.l
 const label = (code: string) => STATUS_LABELS[code as keyof typeof STATUS_LABELS];
 ---
 
-<Base current="home">
+<Base current="home" structured={siteData()}>
   <section class="band home" slot="band" aria-labelledby="lookup-title">
     <div class="wrap">
       <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>

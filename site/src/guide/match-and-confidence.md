@@ -5,8 +5,7 @@ title: Match and confidence
 answer: A match is a link this site proposes between a claim and a record in a public registry; its confidence is an automatic estimate that the record concerns the same treatment for the same condition.
 rule: how-a-status-is-set
 on_site: A match whose score is in the high band is approved by rule and its record then counts toward the status. Every match shown carries its score and its reasons, and the operator can remove one that is wrong.
-applies: matches
-related: [record, checked-by-a-person, trial-registry, claim]
+related: [record, checked-by-a-person, trial-registry]
 checked: false
 ---
 

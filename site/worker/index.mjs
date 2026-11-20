@@ -22,7 +22,6 @@ import { bounded } from "./public-cache.mjs";
 import { makeResearch } from "./research.mjs";
 import { eventStream, serverTiming, stageTimes } from "./stream.mjs";
 import { handleTrial } from "./trials.mjs";
-import { releaseFile } from "./site-release.mjs";
 
 const PATH = "/api/lookup";
 // What a reader's browser may send with text it read: this many links, each this long.
@@ -128,11 +127,14 @@ async function withLinkedArticle(platform, post, index, { fetch, contact }) {
 }
 
 /** @param {{ model: object, registry: object, papers?: object, fetch?: Function } | undefined} tools stand-ins, for tests */
-// A claim's own files, by its slug, and where each leads when the claim leads to a pair: the
-// pair's embed, oEmbed, cards and open data record, and, for the claim's own feed, the site's
-// feed of status changes (a pair has no feed of its own).
-const CLAIM_FILES = [
-  [/^\/embed\/([a-z0-9-]+)\/?$/, (to) => `/embed/${to}`],
+// The files a claim had besides its page, by its slug, while the site tracked claims (until
+// 2026-11-20), and where each leads when the claim leads to a pair: the pair's embed, oEmbed,
+// cards and open data record, and, for the claim's own feed, the site's feed of status
+// changes (a pair has no feed of its own). The two saved aliases of a page and an embed
+// (/<slug>/index.html, /embed/<slug>.html) are here too, since readers kept them.
+const OLD_FILES = [
+  [/^\/([a-z0-9-]+)\/index\.html$/, (to) => `/${to}`],
+  [/^\/embed\/([a-z0-9-]+)(?:\.html|\/index\.html|\/)?$/, (to) => `/embed/${to}`],
   [/^\/oembed\/([a-z0-9-]+)\.json$/, (to) => `/oembed/${to}.json`],
   [/^\/og\/([a-z0-9-]+)\.png$/, (to) => `/og/${to}.png`],
   [/^\/og\/square\/([a-z0-9-]+)\.png$/, (to) => `/og/square/${to}.png`],
@@ -141,14 +143,26 @@ const CLAIM_FILES = [
   [/^\/changes\/([a-z0-9-]+)\.xml$/, () => "/changes.xml"],
 ];
 
-/** Which claim file a path is, by the claim's slug, or null. */
-export function claimAsset(pathname) {
-  for (const [pattern, at] of CLAIM_FILES) {
+/** Which old file a path is, by the slug it was for, or null. */
+export function oldFile(pathname) {
+  for (const [pattern, at] of OLD_FILES) {
     const slug = pattern.exec(pathname)?.[1];
     if (slug) return { slug, at };
   }
   return null;
 }
+
+const moved = (target, here) =>
+  new Response(null, {
+    status: 301,
+    headers: { Location: new URL(`${target}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=300" },
+  });
+
+const gone = (on) =>
+  new Response(gonePage(on ?? null, SITE.name), {
+    status: 410,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" },
+  });
 
 export async function handle(request, env, tools) {
   const started = Date.now();
@@ -159,41 +173,25 @@ export async function handle(request, env, tools) {
     return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
   }
   if (here.pathname !== PATH) {
-    // A claim that leads to its pair (`pair: true` in gone.json, written only by a build that
-    // reads a bundle, openspec pairs-site 3.4a): the build made none of its files, and each
-    // file's address leads to the pair's own. Its page's address is handled below.
-    const asset = claimAsset(here.pathname);
-    if (asset) {
-      const { to, pair } = (await goneList(env.ASSETS, here.origin)).get(asset.slug) ?? {};
-      const target = to && pair ? asset.at(to) : null;
-      if (target && target !== here.pathname) {
-        return new Response(null, {
-          status: 301,
-          headers: { Location: new URL(`${target}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=300" },
-        });
-      }
+    // An address the site served while it tracked claims (dist/gone.json, written by
+    // scripts/redirects.mjs): one whose claim a single published pair came from leads to the
+    // pair (301); every other answers 410 Gone, so readers and search engines learn it was
+    // removed on purpose. RFC 9110 15.5.11: 410 is for a resource known to be gone for good.
+    const file = oldFile(here.pathname);
+    if (file) {
+      const entry = (await goneList(env.ASSETS, here.origin)).get(file.slug);
+      if (entry?.to) return moved(file.at(entry.to), here);
+      if (entry) return gone(entry.on);
     }
-    // A page the operator archived answers 410; everything else is a file of the site.
     const slug = here.pathname.replace(/^\/+|\/+$/g, "");
     if (slug && !slug.includes("/") && !slug.includes(".")) {
-      const { on, to } = (await goneList(env.ASSETS, here.origin)).get(slug) ?? {};
-      // A claim merged into another, or renamed: its address leads to the page it is at now.
-      // A claim whose slug is its pair's address leads nowhere: the pair's page is the file.
-      if (to && to !== slug) {
-        return new Response(null, {
-          status: 301,
-          // Kept for five minutes only, so a merge that is undone stops redirecting soon after the next deploy.
-          headers: { Location: new URL(`/${to}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=300" },
-        });
-      }
-      if (on) {
-        return new Response(gonePage(on, SITE.name), {
-          status: 410,
-          headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=3600" },
-        });
-      }
+      const entry = (await goneList(env.ASSETS, here.origin)).get(slug);
+      if (entry?.to) return moved(`/${entry.to}`, here);
+      if (entry) return gone(entry.on);
     }
-    return await releaseFile(request, here, env) ?? env.ASSETS.fetch(request);
+    // The old index of every claim's record has no successor in its format.
+    if (here.pathname === "/data/claims.json") return gone();
+    return env.ASSETS.fetch(request);
   }
   if (request.method !== "POST") return refuse(405, "method");
   if (!env.OPENAI_API_KEY || !env.LLM_MODEL || !env.CONTACT_EMAIL) return refuse(503, "not_set_up");

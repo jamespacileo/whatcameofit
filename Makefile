@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-site-build check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari public-export public-trials-listing publish-data deploy-check deploy deploy-ci-check deploy-ci pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-site-build check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -110,8 +110,9 @@ site-search-browser: site/node_modules
 site-search-test: site/node_modules
 	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site test:search
 
+# From PAIRS_BUNDLE, or the tests' small bundle when none is named.
 site-build: site/node_modules
-	ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
+	PAIRS_BUNDLE=$(or $(PAIRS_BUNDLE),tests/bundle) ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
 
 # Live: reads each article in site/tests/fixtures/research/cases, asks the model, OpenAlex
 # and ROR, and checks the report's paper is found. Costs a model call and up to five
@@ -184,89 +185,41 @@ store-deploy: store/ingest/node_modules
 	@test -n "$(ENV)" || { echo "Name ENV: preview or production."; exit 1; }
 	node store/ingest/scripts/deploy.mjs --env $(ENV) $(if $(CONFIRM),--confirm $(CONFIRM)) $(if $(TOKENS),--tokens-file "$(TOKENS)") $(ARGS)
 
-# A rehearsal of taking the site's export from the truth store (task 6.2). It reads the D1
-# database and the bucket named, writes an export under STORE_REHEARSAL, holds it to the
-# schema the site reads and to the checks a published snapshot must pass, and says how it
-# compares with the committed snapshot. It changes nothing the site is built from.
-#   STORE_D1=thenwhat-store-preview STORE_R2_BUCKET=thenwhat-payloads-preview make store-export-rehearsal
-# Wrangler must be signed in (or CLOUDFLARE_API_TOKEN set) with read access to both.
-STORE_REHEARSAL ?= $(CURDIR)/.store-rehearsal
-.PHONY: store-export-rehearsal
-store-export-rehearsal: store/ingest/node_modules
-	@test -n "$(STORE_D1)" || { echo "Name the D1 database with STORE_D1."; exit 1; }
-	mkdir -p $(STORE_REHEARSAL)
-	uv run --directory pipeline thenwhat export --d1 $(STORE_D1) \
-	  --store $(STORE_REHEARSAL)/store.db --payloads $(STORE_REHEARSAL)/objects \
-	  --out $(STORE_REHEARSAL)/export.json
-	uv run --directory pipeline python -m thenwhat.export.rehearsal \
-	  $(STORE_REHEARSAL)/export.json $(CURDIR)/site/export.schema.json $(CURDIR)/site/data/published-export.json
-	node site/scripts/stage-public-export.mjs $(STORE_REHEARSAL)/export.json $(STORE_REHEARSAL)/published-export.json
-
-PUBLIC_EXPORT := site/data/public-export.json
-
-# A normal export from the running pipeline: every approved, unarchived claim.
-# Outlets added since the last run are asked for their icon first; an outlet that
-# cannot be reached does not stop the export.
-public-export:
-	-docker compose exec -T pipeline thenwhat icons >&2
-	docker compose exec -T pipeline sh -c 'thenwhat export --out /tmp/public-export.json >&2 && cat /tmp/public-export.json' > $(PUBLIC_EXPORT).tmp
-	mv $(PUBLIC_EXPORT).tmp $(PUBLIC_EXPORT)
-
-# The trial listing that stands beside the export: registry facts of one named set of
-# stored trials, for the site's search and its page of an uncited trial. The site finds it
-# by name beside the export it builds from. Sends no request.
-PUBLIC_LISTING := site/data/public-trials-listing.json
-TRIALS_SET ?= active-or-ended-this-year
-
-public-trials-listing:
-	docker compose exec -T pipeline sh -c 'thenwhat trials-listing --set $(TRIALS_SET) --out /tmp/public-trials-listing.json >&2 && cat /tmp/public-trials-listing.json' > $(PUBLIC_LISTING).tmp
-	mv $(PUBLIC_LISTING).tmp $(PUBLIC_LISTING)
-
-# Review locally, then commit these snapshots. GitHub never reads the private database.
-publish-data: public-export public-trials-listing
-	node site/scripts/stage-public-export.mjs $(PUBLIC_EXPORT) site/data/published-export.json site/data/published-topics.json
-	node site/scripts/stage-trials-listing.mjs $(PUBLIC_LISTING) site/data/published-trials-listing.json site/data/published-export.json
-
+# The site is built from one bundle of pairs (openspec pairs-site). A rehearsal of the
+# public build from the small bundle the tests use: needs no Cloudflare account and
+# publishes nothing. CI runs it.
 deploy-ci-check: site/node_modules
-	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs --dry-run
-
-deploy-ci: site/node_modules
-	EXPORT_FILE=data/published-export.json node site/scripts/deploy.mjs $(if $(filter 1,$(DEPLOY_REUSE_BUILD)),--reuse-build)
+	PAIRS_BUNDLE=tests/bundle node site/scripts/deploy.mjs --dry-run
 
 # One pull request's copy of the site, on its own Worker thenwhat-pr-<number> at a
 # workers.dev address. Never production. GitHub runs this for every pull request.
 #   PR_NUMBER=12 make pr-preview-check
 pr-preview-check: site/node_modules
-	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs --dry-run
+	node site/scripts/pr-preview.mjs --dry-run
 
 # Whether the pull request's copy is already this commit's. Needs no dependencies.
 pr-preview-state:
-	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs --state
+	node site/scripts/pr-preview.mjs --state
 
 pr-preview: site/node_modules
-	EXPORT_FILE=data/published-export.json node site/scripts/pr-preview.mjs
+	node site/scripts/pr-preview.mjs
 
-# Everything a deployment does except publishing: the checks, a public build, and
-# Wrangler's own dry run.
-deploy-check: site/node_modules public-export public-trials-listing
-	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs --dry-run
-
-# The cutover rehearsal (openspec pairs-site, task 4.4): everything a deployment with pair
-# pages does except publishing. Reads the current bundle version of PAIRS_DATABASE (the
-# production store by default, read only), exports it, builds the site from it and has
-# Wrangler check the Worker with pairs. Publishing with pair pages also needs --cutover.
+# Everything a deployment does except publishing (task 4.4). Reads the current bundle
+# version of PAIRS_DATABASE (the production store by default, read only), exports it,
+# builds the site from it and has Wrangler check the Worker.
 PAIRS_DATABASE ?= thenwhat-store
-deploy-pairs-check: site/node_modules
-	EXPORT_FILE=data/published-export.json PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs --dry-run
+deploy-check deploy-pairs-check: site/node_modules
+	PAIRS_BUNDLE= PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs --dry-run
 
-# Publish to Cloudflare at SITE_URL's domain. Refuses a preview export and a
-# local address.
-deploy: site/node_modules public-export public-trials-listing
-	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs
+# Publish to Cloudflare at SITE_URL's domain, from PAIRS_DATABASE's current bundle version.
+# Refuses a local address, and refuses to publish without the operator's word:
+#   make deploy ARGS=--cutover
+deploy: site/node_modules
+	PAIRS_BUNDLE= PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs $(ARGS)
 
 # The site with its registry search, on this machine only: http://localhost:8787
-# Reads the model settings from .env and builds from site/data/export.json if there is one.
+# Reads the model settings from .env and builds from PAIRS_BUNDLE (the tests' small bundle unless named).
 lookup-dev: site/node_modules
 	node site/scripts/dev-vars.mjs
-	LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
+	PAIRS_BUNDLE=$(or $(PAIRS_BUNDLE),tests/bundle) LOOKUP_URL=/api/lookup ASTRO_TELEMETRY_DISABLED=1 pnpm --dir site run build
 	pnpm --dir site exec wrangler dev --port 8787

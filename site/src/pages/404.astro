@@ -1,7 +1,9 @@
 ---
 import Base from "../layouts/Base.astro";
 import Unfound from "../components/Unfound.astro";
-import { listedTopics } from "../lib/export";
+import { topicsIndex } from "../lib/pairs";
+
+const topics = topicsIndex();
 ---
 
 <Base title="No page at this address">
@@ -9,21 +11,21 @@ import { listedTopics } from "../lib/export";
   <h1 class="title">No page record found</h1>
   <Unfound />
   <p class="lede">
-    No tracked claim has this address. It may never have been tracked, or the address may be
-    mistyped. Last checked: just now.
+    No treatment and condition followed here has this address. It may never have been followed,
+    or the address may be mistyped. Last checked: just now.
   </p>
   <ul class="plain">
-    <li><a href="/">Search the tracked claims</a></li>
+    <li><a href="/">Search the treatments and conditions followed</a></li>
     {
       // A handful of topics are named here; more than that are a list of their own.
-      listedTopics.length > 6 ? (
+      topics.length > 6 ? (
         <li>
-          <a href="/topics">All {listedTopics.length} topics</a>
+          <a href="/topics">All {topics.length} topics</a>
         </li>
       ) : (
-        listedTopics.map((vertical) => (
+        topics.map((topic) => (
           <li>
-            <a href={`/topic/${vertical.slug}`}>All claims in {vertical.title.toLowerCase()}</a>
+            <a href={`/topic/${topic.slug}`}>Everything in {topic.title.toLowerCase()}</a>
           </li>
         ))
       )

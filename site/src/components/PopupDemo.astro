@@ -14,7 +14,7 @@ import {
   wasNow,
   type RegistryRecord,
 } from "../lib/extension-page";
-import type { LookupClaim } from "../lib/lookup-claim";
+import type { PairLookup as LookupClaim } from "../lib/pairs";
 import { NOTICES } from "../lib/notices";
 import { STAGE_PATH } from "../lib/status";
 
@@ -143,14 +143,6 @@ const places = STAGE_PATH.length;
                 <p class="pp-tags">
                   {record.phase && <span class="pp-chip">{record.phase}</span>}
                   {record.state && <span class="pp-chip">{record.state}</span>}
-                </p>
-                <p class="pp-match">
-                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10" />
-                    <circle cx="12" cy="12" r="6" />
-                    <circle cx="12" cy="12" r="2" />
-                  </svg>
-                  {record.confidence}
                 </p>
               </li>
             ))}

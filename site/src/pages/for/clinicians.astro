@@ -3,20 +3,21 @@
 // dated sentence to copy and the card. Openspec landing-pages-and-guide.
 import Lookup from "../../components/Lookup.astro";
 import Audience from "../../layouts/Audience.astro";
-import { data } from "../../lib/export";
-import { exampleClaim } from "../../lib/extension-page";
+import { examplePair } from "../../lib/extension-page";
+import { pairPages, pairView } from "../../lib/pairs";
 import { statusSlug } from "../../lib/guide";
 import { NOTICES } from "../../lib/notices";
 import { STATUS_LABELS } from "../../lib/status";
 
-const example = exampleClaim(data.claims);
+const examplePage = examplePair(Object.values(pairPages()));
+const example = examplePage && pairView(examplePage);
 ---
 
 <Audience
   audience="clinicians"
   title="Asked about a headline?"
-  lede="Paste the link to the article, or type the treatment. If the claim is tracked, the answer is where it stands in the public records, with a dated sentence to copy into your reply."
-  description="Look up a reported breakthrough a patient or relative has asked about: its status in the public records, and a dated sentence to copy."
+  lede="Paste the link to the article, or type the treatment. If the treatment is followed here, the answer is where it stands in the public records, with a dated sentence to copy into your reply."
+  description="Look up a treatment a patient or relative has asked about: its status in the public records, and a dated sentence to copy."
 >
   <Lookup
     slot="tool"
@@ -26,21 +27,20 @@ const example = exampleClaim(data.claims);
 
   <h2 class="bar">Browse by clinical category</h2>
   <p>
-    Each claim is also filed under the MeSH categories its registered trials and published
-    papers are indexed under, in the U.S. National Library of Medicine's own names and
+    Each treatment and condition is also filed under the MeSH category of its condition, in the U.S. National Library of Medicine's own names and
     hierarchy: <a href="/clinical">clinical categories</a>. A category says what the records
     are about. It is not a diagnosis, and a registered trial is not a treatment option.
   </p>
 
-  <h2 class="bar">A claim page prints cleanly</h2>
+  <h2 class="bar">A page prints cleanly</h2>
   <p>
-    Each claim page prints as one document: the status, what it means, the dated records with
+    Each treatment and condition's page prints as one document: the status, what it means, the dated records with
     their sources, and the two notices. Menus and buttons are left off the paper.
     {
       example && (
         <>
           {" "}
-          An example to print: <a href={`/${example.slug}`}>{example.intervention.name}</a>.
+          An example to print: <a href={`/${example.address}`}>{example.title}</a>.
         </>
       )
     }

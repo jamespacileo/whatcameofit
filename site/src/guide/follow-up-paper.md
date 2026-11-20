@@ -5,7 +5,6 @@ title: Follow-up paper
 answer: A follow-up paper is a later publication that cites a claim's origin paper and either shares an author with it or names the treatment.
 rule: where-the-data-comes-from
 on_site: A follow-up paper is listed on the claim page as a record, with its date and a link to the publishing record. It does not change the status, which is set from trials, approvals and retractions.
-applies: follow-up-papers
 related: [origin-paper, record, retraction, no-signal]
 checked: false
 ---

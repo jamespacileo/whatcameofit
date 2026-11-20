@@ -37,30 +37,12 @@ export function pullRequestWorker(number) {
 }
 
 /**
- * Why this export must not be deployed to this address: one sentence each, all at once.
+ * Why the site must not be deployed to this address: one sentence each, all at once.
  * An empty list means the deployment may go ahead.
  */
-export function deployProblems({ data, siteUrl }) {
-  const problems = [];
-
+export function deployProblems({ siteUrl }) {
   const address = addressProblem(siteUrl);
-  if (address) problems.push(address);
-
-  if (data.preview) {
-    problems.push(
-      "The export is a preview. A preview is never deployed. Write a normal export first (make public-export).",
-    );
-  }
-
-  const claims = data.claims ?? [];
-  if (claims.length === 0) {
-    problems.push("The export holds no claims. There is nothing to publish.");
-  }
-
-  // A claim no person checked is published: openspec auto-publish, decided 2026-11-13.
-  // The export says which claims a person checked.
-
-  return problems;
+  return address ? [address] : [];
 }
 
 const NOT_YET_REGISTERED = /\[code: 10007\]/;

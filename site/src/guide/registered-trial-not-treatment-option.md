@@ -5,7 +5,6 @@ title: Why a registered trial is not a treatment option
 answer: A registered trial is a research study set up to find out whether a treatment is safe and whether it works; its registry record describes that study and is not an offer of the treatment.
 rule: what-this-site-never-says
 on_site: This site lists trials as records of research. A trial entry does not say where a trial takes place or who may take part in it, and every page carries the notice that a registered clinical trial is not a treatment option.
-applies: registered-not-approved
 sources:
   - name: "ClinicalTrials.gov, Learn About Studies"
     url: https://clinicaltrials.gov/study-basics/learn-about-studies

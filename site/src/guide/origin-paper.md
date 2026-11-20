@@ -5,7 +5,7 @@ title: Origin paper
 answer: The origin paper is the publication the first news reports of a claim were about; a claim has at most one.
 rule: how-a-status-is-set
 on_site: The origin paper matters to a status in one way. If it has a retraction notice, the status is “Origin paper retracted”, and that rule is applied before any other.
-related: [follow-up-paper, origin-paper-retracted, retraction, claim]
+related: [follow-up-paper, origin-paper-retracted, retraction]
 checked: false
 ---
 

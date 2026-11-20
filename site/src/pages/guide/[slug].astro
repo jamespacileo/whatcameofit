@@ -1,24 +1,17 @@
 ---
 // One guide entry (openspec landing-pages-and-guide): the answer, what the word rests
-// on in the records, what it does not tell the reader, the site's rule for it with
-// claims where it applies today, its sources, and the entries beside it.
+// on in the records, what it does not tell the reader, the site's rule for it,
+// its sources, and the entries beside it.
 import ArrowLeft from "@lucide/astro/icons/arrow-left";
 import ArrowRight from "@lucide/astro/icons/arrow-right";
 import Base from "../../layouts/Base.astro";
-import ClaimTable from "../../components/ClaimTable.astro";
 import ReportError from "../../components/ReportError.astro";
 import StageTrack from "../../components/StageTrack.astro";
-import { data } from "../../lib/export";
-import { METHOD_SECTIONS, SHELVES, claimsAtWork, neighbours } from "../../lib/guide";
+import { METHOD_SECTIONS, SHELVES, neighbours } from "../../lib/guide";
 import { entryAt, entryBody, guide } from "../../lib/guide-entries";
 import { GUIDE_UNCHECKED_NOTE } from "../../lib/notices";
-import { hasLinkedReport, reportedClaimCount } from "../../lib/reports";
 import { definedTermData } from "../../lib/structured";
 import { formatDate } from "../../lib/timetable";
-import { pairBundleFolder } from "../../lib/pairs";
-
-// A build that reads a bundle has no "It happened" page to link (pairs-site task 5.6).
-const moreShown = (href: string) => !(pairBundleFolder() && href === "/it-happened");
 
 export function getStaticPaths() {
   return guide.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
@@ -27,9 +20,6 @@ export function getStaticPaths() {
 const { entry } = Astro.props;
 const Body = entryBody(entry.slug);
 const shelf = SHELVES.find((shelf) => shelf.id === entry.shelf)!;
-const work = claimsAtWork(entry, data.claims);
-const total = data.claims.length;
-const reported = reportedClaimCount(data.claims);
 const related = entry.related.map((slug) => entryAt(slug)!);
 const { previous, next } = neighbours(guide, entry);
 const CHECKED_ENTRY = "checked-by-a-person";
@@ -80,30 +70,6 @@ const CHECKED_ENTRY = "checked-by-a-person";
       {entry.onSite}{" "}
       <a href={`/how-it-works#${entry.rule}`}>The rule: {METHOD_SECTIONS[entry.rule]}</a>
     </p>
-    {
-      work &&
-        (work.total === 0 ? (
-          <p>{work.none}</p>
-        ) : (
-          <>
-            <p>
-              {work.total} of {total} tracked {total === 1 ? "claim" : "claims"} {work.many}
-              {data.last_checked_at && <> when the registries were checked on {formatDate(data.last_checked_at)}</>}.
-              {" "}{reported} of the {total} tracked {total === 1 ? "claim" : "claims"} with a linked report.
-              {work.total > work.shown.length && (work.shown.every(hasLinkedReport)
-                ? ` These are the ${work.shown.length} most recently reported.`
-                : ` Showing ${work.shown.length} examples.`)}
-            </p>
-            <ClaimTable claims={work.shown} caption={`Tracked claims: ${entry.title}`} />
-            {moreShown(work.more.href) && (
-              <p class="rest">
-                <a href={work.more.href}>{work.more.label}</a>
-              </p>
-            )}
-          </>
-        ))
-    }
-
     <h2 class="bar" id="sources">Sources</h2>
     <ul class="plain">
       <li>

@@ -1,8 +1,8 @@
 // The pair page and the pages that list pairs (openspec pairs-site, tasks 3.1 to 3.3), built
 // from tests/bundle: real pair pages the lab's own pipeline test writes from its recorded
-// slice. The claims site is built beside it from tests/fixture-export.json, and a build given
-// no bundle makes no pair page. A third build drops the ancestor pair the lab will stop
-// making, to show the listings roll pairs up the MeSH tree themselves.
+// slice. The bundle is the build's only input, and a build given none stops. A second build
+// drops the ancestor pair the lab will stop making, to show the listings roll pairs up the
+// MeSH tree themselves.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -20,7 +20,6 @@ import { SITE } from "../site.config.mjs";
 import { stateFor } from "../../extension/src/lookup.js";
 
 const withBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-"));
-const without = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-off-"));
 const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowest-"));
 // The bundle as the lab will cut it: a pair only at the most specific MeSH term, so no pair
 // for acoziborole and "Infections" itself.
@@ -44,7 +43,7 @@ const TWO_TRIALS = "acoziborole--infections";
 
 function build(outDir, env = {}) {
   return spawnSync("npx", ["astro", "build", "--outDir", outDir], {
-    env: { ...process.env, EXPORT_FILE: "tests/fixture-export.json", ASTRO_TELEMETRY_DISABLED: "1", ...env },
+    env: { ...process.env, ASTRO_TELEMETRY_DISABLED: "1", ...env },
     encoding: "utf8",
   });
 }
@@ -65,7 +64,6 @@ const addresses = (files) => files.map((file) => file.row.pair.address).sort();
 before(() => {
   for (const [dir, env] of [
     [withBundle, { PAIRS_BUNDLE: "tests/bundle" }],
-    [without, { PAIRS_BUNDLE: "" }],
     [narrowest, { PAIRS_BUNDLE: narrowestBundle }],
   ]) {
     const result = build(dir, env);
@@ -73,7 +71,7 @@ before(() => {
   }
 });
 
-test("every pair built ahead has a page at its address, beside the claims site", () => {
+test("every pair built ahead has a page at its address", () => {
   assert.ok(Object.keys(built).length > 0);
   for (const address of Object.keys(pages)) assert.equal(fs.existsSync(path.join(withBundle, address)), address in built, address);
   for (const [address, file] of Object.entries(built)) {
@@ -82,8 +80,6 @@ test("every pair built ahead has a page at its address, beside the claims site",
     assert.equal(document.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
     assert.match(document.querySelector("[data-pair-status]").textContent, new RegExp(STATUS_LABELS[file.row.status.code]));
   }
-  // The claims site is still built in full.
-  assert.ok(fs.existsSync(path.join(withBundle, "approved-claim", "index.html")));
 });
 
 test("a pair with two trials shows both, and lists the events that set its status", () => {
@@ -190,11 +186,12 @@ test("the changes feed has an entry for each change in each pair's history, link
 
 test("the lookup file lists every pair by its address, in the shape the released extension reads", () => {
   const lookup = JSON.parse(fs.readFileSync(path.join(withBundle, "lookup.json"), "utf8"));
-  const claimsLookup = JSON.parse(fs.readFileSync(path.join(without, "lookup.json"), "utf8"));
-  assert.deepEqual(Object.keys(lookup).sort(), Object.keys(claimsLookup).sort());
+  // The file's keys are a wire format: the released extension reads them under these names,
+  // "claims" among them, from when the site tracked claims (extension/src/lookup.js).
+  assert.deepEqual(Object.keys(lookup).sort(), ["articles", "claims", "generated_at", "last_checked", "live", "notices", "places", "preview", "schema_version", "topics"]);
   assert.deepEqual(Object.keys(lookup.claims).sort(), Object.keys(pages).sort());
-  const claimKeys = Object.keys(Object.values(claimsLookup.claims)[0]).sort();
-  for (const entry of Object.values(lookup.claims)) assert.deepEqual(Object.keys(entry).sort(), claimKeys);
+  const entryKeys = ["first_reported", "headline", "indication", "latest_promise", "meaning", "names", "no_signal", "page", "place", "status", "terms", "topic", "unchecked"];
+  for (const entry of Object.values(lookup.claims)) assert.deepEqual(Object.keys(entry).sort(), entryKeys);
   const site = new URL(SITE.url).host;
   for (const [address, file] of Object.entries(pages)) {
     const state = stateFor(`${site}/${address}`, { index: lookup, savedAt: null }, site);
@@ -223,10 +220,9 @@ test("each pair's open data record is the lab's data file as written, with the l
     assert.match(record.licence, /CC BY 4\.0/);
     assert.deepEqual(record.pair, file.pair);
   }
-  assert.ok(!fs.existsSync(path.join(without, "data", "pairs")));
 });
 
-test("the sitemap lists pair addresses and the pages that list pairs, and no claim's page", () => {
+test("the sitemap lists pair addresses and the pages that list pairs", () => {
   const locations = (dir) =>
     [...fs.readFileSync(path.join(dir, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname);
   const listed = new Set(locations(withBundle));
@@ -234,9 +230,6 @@ test("the sitemap lists pair addresses and the pages that list pairs, and no cla
   for (const file of Object.values(readBundle("tests/bundle").pages.PairInterventionPage)) {
     assert.ok(listed.has(`/intervention/${file.intervention.slug}`));
   }
-  assert.ok(!listed.has("/approved-claim"));
-  assert.ok(locations(without).includes("/approved-claim"));
-  for (const address of Object.keys(pages)) assert.ok(!locations(without).includes(`/${address}`));
 });
 
 test("the home page opens with the lookup box, then the latest changes, topics and treatments of pairs", () => {
@@ -250,9 +243,6 @@ test("the home page opens with the lookup box, then the latest changes, topics a
   assert.deepEqual(topics.sort(), [...new Set(Object.values(pages).filter((file) => file.row.filing).map((file) => file.row.filing.vertical))].sort());
   const treatments = [...document.querySelectorAll('[data-home="treatments"] [data-intervention]')].map((item) => item.dataset.intervention);
   assert.deepEqual(treatments.sort(), [...new Set(Object.values(pages).map((file) => file.row.intervention.slug))].sort());
-  // The claims home is left out whole, with its scripts.
-  assert.equal(page(without, "").querySelector("[data-home]"), null);
-  assert.ok(fs.readFileSync(path.join(without, "index.html"), "utf8").length > fs.readFileSync(path.join(withBundle, "index.html"), "utf8").length);
 });
 
 test("the search detail file gives each pair its trials, by the pair's address", () => {
@@ -262,8 +252,6 @@ test("the search detail file gives each pair its trials, by the pair's address",
     assert.deepEqual(detail.claims[address].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
     assert.equal(detail.claims[address].reports.length, file.row.first_report ? 1 : 0);
   }
-  const claimsDetail = JSON.parse(fs.readFileSync(path.join(without, "search-detail.json"), "utf8"));
-  for (const address of Object.keys(pages)) assert.equal(claimsDetail.claims[address], undefined);
 });
 
 test("each pair built ahead has its cards and embed, and its page names them", () => {
@@ -287,10 +275,6 @@ test("each pair built ahead has its cards and embed, and its page names them", (
     assert.match(document.querySelector('meta[property="og:image"]').getAttribute("content"), new RegExp(`/og/${address}\\.png`));
     assert.match(document.querySelector('meta[property="og:image:alt"]').getAttribute("content"), /Not medical advice/);
     assert.match(document.querySelector('link[type="application/json+oembed"]').getAttribute("href"), new RegExp(`/oembed/${address}\\.json$`));
-  }
-  for (const address of Object.keys(pages)) {
-    assert.ok(!fs.existsSync(path.join(without, "og", `${address}.png`)), address);
-    assert.ok(!fs.existsSync(path.join(without, "embed", address)), address);
   }
 });
 
@@ -355,12 +339,10 @@ test("the footer's Data page describes the pairs' files and its link opens the p
   // The example record it names is a file of the build.
   const example = [...data.querySelectorAll("a")].map((a) => a.getAttribute("href")).find((href) => href?.startsWith("/data/pairs/"));
   assert.ok(fs.existsSync(path.join(withBundle, example)), example);
-  // Without a bundle the page is the claims' as before.
-  assert.ok(page(without, "data").querySelector('a[href="/data/claims.json"]'));
 });
 
-test("a build that reads a bundle leaves out It happened and Anniversaries, and links neither", () => {
-  // Launch scope (2026-11-20; openspec pairs-site tasks 5.6, 5.7): both list claims by their
+test("the site has no It happened or Anniversaries page, and links neither", () => {
+  // Launch scope (2026-11-20; openspec pairs-site tasks 5.6, 5.7): both listed claims by their
   // reports, which the bundle does not carry. Their addresses answer 404.
   const GONE = ["/it-happened", "/anniversaries", "/anniversaries.xml"];
   for (const file of ["it-happened/index.html", "anniversaries/index.html", "anniversaries.xml"]) {
@@ -385,10 +367,6 @@ test("a build that reads a bundle leaves out It happened and Anniversaries, and 
   assert.deepEqual(linked, []);
   // Nor does the guide's entry on approval send a reader to the page by name.
   assert.doesNotMatch(page(withBundle, "guide/approved").body.textContent, /It happened/);
-  // A build with no bundle still has them.
-  assert.ok(fs.existsSync(path.join(without, "it-happened", "index.html")));
-  assert.ok(fs.existsSync(path.join(without, "anniversaries", "index.html")));
-  assert.ok(fs.existsSync(path.join(without, "anniversaries.xml")));
 });
 
 test("a pair filed under no topic still has its page, and is reached from every list but a topic's", () => {
@@ -413,17 +391,18 @@ test("a pair filed under no topic still has its page, and is reached from every 
   assert.match(sitemap, new RegExp(`/${UNFILED}</loc>`));
 });
 
-test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
-  for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
-  assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));
-  assert.ok(!fs.existsSync(path.join(without, "intervention")));
-  assert.ok(!fs.existsSync(path.join(without, "condition")));
-  assert.match(page(without, "topic/gum-disease").querySelector("h1").textContent, /gum/i);
-  assert.equal(page(without, "topic/gum-disease").querySelector("[data-pair-table]"), null);
-  assert.equal(page(without, "topics").querySelector("[data-listing]"), null);
-  assert.equal(page(without, "clinical").querySelector("[data-listing]"), null);
-  const feed = fs.readFileSync(path.join(without, "changes.xml"), "utf8");
-  for (const address of Object.keys(pages)) assert.ok(!feed.includes(`/${address}"`), address);
+test("a build given no bundle stops, saying what it needs", () => {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-none-"));
+  const result = build(out, { PAIRS_BUNDLE: "" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stdout + result.stderr, /PAIRS_BUNDLE/);
+});
+
+test("no page, file or address of the build is a claim's", () => {
+  for (const gone of ["data/claims.json", "data/claims", "rows", "year", "source", "outlet-icons"]) {
+    assert.ok(!fs.existsSync(path.join(withBundle, gone)), gone);
+  }
+  assert.doesNotMatch(fs.readFileSync(path.join(withBundle, "sitemap.xml"), "utf8"), /claims/);
 });
 
 // Task 2.4: the bundle carries codes and the site words them. No code reaches a reader as a

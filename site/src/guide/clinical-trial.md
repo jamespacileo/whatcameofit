@@ -5,7 +5,6 @@ title: Clinical trial
 answer: A clinical trial is a research study in which people are assigned to one or more treatments, or other interventions, so that the effect on their health can be measured.
 rule: how-a-status-is-set
 on_site: Every status from “Trial registered” to “Phase 3 trial” rests on the registry record of a clinical trial matched to the claim. The claim page lists each trial once and links its record.
-applies: trials
 sources:
   - name: "World Health Organization, International Clinical Trials Registry Platform"
     url: https://www.who.int/clinical-trials-registry-platform

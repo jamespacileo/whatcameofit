@@ -3,7 +3,7 @@ import Base from "../layouts/Base.astro";
 import StageTrack from "../components/StageTrack.astro";
 import StatusMade from "../components/StatusMade.astro";
 import { brandAsset } from "../lib/brand";
-import { data } from "../lib/export";
+import { PAIR_SOURCES } from "../lib/pair-record";
 import { statusSlug } from "../lib/guide";
 import { SITE } from "../../site.config.mjs";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "../lib/status";
@@ -392,7 +392,7 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
   </p>
   <ul>
     {
-      data.sources.map((source) => (
+      PAIR_SOURCES.map((source) => (
         <li>
           <a href={source.url}>{source.name}</a>
         </li>

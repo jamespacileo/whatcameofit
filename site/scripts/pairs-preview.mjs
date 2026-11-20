@@ -5,7 +5,7 @@
 // makes the pages not built ahead from it.
 //
 // When the preview's token cannot read that database, or it does not exist, or it is not in
-// the EU, the pairs part is left out and said why: the preview is the claims site as before.
+// the EU, the preview holds only the pages built ahead, and its log says why.
 // Production (wrangler.jsonc) is never read or written here.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
