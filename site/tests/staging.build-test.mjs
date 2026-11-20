@@ -115,8 +115,9 @@ test("the staging smoke checks pass against the build's Worker, every answer mar
 });
 
 /** One address of every kind of answer the Worker gives, from the build: a built page passed
- * through from the assets, a page and a data file made on request, a 301, a 410, a 404, and the
- * error page of a file that fails its check (one is broken in D1 below). */
+ * through from the assets, a page, a listing and a data file made on request, a 301, a 410, a
+ * 404, and the error page of a file that fails its check (one is broken in D1 below). A 304
+ * joins them once pages carry ETags (openspec pairs-site 4.6, item 5). */
 async function everyKind() {
   const { checks } = smokeAddresses("dist");
   const db = await mf.getD1Database("PAIRS");
@@ -125,7 +126,9 @@ async function everyKind() {
   const broken = pages.at(-1).address;
   await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairPage' AND key = ?2 AND part > 0").bind(version, broken).run();
   await db.prepare("UPDATE pair_page SET body = '{}' WHERE version = ?1 AND model = 'PairPage' AND key = ?2").bind(version, broken).run();
-  return [...checks, { pathname: `/${broken}`, status: 500 }, { pathname: "/pair-shell", status: 404 }];
+  // A listing, made on request from the lab's file (worker/listings.mjs).
+  const listing = `/intervention/${fs.readdirSync(path.join(BUNDLE, "p12_pair_intervention_page")).sort()[0].slice(0, -5)}`;
+  return [...checks, { pathname: listing, status: 200 }, { pathname: `/${broken}`, status: 500 }, { pathname: "/pair-shell", status: 404 }];
 }
 
 test("the Worker marks every kind of answer noindex in staging's configuration, and adds none in production's", async () => {
