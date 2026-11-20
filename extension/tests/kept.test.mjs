@@ -63,7 +63,7 @@ test("an entry's candidates are its claim pages, then its registry records", () 
 });
 
 const claim = { headline: "Reviewed claim", page: "/reviewed", status: "Trial registered", place: 2, meaning: "not kept" };
-const index = (status, place) => ({ claims: { reviewed: { ...claim, status, place } } });
+const index = (status, place) => ({ pairs: { reviewed: { ...claim, status, place } } });
 
 test("following remembers a claim as it stands, once", () => {
   const follows = follow(follow([], claim), claim);
@@ -82,7 +82,7 @@ test("a followed claim is marked changed when its status or place moves", () => 
 });
 
 test("a followed claim that is no longer published says so and shows no change", () => {
-  const [gone] = followedNow(follow([], claim), { claims: {} });
+  const [gone] = followedNow(follow([], claim), { pairs: {} });
   assert.equal(gone.gone, true);
   assert.equal(gone.changed, false);
 });

@@ -2,7 +2,8 @@
 
 // The saved lookup file's format. Refresh pre-automatic-lookup caches once so an
 // upgrade sees current service settings. The background check writes the same shape.
-export const CACHE_VERSION = 2;
+// Version 3 saves the file as fetched, of either version, with the address it came from.
+export const CACHE_VERSION = 3;
 
 /**
  * @param {string | null} key the current page's address in comparison form, or null
@@ -22,8 +23,8 @@ export function stateFor(key, loaded, siteKey = null) {
   const own = siteKey !== null && (key === siteKey || key.startsWith(`${siteKey}/`) || key.startsWith(`${siteKey}?`));
   const path = own ? key.slice(siteKey.length).replace(/\?.*$/, "") : null;
   const claims = own
-    ? Object.values(index.claims).filter((claim) => claim.page === path)
-    : (index.articles[key] ?? []).map((slug) => index.claims[slug]).filter(Boolean);
+    ? Object.values(index.pairs).filter((claim) => claim.page === path)
+    : (index.articles[key] ?? []).map((address) => index.pairs[address]).filter(Boolean);
   if (own && claims.length === 0) return { kind: "no-page" };
   // `live` is where the site answers a registry search, when it offers one.
   if (claims.length === 0) return { kind: "untracked", savedAt, live: index.live ?? null };
@@ -34,7 +35,7 @@ export function stateFor(key, loaded, siteKey = null) {
     // How many places the path has; each claim carries its own place on it.
     places: index.places ?? null,
     notices: index.notices ?? [],
-    lastChecked: index.last_checked ?? null,
+    lastChecked: index.checked_on ?? index.last_checked ?? null,
     savedAt,
   };
 }

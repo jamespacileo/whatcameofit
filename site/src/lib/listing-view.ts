@@ -5,8 +5,8 @@
 // the Worker reads one file by key: never the row tables, whose topic join read about 6,000 rows
 // a view on the rehearsal against 6 to 170 for a page file.
 import { shownName } from "./pair-view.ts";
-import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { STATUS_LABELS } from "./status.ts";
+import { conditionCard, treatmentCard, type CardView } from "./card-view.ts";
 
 export interface ListingRow {
   address: string;
@@ -36,6 +36,8 @@ export interface ListingView {
   notes: string[];
   /** Linked lines under the notes: broader and narrower categories. */
   linkGroups: { label: string; links: ListingLink[] }[];
+  /** What the listed treatment or category is: its knowledge card, or none. */
+  card: CardView | null;
   rows: ListingRow[];
 }
 
@@ -70,23 +72,15 @@ export const namedPairs = (file: any): string[] => [...new Set<string>(file.pair
 export function interventionListing(file: any, published: Set<string>): ListingView {
   const preferred = file.intervention.preferred_name;
   const name = shownName(preferred);
-  const otherNames = [
-    ...new Set(
-      file.names
-        .filter((held: any) => held.role !== "preferred" && held.name.toLowerCase() !== preferred.toLowerCase())
-        .map((held: any) => shownName(held.name)),
-    ),
-  ] as string[];
-  const code = file.approach?.approach;
-  const approach = code && Object.hasOwn(PAIR_APPROACH_LABELS, code) ? PAIR_APPROACH_LABELS[code] : null;
   return {
     kind: "intervention",
     path: `/intervention/${file.intervention.slug}`,
     title: name,
     description: `Where the public trial records show ${name} stands, for each condition it is tested for.`,
     crumbs: [],
-    notes: [...(approach ? [`Kind of treatment: ${approach}.`] : []), ...(otherNames.length ? [`Also known as ${otherNames.join(", ")}.`] : [])],
+    notes: [],
     linkGroups: [],
+    card: treatmentCard(file),
     rows: rowsOf(file.pairs, published),
   };
 }
@@ -112,14 +106,15 @@ export function categoryListing(file: any, published: Set<string>, categories: S
     }))
     .filter((one: ListingLink) => (one.count ?? 0) > 0)
     .sort(byLabel);
-  const tree = descriptor.tree_numbers.length ? `, tree ${descriptor.tree_numbers.join(", ")}` : "";
   return {
     kind: "category",
     path: categoryPath(descriptor.descriptor_id),
     title: descriptor.label,
     description: `Treatments tested for conditions in the MeSH category ${descriptor.label}, and where each stands.`,
     crumbs: [{ href: "/clinical", label: "Clinical categories" }],
-    notes: [`MeSH category ${descriptor.descriptor_id}${tree}. Lists the pairs whose condition is this category or one beneath it. A category is not a diagnosis and not advice.`],
+    // Names only: the descriptor's id and tree numbers are codes, and stay in the address.
+    notes: ["Lists the pairs whose condition is this category or one beneath it. A category is not a diagnosis and not advice."],
+    card: conditionCard(descriptor, file.broader, (id) => (categories.has(id) ? categoryPath(id) : undefined)),
     linkGroups: [...(broader.length ? [{ label: "Broader", links: broader }] : []), ...(narrower.length ? [{ label: "Narrower", links: narrower }] : [])],
     rows: rowsOf(file.pairs, published),
   };
@@ -136,6 +131,7 @@ export function topicListing(file: any, published: Set<string>): ListingView {
     crumbs: [{ href: "/topics", label: "Topics" }],
     notes: [],
     linkGroups: [],
+    card: null,
     rows: rowsOf(file.pairs, published),
   };
 }

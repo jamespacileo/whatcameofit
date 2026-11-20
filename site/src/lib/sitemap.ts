@@ -23,6 +23,7 @@ export function sitePages(): string[] {
   return [
     "/",
     "/topics",
+    "/explore",
     ...(clinicalTops().length > 0 ? ["/clinical"] : []),
     "/how-it-works",
     "/guide",

@@ -62,7 +62,7 @@ function popup(t, collected, { media = [], answer = treatment } = {}) {
       },
     },
     async fetch(url, options) {
-      if (url === `${SITE.url}/lookup.json`) return Response.json({ articles: {}, claims: {}, live: "/api/lookup" });
+      if (url === `${SITE.url}/lookup/2.json`) return Response.json({ articles: {}, claims: {}, live: "/api/lookup" });
       if (url === shortLink) {
         resolvingLink = true;
         return new Response(await shortResponse.promise);

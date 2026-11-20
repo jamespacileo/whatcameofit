@@ -78,3 +78,35 @@ The home page, an intervention's page, a condition's page, a topic's page, the t
 #### Scenario: The box reads version 2
 - **WHEN** a reader searches in the lookup box
 - **THEN** the box reads `/lookup/2.json` and the search detail, and not `/lookup.json`
+
+### Requirement: Pages show names, never codes
+No page SHALL show a code where a name belongs: a MeSH descriptor's id, a tree number, a substance code or an intervention key stays in addresses and data files. A step of a path with no name in the bundle SHALL be left out rather than shown as its code.
+
+#### Scenario: A condition's page
+- **WHEN** a reader opens a condition's or a clinical category's page
+- **THEN** the page names the condition and where it sits in MeSH, and shows neither its descriptor id nor a tree number
+
+### Requirement: Every treatment, condition and group has a knowledge card
+A treatment's, a condition's and a group's page SHALL open with a knowledge card built from fixed slots: what kind of thing it is, its facts, and one path for each place it sits in each tree that classifies it, each tree and level named in the site's words. A slot the bundle does not fill SHALL be left out, never filled from another source, and a card SHALL carry no verdict wording and no fact that implies a treatment works or is available.
+
+#### Scenario: A condition in two branches of MeSH
+- **WHEN** a condition's descriptor sits under two branches
+- **THEN** its card shows a path for each branch, each step that has a page linked
+
+#### Scenario: A treatment with no kind
+- **WHEN** the rule gives a treatment no kind of treatment
+- **THEN** its card shows no place in that tree
+
+### Requirement: Treatments and conditions can be browsed by each of their trees
+The site SHALL have a treatments index and a conditions index listing every tree on that side (conditions: body system from MeSH and health topic; treatments: kind of treatment, therapeutic use from WHO ATC with its credit, drug class, pharmacological action and combinations), each tree browsable from its top with the number of pairs beneath every node, and a page per node made on request from the lab's file for it.
+
+#### Scenario: A drug class
+- **WHEN** a reader opens a drug class's node
+- **THEN** the page shows its card, its path in each tree it sits in, its narrower nodes with counts, and every pair whose treatment is a member at or beneath it
+
+### Requirement: A reader can pick several treatments and conditions at any level
+The explore page SHALL let a reader pick any number of nodes from any tree on either side by name, and list the pairs that match: a node includes everything beneath it, picks within one tree match any of them, picks in different trees must all match. The picks SHALL live in the address, the filtering SHALL run in the reader's browser from one cached file with no database read, and the page's canonical address SHALL carry no picks.
+
+#### Scenario: A class and a condition
+- **WHEN** a reader picks a drug class and a condition
+- **THEN** the page lists the pairs whose treatment is in the class and whose condition is at or beneath the condition, with counts beside the other choices

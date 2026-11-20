@@ -35,6 +35,7 @@ const shared = [
   ["worker/page.mjs", "page.js", []],
   ["worker/names.mjs", "names.js", []],
   ["worker/tracked.mjs", "tracked.js", [["./names.mjs", "./names.js"]]],
+  ["src/lib/lookup-file.mjs", "lookup-file.js", []],
   ["src/lib/source-url.mjs", "source-url.js", [["./article-key.mjs", "./article-key.js"]]],
 ];
 for (const [from, to, imports] of shared) {
@@ -49,6 +50,8 @@ const visualPath = path.join(dist, "visual.js");
 fs.writeFileSync(visualPath, fs.readFileSync(visualPath, "utf8").replace("../../site/src/lib/source-url.mjs", "./source-url.js"));
 const resultsPath = path.join(dist, "results.js");
 fs.writeFileSync(resultsPath, fs.readFileSync(resultsPath, "utf8").replace("../../site/worker/tracked.mjs", "./tracked.js"));
+const indexPath = path.join(dist, "index-file.js");
+fs.writeFileSync(indexPath, fs.readFileSync(indexPath, "utf8").replace("../../site/src/lib/lookup-file.mjs", "./lookup-file.js"));
 const { NOTICES } = await import(pathToFileURL(path.join(site, "src/lib/notices.ts")).href);
 fs.writeFileSync(
   path.join(dist, "notices.js"),

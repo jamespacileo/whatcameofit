@@ -1,0 +1,41 @@
+---
+// The explore page (openspec pairs-site, task 6.2): pick treatments and conditions from any tree,
+// at any level, and see the pairs that match. Built once; the reader's browser filters
+// /data/explore.json, so a pick reads no database. Its canonical address carries no picks.
+import Base from "../layouts/Base.astro";
+import MeshCredit from "../components/MeshCredit.astro";
+---
+
+<Base
+  title="Explore treatments and conditions"
+  description="Pick one or more treatments and conditions, by body system, health topic or kind of treatment, and see where the public trial records show each pair stands."
+  current="topics"
+  breadcrumbs={[{ name: "Explore", path: "/explore" }]}
+>
+  <h1 class="title" data-listing="explore">Explore treatments and conditions</h1>
+  <p class="lede">
+    Pick as many as you like, from any list and at any level. A broad choice includes everything beneath it. Not medical
+    advice. <a href="/how-it-works">How a status is set</a>
+  </p>
+  <div class="explore" data-explore="/data/explore.json">
+    <div class="explore-find">
+      <label for="explore-search">Find a treatment or condition group by name</label>
+      <input id="explore-search" type="search" autocomplete="off" data-explore-search placeholder="For example, infections or drug" />
+      <div class="explore-suggestions" data-explore-suggestions aria-live="polite"></div>
+    </div>
+    <div class="explore-chips" data-explore-chips aria-label="Your choices"></div>
+    <div class="explore-layout">
+      <div class="explore-facets" data-explore-facets></div>
+      <div class="explore-main">
+        <p class="explore-status" data-explore-status aria-live="polite">Loading the list…</p>
+        <noscript><p>This page needs JavaScript to filter. Every pair is also listed on the <a href="/topics">topics page</a>.</p></noscript>
+        <div data-explore-results></div>
+      </div>
+    </div>
+  </div>
+  <MeshCredit />
+</Base>
+
+<script>
+  import "../scripts/explore.ts";
+</script>
