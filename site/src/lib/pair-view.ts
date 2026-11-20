@@ -102,16 +102,25 @@ function valueText(value: any, dispersion: string | null): string {
  * to 3.7"), then the groups it covers, so a comparison of two arms of three, or within one
  * arm, says which. ClinicalTrials.gov's statistical analysis elements
  * (https://clinicaltrials.gov/policy/results-definitions) give each field. */
+/** A posted interval with whichever bounds the registry gives: both ("95% interval -7.2 to
+ * 3.7"), or one, as a one-sided interval is posted ("95% interval from -7.2", "95% interval up
+ * to 3.7"). Each bound is nullable on its own in `PostedComparison`. */
+function intervalText(comparison: any): string | null {
+  const { lower, upper } = comparison;
+  if (lower === null && upper === null) return null;
+  const label = comparison.interval_pct ? `${comparison.interval_pct}% interval` : "interval";
+  if (lower !== null && upper !== null) return `${label} ${lower} to ${upper}`;
+  return lower !== null ? `${label} from ${lower}` : `${label} up to ${upper}`;
+}
+
 function comparisonLine(comparison: any, titles: Map<string, string>): string {
   const estimate = comparison.estimate
     ? [
         [comparison.estimate_kind, comparison.estimate].filter(Boolean).join(" "),
-        comparison.lower !== null && comparison.upper !== null
-          ? `${comparison.interval_pct ? `${comparison.interval_pct}% interval` : "interval"} ${comparison.lower} to ${comparison.upper}`
-          : null,
+        intervalText(comparison),
       ].filter(Boolean).join(", ")
     : null;
-  const test = comparison.design && comparison.design.toLowerCase() in TEST_WORDS ? comparison.design.toLowerCase() : null;
+  const test = comparison.design && Object.hasOwn(TEST_WORDS, comparison.design.toLowerCase()) ? comparison.design.toLowerCase() : null;
   // With an estimate and no p value, the estimate is the result; the line does not say "no p value".
   const tested = comparison.p_value || !estimate ? comparisonText({ p_value: comparison.p_value, method: comparison.method, test } as any) : comparison.method;
   const groups = comparison.group_ids.map((id: string) => titles.get(id) ?? id);
@@ -127,7 +136,7 @@ function outcomesOf(findings: any): OutcomeView[] {
     .sort((a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9))
     .map((outcome) => {
       const measureCode = outcome.param_type?.toLowerCase().replace(/\s+/g, "_");
-      const kind = measureCode && measureCode in MEASURE_WORDS ? MEASURE_WORDS[measureCode] : outcome.param_type;
+      const kind = measureCode && Object.hasOwn(MEASURE_WORDS, measureCode) ? MEASURE_WORDS[measureCode] : outcome.param_type;
       // A count of participants is not followed by the unit "participants".
       const repeats = measureCode === "count_of_participants" && /^participants?$/i.test(outcome.unit ?? "");
       const measure = [kind, repeats ? null : outcome.unit].filter(Boolean).join(", ") || null;

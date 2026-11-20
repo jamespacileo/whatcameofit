@@ -10,7 +10,8 @@ import { canonicalAddress } from "../lib/structured";
 const index = pairDataIndex(SITE.name, SITE.url);
 const count = index.entries.length;
 // A record the build wrote, so the example opens on a copy with no store as well.
-const example = index.entries.find((entry) => builtAheadRecords().includes(entry.address))?.record;
+const written = new Set(builtAheadRecords());
+const example = index.entries.find((entry) => written.has(entry.address))?.record;
 const description =
   "Every treatment and condition the site follows, with its status and the trial records behind it, as JSON you can download and reuse: an index of every pair, and one file per pair.";
 const structured = {

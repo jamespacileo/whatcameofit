@@ -58,6 +58,12 @@ const bundle = copyBundle({
       group_ids: ["OG000"], design: null, method: null, p_value: null,
       estimate_kind: "Risk Difference (RD)", estimate: "-1.5", interval_pct: "95", lower: "-7.2", upper: "3.7",
     });
+    // A one-sided interval: only its lower bound is posted.
+    findings.comparisons.push({
+      key: `${findings.outcomes[0].key}|098`, outcome_key: findings.outcomes[0].key, kind: "treated_vs_comparator",
+      group_ids: ["OG001"], design: null, method: null, p_value: null,
+      estimate_kind: "Mean Difference (Final Values)", estimate: "0.4", interval_pct: "97.5", lower: "-0.2", upper: null,
+    });
   },
 });
 // The claims export, with the first moved claim also archived: its address still answers 410.
@@ -196,6 +202,8 @@ test("a trial's posted results are shown as the registry wrote them, built ahead
   // An estimate and its interval are kept, and are not called a comparison with no p value.
   const estimate = [...section.querySelectorAll("[data-comparison]")].find((line) => /Risk Difference/.test(line.textContent));
   assert.equal(estimate.textContent, "Risk Difference (RD) -1.5, 95% interval -7.2 to 3.7. Posted for: Arm I (Curcumin)");
+  const oneSided = [...section.querySelectorAll("[data-comparison]")].find((line) => /Mean Difference/.test(line.textContent));
+  assert.equal(oneSided.textContent, "Mean Difference (Final Values) 0.4, 97.5% interval from -0.2. Posted for: Arm II (Placebo)");
   assertNoOutcomeVerdict([section.textContent]);
 });
 
