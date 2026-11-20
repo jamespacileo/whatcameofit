@@ -1,23 +1,23 @@
 ---
 // A condition's page on the pair path: every pair for it or for a condition beneath it in MeSH.
-import ListingPage from "./ListingPage.astro";
+// The build makes it, in the band and sheet the Worker gives every listing it makes
+// (lib/listing-render.ts), so a condition's page and a treatment's look alike.
+import Base from "../layouts/Base.astro";
 import { conditionCardOf, conditionListings } from "../lib/pairs";
-import { renderCard } from "../lib/card-render";
+import { conditionListing } from "../lib/listing-view";
+import { renderListingBand, renderListingSheet } from "../lib/listing-render";
+import "./pair.css";
 
 export function getStaticPaths() {
   return conditionListings().map((listing) => ({ params: { condition: listing.slug }, props: { listing } }));
 }
 
 const { listing } = Astro.props;
-const card = renderCard(conditionCardOf({ descriptor_id: listing.descriptorId, label: listing.label, tree_numbers: listing.treeNumbers }));
+const view = conditionListing(listing, conditionCardOf({ descriptor_id: listing.descriptorId, label: listing.label, tree_numbers: listing.treeNumbers }));
 ---
 
-<ListingPage
-  title={listing.label}
-  kind="condition"
-  description={`Treatments tested for ${listing.label.toLowerCase()}, and where the public trial records show each stands.`}
-  pairs={listing.pairs}
->
-  <Fragment set:html={card} />
-  <p class="what-this-is">Lists this condition and the narrower ones beneath it. A condition is not a diagnosis.</p>
-</ListingPage>
+<Base title={view.title} description={view.description} current="topics" framed>
+  <Fragment slot="band" set:html={renderListingBand(view)} />
+  {/* A condition's page credits no MeSH category, so no edition is named. */}
+  <Fragment set:html={renderListingSheet(view, "")} />
+</Base>
