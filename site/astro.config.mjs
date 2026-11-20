@@ -2,6 +2,7 @@
 import { defineConfig } from "astro/config";
 
 import { EXTENSION_OFFERED, SITE } from "./site.config.mjs";
+import { writeBundleCode } from "./scripts/bundle-code.mjs";
 
 // The extension page exists only once a store lists the extension. A page that
 // offered nothing to install would be a dead end, so its route is added here, and
@@ -25,8 +26,10 @@ const pairPages = {
   name: "pair-pages",
   hooks: {
     /** @param {{ injectRoute: (route: { pattern: string, entrypoint: string }) => void }} setup */
-    "astro:config:setup": ({ injectRoute }) => {
+    "astro:config:setup": async ({ injectRoute }) => {
       if (process.env.PAIRS_BUNDLE) {
+        // The validators and types of the bundle's page models (decision 1), for the Worker.
+        await writeBundleCode(process.env.PAIRS_BUNDLE, ".bundle-code");
         injectRoute({ pattern: "/[address]", entrypoint: "./src/pair/PairRoute.astro" });
         injectRoute({ pattern: "/intervention/[intervention]", entrypoint: "./src/pair/InterventionRoute.astro" });
         injectRoute({ pattern: "/condition/[condition]", entrypoint: "./src/pair/ConditionRoute.astro" });
