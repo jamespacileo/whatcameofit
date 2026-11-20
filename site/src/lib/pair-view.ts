@@ -5,15 +5,133 @@
 import {
   PAIR_APPROACH_LABELS,
   PAIR_EVENT_LABELS,
+  PAIR_OUTCOME_KIND_WORDS,
   PAIR_PHASE_WORDS,
   PAIR_REGISTRY_NAMES,
   PAIR_STATUS_GLOSSES,
   PAIR_STATUS_LABELS,
   PAIR_TRIAL_STATES,
 } from "./pair-wording.ts";
-import { TRIAL_STATE_WORDS } from "./trial-facts.ts";
+import { MEASURE_WORDS, TEST_WORDS, TRIAL_STATE_WORDS, comparisonText } from "./trial-facts.ts";
 
 export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
+
+export interface PaperLink {
+  id: string;
+  /** The identifier as the reader sees it: "doi:10.1186/..." or "PMID 42027418". */
+  label: string;
+  /** Where the identifier resolves, or null for a kind the site does not link. */
+  url: string | null;
+}
+
+/** A paper by the identifier the lab holds. A DOI is linked through the DOI resolver as
+ * https://doi.org/<DOI>, the form Crossref's DOI display guidelines ask for
+ * (https://www.crossref.org/display-guidelines/); a PubMed identifier through PubMed's own
+ * address, https://pubmed.ncbi.nlm.nih.gov/<PMID>/ (NLM, "Linking to PubMed"). An identifier
+ * of any other kind is shown as written, unlinked: the site does not guess an address. Each
+ * part of a DOI between slashes is percent-encoded, so a `?`, `#` or `%` in its suffix reaches
+ * the resolver as part of the DOI (DOI Handbook 2.5.2.4, https://www.doi.org/the-identifier/resources/handbook/2_numbering). */
+export function paperLink(id: string): PaperLink {
+  if (/^10\.\d{4,9}\/\S+$/.test(id)) {
+    return { id, label: `doi:${id}`, url: `https://doi.org/${id.split("/").map(encodeURIComponent).join("/")}` };
+  }
+  const pmid = /^pmid:(\d+)$/i.exec(id)?.[1];
+  if (pmid) return { id, label: `PMID ${pmid}`, url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` };
+  return { id, label: id, url: null };
+}
+
+export interface ResultRowView {
+  group: string;
+  /** The registry's row or category title within the group, where it gives one. */
+  part: string | null;
+  analysed: string | null;
+  value: string;
+}
+
+export interface OutcomeView {
+  title: string;
+  kind: string;
+  /** "Median, pg/mL": what the numbers are. */
+  measure: string | null;
+  timeFrame: string | null;
+  rows: ResultRowView[];
+  comparisons: string[];
+}
+
+/** A posted value as the registry wrote it: "0.0 (Full Range -4.2 to 10.9)". Nothing is
+ * worked out or rounded. ClinicalTrials.gov's results data elements set what each field is:
+ * the measure type, the measure of dispersion or precision, and the number analysed
+ * (https://clinicaltrials.gov/policy/results-definitions). */
+function valueText(value: any, dispersion: string | null): string {
+  if (value.value === null) return "No value posted";
+  const kind = dispersion ? `${dispersion} ` : "";
+  if (value.lower !== null && value.upper !== null) return `${value.value} (${kind}${value.lower} to ${value.upper})`;
+  if (value.spread !== null) return `${value.value} (${kind}${value.spread})`;
+  return value.value;
+}
+
+/** A posted comparison in the registry's terms: its p value and method in the claim page's
+ * wording, then any estimate with its interval ("Risk Difference (RD) -1.5, 95% interval -7.2
+ * to 3.7"), then the groups it covers, so a comparison of two arms of three, or within one
+ * arm, says which. ClinicalTrials.gov's statistical analysis elements
+ * (https://clinicaltrials.gov/policy/results-definitions) give each field. */
+/** A posted interval with whichever bounds the registry gives: both ("95% interval -7.2 to
+ * 3.7"), or one, as a one-sided interval is posted ("95% interval from -7.2", "95% interval up
+ * to 3.7"). Each bound is nullable on its own in `PostedComparison`. */
+function intervalText(comparison: any): string | null {
+  const { lower, upper } = comparison;
+  if (lower === null && upper === null) return null;
+  const label = comparison.interval_pct ? `${comparison.interval_pct}% interval` : "interval";
+  if (lower !== null && upper !== null) return `${label} ${lower} to ${upper}`;
+  return lower !== null ? `${label} from ${lower}` : `${label} up to ${upper}`;
+}
+
+function comparisonLine(comparison: any, titles: Map<string, string>): string {
+  const estimate = comparison.estimate
+    ? [
+        [comparison.estimate_kind, comparison.estimate].filter(Boolean).join(" "),
+        intervalText(comparison),
+      ].filter(Boolean).join(", ")
+    : null;
+  const test = comparison.design && Object.hasOwn(TEST_WORDS, comparison.design.toLowerCase()) ? comparison.design.toLowerCase() : null;
+  // With an estimate and no p value, the estimate is the result; the line does not say "no p value".
+  const tested = comparison.p_value || !estimate ? comparisonText({ p_value: comparison.p_value, method: comparison.method, test } as any) : comparison.method;
+  const groups = comparison.group_ids.map((id: string) => titles.get(id) ?? id);
+  return [tested, estimate].filter(Boolean).join("; ") + (groups.length ? `. Posted for: ${groups.join(", ")}` : "");
+}
+
+/** A trial's posted outcomes, primary first, each with its groups' values and any
+ * comparison the sponsor posted with it. */
+function outcomesOf(findings: any): OutcomeView[] {
+  if (!findings) return [];
+  const rank: Record<string, number> = { primary: 0, secondary: 1, other: 2, post_hoc: 3 };
+  return [...findings.outcomes]
+    .sort((a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9))
+    .map((outcome) => {
+      const measureCode = outcome.param_type?.toLowerCase().replace(/\s+/g, "_");
+      const kind = measureCode && Object.hasOwn(MEASURE_WORDS, measureCode) ? MEASURE_WORDS[measureCode] : outcome.param_type;
+      // A count of participants is not followed by the unit "participants".
+      const repeats = measureCode === "count_of_participants" && /^participants?$/i.test(outcome.unit ?? "");
+      const measure = [kind, repeats ? null : outcome.unit].filter(Boolean).join(", ") || null;
+      return {
+        title: outcome.title,
+        kind: PAIR_OUTCOME_KIND_WORDS[outcome.kind],
+        measure,
+        timeFrame: outcome.time_frame,
+        rows: outcome.values.map((value: any) => ({
+          group: value.group_title ?? value.group_id,
+          part: [value.class_title, value.category_title].filter(Boolean).join(", ") || null,
+          analysed: value.analysed,
+          value: valueText(value, outcome.dispersion_type),
+        })),
+        comparisons: findings.comparisons
+          .filter((comparison: any) => comparison.outcome_key === outcome.key)
+          .map((comparison: any) =>
+            comparisonLine(comparison, new Map(outcome.values.map((value: any) => [value.group_id, value.group_title ?? value.group_id]))),
+          ),
+      };
+    });
+}
 
 /** Whether a pair's page is built ahead (design decision 2): a pair with a claim origin, or
  * with more than one supporting trial. Every other pair's page is made on request. The second
@@ -51,8 +169,9 @@ export interface PairTrialView {
   pairArm: string | null;
   whyStopped: string | null;
   events: PairEventView[];
-  papers: number;
+  papers: PaperLink[];
   resultsPosted: boolean;
+  outcomes: OutcomeView[];
   registryUrl: string;
 }
 
@@ -138,8 +257,10 @@ export function pairView(page: any): PairView {
         pairArm: trial.claim_arm,
         whyStopped: facts.why_stopped,
         events: trial.events.map(eventView).sort(byDay),
-        papers: trial.paper_ids.length,
-        resultsPosted: trial.events.some((event: any) => event.kind === "results_posted"),
+        papers: trial.paper_ids.map(paperLink),
+        // Posted when the registry dated their posting, or when the page carries them.
+        resultsPosted: trial.events.some((event: any) => event.kind === "results_posted") || Boolean(trial.findings?.outcomes.length),
+        outcomes: outcomesOf(trial.findings),
         registryUrl: `https://clinicaltrials.gov/study/${encodeURIComponent(trial.nct_id)}`,
       };
     }),

@@ -5,6 +5,8 @@
 // so a new deployment needs no purge.
 import { pairView } from "../src/lib/pair-view.ts";
 import { escape, pairDescription, renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
+import { pairRecordText } from "../src/lib/pair-record.ts";
+import { SITE } from "../site.config.mjs";
 
 /** A pair's address: two slugs joined by a double hyphen. */
 const ADDRESS = /^\/([a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*)$/;
@@ -17,6 +19,38 @@ export const UNREADABLE = "This page could not be shown. Its record did not pass
 /** The address a path names, or null when it is no pair's. */
 export function pairAddress(pathname) {
   return ADDRESS.exec(pathname)?.[1] ?? null;
+}
+
+const RECORD = /^\/data\/pairs\/([a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*)\.json$/;
+
+/** The address of the pair whose open data record a path names, or null. */
+export function recordAddress(pathname) {
+  return RECORD.exec(pathname)?.[1] ?? null;
+}
+
+/** The frame the build left and the bundle version it read, or null on a deployment without. */
+async function builtVersion(env, url) {
+  const frame = await env.ASSETS.fetch(new Request(new URL(SHELL_PATH, url)));
+  if (!frame.ok) return null;
+  const shell = await frame.text();
+  const version = VERSION.exec(shell)?.[1];
+  return version ? { shell, version } : null;
+}
+
+/** One file of the bundle as the loader kept it, its parts joined: the parsed file, undefined
+ * when it does not parse, or null when the version holds no such file. */
+async function bundleFile(env, version, model, key) {
+  const { results } = await env.PAIRS.prepare(
+    "SELECT body FROM pair_page WHERE version = ?1 AND model = ?2 AND key = ?3 ORDER BY part",
+  )
+    .bind(version, model, key)
+    .all();
+  if (!results.length) return null;
+  try {
+    return JSON.parse(results.map((row) => row.body).join(""));
+  } catch {
+    return undefined;
+  }
 }
 
 function fill(shell, { title, description, address, band, sheet }) {
@@ -40,29 +74,16 @@ export async function pairPage(request, env, validate, cache) {
   const url = new URL(request.url);
   const address = pairAddress(url.pathname);
   if (!address || !env.PAIRS || typeof validate !== "function") return null;
-  const frame = await env.ASSETS.fetch(new Request(new URL(SHELL_PATH, url)));
-  if (!frame.ok) return null;
-  const shell = await frame.text();
-  const version = VERSION.exec(shell)?.[1];
-  if (!version) return null;
+  const built = await builtVersion(env, url);
+  if (!built) return null;
+  const { shell, version } = built;
 
   const key = new Request(new URL(`/__pair/${version}/${address}`, url));
   const kept = cache ? await cache.match(key) : undefined;
   if (kept) return kept;
 
-  const { results } = await env.PAIRS.prepare(
-    "SELECT body FROM pair_page WHERE version = ?1 AND model = 'PairPage' AND key = ?2 ORDER BY part",
-  )
-    .bind(version, address)
-    .all();
-  if (!results.length) return null;
-
-  let file;
-  try {
-    file = JSON.parse(results.map((row) => row.body).join(""));
-  } catch {
-    file = undefined;
-  }
+  const file = await bundleFile(env, version, "PairPage", address);
+  if (file === null) return null;
   if (!validate(file)) {
     const page = fill(shell, {
       title: "Page not shown",
@@ -84,6 +105,42 @@ export async function pairPage(request, env, validate, cache) {
   });
   const answer = new Response(page, {
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": `public, max-age=${DAY_SECONDS}` },
+  });
+  if (cache) await cache.put(key, answer.clone());
+  return answer;
+}
+
+/**
+ * The open data record of a pair the build did not write (task 1.3: one file a pair would pass
+ * the deployment's file limit), from the `PairDataFile` of the version the build read, checked
+ * with its compiled validator and written as the build writes a record. Null when this
+ * deployment has no frame or store, or the version holds no such pair.
+ * @param {Request} request
+ * @param {{ ASSETS: { fetch: (request: Request) => Promise<Response> }, PAIRS?: any }} env
+ * @param {(file: unknown) => boolean} validate the compiled validator of `PairDataFile`
+ * @param {{ match: Function, put: Function } | null} cache
+ */
+export async function pairRecord(request, env, validate, cache) {
+  const url = new URL(request.url);
+  const address = recordAddress(url.pathname);
+  if (!address || !env.PAIRS || typeof validate !== "function") return null;
+  const built = await builtVersion(env, url);
+  if (!built) return null;
+
+  const key = new Request(new URL(`/__pair-record/${built.version}/${address}`, url));
+  const kept = cache ? await cache.match(key) : undefined;
+  if (kept) return kept;
+
+  const file = await bundleFile(env, built.version, "PairDataFile", address);
+  if (file === null) return null;
+  if (!validate(file)) {
+    return new Response(JSON.stringify({ error: UNREADABLE }), {
+      status: 500,
+      headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+    });
+  }
+  const answer = new Response(pairRecordText(file, SITE.name, SITE.url), {
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": `public, max-age=${DAY_SECONDS}` },
   });
   if (cache) await cache.put(key, answer.clone());
   return answer;

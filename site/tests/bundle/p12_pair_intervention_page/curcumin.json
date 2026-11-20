@@ -1,0 +1,179 @@
+{
+ "intervention": {
+  "id": "substance:IT942ZTH98",
+  "key_kind": "substance",
+  "key_value": "IT942ZTH98",
+  "preferred_name": "Curcumin",
+  "slug": "curcumin",
+  "components": []
+ },
+ "names": [
+  {
+   "intervention_id": "substance:IT942ZTH98",
+   "name": "Curcumin",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:IT942ZTH98",
+  "approach": null,
+  "basis": "registry_intervention_type",
+  "registry_type": null,
+  "trials": 3
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D005757",
+    "key": "substance:IT942ZTH98|D005757",
+    "address": "curcumin--gastritis-atrophic",
+    "nct_ids": [
+     "NCT02782949"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:IT942ZTH98",
+    "key_kind": "substance",
+    "key_value": "IT942ZTH98",
+    "preferred_name": "Curcumin",
+    "slug": "curcumin",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D005757",
+    "slug": "gastritis-atrophic"
+   },
+   "descriptor": {
+    "descriptor_id": "D005757",
+    "label": "Gastritis, Atrophic",
+    "tree_numbers": [
+     "C06.405.205.697.394",
+     "C06.405.748.398.394"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D005757",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT02782949|registered|2016-05-26",
+     "NCT02782949|started|2017-04-04"
+    ],
+    "as_of": "2026-11-19"
+   },
+   "filing": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D005757",
+    "vertical": "gut-and-liver",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D007829",
+    "key": "substance:IT942ZTH98|D007829",
+    "address": "curcumin--laryngostenosis",
+    "nct_ids": [
+     "NCT05688488"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:IT942ZTH98",
+    "key_kind": "substance",
+    "key_value": "IT942ZTH98",
+    "preferred_name": "Curcumin",
+    "slug": "curcumin",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D007829",
+    "slug": "laryngostenosis"
+   },
+   "descriptor": {
+    "descriptor_id": "D007829",
+    "label": "Laryngostenosis",
+    "tree_numbers": [
+     "C09.400.591",
+     "C08.360.591",
+     "C16.131.740.658"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D007829",
+    "code": "trial_registered",
+    "overlay_years": 3,
+    "explained_by": [
+     "NCT05688488|registered|2023-01-18"
+    ],
+    "as_of": "2026-11-19"
+   },
+   "filing": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D007829",
+    "vertical": "lungs-and-breathing",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D003865",
+    "key": "substance:IT942ZTH98|D003865",
+    "address": "curcumin--major-depressive-disorder",
+    "nct_ids": [
+     "NCT01022632"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:IT942ZTH98",
+    "key_kind": "substance",
+    "key_value": "IT942ZTH98",
+    "preferred_name": "Curcumin",
+    "slug": "curcumin",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D003865",
+    "slug": "major-depressive-disorder"
+   },
+   "descriptor": {
+    "descriptor_id": "D003865",
+    "label": "Major Depressive Disorder",
+    "tree_numbers": [
+     "F03.600.300.375"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D003865",
+    "code": "trial_registered",
+    "overlay_years": 16,
+    "explained_by": [
+     "NCT01022632|registered|2009-12-01"
+    ],
+    "as_of": "2026-11-19"
+   },
+   "filing": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D003865",
+    "vertical": "mental-health",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ]
+}

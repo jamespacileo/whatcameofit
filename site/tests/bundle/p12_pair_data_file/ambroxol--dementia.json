@@ -1,0 +1,164 @@
+{
+ "pair": {
+  "row": {
+   "pair": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "key": "substance:200168S0CL|D003704",
+    "address": "ambroxol--dementia",
+    "nct_ids": [
+     "NCT02914366"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:200168S0CL",
+    "key_kind": "substance",
+    "key_value": "200168S0CL",
+    "preferred_name": "AMBROXOL",
+    "slug": "ambroxol",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D003704",
+    "slug": "dementia"
+   },
+   "descriptor": {
+    "descriptor_id": "D003704",
+    "label": "Dementia",
+    "tree_numbers": [
+     "F03.615.400",
+     "C10.228.140.380"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "code": "trial_registered",
+    "overlay_years": 10,
+    "explained_by": [
+     "NCT02914366|registered|2016-09-26"
+    ],
+    "as_of": "2026-11-19"
+   },
+   "filing": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "vertical": "dementia",
+    "basis": "narrowest_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "claim_slug": "ambroxol-parkinsons-disease-dementia",
+    "drafted_from": "seed",
+    "drafted_by_run": "18defa0a6383",
+    "created_at": "2026-11-19T00:44:32.929308"
+   },
+   "first_report": null
+  },
+  "names": [
+   {
+    "intervention_id": "substance:200168S0CL",
+    "name": "AMBROXOL",
+    "origin": "substance_registry",
+    "role": "preferred",
+    "searchable": true
+   },
+   {
+    "intervention_id": "substance:200168S0CL",
+    "name": "TABCIN",
+    "origin": "substance_registry",
+    "role": "brand",
+    "searchable": true
+   }
+  ],
+  "checked_by_person": false,
+  "trials": [
+   {
+    "nct_id": "NCT02914366",
+    "arms": [
+     "Ambroxol high dose (1050 mg)"
+    ],
+    "claim_arm": "Ambroxol high dose (1050 mg)",
+    "facts": {
+     "nct_id": "NCT02914366",
+     "as_of": "2024-02-28",
+     "title": "Ambroxol as a Treatment for Parkinson's Disease Dementia",
+     "phases": [
+      "phase_2"
+     ],
+     "overall_status": "unknown",
+     "participants": {
+      "count": 55,
+      "actual": true
+     },
+     "start": {
+      "day": "2015-11",
+      "basis": "registry_date"
+     },
+     "primary_completion": {
+      "day": "2025-12",
+      "basis": "registry_date_estimated"
+     },
+     "completion": {
+      "day": "2025-12",
+      "basis": "registry_date_estimated"
+     },
+     "allocation": "RANDOMIZED",
+     "masking": "QUADRUPLE",
+     "primary_purpose": "TREATMENT",
+     "healthy_volunteers": false,
+     "minimum_age": "50 Years",
+     "maximum_age": null,
+     "sponsor_name": null,
+     "sponsor_class": null,
+     "primary_outcomes": null,
+     "why_stopped": null,
+     "results": null
+    },
+    "events": [
+     {
+      "key": "NCT02914366|registered|2016-09-26",
+      "nct_id": "NCT02914366",
+      "kind": "registered",
+      "day": "2016-09-26",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2"
+      ],
+      "update_key": "NCT02914366@2024-02-28"
+     }
+    ],
+    "paper_ids": [
+     "10.1001/jamaneurol.2025.1687",
+     "10.1186/s12883-019-1252-3"
+    ],
+    "findings": null
+   }
+  ],
+  "approach": {
+   "intervention_id": "substance:200168S0CL",
+   "approach": "drug",
+   "basis": "registry_intervention_type",
+   "registry_type": "DRUG",
+   "trials": 1
+  },
+  "history": [
+   {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "before": null,
+    "after": "trial_registered",
+    "on": "2026-11-16",
+    "observed_in_run": "fdb6df937309"
+   }
+  ],
+  "checked": [
+   {
+    "registry": "clinicaltrials.gov",
+    "checked_through": "2026-11-17"
+   }
+  ]
+ }
+}
