@@ -51,6 +51,16 @@ export function recordAddress(pathname) {
  *   a page made here carries the same mark as the files beside it;
  * - `meshEdition`, the MeSH vocabulary's year as the build states it.
  */
+// The frame as read for a request, kept for the rest of that request: the address check, the
+// cache of not-found answers and the page's own step all read it, and the asset is fetched once.
+const framesRead = new WeakMap();
+
+/** `builtVersion` for one request, read once however many steps ask. */
+export function builtFor(request, env) {
+  if (!framesRead.has(request)) framesRead.set(request, builtVersion(env, new URL(request.url)));
+  return framesRead.get(request);
+}
+
 export async function builtVersion(env, url) {
   const frame = await env.ASSETS.fetch(new Request(new URL(SHELL_PATH, url)));
   if (!frame.ok) return null;
@@ -72,6 +82,10 @@ export function madeHeaders(built, type, cacheControl) {
   if (built.robots) headers.set("X-Robots-Tag", built.robots);
   return headers;
 }
+
+/** What a page's step answers when D1 confirms the version holds no such file: the key its page
+ * would be kept under, where the Worker's entry keeps the not-found answer instead. */
+export const notHeld = (key) => ({ notHeld: key });
 
 /** What `bundleFile` gives for a file the version does not hold: distinct from any parsed body,
  * JSON `null` included, so every body found is checked. */
@@ -135,7 +149,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   const url = new URL(request.url);
   const address = pairAddress(url.pathname);
   if (!address || !env.PAIRS || typeof validate !== "function") return null;
-  const built = await builtVersion(env, url);
+  const built = await builtFor(request, env);
   if (!built) return null;
   const { shell, version } = built;
 
@@ -144,7 +158,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   if (kept) return kept;
 
   const file = await bundleFile(env, version, "PairPage", address);
-  if (file === ABSENT) return null;
+  if (file === ABSENT) return notHeld(key);
   let intervention = ABSENT;
   let published = new Set();
   const valid = validate(file);
@@ -192,7 +206,7 @@ export async function pairRecord(request, env, validate, cache) {
   const url = new URL(request.url);
   const address = recordAddress(url.pathname);
   if (!address || !env.PAIRS || typeof validate !== "function") return null;
-  const built = await builtVersion(env, url);
+  const built = await builtFor(request, env);
   if (!built) return null;
 
   const key = new Request(new URL(`/__pair-record/${built.version}/${built.build}/${address}`, url));
@@ -200,7 +214,7 @@ export async function pairRecord(request, env, validate, cache) {
   if (kept) return kept;
 
   const file = await bundleFile(env, built.version, "PairDataFile", address);
-  if (file === ABSENT) return null;
+  if (file === ABSENT) return notHeld(key);
   if (!validate(file)) {
     return new Response(JSON.stringify({ error: UNREADABLE }), { status: 500, headers: madeHeaders(built, "application/json; charset=utf-8", "no-store") });
   }

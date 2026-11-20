@@ -7,7 +7,7 @@
 // 6 to 170. An address that cannot be a listing is refused by its pattern before any read.
 import { categoryListing, interventionListing, namedPairs, topicListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
-import { ABSENT, FILE_SQL, builtVersion, fill, madeHeaders, parsedFile, unreadablePage } from "./pairs.mjs";
+import { ABSENT, FILE_SQL, builtFor, fill, madeHeaders, notHeld, parsedFile, unreadablePage } from "./pairs.mjs";
 
 const DAY_SECONDS = 86400;
 const SLUG = "[a-z0-9]+(?:-[a-z0-9]+)*";
@@ -40,7 +40,7 @@ export async function listingPage(request, env, validators, cache) {
   if (!listing || !env.PAIRS) return null;
   const validate = validators[listing.check];
   if (typeof validate !== "function") return null;
-  const built = await builtVersion(env, url);
+  const built = await builtFor(request, env);
   if (!built) return null;
   const { shell, version } = built;
 
@@ -50,7 +50,7 @@ export async function listingPage(request, env, validators, cache) {
 
   const { results: parts } = await env.PAIRS.prepare(FILE_SQL).bind(version, listing.model, listing.key).all();
   const file = parsedFile(parts);
-  if (file === ABSENT) return null;
+  if (file === ABSENT) return notHeld(key);
   if (!validate(file)) return unreadablePage(built, url.pathname.slice(1));
 
   // Which of the pairs the file names this version publishes (the pair table's address index),

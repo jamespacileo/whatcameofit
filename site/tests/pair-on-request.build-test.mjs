@@ -578,7 +578,94 @@ test("a listing address no file holds is not found, and one no listing could hav
     for (const pathname of ["/intervention/Not_A_Slug", "/intervention/a--b", "/clinical/X007239", "/clinical/D12", "/topic/x/y", "/topic/"]) {
       assert.equal((await get(pathname)).status, 404, pathname);
     }
-    assert.notEqual((await get("/intervention/no-such-treatment")).status, 404, "the well-formed address reads the table");
+    // Asked on a fresh host: on this one its not-found answer is kept for five minutes.
+    assert.notEqual((await getFresh("/intervention/no-such-treatment")).status, 404, "the well-formed address reads the table");
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+// The address space (openspec pairs-site task 4.6c): only a pair's or a listing's address reads
+// D1; an address of theirs the version holds nothing for is answered 404 and kept five minutes;
+// the query string is no part of an address.
+test("an address no pair or listing could have is answered by the assets, with no read of D1, whatever its family", async () => {
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    for (const pathname of [
+      "/Acoziborole--trypanosomiasis", "/acoziborole---x", "/acoziborole--", "/acoziborole",
+      "/data/pairs/A--b.json", "/data/pairs/a--b.JSON", "/data/pairs/a--b",
+      "/embed/acoziborole", "/embed/a--b/extra", "/oembed/a--b.xml", "/og/a--b.jpg", "/og/huge/a--b.png", "/og/square/A--b.png",
+      `/a--${"b".repeat(400)}`, `/embed/a--${"b".repeat(400)}`,
+    ]) {
+      const response = await getFresh(pathname);
+      assert.equal(response.status, 404, pathname);
+      await response.body?.cancel();
+    }
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+test("a well-formed address the version holds nothing for answers 404, kept five minutes, and is not read again", async () => {
+  const host = "https://missing.test";
+  for (const pathname of ["/no-such--pair", "/data/pairs/no-such--pair.json", "/embed/no-such--pair", "/oembed/no-such--pair.json", "/og/no-such--pair.png", "/topic/no-such-topic"]) {
+    const first = await mf.dispatchFetch(`${host}${pathname}`, { redirect: "manual" });
+    assert.equal(first.status, 404, pathname);
+    assert.equal(first.headers.get("Cache-Control"), "public, max-age=300", pathname);
+    await first.body?.cancel();
+  }
+  // With the page table gone, the same addresses are answered from what was kept.
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    for (const pathname of ["/no-such--pair", "/embed/no-such--pair", "/topic/no-such-topic", "/no-such--pair?x=1"]) {
+      const again = await mf.dispatchFetch(`${host}${pathname}`, { redirect: "manual" });
+      assert.equal(again.status, 404, pathname);
+      await again.body?.cancel();
+    }
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+test("a miss first asked for with HEAD keeps nothing bodiless: the GET after it has the not-found page", async () => {
+  const host = "https://head-first.test";
+  const head = await mf.dispatchFetch(`${host}/no-such--pair`, { method: "HEAD", redirect: "manual" });
+  assert.equal(head.status, 404);
+  await head.body?.cancel();
+  const page = await mf.dispatchFetch(`${host}/no-such--pair`, { redirect: "manual" });
+  assert.equal(page.status, 404);
+  assert.match(await page.text(), /<title>[^<]+<\/title>/);
+});
+
+test("only a confirmed miss in D1 is kept: a page whose frame failed answers again once the frame is back", async () => {
+  const host = "https://frame-back.test";
+  // The embed's frame is missing for a moment, as in a deployment still reaching a location.
+  hidden.add("/embed-shell");
+  try {
+    const failed = await mf.dispatchFetch(`${host}/embed/${ON_REQUEST}`, { redirect: "manual" });
+    assert.equal(failed.status, 404);
+    assert.notEqual(failed.headers.get("Cache-Control"), "public, max-age=300", "a failure is no miss");
+    await failed.body?.cancel();
+  } finally {
+    hidden.delete("/embed-shell");
+  }
+  assert.equal((await mf.dispatchFetch(`${host}/embed/${ON_REQUEST}`, { redirect: "manual" })).status, 200);
+});
+
+test("the query string is no part of an address: the same page, kept once, its canonical address bare", async () => {
+  const host = "https://query.test";
+  const plain = await (await mf.dispatchFetch(`${host}/${ON_REQUEST}`)).text();
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    // Answered from what was kept for the bare address, with no read of D1.
+    const asked = await mf.dispatchFetch(`${host}/${ON_REQUEST}?utm_source=x&ref=y`);
+    assert.equal(asked.status, 200);
+    const text = await asked.text();
+    assert.equal(text, plain);
+    assert.equal(parseHTML(text).document.querySelector('link[rel="canonical"]').getAttribute("href"), canonicalAddress(`/${ON_REQUEST}`));
   } finally {
     await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
   }
