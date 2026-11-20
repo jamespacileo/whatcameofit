@@ -43,6 +43,7 @@ export function readBundle(folder: string): Bundle {
   // The lab writes some times with no offset (`PairOrigin.created_at`), which the schema
   // calls a date-time and RFC 3339 does not. Both spellings are read as a time until the
   // lab writes an offset (openspec pairs-site, task 2.5).
+  // Remove when tests/bundle-strict.test.mjs finds no failing file: the lab's fixed bundle.
   ajv.addFormat("date-time", (text) => !Number.isNaN(Date.parse(text)));
   const pages: Bundle["pages"] = {};
   const withoutSchema: string[] = [];
