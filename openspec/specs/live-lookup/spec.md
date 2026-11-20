@@ -608,3 +608,30 @@ Successful DOI/PubMed-to-trial mappings and public registry query results MAY be
 #### Scenario: A paper service fails
 - **WHEN** a paper metadata request fails or times out
 - **THEN** no successful empty mapping is stored and a later lookup can ask again
+
+### Requirement: Public on-demand research context
+The public lookup SHALL return the records of papers the report links to, bibliographic search results and identifiers for organisations explicitly named in the report, in addition to trial candidates. These SHALL be labelled unreviewed search results, separate from any status and from match confidence. The interface SHALL collapse secondary context initially. Missing keys, provider limits and failures SHALL leave trial results available. Old cached results and older extensions SHALL remain compatible.
+
+#### Scenario: A report has related papers and names a university
+- **WHEN** OpenAlex finds papers and ROR selects the university's identity
+- **THEN** paper titles, metadata and source links and the ROR organisation link are available in collapsed sections, with no status change
+
+#### Scenario: The report links to its paper
+- **WHEN** the page links to a paper by DOI or PubMed number and a keyword search would not return that paper
+- **THEN** the paper's record is fetched by its identifier, listed first and marked as linked from the article
+
+#### Scenario: The paper's title shares few words with the report
+- **WHEN** the report links to no paper, names two organisations that ROR identifies, and a keyword search does not return the paper it reports
+- **THEN** works on the treatment's terms with an author at each named organisation, published around the report's date, are searched for, and a paper found this way is listed before keyword results with the organisations it was found under, those found under more organisations first
+
+#### Scenario: The free allowance cannot be established
+- **WHEN** OpenAlex's allowance is exhausted, unknown, exceeds the free budget or has prepaid credit
+- **THEN** no charged literature search is sent, a temporary unavailability is shown, and trial lookup and ROR continue
+
+#### Scenario: Repeated research query
+- **WHEN** a normalized metadata result is less than seven days old
+- **THEN** it is reused without a provider request, including an empty result
+
+#### Scenario: A provider times out or limits access
+- **WHEN** an API call or its body takes more than five seconds, or a source responds with a quota error
+- **THEN** the optional source stops without retries or alternative accounts and the remaining results are returned

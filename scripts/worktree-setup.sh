@@ -3,7 +3,7 @@
 # copy of every package in a store shared by all checkouts on this machine and links it
 # in, so this takes seconds and downloads nothing the store already holds.
 #
-#   sh scripts/worktree-setup.sh            # site and video
+#   sh scripts/worktree-setup.sh            # the site
 #   sh scripts/worktree-setup.sh site       # one of them
 set -eu
 
@@ -32,5 +32,4 @@ if [ $# -gt 0 ]; then
   for dir in "$@"; do setup "$dir"; done
 else
   setup site
-  setup video
 fi
