@@ -2,6 +2,10 @@
 
 The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare Worker in the Palladio account. Source code is public at https://github.com/jamespacileo/whatcameofit. The pipeline, review database, local preview and provider keys stay on the private machine.
 
+## Publishing from main is paused
+
+Decided by the operator on 20 November 2026: claims are being removed from the site (openspec `pairs-site`, task 3.4), so a merge to `main` no longer publishes to production. The `Deploy production` job runs only when the repository variable `PUBLISH_PRODUCTION` is `true`, and it is not set. Production keeps serving its last deployment, the claims site, until the cutover ("Pair pages in production", below), which the operator starts. The checks, the build rehearsal and pull request previews run as before. To undo the pause, set `PUBLISH_PRODUCTION` to `true`; what follows describes publishing as it was until then.
+
 ## Normal publishing workflow
 
 GitHub Actions runs the pipeline, store, site build, and release checks in parallel. The required `Tests and build` check passes when all suites pass. A newer push cancels outstanding checks for the same pull request. Use `make check` to run the checks locally and `make deploy-ci-check` to rehearse the public build.
