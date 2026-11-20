@@ -12,7 +12,7 @@ const index = {
     "news.example.org/both": ["one", "two"],
     "news.example.org/gone": ["withdrawn"],
   },
-  claims: { one: claim("Claim one"), two: claim("Claim two") },
+  pairs: { one: claim("Claim one"), two: claim("Claim two") },
 };
 const loaded = { index, savedAt: null };
 
@@ -45,7 +45,7 @@ test("an untracked page carries a registry endpoint only where the site answers 
 });
 
 test("the site's own claim page shows that claim, and its other pages ask for an article", () => {
-  const own = { index: { ...index, live: "/api/lookup", claims: { one: { ...claim("Claim one"), page: "/one" }, two: claim("Claim two") } }, savedAt: null };
+  const own = { index: { ...index, live: "/api/lookup", pairs: { one: { ...claim("Claim one"), page: "/one" }, two: claim("Claim two") } }, savedAt: null };
   const state = stateFor("site.example/one?from=home", own, "site.example");
   assert.equal(state.kind, "tracked");
   assert.deepEqual(state.claims.map((c) => c.headline), ["Claim one"]);
