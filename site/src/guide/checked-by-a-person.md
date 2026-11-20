@@ -11,7 +11,7 @@ checked: false
 
 ## In the records
 
-Each claim carries a mark saying whether a person has reviewed it. A page put together by software, from a seed file or by an assistant's decision, carries a notice under its status until the operator has read it against its sources.
+Each page carries a mark saying whether a person has reviewed it. A page put together by software, from a seed file or by an assistant's decision, carries a notice under its status until the operator has read it against its sources.
 
 The same holds for this guide. Each entry is drafted from the sources it lists and says so until it has been read.
 

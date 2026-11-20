@@ -9,9 +9,9 @@ checked: false
 
 ## In the records
 
-A trial registry holds a record of a clinical trial of the treatment for the condition, and that record has been matched to the claim. Either the registry does not yet show the trial as started, or the record gives no phase.
+A trial registry holds a record of a clinical trial of the treatment for the condition, and that record has been matched to the page's treatment and condition. Either the registry does not yet show the trial as started, or the record gives no phase.
 
-The claim page links the record, so the registry's own account of the trial is one press away: who sponsors it, what it plans to measure and its current state.
+The page links the record, so the registry's own account of the trial is one press away: who sponsors it, what it plans to measure and its current state.
 
 ## What it does not tell you
 

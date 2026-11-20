@@ -9,9 +9,9 @@ checked: false
 
 ## In the records
 
-The first news reports of the claim were about a published paper, which this site calls the origin paper. The journal that published it has since issued a retraction notice, and the claim page lists that notice as a record, with its date and a link.
+The first news reports of the treatment were about a published paper, which this site calls the origin paper. The journal that published it has since issued a retraction notice, and the page lists that notice as a record, with its date and a link.
 
-Any trials and other records found for the claim stay on its page. They no longer set the status.
+Any trials and other records found for the treatment stay on its page. They no longer set the status.
 
 ## What it does not tell you
 
