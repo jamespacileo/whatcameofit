@@ -187,6 +187,11 @@ test("the Worker marks every kind of answer noindex in staging's configuration, 
   const held = await mf.dispatchFetch(`${ORIGIN}${page}`, { headers: { "If-None-Match": tag } });
   assert.equal(held.status, 304);
   assert.equal(held.headers.get("X-Robots-Tag"), "noindex", `${page} (304)`);
+  // A method other than GET or HEAD at an address no file has: the Worker's 405, marked too.
+  const posted = await mf.dispatchFetch(`${ORIGIN}${missing}`, { method: "POST", redirect: "manual" });
+  assert.equal(posted.status, 405);
+  assert.equal(posted.headers.get("X-Robots-Tag"), "noindex", `${missing} (405)`);
+  await posted.body?.cancel();
   // The same Worker without staging's variable, as production's configuration has none.
   await mf.setOptions(convertV4MiniflareOptions({
     modules: true,
