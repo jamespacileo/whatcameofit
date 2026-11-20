@@ -170,7 +170,8 @@ const config = siteRelease ? prepareSiteRelease({
   },
 }) : "wrangler.preview.jsonc";
 // With pair pages, the copy's Worker is the one with pairs, given the pairs database.
-const deployConfig = pairs ? pairsConfig({ base: config, database: pairs.database, scratch }) : config;
+// Wrangler runs in the site's folder and reads `config` from there; this script may not.
+const deployConfig = pairs ? pairsConfig({ base: path.resolve(SITE_DIR, config), database: pairs.database, scratch }) : config;
 const args = ["deploy", "--config", deployConfig, "--name", worker];
 // The contact address is how the trial reader presents itself to the registry.
 if (process.env.CONTACT_EMAIL) args.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
