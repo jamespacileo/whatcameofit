@@ -14,7 +14,6 @@ import { readBundle } from "../src/lib/bundle.ts";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
-import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
 import { stateFor } from "../../extension/src/lookup.js";
@@ -321,22 +320,12 @@ test("no pair page shows a value it could not read", () => {
   }
 });
 
-test("a trial's posted results are shown as the registry wrote them, with no verdict", () => {
-  // curcumin--gastritis-atrophic: trial NCT02782949, posted outcomes and comparisons, from the
-  // lab's rehearsal. It has one trial and no claim origin, so it is made on request; its file
-  // is rendered here through a pair page built ahead as well (see the on-request test).
-  const withResults = Object.entries(built).filter(([, one]) => one.trials.some((trial) => trial.findings?.outcomes.length));
-  for (const [address, file] of withResults) {
-    const document = page(withBundle, address);
-    for (const trial of file.trials.filter((one) => one.findings?.outcomes.length)) {
-      const section = document.querySelector(`[data-trial="${trial.nct_id}"] [data-results]`);
-      const outcomes = [...section.querySelectorAll("[data-outcome]")];
-      assert.equal(outcomes.length, trial.findings.outcomes.length);
-      assertNoOutcomeVerdict([section.textContent]);
-    }
-  }
+test("the bundle holds a trial with posted outcomes and comparisons", () => {
+  // curcumin--gastritis-atrophic: trial NCT02782949, from the lab's rehearsal. It is made on
+  // request here (one trial, no claim origin); tests/pair-on-request.build-test.mjs builds it
+  // ahead too and checks its results on the built page and on the page made on request.
   const curcumin = pages["curcumin--gastritis-atrophic"].trials[0].findings;
-  assert.ok(curcumin.outcomes.length > 0 && curcumin.comparisons.length > 0, "the bundle holds posted outcomes and comparisons");
+  assert.ok(curcumin.outcomes.length > 0 && curcumin.comparisons.length > 0);
 });
 
 test("the footer's Data page describes the pairs' files and its link opens the pairs' index", () => {

@@ -16,6 +16,7 @@ import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { movedAddresses } from "../src/lib/bundle.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
+import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
 import { UNREADABLE } from "../worker/pairs.mjs";
 
 const MARKUP = 'A <script>alert("x")</script> & <b>bold</b> study';
@@ -24,6 +25,9 @@ const BUILT_WITH_MARKUP = "apitegromab--obesity";
 const COMPARED = "apitegromab--neuromuscular-diseases";
 const BROKEN = "apitegromab--overweight";
 const KEPT = "tulisokibart--scleroderma-diffuse";
+// The one pair with posted results; given a claim origin here so that it is also built ahead.
+const WITH_RESULTS = "curcumin--gastritis-atrophic";
+const ORIGIN = JSON.parse(fs.readFileSync(`tests/bundle/p12_pair_page/${BUILT_WITH_MARKUP}.json`, "utf8")).row.origin;
 
 function copyBundle(change) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-on-request-"));
@@ -45,6 +49,16 @@ const SAME_ADDRESS = BUILT_WITH_MARKUP;
 const bundle = copyBundle({
   [ON_REQUEST]: withMarkup,
   [BUILT_WITH_MARKUP]: (page) => { withMarkup(page); page.row.origin.claim_slug = SAME_ADDRESS; },
+  [WITH_RESULTS]: (page) => {
+    page.row.origin = { ...ORIGIN, claim_slug: WITH_RESULTS };
+    // An estimate with its interval and no p value, as the lab's NCT05256017 posts one.
+    const { findings } = page.trials[0];
+    findings.comparisons.push({
+      key: `${findings.outcomes[0].key}|099`, outcome_key: findings.outcomes[0].key, kind: "treated_vs_comparator",
+      group_ids: ["OG000"], design: null, method: null, p_value: null,
+      estimate_kind: "Risk Difference (RD)", estimate: "-1.5", interval_pct: "95", lower: "-7.2", upper: "3.7",
+    });
+  },
 });
 // The claims export, with the first moved claim also archived: its address still answers 410.
 const moved = movedAddresses(Object.values(Object.fromEntries(
@@ -157,10 +171,32 @@ test("a pair not built ahead is made on request from D1, kept a day", async () =
       assert.equal(shown.querySelectorAll("[data-paper]").length, trial.paper_ids.length, `${address} ${trial.nct_id}`);
     }
   }
-  // curcumin--gastritis-atrophic, made on request, posts its outcomes and a comparison.
-  const curcumin = await documentOf(await get("/curcumin--gastritis-atrophic"));
-  assert.ok(curcumin.querySelectorAll("[data-outcome]").length > 0);
-  assert.match(curcumin.querySelector("[data-results]").textContent, /p = 0\.3990, Wilcoxon Rank-Sum test \(superiority test\)/);
+});
+
+test("a trial's posted results are shown as the registry wrote them, built ahead and made on request", async () => {
+  const file = pages[WITH_RESULTS];
+  assert.ok(builtAhead(file));
+  const built = parseHTML(fs.readFileSync(path.join(dist, WITH_RESULTS, "index.html"), "utf8")).document;
+  hidden.add(`/${WITH_RESULTS}`);
+  let made;
+  try {
+    const response = await get(`/${WITH_RESULTS}`);
+    assert.equal(response.status, 200);
+    made = await documentOf(response);
+  } finally {
+    hidden.delete(`/${WITH_RESULTS}`);
+  }
+  assert.equal(made.querySelector(".frame").outerHTML, built.querySelector(".frame").outerHTML);
+  const [trial] = file.trials;
+  const section = built.querySelector(`[data-trial="${trial.nct_id}"] [data-results]`);
+  assert.equal(section.querySelectorAll("[data-outcome]").length, trial.findings.outcomes.length);
+  assert.equal(section.querySelectorAll("[data-comparison]").length, trial.findings.comparisons.length);
+  // A comparison says which groups it covers, by the outcome's own group titles.
+  assert.match(section.textContent, /p = 0\.3990, Wilcoxon Rank-Sum test \(superiority test\)\. Posted for: Arm I \(Curcumin\), Arm II \(Placebo\)/);
+  // An estimate and its interval are kept, and are not called a comparison with no p value.
+  const estimate = [...section.querySelectorAll("[data-comparison]")].find((line) => /Risk Difference/.test(line.textContent));
+  assert.equal(estimate.textContent, "Risk Difference (RD) -1.5, 95% interval -7.2 to 3.7. Posted for: Arm I (Curcumin)");
+  assertNoOutcomeVerdict([section.textContent]);
 });
 
 test("the same file gives the same page built ahead and made on request", async () => {

@@ -55,9 +55,13 @@ export interface PaperLink {
  * https://doi.org/<DOI>, the form Crossref's DOI display guidelines ask for
  * (https://www.crossref.org/display-guidelines/); a PubMed identifier through PubMed's own
  * address, https://pubmed.ncbi.nlm.nih.gov/<PMID>/ (NLM, "Linking to PubMed"). An identifier
- * of any other kind is shown as written, unlinked: the site does not guess an address. */
+ * of any other kind is shown as written, unlinked: the site does not guess an address. Each
+ * part of a DOI between slashes is percent-encoded, so a `?`, `#` or `%` in its suffix reaches
+ * the resolver as part of the DOI (DOI Handbook 2.5.2.4, https://www.doi.org/the-identifier/resources/handbook/2_numbering). */
 export function paperLink(id: string): PaperLink {
-  if (/^10\.\d{4,9}\/\S+$/.test(id)) return { id, label: `doi:${id}`, url: `https://doi.org/${encodeURI(id)}` };
+  if (/^10\.\d{4,9}\/\S+$/.test(id)) {
+    return { id, label: `doi:${id}`, url: `https://doi.org/${id.split("/").map(encodeURIComponent).join("/")}` };
+  }
   const pmid = /^pmid:(\d+)$/i.exec(id)?.[1];
   if (pmid) return { id, label: `PMID ${pmid}`, url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` };
   return { id, label: id, url: null };
@@ -93,6 +97,27 @@ function valueText(value: any, dispersion: string | null): string {
   return value.value;
 }
 
+/** A posted comparison in the registry's terms: its p value and method in the claim page's
+ * wording, then any estimate with its interval ("Risk Difference (RD) -1.5, 95% interval -7.2
+ * to 3.7"), then the groups it covers, so a comparison of two arms of three, or within one
+ * arm, says which. ClinicalTrials.gov's statistical analysis elements
+ * (https://clinicaltrials.gov/policy/results-definitions) give each field. */
+function comparisonLine(comparison: any, titles: Map<string, string>): string {
+  const estimate = comparison.estimate
+    ? [
+        [comparison.estimate_kind, comparison.estimate].filter(Boolean).join(" "),
+        comparison.lower !== null && comparison.upper !== null
+          ? `${comparison.interval_pct ? `${comparison.interval_pct}% interval` : "interval"} ${comparison.lower} to ${comparison.upper}`
+          : null,
+      ].filter(Boolean).join(", ")
+    : null;
+  const test = comparison.design && comparison.design.toLowerCase() in TEST_WORDS ? comparison.design.toLowerCase() : null;
+  // With an estimate and no p value, the estimate is the result; the line does not say "no p value".
+  const tested = comparison.p_value || !estimate ? comparisonText({ p_value: comparison.p_value, method: comparison.method, test } as any) : comparison.method;
+  const groups = comparison.group_ids.map((id: string) => titles.get(id) ?? id);
+  return [tested, estimate].filter(Boolean).join("; ") + (groups.length ? `. Posted for: ${groups.join(", ")}` : "");
+}
+
 /** A trial's posted outcomes, primary first, each with its groups' values and any
  * comparison the sponsor posted with it. */
 function outcomesOf(findings: any): OutcomeView[] {
@@ -120,11 +145,7 @@ function outcomesOf(findings: any): OutcomeView[] {
         comparisons: findings.comparisons
           .filter((comparison: any) => comparison.outcome_key === outcome.key)
           .map((comparison: any) =>
-            comparisonText({
-              p_value: comparison.p_value,
-              method: comparison.method,
-              test: comparison.design && comparison.design.toLowerCase() in TEST_WORDS ? comparison.design.toLowerCase() : null,
-            } as any),
+            comparisonLine(comparison, new Map(outcome.values.map((value: any) => [value.group_id, value.group_title ?? value.group_id]))),
           ),
       };
     });
