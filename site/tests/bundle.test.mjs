@@ -87,7 +87,10 @@ test("a claim's address goes to its pair's only when one pair came from it", () 
 
 test("every code the bundle's schemas allow has words, except the expanded access states", () => {
   const defs = JSON.parse(readFileSync(join(folder, "schemas", "PairPage.json"), "utf8")).$defs;
-  const kinds = { ClaimStatusCode: ["status", "status gloss"], TrialPhase: ["phase"], OverallStatus: ["trial state"], TrialEventKind: ["event"], Approach: ["approach"] };
+  // The status codes' definition is found through the pair's status, not by name: lab pull
+  // request 129 renamed it from ClaimStatusCode to StatusCode, and either bundle is read.
+  const statusDef = defs.PairStatus.properties.code.$ref.replace("#/$defs/", "");
+  const kinds = { [statusDef]: ["status", "status gloss"], TrialPhase: ["phase"], OverallStatus: ["trial state"], TrialEventKind: ["event"], Approach: ["approach"] };
   for (const [def, tables] of Object.entries(kinds)) {
     for (const code of defs[def].enum) {
       if (def === "OverallStatus" && UNWORDED_TRIAL_STATES.includes(code)) continue;
