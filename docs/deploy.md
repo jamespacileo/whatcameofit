@@ -198,6 +198,28 @@ Production is published from a tag only. `.github/workflows/release.yml` runs on
 
 To release: `git tag v2026.11.20 <commit of main> && git push origin v2026.11.20`, then approve the run in Actions. `PRODUCTION_PUBLISHING` stays unset until the operator says the cutover can go ahead.
 
+## Rate limits on pages made on request
+
+Two limits stand between a flood of requests and the pages the Worker makes from D1 (openspec pairs-site task 4.6g). Both answer **429 Too Many Requests**, never 403 or 404: Google's crawlers read 429 as the server asking them to slow down, and recover when it stops, while a 403 or 404 would remove the page from Google's index ([reduce crawl rate](https://developers.google.com/crawling/docs/crawlers-fetchers/reduce-crawl-rate)).
+
+**In the Worker** (done in code): the `ON_REQUEST_LIMIT` rate limiting binding, which `pairsConfig` gives every deployment with pairs, each Worker its own namespace (production 4131, staging 4132, previews 4133). 600 requests a minute from one address, per Cloudflare location, on the addresses the Worker makes (a pair's page, record, embed, oEmbed and card addresses, and the listings); past it, 429 with `Retry-After: 60`. Files of the site are never counted. The binding's counts are approximate and per location ([rate limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)).
+
+**At the zone** (the operator's, in the dashboard; nothing in this repository changes it): one rate limiting rule, as the Free plan allows: one rule, counted by IP, a 10-second period and a 10-second mitigation timeout, with Path and Verified Bot as the fields an expression may use ([rate limiting rules](https://developers.cloudflare.com/waf/rate-limiting-rules/)). Security › WAF › Rate limiting rules › Create rule:
+
+- **Rule name:** `Pages made on request`
+- **If incoming requests match** (Edit expression):
+
+  ```text
+  (http.request.uri.path contains "--" or starts_with(http.request.uri.path, "/intervention/") or starts_with(http.request.uri.path, "/clinical/") or starts_with(http.request.uri.path, "/topic/") or starts_with(http.request.uri.path, "/data/pairs/") or starts_with(http.request.uri.path, "/embed/") or starts_with(http.request.uri.path, "/oembed/") or starts_with(http.request.uri.path, "/og/")) and not cf.bot_management.verified_bot
+  ```
+
+  `contains "--"` matches a pair's address (`/<treatment>--<condition>`); verified bots (Googlebot, Bingbot and the like) are never counted.
+- **With the same characteristics:** IP.
+- **When rate exceeds:** 100 requests per 10 seconds (ten a second from one address).
+- **Then take action:** Block, for 10 seconds. A rate limiting rule's block answers 429 by default; if the builder offers a response status, keep 429.
+
+If the expression builder refuses `starts_with` on the Free plan, the same rule with `contains` in its place (`http.request.uri.path contains "/intervention/"` and so on) counts the same addresses.
+
 ## GitHub configuration
 
 The GitHub `production` environment releases its secret to tags matching `v*` only (a deployment tag rule, no branch rule) and requires the operator's approval, with administrator bypass off ("Releases", above). `CLOUDFLARE_PRODUCTION_API_TOKEN` is its environment secret. The `staging` environment releases `CLOUDFLARE_STAGING_API_TOKEN` to `main` only ("Staging", above). Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.

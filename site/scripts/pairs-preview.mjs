@@ -119,6 +119,15 @@ export const WORKER_FIRST = [
   "/api/*", "/trials/*",
 ];
 
+/**
+ * The rate limit on addresses made on request (worker/with-pairs.mjs, ON_REQUEST_LIMIT), by
+ * Worker: each its own namespace, so staging never uses up production's counts. 600 a minute
+ * from one address in one location, ten a second: a search engine's crawler asks far fewer of one
+ * location from one address.
+ */
+export const ON_REQUEST_LIMITS = { thenwhat: "4131", "thenwhat-staging": "4132", "thenwhat-pr": "4133" };
+export const ON_REQUEST_LIMIT = { limit: 600, period: 60 };
+
 export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" }) {
   // A name alone is the site's own file, as Wrangler reads it from the site's folder.
   base = path.resolve(SITE_DIR, base);
@@ -135,6 +144,11 @@ export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" })
     not_found_handling: "none",
     run_worker_first: WORKER_FIRST,
   };
+  if (!ON_REQUEST_LIMITS[worker]) throw new Error(`no rate limit namespace for the ${worker} Worker`);
+  config.ratelimits = [
+    ...(config.ratelimits ?? []).filter((binding) => binding.name !== "ON_REQUEST_LIMIT"),
+    { name: "ON_REQUEST_LIMIT", namespace_id: ON_REQUEST_LIMITS[worker], simple: ON_REQUEST_LIMIT },
+  ];
   config.d1_databases = [
     ...(config.d1_databases ?? []).filter((binding) => binding.binding !== "PAIRS"),
     { binding: "PAIRS", database_name: database.name, database_id: database.id, migrations_dir: MIGRATIONS },

@@ -61,6 +61,35 @@ async function notFoundPage(request, env, answer) {
 // address no file has reaches the Worker whatever the method, so it says the same here.
 const READ = new Set(["GET", "HEAD"]);
 
+/**
+ * How many on-request answers one address may ask for, per Cloudflare location (openspec
+ * pairs-site task 4.6g): the ON_REQUEST_LIMIT binding, which pairsConfig gives every deployment
+ * with pairs. Past it, 429 with Retry-After, never 403 or 404: Google's crawlers read 429 as the
+ * server asking them to slow down, while a 403 or 404 would drop the page from the index
+ * (https://developers.google.com/crawling/docs/crawlers-fetchers/reduce-crawl-rate). The limit
+ * is far above what a search engine's crawler asks of one location from one address, and is
+ * counted by the asker's address, the only key a crawler or a scraper brings: the binding's
+ * counts are approximate and per location
+ * (https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/).
+ */
+const RETRY_SECONDS = 60;
+
+async function overLimit(request, env) {
+  if (!env.ON_REQUEST_LIMIT) return false;
+  const asker = request.headers.get("CF-Connecting-IP") ?? "unknown";
+  const { success } = await env.ON_REQUEST_LIMIT.limit({ key: asker });
+  return !success;
+}
+
+/**
+ * The cache pages made here are kept in: the Cache API (caches.default), kept for launch. Its
+ * contents stay in the data centre that kept them and outlast a deployment
+ * (https://developers.cloudflare.com/workers/runtime-apis/cache/), and the keys hold the bundle
+ * version and the frame's digest, so a new deployment never answers an older page. Not Workers
+ * Cache: it bills requests that are otherwise free, static asset requests among them, and keys
+ * by the Worker's version by default, so it would start empty after each deployment
+ * (https://developers.cloudflare.com/workers/cache/).
+ */
 export async function handleWithPairs(request, env, cache = globalThis.caches?.default ?? null) {
   const url = new URL(request.url);
   // The frames are the Worker's to fill, never pages of their own.
@@ -82,6 +111,13 @@ export async function handleWithPairs(request, env, cache = globalThis.caches?.d
   // is made here; any other path that the assets do not hold answers their not-found page.
   const make = onRequest(url.pathname);
   if (!make) return notFoundPage(request, env, answer);
+  if (await overLimit(request, env)) {
+    await answer.body?.cancel();
+    return new Response("Too many requests. Please slow down and try again shortly.", {
+      status: 429,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": String(RETRY_SECONDS), "Cache-Control": "no-store" },
+    });
+  }
   const made = await make(request, env, cache);
   if (made instanceof Response) return made;
   // No frame or store, or a dependency of the page that failed: the asset's answer, kept nowhere.

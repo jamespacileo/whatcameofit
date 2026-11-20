@@ -14,6 +14,7 @@ import { build as bundleWorker } from "esbuild";
 import { parseHTML } from "linkedom";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
+import { ON_REQUEST_LIMITS, pairsConfig } from "../scripts/pairs-preview.mjs";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 import { categoryListing, interventionListing, topicListing } from "../src/lib/listing-view.ts";
@@ -942,4 +943,52 @@ test("the code that writes a page is in its tag: a renderer or wording change gi
   } finally {
     frameEdits["/pair-shell"] = (text) => text;
   }
+});
+
+// The rate limit on addresses made on request (openspec pairs-site task 4.6g), in a Worker of its
+// own with a limit of three, so the other tests here are never counted.
+test("past its limit an asker gets 429 with Retry-After, never 403 or 404, and files are never counted", async () => {
+  const worker = await bundleWorker({ entryPoints: ["worker/with-pairs.mjs"], bundle: true, format: "esm", platform: "browser", conditions: ["workerd", "worker", "browser"], target: "es2022", write: false });
+  const limited = new Miniflare(convertV4MiniflareOptions({
+    modules: true,
+    script: worker.outputFiles[0].text,
+    compatibilityDate: "2026-10-01",
+    cf: false,
+    d1Databases: ["PAIRS"],
+    ratelimits: { ON_REQUEST_LIMIT: { namespace_id: "9001", simple: { limit: 3, period: 60 } } },
+    serviceBindings: { ASSETS: assets },
+  }));
+  try {
+    const db = await limited.getD1Database("PAIRS");
+    for (const sql of migration()) await db.prepare(sql).run();
+    await load(db, bundle);
+    const ask = (pathname, from) => limited.dispatchFetch(`https://limited.test${pathname}`, { headers: { "CF-Connecting-IP": from }, redirect: "manual" });
+    for (let at = 0; at < 3; at += 1) {
+      const response = await ask(`/${ON_REQUEST}`, "192.0.2.1");
+      assert.equal(response.status, 200, `request ${at + 1}`);
+      await response.body?.cancel();
+    }
+    const refused = await ask(`/intervention/acoziborole`, "192.0.2.1");
+    assert.equal(refused.status, 429);
+    assert.equal(refused.headers.get("Retry-After"), "60");
+    assert.equal(refused.headers.get("Cache-Control"), "no-store");
+    await refused.body?.cancel();
+    // Another address is counted on its own; a file of the site is never counted.
+    assert.equal((await ask(`/${ON_REQUEST}`, "192.0.2.2")).status, 200);
+    assert.equal((await ask("/about", "192.0.2.1")).status, 200);
+  } finally {
+    await limited.dispose();
+  }
+});
+
+test("every deployment with pairs is given the limit, in a namespace of its own Worker's", () => {
+  for (const [worker, base] of [["thenwhat", "wrangler.jsonc"], ["thenwhat-staging", "wrangler.staging.jsonc"], ["thenwhat-pr", "wrangler.preview.jsonc"]]) {
+    const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-limit-config-"));
+    const config = JSON.parse(fs.readFileSync(pairsConfig({ base, database: { name: "thenwhat-limit-preview", id: "00000000-0000-0000-0000-000000000000" }, scratch, worker }), "utf8"));
+    const binding = config.ratelimits.find((one) => one.name === "ON_REQUEST_LIMIT");
+    assert.deepEqual(binding, { name: "ON_REQUEST_LIMIT", namespace_id: ON_REQUEST_LIMITS[worker], simple: { limit: 600, period: 60 } });
+    // Its own namespace: no other limit of the site shares its counts.
+    assert.equal(config.ratelimits.filter((one) => one.namespace_id === binding.namespace_id).length, 1);
+  }
+  assert.equal(new Set(Object.values(ON_REQUEST_LIMITS)).size, Object.keys(ON_REQUEST_LIMITS).length);
 });
