@@ -23,7 +23,7 @@ const study = (id, intervention, condition) => ({ protocolSection: {
 } });
 const a = study("NCT00000001", first.intervention, first.indication);
 const b = study("NCT00000002", second.intervention, second.indication);
-const index = { claims: Object.fromEntries([first, second].map((one, at) => [`card-${at}`, {
+const index = { pairs: Object.fromEntries([first, second].map((one, at) => [`card-${at}`, {
   names: [one.intervention], indication: one.indication, headline: one.gist, page: `/card-${at}`,
 }])) };
 const quiet = { fetch: async () => null, named: async () => [], search: async () => [] };
@@ -105,7 +105,7 @@ test("reused multi-claim answers reassociate every card and persist no nested gi
   const saved = await previousResult(store, "https://example.org/roundup", 2000);
   assert.equal(saved.claims.length, 2);
   assert.ok(saved.claims.every(one => !("gist" in one)));
-  const moved = withCurrentClaims(saved, { claims: { "card-1": index.claims["card-1"] } });
+  const moved = withCurrentClaims(saved, { pairs: { "card-1": index.pairs["card-1"] } });
   assert.deepEqual(moved.claims.map(one => one.tracked.map(card => card.slug)), [[], ["card-1"]]);
 });
 
@@ -152,7 +152,7 @@ test("browser reuse keeps the group and checked date but never nested gists or p
   const entries = remember([], "page", "fingerprint", found, now);
   assert.equal(entries.length, 1);
   assert.ok(entries[0].found.claims.every(one => !("gist" in one)));
-  const saved = reusable(entries, "page", "fingerprint", now + 1, { claims: {} });
+  const saved = reusable(entries, "page", "fingerprint", now + 1, { pairs: {} });
   assert.equal(saved.at, now);
   assert.ok(saved.found.claims.every(one => one.tracked.length === 0));
   found.claims[1].check_state = "partial";

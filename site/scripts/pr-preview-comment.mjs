@@ -21,6 +21,7 @@ const PAGES = [
 ];
 const FILES = [
   ["lookup.json", "/lookup.json"],
+  ["lookup/2.json", "/lookup/2.json"],
   ["sitemap.xml", "/sitemap.xml"],
   ["changes.xml", "/changes.xml"],
   ["robots.txt", "/robots.txt"],

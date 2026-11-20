@@ -6,6 +6,7 @@
 // Behaviour: openspec reader-follow-up, "Notification of a change", "Reminder in the extension".
 import { SITE } from "./config.js";
 import { CACHE_VERSION } from "./lookup.js";
+import { fetchIndex, readIndex } from "./index-file.js";
 import { alarmsFor, changeMessage, changesToTell, REFRESH_MINUTES, reminderMessage, reminderOf } from "./watch.js";
 
 const api = globalThis.browser ?? globalThis.chrome;
@@ -19,10 +20,10 @@ function notify(id, { title, message }) {
 }
 
 async function refresh() {
-  const response = await fetch(`${SITE.url}/lookup.json`, { cache: "no-store" });
-  if (!response.ok) return;
-  const index = await response.json();
-  await api.storage.local.set({ lookup: { version: CACHE_VERSION, index, etag: response.headers?.get("ETag") ?? null, savedAt: Date.now() } });
+  const fetched = await fetchIndex(fetch, SITE.url).catch(() => null);
+  if (!fetched) return;
+  const index = readIndex(fetched.file);
+  await api.storage.local.set({ lookup: { version: CACHE_VERSION, ...fetched, savedAt: Date.now() } });
   if (!canNotify) return;
   const { follows = [], told = {} } = await api.storage.local.get(["follows", "told"]);
   const { tell, told: nowTold } = changesToTell(follows, index, told);
@@ -44,7 +45,7 @@ async function remindNow(name) {
   const { reminders = [], lookup = null } = await api.storage.local.get(["reminders", "lookup"]);
   const reminder = reminderOf(name, reminders);
   if (!reminder) return;
-  const status = Object.values(lookup?.index?.claims ?? {}).find((claim) => claim.page === reminder.page)?.status ?? null;
+  const status = Object.values(readIndex(lookup?.file ?? lookup?.index)?.pairs ?? {}).find((claim) => claim.page === reminder.page)?.status ?? null;
   await notify(`remind:${reminder.page}`, reminderMessage(reminder, status));
   await api.storage.local.set({ reminders: reminders.filter((kept) => kept !== reminder) });
 }

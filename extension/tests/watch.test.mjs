@@ -16,7 +16,7 @@ import {
 } from "../src/watch.js";
 
 const index = (status, place = 2) => ({
-  claims: { a: { headline: "Gel regrows enamel", page: "/enamel-gel", status, place } },
+  pairs: { a: { headline: "Gel regrows enamel", page: "/enamel-gel", status, place } },
 });
 const followed = [{ headline: "Gel regrows enamel", page: "/enamel-gel", status: "Trial registered", place: 2 }];
 
@@ -38,7 +38,7 @@ test("a change is told once, and again only if it moves on", () => {
 
 test("an unchanged or unpublished claim is not told", () => {
   assert.equal(changesToTell(followed, index("Trial registered", 2)).tell.length, 0);
-  assert.equal(changesToTell(followed, { claims: {} }).tell.length, 0);
+  assert.equal(changesToTell(followed, { pairs: {} }).tell.length, 0);
 });
 
 test("a change into no signal is told in plain words", () => {

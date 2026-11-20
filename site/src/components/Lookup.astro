@@ -113,7 +113,8 @@ const sentenceJson = sentences
   import { LIVE, describeAnswer, refusalMessage, textWouldHelp } from "../lib/live-lookup.mjs";
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { SITE as BRAND } from "../../site.config.mjs";
-  import { closestClaims, readAddress } from "../lib/lookup-match.mjs";
+  import { closestPairs, readAddress } from "../lib/lookup-match.mjs";
+  import { LOOKUP_FILE, readLookupFile, readSearchDetail } from "../lib/lookup-file.mjs";
   import { ranked, searchWords, wordPattern, wordsIn } from "../lib/search-order";
   import { suggest, suggestParts, suggestWords, type Suggestion } from "../lib/suggest";
   import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, NOT_AN_OPTION, changedShort, findListed, listingWords, registryDate, searchListing, setNote } from "../lib/trial-page.mjs";
@@ -161,7 +162,7 @@ const sentenceJson = sentences
   }
   interface Lookup {
     articles: Record<string, string[]>;
-    claims: Record<string, LookupClaim>;
+    pairs: Record<string, LookupClaim>;
     places: number;
     topics: Record<string, Topic>;
   }
@@ -182,7 +183,7 @@ const sentenceJson = sentences
     phases: string[];
   }
   interface SearchDetail {
-    claims: Record<string, { reports: SearchReport[]; trials: SearchTrial[] }>;
+    pairs: Record<string, { reports: SearchReport[]; trials: SearchTrial[] }>;
   }
   interface PassOn {
     sentence: string;
@@ -597,7 +598,8 @@ const sentenceJson = sentences
   }
 
   let lookup: Promise<Lookup> | undefined;
-  const loadLookup = () => (lookup ??= fetch("/lookup.json").then((response) => response.json()));
+  // The version 2 file, read into the shape the box was written with (src/lib/lookup-file.mjs).
+  const loadLookup = () => (lookup ??= fetch(LOOKUP_FILE).then((response) => response.json()).then(readLookupFile));
 
   async function lookUp(address: string, read: ReturnType<typeof readAddress>) {
     const asked = latest;
@@ -640,7 +642,7 @@ const sentenceJson = sentences
     }
     if (asked !== latest) return;
     const slugs = index.articles[read["key"]] ?? [];
-    const tracked = slugs.map((slug) => index.claims[slug]).filter(Boolean);
+    const tracked = slugs.map((slug) => index.pairs[slug]).filter(Boolean);
     if (tracked.length > 0) {
       results.replaceChildren(
         element(
@@ -653,7 +655,7 @@ const sentenceJson = sentences
       results.scrollIntoView({ block: "nearest" });
       return;
     }
-    const close = closestClaims(index, address).map((match: { claim: LookupClaim }) => match.claim);
+    const close = closestPairs(index, address).map((match: { claim: LookupClaim }) => match.claim);
     if (close.length > 0) {
       results.replaceChildren(
         element(
@@ -774,7 +776,7 @@ const sentenceJson = sentences
   // The reports and trials of a claim that hold the searched words, those holding most
   // of them first, a report ahead of a trial.
   function foundIn(page: string, words: string[], detail: SearchDetail): Found[] {
-    const held = detail.claims[page.slice(1)];
+    const held = detail.pairs[page.slice(1)];
     if (!held) return [];
     const found: Found[] = [
       ...held.reports.map((report) => ({ kind: "report" as const, strength: wordsIn(report.title, words), report })),
@@ -1220,7 +1222,7 @@ const sentenceJson = sentences
     (searchDetail ??= fetch("/search-detail.json").then((response) => {
       if (!response.ok) throw new Error(`search detail ${response.status}`);
       return response.json();
-    }));
+    }).then(readSearchDetail));
 
   // The trial listing: registry facts of the listed trials. Fetched only once a reader
   // has searched, and then kept for the page's life.
@@ -1375,7 +1377,7 @@ const sentenceJson = sentences
         return asking;
       }
       const list = element("ol", undefined, "plain");
-      list.append(...found.trials.map((trial) => listedRow(trial, index.claims, cited, words)));
+      list.append(...found.trials.map((trial) => listedRow(trial, index.pairs, cited, words)));
       group.replaceChildren(...head(), list);
       if (found.total > found.trials.length) group.append(element("p", SEARCH_WORDS.more(found.total - found.trials.length), "match-more"));
       return true;
@@ -1447,11 +1449,11 @@ const sentenceJson = sentences
     const wanted = query.toLowerCase();
     let trial: SearchTrial | undefined;
     const owners: LookupClaim[] = [];
-    for (const [slug, held] of Object.entries(detail.claims)) {
+    for (const [slug, held] of Object.entries(detail.pairs)) {
       const match = held.trials.find((candidate) => candidate.id.toLowerCase() === wanted);
-      if (!match || !index.claims[slug]) continue;
+      if (!match || !index.pairs[slug]) continue;
       trial ??= match;
-      owners.push(index.claims[slug]);
+      owners.push(index.pairs[slug]);
     }
     if (!trial) {
       const id = asWritten(query);
@@ -1472,7 +1474,7 @@ const sentenceJson = sentences
         const block = element("div", undefined, "search-results");
         block.append(searchHead(id, "A registered trial"));
         const list = element("ol", undefined, "plain listed-trials");
-        list.append(listedRow(listed, index.claims, citedTrials));
+        list.append(listedRow(listed, index.pairs, citedTrials));
         block.append(list, element("p", NOT_AN_OPTION, "trial-note"));
         place(block, `${id} is a registered trial,`);
         return;
@@ -1510,7 +1512,7 @@ const sentenceJson = sentences
     block.append(record);
     for (const claim of owners) {
       block.append(standing(claim, index.places, { lead: "Followed here · on record now", heading: "h3", compact: true }));
-      const [report] = detail.claims[claim.page.slice(1)]?.reports ?? [];
+      const [report] = detail.pairs[claim.page.slice(1)]?.reports ?? [];
       if (report) block.append(reportCard(report, claim, [], index.topics));
     }
     place(block, `${trial.id} is on record for ${said},`);
@@ -1545,8 +1547,8 @@ const sentenceJson = sentences
     const kept = pairIndexes.get(index);
     if (kept?.detail === detail) return kept.searchIndex;
     const words = (text: string) => text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
-    const entries = Object.entries(index.claims).map(([slug, claim], order) => {
-      const trials = detail.claims[slug]?.trials ?? [];
+    const entries = Object.entries(index.pairs).map(([slug, claim], order) => {
+      const trials = detail.pairs[slug]?.trials ?? [];
       const fields = [
         [claim.headline, ...(claim.names ?? [])],
         [claim.indication, claim.terms ?? ""],
@@ -1655,7 +1657,7 @@ const sentenceJson = sentences
 
     // Each pair found is named by its page. A page is read once, however many views ask for
     // it; one that failed is asked for again.
-    const byPage = new Map(Object.values(index.claims).map((claim) => [claim.page, claim]));
+    const byPage = new Map(Object.values(index.pairs).map((claim) => [claim.page, claim]));
     const reads = new Map<IndexedHit, Promise<LookupClaim | undefined>>();
     const readHits = (batch: IndexedHit[]) => Promise.all(batch.map((hit) => {
       const pending = reads.get(hit);
@@ -1675,9 +1677,9 @@ const sentenceJson = sentences
     let exact: ExactHeadline | undefined;
     const asWords = plain(query);
     if (asWords.includes(" ")) {
-      for (const [slug, held] of Object.entries(detail.claims)) {
+      for (const [slug, held] of Object.entries(detail.pairs)) {
         const report = held.reports.find((candidate) => plain(candidate.title) === asWords);
-        const claim = index.claims[slug];
+        const claim = index.pairs[slug];
         if (!report || !claim) continue;
         exact = { claim, report };
         break;

@@ -2,8 +2,7 @@
 // holds one, by outlet, title and date, and its trials, by registry identifier and title.
 // The lookup box reads it only when words are searched, to say under each pair which
 // report or trial the words were found in, and to answer a registry identifier with its
-// trial. It holds no article text. `claims` is the key the lookup box reads: every pair, by
-// address.
+// trial. It holds no article text. `pairs` is every pair, by address.
 import type { APIRoute } from "astro";
 import { formatDate } from "../lib/timetable";
 import { PHASE_WORDS } from "../lib/trial-facts";
@@ -34,11 +33,11 @@ export const GET: APIRoute = () => {
       trials: page.trials.map((trial: any) => ({
         id: trial.nct_id,
         title: trial.facts.title,
-        registry: "ClinicalTrials.gov",
-        url: `https://clinicaltrials.gov/study/${trial.nct_id}`,
         phases: (trial.facts.phases ?? []).map((phase: string) => PHASE_WORDS[phase] ?? phase),
       })),
     };
   }
-  return Response.json({ schema_version: 1, claims: pairs });
+  // Each trial by its identifier alone: its registry and address are the same rule for
+  // every trial, and the reader adds them (readSearchDetail in src/lib/lookup-file.mjs).
+  return Response.json({ schema_version: 3, pairs });
 };

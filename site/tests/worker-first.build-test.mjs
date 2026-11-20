@@ -84,7 +84,7 @@ test("the configuration a deployment with pairs is given runs the Worker first o
 
 test("a page or file of the site is served as the file", async () => {
   const condition = Object.values(pages)[0].row.condition.slug;
-  for (const pathname of ["/", "/about", "/topics", "/clinical", `/condition/${condition}`, "/data/pairs.json", "/lookup.json", "/sitemap.xml", "/how-it-works"]) {
+  for (const pathname of ["/", "/about", "/topics", "/clinical", `/condition/${condition}`, "/data/pairs.json", "/lookup.json", "/lookup/2.json", "/sitemap.xml", "/how-it-works"]) {
     const response = await ask(pathname);
     assert.equal(response.status, 200, pathname);
     assert.equal(await response.text(), fs.readFileSync(path.join(dist, pathname === "/" ? "index.html" : fs.existsSync(path.join(dist, `${pathname.slice(1)}.html`)) ? `${pathname.slice(1)}.html` : fs.existsSync(path.join(dist, pathname.slice(1), "index.html")) ? path.join(pathname.slice(1), "index.html") : pathname.slice(1)), "utf8"), pathname);

@@ -68,6 +68,17 @@ The home page, an intervention's page, a condition's page, a topic's page, the t
 - **WHEN** the extension's tests run against an index made from the small bundle
 - **THEN** they pass without a change to the extension
 
+### Requirement: The lookup file keyed by pair
+`/lookup/2.json` SHALL list every published pair under `pairs`, keyed by its address, with the same words as `/lookup.json` under the names a pair has (`title`, `condition`), and no field that only a claim had. It SHALL be one static file under 25 MiB at 30,000 pairs. The site's lookup box, its search and the lookup Worker SHALL read it; `/lookup.json` SHALL be built beside it, unchanged, until an extension release reads version 2.
+
+#### Scenario: Both versions hold the same pairs
+- **WHEN** the site is built from the small bundle
+- **THEN** both files list every pair, and each pair's words in version 2 equal its words in version 1
+
+#### Scenario: The box reads version 2
+- **WHEN** a reader searches in the lookup box
+- **THEN** the box reads `/lookup/2.json` and the search detail, and not `/lookup.json`
+
 ### Requirement: Pages show names, never codes
 No page SHALL show a code where a name belongs: a MeSH descriptor's id, a tree number, a substance code or an intervention key stays in addresses and data files. A step of a path with no name in the bundle SHALL be left out rather than shown as its code.
 

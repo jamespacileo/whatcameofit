@@ -12,7 +12,10 @@ export function withCurrentClaims(found, index) {
   // search terms only. The names stated as whole aliases can associate a card.
   const wanted = new Set(regimenKeys(names));
   const indication = nameKey(found.condition);
-  const cards = Object.entries(index?.claims ?? {})
+  // The Worker's index is version 2 as read by src/lib/lookup-file.mjs (`pairs`); the
+  // released extension, which copies this file at build, still holds version 1 (`claims`).
+  // Both carry `indication`, `headline` and `page` on each entry.
+  const cards = Object.entries(index?.pairs ?? index?.claims ?? {})
     .filter(([, claim]) => indication && nameKey(claim.indication) === indication)
     .map(([slug, claim]) => ({ slug, claim, keys: regimenKeys(claim.names ?? []) }));
   const primary = regimenKeys(names.slice(0, 1))[0];
