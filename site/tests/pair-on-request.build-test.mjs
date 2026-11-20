@@ -762,6 +762,84 @@ test("an embed whose file fails its check is refused in the embed's own frame, w
   assert.doesNotMatch(document.body.textContent, /APITEGROMAB/i);
 });
 
+// Entity tags (openspec pairs-site task 4.6e): from what a page is made of, kept across bundle
+// versions while that is unchanged, so an asker who holds a page is told so (304).
+const ON_REQUEST_KINDS = () => [`/${ON_REQUEST}`, `/data/pairs/${ON_REQUEST}.json`, `/embed/${ON_REQUEST}`, `/oembed/${ON_REQUEST}.json`, `/og/${ON_REQUEST}.png`, "/intervention/acoziborole", "/topic/infections"];
+
+test("every page made on request carries a weak tag, and asking with it answers 304 with no body", async () => {
+  for (const pathname of ON_REQUEST_KINDS()) {
+    const full = await getFresh(pathname);
+    assert.equal(full.status, 200, pathname);
+    const tag = full.headers.get("ETag");
+    assert.match(tag, /^W\/"[0-9a-f]{24}"$/, pathname);
+    await full.body?.cancel();
+    const host = `https://tag-${(freshHosts += 1)}.test`;
+    // Made again on a new host, from D1, and answered before it is written.
+    const asked = await mf.dispatchFetch(`${host}${pathname}`, { headers: { "If-None-Match": tag }, redirect: "manual" });
+    assert.equal(asked.status, 304, pathname);
+    assert.equal(asked.headers.get("ETag"), tag);
+    assert.equal(asked.headers.get("Cache-Control"), full.headers.get("Cache-Control"));
+    assert.equal(await asked.text(), "");
+    // A tag it does not hold, or none, gets the page.
+    assert.equal((await mf.dispatchFetch(`${host}${pathname}`, { headers: { "If-None-Match": 'W/"0000"' } })).status, 200, pathname);
+  }
+});
+
+test("a kept page answers 304 to an asker who holds it, with no read of D1", async () => {
+  const host = "https://tag-kept.test";
+  const full = await mf.dispatchFetch(`${host}/${ON_REQUEST}`);
+  const tag = full.headers.get("ETag");
+  await full.body?.cancel();
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    const asked = await mf.dispatchFetch(`${host}/${ON_REQUEST}`, { headers: { "If-None-Match": `"other", ${tag}` } });
+    assert.equal(asked.status, 304);
+    assert.equal(asked.headers.get("ETag"), tag);
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+test("a page whose file is unchanged keeps its tag under a new bundle version; a changed one does not", async () => {
+  const CHANGED = "tulisokibart--scleroderma-diffuse";
+  const before = new Map();
+  for (const pathname of [`/${ON_REQUEST}`, `/${CHANGED}`]) {
+    const response = await getFresh(pathname);
+    before.set(pathname, response.headers.get("ETag"));
+    await response.body?.cancel();
+  }
+  // The next bundle: this test's own, with one pair's trial title changed and every other file
+  // as it was. Loaded beside the versions the other tests read, none of them dropped.
+  const next = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-next-"));
+  fs.cpSync(bundle, next, { recursive: true });
+  for (const folder of ["p12_pair_page", "p12_pair_data_file"]) {
+    const file = path.join(next, folder, `${CHANGED}.json`);
+    const held = JSON.parse(fs.readFileSync(file, "utf8"));
+    (folder === "p12_pair_page" ? held : held.pair).trials[0].facts.title = "A retitled study";
+    fs.writeFileSync(file, JSON.stringify(held));
+  }
+  fs.rmSync(path.join(next, "manifest.json"));
+  writeManifest(next, { madeAt: "2026-11-21T00:00:00Z" });
+  const db = await mf.getD1Database("PAIRS");
+  for (const sql of statements(next, { keep: 10 }).sql) await db.prepare(sql).run();
+  const version = statements(next).version;
+  assert.notEqual(version, statements(bundle).version);
+  frameEdits["/pair-shell"] = (text) => text.replace(/data-pair-version="[0-9a-f]{16}"/, `data-pair-version="${version}"`);
+  try {
+    const kept = await getFresh(`/${ON_REQUEST}`);
+    assert.equal(kept.headers.get("ETag"), before.get(`/${ON_REQUEST}`), "an unchanged pair keeps its tag");
+    await kept.body?.cancel();
+    const asked = await mf.dispatchFetch(`https://tag-next-${(freshHosts += 1)}.test/${ON_REQUEST}`, { headers: { "If-None-Match": before.get(`/${ON_REQUEST}`) } });
+    assert.equal(asked.status, 304);
+    const changed = await getFresh(`/${CHANGED}`);
+    assert.notEqual(changed.headers.get("ETag"), before.get(`/${CHANGED}`), "a changed pair has a new tag");
+    assert.match(await changed.text(), /A retitled study/);
+  } finally {
+    frameEdits["/pair-shell"] = (text) => text;
+  }
+});
+
 test("a pair names the same treatment's pairs for narrower conditions", async () => {
   // acoziborole--infections (C01) and acoziborole--trypanosomiasis (C01.610…) from the small
   // bundle; the African form sits beneath both.

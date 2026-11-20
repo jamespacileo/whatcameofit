@@ -72,7 +72,56 @@ export async function builtVersion(env, url) {
   const meshEdition = (MESH_EDITION.exec(shell)?.[1] ?? "").replaceAll("&amp;", "&").replaceAll("&#39;", "'").replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">");
   const siteUrl = SITE_ORIGIN.exec(shell)?.[1];
   if (!siteUrl) return null;
-  return { shell, version, build, siteUrl, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
+  // The frame as a page's content sees it: the same whatever bundle version it records, so a page
+  // whose file is unchanged keeps its tag from one bundle to the next.
+  const frameTag = await digestOf(shell.replace(VERSION, 'data-pair-version=""'));
+  return { shell, version, build, frameTag, siteUrl, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
+}
+
+/** The first 12 bytes of a text's SHA-256, in hex. */
+async function digestOf(text) {
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+  return [...digest.slice(0, 12)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * A page's entity tag, from what it is made of (openspec pairs-site task 4.6e): the files it reads
+ * from D1, as read, and the sets it reads with them, and the frame as a page sees it. A page
+ * whose file is unchanged keeps its tag across bundle versions, so a crawler asking again is told
+ * it is unchanged (304) rather than sent it whole after every load.
+ *
+ * Weak (`W/`): two pages with one tag are the same page but not the same bytes, since the frame
+ * carries the bundle version it was built from. RFC 9110 8.8.1: a weak validator "might not
+ * change for every change to the representation data"; If-None-Match compares tags weakly, so a
+ * weak tag answers a conditional GET in full (8.8.3.2, 13.1.2).
+ * https://www.rfc-editor.org/rfc/rfc9110#section-8.8
+ */
+export async function contentTag(built, ...parts) {
+  const text = [built.frameTag, ...parts.map((part) => (part === ABSENT ? "absent" : typeof part === "string" ? part : JSON.stringify(part)))].join("\u0000");
+  return `W/"${await digestOf(text)}"`;
+}
+
+/** Whether the asker holds this tag already (If-None-Match, compared weakly: RFC 9110 13.1.2). */
+export function unchanged(request, tag) {
+  const asked = request.headers.get("If-None-Match");
+  if (!asked || !tag) return false;
+  if (asked.trim() === "*") return true;
+  const opaque = (one) => one.trim().replace(/^W\//, "");
+  return asked.split(",").some((one) => opaque(one) === opaque(tag));
+}
+
+/** The answer for an asker who holds the page: its tag and caching, no body (RFC 9110 15.4.5). */
+export function notModified(built, tag, cacheControl) {
+  const headers = new Headers({ ...SITE_HEADERS, ETag: tag, "Cache-Control": cacheControl });
+  if (built.robots) headers.set("X-Robots-Tag", built.robots);
+  return new Response(null, { status: 304, headers });
+}
+
+/** A kept page, or 304 for an asker who holds it, read from what the cache kept: no D1 read. */
+export function fromCache(request, built, kept) {
+  const tag = kept.headers.get("ETag");
+  if (kept.status === 200 && tag && unchanged(request, tag)) return notModified(built, tag, kept.headers.get("Cache-Control"));
+  return kept;
 }
 
 /** The headers of a page or file made here: the site's own, its type and caching, and the
@@ -155,7 +204,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
 
   const key = new Request(new URL(`/__pair/${version}/${built.build}/${address}`, url));
   const kept = cache ? await cache.match(key) : undefined;
-  if (kept) return kept;
+  if (kept) return fromCache(request, built, kept);
 
   const file = await bundleFile(env, version, "PairPage", address);
   if (file === ABSENT) return notHeld(key);
@@ -177,6 +226,10 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   if (!valid || (intervention !== ABSENT && !(typeof validateIntervention === "function" && validateIntervention(intervention)))) {
     return unreadablePage(built, address);
   }
+  // Answered before the page is written: an asker who holds it is told so.
+  const tag = await contentTag(built, "pair", file, intervention, [...published].sort());
+  const caching = `public, max-age=${DAY_SECONDS}`;
+  if (unchanged(request, tag)) return notModified(built, tag, caching);
 
   const view = pairView(file);
   const page = fill(shell, {
@@ -187,7 +240,9 @@ export async function pairPage(request, env, validate, cache, validateInterventi
     oembed: true,
     sheet: renderPairSheet(view, narrowerPairs(file, intervention === ABSENT ? null : intervention, published)),
   });
-  const answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });
+  const headers = madeHeaders(built, "text/html; charset=utf-8", caching);
+  headers.set("ETag", tag);
+  const answer = new Response(page, { headers });
   if (cache) await cache.put(key, answer.clone());
   return answer;
 }
@@ -211,16 +266,19 @@ export async function pairRecord(request, env, validate, cache) {
 
   const key = new Request(new URL(`/__pair-record/${built.version}/${built.build}/${address}`, url));
   const kept = cache ? await cache.match(key) : undefined;
-  if (kept) return kept;
+  if (kept) return fromCache(request, built, kept);
 
   const file = await bundleFile(env, built.version, "PairDataFile", address);
   if (file === ABSENT) return notHeld(key);
   if (!validate(file)) {
     return new Response(JSON.stringify({ error: UNREADABLE }), { status: 500, headers: madeHeaders(built, "application/json; charset=utf-8", "no-store") });
   }
-  const answer = new Response(pairRecordText(file, SITE.name, built.siteUrl), {
-    headers: madeHeaders(built, "application/json; charset=utf-8", `public, max-age=${DAY_SECONDS}`),
-  });
+  const tag = await contentTag(built, "record", file);
+  const caching = `public, max-age=${DAY_SECONDS}`;
+  if (unchanged(request, tag)) return notModified(built, tag, caching);
+  const headers = madeHeaders(built, "application/json; charset=utf-8", caching);
+  headers.set("ETag", tag);
+  const answer = new Response(pairRecordText(file, SITE.name, built.siteUrl), { headers });
   if (cache) await cache.put(key, answer.clone());
   return answer;
 }

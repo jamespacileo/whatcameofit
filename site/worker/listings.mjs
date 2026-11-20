@@ -7,7 +7,7 @@
 // 6 to 170. An address that cannot be a listing is refused by its pattern before any read.
 import { categoryListing, interventionListing, namedPairs, topicListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
-import { ABSENT, FILE_SQL, builtFor, fill, madeHeaders, notHeld, parsedFile, unreadablePage } from "./pairs.mjs";
+import { ABSENT, FILE_SQL, builtFor, contentTag, fill, fromCache, madeHeaders, notHeld, notModified, parsedFile, unchanged, unreadablePage } from "./pairs.mjs";
 
 const DAY_SECONDS = 86400;
 const SLUG = "[a-z0-9]+(?:-[a-z0-9]+)*";
@@ -46,7 +46,7 @@ export async function listingPage(request, env, validators, cache) {
 
   const key = new Request(new URL(`/__listing/${version}/${built.build}${url.pathname}`, url));
   const kept = cache ? await cache.match(key) : undefined;
-  if (kept) return kept;
+  if (kept) return fromCache(request, built, kept);
 
   const { results: parts } = await env.PAIRS.prepare(FILE_SQL).bind(version, listing.model, listing.key).all();
   const file = parsedFile(parts);
@@ -67,7 +67,12 @@ export async function listingPage(request, env, validators, cache) {
   }
   const [pairs, categories] = await env.PAIRS.batch(reads);
   const published = new Set(pairs.results.map((row) => row.address));
-  const view = listing.view(file, published, new Set((categories?.results ?? []).map((row) => row.key)));
+  const known = new Set((categories?.results ?? []).map((row) => row.key));
+  // Answered before the page is written: an asker who holds it is told so.
+  const tag = await contentTag(built, "listing", file, [...published].sort(), [...known].sort(), built.meshEdition);
+  const caching = `public, max-age=${DAY_SECONDS}`;
+  if (unchanged(request, tag)) return notModified(built, tag, caching);
+  const view = listing.view(file, published, known);
   const page = fill(shell, {
     title: view.title,
     description: view.description,
@@ -75,7 +80,9 @@ export async function listingPage(request, env, validators, cache) {
     band: renderListingBand(view),
     sheet: renderListingSheet(view, built.meshEdition),
   });
-  const answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });
+  const headers = madeHeaders(built, "text/html; charset=utf-8", caching);
+  headers.set("ETag", tag);
+  const answer = new Response(page, { headers });
   if (cache) await cache.put(key, answer.clone());
   return answer;
 }
