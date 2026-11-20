@@ -11,6 +11,7 @@ import path from "node:path";
 import { before, test } from "node:test";
 import { parseHTML } from "linkedom";
 import { readBundle } from "../src/lib/bundle.ts";
+import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
@@ -34,6 +35,7 @@ const UNFILED = "tulisokibart--hidradenitis-suppurativa";
 const ADDED_AFTER_CUT = new Set([UNFILED]);
 fs.cpSync("tests/bundle", narrowestBundle, { recursive: true });
 for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(narrowestBundle, folder, `${ANCESTOR}.json`));
+writeManifest(narrowestBundle, { madeAt: "2026-11-20T00:00:00Z" });
 const pages = readBundle("tests/bundle").pages.PairPage;
 // The pairs whose page, card and embed the build makes (decision 2); the rest are made on
 // request by the Worker (tests/pair-on-request.build-test.mjs).
@@ -435,6 +437,13 @@ test("a bundle carrying a code with no words stops the build, naming the code", 
     const doctored = JSON.parse(fs.readFileSync(file, "utf8"));
     doctored.checked = [{ registry: "ctis", checked_through: "2026-11-18" }];
     fs.writeFileSync(file, JSON.stringify(doctored));
+    // Under the small bundle's own manifest the changed file stops the build on the checksum,
+    // before any page is written (task 2.3); with a manifest of its own, on the code.
+    const stale = build(out, { PAIRS_BUNDLE: unworded });
+    assert.notEqual(stale.status, 0);
+    assert.match(stale.stdout + stale.stderr, /checksum sha256:[0-9a-f]{64} differs from the manifest's/);
+    assert.equal(fs.readdirSync(out, { recursive: true }).some((name) => String(name).endsWith(".html")), false);
+    writeManifest(unworded, { madeAt: "2026-11-20T00:00:00Z" });
     const result = build(out, { PAIRS_BUNDLE: unworded });
     assert.notEqual(result.status, 0);
     assert.match(result.stdout + result.stderr, /no words for: registry: ctis/);

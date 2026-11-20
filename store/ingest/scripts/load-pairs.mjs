@@ -8,67 +8,60 @@
 // <folder> is what `lab pipeline pages` writes: `p12_<page>/<key>.json` and `schemas/`.
 // Each schema is kept as a `pair_page` row of the model `$schema`, keyed by its page model's
 // name, so a version read back from D1 (scripts/export-pairs.mjs) is the whole folder.
+// The folder is checked against its `manifest.json` (scripts/bundle-manifest.mjs) before any
+// statement is made: a file missing or changed since the lab wrote it, and nothing is loaded.
+// The manifest itself is kept as the `pair_page` row `$manifest`/`manifest`.
 // The bundle's version is the checksum of its files, read as JSON, schemas included. Its rows are written under that
 // version and the last statements mark it current and drop every version but it and the
 // one before, so a load that stops early leaves the site reading what it read. Loading
 // the current version again is refused: nothing would change.
-import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { MANIFEST, SCHEMA_MODEL, bundleVersion, checkManifest, files } from "./bundle-manifest.mjs";
 
-const PREFIX = "p12_";
-const SCHEMAS = "schemas";
-/** The reserved model name a schema is kept under in `pair_page`. No page model has it. */
-export const SCHEMA_MODEL = "$schema";
+export { SCHEMA_MODEL, bundleVersion, files };
+
+/** The reserved model the manifest is kept under in `pair_page`, keyed `manifest`, so a version
+ * read back from D1 has the manifest the lab wrote. It is not one of the files it checksums. */
+export const MANIFEST_MODEL = "$manifest";
+const MANIFEST_KEY = MANIFEST.slice(0, -".json".length);
 // Under D1's 100,000 bytes a statement: a character is at most four bytes, a quote doubles.
 const PART_CHARS = 10_000;
 const KEPT_VERSIONS = 2;
 const TABLES = ["pair_page", "pair_intervention", "pair_intervention_name", "pair_condition", "pair", "pair_trial", "pair_trial_facts", "pair_status_change"];
 
-const model = (folder) => folder.slice(PREFIX.length).split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join("");
 const quote = (value) => (value === null || value === undefined ? "NULL"
   : typeof value === "number" ? String(value)
   : typeof value === "boolean" ? (value ? "1" : "0")
   : `'${String(value).replaceAll("'", "''")}'`);
 const insert = (table, row) => `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map(quote).join(", ")})`;
 
-// The bundle's files, in a fixed order: [model, key, text]. Page files first, by folder and
-// name; then each schema, as the model `$schema` keyed by its page model's name.
-export function files(folder) {
-  const out = [];
-  for (const name of readdirSync(folder).filter((entry) => entry.startsWith(PREFIX) && statSync(join(folder, entry)).isDirectory()).sort()) {
-    for (const file of readdirSync(join(folder, name)).filter((entry) => entry.endsWith(".json")).sort()) {
-      out.push([model(name), file.slice(0, -".json".length), readFileSync(join(folder, name, file), "utf8")]);
-    }
-  }
-  if (!out.length) throw new Error(`${folder} holds no page file under a ${PREFIX}* folder: give the folder \`lab pipeline pages\` wrote`);
-  const schemas = join(folder, SCHEMAS);
-  const held = existsSync(schemas) ? readdirSync(schemas).filter((entry) => entry.endsWith(".json")).sort() : [];
-  if (!held.length) throw new Error(`${folder} holds no ${SCHEMAS}/ folder of JSON Schemas: the site reads none of a bundle without them`);
-  for (const file of held) out.push([SCHEMA_MODEL, file.slice(0, -".json".length), readFileSync(join(schemas, file), "utf8")]);
-  return out;
-}
-
-// A bundle's version: the checksum of its page files. The site's build records the same
-// version, the only one its Worker reads pages of (openspec pairs-site).
-export function bundleVersion(folder, pages = files(folder)) {
-  const hash = createHash("sha256");
-  // Each file as compact JSON, so a folder written back from D1 has the version it was loaded
-  // under whatever spacing the lab used.
-  for (const [name, key, text] of pages) hash.update(`${name}/${key}\n${JSON.stringify(JSON.parse(text))}\n`);
-  return hash.digest("hex").slice(0, 16);
+// The statements that store a checked folder's manifest under its version when that version is
+// held without one: a bundle loaded before bundles carried a manifest keeps its version (the
+// manifest is outside the checksum), so it is never loaded again, and without this it could
+// never be exported for a build. A manifest already held is left as it is.
+// It takes the version and manifest a check already returned (`statements(...)` gives both), so
+// the manifest stored is the one checked, even if the folder is replaced in the meantime.
+export function manifestBackfill({ version, manifest }) {
+  const body = JSON.stringify(manifest);
+  // One part, so the guard below sees the whole manifest or none of it.
+  if (body.length > PART_CHARS) throw new Error(`the manifest of bundle ${version} is longer than one part of ${PART_CHARS} characters`);
+  const sql = `INSERT INTO pair_page (version, model, key, part, body) SELECT ${quote(version)}, ${quote(MANIFEST_MODEL)}, ${quote(MANIFEST_KEY)}, 0, ${quote(body)}`
+    + ` WHERE EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)})`
+    + ` AND NOT EXISTS (SELECT 1 FROM pair_page WHERE version = ${quote(version)} AND model = ${quote(MANIFEST_MODEL)})`;
+  return { version, sql: [sql] };
 }
 
 // The statements that load a bundle, its version and its counts. Each statement is one line.
 export function statements(folder, { loadedAt = new Date().toISOString() } = {}) {
-  const pages = files(folder);
-  const version = bundleVersion(folder, pages);
+  // Nothing is written unless the folder is whole and unchanged since its manifest was made.
+  const { version, manifest, pages } = checkManifest(folder);
   const rows = Object.fromEntries(TABLES.map((table) => [table, new Map()]));
   const put = (table, key, row) => rows[table].set(key, { version, ...row });
 
-  for (const [name, key, text] of pages) {
+  for (const [name, key, text] of [...pages, [MANIFEST_MODEL, MANIFEST_KEY, JSON.stringify(manifest)]]) {
     const body = JSON.stringify(JSON.parse(text));
     for (let part = 0; part * PART_CHARS < body.length; part += 1) {
       put("pair_page", `${name}|${key}|${part}`, { model: name, key, part, body: body.slice(part * PART_CHARS, (part + 1) * PART_CHARS) });
@@ -108,7 +101,7 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
     ...TABLES.map((table) => `DELETE FROM ${table} WHERE version NOT IN ${kept}`),
     `DELETE FROM pair_bundle WHERE version NOT IN (SELECT version FROM (${kept.slice(1, -1)}))`,
   ];
-  return { version, counts, sql };
+  return { version, manifest, counts, sql };
 }
 
 // Run as a command, not imported (an importer may have no script path of its own).
@@ -126,7 +119,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       const { execute, target } = await import("./d1.mjs");
       const to = target(argv);
       const [held] = (await execute(to, "--command", `SELECT version FROM pair_bundle WHERE current = 1`))[0]?.results ?? [];
-      if (held?.version === load.version) throw new Error(`bundle ${load.version} is already the current one: nothing to load`);
+      if (held?.version === load.version) {
+        await execute(to, "--command", manifestBackfill(load).sql[0]);
+        console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is held`);
+        process.exit(0);
+      }
       const dir = mkdtempSync(join(tmpdir(), "thenwhat-pairs-"));
       try {
         writeFileSync(join(dir, "pairs.sql"), load.sql.join(";\n") + ";\n");

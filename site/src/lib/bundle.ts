@@ -7,6 +7,7 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES, unwordedPairCodes } from "./pair-wording.ts";
+import { SCHEMA_MODEL, checkManifest } from "../../../store/ingest/scripts/bundle-manifest.mjs";
 
 const PREFIX = "p12_";
 const SCHEMAS = "schemas";
@@ -20,21 +21,42 @@ export function modelOf(folder: string): string {
     .join("");
 }
 
+/** The folder of a page model: `PairPage` is held in `p12_pair_page`. */
+const folderOf = (model: string) => PREFIX + model.replace(/[A-Z]/g, (letter, at) => `${at ? "_" : ""}${letter.toLowerCase()}`);
+
 export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES, unwordedPairCodes };
 
 export interface Bundle {
+  /** The bundle's version: the first 16 hex digits of the checksum its manifest states. */
+  version: string;
+  /** The manifest as the lab wrote it (`store/ingest/scripts/bundle-manifest.mjs`). */
+  manifest: Record<string, any>;
   /** Page model name to its pages, by key (a pair page's key is its address). */
   pages: Record<string, Record<string, any>>;
   /** Page models the bundle holds that have no schema in it: nothing of theirs is read. */
   withoutSchema: string[];
 }
 
-/** Read a bundle folder. Throws, naming the file, when one does not fit its schema, and
- * naming the codes when a pair page carries one the site has no words for. */
+/** Read a bundle folder. Throws, naming the page model and both counts when the manifest's
+ * counts differ from the files, when the files' checksum is not the manifest's, naming the
+ * file when one does not fit its schema, and naming the codes when a pair page carries one
+ * the site has no words for. Every page is built from what this returns, so a build stops
+ * on any of these before it writes a page. */
 export function readBundle(folder: string): Bundle {
   if (!fs.existsSync(path.join(folder, SCHEMAS))) {
     throw new Error(`${folder} holds no ${SCHEMAS}/ folder: it is not a bundle of page files.`);
   }
+  // The manifest first (openspec pairs-site, task 2.3): a folder cut short in a copy, or
+  // changed after the lab wrote it, is refused whole rather than published in part.
+  // Every page and schema below is read from what the check read, not from the folder again,
+  // so the pages built are the ones the recorded version names even if the folder changes.
+  const { version, manifest, pages: checked } = checkManifest(folder);
+  const held = new Map<string, [string, string][]>();
+  for (const [model, key, text] of checked as [string, string, string][]) {
+    if (!held.has(model)) held.set(model, []);
+    held.get(model)!.push([key, text]);
+  }
+  const schemas = new Map(held.get(SCHEMA_MODEL) ?? []);
   const ajv = new Ajv2020({ allErrors: false, strict: false });
   addFormats(ajv);
   // The lab writes some times with no offset (`PairOrigin.created_at`), which the schema
@@ -44,28 +66,24 @@ export function readBundle(folder: string): Bundle {
   ajv.addFormat("date-time", (text) => !Number.isNaN(Date.parse(text)));
   const pages: Bundle["pages"] = {};
   const withoutSchema: string[] = [];
-  const folders = fs
-    .readdirSync(folder)
-    .filter((name) => name.startsWith(PREFIX) && fs.statSync(path.join(folder, name)).isDirectory())
-    .sort();
-  for (const name of folders) {
-    const model = modelOf(name);
-    const schemaFile = path.join(folder, SCHEMAS, `${model}.json`);
-    if (!fs.existsSync(schemaFile)) {
+  for (const [model, files] of [...held].filter(([model]) => model !== SCHEMA_MODEL)) {
+    const schema = schemas.get(model);
+    if (!schema) {
       withoutSchema.push(model);
       continue;
     }
-    const validate = ajv.compile(JSON.parse(fs.readFileSync(schemaFile, "utf8")));
+    const validate = ajv.compile(JSON.parse(schema));
+    const name = folderOf(model);
     pages[model] = {};
-    for (const file of fs.readdirSync(path.join(folder, name)).filter((entry) => entry.endsWith(".json")).sort()) {
-      const page = JSON.parse(fs.readFileSync(path.join(folder, name, file), "utf8"));
+    for (const [key, text] of files) {
+      const page = JSON.parse(text);
       if (!validate(page)) {
         const [error] = validate.errors ?? [];
         throw new Error(
-          `${name}/${file} does not fit ${model}: ${error?.instancePath || "/"} ${error?.message ?? "is invalid"}.`,
+          `${name}/${key}.json does not fit ${model}: ${error?.instancePath || "/"} ${error?.message ?? "is invalid"}.`,
         );
       }
-      pages[model][file.slice(0, -".json".length)] = page;
+      pages[model][key] = page;
     }
   }
   const unworded = unwordedPairCodes(
@@ -75,7 +93,7 @@ export function readBundle(folder: string): Bundle {
   if (unworded.length) {
     throw new Error(`The bundle carries codes the site has no words for: ${unworded.join(", ")}.`);
   }
-  return { pages, withoutSchema };
+  return { version, manifest, pages, withoutSchema };
 }
 
 /** Where a claim's address goes now: the address of the pair that came from it. A claim
