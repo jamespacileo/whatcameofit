@@ -93,6 +93,41 @@ To turn it on, the operator, once:
 2. Give the preview token D1 access: in the preview account's dashboard, edit the API token stored as `CLOUDFLARE_PREVIEW_API_TOKEN` in the GitHub `preview` environment and add **Account, D1, Edit**, for the preview account only. No new secret or variable is needed: the database is found by its name.
 3. Run **Pull request preview** again on an open pull request and look for the `Pair pages:` line in its log.
 
+### Pair pages in production: rehearse, publish, roll back
+
+openspec `pairs-site`, task 4.4. A deployment with pair pages reads its bundle from the store's D1 database, never from a folder in the repository. `site/scripts/deploy.mjs`, given `PAIRS_DATABASE`:
+
+1. Reads the database back with `wrangler d1 info` and stops unless its jurisdiction is `eu`.
+2. Reads its current bundle version (`pair_bundle.current`), or the version `PAIRS_VERSION` names, and exports it to a folder of the run with `store/ingest/scripts/export-pairs.mjs`'s `exportBundle`. The export works the version out again from the files it wrote and stops unless it matches. A version with no pair page stops the deployment.
+3. Builds the site with `PAIRS_BUNDLE` set to that folder. The build checks every file against its schema and every code against the site's wording (`site/src/lib/pair-wording.ts`), and stops on either.
+4. Checks that the build recorded the same version in `/pair-shell`, the frame the Worker fills for pages made on request.
+5. Deploys `worker/with-pairs.mjs` with the database bound as `PAIRS`, in a configuration written for the run from `wrangler.jsonc`. `wrangler.jsonc` itself is unchanged.
+
+The log says `Pair pages: bundle <version>, <n> pairs, from <database>`.
+
+**Rehearse** (reads production's database, writes nothing anywhere):
+
+```sh
+pnpm --dir site exec wrangler login        # the production account
+make deploy-pairs-check                     # PAIRS_DATABASE defaults to thenwhat-store
+```
+
+On this machine without Cloudflare, `site/tests/pairs-deploy.build-test.mjs` runs the same dry run against D1's local engine (`PAIRS_LOCAL_STATE=<folder>`, accepted only with `--dry-run`).
+
+**Publish** only at the cutover, after the operator says it can go ahead (task 5.2). Without `--cutover`, deploy.mjs refuses to publish with pair pages before building anything:
+
+```sh
+EXPORT_FILE=data/published-export.json PAIRS_DATABASE=thenwhat-store node site/scripts/deploy.mjs --cutover
+```
+
+A checked CI build (`--reuse-build`) holds no bundle, so it is refused with `PAIRS_DATABASE`.
+
+**Roll back**, from quickest to fullest:
+
+- The deployment before: `pnpm --dir site exec wrangler rollback <last-good-version-id>`, as for any release (below). A rollback to a version from before the cutover serves the claims site again.
+- The bundle before, on the current code: the store keeps the current version and the one before (design decision 4), so deploy that version by name, leaving D1 as it is: `PAIRS_VERSION=<version before> ... node site/scripts/deploy.mjs --cutover`. Read the versions with `SELECT version, current, loaded_at FROM pair_bundle`.
+- The claims site: `make deploy-ci` of the commit before the cutover, which still reads the committed claims export (design decision 10).
+
 ## GitHub configuration
 
 Restrict the GitHub `production` environment to `main`. Store `CLOUDFLARE_PRODUCTION_API_TOKEN` as an environment secret there before merging the workflow. Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.

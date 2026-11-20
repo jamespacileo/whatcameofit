@@ -251,6 +251,14 @@ pr-preview: site/node_modules
 deploy-check: site/node_modules public-export public-trials-listing
 	EXPORT_FILE=data/public-export.json node site/scripts/deploy.mjs --dry-run
 
+# The cutover rehearsal (openspec pairs-site, task 4.4): everything a deployment with pair
+# pages does except publishing. Reads the current bundle version of PAIRS_DATABASE (the
+# production store by default, read only), exports it, builds the site from it and has
+# Wrangler check the Worker with pairs. Publishing with pair pages also needs --cutover.
+PAIRS_DATABASE ?= thenwhat-store
+deploy-pairs-check: site/node_modules
+	EXPORT_FILE=data/published-export.json PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs --dry-run
+
 # Publish to Cloudflare at SITE_URL's domain. Refuses a preview export and a
 # local address.
 deploy: site/node_modules public-export public-trials-listing
