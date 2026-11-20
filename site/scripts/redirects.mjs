@@ -55,7 +55,20 @@ const gone = [
 if (process.env.PAIRS_BUNDLE) {
   const listed = new Set(gone.map((entry) => entry.slug));
   const pairs = Object.values(readBundle(path.resolve(process.env.PAIRS_BUNDLE)).pages.PairPage ?? {});
-  for (const [slug, to] of Object.entries(movedAddresses(pairs))) if (!listed.has(slug)) gone.push({ slug, to });
+  // `pair: true` marks a claim that leads to its pair, whose page and files the build does not
+  // make (src/lib/pairs.ts, claimsWithAPair): the Worker sends its files' addresses to the
+  // pair's too. A claim whose slug is its pair's address is listed so, and is not redirected.
+  const single = new Map();
+  for (const page of pairs) {
+    const slug = page.row.origin?.claim_slug;
+    if (slug) single.set(slug, single.has(slug) ? null : page.row.pair.address);
+  }
+  const moved = movedAddresses(pairs);
+  for (const [slug, to] of single) {
+    if (to === null || listed.has(slug)) continue;
+    if (to !== slug && moved[slug] !== to) throw new Error(`The rule for ${slug} disagrees with movedAddresses: ${to} and ${moved[slug]}.`);
+    gone.push({ slug, to, pair: true });
+  }
 }
 fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
 

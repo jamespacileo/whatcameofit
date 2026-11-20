@@ -75,7 +75,13 @@ const exportFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-exp
 // No topic address was published from the fixture export.
 const publishedTopics = path.join(path.dirname(exportFile), "published-topics.json");
 fs.writeFileSync(publishedTopics, "[]");
-fs.writeFileSync(exportFile, JSON.stringify({ ...JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8")), archived: [{ slug: ARCHIVED, on: "2026-11-01" }] }));
+// One claim of the fixture takes the slug of a claim that leads to a pair of the bundle, so the
+// build has a claim with a pair (task 3.4a): "phase-claim" becomes MATCHED.
+const MATCHED = Object.keys(moved).sort().find((slug) => slug !== ARCHIVED);
+const UNMATCHED = "quiet-claim";
+const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+for (const claim of fixture.claims) if (claim.slug === "phase-claim") claim.slug = MATCHED;
+fs.writeFileSync(exportFile, JSON.stringify({ ...fixture, archived: [{ slug: ARCHIVED, on: "2026-11-01" }] }));
 const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-on-request-"));
 const pages = Object.fromEntries(
   fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => [name.slice(0, -5), JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))]),
@@ -114,7 +120,7 @@ async function load(db, folder) {
 
 before(async () => {
   const result = spawnSync("npx", ["astro", "build", "--outDir", dist], {
-    env: { ...process.env, EXPORT_FILE: "tests/fixture-export.json", PAIRS_BUNDLE: bundle, ASTRO_TELEMETRY_DISABLED: "1" },
+    env: { ...process.env, EXPORT_FILE: exportFile, PAIRS_BUNDLE: bundle, ASTRO_TELEMETRY_DISABLED: "1" },
     encoding: "utf8",
   });
   assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -309,4 +315,46 @@ test("a claim whose pair is published leads to it, an archived one is still gone
   const same = await get(`/${SAME_ADDRESS}`);
   assert.equal(same.status, 200);
   assert.ok((await documentOf(same)).querySelector("[data-pair-status]"));
+});
+
+test("a claim with a pair is not built, and every file of it leads to the pair's", async () => {
+  const address = moved[MATCHED];
+  assert.ok(address, "the fixture has a claim with a pair");
+  // Not built: its page, record, embed, oEmbed, cards and feed.
+  const files = [`${MATCHED}/index.html`, `data/claims/${MATCHED}.json`, `embed/${MATCHED}/index.html`, `oembed/${MATCHED}.json`,
+    `og/${MATCHED}.png`, `og/square/${MATCHED}.png`, `og/tall/${MATCHED}.png`, `changes/${MATCHED}.xml`];
+  for (const file of files) assert.ok(!fs.existsSync(path.join(dist, file)), file);
+  const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "claims.json"), "utf8"));
+  assert.ok(!index.entries.some((entry) => entry.slug === MATCHED));
+  for (const feed of fs.readdirSync(path.join(dist, "changes", "topic"))) {
+    assert.ok(!fs.readFileSync(path.join(dist, "changes", "topic", feed), "utf8").includes(`/${MATCHED}`), feed);
+  }
+  // What each of its addresses answers now.
+  const leads = {
+    [`/${MATCHED}`]: `/${address}`,
+    [`/data/claims/${MATCHED}.json`]: `/data/pairs/${address}.json`,
+    [`/embed/${MATCHED}`]: `/embed/${address}`,
+    [`/oembed/${MATCHED}.json`]: `/oembed/${address}.json`,
+    [`/og/${MATCHED}.png`]: `/og/${address}.png`,
+    [`/og/square/${MATCHED}.png`]: `/og/square/${address}.png`,
+    [`/og/tall/${MATCHED}.png`]: `/og/tall/${address}.png`,
+    [`/changes/${MATCHED}.xml`]: "/changes.xml",
+  };
+  for (const [from, to] of Object.entries(leads)) {
+    const response = await get(from);
+    assert.equal(response.status, 301, from);
+    assert.equal(new URL(response.headers.get("Location")).pathname, to, from);
+    // And the pair's own file answers.
+    assert.equal((await get(to)).status, 200, to);
+  }
+});
+
+test("a claim with no pair is built and answers as before, and an archived one is still gone", async () => {
+  assert.equal(moved[UNMATCHED], undefined);
+  for (const pathname of [`/${UNMATCHED}`, `/data/claims/${UNMATCHED}.json`, `/embed/${UNMATCHED}`, `/oembed/${UNMATCHED}.json`, `/og/${UNMATCHED}.png`, `/changes/${UNMATCHED}.xml`]) {
+    assert.equal((await get(pathname)).status, 200, pathname);
+  }
+  const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "claims.json"), "utf8"));
+  assert.ok(index.entries.some((entry) => entry.slug === UNMATCHED));
+  assert.equal((await get(`/${ARCHIVED}`)).status, 410);
 });
