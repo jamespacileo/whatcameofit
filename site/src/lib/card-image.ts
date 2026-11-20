@@ -12,6 +12,7 @@ import {
   PROMISED_LABEL,
   cardContent,
   clip,
+  pairCardContent,
   topicCardContent,
   type CardContent,
   type CardFact,
@@ -20,6 +21,7 @@ import {
 import { data, type ExportedClaim, type ExportedVertical } from "./export";
 import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText, topicClaimSummary } from "./status";
 import { topicDrawing } from "./topic-drawing";
+import { pairView } from "./pairs";
 
 const INK = "#0f1f38";
 const BLUE = "#14427f";
@@ -384,6 +386,26 @@ function content(claim: ExportedClaim): CardContent {
     latestPromise(claim)?.parsed_date ?? null,
     data.last_checked_at,
   );
+}
+
+/** A pair's card, from its page file (openspec pairs-site). */
+export function pairCardFor(page: any): CardContent {
+  const view = pairView(page);
+  return {
+    ...pairCardContent(
+      `${view.intervention} for ${view.condition.toLowerCase()}`,
+      view.status,
+      overlayText(page.row.status.overlay_years),
+      view.trials.length,
+      view.asOf,
+    ),
+    place: STAGE_PATH.indexOf(view.statusCode as (typeof STAGE_PATH)[number]) + 1 || null,
+  };
+}
+
+export async function pairCardPng(page: any, which: Shape): Promise<Uint8Array> {
+  const layout = LAYOUTS[which];
+  return png(draw(pairCardFor(page), layout), layout.width, layout.height);
 }
 
 export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8Array> {
