@@ -129,6 +129,9 @@ test("the staging smoke checks pass against the build's Worker, every answer mar
     attempts: 1,
   });
   assert.match(lines[0], new RegExp(`OK /build-revision.txt names commit ${REVISION}`));
+  // What the bundle holds, read back from the deployment: the fixture's manifest gives no
+  // trials fetched, so it states no launch measure.
+  assert.ok(lines.includes("   Bundle " + fs.readFileSync("dist/bundle-version.txt", "utf8").trim() + ": 15 pairs, lab commit not given; no launch measure: the manifest gives no coverage.trials_fetched."), lines.join("\n"));
   assert.match(lines.at(-1), /Staging passed all 8 checks at https:\/\/staging\.whatcameofit\.com\./);
   for (const status of ["200", "301", "410", "404"]) assert.ok(lines.some((line) => line.includes(` ${status}, noindex`)), status);
 });
