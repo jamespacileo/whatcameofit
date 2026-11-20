@@ -6,7 +6,8 @@ import Base from "../layouts/Base.astro";
 import { cardAlt } from "../lib/card";
 import { pairCardFor } from "../lib/card-image";
 import { pairDescription, renderPairBand, renderPairSheet } from "../lib/pair-render";
-import { builtAheadPages, pairView } from "../lib/pairs";
+import { builtAheadPages, pairBundle, pairPages, pairView } from "../lib/pairs";
+import { narrowerPairs } from "../lib/pair-view";
 import "./pair.css";
 
 export function getStaticPaths() {
@@ -15,6 +16,8 @@ export function getStaticPaths() {
 
 const { page } = Astro.props;
 const view = pairView(page);
+// The intervention's page file, which the Worker reads too for a page it makes on request.
+const narrower = narrowerPairs(page, pairBundle()?.pages.PairInterventionPage?.[page.row.intervention.slug] ?? null, new Set(Object.keys(pairPages())));
 ---
 
 <Base
@@ -26,5 +29,5 @@ const view = pairView(page);
   framed
 >
   <Fragment slot="band" set:html={renderPairBand(view)} />
-  <Fragment set:html={renderPairSheet(view)} />
+  <Fragment set:html={renderPairSheet(view, narrower)} />
 </Base>

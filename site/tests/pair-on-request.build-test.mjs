@@ -360,3 +360,62 @@ test("a claim with no pair is built and answers as before, and an archived one i
   assert.ok(index.entries.some((entry) => entry.slug === UNMATCHED));
   assert.equal((await get(`/${ARCHIVED}`)).status, 410);
 });
+
+test("a pair names the same treatment's pairs for narrower conditions, built ahead and made on request", async () => {
+  // acoziborole--infections (C01, built ahead) and acoziborole--trypanosomiasis (C01.610…, made
+  // on request) from the small bundle; the African form sits beneath both.
+  const named = (html) => [...parseHTML(html).document.querySelectorAll("[data-pair-narrower] [data-narrower]")].map((link) => link.dataset.narrower);
+  assert.deepEqual(named(fs.readFileSync(path.join(dist, "acoziborole--infections", "index.html"), "utf8")), [
+    "acoziborole--trypanosomiasis", "acoziborole--trypanosomiasis-african",
+  ]);
+  const made = await get("/acoziborole--trypanosomiasis");
+  assert.equal(made.status, 200);
+  assert.ok(!fs.existsSync(path.join(dist, "acoziborole--trypanosomiasis", "index.html")), "made on request");
+  assert.deepEqual(named(await made.text()), ["acoziborole--trypanosomiasis-african"]);
+  // The narrowest has nothing beneath it, and says nothing.
+  assert.deepEqual(named(fs.readFileSync(path.join(dist, "acoziborole--trypanosomiasis-african", "index.html"), "utf8")), []);
+  assert.ok(!fs.readFileSync(path.join(dist, "acoziborole--trypanosomiasis-african", "index.html"), "utf8").includes("data-pair-narrower"));
+});
+
+test("an intervention page that fails its check stops a page made on request", async () => {
+  const db = await mf.getD1Database("PAIRS");
+  const version = statements(bundle).version;
+  // apitegromab--obesity is built ahead; hidden from the asset binding, the Worker makes it, for
+  // the first time in this run (its answers are kept a day, so a page made earlier would be).
+  await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'apitegromab' AND part > 0").bind(version).run();
+  await db.prepare("UPDATE pair_page SET body = ?2 WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'apitegromab'").bind(version, JSON.stringify({ pairs: "not a list" })).run();
+  hidden.add("/apitegromab--obesity");
+  let response;
+  try {
+    response = await get("/apitegromab--obesity");
+  } finally {
+    hidden.delete("/apitegromab--obesity");
+  }
+  assert.equal(response.status, 500);
+  assert.equal(parseHTML(await response.text()).document.querySelector("[data-pair-unreadable]").textContent, UNREADABLE);
+});
+
+test("a narrower pair the version holds no page for is not linked, and a stored null is checked", async () => {
+  const db = await mf.getD1Database("PAIRS");
+  const version = statements(bundle).version;
+  // A slice without the African form's page: its intervention listing still names it.
+  await db.prepare("DELETE FROM pair WHERE version = ?1 AND address = 'acoziborole--trypanosomiasis-african'").bind(version).run();
+  hidden.add("/acoziborole--infections");
+  try {
+    const made = await get("/acoziborole--infections");
+    assert.equal(made.status, 200);
+    const named = [...parseHTML(await made.text()).document.querySelectorAll("[data-narrower]")].map((link) => link.dataset.narrower);
+    assert.deepEqual(named, ["acoziborole--trypanosomiasis"]);
+  } finally {
+    hidden.delete("/acoziborole--infections");
+  }
+  // An intervention page file stored as JSON null is a body like any other, and fails its check.
+  await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart' AND part > 0").bind(version).run();
+  await db.prepare("UPDATE pair_page SET body = 'null' WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart'").bind(version).run();
+  hidden.add("/tulisokibart--lung-diseases-interstitial");
+  try {
+    assert.equal((await get("/tulisokibart--lung-diseases-interstitial")).status, 500);
+  } finally {
+    hidden.delete("/tulisokibart--lung-diseases-interstitial");
+  }
+});

@@ -278,3 +278,27 @@ export function pairView(page: any): PairView {
     claimSlug: row.origin?.claim_slug ?? null,
   };
 }
+
+export interface NarrowerPair {
+  address: string;
+  condition: string;
+}
+
+/** The same treatment's other pairs whose condition sits beneath this pair's in MeSH: a tree
+ * number of theirs continues one of this pair's ("C01.610" is beneath "C01"). Read from the
+ * intervention's page file, the one source the built page and the Worker share, so the two
+ * list the same pairs. In the order of the conditions' names. */
+export function narrowerPairs(page: any, interventionPage: any | null, published: Set<string>): NarrowerPair[] {
+  if (!interventionPage) return [];
+  const tops: string[] = page.row.descriptor.tree_numbers;
+  const self = page.row.pair.address;
+  const found = new Map<string, string>();
+  for (const row of interventionPage.pairs) {
+    const address = row.pair.address;
+    // Only a pair with a page in this bundle version: a listing can name pairs a slice left out.
+    if (address === self || found.has(address) || !published.has(address)) continue;
+    const beneath = row.descriptor.tree_numbers.some((number: string) => tops.some((top) => number.startsWith(`${top}.`)));
+    if (beneath) found.set(address, row.descriptor.label);
+  }
+  return [...found].sort(([, a], [, b]) => a.localeCompare(b)).map(([address, condition]) => ({ address, condition }));
+}
