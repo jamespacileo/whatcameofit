@@ -6,7 +6,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { FILE_LIMIT, countFiles, oversizedFiles } from "../scripts/dist-size.mjs";
+import { FILE_LIMIT, SEARCH_GZIP_LIMIT, countFiles, oversizedFiles } from "../scripts/dist-size.mjs";
+import { randomBytes } from "node:crypto";
 import { NOTICES } from "../src/lib/notices.ts";
 
 const CHECK = path.resolve(import.meta.dirname, "../scripts/check-dist.mjs");
@@ -66,4 +67,19 @@ test("Scenario: Too many built files", () => {
   const under = run(40);
   assert.equal(under.status, 0, under.stderr);
   assert.match(under.stdout, /31 files of the 40 a build may hold/);
+});
+
+test("a search file over 2 MiB with gzip stops the build, and a lighter one passes", () => {
+  const root = built({});
+  fs.mkdirSync(path.join(root, "dist/lookup"));
+  // Random bytes do not compress, so the gzip size is about the file's own.
+  fs.writeFileSync(path.join(root, "dist/lookup/2.json"), randomBytes(SEARCH_GZIP_LIMIT + 2 ** 17));
+  const over = spawnSync(process.execPath, [CHECK], { cwd: root, encoding: "utf8" });
+  assert.notEqual(over.status, 0);
+  assert.match(over.stderr, /lookup\/2\.json is 2\.1 MiB with gzip, over the 2 MiB the search may download/);
+  // A file far larger than the limit that compresses well is no problem.
+  fs.writeFileSync(path.join(root, "dist/lookup/2.json"), "{}".padEnd(SEARCH_GZIP_LIMIT * 3, " "));
+  fs.writeFileSync(path.join(root, "dist/search-detail.json"), "{}");
+  const under = spawnSync(process.execPath, [CHECK], { cwd: root, encoding: "utf8" });
+  assert.equal(under.status, 0, under.stderr);
 });

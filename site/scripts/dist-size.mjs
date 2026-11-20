@@ -4,6 +4,7 @@
 // file near the host's limit" and "Built files counted against the host's limit".
 import fs from "node:fs";
 import path from "node:path";
+import { gzipSync } from "node:zlib";
 
 export const FILE_LIMIT = 20 * 2 ** 20;
 /** The most files a version may hold on the host's free plan. */
@@ -33,4 +34,22 @@ export function oversizedFiles(directory, limit = FILE_LIMIT) {
   };
   walk(directory);
   return found.sort((a, b) => b.bytes - a.bytes);
+}
+
+// The two files the lookup box's word search downloads, each the first time a reader types or
+// searches (never on page load). At 30,000 pairs, the size the design plans for, each comes
+// to about 1 MB with gzip (openspec pairs-site, task 4.11). The build stops at 2 MiB each,
+// about twice that, so a much heavier file is caught before it ships: then the search is
+// split into parts (task 4.11) rather than the limit raised.
+export const SEARCH_FILES = ["lookup/2.json", "search-detail.json"];
+export const SEARCH_GZIP_LIMIT = 2 * 2 ** 20;
+
+/** Each search file whose gzip size is over the limit, with that size. Missing files are skipped. */
+export function heavySearchFiles(directory, limit = SEARCH_GZIP_LIMIT) {
+  return SEARCH_FILES.flatMap((file) => {
+    const full = path.join(directory, file);
+    if (!fs.existsSync(full)) return [];
+    const bytes = gzipSync(fs.readFileSync(full)).length;
+    return bytes > limit ? [{ file, bytes }] : [];
+  });
 }
