@@ -10,6 +10,7 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { Service, engineUnavailable } from "./harness.mjs";
 import { statements } from "../scripts/load-pairs.mjs";
+import { writeManifest } from "../scripts/bundle-manifest.mjs";
 
 const skip = (await engineUnavailable()) ?? false;
 if (skip && process.env.CI) throw new Error(skip);
@@ -61,6 +62,7 @@ test("a second bundle takes over only at its last statements, and the one before
     cpSync(bundle, smaller, { recursive: true });
     const dropped = "apitegromab--obesity";
     rmSync(join(smaller, "p12_pair_page", `${dropped}.json`));
+    writeManifest(smaller, { madeAt: "2026-11-20T00:00:00Z" });
     const load = statements(smaller, { loadedAt: "2026-11-20T00:00:00.000Z" });
     assert.notEqual(load.version, first);
 
@@ -80,12 +82,29 @@ test("a second bundle takes over only at its last statements, and the one before
     // A third leaves two: the first is gone from every table.
     writeFileSync(join(smaller, "p12_pair_page", `${dropped}.json`), readFileSync(join(bundle, "p12_pair_page", `${dropped}.json`)));
     rmSync(join(smaller, "p12_pair_page", "apitegromab--overweight.json"));
+    writeManifest(smaller, { madeAt: "2026-11-21T00:00:00Z" });
     const third = statements(smaller, { loadedAt: "2026-11-21T00:00:00.000Z" });
     await run(third.sql);
     assert.deepEqual((await all("SELECT version FROM pair_bundle ORDER BY loaded_at")).map((row) => row.version), [load.version, third.version]);
     assert.equal((await one("SELECT count(*) AS n FROM pair_page WHERE version = ?", first)).n, 0);
   } finally {
     rmSync(smaller, { recursive: true, force: true });
+  }
+});
+
+test("a folder that differs from its manifest is refused before any statement is made", () => {
+  const short = mkdtempSync(join(tmpdir(), "thenwhat-bundle-"));
+  try {
+    cpSync(bundle, short, { recursive: true });
+    rmSync(join(short, "p12_pair_data_file", "apitegromab--obesity.json"));
+    const held = readdirSync(join(bundle, "p12_pair_data_file")).length;
+    const counted = new RegExp(`the manifest counts ${held} PairDataFile files and ${held - 1} are present`);
+    assert.throws(() => statements(short), counted);
+    assert.throws(() => execFileSync(process.execPath, [script, short, "--print"], { stdio: "pipe" }), counted);
+    writeFileSync(join(short, "p12_pair_data_file", "apitegromab--obesity.json"), "{}");
+    assert.throws(() => statements(short), /checksum .* differs from the manifest's/);
+  } finally {
+    rmSync(short, { recursive: true, force: true });
   }
 });
 

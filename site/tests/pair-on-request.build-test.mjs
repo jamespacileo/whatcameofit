@@ -13,6 +13,7 @@ import { build as bundleWorker } from "esbuild";
 import { parseHTML } from "linkedom";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
+import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { movedAddresses } from "../src/lib/bundle.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
@@ -40,6 +41,7 @@ function copyBundle(change) {
       fs.writeFileSync(file, JSON.stringify(page));
     }
   }
+  writeManifest(dir, { madeAt: "2026-11-20T00:00:00Z" });
   return dir;
 }
 
