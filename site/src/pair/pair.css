@@ -16,3 +16,15 @@
 .pair-trial dd {
   margin: 0;
 }
+
+/* A list of pairs, as listing pages draw it (lib/listing-render.ts). */
+.pair-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.pair-table th,
+.pair-table td {
+  text-align: left;
+  padding: 0.4rem 0.6rem 0.4rem 0;
+  vertical-align: top;
+}

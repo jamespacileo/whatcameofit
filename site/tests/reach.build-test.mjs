@@ -14,9 +14,11 @@ import { mastodonShare, shareLinks } from "../src/lib/share.ts";
 import { canonicalAddress } from "../src/lib/structured.ts";
 
 const BUNDLE = "tests/bundle";
-// A pair whose page the build makes ahead, and the topic it is filed under.
+// A pair whose page the build makes ahead, and a topic whose file lists a pair with a page. A
+// topic's page is made on request by the Worker (tests/pair-on-request.build-test.mjs holds its
+// canonical address and its trail); the sitemap lists it.
 const PAIR = "ambroxol--dementia";
-const TOPIC = "dementia";
+const TOPIC = "infections";
 const ORIGIN = process.env.SITE_URL || "https://whatcameofit.com";
 const SUGGEST_URL = "mailto:tips@example.org";
 const CORRECTIONS_URL = "https://issues.example.org/new?template=correction";
@@ -158,7 +160,7 @@ test("every page states its own canonical address", () => {
   const expected = {
     "index.html": `${ORIGIN}/`,
     [`${PAIR}/index.html`]: `${ORIGIN}/${PAIR}`,
-    [`topic/${TOPIC}/index.html`]: `${ORIGIN}/topic/${TOPIC}`,
+    "topics/index.html": `${ORIGIN}/topics`,
   };
   for (const [file, address] of Object.entries(expected)) {
     assert.ok(page(file).includes(`<link rel="canonical" href="${address}">`), file);
@@ -204,7 +206,7 @@ test("the home page names the site and its publisher; the data page describes th
   const dataset = structuredOf(page("data/index.html")).find((entry) => entry["@type"] === "Dataset");
   assert.equal(dataset.distribution.contentUrl, `${ORIGIN}/data/pairs.json`);
   assert.match(dataset.license, /creativecommons\.org/);
-  assert.ok(structuredOf(page(`topic/${TOPIC}/index.html`)).some((entry) => entry["@type"] === "BreadcrumbList"));
+  assert.ok(structuredOf(page("clinical/index.html")).some((entry) => entry["@type"] === "BreadcrumbList"));
 });
 
 // site-publishing: Every page has a complete link preview

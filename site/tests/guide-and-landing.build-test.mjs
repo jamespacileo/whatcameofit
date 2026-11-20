@@ -125,7 +125,9 @@ test("the guide is reached from the method page, the footer and the sitemap", ()
 test("the about page shows a pair beside its status, counts from the bundle and ends with the lookup", () => {
   const html = page("about/index.html");
   const words = text(html.split("<main")[1].split("</main>")[0]);
-  const topics = new Set(pairs.filter((file) => file.row.filing).map((file) => file.row.filing.vertical)).size;
+  // The topics whose own file lists a pair with a page, as the topics page counts them.
+  const published = new Set(pairs.map((file) => file.row.pair.address));
+  const topics = Object.values(bundle.pages.PairTopicPage).filter((file) => file.pairs.some((row) => published.has(row.pair.address))).length;
   assert.ok(words.includes(`${pairs.length} treatments and conditions are followed in ${topics} topics`), words.slice(-900));
   assert.ok(Object.values(STATUS_LABELS).some((label) => html.includes(`class="status"`) && words.includes(label)));
   assert.ok(html.includes("https://doi.org/10.1371/journal.pone.0172650"));
