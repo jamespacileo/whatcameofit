@@ -1,0 +1,133 @@
+---
+// The styleguide (openspec pairs-site, shared components): every building block of
+// lib/blocks.ts, and the whole pieces the renderers make of them, drawn with the bundle this
+// build reads, so each is seen as a page shows it. Built only when STYLEGUIDE=1, which staging
+// and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
+// stops a production build that holds it). Never indexed.
+import Base from "../layouts/Base.astro";
+import { band, bandTitle, crumbs, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { pairBundle } from "../lib/pairs";
+import { meshEdition } from "../lib/clinical";
+import { narrowerPairs, pairView } from "../lib/pair-view";
+import { renderPairBand, renderPairSheet } from "../lib/pair-render";
+import { categoryListing, interventionListing, topicListing } from "../lib/listing-view";
+import { renderListingBand, renderListingSheet } from "../lib/listing-render";
+import { renderEmbedArticle, renderEmbedRegistries } from "../lib/embed-render";
+import { renderCard } from "../lib/card-render";
+import { SITE } from "../../site.config.mjs";
+import "../pair/pair.css";
+
+const bundle = pairBundle();
+const pages = bundle.pages;
+const pairs = Object.values(pages.PairPage ?? {}) as any[];
+const published = new Set(Object.keys(pages.PairPage ?? {}));
+const categories = new Set(Object.keys(pages.PairClinicalCategoryPage ?? {}));
+const edition = meshEdition(bundle.manifest?.snapshot?.mesh_years ?? []);
+
+// The pair with the most trials, and one with posted results when the bundle has one: the
+// pieces at their fullest.
+const byTrials = [...pairs].sort((a, b) => b.trials.length - a.trials.length || a.row.pair.address.localeCompare(b.row.pair.address));
+const fullest = byTrials[0];
+const withResults = pairs.find((page) => page.trials.some((trial: any) => trial.findings?.outcomes?.length)) ?? null;
+const view = pairView(fullest);
+const narrower = narrowerPairs(fullest, pages.PairInterventionPage?.[fullest.row.intervention.slug] ?? null, published);
+const first = <T,>(record: Record<string, T> | undefined) => Object.values(record ?? {})[0] ?? null;
+const intervention = first(pages.PairInterventionPage);
+const category = first(pages.PairClinicalCategoryPage);
+const topic = first(pages.PairTopicPage);
+const listings = [
+  intervention && ["An intervention's listing", interventionListing(intervention, published)],
+  category && ["A clinical category's listing", categoryListing(category, published, categories)],
+  topic && ["A topic's listing", topicListing(topic, published)],
+].filter(Boolean) as [string, ReturnType<typeof interventionListing>][];
+const rows = listings[0]?.[1].rows ?? [];
+
+/** Each block: its name in lib/blocks.ts, what it is for, and what it draws here. */
+const blocks: { name: string; about: string; html: string; framed?: boolean }[] = [
+  {
+    name: "band",
+    about: "The navy record band at the head of a record page.",
+    framed: true,
+    html: band(` aria-label="${view.title}"`, [bandTitle(view.title), followedLine("A treatment and a condition,", "what-this-is")]),
+  },
+  { name: "crumbs", about: "Where a page sits, its links joined by a middle dot.", framed: true, html: band("", [crumbs("The treatment and the condition", [{ href: `/intervention/${view.interventionSlug}`, label: view.intervention }, { href: `/condition/${view.conditionSlug}`, label: view.condition }])]) },
+  { name: "bandTitle", about: "A record page's title, in the band's heading face.", framed: true, html: band("", [bandTitle(view.title)]) },
+  { name: "followedLine", about: "What a record page is, in one line, with the way to how a status is set.", framed: true, html: band("", [followedLine("A treatment and a condition,", "what-this-is")]) },
+  { name: "statusWords", about: "A status and its gloss as a sentence: the status in bold, never coloured.", html: `<p>${statusWords(view.status, view.gloss)}</p>` },
+  { name: "sheet", about: "The white sheet under a band, in the site's frame.", html: sheet([`<p>The sheet holds the page's content.</p>`]) },
+  { name: "sheetHeading", about: "A heading of the sheet, with its place's address.", html: sheet([sheetHeading("The trials", "styleguide-trials")]) },
+  {
+    name: "eventList",
+    about: "A dated list of what happened.",
+    html: sheet([eventList("", view.explainedBy.map((event) => `<li>${event.day}: ${event.label}, ${event.nctId}</li>`))]),
+  },
+  { name: "pairTable", about: "A list of pairs: each pair's page, where it stands and its trials.", html: sheet([pairTable("Pairs in the styleguide", rows)]) },
+  { name: "meshCredit", about: "The credit NLM's terms ask for wherever a MeSH category is shown.", html: sheet([meshCredit(edition)]) },
+];
+
+/** Whole pieces, as the pages carry them. */
+const pieces: { name: string; html: string; framed?: boolean }[] = [
+  { name: `A pair's page: ${view.title}`, framed: true, html: renderPairBand(view) + renderPairSheet(view, narrower) },
+  ...(withResults && withResults !== fullest
+    ? [{ name: `Posted results: ${pairView(withResults).title}`, framed: true, html: renderPairBand(pairView(withResults)) + renderPairSheet(pairView(withResults)) }]
+    : []),
+  ...listings.map(([name, listing]) => ({ name: `${name}: ${listing.title}`, framed: true, html: renderListingBand(listing) + renderListingSheet(listing, edition) })),
+  ...(listings.find(([, listing]) => listing.card) ? [{ name: "A knowledge card", html: renderCard(listings.find(([, listing]) => listing.card)![1].card!) }] : []),
+  { name: "An embed's body", html: `<div class="embed"><article>${renderEmbedArticle(view, SITE.name, SITE.url)}<footer><p>${renderEmbedRegistries(view)}</p></footer></article></div>` },
+];
+---
+
+<Base title="Styleguide" description="The building blocks of the site's pages, drawn with the bundle this build reads." noindex>
+  <div class="wrap styleguide">
+    <h1 class="title">Styleguide</h1>
+    <p class="lede">
+      The building blocks of the site's pages (<code>site/src/lib/blocks.ts</code>) and the pieces the pages make of them, drawn with
+      bundle {bundle.version}, {pairs.length} pairs. Built for staging and pull request previews only.
+    </p>
+    <nav aria-label="On this page">
+      <ul>
+        {blocks.map((block) => <li><a href={`#block-${block.name}`}>{block.name}</a></li>)}
+        {pieces.map((piece, index) => <li><a href={`#piece-${index}`}>{piece.name}</a></li>)}
+      </ul>
+    </nav>
+    <h2>Blocks</h2>
+    {
+      blocks.map((block) => (
+        <section class="styleguide-entry" id={`block-${block.name}`} data-block={block.name}>
+          <h3><code>{block.name}</code></h3>
+          <p>{block.about}</p>
+          <div class:list={["styleguide-sample", { framed: block.framed }]}>
+            <Fragment set:html={block.html} />
+          </div>
+        </section>
+      ))
+    }
+    <h2>Pieces</h2>
+    {
+      pieces.map((piece, index) => (
+        <section class="styleguide-entry" id={`piece-${index}`} data-piece>
+          <h3>{piece.name}</h3>
+          <div class:list={["styleguide-sample", { framed: piece.framed }]}>
+            <Fragment set:html={piece.html} />
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .styleguide-entry {
+    margin-block: 2.5rem;
+  }
+  .styleguide-sample {
+    border: 1px dashed var(--rule);
+    border-radius: 0.85rem;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  .styleguide-sample.framed {
+    background: var(--ground);
+    padding: 0;
+  }
+</style>
