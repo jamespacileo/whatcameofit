@@ -5,6 +5,13 @@ import { test } from "node:test";
 import { parseHTML } from "linkedom";
 import { sectionList } from "../src/lib/blocks.ts";
 
+test("a section's id is encoded in its link, so any id leads to its section", () => {
+  const document = parseHTML(`<main>${sectionList("On this page", [{ id: "coverage-50%", name: "Coverage" }])}</main>`).document;
+  const href = document.querySelector("a").getAttribute("href");
+  assert.equal(href, "#coverage-50%25");
+  assert.equal(decodeURIComponent(href.slice(1)), "coverage-50%");
+});
+
 test("each section is a link to its place on the page, with its count when it has one", () => {
   const html = sectionList("On this page", [
     { id: "why", name: "Why this status" },

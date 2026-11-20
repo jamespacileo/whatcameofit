@@ -184,7 +184,7 @@ export function sectionList(label: string, items: SectionItem[]): string {
     `<p class="onpage-title" aria-hidden="true">${escape(label)}</p><ul class="onpage-list">`,
     ...items.map(
       (item) =>
-        `<li><a href="#${escape(item.id)}"><span>${escape(item.name)}</span>${item.count != null && item.count !== "" ? `<span class="n">${escape(item.count)}</span>` : ""}</a></li>`,
+        `<li><a href="#${escape(encodeURIComponent(item.id))}"><span>${escape(item.name)}</span>${item.count != null && item.count !== "" ? `<span class="n">${escape(item.count)}</span>` : ""}</a></li>`,
     ),
     `</ul></nav>`,
   ].join("");

@@ -4,10 +4,20 @@
 for (const nav of document.querySelectorAll<HTMLElement>(".onpage")) {
   const list = nav.querySelector<HTMLElement>(".onpage-list");
   if (!list) continue;
-  const links = [...list.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
-  const targets = links
-    .map((link) => document.getElementById(decodeURIComponent(link.getAttribute("href")!.slice(1))))
-    .filter((target): target is HTMLElement => target !== null);
+  // Each link with the section it leads to, held together: a link's address is encoded
+  // (sectionList), a section's id is not, so they are matched once, here.
+  const sections = [...list.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+    .map((link) => {
+      let id: string;
+      try {
+        id = decodeURIComponent(link.hash.slice(1));
+      } catch {
+        return null;
+      }
+      const target = document.getElementById(id);
+      return target ? { link, target } : null;
+    })
+    .filter((section): section is { link: HTMLAnchorElement; target: HTMLElement } => section !== null);
   const still = matchMedia("(prefers-reduced-motion: reduce)");
 
   // The row moves so that the marked name is in view. Only the row scrolls.
@@ -22,26 +32,41 @@ for (const nav of document.querySelectorAll<HTMLElement>(".onpage")) {
     if (list.scrollLeft + list.clientWidth < list.scrollWidth - 4) more.push("end");
     nav.dataset.more = more.join(" ");
   };
-
-  let marked: HTMLElement | null = null;
-  const mark = () => {
-    let current = targets[0];
-    for (const target of targets) if (target.getBoundingClientRect().top <= 140) current = target;
-    if (!current || current === marked) return;
-    marked = current;
-    for (const link of links) {
-      if (link.getAttribute("href") === `#${current.id}`) {
-        link.setAttribute("aria-current", "true");
-        centre(link);
-      } else link.removeAttribute("aria-current");
-    }
+  // Where a heading lands when its link is followed: its own scroll margin, or below the row
+  // when the row stays at the top. A section is reached once its heading is there.
+  const landing = (target: HTMLElement) => {
+    const margin = parseFloat(getComputedStyle(target).scrollMarginTop) || 0;
+    const box = nav.getBoundingClientRect();
+    // On a narrow screen the list is a row across the page, stuck at its top; on a wide one it
+    // is a column beside the sheet and covers no heading.
+    const isRow = box.width >= innerWidth / 2;
+    const row = isRow && getComputedStyle(nav).position === "sticky" && box.top <= 0 ? box.bottom : 0;
+    return Math.max(margin, row) + 2;
   };
 
-  if (targets.length > 0) {
-    addEventListener("scroll", mark, { passive: true });
+  let marked: HTMLElement | null = null;
+  const mark = (again = false) => {
+    let current = sections[0];
+    for (const section of sections) if (section.target.getBoundingClientRect().top <= landing(section.target)) current = section;
+    if (!current || (current.link === marked && !again)) return;
+    marked = current.link;
+    for (const { link } of sections) {
+      if (link === current.link) link.setAttribute("aria-current", "true");
+      else link.removeAttribute("aria-current");
+    }
+    centre(current.link);
+  };
+
+  if (sections.length > 0) {
+    addEventListener("scroll", () => mark(), { passive: true });
     mark();
   }
   list.addEventListener("scroll", ends, { passive: true });
-  addEventListener("resize", ends);
+  // A new width moves the headings and the row: what is in view and where its chip sits are
+  // worked out again.
+  addEventListener("resize", () => {
+    if (sections.length > 0) mark(true);
+    ends();
+  });
   ends();
 }
