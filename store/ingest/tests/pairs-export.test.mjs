@@ -9,7 +9,7 @@ import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { Service, engineUnavailable } from "./harness.mjs";
 import { exportBundle } from "../scripts/export-pairs.mjs";
-import { SCHEMA_MODEL, bundleVersion, statements } from "../scripts/load-pairs.mjs";
+import { SCHEMA_MODEL, bundleVersion, manifestBackfill, statements } from "../scripts/load-pairs.mjs";
 
 const skip = (await engineUnavailable()) ?? false;
 if (skip && process.env.CI) throw new Error(skip);
@@ -54,11 +54,19 @@ test("the current version is written back as the folder it was loaded from", { s
   await assert.rejects(exportBundle(read, out), /exists/);
 });
 
-test("a version loaded without its manifest is not written back", { skip }, async () => {
+test("a version loaded without its manifest is not written back until the manifest is kept with it", { skip }, async () => {
   await s.db.prepare("DELETE FROM pair_page WHERE version = ? AND model = '$manifest'").bind(load.version).run();
   const out = scratch();
   await assert.rejects(exportBundle(read, out), /was loaded without a manifest\.json/);
   assert.equal(existsSync(out), false);
+  // The same folder, now with its manifest, keeps the version: the manifest is stored beside it, once.
+  const backfill = manifestBackfill(bundle);
+  assert.equal(backfill.version, load.version);
+  for (const sql of [...backfill.sql, ...backfill.sql]) await s.db.prepare(sql).run();
+  assert.equal((await read(`SELECT count(*) AS n FROM pair_page WHERE version = '${load.version}' AND model = '$manifest'`))[0].n, 1);
+  const again = scratch();
+  assert.equal((await exportBundle(read, again)).version, load.version);
+  assert.deepEqual(filesOf(again), filesOf(bundle));
 });
 
 test("a version with a part missing is refused, and nothing is left behind", { skip }, async () => {

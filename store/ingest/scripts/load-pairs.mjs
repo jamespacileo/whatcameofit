@@ -26,6 +26,7 @@ export { SCHEMA_MODEL, bundleVersion, files };
 /** The reserved model the manifest is kept under in `pair_page`, keyed `manifest`, so a version
  * read back from D1 has the manifest the lab wrote. It is not one of the files it checksums. */
 export const MANIFEST_MODEL = "$manifest";
+const MANIFEST_KEY = MANIFEST.slice(0, -".json".length);
 // Under D1's 100,000 bytes a statement: a character is at most four bytes, a quote doubles.
 const PART_CHARS = 10_000;
 const KEPT_VERSIONS = 2;
@@ -37,6 +38,21 @@ const quote = (value) => (value === null || value === undefined ? "NULL"
   : `'${String(value).replaceAll("'", "''")}'`);
 const insert = (table, row) => `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map(quote).join(", ")})`;
 
+// The statements that store a checked folder's manifest under its version when that version is
+// held without one: a bundle loaded before bundles carried a manifest keeps its version (the
+// manifest is outside the checksum), so it is never loaded again, and without this it could
+// never be exported for a build. A manifest already held is left as it is.
+export function manifestBackfill(folder) {
+  const { version, manifest } = checkManifest(folder);
+  const body = JSON.stringify(manifest);
+  // One part, so the guard below sees the whole manifest or none of it.
+  if (body.length > PART_CHARS) throw new Error(`the manifest of ${folder} is longer than one part of ${PART_CHARS} characters`);
+  const sql = `INSERT INTO pair_page (version, model, key, part, body) SELECT ${quote(version)}, ${quote(MANIFEST_MODEL)}, ${quote(MANIFEST_KEY)}, 0, ${quote(body)}`
+    + ` WHERE EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)})`
+    + ` AND NOT EXISTS (SELECT 1 FROM pair_page WHERE version = ${quote(version)} AND model = ${quote(MANIFEST_MODEL)})`;
+  return { version, sql: [sql] };
+}
+
 // The statements that load a bundle, its version and its counts. Each statement is one line.
 export function statements(folder, { loadedAt = new Date().toISOString() } = {}) {
   // Nothing is written unless the folder is whole and unchanged since its manifest was made.
@@ -44,7 +60,7 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
   const rows = Object.fromEntries(TABLES.map((table) => [table, new Map()]));
   const put = (table, key, row) => rows[table].set(key, { version, ...row });
 
-  for (const [name, key, text] of [...pages, [MANIFEST_MODEL, MANIFEST.slice(0, -".json".length), JSON.stringify(manifest)]]) {
+  for (const [name, key, text] of [...pages, [MANIFEST_MODEL, MANIFEST_KEY, JSON.stringify(manifest)]]) {
     const body = JSON.stringify(JSON.parse(text));
     for (let part = 0; part * PART_CHARS < body.length; part += 1) {
       put("pair_page", `${name}|${key}|${part}`, { model: name, key, part, body: body.slice(part * PART_CHARS, (part + 1) * PART_CHARS) });
@@ -102,7 +118,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       const { execute, target } = await import("./d1.mjs");
       const to = target(argv);
       const [held] = (await execute(to, "--command", `SELECT version FROM pair_bundle WHERE current = 1`))[0]?.results ?? [];
-      if (held?.version === load.version) throw new Error(`bundle ${load.version} is already the current one: nothing to load`);
+      if (held?.version === load.version) {
+        await execute(to, "--command", manifestBackfill(folder).sql[0]);
+        console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is held`);
+        process.exit(0);
+      }
       const dir = mkdtempSync(join(tmpdir(), "thenwhat-pairs-"));
       try {
         writeFileSync(join(dir, "pairs.sql"), load.sql.join(";\n") + ";\n");

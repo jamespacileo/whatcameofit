@@ -9,7 +9,7 @@ import addFormats from "ajv-formats";
 import { APPROACH_LABELS } from "./approach.ts";
 import { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES } from "./pair-view.ts";
 import { STATUS_LABELS } from "./status.ts";
-import { checkManifest } from "../../../store/ingest/scripts/bundle-manifest.mjs";
+import { SCHEMA_MODEL, checkManifest } from "../../../store/ingest/scripts/bundle-manifest.mjs";
 import { PHASE_WORDS } from "./trial-facts.ts";
 
 const PREFIX = "p12_";
@@ -23,6 +23,9 @@ export function modelOf(folder: string): string {
     .map((word) => word[0].toUpperCase() + word.slice(1))
     .join("");
 }
+
+/** The folder of a page model: `PairPage` is held in `p12_pair_page`. */
+const folderOf = (model: string) => PREFIX + model.replace(/[A-Z]/g, (letter, at) => `${at ? "_" : ""}${letter.toLowerCase()}`);
 
 export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
 
@@ -48,7 +51,15 @@ export function readBundle(folder: string): Bundle {
   }
   // The manifest first (openspec pairs-site, task 2.3): a folder cut short in a copy, or
   // changed after the lab wrote it, is refused whole rather than published in part.
-  const { version, manifest } = checkManifest(folder);
+  // Every page and schema below is read from what the check read, not from the folder again,
+  // so the pages built are the ones the recorded version names even if the folder changes.
+  const { version, manifest, pages: checked } = checkManifest(folder);
+  const held = new Map<string, [string, string][]>();
+  for (const [model, key, text] of checked as [string, string, string][]) {
+    if (!held.has(model)) held.set(model, []);
+    held.get(model)!.push([key, text]);
+  }
+  const schemas = new Map(held.get(SCHEMA_MODEL) ?? []);
   const ajv = new Ajv2020({ allErrors: false, strict: false });
   addFormats(ajv);
   // The lab writes some times with no offset (`PairOrigin.created_at`), which the schema
@@ -57,28 +68,24 @@ export function readBundle(folder: string): Bundle {
   ajv.addFormat("date-time", (text) => !Number.isNaN(Date.parse(text)));
   const pages: Bundle["pages"] = {};
   const withoutSchema: string[] = [];
-  const folders = fs
-    .readdirSync(folder)
-    .filter((name) => name.startsWith(PREFIX) && fs.statSync(path.join(folder, name)).isDirectory())
-    .sort();
-  for (const name of folders) {
-    const model = modelOf(name);
-    const schemaFile = path.join(folder, SCHEMAS, `${model}.json`);
-    if (!fs.existsSync(schemaFile)) {
+  for (const [model, files] of [...held].filter(([model]) => model !== SCHEMA_MODEL)) {
+    const schema = schemas.get(model);
+    if (!schema) {
       withoutSchema.push(model);
       continue;
     }
-    const validate = ajv.compile(JSON.parse(fs.readFileSync(schemaFile, "utf8")));
+    const validate = ajv.compile(JSON.parse(schema));
+    const name = folderOf(model);
     pages[model] = {};
-    for (const file of fs.readdirSync(path.join(folder, name)).filter((entry) => entry.endsWith(".json")).sort()) {
-      const page = JSON.parse(fs.readFileSync(path.join(folder, name, file), "utf8"));
+    for (const [key, text] of files) {
+      const page = JSON.parse(text);
       if (!validate(page)) {
         const [error] = validate.errors ?? [];
         throw new Error(
-          `${name}/${file} does not fit ${model}: ${error?.instancePath || "/"} ${error?.message ?? "is invalid"}.`,
+          `${name}/${key}.json does not fit ${model}: ${error?.instancePath || "/"} ${error?.message ?? "is invalid"}.`,
         );
       }
-      pages[model][file.slice(0, -".json".length)] = page;
+      pages[model][key] = page;
     }
   }
   const unworded = unwordedPairCodes(Object.values(pages.PairPage ?? {}));
