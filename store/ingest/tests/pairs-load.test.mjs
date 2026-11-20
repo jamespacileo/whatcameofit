@@ -97,8 +97,8 @@ test("a folder that differs from its manifest is refused before any statement is
   try {
     cpSync(bundle, short, { recursive: true });
     rmSync(join(short, "p12_pair_data_file", "apitegromab--obesity.json"));
-    assert.throws(() => statements(short), /the manifest counts 12 PairDataFile files and 11 are present/);
-    assert.throws(() => execFileSync(process.execPath, [script, short, "--print"], { stdio: "pipe" }), /12 PairDataFile files and 11/);
+    assert.throws(() => statements(short), /the manifest counts 14 PairDataFile files and 13 are present/);
+    assert.throws(() => execFileSync(process.execPath, [script, short, "--print"], { stdio: "pipe" }), /14 PairDataFile files and 13/);
     writeFileSync(join(short, "p12_pair_data_file", "apitegromab--obesity.json"), "{}");
     assert.throws(() => statements(short), /checksum .* differs from the manifest's/);
   } finally {

@@ -170,7 +170,7 @@ function copyAsIs(change) {
 
 test("the bundle's manifest states its version, checksum and counts, and the read gives them", () => {
   const bundle = readBundle(folder);
-  assert.equal(bundle.version, "230ee727aab2d32c");
+  assert.equal(bundle.version, "d0a1821d2e1c514d");
   assert.equal(bundle.manifest.checksum.slice("sha256:".length, "sha256:".length + 16), bundle.version);
   for (const [model, pages] of Object.entries(bundle.pages)) assert.equal(bundle.manifest.counts[model], Object.keys(pages).length, model);
 });
@@ -178,7 +178,7 @@ test("the bundle's manifest states its version, checksum and counts, and the rea
 test("a file missing from what the manifest counts stops the read, naming the page model and both counts", () => {
   const dir = copyAsIs((at) => rmSync(join(at, "p12_pair_page", `${address}.json`)));
   try {
-    assert.throws(() => readBundle(dir), /the manifest counts 12 PairPage files and 11 are present/);
+    assert.throws(() => readBundle(dir), /the manifest counts 14 PairPage files and 13 are present/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -192,7 +192,7 @@ test("a file changed after the manifest was made stops the read on the checksum"
     writeFileSync(file, JSON.stringify(page));
   });
   try {
-    assert.throws(() => readBundle(dir), /checksum sha256:[0-9a-f]{64} differs from the manifest's sha256:230ee727/);
+    assert.throws(() => readBundle(dir), /checksum sha256:[0-9a-f]{64} differs from the manifest's sha256:d0a1821d/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

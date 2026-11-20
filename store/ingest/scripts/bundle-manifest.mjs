@@ -11,7 +11,7 @@
 // same file itself (with its step versions); this command is for a folder cut before it does.
 //
 // The checksum leaves the manifest out (it holds the checksum), so a bundle's version is the
-// one it had before bundles carried a manifest: `230ee727aab2d32c` for site/tests/bundle.
+// one it had before bundles carried a manifest.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
