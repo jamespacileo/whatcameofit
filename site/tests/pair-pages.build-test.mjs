@@ -292,6 +292,25 @@ test("every page of a build that reads a bundle carries the footer notices the b
   assert.equal(check.status, 0, check.stdout + check.stderr);
 });
 
+test("the footer's Data page describes the pairs' files and its link opens the pairs' index", () => {
+  // Followed as a reader would: the footer's link, then the page's own download link.
+  const footer = page(withBundle, "").querySelector('footer a[href="/data"]');
+  assert.ok(footer, "the footer links the Data page");
+  const data = page(withBundle, "data");
+  assert.doesNotMatch(data.body.textContent, /claims\.json/);
+  const link = data.querySelector('a[data-open-data="pairs"]');
+  const index = JSON.parse(fs.readFileSync(path.join(withBundle, link.getAttribute("href")), "utf8"));
+  assert.equal(index.format, "pairs-index");
+  assert.equal(index.entries.length, Object.keys(pages).length);
+  assert.equal(Number(data.querySelector("[data-pair-count]").dataset.pairCount), index.entries.length);
+  assert.match(data.querySelector("[data-pair-count]").textContent, new RegExp(`${index.entries.length} treatments and conditions`));
+  // The example record it names is a file of the build.
+  const example = [...data.querySelectorAll("a")].map((a) => a.getAttribute("href")).find((href) => href?.startsWith("/data/pairs/"));
+  assert.ok(fs.existsSync(path.join(withBundle, example)), example);
+  // Without a bundle the page is the claims' as before.
+  assert.ok(page(without, "data").querySelector('a[href="/data/claims.json"]'));
+});
+
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));
