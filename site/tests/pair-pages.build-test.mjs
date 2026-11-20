@@ -25,6 +25,28 @@ const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowes
 // for acoziborole and "Infections" itself.
 const ANCESTOR = "acoziborole--infections";
 const narrowestBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-narrowest-"));
+// A pair filed under no topic: the lab is to make `PairRow.filing` optional, every cleared pair
+// getting a page whether or not a topic covers it. Until its bundle carries that, the schemas
+// here are copies that allow a null filing, as an optional Pydantic field is written.
+const UNFILED = "apitegromab--muscular-atrophy";
+const unfiled = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-unfiled-"));
+const unfiledBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-unfiled-"));
+fs.cpSync("tests/bundle", unfiledBundle, { recursive: true });
+for (const name of fs.readdirSync(path.join(unfiledBundle, "schemas"))) {
+  const file = path.join(unfiledBundle, "schemas", name);
+  const schema = JSON.parse(fs.readFileSync(file, "utf8"));
+  const row = schema.$defs?.PairRow;
+  if (!row) continue;
+  row.properties.filing = { anyOf: [{ $ref: "#/$defs/PairFiling" }, { type: "null" }], default: null };
+  row.required = row.required.filter((field) => field !== "filing");
+  fs.writeFileSync(file, JSON.stringify(schema));
+}
+for (const folder of ["p12_pair_page", "p12_pair_data_file"]) {
+  const file = path.join(unfiledBundle, folder, `${UNFILED}.json`);
+  const held = JSON.parse(fs.readFileSync(file, "utf8"));
+  (folder === "p12_pair_page" ? held : held.pair).row.filing = null;
+  fs.writeFileSync(file, JSON.stringify(held));
+}
 fs.cpSync("tests/bundle", narrowestBundle, { recursive: true });
 for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(narrowestBundle, folder, `${ANCESTOR}.json`));
 const pages = readBundle("tests/bundle").pages.PairPage;
@@ -58,6 +80,7 @@ before(() => {
     [withBundle, { PAIRS_BUNDLE: "tests/bundle" }],
     [without, { PAIRS_BUNDLE: "" }],
     [narrowest, { PAIRS_BUNDLE: narrowestBundle }],
+    [unfiled, { PAIRS_BUNDLE: unfiledBundle }],
   ]) {
     const result = build(dir, env);
     assert.equal(result.status, 0, result.stdout + result.stderr);
@@ -345,6 +368,27 @@ test("the footer's Data page describes the pairs' files and its link opens the p
   assert.ok(fs.existsSync(path.join(withBundle, example)), example);
   // Without a bundle the page is the claims' as before.
   assert.ok(page(without, "data").querySelector('a[href="/data/claims.json"]'));
+});
+
+test("a pair filed under no topic still has its page, and is reached from every list but a topic's", () => {
+  const file = pages[UNFILED];
+  assert.ok(builtAhead(file), "the unfiled pair is one built ahead, so its page is a file of the build");
+  const document = page(unfiled, UNFILED);
+  assert.equal(document.querySelector("[data-pair-status]").dataset.pairStatus, file.row.status.code);
+  assert.ok(listed(unfiled, `intervention/${file.row.intervention.slug}`).includes(UNFILED));
+  assert.ok(listed(unfiled, `condition/${file.row.condition.slug}`).includes(UNFILED));
+  // On no topic's page, and not counted on the topics page.
+  for (const name of fs.readdirSync(path.join(unfiled, "topic"))) assert.ok(!listed(unfiled, `topic/${name}`).includes(UNFILED), name);
+  const counted = [...page(unfiled, "topics").querySelectorAll("[data-topic]")].reduce((sum, item) => sum + Number(item.querySelector(".count").firstChild.textContent), 0);
+  assert.equal(counted, Object.keys(pages).length - 1);
+  // Search and the lookup file hold it, with no topic.
+  const lookup = JSON.parse(fs.readFileSync(path.join(unfiled, "lookup.json"), "utf8"));
+  assert.equal(lookup.claims[UNFILED].page, `/${UNFILED}`);
+  assert.equal(lookup.claims[UNFILED].topic, null);
+  const detail = JSON.parse(fs.readFileSync(path.join(unfiled, "search-detail.json"), "utf8"));
+  assert.deepEqual(detail.claims[UNFILED].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
+  const sitemap = fs.readFileSync(path.join(unfiled, "sitemap.xml"), "utf8");
+  assert.match(sitemap, new RegExp(`/${UNFILED}</loc>`));
 });
 
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
