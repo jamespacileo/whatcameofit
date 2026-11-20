@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-site-build check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-site-build check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 # Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
@@ -216,6 +216,16 @@ deploy-check deploy-pairs-check: site/node_modules
 #   make deploy ARGS=--cutover
 deploy: site/node_modules
 	PAIRS_BUNDLE= PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs $(ARGS)
+
+# Staging (docs/deploy.md, "Staging"): the same build, from the preview store's current bundle,
+# to the thenwhat-staging Worker as a version and a deployment, every response noindex, then the
+# smoke checks against STAGING_URL. Needs CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and
+# STAGING_PAIRS_DATABASE_ID. Rehearse with ARGS=--dry-run (no smoke check then).
+STAGING_URL ?= https://staging.whatcameofit.com
+STAGING_DATABASE ?= thenwhat-store-preview
+deploy-staging: site/node_modules
+	PAIRS_BUNDLE= SITE_URL=$(STAGING_URL) PAIRS_DATABASE=$(STAGING_DATABASE) node site/scripts/deploy.mjs --staging $(ARGS)
+	$(if $(findstring --dry-run,$(ARGS)),,node site/scripts/staging-smoke.mjs $(STAGING_URL) site/dist)
 
 # The site with its registry search, on this machine only: http://localhost:8787
 # Reads the model settings from .env and builds from PAIRS_BUNDLE (the tests' small bundle unless named).

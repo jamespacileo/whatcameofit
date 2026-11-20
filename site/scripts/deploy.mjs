@@ -19,13 +19,25 @@
 // build that needs no Cloudflare account, which is what CI runs. It is never published,
 // because a Worker with no database could make no page on request.
 //
+// --staging deploys the same build to staging instead (docs/deploy.md, "Staging"): the
+// thenwhat-staging Worker (wrangler.staging.jsonc), at SITE_URL's address, from the preview
+// database pinned by STAGING_PAIRS_DATABASE_ID (its name must end in -preview), with every file
+// marked noindex and the Worker marking every response it gives the same (ROBOTS_NOINDEX). It
+// never takes --cutover. It publishes with `wrangler versions upload` and `wrangler versions
+// deploy`, which change no trigger: the Worker's custom domain, workers.dev address and routes
+// stay as the operator set them in the dashboard. One token (CLOUDFLARE_API_TOKEN) holds the
+// Editor role on thenwhat-staging and the account's D1 Read: it reads the bundle by D1's query
+// endpoint and uploads and deploys the version.
+//
+//   SITE_URL=https://staging.whatcameofit.com PAIRS_DATABASE=thenwhat-store-preview node scripts/deploy.mjs --staging
+//
 // Uses the locked project dependency; authenticate with OAuth locally or a CI token.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { deployProblems } from "./deploy-checks.mjs";
+import { STAGING_WORKER, deployProblems, stagingProblems } from "./deploy-checks.mjs";
 import { listingFileProblems } from "./listing-checks.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
@@ -33,6 +45,7 @@ const dist = path.join(SITE_DIR, "dist");
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const cutover = args.includes("--cutover");
+const staging = args.includes("--staging");
 const revision = process.env.BUILD_REVISION;
 const pairsDatabase = process.env.PAIRS_DATABASE || null;
 const pairsLocal = process.env.PAIRS_LOCAL_STATE || null;
@@ -59,7 +72,11 @@ function run(command, args, env = process.env) {
 }
 
 const siteUrl = process.env.SITE_URL;
-const problems = [...deployProblems({ siteUrl }), ...listingFileProblems()];
+const problems = [
+  ...deployProblems({ siteUrl }),
+  ...(staging ? stagingProblems({ siteUrl, database: pairsDatabase, cutover }) : []),
+  ...listingFileProblems(),
+];
 if (problems.length > 0) stop(problems);
 if (revision !== undefined && !/^[a-f0-9]{40}$/.test(revision)) stop(["BUILD_REVISION must be a full Git commit SHA."]);
 
@@ -71,13 +88,22 @@ if ((pairsLocal || pairsVersion) && !pairsDatabase) stop(["PAIRS_LOCAL_STATE or 
 if (pairsVersion && !/^[0-9a-f]{16}$/.test(pairsVersion)) stop(["PAIRS_VERSION is not a bundle version (16 hexadecimal characters)."]);
 if (pairsDatabase) {
   if (pairsLocal && !dryRun) stop(["A bundle from D1's local engine is for a rehearsal: add --dry-run."]);
-  if (!dryRun && !cutover) stop(["Publishing is the cutover. Rehearse with --dry-run, or give --cutover once the operator has said it can go ahead."]);
-  const { exportForDeploy, findDeployDatabase } = await import("./pairs-deploy.mjs");
+  if (!dryRun && !cutover && !staging) stop(["Publishing is the cutover. Rehearse with --dry-run, or give --cutover once the operator has said it can go ahead."]);
+  const { exportForDeploy, findDeployDatabase, findStagingDatabase } = await import("./pairs-deploy.mjs");
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-deploy-"));
   process.once("exit", () => fs.rmSync(scratch, { force: true, recursive: true }));
   try {
-    const database = findDeployDatabase(pairsDatabase, { localState: pairsLocal });
-    const exported = await exportForDeploy({ base: path.join(SITE_DIR, "wrangler.jsonc"), database, scratch, version: pairsVersion });
+    const database =
+      staging && !pairsLocal
+        ? await findStagingDatabase(pairsDatabase, {
+            accountId: process.env.CLOUDFLARE_ACCOUNT_ID,
+            pinnedId: process.env.STAGING_PAIRS_DATABASE_ID,
+            token: process.env.CLOUDFLARE_API_TOKEN,
+          })
+        : findDeployDatabase(pairsDatabase, { localState: pairsLocal });
+    const exported = staging
+      ? await exportForDeploy({ base: path.join(SITE_DIR, "wrangler.staging.jsonc"), database, scratch, version: pairsVersion, worker: STAGING_WORKER })
+      : await exportForDeploy({ base: path.join(SITE_DIR, "wrangler.jsonc"), database, scratch, version: pairsVersion });
     pairs = { database, scratch, ...exported };
   } catch (error) {
     stop([`Pair pages: ${error.message}`]);
@@ -108,10 +134,16 @@ delete env.CLOUDFLARE_API_TOKEN;
 console.log(`Building for ${siteUrl}.`);
 run("pnpm", ["run", "build"], env);
 if (revision) fs.writeFileSync(path.join(dist, "build-revision.txt"), `${revision}\n`);
+// The bundle version the build was made from, for a smoke check to hold the deployment to.
+if (pairs) fs.writeFileSync(path.join(dist, "bundle-version.txt"), `${pairs.version}\n`);
 
 if (!fs.existsSync(path.join(dist, "sitemap.xml"))) {
   stop(["The built site has no sitemap, so it was not built as a public build."]);
 }
+
+// Staging is for the operator, never for a search engine: every file it serves says so, and the
+// Worker passes the same mark on to the pages it makes (worker/pairs.mjs).
+if (staging) fs.appendFileSync(path.join(dist, "_headers"), "\n/*\n  X-Robots-Tag: noindex\n");
 
 // The build recorded its bundle's version in the frame the Worker fills, and the Worker
 // reads pages of that version only, so it must be the version exported.
@@ -123,19 +155,45 @@ if (pairs) {
 
 const wranglerArgs = ["deploy", "--domain", domain];
 if (pairs) wranglerArgs.push("--config", pairs.config);
-if (lookup) {
+if (lookup && !staging) {
   wranglerArgs.push("--var", `LLM_MODEL:${process.env.LLM_MODEL}`, "--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
   for (const name of ["LLM_BASE_URL", "DECISION_BACKEND", "DECISIONS_MODEL"]) {
     if (process.env[name]) wranglerArgs.push("--var", `${name}:${process.env[name]}`);
   }
 }
-console.log(lookup ? "With the registry search (/api/lookup)." : "Without the registry search: LLM_MODEL and CONTACT_EMAIL are not both set.");
+console.log(
+  staging
+    ? "Without the registry search: staging has no saved-results namespace and no model key."
+    : lookup
+      ? "With the registry search (/api/lookup)."
+      : "Without the registry search: LLM_MODEL and CONTACT_EMAIL are not both set.",
+);
 if (dryRun) wranglerArgs.push("--dry-run");
-run(process.execPath, [path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js"), ...wranglerArgs]);
+const WRANGLER = path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js");
+if (staging) {
+  // A version, then a deployment of it: neither touches a trigger (wrangler's versionsUpload
+  // uploads the assets and posts /versions; versions deploy creates a deployment), so the
+  // dashboard's custom domain stays attached and workers.dev stays as the operator set it.
+  const upload = ["versions", "upload", "--config", pairs.config, "--message", `staging ${revision ?? "local"}`];
+  if (dryRun) upload.push("--dry-run");
+  const sent = spawnSync(process.execPath, [WRANGLER, ...upload], { cwd: SITE_DIR, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  process.stdout.write(sent.stdout ?? "");
+  process.stderr.write(sent.stderr ?? "");
+  if (sent.status !== 0) stop([`"wrangler ${upload.join(" ")}" failed. ${STAGING_WORKER} was not changed.`]);
+  if (!dryRun) {
+    const id = /Worker Version ID:\s*([0-9a-f-]{36})/.exec(sent.stdout)?.[1];
+    if (!id) stop([`The version was uploaded, but Wrangler reported no version id, so it was not deployed.`]);
+    run(process.execPath, [WRANGLER, "versions", "deploy", `${id}@100%`, "--config", pairs.config, "--yes", "--message", `staging ${revision ?? "local"}`]);
+  }
+} else {
+  run(process.execPath, [WRANGLER, ...wranglerArgs]);
+}
 console.log(
   dryRun
     ? pairs
-      ? `Dry run finished. Nothing was published. Without --dry-run this would go to ${domain}, from bundle ${pairs.version}.`
+      ? `Dry run finished. Nothing was published. Without --dry-run this would go to ${staging ? `${STAGING_WORKER} (${domain} once its domain is attached)` : domain}, from bundle ${pairs.version}.`
       : "Dry run finished. Nothing was published, and a bundle folder never is."
-    : `Deployed to ${siteUrl}.`,
+    : staging
+      ? `Deployed ${STAGING_WORKER} from bundle ${pairs.version}, at ${siteUrl} once ${domain} is attached in the dashboard.`
+      : `Deployed to ${siteUrl}.`,
 );

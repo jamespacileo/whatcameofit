@@ -36,6 +36,29 @@ export function pullRequestWorker(number) {
   return /^[1-9]\d{0,6}$/.test(String(number ?? "")) ? `thenwhat-pr-${number}` : null;
 }
 
+/** Production's address and staging's Worker (docs/deploy.md, "Staging"). */
+export const PRODUCTION_URL = "https://whatcameofit.com";
+export const STAGING_WORKER = "thenwhat-staging";
+
+/**
+ * Why a staging deployment must not go ahead: one sentence each, all at once. Staging reads a
+ * preview database only, is never the cutover, and never answers at production's address.
+ */
+export function stagingProblems({ siteUrl, database, cutover }) {
+  const problems = [];
+  if (cutover) problems.push("--staging never takes --cutover: staging is not production.");
+  if (!database) problems.push("Staging is built from a database: set PAIRS_DATABASE to one whose name ends in -preview.");
+  else if (!database.endsWith("-preview")) problems.push(`Staging reads only a database whose name ends in -preview, not ${database}.`);
+  try {
+    if (siteUrl && new URL(siteUrl).hostname === new URL(PRODUCTION_URL).hostname) {
+      problems.push(`SITE_URL is production's address (${siteUrl}). Staging answers at its own, such as https://staging.whatcameofit.com.`);
+    }
+  } catch {
+    // addressProblem names an address that does not parse.
+  }
+  return problems;
+}
+
 /**
  * Why the site must not be deployed to this address: one sentence each, all at once.
  * An empty list means the deployment may go ahead.

@@ -146,6 +146,57 @@ A checked CI build (`--reuse-build`) holds no bundle, so it is refused with `PAI
 - The bundle before, on the current code: the store keeps the current version and the one before (design decision 4), so deploy that version by name, leaving D1 as it is: `PAIRS_VERSION=<version before> ... node site/scripts/deploy.mjs --cutover`. Read the versions with `SELECT version, current, loaded_at FROM pair_bundle`.
 - The claims site: `make deploy-ci` of the commit before the cutover, which still reads the committed claims export (design decision 10).
 
+## Staging
+
+Decided by the operator on 20 November 2026: main's work goes to https://staging.whatcameofit.com continuously, and production only from a release tag ("Releases", below).
+
+**What it is.** The `thenwhat-staging` Worker in the Palladio account, serving `worker/with-pairs.mjs` with `thenwhat-store-preview` (Palladio's preview store, which holds the rehearsal bundle) bound as `PAIRS`. Its configuration is `site/wrangler.staging.jsonc`: no route, no custom domain, no workers.dev setting, no `LOOKUP_RESULTS` namespace and no secret, so `/api/lookup` answers "not set up". It never reads `thenwhat-store` (production), `thenwhat-pairs-pr-preview` or the previews account.
+
+**How it is published.** `.github/workflows/staging.yml` runs after every green run of "CI and deploy" on a push to `main`, or when started by hand on `main` (Actions › Staging › Run workflow). It has no pull request trigger (`site/tests/staging-workflow.test.mjs` fails if one appears), asks for the `staging` environment, which releases its token to `main` only, and holds `contents: read` only. It runs `make deploy-staging`:
+
+1. `deploy.mjs --staging` refuses `--cutover`, production's address and any database whose name does not end in `-preview`, finds the database by the id pinned in `STAGING_PAIRS_DATABASE_ID` through D1's REST API (refused unless the name and EU jurisdiction match), and exports its current bundle with `wrangler d1 execute --remote --command` (D1's `/query` endpoint, SELECTs only).
+2. It builds the site from that bundle, marks every file noindex in `_headers` and writes `/bundle-version.txt`.
+3. It publishes with `wrangler versions upload` then `wrangler versions deploy <id>@100%`. Neither changes a trigger, so the custom domain the operator attached, and workers.dev and preview URLs as the operator set them, stay as they are across every deploy. `wrangler deploy` is not used: it sets workers.dev on or off on every run.
+4. The Worker itself adds `X-Robots-Tag: noindex` to every response it gives when `ROBOTS_NOINDEX` is `1`, which only staging's configuration sets (`worker/with-pairs.mjs`, held by `site/tests/staging.build-test.mjs`, "the Worker marks every kind of answer noindex in staging's configuration, and adds none in production's"). The edge's response-header rule on the hostname adds the same; neither depends on the other.
+5. `scripts/staging-smoke.mjs` checks the hostname: `/bundle-version.txt` names the exported bundle, and `/`, a pair page and its data file made on request, an old claim address that leads to its pair (301), one with no pair (410) and `/no-such--pair` (404) each answer as expected with `X-Robots-Tag: noindex`. The addresses are read from the build. Any failure fails the job and names the address.
+
+What the smoke step prints when everything passes:
+
+```text
+OK /bundle-version.txt names bundle 8d9a5628d5e3a2e5
+OK / 200, noindex
+OK /<a pair made on request> 200, noindex
+OK /data/pairs/<that pair>.json 200, noindex
+OK /<an old claim address> 301, noindex
+OK /<an old claim address with no pair> 410, noindex
+OK /no-such--pair 404, noindex
+Staging passed all 7 checks at https://staging.whatcameofit.com.
+```
+
+Before the domain is attached, or while its certificate is still being issued, it prints this and the job fails:
+
+```text
+FAIL staging.whatcameofit.com does not answer yet (ENOTFOUND): attach the custom domain in the dashboard and let its certificate issue, then run staging again.
+```
+
+**The operator's steps**, in order:
+
+1. Create the placeholder Worker `thenwhat-staging` in Palladio, with workers.dev and preview URLs off (done 20 November 2026). Wrangler's per-Worker Editor role cannot create a Worker, so this is the operator's.
+2. Create one API token, `CLOUDFLARE_STAGING_API_TOKEN`: the Worker-specific **Editor** role on `thenwhat-staging`, and the account's **D1 Read**. Nothing else: no zone permission, no D1 Edit. D1 Read covers the `/query` and database endpoints the job calls; D1 Read cannot be scoped to one database, so the pinned id and the `-preview` refusal keep staging to `thenwhat-store-preview`.
+3. In GitHub, environment `staging` (deployment branch `main` only): secret `CLOUDFLARE_STAGING_API_TOKEN`, and variable `STAGING_PAIRS_DATABASE_ID` set to `thenwhat-store-preview`'s id. Repository variable `CLOUDFLARE_ACCOUNT_ID` (Palladio's) is already there; `STAGING_URL` is optional and defaults to `https://staging.whatcameofit.com`.
+4. Attach the custom domain: Cloudflare dashboard › Workers & Pages › `thenwhat-staging` › Settings › Domains & Routes › Add › Custom domain › `staging.whatcameofit.com`. Cloudflare creates the DNS record and certificate; the hostname must have no CNAME record already.
+5. Set the repository variable `STAGING_ENABLED` to `on`. Until it is, the workflow's only job says staging is off and deploys nothing; with it on but the secret or the id missing, the job says which is missing and deploys nothing.
+
+**The first run.** After step 5, start it by hand: Actions › Staging › Run workflow, branch `main`. From then on every green CI run of a push to `main` publishes staging.
+
+To rehearse on this machine, with D1's local engine and nothing sent: `PAIRS_LOCAL_STATE=<folder> make deploy-staging ARGS=--dry-run`.
+
+## Releases
+
+Production is published from a tag only. `.github/workflows/release.yml` runs on a pushed tag matching `v*` (for example `v2026.11.20`), and publishes only while the repository variable `PRODUCTION_PUBLISHING` is `on`; otherwise its one job says publishing is paused. The publishing job asks for the `production` environment, which releases `CLOUDFLARE_PRODUCTION_API_TOKEN` to `v*` tags only and waits for the operator's approval. It checks that the tagged commit is on `main`, then runs `make deploy ARGS=--cutover` from `thenwhat-store` to https://whatcameofit.com.
+
+To release: `git tag v2026.11.20 <commit of main> && git push origin v2026.11.20`, then approve the run in Actions. `PRODUCTION_PUBLISHING` stays unset until the operator says the cutover can go ahead.
+
 ## GitHub configuration
 
 Restrict the GitHub `production` environment to `main`. Store `CLOUDFLARE_PRODUCTION_API_TOKEN` as an environment secret there before merging the workflow. Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.
