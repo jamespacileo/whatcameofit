@@ -15,7 +15,12 @@ import { parseHTML } from "linkedom";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
-import { movedAddresses } from "../src/lib/bundle.ts";
+import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
+import { categoryListing, interventionListing, topicListing } from "../src/lib/listing-view.ts";
+import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
+import { shownName } from "../src/lib/pair-view.ts";
+import { meshEdition } from "../src/lib/clinical.ts";
+import { canonicalAddress } from "../src/lib/structured.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
@@ -73,6 +78,17 @@ const bundle = copyBundle({
     });
   },
 });
+// An intervention's name holding what a replacement string reads as patterns: a listing made on
+// request shows it as written.
+const DOLLARS = "ACOZIBOROLE $$ $& $'";
+{
+  const file = path.join(bundle, "p12_pair_intervention_page", "acoziborole.json");
+  const listing = JSON.parse(fs.readFileSync(file, "utf8"));
+  listing.intervention.preferred_name = DOLLARS;
+  fs.writeFileSync(file, JSON.stringify(listing));
+  fs.rmSync(path.join(bundle, "manifest.json"));
+  writeManifest(bundle, { madeAt: "2026-11-20T00:00:00Z" });
+}
 // Which claim leads to which pair, by the bundle's own record of where each pair came from.
 const moved = movedAddresses(fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))));
 const leads = [...moved].filter(([slug]) => slug !== ARCHIVED && retired.pages.includes(slug));
@@ -85,6 +101,8 @@ const pages = Object.fromEntries(
 );
 // Paths whose built file the asset binding is told to leave out, so the Worker must make them.
 const hidden = new Set();
+// Appended to the frame, to stand for a redeploy with the same bundle and another frame.
+let frameChange = "";
 let mf;
 
 /** The built files, as the asset binding serves them: a page at its address, else the 404 page. */
@@ -96,7 +114,9 @@ function assets(request) {
     const file = path.join(dist, candidate);
     if (!hidden.has(clean) && fs.existsSync(file) && fs.statSync(file).isFile()) {
       const type = file.endsWith(".html") ? "text/html; charset=utf-8" : file.endsWith(".json") ? "application/json" : "application/octet-stream";
-      return new Response(fs.readFileSync(file), { headers: { "Content-Type": type } });
+      const body = clean === "/pair-shell" ? fs.readFileSync(file, "utf8") + frameChange : fs.readFileSync(file);
+      // As a preview's _headers mark every asset (scripts/pr-preview.mjs).
+      return new Response(body, { headers: { "Content-Type": type, "X-Robots-Tag": "noindex" } });
     }
   }
   return new Response(fs.readFileSync(path.join(dist, "404.html")), { status: 404, headers: { "Content-Type": "text/html; charset=utf-8" } });
@@ -359,6 +379,198 @@ test("every address of a claim with no pair answers gone, and so does the claims
   assert.match(text, /noindex/);
   // An address the site never served is not found, not gone.
   assert.equal((await get("/never-a-claim-of-this-site")).status, 404);
+});
+
+
+// Listing pages (openspec pairs-site task 4.6a): none is built; the Worker makes each from the
+// lab's page file, with the shared renderer. These run before the tests below change the store.
+const bundleFiles = () => readBundle(bundle).pages;
+const publishedSet = () => new Set(Object.keys(pages));
+const categorySet = () => new Set(Object.keys(bundleFiles().PairClinicalCategoryPage));
+const shellDocument = () => parseHTML(fs.readFileSync(path.join(dist, "pair-shell", "index.html"), "utf8")).document;
+const meshEditionOfBuild = () => shellDocument().querySelector("[data-mesh-edition]").getAttribute("data-mesh-edition");
+
+/** Every listing of the bundle: its path and the view the shared reader gives for its file. */
+function everyListing() {
+  const files = bundleFiles();
+  return [
+    ...Object.entries(files.PairInterventionPage).map(([slug, file]) => [`/intervention/${slug}`, interventionListing(file, publishedSet())]),
+    ...Object.entries(files.PairClinicalCategoryPage).map(([id, file]) => [`/clinical/${id}`, categoryListing(file, publishedSet(), categorySet())]),
+    ...Object.entries(files.PairTopicPage).map(([slug, file]) => [`/topic/${slug}`, topicListing(file, publishedSet())]),
+  ];
+}
+
+/** The bundle's codes that are codes only: those with an underscore, and intervention ids. */
+function bundleCodes() {
+  const codes = new Set(Object.values(pages).map((page) => page.row.intervention.id));
+  for (const name of fs.readdirSync(path.join(bundle, "schemas"))) {
+    JSON.stringify(JSON.parse(fs.readFileSync(path.join(bundle, "schemas", name), "utf8")), (key, value) => {
+      if (key === "enum") for (const code of value) if (typeof code === "string" && code.includes("_")) codes.add(code);
+      return value;
+    });
+  }
+  return codes;
+}
+
+const builtFooter = () => parseHTML(fs.readFileSync(path.join(dist, "about", "index.html"), "utf8")).document.querySelector("footer.colophon").outerHTML;
+const listedOn = (document) => [...document.querySelectorAll("[data-pair]")].map((row) => row.dataset.pair).sort();
+const filedIn = (file) => [...new Set(file.pairs.map((row) => row.pair.address))].filter((address) => address in pages).sort();
+const squash = (text) => text.replace(/\s+/g, " ").trim();
+
+test("no listing page is built, and the Worker makes each from its file with the shared renderer", async () => {
+  const edition = meshEditionOfBuild();
+  assert.ok(edition.length > 0);
+  for (const [pathname, view] of everyListing()) {
+    assert.ok(!fs.existsSync(path.join(dist, pathname.slice(1))), `${pathname} is built`);
+    const response = await get(pathname);
+    assert.equal(response.status, 200, pathname);
+    assert.match(response.headers.get("Cache-Control"), /max-age=86400/);
+    assert.equal(response.headers.get("X-Robots-Tag"), "noindex", pathname);
+    const made = await documentOf(response);
+    const band = parseHTML(`<main>${renderListingBand(view)}</main>`).document;
+    const sheet = parseHTML(`<main>${renderListingSheet(view, edition)}</main>`).document;
+    assert.equal(made.querySelector(".band.record").outerHTML, band.querySelector(".band.record").outerHTML, pathname);
+    assert.equal(made.querySelector(".frame").outerHTML, sheet.querySelector(".frame").outerHTML, pathname);
+    assert.equal(made.querySelector("title").textContent.startsWith(view.title), true, pathname);
+    assert.deepEqual(listedOn(made), view.rows.map((row) => row.address).sort(), pathname);
+    // Its own canonical address, and the footer a built page carries (its notices and the site's
+    // links, the extension page's among them when the build offers it).
+    assert.equal(made.querySelector('link[rel="canonical"]').getAttribute("href"), canonicalAddress(pathname), pathname);
+    assert.equal(made.querySelector("footer.colophon").outerHTML, builtFooter(), pathname);
+    // No code of the bundle where its words belong.
+    for (const element of made.querySelectorAll("script, style, template")) element.remove();
+    for (const code of bundleCodes()) assert.ok(!made.body.textContent.includes(code), `${pathname} shows the code ${code}`);
+  }
+});
+
+test("a listing lists its file's pairs that have a page, and none the slice left out", async () => {
+  const files = bundleFiles();
+  for (const [slug, file] of Object.entries(files.PairInterventionPage)) {
+    assert.deepEqual(listedOn(await documentOf(await get(`/intervention/${slug}`))), filedIn(file), slug);
+  }
+  for (const [slug, file] of Object.entries(files.PairTopicPage)) {
+    assert.deepEqual(listedOn(await documentOf(await get(`/topic/${slug}`))), filedIn(file), slug);
+  }
+  for (const [id, file] of Object.entries(files.PairClinicalCategoryPage)) {
+    assert.deepEqual(listedOn(await documentOf(await get(`/clinical/${id}`))), filedIn(file), id);
+  }
+  // The slice's ambroxol file names a pair whose page the slice left out.
+  const named = files.PairInterventionPage.ambroxol.pairs.map((row) => row.pair.address);
+  assert.ok(named.some((address) => !(address in pages)));
+  assert.deepEqual(listedOn(await documentOf(await get("/intervention/ambroxol"))), named.filter((address) => address in pages).sort());
+});
+
+test("a category's page links only categories with a page, says how many pairs sit beneath each narrower one, and credits MeSH", async () => {
+  const known = categorySet();
+  // The vocabulary's year as the bundle's manifest states it; this bundle states none.
+  const edition = meshEdition(readBundle(bundle).manifest.snapshot?.mesh_years ?? []);
+  assert.equal(meshEditionOfBuild(), edition);
+  for (const id of known) {
+    const made = await documentOf(await get(`/clinical/${id}`));
+    for (const link of made.querySelectorAll("[data-links] a")) {
+      assert.ok(known.has(link.getAttribute("href").slice("/clinical/".length)), `${id} links ${link.getAttribute("href")}`);
+    }
+    for (const link of made.querySelectorAll('[data-links="narrower"] a')) {
+      const count = Number(link.nextElementSibling.textContent);
+      const below = await documentOf(await get(link.getAttribute("href")));
+      // The narrower page lists at least the pairs this page counts beneath it.
+      assert.ok(count > 0 && listedOn(below).length >= count, `${id}: ${link.textContent} ${count}`);
+    }
+    // The vocabulary's credit: the source by name, the year the bundle states, and that NLM does not endorse the site.
+    const credit = squash(made.querySelector(".mesh-credit").textContent);
+    assert.ok(credit.includes(`courtesy of the U.S. National Library of Medicine: ${edition}.`), `${id}: ${credit}`);
+    assert.match(credit, /Medical Subject Headings \(MeSH\), U\.S\. National Library of Medicine/);
+    assert.match(credit, /NLM does not endorse this site\./);
+  }
+  // The slice's Infections file names Hidradenitis Suppurativa beneath it, which has no page.
+  assert.ok(bundleFiles().PairClinicalCategoryPage.D007239.narrower.some((one) => !known.has(one.descriptor_id)));
+});
+
+test("a listing's page carries the trail above it as structured data", async () => {
+  for (const [pathname, view] of everyListing()) {
+    const made = await documentOf(await get(pathname));
+    const trails = [...made.querySelectorAll('script[type="application/ld+json"]')].map((script) => JSON.parse(script.textContent)).filter((one) => one["@type"] === "BreadcrumbList");
+    assert.equal(trails.length, 1, pathname);
+    const names = trails[0].itemListElement.map((item) => item.name);
+    assert.deepEqual(names.slice(1), [...view.crumbs.map((crumb) => crumb.label), view.title], pathname);
+    assert.equal(new URL(trails[0].itemListElement.at(-1).item).pathname, pathname);
+  }
+});
+
+test("a listing's name is shown as written, whatever a replacement string would read in it", async () => {
+  const made = await documentOf(await get("/intervention/acoziborole"));
+  assert.equal(made.querySelector("[data-listing]").textContent, shownName(DOLLARS));
+  assert.match(made.querySelector("title").textContent, new RegExp(shownName(DOLLARS).replace(/[$&']/g, "\\$&")));
+});
+
+test("the directory pages count the pairs each listing they link lists", async () => {
+  const topics = parseHTML(fs.readFileSync(path.join(dist, "topics", "index.html"), "utf8")).document;
+  for (const item of topics.querySelectorAll("[data-topic]")) {
+    const count = Number(item.querySelector(".count").firstChild.textContent.trim());
+    assert.equal(listedOn(await documentOf(await get(`/topic/${item.dataset.topic}`))).length, count, item.dataset.topic);
+  }
+  const clinical = parseHTML(fs.readFileSync(path.join(dist, "clinical", "index.html"), "utf8")).document;
+  for (const item of clinical.querySelectorAll("[data-category]")) {
+    const count = Number(item.querySelector(".count").textContent.trim());
+    assert.equal(listedOn(await documentOf(await get(`/clinical/${item.dataset.category}`))).length, count, item.dataset.category);
+  }
+});
+
+test("a pair filed under no topic is listed on its intervention's page and on no topic's", async () => {
+  const unfiled = Object.values(pages).find((page) => page.row.filing === null);
+  assert.ok(unfiled);
+  const address = unfiled.row.pair.address;
+  assert.ok(listedOn(await documentOf(await get(`/intervention/${unfiled.row.intervention.slug}`))).includes(address));
+  for (const slug of Object.keys(bundleFiles().PairTopicPage)) {
+    assert.ok(!listedOn(await documentOf(await get(`/topic/${slug}`))).includes(address), slug);
+  }
+});
+
+test("a listing cached for one frame is not answered for another with the same bundle", async () => {
+  const first = await (await get("/topic/infections")).text();
+  assert.ok(!first.includes("<!--another-frame-->"));
+  frameChange = "<!--another-frame-->";
+  try {
+    assert.ok((await (await get("/topic/infections")).text()).includes("<!--another-frame-->"));
+  } finally {
+    frameChange = "";
+  }
+});
+
+test("a listing address no file holds is not found, and one no listing could have is refused before any read", async () => {
+  for (const pathname of ["/intervention/no-such-treatment", "/clinical/D000000001", "/topic/no-such-topic"]) {
+    assert.equal((await get(pathname)).status, 404, pathname);
+  }
+  // With the page table gone, a well-formed address fails on its read; a malformed one never reads.
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    for (const pathname of ["/intervention/Not_A_Slug", "/intervention/a--b", "/clinical/X007239", "/clinical/D12", "/topic/x/y", "/topic/"]) {
+      assert.equal((await get(pathname)).status, 404, pathname);
+    }
+    assert.notEqual((await get("/intervention/no-such-treatment")).status, 404, "the well-formed address reads the table");
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+test("a listing file stored as JSON null is checked, and gives the error page", async () => {
+  const db = await mf.getD1Database("PAIRS");
+  const version = statements(bundle).version;
+  const [row] = (await db.prepare("SELECT key FROM pair_page WHERE version = ?1 AND model = 'PairTopicPage' ORDER BY key LIMIT 1").bind(version).all()).results;
+  const { results: kept } = await db.prepare("SELECT part, body FROM pair_page WHERE version = ?1 AND model = 'PairTopicPage' AND key = ?2").bind(version, row.key).all();
+  await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairTopicPage' AND key = ?2 AND part > 0").bind(version, row.key).run();
+  await db.prepare("UPDATE pair_page SET body = 'null' WHERE version = ?1 AND model = 'PairTopicPage' AND key = ?2").bind(version, row.key).run();
+  try {
+    frameChange = "<!--null-check-->";
+    const response = await get(`/topic/${row.key}`);
+    assert.equal(response.status, 500);
+    assert.ok((await documentOf(response)).querySelector("[data-pair-unreadable]"));
+  } finally {
+    frameChange = "";
+    await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairTopicPage' AND key = ?2").bind(version, row.key).run();
+    for (const part of kept) await db.prepare("INSERT INTO pair_page (version, model, key, part, body) VALUES (?1, 'PairTopicPage', ?2, ?3, ?4)").bind(version, row.key, part.part, part.body).run();
+  }
 });
 
 test("a pair names the same treatment's pairs for narrower conditions, built ahead and made on request", async () => {

@@ -528,7 +528,7 @@ Read on 2026-11-20 for the site's file budget (openspec `pairs-site`, task 1.3),
 - **`_headers`:** 100 rules, 2,000 characters a line.
 - **Not stated:** a cap on the total size of a deployment's assets, on files per upload, or on the asset manifest. Storing assets costs nothing extra.
 - **Versions kept:** the 100 most recent; only those can be deployed or rolled back to.
-- **The account's plan:** no Wrangler command shows it. Two facts put the Palladio account on Workers Paid: the preview D1 database took more than the Free plan's 100,000 rows written in a day and still accepted writes (17 November 2026), and `thenwhat-store-preview` holds 686 MB (20 November 2026), over the Free plan's 500 MB a database. The dashboard (Workers & Pages, Plans) is the operator's to confirm.
+- **The account's plan:** no Wrangler command shows it. Two facts put the Palladio account on Workers Paid: the preview D1 database took more than the Free plan's 100,000 rows written in a day and still accepted writes (17 November 2026), and `thenwhat-store-preview` holds 686 MB (20 November 2026), over the Free plan's 500 MB a database. **Workers Paid, confirmed by the operator 2026-11-20** in the dashboard, with usage blocking on at the operator's Workers threshold and an account-wide budget alert saved.
 - **What the build allows:** `site/scripts/dist-size.mjs` stops a build at 18,000 files (the Free plan's 20,000, less a tenth). The same tenth below Workers Paid's 100,000 is 90,000 (`DIST_FILE_LIMIT`), which the repository does not set until the operator confirms the plan.
 
 ## Cloudflare limits the ingest service is built inside (17 November 2026)

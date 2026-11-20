@@ -5,6 +5,7 @@ import path from "node:path";
 import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
 import { builtAhead, pairView, shownName } from "./pair-view.ts";
+import { categoryListing, interventionListing, topicListing, type ListingView } from "./listing-view.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
 import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
@@ -134,9 +135,18 @@ export interface InterventionListing {
   pairs: PairRow[];
 }
 
-/** One listing an intervention the bundle has a page for, with its pairs. */
+/** The published pairs a listing page lists, as rows: the same pairs the Worker's page for it
+ * lists (lib/listing-view.ts), so every count the build shows matches the page it links. */
+function listedRows(view: ListingView): PairRow[] {
+  const pages = pairPages();
+  return view.rows.map((row) => pairRow(pages[row.address])).sort(byName);
+}
+
+const publishedPairs = () => new Set(Object.keys(pairPages()));
+
+/** One listing an intervention the bundle has a page for, with the pairs its file lists. */
 export function interventionListings(): InterventionListing[] {
-  const pages = Object.values(pairPages());
+  const published = publishedPairs();
   return Object.values(pairBundle().pages.PairInterventionPage ?? {})
     .map((file: any) => {
       const preferred = file.intervention.preferred_name;
@@ -151,10 +161,7 @@ export function interventionListings(): InterventionListing[] {
           ),
         ] as string[],
         approach: file.approach?.approach ? PAIR_APPROACH_LABELS[file.approach.approach] : null,
-        pairs: pages
-          .filter((page) => page.row.intervention.id === file.intervention.id)
-          .map(pairRow)
-          .sort(byName),
+        pairs: listedRows(interventionListing(file, published)),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -170,17 +177,14 @@ export interface TopicListing {
 export function topicListings(): TopicListing[] {
   const topics = Object.values(pairBundle().pages.PairTopicsPage ?? {})[0];
   if (!topics) return [];
-  const pages = Object.values(pairPages());
+  const published = publishedPairs();
+  const files = pairBundle().pages.PairTopicPage ?? {};
   return topics.verticals
     .map((vertical: any) => ({
       slug: vertical.slug,
       title: vertical.title,
-      pairs: pages
-        // A pair filed under no topic is listed on no topic's page; it is reached from its
-        // intervention's and condition's pages, search and the lookup file.
-        .filter((page) => page.row.filing?.vertical === vertical.slug)
-        .map(pairRow)
-        .sort(byName),
+      // The pairs the topic's own file lists; a topic with no file lists none.
+      pairs: files[vertical.slug] ? listedRows(topicListing(files[vertical.slug], published)) : [],
     }))
     .sort((a: TopicListing, b: TopicListing) => a.title.localeCompare(b.title));
 }
@@ -198,19 +202,22 @@ export interface CategoryListing {
  * beneath it. A narrower category with no pair beneath it is left out. */
 export function categoryListings(): CategoryListing[] {
   const files = Object.values(pairBundle().pages.PairClinicalCategoryPage ?? {});
-  const known = new Set(files.map((file: any) => file.descriptor.descriptor_id));
-  const short = (descriptor: any) => ({ descriptorId: descriptor.descriptor_id, label: descriptor.label });
+  const categories = new Set(files.map((file: any) => file.descriptor.descriptor_id));
+  const published = publishedPairs();
+  const idOf = (href: string) => href.slice("/clinical/".length);
   return files
-    .map((file: any) => ({
-      descriptorId: file.descriptor.descriptor_id,
-      label: file.descriptor.label,
-      treeNumbers: file.descriptor.tree_numbers,
-      broader: file.broader.filter((one: any) => known.has(one.descriptor_id)).map(short),
-      narrower: file.narrower
-        .map((one: any) => ({ ...short(one), count: pairsBeneath(one.tree_numbers).length }))
-        .filter((one: any) => one.count > 0 && known.has(one.descriptorId)),
-      pairs: pairsBeneath(file.descriptor.tree_numbers),
-    }))
+    .map((file: any) => {
+      const view = categoryListing(file, published, categories);
+      const group = (label: string) => view.linkGroups.find((one) => one.label === label)?.links ?? [];
+      return {
+        descriptorId: file.descriptor.descriptor_id,
+        label: file.descriptor.label,
+        treeNumbers: file.descriptor.tree_numbers,
+        broader: group("Broader").map((link) => ({ descriptorId: idOf(link.href), label: link.label })),
+        narrower: group("Narrower").map((link) => ({ descriptorId: idOf(link.href), label: link.label, count: link.count ?? 0 })),
+        pairs: listedRows(view),
+      };
+    })
     .sort((a: CategoryListing, b: CategoryListing) => a.label.localeCompare(b.label));
 }
 
