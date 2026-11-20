@@ -60,7 +60,7 @@ const checked = formatDate(bundleMadeAt());
               <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
             </div>
             <div class="shown">
-            <PopupDemo claim={shown} checked={checked} lands />
+            <PopupDemo pair={shown} checked={checked} lands />
             <p class="note">
               The extension's answer{checked && `, from records gathered on ${checked}`}.
               It is found inside your browser: the page's address is sent nowhere.
@@ -81,7 +81,7 @@ const checked = formatDate(bundleMadeAt());
                 <div class="shown">
                 <PopupDemo
                   kind="search"
-                  claim={shown}
+                  pair={shown}
                   subject={{ treatment: example.intervention, condition: example.condition }}
                   records={records}
                 />
@@ -107,7 +107,7 @@ const checked = formatDate(bundleMadeAt());
                   <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
                 </div>
                 <div class="shown">
-                <PopupDemo kind="following" claim={shown} was={change.was} />
+                <PopupDemo kind="following" pair={shown} was={change.was} />
                 <p class="note">
                   When something you follow moves, the extension tells you and marks it in your
                   list. The list is kept in your browser only.
@@ -191,7 +191,7 @@ const checked = formatDate(bundleMadeAt());
   <p>
     It gives a status and the way to the records behind it. It never says whether a treatment
     works, is safe or is available, and it gives no verdict on a report, an outlet or the people
-    behind a claim.
+    behind a treatment.
   </p>
   <ul class="never">
     {NOTICES.map((notice) => <li>{notice}</li>)}

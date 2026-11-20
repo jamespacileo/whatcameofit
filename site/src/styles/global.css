@@ -1,5 +1,5 @@
 @import "@fontsource-variable/figtree/wght.css";
-/* The heading face on a claim and a topic page (openspec band-structure). */
+/* The heading face on a pair and a topic page (openspec band-structure). */
 @import "@fontsource-variable/newsreader/opsz.css";
 
 /* What a reader sees until each face arrives: a font already on the device, scaled
@@ -92,7 +92,7 @@
   --page: 60rem;
   --gutter: clamp(1rem, 4vw, 2rem);
   --radius: 0.85rem;
-  /* The claim page's one scale. Every list, table and panel on it takes its row
+  /* The pair page's one scale. Every list, table and panel on it takes its row
      padding, row rule, label size, note size and panel padding from here, so the
      sections read as one system (openspec claim-primitives; a test holds them to it). */
   --radius-s: 0.65rem;
@@ -121,7 +121,7 @@
   --stop-2: calc(var(--stop-1) + 18rem);
   /* The type scale (openspec type-scale): seven steps for running text and four named
      roles. Every font-size in this file is one of them, a title's clamp or inherit; a
-     browser test holds the stylesheet and rendered claim to it. Root is 17px. */
+     browser test holds the stylesheet and rendered pair to it. Root is 17px. */
   --text-micro: 0.72rem;
   --text-xs: 0.78rem;
   --text-s: 0.85rem;
@@ -387,7 +387,7 @@ p {
 }
 
 /* The name's question mark is drawn, not typed, so that its dot can be the solid
-   blue marker: the question, and under it where a claim stands. On a first visit
+   blue marker: the question, and under it where a pair stands. On a first visit
    the hook is drawn and the dot lands. */
 .masthead .name .ask {
   height: 0.94em;
@@ -633,17 +633,6 @@ main > .wrap {
   margin-bottom: 0;
 }
 
-/* Under the band, the tally opens the lists. */
-.band + .wrap > .tally {
-  margin: clamp(1.25rem, 4vw, 1.75rem) 0 0;
-  font-size: var(--text-m);
-}
-
-/* The tally belongs to the lists, so the first heading follows it closely. */
-.band + .wrap > .tally + .bar {
-  margin-top: clamp(1.25rem, 4vw, 1.75rem);
-}
-
 /* A panel on the band would be blue on blue: there the answer is drawn on white,
    in a hairline frame. */
 .band .digest {
@@ -697,27 +686,6 @@ a.chip:hover {
   margin-right: -0.35rem;
 }
 
-/* A chip with no drawing, for a year. */
-.chip.plain-chip {
-  padding-left: 0.8rem;
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  list-style: none;
-  padding: 0;
-  margin-bottom: 0;
-}
-
-.above-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
 /* The topic and, beside it, the kind of intervention: a plain word, not a chip. */
 .filed {
   display: flex;
@@ -727,11 +695,6 @@ a.chip:hover {
 }
 
 .approach {
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.approach-basis {
   font-size: var(--text-s);
   color: var(--muted);
 }
@@ -770,80 +733,8 @@ a.share {
   fill: currentColor;
 }
 
-/* Follow with its words: the pill, then what it does and where the list is kept. */
-.follow-offer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.9rem;
-  margin-top: 0.9rem;
-}
-
-.follow-offer .share {
-  flex: none;
-}
-
-.follow-offer .entry-note {
-  flex: 1 1 16rem;
-  margin: 0;
-  max-width: 52ch;
-}
-
-.again .follow-offer {
-  margin-top: 1.1rem;
-}
-
-/* Said under the band once a reader follows there: one grey line, no second control. */
-.follow-confirm {
-  margin: 0.9rem 0 0;
-  max-width: 52ch;
-}
-
-/* For a reader who follows the claim and last saw another status. */
-.was-note {
-  margin: 0.9rem 0 0;
-  font-weight: 600;
-}
-
-/* How to hear of a change without looking for one. */
-.keep-up p {
-  max-width: var(--measure);
-}
-
-.keep-feed {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.9rem;
-  margin-top: 0.7rem;
-}
-
-.keep-feed .entry-note {
-  margin: 0;
-}
-
 .closing .suggest {
   margin-top: 1.1rem;
-}
-
-/* Follow and Share, together at the title's far side. */
-.page-actions {
-  display: flex;
-  flex: none;
-  gap: 0.5rem;
-}
-
-/* Under a topic's table: pass it on, or hear of a change. */
-.page-foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 1rem;
-  margin-top: 1rem;
-}
-
-.page-foot .entry-note {
-  margin: 0;
 }
 
 /* The last section of a page: one next step. */
@@ -880,22 +771,9 @@ a.share {
   margin-top: 1.25rem;
 }
 
-.clinical-claims {
-  margin-top: 2rem;
-}
-
 /* The headline a reader followed here, named before anything is said about it. */
 .reported {
   margin-top: 0.7rem;
-}
-
-.reported-title {
-  display: block;
-  width: fit-content;
-  font-size: var(--text-l);
-  font-weight: 600;
-  line-height: 1.4;
-  text-wrap: pretty;
 }
 
 .reported .entry-note {
@@ -935,11 +813,6 @@ a.share {
     padding-block: 0.4rem;
   }
 
-  .pop-trigger.info {
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-  }
-
   /* Links that sit alone on a record's line, and the fold that opens the embed. */
   /* Padding on an inline link enlarges what a thumb can hit without moving the line. */
   .record .origin a,
@@ -960,21 +833,11 @@ a.share {
     padding-block: 0.8rem;
   }
 
-  /* The two links under a claim's title each sit in a sentence: padding enlarges what a
+  /* The two links under a pair's title each sit in a sentence: padding enlarges what a
      thumb can hit without moving the line. */
   .what-this-is a,
   .byline a {
     padding-block: 0.75rem;
-  }
-
-  .embed-how summary {
-    display: inline-block;
-    padding-block: 0.6rem;
-  }
-
-  .pop-trigger.more {
-    padding-block: 0.6rem;
-    margin-block: -0.6rem;
   }
 
   .masthead nav a {
@@ -985,21 +848,6 @@ a.share {
   .colophon a {
     padding-block: 0.6rem;
   }
-}
-
-/* The promise beside the status, as on the card: amber, dashed, and a link to its year. */
-.digest .promised-by {
-  width: fit-content;
-  margin: 0.6rem 0 0;
-  padding: 0.1rem 0.55rem;
-  font-size: var(--text-m);
-  background: var(--promise);
-  border: 1.5px dashed var(--promise-rule);
-  border-radius: 6px;
-}
-
-.digest .promised-by a {
-  font-weight: 700;
 }
 
 /* A report's title leads off the site; the small arrow says so. */
@@ -1101,34 +949,6 @@ a.share {
   margin: 0.35rem 0 0.8rem;
 }
 
-/* The card beside the sentence that says the same thing. */
-.take-body {
-  display: grid;
-  grid-template-columns: 13rem minmax(0, 1fr);
-  gap: 0.9rem 1.1rem;
-  align-items: start;
-}
-
-.take-card {
-  display: block;
-  width: 100%;
-  height: auto;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-s);
-}
-
-@media (max-width: 40rem) {
-  .take-body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  /* The sentence and its buttons first; the card they describe after. */
-  .take-card {
-    width: min(100%, 15rem);
-    order: 2;
-  }
-}
-
 /* Saving a date to come back on: the same pills, under their own heading. */
 .again {
   margin-top: 2rem;
@@ -1143,32 +963,6 @@ a.share {
 
 a.share {
   text-decoration: none;
-}
-
-/* Prefilled posts: the same pills, one per network, under a small label. */
-.post-to {
-  margin-top: 0.9rem;
-}
-
-.post-to summary {
-  cursor: pointer;
-  font-size: var(--text-m);
-  font-weight: 600;
-  color: var(--blue);
-  width: fit-content;
-}
-
-.post-to[open] summary {
-  margin-bottom: 0.5rem;
-}
-
-.post-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
 }
 
 dialog.mastodon {
@@ -1205,43 +999,11 @@ dialog.mastodon input {
   border-radius: 0.5rem;
 }
 
-.mastodon-actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.9rem;
-}
-
 .share.quiet {
   color: var(--muted);
 }
 
-.embed-how {
-  margin-top: 1rem;
-  border-top: 1px solid var(--rule-soft);
-  padding-top: 0.8rem;
-}
-
-.embed-how summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: var(--blue);
-  width: fit-content;
-  font-size: var(--text-m);
-}
-
-.embed-how pre {
-  margin: 0.6rem 0;
-  padding: 0.8rem 1rem;
-  background: var(--panel);
-  border-radius: var(--radius-s);
-  font-size: var(--text-xs);
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  user-select: all;
-}
-
-/* The embed: one claim's status inside another site's frame. */
+/* The embed: one pair's status inside another site's frame. */
 body.embed {
   display: block;
   min-height: 0;
@@ -1368,7 +1130,7 @@ body.embed {
   text-wrap: pretty;
 }
 
-/* The digest: where the claim stands, answered first. */
+/* The digest: where the pair stands, answered first. */
 
 .digest {
   margin-top: 1.25rem;
@@ -1378,12 +1140,6 @@ body.embed {
   display: grid;
   grid-template-columns: minmax(12rem, 1.1fr) 2fr;
   gap: 0.75rem 1.5rem;
-}
-
-.digest .label-row {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
 }
 
 .digest .label {
@@ -1408,10 +1164,6 @@ body.embed {
   border-radius: 6px;
   padding: 0.1rem 0.5rem;
   margin-top: 0.6rem;
-}
-
-.digest .overlay:hover {
-  background: var(--paper);
 }
 
 .digest .changed {
@@ -1673,11 +1425,6 @@ main nav.contents ul li + li {
   main nav.contents ul {
     flex-direction: column;
   }
-
-  /* The share pill lines up with the topic chip, whatever sits under the chip. */
-  .above-title {
-    align-items: flex-start;
-  }
 }
 
 .contents a {
@@ -1756,7 +1503,7 @@ main nav.contents ul li + li {
 }
 
 /* A report named in an answer, built as the day list's report row is: the outlet
-   with its icon, the date and topic in grey, then the title quoted, opening the claim. */
+   with its icon, the date and topic in grey, then the title quoted, opening the pair. */
 .search-report {
   margin-top: 1rem;
   padding-bottom: 0.9rem;
@@ -1805,7 +1552,7 @@ main nav.contents ul li + li {
   text-underline-offset: 0.16em;
 }
 
-/* In an answer the digest's headline opens the claim, and keeps the headline's ink. */
+/* In an answer the digest's headline opens the pair, and keeps the headline's ink. */
 .digest h2 a,
 .digest h3 a {
   color: inherit;
@@ -1943,7 +1690,7 @@ main nav.contents ul li + li {
   border-bottom: 1px solid var(--rule-soft);
 }
 
-/* The row's parts follow one another as they are read: the headline, where the claim
+/* The row's parts follow one another as they are read: the headline, where the pair
    stands, what it is, what the words were found in. On a wide screen the standing is
    lifted into the column at the right, beside all of them. */
 .hit-row > * {
@@ -2125,7 +1872,7 @@ main nav.contents ul li + li {
   color: var(--muted);
 }
 
-/* Listed trials found by a search: registry facts, after any claim. */
+/* Listed trials found by a search: registry facts, after any pair. */
 .listed-trials {
   margin-top: 1.6rem;
 }
@@ -2186,7 +1933,7 @@ main nav.contents ul li + li {
   text-wrap: pretty;
 }
 
-/* After the last claim drawn of a longer answer: the next, at a press, as tall as a
+/* After the last pair drawn of a longer answer: the next, at a press, as tall as a
    fingertip on every screen. */
 .search-results .show-more {
   min-height: 2.75rem;
@@ -2194,7 +1941,7 @@ main nav.contents ul li + li {
   padding-inline: 1.1rem;
 }
 
-/* A searched word that no tracked claim holds, named under the answer's heading. */
+/* A searched word that no tracked pair holds, named under the answer's heading. */
 .search-results .search-unheld {
   margin: 0.5rem 0 0;
   color: var(--muted);
@@ -2244,17 +1991,6 @@ body:has(.band.home) .results .again .bar {
   }
 }
 
-.next-up {
-  color: var(--muted);
-  margin-top: 0.5rem;
-}
-
-.tally {
-  color: var(--muted);
-  margin-top: 0.5rem;
-}
-
-
 .digest .says {
   align-self: center;
 }
@@ -2283,10 +2019,6 @@ body:has(.band.home) .results .again .bar {
     display: contents;
   }
 
-  .digest .label-row {
-    order: 1;
-  }
-
   /* The plain words stay directly under the label they explain. */
   .digest .gloss {
     order: 1;
@@ -2308,45 +2040,6 @@ body:has(.band.home) .results .again .bar {
     order: 4;
     margin-top: 0.7rem;
   }
-}
-
-/* The line under the heading that says what a term match is, where it is first met. */
-.glance-lead {
-  margin: 0.5rem 0 0;
-  max-width: 52ch;
-  text-wrap: pretty;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-/* "At a glance": the source's definition, unchanged, in quotation marks. Its rows are
-   a fact sheet (see "Fact sheet", near the end of this file). */
-.glance-words {
-  margin: 0.35rem 0 0;
-  max-width: 62ch;
-  text-wrap: pretty;
-}
-
-.glance-words::before {
-  content: "\201C";
-}
-
-.glance-words::after {
-  content: "\201D";
-}
-
-.glance-filed svg {
-  vertical-align: -0.15em;
-  margin-inline: 0.2rem;
-  color: var(--ring);
-}
-
-.glance-note {
-  margin: 0.7rem 0 0;
-  max-width: 52ch;
-  text-wrap: pretty;
-  font-size: var(--note-size);
-  color: var(--muted);
 }
 
 /* Section headings. */
@@ -2469,15 +2162,6 @@ body:has(.band.home) .results .again .bar {
   border-top: 1px dashed var(--promise-rule);
 }
 
-.entry-date {
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.entry-kind {
-  font-weight: 700;
-}
-
 .entry-note {
   display: block;
   color: var(--muted);
@@ -2493,9 +2177,6 @@ body:has(.band.home) .results .again .bar {
 }
 
 /* Steps of one source stack in the date and label columns, under one drawing. */
-.record .entry-date {
-  grid-column: 2;
-}
 
 .record .what:target,
 .bar:target {
@@ -2542,20 +2223,6 @@ body:has(.band.home) .results .again .bar {
   vertical-align: 0.02em;
 }
 
-/* The key: each colour and drawing is named once, here. */
-.bar-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.4rem 1.5rem;
-  margin-top: clamp(2rem, 6vw, 2.75rem);
-}
-
-.bar-row .bar {
-  margin: 0;
-}
-
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -2581,18 +2248,6 @@ body:has(.band.home) .results .again .bar {
 
 .legend .basis-mark {
   margin: 0;
-}
-
-.legend .swatch {
-  width: 0.85rem;
-  height: 0.85rem;
-  border-radius: 3px;
-  background: var(--promise);
-  border: 1px solid var(--promise-rule);
-}
-
-.bar-row + * {
-  margin-top: 0.7rem;
 }
 
 .absent {
@@ -2712,87 +2367,9 @@ body:has(.band.home) .results .again .bar {
   margin-top: 0.15rem;
 }
 
-/* In a list the track and the label share a line, so rows stay short. */
-.status-line {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.15rem 0.7rem;
-}
-
-@media (min-width: 40.01rem) {
-  .index .status-line {
-    flex-wrap: nowrap;
-    white-space: nowrap;
-  }
-}
-
 .index .track {
   width: 5.5rem;
   flex: none;
-}
-
-.quiet-note {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--muted);
-  font-size: var(--text-m);
-}
-
-/* Popovers: detail on demand. */
-.pop-trigger {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: 0;
-  padding: 0;
-  margin: 0;
-  cursor: pointer;
-  text-align: left;
-}
-
-.pop-trigger.more {
-  font-weight: 700;
-  text-decoration: underline dotted var(--muted);
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 0.22em;
-}
-
-.pop-trigger.more .opens {
-  display: inline;
-  vertical-align: -0.12em;
-  margin-left: 0.1em;
-  color: var(--muted);
-}
-
-.pop-trigger.more:has(+ .pop:popover-open) .opens {
-  transform: rotate(180deg);
-}
-
-@media print {
-  .pop-trigger.more .opens {
-    display: none;
-  }
-}
-
-.pop-trigger.more:hover,
-.pop-trigger.more:has(+ .pop:popover-open) {
-  text-decoration-style: solid;
-  text-decoration-color: var(--ink);
-}
-
-.pop-trigger.info {
-  display: inline-grid;
-  place-items: center;
-  width: 1.9rem;
-  height: 1.9rem;
-  border-radius: 50%;
-  color: var(--blue);
-}
-
-.pop-trigger.info:hover {
-  background: var(--tag);
 }
 
 .pop {
@@ -2839,57 +2416,6 @@ body:has(.band.home) .results .again .bar {
   margin-top: 0.5rem;
 }
 
-.pop .pop-head {
-  font-weight: 700;
-}
-
-/* Score chip: one score, wherever the claim page shows one. The band in words and the
-   percentage are in sight; what the number is about opens from the chip. No colour says
-   how good a score is: a lower-band reading is outlined in dashes and says so in words. */
-.pop-trigger.score {
-  position: relative;
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  flex: none;
-  padding: 0.12rem 0.6rem;
-  border: 1px solid var(--rule);
-  border-radius: 99px;
-  background: var(--paper);
-  color: var(--muted);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  line-height: 1.4;
-  white-space: nowrap;
-  vertical-align: 0.08em;
-}
-
-.score .score-about {
-  font-weight: 500;
-}
-
-.score .score-words {
-  display: inline-block;
-  color: var(--ink);
-  font-weight: 700;
-}
-
-/* "high, 92%" is written as it is said in a sentence, and drawn with a capital. */
-.score .score-words::first-letter {
-  text-transform: uppercase;
-}
-
-.pop-trigger.score:hover,
-.pop-trigger.score:has(+ .pop:popover-open) {
-  border-color: var(--ring);
-  background: var(--panel);
-}
-
-.pop-trigger.score.low {
-  border-style: dashed;
-  border-color: var(--ring);
-}
-
 /* A chip's panel is a span, so a chip may stand inside a paragraph. */
 span.pop {
   text-align: left;
@@ -2907,133 +2433,6 @@ span.pop > span {
 
 span.pop > span + span {
   margin-top: 0.5rem;
-}
-
-.record-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.25rem 0.9rem;
-}
-
-.record-head .record-title {
-  min-width: 0;
-}
-
-@media (max-width: 40rem) {
-  /* The chip stays small; its press area is 44 pixels tall. */
-  .pop-trigger.score::after {
-    content: "";
-    position: absolute;
-    inset: -0.65rem -0.25rem;
-  }
-
-  .record-head {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .record-head .score {
-    margin-bottom: 0.35rem;
-  }
-}
-
-@media print {
-  .pop-trigger.score {
-    padding: 0;
-    border: 0;
-    background: none;
-  }
-}
-
-.pop .pop-head .basis-mark,
-.pop .pop-note .basis-mark {
-  margin: 0 0.15rem 0 0;
-}
-
-.pop .pop-list {
-  margin: 0.2rem 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-/* The path's six names, the claim's own place in bold with the marker beside it. */
-.pop .pop-path {
-  margin: 0.2rem 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--muted);
-}
-
-.pop .pop-path li {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.pop .pop-path li::before {
-  content: "";
-  flex: none;
-  width: 0.4rem;
-  height: 0.4rem;
-  margin-inline: 0.15rem;
-  border-radius: 50%;
-  border: 1.5px solid var(--ring);
-}
-
-.pop .pop-path li[aria-current] {
-  color: var(--ink);
-  font-weight: 700;
-}
-
-.pop .pop-path li[aria-current]::before {
-  width: 0.7rem;
-  height: 0.7rem;
-  margin-inline: 0;
-  background: var(--blue);
-  border-color: var(--blue);
-}
-
-.pop .pop-note {
-  color: var(--muted);
-  font-size: var(--text-s);
-}
-
-/* The way out of a panel that holds links: a text control as tall as a fingertip, at
-   the panel's foot. Not drawn where the browser has no popover: the panel is then
-   plain content and has nothing to close. */
-.pop-close {
-  display: none;
-}
-
-@supports selector(:popover-open) {
-  .pop-close {
-    /* Held at the panel's foot while a long panel scrolls, so it is always in reach. */
-    position: sticky;
-    bottom: -0.8rem;
-    display: block;
-    width: 100%;
-    min-height: 2.75rem;
-    margin: 0.4rem 0 -0.8rem;
-    padding: 0;
-    border: 0;
-    border-top: 1px solid var(--rule);
-    background: var(--paper);
-    text-align: right;
-    font: inherit;
-    font-size: var(--text-s);
-    font-weight: 600;
-    color: var(--blue);
-    text-decoration: underline;
-    text-underline-offset: 0.22em;
-    cursor: pointer;
-  }
-}
-
-@media print {
-  .pop-close {
-    display: none;
-  }
 }
 
 /* On a phone a panel that holds links and a way out is set at the foot of the screen,
@@ -3181,142 +2580,6 @@ span.pop > span + span {
   display: none !important;
 }
 
-/* The path as a filter: how many claims sit at each place, and a way to pick one.
-   It doubles as the legend for the small tracks in the table beneath it. */
-.stage-filter {
-  margin: 1.5rem 0 0.9rem;
-}
-
-.stage-filter .places {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-}
-
-.stage-filter .place {
-  font: inherit;
-  color: var(--ink);
-  background: none;
-  border: 0;
-  border-radius: 0.5rem;
-  padding: 0.4rem 0.25rem 0.5rem;
-  cursor: pointer;
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 0.1rem;
-  text-align: center;
-  position: relative;
-}
-
-.stage-filter .places .place::before {
-  content: "";
-  position: absolute;
-  top: calc(0.8rem - 0.75px);
-  left: 0;
-  right: 0;
-  border-top: 1.5px solid var(--rule);
-}
-
-.stage-filter .places .place:first-child::before {
-  left: 50%;
-}
-
-.stage-filter .places .place:last-child::before {
-  right: 50%;
-}
-
-.stage-filter .dot {
-  position: relative;
-  width: 0.8rem;
-  height: 0.8rem;
-  border-radius: 50%;
-  background: var(--paper);
-  border: 1.5px solid var(--ring);
-}
-
-.stage-filter .place strong {
-  font-size: var(--text-xl);
-  line-height: 1.2;
-}
-
-.stage-filter .place-name {
-  font-size: var(--text-xs);
-  line-height: 1.25;
-  color: var(--muted);
-}
-
-.stage-filter .place:hover:not(:disabled) {
-  background: var(--panel);
-}
-
-.stage-filter .place[aria-pressed="true"] {
-  background: var(--tint);
-}
-
-.stage-filter .place[aria-pressed="true"] .dot {
-  background: var(--blue);
-  border-color: var(--blue);
-}
-
-.stage-filter .place[aria-pressed="true"] .place-name {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.stage-filter .place:disabled {
-  cursor: default;
-}
-
-.stage-filter .place:disabled strong {
-  color: var(--muted);
-  font-weight: 400;
-}
-
-.stage-filter .off-path {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
-}
-
-.stage-filter .place.off {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  border: 1px solid var(--rule);
-  padding: 0.2rem 0.7rem;
-}
-
-.stage-filter .place.off strong {
-  font-size: var(--text-m);
-}
-
-.stage-filter .shown {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  margin: 0.7rem 0 0;
-  font-size: var(--text-m);
-  color: var(--muted);
-}
-
-.stage-filter .shown button {
-  font: inherit;
-  font-weight: 600;
-  color: var(--blue);
-  background: none;
-  border: 0;
-  padding: 0.2rem 0;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-}
-
-.stage-filter .shown button:hover {
-  text-decoration-thickness: 2px;
-}
-
 /* Under a long table: step through it a page at a time. Rows after the first page
    are in the document; where scripts run they are out of sight until asked for. */
 @media (scripting: enabled) {
@@ -3331,17 +2594,6 @@ span.pop > span + span {
 
 /* The home page's lists: one shown at a time, picked by a tab. Where scripts run,
    only the first is in sight until the tabs take over. */
-@media screen and (scripting: enabled) {
-  .feed:not(.tabbed) .feed-panel ~ .feed-panel {
-    display: none;
-  }
-}
-
-@media print {
-  .feed .feed-panel[hidden] {
-    display: block !important;
-  }
-}
 
 /* A control only a script can work. Without scripts it is left out. Where scripts
    run it holds its place from the first paint, out of sight until its script is
@@ -3381,20 +2633,6 @@ span.pop > span + span {
   text-decoration-thickness: 2px;
 }
 
-/* One word on a row dated since the reader's last visit, or on a followed claim whose
-   status has changed. The words beside it say what; the tag never stands alone. */
-.new-tag {
-  display: inline-block;
-  font-size: var(--text-micro);
-  font-weight: 700;
-  line-height: 1.5;
-  color: var(--ink);
-  background: var(--tag);
-  border-radius: 0.3rem;
-  padding: 0 0.4rem;
-  vertical-align: 0.1em;
-}
-
 /* What is dated since the reader's last visit: one line above the lists. */
 .since {
   margin: 1.2rem 0 0;
@@ -3418,10 +2656,6 @@ span.pop > span + span {
 
 .following > .entry-note {
   margin-top: 0.5rem;
-}
-
-.feed-link {
-  margin-top: 0.6rem;
 }
 
 /* ── The home page's first screen and ground ────────────────────────────────────
@@ -3457,26 +2691,7 @@ body:has(.band.home) .table-frame {
   border-bottom: 1px solid var(--rule);
 }
 
-.feed > .lists-title {
-  margin-top: var(--section-space);
-}
-
-.home-section {
-  margin-top: var(--section-space);
-  padding-top: var(--section-space);
-  border-top: 1px solid var(--rule);
-}
-
-.home-section > :is(.bar, .bar-row):first-child {
-  margin-top: 0;
-}
-
 /* The reader's own list opens the page, under the band: no rule above it. */
-.home-section.following {
-  margin-top: clamp(1.25rem, 4vw, 1.75rem);
-  padding-top: 0;
-  border-top: 0;
-}
 
 :root {
   --section-space: clamp(2rem, 5vw, 2.75rem);
@@ -3514,42 +2729,10 @@ body:has(.band.home) .table-frame {
     margin-top: 0;
   }
 
-  .feed > .days ~ .lists-title,
-  .home-section > :is(.bar, .bar-row):first-child {
-    grid-column: 1;
-    grid-row: 1 / span 12;
-    margin: 0;
-  }
-
-  .feed > .days ~ .lists-title {
-    grid-row: 2 / span 12;
-    position: sticky;
-    top: 1.25rem;
-    margin-top: var(--section-space);
-    text-wrap: balance;
-  }
-
   /* The first thing beside the heading starts on the heading's line. */
   .feed > .days ~ .since:not([hidden]),
   .feed > .days ~ .since[hidden] + .feed-tabs {
     margin-top: var(--section-space);
-  }
-
-  .feed > .days ~ .since:not([hidden]) + .feed-tabs {
-    margin-top: 1rem;
-  }
-
-  .home-section > :not(:first-child) {
-    grid-column: 2 / -1;
-  }
-
-  .home-section > :is(.bar, .bar-row):first-child + * {
-    margin-top: 0;
-  }
-
-  .home-section > .bar-row:first-child {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }
 
@@ -3619,50 +2802,6 @@ body:has(.band.home) .table-frame {
   }
 }
 
-.under-box {
-  margin-top: 1.1rem;
-  font-size: var(--text-m);
-  color: var(--muted);
-}
-
-.under-box p {
-  max-width: none;
-  margin: 0;
-}
-
-.under-box .try {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-items: center;
-  gap: 0.4rem 0.5rem;
-}
-
-.under-box .try[hidden] {
-  display: none;
-}
-
-.under-box .try button {
-  font: inherit;
-  font-weight: 600;
-  color: var(--blue);
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: 999px;
-  min-height: 2rem;
-  padding: 0 0.8rem;
-  cursor: pointer;
-  transition: border-color 120ms ease-out;
-}
-
-.under-box .try button:hover {
-  border-color: var(--blue);
-}
-
-.under-box .try + .holds {
-  margin-top: 0.9rem;
-}
-
 /* Once the box has answered, nothing stands between it and its answer: the words to
    try, the tally and the example give way until the search is cleared. */
 .band.home:has(#results:not(:empty)) :is(.under-box, .then-now) {
@@ -3670,11 +2809,6 @@ body:has(.band.home) .table-frame {
 }
 
 /* A phone keeps the band to the title and the box, and the page white. */
-@media (max-width: 40rem) {
-  .under-box {
-    display: none;
-  }
-}
 
 @media (max-width: 55.99rem) {
   body:has(.band.home) {
@@ -3689,165 +2823,6 @@ body:has(.band.home) .table-frame {
 
   .band.home {
     background: none;
-  }
-
-  .under-box {
-    display: none;
-  }
-}
-
-/* The home page's choices: fields drawn as pills, each saying what it shows. */
-.filter-panel .scoreboard {
-  display: contents;
-}
-
-/* Filter menu: one pill that opens every field that narrows a list (FilterMenu.astro).
-   The pill is the site's own, in ink; a narrowed list says so on the tint, in the words
-   of the fields that narrow it. */
-.filter-menu {
-  min-width: 0;
-}
-
-.share.filter-open {
-  gap: 0.45rem;
-  max-width: 100%;
-  min-height: 2.25rem;
-  padding: 0 0.7rem 0 0.85rem;
-  font-size: var(--text-m);
-  color: var(--ink);
-  background: var(--paper);
-  transition:
-    border-color 120ms,
-    background-color 120ms;
-}
-
-.filter-open[hidden] {
-  display: none;
-}
-
-.share.filter-open:hover,
-.share.filter-open[aria-expanded="true"] {
-  background: var(--paper);
-  border-color: var(--blue);
-}
-
-.share.filter-open[data-narrowed] {
-  background: var(--tint);
-  border-color: var(--tint);
-}
-
-.filter-open [data-filter-says] {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.filter-open svg {
-  flex: none;
-  color: var(--muted);
-}
-
-.filter-open .opens {
-  transition: transform 160ms var(--ease-out);
-}
-
-.filter-open[aria-expanded="true"] .opens {
-  transform: rotate(180deg);
-}
-
-/* The panel: each field on a line, its name before it. */
-.pop.filter-panel {
-  position-area: bottom span-left;
-  width: min(20rem, calc(100vw - 2rem));
-  padding: 0.95rem 1rem 1rem;
-}
-
-.filter-panel:popover-open {
-  display: grid;
-  gap: 0.6rem;
-}
-
-.filter-panel .pick {
-  display: grid;
-  grid-template-columns: 5.2rem minmax(0, 1fr);
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.filter-panel .pick[hidden] {
-  display: none;
-}
-
-.pick-name {
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.filter-panel .pick select {
-  width: 100%;
-  border-radius: var(--radius-s);
-}
-
-.filter-clear {
-  justify-self: start;
-  margin-top: 0.15rem;
-}
-
-/* On a phone the pill, each field it opens and the control that clears them are 44
-   pixels to press. */
-@media (max-width: 40rem) {
-  .share.filter-open,
-  .filter-panel .pick select {
-    min-height: 2.75rem;
-  }
-
-  .filter-clear {
-    min-height: 2.75rem;
-    margin-top: 0;
-  }
-}
-
-/* The mark of something that happened on record (EventMark.astro): one drawing for
-   what the record did, on the tint, the size of an outlet's icon. One blue for all. */
-.event-mark {
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: 1.05rem;
-  height: 1.05rem;
-  border-radius: 50%;
-  background: var(--tint);
-  color: var(--blue);
-}
-
-.event-mark svg {
-  width: 0.72rem;
-  height: 0.72rem;
-}
-
-/* Which way the record moved: begun or approved, halted or refused. Everything else,
-   a finished trial and posted results among it, keeps the blue: what a trial found is
-   not known from its record. The drawing and the row's words say the same without colour. */
-.event-mark[data-direction="forward"] {
-  background: var(--forward-tint);
-  color: var(--forward);
-}
-
-.event-mark[data-direction="stopped"] {
-  background: var(--stopped-tint);
-  color: var(--stopped);
-}
-
-/* A promised date keeps the amber that is a promise's alone. */
-.event-mark[data-direction="promised"] {
-  background: var(--promise);
-  color: var(--promise-mark);
-}
-
-@media (forced-colors: active) {
-  .event-mark {
-    border: 1px solid CanvasText;
   }
 }
 
@@ -3898,74 +2873,6 @@ body:has(.band.home) .table-frame {
   font-variant-numeric: tabular-nums;
 }
 
-/* With no day-by-day list the status and topic fields stand above the tabbed lists. */
-.scoreboard {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-/* Today's anniversaries of first reports, or the next day with one. */
-.on-this-day .calendar {
-  margin-top: 0.3rem;
-}
-
-.on-this-day .calendar .day:first-child,
-.on-this-day .calendar .day {
-  border-top: 0;
-}
-
-.feed-panel .none {
-  margin-top: 0.7rem;
-  color: var(--muted);
-}
-
-.feed-tabs {
-  display: flex;
-  gap: 0.25rem 1.4rem;
-  margin-top: clamp(1.5rem, 5vw, 2.25rem);
-  border-bottom: 1px solid var(--rule);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.feed-tabs [role="tab"] {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font: inherit;
-  font-size: var(--text-m);
-  font-weight: 600;
-  color: var(--muted);
-  background: none;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -1px;
-  padding: 0.65rem 0.1rem 0.5rem;
-  cursor: pointer;
-}
-
-.feed-tabs [role="tab"]:hover {
-  color: var(--blue);
-}
-
-.feed-tabs [role="tab"][aria-selected="true"] {
-  color: var(--ink);
-  border-bottom-color: var(--blue);
-}
-
-.feed-tabs .count {
-  font-size: var(--text-xs);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--ink);
-  background: var(--tint);
-  border-radius: 999px;
-  padding: 0 0.45rem;
-}
-
 /* On a phone the day-by-day list comes straight after the lookup, and the band's lede
    is not drawn, so that a row starts on the first screen: the title and the field's
    label say what the page is. Under the list the order drawn is: what is dated since
@@ -4000,57 +2907,9 @@ body:has(.band.home) .table-frame {
     order: 3;
   }
 
-  .front > .tally {
-    order: 4;
-    margin-top: 1.4rem;
-  }
-
   .feed {
     display: flex;
     flex-direction: column;
-  }
-
-  .feed > .feed-tabs {
-    order: 1;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0 0.5rem;
-    margin-top: 0.7rem;
-    overflow-x: visible;
-  }
-
-  .feed > .scoreboard {
-    order: 2;
-    margin-top: 0.7rem;
-  }
-
-  .feed > .feed-panel {
-    order: 3;
-  }
-
-  .feed-tabs [role="tab"] {
-    flex: 0 1 auto;
-    font-size: var(--text-s);
-    min-height: 2.75rem;
-    padding-inline: 0;
-  }
-
-  .feed-tabs .count {
-    display: none;
-  }
-
-  .feed.tabbed .feed-panel > .bar {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  .feed.tabbed .feed-panel > .bar + * {
-    margin-top: 0.8rem;
   }
 }
 
@@ -4076,61 +2935,6 @@ body:has(.band.home) .table-frame {
     display: inline-block;
     padding-block: 0.65rem;
   }
-
-  .post-to summary,
-  .embed-how summary {
-    padding-block: 0.65rem;
-  }
-
-  .follow-offer .entry-note {
-    flex-basis: 100%;
-  }
-}
-
-.feed.tabbed .feed-panel > .bar {
-  margin-top: 1.1rem;
-  font-size: var(--text-body);
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.pager {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
-  font-size: var(--text-m);
-  color: var(--muted);
-}
-
-.pager-at {
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-}
-
-.pager button {
-  font: inherit;
-  font-weight: 600;
-  color: var(--blue);
-  background: none;
-  border: 0;
-  padding: 0.55rem 0.2rem;
-  cursor: pointer;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-}
-
-.pager button:hover {
-  text-decoration-thickness: 2px;
-}
-
-.pager button[aria-disabled="true"] {
-  color: var(--muted);
-  font-weight: 400;
-  text-decoration: none;
-  cursor: default;
 }
 
 /* The topic directory: dense, lettered, narrowed by typing. */
@@ -4248,33 +3052,10 @@ body:has(.band.home) .table-frame {
   columns: 2 14rem;
 }
 
-/* A group that is its one topic: the link takes the heading's column and its
-   count the start of the next, so the name is read once. */
-.directory.grouped .letter.solo ul {
-  grid-column: 1 / -1;
-  columns: auto;
-}
-
-.directory.grouped .letter.solo li {
-  display: grid;
-  grid-template-columns: 13rem auto;
-  justify-content: start;
-  column-gap: 1.5rem;
-}
-
-.directory.grouped .letter.solo a {
-  font-weight: 700;
-}
-
 @media (max-width: 40rem) {
   .directory.grouped .letter {
     grid-template-columns: 1fr;
     row-gap: 0.25rem;
-  }
-
-  .directory.grouped .letter.solo li {
-    display: flex;
-    justify-content: space-between;
   }
 
   /* The group names are one line that scrolls sideways, out to the screen's
@@ -4309,10 +3090,6 @@ body:has(.band.home) .table-frame {
 
 .directory .none {
   margin-top: 1rem;
-}
-
-.more-topics {
-  margin-top: 0.8rem;
 }
 
 /* The method page: each status with its place on the path and what it means. */
@@ -4359,7 +3136,7 @@ main ul:not([class]) li + li {
   margin-top: 0.35rem;
 }
 
-/* The calendar of first reports: the day, then each claim with its year and status. */
+/* The calendar of first reports: the day, then each pair with its year and status. */
 .calendar,
 .calendar ul {
   list-style: none;
@@ -4470,146 +3247,10 @@ main ul:not([class]) li + li {
   border-bottom: 0;
 }
 
-/* A source page: who ran the report and when, a breath under its title. */
-.source-meta {
-  margin: 0.5rem 0 1.25rem;
-}
-
-.source-foot {
-  margin-top: 1rem;
-}
-
 /* Matched records: the record on the left, how sure the match is on the right, the
    reason one press away. Openspec auto-publish. */
 .matched {
   margin-top: 2rem;
-}
-
-.matched-group {
-  margin: 1.4rem 0 0.4rem;
-  font-size: var(--text-body);
-  color: var(--muted);
-}
-
-/* Registry records grouped by how each was read (openspec registry-record-rows): the
-   reading said once above its group, then the study's title, its identifier, phase,
-   state and match in one quiet line, and what it is for and tests. */
-.record-group + .record-group,
-.record-group + .matched-group {
-  margin-top: 1.6rem;
-}
-
-.record-group-head {
-  margin: 1.4rem 0 0.6rem;
-  font-size: var(--text-body);
-  line-height: 1.3;
-  text-wrap: pretty;
-}
-
-.record-group-count {
-  margin-left: 0.4rem;
-  color: var(--muted);
-  font-size: var(--text-s);
-  font-weight: 400;
-}
-
-
-/* Said once above the possible records: none counts, and the rule that would. */
-.record-not-counted {
-  margin: 0 0 0.4rem;
-  font-size: var(--text-m);
-  color: var(--ink);
-}
-
-.record-rest {
-  max-width: none;
-}
-
-.record-rest > .record-list {
-  margin-top: 0.4rem;
-}
-
-/* A possible record is drawn a step lighter than one that counts. */
-.record-group-possible .record-title {
-  font-weight: 500;
-}
-
-.record-title {
-  margin: 0 0 0.2rem;
-  font-weight: 600;
-  line-height: 1.35;
-  text-wrap: pretty;
-}
-
-
-.record-meta,
-.record-unread,
-.record-links {
-  margin: 0;
-  max-width: none;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.record-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 0.5rem;
-}
-
-/* The separator ends a part, so a wrapped line never starts with one. */
-.record-meta > span:not(:last-child)::after {
-  content: "·";
-  margin-left: 0.5rem;
-  color: var(--ring);
-}
-
-.record-meta .out {
-  margin-left: 0.15em;
-  vertical-align: -0.05em;
-}
-
-/* The registry link is short; on a phone its press area is raised to 24px and more. */
-@media (max-width: 40rem) {
-  .record-source {
-    display: inline-block;
-    padding-block: 0.3rem;
-    margin-block: -0.15rem;
-  }
-}
-
-.record-fields {
-  display: grid;
-  gap: 0.15rem;
-  margin: 0.45rem 0 0;
-  font-size: var(--text-m);
-  max-width: var(--measure);
-}
-
-.record-fields > div {
-  display: grid;
-  grid-template-columns: 9.5rem minmax(0, 1fr);
-  gap: 0 0.7rem;
-}
-
-@media (max-width: 40rem) {
-  .record-fields > div {
-    grid-template-columns: 1fr;
-  }
-
-  .record-fields > div + div {
-    margin-top: 0.3rem;
-  }
-}
-
-.record-fields dt {
-  color: var(--muted);
-  font-size: var(--label-size);
-}
-
-.record-fields dd {
-  margin: 0;
-  overflow-wrap: anywhere;
 }
 
 .match-list li {
@@ -4659,127 +3300,6 @@ main ul:not([class]) li + li {
   font-size: var(--text-m);
 }
 
-/* A background card, inside its row's disclosure in "At a glance": the term, the
-   source's own words, then a quiet credit, the score and its reasons, one column. */
-.term-card {
-  display: grid;
-  gap: 0.55rem;
-  margin-top: 0.6rem;
-  padding: var(--panel-pad);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-s);
-  max-width: 64ch;
-}
-
-.card-head {
-  margin: 0;
-  display: grid;
-  gap: 0.05rem;
-}
-
-.card-kind {
-  color: var(--muted);
-  font-size: var(--text-m);
-}
-
-.card-label {
-  font-weight: 600;
-  justify-self: start;
-}
-
-.card-words-label {
-  margin: 0;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-/* Credit is owed and given, in the small grey of a footnote: a source is named, never
-   louder than what it says. */
-.term-credit {
-  margin: 0;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.term-credit a {
-  color: var(--muted);
-  text-decoration-color: var(--rule);
-}
-
-.term-credit a:hover {
-  color: var(--ink);
-  text-decoration-color: currentColor;
-}
-
-.term-card .match-why {
-  justify-self: start;
-  text-align: left;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.term-card .match-why p {
-  margin: 0;
-  max-width: none;
-  font-size: inherit;
-}
-
-.term-card .match-why-head {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.term-note {
-  margin: 0;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.card-words blockquote {
-  margin: 0.3rem 0 0;
-  padding: 0.7rem 0.9rem;
-  background: var(--panel);
-  border-radius: var(--radius-s);
-  max-width: 62ch;
-  overflow-wrap: anywhere;
-}
-
-/* A drug card's facts: its kind of molecule and what its record says it acts on, in the
-   same pale panel a definition uses, always open since they are short. */
-.card-facts {
-  margin-top: 0.3rem;
-  padding: var(--panel-pad);
-  background: var(--panel);
-  border-radius: var(--radius-s);
-  max-width: 62ch;
-  overflow-wrap: anywhere;
-}
-
-.card-facts p {
-  margin: 0;
-}
-
-.card-facts ul {
-  margin: 0.3rem 0 0;
-  padding-left: 1.1rem;
-}
-
-/* A mechanism is a plain bullet, not a row of the card list it sits inside. */
-.card-facts li {
-  display: list-item;
-  list-style: disc;
-  padding: 0;
-  border: 0;
-}
-
-.term-card .match-why p + p {
-  margin-top: 0.25rem;
-}
-
-.organisation-name {
-  font-weight: 600;
-}
-
 .reported .publisher,
 .origin .publisher {
   display: block;
@@ -4787,20 +3307,11 @@ main ul:not([class]) li + li {
 
 /* Reported statements: under each report, what it said, framed as the report's, with
    how sure the check is one press away. Openspec reported-statements. */
-.statement-source {
-  width: fit-content;
-  font-weight: 600;
-  text-wrap: pretty;
-}
 
 .statement {
   margin: 0;
   max-width: 62ch;
   text-wrap: pretty;
-}
-
-.statement-said {
-  color: var(--muted);
 }
 
 /* On a phone the record keeps the width; how sure the match is goes under it. */
@@ -4850,13 +3361,6 @@ main ul:not([class]) li + li {
 
 /* The heading a lay reader reads first, with the registry's identifier opposite as the
    way to the record. Every trial is drawn at this one size. */
-.trial-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.1rem 1.5rem;
-}
 
 .trial-title {
   margin: 0;
@@ -4868,128 +3372,11 @@ main ul:not([class]) li + li {
   overflow-wrap: anywhere;
 }
 
-.trial-name {
-  margin: 0;
-  font-size: var(--text-m);
-  overflow-wrap: anywhere;
-}
-
-.trial-name a {
-  font-weight: 600;
-}
-
-.trial-name .out {
-  margin-left: 0.15rem;
-  vertical-align: -0.05em;
-}
-
-.trial-measured {
-  max-width: var(--measure);
-}
-
-/* The design and state in plain words: parted by a gap, so a wrapped line never starts
-   with a mark, and a fact never breaks inside itself where it fits. */
-.trial-plain {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1.3rem;
-  font-weight: 600;
-}
-
-/* Notes about the entry, in one muted line that wraps between notes, not inside them.
-   A gap parts them, so a wrapped line never starts with a mark. */
-.trial-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1rem;
-}
-
-.trial-more summary,
-/* Fold line: "the other N of M" under a list, the same wherever a list folds its rest. */
-.trials-rest > summary,
-.papers-rest > summary,
-.post-to > summary,
-.embed-how > summary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  width: fit-content;
-  margin-top: 0.9rem;
-  cursor: pointer;
-  list-style: none;
-  color: var(--blue);
-  font-weight: 600;
-  font-size: var(--text-m);
-}
-
-.trial-more summary {
-  font-size: var(--text-m);
-  margin-top: 0.2rem;
-}
-
-.trial-more summary::-webkit-details-marker,
-.trials-rest > summary::-webkit-details-marker {
-  display: none;
-}
-
-.trial-more[open] > summary svg,
-.trials-rest[open] > summary svg {
-  transform: rotate(180deg);
-}
-
-.trials-rest {
-  max-width: var(--measure);
-}
-
 /* Papers on record: each paper once, in the group of its first role. An entry is built
    like a trial's: a name that leaves the site, one semibold line of what it is, then
    how it came to be listed and a grey line of notes. Openspec paper-facts. */
 .papers {
   margin-top: 2rem;
-}
-
-.paper-group-note {
-  max-width: var(--measure);
-  margin: 0 0 0.5rem;
-}
-
-.paper-name {
-  overflow-wrap: anywhere;
-}
-
-.paper-name a {
-  font-weight: 700;
-}
-
-.paper-name .out {
-  margin-left: 0.15rem;
-  vertical-align: -0.05em;
-}
-
-.paper-retracted {
-  font-weight: 600;
-}
-
-.paper-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1rem;
-}
-
-.papers-rest {
-  max-width: var(--measure);
-}
-
-.post-to > summary::-webkit-details-marker,
-.embed-how > summary::-webkit-details-marker,
-.papers-rest > summary::-webkit-details-marker {
-  display: none;
-}
-
-.post-to[open] > summary svg,
-.embed-how[open] > summary svg,
-.papers-rest[open] > summary svg {
-  transform: rotate(180deg);
 }
 
 .trial-facts {
@@ -5015,31 +3402,7 @@ main ul:not([class]) li + li {
   display: block;
 }
 
-/* On a wide screen a trial's facts read in two columns; posted results take the width. */
-@media (min-width: 60rem) {
-  .trial-table .trial-facts {
-    grid-template-columns: 1fr 1fr;
-    column-gap: 1.6rem;
-  }
-
-  .trial-table .trial-facts > .trial-results {
-    grid-column: 1 / -1;
-  }
-}
-
-.trial-measures {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.35rem;
-}
-
 /* These lists sit inside a row of the trial list and take none of its rules. */
-.trial-list .trial-measures li {
-  padding: 0;
-  border: 0;
-}
 
 .result + .result {
   margin-top: 0.8rem;
@@ -5056,99 +3419,9 @@ main ul:not([class]) li + li {
   font-weight: 400;
 }
 
-/* Posted results as a table to read down: a row for each group, the registry's numbers
-   at body size in tabular figures. Nothing draws a result or sets one number apart. */
-.result-table {
-  width: 100%;
-  max-width: 36rem;
-  border-collapse: collapse;
-}
-
-.result-table caption {
-  padding-bottom: 0.35rem;
-  text-align: left;
-  font-weight: 600;
-}
-
-.result-table caption .entry-note {
-  display: block;
-  font-weight: 400;
-}
-
-.result-table th,
-.result-table td {
-  padding: 0.35rem 0;
-  border-top: 1px solid var(--row-rule);
-  text-align: left;
-  font-weight: 400;
-  vertical-align: top;
-}
-
-.result-table thead th {
-  border-top: 0;
-  padding: 0.1rem 0;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  color: var(--muted);
-}
-
-.result-table .figure {
-  padding-left: 1rem;
-  text-align: right;
-  font-variant-numeric: tabular-nums lining-nums;
-}
-
-/* The spread has a column of its own where there is room, and sits under its value on a phone. */
-.result-table .spread-inline {
-  display: none;
-}
-
-.result-scale {
-  margin: 0.6rem 0 0;
-}
-
-.result-comparison {
-  margin: 0.45rem 0 0;
-  font-variant-numeric: tabular-nums lining-nums;
-}
-
-@media (max-width: 40rem) {
-  .trial-more summary,
-  .trials-rest > summary {
-    min-height: 2.75rem;
-  }
-
-  .trial-name a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-  }
-
-  .result-table .spread {
-    display: none;
-  }
-
-  .result-table .spread-inline {
-    display: block;
-    font-size: var(--text-xs);
-    color: var(--muted);
-  }
-
-  .result-scale a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-  }
-}
-
 @media print {
   .trial {
     break-inside: avoid;
-  }
-
-  .trial-more summary svg,
-  .trials-rest > summary svg {
-    display: none;
   }
 }
 
@@ -5156,42 +3429,16 @@ main ul:not([class]) li + li {
   font-weight: 700;
 }
 
-/* A headline is one box, so the browser can carry it to its claim page. */
+/* A headline is one box, so the browser can carry it to its pair page. */
 .index td.claim a.followed {
   display: block;
   width: fit-content;
-}
-
-/* A claim is listed by its intervention's name; the reported headline sits under it,
-   in full for a reader who wants it and quiet enough to scan past. */
-.index td.claim .claim-headline {
-  display: block;
-  margin-top: 0.15rem;
-  color: var(--muted);
-  font-size: var(--text-m);
-  line-height: 1.4;
 }
 
 /* The link reaches over its cell, so the headline is part of the target but not of
    the link's name. */
 .index td.claim:has(.claim-name) {
   position: relative;
-}
-
-.index td.claim .claim-name::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
-
-@media (min-width: 40.01rem) {
-  .index td.claim .claim-headline {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
-  }
 }
 
 /* A status in plain words, under its label. */
@@ -5295,14 +3542,14 @@ main ul:not([class]) li + li {
   white-space: nowrap;
 }
 
-/* How much a claim has been tested in people: the count of trials in semibold, and the
+/* How much a pair has been tested in people: the count of trials in semibold, and the
    largest size and whether results are posted on a grey line, as a status has its gloss.
    Counts of records only: no colour, mark or order says more. */
 .index .tested {
   width: 18%;
 }
 
-/* With the column, the claim's name keeps the widest share: the status takes a fixed
+/* With the column, the pair's name keeps the widest share: the status takes a fixed
    one and the date only what it needs. */
 .index:has(.tested) .status {
   width: 21%;
@@ -5316,29 +3563,14 @@ main ul:not([class]) li + li {
   width: 16%;
 }
 
-.index .tested-lead {
-  display: block;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.tested-note {
-  max-width: var(--measure);
-  margin: 0.4rem 0 0.7rem;
-}
-
 @media (max-width: 40rem) {
   /* A labelled line, then the grey line beneath it. */
-  /* A block for each claim: no cell keeps a column's share. */
+  /* A block for each pair: no cell keeps a column's share. */
   .index td.tested,
   .index:has(.tested) .status,
   .index:has(.tested) .when,
   .index:has(.tested) .promise {
     width: auto;
-  }
-
-  .index .tested-lead {
-    display: inline;
   }
 }
 
@@ -5469,7 +3701,7 @@ main ul:not([class]) li + li {
 }
 
 /* Motion. Two authored moments tell the site's story: the name's question mark
-   being drawn, and the marker landing where a claim stands. Everything else is
+   being drawn, and the marker landing where a pair stands. Everything else is
    feedback: quick, and never in the way of reading. */
 
 .chip,
@@ -5558,7 +3790,7 @@ main ul:not([class]) li + li {
     }
   }
 
-  /* The marker lands on the claim's place, and one ring leaves it: the same dot
+  /* The marker lands on the pair's place, and one ring leaves it: the same dot
      the name resolves into. */
   .digest .track .step.here {
     position: relative;
@@ -5585,7 +3817,7 @@ main ul:not([class]) li + li {
     animation: record-found 2.2s ease-out both;
   }
 
-  /* A headline pressed on the home page is carried to its place on the claim page,
+  /* A headline pressed on the home page is carried to its place on the pair page,
      and back. It keeps its own size on the way, so its letters are never stretched. */
   .followed {
     view-transition-class: followed;
@@ -5687,9 +3919,6 @@ main ul:not([class]) li + li {
   }
 
   /* Followed: the bookmark lands when it is pressed. Saved: the clock's hand turns once. */
-  .share.landed svg {
-    animation: mark-land 0.4s var(--ease-out);
-  }
 
   .share.saved .clock .hand {
     animation: hand-turn 0.6s var(--ease-out);
@@ -5828,10 +4057,6 @@ main ul:not([class]) li + li {
     outline: 1px solid CanvasText;
     outline-offset: -1px;
   }
-
-  .stage-filter .place[aria-pressed="true"] {
-    outline: 2px solid Highlight;
-  }
 }
 
 @media print {
@@ -5922,25 +4147,6 @@ main ul:not([class]) li + li {
     grid-column: 3;
   }
 
-  .pop-trigger.info {
-    display: none;
-  }
-
-  /* The reasons for the status go under the label, across the panel's column. */
-  .digest .label-row {
-    flex-wrap: wrap;
-  }
-
-  .digest .label-row .pop {
-    flex-basis: 100%;
-    background: none;
-    margin-bottom: 0.4rem;
-  }
-
-  .pop-trigger.more {
-    text-decoration: none;
-  }
-
   /* The frame would draw an empty box where a row moves to the next sheet. */
   .table-frame {
     border: 0;
@@ -5963,22 +4169,7 @@ main ul:not([class]) li + li {
   }
 }
 
-/* --- Not yet checked by a person ----------------------------------------- */
-
-/* A band under the masthead on every page of a preview build. Never amber: amber
-   means "promised" and nothing else. */
-.preview-note {
-  border-bottom: 1px solid var(--rule);
-  background: var(--tint);
-  font-size: var(--text-m);
-  font-weight: 600;
-}
-
-.preview-note .wrap {
-  padding-block: 0.55rem;
-}
-
-/* On a claim page no person checked: approved by rule, seeded or decided by an assistant. */
+/* On a pair page no person checked: approved by rule, seeded or decided by an assistant. */
 .unchecked {
   max-width: var(--measure);
   margin-top: 1rem;
@@ -5986,12 +4177,6 @@ main ul:not([class]) li + li {
   border: 1px dashed var(--muted);
   border-radius: var(--radius-s);
   font-size: var(--text-m);
-}
-
-@media print {
-  .preview-note {
-    background: none;
-  }
 }
 
 /* --- The home page's main box: paste a link or search ---------------------- */
@@ -6111,325 +4296,15 @@ main ul:not([class]) li + li {
   }
 }
 
-/* The record in brief (openspec sections-funnel): one sentence that gives every answer,
-   then the answers as a fact sheet. No colour, mark or order says an answer is for or
-   against a treatment. */
-
-.digest .bridge {
-  margin: 0 0 0.45rem;
-  font-size: var(--text-body);
-}
-
-@media (max-width: 40rem) {
-  /* With the sentence that says what the status means, ahead of the path. */
-  .digest .bridge {
-    order: 2;
-    margin: 0 0 0.2rem;
-  }
-}
-
-/* The sentence: read first, in the page's larger size. A figure is bold and dotted
-   under: it leads to its row. */
-.brief-said {
-  /* About 75 characters a line at this size (46rem ran to 91). */
-  max-width: 37rem;
-  margin: 0.7rem 0 0;
-  /* A step under the section's heading: it sums the rows up, it does not head them. */
-  font-size: var(--text-l);
-  line-height: 1.6;
-  text-wrap: pretty;
-}
-
-.brief-term {
-  color: inherit;
-  font-weight: 700;
-  text-decoration: underline dotted;
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 0.2em;
-}
-
-.brief-term:hover {
-  color: var(--blue);
-}
-
 .brief .fact-sheet {
   margin-top: 1rem;
 }
 
-/* A question stands in the label's column, as a label of "At a glance" does, and its
-   answer starts where a value starts. */
-/* Only an answer's figures are bold: a reader skims down them. */
-.brief .fact-sheet .fact-value {
-  font-size: var(--text-body);
-  font-weight: 400;
-}
-
-.brief .fact-sheet .fact-value b {
-  font-weight: 700;
-}
-
-/* "So many of them": a thin grey bar at the end of the answer's line. */
-.share-bar {
-  display: block;
-  width: 6.5rem;
-  height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(to right, var(--bar, var(--muted)) calc(var(--share) * 100%), var(--rule) 0);
-}
-
-#brief-results .share-bar {
-  --bar: var(--mark-results);
-}
-
-#brief-under_way .share-bar {
-  --bar: var(--mark-going);
-}
-
-.fact-aside:has(.share-bar) {
-  align-self: center;
-}
-
-/* Under the answer; its own lines are one column. */
-.brief-open {
-  --part: 1;
-  grid-column: 2;
-  display: grid;
-  gap: 0.4rem;
-  font-size: var(--text-m);
-}
-
-.brief-open p {
-  margin: 0;
-  max-width: 62ch;
-}
-
-.brief-open .brief-source {
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.brief-link {
-  margin: 0;
-  font-size: var(--text-m);
-  font-weight: 600;
-}
-
-.brief-note {
-  margin-top: 0.8rem;
-}
-
-@media (max-width: 40rem) {
-  .brief-said {
-    font-size: var(--text-body);
-  }
-
-  .brief-open {
-    grid-column: 1;
-  }
-
-  .brief-link a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 2.75rem;
-  }
-}
-
-/* The record strip (openspec record-strip): a claim's dated records on one time axis
-   that every strip shares. A kind of mark differs by shape and by where it sits against
-   the axis; amber is the promised date and nothing else. The axis is one weight along
-   its whole length: a stretch with no mark is never faded or broken. */
-
-.record-strip {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.15rem 1rem;
-}
-
-.strip-line {
-  display: block;
-  overflow: visible;
-  color: var(--ink);
-}
-
-/* Room at each end for a mark that falls on the first or the last day. */
-.strip-frame {
-  display: block;
-  flex: 1 1 9rem;
-  width: 9rem;
-  max-width: 24rem;
-  margin-inline: 6px;
-}
-
-.strip-frame .strip-line {
-  width: 100%;
-}
-
-/* A strip alone, on a claim's page: its first year and its last day under the ends. */
-.strip-years {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.1rem;
-  color: var(--muted);
-  font-size: var(--text-s);
-  font-variant-numeric: tabular-nums;
-}
-
-.strip-years span:last-child {
-  transform: translateX(6px);
-}
-
-.strip-years span:first-child {
-  transform: translateX(-6px);
-}
-
-.strip-axis {
-  stroke: currentColor;
-  stroke-width: 1.25;
-}
-
-.strip-notch {
-  stroke: var(--ring);
-  stroke-width: 1;
-}
-
-.strip-record {
-  stroke: currentColor;
-  stroke-width: 1.5;
-}
-
-.strip-results,
-.strip-decision {
-  fill: currentColor;
-}
-
-.strip-report {
-  fill: var(--paper);
-  stroke: var(--blue);
-  stroke-width: 1.75;
-}
-
-.strip-promise line {
-  stroke: var(--promise-mark);
-  stroke-width: 1.5;
-  stroke-dasharray: 2.5 2;
-}
-
-.strip-promise path {
-  fill: var(--promise-mark);
-}
-
-.strip-check {
-  stroke: currentColor;
-  stroke-width: 2.5;
-}
-
-.strip-counts {
-  color: var(--muted);
-  font-size: var(--text-m);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* What the records add, in words, under the outlet's title. */
-.row-counts {
-  margin: 0.55rem 0 0;
-  color: var(--muted);
-  font-size: var(--text-m);
-  font-variant-numeric: tabular-nums;
-}
-
-.row-counts:empty {
-  display: none;
-}
-
-/* A claim's own strip, at the head of what is recorded, with the key under it. */
-.claim-strip {
-  max-width: 40rem;
-  margin: 0.4rem 0 1.2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--rule-soft);
-}
-
-.claim-strip .strip-frame {
-  flex: 1 1 auto;
-  width: auto;
-  max-width: none;
-}
-
-.claim-strip .strip-key {
-  margin: 0.6rem 0 0;
-}
-
-.strip-key {
-  margin: 0.9rem 0 0.7rem;
-  color: var(--muted);
-  font-size: var(--text-m);
-}
-
-.strip-key-title {
-  margin: 0 0 0.25rem;
-}
-
-.strip-key ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.1rem 1.1rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.strip-key li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  white-space: nowrap;
-}
-
-/* In a list of claims the strip sits under the status. One width for every row, so
-   the axes line up down the column. */
-.index td.status .record-strip {
-  margin-top: 0.55rem;
-}
-
-.index td.status .strip-frame {
-  flex: none;
-  width: 11rem;
-}
-
-@media (max-width: 40rem) {
-  .index td.status .strip-frame {
-    width: calc(100% - 12px);
-    max-width: 24rem;
-  }
-}
-
 /* A drawing's ink is not swapped by the system, so each mark is given the system's
    text colour by name. */
-@media (forced-colors: active) {
-  .strip-axis,
-  .strip-record,
-  .strip-check,
-  .strip-notch,
-  .strip-report,
-  .strip-promise line {
-    stroke: CanvasText;
-  }
-
-  .strip-report {
-    fill: Canvas;
-  }
-
-  .strip-results,
-  .strip-decision,
-  .strip-promise path {
-    fill: CanvasText;
-  }
-}
 
 /* ── The page frame ─────────────────────────────────────────────────────────────
-   Claim and topic pages: a navy band holding the title and the status, then a list
+   Pair and topic pages: a navy band holding the title and the status, then a list
    of sections, the sheet and the page's actions. Openspec page-frame. */
 
 :root {
@@ -6506,60 +4381,6 @@ body.framed {
   color: var(--footer);
 }
 
-/* Under the headline: what kind of thing the treatment is and a gene, each a link down
-   to its row in "At a glance". A quiet line of the band's own type, before the status
-   on a phone. */
-.glance-band {
-  margin-top: 0.7rem;
-}
-
-.glance-band ul {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 1.5rem;
-}
-
-.band.record .glance-band li {
-  border: 0;
-  padding: 0;
-}
-
-.band.record .glance-band a {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 0.4rem;
-  min-height: 2.75rem;
-  padding-block: 0.55rem;
-  color: var(--on-navy-ink);
-  text-decoration: none;
-}
-
-.band.record .glance-band a:hover .glance-band-value {
-  text-decoration-thickness: 2px;
-}
-
-.glance-band-label {
-  font-size: var(--text-s);
-  color: var(--navy-soft);
-}
-
-/* Underlined at rest, with an arrow down: a link to further down this page, which a
-   touch screen cannot learn from a hover. */
-.glance-band-value {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-decoration-color: rgb(255 255 255 / 0.5);
-  text-underline-offset: 0.2em;
-}
-
-.glance-band svg {
-  align-self: center;
-  color: var(--on-navy);
-}
-
 /* The status panel is the card at the right: ink on white, level with the title. */
 .band.record .digest {
   grid-column: 3;
@@ -6591,16 +4412,8 @@ body.framed {
   margin: 0;
 }
 
-.band.record .digest .bridge {
-  margin: 0.35rem 0 0;
-  font-weight: 600;
-}
-
 /* The trials' states, counted, under a status that names a phase: the status's sentence
    is the answer and stays the heavier; the count supports it. */
-.band.record .digest .bridge.counts {
-  font-weight: 400;
-}
 
 .frame {
   display: grid;
@@ -6629,78 +4442,10 @@ body.framed {
   max-width: var(--measure);
 }
 
-.phone-reported {
-  display: none;
-}
-
-.rail {
-  grid-column: 3;
-  position: sticky;
-  top: 0;
-  padding-top: 1.5rem;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.rail .share {
-  justify-content: flex-start;
-  text-decoration: none;
-}
-
-.onpage {
-  grid-column: 1;
-  position: sticky;
-  top: 0;
-  max-height: 100vh;
-  overflow: auto;
-  padding: 1.5rem 0 2rem;
-}
-
-.onpage-title {
-  margin: 0;
-  padding: 0 0.6rem 0.5rem;
-  font-size: var(--text-s);
-  font-weight: 700;
-  color: var(--muted);
-}
-
 .strip {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-.onpage a {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.42rem 0.6rem;
-  border-radius: 0.5rem;
-  color: var(--ink);
-  text-decoration: none;
-  font-size: var(--text-m);
-  line-height: 1.3;
-  transition:
-    background-color 120ms,
-    color 120ms;
-}
-
-.onpage a .n {
-  margin-left: auto;
-  color: var(--muted);
-  font-size: var(--text-s);
-  white-space: nowrap;
-}
-
-.onpage a:hover {
-  background: var(--tint);
-}
-
-.onpage a[aria-current] {
-  background: var(--paper);
-  box-shadow: 0 0 0 1px var(--rule);
-  color: var(--blue);
-  font-weight: 700;
 }
 
 /* A heading that folds its section: the heading holds the button, and the button's
@@ -6740,10 +4485,6 @@ body.framed {
   text-align: left;
 }
 
-.fold .chev {
-  display: none;
-}
-
 .js .fold {
   cursor: pointer;
 }
@@ -6752,45 +4493,6 @@ body.framed {
   content: "";
   position: absolute;
   inset: -0.5rem 0;
-}
-
-/* The fold mark: a round chevron at the end of the heading's first line. It points up
-   while the section is open and down while it is folded, as a row's does. */
-.js .fold .chev {
-  position: absolute;
-  top: calc((1lh - var(--fold-mark)) / 2);
-  right: 0;
-  display: grid;
-  place-items: center;
-  width: var(--fold-mark);
-  height: var(--fold-mark);
-  border-radius: 50%;
-  background: var(--tint);
-  color: var(--blue);
-  transition: background-color 120ms;
-}
-
-.js .fold:hover .chev {
-  background: var(--tag);
-}
-
-.fold .chev svg {
-  rotate: 180deg;
-  transition: rotate 200ms var(--ease-out);
-}
-
-.fold[aria-expanded="false"] .chev svg {
-  rotate: 0deg;
-}
-
-.fold-note {
-  position: relative;
-  z-index: 1;
-  pointer-events: none;
-  margin-left: auto;
-  color: var(--muted);
-  font-size: var(--text-s);
-  text-align: right;
 }
 
 .fold-head > a {
@@ -6802,63 +4504,6 @@ body.framed {
 
 .bar.sub {
   font-size: var(--text-l);
-}
-
-/* The controls that narrow the timetable to one kind of entry. */
-.kind-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.9rem 0;
-}
-
-.kind-tab {
-  min-height: 2.1rem;
-  padding: 0.28rem 0.85rem;
-  border: 1px solid var(--ring);
-  border-radius: 999px;
-  background: var(--paper);
-  color: var(--ink);
-  font: inherit;
-  font-size: var(--text-m);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background-color 120ms,
-    color 120ms,
-    border-color 120ms;
-}
-
-.kind-tab .n {
-  font-weight: 400;
-  color: var(--muted);
-  margin-left: 0.2rem;
-}
-
-.kind-tab:hover {
-  background: var(--tint);
-}
-
-.kind-tab[aria-pressed="true"] {
-  background: var(--footer);
-  border-color: var(--footer);
-  color: var(--on-navy-ink);
-}
-
-.kind-tab[aria-pressed="true"] .n {
-  color: var(--navy-soft);
-}
-
-@media (max-width: 40rem) {
-  .kind-tab {
-    min-height: 2.75rem;
-  }
-}
-
-@media print {
-  .kind-tabs {
-    display: none !important;
-  }
 }
 
 /* The first state of a fold is the stylesheet's, so nothing is painted open and then
@@ -6904,19 +4549,6 @@ body.framed {
     grid-column: 1;
   }
 
-  .onpage {
-    z-index: 5;
-    max-height: none;
-    overflow: visible;
-    padding: 0;
-    background: var(--ground);
-    border-bottom: 1px solid var(--rule);
-  }
-
-  .onpage-title {
-    display: none;
-  }
-
   .strip {
     display: flex;
     gap: 0.35rem;
@@ -6931,57 +4563,6 @@ body.framed {
 
   .strip li {
     flex: none;
-  }
-
-  .onpage a {
-    min-height: 2.75rem;
-    align-items: center;
-    white-space: nowrap;
-    padding-inline: 0.85rem;
-    border: 1px solid var(--rule);
-    border-radius: 999px;
-    background: var(--paper);
-  }
-
-  .onpage a .n {
-    margin-left: 0.1rem;
-  }
-
-  /* More names off either end of the row: that end fades. */
-  .onpage::before,
-  .onpage::after {
-    content: "";
-    position: absolute;
-    z-index: 1;
-    top: 0;
-    bottom: 1px;
-    width: 3rem;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 150ms;
-  }
-
-  .onpage::before {
-    left: 0;
-    background: linear-gradient(to right, var(--ground) 20%, transparent);
-  }
-
-  .onpage::after {
-    right: 0;
-    background: linear-gradient(to left, var(--ground) 20%, transparent);
-  }
-
-  .onpage[data-more~="start"]::before,
-  .onpage[data-more~="end"]::after {
-    opacity: 1;
-  }
-
-  .rail {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    padding: 0.9rem var(--gutter) 0;
-    background: var(--paper);
   }
 
   .sheet {
@@ -7013,31 +4594,6 @@ body.framed {
     grid-column: 1;
   }
 
-  /* The band keeps to the title and the status; the report opens the sheet. */
-  .band-reported {
-    display: none;
-  }
-
-  .phone-reported {
-    display: block;
-    margin-bottom: 1.2rem;
-    padding-bottom: 1.1rem;
-    border-bottom: 1px solid var(--rule);
-  }
-
-  .phone-reported .entry-note {
-    display: block;
-  }
-
-  /* The status panel already links to the reminders; the row keeps to two. */
-  .rail [data-remind-link] {
-    display: none !important;
-  }
-
-  .rail {
-    padding-top: 0.7rem;
-  }
-
   .sheet {
     padding-top: 1.1rem;
   }
@@ -7054,27 +4610,9 @@ body.framed {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .fold .chev svg,
-  .fact-open .chev,
-  .fact-open .chev svg,
-  .onpage a,
-  .onpage::before,
-  .onpage::after {
-    transition: none;
-  }
-}
-
 @media print {
   body.framed {
     background: none;
-  }
-
-  .onpage,
-  .rail,
-  .fold .chev,
-  .phone-reported {
-    display: none !important;
   }
 
   .band.record {
@@ -7118,53 +4656,9 @@ body.framed {
   }
 }
 
-/* The trials table: one row to read across for each trial; a row opens to the rest. */
-.trial-table {
-  --trial-cols: minmax(0, 1.5fr) minmax(0, 0.7fr) minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-
-.trial-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--trial-cols);
-  column-gap: 1.2rem;
-  align-items: start;
-  padding: var(--row-pad) 1.1rem;
-}
-
-.trial-columns {
-  background: var(--table-head);
-  color: var(--muted);
-  font-size: var(--label-size);
-  font-weight: 600;
-  padding-block: 0.5rem;
-}
-
 .trial-group {
   border-top: 1px solid var(--rule-soft);
   scroll-margin-top: 1.25rem;
-}
-
-.trial-group > .trial-row {
-  transition: background-color 120ms;
-}
-
-.js .trial-group > .trial-row:hover {
-  background: var(--panel);
-}
-
-.trial-cell {
-  font-size: var(--text-m);
-  min-width: 0;
-}
-
-.trial-cell .lbl {
-  display: none;
-  color: var(--muted);
-  font-size: var(--text-xs);
 }
 
 .trial-open {
@@ -7180,10 +4674,6 @@ body.framed {
   text-align: left;
 }
 
-.trial-open .chev {
-  display: none;
-}
-
 .js .trial-open {
   cursor: pointer;
 }
@@ -7194,210 +4684,10 @@ body.framed {
   inset: 0;
 }
 
-.js .trial-open .chev {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 1.3rem;
-  height: 1.3rem;
-  margin-top: 0.12rem;
-  border-radius: 50%;
-  background: var(--tint);
-  color: var(--blue);
-}
-
-.trial-open .chev svg {
-  transition: rotate 200ms var(--ease-out);
-}
-
-.trial-open[aria-expanded="false"] .chev svg {
-  rotate: -90deg;
-}
-
-.trial-table .trial-title {
-  font-size: inherit;
-  margin: 0;
-}
-
-.trial-table .trial-name {
-  position: relative;
-  z-index: 1;
-  display: block;
-  margin: 0;
-  font-size: var(--text-s);
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.js .trial-table .trial-name {
-  margin-left: 1.9rem;
-}
-
 /* Below 68rem the section chips stay at the top; a phase heading sticks under them. */
 @media (max-width: 68rem) {
   .trials {
     --sticky-top: 3.85rem;
-  }
-}
-
-/* Trials by phase: each phase is a heading over its own table; only the first table
-   shows the column names, the others keep them for a screen reader. */
-.trial-phase-head {
-  position: sticky;
-  top: var(--sticky-top, 0);
-  z-index: 2;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.1rem 0.7rem;
-  margin: 1.6rem 0 0.55rem;
-  padding-block: 0.35rem;
-  background: var(--paper);
-  font-size: var(--text-l);
-}
-
-.take-why + .trial-phase-group .trial-phase-head {
-  margin-top: 0.4rem;
-}
-
-.trial-phase-head .entry-note {
-  font-weight: 400;
-}
-
-.trial-by,
-.trial-cell .trial-phase {
-  display: block;
-  margin-top: 0.15rem;
-  color: var(--muted);
-  font-size: var(--text-s);
-}
-
-.trial-posted {
-  display: block;
-  margin-top: 0.15rem;
-  color: var(--muted);
-  font-size: var(--text-s);
-}
-
-.trial-gloss {
-  display: block;
-  margin-top: 0.2rem;
-  color: var(--muted);
-  font-size: var(--text-s);
-  line-height: 1.4;
-}
-
-.trial-measure-words {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-}
-
-.trial-id a {
-  position: relative;
-  z-index: 1;
-  white-space: nowrap;
-}
-
-.trial-detail {
-  padding: 0.2rem 1.1rem 1.1rem;
-}
-
-.js .trial-detail {
-  padding-left: 3rem;
-}
-
-@media screen {
-  .js .trial-group:not([data-open]) > .trial-detail {
-    display: none;
-  }
-}
-
-.trials-rest > .trial-table {
-  margin-top: 0.7rem;
-}
-
-@media (max-width: 40rem) {
-  .trial-columns {
-    display: none;
-  }
-
-  .trial-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    row-gap: 0.7rem;
-  }
-
-  .trial-lead {
-    grid-column: 1 / -1;
-  }
-
-  .trial-row {
-    grid-auto-flow: dense;
-  }
-
-  .trial-measure {
-    grid-column: 1 / -1;
-  }
-
-  .trial-measure-words {
-    display: inline;
-  }
-
-  /* On a phone the identifier sits opposite the size, and is a full-height target. */
-  .trial-lead {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .trial-id {
-    grid-column: 2;
-    grid-row: 1;
-    justify-self: end;
-    text-align: right;
-  }
-
-  .trial-cell.trial-id .lbl {
-    display: none;
-  }
-
-  .trial-id a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-    margin-block: -0.6rem;
-  }
-
-  .trial-cell .lbl {
-    display: block;
-  }
-
-  .trial-table .trial-group:first-of-type,
-  .trial-columns + .trial-group {
-    border-top: 0;
-  }
-
-  .js .trial-detail {
-    padding-left: 1.1rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .trial-open .chev svg,
-  .trial-group > .trial-row {
-    transition: none;
-  }
-}
-
-@media print {
-  .trial-open .chev {
-    display: none !important;
-  }
-
-  .trial-columns {
-    background: none;
-    color: var(--ink);
-    border-bottom: 1px solid var(--rule);
   }
 }
 
@@ -7415,77 +4705,11 @@ body.framed {
   max-width: 46rem;
 }
 
-.onpage a[aria-current="page"] {
-  background: var(--paper);
-  box-shadow: 0 0 0 1px var(--rule);
-  color: var(--blue);
-  font-weight: 700;
-}
-
 .sheet-title {
   margin-top: 0;
 }
 
-.word-field {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  max-width: 24rem;
-  min-height: 2.75rem;
-  margin-bottom: 0.9rem;
-  padding: 0 0.75rem;
-  border: 1px solid var(--ring);
-  border-radius: var(--radius-s);
-  background: var(--paper);
-  color: var(--muted);
-}
-
-.word-field:focus-within {
-  outline: 3px solid var(--blue);
-  outline-offset: 2px;
-}
-
-.word-field input {
-  width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: none;
-  font: inherit;
-  color: var(--ink);
-}
-
-.word-field input::placeholder {
-  color: var(--muted);
-}
-
-.no-match {
-  display: grid;
-  gap: 0.9rem;
-  justify-items: start;
-  margin-top: 0.9rem;
-  padding: 1.4rem 1.5rem;
-  border: 1px dashed var(--ring);
-  border-radius: var(--radius);
-}
-
-.no-match[hidden] {
-  display: none;
-}
-
-.no-match p {
-  margin: 0;
-  max-width: 34rem;
-}
-
-@media print {
-  .word-field,
-  .no-match {
-    display: none !important;
-  }
-}
-
-/* In the sheet the claim's name leads its row at a readable width. */
+/* In the sheet the pair's name leads its row at a readable width. */
 @media (min-width: 40.01rem) {
   .sheet table.index th:first-child,
   .sheet table.index td.claim {
@@ -7496,23 +4720,6 @@ body.framed {
 /* A framed page with no column of actions: the sheet takes its place. */
 .frame.no-rail .sheet {
   grid-column: 2 / 4;
-}
-
-.band-actions {
-  flex-wrap: wrap;
-  margin-top: 1.2rem;
-}
-
-.band.record .band-actions .share {
-  color: var(--on-navy-ink);
-  background: rgb(255 255 255 / 0.08);
-  border-color: rgb(255 255 255 / 0.4);
-  text-decoration: none;
-}
-
-.band.record .band-actions .share:hover {
-  background: rgb(255 255 255 / 0.18);
-  border-color: var(--on-navy-ink);
 }
 
 @media (max-width: 68rem) {
@@ -7530,40 +4737,16 @@ body.framed {
 
 /* After the critique of the built page (2026-11-15). */
 
-/* A claim's actions sit in the band, under the title's column and beside the card. */
-.band-grid > .band-actions {
-  grid-column: 2;
-  align-self: end;
-}
+/* A pair's actions sit in the band, under the title's column and beside the card. */
 
 .band-grid > .digest {
   grid-row: 1 / span 2;
 }
 
 /* Followed: the pill is filled, on white, so its words stay readable on the navy. */
-.band.record .band-actions .share[aria-pressed="true"],
-.band.record .band-actions .share.done {
-  background: var(--on-navy-ink);
-  border-color: var(--on-navy-ink);
-  color: var(--footer);
-}
 
 .band.record .outlet .domain {
   color: var(--navy-soft);
-}
-
-/* A trial reached by a link is marked along its row. */
-.trial-group:target > .trial-row {
-  background: var(--tint);
-}
-
-/* A date or an identifier is read as one thing and never breaks inside itself. */
-.trial-cell {
-  overflow-wrap: normal;
-}
-
-.trial-table .trial-name a {
-  white-space: nowrap;
 }
 
 /* A note under a heading keeps to a line a reader can follow, and leaves no word alone. */
@@ -7572,28 +4755,10 @@ body.framed {
   text-wrap: pretty;
 }
 
-.digest .bridge {
-  text-wrap: pretty;
-}
-
 @media (max-width: 68rem) {
-  .band-grid > .band-actions {
-    grid-column: 1;
-  }
 
   .band-grid > .digest {
     grid-row: auto;
-  }
-}
-
-@media (max-width: 40rem) {
-  /* The status panel already links to the reminders; the row keeps to two. */
-  .band-actions [data-remind-link] {
-    display: none !important;
-  }
-
-  .band-grid > .band-actions {
-    margin-top: 0;
   }
 }
 
@@ -7688,10 +4853,6 @@ body.framed {
   .band-grid > .band-main {
     grid-row: 1;
   }
-
-  .band-grid > .band-actions {
-    grid-row: 2;
-  }
 }
 
 /* Where the section list is a row of chips the band is one surface, the main tone,
@@ -7702,7 +4863,7 @@ body.framed {
   }
 }
 
-/* The quiet sheet (openspec quiet-sheet). Clamped text: a claim's summary and a section's
+/* The quiet sheet (openspec quiet-sheet). Clamped text: a pair's summary and a section's
    note are held to a few lines where a script can offer the rest (scripts/clamps.ts adds
    "More" only when there is more). With no script, and on paper, the text is whole. */
 .js [data-clamp]:not(.unclamped) {
@@ -7734,34 +4895,6 @@ body.framed {
 @media (max-width: 40rem) {
   .clamp-more {
     min-height: 2.75rem;
-  }
-}
-
-/* The band's side column: the topic's drawing, large, where the section list stands
-   below it. Decoration: the chip beside it names the topic. */
-.band-side {
-  display: none;
-}
-
-@media screen and (min-width: 68.01rem) {
-  .band-grid > .band-side {
-    display: grid;
-    place-items: center;
-    grid-column: 1;
-    grid-row: 1 / span 2;
-    align-self: start;
-    width: 5.5rem;
-    height: 5.5rem;
-    margin-top: 0.4rem;
-    border-radius: 50%;
-    background: var(--band-main);
-    color: var(--on-navy);
-  }
-
-  .band-side svg {
-    width: 2.75rem;
-    height: 2.75rem;
-    stroke-width: 1.4;
   }
 }
 
@@ -7807,31 +4940,6 @@ body.framed {
   max-width: 36ch;
 }
 
-/* A claim page's title: the treatment in the heading face, and under it what it is for,
-   in the text face and the band's quieter ink, so the two are read as name and use. */
-.band.record .claim-title .title-what,
-.band.record .claim-title .title-for {
-  display: block;
-}
-
-.band.record .claim-title .title-for {
-  margin-top: 0.4rem;
-  max-width: 36ch;
-  font-family: var(--face);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  line-height: 1.3;
-  letter-spacing: 0;
-  color: var(--navy-soft);
-  text-wrap: pretty;
-}
-
-@media print {
-  .band.record .claim-title .title-for {
-    color: #46566b;
-  }
-}
-
 /* A record page's section headings, in the same face. */
 .sheet .bar {
   font-family: var(--display);
@@ -7868,14 +4976,6 @@ body.framed {
 }
 
 /* The summary under the title. Its colour is the band's, so on paper it is ink. */
-.band-lede {
-  margin: 0.9rem 0 0;
-  max-width: 58ch;
-  font-size: var(--text-l);
-  line-height: 1.55;
-  color: inherit;
-  text-wrap: pretty;
-}
 
 .js [data-clamp="5"]:not(.unclamped) {
   -webkit-line-clamp: 5;
@@ -7888,12 +4988,6 @@ body.framed {
 }
 
 /* One summary is drawn: in the band where it has room, in the sheet on a phone. */
-@media (max-width: 40rem) {
-  .band.record .band-lede[data-clamp],
-  .band.record .band-lede + .clamp-more {
-    display: none;
-  }
-}
 
 @media (min-width: 40.01rem) {
   .sheet > .lede[data-clamp],
@@ -7902,34 +4996,11 @@ body.framed {
   }
 }
 
-.band.record .glance-band {
-  margin-top: 0.5rem;
-}
-
 /* The card's heading, in sight: a tab on the card's own tone, standing on its top edge. */
 .band.record .digest {
   position: relative;
   margin-top: 2.15rem;
   border-top-left-radius: 0;
-}
-
-.band.record .digest .card-tab {
-  position: absolute;
-  left: -1px;
-  bottom: 100%;
-  display: flex;
-  align-items: center;
-  height: 2.15rem;
-  margin: 0;
-  padding: 0 1rem;
-  border: 1px solid rgb(142 193 245 / 0.3);
-  border-bottom: 0;
-  border-radius: var(--radius-s) var(--radius-s) 0 0;
-  background: var(--band-card);
-  color: var(--on-navy-ink);
-  font-size: var(--text-s);
-  font-weight: 700;
-  line-height: 1.2;
 }
 
 /* The card's records as rows, each with its mark. */
@@ -7946,39 +5017,11 @@ body.framed {
 }
 
 /* The actions as filled pills, on the card's tone. */
-@media screen {
-  .band.record .band-actions .share {
-    background: var(--band-card);
-    border-color: transparent;
-  }
-
-  .band.record .band-actions .share:hover {
-    background: var(--band-card);
-    border-color: rgb(142 193 245 / 0.55);
-  }
-}
 
 @media screen and (min-width: 68.01rem) {
   /* The card starts level with the title's column, tab and all. */
   .band.record .digest {
     margin-top: 2.15rem;
-  }
-
-  /* The topic's drawing, large: a mark of the band, not a badge on it. */
-  .band-grid > .band-side {
-    width: 9.5rem;
-    height: 9.5rem;
-    margin-top: 0.2rem;
-    border-radius: 0;
-    background: none;
-    color: var(--band-main);
-    place-items: start;
-  }
-
-  .band-side svg {
-    width: 9.5rem;
-    height: 9.5rem;
-    stroke-width: 1.1;
   }
 }
 
@@ -7986,71 +5029,6 @@ body.framed {
   .band.record .digest {
     margin-top: 0;
   }
-
-  .band.record .digest .card-tab {
-    position: static;
-    height: auto;
-    padding: 0;
-    border: 0;
-    background: none;
-    color: inherit;
-  }
-}
-
-/* The sheet as one system (openspec sheet-cohesion, asked for by the operator on
-   2026-11-17 after the band: the rest of a claim page read as disorganised and hard to
-   skim). */
-
-/* A long record folds by year: an older year is one line, its count and its kinds, that
-   opens to the year's records. The fold line is the page's own (as .trials-rest). */
-.year-rest > summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.15rem 0.75rem;
-  cursor: pointer;
-  list-style: none;
-  font-size: var(--text-m);
-}
-
-.year-rest > summary::-webkit-details-marker {
-  display: none;
-}
-
-.year-total {
-  color: var(--blue);
-  font-weight: 600;
-}
-
-.year-kinds,
-.year-basis {
-  color: var(--muted);
-  font-size: var(--note-size);
-}
-
-.year-basis {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.year-rest > summary svg {
-  align-self: center;
-  color: var(--blue);
-  transition: transform 160ms var(--ease-out);
-}
-
-.year-rest[open] > summary svg {
-  transform: rotate(180deg);
-}
-
-.year-rest > summary:hover .year-total {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-.year-rest[open] > summary {
-  margin-bottom: 0.6rem;
 }
 
 /* A folded year's row is as quiet as its line: the year in the row's weight, not the
@@ -8077,23 +5055,6 @@ body.framed {
   .timetable tr:has(.year-rest:not([open])) > th.year {
     padding-top: 0.95rem;
   }
-
-  .year-rest > summary {
-    min-height: 2.75rem;
-    align-content: center;
-    gap: 0 0.6rem;
-  }
-
-  .year-rest > summary .year-kinds {
-    order: 3;
-    flex-basis: 100%;
-  }
-}
-
-@media print {
-  .year-rest > summary svg {
-    display: none;
-  }
 }
 
 /* One container for every section of a record page: open rows between rules, as "The
@@ -8107,16 +5068,6 @@ body.framed {
   border-radius: 0;
 }
 
-.sheet .statement-list,
-.sheet .record-list {
-  border-top: 1px solid var(--rule);
-}
-
-.sheet .statement-list > li:first-child,
-.sheet .record-list > li:first-child {
-  border-top: 0;
-}
-
 /* A section's opening note is one muted line; "More" gives the rest (scripts/clamps.ts).
    The same for every section, so the eye lands on the heading and then on the rows. */
 .sheet .take-why {
@@ -8126,110 +5077,11 @@ body.framed {
   color: var(--muted);
 }
 
-
-/* Trials: a row keeps to what tells one trial from the next. The measure is held to two
-   lines and who runs it to one; the row opens to the rest. People are set as figures. */
-.trial-row .trial-measure-words {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-}
-
-.trial-row .trial-measure .trial-by {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.trial-row .trial-title {
-  font-variant-numeric: tabular-nums;
-}
-
-@media print {
-  .trial-row .trial-measure-words {
-    display: block;
-    overflow: visible;
-  }
-
-  .trial-row .trial-measure .trial-by {
-    white-space: normal;
-  }
-}
-
 /* Trials as one table (openspec sheet-cohesion): the columns are named once, over every
    group, and stay in sight; each phase is a tinted row with its name and its count, as
    the reference draws a group; a row is two lines. */
 .sheet .trials {
   --trial-cols-wide: minmax(13rem, 1.5fr) 6rem minmax(0, 1.3fr) 8.5rem 8.5rem;
-}
-
-.sheet .trials .trial-table,
-.sheet .trials .trial-columns-top {
-  --trial-cols: var(--trial-cols-wide);
-}
-
-.sheet .trials .trial-columns-top {
-  position: sticky;
-  top: var(--sticky-top, 0);
-  z-index: 3;
-  border-top: 1px solid var(--rule);
-}
-
-/* A group's own column names: read out, not drawn. */
-.sheet .trials .trial-table > .trial-columns {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.sheet .trials .trial-table {
-  border-top: 0;
-  border-bottom: 0;
-}
-
-.sheet .trials .trial-table > .trial-columns + .trial-group {
-  border-top: 0;
-}
-
-.sheet .trials .trial-phase-head {
-  position: static;
-  justify-content: space-between;
-  margin: 0;
-  padding: 0.5rem 1.1rem;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-  background: var(--panel);
-  font-family: var(--face);
-  font-size: var(--text-m);
-  font-weight: 700;
-}
-
-.sheet .trials .trial-phase-group:first-of-type .trial-phase-head {
-  border-top: 0;
-}
-
-.sheet .trials .trial-phase-group:last-of-type {
-  border-bottom: 1px solid var(--rule);
-}
-
-.sheet .trials .trials-rest {
-  max-width: none;
-}
-
-.sheet .trials .trials-rest > summary {
-  margin: 0.55rem 1.1rem 0.7rem;
-}
-
-.trial-row .trial-measure-words {
-  -webkit-line-clamp: 1;
-  line-clamp: 1;
 }
 
 /* One right edge (openspec sheet-cohesion, the layout pass of 2026-11-17): every list,
@@ -8243,110 +5095,12 @@ body.framed {
   max-width: none;
 }
 
-/* What stands over the timetable: its filter at the left, its key at the right. */
-.table-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem 1.5rem;
-  margin: 0.9rem 0 0.7rem;
-}
-
-.table-tools .kind-tabs {
-  margin: 0;
-}
-
 /* A year in the label's column, its records where a value starts: where the sheet is
    wide enough that a folded year's summary still fits on its line. */
 @media (min-width: 60rem) {
   .sheet .timetable .year {
     width: calc(var(--stop-1) - 0.85rem);
   }
-}
-
-@media (min-width: 40.01rem) {
-  /* A report's statement on the sheet's first stop: what kind of statement in the
-     label's column, the statement where a value starts, how sure the reading is at the
-     end of its line. */
-  .sheet .statement-list > li {
-    grid-template-columns: var(--label-col) minmax(0, 1fr) auto;
-    column-gap: 1.5rem;
-    align-items: baseline;
-  }
-
-  .sheet .statement-list .match-record {
-    display: contents;
-  }
-
-  .sheet .statement-list .card-kind {
-    grid-column: 1;
-  }
-
-  .sheet .statement-list .statement,
-  .sheet .statement-list .match-record > .entry-note {
-    grid-column: 2;
-  }
-
-  .sheet .statement-list > li > .pop-trigger {
-    grid-column: 3;
-    grid-row: 1;
-  }
-
-}
-
-@media print {
-  .sheet .trials .trial-columns-top {
-    position: static;
-  }
-
-  .trial-row .trial-measure-words {
-    display: block;
-  }
-}
-
-/* The chip, lighter (openspec score-chip, 2026-11-17): the percentage is the chip's
-   figure, in ink and tabular; the band's words beside it are plain. A lower-band reading
-   keeps its words in ink, since the words are what it must say. What is not a score (how
-   a term was found: "by exact name") opens the same panel as plain words, underlined in
-   dots like the page's other words that open, without the chip's outline. */
-.score .score-words {
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.score .score-figure {
-  color: var(--ink);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.score.low .score-words {
-  color: var(--ink);
-  font-weight: 700;
-}
-
-.pop-trigger.score.said {
-  padding-inline: 0;
-  border-color: transparent;
-  border-radius: 0;
-  background: none;
-  text-decoration: underline dotted;
-  text-decoration-color: var(--ring);
-  text-underline-offset: 0.25em;
-}
-
-.pop-trigger.score.said .score-words {
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.pop-trigger.score.said:hover,
-.pop-trigger.score.said:has(+ .pop:popover-open) {
-  border-color: transparent;
-  background: none;
-  text-decoration-style: solid;
-  text-decoration-color: currentColor;
 }
 
 /* Fact sheet (components/FactSheet.astro and Fact.astro; openspec glance-rows). Rows of
@@ -8409,64 +5163,6 @@ body.framed {
   overflow-wrap: anywhere;
 }
 
-.fact-sheet .fact-head {
-  display: contents;
-}
-
-.fact-sheet .fact-value {
-  grid-column: 1;
-  font-size: var(--text-l);
-  font-weight: 700;
-}
-
-/* Grey lines under the value: its other names, what a reading is not. */
-.fact-sheet .aka {
-  grid-column: 1 / -1;
-  display: block;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-/* A score below the high band stays on the closed row. It stands over the row's press,
-   so it opens its own panel. It is grey at rest, like everything on the row but the
-   label and the value; a lower-band reading keeps its ink. */
-.fact-sheet .fact-aside {
-  position: relative;
-  z-index: 1;
-  grid-column: 2;
-  grid-row: 1;
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.3rem;
-  margin: 0;
-}
-
-/* The scores of this section are grey at rest, on the row and where it opens. */
-.fact-sheet .pop-trigger.score:not(.low):not(.said) {
-  border-color: var(--rule-soft);
-  background: none;
-}
-
-.fact-sheet .score:not(.low) .score-figure {
-  color: var(--muted);
-  font-weight: 600;
-}
-
-.fact-sheet .pop-trigger.score.said {
-  text-decoration-color: var(--rule);
-}
-
-.fact-sheet .pop-trigger.score.said .score-words {
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.fact-sheet .pop-trigger.score:not(.low):not(.said):hover,
-.fact-sheet .pop-trigger.score:not(.low):not(.said):has(+ .pop:popover-open) {
-  border-color: var(--ring);
-}
-
 /* The press: the fold mark, round, at the end of the value's line and under the
    section's own. Grey and bare at rest; filled, in the link's blue, under the pointer
    and while the row is open. */
@@ -8483,47 +5179,6 @@ body.framed {
   color: var(--muted);
   font: inherit;
   cursor: pointer;
-}
-
-.fact-open .fact-open-words {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.fact-open .chev {
-  display: grid;
-  place-items: center;
-  width: var(--fold-mark);
-  height: var(--fold-mark);
-  border-radius: 50%;
-  color: var(--muted);
-  transition:
-    background-color 120ms,
-    color 120ms;
-}
-
-.fact-open .chev svg {
-  transition: rotate 200ms var(--ease-out);
-}
-
-.fact-open[aria-expanded="true"] .chev svg {
-  rotate: 180deg;
-}
-
-.js .fact-open:hover .chev,
-.js .fact-sheet > div[data-open] .fact-open .chev,
-.js .entry-rows > li[data-open] > .fact-open .chev {
-  background: var(--tint);
-  color: var(--blue);
-}
-
-.js .fact-sheet > div[data-open] .fact-open:hover .chev,
-.js .entry-rows > li[data-open] > .fact-open:hover .chev {
-  background: var(--tag);
 }
 
 /* The press is the row's head: its label, its value and whatever stands under the
@@ -8579,74 +5234,6 @@ body.framed {
   display: none;
 }
 
-/* The source's words, whole, in the value's column with the label's cell left empty,
-   in the page's size and ink: the first thing read. */
-.fact-more .glance-said {
-  grid-column: var(--part);
-  max-width: var(--measure);
-  font-size: var(--text-body);
-  line-height: 1.55;
-}
-
-.fact-sheet .fact-more .glance-words,
-.fact-sheet .fact-more .glance-words-long {
-  display: inline;
-  margin: 0;
-}
-
-/* The source pill: the source's name, grey and small, at the end of its words. A link:
-   it darkens under the pointer and opens the source in a new tab. */
-.source-pill {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 0.2rem;
-  padding: 0.05rem 0.55rem;
-  border: 1px solid var(--rule);
-  border-radius: 99px;
-  color: var(--muted);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  line-height: 1.5;
-  text-decoration: none;
-  vertical-align: 0.12em;
-  white-space: nowrap;
-}
-
-.source-pill:hover {
-  border-color: var(--ring);
-  background: var(--paper);
-  color: var(--ink);
-}
-
-/* With no words of the source's to follow, the pill is a part of its own: "Source". */
-.fact-more .glance-said:not(:has(.glance-words)) {
-  display: contents;
-}
-
-.fact-more .glance-said:not(:has(.glance-words)) .source-pill {
-  grid-column: var(--part);
-  justify-self: start;
-  margin: 0;
-}
-
-/* The parts. A part's label: grey, the label's size, in the label's column. */
-.fact-more .glance-part-label,
-.fact-more .glance-filed-label,
-.fact-more .card-kind {
-  grid-column: 1;
-  margin: 0;
-  font-size: var(--label-size);
-  font-weight: 500;
-  color: var(--muted);
-}
-
-/* The card is not a box of its own here: its pieces are parts of the row. */
-.fact-more .glance-filed,
-.fact-more .term-card,
-.fact-more .card-head {
-  display: contents;
-}
-
 /* What a part names: in ink a step smaller than the words; the credit and the notes
    keep their own small grey. */
 .fact-more .glance-filed-words,
@@ -8660,20 +5247,6 @@ body.framed {
 .fact-more .match-why {
   grid-column: var(--part);
   margin: 0;
-}
-
-.fact-more .glance-filed-words {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: var(--text-m);
-  color: var(--ink);
-}
-
-.fact-more .card-label {
-  justify-self: start;
-  font-size: var(--text-m);
 }
 
 /* The second press of a row that opens, outside a term card too: closed until asked
@@ -8690,18 +5263,6 @@ body.framed {
   max-width: 62ch;
 }
 
-.entry-more .match-why-head {
-  min-height: 1.75rem;
-  color: var(--muted);
-  font-size: var(--label-size);
-  font-weight: 500;
-}
-
-.entry-more .match-why-head:hover,
-.entry-more .match-why[open] .match-why-head {
-  color: var(--ink);
-}
-
 .entry-more .match-why p + p {
   margin-top: 0.35rem;
 }
@@ -8714,22 +5275,6 @@ body.framed {
   max-width: var(--measure);
 }
 
-.fact-more .match-why-head {
-  min-height: 1.75rem;
-  color: var(--muted);
-  font-size: var(--label-size);
-  font-weight: 500;
-}
-
-.fact-more .match-why-head:hover,
-.fact-more .match-why[open] .match-why-head {
-  color: var(--ink);
-}
-
-.fact-more .match-why-head + * {
-  margin-top: 0.2rem;
-}
-
 .fact-more .match-why p:not(.match-score) {
   font-size: var(--text-m);
   color: var(--ink);
@@ -8737,28 +5282,6 @@ body.framed {
 
 .fact-more .match-why p + p {
   margin-top: 0.35rem;
-}
-
-/* A drug's facts are its row's value and other names: said once, on the row. The box
-   stays where it says something the row does not (no mechanism on record). */
-.fact-more .card-facts:not(:has(.entry-note)) {
-  display: none;
-}
-
-.fact-more .card-facts {
-  background: var(--paper);
-}
-
-/* A new part starts a little lower than a line of the same part. */
-.fact-more .card-kind,
-.fact-more .card-label,
-.fact-more .glance-filed-label,
-.fact-more .glance-filed-words {
-  margin-top: 0.45rem;
-}
-
-.fact-more .glance-said:not(:has(.glance-words)) .glance-part-label {
-  margin-top: 0;
 }
 
 @media (max-width: 40rem) {
@@ -8779,33 +5302,12 @@ body.framed {
     grid-column: 2;
   }
 
-  .fact-sheet .aka {
-    order: 1;
-  }
-
-  .fact-sheet .fact-aside {
-    grid-column: 1 / -1;
-    grid-row: auto;
-    order: 2;
-    justify-content: flex-start;
-  }
-
   /* Opened, a part's label stands over what it names, and the parts take the row's
      full width, under the label too. */
   .fact-sheet .fact-more {
     --part: 1;
     grid-template-columns: minmax(0, 1fr);
     row-gap: 0.25rem;
-  }
-
-  .fact-more .card-label,
-  .fact-more .glance-filed-words {
-    margin-top: 0;
-  }
-
-  /* A finger's size on a phone, as every other press here. */
-  .fact-more .match-why-head {
-    min-height: 2.75rem;
   }
 }
 
@@ -8826,22 +5328,12 @@ body.framed {
   .js .entry-rows > li:not([data-open]) .entry-more {
     display: grid;
   }
-
-  .fact-open .chev,
-  .fact-more .match-why-head svg {
-    display: none;
-  }
-
-  .source-pill {
-    padding: 0;
-    border: 0;
-  }
 }
 
 /* Entry rows (components/Entry.astro; openspec sheet-cohesion, the rows pass of
    2026-11-17): the one grammar for a list of things on a record page, such as papers and
    organisations. A row is what the thing is, at the left edge: its name and at most one
-   grey line. From the sheet's second stop, how it is tied to this claim: one line of
+   grey line. From the sheet's second stop, how it is tied to this pair: one line of
    marks and short words, and any score, in sight. At the end of its line, the fold mark.
    Where it came from, when it was read and the sentences the marks stand for are what
    the row opens to, by the same press as a fact row: the head tinted, the rest on the
@@ -8873,36 +5365,11 @@ body.framed {
     0.85rem 0 0 var(--tint);
 }
 
-.entry-lead {
-  display: grid;
-  gap: 0.1rem;
-  min-width: 0;
-}
-
-.entry-lead > * {
-  margin: 0;
-}
-
-.entry-name {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
 /* What is pressed for itself lies over the row's press. */
 .entry-rows a,
 .entry-rows .pop-trigger {
   position: relative;
   z-index: 1;
-}
-
-.entry-ties {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.2rem 1.1rem;
-  min-width: 0;
-  font-size: var(--text-m);
 }
 
 /* One tie: a mark or a drawing, then a number or a few words. */
@@ -8917,28 +5384,6 @@ body.framed {
   width: 1rem;
   height: 1rem;
   color: var(--muted);
-}
-
-/* The tie mark: a ring, filled in the hue of results where the trial's sponsor made the tie. It says how
-   a paper came to be listed, never how good it is. */
-.tie-mark {
-  flex: none;
-  width: 0.6rem;
-  height: 0.6rem;
-  border: 1.5px solid var(--muted);
-  border-radius: 50%;
-}
-
-.tie-mark.listed {
-  border-color: var(--mark-results);
-  background: var(--mark-results);
-}
-
-.tie-key {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem 1.4rem;
-  margin: 0 0 0.5rem;
 }
 
 .entry-rows .fact-open {
@@ -8979,13 +5424,6 @@ body.framed {
   border: 0;
 }
 
-.entry-more-ties {
-  display: grid;
-  gap: 0.25rem;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
 /* From here a row is three columns: the thing, its ties from the second stop, the mark. */
 @media (min-width: 52rem) {
   .entry-rows > li,
@@ -8994,21 +5432,8 @@ body.framed {
     column-gap: 2.5rem;
   }
 
-  .entry-ties {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
   .entry-rows .fact-open {
     grid-column: 3;
-  }
-
-  .entry-more-lead {
-    grid-column: 1;
-  }
-
-  .entry-more-ties {
-    grid-column: 2 / -1;
   }
 }
 
@@ -9039,376 +5464,11 @@ body.framed {
   gap: 0.45rem;
 }
 
-.state-mark {
-  --mark: var(--mark-plan);
-  flex: none;
-  width: 0.6rem;
-  height: 0.6rem;
-  border: 1.5px solid var(--mark);
-  border-radius: 50%;
-  translate: 0 0.02rem;
-}
-
-.state-mark[data-state="under_way"] {
-  --mark: var(--mark-going);
-  background: linear-gradient(to right, var(--mark) 50%, transparent 50%);
-}
-
-.state-mark[data-state="completed"] {
-  --mark: var(--mark-done);
-  background: var(--mark);
-}
-
-.state-mark[data-state="terminated"] {
-  --mark: var(--mark-halt);
-  background: var(--mark);
-}
-
-.state-mark[data-state="suspended"],
-.state-mark[data-state="withdrawn"] {
-  --mark: var(--mark-halt);
-}
-
-.state-mark[data-state="suspended"],
-.state-mark[data-state="terminated"],
-.state-mark[data-state="withdrawn"] {
-  border-radius: 1px;
-}
-
-.state-mark[data-state="unknown"] {
-  border-style: dotted;
-}
-
-/* What the report said (openspec sections-funnel; re-laid out after the critique of
-   2026-11-17). Every statement stands in a group named in the label's column: who the
-   report had saying it, what kind of statement it is, or its report. A row is the
-   firmness mark and the statement, from where a value starts; then, each in a column of
-   its own so they line up down the list, a tag in words (the kind, or who said it) and
-   a drawing alone (the report's outlet, or who said it). */
-.said-tools {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.4rem 1.5rem;
-  margin: 0.6rem 0 0;
-}
-
-.said-key {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.15rem 1.3rem;
-  margin: 0;
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-.said-key > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-}
-
-/* The order's choice: smaller than the timetable's filter, since it changes nothing
-   that is said. */
-.said-order {
-  gap: 0.3rem;
-  margin: 0;
-}
-
-.said-order .kind-tab {
-  min-height: 1.85rem;
-  padding: 0.1rem 0.75rem;
-  font-size: var(--text-s);
-}
-
-/* The firmness mark: full where the report put it as a fact; a broken ring where it
-   put it as something that could be so. Ink and grey: no hue. */
-.firm-mark {
-  flex: none;
-  display: inline-block;
-  width: 0.6rem;
-  height: 0.6rem;
-  border: 1.5px solid var(--mark-done);
-  border-radius: 50%;
-  background: var(--mark-done);
-}
-
-.firm-mark.maybe {
-  border-style: dashed;
-  border-color: var(--muted);
-  background: none;
-}
-
-/* One list for each order, under the section's rule and closed by a hairline. */
-.said-view {
-  margin-top: 0.6rem;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-}
-
-.said-group {
-  display: grid;
-  grid-template-columns: var(--label-col) minmax(0, 1fr);
-  column-gap: 1.5rem;
-  border-top: 1px solid var(--ring);
-}
-
-.said-view > .said-group:first-child {
-  border-top: 0;
-}
-
-/* A group's name sits on the first statement's first line. */
-.said-by {
-  display: grid;
-  align-content: start;
-  gap: 0.1rem;
-  margin: 0;
-  padding: calc(var(--row-pad) + 0.14rem) 0 var(--row-pad);
-  font-family: var(--face);
-  font-size: var(--text-m);
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.said-by small {
-  font-size: var(--text-s);
-  font-weight: 400;
-  color: var(--muted);
-}
-
-.said-by .outlet .domain {
-  display: none;
-}
-
-/* Under an outlet's name its day starts where the name starts, past the icon. */
-.said-by:has(.outlet) small {
-  padding-left: 1.45rem;
-}
-
-.said-name,
-.said-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.said-name svg,
-.said-tag svg,
-.said-source svg {
-  flex: none;
-  color: var(--muted);
-}
-
-.said-tag {
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-/* The third thing a row says, as a drawing alone: an outlet's icon, or who said it. Its
-   name is read out and shown under the pointer. */
-.said-source {
-  display: inline-flex;
-  align-items: center;
-  align-self: center;
-}
-
-.said-source .outlet-name > :not(.outlet-icon),
-.said-source .domain {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.sheet .said-group .statement-rows {
-  margin: 0;
-  border-top: 0;
-}
-
-.said-group .statement-rows > li:last-child {
-  border-bottom: 0;
-}
-
-.statement-rows .statement {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 0.6rem;
-  align-items: baseline;
-  max-width: none;
-}
-
-.statement-rows .statement-text {
-  max-width: 60ch;
-}
-
-.statement-rows .statement-text b {
-  font-weight: 700;
-}
-
-.statement-rows .entry-ties {
-  gap: 0.2rem 0.9rem;
-}
-
-.said-more {
-  grid-column: 1 / -1;
-  display: grid;
-  gap: 0.3rem;
-}
-
-/* Where a row opens, its report first: the title as the link, then the outlet and day. */
-.said-from {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.1rem 0.8rem;
-}
-
-.said-from .entry-note {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 0.5rem;
-}
-
-@media (min-width: 52rem) {
-  .sheet .statement-rows > li,
-  .sheet .statement-rows .entry-more {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    column-gap: 1.25rem;
-  }
-
-  /* Two columns after the statement: the tag's words start on one edge down the list,
-     and the drawings stand in a column of their own. */
-  .statement-rows .entry-ties {
-    display: grid;
-    grid-template-columns: 9.5rem 1.3rem;
-    column-gap: 0.7rem;
-    align-items: baseline;
-    justify-content: end;
-  }
-
-  .statement-rows .entry-ties > .pop-trigger {
-    grid-column: 1 / -1;
-    justify-self: start;
-  }
-
-  .said-more {
-    padding-left: 1.2rem;
-  }
-}
-
-@media (max-width: 40rem) {
-  .said-group {
-    display: block;
-  }
-
-  .said-by {
-    padding-bottom: 0;
-  }
-
-  /* On a phone the tags stand under the statement, where there is room for the
-     outlet's name beside its icon. */
-  .said-source .outlet-name > :not(.outlet-icon) {
-    position: static;
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
-    font-size: var(--text-s);
-    color: var(--muted);
-  }
-}
-
-/* Names as chips (openspec sections-funnel): the organisations of one part, beside the
-   part's label. A chip is a name and, for a sponsor, how many of the claim's trials name
-   it; it opens a small panel. In order of name. */
-.organisations .fact-value {
-  font-size: var(--text-m);
-  font-weight: 400;
-}
-
-.name-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.4rem;
-}
-
-/* A name is words with a dotted line under them, as a term that opens is everywhere:
-   easier to read in a row than a pill. */
-.pop-trigger.name-chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.35rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ink);
-  font: inherit;
-  font-size: var(--text-m);
-  text-align: left;
-  cursor: pointer;
-}
-
-.name-chip .organisation-name {
-  text-decoration: underline dotted var(--ring);
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 0.22em;
-}
-
-.pop-trigger.name-chip:hover .organisation-name,
-.pop-trigger.name-chip:has(+ .pop:popover-open) .organisation-name {
-  color: var(--blue);
-  text-decoration-color: currentColor;
-}
-
-.chip-n {
-  color: var(--muted);
-  font-size: var(--text-s);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.pop .pop-title {
-  font-weight: 700;
-}
-
-.pop .organisation-roles {
-  margin: 0.3rem 0;
-}
-
-.pop .organisation-roles li {
-  display: block;
-  padding: 0;
-  border: 0;
-  overflow-wrap: anywhere;
-}
-
-@media (max-width: 40rem) {
-  .pop-trigger.name-chip {
-    min-height: 2.75rem;
-  }
-}
-
 /* Keep or pass on (openspec sections-funnel): a fact sheet of things to do. A value is
    a row of buttons, not a figure. */
-.keep .fact-value {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem 0.55rem;
-  font-size: var(--text-m);
-  font-weight: 400;
-}
 
 .keep .take-actions {
   display: contents;
-}
-
-.keep .follow-offer {
-  margin: 0;
 }
 
 .keep .fact-sheet .sentence {
@@ -9416,135 +5476,9 @@ body.framed {
   margin-top: 0.4rem;
 }
 
-.keep .post-to {
-  grid-column: 1 / -1;
-  margin-top: 0.3rem;
-}
-
-.keep .embed-how {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.keep .embed-how > summary,
-.keep .post-to > summary {
-  margin-top: 0;
-}
-
-.keep-feed-links {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 1.2rem;
-}
-
-/* Other claims of the topic: a name, a place on the path, a date. */
-.other-claims .entry-ties {
-  gap: 0.1rem 0.9rem;
-}
-
-.other-claims .other-first {
-  white-space: nowrap;
-}
-
-/* A labelled group of rows (openspec sections-funnel): the group's name in the label's
-   column, its rows beside it. Papers stand under their year. */
-.year-groups {
-  margin: 0.5rem 0 0;
-  border-top: 1px solid var(--rule);
-}
-
-.label-group {
-  display: grid;
-  grid-template-columns: var(--label-col) minmax(0, 1fr);
-  column-gap: 1.5rem;
-  border-top: 1px solid var(--ring);
-}
-
-.year-groups > .label-group:first-child {
-  border-top: 0;
-}
-
-.label-group-name {
-  margin: 0;
-  padding-top: var(--row-pad);
-  font-family: var(--face);
-  font-size: var(--text-l);
-  font-weight: 700;
-  line-height: 1.35;
-}
-
-.sheet .label-group > .entry-rows {
-  margin: 0;
-  border-top: 0;
-}
-
-.label-group > .entry-rows > li:last-child {
-  border-bottom: 0;
-}
-
-.paper-kind {
-  color: var(--muted);
-}
-
-.paper-rows .entry-ties {
-  justify-content: flex-end;
-  gap: 0.2rem 0.9rem;
-  color: var(--muted);
-}
-
-@media (min-width: 52rem) {
-  /* The same width on every row, so the titles end on one edge. */
-  .paper-rows .entry-ties {
-    min-width: 14.5rem;
-  }
-}
-
-.paper-rows .paper-kind {
-  margin-right: 0.4rem;
-}
-
-@media (min-width: 52rem) {
-  /* A paper is its title, then its kind and its ties. */
-  .sheet .paper-rows > li,
-  .sheet .paper-rows .entry-more {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    column-gap: 1.25rem;
-  }
-}
-
 /* A long title is cut to two lines while its row is closed, so the list stays a list;
    the opened row shows it whole (2026-11-17: cut to one line, a title of 196 characters
    could be read nowhere). With no script, and on paper, a title is always whole. */
-@media screen {
-  .js .paper-rows > li:not([data-open]) .paper-name {
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    overflow: hidden;
-  }
-}
-
-@media (min-width: 52rem) {
-
-  .sheet .paper-rows .entry-more-lead,
-  .sheet .paper-rows .entry-more-ties {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 40rem) {
-  .label-group {
-    display: block;
-  }
-}
-
-/* A possible record's mark, before its title. */
-.record-title .state-mark {
-  display: inline-block;
-  margin-right: 0.55rem;
-}
 
 /* Milestones (openspec sections-funnel): the record's moments on one line under the
    section's rule, each a shape on the line, its name and its date. The shapes are the
@@ -9581,19 +5515,6 @@ body.framed {
   box-shadow: 0 0 0 4px var(--paper);
 }
 
-.milestones li > .state-mark {
-  translate: none;
-}
-
-.milestones li > .state-mark:not([data-state="completed"]):not([data-state="terminated"]),
-.milestones li > .ev-report {
-  background-color: var(--paper);
-}
-
-.milestones li > .state-mark[data-state="under_way"] {
-  background: linear-gradient(to right, var(--mark) 50%, var(--paper) 50%);
-}
-
 .milestones a {
   color: var(--ink);
   font-weight: 700;
@@ -9615,27 +5536,6 @@ body.framed {
   border-top-color: var(--promise-rule);
 }
 
-/* "Results posted": a full mark with a ring round it. */
-.state-mark.posted {
-  outline: 1.5px solid var(--mark-results);
-  outline-offset: 2px;
-}
-
-.ev-report,
-.ev-promise {
-  flex: none;
-  display: inline-block;
-  width: 0.55rem;
-  height: 0.55rem;
-  border: 1.5px solid var(--blue);
-  rotate: 45deg;
-}
-
-.ev-promise {
-  border-color: var(--promise-mark);
-  background: var(--promise-mark);
-}
-
 .record-all > summary {
   margin-top: 0.4rem;
 }
@@ -9650,17 +5550,9 @@ body.framed {
 /* On a phone the fold lines under a list and the brief's marked words are a fingertip
    tall: padding, so no line moves. */
 @media (max-width: 40rem) {
-  .trials-rest > summary,
-  .papers-rest > summary {
-    min-height: 2.75rem;
-  }
 
   .record-all > summary {
     margin-top: 0;
-  }
-
-  .brief-term {
-    padding-block: 0.55rem;
   }
 
   .fact-sheet > div:has(.fact-open) > dd:not(.fact-more) a {
@@ -9693,141 +5585,6 @@ body.framed {
   .milestones li.promised {
     border-left-style: dashed;
     border-left-color: var(--promise-rule);
-  }
-}
-
-/* The trials' spread (openspec sections-funnel): over the table, a mark a trial under
-   its phase, in the shape of its state and ringed where results are posted. Grey at
-   every state: it shows how the trials are spread, never how one turned out. */
-.trial-matrix {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 2.2rem;
-  margin: 0.7rem 0 0;
-  padding: 1rem 0 0.3rem;
-  border-top: 1px solid var(--rule);
-  font-size: var(--text-m);
-}
-
-.trial-matrix p {
-  margin: 0;
-}
-
-.trial-dots {
-  display: grid;
-  grid-template-columns: repeat(6, 0.6rem);
-  gap: 0.55rem;
-  margin-top: 0.6rem;
-}
-
-.trial-dots a {
-  display: block;
-  line-height: 0;
-}
-
-.trial-dots .state-mark {
-  display: block;
-  translate: none;
-}
-
-.trial-dots a:hover .state-mark {
-  border-color: var(--blue);
-  outline-color: var(--blue);
-}
-
-.trial-key {
-  margin: 0.5rem 0 0.8rem;
-}
-
-.trial-key .state-mark {
-  translate: none;
-}
-
-/* A trial's size against the claim's largest: under its head count, and beside it once
-   the row is wide enough, so a row is one line. */
-.trial-lead .share-bar {
-  width: auto;
-  max-width: 6.5rem;
-  margin: 0.4rem 0 0 1.9rem;
-}
-
-.trial-none {
-  color: var(--muted);
-}
-
-@media (min-width: 52rem) {
-  .sheet .trials .trial-lead {
-    display: grid;
-    grid-template-columns: 8.9rem minmax(2rem, 1fr);
-    column-gap: 0.6rem;
-    align-items: start;
-  }
-
-  .sheet .trials .trial-lead .share-bar {
-    max-width: none;
-    margin: 0.55rem 0 0;
-  }
-
-  .sheet .trials .trial-lead .trial-by {
-    grid-column: 1 / -1;
-    margin-left: 1.9rem;
-  }
-}
-
-/* A folded year (openspec sections-funnel): a shape for each of its records, oldest
-   first, then how many. The shapes are the trials' own. */
-.year-marks {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.55rem;
-  align-self: center;
-  min-width: 0;
-}
-
-.year-marks .state-mark,
-.year-key .state-mark {
-  translate: none;
-}
-
-.year-rest > summary .year-total {
-  margin-left: auto;
-  color: var(--muted);
-  font-weight: 400;
-  font-size: var(--note-size);
-}
-
-.year-key {
-  margin: 0 0 0.6rem;
-}
-
-/* A registry record (openspec sections-funnel): an entry row. Its title and what its
-   record says stand on one line where there is room; its match ends the line. */
-.record-row .entry-lead {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.1rem 0.9rem;
-}
-
-.record-row .record-title {
-  margin: 0;
-}
-
-.sheet .record-group .record-list {
-  margin-top: 0;
-}
-
-@media (min-width: 52rem) {
-  .sheet .record-list > li,
-  .sheet .record-list .entry-more {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    column-gap: 1.25rem;
-  }
-
-  .sheet .record-list .entry-more-lead,
-  .sheet .record-list .entry-more-ties {
-    grid-column: 1 / -1;
   }
 }
 
@@ -9888,87 +5645,19 @@ body.framed {
     gap: var(--fold-gap);
   }
 
-  /* The mark stands in the button's own line, before the title and pulled out by its
-     width and the gap, so it is centred on the title's first line whatever else the
-     heading's row holds. */
-  .js .sheet .fold .chev {
-    position: static;
-    flex: none;
-    align-self: flex-start;
-    margin: calc((1lh - var(--fold-mark)) / 2) 0 0 calc(-1 * var(--fold-hang));
-  }
-
   /* The press reaches the mark too. */
   .js .sheet .fold::after {
     left: calc(-1 * var(--fold-hang));
   }
 }
 
-/* Section info (openspec section-info, asked for by the operator on 2026-11-17): a quiet
-   info mark beside a section's heading opens what the section holds in a small panel,
-   on hover, on a press and from the keyboard, in place of a paragraph under the
-   heading. The mark is grey until it is used; the panel is the page's own popover, set
-   as a compact card: a fixed width, even padding, the note's size. */
-.pop-trigger.info.about {
-  align-self: center;
-  width: 1.7rem;
-  height: 1.7rem;
-  /* The drawn mark stands half a rem after the title's last letter. */
-  margin-left: -0.65rem;
-  /* On the middle of the title's letters, not of its line box. */
-  translate: 0 -0.08rem;
-  color: var(--muted);
-}
-
-.pop-trigger.info.about:hover,
-.pop-trigger.info.about:has(+ .pop:popover-open) {
-  background: var(--panel);
-  color: var(--ink);
-}
-
-.pop-trigger.about + .pop {
-  width: 20rem;
-  max-width: min(20rem, calc(100vw - 2rem));
-  margin: 0.3rem 0;
-  padding: 0.9rem 1rem;
-  font-size: var(--text-s);
-  line-height: 1.5;
-}
-
 /* The panel arrives: a short fade and a slight growth from the mark's corner. With
    reduced motion it is simply there. */
 @media (prefers-reduced-motion: no-preference) {
-  .pop-trigger.about + .pop {
-    opacity: 0;
-    scale: 0.96;
-    transform-origin: top left;
-    transition:
-      opacity 140ms var(--ease-out),
-      scale 140ms var(--ease-out),
-      overlay 140ms allow-discrete,
-      display 140ms allow-discrete;
-  }
-
-  .pop-trigger.about + .pop:popover-open {
-    opacity: 1;
-    scale: 1;
-  }
-
-  @starting-style {
-    .pop-trigger.about + .pop:popover-open {
-      opacity: 0;
-      scale: 0.96;
-    }
-  }
 }
 
 /* A finger's size without a taller heading line: the press reaches past the line and
    back over the title's last letter, and the drawn mark keeps its place. */
-@media (max-width: 40rem) {
-  .pop-trigger.info.about {
-    margin: -0.6rem -0.55rem -0.6rem -1.2rem;
-  }
-}
 
 /* On paper the note is printed under its heading, whole. */
 @media print {
@@ -9983,8 +5672,8 @@ body.framed {
 
 /* The home page's opening (openspec home-then-now, the operator's choice of "A" on
    2026-11-17 from three mocks in .impeccable/mocks/home-variants/): the title and the
-   section headings in the heading face, as a claim page has them, and under the box one
-   published claim drawn as the site's idea: what an outlet reported, then where it
+   section headings in the heading face, as a pair page has them, and under the box one
+   published pair drawn as the site's idea: what an outlet reported, then where it
    stands on the records. */
 .band.home .title {
   font-family: var(--display);
@@ -10008,219 +5697,13 @@ body:has(.band.home) .bar {
   font-size: var(--text-heading);
 }
 
-.then-now {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 19rem);
-  align-items: center;
-  column-gap: 1.75rem;
-  max-width: 54rem;
-  margin: 2.1rem auto 0;
-  padding: 1.25rem 1.25rem 1.25rem 1.75rem;
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  background: var(--paper);
-  color: var(--ink);
-  text-align: left;
-  text-decoration: none;
-  transition: border-color 160ms var(--ease-out);
-}
-
-.then-now:hover {
-  border-color: var(--ring);
-}
-
-/* The ring stands off the card's edge and takes its corners. */
-.then-now:focus-visible {
-  outline-offset: 4px;
-  border-radius: var(--radius);
-}
-
-.then-now p {
-  margin: 0;
-}
-
-.then-when {
-  font-size: var(--text-s);
-  color: var(--muted);
-}
-
-/* The outlet's own words, in the heading face: a quotation, never the site's title. */
-.then-now .then-quote {
-  margin-top: 0.35rem;
-  font-family: var(--display);
-  font-size: clamp(1.4rem, 3vw, 1.75rem);
-  font-weight: 500;
-  line-height: 1.16;
-  letter-spacing: -0.012em;
-  text-wrap: balance;
-  overflow-wrap: anywhere;
-}
-
-.then-now:hover .then-quote {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.16em;
-}
-
-.then-arrow {
-  display: block;
-}
-
-.then-gap {
-  display: grid;
-  justify-items: center;
-  gap: 0.3rem;
-  color: var(--muted);
-  font-size: var(--text-s);
-  white-space: nowrap;
-}
-
-/* The status as a claim page draws it: a well of the record band's dark tone, its
-   heading a tab on its top edge. The same in both themes, as the band's tones are. */
-.now-well {
-  --ink: var(--on-navy-ink);
-  --blue: var(--on-navy);
-  --muted: var(--navy-soft);
-  --ring: #9db4d2;
-  --paper: var(--band-card);
-  position: relative;
-  margin-top: 1.9rem;
-  padding: 0.85rem 1.1rem 0.95rem;
-  /* No edge on the light page; a faint blue one in the dark theme, where the card's
-     own ground is nearly the well's tone. As the status card on a record band. */
-  border: 1px solid var(--band-card-rule);
-  border-radius: 0 var(--radius-s) var(--radius-s) var(--radius-s);
-  background: var(--band-card);
-  color: var(--on-navy-ink);
-}
-
-.now-tab {
-  position: absolute;
-  bottom: 100%;
-  display: flex;
-  align-items: center;
-  left: -1px;
-  height: 1.9rem;
-  padding: 0 0.95rem;
-  border: 1px solid var(--band-card-rule);
-  border-bottom: 0;
-  border-radius: var(--radius-s) var(--radius-s) 0 0;
-  background: var(--band-card);
-  font-size: var(--text-xs);
-  font-weight: 700;
-}
-
-.now-label {
-  font-size: var(--text-status);
-  font-weight: 700;
-  line-height: 1.15;
-  color: var(--on-navy);
-}
-
-.then-now .now-gloss,
-.then-now .now-latest,
-.then-now .now-note {
-  margin-top: 0.25rem;
-  font-size: var(--text-s);
-  color: var(--navy-soft);
-}
-
-.then-now .now-note {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--on-navy-ink);
-  font-weight: 600;
-}
-
-.now-well .track {
-  margin-top: 0.6rem;
-}
-
-@media (max-width: 52rem) {
-  .then-now {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.9rem;
-    padding: 1.1rem;
-  }
-
-  .then-gap {
-    grid-auto-flow: column;
-    justify-content: start;
-    gap: 0.5rem;
-  }
-
-  /* Stacked, the arrow is short and points down, from the report to the record. */
-  .then-gap {
-    align-items: center;
-    min-height: 1.75rem;
-  }
-
-  .then-arrow {
-    width: 1.65rem;
-    height: auto;
-    transform: rotate(90deg);
-  }
-}
-
 /* On a phone the band keeps to the title and the box, so a row of the list starts on
    the first screen, as the words under the box are not drawn there either. */
-@media (max-width: 40rem) {
-  .then-now {
-    display: none;
-  }
-}
-
-@media print {
-  .then-now {
-    border: 0;
-    padding: 0;
-  }
-
-  .now-well {
-    margin-top: 0;
-    padding: 0;
-    background: none;
-    color: inherit;
-  }
-
-  .now-tab {
-    position: static;
-    height: auto;
-    padding: 0;
-    background: none;
-  }
-}
 
 /* The home page's card, once, in the order it is read (DESIGN.md, Motion): the arrow is
-   drawn from the report to the record, then the marker lands on the claim's place and
-   one ring leaves it, as on a claim page. The words are there from the first paint; the
+   drawn from the report to the record, then the marker lands on the pair's place and
+   one ring leaves it, as on a pair page. The words are there from the first paint; the
    drawing rests on its finished state, which is what reduced motion and paper show. */
-@media (prefers-reduced-motion: no-preference) {
-  .then-arrow path {
-    stroke-dasharray: 1 1.2;
-    animation: line-drawn 0.55s var(--ease-out) 0.35s both;
-  }
-
-  .then-arrow path + path {
-    animation-duration: 0.3s;
-    animation-delay: 0.75s;
-  }
-
-  .now-well .track .step.here {
-    position: relative;
-    animation: mark-land 0.6s var(--ease-out) 0.95s both;
-  }
-
-  .now-well .track .step.here::after {
-    content: "";
-    position: absolute;
-    inset: -1.5px;
-    border-radius: 50%;
-    border: 1.5px solid var(--blue);
-    animation: mark-ring 0.9s var(--ease-out) 1.25s both;
-  }
-}
 
 /* The home band on the light page (asked for by the operator on 2026-11-17): a ground
    with a little depth, and a dot grid that changes in colour and strength across it, all
@@ -10307,7 +5790,7 @@ body:has(.band.home) .bar {
 
 /* ---- A phone's first screen (openspec home-then-now 4o) ----
    The masthead is closer, the box and its button share one line, and the three things
-   to try stand under them, so that a row of the list and where its claim stands are
+   to try stand under them, so that a row of the list and where its pair stands are
    both on the first screen. */
 @media (max-width: 40rem) {
   .masthead .wrap {
@@ -10343,36 +5826,13 @@ body:has(.band.home) .bar {
     padding-inline: 0.85rem;
     font-size: var(--text-body);
   }
-
-  /* What to try is one press each; how many claims are held is left to the page below. */
-  .under-box {
-    display: block;
-    margin-top: 0.7rem;
-  }
-
-  .under-box .holds {
-    display: none;
-  }
-
-  /* One line of them. */
-  .under-box .try {
-    flex-wrap: nowrap;
-    gap: 0.35rem;
-    font-size: var(--text-s);
-  }
-
-  .under-box .try button {
-    flex: none;
-    min-height: 2.75rem;
-    padding: 0 0.65rem;
-  }
 }
 
 /* ---- Suggestions under the box (openspec search-suggestions; the operator's choice of
    "A" on 2026-11-17 from four mocks in .impeccable/mocks/search-autocomplete/). While
    words are typed, rows of five kinds stand under the box, each kind under its name in
    a fixed order. A row is a drawing for its kind, what it names with the typed words in
-   bold, and in grey at its right how much is behind it or where its claim stands. An
+   bold, and in grey at its right how much is behind it or where its pair stands. An
    outlet's title is in the heading face between its marks. The chosen row is on the
    tint. The last row sends the words as they are. ---- */
 .search .row {

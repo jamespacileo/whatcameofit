@@ -4,7 +4,7 @@ order: 4
 title: Laboratory and animal studies
 answer: Laboratory and animal studies, together called preclinical research, are the tests done on a treatment before it is tested in people.
 rule: how-a-status-is-set
-on_site: When no trial is found for a claim and the first news reports described laboratory or animal work, the status is “Preclinical only”. The kind of study the reports described is recorded with the claim.
+on_site: When no trial is found for a treatment and condition and the first news reports described laboratory or animal work, the status is “Preclinical only”. The kind of study the reports described is recorded with the treatment.
 sources:
   - name: "U.S. Food and Drug Administration, The Drug Development Process, Step 2: Preclinical Research"
     url: https://www.fda.gov/patients/drug-development-process/step-2-preclinical-research
