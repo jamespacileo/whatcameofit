@@ -4,7 +4,7 @@
 import path from "node:path";
 import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
-import { builtAhead, pairView, shownName } from "./pair-view.ts";
+import { featured, pairView, shownName } from "./pair-view.ts";
 import { categoryListing, interventionListing, topicListing, type ListingView } from "./listing-view.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
@@ -35,7 +35,7 @@ export function bundleMadeAt(): string {
   return pairBundle().manifest.made_at;
 }
 
-export { builtAhead, pairView, shownName, type PairEventView, type PairTrialView, type PairView } from "./pair-view.ts";
+export { featured, pairView, shownName, type PairEventView, type PairTrialView, type PairView } from "./pair-view.ts";
 
 /** The version of the bundle this build reads: the checksum `load-pairs.mjs` loads it into
  * D1 under, as its manifest states and `readBundle` checked. */
@@ -48,10 +48,9 @@ export function pairPages(): Record<string, any> {
   return pairBundle().pages.PairPage ?? {};
 }
 
-/** The pairs whose page, card and embed this build makes (decision 2); the Worker makes
- * every other pair's page on request. */
-export function builtAheadPages(): Record<string, any> {
-  return Object.fromEntries(Object.entries(pairPages()).filter(([, page]) => builtAhead(page)));
+/** The pairs built pages carry as examples (`featured`). */
+export function featuredPages(): Record<string, any> {
+  return Object.fromEntries(Object.entries(pairPages()).filter(([, page]) => featured(page)));
 }
 
 // Listing pages (openspec pairs-site, task 3.2). Every list is worked out here from the pair
@@ -327,17 +326,6 @@ export function pairLookupMaps(): { articles: Record<string, string[]>; claims: 
 
 export { PAIR_RECORD_FORMAT };
 export const PAIR_INDEX_FORMAT = { format: "pairs-index", format_version: 1 } as const;
-
-/** The pairs whose open data record the build writes: those whose page it builds ahead, and
- * a data file with no page. Every other record is served on request from D1
- * (worker/pairs.mjs), so a full bundle does not take a file per pair in the deployment,
- * whose file limit it would pass (task 1.3; docs/sources.md, Workers static assets). */
-export function builtAheadRecords(): string[] {
-  const pages = pairPages();
-  return Object.keys(pairBundle().pages.PairDataFile ?? {})
-    .filter((address) => !pages[address] || builtAhead(pages[address]))
-    .sort();
-}
 
 /** The index of the pairs' open data records. */
 export function pairDataIndex(siteName: string, siteUrl: string) {

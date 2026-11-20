@@ -4,14 +4,13 @@
 import Base from "../layouts/Base.astro";
 import { SITE } from "../../site.config.mjs";
 import { DATA_LICENCE, DATA_LICENCE_URL, dataCredit } from "../lib/open-data";
-import { builtAheadRecords, pairDataIndex } from "../lib/pairs";
+import { pairDataIndex } from "../lib/pairs";
 import { canonicalAddress } from "../lib/structured";
 
 const index = pairDataIndex(SITE.name, SITE.url);
 const count = index.entries.length;
-// A record the build wrote, so the example opens on a copy with no store as well.
-const written = new Set(builtAheadRecords());
-const example = index.entries.find((entry) => written.has(entry.address))?.record;
+// Every record is served on request from D1 (worker/pairs.mjs); the first stands for them.
+const example = index.entries[0]?.record;
 const description =
   "Every treatment and condition the site follows, with its status and the trial records behind it, as JSON you can download and reuse: an index of every pair, and one file per pair.";
 const structured = {

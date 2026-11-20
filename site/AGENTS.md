@@ -8,6 +8,8 @@ astro dev --background
 
 Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
 
+Astro's dev server runs no Worker, so it shows no pair page, listing or embed: the build makes none, and the Worker makes each on request. To see them, run `make pairs-dev` from the repository root: it builds from a bundle (the small `tests/bundle` unless `PAIRS_BUNDLE` names another), loads it into D1's local engine and serves the site with its Worker at http://localhost:8788.
+
 ## Documentation
 
 Full documentation: https://docs.astro.build

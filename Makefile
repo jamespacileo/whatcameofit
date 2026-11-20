@@ -122,6 +122,13 @@ deploy-check deploy-pairs-check: site/node_modules
 deploy: site/node_modules
 	PAIRS_BUNDLE= PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs $(ARGS)
 
+# The pairs site on this machine as a deployment serves it, with the Worker and the bundle in
+# D1's local engine: http://localhost:8788. Astro's dev server has no pair pages, since none is
+# built (site/scripts/pairs-dev.mjs). PAIRS_BUNDLE names another bundle.
+.PHONY: pairs-dev
+pairs-dev: site/node_modules
+	node site/scripts/pairs-dev.mjs
+
 # The site with its registry search, on this machine only: http://localhost:8787
 # Reads the model settings from .env and builds from PAIRS_BUNDLE (the tests' small bundle unless named).
 lookup-dev: site/node_modules

@@ -246,7 +246,8 @@ test("the built listing is the file given, and a pair's page does not fetch it",
   }
   assert.deepEqual(fs.readFileSync(path.join(dist, "trial-listed.txt"), "utf8").trim().split("\n"), listing.trials.map((row) => row[0]));
   // Scenario: A page that needs no search
-  const pair = fs.readFileSync(path.join(dist, HOLDER, "index.html"), "utf8");
+  // A pair's page is made on request into the pair frame, with nothing more than its record.
+  const pair = fs.readFileSync(path.join(dist, "pair-shell", "index.html"), "utf8");
   assert.ok(!pair.includes("trials-listing") && !pair.includes("trial-listed"));
 });
 

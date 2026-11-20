@@ -13,6 +13,18 @@ import { SITE } from "../site.config.mjs";
 const ADDRESS = /^\/([a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*)$/;
 const VERSION = /data-pair-version="([0-9a-f]{16})"/;
 const MESH_EDITION = /data-mesh-edition="([^"]*)"/;
+// The site's address as the build wrote it into the frame's canonical link: the Worker's own
+// SITE_URL is not the build's, so every address a page made here names comes from the frame.
+const SITE_ORIGIN = /<link rel="canonical" href="(https?:\/\/[^/"]+)\/__PAIR_ADDRESS__"/;
+
+/** The headers public/_headers sends with every file of the site ("/*"). A response made here
+ * is no file, so the Worker sets them itself; tests/pair-on-request.build-test.mjs holds the
+ * two lists the same. */
+export const SITE_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=31536000",
+};
 export const SHELL_PATH = "/pair-shell";
 const DAY_SECONDS = 86400;
 // Said when a pair's file does not pass its check: nothing of the file is shown.
@@ -48,12 +60,15 @@ export async function builtVersion(env, url) {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(shell)));
   const build = [...digest.slice(0, 8)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
   const meshEdition = (MESH_EDITION.exec(shell)?.[1] ?? "").replaceAll("&amp;", "&").replaceAll("&#39;", "'").replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-  return { shell, version, build, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
+  const siteUrl = SITE_ORIGIN.exec(shell)?.[1];
+  if (!siteUrl) return null;
+  return { shell, version, build, siteUrl, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
 }
 
-/** The headers of a page or file made here: its type and caching, and the frame's robots mark. */
+/** The headers of a page or file made here: the site's own, its type and caching, and the
+ * frame's robots mark. */
 export function madeHeaders(built, type, cacheControl) {
-  const headers = new Headers({ "Content-Type": type, "Cache-Control": cacheControl });
+  const headers = new Headers({ ...SITE_HEADERS, "Content-Type": type, "Cache-Control": cacheControl });
   if (built.robots) headers.set("X-Robots-Tag", built.robots);
   return headers;
 }
@@ -83,8 +98,11 @@ export async function bundleFile(env, version, model, key) {
 
 /** The frame with a page's parts in their places. Each part is put in by a function, so it goes
  * in as written: a replacement string would read "$$" or "$&" in it as patterns. */
-export function fill(shell, { title, description, address, band, sheet }) {
-  return shell
+// The frame's oEmbed link (PairShell.astro): kept for a pair's page, removed for a listing's.
+const OEMBED_LINK = /<link[^>]*type="application\/json\+oembed"[^>]*>/;
+
+export function fill(shell, { title, description, address, band, sheet, oembed = false }) {
+  return (oembed ? shell : shell.replace(OEMBED_LINK, ""))
     .replaceAll("__PAIR_TITLE__", () => escape(title))
     .replaceAll("__PAIR_DESCRIPTION__", () => escape(description))
     .replaceAll("__PAIR_ADDRESS__", () => escape(address))
@@ -152,6 +170,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
     description: pairDescription(view),
     address,
     band: renderPairBand(view),
+    oembed: true,
     sheet: renderPairSheet(view, narrowerPairs(file, intervention === ABSENT ? null : intervention, published)),
   });
   const answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });
@@ -185,7 +204,7 @@ export async function pairRecord(request, env, validate, cache) {
   if (!validate(file)) {
     return new Response(JSON.stringify({ error: UNREADABLE }), { status: 500, headers: madeHeaders(built, "application/json; charset=utf-8", "no-store") });
   }
-  const answer = new Response(pairRecordText(file, SITE.name, SITE.url), {
+  const answer = new Response(pairRecordText(file, SITE.name, built.siteUrl), {
     headers: madeHeaders(built, "application/json; charset=utf-8", `public, max-age=${DAY_SECONDS}`),
   });
   if (cache) await cache.put(key, answer.clone());

@@ -1,0 +1,30 @@
+---
+// The frame of a pair's embed, which the Worker fills on request (worker/shares.mjs) with
+// lib/embed-render.ts: the page head with the site's styles, the footer notices every page
+// carries (scripts/check-dist.mjs), and marked places for the title, the body and when the
+// registries were read. The build makes no embed of its own (openspec pairs-site task 4.6), and the
+// Worker never serves the frame itself.
+import "../styles/global.css";
+import { SITE } from "../../site.config.mjs";
+import { NOTICES } from "../lib/notices";
+---
+
+<!doctype html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* The pair page is the one to find; this is only its window elsewhere. */}
+    <meta name="robots" content="noindex" />
+    <title>__EMBED_TITLE__ | {SITE.name}</title>
+  </head>
+  <body class="embed">
+    <article>
+      <Fragment set:html="<!--embed-article-->" />
+      <footer>
+        {NOTICES.map((notice) => <p>{notice}</p>)}
+        <p>Data sources: ClinicalTrials.gov, Medical Subject Headings (MeSH).<Fragment set:html="<!--embed-registries-->" /></p>
+      </footer>
+    </article>
+  </body>
+</html>
