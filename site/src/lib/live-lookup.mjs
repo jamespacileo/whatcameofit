@@ -60,7 +60,7 @@ const REFUSALS = {
   address: "That does not look like the address of an article.",
   too_long: "That is too much text. Paste the headline and the first few paragraphs only.",
   busy: "Too many searches are being made right now. Try again in a minute.",
-  budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
+  budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Published pages remain available.",
   not_set_up: "The registry search is not available on this site at the moment.",
   failed: "The search could not be completed. Nothing was found or ruled out. Try again in a minute.",
   timeout: "The search took too long and was stopped. Nothing was found or ruled out. Try again in a minute.",
