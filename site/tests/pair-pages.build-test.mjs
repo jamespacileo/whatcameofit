@@ -201,8 +201,13 @@ test("each pair's open data record is the lab's data file as written, with the l
   const files = readBundle("tests/bundle").pages.PairDataFile;
   const index = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs.json"), "utf8"));
   assert.deepEqual(index.entries.map((entry) => entry.address), Object.keys(files).sort());
+  // The build writes the record of a pair it builds ahead; the Worker serves the rest from D1
+  // (task 1.3, tests/pair-on-request.build-test.mjs).
   for (const [address, file] of Object.entries(files)) {
-    const record = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs", `${address}.json`), "utf8"));
+    const written = path.join(withBundle, "data", "pairs", `${address}.json`);
+    assert.equal(fs.existsSync(written), builtAhead(pages[address]), address);
+    if (!builtAhead(pages[address])) continue;
+    const record = JSON.parse(fs.readFileSync(written, "utf8"));
     assert.equal(record.format, "pair-record");
     assert.match(record.licence, /CC BY 4\.0/);
     assert.deepEqual(record.pair, file.pair);

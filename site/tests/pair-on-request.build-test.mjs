@@ -178,6 +178,36 @@ test("the same file gives the same page built ahead and made on request", async 
   }
 });
 
+test("a pair's open data record is written by the build only with its page, and served from D1 otherwise", async () => {
+  // Task 1.3: one record a pair would pass the deployment's file limit at full size.
+  for (const [address, page] of Object.entries(pages)) {
+    assert.equal(fs.existsSync(path.join(dist, "data", "pairs", `${address}.json`)), builtAhead(page), address);
+  }
+  const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "pairs.json"), "utf8"));
+  assert.equal(index.entries.length, Object.keys(pages).length);
+  for (const entry of index.entries) {
+    const response = await get(entry.record);
+    assert.equal(response.status, 200, entry.record);
+    assert.match(response.headers.get("Content-Type"), /application\/json/);
+    const record = await response.json();
+    assert.equal(record.format, "pair-record");
+    assert.equal(record.pair.row.pair.address, entry.address);
+  }
+  // The record made on request is the build's own text for the same file.
+  const recordPath = `/data/pairs/${COMPARED}.json`;
+  const built = fs.readFileSync(path.join(dist, recordPath.slice(1)), "utf8");
+  hidden.add(recordPath);
+  try {
+    const response = await get(recordPath);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("Cache-Control"), /max-age=86400/);
+    assert.equal(await response.text(), built);
+  } finally {
+    hidden.delete(recordPath);
+  }
+  assert.equal((await get("/data/pairs/no-such--pair.json")).status, 404);
+});
+
 test("a title holding markup is shown as text, built ahead and made on request", async () => {
   const built = fs.readFileSync(path.join(dist, BUILT_WITH_MARKUP, "index.html"), "utf8");
   const made = await (await get(`/${ON_REQUEST}`)).text();
