@@ -108,6 +108,13 @@ test("a folder that differs from its manifest is refused before any statement is
   }
 });
 
+test("a load keeps the current version and the one before unless told to keep more, never fewer", () => {
+  assert.throws(() => statements(bundle, { keep: 1 }), /at least 2/);
+  const kept = (sql) => sql.find((one) => one.startsWith("DELETE FROM pair_bundle"));
+  assert.match(kept(statements(bundle).sql), /LIMIT 2\)/);
+  assert.match(kept(statements(bundle, { keep: 10 }).sql), /LIMIT 10\)/);
+});
+
 test("the command refuses a folder that holds no page file", () => {
   const empty = mkdtempSync(join(tmpdir(), "thenwhat-bundle-"));
   try {

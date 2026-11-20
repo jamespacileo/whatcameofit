@@ -19,6 +19,18 @@ const MIGRATIONS = path.resolve(SITE_DIR, "../store/ingest/migrations");
 export const PREVIEW_PAIRS_DATABASE = "thenwhat-pairs-pr-preview";
 /** The bundle a preview loads unless PREVIEW_PAIRS_BUNDLE names another folder. */
 export const PREVIEW_PAIRS_BUNDLE = path.join(SITE_DIR, "tests/bundle");
+/** How many bundle versions the previews' database keeps, newest loads first. A preview reads
+ * pages made on request and open-data records from D1 at the version its build recorded in
+ * /pair-shell for as long as it is up, but the store's own rule (the current version and the
+ * one before) dropped an older open pull request's version after two newer loads, and its
+ * pages then answered 404 until it was pushed again (review of PR 383). A preview's version
+ * changes only when a pull request changes its bundle, so ten distinct bundles while one pull
+ * request is open is far more than happens. A version is known only to the Worker built from
+ * it, so keeping exactly the live previews' versions would mean asking every open preview at
+ * each load; the count is the smaller rule. At the rehearsal's size (about 100 MB a version)
+ * ten is about 1 GB of the 10 GB a D1 database may hold (docs/sources.md). Production keeps the
+ * store's rule. */
+export const PREVIEW_KEPT_VERSIONS = 10;
 const HOW = 'see docs/deploy.md, "Pair pages in a preview"';
 
 export function wrangler(args) {
@@ -99,7 +111,7 @@ export function loadPairsBundle({ config, database, bundle, local = false, persi
   const where = local ? ["--local", ...(persistTo ? ["--persist-to", persistTo] : [])] : ["--remote"];
   const migrated = wrangler(["d1", "migrations", "apply", database.name, ...where, "--config", config]);
   if (migrated.status !== 0) throw new Error(`the migrations did not apply to ${database.name}: ${lastError(`${migrated.stdout}${migrated.stderr}`)}`);
-  const load = statements(bundle);
+  const load = statements(bundle, { keep: PREVIEW_KEPT_VERSIONS });
   const held = wrangler(["d1", "execute", database.name, ...where, "--config", config, "--json", "--command",
     `SELECT current FROM pair_bundle WHERE version = '${load.version}'`]);
   if (held.status !== 0) throw new Error(`${database.name} could not be read: ${lastError(`${held.stdout}${held.stderr}`)}`);
