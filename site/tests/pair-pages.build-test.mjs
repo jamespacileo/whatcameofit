@@ -28,6 +28,8 @@ import { SITEMAP_LIMIT, inFiles } from "../src/lib/sitemap-files.ts";
 import { readLookupFile, readSearchDetail } from "../src/lib/lookup-file.mjs";
 import { FILE_LIMIT } from "../scripts/dist-size.mjs";
 import { GOLDENS, keptGoldens, writeGoldens } from "./goldens.mjs";
+import { meshCredit } from "../src/lib/blocks.ts";
+import { meshEdition } from "../src/lib/clinical.ts";
 
 const withBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-"));
 const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowest-"));
@@ -172,6 +174,15 @@ test("every built condition page's main content is the HTML kept for it", () => 
   assert.ok(built.size > 0);
   assert.deepEqual([...kept.keys()].sort(), [...built.keys()].sort());
   for (const [name, html] of built) assert.equal(html, kept.get(name), name);
+});
+
+// The credit NLM asks for, on the built index of clinical categories, is the one the Worker
+// writes on a category page made on request: one function writes both (lib/blocks.ts).
+test("the built clinical index credits MeSH in the very words a category page made on request does", () => {
+  const html = fs.readFileSync(path.join(withBundle, "clinical", "index.html"), "utf8");
+  const edition = meshEdition(readBundle("tests/bundle").manifest?.snapshot?.mesh_years ?? []);
+  assert.ok(html.includes(meshCredit(edition)), "the built credit is meshCredit's");
+  assert.ok(renderListingSheet(categoryListing(Object.values(readBundle("tests/bundle").pages.PairClinicalCategoryPage)[0], new Set(Object.keys(pages)), new Set()), edition).includes(meshCredit(edition)));
 });
 
 test("no intervention, category or topic page is built: the Worker makes each", () => {
