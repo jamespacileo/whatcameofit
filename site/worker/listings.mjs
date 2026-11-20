@@ -71,7 +71,7 @@ export async function listingPage(request, env, validators, cache) {
   // Both sets are this page's own: the pairs its file names that are published, and its own
   // broader and narrower categories that have a page. Nothing elsewhere in a bundle changes them.
   // Answered before the page is written: an asker who holds it is told so.
-  const tag = await contentTag(built, "listing", file, [...published].sort(), [...known].sort(), built.meshEdition);
+  const tag = await contentTag(built, "listing", built.pageFrame, file, [...published].sort(), [...known].sort(), built.meshEdition);
   const caching = `public, max-age=${DAY_SECONDS}`;
   if (unchanged(request, tag)) return notModified(built, tag, caching);
   const view = listing.view(file, published, known);

@@ -11,7 +11,7 @@ import { embedTitle, oembedOf, renderEmbedArticle, renderEmbedRegistries } from 
 import { escape } from "../src/lib/pair-render.ts";
 import { pairView } from "../src/lib/pair-view.ts";
 import { SITE } from "../site.config.mjs";
-import { ABSENT, UNREADABLE, builtFor, bundleFile, contentTag, fromCache, madeHeaders, notHeld, notModified, unchanged } from "./pairs.mjs";
+import { ABSENT, UNREADABLE, builtFor, bundleFile, contentTag, digestOf, fromCache, madeHeaders, notHeld, notModified, unchanged } from "./pairs.mjs";
 
 export const EMBED_SHELL_PATH = "/embed-shell";
 const DAY_SECONDS = 86400;
@@ -73,15 +73,14 @@ export async function shareAnswer(request, env, validate, cache) {
     const where = new URL(card);
     const image = await env.ASSETS.fetch(new Request(new URL(`${where.pathname}${where.search}`, url)));
     if (!image.ok) return null;
-    // The site's own card, whose address carries its revision: its tag is that address.
-    const tag = await contentTag(built, "card", card);
-    if (unchanged(request, tag)) {
-      await image.body?.cancel();
-      return notModified(built, tag, `public, max-age=${DAY_SECONDS}`);
-    }
+    // The site's own card, tagged by its pixels: its address's revision follows the mark, not
+    // the card's layout, so a redrawn card at the same address must get a new tag.
+    const bytes = new Uint8Array(await image.arrayBuffer());
+    const tag = await contentTag(built, "card", await digestOf(bytes));
+    if (unchanged(request, tag)) return notModified(built, tag, `public, max-age=${DAY_SECONDS}`);
     const headers = madeHeaders(built, "image/png", `public, max-age=${DAY_SECONDS}`);
     headers.set("ETag", tag);
-    answer = new Response(image.body, { headers });
+    answer = new Response(bytes, { headers });
   } else {
     const file = await bundleFile(env, built.version, "PairPage", share.address);
     if (file === ABSENT) return notHeld(key);

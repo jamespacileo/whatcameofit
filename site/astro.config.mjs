@@ -3,6 +3,7 @@ import { defineConfig } from "astro/config";
 
 import { EXTENSION_OFFERED, SITE } from "./site.config.mjs";
 import { writeBundleCode } from "./scripts/bundle-code.mjs";
+import { rendererDigest } from "./scripts/renderer-digest.mjs";
 
 // The extension page exists only once a store lists the extension. A page that
 // offered nothing to install would be a dead end, so its route is added here, and
@@ -31,6 +32,9 @@ const pairPages = {
       }
       // The validators and types of the bundle's page models (decision 1), for the Worker.
       await writeBundleCode(process.env.PAIRS_BUNDLE, ".bundle-code");
+      // The digest of the code that writes pages made on request, for the frames to carry
+      // (scripts/renderer-digest.mjs): every entity tag takes it in.
+      process.env.PAIRS_RENDERER_DIGEST = rendererDigest();
       // No file is built per pair (openspec pairs-site task 4.6): every pair's page, open data
       // record, embed, oEmbed description and card address is the Worker's, made on request
       // from D1 (worker/pairs.mjs, worker/shares.mjs), so the build's file count does not grow

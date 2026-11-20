@@ -12,6 +12,10 @@ import { SITE } from "../site.config.mjs";
 /** A pair's address: two slugs joined by a double hyphen. */
 const ADDRESS = /^\/([a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*)$/;
 const VERSION = /data-pair-version="([0-9a-f]{16})"/;
+const RENDERER = /data-renderer="([0-9a-f]+)"/;
+// The footer's date of the bundle (Base.astro): the same page made from an unchanged file says
+// another date after each load, which is no change to the page itself.
+const GATHERED = /<p data-records-gathered>[^<]*<\/p>/;
 const MESH_EDITION = /data-mesh-edition="([^"]*)"/;
 // The site's address as the build wrote it into the frame's canonical link: the Worker's own
 // SITE_URL is not the build's, so every address a page made here names comes from the frame.
@@ -72,23 +76,29 @@ export async function builtVersion(env, url) {
   const meshEdition = (MESH_EDITION.exec(shell)?.[1] ?? "").replaceAll("&amp;", "&").replaceAll("&#39;", "'").replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">");
   const siteUrl = SITE_ORIGIN.exec(shell)?.[1];
   if (!siteUrl) return null;
-  // The frame as a page's content sees it: the same whatever bundle version it records, so a page
-  // whose file is unchanged keeps its tag from one bundle to the next.
-  const frameTag = await digestOf(shell.replace(VERSION, 'data-pair-version=""'));
-  return { shell, version, build, frameTag, siteUrl, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
+  // The frame as a page's content sees it: the same whatever bundle it was built from (its
+  // version and the date the bundle was made left out), so an HTML page whose file is unchanged
+  // keeps its tag from one bundle to the next.
+  const pageFrame = await digestOf(shell.replace(VERSION, 'data-pair-version=""').replace(GATHERED, "<p data-records-gathered></p>"));
+  const renderer = RENDERER.exec(shell)?.[1];
+  if (!renderer) return null;
+  return { shell, version, build, pageFrame, renderer, siteUrl, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
 }
 
-/** The first 12 bytes of a text's SHA-256, in hex. */
-async function digestOf(text) {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)));
+/** The first 12 bytes of the SHA-256 of a text or of bytes, in hex. */
+export async function digestOf(content) {
+  const bytes = typeof content === "string" ? new TextEncoder().encode(content) : content;
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
   return [...digest.slice(0, 12)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /**
- * A page's entity tag, from what it is made of (openspec pairs-site task 4.6e): the files it reads
- * from D1, as read, and the sets it reads with them, and the frame as a page sees it. A page
- * whose file is unchanged keeps its tag across bundle versions, so a crawler asking again is told
- * it is unchanged (304) rather than sent it whole after every load.
+ * A page's entity tag, from what it is made of (openspec pairs-site task 4.6e): the code that
+ * writes it (the renderer digest the build put in the frame) and the site's address, then each
+ * format's own inputs, given by the caller: the files it reads from D1, as read, the part of the
+ * sets read with them that reaches the page, and for an HTML page the frame as a page sees it.
+ * A page whose inputs are unchanged keeps its tag across bundle versions, so a crawler asking
+ * again is told it is unchanged (304) rather than sent it whole after every load.
  *
  * Weak (`W/`): two pages with one tag are the same page but not the same bytes, since the frame
  * carries the bundle version it was built from. RFC 9110 8.8.1: a weak validator "might not
@@ -97,7 +107,7 @@ async function digestOf(text) {
  * https://www.rfc-editor.org/rfc/rfc9110#section-8.8
  */
 export async function contentTag(built, ...parts) {
-  const text = [built.frameTag, ...parts.map((part) => (part === ABSENT ? "absent" : typeof part === "string" ? part : JSON.stringify(part)))].join("\u0000");
+  const text = [built.renderer, built.siteUrl, ...parts.map((part) => (part === ABSENT ? "absent" : typeof part === "string" ? part : JSON.stringify(part)))].join("\u0000");
   return `W/"${await digestOf(text)}"`;
 }
 
@@ -117,11 +127,15 @@ export function notModified(built, tag, cacheControl) {
   return new Response(null, { status: 304, headers });
 }
 
-/** A kept page, or 304 for an asker who holds it, read from what the cache kept: no D1 read. */
+/** A kept page, or 304 for an asker who holds it, read from what the cache kept: no D1 read.
+ * The 304 carries the kept page's age and date, so a cache downstream keeps it no longer than
+ * the page's own day (RFC 9111 4.2.3). */
 export function fromCache(request, built, kept) {
   const tag = kept.headers.get("ETag");
-  if (kept.status === 200 && tag && unchanged(request, tag)) return notModified(built, tag, kept.headers.get("Cache-Control"));
-  return kept;
+  if (!(kept.status === 200 && tag && unchanged(request, tag))) return kept;
+  const answer = notModified(built, tag, kept.headers.get("Cache-Control"));
+  for (const name of ["Age", "Date", "Expires"]) if (kept.headers.has(name)) answer.headers.set(name, kept.headers.get(name));
+  return answer;
 }
 
 /** The headers of a page or file made here: the site's own, its type and caching, and the
@@ -231,7 +245,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   // this treatment or another, leaves the tag as it was.
   const narrower = narrowerPairs(file, intervention === ABSENT ? null : intervention, published);
   // Answered before the page is written: an asker who holds it is told so.
-  const tag = await contentTag(built, "pair", file, narrower);
+  const tag = await contentTag(built, "pair", built.pageFrame, file, narrower);
   const caching = `public, max-age=${DAY_SECONDS}`;
   if (unchanged(request, tag)) return notModified(built, tag, caching);
 

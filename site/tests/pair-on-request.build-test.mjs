@@ -764,6 +764,16 @@ test("an embed whose file fails its check is refused in the embed's own frame, w
 
 // Entity tags (openspec pairs-site task 4.6e): from what a page is made of, kept across bundle
 // versions while that is unchanged, so an asker who holds a page is told so (304).
+/** The pair frame a real build of a bundle leaves: its version, its bundle's date and all. */
+function builtFrame(folder) {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-next-build-"));
+  const made = spawnSync("npx", ["astro", "build", "--outDir", out], { encoding: "utf8", env: { ...process.env, PAIRS_BUNDLE: folder, ASTRO_TELEMETRY_DISABLED: "1" } });
+  assert.equal(made.status, 0, made.stdout.slice(-2000) + made.stderr.slice(-2000));
+  const frame = fs.readFileSync(path.join(out, "pair-shell", "index.html"), "utf8");
+  fs.rmSync(out, { recursive: true, force: true });
+  return frame;
+}
+
 const ON_REQUEST_KINDS = () => [`/${ON_REQUEST}`, `/data/pairs/${ON_REQUEST}.json`, `/embed/${ON_REQUEST}`, `/oembed/${ON_REQUEST}.json`, `/og/${ON_REQUEST}.png`, "/intervention/acoziborole", "/topic/infections"];
 
 test("every page made on request carries a weak tag, and asking with it answers 304 with no body", async () => {
@@ -804,7 +814,7 @@ test("a kept page answers 304 to an asker who holds it, with no read of D1", asy
 test("a page whose file is unchanged keeps its tag under a new bundle version; a changed one does not", async () => {
   const CHANGED = "tulisokibart--scleroderma-diffuse";
   const before = new Map();
-  for (const pathname of [`/${ON_REQUEST}`, `/${CHANGED}`]) {
+  for (const pathname of [`/${ON_REQUEST}`, `/${CHANGED}`, `/data/pairs/${ON_REQUEST}.json`]) {
     const response = await getFresh(pathname);
     before.set(pathname, response.headers.get("ETag"));
     await response.body?.cancel();
@@ -825,13 +835,19 @@ test("a page whose file is unchanged keeps its tag under a new bundle version; a
   for (const sql of statements(next, { keep: 10 }).sql) await db.prepare(sql).run();
   const version = statements(next).version;
   assert.notEqual(version, statements(bundle).version);
-  frameEdits["/pair-shell"] = (text) => text.replace(/data-pair-version="[0-9a-f]{16}"/, `data-pair-version="${version}"`);
+  // The frame of a real build of the next bundle: another version and another bundle date.
+  const nextFrame = builtFrame(next);
+  assert.match(nextFrame, new RegExp(`data-pair-version="${version}"`));
+  frameEdits["/pair-shell"] = () => nextFrame;
   try {
     const kept = await getFresh(`/${ON_REQUEST}`);
     assert.equal(kept.headers.get("ETag"), before.get(`/${ON_REQUEST}`), "an unchanged pair keeps its tag");
     await kept.body?.cancel();
     const asked = await mf.dispatchFetch(`https://tag-next-${(freshHosts += 1)}.test/${ON_REQUEST}`, { headers: { "If-None-Match": before.get(`/${ON_REQUEST}`) } });
     assert.equal(asked.status, 304);
+    const record = await getFresh(`/data/pairs/${ON_REQUEST}.json`);
+    assert.equal(record.headers.get("ETag"), before.get(`/data/pairs/${ON_REQUEST}.json`), "an unchanged record keeps its tag");
+    await record.body?.cancel();
     const changed = await getFresh(`/${CHANGED}`);
     assert.notEqual(changed.headers.get("ETag"), before.get(`/${CHANGED}`), "a changed pair has a new tag");
     assert.match(await changed.text(), /A retitled study/);
@@ -857,7 +873,10 @@ test("a pair added or removed elsewhere leaves a page's tag as it was, even one 
   const db = await mf.getD1Database("PAIRS");
   for (const sql of statements(next, { keep: 10 }).sql) await db.prepare(sql).run();
   const version = statements(next).version;
-  frameEdits["/pair-shell"] = (text) => text.replace(/data-pair-version="[0-9a-f]{16}"/, `data-pair-version="${version}"`);
+  // The frame of a real build of the next bundle: another version and another bundle date.
+  const nextFrame = builtFrame(next);
+  assert.match(nextFrame, new RegExp(`data-pair-version="${version}"`));
+  frameEdits["/pair-shell"] = () => nextFrame;
   try {
     const after = await getFresh(`/${KEPT}`);
     assert.equal(after.headers.get("ETag"), tag);
@@ -905,4 +924,22 @@ test("a narrower pair the version holds no page for is not linked, and a stored 
   await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart' AND part > 0").bind(version).run();
   await db.prepare("UPDATE pair_page SET body = 'null' WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart'").bind(version).run();
   assert.equal((await getFresh("/tulisokibart--lung-diseases-interstitial")).status, 500);
+});
+
+test("the code that writes a page is in its tag: a renderer or wording change gives every page a new one", async () => {
+  const before = await getFresh(`/${ON_REQUEST}`);
+  const tag = before.headers.get("ETag");
+  await before.body?.cancel();
+  // The frame of a build whose renderer digest differs, as after a change to the site's wording.
+  frameEdits["/pair-shell"] = (text) => text.replace(/data-renderer="[0-9a-f]+"/, 'data-renderer="000000000000000000000000"');
+  try {
+    const after = await getFresh(`/${ON_REQUEST}`);
+    assert.notEqual(after.headers.get("ETag"), tag);
+    await after.body?.cancel();
+    const asked = await mf.dispatchFetch(`https://tag-renderer-${(freshHosts += 1)}.test/${ON_REQUEST}`, { headers: { "If-None-Match": tag } });
+    assert.equal(asked.status, 200, "an outdated page is never called unchanged");
+    await asked.body?.cancel();
+  } finally {
+    frameEdits["/pair-shell"] = (text) => text;
+  }
 });
