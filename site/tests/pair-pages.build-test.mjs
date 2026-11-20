@@ -383,6 +383,8 @@ test("a build that reads a bundle leaves out It happened and Anniversaries, and 
   };
   walk(withBundle);
   assert.deepEqual(linked, []);
+  // Nor does the guide's entry on approval send a reader to the page by name.
+  assert.doesNotMatch(page(withBundle, "guide/approved").body.textContent, /It happened/);
   // A build with no bundle still has them.
   assert.ok(fs.existsSync(path.join(without, "it-happened", "index.html")));
   assert.ok(fs.existsSync(path.join(without, "anniversaries", "index.html")));
