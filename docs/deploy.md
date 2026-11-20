@@ -77,7 +77,7 @@ What a preview does (`site/scripts/pairs-preview.mjs`, called by `pr-preview.mjs
 
 1. Reads `thenwhat-pairs-pr-preview` with `wrangler d1 info`. When the token cannot read it, it does not exist, or its jurisdiction is not `eu`, the log says `Pair pages left out of this copy: <why>` and the copy is the claims site as before. Nothing else changes.
 2. Applies `store/ingest/migrations` to it and loads the bundle (`site/tests/bundle`, or the folder `PREVIEW_PAIRS_BUNDLE` names) with the store's own loader statements, unless that version is already current there. The log says `Pair pages: bundle <version> loaded into thenwhat-pairs-pr-preview` or `already current in`.
-3. Builds the copy with `PAIRS_BUNDLE` set to that bundle, and deploys it with `worker/with-pairs.mjs` and the database bound as `PAIRS`, in a configuration written for the run. `wrangler.preview.jsonc` itself holds no database id, and production's `wrangler.jsonc` is never read.
+3. Builds the copy with `PAIRS_BUNDLE` set to that bundle, and deploys it with `worker/with-pairs.mjs` and the database bound as `PAIRS`, in a configuration written for the run. `wrangler.preview.jsonc` itself holds no database id. A preview never reads production's `wrangler.jsonc`: `pairsConfig` refuses any configuration but a preview's. Only `make deploy` builds from it ("Pair pages in production", below).
 
 The database keeps the current bundle and the one before. Previews built from more than two different bundles at once displace the oldest, whose pages made on request then answer not found until that preview is published again. Previews of the committed small bundle share one version.
 
