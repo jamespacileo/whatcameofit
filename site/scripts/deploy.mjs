@@ -134,8 +134,14 @@ const env = {
   PAIRS_BUNDLE: pairs ? pairs.folder : bundleFolder,
 };
 delete env.CLOUDFLARE_API_TOKEN;
+// The styleguide is for staging only; production never builds it, whatever this shell holds.
+if (staging) env.STYLEGUIDE = "1";
+else delete env.STYLEGUIDE;
 console.log(`Building for ${siteUrl}.`);
 run("pnpm", ["run", "build"], env);
+if (!staging && fs.existsSync(path.join(dist, "styleguide"))) {
+  stop(["The built site holds the styleguide, which only staging and previews may have. Nothing was published."]);
+}
 if (revision) fs.writeFileSync(path.join(dist, "build-revision.txt"), `${revision}\n`);
 // The bundle version the build was made from, for a smoke check to hold the deployment to.
 if (pairs) fs.writeFileSync(path.join(dist, "bundle-version.txt"), `${pairs.version}\n`);

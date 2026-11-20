@@ -36,3 +36,9 @@
 # What a deployment was built from (scripts/bundle-facts.mjs): for people, not search engines.
 /bundle-manifest.json
   X-Robots-Tag: noindex
+
+# The styleguide, built only for staging and previews (src/styleguide/Styleguide.astro).
+/styleguide
+  X-Robots-Tag: noindex
+/styleguide/*
+  X-Robots-Tag: noindex
