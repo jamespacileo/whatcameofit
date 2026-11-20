@@ -255,3 +255,41 @@ test("the shared stylesheet defines one scale and uses it for font declarations"
   }, css);
   assert.deepEqual(problems, [], "shared style declarations outside the scale");
 });
+
+// The explore page (openspec pairs-site, task 6.2): picks from any tree, at any level, filtered
+// in the browser from one built file. A broad node includes what is beneath it; picks in two
+// trees must both match; the picks live in the address.
+test("the explore page lists the pairs that match picks from two trees, a broad node including what is beneath it", async (t) => {
+  const index = JSON.parse(await readFile(path.join(dist, "data/explore.json"), "utf8"));
+  const inTree = (key, id) => index.pairs.filter((pair) => (pair.at[key] ?? []).includes(id)).map((pair) => pair.address).sort();
+  const page = await openPage(t);
+  await page.goto(`${origin}/explore`);
+  await expect(page.locator("[data-explore-status]")).toHaveText(`${index.pairs.length} treatments and conditions match.`);
+
+  // A broad MeSH node, found by name: every pair at or beneath it.
+  await page.locator("[data-explore-search]").fill("nervous system");
+  await page.locator('[data-pick="body-system:nervous-system-diseases"]').click();
+  const nervous = inTree("body-system", "nervous-system-diseases");
+  assert.ok(nervous.length > 1 && nervous.includes("ambroxol--dementia"), nervous.join(", "));
+  const listed = async () => (await page.locator("[data-explore-results] [data-pair]").evaluateAll((rows) => rows.map((row) => row.dataset.pair))).sort();
+  await expect(page.locator("[data-explore-results] [data-pair]")).toHaveCount(nervous.length);
+  assert.deepEqual(await listed(), nervous);
+
+  // And a kind of treatment: both must match.
+  await page.locator('[data-tree="kind"] input[data-node="drug"]').check();
+  const both = nervous.filter((address) => inTree("kind", "drug").includes(address));
+  await expect(page.locator("[data-explore-results] [data-pair]")).toHaveCount(both.length);
+  assert.deepEqual(await listed(), both);
+  assert.equal(new URL(page.url()).search, "?body-system=nervous-system-diseases&kind=drug");
+
+  // The address alone brings the same picks back, and a chip removes one.
+  const again = await openPage(t);
+  await again.goto(`${origin}/explore?body-system=nervous-system-diseases&kind=drug`);
+  await expect(again.locator("[data-explore-results] [data-pair]")).toHaveCount(both.length);
+  await again.locator('[data-explore-chips] [data-pick="kind:drug"]').click();
+  await expect(again.locator("[data-explore-results] [data-pair]")).toHaveCount(nervous.length);
+  // Its canonical address carries no picks.
+  const canonical = new URL(await again.locator('link[rel="canonical"]').getAttribute("href"));
+  assert.equal(canonical.search, "");
+  assert.match(canonical.pathname, /^\/explore\/?$/);
+});

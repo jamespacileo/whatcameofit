@@ -105,7 +105,7 @@ The site SHALL have a treatments index and a conditions index listing every tree
 - **THEN** the page shows its card, its path in each tree it sits in, its narrower nodes with counts, and every pair whose treatment is a member at or beneath it
 
 ### Requirement: A reader can pick several treatments and conditions at any level
-The explore page SHALL let a reader pick any number of nodes from any tree on either side by name, and list the pairs that match: a node includes everything beneath it, picks within one tree match any of them, picks in different trees must all match. The picks SHALL live in the address, the filtering SHALL run in the reader's browser from one cached file with no database read, and the page SHALL not be indexed with picks in its address.
+The explore page SHALL let a reader pick any number of nodes from any tree on either side by name, and list the pairs that match: a node includes everything beneath it, picks within one tree match any of them, picks in different trees must all match. The picks SHALL live in the address, the filtering SHALL run in the reader's browser from one cached file with no database read, and the page's canonical address SHALL carry no picks.
 
 #### Scenario: A class and a condition
 - **WHEN** a reader picks a drug class and a condition

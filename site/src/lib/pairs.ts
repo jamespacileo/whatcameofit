@@ -7,6 +7,7 @@ import { readBundle, type Bundle } from "./bundle.ts";
 import { featured, pairView, shownName } from "./pair-view.ts";
 import { categoryListing, interventionListing, topicListing, type ListingView } from "./listing-view.ts";
 import { conditionCard, type CardView } from "./card-view.ts";
+import { exploreIndex, type ExploreIndex } from "./explore.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
 import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
@@ -393,4 +394,10 @@ export function pairDataIndex(siteName: string, siteUrl: string) {
         };
       }),
   };
+}
+
+/** The explore page's file: the published pairs with their places in each tree. */
+export function exploreFile(): ExploreIndex {
+  const bundle = pairBundle().pages;
+  return exploreIndex(pairPages(), Object.values(bundle.PairClinicalCategoryPage ?? {}), Object.values(bundle.PairTopicsPage ?? {})[0]);
 }

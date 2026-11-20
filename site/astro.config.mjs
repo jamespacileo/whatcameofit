@@ -45,6 +45,9 @@ const pairPages = {
       // An intervention's, a topic's and a clinical category's page are the Worker's, made on
       // request from the lab's page files (worker/listings.mjs).
       injectRoute({ pattern: "/data/pairs.json", entrypoint: "./src/pair/pairs-index.json.ts" });
+      // The explore page and its one file, filtered in the reader's browser (task 6.2).
+      injectRoute({ pattern: "/explore", entrypoint: "./src/pair/Explore.astro" });
+      injectRoute({ pattern: "/data/explore.json", entrypoint: "./src/pair/explore.json.ts" });
     },
   },
 };

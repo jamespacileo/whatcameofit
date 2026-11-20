@@ -6020,3 +6020,84 @@ body:has(.band.home) .bar {
     margin-bottom: 0.3rem;
   }
 }
+
+/* The explore page (src/scripts/explore.ts): the trees to pick from at the left, the pairs
+   that match at the right; one column on a phone. */
+.explore-find {
+  margin: 1rem 0 0.5rem;
+  max-width: var(--measure);
+  position: relative;
+}
+.explore-find label {
+  display: block;
+  font-size: var(--text-s);
+  margin-bottom: 0.25rem;
+}
+.explore-find input {
+  width: 100%;
+}
+.explore-suggestions {
+  display: grid;
+  gap: 0.2rem;
+  margin-top: 0.3rem;
+}
+.explore-suggestion {
+  background: var(--raised);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid;
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+}
+.explore-suggestion .suggestion-path {
+  color: var(--muted);
+  font-size: var(--text-s);
+}
+.explore-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+.explore-chip,
+.explore-clear {
+  background: var(--tint);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0.2rem 0.7rem;
+}
+.explore-clear {
+  background: none;
+}
+.explore-layout {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(14rem, 1fr) 2.5fr;
+}
+.explore-tree ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+.explore-tree ul ul {
+  padding-left: 1.1rem;
+}
+.explore-tree li {
+  margin: 0.15rem 0;
+}
+.explore-tree details summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--text-s);
+}
+.explore-tree .count,
+.explore-status {
+  color: var(--muted);
+}
+@media (max-width: 48rem) {
+  .explore-layout {
+    grid-template-columns: 1fr;
+  }
+}
