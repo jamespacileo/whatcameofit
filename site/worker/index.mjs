@@ -5,6 +5,7 @@
 // Raw requests are never stored or logged. Independently public structured answers
 // may be cached briefly under a URL digest. Network addresses only count request rates.
 import { PLATFORM_NAMES, readAddress } from "../src/lib/lookup-match.mjs";
+import { LOOKUP_FILE, readLookupFile } from "../src/lib/lookup-file.mjs";
 import { MAX_TEXT_CHARACTERS, readArticle } from "./article.mjs";
 import { lookUp } from "./lookup.mjs";
 import { SITE } from "../site.config.mjs";
@@ -65,11 +66,12 @@ function realTools(env) {
   };
 }
 
-/** The claims that cite this article, as the site lists them. */
+/** The pairs that cite this article, as the site lists them. `slug` and `headline` are the
+ * keys the released extension reads in an answer. */
 function trackedBy(index, articleKey) {
   return (index.articles?.[articleKey] ?? [])
-    .filter((slug) => index.claims?.[slug])
-    .map((slug) => ({ slug, headline: index.claims[slug].headline, page: index.claims[slug].page }));
+    .filter((address) => index.pairs?.[address])
+    .map((address) => ({ slug: address, headline: index.pairs[address].title, page: index.pairs[address].page }));
 }
 
 /**
@@ -264,15 +266,16 @@ export async function handle(request, env, tools) {
 }
 
 async function lookupIndex(env, here) {
-  return env.ASSETS.fetch(new Request(new URL("/lookup.json", here)))
-    .then(response => response.ok ? response.json() : { claims: {} })
-    .catch(() => ({ claims: {} }));
+  return env.ASSETS.fetch(new Request(new URL(LOOKUP_FILE, here)))
+    .then(response => response.ok ? response.json() : null)
+    .catch(() => null)
+    .then(readLookupFile);
 }
 
 async function currentResult(env, address, here) {
   const found = await previousResult(env.LOOKUP_RESULTS, address);
   if (found?.about_a_treatment !== true) return found;
-  const index = await bounded(() => lookupIndex(env, here), INDEX_TIMEOUT_MS, { claims: {} });
+  const index = await bounded(() => lookupIndex(env, here), INDEX_TIMEOUT_MS, readLookupFile(null));
   return withCurrentClaims(found, index);
 }
 

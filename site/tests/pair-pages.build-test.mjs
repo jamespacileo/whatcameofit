@@ -22,6 +22,7 @@ import { SITE } from "../site.config.mjs";
 import { stateFor } from "../../extension/src/lookup.js";
 import { sitemapAddresses, sitemapText } from "./sitemap-read.mjs";
 import { SITEMAP_LIMIT, inFiles } from "../src/lib/sitemap-files.ts";
+import { readLookupFile } from "../src/lib/lookup-file.mjs";
 
 const withBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-"));
 const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowest-"));
@@ -209,6 +210,35 @@ test("the lookup file lists every pair by its address, in the shape the released
   assert.equal(stateFor("news.example.org/story", { index: lookup, savedAt: null }, site).kind, "untracked");
 });
 
+test("version 2 of the lookup file lists every pair by its address, with the same words as version 1", () => {
+  const v1 = JSON.parse(fs.readFileSync(path.join(withBundle, "lookup.json"), "utf8"));
+  const text = fs.readFileSync(path.join(withBundle, "lookup", "2.json"), "utf8");
+  const v2 = JSON.parse(text);
+  assert.deepEqual(Object.keys(v2).sort(), ["articles", "checked_on", "format", "format_version", "generated_at", "live", "notices", "pairs", "places", "topics"]);
+  assert.equal(v2.format, "lookup");
+  assert.equal(v2.format_version, 2);
+  assert.deepEqual(Object.keys(v2.pairs).sort(), Object.keys(pages).sort());
+  const entryKeys = ["condition", "first_reported", "meaning", "names", "no_signal", "place", "status", "terms", "title", "topic", "unchecked"];
+  for (const [address, entry] of Object.entries(v2.pairs)) {
+    assert.deepEqual(Object.keys(entry).sort(), entryKeys);
+    // The same words under the new names; the page is the key itself.
+    const { headline, page, indication, latest_promise, ...same } = v1.claims[address];
+    assert.deepEqual({ ...same, title: headline, condition: indication }, entry, address);
+    assert.equal(page, `/${address}`);
+  }
+  for (const key of ["articles", "generated_at", "live", "notices", "places", "topics"]) assert.deepEqual(v2[key], v1[key], key);
+  assert.equal(v2.checked_on, v1.last_checked);
+  // As the lookup box and the Worker read it: every pair with its page, and nothing from a file of another version.
+  const read = readLookupFile(v2);
+  for (const address of Object.keys(pages)) assert.equal(read.pairs[address].page, `/${address}`);
+  assert.deepEqual(readLookupFile(v1).pairs, {});
+  // One file, kept under the 25 MiB a static file may be at 30,000 pairs (the size the
+  // design plans for), at this bundle's bytes a pair. No larger a pair than version 1.
+  const perPair = Buffer.byteLength(text) / Object.keys(pages).length;
+  assert.ok(perPair * 30_000 < 25 * 1024 * 1024, `${Math.round(perPair)} bytes a pair`);
+  assert.ok(Buffer.byteLength(text) < Buffer.byteLength(JSON.stringify(v1)));
+});
+
 test("each pair's open data record is the lab's data file as written, with the licence", () => {
   const files = readBundle("tests/bundle").pages.PairDataFile;
   const index = JSON.parse(fs.readFileSync(path.join(withBundle, "data", "pairs.json"), "utf8"));
@@ -267,10 +297,10 @@ test("the home page opens with the lookup box, then the latest changes, topics a
 
 test("the search detail file gives each pair its trials, by the pair's address", () => {
   const detail = JSON.parse(fs.readFileSync(path.join(withBundle, "search-detail.json"), "utf8"));
-  assert.deepEqual(Object.keys(detail.claims).sort(), Object.keys(pages).sort());
+  assert.deepEqual(Object.keys(detail.pairs).sort(), Object.keys(pages).sort());
   for (const [address, file] of Object.entries(pages)) {
-    assert.deepEqual(detail.claims[address].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
-    assert.equal(detail.claims[address].reports.length, file.row.first_report ? 1 : 0);
+    assert.deepEqual(detail.pairs[address].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
+    assert.equal(detail.pairs[address].reports.length, file.row.first_report ? 1 : 0);
   }
 });
 
@@ -396,7 +426,7 @@ test("a pair filed under no topic still has its page, its condition's listing, s
   assert.equal(lookup.claims[UNFILED].page, `/${UNFILED}`);
   assert.equal(lookup.claims[UNFILED].topic, null);
   const detail = JSON.parse(fs.readFileSync(path.join(withBundle, "search-detail.json"), "utf8"));
-  assert.deepEqual(detail.claims[UNFILED].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
+  assert.deepEqual(detail.pairs[UNFILED].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
   const sitemap = sitemapText(withBundle);
   assert.match(sitemap, new RegExp(`/${UNFILED}</loc>`));
 });

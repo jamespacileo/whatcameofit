@@ -2,8 +2,7 @@
 // holds one, by outlet, title and date, and its trials, by registry identifier and title.
 // The lookup box reads it only when words are searched, to say under each pair which
 // report or trial the words were found in, and to answer a registry identifier with its
-// trial. It holds no article text. `claims` is the key the lookup box reads: every pair, by
-// address.
+// trial. It holds no article text. `pairs` is every pair, by address.
 import type { APIRoute } from "astro";
 import { formatDate } from "../lib/timetable";
 import { PHASE_WORDS } from "../lib/trial-facts";
@@ -40,5 +39,5 @@ export const GET: APIRoute = () => {
       })),
     };
   }
-  return Response.json({ schema_version: 1, claims: pairs });
+  return Response.json({ schema_version: 2, pairs });
 };
