@@ -19,6 +19,7 @@ import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 import { categoryListing, interventionListing, topicListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { shownName } from "../src/lib/pair-view.ts";
+import { meshEdition } from "../src/lib/clinical.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
@@ -455,7 +456,9 @@ test("a listing lists its file's pairs that have a page, and none the slice left
 
 test("a category's page links only categories with a page, says how many pairs sit beneath each narrower one, and credits MeSH", async () => {
   const known = categorySet();
-  const built = parseHTML(fs.readFileSync(path.join(dist, "clinical", "index.html"), "utf8")).document;
+  // The vocabulary's year as the bundle's manifest states it; this bundle states none.
+  const edition = meshEdition(readBundle(bundle).manifest.snapshot?.mesh_years ?? []);
+  assert.equal(meshEditionOfBuild(), edition);
   for (const id of known) {
     const made = await documentOf(await get(`/clinical/${id}`));
     for (const link of made.querySelectorAll("[data-links] a")) {
@@ -467,8 +470,11 @@ test("a category's page links only categories with a page, says how many pairs s
       // The narrower page lists at least the pairs this page counts beneath it.
       assert.ok(count > 0 && listedOn(below).length >= count, `${id}: ${link.textContent} ${count}`);
     }
-    // The vocabulary's credit, in the words the built clinical index shows.
-    assert.equal(squash(made.querySelector(".mesh-credit").textContent), squash(built.querySelector(".mesh-credit").textContent), id);
+    // The vocabulary's credit: the source by name, the year the bundle states, and that NLM does not endorse the site.
+    const credit = squash(made.querySelector(".mesh-credit").textContent);
+    assert.ok(credit.includes(`courtesy of the U.S. National Library of Medicine: ${edition}.`), `${id}: ${credit}`);
+    assert.match(credit, /Medical Subject Headings \(MeSH\), U\.S\. National Library of Medicine/);
+    assert.match(credit, /NLM does not endorse this site\./);
   }
   // The slice's Infections file names Hidradenitis Suppurativa beneath it, which has no page.
   assert.ok(bundleFiles().PairClinicalCategoryPage.D007239.narrower.some((one) => !known.has(one.descriptor_id)));
