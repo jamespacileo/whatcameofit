@@ -23,6 +23,7 @@ Sections 1 and 2 need only the lab's step S9 and its bundle command. Section 5 w
 
 - [x] 2.2a Done 2026-11-19: `site/src/lib/bundle.ts` reads a bundle folder, checks each file against its schema and each code against the site's wording, and gives a claim's address its pair's; `tests/bundle.test.mjs` on the small bundle. Compiled validators for the Worker and generated types are still 2.2
 - [ ] 2.5 **[lab]** `PairOrigin.created_at` is written with no offset, which its schema calls a date-time; the site reads both spellings until the lab writes one. Remove the allowance in `bundle.ts` then
+  - Recorded 2026-11-20: `site/tests/bundle-strict.test.mjs` validates the small bundle with the lab's schemas unmodified under strict Ajv 2020 with ajv-formats. Exactly the 21 files that hold a pair with a claim origin fail, and only for `created_at` lacking the offset RFC 3339 requires. When the lab's fixed bundle is cut into `site/tests/bundle`, that test fails on an empty list: remove the `date-time` allowance in `bundle.ts` and the test's list together, and tick this task
 
 ## 3. Pages
 
