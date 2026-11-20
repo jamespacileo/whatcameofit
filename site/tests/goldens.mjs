@@ -3,6 +3,7 @@
 // components): a refactor of the renderers leaves them byte for byte the same, and a change
 // meant to show is reviewed in their diff. `UPDATE_GOLDENS=1 node --test tests/goldens.test.mjs`
 // writes them again from the renderers.
+import "./goldens-origin.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -12,16 +13,17 @@ import { renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
 import { categoryListing, interventionListing, topicListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
+import { meshEdition } from "../src/lib/clinical.ts";
 import { SITE } from "../site.config.mjs";
 
 export const GOLDENS = fileURLToPath(new URL("./goldens", import.meta.url));
 const BUNDLE = fileURLToPath(new URL("./bundle", import.meta.url));
-// A MeSH year for the category pages' credit; the fixture's manifest states none.
-const MESH_EDITION = "2026";
 
 /** Every page's HTML as the renderers write it, by its file under tests/goldens/. */
 export function renderedGoldens() {
-  const files = readBundle(BUNDLE).pages;
+  const { manifest, pages: files } = readBundle(BUNDLE);
+  // The MeSH year the category pages credit, as the frame works it out (src/pair/PairShell.astro).
+  const edition = meshEdition(manifest?.snapshot?.mesh_years ?? []);
   const pairs = files.PairPage;
   const published = new Set(Object.keys(pairs));
   const categories = new Set(Object.keys(files.PairClinicalCategoryPage));
@@ -37,7 +39,7 @@ export function renderedGoldens() {
     ...Object.entries(files.PairClinicalCategoryPage).map(([key, file]) => [`clinical-${key}`, categoryListing(file, published, categories)]),
     ...Object.entries(files.PairTopicPage).map(([key, file]) => [`topic-${key}`, topicListing(file, published)]),
   ];
-  for (const [name, view] of listings) out.set(`listings/${name}.html`, `${renderListingBand(view)}\n${renderListingSheet(view, MESH_EDITION)}\n`);
+  for (const [name, view] of listings) out.set(`listings/${name}.html`, `${renderListingBand(view)}\n${renderListingSheet(view, edition)}\n`);
   return out;
 }
 
