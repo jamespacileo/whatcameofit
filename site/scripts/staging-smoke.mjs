@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as wait } from "node:timers/promises";
+import { factsLine } from "./bundle-facts.mjs";
 
 /** What a fetch that never got an answer means, in the operator's words. */
 function unanswered(error, origin) {
@@ -91,6 +92,13 @@ export async function checkStaging({ origin, dist, revision, request = fetch, at
   try {
     await names("/build-revision.txt", revision, "commit");
     await names("/bundle-version.txt", version, "bundle");
+    // What that bundle holds (scripts/bundle-facts.mjs), printed for the person reading the run:
+    // part of the bundle's check, so a facts file of another bundle fails it.
+    const facts = await answer(`/bundle-manifest.json?v=${version}`);
+    const held = facts.status === 200 ? await facts.json() : null;
+    if (held?.version !== version) failures.push(`/bundle-manifest.json names ${held?.version ?? `nothing (${facts.status})`}, not bundle ${version}`);
+    else if (held.pairs !== held.counts?.PairPage) failures.push(`/bundle-manifest.json counts ${held.pairs} pair pages, but its manifest ${held.counts?.PairPage}`);
+    else say(`   ${factsLine(held)}`);
   } catch (error) {
     // Nothing answers: every other address would say the same.
     say(`FAIL ${error.message}`);
