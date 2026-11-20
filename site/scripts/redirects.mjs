@@ -7,6 +7,7 @@
 // published address broken, so the build fails and names it.
 import fs from "node:fs";
 import path from "node:path";
+import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
 
@@ -47,6 +48,15 @@ const gone = [
   ...(data.archived ?? []).map(({ slug, on }) => ({ slug, on })),
   ...(data.moved ?? []).map(({ slug, to }) => ({ slug, to })),
 ];
+// A build that reads a bundle (openspec pairs-site, task 4.3): each claim whose pair is
+// published leads to the pair's address. An archived claim still answers 410, and a claim
+// already moved keeps its own redirect. A claim whose slug is its pair's address, or that
+// stands behind more than one pair, moves nowhere (`movedAddresses`).
+if (process.env.PAIRS_BUNDLE) {
+  const listed = new Set(gone.map((entry) => entry.slug));
+  const pairs = Object.values(readBundle(path.resolve(process.env.PAIRS_BUNDLE)).pages.PairPage ?? {});
+  for (const [slug, to] of Object.entries(movedAddresses(pairs))) if (!listed.has(slug)) gone.push({ slug, to });
+}
 fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
 
 console.log(`Redirect check passed: ${lines.length} retired topic ${lines.length === 1 ? "address" : "addresses"}.`);

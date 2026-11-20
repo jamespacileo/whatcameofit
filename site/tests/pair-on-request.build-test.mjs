@@ -1,4 +1,4 @@
-// Pair pages made on request (openspec pairs-site, tasks 4.1 and 4.2). The site is built from
+// Pair pages made on request and old claim addresses (openspec pairs-site, tasks 4.1 to 4.3). The site is built from
 // a copy of tests/bundle (real pair pages from the lab's recorded slice) in which two trial
 // titles hold markup. The Worker is bundled as Wrangler bundles it and run in workerd
 // (Miniflare) against a local D1 holding migration 0011 and that bundle, loaded by the store's
@@ -13,6 +13,7 @@ import { build as bundleWorker } from "esbuild";
 import { parseHTML } from "linkedom";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
+import { movedAddresses } from "../src/lib/bundle.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { UNREADABLE } from "../worker/pairs.mjs";
@@ -39,7 +40,22 @@ function copyBundle(change) {
 }
 
 const withMarkup = (page) => { page.trials[0].facts.title = MARKUP; };
-const bundle = copyBundle({ [ON_REQUEST]: withMarkup, [BUILT_WITH_MARKUP]: withMarkup });
+// A claim whose slug is its pair's address: no redirect, the pair's page.
+const SAME_ADDRESS = BUILT_WITH_MARKUP;
+const bundle = copyBundle({
+  [ON_REQUEST]: withMarkup,
+  [BUILT_WITH_MARKUP]: (page) => { withMarkup(page); page.row.origin.claim_slug = SAME_ADDRESS; },
+});
+// The claims export, with the first moved claim also archived: its address still answers 410.
+const moved = movedAddresses(Object.values(Object.fromEntries(
+  fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => [name, JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))]),
+)));
+const [ARCHIVED] = Object.keys(moved).sort();
+const exportFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-export-")), "export.json");
+// No topic address was published from the fixture export.
+const publishedTopics = path.join(path.dirname(exportFile), "published-topics.json");
+fs.writeFileSync(publishedTopics, "[]");
+fs.writeFileSync(exportFile, JSON.stringify({ ...JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8")), archived: [{ slug: ARCHIVED, on: "2026-11-01" }] }));
 const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-on-request-"));
 const pages = Object.fromEntries(
   fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => [name.slice(0, -5), JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))]),
@@ -82,6 +98,11 @@ before(async () => {
     encoding: "utf8",
   });
   assert.equal(result.status, 0, result.stdout + result.stderr);
+  const redirects = spawnSync(process.execPath, ["scripts/redirects.mjs"], {
+    env: { ...process.env, DIST_DIR: dist, EXPORT_FILE: exportFile, PAIRS_BUNDLE: bundle, PUBLISHED_TOPICS_FILE: publishedTopics },
+    encoding: "utf8",
+  });
+  assert.equal(redirects.status, 0, redirects.stdout + redirects.stderr);
   const worker = await bundleWorker({
     entryPoints: ["worker/with-pairs.mjs"],
     bundle: true,
@@ -106,7 +127,7 @@ before(async () => {
 
 after(async () => { if (mf) await mf.dispose(); });
 
-const get = (pathname) => mf.dispatchFetch(`https://site.test${pathname}`);
+const get = (pathname) => mf.dispatchFetch(`https://site.test${pathname}`, { redirect: "manual" });
 const documentOf = async (response) => parseHTML(await response.text()).document;
 
 test("the rule builds a pair ahead when it came from a claim or rests on more than one trial", () => {
@@ -189,4 +210,19 @@ test("the Worker reads only the bundle version the build read, whatever is curre
   const text = await (await get(`/${KEPT}`)).text();
   assert.match(text, /Tulisokibart for scleroderma/);
   assert.doesNotMatch(text, /Renamedinlater/i);
+});
+
+test("a claim whose pair is published leads to it, an archived one is still gone", async () => {
+  const leads = Object.entries(moved).filter(([slug]) => slug !== ARCHIVED);
+  assert.ok(leads.length > 0);
+  for (const [slug, address] of leads) {
+    const response = await get(`/${slug}?from=share`);
+    assert.equal(response.status, 301, slug);
+    assert.equal(new URL(response.headers.get("Location")).pathname + new URL(response.headers.get("Location")).search, `/${address}?from=share`);
+  }
+  assert.equal((await get(`/${ARCHIVED}`)).status, 410);
+  assert.equal(moved[SAME_ADDRESS], undefined);
+  const same = await get(`/${SAME_ADDRESS}`);
+  assert.equal(same.status, 200);
+  assert.ok((await documentOf(same)).querySelector("[data-pair-status]"));
 });
