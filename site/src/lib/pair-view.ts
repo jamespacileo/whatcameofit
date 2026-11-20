@@ -162,6 +162,8 @@ export function shownName(name: string): string {
 
 export interface PairEventView {
   key: string;
+  /** The event's kind as the bundle gives it (`TrialEventKind`). */
+  kind: string;
   day: string;
   label: string;
   nctId: string;
@@ -216,6 +218,7 @@ export interface PairView {
 function eventView(event: any): PairEventView {
   return {
     key: event.key,
+    kind: event.kind,
     day: event.day,
     label: PAIR_EVENT_LABELS[event.kind],
     nctId: event.nct_id,

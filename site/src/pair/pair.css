@@ -215,3 +215,93 @@
     overflow: visible;
   }
 }
+
+/* The record strip (lib/record-strip.ts): a pair's dated records on one time axis. A kind of
+   mark differs by shape and by where it sits against the axis. The axis is one weight along
+   its whole length: a stretch with no mark is never faded or broken. */
+.record-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 1rem;
+}
+.strip-line {
+  display: block;
+  overflow: visible;
+  color: var(--ink);
+}
+/* Room at each end for a mark that falls on the first or the last day. */
+.strip-frame {
+  display: block;
+  flex: 1 1 auto;
+  width: auto;
+  max-width: 40rem;
+  margin-inline: 6px;
+}
+.strip-frame .strip-line {
+  width: 100%;
+}
+.strip-years {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.1rem;
+  color: var(--muted);
+  font-size: var(--text-s);
+  font-variant-numeric: tabular-nums;
+}
+.strip-years span:last-child {
+  transform: translateX(6px);
+}
+.strip-years span:first-child {
+  transform: translateX(-6px);
+}
+.strip-axis {
+  stroke: currentColor;
+  stroke-width: 1.25;
+}
+.strip-notch {
+  stroke: var(--ring);
+  stroke-width: 1;
+}
+.strip-record {
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+.strip-results {
+  fill: currentColor;
+}
+.strip-check {
+  stroke: currentColor;
+  stroke-width: 2.5;
+}
+.strip-key {
+  margin: 0.6rem 0 0;
+  color: var(--muted);
+  font-size: var(--text-m);
+}
+.strip-key ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 1.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.strip-key li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+}
+/* A drawing's ink is not swapped by the system, so each mark is given the system's text colour. */
+@media (forced-colors: active) {
+  .strip-axis,
+  .strip-record,
+  .strip-check,
+  .strip-notch {
+    stroke: CanvasText;
+  }
+  .strip-results {
+    fill: CanvasText;
+  }
+}
