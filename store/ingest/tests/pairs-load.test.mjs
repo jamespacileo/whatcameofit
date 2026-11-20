@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { Service, engineUnavailable } from "./harness.mjs";
-import { chunkedDrops, droppedVersions, scratchBeside, statements, writeStatementFiles, writeStatements } from "../scripts/load-pairs.mjs";
+import { chunkedDrops, droppedVersions, keptVersions, scratchBeside, withChunkedDrops, statements, writeStatementFiles, writeStatements } from "../scripts/load-pairs.mjs";
 import { Writable } from "node:stream";
 import { realpathSync as realpathSync_, symlinkSync } from "node:fs";
 import { dirname } from "node:path";
@@ -152,7 +152,7 @@ test("a version that falls out is deleted a few rows at a time, each table in as
     assert.ok(dropped.some((one) => one.version === oldest.version));
     assert.ok(!dropped.some((one) => one.version === loads[1].version || one.version === next.version));
     const chunk = 4;
-    const drops = chunkedDrops(dropped, chunk);
+    const drops = chunkedDrops(dropped, { chunk });
     const expected = dropped.reduce((sum, one) => sum + Object.values(one.counts).reduce((n, rows) => n + Math.ceil(rows / chunk), 0), 0);
     assert.equal(drops.length, expected);
     // Run as the command runs them: the new version's rows, its switch, the chunks, then the
@@ -171,6 +171,53 @@ test("a version that falls out is deleted a few rows at a time, each table in as
   } finally {
     for (const copy of copies) rmSync(copy, { recursive: true, force: true });
   }
+});
+
+test("a chunk deletes nothing of a version the store keeps when it runs, though the plan meant to drop it", { skip }, async () => {
+  // The plan is made with A as the oldest; before the chunks run, another load makes A current
+  // again. The chunks ask what is kept as they run, so A keeps every row.
+  const held = async () => all("SELECT version, current, loaded_at, counts FROM pair_bundle");
+  const copies = [];
+  try {
+    const loads = [];
+    for (const [at, gone] of [["2027-01-01", "apitegromab--obesity"], ["2027-01-02", "apitegromab--overweight"], ["2027-01-03", null]]) {
+      const copy = mkdtempSync(join(tmpdir(), "thenwhat-bundle-"));
+      copies.push(copy);
+      cpSync(bundle, copy, { recursive: true });
+      if (gone) rmSync(join(copy, "p12_pair_page", `${gone}.json`));
+      writeManifest(copy, { madeAt: `${at}T00:00:00Z` });
+      loads.push(statements(copy, { loadedAt: `${at}T00:00:00.000Z` }));
+    }
+    const [a, b, c] = loads;
+    for (const load of [a, b]) await run(load.sql);
+    const planned = await held();
+    assert.ok(droppedVersions(planned, c.version).some((one) => one.version === a.version), "the plan drops A");
+    const sql = withChunkedDrops(c, planned, 2);
+    // Another load makes A current and the newest, after the plan.
+    await run(["UPDATE pair_bundle SET current = 0", `UPDATE pair_bundle SET current = 1, loaded_at = '2027-01-09T00:00:00.000Z' WHERE version = '${a.version}'`]);
+    const before = (await one("SELECT count(*) AS n FROM pair_page WHERE version = ?", a.version)).n;
+    // C's statements up to its own switch and chunks, then stop: A is still the newest after C,
+    // so it is kept, and no chunk may have touched it.
+    await run(sql.slice(0, sql.length - (c.sql.length - c.dropsAt)));
+    assert.equal((await one("SELECT count(*) AS n FROM pair_page WHERE version = ?", a.version)).n, before);
+  } finally {
+    for (const copy of copies) rmSync(copy, { recursive: true, force: true });
+  }
+});
+
+test("versions loaded in the same instant are dropped in the same order the store keeps them, whatever order they are read in", () => {
+  const at = "2027-02-01T00:00:00.000Z";
+  const counts = JSON.stringify({ pair_page: 1 });
+  const rows = [
+    { version: "aaaaaaaaaaaaaaaa", current: 0, loaded_at: at, counts },
+    { version: "bbbbbbbbbbbbbbbb", current: 0, loaded_at: at, counts },
+    { version: "cccccccccccccccc", current: 0, loaded_at: at, counts },
+  ];
+  const dropped = (held) => droppedVersions(held, "ffffffffffffffff").map((one) => one.version);
+  // keptVersions orders by version last, descending: with two kept, the new one and "ccc…".
+  assert.deepEqual(dropped(rows), ["bbbbbbbbbbbbbbbb", "aaaaaaaaaaaaaaaa"]);
+  assert.deepEqual(dropped([...rows].reverse()), ["bbbbbbbbbbbbbbbb", "aaaaaaaaaaaaaaaa"]);
+  assert.match(keptVersions(2), /ORDER BY current DESC, loaded_at DESC, version DESC LIMIT 2/);
 });
 
 test("a dropped version whose counts the store does not hold is refused, not deleted whole", () => {

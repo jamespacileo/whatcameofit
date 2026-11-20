@@ -56,31 +56,52 @@ const KEYS = {
 export const DELETE_CHUNK = 1000;
 
 /**
- * The versions a load will drop: after it, the store keeps the new version and the `keep - 1`
- * others loaded last (the order the load's own deletes use: current first, then loaded_at).
+ * The versions the store keeps, as SQL, read when the statement runs: current first, then the
+ * last loaded, then the version itself, so two loaded in the same instant are always kept in
+ * the same order.
+ */
+export const keptVersions = (keep) => `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC, version DESC LIMIT ${keep})`;
+
+/**
+ * The versions a load plans to drop: after it, the store keeps the new version and the
+ * `keep - 1` others first in keptVersions' order. Only how many chunks to write is taken from
+ * this plan; each chunk asks keptVersions again when it runs (chunkedDrops).
  * @param {{ version: string, loaded_at: string, counts: string | Record<string, number> }[]} held pair_bundle's rows
  */
 export function droppedVersions(held, version, keep = KEPT_VERSIONS) {
+  const later = (a, b) => (a.loaded_at !== b.loaded_at ? (a.loaded_at < b.loaded_at ? 1 : -1) : a.version < b.version ? 1 : a.version > b.version ? -1 : 0);
   return held
     .filter((row) => row.version !== version)
-    .sort((a, b) => (a.loaded_at < b.loaded_at ? 1 : a.loaded_at > b.loaded_at ? -1 : 0))
+    .sort(later)
     .slice(keep - 1)
     .map((row) => ({ version: row.version, counts: typeof row.counts === "string" ? JSON.parse(row.counts) : row.counts }));
 }
 
 /**
  * Deletes of the dropped versions' rows in chunks of `chunk`, as many as each table's count for
- * that version (pair_bundle.counts) needs, each picked by key. They run where the load's own
- * deletes do, after the new version is current; those then find nothing left.
+ * that version (pair_bundle.counts) needs, each picked by key. Each chunk deletes only while its
+ * version is not one the store keeps at that moment: a version another load made current, or
+ * one kept as the version before, after the plan was made, loses no row. They run where the
+ * load's own deletes do, after the new version is current; those then find nothing left.
  */
-export function chunkedDrops(dropped, chunk = DELETE_CHUNK) {
+export function chunkedDrops(dropped, { keep = KEPT_VERSIONS, chunk = DELETE_CHUNK } = {}) {
   return dropped.flatMap(({ version, counts }) => TABLES.flatMap((table) => {
     const rows = counts?.[table];
     if (!Number.isInteger(rows) || rows < 0) throw new Error(`pair_bundle holds no ${table} count for version ${version}, so its rows cannot be deleted in chunks`);
     const key = KEYS[table].join(", ");
-    const one = `DELETE FROM ${table} WHERE (${key}) IN (SELECT ${key} FROM ${table} WHERE version = ${quote(version)} LIMIT ${chunk})`;
+    const one = `DELETE FROM ${table} WHERE (${key}) IN (SELECT ${key} FROM ${table} WHERE version = ${quote(version)} AND version NOT IN ${keptVersions(keep)} LIMIT ${chunk})`;
     return Array.from({ length: Math.ceil(rows / chunk) }, () => one);
   }));
+}
+
+/**
+ * A load's statements with the versions it drops deleted in chunks, planned from pair_bundle's
+ * rows as read before the load (`held`): the command's remote and local loads, and a pull
+ * request preview's, all go through here.
+ */
+export function withChunkedDrops(load, held, chunk = DELETE_CHUNK) {
+  const drops = chunkedDrops(droppedVersions(held, load.version, load.keep), { keep: load.keep, chunk });
+  return [...load.sql.slice(0, load.dropsAt), ...drops, ...load.sql.slice(load.dropsAt)];
 }
 
 const quote = (value) => (value === null || value === undefined ? "NULL"
@@ -142,7 +163,7 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
   }
 
   const counts = Object.fromEntries(TABLES.map((table) => [table, rows[table].size]));
-  const kept = `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC LIMIT ${keep})`;
+  const kept = keptVersions(keep);
   const sql = [
     // A version left by a load that stopped is cleared before it is loaded again.
     ...TABLES.map((table) => `DELETE FROM ${table} WHERE version = ${quote(version)} AND NOT EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)} AND current = 1)`),
@@ -158,7 +179,7 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
   // Where a load against a store it has read puts its chunked deletes (chunkedDrops): just
   // before the deletes of the versions that fall out.
   const dropsAt = sql.length - TABLES.length - 1;
-  return { version, manifest, counts, sql, dropsAt };
+  return { version, manifest, counts, sql, dropsAt, keep };
 }
 
 /**
@@ -253,8 +274,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
         // D1 itself takes one file of up to 5 GB; the local engine reads each file whole, so it
         // is given them in parts, in order.
         // The versions that fall out are deleted a chunk at a time, inside D1's time a query has.
-        const drops = chunkedDrops(droppedVersions(versions, load.version));
-        const sql = [...load.sql.slice(0, load.dropsAt), ...drops, ...load.sql.slice(load.dropsAt)];
+        const sql = withChunkedDrops(load, versions);
         for (const file of await writeStatementFiles(dir, sql, to.remote ? Infinity : LOCAL_FILE_BYTES)) await execute(to, "--file", file);
       } finally {
         rmSync(dir, { recursive: true, force: true });
