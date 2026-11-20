@@ -111,7 +111,8 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
   return { version, counts, sql };
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Run as a command, not imported (an importer may have no script path of its own).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [folder, ...argv] = process.argv.slice(2);
   if (!folder || folder.startsWith("--")) {
     console.error("usage: node scripts/load-pairs.mjs <folder of page files> [--print | --remote [--config <file>] [--production <database name>]]");

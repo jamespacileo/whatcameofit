@@ -32,6 +32,16 @@ test("the preview's configuration gains the Worker with pairs and the pairs data
   assert.throws(() => pairsConfig({ base: "wrangler.jsonc", database, scratch: dir }), /not a pull request preview's configuration/);
 });
 
+test("the preview's configuration is found by its name from any folder, as pr-preview.mjs names it", () => {
+  // `make pr-preview` runs from the repository's root and gives the name alone.
+  const dir = scratch();
+  const script = `const { pairsConfig } = await import(${JSON.stringify(new URL("../scripts/pairs-preview.mjs", import.meta.url).href)});
+    console.log(pairsConfig({ base: "wrangler.preview.jsonc", database: ${JSON.stringify(database)}, scratch: ${JSON.stringify(dir)} }));`;
+  const run = spawnSync(process.execPath, ["--input-type=module", "-e", script], { cwd: path.resolve(".."), encoding: "utf8" });
+  assert.equal(run.status, 0, run.stderr);
+  assert.equal(JSON.parse(fs.readFileSync(run.stdout.trim(), "utf8")).assets.directory, path.resolve("dist"));
+});
+
 test("a preview loads its bundle into the pairs database once, after the store's migrations", () => {
   const dir = scratch();
   const persistTo = path.join(dir, "state");
