@@ -1,6 +1,7 @@
 // The lab's bundle of page files, read as the build reads it. tests/bundle is real: the
 // pair pages the lab's own pipeline test writes from its recorded slice.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -108,6 +109,43 @@ test("a registry the site has no name for stops the read, named, and a known one
     rmSync(known, { recursive: true, force: true });
     rmSync(unknown, { recursive: true, force: true });
   }
+});
+
+test("a code named like an object's own property has no words, and stops the read", () => {
+  // The registry is free text in the schema; a name every object inherits is not a word of the site's.
+  for (const registry of ["toString", "constructor", "__proto__"]) {
+    const dir = copy((page) => { page.checked = [{ registry, checked_through: "2026-11-18" }]; });
+    try {
+      assert.throws(() => readBundle(dir), new RegExp(`no words for: registry: ${registry}`), registry);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("the build's reader refuses to load when a table of words holds a verdict", () => {
+  // The check runs when the wording module loads, and the build reads bundles through
+  // bundle.ts, which imports it. Here a module hook gives the event table a verdict label as it
+  // loads, and loading the reader must fail on it: removing the load-time check fails this test.
+  const hook = `
+    import { registerHooks } from "node:module";
+    registerHooks({
+      load(url, context, nextLoad) {
+        const loaded = nextLoad(url, context);
+        if (url.endsWith("/src/lib/pair-wording.ts")) {
+          const source = String(loaded.source);
+          if (!source.includes('terminated: "Trial terminated"')) throw new Error("the event table has moved: update this test");
+          return { ...loaded, source: source.replace('terminated: "Trial terminated"', 'terminated: "Trial abandoned"') };
+        }
+        return loaded;
+      },
+    });
+    await import(${JSON.stringify(new URL("../src/lib/bundle.ts", import.meta.url).href)});
+  `;
+  const run = spawnSync(process.execPath, ["--input-type=module", "-e", hook], { encoding: "utf8" });
+  assert.notEqual(run.status, 0, "the reader loaded with a verdict in its words");
+  assert.match(run.stderr, /Verdict wording "abandoned"/);
+  assert.doesNotMatch(run.stderr, /event table has moved/);
 });
 
 test("verdict wording in any table of the pair path's words is refused", () => {
