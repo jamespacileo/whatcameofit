@@ -20,6 +20,8 @@ import { STATUS_LABELS } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
 import { stateFor } from "../../extension/src/lookup.js";
+import { sitemapAddresses, sitemapText } from "./sitemap-read.mjs";
+import { SITEMAP_LIMIT, inFiles } from "../src/lib/sitemap-files.ts";
 
 const withBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-"));
 const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowest-"));
@@ -217,12 +219,31 @@ test("each pair's open data record is the lab's data file as written, with the l
 });
 
 test("the sitemap lists pair addresses and the pages that list pairs", () => {
-  const locations = (dir) =>
-    [...fs.readFileSync(path.join(dir, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname);
+  const locations = (dir) => sitemapAddresses(dir).map((address) => new URL(address).pathname);
   const listed = new Set(locations(withBundle));
   for (const address of Object.keys(pages)) assert.ok(listed.has(`/${address}`), address);
   for (const file of Object.values(readBundle("tests/bundle").pages.PairInterventionPage)) {
     assert.ok(listed.has(`/intervention/${file.intervention.slug}`));
+  }
+});
+
+test("the sitemap is an index of files for the site's pages, its listings and its pairs, with no date, priority or frequency", () => {
+  const index = fs.readFileSync(path.join(withBundle, "sitemap.xml"), "utf8");
+  assert.match(index, /<sitemapindex xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  const files = [...index.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname);
+  assert.deepEqual(files, ["/sitemaps/pages.xml", "/sitemaps/listings.xml", "/sitemaps/pairs.xml"]);
+  const pairs = fs.readFileSync(path.join(withBundle, "sitemaps", "pairs.xml"), "utf8");
+  assert.deepEqual([...pairs.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => new URL(match[1]).pathname), Object.keys(pages).sort().map((address) => `/${address}`));
+  // Past the limit a kind is split into numbered files, each at most the limit, every address once.
+  const addresses = Object.keys(pages).sort().map((address) => `/${address}`);
+  const split = inFiles("pairs", addresses, 4);
+  assert.deepEqual(split.map((file) => file.name), Array.from({ length: Math.ceil(addresses.length / 4) }, (_, at) => `pairs-${at + 1}`));
+  assert.ok(split.every((file) => file.pages.length <= 4));
+  assert.deepEqual(split.flatMap((file) => file.pages), addresses);
+  assert.equal(SITEMAP_LIMIT, 50000);
+  for (const name of ["sitemap.xml", ...files.map((file) => file.slice(1))]) {
+    const text = fs.readFileSync(path.join(withBundle, name), "utf8");
+    assert.doesNotMatch(text, /<lastmod>|<priority>|<changefreq>/, name);
   }
 });
 
@@ -373,7 +394,7 @@ test("a pair filed under no topic still has its page, its condition's listing, s
   assert.equal(lookup.claims[UNFILED].topic, null);
   const detail = JSON.parse(fs.readFileSync(path.join(withBundle, "search-detail.json"), "utf8"));
   assert.deepEqual(detail.claims[UNFILED].trials.map((trial) => trial.id), file.trials.map((trial) => trial.nct_id));
-  const sitemap = fs.readFileSync(path.join(withBundle, "sitemap.xml"), "utf8");
+  const sitemap = sitemapText(withBundle);
   assert.match(sitemap, new RegExp(`/${UNFILED}</loc>`));
 });
 
@@ -388,7 +409,7 @@ test("no page, file or address of the build is a claim's", () => {
   for (const gone of ["data/claims.json", "data/claims", "rows", "year", "source", "outlet-icons"]) {
     assert.ok(!fs.existsSync(path.join(withBundle, gone)), gone);
   }
-  assert.doesNotMatch(fs.readFileSync(path.join(withBundle, "sitemap.xml"), "utf8"), /claims/);
+  assert.doesNotMatch(sitemapText(withBundle), /claims/);
 });
 
 // Task 2.4: the bundle carries codes and the site words them. No code reaches a reader as a

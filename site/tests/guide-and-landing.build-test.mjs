@@ -11,6 +11,7 @@ import { AUDIENCES } from "../src/lib/audiences.ts";
 import { METHOD_SECTIONS, statusSlug } from "../src/lib/guide.ts";
 import { readBundle } from "../src/lib/bundle.ts";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../src/lib/status.ts";
+import { sitemapText } from "./sitemap-read.mjs";
 
 const bundle = readBundle("tests/bundle");
 const pairs = Object.values(bundle.pages.PairPage);
@@ -108,7 +109,7 @@ test("the guide is reached from the method page, the footer and the sitemap", ()
   for (const href of ["/guide", "/about", ...AUDIENCES.map((audience) => `/for/${audience}`)]) {
     assert.ok(html.split("<footer")[1].includes(`href="${href}"`), `the footer does not link ${href}`);
   }
-  const sitemap = page("sitemap.xml");
+  const sitemap = sitemapText(dist);
   for (const path of ["/guide", "/guide/no-signal", "/about", "/for/journalists"]) {
     assert.ok(sitemap.includes(`${path}</loc>`), `${path} is not in the sitemap`);
   }
