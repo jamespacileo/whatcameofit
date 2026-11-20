@@ -45,7 +45,12 @@ export interface ResultRowView {
   /** The registry's row or category title within the group, where it gives one. */
   part: string | null;
   analysed: string | null;
+  /** The value and its spread as one line: "0.0 (Full Range -4.2 to 10.9)". */
   value: string;
+  /** The value alone, as posted ("0.0"), or "No value posted". */
+  estimate: string;
+  /** Its spread as posted, with what kind it is ("Full Range -4.2 to 10.9"), or none. */
+  spread: string | null;
 }
 
 export interface OutcomeView {
@@ -62,12 +67,17 @@ export interface OutcomeView {
  * worked out or rounded. ClinicalTrials.gov's results data elements set what each field is:
  * the measure type, the measure of dispersion or precision, and the number analysed
  * (https://clinicaltrials.gov/policy/results-definitions). */
-function valueText(value: any, dispersion: string | null): string {
-  if (value.value === null) return "No value posted";
+function valueParts(value: any, dispersion: string | null): { estimate: string; spread: string | null } {
+  if (value.value === null) return { estimate: "No value posted", spread: null };
   const kind = dispersion ? `${dispersion} ` : "";
-  if (value.lower !== null && value.upper !== null) return `${value.value} (${kind}${value.lower} to ${value.upper})`;
-  if (value.spread !== null) return `${value.value} (${kind}${value.spread})`;
-  return value.value;
+  if (value.lower !== null && value.upper !== null) return { estimate: value.value, spread: `${kind}${value.lower} to ${value.upper}` };
+  if (value.spread !== null) return { estimate: value.value, spread: `${kind}${value.spread}` };
+  return { estimate: value.value, spread: null };
+}
+
+function valueText(value: any, dispersion: string | null): string {
+  const { estimate, spread } = valueParts(value, dispersion);
+  return spread === null ? estimate : `${estimate} (${spread})`;
 }
 
 /** A posted comparison in the registry's terms: its p value and method in the claim page's
@@ -123,6 +133,7 @@ function outcomesOf(findings: any): OutcomeView[] {
           part: [value.class_title, value.category_title].filter(Boolean).join(", ") || null,
           analysed: value.analysed,
           value: valueText(value, outcome.dispersion_type),
+          ...valueParts(value, outcome.dispersion_type),
         })),
         comparisons: findings.comparisons
           .filter((comparison: any) => comparison.outcome_key === outcome.key)

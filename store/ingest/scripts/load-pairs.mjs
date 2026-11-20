@@ -35,6 +35,75 @@ const PART_CHARS = 10_000;
 export const KEPT_VERSIONS = 2;
 const TABLES = ["pair_page", "pair_intervention", "pair_intervention_name", "pair_condition", "pair", "pair_trial", "pair_trial_facts", "pair_status_change"];
 
+// Each table's key (migration 0011): the tables are WITHOUT ROWID, so a chunk is picked by key.
+const KEYS = {
+  pair_page: ["version", "model", "key", "part"],
+  pair_intervention: ["version", "id"],
+  pair_intervention_name: ["version", "intervention_id", "name"],
+  pair_condition: ["version", "descriptor_id"],
+  pair: ["version", "key"],
+  pair_trial: ["version", "pair_key", "nct_id"],
+  pair_trial_facts: ["version", "nct_id"],
+  pair_status_change: ["version", "pair_key", "on_day", "after"],
+};
+
+/**
+ * Rows a delete statement removes at most. D1 gives a query 30 seconds
+ * (https://developers.cloudflare.com/d1/platform/limits/) and asks for large deletes in
+ * batches of about 1,000 rows (the same page); a full bundle's version is about 110,000 page
+ * rows, which one statement could not be trusted to remove in time.
+ */
+export const DELETE_CHUNK = 1000;
+
+/**
+ * The versions the store keeps, as SQL, read when the statement runs: current first, then the
+ * last loaded, then the version itself, so two loaded in the same instant are always kept in
+ * the same order.
+ */
+export const keptVersions = (keep) => `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC, version DESC LIMIT ${keep})`;
+
+/**
+ * The versions a load plans to drop: after it, the store keeps the new version and the
+ * `keep - 1` others first in keptVersions' order. Only how many chunks to write is taken from
+ * this plan; each chunk asks keptVersions again when it runs (chunkedDrops).
+ * @param {{ version: string, loaded_at: string, counts: string | Record<string, number> }[]} held pair_bundle's rows
+ */
+export function droppedVersions(held, version, keep = KEPT_VERSIONS) {
+  const later = (a, b) => (a.loaded_at !== b.loaded_at ? (a.loaded_at < b.loaded_at ? 1 : -1) : a.version < b.version ? 1 : a.version > b.version ? -1 : 0);
+  return held
+    .filter((row) => row.version !== version)
+    .sort(later)
+    .slice(keep - 1)
+    .map((row) => ({ version: row.version, counts: typeof row.counts === "string" ? JSON.parse(row.counts) : row.counts }));
+}
+
+/**
+ * Deletes of the dropped versions' rows in chunks of `chunk`, as many as each table's count for
+ * that version (pair_bundle.counts) needs, each picked by key. Each chunk deletes only while its
+ * version is not one the store keeps at that moment: a version another load made current, or
+ * one kept as the version before, after the plan was made, loses no row. They run where the
+ * load's own deletes do, after the new version is current; those then find nothing left.
+ */
+export function chunkedDrops(dropped, { keep = KEPT_VERSIONS, chunk = DELETE_CHUNK } = {}) {
+  return dropped.flatMap(({ version, counts }) => TABLES.flatMap((table) => {
+    const rows = counts?.[table];
+    if (!Number.isInteger(rows) || rows < 0) throw new Error(`pair_bundle holds no ${table} count for version ${version}, so its rows cannot be deleted in chunks`);
+    const key = KEYS[table].join(", ");
+    const one = `DELETE FROM ${table} WHERE (${key}) IN (SELECT ${key} FROM ${table} WHERE version = ${quote(version)} AND version NOT IN ${keptVersions(keep)} LIMIT ${chunk})`;
+    return Array.from({ length: Math.ceil(rows / chunk) }, () => one);
+  }));
+}
+
+/**
+ * A load's statements with the versions it drops deleted in chunks, planned from pair_bundle's
+ * rows as read before the load (`held`): the command's remote and local loads, and a pull
+ * request preview's, all go through here.
+ */
+export function withChunkedDrops(load, held, chunk = DELETE_CHUNK) {
+  const drops = chunkedDrops(droppedVersions(held, load.version, load.keep), { keep: load.keep, chunk });
+  return [...load.sql.slice(0, load.dropsAt), ...drops, ...load.sql.slice(load.dropsAt)];
+}
+
 const quote = (value) => (value === null || value === undefined ? "NULL"
   : typeof value === "number" ? String(value)
   : typeof value === "boolean" ? (value ? "1" : "0")
@@ -94,7 +163,7 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
   }
 
   const counts = Object.fromEntries(TABLES.map((table) => [table, rows[table].size]));
-  const kept = `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC LIMIT ${keep})`;
+  const kept = keptVersions(keep);
   const sql = [
     // A version left by a load that stopped is cleared before it is loaded again.
     ...TABLES.map((table) => `DELETE FROM ${table} WHERE version = ${quote(version)} AND NOT EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)} AND current = 1)`),
@@ -107,7 +176,10 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
     ...TABLES.map((table) => `DELETE FROM ${table} WHERE version IN (SELECT version FROM pair_bundle WHERE version NOT IN ${kept})`),
     `DELETE FROM pair_bundle WHERE version NOT IN (SELECT version FROM (${kept.slice(1, -1)}))`,
   ];
-  return { version, manifest, counts, sql };
+  // Where a load against a store it has read puts its chunked deletes (chunkedDrops): just
+  // before the deletes of the versions that fall out.
+  const dropsAt = sql.length - TABLES.length - 1;
+  return { version, manifest, counts, sql, dropsAt, keep };
 }
 
 /**
@@ -188,7 +260,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     } else {
       const { execute, target } = await import("./d1.mjs");
       const to = target(argv);
-      const [held] = (await execute(to, "--command", `SELECT version FROM pair_bundle WHERE current = 1`))[0]?.results ?? [];
+      const versions = (await execute(to, "--command", "SELECT version, current, loaded_at, counts FROM pair_bundle"))[0]?.results ?? [];
+      const held = versions.find((row) => row.current === 1);
       if (held?.version === load.version) {
         await execute(to, "--command", manifestBackfill(load).sql[0]);
         console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is held`);
@@ -200,7 +273,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       try {
         // D1 itself takes one file of up to 5 GB; the local engine reads each file whole, so it
         // is given them in parts, in order.
-        for (const file of await writeStatementFiles(dir, load.sql, to.remote ? Infinity : LOCAL_FILE_BYTES)) await execute(to, "--file", file);
+        // The versions that fall out are deleted a chunk at a time, inside D1's time a query has.
+        const sql = withChunkedDrops(load, versions);
+        for (const file of await writeStatementFiles(dir, sql, to.remote ? Infinity : LOCAL_FILE_BYTES)) await execute(to, "--file", file);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
