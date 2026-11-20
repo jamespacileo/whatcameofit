@@ -150,7 +150,17 @@ test("a pair not built ahead is made on request from D1, kept a day", async () =
     assert.match(document.querySelector("[data-pair-status]").textContent, new RegExp(STATUS_LABELS[page.row.status.code]));
     assert.match(document.querySelector("title").textContent, new RegExp(page.row.descriptor.label.split(",")[0], "i"));
     assert.equal(document.querySelectorAll("[data-trial]").length, page.trials.length);
+    // Posted results and papers are shown on a page made on request as on a built one.
+    for (const trial of page.trials) {
+      const shown = document.querySelector(`[data-trial="${trial.nct_id}"]`);
+      assert.equal(shown.querySelectorAll("[data-outcome]").length, trial.findings?.outcomes.length ?? 0, `${address} ${trial.nct_id}`);
+      assert.equal(shown.querySelectorAll("[data-paper]").length, trial.paper_ids.length, `${address} ${trial.nct_id}`);
+    }
   }
+  // curcumin--gastritis-atrophic, made on request, posts its outcomes and a comparison.
+  const curcumin = await documentOf(await get("/curcumin--gastritis-atrophic"));
+  assert.ok(curcumin.querySelectorAll("[data-outcome]").length > 0);
+  assert.match(curcumin.querySelector("[data-results]").textContent, /p = 0\.3990, Wilcoxon Rank-Sum test \(superiority test\)/);
 });
 
 test("the same file gives the same page built ahead and made on request", async () => {

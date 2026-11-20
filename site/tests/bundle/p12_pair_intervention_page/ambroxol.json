@@ -1,0 +1,143 @@
+{
+ "intervention": {
+  "id": "substance:200168S0CL",
+  "key_kind": "substance",
+  "key_value": "200168S0CL",
+  "preferred_name": "AMBROXOL",
+  "slug": "ambroxol",
+  "components": []
+ },
+ "names": [
+  {
+   "intervention_id": "substance:200168S0CL",
+   "name": "AMBROXOL",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:200168S0CL",
+   "name": "TABCIN",
+   "origin": "substance_registry",
+   "role": "brand",
+   "searchable": true
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:200168S0CL",
+  "approach": "drug",
+  "basis": "registry_intervention_type",
+  "registry_type": "DRUG",
+  "trials": 1
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "key": "substance:200168S0CL|D003704",
+    "address": "ambroxol--dementia",
+    "nct_ids": [
+     "NCT02914366"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:200168S0CL",
+    "key_kind": "substance",
+    "key_value": "200168S0CL",
+    "preferred_name": "AMBROXOL",
+    "slug": "ambroxol",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D003704",
+    "slug": "dementia"
+   },
+   "descriptor": {
+    "descriptor_id": "D003704",
+    "label": "Dementia",
+    "tree_numbers": [
+     "F03.615.400",
+     "C10.228.140.380"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "code": "trial_registered",
+    "overlay_years": 10,
+    "explained_by": [
+     "NCT02914366|registered|2016-09-26"
+    ],
+    "as_of": "2026-11-19"
+   },
+   "filing": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "vertical": "dementia",
+    "basis": "narrowest_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D003704",
+    "claim_slug": "ambroxol-parkinsons-disease-dementia",
+    "drafted_from": "seed",
+    "drafted_by_run": "18defa0a6383",
+    "created_at": "2026-11-19T00:44:32.929308"
+   },
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D010300",
+    "key": "substance:200168S0CL|D010300",
+    "address": "ambroxol--parkinson-disease",
+    "nct_ids": [
+     "NCT02914366"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:200168S0CL",
+    "key_kind": "substance",
+    "key_value": "200168S0CL",
+    "preferred_name": "AMBROXOL",
+    "slug": "ambroxol",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D010300",
+    "slug": "parkinson-disease"
+   },
+   "descriptor": {
+    "descriptor_id": "D010300",
+    "label": "Parkinson Disease",
+    "tree_numbers": [
+     "C10.228.662.600.400",
+     "C10.574.928.750",
+     "C10.228.140.079.862.500"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D010300",
+    "code": "trial_registered",
+    "overlay_years": 10,
+    "explained_by": [
+     "NCT02914366|registered|2016-09-26"
+    ],
+    "as_of": "2026-11-19"
+   },
+   "filing": {
+    "intervention_id": "substance:200168S0CL",
+    "condition_id": "D010300",
+    "vertical": "brain-and-nerves",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  }
+ ]
+}

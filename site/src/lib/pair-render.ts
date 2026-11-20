@@ -2,8 +2,10 @@
 // renderer for the page built ahead and the page the Worker makes on request, so the two are
 // the same for the same file. Every value read from a page file goes through `escape`.
 import { UNCHECKED_BYLINE } from "./notices.ts";
-import type { PairView } from "./pair-view.ts";
+import type { PairTrialView, PairView } from "./pair-view.ts";
+import { assertNoOutcomeVerdict } from "./trial-facts.ts";
 import { formatDate } from "./timetable.ts";
+import { registryDate } from "./trial-page.mjs";
 
 const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 
@@ -20,7 +22,11 @@ export function pairDescription(view: PairView): string {
   return `${view.status}: where the public records show ${view.intervention} for ${view.condition.toLowerCase()} stands, from ${trialCount(view)}.`;
 }
 
-const when = (day: string, estimated: boolean) => `${escape(formatDate(day))}${estimated ? " (expected)" : ""}`;
+/** A registry date as precise as the registry gave it: a day, or a month and year ("Nov 2015"),
+ * or a year. A missing day is never filled in. */
+const registryDay = (value: string) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(value) : (registryDate(value) ?? value));
+
+const when = (day: string, estimated: boolean) => `${escape(registryDay(day))}${estimated ? " (expected)" : ""}`;
 
 /** The band at the head of the page: the pair, where it stands, and who checked it. */
 export function renderPairBand(view: PairView): string {
@@ -41,6 +47,34 @@ function fact(label: string, value: string | null): string {
   return value === null ? "" : `<dt>${escape(label)}</dt><dd>${value}</dd>`;
 }
 
+/** Said once above a trial's posted results. */
+export const RESULTS_NOTE =
+  "The numbers the trial's sponsor posted to the registry, as written there. The registry record says what each measure runs from and to.";
+
+assertNoOutcomeVerdict([RESULTS_NOTE, "Posted results", "Group", "Analysed", "Value"]);
+
+function renderOutcomes(outcomes: PairTrialView["outcomes"]): string {
+  return [
+    `<section class="pair-results" data-results><h4>Posted results</h4><p class="note">${escape(RESULTS_NOTE)}</p>`,
+    ...outcomes.map((outcome) =>
+      [
+        `<div class="pair-outcome" data-outcome>`,
+        `<p><strong>${escape(outcome.title)}</strong></p>`,
+        `<p class="note">${[outcome.kind, outcome.measure, outcome.timeFrame].filter(Boolean).map(escape).join(" · ")}</p>`,
+        `<table><thead><tr><th scope="col">Group</th><th scope="col">Analysed</th><th scope="col">Value</th></tr></thead><tbody>`,
+        ...outcome.rows.map(
+          (row) =>
+            `<tr><th scope="row">${escape(row.group)}${row.part ? `<br><span class="note">${escape(row.part)}</span>` : ""}</th><td>${escape(row.analysed ?? "")}</td><td>${escape(row.value)}</td></tr>`,
+        ),
+        `</tbody></table>`,
+        outcome.comparisons.length ? `<ul class="pair-comparisons">${outcome.comparisons.map((text) => `<li data-comparison>${escape(text)}</li>`).join("")}</ul>` : "",
+        `</div>`,
+      ].join(""),
+    ),
+    `</section>`,
+  ].join("");
+}
+
 /** The body of the page: why the status, the trials, the history and the treatment. */
 export function renderPairSheet(view: PairView): string {
   const trials = view.trials.map((trial) =>
@@ -52,8 +86,8 @@ export function renderPairSheet(view: PairView): string {
       fact("State", escape(trial.state)),
       fact("Phase", trial.phases && escape(trial.phases)),
       fact("People", trial.participants && escape(trial.participants)),
-      fact("Started", trial.start && escape(formatDate(trial.start))),
-      fact("Primary completion", trial.primaryCompletion && escape(formatDate(trial.primaryCompletion))),
+      fact("Started", trial.start && escape(registryDay(trial.start))),
+      fact("Primary completion", trial.primaryCompletion && escape(registryDay(trial.primaryCompletion))),
       fact(
         "Arms",
         trial.arms.length
@@ -62,10 +96,19 @@ export function renderPairSheet(view: PairView): string {
       ),
       fact("Why it stopped, in the record", trial.whyStopped && escape(trial.whyStopped)),
       fact("Results", trial.resultsPosted ? "Posted on the registry" : "None posted"),
-      fact("Papers", trial.papers > 0 ? (trial.papers === 1 ? "1 paper" : `${trial.papers} papers`) : null),
+      fact(
+        "Papers",
+        trial.papers.length
+          ? trial.papers
+              .map((paper) => (paper.url ? `<a href="${escape(paper.url)}" rel="external" data-paper="${escape(paper.id)}">${escape(paper.label)}</a>` : `<span data-paper="${escape(paper.id)}">${escape(paper.label)}</span>`))
+              .join(", ")
+          : null,
+      ),
       `</dl><ol class="pair-events">`,
       ...trial.events.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}</li>`),
-      `</ol></article>`,
+      `</ol>`,
+      trial.outcomes.length ? renderOutcomes(trial.outcomes) : "",
+      `</article>`,
     ].join(""),
   );
   return [

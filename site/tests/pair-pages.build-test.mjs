@@ -14,6 +14,7 @@ import { readBundle } from "../src/lib/bundle.ts";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
 import { builtAhead } from "../src/lib/pair-view.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
+import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
 import { stateFor } from "../../extension/src/lookup.js";
@@ -290,6 +291,47 @@ test("every page of a build that reads a bundle carries the footer notices the b
   // The check `pnpm run build` runs after Astro; a pull request's preview stops on it.
   const check = spawnSync(process.execPath, ["scripts/check-dist.mjs"], { env: { ...process.env, DIST_DIR: withBundle }, encoding: "utf8" });
   assert.equal(check.status, 0, check.stdout + check.stderr);
+});
+
+test("a trial's papers are linked by their identifiers, and nothing of a paper's text is shown", () => {
+  // ambroxol--dementia: trial NCT02914366 and its two papers, from the lab's rehearsal.
+  const file = pages["ambroxol--dementia"];
+  const trial = file.trials.find((one) => one.paper_ids.length > 0);
+  assert.ok(trial, "the bundle holds a trial with papers");
+  const document = page(withBundle, "ambroxol--dementia");
+  const links = [...document.querySelectorAll(`[data-trial="${trial.nct_id}"] [data-paper]`)];
+  assert.deepEqual(links.map((link) => link.dataset.paper), trial.paper_ids);
+  for (const link of links) {
+    assert.equal(link.getAttribute("href"), `https://doi.org/${link.dataset.paper}`);
+    assert.equal(link.textContent, `doi:${link.dataset.paper}`);
+  }
+  // Its start is given to the month only, and is shown so, with no day made up.
+  assert.equal(trial.facts.start.day, "2015-11");
+  assert.match(document.querySelector(`[data-trial="${trial.nct_id}"]`).textContent, /Started\s*Nov 2015/);
+});
+
+test("no pair page shows a value it could not read", () => {
+  for (const address of Object.keys(built)) {
+    assert.doesNotMatch(page(withBundle, address).body.textContent, /\bundefined\b|\bnull\b|NaN/, address);
+  }
+});
+
+test("a trial's posted results are shown as the registry wrote them, with no verdict", () => {
+  // curcumin--gastritis-atrophic: trial NCT02782949, posted outcomes and comparisons, from the
+  // lab's rehearsal. It has one trial and no claim origin, so it is made on request; its file
+  // is rendered here through a pair page built ahead as well (see the on-request test).
+  const withResults = Object.entries(built).filter(([, one]) => one.trials.some((trial) => trial.findings?.outcomes.length));
+  for (const [address, file] of withResults) {
+    const document = page(withBundle, address);
+    for (const trial of file.trials.filter((one) => one.findings?.outcomes.length)) {
+      const section = document.querySelector(`[data-trial="${trial.nct_id}"] [data-results]`);
+      const outcomes = [...section.querySelectorAll("[data-outcome]")];
+      assert.equal(outcomes.length, trial.findings.outcomes.length);
+      assertNoOutcomeVerdict([section.textContent]);
+    }
+  }
+  const curcumin = pages["curcumin--gastritis-atrophic"].trials[0].findings;
+  assert.ok(curcumin.outcomes.length > 0 && curcumin.comparisons.length > 0, "the bundle holds posted outcomes and comparisons");
 });
 
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {

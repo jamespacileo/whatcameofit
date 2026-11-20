@@ -4,7 +4,7 @@
 // with none, and the Worker reads only the bundle version the build read.
 import { APPROACH_LABELS } from "./approach.ts";
 import { assertNeutral, STATUS_GLOSSES, STATUS_LABELS } from "./status.ts";
-import { PHASE_WORDS, TRIAL_STATE_WORDS } from "./trial-facts.ts";
+import { MEASURE_WORDS, PHASE_WORDS, TEST_WORDS, TRIAL_STATE_WORDS, assertNoOutcomeVerdict, comparisonText } from "./trial-facts.ts";
 
 /** The registry's state of a trial, as the lab codes it, in the site's own states. A code
  * absent here has no wording: the build stops on it. */
@@ -32,6 +32,103 @@ export const PAIR_EVENT_LABELS: Record<string, string> = {
 };
 
 assertNeutral(Object.values(PAIR_EVENT_LABELS));
+
+/** Which of a trial's measures a posted outcome is, as the registry classes it. */
+export const OUTCOME_KIND_WORDS: Record<string, string> = {
+  primary: "Primary outcome",
+  secondary: "Secondary outcome",
+  other: "Other outcome",
+  post_hoc: "Post hoc outcome",
+};
+
+assertNoOutcomeVerdict(Object.values(OUTCOME_KIND_WORDS));
+
+export interface PaperLink {
+  id: string;
+  /** The identifier as the reader sees it: "doi:10.1186/..." or "PMID 42027418". */
+  label: string;
+  /** Where the identifier resolves, or null for a kind the site does not link. */
+  url: string | null;
+}
+
+/** A paper by the identifier the lab holds. A DOI is linked through the DOI resolver as
+ * https://doi.org/<DOI>, the form Crossref's DOI display guidelines ask for
+ * (https://www.crossref.org/display-guidelines/); a PubMed identifier through PubMed's own
+ * address, https://pubmed.ncbi.nlm.nih.gov/<PMID>/ (NLM, "Linking to PubMed"). An identifier
+ * of any other kind is shown as written, unlinked: the site does not guess an address. */
+export function paperLink(id: string): PaperLink {
+  if (/^10\.\d{4,9}\/\S+$/.test(id)) return { id, label: `doi:${id}`, url: `https://doi.org/${encodeURI(id)}` };
+  const pmid = /^pmid:(\d+)$/i.exec(id)?.[1];
+  if (pmid) return { id, label: `PMID ${pmid}`, url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` };
+  return { id, label: id, url: null };
+}
+
+export interface ResultRowView {
+  group: string;
+  /** The registry's row or category title within the group, where it gives one. */
+  part: string | null;
+  analysed: string | null;
+  value: string;
+}
+
+export interface OutcomeView {
+  title: string;
+  kind: string;
+  /** "Median, pg/mL": what the numbers are. */
+  measure: string | null;
+  timeFrame: string | null;
+  rows: ResultRowView[];
+  comparisons: string[];
+}
+
+/** A posted value as the registry wrote it: "0.0 (Full Range -4.2 to 10.9)". Nothing is
+ * worked out or rounded. ClinicalTrials.gov's results data elements set what each field is:
+ * the measure type, the measure of dispersion or precision, and the number analysed
+ * (https://clinicaltrials.gov/policy/results-definitions). */
+function valueText(value: any, dispersion: string | null): string {
+  if (value.value === null) return "No value posted";
+  const kind = dispersion ? `${dispersion} ` : "";
+  if (value.lower !== null && value.upper !== null) return `${value.value} (${kind}${value.lower} to ${value.upper})`;
+  if (value.spread !== null) return `${value.value} (${kind}${value.spread})`;
+  return value.value;
+}
+
+/** A trial's posted outcomes, primary first, each with its groups' values and any
+ * comparison the sponsor posted with it. */
+function outcomesOf(findings: any): OutcomeView[] {
+  if (!findings) return [];
+  const rank: Record<string, number> = { primary: 0, secondary: 1, other: 2, post_hoc: 3 };
+  return [...findings.outcomes]
+    .sort((a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9))
+    .map((outcome) => {
+      const measureCode = outcome.param_type?.toLowerCase().replace(/\s+/g, "_");
+      const kind = measureCode && measureCode in MEASURE_WORDS ? MEASURE_WORDS[measureCode] : outcome.param_type;
+      // A count of participants is not followed by the unit "participants".
+      const repeats = measureCode === "count_of_participants" && /^participants?$/i.test(outcome.unit ?? "");
+      const measure = [kind, repeats ? null : outcome.unit].filter(Boolean).join(", ") || null;
+      return {
+        title: outcome.title,
+        kind: OUTCOME_KIND_WORDS[outcome.kind],
+        measure,
+        timeFrame: outcome.time_frame,
+        rows: outcome.values.map((value: any) => ({
+          group: value.group_title ?? value.group_id,
+          part: [value.class_title, value.category_title].filter(Boolean).join(", ") || null,
+          analysed: value.analysed,
+          value: valueText(value, outcome.dispersion_type),
+        })),
+        comparisons: findings.comparisons
+          .filter((comparison: any) => comparison.outcome_key === outcome.key)
+          .map((comparison: any) =>
+            comparisonText({
+              p_value: comparison.p_value,
+              method: comparison.method,
+              test: comparison.design && comparison.design.toLowerCase() in TEST_WORDS ? comparison.design.toLowerCase() : null,
+            } as any),
+          ),
+      };
+    });
+}
 
 /** Whether a pair's page is built ahead (design decision 2): a pair with a claim origin, or
  * with more than one supporting trial. Every other pair's page is made on request. The second
@@ -69,8 +166,9 @@ export interface PairTrialView {
   pairArm: string | null;
   whyStopped: string | null;
   events: PairEventView[];
-  papers: number;
+  papers: PaperLink[];
   resultsPosted: boolean;
+  outcomes: OutcomeView[];
   registryUrl: string;
 }
 
@@ -156,8 +254,10 @@ export function pairView(page: any): PairView {
         pairArm: trial.claim_arm,
         whyStopped: facts.why_stopped,
         events: trial.events.map(eventView).sort(byDay),
-        papers: trial.paper_ids.length,
-        resultsPosted: trial.events.some((event: any) => event.kind === "results_posted"),
+        papers: trial.paper_ids.map(paperLink),
+        // Posted when the registry dated their posting, or when the page carries them.
+        resultsPosted: trial.events.some((event: any) => event.kind === "results_posted") || Boolean(trial.findings?.outcomes.length),
+        outcomes: outcomesOf(trial.findings),
         registryUrl: `https://clinicaltrials.gov/study/${encodeURIComponent(trial.nct_id)}`,
       };
     }),
