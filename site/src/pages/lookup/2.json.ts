@@ -9,8 +9,8 @@
 // Shape: /mnt/project-files/claims-removal/lookup-index-by-pair.md (proposal, 2026-11-20).
 import type { APIRoute } from "astro";
 import { bundleMadeAt, pairLookupIndex, topicsIndex } from "../../lib/pairs";
-import { NOTICES } from "../../lib/notices";
-import { STAGE_PATH } from "../../lib/status";
+import { NOTICES, UNCHECKED_NOTE } from "../../lib/notices";
+import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../../lib/status";
 import { SITE } from "../../../site.config.mjs";
 import { formatDate } from "../../lib/timetable";
 import { LOOKUP_FORMAT } from "../../lib/lookup-file.mjs";
@@ -25,6 +25,10 @@ export const GET: APIRoute = () => {
     // Where a registry search may be asked for, or null when this site offers none.
     live: SITE.lookupUrl,
     places: STAGE_PATH.length,
+    // What each status means, by the status as each pair names it, and the note a pair no
+    // person has checked carries: the same for every such pair, so given once here.
+    meanings: Object.fromEntries(Object.entries(STATUS_LABELS).map(([code, label]) => [label, STATUS_MEANINGS[code as keyof typeof STATUS_MEANINGS]])),
+    unchecked_note: UNCHECKED_NOTE,
     // Each listed topic's name and how many it holds.
     topics: Object.fromEntries(topicsIndex().map((topic) => [topic.slug, { title: topic.title, count: topic.count }])),
     articles,
