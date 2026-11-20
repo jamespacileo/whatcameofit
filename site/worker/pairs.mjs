@@ -226,8 +226,12 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   if (!valid || (intervention !== ABSENT && !(typeof validateIntervention === "function" && validateIntervention(intervention)))) {
     return unreadablePage(built, address);
   }
+  // The narrower pairs the page links: of the intervention's file and its published pairs, only
+  // these reach the page, so only these go into its tag. A pair added or removed elsewhere, of
+  // this treatment or another, leaves the tag as it was.
+  const narrower = narrowerPairs(file, intervention === ABSENT ? null : intervention, published);
   // Answered before the page is written: an asker who holds it is told so.
-  const tag = await contentTag(built, "pair", file, intervention, [...published].sort());
+  const tag = await contentTag(built, "pair", file, narrower);
   const caching = `public, max-age=${DAY_SECONDS}`;
   if (unchanged(request, tag)) return notModified(built, tag, caching);
 
@@ -238,7 +242,7 @@ export async function pairPage(request, env, validate, cache, validateInterventi
     address,
     band: renderPairBand(view),
     oembed: true,
-    sheet: renderPairSheet(view, narrowerPairs(file, intervention === ABSENT ? null : intervention, published)),
+    sheet: renderPairSheet(view, narrower),
   });
   const headers = madeHeaders(built, "text/html; charset=utf-8", caching);
   headers.set("ETag", tag);

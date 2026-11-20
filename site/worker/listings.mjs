@@ -68,6 +68,8 @@ export async function listingPage(request, env, validators, cache) {
   const [pairs, categories] = await env.PAIRS.batch(reads);
   const published = new Set(pairs.results.map((row) => row.address));
   const known = new Set((categories?.results ?? []).map((row) => row.key));
+  // Both sets are this page's own: the pairs its file names that are published, and its own
+  // broader and narrower categories that have a page. Nothing elsewhere in a bundle changes them.
   // Answered before the page is written: an asker who holds it is told so.
   const tag = await contentTag(built, "listing", file, [...published].sort(), [...known].sort(), built.meshEdition);
   const caching = `public, max-age=${DAY_SECONDS}`;

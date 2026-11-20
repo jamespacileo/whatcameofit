@@ -840,6 +840,36 @@ test("a page whose file is unchanged keeps its tag under a new bundle version; a
   }
 });
 
+test("a pair added or removed elsewhere leaves a page's tag as it was, even one of the same treatment", async () => {
+  // The narrowest acoziborole pair links no narrower pair: removing the broadest one, of the same
+  // treatment, and an unrelated pair, changes nothing it shows, and so not its tag.
+  const KEPT = "acoziborole--trypanosomiasis-african";
+  const before = await getFresh(`/${KEPT}`);
+  const tag = before.headers.get("ETag");
+  await before.body?.cancel();
+  const next = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-fewer-"));
+  fs.cpSync(bundle, next, { recursive: true });
+  for (const gone of ["acoziborole--infections", "tulisokibart--scleroderma-diffuse"]) {
+    for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(next, folder, `${gone}.json`));
+  }
+  fs.rmSync(path.join(next, "manifest.json"));
+  writeManifest(next, { madeAt: "2026-11-21T01:00:00Z" });
+  const db = await mf.getD1Database("PAIRS");
+  for (const sql of statements(next, { keep: 10 }).sql) await db.prepare(sql).run();
+  const version = statements(next).version;
+  frameEdits["/pair-shell"] = (text) => text.replace(/data-pair-version="[0-9a-f]{16}"/, `data-pair-version="${version}"`);
+  try {
+    const after = await getFresh(`/${KEPT}`);
+    assert.equal(after.headers.get("ETag"), tag);
+    await after.body?.cancel();
+    assert.equal((await mf.dispatchFetch(`https://tag-fewer-${(freshHosts += 1)}.test/${KEPT}`, { headers: { "If-None-Match": tag } })).status, 304);
+    // The broadest pair is gone from this version.
+    assert.equal((await getFresh("/acoziborole--infections")).status, 404);
+  } finally {
+    frameEdits["/pair-shell"] = (text) => text;
+  }
+});
+
 test("a pair names the same treatment's pairs for narrower conditions", async () => {
   // acoziborole--infections (C01) and acoziborole--trypanosomiasis (C01.610…) from the small
   // bundle; the African form sits beneath both.
