@@ -125,3 +125,14 @@ test("the command refuses a folder that holds no page file", () => {
     rmSync(empty, { recursive: true, force: true });
   }
 });
+
+// The statements leave the loader one at a time (writeStatements): joined into one string, a
+// full bundle's pass V8's longest string. What is written is still every statement, in order.
+test("the printed statements are every statement in order, each ended, written one at a time", () => {
+  const printed = execFileSync(process.execPath, [script, bundle, "--print"], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
+  const { sql } = statements(bundle);
+  // Each run stamps its own loaded_at; everything else is the same text.
+  const unstamped = (text) => text.replace(/'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z'/g, "'<loaded at>'");
+  assert.equal(unstamped(printed), unstamped(sql.map((statement) => `${statement};\n`).join("")));
+  assert.ok(sql.length > 100, "the fixture gives many statements");
+});

@@ -15,9 +15,9 @@
 // version and the last statements mark it current and drop every version but it and the
 // one before, so a load that stops early leaves the site reading what it read. Loading
 // the current version again is refused: nothing would change.
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { createWriteStream, mkdtempSync, rmSync } from "node:fs";
+import { once } from "node:events";
+import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { MANIFEST, SCHEMA_MODEL, bundleVersion, checkManifest, files } from "./bundle-manifest.mjs";
 
@@ -109,6 +109,21 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
   return { version, manifest, counts, sql };
 }
 
+/**
+ * Writes the statements to a stream one at a time, waiting whenever it asks to. Joined into one
+ * string, a full bundle's statements pass V8's longest string (about 536 million characters;
+ * the rehearsal's 3,825 pairs are 73 million) and the load stops with "Invalid string length"
+ * before anything is sent.
+ * @param {import("node:stream").Writable} stream
+ * @param {string[]} sql
+ */
+export async function writeStatements(stream, sql) {
+  for (const statement of sql) {
+    if (!stream.write(`${statement};\n`)) await once(stream, "drain");
+  }
+  await new Promise((done, failed) => stream.end((error) => (error ? failed(error) : done())));
+}
+
 // Run as a command, not imported (an importer may have no script path of its own).
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const [folder, ...argv] = process.argv.slice(2);
@@ -119,7 +134,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     const load = statements(folder);
     if (argv.includes("--print")) {
-      console.log(load.sql.join(";\n") + ";");
+      // Ended here, so the statements are all out before the process exits.
+      await writeStatements(process.stdout, load.sql);
     } else {
       const { execute, target } = await import("./d1.mjs");
       const to = target(argv);
@@ -129,9 +145,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
         console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is held`);
         process.exit(0);
       }
-      const dir = mkdtempSync(join(tmpdir(), "thenwhat-pairs-"));
+      // Beside the bundle's folder, on the drive that holds it: the statements carry the lab's
+      // pages, which stay off this machine's own disk.
+      const dir = mkdtempSync(join(dirname(resolve(folder)), ".thenwhat-pairs-"));
       try {
-        writeFileSync(join(dir, "pairs.sql"), load.sql.join(";\n") + ";\n");
+        await writeStatements(createWriteStream(join(dir, "pairs.sql")), load.sql);
         await execute(to, "--file", join(dir, "pairs.sql"));
       } finally {
         rmSync(dir, { recursive: true, force: true });
