@@ -92,6 +92,33 @@ const readConfig = (file) => JSON.parse(fs.readFileSync(file, "utf8").replace(/^
  * configuration whose Worker is not `worker` (by default a pull request preview's), so a
  * preview never writes production's and `make deploy` never writes a preview's.
  */
+/**
+ * How a deployment with pairs routes between its files and its Worker (openspec pairs-site task
+ * 4.6d), set on every configuration written here: a preview's, staging's and the cutover's.
+ * The configuration files themselves are left as they are; production's (wrangler.jsonc) is not
+ * changed before the cutover.
+ *
+ * - An address that is a file is served without the Worker: a static asset request is free and
+ *   unlimited, while one that runs the Worker first is billed as an invocation
+ *   (https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/).
+ * - An address no file has reaches the Worker (`not_found_handling: "none"`): a pair's page
+ *   (/<a>--<b>), every listing, record, embed and card address, an old claim's address (301 or
+ *   410), a saved alias, and a missing page, whose not-found page the Worker sends
+ *   (worker/with-pairs.mjs). With "404-page" the files answer such an address themselves and the
+ *   Worker is never asked: seen in `wrangler dev`, tests/worker-first.build-test.mjs.
+ * - The Worker runs first (WORKER_FIRST) only where a file of the address exists and the Worker
+ *   must answer instead: the frames it fills, never served themselves, and the trial reader's
+ *   template; and its registry search and trial pages, so they never reach a file. `*` matches
+ *   across "/", and a "!" pattern wins over the others
+ *   (https://developers.cloudflare.com/workers/static-assets/binding/#run_worker_first).
+ */
+export const WORKER_FIRST = [
+  "/pair-shell", "/pair-shell/*", "/embed-shell", "/embed-shell/*",
+  "/trial-reader", "/trial-reader/*", "/trial-reader.html",
+  "/api/*", "/trials/*",
+  "!/_astro/*",
+];
+
 export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" }) {
   // A name alone is the site's own file, as Wrangler reads it from the site's folder.
   base = path.resolve(SITE_DIR, base);
@@ -102,7 +129,12 @@ export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" })
   }
   const from = path.dirname(path.resolve(base));
   config.main = path.resolve(SITE_DIR, "worker/with-pairs.mjs");
-  config.assets = { ...config.assets, directory: path.resolve(from, config.assets.directory) };
+  config.assets = {
+    ...config.assets,
+    directory: path.resolve(from, config.assets.directory),
+    not_found_handling: "none",
+    run_worker_first: WORKER_FIRST,
+  };
   config.d1_databases = [
     ...(config.d1_databases ?? []).filter((binding) => binding.binding !== "PAIRS"),
     { binding: "PAIRS", database_name: database.name, database_id: database.id, migrations_dir: MIGRATIONS },

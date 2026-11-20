@@ -40,14 +40,28 @@ function onRequest(pathname) {
   return null;
 }
 
+/** The site's not-found page, with the status and headers of the answer it stands in for. */
+async function notFoundPage(request, env, answer) {
+  const page = await env.ASSETS.fetch(new Request(new URL("/404", request.url)));
+  if (!page.ok) return answer;
+  await answer.body?.cancel();
+  const headers = new Headers(answer.headers);
+  headers.set("Content-Type", page.headers.get("Content-Type") ?? "text/html; charset=utf-8");
+  return new Response(page.body, { status: 404, headers });
+}
+
 export async function handleWithPairs(request, env, cache = globalThis.caches?.default ?? null) {
   const url = new URL(request.url);
   // The frames are the Worker's to fill, never pages of their own.
   if ([SHELL_PATH, EMBED_SHELL_PATH].some((frame) => url.pathname === frame || url.pathname === `${frame}/`)) {
-    return handle(new Request(new URL("/__no-such-page__", url), request), env);
+    const hidden = await handle(new Request(new URL("/__no-such-page__", url), request), env);
+    return hidden.headers.get("Content-Type")?.startsWith("text/html") ? hidden : notFoundPage(request, env, hidden);
   }
-  const answer = await handle(request, env);
+  let answer = await handle(request, env);
   if (answer.status !== 404) return answer;
+  // A deployment with pairs gives the files no not-found page of their own (not_found_handling
+  // "none", so an address no file has reaches this Worker): the site's is sent here.
+  if (!answer.headers.get("Content-Type")?.startsWith("text/html")) answer = await notFoundPage(request, env, answer);
   const alias = ALIAS.exec(url.pathname)?.[1];
   if (alias) {
     await answer.body?.cancel();
