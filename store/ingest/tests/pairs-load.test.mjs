@@ -97,8 +97,10 @@ test("a folder that differs from its manifest is refused before any statement is
   try {
     cpSync(bundle, short, { recursive: true });
     rmSync(join(short, "p12_pair_data_file", "apitegromab--obesity.json"));
-    assert.throws(() => statements(short), /the manifest counts 14 PairDataFile files and 13 are present/);
-    assert.throws(() => execFileSync(process.execPath, [script, short, "--print"], { stdio: "pipe" }), /14 PairDataFile files and 13/);
+    const held = readdirSync(join(bundle, "p12_pair_data_file")).length;
+    const counted = new RegExp(`the manifest counts ${held} PairDataFile files and ${held - 1} are present`);
+    assert.throws(() => statements(short), counted);
+    assert.throws(() => execFileSync(process.execPath, [script, short, "--print"], { stdio: "pipe" }), counted);
     writeFileSync(join(short, "p12_pair_data_file", "apitegromab--obesity.json"), "{}");
     assert.throws(() => statements(short), /checksum .* differs from the manifest's/);
   } finally {

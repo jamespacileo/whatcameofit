@@ -8,7 +8,7 @@ import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { modelOf, movedAddresses, readBundle, unwordedPairCodes } from "../src/lib/bundle.ts";
-import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
+import { bundleVersion, writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { pairView } from "../src/lib/pair-view.ts";
 import { assertPairWordingNeutral, PAIR_WORDING, UNWORDED_TRIAL_STATES } from "../src/lib/pair-wording.ts";
 
@@ -161,6 +161,8 @@ test("verdict wording in any table of the pair path's words is refused", () => {
 
 // The manifest (openspec pairs-site, task 2.3): its counts and checksum are checked before any
 // page is read, so a build stops before it writes one.
+const pairPages = readdirSync(join(folder, "p12_pair_page")).length;
+
 function copyAsIs(change) {
   const dir = mkdtempSync(join(tmpdir(), "thenwhat-bundle-"));
   cpSync(folder, dir, { recursive: true });
@@ -170,7 +172,8 @@ function copyAsIs(change) {
 
 test("the bundle's manifest states its version, checksum and counts, and the read gives them", () => {
   const bundle = readBundle(folder);
-  assert.equal(bundle.version, "d0a1821d2e1c514d");
+  // The small bundle is cut again as the lab changes, so its version is worked out, not written here.
+  assert.equal(bundle.version, bundleVersion(folder));
   assert.equal(bundle.manifest.checksum.slice("sha256:".length, "sha256:".length + 16), bundle.version);
   for (const [model, pages] of Object.entries(bundle.pages)) assert.equal(bundle.manifest.counts[model], Object.keys(pages).length, model);
 });
@@ -178,7 +181,7 @@ test("the bundle's manifest states its version, checksum and counts, and the rea
 test("a file missing from what the manifest counts stops the read, naming the page model and both counts", () => {
   const dir = copyAsIs((at) => rmSync(join(at, "p12_pair_page", `${address}.json`)));
   try {
-    assert.throws(() => readBundle(dir), /the manifest counts 14 PairPage files and 13 are present/);
+    assert.throws(() => readBundle(dir), new RegExp(`the manifest counts ${pairPages} PairPage files and ${pairPages - 1} are present`));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -192,7 +195,7 @@ test("a file changed after the manifest was made stops the read on the checksum"
     writeFileSync(file, JSON.stringify(page));
   });
   try {
-    assert.throws(() => readBundle(dir), /checksum sha256:[0-9a-f]{64} differs from the manifest's sha256:d0a1821d/);
+    assert.throws(() => readBundle(dir), new RegExp(`checksum sha256:[0-9a-f]{64} differs from the manifest's sha256:${bundleVersion(folder)}`));
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
