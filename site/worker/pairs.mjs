@@ -5,6 +5,7 @@
 // so a new deployment needs no purge.
 import { pairView } from "../src/lib/pair-view.ts";
 import { escape, pairDescription, renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
+import { narrowerPairs } from "../src/lib/pair-view.ts";
 import { pairRecordText } from "../src/lib/pair-record.ts";
 import { SITE } from "../site.config.mjs";
 
@@ -69,8 +70,9 @@ function fill(shell, { title, description, address, band, sheet }) {
  * @param {{ ASSETS: { fetch: (request: Request) => Promise<Response> }, PAIRS?: any }} env
  * @param {(file: unknown) => boolean} validate the compiled validator of `PairPage`
  * @param {{ match: Function, put: Function } | null} cache
+ * @param {(file: unknown) => boolean} validateIntervention the compiled validator of `PairInterventionPage`
  */
-export async function pairPage(request, env, validate, cache) {
+export async function pairPage(request, env, validate, cache, validateIntervention) {
   const url = new URL(request.url);
   const address = pairAddress(url.pathname);
   if (!address || !env.PAIRS || typeof validate !== "function") return null;
@@ -84,7 +86,11 @@ export async function pairPage(request, env, validate, cache) {
 
   const file = await bundleFile(env, version, "PairPage", address);
   if (file === null) return null;
-  if (!validate(file)) {
+  // The same treatment's narrower pairs, from its intervention page file: one more read by the
+  // table's key (version, model, key), the same file the built page reads. A version with no
+  // such file lists none, as the build does; a file that fails its check stops the page.
+  const intervention = validate(file) ? await bundleFile(env, version, "PairInterventionPage", file.row.intervention.slug) : null;
+  if (!validate(file) || (intervention !== null && !(typeof validateIntervention === "function" && validateIntervention(intervention)))) {
     const page = fill(shell, {
       title: "Page not shown",
       description: UNREADABLE,
@@ -101,7 +107,7 @@ export async function pairPage(request, env, validate, cache) {
     description: pairDescription(view),
     address,
     band: renderPairBand(view),
-    sheet: renderPairSheet(view),
+    sheet: renderPairSheet(view, narrowerPairs(file, intervention)),
   });
   const answer = new Response(page, {
     headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": `public, max-age=${DAY_SECONDS}` },
