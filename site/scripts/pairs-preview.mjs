@@ -105,7 +105,7 @@ export function loadPairsBundle({ config, database, bundle, local = false, persi
   if (held.status !== 0) throw new Error(`${database.name} could not be read: ${lastError(`${held.stdout}${held.stderr}`)}`);
   if (json(held.stdout)[0]?.results?.[0]?.current === 1) {
     // Already current, perhaps from before bundles carried a manifest: keep the manifest with it.
-    const kept = wrangler(["d1", "execute", database.name, ...where, "--config", config, "--json", "--command", manifestBackfill(bundle).sql[0]]);
+    const kept = wrangler(["d1", "execute", database.name, ...where, "--config", config, "--json", "--command", manifestBackfill(load).sql[0]]);
     if (kept.status !== 0) throw new Error(`the manifest of bundle ${load.version} was not kept in ${database.name}: ${lastError(`${kept.stdout}${kept.stderr}`)}`);
     return { version: load.version, loaded: false };
   }

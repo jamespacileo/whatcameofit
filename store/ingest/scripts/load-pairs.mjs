@@ -42,11 +42,12 @@ const insert = (table, row) => `INSERT INTO ${table} (${Object.keys(row).join(",
 // held without one: a bundle loaded before bundles carried a manifest keeps its version (the
 // manifest is outside the checksum), so it is never loaded again, and without this it could
 // never be exported for a build. A manifest already held is left as it is.
-export function manifestBackfill(folder) {
-  const { version, manifest } = checkManifest(folder);
+// It takes the version and manifest a check already returned (`statements(...)` gives both), so
+// the manifest stored is the one checked, even if the folder is replaced in the meantime.
+export function manifestBackfill({ version, manifest }) {
   const body = JSON.stringify(manifest);
   // One part, so the guard below sees the whole manifest or none of it.
-  if (body.length > PART_CHARS) throw new Error(`the manifest of ${folder} is longer than one part of ${PART_CHARS} characters`);
+  if (body.length > PART_CHARS) throw new Error(`the manifest of bundle ${version} is longer than one part of ${PART_CHARS} characters`);
   const sql = `INSERT INTO pair_page (version, model, key, part, body) SELECT ${quote(version)}, ${quote(MANIFEST_MODEL)}, ${quote(MANIFEST_KEY)}, 0, ${quote(body)}`
     + ` WHERE EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)})`
     + ` AND NOT EXISTS (SELECT 1 FROM pair_page WHERE version = ${quote(version)} AND model = ${quote(MANIFEST_MODEL)})`;
@@ -100,7 +101,7 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
     ...TABLES.map((table) => `DELETE FROM ${table} WHERE version NOT IN ${kept}`),
     `DELETE FROM pair_bundle WHERE version NOT IN (SELECT version FROM (${kept.slice(1, -1)}))`,
   ];
-  return { version, counts, sql };
+  return { version, manifest, counts, sql };
 }
 
 // Run as a command, not imported (an importer may have no script path of its own).
@@ -119,7 +120,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       const to = target(argv);
       const [held] = (await execute(to, "--command", `SELECT version FROM pair_bundle WHERE current = 1`))[0]?.results ?? [];
       if (held?.version === load.version) {
-        await execute(to, "--command", manifestBackfill(folder).sql[0]);
+        await execute(to, "--command", manifestBackfill(load).sql[0]);
         console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is held`);
         process.exit(0);
       }
