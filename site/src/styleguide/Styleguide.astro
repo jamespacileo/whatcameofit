@@ -85,7 +85,7 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
   { name: "meshCredit", about: "The credit NLM's terms ask for wherever a MeSH category is shown.", html: sheet([meshCredit(edition)]) },
   {
     name: "trialsTable",
-    about: "A pair's trials as a table (lib/trials-table.ts): results posted first, then by furthest phase; each row opens to its record. Not on a pair page yet.",
+    about: "A pair's trials as a table (lib/trials-table.ts): results posted first, then by furthest phase; each row opens to its record. A pair page shows it from three trials up (TRIALS_TABLE_FROM in lib/pair-render.ts); fewer stay as entries.",
     html: view ? sheet([trialsTable(view.trials)]) : NO_PAIR,
   },
   {

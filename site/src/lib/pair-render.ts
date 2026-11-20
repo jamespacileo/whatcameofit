@@ -6,6 +6,7 @@ import { UNCHECKED_BYLINE } from "./notices.ts";
 import type { NarrowerPair, PairTrialView, PairView } from "./pair-view.ts";
 import { assertNoOutcomeVerdict } from "./trial-facts.ts";
 import { formatDate } from "./timetable.ts";
+import { trialsTable } from "./trials-table.ts";
 import { registryDate } from "./trial-page.mjs";
 
 export { escape };
@@ -77,6 +78,9 @@ function renderOutcomes(outcomes: PairTrialView["outcomes"]): string {
 }
 
 /** The body of the page: why the status, the trials, the history and the treatment. */
+/** How many trials a pair has before its page shows them as a table rather than one entry each. */
+export const TRIALS_TABLE_FROM = 3;
+
 /** The line that names the same treatment's pairs for narrower conditions. */
 export const NARROWER_LEAD = "Also followed for narrower conditions:";
 
@@ -115,7 +119,10 @@ export function trialRecord(trial: PairTrialView): string {
 }
 
 export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): string {
-  const trials = view.trials.map((trial) =>
+  // From a few trials up, the trials read across as a table (lib/trials-table.ts), each row
+  // opening to the same record; fewer stay as entries of their own. Only the one used is made.
+  const asTable = view.trials.length >= TRIALS_TABLE_FROM;
+  const trials = asTable ? [trialsTable(view.trials)] : view.trials.map((trial) =>
     [
       `<article class="pair-trial" data-trial="${escape(trial.nctId)}">`,
       `<h3><a href="${escape(trial.registryUrl)}" rel="external">${escape(trial.nctId)}</a>`,
