@@ -9,6 +9,7 @@ import { SITE } from "../../site.config.mjs";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "../lib/status";
 import { NO_REPORT, setAbout } from "../lib/trial-page.mjs";
 import { listing } from "../lib/trials-listing";
+import { pairBundleFolder } from "../lib/pairs";
 
 const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
 ---
@@ -457,8 +458,9 @@ const codes = Object.keys(STATUS_LABELS) as (keyof typeof STATUS_LABELS)[];
       made on your device.
     </li>
     <li>
-      <strong>Feeds.</strong> For a feed reader: <a href="/changes.xml">every status change</a>,
-      and <a href="/anniversaries.xml">anniversaries of first reports</a>. Each claim page and
+      {/* A build that reads a bundle has no anniversaries feed (pairs-site task 5.7). */}
+      <strong>Feeds.</strong> For a feed reader: <a href="/changes.xml">every status change</a>
+      {pairBundleFolder() ? "." : <>, and <a href="/anniversaries.xml">anniversaries of first reports</a>.</>} Each claim page and
       each topic page links a feed of its own.
     </li>
     <li>

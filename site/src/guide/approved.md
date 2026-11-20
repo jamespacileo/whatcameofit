@@ -11,8 +11,6 @@ checked: false
 
 A regulator has published a decision approving the treatment for the condition the claim is about. The claim page lists that decision as a record, with its date and a link to the regulator's own page.
 
-The page “It happened” lists every tracked claim with this status.
-
 ## What it does not tell you
 
 It does not say where the treatment is approved beyond the regulator named in the record. Each regulator decides for its own territory, and an approval by one is not an approval by another.

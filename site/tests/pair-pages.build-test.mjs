@@ -359,6 +359,38 @@ test("the footer's Data page describes the pairs' files and its link opens the p
   assert.ok(page(without, "data").querySelector('a[href="/data/claims.json"]'));
 });
 
+test("a build that reads a bundle leaves out It happened and Anniversaries, and links neither", () => {
+  // Launch scope (2026-11-20; openspec pairs-site tasks 5.6, 5.7): both list claims by their
+  // reports, which the bundle does not carry. Their addresses answer 404.
+  const GONE = ["/it-happened", "/anniversaries", "/anniversaries.xml"];
+  for (const file of ["it-happened/index.html", "anniversaries/index.html", "anniversaries.xml"]) {
+    assert.ok(!fs.existsSync(path.join(withBundle, file)), file);
+  }
+  assert.ok(!fs.existsSync(path.join(withBundle, "rows", "on-this-day")));
+  // No built page links to them.
+  const linked = [];
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (entry.name.endsWith(".html")) {
+        const html = fs.readFileSync(full, "utf8");
+        for (const address of [...GONE, "/rows/on-this-day/"]) {
+          if (html.includes(`href="${address}`)) linked.push(`${path.relative(withBundle, full)} links ${address}`);
+        }
+      }
+    }
+  };
+  walk(withBundle);
+  assert.deepEqual(linked, []);
+  // Nor does the guide's entry on approval send a reader to the page by name.
+  assert.doesNotMatch(page(withBundle, "guide/approved").body.textContent, /It happened/);
+  // A build with no bundle still has them.
+  assert.ok(fs.existsSync(path.join(without, "it-happened", "index.html")));
+  assert.ok(fs.existsSync(path.join(without, "anniversaries", "index.html")));
+  assert.ok(fs.existsSync(path.join(without, "anniversaries.xml")));
+});
+
 test("a pair filed under no topic still has its page, and is reached from every list but a topic's", () => {
   const file = pages[UNFILED];
   assert.equal(file.row.filing, null, "the lab wrote this pair with no topic");

@@ -110,6 +110,8 @@ test("the comment for a copy built from a bundle counts its pairs, as the workfl
   assert.match(run.stdout, /12 pairs from bundle `230ee727aab2d32c`/);
   assert.doesNotMatch(run.stdout, /\d+ claims/);
   assert.doesNotMatch(run.stdout, /Claims this pull request adds/);
+  // A pairs copy has no Anniversaries page to link (pairs-site task 5.7).
+  assert.doesNotMatch(run.stdout, /\/anniversaries/);
 
   const claimsCopy = spawnSync(process.execPath, ["scripts/pr-preview-comment.mjs"], {
     encoding: "utf8",
@@ -117,6 +119,7 @@ test("the comment for a copy built from a bundle counts its pairs, as the workfl
   });
   assert.equal(claimsCopy.status, 0, claimsCopy.stderr);
   assert.doesNotMatch(claimsCopy.stdout, /pairs/);
+  assert.match(claimsCopy.stdout, /\[Anniversaries\]\(https:\/\/[^)]+\/anniversaries\)/);
 });
 
 test("a failed build says so in the same comment and offers no address", () => {

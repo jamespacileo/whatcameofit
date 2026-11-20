@@ -8,6 +8,7 @@ import { CLAIM_FIELDS } from "../../lib/audiences";
 import { CORRECTION_SUBJECT, contactLink } from "../../lib/contact.mjs";
 import { data, listedTopics } from "../../lib/export";
 import { DATA_LICENCE, DATA_LICENCE_URL } from "../../lib/open-data";
+import { pairBundleFolder } from "../../lib/pairs";
 import { reportedClaimCount } from "../../lib/reports";
 import { siteOpenData } from "../../lib/site-open-data";
 import { formatDate } from "../../lib/timetable";
@@ -99,8 +100,9 @@ const count = data.claims.length;
 
   <h2 class="bar">Feeds, and reporting a wrong match</h2>
   <p>
-    For a feed reader: <a href="/changes.xml">every status change</a> and{" "}
-    <a href="/anniversaries.xml">anniversaries of first reports</a>. Each claim page and each topic
+    {/* A build that reads a bundle has no anniversaries feed (pairs-site task 5.7). */}
+    For a feed reader: <a href="/changes.xml">every status change</a>
+    {pairBundleFolder() ? "." : <> and <a href="/anniversaries.xml">anniversaries of first reports</a>.</>} Each claim page and each topic
     page links a feed of its own.
   </p>
   <p>

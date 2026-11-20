@@ -15,6 +15,10 @@ import { GUIDE_UNCHECKED_NOTE } from "../../lib/notices";
 import { hasLinkedReport, reportedClaimCount } from "../../lib/reports";
 import { definedTermData } from "../../lib/structured";
 import { formatDate } from "../../lib/timetable";
+import { pairBundleFolder } from "../../lib/pairs";
+
+// A build that reads a bundle has no "It happened" page to link (pairs-site task 5.6).
+const moreShown = (href: string) => !(pairBundleFolder() && href === "/it-happened");
 
 export function getStaticPaths() {
   return guide.map((entry) => ({ params: { slug: entry.slug }, props: { entry } }));
@@ -91,9 +95,11 @@ const CHECKED_ENTRY = "checked-by-a-person";
                 : ` Showing ${work.shown.length} examples.`)}
             </p>
             <ClaimTable claims={work.shown} caption={`Tracked claims: ${entry.title}`} />
-            <p class="rest">
-              <a href={work.more.href}>{work.more.label}</a>
-            </p>
+            {moreShown(work.more.href) && (
+              <p class="rest">
+                <a href={work.more.href}>{work.more.label}</a>
+              </p>
+            )}
           </>
         ))
     }
