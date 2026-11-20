@@ -286,6 +286,12 @@ test("a build that reads a bundle writes the validators and types of its page mo
   }
 });
 
+test("every page of a build that reads a bundle carries the footer notices the build check asks for", () => {
+  // The check `pnpm run build` runs after Astro; a pull request's preview stops on it.
+  const check = spawnSync(process.execPath, ["scripts/check-dist.mjs"], { env: { ...process.env, DIST_DIR: withBundle }, encoding: "utf8" });
+  assert.equal(check.status, 0, check.stdout + check.stderr);
+});
+
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));

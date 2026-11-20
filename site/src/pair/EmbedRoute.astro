@@ -6,6 +6,7 @@ import { SITE } from "../../site.config.mjs";
 import { CARD_NOTICE, clip, monthAndYear } from "../lib/card";
 import { NOTICES } from "../lib/notices";
 import { builtAheadPages, pairView } from "../lib/pairs";
+import { formatDate } from "../lib/timetable";
 
 export function getStaticPaths() {
   return Object.entries(builtAheadPages()).map(([address, page]) => ({ params: { address }, props: { page } }));
@@ -14,6 +15,8 @@ export function getStaticPaths() {
 const view = pairView(Astro.props.page);
 const title = `${view.intervention} for ${view.condition.toLowerCase()}`;
 const page = `${SITE.url}/${view.address}`;
+// The footer every page carries says when the registries were read (scripts/check-dist.mjs).
+const latestCheck = view.registryChecks.map((check) => check.through).sort().at(-1) ?? null;
 ---
 
 <!doctype html>
@@ -41,7 +44,14 @@ const page = `${SITE.url}/${view.address}`;
       </p>
       <footer>
         {NOTICES.map((notice) => <p>{notice}</p>)}
-        <p>Data sources: ClinicalTrials.gov, Medical Subject Headings (MeSH).</p>
+        <p>
+          Data sources: ClinicalTrials.gov, Medical Subject Headings (MeSH).
+          {
+            latestCheck
+              ? ` Registries last checked ${formatDate(latestCheck)}.`
+              : ` Registries: status worked out ${formatDate(view.asOf)} from the trial records.`
+          }
+        </p>
       </footer>
     </article>
   </body>
