@@ -2,7 +2,7 @@
 // makes on request (worker/listings.mjs), so the two are the same for the same file. Every value
 // from a page file goes through `escape`. It fills the same frame as a pair page (/pair-shell).
 import type { ListingView } from "./listing-view.ts";
-import { escape } from "./pair-render.ts";
+import { band, bandTitle, crumbs, escape, followedLine, sheet, sheetHeading } from "./blocks.ts";
 import { renderCard } from "./card-render.ts";
 import { breadcrumbData } from "./structured.ts";
 import { UNCHECKED_BYLINE } from "./notices.ts";
@@ -29,24 +29,21 @@ export function renderMeshCredit(edition: string): string {
 
 /** The band: where the page sits, its title, and what it is. */
 export function renderListingBand(view: ListingView): string {
-  return [
-    trailData(view),
-    `<section class="band record" aria-label="${escape(view.title)}"><div class="wrap band-grid"><div class="band-main">`,
-    view.crumbs.length
-      ? `<nav class="crumbs" aria-label="Where this page sits">${view.crumbs.map((crumb) => `<a href="${escape(crumb.href)}">${escape(crumb.label)}</a>`).join(" · ")}</nav>`
-      : "",
-    `<h1 class="title" data-listing="${escape(view.kind)}">${escape(view.title)}</h1>`,
-    `<p class="lede" data-pagefind-ignore>${escape(count(view.rows.length))} followed through the public trial records. Not medical advice. <a href="/how-it-works">How a status is set</a></p>`,
-    view.card ? renderCard(view.card) : "",
-    `</div></div></section>`,
-  ].join("");
+  return (
+    trailData(view) +
+    band(` aria-label="${escape(view.title)}"`, [
+      view.crumbs.length ? crumbs("Where this page sits", view.crumbs) : "",
+      bandTitle(view.title, ` data-listing="${escape(view.kind)}"`),
+      followedLine(escape(count(view.rows.length)), "lede"),
+      view.card ? renderCard(view.card) : "",
+    ])
+  );
 }
 
 /** The sheet: the notes, the linked categories, then the list, and on a category's page the
  * vocabulary's credit (`meshEdition`, the year the build states). */
 export function renderListingSheet(view: ListingView, meshEdition: string): string {
-  return [
-    `<div class="frame no-rail"><div class="sheet">`,
+  return sheet([
     ...view.notes.map((note) => `<p class="what-this-is">${escape(note)}</p>`),
     ...view.linkGroups.map(
       (group) =>
@@ -54,7 +51,7 @@ export function renderListingSheet(view: ListingView, meshEdition: string): stri
           .map((link) => `<a href="${escape(link.href)}">${escape(link.label)}</a>${link.count === undefined ? "" : ` <span class="count">${link.count}</span>`}`)
           .join(", ")}</p>`,
     ),
-    `<h2 class="bar sheet-title" id="pairs">Treatments and conditions</h2>`,
+    sheetHeading("Treatments and conditions", "pairs"),
     view.rows.length === 0
       ? `<p>No pair is listed here yet.</p>`
       : [
@@ -69,6 +66,5 @@ export function renderListingSheet(view: ListingView, meshEdition: string): stri
           `</tbody></table>`,
         ].join(""),
     view.kind === "category" ? renderMeshCredit(meshEdition) : "",
-    `</div></div>`,
-  ].join("");
+  ]);
 }

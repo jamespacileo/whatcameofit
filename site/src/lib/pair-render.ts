@@ -1,18 +1,14 @@
 // A pair page's content as HTML (openspec pairs-site, design decision 3 as revised): one
 // renderer for the page built ahead and the page the Worker makes on request, so the two are
 // the same for the same file. Every value read from a page file goes through `escape`.
+import { band, bandTitle, crumbs, escape, eventList, followedLine, sheet, sheetHeading, statusWords } from "./blocks.ts";
 import { UNCHECKED_BYLINE } from "./notices.ts";
 import type { NarrowerPair, PairTrialView, PairView } from "./pair-view.ts";
 import { assertNoOutcomeVerdict } from "./trial-facts.ts";
 import { formatDate } from "./timetable.ts";
 import { registryDate } from "./trial-page.mjs";
 
-const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-
-/** Text made safe to place in HTML, between tags or in a quoted attribute. */
-export function escape(value: unknown): string {
-  return String(value ?? "").replace(/[&<>"']/g, (character) => ENTITIES[character]);
-}
+export { escape };
 
 const trialCount = (view: PairView) =>
   view.trials.length === 1 ? "1 registered trial" : `${view.trials.length} registered trials`;
@@ -30,19 +26,18 @@ const when = (day: string, estimated: boolean) => `${escape(registryDay(day))}${
 
 /** The band at the head of the page: the pair, where it stands, and who checked it. */
 export function renderPairBand(view: PairView): string {
-  return [
-    // The search index (Pagefind) reads only pages marked as a body, so only pair pages are
-    // found by words; the topic narrows a search to one topic's pairs.
-    `<section class="band record" data-pagefind-body${view.topic ? ` data-pagefind-filter="topic:${escape(view.topic)}"` : ""} aria-label="This pair and where it stands"><div class="wrap band-grid"><div class="band-main">`,
-    `<nav class="crumbs" aria-label="The treatment and the condition">`,
-    `<a href="/intervention/${escape(view.interventionSlug)}" data-pair-intervention>${escape(view.intervention)}</a> · `,
-    `<a href="/condition/${escape(view.conditionSlug)}" data-pair-condition>${escape(view.condition)}</a></nav>`,
-    `<h1 class="title">${escape(view.title)}</h1>`,
-    `<p class="what-this-is" data-pagefind-ignore>A treatment and a condition, followed through the public trial records. Not medical advice. <a href="/how-it-works">How a status is set</a></p>`,
-    `<p class="lede" data-pair-status="${escape(view.statusCode)}"><strong>${escape(view.status)}</strong>. ${escape(view.gloss)}. As of ${escape(formatDate(view.asOf))}, from ${escape(trialCount(view))}.</p>`,
+  // The search index (Pagefind) reads only pages marked as a body, so only pair pages are
+  // found by words; the topic narrows a search to one topic's pairs.
+  return band(` data-pagefind-body${view.topic ? ` data-pagefind-filter="topic:${escape(view.topic)}"` : ""} aria-label="This pair and where it stands"`, [
+    crumbs("The treatment and the condition", [
+      { href: `/intervention/${view.interventionSlug}`, label: view.intervention, data: "data-pair-intervention" },
+      { href: `/condition/${view.conditionSlug}`, label: view.condition, data: "data-pair-condition" },
+    ]),
+    bandTitle(view.title),
+    followedLine("A treatment and a condition,", "what-this-is"),
+    `<p class="lede" data-pair-status="${escape(view.statusCode)}">${statusWords(view.status, view.gloss)} As of ${escape(formatDate(view.asOf))}, from ${escape(trialCount(view))}.</p>`,
     view.checkedByPerson ? "" : `<p class="byline" data-pair-unchecked>${escape(UNCHECKED_BYLINE[0])} ${escape(UNCHECKED_BYLINE[1])}</p>`,
-    `</div></div></section>`,
-  ].join("");
+  ]);
 }
 
 function fact(label: string, value: string | null): string {
@@ -111,33 +106,34 @@ export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): 
               .join(", ")
           : null,
       ),
-      `</dl><ol class="pair-events">`,
-      ...trial.events.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}</li>`),
-      `</ol>`,
+      `</dl>`,
+      eventList("", trial.events.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}</li>`)),
       trial.outcomes.length ? renderOutcomes(trial.outcomes) : "",
       `</article>`,
     ].join(""),
   );
-  return [
-    `<div class="frame no-rail"><div class="sheet">`,
+  return sheet([
     narrower.length
       ? `<p class="note" data-pair-narrower>${escape(NARROWER_LEAD)} ${narrower
           .map((pair) => `<a href="/${escape(pair.address)}" data-narrower="${escape(pair.address)}">${escape(pair.condition)}</a>`)
           .join(", ")}</p>`
       : "",
-    `<h2 class="bar sheet-title" id="why">Why this status</h2><ol class="pair-events" data-pair-explained>`,
-    ...view.explainedBy.map(
-      (event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}, ${escape(event.nctId)}</li>`,
+    sheetHeading("Why this status", "why"),
+    eventList(
+      " data-pair-explained",
+      view.explainedBy.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}, ${escape(event.nctId)}</li>`),
     ),
-    `</ol><h2 class="bar sheet-title" id="trials">The trials</h2>`,
+    sheetHeading("The trials", "trials"),
     ...trials,
-    `<h2 class="bar sheet-title" id="history">How the status changed</h2><ol class="pair-events" data-pair-history>`,
-    ...view.history.map(
-      (change) =>
-        `<li>${escape(formatDate(change.on))}: ${change.before ? `${escape(change.before)} to ${escape(change.after)}` : `First set: ${escape(change.after)}`}</li>`,
+    sheetHeading("How the status changed", "history"),
+    eventList(
+      " data-pair-history",
+      view.history.map(
+        (change) =>
+          `<li>${escape(formatDate(change.on))}: ${change.before ? `${escape(change.before)} to ${escape(change.after)}` : `First set: ${escape(change.after)}`}</li>`,
+      ),
     ),
-    `</ol>`,
-    view.otherNames.length > 0 || view.approach ? `<h2 class="bar sheet-title" id="about">About the treatment</h2>` : "",
+    view.otherNames.length > 0 || view.approach ? sheetHeading("About the treatment", "about") : "",
     view.approach ? `<p>Kind of treatment: ${escape(view.approach)}.</p>` : "",
     view.otherNames.length > 0 ? `<p data-pair-names>Also known as ${view.otherNames.map(escape).join(", ")}.</p>` : "",
     view.registryChecks.length > 0
@@ -145,6 +141,5 @@ export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): 
           .map((check) => `${escape(check.registry)}, through ${escape(formatDate(check.through))}`)
           .join("; ")}.</p>`
       : "",
-    `</div></div>`,
-  ].join("");
+  ]);
 }

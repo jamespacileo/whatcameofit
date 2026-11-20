@@ -4,7 +4,7 @@
 // so the frame the build leaves (src/pair/EmbedShell.astro) and the Worker agree on the markup.
 // Every value from a page file goes through `escape`.
 import { CARD_NOTICE, clip, monthAndYear } from "./card.ts";
-import { escape } from "./pair-render.ts";
+import { escape, statusWords } from "./blocks.ts";
 import type { PairView } from "./pair-view.ts";
 import { EMBED_SIZE, embedSnippet } from "./share.ts";
 import { formatDate } from "./timetable.ts";
@@ -19,7 +19,7 @@ export function renderEmbedArticle(view: PairView, siteName: string, siteUrl: st
   return [
     `<p class="embed-name"><a href="${escape(page)}" target="_top">${escape(siteName)}</a> <span>${escape(CARD_NOTICE)}</span></p>`,
     `<h1>${escape(clip(embedTitle(view), 160))}</h1>`,
-    `<div class="embed-status" data-pair-status="${escape(view.statusCode)}"><strong>${escape(view.status)}</strong>. ${escape(view.gloss)}.</div>`,
+    `<div class="embed-status" data-pair-status="${escape(view.statusCode)}">${statusWords(view.status, view.gloss)}</div>`,
     `<p class="embed-more"><span>Checked ${escape(monthAndYear(view.asOf))}.</span> <a href="${escape(page)}" target="_top">Records and sources</a></p>`,
   ].join("");
 }
