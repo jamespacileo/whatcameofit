@@ -272,6 +272,15 @@ test("each pair has its cards and embed, and its page names them", () => {
   }
 });
 
+test("a build that reads a bundle writes the validators and types of its page models", () => {
+  const code = fs.readFileSync(".bundle-code/validators.mjs", "utf8");
+  for (const name of fs.readdirSync("tests/bundle/schemas")) {
+    const model = name.slice(0, -".json".length);
+    assert.match(code, new RegExp(`validate${model}`), model);
+    assert.ok(fs.existsSync(path.join(".bundle-code", "types", `${model}.d.ts`)), model);
+  }
+});
+
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));

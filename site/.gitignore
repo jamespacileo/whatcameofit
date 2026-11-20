@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# validators and types made from a bundle's schemas (scripts/bundle-code.mjs)
+.bundle-code/
 
 # dependencies
 node_modules/
