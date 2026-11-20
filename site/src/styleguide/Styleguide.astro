@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { band, bandTitle, basisMark, crumbs, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -95,6 +95,22 @@ const blocks: { name: string; about: string; html: string; framed?: boolean }[] 
     about: "A pair's dated trial records on one time axis to the last check (lib/record-strip.ts), with its key. Not on a pair page yet.",
     html: view ? (recordStrip(view) ? `${recordStrip(view)}${stripKey()}` : `<p>This pair has no dated record to draw.</p>`) : NO_PAIR,
   },
+  {
+    name: "sectionList",
+    about: "The sections of a page beside its sheet, the one in view marked; one row of chips on a narrow screen. Not on a pair page yet.",
+    framed: true,
+    html: view
+      ? renderPairSheet(view, narrower).replace(
+          `<div class="frame no-rail"><div class="sheet">`,
+          `<div class="frame">${sectionList("On this page", [
+            { id: "why", name: "Why this status" },
+            { id: "trials", name: "The trials", count: view.trials.length },
+            { id: "history", name: "How the status changed" },
+            ...(view.otherNames.length > 0 || view.approach ? [{ id: "about", name: "About the treatment" }] : []),
+          ])}<div class="sheet">`,
+        )
+      : NO_PAIR,
+  },
   { name: "basisMark", about: "Marks a record the status rests on: the blue diamond, named once in a key.", html: `<p>${basisMark()} Basis of status</p>` },
   {
     name: "embedFooter",
@@ -114,8 +130,10 @@ const pieces: { name: string; html: string; framed?: boolean }[] = [
     : []),
 ];
 
-/** A sample's own ids, so two samples never share one and a link reaches the one it names. */
-const namespaced = (html: string, prefix: string) => html.replace(/ id="([^"]+)"/g, (_, id) => ` id="${prefix}-${id}"`);
+/** A sample's own ids, so two samples never share one and a link reaches the one it names: its
+ * links within itself follow. */
+const namespaced = (html: string, prefix: string) =>
+  html.replace(/ id="([^"]+)"/g, (_, id) => ` id="${prefix}-${id}"`).replace(/ href="#([^"]+)"/g, (_, id) => ` href="#${prefix}-${id}"`);
 ---
 
 <Base title="Styleguide" description="The building blocks of the site's pages, drawn with the bundle this build reads." noindex>
@@ -158,6 +176,10 @@ const namespaced = (html: string, prefix: string) => html.replace(/ id="([^"]+)"
     )
   }
 </Base>
+
+<script>
+  import "../scripts/section-list";
+</script>
 
 <style>
   .styleguide-text {
