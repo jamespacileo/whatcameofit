@@ -24,6 +24,10 @@ const registryDay = (value: string) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? form
 
 const when = (day: string, estimated: boolean) => `${escape(registryDay(day))}${estimated ? " (expected)" : ""}`;
 
+/** An event's date as a page gives it: as precise as the registry gave it, and "(expected)"
+ * when the registry expects it rather than records it. HTML. */
+export const eventWhen = when;
+
 /** The band at the head of the page: the pair, where it stands, and who checked it. */
 export function renderPairBand(view: PairView): string {
   // The search index (Pagefind) reads only pages marked as a body, so only pair pages are
@@ -61,7 +65,7 @@ function renderOutcomes(outcomes: PairTrialView["outcomes"]): string {
         `<table><thead><tr><th scope="col">Group</th><th scope="col">Analysed</th><th scope="col">Value</th></tr></thead><tbody>`,
         ...outcome.rows.map(
           (row) =>
-            `<tr><th scope="row">${escape(row.group)}${row.part ? `<br><span class="note">${escape(row.part)}</span>` : ""}</th><td>${escape(row.analysed ?? "")}</td><td>${escape(row.value)}</td></tr>`,
+            `<tr><th scope="row">${escape(row.group)}${row.part ? `<br><span class="note">${escape(row.part)}</span>` : ""}</th><td>${escape(row.analysed ?? "")}</td><td><span class="pair-value">${escape(row.estimate)}</span>${row.spread === null ? "" : ` <span class="pair-spread">(${escape(row.spread)})</span>`}</td></tr>`,
         ),
         `</tbody></table>`,
         outcome.comparisons.length ? `<ul class="pair-comparisons">${outcome.comparisons.map((text) => `<li data-comparison>${escape(text)}</li>`).join("")}</ul>` : "",
