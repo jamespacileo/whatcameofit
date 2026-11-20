@@ -1,8 +1,6 @@
-// The lists that say where a kind of record goes agree with one another: the kinds the
-// door takes (src/kinds.mjs), the tier each is pushed to (the pipeline's
-// pipeline/src/thenwhat/store/tiers.py, read here as text), the kinds the inbox keeps,
-// and the rows clearing the inbox deletes (src/store.mjs). The pipeline holds the same
-// in pipeline/tests/test_store_kinds.py; a new kind has to pass both.
+// The rows clearing the inbox deletes (src/store.mjs) never sit under another row. The
+// kinds were once also held to the claims pipeline's tier lists; the pipeline was removed
+// on 2026-11-20 (James, "Delete it now"), so the door's own lists are the only ones.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
@@ -11,24 +9,10 @@ import { fileURLToPath } from "node:url";
 import { INBOX_KINDS, KINDS } from "../src/kinds.mjs";
 
 const read = (path) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), "utf8");
-const tiers = read("../../../pipeline/src/thenwhat/store/tiers.py");
-const set = (name) => {
-  const found = new RegExp(`^${name} = frozenset\\(\\s*\\{([^}]*)\\}`, "m").exec(tiers);
-  assert.ok(found, `${name} in tiers.py`);
-  return new Set([...found[1].matchAll(/"([a-z_]+)"/g)].map(([, kind]) => kind));
-};
-const HOT = set("HOT_KINDS"), BULK = set("BULK_KINDS"), FOLLOWING = set("FOLLOWING_KINDS");
 
-test("every kind the door takes is in exactly one of the pipeline's tier lists", () => {
+test("the door takes each kind once, and the inbox keeps only kinds the door takes", () => {
   assert.equal(new Set(KINDS).size, KINDS.length);
-  for (const kind of KINDS) {
-    assert.equal([HOT, BULK, FOLLOWING].filter((list) => list.has(kind)).length, 1, `${kind} must be in exactly one of HOT_KINDS, BULK_KINDS and FOLLOWING_KINDS`);
-  }
-  for (const kind of [...HOT, ...BULK, ...FOLLOWING]) assert.ok(KINDS.includes(kind), `a tier names ${kind}, which the door does not take`);
-});
-
-test("the inbox keeps exactly the bulk kinds", () => {
-  assert.deepEqual([...INBOX_KINDS].sort(), [...BULK].sort());
+  for (const kind of INBOX_KINDS) assert.ok(KINDS.includes(kind), kind);
 });
 
 test("clearing the inbox never deletes a row from under another", () => {

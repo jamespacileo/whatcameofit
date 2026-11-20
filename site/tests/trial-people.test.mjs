@@ -225,7 +225,7 @@ test("an answer kept before people were removed is not read", async () => {
 });
 
 test("a legacy investigator affiliation is removed on initial fetch and old-cache replacement", async () => {
-  const given = JSON.parse(readFileSync(new URL("../../pipeline/tests/fixtures/clinicaltrials/synthetic_legacy_affiliation.json", import.meta.url)));
+  const given = JSON.parse(readFileSync(new URL("./fixtures/synthetic-legacy-affiliation.json", import.meta.url)));
   assert.ok(peopleIn(given).length);
   const clean = withoutPeople(given);
   assert.deepEqual(clean.protocolSection.sponsorCollaboratorsModule.responsibleParty, { type: "PRINCIPAL_INVESTIGATOR" });
