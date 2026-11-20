@@ -9,7 +9,10 @@ import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { Service, engineUnavailable } from "./harness.mjs";
-import { statements } from "../scripts/load-pairs.mjs";
+import { scratchBeside, statements, writeStatementFiles, writeStatements } from "../scripts/load-pairs.mjs";
+import { Writable } from "node:stream";
+import { realpathSync as realpathSync_, symlinkSync } from "node:fs";
+import { dirname } from "node:path";
 import { writeManifest } from "../scripts/bundle-manifest.mjs";
 
 const skip = (await engineUnavailable()) ?? false;
@@ -123,5 +126,71 @@ test("the command refuses a folder that holds no page file", () => {
     assert.match(printed, /INSERT INTO pair \(/);
   } finally {
     rmSync(empty, { recursive: true, force: true });
+  }
+});
+
+// The statements leave the loader one at a time (writeStatements): joined into one string, a
+// full bundle's pass V8's longest string. What is written is still every statement, in order.
+test("the printed statements are every statement in order, each ended, written one at a time", () => {
+  const printed = execFileSync(process.execPath, [script, bundle, "--print"], { encoding: "utf8", maxBuffer: 256 * 1024 * 1024 });
+  const { sql } = statements(bundle);
+  // Each run stamps its own loaded_at; everything else is the same text.
+  const unstamped = (text) => text.replace(/'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z'/g, "'<loaded at>'");
+  assert.equal(unstamped(printed), unstamped(sql.map((statement) => `${statement};\n`).join("")));
+  assert.ok(sql.length > 100, "the fixture gives many statements");
+});
+
+test("the statements reach the stream one at a time, the writer waiting whenever the stream asks it to", async () => {
+  const { sql } = statements(bundle);
+  const seen = [];
+  let waits = 0;
+  // A stream that holds one write before it asks the writer to wait, as a pipe or a slow disk does.
+  const slow = new Writable({
+    highWaterMark: 1,
+    write(chunk, _encoding, done) {
+      seen.push(chunk.toString());
+      setImmediate(done);
+    },
+  });
+  slow.on("drain", () => { waits += 1; });
+  await writeStatements(slow, sql);
+  assert.deepEqual(seen, sql.map((statement) => `${statement};\n`));
+  assert.ok(waits > 0, "the writer waited on the stream");
+});
+
+test("a failing stream fails the write, the last flush included, rather than ending the process", async () => {
+  const failing = new Writable({ write(_chunk, _encoding, done) { done(new Error("no space left on device")); } });
+  await assert.rejects(writeStatements(failing, ["SELECT 1"]), /no space left on device/);
+});
+
+test("statements for the local engine go in bounded files in order, the switch to the new version kept whole in the last", async () => {
+  const { sql } = statements(bundle);
+  const dir = mkdtempSync(join(tmpdir(), "thenwhat-sql-"));
+  try {
+    const files = await writeStatementFiles(dir, sql, 64 * 1024);
+    assert.ok(files.length > 2, `${files.length} files`);
+    const texts = files.map((file) => readFileSync(file, "utf8"));
+    assert.equal(texts.join(""), sql.map((statement) => `${statement};\n`).join(""));
+    const switchAt = sql.findIndex((statement) => statement.startsWith("UPDATE pair_bundle SET current"));
+    assert.ok(texts.at(-1).includes(`${sql[switchAt]};\n${sql[switchAt + 1]};\n`));
+    for (const text of texts.slice(0, -1)) assert.ok(!text.includes("UPDATE pair_bundle SET current"));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("the load's SQL is written beside the bundle's real folder, not beside a link to it", () => {
+  const drive = mkdtempSync(join(tmpdir(), "thenwhat-drive-"));
+  const here = mkdtempSync(join(tmpdir(), "thenwhat-here-"));
+  try {
+    const real = join(drive, "bundle");
+    cpSync(bundle, real, { recursive: true });
+    const link = join(here, "bundle");
+    symlinkSync(real, link);
+    const scratch = scratchBeside(link);
+    assert.equal(dirname(scratch), realpathSync_(drive));
+  } finally {
+    rmSync(drive, { recursive: true, force: true });
+    rmSync(here, { recursive: true, force: true });
   }
 });
