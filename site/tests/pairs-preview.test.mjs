@@ -8,9 +8,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
+import { KEPT_VERSIONS, statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { writeBundleCode } from "../scripts/bundle-code.mjs";
-import { PREVIEW_PAIRS_BUNDLE, PREVIEW_PAIRS_DATABASE, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
+import { PREVIEW_KEPT_VERSIONS, PREVIEW_PAIRS_BUNDLE, PREVIEW_PAIRS_DATABASE, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
 
 const WRANGLER = path.resolve("node_modules/wrangler/bin/wrangler.js");
 // A stand-in id: the local engine keys its file by it and asks Cloudflare nothing.
@@ -56,6 +56,36 @@ test("a preview loads its bundle into the pairs database once, after the store's
   assert.equal(read.status, 0, read.stderr);
   const rows = JSON.parse(read.stdout.slice(read.stdout.indexOf("[")))[0].results;
   assert.deepEqual(rows, [{ version: first.version, current: 1, pairs: fs.readdirSync(path.join(PREVIEW_PAIRS_BUNDLE, "p12_pair_page")).length }]);
+});
+
+test("the previews' database keeps an older preview's version after newer loads", (t) => {
+  // Three distinct bundles, as three pull requests that each changed the bundle would load.
+  const dir = scratch();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const persistTo = path.join(dir, "state");
+  const config = pairsConfig({ base: "wrangler.preview.jsonc", database, scratch: dir });
+  const versions = [];
+  for (const dropped of [null, "apitegromab--obesity", "apitegromab--overweight"]) {
+    const bundle = path.join(dir, `bundle-${versions.length}`);
+    fs.cpSync(PREVIEW_PAIRS_BUNDLE, bundle, { recursive: true });
+    if (dropped) {
+      fs.rmSync(path.join(bundle, "p12_pair_page", `${dropped}.json`));
+      // A changed folder needs its own manifest, which the loader checks before writing.
+      fs.rmSync(path.join(bundle, "manifest.json"), { force: true });
+      const made = spawnSync(process.execPath, [path.resolve("../store/ingest/scripts/bundle-manifest.mjs"), bundle], { encoding: "utf8" });
+      assert.equal(made.status, 0, made.stderr);
+    }
+    versions.push(loadPairsBundle({ config, database, bundle, local: true, persistTo }).version);
+  }
+  assert.equal(new Set(versions).size, 3);
+  const read = wrangler(["d1", "execute", database.name, "--local", "--persist-to", persistTo, "--config", config, "--json",
+    "--command", "SELECT b.version, (SELECT count(*) FROM pair_page p WHERE p.version = b.version) AS parts FROM pair_bundle b ORDER BY b.loaded_at"]);
+  assert.equal(read.status, 0, read.stderr);
+  const rows = JSON.parse(read.stdout.slice(read.stdout.indexOf("[")))[0].results;
+  // The store's rule would keep the last two; the previews' keeps the first one too, whole.
+  assert.deepEqual(rows.map((row) => row.version), versions);
+  assert.ok(rows.every((row) => row.parts > 0));
+  assert.ok(PREVIEW_KEPT_VERSIONS > KEPT_VERSIONS);
 });
 
 test("Wrangler accepts the copy's Worker with pairs and its binding, in a dry run", async () => {

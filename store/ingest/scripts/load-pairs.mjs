@@ -29,7 +29,9 @@ export const MANIFEST_MODEL = "$manifest";
 const MANIFEST_KEY = MANIFEST.slice(0, -".json".length);
 // Under D1's 100,000 bytes a statement: a character is at most four bytes, a quote doubles.
 const PART_CHARS = 10_000;
-const KEPT_VERSIONS = 2;
+// The store keeps the current version and the one before: a deployment is rolled back by
+// building from the one before (docs/deploy.md). Previews keep more (site/scripts/pairs-preview.mjs).
+export const KEPT_VERSIONS = 2;
 const TABLES = ["pair_page", "pair_intervention", "pair_intervention_name", "pair_condition", "pair", "pair_trial", "pair_trial_facts", "pair_status_change"];
 
 const quote = (value) => (value === null || value === undefined ? "NULL"
@@ -55,7 +57,8 @@ export function manifestBackfill({ version, manifest }) {
 }
 
 // The statements that load a bundle, its version and its counts. Each statement is one line.
-export function statements(folder, { loadedAt = new Date().toISOString() } = {}) {
+export function statements(folder, { loadedAt = new Date().toISOString(), keep = KEPT_VERSIONS } = {}) {
+  if (!Number.isInteger(keep) || keep < 2) throw new Error(`keep must be a whole number of at least 2 (the current version and the one before), not ${keep}`);
   // Nothing is written unless the folder is whole and unchanged since its manifest was made.
   const { version, manifest, pages } = checkManifest(folder);
   const rows = Object.fromEntries(TABLES.map((table) => [table, new Map()]));
@@ -90,7 +93,7 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
   }
 
   const counts = Object.fromEntries(TABLES.map((table) => [table, rows[table].size]));
-  const kept = `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC LIMIT ${KEPT_VERSIONS})`;
+  const kept = `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC LIMIT ${keep})`;
   const sql = [
     // A version left by a load that stopped is cleared before it is loaded again.
     ...TABLES.map((table) => `DELETE FROM ${table} WHERE version = ${quote(version)} AND NOT EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)} AND current = 1)`),
@@ -98,7 +101,9 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
     ...TABLES.flatMap((table) => [...rows[table].values()].map((row) => insert(table, row))),
     `UPDATE pair_bundle SET current = 0 WHERE current = 1 AND version <> ${quote(version)}`,
     `UPDATE pair_bundle SET current = 1 WHERE version = ${quote(version)}`,
-    ...TABLES.map((table) => `DELETE FROM ${table} WHERE version NOT IN ${kept}`),
+    // Only the versions that fall out are deleted, each table by its key's first column, so a
+    // load reads the rows it removes and not the history it keeps.
+    ...TABLES.map((table) => `DELETE FROM ${table} WHERE version IN (SELECT version FROM pair_bundle WHERE version NOT IN ${kept})`),
     `DELETE FROM pair_bundle WHERE version NOT IN (SELECT version FROM (${kept.slice(1, -1)}))`,
   ];
   return { version, manifest, counts, sql };
