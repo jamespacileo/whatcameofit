@@ -292,6 +292,25 @@ test("every page of a build that reads a bundle carries the footer notices the b
   assert.equal(check.status, 0, check.stdout + check.stderr);
 });
 
+test("the footer's Data page describes the pairs' files and its link opens the pairs' index", () => {
+  // Followed as a reader would: the footer's link, then the page's own download link.
+  const footer = page(withBundle, "").querySelector('footer a[href="/data"]');
+  assert.ok(footer, "the footer links the Data page");
+  const data = page(withBundle, "data");
+  assert.doesNotMatch(data.body.textContent, /claims\.json/);
+  const link = data.querySelector('a[data-open-data="pairs"]');
+  const index = JSON.parse(fs.readFileSync(path.join(withBundle, link.getAttribute("href")), "utf8"));
+  assert.equal(index.format, "pairs-index");
+  assert.equal(index.entries.length, Object.keys(pages).length);
+  assert.equal(Number(data.querySelector("[data-pair-count]").dataset.pairCount), index.entries.length);
+  assert.match(data.querySelector("[data-pair-count]").textContent, new RegExp(`${index.entries.length} treatments and conditions`));
+  // The example record it names is a file of the build.
+  const example = [...data.querySelectorAll("a")].map((a) => a.getAttribute("href")).find((href) => href?.startsWith("/data/pairs/"));
+  assert.ok(fs.existsSync(path.join(withBundle, example)), example);
+  // Without a bundle the page is the claims' as before.
+  assert.ok(page(without, "data").querySelector('a[href="/data/claims.json"]'));
+});
+
 test("a build given no bundle makes no pair page, and keeps the claims' listings", () => {
   for (const address of Object.keys(pages)) assert.ok(!fs.existsSync(path.join(without, address)), address);
   assert.ok(fs.existsSync(path.join(without, "approved-claim", "index.html")));
@@ -303,4 +322,56 @@ test("a build given no bundle makes no pair page, and keeps the claims' listings
   assert.equal(page(without, "clinical").querySelector("[data-listing]"), null);
   const feed = fs.readFileSync(path.join(without, "changes.xml"), "utf8");
   for (const address of Object.keys(pages)) assert.ok(!feed.includes(`/${address}"`), address);
+});
+
+// Task 2.4: the bundle carries codes and the site words them. No code reaches a reader as a
+// word: not a status, state, phase, event, kind of treatment or registry, nor an
+// intervention's key.
+test("no page built from the bundle shows one of its codes where its words belong", () => {
+  const codes = new Set();
+  for (const file of fs.readdirSync("tests/bundle/schemas")) {
+    JSON.stringify(JSON.parse(fs.readFileSync(path.join("tests/bundle/schemas", file), "utf8")), (key, value) => {
+      // Codes of one word ("drug", "completed") are ordinary words too; those with an
+      // underscore are codes only.
+      if (key === "enum") for (const code of value) if (typeof code === "string" && code.includes("_")) codes.add(code);
+      return value;
+    });
+  }
+  for (const file of Object.values(pages)) codes.add(file.row.intervention.id);
+  assert.ok(codes.has("phase_2") && codes.has("results_posted") && codes.has("gene_therapy"));
+  const htmlPages = [
+    "index.html",
+    ...Object.keys(built).flatMap((address) => [`${address}/index.html`, `embed/${address}/index.html`]),
+    ...["intervention", "condition", "topic", "clinical"].flatMap((folder) =>
+      fs
+        .readdirSync(path.join(withBundle, folder), { recursive: true })
+        .filter((name) => name.endsWith("index.html"))
+        .map((name) => path.join(folder, name)),
+    ),
+  ];
+  assert.ok(htmlPages.length > Object.keys(built).length * 2);
+  for (const file of htmlPages) {
+    const { document } = parseHTML(fs.readFileSync(path.join(withBundle, file), "utf8"));
+    for (const element of document.querySelectorAll("script, style, template")) element.remove();
+    const text = document.body.textContent;
+    for (const code of codes) assert.ok(!text.includes(code), `${file} shows the code ${code}`);
+  }
+});
+
+test("a bundle carrying a code with no words stops the build, naming the code", () => {
+  const unworded = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-unworded-"));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-unworded-"));
+  try {
+    fs.cpSync("tests/bundle", unworded, { recursive: true });
+    const file = path.join(unworded, "p12_pair_page", `${TWO_TRIALS}.json`);
+    const doctored = JSON.parse(fs.readFileSync(file, "utf8"));
+    doctored.checked = [{ registry: "ctis", checked_through: "2026-11-18" }];
+    fs.writeFileSync(file, JSON.stringify(doctored));
+    const result = build(out, { PAIRS_BUNDLE: unworded });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stdout + result.stderr, /no words for: registry: ctis/);
+  } finally {
+    fs.rmSync(unworded, { recursive: true, force: true });
+    fs.rmSync(out, { recursive: true, force: true });
+  }
 });

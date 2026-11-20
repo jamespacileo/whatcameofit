@@ -1,12 +1,15 @@
 // The lab's bundle of page files, read as the build reads it. tests/bundle is real: the
 // pair pages the lab's own pipeline test writes from its recorded slice.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { cpSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { modelOf, movedAddresses, readBundle, unwordedPairCodes } from "../src/lib/bundle.ts";
+import { pairView } from "../src/lib/pair-view.ts";
+import { assertPairWordingNeutral, PAIR_WORDING, UNWORDED_TRIAL_STATES } from "../src/lib/pair-wording.ts";
 
 const folder = fileURLToPath(new URL("./bundle", import.meta.url));
 const address = "apitegromab--muscular-atrophy-spinal";
@@ -63,4 +66,92 @@ test("a claim's address goes to its pair's only when one pair came from it", () 
     else assert.equal(moved[slug], undefined, slug);
   }
   assert.ok(bySlug.size > 0);
+});
+
+// Task 2.4: the bundle's codes are worded by the site, keyed as the bundle's schema spells them.
+
+test("every code the bundle's schemas allow has words, except the expanded access states", () => {
+  const defs = JSON.parse(readFileSync(join(folder, "schemas", "PairPage.json"), "utf8")).$defs;
+  const kinds = { ClaimStatusCode: ["status", "status gloss"], TrialPhase: ["phase"], OverallStatus: ["trial state"], TrialEventKind: ["event"], Approach: ["approach"] };
+  for (const [def, tables] of Object.entries(kinds)) {
+    for (const code of defs[def].enum) {
+      if (def === "OverallStatus" && UNWORDED_TRIAL_STATES.includes(code)) continue;
+      for (const table of tables) assert.ok(PAIR_WORDING[table][code], `${def} ${code} has no ${table} words`);
+    }
+  }
+  // The states left without words are the schema's own, so none of them is worded by mistake.
+  for (const code of UNWORDED_TRIAL_STATES) {
+    assert.ok(defs.OverallStatus.enum.includes(code), code);
+    assert.equal(PAIR_WORDING["trial state"][code], undefined, code);
+  }
+});
+
+test("a kind of treatment spelled as the bundle spells it is worded", () => {
+  // The claims export spells it "gene-therapy"; the bundle "gene_therapy".
+  const dir = copy((page) => { page.approach = { ...page.approach, approach: "gene_therapy" }; });
+  try {
+    const page = readBundle(dir).pages.PairPage[address];
+    assert.equal(pairView(page).approach, "Gene therapy");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("a registry the site has no name for stops the read, named, and a known one is shown by name", () => {
+  const known = copy((page) => { page.checked = [{ registry: "clinicaltrials.gov", checked_through: "2026-11-18" }]; });
+  const unknown = copy((page) => { page.checked = [{ registry: "ctis", checked_through: "2026-11-18" }]; });
+  try {
+    assert.deepEqual(pairView(readBundle(known).pages.PairPage[address]).registryChecks, [
+      { registry: "ClinicalTrials.gov", through: "2026-11-18" },
+    ]);
+    assert.throws(() => readBundle(unknown), /no words for: registry: ctis/);
+  } finally {
+    rmSync(known, { recursive: true, force: true });
+    rmSync(unknown, { recursive: true, force: true });
+  }
+});
+
+test("a code named like an object's own property has no words, and stops the read", () => {
+  // The registry is free text in the schema; a name every object inherits is not a word of the site's.
+  for (const registry of ["toString", "constructor", "__proto__"]) {
+    const dir = copy((page) => { page.checked = [{ registry, checked_through: "2026-11-18" }]; });
+    try {
+      assert.throws(() => readBundle(dir), new RegExp(`no words for: registry: ${registry}`), registry);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
+test("the build's reader refuses to load when a table of words holds a verdict", () => {
+  // The check runs when the wording module loads, and the build reads bundles through
+  // bundle.ts, which imports it. Here a module hook gives the event table a verdict label as it
+  // loads, and loading the reader must fail on it: removing the load-time check fails this test.
+  const hook = `
+    import { registerHooks } from "node:module";
+    registerHooks({
+      load(url, context, nextLoad) {
+        const loaded = nextLoad(url, context);
+        if (url.endsWith("/src/lib/pair-wording.ts")) {
+          const source = String(loaded.source);
+          if (!source.includes('terminated: "Trial terminated"')) throw new Error("the event table has moved: update this test");
+          return { ...loaded, source: source.replace('terminated: "Trial terminated"', 'terminated: "Trial abandoned"') };
+        }
+        return loaded;
+      },
+    });
+    await import(${JSON.stringify(new URL("../src/lib/bundle.ts", import.meta.url).href)});
+  `;
+  const run = spawnSync(process.execPath, ["--input-type=module", "-e", hook], { encoding: "utf8" });
+  assert.notEqual(run.status, 0, "the reader loaded with a verdict in its words");
+  assert.match(run.stderr, /Verdict wording "abandoned"/);
+  assert.doesNotMatch(run.stderr, /event table has moved/);
+});
+
+test("verdict wording in any table of the pair path's words is refused", () => {
+  assert.doesNotThrow(() => assertPairWordingNeutral(PAIR_WORDING));
+  assert.throws(
+    () => assertPairWordingNeutral({ ...PAIR_WORDING, event: { ...PAIR_WORDING.event, terminated: "Trial abandoned" } }),
+    /Verdict wording "abandoned"/,
+  );
 });

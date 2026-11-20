@@ -21,7 +21,7 @@ export const PREVIEW_PAIRS_DATABASE = "thenwhat-pairs-pr-preview";
 export const PREVIEW_PAIRS_BUNDLE = path.join(SITE_DIR, "tests/bundle");
 const HOW = 'see docs/deploy.md, "Pair pages in a preview"';
 
-function wrangler(args) {
+export function wrangler(args) {
   return spawnSync(process.execPath, [WRANGLER, ...args], {
     cwd: SITE_DIR,
     encoding: "utf8",
@@ -30,7 +30,7 @@ function wrangler(args) {
   });
 }
 
-const lastError = (text) =>
+export const lastError = (text) =>
   text
     .replace(/\x1b\[[0-9;]*m/g, "")
     .split("\n")
@@ -38,7 +38,7 @@ const lastError = (text) =>
     .filter((line) => /error|code: \d+/i.test(line))
     .at(-1) ?? "no reason given";
 
-const json = (text) => JSON.parse(text.slice(text.search(/[[{]/)));
+export const json = (text) => JSON.parse(text.slice(text.search(/[[{]/)));
 
 /**
  * The preview account's pairs database, or why the pairs part is left out.
@@ -63,15 +63,19 @@ export function findPairsDatabase(name = PREVIEW_PAIRS_DATABASE) {
 const readConfig = (file) => JSON.parse(fs.readFileSync(file, "utf8").replace(/^[ \t]*\/\/.*$/gm, ""));
 
 /**
- * A preview's Wrangler configuration with pair pages: the given preview configuration, its
- * Worker the one with pairs, and the pairs database bound as PAIRS. Written into `scratch`.
- * Refuses any configuration that is not a pull request preview's.
+ * A Wrangler configuration with pair pages: the given configuration, its Worker the one with
+ * pairs, and the pairs database bound as PAIRS. Written into `scratch`. Refuses a
+ * configuration whose Worker is not `worker` (by default a pull request preview's), so a
+ * preview never writes production's and `make deploy` never writes a preview's.
  */
-export function pairsConfig({ base, database, scratch }) {
+export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" }) {
   // A name alone is the site's own file, as Wrangler reads it from the site's folder.
   base = path.resolve(SITE_DIR, base);
   const config = readConfig(base);
-  if (config.name !== "thenwhat-pr") throw new Error(`${base} is not a pull request preview's configuration (its name is ${config.name})`);
+  if (config.name !== worker) {
+    const what = worker === "thenwhat-pr" ? "a pull request preview's" : `the ${worker} Worker's`;
+    throw new Error(`${base} is not ${what} configuration (its name is ${config.name})`);
+  }
   const from = path.dirname(path.resolve(base));
   config.main = path.resolve(SITE_DIR, "worker/with-pairs.mjs");
   config.assets = { ...config.assets, directory: path.resolve(from, config.assets.directory) };

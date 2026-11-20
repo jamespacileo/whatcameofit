@@ -6,10 +6,22 @@
 //   SITE_URL=https://example.org node scripts/deploy.mjs --dry-run  check and build only
 //   BUILD_REVISION=<sha> node scripts/deploy.mjs --reuse-build     deploy a verified CI build
 //
+// With pair pages (openspec pairs-site, task 4.4), PAIRS_DATABASE names the D1 database whose
+// current bundle version the site is built from; its Worker is worker/with-pairs.mjs with that
+// database bound as PAIRS. Until the cutover only a dry run is allowed: publishing with pair
+// pages also needs --cutover. PAIRS_LOCAL_STATE reads the database from D1's local engine at
+// that folder instead, for a rehearsal on this machine, and is refused without --dry-run.
+// PAIRS_VERSION builds from that version instead of the current one: the version before, which
+// the store keeps, is how a deployment with pair pages is rolled back without touching D1.
+//
+//   PAIRS_DATABASE=thenwhat-store node scripts/deploy.mjs --dry-run      rehearse the cutover
+//
 // Uses the locked project dependency; authenticate with OAuth locally or a CI token.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+
+import os from "node:os";
 
 import { besideProblems } from "./listing-checks.mjs";
 import { deployProblems } from "./deploy-checks.mjs";
@@ -21,7 +33,11 @@ const dist = path.join(SITE_DIR, "dist");
 const args = process.argv.slice(2);
 const dryRun = args.includes("--dry-run");
 const reuse = args.includes("--reuse-build");
+const cutover = args.includes("--cutover");
 const revision = process.env.BUILD_REVISION;
+const pairsDatabase = process.env.PAIRS_DATABASE || null;
+const pairsLocal = process.env.PAIRS_LOCAL_STATE || null;
+const pairsVersion = process.env.PAIRS_VERSION || null;
 
 function stop(lines) {
   console.error(["Not deployed.", ...lines.map((line) => `  - ${line}`)].join("\n"));
@@ -56,6 +72,29 @@ const siteUrl = process.env.SITE_URL;
 const problems = [...deployProblems({ data, siteUrl }), ...besideProblems(exportFile, data)];
 if (problems.length > 0) stop(problems);
 
+// Pair pages: the bundle is the database's current version, exported to a folder of this
+// run. The cutover is one deployment the operator says can go ahead (task 5.2), so until then
+// nothing is published with pair pages.
+let pairs = null;
+if ((pairsLocal || pairsVersion) && !pairsDatabase) stop(["PAIRS_LOCAL_STATE or PAIRS_VERSION was given without PAIRS_DATABASE."]);
+if (pairsVersion && !/^[0-9a-f]{16}$/.test(pairsVersion)) stop(["PAIRS_VERSION is not a bundle version (16 hexadecimal characters)."]);
+if (pairsDatabase) {
+  if (pairsLocal && !dryRun) stop(["A bundle from D1's local engine is for a rehearsal: add --dry-run."]);
+  if (!dryRun && !cutover) stop(["Publishing with pair pages is the cutover. Rehearse with --dry-run, or give --cutover once the operator has said it can go ahead."]);
+  if (reuse) stop(["A checked CI build is built from no bundle: leave out --reuse-build with PAIRS_DATABASE."]);
+  const { exportForDeploy, findDeployDatabase } = await import("./pairs-deploy.mjs");
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-deploy-"));
+  process.once("exit", () => fs.rmSync(scratch, { force: true, recursive: true }));
+  try {
+    const database = findDeployDatabase(pairsDatabase, { localState: pairsLocal });
+    const exported = await exportForDeploy({ base: path.join(SITE_DIR, "wrangler.jsonc"), database, scratch, version: pairsVersion });
+    pairs = { database, scratch, ...exported };
+  } catch (error) {
+    stop([`Pair pages: ${error.message}`]);
+  }
+  console.log(`Pair pages: bundle ${pairs.version}, ${pairs.pairs} pairs, from ${pairs.database.name}${pairs.database.local ? " (local engine)" : ""}.`);
+}
+
 const domain = new URL(siteUrl).hostname;
 const siteRelease = releaseSettings();
 if ((reuse || revision !== undefined) && !/^[a-f0-9]{40}$/.test(revision ?? "")) {
@@ -74,6 +113,7 @@ if (!reuse) {
     EXPORT_FILE: exportFile,
     ASTRO_TELEMETRY_DISABLED: "1",
     LOOKUP_URL: lookup ? "/api/lookup" : "",
+    PAIRS_BUNDLE: pairs ? pairs.folder : "",
   };
   delete env.CLOUDFLARE_API_TOKEN;
   env.SITE_RELEASE_BUILD = siteRelease ? "1" : "";
@@ -95,10 +135,20 @@ if (!fs.existsSync(path.join(dist, "sitemap.xml"))) {
   stop(["The built site has no sitemap, so it was not built as a public build."]);
 }
 
+// A build from a bundle recorded its version in the frame the Worker fills, and the Worker
+// reads pages of that version only, so it must be the version exported.
+if (pairs) {
+  const { builtVersion } = await import("./pairs-deploy.mjs");
+  const recorded = builtVersion(dist);
+  if (recorded !== pairs.version) stop([`The built site records bundle ${recorded ?? "none"}, not ${pairs.version}.`]);
+}
+
 const wranglerArgs = ["deploy", "--domain", domain];
 if (siteRelease) {
   const config = prepareSiteRelease({ settings: siteRelease, siteDir: SITE_DIR, dist, dryRun, run });
-  wranglerArgs.push("--config", config);
+  wranglerArgs.push("--config", pairs ? (await import("./pairs-preview.mjs")).pairsConfig({ base: config, database: pairs.database, scratch: pairs.scratch, worker: "thenwhat" }) : config);
+} else if (pairs) {
+  wranglerArgs.push("--config", pairs.config);
 } else if (reuse && (countFiles(dist) > FILE_COUNT_LIMIT || oversizedFiles(dist, FILE_LIMIT).length)) {
   stop(["The checked build exceeds the static file limits. Configure SITE_FILES_BUCKET for a split release."]);
 }
@@ -121,6 +171,6 @@ if (!dryRun && !reuse) {
 }
 console.log(
   dryRun
-    ? `Dry run finished. Nothing was published. Without --dry-run this would go to ${domain}.`
+    ? `Dry run finished. Nothing was published. Without --dry-run this would go to ${domain}${pairs ? `, with pair pages from bundle ${pairs.version}` : ""}.`
     : `Deployed to ${siteUrl}.`,
 );

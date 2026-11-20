@@ -1,6 +1,7 @@
 // What must be true before the site is deployed. Pure function, synthetic exports.
 // No build, no network and no Cloudflare account.
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { test } from "node:test";
 import { deployProblems, pullRequestWorker } from "../scripts/deploy-checks.mjs";
 import { MARKER, addedClaims, previewComment } from "../scripts/pr-preview-comment.mjs";
@@ -97,6 +98,25 @@ test("a long list of added claims is cut short and counted", () => {
 
   assert.equal(body.match(/^- \[claim-/gm).length, 10);
   assert.match(body, /and 15 more/);
+});
+
+test("the comment for a copy built from a bundle counts its pairs, as the workflow runs it", () => {
+  // The workflow's own call: pr-preview.mjs's outputs passed on as PAIRS_COUNT and PAIRS_VERSION.
+  const run = spawnSync(process.execPath, ["scripts/pr-preview-comment.mjs"], {
+    encoding: "utf8",
+    env: { ...process.env, STATE: "published", PREVIEW_URL: PREVIEW, PR_NUMBER: "12", PAIRS_COUNT: "12", PAIRS_VERSION: "230ee727aab2d32c" },
+  });
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /12 pairs from bundle `230ee727aab2d32c`/);
+  assert.doesNotMatch(run.stdout, /\d+ claims/);
+  assert.doesNotMatch(run.stdout, /Claims this pull request adds/);
+
+  const claimsCopy = spawnSync(process.execPath, ["scripts/pr-preview-comment.mjs"], {
+    encoding: "utf8",
+    env: { ...process.env, STATE: "published", PREVIEW_URL: PREVIEW, PR_NUMBER: "12", PAIRS_COUNT: "", PAIRS_VERSION: "" },
+  });
+  assert.equal(claimsCopy.status, 0, claimsCopy.stderr);
+  assert.doesNotMatch(claimsCopy.stdout, /pairs/);
 });
 
 test("a failed build says so in the same comment and offers no address", () => {
