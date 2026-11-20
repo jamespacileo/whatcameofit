@@ -6,17 +6,22 @@
 //   node scripts/load-pairs.mjs <folder> --print               the statements, nothing run
 //
 // <folder> is what `lab pipeline pages` writes: `p12_<page>/<key>.json` and `schemas/`.
-// The bundle's version is the checksum of its files. Its rows are written under that
+// Each schema is kept as a `pair_page` row of the model `$schema`, keyed by its page model's
+// name, so a version read back from D1 (scripts/export-pairs.mjs) is the whole folder.
+// The bundle's version is the checksum of its files, read as JSON, schemas included. Its rows are written under that
 // version and the last statements mark it current and drop every version but it and the
 // one before, so a load that stops early leaves the site reading what it read. Loading
 // the current version again is refused: nothing would change.
 import { createHash } from "node:crypto";
-import { mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const PREFIX = "p12_";
+const SCHEMAS = "schemas";
+/** The reserved model name a schema is kept under in `pair_page`. No page model has it. */
+export const SCHEMA_MODEL = "$schema";
 // Under D1's 100,000 bytes a statement: a character is at most four bytes, a quote doubles.
 const PART_CHARS = 10_000;
 const KEPT_VERSIONS = 2;
@@ -29,7 +34,8 @@ const quote = (value) => (value === null || value === undefined ? "NULL"
   : `'${String(value).replaceAll("'", "''")}'`);
 const insert = (table, row) => `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map(quote).join(", ")})`;
 
-// The bundle's page files, in a fixed order: [model, key, text].
+// The bundle's files, in a fixed order: [model, key, text]. Page files first, by folder and
+// name; then each schema, as the model `$schema` keyed by its page model's name.
 export function files(folder) {
   const out = [];
   for (const name of readdirSync(folder).filter((entry) => entry.startsWith(PREFIX) && statSync(join(folder, entry)).isDirectory()).sort()) {
@@ -38,6 +44,10 @@ export function files(folder) {
     }
   }
   if (!out.length) throw new Error(`${folder} holds no page file under a ${PREFIX}* folder: give the folder \`lab pipeline pages\` wrote`);
+  const schemas = join(folder, SCHEMAS);
+  const held = existsSync(schemas) ? readdirSync(schemas).filter((entry) => entry.endsWith(".json")).sort() : [];
+  if (!held.length) throw new Error(`${folder} holds no ${SCHEMAS}/ folder of JSON Schemas: the site reads none of a bundle without them`);
+  for (const file of held) out.push([SCHEMA_MODEL, file.slice(0, -".json".length), readFileSync(join(schemas, file), "utf8")]);
   return out;
 }
 
@@ -45,7 +55,9 @@ export function files(folder) {
 // version, the only one its Worker reads pages of (openspec pairs-site).
 export function bundleVersion(folder, pages = files(folder)) {
   const hash = createHash("sha256");
-  for (const [name, key, text] of pages) hash.update(`${name}/${key}\n${text}\n`);
+  // Each file as compact JSON, so a folder written back from D1 has the version it was loaded
+  // under whatever spacing the lab used.
+  for (const [name, key, text] of pages) hash.update(`${name}/${key}\n${JSON.stringify(JSON.parse(text))}\n`);
   return hash.digest("hex").slice(0, 16);
 }
 
