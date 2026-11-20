@@ -1,0 +1,2 @@
+# Compared byte for byte with what the renderers write (site/tests/goldens.mjs).
+site/tests/goldens/** text eol=lf

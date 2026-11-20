@@ -27,6 +27,7 @@ import { sitemapAddresses, sitemapText } from "./sitemap-read.mjs";
 import { SITEMAP_LIMIT, inFiles } from "../src/lib/sitemap-files.ts";
 import { readLookupFile, readSearchDetail } from "../src/lib/lookup-file.mjs";
 import { FILE_LIMIT } from "../scripts/dist-size.mjs";
+import { GOLDENS, keptGoldens, writeGoldens } from "./goldens.mjs";
 
 const withBundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-"));
 const narrowest = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-narrowest-"));
@@ -151,6 +152,28 @@ test("a condition's page lists every pair for it or a condition beneath it, each
 
 // A listing page is the lab's file for it, made on request by the Worker (decision 2 as chosen on
 // 2026-11-20, task 4.6a); tests/pair-on-request.build-test.mjs holds what each lists.
+// Each built condition page's main content is the HTML kept for it in tests/goldens/condition/
+// (tests/goldens.mjs), so a change to how the build writes it shows in the pull request.
+test("every built condition page's main content is the HTML kept for it", () => {
+  const folder = path.join(GOLDENS, "condition");
+  // The bytes the build wrote, from the page's one <main> to its end: never read back through a
+  // parser, which would write attributes and spacing its own way.
+  const mainOf = (html) => {
+    const start = html.indexOf("<main");
+    const end = html.indexOf("</main>", start);
+    assert.ok(start >= 0 && end > start && html.indexOf("<main", start + 1) < 0, "one main element");
+    return html.slice(start, end + "</main>".length);
+  };
+  const built = new Map(fs.readdirSync(path.join(withBundle, "condition")).map((slug) => [
+    `${slug}.html`, `${mainOf(fs.readFileSync(path.join(withBundle, "condition", slug, "index.html"), "utf8"))}\n`,
+  ]));
+  if (process.env.UPDATE_GOLDENS === "1") writeGoldens(built, folder);
+  const kept = keptGoldens(folder);
+  assert.ok(built.size > 0);
+  assert.deepEqual([...kept.keys()].sort(), [...built.keys()].sort());
+  for (const [name, html] of built) assert.equal(html, kept.get(name), name);
+});
+
 test("no intervention, category or topic page is built: the Worker makes each", () => {
   const bundle = readBundle("tests/bundle");
   for (const slug of Object.keys(bundle.pages.PairInterventionPage)) assert.ok(!fs.existsSync(path.join(withBundle, "intervention", slug)), slug);
