@@ -68,7 +68,13 @@ test("the previews' database keeps an older preview's version after newer loads"
   for (const dropped of [null, "apitegromab--obesity", "apitegromab--overweight"]) {
     const bundle = path.join(dir, `bundle-${versions.length}`);
     fs.cpSync(PREVIEW_PAIRS_BUNDLE, bundle, { recursive: true });
-    if (dropped) fs.rmSync(path.join(bundle, "p12_pair_page", `${dropped}.json`));
+    if (dropped) {
+      fs.rmSync(path.join(bundle, "p12_pair_page", `${dropped}.json`));
+      // A changed folder needs its own manifest, which the loader checks before writing.
+      fs.rmSync(path.join(bundle, "manifest.json"), { force: true });
+      const made = spawnSync(process.execPath, [path.resolve("../store/ingest/scripts/bundle-manifest.mjs"), bundle], { encoding: "utf8" });
+      assert.equal(made.status, 0, made.stderr);
+    }
     versions.push(loadPairsBundle({ config, database, bundle, local: true, persistTo }).version);
   }
   assert.equal(new Set(versions).size, 3);
