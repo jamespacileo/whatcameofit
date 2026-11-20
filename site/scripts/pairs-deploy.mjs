@@ -35,6 +35,31 @@ export function findDeployDatabase(name, { localState } = {}) {
 }
 
 /**
+ * The preview database staging reads, found through D1's REST API with D1 Read: `wrangler d1
+ * info` also asks the analytics API, which the staging token does not hold. Refused
+ * unless the id given is the one pinned for staging (`STAGING_PAIRS_DATABASE_ID`), the name is the
+ * one asked for and ends in -preview, and the jurisdiction reads back as the EU. The token is
+ * account-wide, so the pinned id is what keeps staging to this one database.
+ * https://developers.cloudflare.com/api/resources/d1/subresources/database/methods/get/
+ * @returns {Promise<{ name: string, id: string, local: false }>}
+ */
+export async function findStagingDatabase(name, { accountId, pinnedId, token, request = fetch }) {
+  if (!/^[a-z0-9][a-z0-9-]*-preview$/.test(name ?? "")) throw new Error(`staging reads only a database whose name ends in -preview, not ${name}`);
+  if (!/^[0-9a-f-]{36}$/.test(pinnedId ?? "")) throw new Error("STAGING_PAIRS_DATABASE_ID is not set to the staging database's id");
+  if (!accountId || !token) throw new Error("CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN are both needed to read the database");
+  const answer = await request(`https://api.cloudflare.com/client/v4/accounts/${accountId}/d1/database/${pinnedId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const body = await answer.json().catch(() => null);
+  if (!answer.ok || !body?.success) throw new Error(`the staging database ${pinnedId} could not be read (HTTP ${answer.status})`);
+  const info = body.result;
+  if (info.uuid !== pinnedId) throw new Error(`the API answered for ${info.uuid}, not the pinned ${pinnedId}`);
+  if (info.name !== name) throw new Error(`the pinned database is ${info.name}, not ${name}`);
+  if (info.jurisdiction !== "eu") throw new Error(`${name} does not read back as in the EU jurisdiction, so nothing is read from it`);
+  return { name, id: info.uuid, local: false };
+}
+
+/**
  * Export the database's current bundle version, or the one given, into `<scratch>/bundle`: the folder the site is
  * built from. `exportBundle` works the version out again from the files it wrote and removes
  * the folder unless it matches, so the build reads exactly what D1 holds.

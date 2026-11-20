@@ -1,6 +1,6 @@
-// The extension page (openspec landing-pages-and-guide): which claim it shows, that its
+// The extension page (openspec landing-pages-and-guide): which pair it shows, that its
 // words match the extension's own, and that it is built only when a store lists the
-// extension. Pages are checked in builds of tests/fixture-export.json.
+// extension. Pages are checked in builds of tests/bundle.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -13,14 +13,13 @@ import {
   PERMISSIONS,
   POPUP_LINES,
   POPUP_WORDS,
-  exampleClaim,
-  latestChange,
-  registryRecords,
+  examplePair,
   wasNow,
 } from "../src/lib/extension-page.ts";
+import { readBundle } from "../src/lib/bundle.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 
-const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
+const pairs = Object.values(readBundle("tests/bundle").pages.PairPage);
 const view = fs.readFileSync("../extension/src/view.js", "utf8");
 
 const CHROME = "https://chromewebstore.google.com/detail/example";
@@ -36,7 +35,7 @@ function build(env) {
       CHROME_STORE_URL: "",
       SAFARI_STORE_URL: "",
       ...env,
-      EXPORT_FILE: "tests/fixture-export.json",
+      PAIRS_BUNDLE: "tests/bundle",
       ASTRO_TELEMETRY_DISABLED: "1",
     },
     encoding: "utf8",
@@ -77,20 +76,20 @@ test("Scenario: One store is configured", () => {
 });
 
 test("Scenario: The extension is installable", () => {
-  const topic = `topic/${fixture.claims[0].vertical}/index.html`;
-  for (const file of ["index.html", "quiet-claim/index.html", topic, "how-it-works/index.html"]) {
+  const example = examplePair(pairs);
+  // A topic's page is made on request by the Worker; the built topics page stands for the listings.
+  // A pair's page is made on request into the pair frame, whose footer is a built page's.
+  for (const file of ["index.html", "pair-shell/index.html", "topics/index.html", "how-it-works/index.html"]) {
     assert.ok(chrome(file).includes('href="/extension"'), `${file} does not link the extension page`);
   }
 });
 
-test("the page shows the popup's answer for the example claim, dated", () => {
+test("the page shows the popup's answer for the example pair, dated", () => {
   const html = chrome("extension/index.html");
-  const example = exampleClaim(fixture.claims);
-  assert.ok(html.includes(STATUS_LABELS[example.status.code]), "the example claim's status is missing");
+  const example = examplePair(pairs);
+  assert.ok(html.includes(STATUS_LABELS[example.row.status.code]), "the example pair's status is missing");
   assert.ok(html.includes(POPUP_WORDS.standing));
-  assert.match(html, /as the registries showed it on/i, "the popup's answer is not dated");
-  // The report is named by outlet, title and date; a drawn article would need its text.
-  assert.ok(html.includes(example.articles[0].outlet));
+  assert.match(html, /from records gathered on \d/i, "the popup's answer is not dated");
 });
 
 test("Scenario: A reader checks before installing", () => {
@@ -119,12 +118,4 @@ test("the extension page carries the two notices in its body and holds no endors
   assert.ok(body.includes("This site gives no medical advice"));
   assert.ok(body.includes("A registered clinical trial is not a treatment option"));
   assert.doesNotMatch(body, /\btrusted by\b|\brated\b|\bstars?\b|\busers\b|\binstalls\b/i);
-});
-
-test("Scenario: A claim with neither", () => {
-  const example = exampleClaim(fixture.claims);
-  assert.equal(latestChange(example), null);
-  assert.deepEqual(registryRecords(example), []);
-  const html = chrome("extension/index.html");
-  assert.equal(html.match(/class="pp-popup/g).length, 1, "an answer is drawn that the export does not hold");
 });

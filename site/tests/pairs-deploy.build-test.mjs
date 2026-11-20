@@ -16,10 +16,6 @@ import { loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
 const BUNDLE = path.resolve("tests/bundle");
 const DATABASE = "thenwhat-store";
 const scratch = () => fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-deploy-test-"));
-// The fixture export's topics are not production's, so the record of topics published is a
-// file of this test's own, holding none.
-const PUBLISHED_TOPICS = path.join(scratch(), "published-topics.json");
-fs.writeFileSync(PUBLISHED_TOPICS, "[]\n");
 
 function deploy(args, env = {}) {
   return spawnSync(process.execPath, ["scripts/deploy.mjs", ...args], {
@@ -28,11 +24,10 @@ function deploy(args, env = {}) {
     env: {
       ...process.env,
       SITE_URL: "https://whatcameofit.com",
-      EXPORT_FILE: "tests/fixture-export.json",
+      PAIRS_BUNDLE: "",
       ASTRO_TELEMETRY_DISABLED: "1",
       CI: "1",
       WRANGLER_SEND_METRICS: "false",
-      PUBLISHED_TOPICS_FILE: PUBLISHED_TOPICS,
       ...env,
     },
   });
@@ -47,10 +42,10 @@ function localStore() {
   return database.persistTo;
 }
 
-test("publishing with pair pages is refused before anything is built, unless it is the cutover", () => {
+test("publishing is refused before anything is built, unless it is the cutover", () => {
   const remote = deploy([], { PAIRS_DATABASE: DATABASE });
   assert.equal(remote.status, 1);
-  assert.match(remote.stderr, /Publishing with pair pages is the cutover/);
+  assert.match(remote.stderr, /Publishing is the cutover/);
   const local = deploy(["--cutover"], { PAIRS_DATABASE: DATABASE, PAIRS_LOCAL_STATE: scratch() });
   assert.equal(local.status, 1);
   assert.match(local.stderr, /local engine is for a rehearsal: add --dry-run/);
@@ -79,11 +74,24 @@ test("a dry run reads the current version, builds the site from it and checks th
   const run = deploy(["--dry-run"], { PAIRS_DATABASE: DATABASE, PAIRS_LOCAL_STATE: localStore() });
   assert.equal(run.status, 0, run.stdout.slice(-4000) + run.stderr.slice(-4000));
   const pairs = fs.readdirSync(path.join(BUNDLE, "p12_pair_page")).length;
-  assert.match(run.stdout, new RegExp(`Pair pages: bundle ${version}, ${pairs} pairs, from ${DATABASE} \\(local engine\\)`));
+  assert.match(run.stdout, new RegExp(`Bundle ${version}, ${pairs} pairs, from ${DATABASE} \\(local engine\\)`));
   // The build read that version and recorded it for the pages made on request.
   assert.equal(builtVersion("dist"), version);
-  assert.ok(fs.existsSync(path.join("dist", "apitegromab--muscular-atrophy-spinal", "index.html")));
+  // No file is built per pair; the frames the Worker fills are.
+  assert.ok(!fs.existsSync(path.join("dist", "apitegromab--muscular-atrophy-spinal")));
+  assert.ok(fs.existsSync(path.join("dist", "pair-shell", "index.html")) && fs.existsSync(path.join("dist", "embed-shell", "index.html")));
   // Wrangler was given the production Worker with the database bound as PAIRS.
   assert.match(run.stdout, /env\.PAIRS \(thenwhat-store\)/);
-  assert.match(run.stdout, new RegExp(`Dry run finished\\. Nothing was published\\..*whatcameofit\\.com, with pair pages from bundle ${version}`));
+  assert.match(run.stdout, new RegExp(`Dry run finished\\. Nothing was published\\..*whatcameofit\\.com, from bundle ${version}`));
+});
+
+test("a bundle folder with no database is rehearsed, and never published", () => {
+  const refused = deploy([], { PAIRS_BUNDLE: "tests/bundle" });
+  assert.equal(refused.status, 1);
+  assert.match(refused.stderr, /A bundle folder with no database is for a rehearsal/);
+  assert.match(deploy(["--dry-run"]).stderr, /No bundle was named/);
+  const run = deploy(["--dry-run"], { PAIRS_BUNDLE: "tests/bundle" });
+  assert.equal(run.status, 0, run.stdout.slice(-4000) + run.stderr.slice(-4000));
+  assert.equal(builtVersion("dist"), statements(BUNDLE).version);
+  assert.match(run.stdout, /Nothing was published, and a bundle folder never is\./);
 });

@@ -3,43 +3,32 @@
 // list with its source: the popup's own words with the extension's view, the
 // permissions with its manifest. What is sent and kept follows the privacy page, which
 // stays the full account.
-import type { ExportedClaim } from "./export";
-import { confidenceLabel } from "./confidence.ts";
-import { STAGE_PATH, STATUS_LABELS, latestPromise } from "./status.ts";
+import { STAGE_PATH, STATUS_LABELS, type StatusCode } from "./status.ts";
 
 /**
- * The claim a landing page shows at work. Chosen by rule, never by hand: it must have
- * a news report to quote; then a status on the path comes first, then a dated promise,
- * then matched registry records and a change of status on record (so the extension page
- * can draw all three of the popup's answers), then the most news reports. The slug
- * settles a tie, so a rebuild picks the same one.
+ * The pair a landing page shows at work. Chosen by rule, never by hand: a status on the
+ * path comes first, then a change of status on record (so the extension page can draw the
+ * popup's followed list), then the most trials. The address settles a tie, so a rebuild
+ * picks the same one. Takes the bundle's pair pages.
  */
-export function exampleClaim(claims: readonly ExportedClaim[]): ExportedClaim | null {
-  return exampleClaims(claims)[0] ?? null;
+export function examplePair(pages: readonly any[]): any | null {
+  return examplePairs(pages)[0] ?? null;
 }
 
-/** Every claim with a news report, in the order `exampleClaim` prefers them. */
-export function exampleClaims(claims: readonly ExportedClaim[]): ExportedClaim[] {
-  const rank = (claim: ExportedClaim) => [
-    STAGE_PATH.includes(claim.status.code) ? 0 : 1,
-    latestPromise(claim) ? 0 : 1,
-    registryRecords(claim).length > 0 ? 0 : 1,
-    latestChange(claim) ? 0 : 1,
-    -claim.articles.length,
+/** Every pair, in the order `examplePair` prefers them. */
+export function examplePairs(pages: readonly any[]): any[] {
+  const rank = (page: any) => [
+    STAGE_PATH.includes(page.row.status.code) ? 0 : 1,
+    latestChange(page) ? 0 : 1,
+    -page.trials.length,
   ];
-  const reported = claims.filter((claim) => claim.articles.length > 0);
-  return [...reported].sort((a, b) => {
+  return [...pages].sort((a, b) => {
     const [ra, rb] = [rank(a), rank(b)];
     for (let index = 0; index < ra.length; index += 1) {
       if (ra[index] !== rb[index]) return ra[index] - rb[index];
     }
-    return a.slug < b.slug ? -1 : 1;
+    return a.row.pair.address < b.row.pair.address ? -1 : 1;
   });
-}
-
-/** The report a reader would have been reading: the claim's earliest, as the outlet titled it. */
-export function firstReport(claim: ExportedClaim) {
-  return [...claim.articles].sort((a, b) => (a.published_date < b.published_date ? -1 : 1))[0];
 }
 
 /** The popup's own labels, as `extension/src/view.js` names and words them. */
@@ -73,7 +62,7 @@ export const POPUP_LINES = {
 /** The line under the notices, in the extension's words. */
 export const lastChecked = (date: string) => `Registries last checked ${date}.`;
 
-/** What the popup says of a followed claim that has moved, in the extension's words. */
+/** What the popup says of a followed pair that has moved, in the extension's words. */
 export const wasNow = (was: string, now: string) => `Was: ${was}. Now: ${now}.`;
 
 /** How the popup counts the records an automatic search lists. */
@@ -81,59 +70,37 @@ export const possibleMatches = (count: number) =>
   `${count} possible ${count === 1 ? "match" : "matches"}`;
 
 export interface RegistryRecord {
-  /** The registry's own identifier: the export holds no trial titles. */
+  /** The registry's own identifier. */
   id: string;
   /** The record in its registry. */
   url: string | null;
   phase: string | null;
   state: string | null;
-  confidence: string;
 }
 
-const PHASE_ORDER = ["phase_1", "phase_2", "phase_3", "phase_4"];
-const phaseWords = (phases: string[]) =>
-  phases.length === 0 ? null : phases.map((phase) => phase.replace("phase_", "Phase ")).join(" / ");
-const stateWords = (state: string) => state.charAt(0).toUpperCase() + state.slice(1);
+const PHASE_ORDER = ["PHASE1", "PHASE2", "PHASE3", "PHASE4"];
 
 /**
- * The trial records matched to a claim, furthest phase first, as an automatic search
- * would list them: identifier, phase, the trial's latest state, and the match's score in
- * the site's words. Only records the export holds; nothing is made up for the drawing.
+ * A pair's trial records, furthest phase first, as an automatic search would list them:
+ * identifier, phase and the trial's state, in the words the pair page uses (`pairView`).
+ * Only records the bundle holds; nothing is made up for the drawing.
  */
-export function registryRecords(claim: ExportedClaim, atMost = 2): RegistryRecord[] {
-  const records = (claim.matches ?? []).flatMap((match) => {
-    const events = claim.events.filter((event) => event.trial_id === match.external_id);
-    if (events.length === 0) return [];
-    const phases = events.find((event) => event.trial_phases.length > 0)?.trial_phases ?? [];
-    const states = events
-      .filter((event) => event.trial_state)
-      .sort((a, b) => (a.event_date < b.event_date ? 1 : -1));
-    const furthest = Math.max(-1, ...phases.map((phase) => PHASE_ORDER.indexOf(phase)));
-    return [
-      {
-        furthest,
-        record: {
-          id: match.external_id,
-          url: match.url,
-          phase: phaseWords(phases),
-          state: states[0]?.trial_state ? stateWords(states[0].trial_state) : null,
-          confidence: confidenceLabel(match.score),
-        },
-      },
-    ];
-  });
-  return records
-    .sort((a, b) => b.furthest - a.furthest || (a.record.id < b.record.id ? 1 : -1))
+export function registryRecords(page: any, trials: { nctId: string; phases: string | null; state: string; registryUrl: string }[], atMost = 2): RegistryRecord[] {
+  const furthest = new Map<string, number>(
+    page.trials.map((trial: any) => [trial.nct_id, Math.max(-1, ...(trial.facts.phases ?? []).map((phase: string) => PHASE_ORDER.indexOf(phase)))]),
+  );
+  return [...trials]
+    .sort((a, b) => furthest.get(b.nctId)! - furthest.get(a.nctId)! || (a.nctId < b.nctId ? 1 : -1))
     .slice(0, atMost)
-    .map((entry) => entry.record);
+    .map((trial) => ({ id: trial.nctId, url: trial.registryUrl, phase: trial.phases, state: trial.state }));
 }
 
-/** The claim's latest change of status, when its history holds one: from, to and the day. */
-export function latestChange(claim: ExportedClaim) {
-  const history = claim.status.history ?? [];
-  if (history.length < 2) return null;
-  const [before, after] = history.slice(-2);
-  return { was: STATUS_LABELS[before.code], now: STATUS_LABELS[after.code], on: after.on };
+/** The pair's latest change of status, when its history holds one: from, to and the day. */
+export function latestChange(page: any) {
+  const changes = [...page.history].sort((a: any, b: any) => (a.on < b.on ? -1 : 1));
+  const last = changes.at(-1);
+  if (!last?.before) return null;
+  return { was: STATUS_LABELS[last.before as StatusCode], now: STATUS_LABELS[last.after as StatusCode], on: last.on };
 }
 
 export interface Permission {
@@ -159,17 +126,17 @@ export const PERMISSIONS: Permission[] = [
   {
     name: "storage",
     plain: "Keeping things in this browser",
-    use: "Holds the lookup file, the pages you checked recently, the claims you follow and your reminders.",
+    use: "Holds the lookup file, the pages you checked recently, what you follow and your reminders.",
   },
   {
     name: "alarms",
     plain: "A timer",
-    use: "Fetches the lookup file twice a day, so a followed claim that moves can be noticed.",
+    use: "Fetches the lookup file twice a day, so something you follow that moves can be noticed.",
   },
   {
     name: "notifications",
     plain: "Notifications",
-    use: "Tells you when a claim you follow has moved, or a reminder you set is due. The browser may ask you first.",
+    use: "Tells you when something you follow has moved, or a reminder you set is due. The browser may ask you first.",
   },
 ];
 
@@ -214,10 +181,10 @@ export const LEDGER: LedgerRow[] = [
     kept: "The file and when it was fetched.",
   },
   {
-    when: "You follow a claim or set a reminder",
+    when: "You follow a treatment or set a reminder",
     sent: null,
     sentNote: "The list is read against the lookup file inside your browser.",
     to: "Nowhere",
-    kept: "The claim as it stood when you last looked, and the reminder's day until it is shown.",
+    kept: "The status as it stood when you last looked, and the reminder's day until it is shown.",
   },
 ];

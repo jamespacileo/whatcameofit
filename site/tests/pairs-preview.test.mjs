@@ -8,9 +8,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
+import { KEPT_VERSIONS, statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { writeBundleCode } from "../scripts/bundle-code.mjs";
-import { PREVIEW_PAIRS_BUNDLE, PREVIEW_PAIRS_DATABASE, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
+import { ON_REQUEST_LIMITS, PREVIEW_KEPT_VERSIONS, PREVIEW_PAIRS_BUNDLE, PREVIEW_PAIRS_DATABASE, limitProblems, loadPairsBundle, pairsConfig } from "../scripts/pairs-preview.mjs";
 
 const WRANGLER = path.resolve("node_modules/wrangler/bin/wrangler.js");
 // A stand-in id: the local engine keys its file by it and asks Cloudflare nothing.
@@ -58,6 +58,36 @@ test("a preview loads its bundle into the pairs database once, after the store's
   assert.deepEqual(rows, [{ version: first.version, current: 1, pairs: fs.readdirSync(path.join(PREVIEW_PAIRS_BUNDLE, "p12_pair_page")).length }]);
 });
 
+test("the previews' database keeps an older preview's version after newer loads", (t) => {
+  // Three distinct bundles, as three pull requests that each changed the bundle would load.
+  const dir = scratch();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const persistTo = path.join(dir, "state");
+  const config = pairsConfig({ base: "wrangler.preview.jsonc", database, scratch: dir });
+  const versions = [];
+  for (const dropped of [null, "apitegromab--obesity", "apitegromab--overweight"]) {
+    const bundle = path.join(dir, `bundle-${versions.length}`);
+    fs.cpSync(PREVIEW_PAIRS_BUNDLE, bundle, { recursive: true });
+    if (dropped) {
+      fs.rmSync(path.join(bundle, "p12_pair_page", `${dropped}.json`));
+      // A changed folder needs its own manifest, which the loader checks before writing.
+      fs.rmSync(path.join(bundle, "manifest.json"), { force: true });
+      const made = spawnSync(process.execPath, [path.resolve("../store/ingest/scripts/bundle-manifest.mjs"), bundle], { encoding: "utf8" });
+      assert.equal(made.status, 0, made.stderr);
+    }
+    versions.push(loadPairsBundle({ config, database, bundle, local: true, persistTo }).version);
+  }
+  assert.equal(new Set(versions).size, 3);
+  const read = wrangler(["d1", "execute", database.name, "--local", "--persist-to", persistTo, "--config", config, "--json",
+    "--command", "SELECT b.version, (SELECT count(*) FROM pair_page p WHERE p.version = b.version) AS parts FROM pair_bundle b ORDER BY b.loaded_at"]);
+  assert.equal(read.status, 0, read.stderr);
+  const rows = JSON.parse(read.stdout.slice(read.stdout.indexOf("[")))[0].results;
+  // The store's rule would keep the last two; the previews' keeps the first one too, whole.
+  assert.deepEqual(rows.map((row) => row.version), versions);
+  assert.ok(rows.every((row) => row.parts > 0));
+  assert.ok(PREVIEW_KEPT_VERSIONS > KEPT_VERSIONS);
+});
+
 test("Wrangler accepts the copy's Worker with pairs and its binding, in a dry run", async () => {
   const dir = scratch();
   // The validators a build that reads the bundle writes, which the Worker with pairs imports.
@@ -75,4 +105,39 @@ test("Wrangler accepts the copy's Worker with pairs and its binding, in a dry ru
   const bundled = fs.readdirSync(out).filter((name) => name.endsWith(".js")).map((name) => fs.readFileSync(path.join(out, name), "utf8")).join("\n");
   assert.match(bundled, /FROM pair_page WHERE version = \?1/);
   assert.match(bundled, /validatePairPage/);
+});
+
+// The rate limit on pages made on request (openspec pairs-site task 4.6g): every deployment's
+// configuration carries it, and the deploy checks refuse one that does not.
+test("every deployment with pairs is given the limit, in a namespace of its own Worker's", () => {
+  for (const [worker, base] of [["thenwhat", "wrangler.jsonc"], ["thenwhat-staging", "wrangler.staging.jsonc"], ["thenwhat-pr", "wrangler.preview.jsonc"]]) {
+    const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-limit-config-"));
+    const config = JSON.parse(fs.readFileSync(pairsConfig({ base, database: { name: "thenwhat-limit-preview", id: "00000000-0000-0000-0000-000000000000" }, scratch, worker }), "utf8"));
+    const binding = config.ratelimits.find((one) => one.name === "ON_REQUEST_LIMIT");
+    assert.deepEqual(binding, { name: "ON_REQUEST_LIMIT", namespace_id: ON_REQUEST_LIMITS[worker], simple: { limit: 600, period: 60 } });
+    // Its own namespace: no other limit of the site shares its counts.
+    assert.equal(config.ratelimits.filter((one) => one.namespace_id === binding.namespace_id).length, 1);
+  }
+  assert.equal(new Set(Object.values(ON_REQUEST_LIMITS)).size, Object.keys(ON_REQUEST_LIMITS).length);
+});
+
+test("the deploy checks refuse a configuration with pairs that lacks the rate limit, or gives it another Worker's namespace", () => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-limit-refusal-"));
+  const database = { name: "thenwhat-limit-preview", id: "00000000-0000-0000-0000-000000000000" };
+  for (const [worker, base] of [["thenwhat", "wrangler.jsonc"], ["thenwhat-staging", "wrangler.staging.jsonc"], ["thenwhat-pr", "wrangler.preview.jsonc"]]) {
+    const file = pairsConfig({ base, database, scratch: path.join(scratch, worker), worker });
+    assert.deepEqual(limitProblems(file), [], worker);
+    const config = JSON.parse(fs.readFileSync(file, "utf8"));
+    const without = path.join(scratch, `${worker}-without.json`);
+    fs.writeFileSync(without, JSON.stringify({ ...config, ratelimits: config.ratelimits.filter((one) => one.name !== "ON_REQUEST_LIMIT") }));
+    assert.match(limitProblems(without).join("\n"), /binds the pairs database but not ON_REQUEST_LIMIT/, worker);
+    const shared = path.join(scratch, `${worker}-shared.json`);
+    const other = Object.values(ON_REQUEST_LIMITS).find((id) => id !== ON_REQUEST_LIMITS[worker]);
+    fs.writeFileSync(shared, JSON.stringify({ ...config, ratelimits: config.ratelimits.map((one) => (one.name === "ON_REQUEST_LIMIT" ? { ...one, namespace_id: other } : one)) }));
+    assert.match(limitProblems(shared).join("\n"), new RegExp(`namespace ${other}, not ${worker}'s own`), worker);
+  }
+  // A configuration with no pairs database is the claims site's, which makes no page on request.
+  const claims = path.join(scratch, "claims.json");
+  fs.writeFileSync(claims, JSON.stringify({ name: "thenwhat" }));
+  assert.deepEqual(limitProblems(claims), []);
 });

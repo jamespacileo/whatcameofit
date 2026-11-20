@@ -1,21 +1,19 @@
 // The guide (openspec landing-pages-and-guide): what an entry is, the checks a build
-// runs on the entry files, and which published claims an entry shows at work. Pure: no
-// file, network or clock. The entry files are read in guide-entries.ts.
-import type { ExportedClaim, StatusCode } from "./export";
+// runs on the entry files. Pure: no file, network or clock. The entry files are read in guide-entries.ts.
 import {
   STAGE_PATH,
   STATUS_GLOSSES,
   STATUS_LABELS,
   STATUS_MEANINGS,
   assertNeutral,
-  latestPromise,
+  type StatusCode,
 } from "./status.ts";
 
 export type Shelf = "status" | "site" | "research";
 
 /** The three shelves, in the order the index lists them. */
 export const SHELVES: { id: Shelf; title: string; about: string }[] = [
-  { id: "status", title: "Statuses", about: "Where a claim can stand, as its page words it." },
+  { id: "status", title: "Statuses", about: "Where a treatment and condition can stand, as its page words it." },
   { id: "site", title: "Words this site uses", about: "What this site means by its own terms." },
   {
     id: "research",
@@ -59,8 +57,6 @@ export interface GuideEntry {
   rule: string;
   /** The rule, said in one or two sentences. */
   onSite: string;
-  /** Which published claims the word applies to: a key of APPLIES, or null for none. */
-  applies: string | null;
   sources: GuideSource[];
   related: string[];
   /** Whether a person has read the entry and set it checked. */
@@ -82,7 +78,7 @@ const day = (value: unknown): string =>
 
 /**
  * An entry from its file: the name gives the address, the front matter the rest. A
- * status entry takes its title, answer and gloss from the status wording the claim
+ * status entry takes its title, answer and gloss from the status wording the pair
  * pages read, so they are typed once.
  */
 export function readEntry(
@@ -102,7 +98,6 @@ export function readEntry(
     order: Number(front.order ?? 0),
     rule: String(front.rule ?? ""),
     onSite: String(front.on_site ?? ""),
-    applies: known ? status : front.applies ? String(front.applies) : null,
     sources: ((front.sources as Record<string, unknown>[] | undefined) ?? []).map((source) => ({
       name: String(source.name ?? ""),
       url: String(source.url ?? ""),
@@ -140,8 +135,8 @@ const MOST_RELATED = 5;
 
 const wordCount = (text: string) => text.split(/\s+/).filter(Boolean).length;
 
-/** Entries the site's own pages link to by name: the key to the record strip. */
-export const REQUIRED_ENTRIES = ["record-strip"];
+/** Entries the site's own pages link to by name. */
+export const REQUIRED_ENTRIES: string[] = [];
 
 /**
  * Everything wrong with the entry files, one line each; empty when the guide may be
@@ -189,9 +184,6 @@ export function guideProblems(
       say(`its rule "${entry.rule}" is not a section of the method page.`);
     }
     if (!entry.onSite) say("it does not say the rule that uses the word.");
-    if (entry.applies !== null && !(entry.applies in APPLIES)) {
-      say(`"${entry.applies}" names no set of claims.`);
-    }
     if (entry.shelf === "research" && entry.sources.length === 0) {
       say("an entry on how research is recorded lists at least one source.");
     }
@@ -253,133 +245,6 @@ export function shelfEntries(entries: readonly GuideEntry[], shelf: Shelf): Guid
 /** Every entry in the order the index lists them. */
 export function orderedEntries(entries: readonly GuideEntry[]): GuideEntry[] {
   return SHELVES.flatMap((shelf) => shelfEntries(entries, shelf.id));
-}
-
-interface Applies {
-  test: (claim: ExportedClaim) => boolean;
-  /** How the claims are named in "3 of 12 …" and "No tracked claim … now". */
-  many: string;
-  none: string;
-  /** Where the rest are listed. */
-  more: { href: string; label: string };
-}
-
-const TOPICS = { href: "/topics", label: "Every tracked claim, by topic" };
-const atStatus = (code: StatusCode): Applies => ({
-  test: (claim) => claim.status.code === code,
-  many: "have this status",
-  none: "No tracked claim has this status now.",
-  more: { href: `/?status=${code}`, label: "The claims at this status" },
-});
-const hasTrial = (claim: ExportedClaim) =>
-  (claim.trials ?? []).length > 0 || claim.events.some((event) => event.trial_id !== null);
-
-/**
- * The sets of published claims a word can apply to. An entry names one; the page lists
- * up to three of its claims and counts the rest.
- */
-export const APPLIES: Record<string, Applies> = {
-  ...(Object.fromEntries(
-    (Object.keys(STATUS_LABELS) as StatusCode[]).map((code) => [code, atStatus(code)]),
-  ) as Record<StatusCode, Applies>),
-  approved: {
-    ...atStatus("approved"),
-    more: { href: "/it-happened", label: "Every approval on record" },
-  },
-  claims: {
-    test: () => true,
-    many: "are tracked",
-    none: "No claim is tracked yet.",
-    more: TOPICS,
-  },
-  promises: {
-    test: (claim) => latestPromise(claim) !== null,
-    many: "have a dated promise",
-    none: "No tracked claim has a dated promise now.",
-    more: { href: "/?view=promised", label: "Promises, by date" },
-  },
-  records: {
-    test: (claim) => claim.events.length > 0,
-    many: "have at least one record",
-    none: "No tracked claim has a record now.",
-    more: TOPICS,
-  },
-  matches: {
-    test: (claim) => (claim.matches ?? []).length > 0,
-    many: "list a match with its confidence",
-    none: "No tracked claim lists a match now.",
-    more: TOPICS,
-  },
-  "no-signal": {
-    test: (claim) => claim.status.overlay_years !== null,
-    many: "carry the no-signal note",
-    none: "No tracked claim carries the no-signal note now.",
-    more: { href: "/?view=quiet", label: "The claims with no signal, longest first" },
-  },
-  "follow-up-papers": {
-    test: (claim) => claim.events.some((event) => event.type === "followup_paper"),
-    many: "list a follow-up paper",
-    none: "No tracked claim lists a follow-up paper now.",
-    more: TOPICS,
-  },
-  checked: {
-    test: (claim) => claim.checked_by_person,
-    many: "have been checked by a person",
-    none: "No tracked claim has been checked by a person yet. Each page says so.",
-    more: TOPICS,
-  },
-  trials: {
-    test: hasTrial,
-    many: "list a trial registry record",
-    none: "No tracked claim lists a trial registry record now.",
-    more: TOPICS,
-  },
-  phases: {
-    test: (claim) => ["phase_1", "phase_2", "phase_3"].includes(claim.status.code),
-    many: "have a status that names a phase",
-    none: "No tracked claim has a status that names a phase now.",
-    more: TOPICS,
-  },
-  "primary-outcomes": {
-    test: (claim) =>
-      (claim.trials ?? []).some((trial) => (trial.facts?.primary_outcomes.length ?? 0) > 0),
-    many: "list a trial with its planned primary outcomes",
-    none: "No tracked claim lists a trial's planned primary outcomes now.",
-    more: TOPICS,
-  },
-  "ended-early": {
-    test: (claim) =>
-      (claim.trials ?? []).some((trial) => ["terminated", "withdrawn"].includes(trial.state)) ||
-      claim.events.some((event) => ["terminated", "withdrawn"].includes(event.trial_state ?? "")),
-    many: "list a trial that was terminated or withdrawn",
-    none: "No tracked claim lists a trial that was terminated or withdrawn now.",
-    more: TOPICS,
-  },
-  retractions: {
-    test: (claim) => claim.events.some((event) => event.type === "retraction"),
-    many: "list a retraction notice",
-    none: "No tracked claim lists a retraction notice now.",
-    more: TOPICS,
-  },
-  "registered-not-approved": {
-    test: (claim) => hasTrial(claim) && claim.status.code !== "approved",
-    many: "list a registered trial and no approval",
-    none: "No tracked claim lists a registered trial without an approval now.",
-    more: TOPICS,
-  },
-};
-
-/** The most claims an entry lists. */
-export const CLAIMS_SHOWN = 3;
-
-/** The claims an entry's word applies to now: up to three, newest report first, and how many in all. */
-export function claimsAtWork(entry: GuideEntry, claims: readonly ExportedClaim[]) {
-  const set = entry.applies ? APPLIES[entry.applies] : null;
-  if (!set) return null;
-  const held = claims
-    .filter(set.test)
-    .sort((a, b) => ((a.first_reported_date ?? "") < (b.first_reported_date ?? "") ? 1 : -1));
-  return { shown: held.slice(0, CLAIMS_SHOWN), total: held.length, ...set };
 }
 
 /** The entries before and after one on its shelf, for the foot of its page. */

@@ -5,20 +5,150 @@
 import {
   PAIR_APPROACH_LABELS,
   PAIR_EVENT_LABELS,
+  PAIR_OUTCOME_KIND_WORDS,
   PAIR_PHASE_WORDS,
   PAIR_REGISTRY_NAMES,
   PAIR_STATUS_GLOSSES,
   PAIR_STATUS_LABELS,
   PAIR_TRIAL_STATES,
 } from "./pair-wording.ts";
-import { TRIAL_STATE_WORDS } from "./trial-facts.ts";
+import { MEASURE_WORDS, TEST_WORDS, TRIAL_STATE_WORDS, comparisonText } from "./trial-facts.ts";
 
 export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
 
-/** Whether a pair's page is built ahead (design decision 2): a pair with a claim origin, or
- * with more than one supporting trial. Every other pair's page is made on request. The second
- * half is provisional until a full run's count of pairs is known (task 1.3). */
-export function builtAhead(page: any): boolean {
+export interface PaperLink {
+  id: string;
+  /** The identifier as the reader sees it: "doi:10.1186/..." or "PMID 42027418". */
+  label: string;
+  /** Where the identifier resolves, or null for a kind the site does not link. */
+  url: string | null;
+}
+
+/** A paper by the identifier the lab holds. A DOI is linked through the DOI resolver as
+ * https://doi.org/<DOI>, the form Crossref's DOI display guidelines ask for
+ * (https://www.crossref.org/display-guidelines/); a PubMed identifier through PubMed's own
+ * address, https://pubmed.ncbi.nlm.nih.gov/<PMID>/ (NLM, "Linking to PubMed"). An identifier
+ * of any other kind is shown as written, unlinked: the site does not guess an address. Each
+ * part of a DOI between slashes is percent-encoded, so a `?`, `#` or `%` in its suffix reaches
+ * the resolver as part of the DOI (DOI Handbook 2.5.2.4, https://www.doi.org/the-identifier/resources/handbook/2_numbering). */
+export function paperLink(id: string): PaperLink {
+  if (/^10\.\d{4,9}\/\S+$/.test(id)) {
+    return { id, label: `doi:${id}`, url: `https://doi.org/${id.split("/").map(encodeURIComponent).join("/")}` };
+  }
+  const pmid = /^pmid:(\d+)$/i.exec(id)?.[1];
+  if (pmid) return { id, label: `PMID ${pmid}`, url: `https://pubmed.ncbi.nlm.nih.gov/${pmid}/` };
+  return { id, label: id, url: null };
+}
+
+export interface ResultRowView {
+  group: string;
+  /** The registry's row or category title within the group, where it gives one. */
+  part: string | null;
+  analysed: string | null;
+  /** The value and its spread as one line: "0.0 (Full Range -4.2 to 10.9)". */
+  value: string;
+  /** The value alone, as posted ("0.0"), or "No value posted". */
+  estimate: string;
+  /** Its spread as posted, with what kind it is ("Full Range -4.2 to 10.9"), or none. */
+  spread: string | null;
+}
+
+export interface OutcomeView {
+  title: string;
+  kind: string;
+  /** "Median, pg/mL": what the numbers are. */
+  measure: string | null;
+  timeFrame: string | null;
+  rows: ResultRowView[];
+  comparisons: string[];
+}
+
+/** A posted value as the registry wrote it: "0.0 (Full Range -4.2 to 10.9)". Nothing is
+ * worked out or rounded. ClinicalTrials.gov's results data elements set what each field is:
+ * the measure type, the measure of dispersion or precision, and the number analysed
+ * (https://clinicaltrials.gov/policy/results-definitions). */
+function valueParts(value: any, dispersion: string | null): { estimate: string; spread: string | null } {
+  if (value.value === null) return { estimate: "No value posted", spread: null };
+  const kind = dispersion ? `${dispersion} ` : "";
+  if (value.lower !== null && value.upper !== null) return { estimate: value.value, spread: `${kind}${value.lower} to ${value.upper}` };
+  if (value.spread !== null) return { estimate: value.value, spread: `${kind}${value.spread}` };
+  return { estimate: value.value, spread: null };
+}
+
+function valueText(value: any, dispersion: string | null): string {
+  const { estimate, spread } = valueParts(value, dispersion);
+  return spread === null ? estimate : `${estimate} (${spread})`;
+}
+
+/** A posted comparison in the registry's terms: its p value and method in the claim page's
+ * wording, then any estimate with its interval ("Risk Difference (RD) -1.5, 95% interval -7.2
+ * to 3.7"), then the groups it covers, so a comparison of two arms of three, or within one
+ * arm, says which. ClinicalTrials.gov's statistical analysis elements
+ * (https://clinicaltrials.gov/policy/results-definitions) give each field. */
+/** A posted interval with whichever bounds the registry gives: both ("95% interval -7.2 to
+ * 3.7"), or one, as a one-sided interval is posted ("95% interval from -7.2", "95% interval up
+ * to 3.7"). Each bound is nullable on its own in `PostedComparison`. */
+function intervalText(comparison: any): string | null {
+  const { lower, upper } = comparison;
+  if (lower === null && upper === null) return null;
+  const label = comparison.interval_pct ? `${comparison.interval_pct}% interval` : "interval";
+  if (lower !== null && upper !== null) return `${label} ${lower} to ${upper}`;
+  return lower !== null ? `${label} from ${lower}` : `${label} up to ${upper}`;
+}
+
+function comparisonLine(comparison: any, titles: Map<string, string>): string {
+  const estimate = comparison.estimate
+    ? [
+        [comparison.estimate_kind, comparison.estimate].filter(Boolean).join(" "),
+        intervalText(comparison),
+      ].filter(Boolean).join(", ")
+    : null;
+  const test = comparison.design && Object.hasOwn(TEST_WORDS, comparison.design.toLowerCase()) ? comparison.design.toLowerCase() : null;
+  // With an estimate and no p value, the estimate is the result; the line does not say "no p value".
+  const tested = comparison.p_value || !estimate ? comparisonText({ p_value: comparison.p_value, method: comparison.method, test } as any) : comparison.method;
+  const groups = comparison.group_ids.map((id: string) => titles.get(id) ?? id);
+  return [tested, estimate].filter(Boolean).join("; ") + (groups.length ? `. Posted for: ${groups.join(", ")}` : "");
+}
+
+/** A trial's posted outcomes, primary first, each with its groups' values and any
+ * comparison the sponsor posted with it. */
+function outcomesOf(findings: any): OutcomeView[] {
+  if (!findings) return [];
+  const rank: Record<string, number> = { primary: 0, secondary: 1, other: 2, post_hoc: 3 };
+  return [...findings.outcomes]
+    .sort((a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9))
+    .map((outcome) => {
+      const measureCode = outcome.param_type?.toLowerCase().replace(/\s+/g, "_");
+      const kind = measureCode && Object.hasOwn(MEASURE_WORDS, measureCode) ? MEASURE_WORDS[measureCode] : outcome.param_type;
+      // A count of participants is not followed by the unit "participants".
+      const repeats = measureCode === "count_of_participants" && /^participants?$/i.test(outcome.unit ?? "");
+      const measure = [kind, repeats ? null : outcome.unit].filter(Boolean).join(", ") || null;
+      return {
+        title: outcome.title,
+        kind: PAIR_OUTCOME_KIND_WORDS[outcome.kind],
+        measure,
+        timeFrame: outcome.time_frame,
+        rows: outcome.values.map((value: any) => ({
+          group: value.group_title ?? value.group_id,
+          part: [value.class_title, value.category_title].filter(Boolean).join(", ") || null,
+          analysed: value.analysed,
+          value: valueText(value, outcome.dispersion_type),
+          ...valueParts(value, outcome.dispersion_type),
+        })),
+        comparisons: findings.comparisons
+          .filter((comparison: any) => comparison.outcome_key === outcome.key)
+          .map((comparison: any) =>
+            comparisonLine(comparison, new Map(outcome.values.map((value: any) => [value.group_id, value.group_title ?? value.group_id]))),
+          ),
+      };
+    });
+}
+
+/** Whether a pair is one of the examples built pages carry: the lookup's sentences to pass on
+ * and the journalists' picker. A pair with a claim origin, or with more than one supporting
+ * trial. It is no file of the build: every pair's page, record, embed and card is made on
+ * request (openspec pairs-site task 4.6). Kept to a few, so a page never carries every pair. */
+export function featured(page: any): boolean {
   return page.row.origin !== null || page.trials.length > 1;
 }
 
@@ -51,8 +181,9 @@ export interface PairTrialView {
   pairArm: string | null;
   whyStopped: string | null;
   events: PairEventView[];
-  papers: number;
+  papers: PaperLink[];
   resultsPosted: boolean;
+  outcomes: OutcomeView[];
   registryUrl: string;
 }
 
@@ -76,7 +207,8 @@ export interface PairView {
   approach: string | null;
   checkedByPerson: boolean;
   registryChecks: { registry: string; through: string }[];
-  claimSlug: string | null;
+  /** The topic the lab filed the pair under, or null. */
+  topic: string | null;
 }
 
 function eventView(event: any): PairEventView {
@@ -138,8 +270,10 @@ export function pairView(page: any): PairView {
         pairArm: trial.claim_arm,
         whyStopped: facts.why_stopped,
         events: trial.events.map(eventView).sort(byDay),
-        papers: trial.paper_ids.length,
-        resultsPosted: trial.events.some((event: any) => event.kind === "results_posted"),
+        papers: trial.paper_ids.map(paperLink),
+        // Posted when the registry dated their posting, or when the page carries them.
+        resultsPosted: trial.events.some((event: any) => event.kind === "results_posted") || Boolean(trial.findings?.outcomes.length),
+        outcomes: outcomesOf(trial.findings),
         registryUrl: `https://clinicaltrials.gov/study/${encodeURIComponent(trial.nct_id)}`,
       };
     }),
@@ -154,6 +288,30 @@ export function pairView(page: any): PairView {
     approach: page.approach?.approach ? PAIR_APPROACH_LABELS[page.approach.approach] : null,
     checkedByPerson: page.checked_by_person,
     registryChecks: page.checked.map((check: any) => ({ registry: PAIR_REGISTRY_NAMES[check.registry], through: check.checked_through })),
-    claimSlug: row.origin?.claim_slug ?? null,
+    topic: row.filing?.vertical ?? null,
   };
+}
+
+export interface NarrowerPair {
+  address: string;
+  condition: string;
+}
+
+/** The same treatment's other pairs whose condition sits beneath this pair's in MeSH: a tree
+ * number of theirs continues one of this pair's ("C01.610" is beneath "C01"). Read from the
+ * intervention's page file, the one source the built page and the Worker share, so the two
+ * list the same pairs. In the order of the conditions' names. */
+export function narrowerPairs(page: any, interventionPage: any | null, published: Set<string>): NarrowerPair[] {
+  if (!interventionPage) return [];
+  const tops: string[] = page.row.descriptor.tree_numbers;
+  const self = page.row.pair.address;
+  const found = new Map<string, string>();
+  for (const row of interventionPage.pairs) {
+    const address = row.pair.address;
+    // Only a pair with a page in this bundle version: a listing can name pairs a slice left out.
+    if (address === self || found.has(address) || !published.has(address)) continue;
+    const beneath = row.descriptor.tree_numbers.some((number: string) => tops.some((top) => number.startsWith(`${top}.`)));
+    if (beneath) found.set(address, row.descriptor.label);
+  }
+  return [...found].sort(([, a], [, b]) => a.localeCompare(b)).map(([address, condition]) => ({ address, condition }));
 }

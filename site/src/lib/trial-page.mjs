@@ -131,7 +131,7 @@ export const changedShort = (day) => `Record last changed ${day}`;
 export const SEARCH_WORDS = {
   heading: "Registered trials with these words",
   open: "See the registry facts",
-  claim: "See the tracked claim",
+  claim: "See what the records show",
   more: (count) => `And ${count} more. Add a word to narrow them.`,
   // A large listing is read only when the reader asks for it.
   ask: (count) => `Search ${count.toLocaleString("en")} registered trials for these words`,

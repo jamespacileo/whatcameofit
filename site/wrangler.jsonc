@@ -1,7 +1,7 @@
 // Cloudflare Workers. Every address is a file of the built site except /api/lookup,
 // which runs worker/index.mjs: the registry search for an article the site does not
 // track. Deploy with `make deploy` (see docs/deploy.md), never with `wrangler deploy`
-// alone: the make target refuses a preview export first.
+// alone: the make target checks the address and the bundle first.
 {
   "name": "thenwhat",
   // Not newer than the installed Wrangler supports, or `wrangler dev` will not start.
@@ -23,7 +23,7 @@
     "not_found_handling": "404-page",
     // Page addresses carry no trailing slash, as the canonical links and sitemap write them.
     "html_handling": "drop-trailing-slash",
-    // Every address but built assets goes through the Worker (/api/lookup included), so an archived claim's address can answer 410; the
+    // Every address but built assets goes through the Worker (/api/lookup included), so an address the site once served for a claim can answer 301 or 410; the
     // Worker hands every other request straight to the files. Built assets skip it.
     "run_worker_first": ["/*", "!/_astro/*", "!/pagefind/*"]
   },

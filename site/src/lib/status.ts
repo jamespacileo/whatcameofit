@@ -1,6 +1,16 @@
 // Words for statuses and events. They describe records; they never judge.
-import type { ExportedClaim, ExportedEvent, StatusCode } from "./export";
-import { hasLinkedReport } from "./reports.ts";
+/** The status codes, as the bundle's schema spells them. */
+export type StatusCode =
+  | "preclinical_only"
+  | "no_trial_found"
+  | "trial_registered"
+  | "phase_1"
+  | "phase_2"
+  | "phase_3"
+  | "approved"
+  | "failed"
+  | "terminated"
+  | "retracted";
 
 export const STATUS_LABELS: Record<StatusCode, string> = {
   preclinical_only: "Preclinical only",
@@ -46,86 +56,10 @@ export const STATUS_GLOSSES: Record<StatusCode, string> = {
   retracted: "The original paper was retracted",
 };
 
-// How a count of claims with one status is said in a sentence: for one claim, for several.
-const STATUS_CLAUSES: Record<StatusCode, [one: string, many: string]> = {
-  preclinical_only: ["has no trial in people on record", "have no trial in people on record"],
-  no_trial_found: [
-    "has no matching registered trial found",
-    "have no matching registered trial found",
-  ],
-  trial_registered: ["has a trial in people registered", "have a trial in people registered"],
-  phase_1: ["has reached an early trial in people", "have reached early trials in people"],
-  phase_2: ["has reached a mid-stage trial in people", "have reached mid-stage trials in people"],
-  phase_3: [
-    "has reached a large late-stage trial in people",
-    "have reached large late-stage trials in people",
-  ],
-  approved: ["has been approved by a regulator", "have been approved by a regulator"],
-  failed: [
-    "had a trial that did not meet its main goal",
-    "had a trial that did not meet its main goal",
-  ],
-  terminated: ["had its trials stopped early", "had their trials stopped early"],
-  retracted: ["had its original paper retracted", "had their original papers retracted"],
-};
-
 export function overlayText(years: number | null): string | null {
   return years === null ? null : `No signal for ${years} ${years === 1 ? "year" : "years"}`;
 }
 
-const TRIAL_STATES: Record<string, string> = {
-  started: "Trial started",
-  completed: "Trial completed",
-  terminated: "Trial terminated",
-  withdrawn: "Trial withdrawn",
-  suspended: "Trial suspended",
-};
-
-export function eventLabel(event: ExportedEvent): string {
-  switch (event.type) {
-    case "followup_paper":
-      return "Follow-up paper";
-    case "trial_registered":
-      return "Trial registered";
-    case "trial_status_change":
-      return TRIAL_STATES[event.trial_state ?? ""] ?? "Trial status changed";
-    case "trial_results_posted":
-      return "Trial results posted";
-    case "grant_awarded":
-      return "Grant awarded";
-    case "company_event":
-      return "Company event";
-    case "retraction":
-      return "Retraction notice";
-    case "regulatory_decision":
-      return event.regulatory_outcome === "approved" ? "Regulatory approval" : "Regulatory refusal";
-    default:
-      return "Record";
-  }
-}
-
-const SOURCE_NAMES: Record<string, string> = {
-  "clinicaltrials.gov": "ClinicalTrials.gov",
-  europepmc: "Europe PMC",
-  crossref: "Crossref",
-  "manual entry": "Source",
-};
-
-export function sourceName(name: string): string {
-  return SOURCE_NAMES[name] ?? name;
-}
-
-export const EVIDENCE_STAGES: Record<string, string> = {
-  in_vitro: "Laboratory (in vitro)",
-  animal: "Animal study",
-  early_human: "Early human study",
-  late_human: "Late human study",
-};
-
-export function latestPromise(claim: ExportedClaim) {
-  const dated = claim.promises.filter((promise) => promise.parsed_date !== null);
-  return dated.sort((a, b) => (a.parsed_date! < b.parsed_date! ? 1 : -1))[0] ?? null;
-}
 
 // A build fails rather than publish a verdict. "No signal" is never worded as an ending.
 const VERDICT_WORDS =
@@ -146,13 +80,11 @@ assertNeutral([
   ...Object.values(STATUS_LABELS),
   ...Object.values(STATUS_MEANINGS),
   ...Object.values(STATUS_GLOSSES),
-  ...Object.values(STATUS_CLAUSES).flat(),
-  ...Object.values(TRIAL_STATES),
   overlayText(1)!,
   overlayText(6)!,
 ]);
 
-// The path a claim can move along. A status off the path (no trial record found,
+// The path a pair can move along. A status off the path (no trial record found,
 // failed, terminated, retracted) is shown in words only.
 export const STAGE_PATH: StatusCode[] = [
   "preclinical_only",
@@ -162,137 +94,3 @@ export const STAGE_PATH: StatusCode[] = [
   "phase_3",
   "approved",
 ];
-
-// The most statuses a summary names; the claims at any others are counted together.
-const SUMMARY_NAMES = 4;
-
-/**
- * One sentence on where a list's claims stand, from the count at each status alone.
- * Statuses are named in path order, then those off the path. Null for an empty list.
- */
-export function topicSummary(
-  counts: ReadonlyMap<StatusCode, number>,
-  coverage?: { total: number; reported: number },
-): string | null {
-  const offPath = (Object.entries(STATUS_LABELS) as [StatusCode, string][])
-    .map(([code]) => code)
-    .filter((code) => !STAGE_PATH.includes(code));
-  const present = [...STAGE_PATH, ...offPath].filter((code) => (counts.get(code) ?? 0) > 0);
-  const counted = present.reduce((sum, code) => sum + counts.get(code)!, 0);
-  const total = coverage?.total ?? counted;
-  if (total === 0) return null;
-  const title = coverage && coverage.reported < total
-    ? `${total} ${total === 1 ? "claim" : "claims"} tracked, ${coverage.reported} with a linked report`
-    : "";
-  if (counted === 0) return `${title}.`;
-  if (total === 1) {
-    if (title) return `${title}. The claim ${STATUS_CLAUSES[present[0]][0]}.`;
-    return `1 reported breakthrough tracked: it ${STATUS_CLAUSES[present[0]][0]}.`;
-  }
-  // The sort is stable, so statuses with equal counts keep their path order.
-  const named = [...present]
-    .sort((a, b) => counts.get(b)! - counts.get(a)!)
-    .slice(0, SUMMARY_NAMES);
-  const parts = present
-    .filter((code) => named.includes(code))
-    .map((code) => {
-      const count = counts.get(code)!;
-      return `${count} ${STATUS_CLAUSES[code][count === 1 ? 0 : 1]}`;
-    });
-  const rest = total - named.reduce((sum, code) => sum + counts.get(code)!, 0);
-  if (rest > 0) parts.push(`${rest} ${rest === 1 ? "is" : "are"} at other statuses`);
-  const said =
-    parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
-  if (title) return `${title}. ${said}.`;
-  return `Of ${total} reported breakthroughs tracked, ${said}.`;
-}
-
-export function topicClaimSummary(claims: readonly ExportedClaim[]): string | null {
-  const counts = new Map<StatusCode, number>();
-  let reported = 0;
-  for (const claim of claims) {
-    const linked = hasLinkedReport(claim);
-    if (linked) reported += 1;
-    const code = claim.status.code;
-    if (code === "approved" && !linked) continue;
-    counts.set(code, (counts.get(code) ?? 0) + 1);
-  }
-  return topicSummary(counts, { total: claims.length, reported });
-}
-
-/** Which way a record moved, for the colour of its mark (docs/adr/0010): "forward" when
- * something began or a regulator approved, "stopped" when something was halted, taken
- * back or refused, "neither" for everything else. A trial that ran to its end and
- * results that were posted are "neither": what they found is not known from the record.
- * It says which way the record moved. It never says whether a treatment works. */
-export type EventDirection = "forward" | "stopped" | "neither";
-
-const STOPPED_STATES = new Set(["suspended", "terminated", "withdrawn"]);
-
-export function eventDirection(event: ExportedEvent): EventDirection {
-  switch (event.type) {
-    case "trial_registered":
-      return "forward";
-    case "trial_status_change":
-      if (event.trial_state === "started") return "forward";
-      return STOPPED_STATES.has(event.trial_state ?? "") ? "stopped" : "neither";
-    case "regulatory_decision":
-      return event.regulatory_outcome === "approved" ? "forward" : "stopped";
-    case "retraction":
-      return "stopped";
-    default:
-      return "neither";
-  }
-}
-
-// What kind of record an entry is. Each kind has one drawing, named once in a legend.
-export type RecordKind =
-  | "report"
-  | "trial"
-  | "paper"
-  | "regulator"
-  | "retraction"
-  | "grant"
-  | "company"
-  | "record";
-
-export const KIND_NAMES: Record<RecordKind, string> = {
-  report: "News report",
-  trial: "Trial registry record",
-  paper: "Paper",
-  regulator: "Regulator decision",
-  retraction: "Retraction notice",
-  grant: "Grant",
-  company: "Company event",
-  record: "Record",
-};
-
-/** The same kinds, named as a count of them: the controls that narrow the timetable. */
-export const KIND_PLURALS: Record<RecordKind, string> = {
-  report: "News reports",
-  trial: "Trial registry records",
-  paper: "Papers",
-  regulator: "Regulator decisions",
-  retraction: "Retraction notices",
-  grant: "Grants",
-  company: "Company events",
-  record: "Records",
-};
-
-export function eventKind(event: ExportedEvent): RecordKind {
-  if (event.type.startsWith("trial_")) return "trial";
-  switch (event.type) {
-    case "followup_paper":
-      return "paper";
-    case "regulatory_decision":
-      return "regulator";
-    case "retraction":
-      return "retraction";
-    case "grant_awarded":
-      return "grant";
-    case "company_event":
-      return "company";
-    default:
-      return "record";
-  }
-}

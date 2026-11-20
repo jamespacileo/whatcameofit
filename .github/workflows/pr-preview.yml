@@ -55,8 +55,6 @@ jobs:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
-          # The base is the checkout's first parent: the comment lists the claims added since it.
-          fetch-depth: 2
       # A push that changes nothing the site is made from leaves the copy as it is:
       # the copy says what it was made from, and that is compared with this commit.
       - name: See whether the copy is already this commit's
@@ -90,7 +88,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: site/.cache/cards
-          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/pnpm-lock.yaml') }}
+          key: site-cards-${{ hashFiles('site/tests/bundle/manifest.json', 'site/src/lib/card*.ts', 'site/pnpm-lock.yaml') }}
           restore-keys: site-cards-
       - name: Build and publish
         id: preview
@@ -109,7 +107,7 @@ jobs:
           STATE: ${{ (steps.state.outputs.published == 'true' || steps.preview.outcome == 'success') && 'published' || 'failed' }}
           PREVIEW_URL: ${{ steps.preview.outputs.url || steps.state.outputs.url }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          # Set when the copy was built from a bundle of pair pages (openspec pairs-site).
+          # The bundle the copy was built from (openspec pairs-site).
           PAIRS_COUNT: ${{ steps.preview.outputs.pairs_count || steps.state.outputs.pairs_count }}
           PAIRS_VERSION: ${{ steps.preview.outputs.pairs }}
         run: |

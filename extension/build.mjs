@@ -35,6 +35,7 @@ const shared = [
   ["worker/page.mjs", "page.js", []],
   ["worker/names.mjs", "names.js", []],
   ["worker/tracked.mjs", "tracked.js", [["./names.mjs", "./names.js"]]],
+  ["src/lib/lookup-file.mjs", "lookup-file.js", []],
   ["src/lib/source-url.mjs", "source-url.js", [["./article-key.mjs", "./article-key.js"]]],
 ];
 for (const [from, to, imports] of shared) {
@@ -49,6 +50,8 @@ const visualPath = path.join(dist, "visual.js");
 fs.writeFileSync(visualPath, fs.readFileSync(visualPath, "utf8").replace("../../site/src/lib/source-url.mjs", "./source-url.js"));
 const resultsPath = path.join(dist, "results.js");
 fs.writeFileSync(resultsPath, fs.readFileSync(resultsPath, "utf8").replace("../../site/worker/tracked.mjs", "./tracked.js"));
+const indexPath = path.join(dist, "index-file.js");
+fs.writeFileSync(indexPath, fs.readFileSync(indexPath, "utf8").replace("../../site/src/lib/lookup-file.mjs", "./lookup-file.js"));
 const { NOTICES } = await import(pathToFileURL(path.join(site, "src/lib/notices.ts")).href);
 fs.writeFileSync(
   path.join(dist, "notices.js"),
@@ -92,7 +95,7 @@ const manifest = {
   // popup read an untracked page for its automatic registry search. The site's
   // own address is the one place the extension may fetch from or send to.
   // "alarms" and "notifications" let the background check refresh the lookup file twice
-  // a day and tell the reader when a followed claim moves or a reminder is due.
+  // a day and tell the reader when a followed page moves or a reminder is due.
   permissions: ["activeTab", "scripting", "storage", "alarms", "notifications"],
   background: { service_worker: "background.js", type: "module" },
   // The site, and the shorteners whose links the popup opens to learn where they lead

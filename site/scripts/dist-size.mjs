@@ -4,27 +4,13 @@
 // file near the host's limit" and "Built files counted against the host's limit".
 import fs from "node:fs";
 import path from "node:path";
+import { gzipSync } from "node:zlib";
 
 export const FILE_LIMIT = 20 * 2 ** 20;
 /** The most files a version may hold on the host's free plan. */
 export const HOST_FILE_COUNT = 20_000;
 /** Where the build stops. DIST_FILE_LIMIT raises it for a plan that allows more. */
 export const FILE_COUNT_LIMIT = Number(process.env.DIST_FILE_LIMIT) || 18_000;
-// A split release is counted after its claim files have been staged separately.
-export const SPLIT_RELEASE = process.env.SITE_RELEASE_BUILD === "1";
-
-// A claim emits its page, data record, feed, embed, oEmbed, and three card images.
-// Search fragments and shared files add to this floor, so the final check still runs.
-const CLAIM_ROUTE_FILES = 8;
-
-export function assertClaimFilesFit(claims, limit = FILE_COUNT_LIMIT) {
-  const floor = claims * CLAIM_ROUTE_FILES;
-  if (floor > limit) {
-    throw new Error(
-      `The ${claims.toLocaleString("en-GB")} claims require at least ${floor.toLocaleString("en-GB")} files before search indexing. The build limit is ${limit.toLocaleString("en-GB")} files.`,
-    );
-  }
-}
 
 /** How many files are under the directory, in every folder. */
 export function countFiles(directory) {
@@ -48,4 +34,22 @@ export function oversizedFiles(directory, limit = FILE_LIMIT) {
   };
   walk(directory);
   return found.sort((a, b) => b.bytes - a.bytes);
+}
+
+// The two files the lookup box's word search downloads, each the first time a reader types or
+// searches (never on page load). At 30,000 pairs, the size the design plans for, each comes
+// to about 1 MB with gzip (openspec pairs-site, task 4.11). The build stops at 2 MiB each,
+// about twice that, so a much heavier file is caught before it ships: then the search is
+// split into parts (task 4.11) rather than the limit raised.
+export const SEARCH_FILES = ["lookup/2.json", "search-detail.json"];
+export const SEARCH_GZIP_LIMIT = 2 * 2 ** 20;
+
+/** Each search file whose gzip size is over the limit, with that size. Missing files are skipped. */
+export function heavySearchFiles(directory, limit = SEARCH_GZIP_LIMIT) {
+  return SEARCH_FILES.flatMap((file) => {
+    const full = path.join(directory, file);
+    if (!fs.existsSync(full)) return [];
+    const bytes = gzipSync(fs.readFileSync(full)).length;
+    return bytes > limit ? [{ file, bytes }] : [];
+  });
 }

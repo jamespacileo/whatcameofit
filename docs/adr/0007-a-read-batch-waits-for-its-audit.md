@@ -1,5 +1,7 @@
 # 7. A batch of read claims waits for its audit before any export publishes it
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-16. Status: accepted. Change: `openspec/changes/archive/2026-11-18-social-link-backfill`. Amends 0001 for claims drafted by a link lead's read.
 
 ## Context

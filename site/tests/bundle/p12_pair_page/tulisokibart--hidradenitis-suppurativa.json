@@ -1,0 +1,159 @@
+{
+ "row": {
+  "pair": {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D017497",
+   "key": "substance:ON09TCS5H3|D017497",
+   "address": "tulisokibart--hidradenitis-suppurativa",
+   "nct_ids": [
+    "NCT06956235"
+   ],
+   "checked_by_person": false
+  },
+  "intervention": {
+   "id": "substance:ON09TCS5H3",
+   "key_kind": "substance",
+   "key_value": "ON09TCS5H3",
+   "preferred_name": "Tulisokibart",
+   "slug": "tulisokibart",
+   "components": []
+  },
+  "condition": {
+   "descriptor_id": "D017497",
+   "slug": "hidradenitis-suppurativa"
+  },
+  "descriptor": {
+   "descriptor_id": "D017497",
+   "label": "Hidradenitis Suppurativa",
+   "tree_numbers": [
+    "C01.800.720.420",
+    "C17.800.946.315.320",
+    "C01.830.499",
+    "C01.150.252.819.420",
+    "C17.800.838.765.420"
+   ]
+  },
+  "status": {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D017497",
+   "code": "phase_2",
+   "overlay_years": null,
+   "explained_by": [
+    "NCT06956235|registered|2025-05-04",
+    "NCT06956235|started|2025-06-09"
+   ],
+   "as_of": "2026-11-18"
+  },
+  "filing": null,
+  "origin": {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D017497",
+   "claim_slug": "tulisokibart-hidradenitis-suppurativa",
+   "drafted_from": "seed",
+   "drafted_by_run": "ff9ba21ecea8",
+   "created_at": "2026-11-20T13:25:30.320291"
+  },
+  "first_report": null
+ },
+ "names": [
+  {
+   "intervention_id": "substance:ON09TCS5H3",
+   "name": "Tulisokibart",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  }
+ ],
+ "checked_by_person": false,
+ "trials": [
+  {
+   "nct_id": "NCT06956235",
+   "arms": [
+    "Arm 1: High Dose",
+    "Arm 2: Medium Dose",
+    "Arm 3: Low Dose"
+   ],
+   "claim_arm": null,
+   "facts": {
+    "nct_id": "NCT06956235",
+    "as_of": "2026-10-02",
+    "title": "Study to Evaluate Tulisokibart for Hidradenitis Suppurativa (MK-7240-012)",
+    "phases": [
+     "phase_2"
+    ],
+    "overall_status": "active_not_recruiting",
+    "participants": {
+     "count": 149,
+     "actual": true
+    },
+    "start": {
+     "day": "2025-06-09",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2026-04-02",
+     "basis": "registry_date"
+    },
+    "completion": {
+     "day": "2028-06-06",
+     "basis": "registry_date_estimated"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "TRIPLE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "18 Years",
+    "maximum_age": "75 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT06956235|registered|2025-05-04",
+     "nct_id": "NCT06956235",
+     "kind": "registered",
+     "day": "2025-05-04",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT06956235@2026-10-02"
+    },
+    {
+     "key": "NCT06956235|started|2025-06-09",
+     "nct_id": "NCT06956235",
+     "kind": "started",
+     "day": "2025-06-09",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "update_key": "NCT06956235@2026-10-02"
+    }
+   ],
+   "paper_ids": [],
+   "findings": null
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:ON09TCS5H3",
+  "approach": "drug",
+  "basis": "registry_intervention_type",
+  "registry_type": "DRUG",
+  "trials": 2
+ },
+ "history": [
+  {
+   "intervention_id": "substance:ON09TCS5H3",
+   "condition_id": "D017497",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-18",
+   "observed_in_run": "e56dbaaa0d5c"
+  }
+ ],
+ "checked": []
+}

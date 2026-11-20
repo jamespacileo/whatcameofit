@@ -4,8 +4,7 @@ order: 2
 title: Trial registry
 answer: A trial registry is a public database in which the sponsor of a trial records what the trial is, what it will measure and its current state.
 rule: where-the-data-comes-from
-on_site: This site searches ClinicalTrials.gov for each claim's treatment and condition, and links every trial record it matches. A trial held only in another registry is not found, which is one reason a claim can show no trial.
-applies: trials
+on_site: This site searches ClinicalTrials.gov for each page's treatment and condition, and links every trial record it matches. A trial held only in another registry is not found, which is one reason a page can show no trial.
 sources:
   - name: "International Committee of Medical Journal Editors, Clinical Trials: Registration"
     url: https://www.icmje.org/recommendations/browse/publishing-and-editorial-issues/clinical-trial-registration.html

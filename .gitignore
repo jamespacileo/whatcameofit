@@ -11,12 +11,7 @@ __pycache__/
 node_modules/
 site/dist/
 site/.astro/
-site/data/export.json
-site/data/public-export.json
-site/data/public-export.json.tmp
 site/data/trials-listing.json
-site/data/public-trials-listing.json
-site/data/public-trials-listing.json.tmp
 site/.wrangler/
 site/.dev.vars
 
@@ -31,9 +26,6 @@ extension/safari/
 .impeccable/review/
 .impeccable/questions/
 .impeccable/config.local.json
-
-# bulk link files fetched for the social-link backfill
-data/link-files/
 
 # store proof: the sample exported from the working database, and the SQLite file built from it
 store/proof/sample/
@@ -52,7 +44,7 @@ store/ingest/.cloudflare.local.json
 store/ingest/.upload-state/
 store/ingest/wrangler.production.jsonc
 
-# the store's build files and their state: never committed (pipeline/src/thenwhat/store)
+# the store's build files and their state: never committed
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm

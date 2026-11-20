@@ -1,0 +1,731 @@
+{
+ "pair": {
+  "row": {
+   "pair": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D005757",
+    "key": "substance:IT942ZTH98|D005757",
+    "address": "curcumin--gastritis-atrophic",
+    "nct_ids": [
+     "NCT02782949"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:IT942ZTH98",
+    "key_kind": "substance",
+    "key_value": "IT942ZTH98",
+    "preferred_name": "Curcumin",
+    "slug": "curcumin",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D005757",
+    "slug": "gastritis-atrophic"
+   },
+   "descriptor": {
+    "descriptor_id": "D005757",
+    "label": "Gastritis, Atrophic",
+    "tree_numbers": [
+     "C06.405.205.697.394",
+     "C06.405.748.398.394"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D005757",
+    "code": "phase_2",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT02782949|registered|2016-05-26",
+     "NCT02782949|started|2017-04-04"
+    ],
+    "as_of": "2026-11-19"
+   },
+   "filing": {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D005757",
+    "vertical": "gut-and-liver",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "first_report": null
+  },
+  "names": [
+   {
+    "intervention_id": "substance:IT942ZTH98",
+    "name": "Curcumin",
+    "origin": "substance_registry",
+    "role": "preferred",
+    "searchable": true
+   }
+  ],
+  "checked_by_person": false,
+  "trials": [
+   {
+    "nct_id": "NCT02782949",
+    "arms": [
+     "Arm I (curcumin)"
+    ],
+    "claim_arm": "Arm I (curcumin)",
+    "facts": {
+     "nct_id": "NCT02782949",
+     "as_of": "2026-11-18",
+     "title": "Curcumin in Preventing Gastric Cancer in Patients With Chronic Atrophic Gastritis or Gastric Intestinal Metaplasia",
+     "phases": [
+      "phase_2"
+     ],
+     "overall_status": "active_not_recruiting",
+     "participants": {
+      "count": 50,
+      "actual": true
+     },
+     "start": {
+      "day": "2017-04-04",
+      "basis": "registry_date"
+     },
+     "primary_completion": {
+      "day": "2022-10-06",
+      "basis": "registry_date"
+     },
+     "completion": {
+      "day": "2027-04-01",
+      "basis": "registry_date_estimated"
+     },
+     "allocation": "RANDOMIZED",
+     "masking": "DOUBLE",
+     "primary_purpose": "PREVENTION",
+     "healthy_volunteers": false,
+     "minimum_age": "21 Years",
+     "maximum_age": null,
+     "sponsor_name": null,
+     "sponsor_class": null,
+     "primary_outcomes": null,
+     "why_stopped": null,
+     "results": null
+    },
+    "events": [
+     {
+      "key": "NCT02782949|registered|2016-05-26",
+      "nct_id": "NCT02782949",
+      "kind": "registered",
+      "day": "2016-05-26",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2"
+      ],
+      "update_key": "NCT02782949@2026-11-18"
+     },
+     {
+      "key": "NCT02782949|started|2017-04-04",
+      "nct_id": "NCT02782949",
+      "kind": "started",
+      "day": "2017-04-04",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2"
+      ],
+      "update_key": "NCT02782949@2026-11-18"
+     },
+     {
+      "key": "NCT02782949|results_posted|2024-03-05",
+      "nct_id": "NCT02782949",
+      "kind": "results_posted",
+      "day": "2024-03-05",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_2"
+      ],
+      "update_key": "NCT02782949@2026-11-18"
+     }
+    ],
+    "paper_ids": [],
+    "findings": {
+     "outcomes": [
+      {
+       "key": "NCT02782949|000",
+       "nct_id": "NCT02782949",
+       "kind": "primary",
+       "title": "Absolute Change in IL-1beta Cytokine Levels in the Gastric Mucosa",
+       "time_frame": "Baseline up to 6 months",
+       "unit": "pg/mL",
+       "param_type": "MEDIAN",
+       "dispersion_type": "Full Range",
+       "values": [
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Antrum: IL-1beta Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-4.2",
+         "upper": "10.9"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Antrum: IL-1beta Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "-0.1",
+         "spread": null,
+         "lower": "-5.5",
+         "upper": "4.1"
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Body: IL-1beta Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-5.2",
+         "upper": "4.2"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Body: IL-1beta Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "0.1",
+         "spread": null,
+         "lower": "-0.8",
+         "upper": "8.6"
+        }
+       ],
+       "as_of": "2026-11-18"
+      },
+      {
+       "key": "NCT02782949|001",
+       "nct_id": "NCT02782949",
+       "kind": "secondary",
+       "title": "Change in Histology Gastric Score",
+       "time_frame": "Baseline up to 6 months",
+       "unit": "scores on a scale",
+       "param_type": "MEDIAN",
+       "dispersion_type": "Full Range",
+       "values": [
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Correa Score Difference (Puerto Rico data) central review",
+         "category_title": null,
+         "analysed": "22",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-2.8",
+         "upper": "3.6"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Correa Score Difference (Puerto Rico data) central review",
+         "category_title": null,
+         "analysed": "25",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-3.6",
+         "upper": "2.6"
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Correa Score Difference (UAB data)",
+         "category_title": null,
+         "analysed": "22",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-3.6",
+         "upper": "3.6"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Correa Score Difference (UAB data)",
+         "category_title": null,
+         "analysed": "25",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-3.9",
+         "upper": "3.5"
+        }
+       ],
+       "as_of": "2026-11-18"
+      },
+      {
+       "key": "NCT02782949|002",
+       "nct_id": "NCT02782949",
+       "kind": "secondary",
+       "title": "Additional Gastric Mucosal Cytokine/Chemokine Levels (TNFalpha, and IP-10)",
+       "time_frame": "Baseline up to 6 months",
+       "unit": "pg/mL",
+       "param_type": "MEDIAN",
+       "dispersion_type": "Full Range",
+       "values": [
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Antrum: TNF-alpha Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "-0.1",
+         "spread": null,
+         "lower": "-3.8",
+         "upper": "5.7"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Antrum: TNF-alpha Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-1.8",
+         "upper": "8.7"
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Antrum: IP-10 Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "8.0",
+         "spread": null,
+         "lower": "-135.7",
+         "upper": "285.9"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Antrum: IP-10 Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "14.3",
+         "spread": null,
+         "lower": "-218.3",
+         "upper": "179.2"
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Body: IP-10 Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "1.2",
+         "spread": null,
+         "lower": "-356.5",
+         "upper": "217.0"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Body: IP-10 Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "5.2",
+         "spread": null,
+         "lower": "-132.3",
+         "upper": "157.9"
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Body: TNF-alpha Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-1.8",
+         "upper": "4.6"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Body: TNF-alpha Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-8.0",
+         "upper": "12.0"
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Antrum: IL-8 Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "-0.3",
+         "spread": null,
+         "lower": "-30.7",
+         "upper": "12.4"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Antrum: IL-8 Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "-0.2",
+         "spread": null,
+         "lower": "-55.4",
+         "upper": "385.2"
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "Body: IL-8 Difference",
+         "category_title": null,
+         "analysed": "22",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-1.8",
+         "upper": "4.6"
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "Body: IL-8 Difference",
+         "category_title": null,
+         "analysed": "25",
+         "value": "0.0",
+         "spread": null,
+         "lower": "-8.0",
+         "upper": "12.0"
+        }
+       ],
+       "as_of": "2026-11-18"
+      },
+      {
+       "key": "NCT02782949|003",
+       "nct_id": "NCT02782949",
+       "kind": "secondary",
+       "title": "Gastric Mucosal Deoxyribonucleic Acid (DNA) Damage",
+       "time_frame": "Baseline up to 6 months",
+       "unit": "Participants",
+       "param_type": "COUNT_OF_PARTICIPANTS",
+       "dispersion_type": null,
+       "values": [
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": "< 1%",
+         "analysed": "22",
+         "value": "18",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": "< 1%",
+         "analysed": "25",
+         "value": "19",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": "1-5%",
+         "analysed": "22",
+         "value": "2",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": "1-5%",
+         "analysed": "25",
+         "value": "4",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": ">5%",
+         "analysed": "22",
+         "value": "2",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": ">5%",
+         "analysed": "25",
+         "value": "1",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": "Missing",
+         "analysed": "22",
+         "value": "0",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Baseline",
+         "category_title": "Missing",
+         "analysed": "25",
+         "value": "1",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": "< 1%",
+         "analysed": "22",
+         "value": "19",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": "< 1%",
+         "analysed": "25",
+         "value": "13",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": "1-5%",
+         "analysed": "22",
+         "value": "2",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": "1-5%",
+         "analysed": "25",
+         "value": "10",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": ">5%",
+         "analysed": "22",
+         "value": "1",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": ">5%",
+         "analysed": "25",
+         "value": "1",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG000",
+         "group_title": "Arm I (Curcumin)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": "Missing",
+         "analysed": "22",
+         "value": "0",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        },
+        {
+         "group_id": "OG001",
+         "group_title": "Arm II (Placebo)",
+         "class_title": "DNA Damage: Month 6",
+         "category_title": "Missing",
+         "analysed": "25",
+         "value": "1",
+         "spread": null,
+         "lower": null,
+         "upper": null
+        }
+       ],
+       "as_of": "2026-11-18"
+      }
+     ],
+     "comparisons": [
+      {
+       "key": "NCT02782949|000|000",
+       "outcome_key": "NCT02782949|000",
+       "kind": "other",
+       "group_ids": [
+        "OG000",
+        "OG001"
+       ],
+       "design": "SUPERIORITY",
+       "method": "Wilcoxon Rank-Sum test",
+       "p_value": "0.3990",
+       "estimate_kind": null,
+       "estimate": null,
+       "interval_pct": null,
+       "lower": null,
+       "upper": null
+      },
+      {
+       "key": "NCT02782949|003|000",
+       "outcome_key": "NCT02782949|003",
+       "kind": "other",
+       "group_ids": [
+        "OG000",
+        "OG001"
+       ],
+       "design": "SUPERIORITY",
+       "method": "Fisher Exact",
+       "p_value": "0.74",
+       "estimate_kind": null,
+       "estimate": null,
+       "interval_pct": null,
+       "lower": null,
+       "upper": null
+      }
+     ],
+     "arms": [],
+     "harms": [
+      {
+       "key": "NCT02782949|EG000",
+       "nct_id": "NCT02782949",
+       "group_id": "EG000",
+       "deaths_affected": 0,
+       "deaths_at_risk": 26,
+       "serious_affected": 0,
+       "serious_at_risk": 26,
+       "other_affected": 14,
+       "other_at_risk": 26,
+       "frequency_threshold": "0",
+       "time_frame": "Up to 7 months"
+      },
+      {
+       "key": "NCT02782949|EG001",
+       "nct_id": "NCT02782949",
+       "group_id": "EG001",
+       "deaths_affected": 0,
+       "deaths_at_risk": 24,
+       "serious_affected": 0,
+       "serious_at_risk": 24,
+       "other_affected": 12,
+       "other_at_risk": 24,
+       "frequency_threshold": "0",
+       "time_frame": "Up to 7 months"
+      }
+     ],
+     "serious_events": [],
+     "registered": [
+      {
+       "key": "NCT02782949|primary|000",
+       "nct_id": "NCT02782949",
+       "kind": "primary",
+       "measure": "Absolute Change in IL-1beta Cytokine Levels in the Gastric Mucosa",
+       "time_frame": "Baseline up to 6 months"
+      },
+      {
+       "key": "NCT02782949|secondary|000",
+       "nct_id": "NCT02782949",
+       "kind": "secondary",
+       "measure": "Change in Histology Gastric Score",
+       "time_frame": "Baseline up to 6 months"
+      },
+      {
+       "key": "NCT02782949|secondary|001",
+       "nct_id": "NCT02782949",
+       "kind": "secondary",
+       "measure": "Additional Gastric Mucosal Cytokine/Chemokine Levels (TNFalpha, and IP-10)",
+       "time_frame": "Baseline up to 6 months"
+      },
+      {
+       "key": "NCT02782949|secondary|002",
+       "nct_id": "NCT02782949",
+       "kind": "secondary",
+       "measure": "Gastric Mucosal Deoxyribonucleic Acid (DNA) Damage",
+       "time_frame": "Baseline up to 6 months"
+      },
+      {
+       "key": "NCT02782949|other|000",
+       "nct_id": "NCT02782949",
+       "kind": "other",
+       "measure": "Proinflammatory Cytokine Genotype Status (IL-1beta, IL-8, and TNFalpha Single Nucleotide Polymorphisms)",
+       "time_frame": "At baseline"
+      }
+     ],
+     "due": {
+      "nct_id": "NCT02782949",
+      "primary_completion": "2022-10-06",
+      "code": "results_posted",
+      "days_since_completion": 1502,
+      "as_of": "2026-11-16"
+     }
+    }
+   }
+  ],
+  "approach": {
+   "intervention_id": "substance:IT942ZTH98",
+   "approach": null,
+   "basis": "registry_intervention_type",
+   "registry_type": null,
+   "trials": 3
+  },
+  "history": [
+   {
+    "intervention_id": "substance:IT942ZTH98",
+    "condition_id": "D005757",
+    "before": null,
+    "after": "phase_2",
+    "on": "2026-11-19",
+    "observed_in_run": "d16a82607319"
+   }
+  ],
+  "checked": [
+   {
+    "registry": "clinicaltrials.gov",
+    "checked_through": "2026-11-17"
+   }
+  ]
+ }
+}

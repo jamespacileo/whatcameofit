@@ -2,6 +2,24 @@
 
 The public site is https://whatcameofit.com, served by the `thenwhat` Cloudflare Worker in the Palladio account. Source code is public at https://github.com/jamespacileo/whatcameofit. The pipeline, review database, local preview and provider keys stay on the private machine.
 
+## The site is built from the bundle of pairs, and nothing publishes it but the cutover
+
+Decided by the operator on 20 November 2026: claims are removed from the site (openspec `pairs-site`, task 3.4). The site's only input is a bundle of pairs. There is no claims export, no committed snapshot (`site/data/published-export.json` is gone) and no `Deploy production` job: a merge to `main` runs the checks, the build rehearsal and pull request previews, and publishes nothing. Production keeps serving its last deployment, the claims site, until the cutover ("Pair pages in production", below), which the operator starts.
+
+What the commands do now:
+
+```sh
+make deploy-ci-check        # rehearses the public build from site/tests/bundle; no account, nothing published
+make deploy-check           # rehearses from PAIRS_DATABASE's current bundle (thenwhat-store by default)
+make deploy ARGS=--cutover  # publishes, once the operator has said the cutover can go ahead
+```
+
+A bundle folder alone (`PAIRS_BUNDLE`, no database) is only ever a dry run: `deploy.mjs` refuses to publish one. A pull request's preview is built from `site/tests/bundle` unless `PREVIEW_PAIRS_BUNDLE` names another folder; without the preview account's pairs database it holds the pages built ahead only.
+
+Addresses the site served while it tracked claims are frozen in `site/data/retired-addresses.json`. The build writes what each answers to `dist/gone.json`, and the Worker answers from it: a claim that one published pair lists (the bundle's `claim_slugs`, or `origin.claim_slug` in a bundle made before that field) leads to the pair with a 301, with its embed, cards, oEmbed and data record; every other claim address answers 410 Gone, as does `/data/claims.json`. No file is built for any of them.
+
+The sections "Normal publishing workflow", "Local checks and emergency deployment" and the split release below describe publishing from the claims snapshot as it was. They are kept for the record until this file is rewritten for the cutover, and their commands (`make publish-data`, `make deploy-ci`, `SITE_FILES_BUCKET`) no longer exist.
+
 ## Normal publishing workflow
 
 GitHub Actions runs the pipeline, store, site build, and release checks in parallel. The required `Tests and build` check passes when all suites pass. A newer push cancels outstanding checks for the same pull request. Use `make check` to run the checks locally and `make deploy-ci-check` to rehearse the public build.
@@ -79,7 +97,7 @@ What a preview does (`site/scripts/pairs-preview.mjs`, called by `pr-preview.mjs
 2. Applies `store/ingest/migrations` to it and loads the bundle (`site/tests/bundle`, or the folder `PREVIEW_PAIRS_BUNDLE` names) with the store's own loader statements, unless that version is already current there. The log says `Pair pages: bundle <version> loaded into thenwhat-pairs-pr-preview` or `already current in`.
 3. Builds the copy with `PAIRS_BUNDLE` set to that bundle, and deploys it with `worker/with-pairs.mjs` and the database bound as `PAIRS`, in a configuration written for the run. `wrangler.preview.jsonc` itself holds no database id. A preview never reads production's `wrangler.jsonc`: `pairsConfig` refuses any configuration but a preview's. Only `make deploy` builds from it ("Pair pages in production", below).
 
-The database keeps the current bundle and the one before. Previews built from more than two different bundles at once displace the oldest, whose pages made on request then answer not found until that preview is published again. Previews of the committed small bundle share one version.
+The previews' database keeps the last ten bundle versions loaded (`PREVIEW_KEPT_VERSIONS` in `pairs-preview.mjs`), where the store keeps the current version and the one before for a rollback. A preview reads its pages made on request and its open-data records at the version its build recorded, for as long as it is up, and a preview's version changes only when a pull request changes its bundle. Only an open pull request whose bundle is older than ten later distinct bundles loses its version; its pages made on request then answer not found until the preview is published again. A push that changes nothing the site is made from does not do that, because the workflow sees the copy is already this commit's and skips the build: run **Pull request preview** again with a change to the site, or run `PR_NUMBER=<number> make pr-preview` from that pull request's checkout with the preview account's token, which loads the bundle again. `PREVIEW_PAIRS_KEEP` sets a smaller count (at least 2) if the preview account's database is on the Free plan's 500 MB. Previews of the committed small bundle share one version.
 
 To turn it on, the operator, once:
 
@@ -117,7 +135,7 @@ On this machine without Cloudflare, `site/tests/pairs-deploy.build-test.mjs` run
 **Publish** only at the cutover, after the operator says it can go ahead (task 5.2). Without `--cutover`, deploy.mjs refuses to publish with pair pages before building anything:
 
 ```sh
-EXPORT_FILE=data/published-export.json PAIRS_DATABASE=thenwhat-store node site/scripts/deploy.mjs --cutover
+PAIRS_DATABASE=thenwhat-store node site/scripts/deploy.mjs --cutover
 ```
 
 A checked CI build (`--reuse-build`) holds no bundle, so it is refused with `PAIRS_DATABASE`.
@@ -128,9 +146,84 @@ A checked CI build (`--reuse-build`) holds no bundle, so it is refused with `PAI
 - The bundle before, on the current code: the store keeps the current version and the one before (design decision 4), so deploy that version by name, leaving D1 as it is: `PAIRS_VERSION=<version before> ... node site/scripts/deploy.mjs --cutover`. Read the versions with `SELECT version, current, loaded_at FROM pair_bundle`.
 - The claims site: `make deploy-ci` of the commit before the cutover, which still reads the committed claims export (design decision 10).
 
+## Staging
+
+Decided by the operator on 20 November 2026: main's work goes to https://staging.whatcameofit.com continuously, and production only from a release tag ("Releases", below).
+
+**What it is.** The `thenwhat-staging` Worker in the Palladio account, serving `worker/with-pairs.mjs` with `thenwhat-store-preview` (Palladio's preview store, which holds the rehearsal bundle) bound as `PAIRS`. Its configuration is `site/wrangler.staging.jsonc`: no route, no custom domain, no workers.dev setting, no `LOOKUP_RESULTS` namespace and no secret, so `/api/lookup` answers "not set up". It never reads `thenwhat-store` (production), `thenwhat-pairs-pr-preview` or the previews account.
+
+**How it is published.** `.github/workflows/staging.yml` runs after every green run of "CI and deploy" on a push to `main`, or when started by hand on `main` (Actions › Staging › Run workflow). It has no pull request trigger (`site/tests/staging-workflow.test.mjs` fails if one appears), asks for the `staging` environment, which releases its token to `main` only, and holds `contents: read` only. Only main's tip is published: the job's first step reads main's tip, skips (saying so, not failing) a CI run for an older commit that finished late or was run again, and checks out the tip itself; by hand, the tip is published. Publishes never interleave: one runs at a time (`concurrency: staging`), a run started meanwhile waits, and a newer waiting run replaces an older one. No `run:` step holds an expression: every value reaches the shell as a quoted variable from `env:`. It runs `make deploy-staging`:
+
+1. `deploy.mjs --staging` refuses `--cutover`, production's address and any database whose name does not end in `-preview`, finds the database by the id pinned in `STAGING_PAIRS_DATABASE_ID` through D1's REST API (refused unless the name and EU jurisdiction match), and exports its current bundle with `wrangler d1 execute --remote --command` (D1's `/query` endpoint, SELECTs only).
+2. It builds the site from that bundle, marks every file noindex in `_headers` and writes `/bundle-version.txt` and `/bundle-manifest.json`: the bundle's version, `made_at`, `lab_commit`, counts, pairs, and the launch measure (distinct trials on pair pages over the manifest's `coverage.trials_fetched`, or none when the manifest gives no count), also printed in the log with the pair addresses the sitemap lists (`scripts/bundle-facts.mjs`). The smoke step prints the same line from the deployed file, and fails if it names another bundle.
+3. It publishes with `wrangler versions upload` then `wrangler versions deploy <id>@100%`. Neither changes a trigger, so the custom domain the operator attached, and workers.dev and preview URLs as the operator set them, stay as they are across every deploy. `wrangler deploy` is not used: it sets workers.dev on or off on every run.
+4. The Worker itself adds `X-Robots-Tag: noindex` to every response it gives when `ROBOTS_NOINDEX` is `1`, which only staging's configuration sets (`worker/with-pairs.mjs`, held by `site/tests/staging.build-test.mjs`, "the Worker marks every kind of answer noindex in staging's configuration, and adds none in production's"). The edge's response-header rule on the hostname adds the same; neither depends on the other.
+5. `scripts/staging-smoke.mjs` checks the hostname: `/build-revision.txt` names the commit deployed and `/bundle-version.txt` the exported bundle (each asked again, up to six times ten seconds, while the new version spreads), and `/`, a pair page and its data file made on request, an old claim address that leads to its pair (301), one with no pair (410) and `/no-such--pair` (404) each answer as expected with `X-Robots-Tag: noindex`. The addresses are read from the build. Any failure fails the job and names the address.
+
+What the smoke step prints when everything passes:
+
+```text
+OK /build-revision.txt names commit <the commit deployed>
+OK /bundle-version.txt names bundle 8d9a5628d5e3a2e5
+   Bundle 8d9a5628d5e3a2e5: 3,825 pairs, lab commit <the lab's commit>; launch measure <n>% (<distinct trials on pages> distinct trials on pages of <trials fetched> fetched).
+OK / 200, noindex
+OK /<a pair made on request> 200, noindex
+OK /data/pairs/<that pair>.json 200, noindex
+OK /<an old claim address> 301, noindex
+OK /<an old claim address with no pair> 410, noindex
+OK /no-such--pair 404, noindex
+Staging passed all 8 checks at https://staging.whatcameofit.com.
+```
+
+Before the domain is attached, or while its certificate is still being issued, it prints this and the job fails:
+
+```text
+FAIL staging.whatcameofit.com does not answer yet (ENOTFOUND): attach the custom domain in the dashboard and let its certificate issue, then run staging again.
+```
+
+**The operator's steps**, in order:
+
+1. Create the placeholder Worker `thenwhat-staging` in Palladio, with workers.dev and preview URLs off (done 20 November 2026). Wrangler's per-Worker Editor role cannot create a Worker, so this is the operator's.
+2. Create one API token, `CLOUDFLARE_STAGING_API_TOKEN`: the Worker-specific **Editor** role on `thenwhat-staging`, and the account's **D1 Read**. Nothing else: no zone permission, no D1 Edit. D1 Read covers the `/query` and database endpoints the job calls; D1 Read cannot be scoped to one database, so the pinned id and the `-preview` refusal keep staging to `thenwhat-store-preview`.
+3. In GitHub, environment `staging` (deployment branch `main` only): secret `CLOUDFLARE_STAGING_API_TOKEN`, and variable `STAGING_PAIRS_DATABASE_ID` set to `thenwhat-store-preview`'s id. Repository variable `CLOUDFLARE_ACCOUNT_ID` (Palladio's) is already there; `STAGING_URL` is optional and defaults to `https://staging.whatcameofit.com`.
+4. Attach the custom domain: Cloudflare dashboard › Workers & Pages › `thenwhat-staging` › Settings › Domains & Routes › Add › Custom domain › `staging.whatcameofit.com`. Cloudflare creates the DNS record and certificate; the hostname must have no CNAME record already.
+5. Set the repository variable `STAGING_ENABLED` to `on`. Until it is, the workflow's only job says staging is off and deploys nothing; with it on but the secret or the id missing, the job says which is missing and deploys nothing.
+
+**The first run.** After step 5, start it by hand: Actions › Staging › Run workflow, branch `main`. From then on every green CI run of a push to `main` publishes staging.
+
+To rehearse on this machine, with D1's local engine and nothing sent: `PAIRS_LOCAL_STATE=<folder> make deploy-staging ARGS=--dry-run`.
+
+## Releases
+
+Production is published from a tag only. `.github/workflows/release.yml` runs on a pushed tag matching `v*` (for example `v2026.11.20`), and publishes only while the repository variable `PRODUCTION_PUBLISHING` is `on`; otherwise its one job says publishing is paused. The publishing job asks for the `production` environment, which releases `CLOUDFLARE_PRODUCTION_API_TOKEN` to `v*` tags only and waits for the operator's approval. It checks that the tagged commit is on `main` and that "CI and deploy" passed for it on a push to `main` (read with `actions: read`), runs `make deploy ARGS=--cutover` from `thenwhat-store` to https://whatcameofit.com, then checks the live site (`scripts/smoke-live.mjs`: the deployed commit, a stylesheet, the Worker and public pages).
+
+To release: `git tag v2026.11.20 <commit of main> && git push origin v2026.11.20`, then approve the run in Actions. `PRODUCTION_PUBLISHING` stays unset until the operator says the cutover can go ahead.
+
+## Rate limits on pages made on request
+
+Two limits stand between a flood of requests and the pages the Worker makes from D1 (openspec pairs-site task 4.6g). Both answer **429 Too Many Requests**, never 403 or 404: Google's crawlers read 429 as the server asking them to slow down, and recover when it stops, while a 403 or 404 would remove the page from Google's index ([reduce crawl rate](https://developers.google.com/crawling/docs/crawlers-fetchers/reduce-crawl-rate)).
+
+**In the Worker** (done in code): the `ON_REQUEST_LIMIT` rate limiting binding, which `pairsConfig` gives every deployment with pairs, each Worker its own namespace (production 4131, staging 4132, previews 4133). 600 requests a minute from one address, per Cloudflare location, on the addresses the Worker makes (a pair's page, record, embed, oEmbed and card addresses, and the listings); past it, 429 with `Retry-After: 60`. Files of the site are never counted. The binding's counts are approximate and per location ([rate limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)).
+
+A fault of the limiter never takes pages down: with the binding missing, or a `limit()` call that throws, the Worker answers the request and logs one line (`ON_REQUEST_LIMIT is not bound` or `ON_REQUEST_LIMIT failed`). The guard is at deploy time instead: `deploy.mjs` (staging and the cutover) and `pr-preview.mjs` refuse a configuration that binds the pairs database without `ON_REQUEST_LIMIT` in its own Worker's namespace at the site's limit (`limitProblems` in `scripts/pairs-preview.mjs`), and nothing is published.
+
+**At the zone** (the operator's, in the dashboard; nothing in this repository changes it): one rate limiting rule, as the Free plan allows: one rule, counted by IP, a 10-second period and a 10-second mitigation timeout, with Path and Verified Bot as the fields an expression may use ([rate limiting rules](https://developers.cloudflare.com/waf/rate-limiting-rules/)). Security › WAF › Rate limiting rules › Create rule:
+
+- **Rule name:** `Pages made on request`
+- **If incoming requests match** (Edit expression):
+
+  ```text
+  (http.request.uri.path contains "--" or http.request.uri.path contains "/intervention/" or http.request.uri.path contains "/topic/" or http.request.uri.path contains "/clinical/D") and not cf.bot_management.verified_bot
+  ```
+
+  Only the shapes the Worker makes from D1: every pair's page, record, embed, oEmbed and card address holds `--` (`/<treatment>--<condition>`), and the listings are `/intervention/<slug>`, `/topic/<slug>` and `/clinical/D<code>`. The built `/clinical/` index and the retired claim embeds (`/embed/<claim>`, answered without D1) are not counted; no file of the build has `--` in its path. Verified bots (Googlebot, Bingbot and the like) are never counted: `cf.bot_management.verified_bot` needs Bot Management elsewhere, "except in rate limiting rules, where this field is available on all plans" ([the field](https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.bot_management.verified_bot/)).
+- **With the same characteristics:** IP.
+- **When rate exceeds:** 100 requests per 10 seconds (ten a second from one address). The threshold is ours: a person's page load asks for a few of these addresses at most (its scripts, styles and images are files at other paths), so a person browsing stays far below it. 10 seconds is the only period, and the only mitigation timeout, the Free plan offers ([availability](https://developers.cloudflare.com/waf/rate-limiting-rules/)).
+- **Then take action:** Block, for 10 seconds. Block's response code defaults to 429 ([parameters](https://developers.cloudflare.com/waf/rate-limiting-rules/parameters/)); if the builder offers a response status, keep 429.
+
 ## GitHub configuration
 
-Restrict the GitHub `production` environment to `main`. Store `CLOUDFLARE_PRODUCTION_API_TOKEN` as an environment secret there before merging the workflow. Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.
+The GitHub `production` environment releases its secret to tags matching `v*` only (a deployment tag rule, no branch rule) and requires the operator's approval, with administrator bypass off ("Releases", above). `CLOUDFLARE_PRODUCTION_API_TOKEN` is its environment secret. The `staging` environment releases `CLOUDFLARE_STAGING_API_TOKEN` to `main` only ("Staging", above). Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.
 
 Production deployments are serialized. A superseded revision is skipped when it reaches the queue. Actions are pinned to commit SHAs, and Wrangler is pinned in `site/package.json` and installed using `site/pnpm-lock.yaml`.
 
@@ -147,7 +240,7 @@ Set these repository values in Settings → Secrets and variables → Actions:
 | Variable | `CHROME_STORE_URL` | The extension's Chrome Web Store listing, once it is published there |
 | Variable | `SAFARI_STORE_URL` | The extension's Mac App Store listing, once it is published there |
 
-Scope the production token to Workers deployment in Palladio, with Workers Routes editing and Zone read for `whatcameofit.com`. The existing token expires on 12 November 2027.
+Scope the production token to Workers deployment in Palladio, with Workers Routes editing and Zone read for `whatcameofit.com`, and the account's D1 Read: a release reads its bundle from `thenwhat-store` with the same token (`d1 info` and `/query`) before it publishes. The existing token expires on 12 November 2027.
 
 Cloudflare's [GitHub Actions guide](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/) documents deployment credentials. Keep deployment credentials out of workflow logs, and out of any run a fork's pull request starts.
 
@@ -173,14 +266,6 @@ pnpm --dir site exec wrangler rollback <last-good-version-id>
 ```
 
 Verify the home page, stylesheet and `/build-revision.txt` after rollback. An older release may predate the revision file.
-
-### Split releases for large claim sets
-
-Build the same static site from the reviewed export. With `SITE_FILES_BUCKET` set, the local deploy command stages the generated claim pages, records, feeds, embeds, images and Pagefind files in a private R2 bucket. Topic pages and home list files that exceed the static per-file budget go there too. Their public addresses are unchanged. The Worker assets hold the rest of the site and a manifest that refers to the staged files by checksum. A Worker rollback restores its own manifest and lookup together.
-
-Use a bucket dedicated to generated public site files. Set `SITE_FILES_JURISDICTION` if the bucket has a jurisdiction, and configure an [rclone remote for R2](https://developers.cloudflare.com/r2/examples/rclone/) with access to that bucket. Set `SITE_FILES_REMOTE` to the remote's name. The uploader checks the objects before deploying the Worker and keeps earlier versions' objects for rollback. A dry run stages and checks the Worker bundle locally without contacting the bucket. `SITE_FILES_STAGE_DIR` can point to an existing folder on the external NVMe. `CARD_STORE` can also point to the NVMe to keep rendered card images there between builds.
-
-Pull request previews use `PREVIEW_SITE_FILES_BUCKET`, `PREVIEW_SITE_FILES_REMOTE` and, where applicable, `PREVIEW_SITE_FILES_JURISDICTION`. Give the preview a separate bucket. Staged preview files carry the same noindex instruction as the rest of the preview. The hosted CI workflows still use the ordinary asset bundle until their split-release storage and credentials are configured.
 
 ## Domain and contact settings
 
@@ -272,265 +357,9 @@ Timing events contain numeric durations/completion offsets only, with no article
 
 `read_ms`, `papers_ms`, `score_ms`, and `research_ms` measure each stage from its own start. `registry_ms` sums active registry calls, excluding time waiting in the lookup queue. Stages overlap, so their durations must not be added to estimate latency. `core_ms` and `total_ms` are elapsed milestones from lookup start, not stage durations.
 
-## The store on D1 (preview)
+## The store on D1
 
-The store is a D1 database, an R2 bucket and a Queue, reached only through the ingest service in `store/ingest/` (`store/ingest/README.md`). Nothing below touches the site. The repository carries the resources' names only. A database's id is written by `node store/ingest/scripts/preview-config.mjs` into `store/ingest/wrangler.preview.jsonc`, which is git-ignored, and is never printed.
-
-### How the resources were created
-
-Created by the operator on 17 November 2026 with Wrangler 4:
-
-| Resource | Preview | Production | Jurisdiction |
-| --- | --- | --- | --- |
-| D1 database | `thenwhat-store-preview` | `thenwhat-store` | `eu`, set at creation and not changeable afterwards |
-| R2 bucket | `thenwhat-payloads-preview` | `thenwhat-payloads` | `eu`, set at creation |
-| Queue | `thenwhat-work-preview` | `thenwhat-work` | created without the flag (see below) |
-
-The commands that create the preview's three, as Wrangler 4.161.0 takes them (the operator's own commands were not recorded here):
-
-```bash
-wrangler d1 create thenwhat-store-preview --jurisdiction eu
-wrangler r2 bucket create thenwhat-payloads-preview --jurisdiction eu
-wrangler queues create thenwhat-work-preview
-```
-
-**Queues and jurisdiction.** `wrangler queues create` has a `--jurisdiction` flag, but Cloudflare's documentation, read on 17 November 2026, lists no values for it and says nothing of the European Union for Queues. The two Queues were created without it. A message on the Queue names a step with work due and nothing else (no record, no address, no time), so no data of the tracker rests in a Queue. Whether to recreate them with the flag is the operator's decision once Cloudflare documents its values.
-
-### The deployment check: read the jurisdiction back
-
-Before any record is written to a database, read its jurisdiction and stop unless it is `eu`:
-
-```bash
-cd store/ingest && node scripts/preview-config.mjs
-npx wrangler d1 info thenwhat-store-preview --json
-```
-
-The answer's `jurisdiction` must be `eu`. Read back on 17 November 2026 for `thenwhat-store-preview`: `eu`. Cloudflare's documentation does not promise that `d1 info` shows the field, so if a later Wrangler leaves it out, treat that as a failed check.
-
-### Schema
-
-```bash
-cd store/ingest
-npx wrangler d1 migrations apply STORE --remote --config wrangler.preview.jsonc
-```
-
-Applied to the preview on 17 November 2026: `0001_store_schema.sql` (which was `store/schema.sql`, byte for byte, that day; since then the schema is the sum of the migrations, and `0006` adds the tables of the progressive trial load) and `0002_ingest_service.sql`.
-
-### Two tiers (decided by the operator on 17 November 2026)
-
-The store is in two tiers. Which table is in which is stated in `store/store-tables.md`, not here.
-
-- **Hot:** what the site's export, the lookup service and the extension read. It is loaded into D1.
-- **Bulk:** registry trials, leads, shares, link tables, work entries, usage, measures and their payload rows. It ships as one SQLite file in R2 under `bulk/<build id>/` and is not loaded into D1.
-
-`thenwhat store build` writes a hot file and a bulk file. The migrations still create every table in D1, so the bulk tables are there and empty. What that means for the ingest service today:
-
-- None of its own routes reads a bulk table. `/work/*` reads `work_item`, `/slices/*` reads `work_slice`, and the audit-hold check reads `claim`.
-- A record of a bulk kind that a merged run hands over is also kept in the service's `inbox`, for the daily job to fold into the bulk file and clear (`GET /inbox`, `POST /inbox/clear`). The migrations now include `0003_inbox.sql`, `0004_inbox_folded.sql` and `0005_inbox_fold.sql`: apply them before the service is deployed.
-- The merge still writes whatever kind it is handed. A reader's lead or a found trial is added to D1's copy of the table and is not matched against the bulk file, so a lead the bulk file already has is added again in D1.
-- A record whose parent is only in the bulk file is not resolved: a share, label or reading of a lead, or an article lead of a trial, that the run does not also carry. The run's counts then do not reconcile and the merge is undone. A run must carry such a parent itself until the merge is taught the tiers.
-
-### Cut-over: one command
-
-The cut-over is not done by hand. One script holds the order, for this machine, the preview and production (`store/ingest/scripts/cutover.mjs`). On 17 November 2026 the steps run by hand went out of order three times; the hand sequence that stood here is gone.
-
-```bash
-make store-rehearsal STORE_DIR=<a build's folder>                                  # this machine, nothing sent
-make store-cutover ENV=preview STORE_DIR=<a build's folder> ARGS="--dry-run"       # the plan, nothing run
-make store-cutover ENV=preview STORE_DIR=<a build's folder>
-make store-cutover ENV=production STORE_DIR=<a build's folder> CONFIRM=thenwhat-store
-```
-
-A build's folder is what `thenwhat store build` leaves: `store.hot.sqlite`, `store.bulk.sqlite`, `payloads/hot`, `payloads/bulk`, and `checks.json` (made by the command when it is not there). The stages, in order; the first that fails stops the run and is named:
-
-| | Stage | What it does |
-| --- | --- | --- |
-| 0 | privacy | `thenwhat store prove-no-people` on both files and both payload folders. If it fails or cannot be run, nothing is sent. |
-| 1 | jurisdiction | The database's jurisdiction is read back and must be `eu`; the bucket must be found in `eu`. |
-| 2 | config | The configuration for the environment, with the database's id looked up by name, in a git-ignored file. Production's is removed at the end. |
-| 3 | bookmark | D1's Time Travel bookmark, written under `~/Library/Application Support/thenwhat/store/bookmarks/`, before anything is changed. |
-| 4 | empty | The store must hold no row. With `ARGS="--replace"` a preview store is emptied, or replaced when it holds over 200,000 rows. Production is never emptied: the command stops and prints the commands for the operator. This comes before the migrations, so a store that holds rows never meets a migration that makes a table again. |
-| 5 | migrations | All of `store/ingest/migrations/`. Refused when the database applied a migration under a name the files no longer have in that place (they were renumbered on 17 November 2026), and when a pending migration makes a table again while the store holds rows: such a database is replaced. |
-| 6 | dump | The hot file as SQL (`dump-for-import.mjs`), and that SQL replayed strictly on this machine (`check-dump.mjs`). |
-| 7 | import | The files, in order, counted against the manifest (`import-folder.mjs`). |
-| 8 | checksum | Every hot table in D1 against the build's checks (`checksum-d1.mjs --checks`). No row is fetched back. |
-| 9 | payloads | The payload objects of both tiers (`upload-payloads.mjs`), twenty read back. |
-| 10 | bulk | The bulk file, compressed, in parts of 200 MB, its manifest last (`upload-bulk.mjs`). |
-| 11 | verify | The bulk manifest read back and held to the file. On this machine the whole file comes back and is compared. |
-| 12 | export | On this machine only: `thenwhat export-compare` of the hot file against the working database (`ARGS="--skip-export"` leaves it out). |
-
-A rebuild may keep an unchanged bulk file. The hot file, and D1 after it, then carry the new build's id while the bulk file keeps the id of the build that made it; the bulk file is stored under its own id, and when the bucket's manifest for that id already describes the same file it is not sent again. Where the build left `<file>.watermarks.json`, the two files must agree with it or nothing is run.
-
-**A migration that makes a table again is for an empty store only.** SQLite cannot change a CHECK, so `0007_payload_inline_limit.sql` copies every payload aside, drops the table, makes it again and copies the rows back, in one transaction. On the loaded preview (the hot tier, migrations 0001 to 0005 applied) on 17 November 2026 it failed after 38 s: "D1 DB exceeded its CPU time limit and was reset. [code: 7429]". Nothing was lost; the database was replaced. So 0007 is applied before a load, never after one; never run `wrangler d1 migrations apply` by hand against a store that holds rows when such a migration is pending. A migration of this kind says so on a line of its own, `-- rebuilds: <table>`, and the cut-over also takes any migration that drops a table for one. The next change of this kind is to be written to copy in batches across several migrations, or avoided.
-
-Production needs both `ENV=production` and `CONFIRM=thenwhat-store`, and every script it calls is given `--production` explicitly. Everything the steps print goes, as it arrives and unfiltered, to `<build's folder>/cutover/<env>-<time>.log`; the terminal shows the same with ids masked. `result-<env>-<time>.json` beside it has each stage's seconds, the rows D1 says were written, and the build's id. The log can hold a database's id: it stays in the build's folder and is not committed.
-
-If a stage fails after the import began, restore to the bookmark, or for the preview run again with `--replace`.
-
-### Restore, in two tiers
-
-- **Hot, within Time Travel's history:** restore D1 to a bookmark (below).
-- **Hot, otherwise:** build the hot file again (from a Postgres dump or a kept file, below), then steps 2 and 3 into an emptied database.
-- **Bulk:** fetch it by its build id. Each part and the whole file are checked against the manifest, and the file takes its name only when it is proved.
-  ```bash
-  node store/ingest/scripts/download-bulk.mjs <build id> <out.sqlite> --remote
-  ```
-- **Payload objects** are never overwritten, each being stored under its own checksum; upload the folder again and only the missing ones are sent (`--check-first` when the notes of the earlier upload are gone).
-
-### After a reload or a restore: start the push state again
-
-The push state does not notice a reload or a restore of the store, even one from the same build on the same host. What `backfill push` and `slices run --push` sent since the build stays in `<file>.pushed.json`, and those records would be skipped. After any reload or restore, start the state again and send every slice again:
-
-```bash
-thenwhat store fresh-state <store file> --url <address> --out <new state file>
-thenwhat backfill slices run --push --again --state <new state file>
-```
-
-`slices run --push` stops when the store holds no slice of the set but the state or the plan says some were sent. `GET /progress` gives `build_id`, the build the store was loaded from, read from the ids of the build's own runs; `fresh-state` and `slices run --push` refuse a store loaded from another build than the state's. It also gives `database_since`, when the database's first migration was applied: a database that was replaced shows a new time, one restored by Time Travel does not.
-
-**A restore by Time Travel is not a reload.** The database keeps its `database_since` and the build it was loaded from, so no check catches it, and the push state goes on saying that what was pushed after the bookmark is in the store. So keep a copy of the push state with every bookmark: when a bookmark is taken, copy `<state>.pushed.json` and the slices' plan (`slices-<set>-<year>.json`) beside its id. After a restore to a bookmark, put back that bookmark's copy of the push state and the plan, and do not run `fresh-state`: it starts from the build, so the next push would send again every decision and action pushed since the build, and an action is not idempotent (a decision would be held twice). Then run `thenwhat backfill push` and `thenwhat backfill slices run --push`: they send what was pushed after the bookmark, and a slice the store no longer shows goes whole.
-
-### The daily fold, in order
-
-A lookup's bulk records wait in D1's inbox until they are safe in R2. The order is held by the service, not by care:
-
-1. `thenwhat store fold-inbox <bulk.sqlite> --delta <file>` reads the inbox and merges it into the bulk file. It prints the last record folded.
-2. `node store/ingest/scripts/upload-delta.mjs <file> --build <id> --through <seq> --remote` puts the delta beside its build and adds it to `bulk/<build id>/deltas.json`. It prints the object's key.
-3. `POST /inbox/folded {object}` records the fold. The service looks for the object in the bucket and reads how far it folded from the build's `deltas.json`; it refuses without either.
-4. `POST /inbox/clear {through}` (`thenwhat store clear-inbox`) is refused past the furthest fold recorded.
-
-A restore of the bulk tier is `download-bulk.mjs`, then `download-deltas.mjs <build id> <folder>`, then `thenwhat store apply-delta` for each delta in the list's order.
-
-The ingest service now refuses a registry record that still names a person, in a record or as a payload object, so the fault cannot return through it. The bulk load does not pass that door: a store file is only as clean as the build that made it.
-
-### Which database a script acts on
-
-`import-folder.mjs`, `checksum-d1.mjs` and `empty-store.mjs` act on the database named by the Wrangler configuration in use (`--config`, else the preview's) and print its name first. A name not ending in `-preview` is production: loading or checking it needs `--production <that name>`, and emptying it is refused whatever is passed. The bucket scripts write to the preview bucket unless `--remote --production <bucket>` names production's.
-
-### Removing payload objects
-
-When payload objects must go (on 17 November 2026: trial payloads were found to carry people's names, emails and phone numbers from the registry, so every object uploaded that day is removed and the build corrected):
-
-```bash
-node store/ingest/scripts/remove-payloads.mjs --all-noted --remote --verify-empty        # every object the upload noted
-node store/ingest/scripts/remove-payloads.mjs --not-in <payload folder> --remote         # those a rebuilt folder no longer holds
-node store/ingest/scripts/remove-payloads.mjs --bulk-build <build id> --remote --verify-empty
-```
-
-Four at a time, with a longer wait after a 429. It removes and checks only the objects the upload's notes name (`store/ingest/.upload-state/`), because Wrangler 4.161.0 cannot list a bucket's objects. For proof that nothing is left, search the prefixes `payload/` and `bulk/` in the dashboard (R2, the bucket, Objects); `wrangler r2 bucket info <bucket> --jurisdiction eu` gives the object count, some minutes late. The notes are on the machine that uploaded: run it there. The same objects in a database's Time Travel history and in any downloaded copy are not touched by this.
-
-### Bulk load: what the steps do, and what was measured
-
-The first load of the tracker does not go through the merge. The hot tier is built on a device as a SQLite file with `store/schema.sql`, written out as SQL, and loaded with Wrangler. The figures below are from loads of the whole store, before the tiers were decided.
-
-1. Note the restore bookmark (below).
-2. Write the SQL, in a folder of its own. It also writes `manifest.json`, each table's rows.
-   ```bash
-   node store/ingest/scripts/dump-for-import.mjs <store.sqlite> <folder>/store.sql --rows-a-file 500000
-   ```
-3. Try the dump on this machine first. It loads the files into a scratch SQLite file as D1 takes them, each statement on its own with foreign keys checked at once, and counts every table. Nothing is sent anywhere.
-   ```bash
-   node store/ingest/scripts/check-dump.mjs <folder>
-   ```
-4. Put the payload objects in the bucket, under the keys the build gave them (`payload/<sha256>`). It uses Wrangler's own login and makes no access key; it is resumable, and ends by reading 20 objects back and comparing each one's checksum with its key.
-   ```bash
-   node store/ingest/scripts/upload-payloads.mjs <payload folder> --remote
-   ```
-5. Load the folder. Files go in the order of their names; the first failure stops the load; each table is then counted against the manifest.
-   ```bash
-   node store/ingest/scripts/import-folder.mjs <folder> --remote
-   ```
-6. If the counts differ, or a file failed, restore to the bookmark (or empty the store) rather than loading again over what is there. A failure names the file's tables.
-
-What the SQL must be, from Cloudflare's import documentation read on 17 November 2026 (`docs/sources.md`): no `BEGIN TRANSACTION` or `COMMIT`; each statement at most 100,000 bytes; a file at most 5 GiB. And from the schema: every `INSERT` names its columns, because a generated column (`review_rank`) cannot be written; the search tables are filled by the schema's triggers and are not in the dump; parents come before children, in tables and in rows, because D1 checks foreign keys statement by statement.
-
-**The first real load failed on its second file** (17 November 2026, 2,704,375 rows in 11 files): `FOREIGN KEY constraint failed`. The first file, 557 MB, had loaded in 115 s with 749,396 rows written. The cause: three merged claims point at a claim with a higher id, so their rows came before the claim they point at, and the `PRAGMA defer_foreign_keys = true` at the head of the file did not hold on D1 as it does on the local engine. The dump no longer leans on that PRAGMA: tables are written parents first by the schema's foreign keys, and a table that points at itself (a merged claim) has its rows written parents first. `check-dump.mjs` fails on the old dump at the same place and passes the new one. The local engine cannot read a file over about 500 MB, so a local trial needs smaller files than a remote load does.
-
-A row too long for one statement (an outlet's icon of 93,062 bytes is 186 KB as hex) is written in parts: an `INSERT` with the start of the long value, then `UPDATE`s that append the rest by primary key, a BLOB's cast back to BLOB. The dumper tries each such row on a scratch copy of its table first. The manifest counts rows, not statements. A dump that fails removes its files; `import-folder.mjs` loads nothing from a folder with no manifest, a `.partial` file, or files the manifest does not list.
-
-**Tried on the preview on 17 November 2026**, with a made-up store of 49,999 records (`scripts/sample-store.mjs`): 66,687 table rows in 176 statements, 14.9 MB of SQL, loaded in 2.8 s (6 s with Wrangler's own start). D1 reported 135,572 changes and 250,037 rows written, and the database was 19.0 MB afterwards. Nothing failed.
-
-- **D1 bills about 3.75 rows written for each table row** of this sample, because indexes and the search tables are written too. A load of 2 million table rows is then about 7.5 million rows written.
-- **The plan.** The free plan allows 100,000 rows written a day and then refuses every query until midnight UTC. The trial wrote 250,037 in one day and a later write succeeded, which only the Workers Paid plan allows (50 million a month included). No Wrangler command shows the plan; the dashboard does, under Workers & Pages, Plans.
-- **Not known:** Cloudflare's documentation does not say whether the database refuses other requests while a file is loading, nor whether a file that fails is undone. Load when nothing reads the store, and restore after a failure.
-
-To clear trial rows from a small store (the schema and the record of migrations stay):
-
-```bash
-node store/ingest/scripts/empty-store.mjs --empty thenwhat-store-preview --remote
-```
-
-It takes only the preview database, by name; there is no such command for production. It deletes in batches of 20,000 rows, passes over tables the database does not have yet, and refuses a store of more than 200,000 rows.
-
-### Resetting the preview store
-
-A large store is not emptied: it is replaced. On 17 November 2026 one file of `DELETE`s against the fully loaded preview (2.7 million rows, 2.3 GB) failed after 60 s with "Upstream service unavailable [code: 7009]", and every deleted row would have been a billed write. Deleting the database and creating it again took 7 s and wrote nothing.
-
-```bash
-npx wrangler d1 delete thenwhat-store-preview
-npx wrangler d1 create thenwhat-store-preview --jurisdiction eu
-cd store/ingest && node scripts/preview-config.mjs
-npx wrangler d1 info thenwhat-store-preview --json     # jurisdiction must read eu
-npx wrangler d1 migrations apply STORE --remote --config wrangler.preview.jsonc
-```
-
-The new database has a new id, so `preview-config.mjs` must be run again, and anything bound to the old id (a deployed Worker) must be deployed again. Its Time Travel history starts empty. Preview only: production is never reset this way.
-
-### Restore
-
-D1 keeps the database's history for 30 days on the paid plan (7 on the free). A bookmark names a moment.
-
-```bash
-npx wrangler d1 time-travel info thenwhat-store-preview        # the bookmark now: note it before a load
-npx wrangler d1 time-travel restore thenwhat-store-preview --bookmark <bookmark>
-```
-
-A restore overwrites the database in place and cancels requests in flight. It prints the bookmark of the moment before it, and restoring to that undoes it. At most 10 restores in 10 minutes for a database. R2 is not restored with it: payloads are stored under their checksums and are never overwritten, so an object a restored store no longer names is only unused. A restore of the preview has not been run yet (task 3.8).
-
-### Restoring the store from a Postgres dump or a kept store file
-
-When Time Travel cannot help (the history has run out, or the database is gone), the store is filled again by the same bulk path as the first fill, never row by row through the ingest service.
-
-1. From a Postgres dump: restore it into a scratch Postgres database and point `DATABASE_URL` at it. From a kept store file, skip to step 3.
-2. Build the store file. The database is only read; every record goes through `store/merge.sql`; each payload over the bound a row may hold (524,288 bytes; `store/schema.sql`, the CHECK on `payload.body`) is written once under `payload/<sha256>`; `<store.sqlite>.pushed.json` is written beside the file.
-   ```bash
-   uv run thenwhat store build <store.sqlite> --payloads <folder>
-   ```
-3. Run the cut-over on the build's folder. It is the same command as the first fill, and does the dump, the strict replay, the load, the checksums, the payload objects and the bulk file in order (above, "Cut-over: one command"):
-   ```bash
-   make store-cutover ENV=preview STORE_DIR=<the build's folder>
-   ```
-   By hand, for the hot file alone: `node store/ingest/scripts/dump-for-import.mjs <store.hot.sqlite> <sql-folder>/store.sql --rows-a-file 60000`, then `check-dump.mjs <sql-folder>`, then `import-folder.mjs <sql-folder> --remote`, which counts every table against the dump's manifest, then `checksum-d1.mjs`. The pipeline's own `store dump` and `store check` are retired.
-4. Keep `<store.sqlite>.pushed.json` with the file: `thenwhat backfill push --state <it>` then hands over only what changed since the build.
-
-The search tables are filled by the schema's triggers as the rows arrive; the dump holds no statement that rebuilds them.
-
-### Deploying the ingest service
-
-Decided by the operator on 17 November 2026: the ingest service is deployed on a `workers.dev` address and answers only to tokens. It is deployed by one command and no other way:
-
-```bash
-make store-deploy ENV=preview TOKENS=<file of token checksums> ARGS="--dry-run"    # the plan and the configuration, nothing run
-STORE_TOKEN_OPERATOR=... make store-deploy ENV=preview TOKENS=<file of token checksums>
-STORE_TOKEN_OPERATOR=... make store-deploy ENV=production CONFIRM=thenwhat-store-ingest TOKENS=<file of token checksums>
-```
-
-Set `STORE_TOKEN_OPERATOR` in the shell from the tokens' own file (`set -a; . <file>; set +a`), never on the command line. The stages, in order:
-
-1. **config.** The configuration that is deployed is written from the committed `wrangler.jsonc`: the Worker's name for the environment (`thenwhat-store-ingest-preview`, `thenwhat-store-ingest`), the database with its id looked up by name, the bucket in `eu`, `workers_dev` true, `preview_urls` false, logs off, the two rate limits, and no Queue. The file is git-ignored and removed at the end.
-2. **jurisdiction.** The database reads back `eu` and the bucket is found in `eu`, or nothing is deployed.
-3. **migrations.** None may be left to apply.
-4. **deploy.**
-5. **secret.** `INGEST_TOKENS` is set by `wrangler secret put`, which reads the file on its standard input. The value is never an argument and never printed or logged; the script says only how many tokens the file lists and its size, and refuses a file that is not a list of checksums.
-6. **smoke.** Every route answers 401 with no token and with a wrong one; the progress page answers only its empty shell; the operator's token gets 200 from `GET /progress`. Then the address is printed.
-
-What a `workers.dev` address exposes. Anyone can reach it. Without a known token every route answers `401 {"error":"unauthorized"}` and nothing else, whatever was asked, so a caller learns only that a service is there; `GET /progress/page` answers a static page with no count in it. Cloudflare applies its Browser Integrity Check to `workers.dev` and nothing else that is ours to configure: a zone's WAF and rate-limit rules do not apply there. So the service limits itself with the platform's rate-limit bindings: 60 requests a minute from one address with no known token, 600 a minute a token, each counted separately in each Cloudflare location and approximately. An address is used as the counting key and is not stored or logged. Cloudflare Access can be put in front of a `workers.dev` address if a second lock is wanted; every writer would then send its headers too.
-
-Queues. `wrangler queues create` has a `--jurisdiction` flag, but Cloudflare's documentation gives it no values and says nothing of where a Queue's data rests. The service's only use of a Queue is to wake a consumer with a step's name, and nothing consumes one yet, so the deployed configuration binds none and the service sends nothing. When a consumer exists, the binding returns and the jurisdiction question is settled then.
-
-### Watching a backfill
-
-A slice of trials is a record of the store, kind `trial_slice`, handed over and merged like any other: which group of trials it is, how many it holds, and a count and a time for each of five stages (record fetched, registry papers looked for, PubMed asked, in the store, page built). A set is a rule and the year it was chosen in; the pipeline hands every planned slice over at the start, so a set's totals are its slices'; the merge never lets a stage go back. `GET /progress` answers counts only, to the operator's and the daily job's tokens: each set with totals by stage and every slice, the last merged run of each writer, and the rows of each table. `<address>/progress/page` shows the same as bars and a grid of slices. The page itself holds nothing; it asks for a token once, keeps it for that browser tab only, and sends it as a header, never in an address. `node store/ingest/scripts/progress-preview.mjs` shows the page on this machine with made-up counts.
+The store holds the bundles of pairs the site is built from: its migrations and the scripts that load and read back a bundle are in `store/ingest/` (`store/README.md`). The ingest service, the two tiers, the cut-over from Postgres, the daily fold and the payload bucket described here until 2026-11-20 belonged to the claims store, removed with claims that day; their text stays in git history. The tables migrations 0001 to 0010 made are dropped at the cutover, on the operator's word.
 
 ## Removing saved copies from KV
 

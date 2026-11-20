@@ -6,32 +6,14 @@ import { SITE } from "../../site.config.mjs";
 <Base title="Privacy" description="What the website and browser extension read, send and keep.">
   <h1 class="title">Privacy</h1>
   <p class="lede">What the website and browser extension read, send and keep.</p>
-  <p>Updated 14 November 2026. {SITE.name} is operated by James Pacileo.</p>
+  <p>Updated 20 November 2026. {SITE.name} is operated by James Pacileo.</p>
 
   <h2 class="bar">Reading the site</h2>
   <p>
     No account is needed. We do not add analytics, set tracking cookies, keep reader profiles,
-    or sell information about readers. Searching the published claims happens in your browser.
+    or sell information about readers. Searching the published pages happens in your browser.
     A marker in your browser's session storage stops the wordmark animation repeating in the
     same tab; it is not sent to us.
-  </p>
-  <p>
-    The links that post a claim to a network open that network with the claim's sentence and
-    address filled in; nothing is loaded from it until you press one. If you post to Mastodon,
-    the server you name is kept in your browser's local storage so you are not asked again; it
-    is not sent to us.
-  </p>
-  <p>
-    The home page notes the day you last opened it, so it can say what is dated since then.
-    If you follow a claim, its address, its headline and its status when you last saw it are
-    kept so the home page can list it and note a change. Both are kept in your browser's
-    local storage and are not sent to us; clearing the site's data in your browser, or
-    pressing "Stop following", removes them.
-  </p>
-  <p>
-    A claim page can save a reminder to your calendar. The calendar file is made in your browser
-    from the date you pick. The date and the claim are not sent to us, and we keep no record
-    that a reminder was saved.
   </p>
   <p>
     Cloudflare hosts and protects the site. Requests for pages and files pass through its network,
@@ -51,21 +33,21 @@ import { SITE } from "../../site.config.mjs";
   <p>
     The extension also keeps two lists for you, in the browser only: the ten pages you checked
     most recently (each page's address and title, the date, and what the check found), and the
-    claims you chose to follow, as they stood when you last looked. Neither list is sent to us
-    or to anyone else. "Clear this list" empties the first, "Stop following" removes a claim
+    pages you chose to follow, as they stood when you last looked. Neither list is sent to us
+    or to anyone else. "Clear this list" empties the first, "Stop following" removes a page
     from the second, and removing the extension removes both.
   </p>
   <p>
     While the extension is installed, twice a day it fetches the same public lookup file, so it
-    can tell you with a notification when a claim you follow has moved. That request carries no
+    can tell you with a notification when a page you follow has moved. That request carries no
     page address, nothing you checked and nothing about you. A reminder you set ("remind me in
-    six months") is kept in the browser with the claim's name and the day, shows one
+    six months") is kept in the browser with the page's name and the day, shows one
     notification on that day, and is then removed. The browser may ask you to allow
-    notifications; without them, the popup still marks a claim that has moved.
+    notifications; without them, the popup still marks a page that has moved.
   </p>
   <p>
     Before the first untracked lookup, the extension asks you to allow sharing page content and screenshot fallback with our service and OpenAI. If you allow it, opening an untracked page starts
-    the registry search described below automatically. You can turn this off in Automatic search settings and keep using reviewed claim matching. The extension does
+    the registry search described below automatically. You can turn this off in Automatic search settings and keep using matching against the published pages. The extension does
     not monitor other tabs or automatically search pages while you browse with it closed.
     Open it only on public reports you want to check. Select words before opening it to limit
     the text sent.
@@ -123,8 +105,8 @@ import { SITE } from "../../site.config.mjs";
     <a href="https://developers.openai.com/api/docs/guides/your-data">OpenAI's data controls</a>.
   </p>
   <p>
-    Automatic search has a limited monthly allowance. When it is used, reviewed claim pages
-    remain available. A search never creates a reviewed claim or changes a claim's status.
+    Automatic search has a limited monthly allowance. When it is used, the published pages
+    remain available. A search never creates a page or changes a status.
   </p>
 
   <h2 class="bar">Writing to us</h2>

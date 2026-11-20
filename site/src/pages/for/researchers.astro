@@ -1,56 +1,44 @@
 ---
-// For people who study what follows the news: the data file itself, with its licence,
-// the day it was built and its fields. Openspec landing-pages-and-guide.
+// For people who study what follows a treatment: the data files themselves, with their
+// licence, the day their records were gathered and what a record holds. Openspec
+// landing-pages-and-guide.
 import Download from "@lucide/astro/icons/download";
 import { SITE } from "../../../site.config.mjs";
 import Audience from "../../layouts/Audience.astro";
-import { CLAIM_FIELDS } from "../../lib/audiences";
 import { CORRECTION_SUBJECT, contactLink } from "../../lib/contact.mjs";
-import { data, listedTopics } from "../../lib/export";
 import { DATA_LICENCE, DATA_LICENCE_URL } from "../../lib/open-data";
-import { reportedClaimCount } from "../../lib/reports";
-import { siteOpenData } from "../../lib/site-open-data";
+import { bundleMadeAt, pairDataIndex, topicsIndex } from "../../lib/pairs";
 import { formatDate } from "../../lib/timetable";
 
-const file = siteOpenData();
-// The fields are read from the records as built, so the list cannot name one it lacks.
-const fields = Object.keys(file.claims[0] ?? CLAIM_FIELDS);
+const count = pairDataIndex(SITE.name, SITE.url).entries.length;
+const topics = topicsIndex().length;
 const corrections = contactLink(SITE.correctionsUrl, "", CORRECTION_SUBJECT);
-const count = data.claims.length;
 ---
 
 <Audience
   audience="researchers"
-  title="Studying what follows the news?"
-  lede="Every published claim, with its status, the records behind it, its news reports and its promises, as JSON you can download, cite and build on."
-  description="The open data file of reported medical breakthroughs and what the public records show since: its licence, the day it was built and its fields."
+  title="Studying what becomes of a treatment?"
+  lede="Every treatment and condition followed here, with its status and the trial records behind it, as JSON you can download, cite and build on."
+  description="The open data files of treatments and conditions and what the public trial records show: their licence, the day the records were gathered and what a record holds."
 >
   <div class="file" slot="tool">
-    <a class="get" href="/data/claims.json" download>
+    <a class="get" href="/data/pairs.json" download>
       <Download size={18} stroke-width={1.9} aria-hidden="true" />
-      Download the index, claims.json
+      Download the index, pairs.json
     </a>
     <dl class="about-file">
       <div>
         <dt>Holds</dt>
         <dd>
           {count}{" "}
-          {count === 1 ? "claim" : "claims"} in {listedTopics.length}{" "}
-          {listedTopics.length === 1 ? "topic" : "topics"}, as JSON. {reportedClaimCount(data.claims)} with a linked report.
+          {count === 1 ? "treatment and condition" : "treatments and conditions"} in {topics}{" "}
+          {topics === 1 ? "topic" : "topics"}, as JSON.
         </dd>
       </div>
       <div>
-        <dt>Built</dt>
-        <dd>{formatDate(data.generated_at)}</dd>
+        <dt>Records gathered</dt>
+        <dd>{formatDate(bundleMadeAt())}</dd>
       </div>
-      {
-        data.last_checked_at && (
-          <div>
-            <dt>Registries checked</dt>
-            <dd>{formatDate(data.last_checked_at)}</dd>
-          </div>
-        )
-      }
       <div>
         <dt>Licence</dt>
         <dd>
@@ -60,74 +48,42 @@ const count = data.claims.length;
     </dl>
   </div>
 
-  <h2 class="bar" id="fields">What each claim's record holds</h2>
+  <h2 class="bar" id="fields">What each record holds</h2>
   <p>
-    The index lists each claim with the address of its full record, one file per claim.{" "}
-    <a href="/data">The data page</a> says how to fetch them all.
-  </p>
-  <dl class="fields">
-    {
-      fields.map((field) => (
-        <div>
-          <dt>
-            <code>{field}</code>
-          </dt>
-          <dd>{CLAIM_FIELDS[field] ?? "Described on the data page."}</dd>
-        </div>
-      ))
-    }
-  </dl>
-  <p>
-    The files leave out article text, claims not approved in review, and outlet icons.{" "}
-    <a href="/data">The data page</a> gives the credit line to use.
+    The index lists each treatment and condition with the address of its full record, one file
+    each. <a href="/data">The data page</a> says how to fetch them all and gives the credit line
+    to use. The files hold public trial records only, and no article text.
   </p>
 
   <h2 class="bar">How a status is set</h2>
   <p>
-    By fixed rules, applied in order, from the approved records in the <code>events</code> field.
-    No model and no editor decides one, and <code>status.explained_by</code> names the records
-    that produced it. <a href="/how-it-works#how-a-status-is-set">The rules, in order</a>
-  </p>
-
-  <h2 class="bar">What a match's confidence is, and is not</h2>
-  <p>
-    Each entry in <code>matches</code> carries a score from 0 to 1: an automatic estimate that a
-    registry record concerns the claim's treatment for its condition. It is not a measured
-    probability and says nothing about the treatment or the trial's quality.{" "}
-    <a href="/guide/match-and-confidence">Match and confidence, in the guide</a>
+    By fixed rules, applied in order, from the dated registry events of the trials in a record.
+    No model and no editor decides one, and a record names the events that produced its status.{" "}
+    <a href="/how-it-works#how-a-status-is-set">The rules, in order</a>
   </p>
 
   <h2 class="bar">Feeds, and reporting a wrong match</h2>
   <p>
-    For a feed reader: <a href="/changes.xml">every status change</a> and{" "}
-    <a href="/anniversaries.xml">anniversaries of first reports</a>. Each claim page and each topic
-    page links a feed of its own.
+    For a feed reader: <a href="/changes.xml">every status change</a>.
   </p>
-  <p>
-    {
-      corrections ? (
-        <>
-          A match that links the wrong record:{" "}
-          <a href={corrections.href}>report it (opens {corrections.opens})</a>, with the record's
-          identifier. A wrong match is removed and the rules then set the status again.
-        </>
-      ) : (
-        <>
-          Each claim page says how to report an error in it. A wrong match is removed and the rules
-          then set the status again.
-        </>
-      )
-    }
-  </p>
+  {
+    corrections && (
+      <p>
+        A trial filed under the wrong treatment or condition:{" "}
+        <a href={corrections.href}>report it (opens {corrections.opens})</a>, with the record's
+        identifier. A wrong match is removed and the rules then set the status again.
+      </p>
+    )
+  }
 
   <Fragment slot="limits">
     <p>
-      The claims are not a sample of medical news. They are the reports this site has been given or
-      has found, so counts across them describe this collection and nothing wider.
+      The treatments and conditions are not a sample of medicine. They are the ones this site
+      follows so far, so counts across them describe this collection and nothing wider.
     </p>
     <p>
-      Matches are made by software and published by rule; <code>checked_by_person</code> says
-      whether a person has reviewed a claim. A real trial can be missed, and a status can lag a
+      Trials are matched to a treatment and condition by software and published by rule; a record
+      says whether a person has reviewed it. A real trial can be missed, and a status can lag a
       registry.
     </p>
     <p>

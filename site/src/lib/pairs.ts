@@ -1,53 +1,58 @@
 // The pair pages (openspec pairs-site): what a page shows, from the lab's `PairPage` files.
-// Until the cutover the claims site stays as it is, and pair pages are built only when the
-// build is given a bundle folder in PAIRS_BUNDLE. A build without one is the claims site
-// alone, so a merge to main publishes no pair page.
+// The bundle folder named in PAIRS_BUNDLE is the build's only input (the operator's decision
+// of 2026-11-20 removed the claims export), so a build without one stops.
 import path from "node:path";
 import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
-import { bundleVersion } from "../../../store/ingest/scripts/load-pairs.mjs";
-import { builtAhead, pairView, shownName } from "./pair-view.ts";
+import { featured, pairView, shownName } from "./pair-view.ts";
+import { categoryListing, interventionListing, topicListing, type ListingView } from "./listing-view.ts";
+import { conditionCard, type CardView } from "./card-view.ts";
+import { exploreIndex, type ExploreIndex } from "./explore.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
-import { DATA_LICENCE, dataCredit } from "./open-data.ts";
+import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
-/** The bundle folder this build reads, or null when it builds no pair page. */
-export function pairBundleFolder(): string | null {
+/** The bundle folder this build reads. */
+export function pairBundleFolder(): string {
   const folder = process.env.PAIRS_BUNDLE;
-  return folder ? path.resolve(folder) : null;
-}
-
-let cached: Bundle | null | undefined;
-
-/** The bundle this build reads, read once; null when it builds no pair page. */
-export function pairBundle(): Bundle | null {
-  if (cached === undefined) {
-    const folder = pairBundleFolder();
-    cached = folder ? readBundle(folder) : null;
+  if (!folder) {
+    throw new Error(
+      "No bundle to build from: set PAIRS_BUNDLE to a folder of the lab's page files (tests/bundle is the small one the tests build).",
+    );
   }
-  return cached;
+  return path.resolve(folder);
 }
 
-export { builtAhead, pairView, shownName, type PairEventView, type PairTrialView, type PairView } from "./pair-view.ts";
+let cached: Bundle | undefined;
+
+/** The bundle this build reads, read once. */
+export function pairBundle(): Bundle {
+  return (cached ??= readBundle(pairBundleFolder()));
+}
+
+/** When the bundle was made, as its manifest states: the date the site's pages speak for. */
+export function bundleMadeAt(): string {
+  return pairBundle().manifest.made_at;
+}
+
+export { featured, pairView, shownName, type PairEventView, type PairTrialView, type PairView } from "./pair-view.ts";
 
 /** The version of the bundle this build reads: the checksum `load-pairs.mjs` loads it into
- * D1 under. Null when the build reads no bundle. */
-export function pairBundleVersion(): string | null {
-  const folder = pairBundleFolder();
-  return folder ? bundleVersion(folder) : null;
+ * D1 under, as its manifest states and `readBundle` checked. */
+export function pairBundleVersion(): string {
+  return pairBundle().version;
 }
 
-/** Every pair the bundle holds, by address. Empty when the build reads no bundle. */
+/** Every pair the bundle holds, by address. */
 export function pairPages(): Record<string, any> {
-  return pairBundle()?.pages.PairPage ?? {};
+  return pairBundle().pages.PairPage ?? {};
 }
 
-/** The pairs whose page, card and embed this build makes (decision 2); the Worker makes
- * every other pair's page on request. */
-export function builtAheadPages(): Record<string, any> {
-  return Object.fromEntries(Object.entries(pairPages()).filter(([, page]) => builtAhead(page)));
+/** The pairs built pages carry as examples (`featured`). */
+export function featuredPages(): Record<string, any> {
+  return Object.fromEntries(Object.entries(pairPages()).filter(([, page]) => featured(page)));
 }
 
 // Listing pages (openspec pairs-site, task 3.2). Every list is worked out here from the pair
@@ -131,10 +136,19 @@ export interface InterventionListing {
   pairs: PairRow[];
 }
 
-/** One listing an intervention the bundle has a page for, with its pairs. */
+/** The published pairs a listing page lists, as rows: the same pairs the Worker's page for it
+ * lists (lib/listing-view.ts), so every count the build shows matches the page it links. */
+function listedRows(view: ListingView): PairRow[] {
+  const pages = pairPages();
+  return view.rows.map((row) => pairRow(pages[row.address])).sort(byName);
+}
+
+const publishedPairs = () => new Set(Object.keys(pairPages()));
+
+/** One listing an intervention the bundle has a page for, with the pairs its file lists. */
 export function interventionListings(): InterventionListing[] {
-  const pages = Object.values(pairPages());
-  return Object.values(pairBundle()?.pages.PairInterventionPage ?? {})
+  const published = publishedPairs();
+  return Object.values(pairBundle().pages.PairInterventionPage ?? {})
     .map((file: any) => {
       const preferred = file.intervention.preferred_name;
       return {
@@ -148,10 +162,7 @@ export function interventionListings(): InterventionListing[] {
           ),
         ] as string[],
         approach: file.approach?.approach ? PAIR_APPROACH_LABELS[file.approach.approach] : null,
-        pairs: pages
-          .filter((page) => page.row.intervention.id === file.intervention.id)
-          .map(pairRow)
-          .sort(byName),
+        pairs: listedRows(interventionListing(file, published)),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -165,17 +176,16 @@ export interface TopicListing {
 
 /** One listing a topic of the bundle's topics page, with the pairs the lab filed under it. */
 export function topicListings(): TopicListing[] {
-  const topics = Object.values(pairBundle()?.pages.PairTopicsPage ?? {})[0];
+  const topics = Object.values(pairBundle().pages.PairTopicsPage ?? {})[0];
   if (!topics) return [];
-  const pages = Object.values(pairPages());
+  const published = publishedPairs();
+  const files = pairBundle().pages.PairTopicPage ?? {};
   return topics.verticals
     .map((vertical: any) => ({
       slug: vertical.slug,
       title: vertical.title,
-      pairs: pages
-        .filter((page) => page.row.filing.vertical === vertical.slug)
-        .map(pairRow)
-        .sort(byName),
+      // The pairs the topic's own file lists; a topic with no file lists none.
+      pairs: files[vertical.slug] ? listedRows(topicListing(files[vertical.slug], published)) : [],
     }))
     .sort((a: TopicListing, b: TopicListing) => a.title.localeCompare(b.title));
 }
@@ -192,21 +202,33 @@ export interface CategoryListing {
 /** One listing a clinical category the bundle has a page for, with every pair at or
  * beneath it. A narrower category with no pair beneath it is left out. */
 export function categoryListings(): CategoryListing[] {
-  const files = Object.values(pairBundle()?.pages.PairClinicalCategoryPage ?? {});
-  const known = new Set(files.map((file: any) => file.descriptor.descriptor_id));
-  const short = (descriptor: any) => ({ descriptorId: descriptor.descriptor_id, label: descriptor.label });
+  const files = Object.values(pairBundle().pages.PairClinicalCategoryPage ?? {});
+  const categories = new Set(files.map((file: any) => file.descriptor.descriptor_id));
+  const published = publishedPairs();
+  const idOf = (href: string) => href.slice("/clinical/".length);
   return files
-    .map((file: any) => ({
-      descriptorId: file.descriptor.descriptor_id,
-      label: file.descriptor.label,
-      treeNumbers: file.descriptor.tree_numbers,
-      broader: file.broader.filter((one: any) => known.has(one.descriptor_id)).map(short),
-      narrower: file.narrower
-        .map((one: any) => ({ ...short(one), count: pairsBeneath(one.tree_numbers).length }))
-        .filter((one: any) => one.count > 0 && known.has(one.descriptorId)),
-      pairs: pairsBeneath(file.descriptor.tree_numbers),
-    }))
+    .map((file: any) => {
+      const view = categoryListing(file, published, categories);
+      const group = (label: string) => view.linkGroups.find((one) => one.label === label)?.links ?? [];
+      return {
+        descriptorId: file.descriptor.descriptor_id,
+        label: file.descriptor.label,
+        treeNumbers: file.descriptor.tree_numbers,
+        broader: group("Broader").map((link) => ({ descriptorId: idOf(link.href), label: link.label })),
+        narrower: group("Narrower").map((link) => ({ descriptorId: idOf(link.href), label: link.label, count: link.count ?? 0 })),
+        pairs: listedRows(view),
+      };
+    })
     .sort((a: CategoryListing, b: CategoryListing) => a.label.localeCompare(b.label));
+}
+
+/** A condition's knowledge card, built ahead: its places in MeSH, named from every descriptor
+ * the bundle's clinical category files hold, each step linked when it has a page. */
+export function conditionCardOf(descriptor: { descriptor_id: string; label: string; tree_numbers: string[] }): CardView {
+  const files = Object.values(pairBundle().pages.PairClinicalCategoryPage ?? {});
+  const categories = new Set(files.map((file: any) => file.descriptor.descriptor_id));
+  const known = files.flatMap((file: any) => [file.descriptor, ...file.broader, ...file.narrower]);
+  return conditionCard(descriptor, known, (id) => (categories.has(id) ? `/clinical/${id}` : undefined));
 }
 
 export interface TopicEntry {
@@ -219,7 +241,7 @@ export interface TopicEntry {
 /** The topics page on the pair path: each topic with a pair filed under it, with its group
  * from the bundle's topics page. */
 export function topicsIndex(): TopicEntry[] {
-  const topics = Object.values(pairBundle()?.pages.PairTopicsPage ?? {})[0];
+  const topics = Object.values(pairBundle().pages.PairTopicsPage ?? {})[0];
   if (!topics) return [];
   const groups = new Map(topics.groups.map((group: any) => [group.slug, group]));
   const counts = new Map(topicListings().map((listing) => [listing.slug, listing.pairs.length]));
@@ -271,72 +293,95 @@ export function pairChanges(): PairChange[] {
 
 // The lookup file and open data on the pair path (openspec pairs-site, task 3.3).
 
-/** One pair as the lookup file words it: the keys the released extension reads, as
- * `lookupClaim` gives them for a claim, so the extension needs no release at the cutover. */
-export function pairLookup(page: any) {
+/** One pair in the site's words, every field either version of the lookup file gives. */
+function pairWords(page: any) {
   const view = pairView(page);
   const report = page.row.first_report;
   return {
-    headline: `${view.intervention} for ${view.condition.toLowerCase()}`,
-    page: `/${view.address}`,
+    title: `${view.intervention} for ${view.condition.toLowerCase()}`,
     status: view.status,
     meaning: STATUS_MEANINGS[view.statusCode as keyof typeof STATUS_MEANINGS],
     place: STAGE_PATH.indexOf(view.statusCode as (typeof STAGE_PATH)[number]) + 1 || null,
     no_signal: overlayText(page.row.status.overlay_years),
     first_reported: report?.published ? formatDate(report.published) : null,
-    latest_promise: null,
     unchecked: view.checkedByPerson ? null : UNCHECKED_NOTE,
     names: [view.intervention, ...view.otherNames],
-    indication: view.condition,
+    condition: view.condition,
     terms: [view.condition, ...(report ? [report.title] : [])].join(" "),
-    // The site's search answer reads the topic; the extension does not.
-    topic: page.row.filing.vertical,
+    topic: page.row.filing?.vertical ?? null,
   };
 }
 
-/** The lookup file's `articles` and `claims` on the pair path: every pair by its address,
- * and each pair's first report by its address in comparison form, where the lab holds one. */
-export function pairLookupMaps(): { articles: Record<string, string[]>; claims: Record<string, unknown> } {
+/** One pair as the lookup file words it, in version 2 (`/lookup/2.json`): keyed by its
+ * address, so its page (`/<address>`) is not repeated, and with the words every pair of a
+ * status shares given once in the file (`meanings`, `unchecked_note`), not on each pair. */
+export function pairLookupEntry(page: any) {
+  const { meaning, unchecked, ...words } = pairWords(page);
+  return { ...words, unchecked: unchecked !== null };
+}
+
+/** One pair as version 1 of the lookup file (`/lookup.json`) words it: the keys the released
+ * extension reads, as the file gave them while the site tracked claims, so the extension needs
+ * no release. Only what that extension reads: not the search's `terms` or `topic`. */
+export function pairLookup(page: any) {
+  const entry = pairWords(page);
+  return {
+    headline: entry.title,
+    page: `/${page.row.pair.address}`,
+    status: entry.status,
+    meaning: entry.meaning,
+    place: entry.place,
+    no_signal: entry.no_signal,
+    first_reported: entry.first_reported,
+    latest_promise: null,
+    unchecked: entry.unchecked,
+    names: entry.names,
+    indication: entry.condition,
+  };
+}
+
+export type PairLookup = ReturnType<typeof pairLookup>;
+
+/** Each pair's first report by its address in comparison form, where the lab holds one,
+ * to the addresses of the pairs it reports. The same in both versions of the lookup file. */
+function articleMap(): Record<string, string[]> {
   const articles: Record<string, string[]> = {};
-  const claims: Record<string, unknown> = {};
   for (const page of Object.values(pairPages())) {
     const address = page.row.pair.address;
-    claims[address] = pairLookup(page);
     const url = page.row.first_report?.url;
     const compared = url ? articleKey(url) : null;
     if (compared === null) continue;
     const addresses = (articles[compared] ??= []);
     if (!addresses.includes(address)) addresses.push(address);
   }
-  return { articles, claims };
+  return articles;
 }
 
-export const PAIR_RECORD_FORMAT = { format: "pair-record", format_version: 1 } as const;
+/** Version 1's `articles` and `claims`: every pair by its address. */
+export function pairLookupMaps(): { articles: Record<string, string[]>; claims: Record<string, unknown> } {
+  const claims: Record<string, unknown> = {};
+  for (const page of Object.values(pairPages())) claims[page.row.pair.address] = pairLookup(page);
+  return { articles: articleMap(), claims };
+}
+
+/** Version 2's `articles` and `pairs`: every pair by its address. */
+export function pairLookupIndex(): { articles: Record<string, string[]>; pairs: Record<string, PairLookupEntry> } {
+  const pairs: Record<string, PairLookupEntry> = {};
+  for (const page of Object.values(pairPages())) pairs[page.row.pair.address] = pairLookupEntry(page);
+  return { articles: articleMap(), pairs };
+}
+
+export type PairLookupEntry = ReturnType<typeof pairLookupEntry>;
+
+export { PAIR_RECORD_FORMAT };
 export const PAIR_INDEX_FORMAT = { format: "pairs-index", format_version: 1 } as const;
-
-const PAIR_SOURCES = [
-  { name: "ClinicalTrials.gov", url: "https://clinicaltrials.gov/" },
-  { name: "Medical Subject Headings (MeSH)", url: "https://www.nlm.nih.gov/mesh/" },
-];
-
-function pairDataHeader(siteName: string, siteUrl: string) {
-  return { licence: DATA_LICENCE, credit: dataCredit(siteName, siteUrl), sources: PAIR_SOURCES };
-}
-
-/** One pair's open data record: the lab's data file for it as written, with the licence,
- * credit and sources, so the file stands alone. */
-export function pairDataRecord(address: string, siteName: string, siteUrl: string) {
-  const file = pairBundle()?.pages.PairDataFile?.[address];
-  if (!file) throw new Error(`The bundle holds no data file for the pair ${address}.`);
-  return { ...PAIR_RECORD_FORMAT, ...pairDataHeader(siteName, siteUrl), pair: file.pair };
-}
 
 /** The index of the pairs' open data records. */
 export function pairDataIndex(siteName: string, siteUrl: string) {
   return {
     ...PAIR_INDEX_FORMAT,
     ...pairDataHeader(siteName, siteUrl),
-    entries: Object.keys(pairBundle()?.pages.PairDataFile ?? {})
+    entries: Object.keys(pairBundle().pages.PairDataFile ?? {})
       .sort()
       .map((address) => {
         const row = pairRow(pairPages()[address]);
@@ -349,4 +394,10 @@ export function pairDataIndex(siteName: string, siteUrl: string) {
         };
       }),
   };
+}
+
+/** The explore page's file: the published pairs with their places in each tree. */
+export function exploreFile(): ExploreIndex {
+  const bundle = pairBundle().pages;
+  return exploreIndex(pairPages(), Object.values(bundle.PairClinicalCategoryPage ?? {}), Object.values(bundle.PairTopicsPage ?? {})[0]);
 }

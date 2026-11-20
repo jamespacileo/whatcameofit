@@ -9,6 +9,7 @@ import { canonicalAddress } from "../lib/structured";
 
 const index = pairDataIndex(SITE.name, SITE.url);
 const count = index.entries.length;
+// Every record is served on request from D1 (worker/pairs.mjs); the first stands for them.
 const example = index.entries[0]?.record;
 const description =
   "Every treatment and condition the site follows, with its status and the trial records behind it, as JSON you can download and reuse: an index of every pair, and one file per pair.";

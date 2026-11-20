@@ -3,9 +3,8 @@ import { test } from "node:test";
 import { checkLive } from "../scripts/smoke-live.mjs";
 
 const revision = "a".repeat(40);
-const expected = { generated_at: "2026-11-17", claims: [{ slug: "one-trial" }] };
 const stylesheet = "/_astro/global.abc.css";
-const options = { origin: "https://example.org", revision, expected, attempts: 3, waitMs: 0 };
+const options = { origin: "https://example.org", revision, attempts: 3, waitMs: 0 };
 
 function answer(pathname) {
   switch (pathname) {
@@ -13,16 +12,12 @@ function answer(pathname) {
     case "/": return new Response(`<link rel="stylesheet" href="${stylesheet}">`);
     case stylesheet: return new Response("body {}", { headers: { "Content-Type": "text/css" } });
     case "/api/lookup": return Response.json({ error: "method" }, { status: 405 });
-    case "/lookup.json": return Response.json({
-      preview: false,
-      generated_at: expected.generated_at,
-      claims: { "one-trial": {} },
-    });
+    case "/lookup.json": return Response.json({ preview: false, claims: { "one--trial": {} } });
     default: return new Response("Page");
   }
 }
 
-test("production smoke retries a timeout and a stale 200 before accepting the expected release", async () => {
+test("production smoke retries a timeout and a stale 200 before accepting the release", async () => {
   let revisionRequests = 0;
   let snapshotRequests = 0;
   await checkLive({
@@ -34,7 +29,7 @@ test("production smoke retries a timeout and a stale 200 before accepting the ex
         if (revisionRequests === 2) return new Response("b".repeat(40));
       }
       if (pathname === "/lookup.json" && ++snapshotRequests === 1) {
-        return Response.json({ preview: false, generated_at: "2026-11-16", claims: { "one-trial": {} } });
+        return Response.json({ preview: true, claims: { "one--trial": {} } });
       }
       return answer(pathname);
     },

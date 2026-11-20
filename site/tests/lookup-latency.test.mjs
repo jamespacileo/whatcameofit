@@ -45,7 +45,7 @@ test("a non-treatment answer is given at once and later background failures stay
     const result = await within(lookUp({
       text: "A tinnitus biomarker study. NCT00000001",
       model: { read: async () => ({ about_a_treatment: false, gist: "not a treatment" }) },
-      index: { claims: {} },
+      index: { pairs: {} },
       registry: { fetch: () => record.promise },
       page: { dois: ["10.1002/example"] },
       papers: { trialNumbers: () => paper.promise },
@@ -70,7 +70,7 @@ test("a treatment lookup still overlaps the model's reading with stated records 
   const running = lookUp({
     text: "EX-1 for tinnitus. NCT00000001",
     model: { read: () => reading.promise, score: scoreAll },
-    index: { claims: {} },
+    index: { pairs: {} },
     registry: {
       fetch: async (number) => { asked.push(number); return records[number] ?? null; },
       named: async () => [],
@@ -93,7 +93,7 @@ test("a treatment lookup still fails when a stated record cannot be fetched", as
   await assert.rejects(lookUp({
     text: "EX-1 for tinnitus. NCT00000001",
     model: { read: async () => treatment, score: scoreAll },
-    index: { claims: {} },
+    index: { pairs: {} },
     registry: { fetch: async () => { throw new Error("registry 500"); }, named: async () => [], search: async () => [] },
   }), /registry 500/);
 });
@@ -198,7 +198,7 @@ const env = (store) => ({
   OPENAI_API_KEY: "test", LLM_MODEL: "configured", CONTACT_EMAIL: "test@example.org",
   LOOKUP_PER_READER: { limit: async () => ({ success: true }) },
   LOOKUP_IN_ALL: { limit: async () => ({ success: true }) },
-  ASSETS: { fetch: async () => Response.json({ claims: {}, articles: {} }) },
+  ASSETS: { fetch: async () => Response.json({ format: "lookup", format_version: 2, pairs: {}, articles: {} }) },
   LOOKUP_RESULTS: store,
 });
 const lookupRequest = (body) => new Request("https://whatcameofit.example/api/lookup", { method: "POST", body: JSON.stringify(body) });

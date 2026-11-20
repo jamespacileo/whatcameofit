@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { articleKey } from "../src/lib/article-key.mjs";
-import { closestClaims, readAddress } from "../src/lib/lookup-match.mjs";
+import { closestPairs, readAddress } from "../src/lib/lookup-match.mjs";
 
 const article = (input) => {
   const read = readAddress(input);
@@ -127,7 +127,7 @@ test("words that are not an address are left for the ordinary search", () => {
 // --- closest matches ---------------------------------------------------------
 
 const index = {
-  claims: {
+  pairs: {
     "tooth-antibody": {
       headline: "Antibody against USAG-1 regrows teeth in mice",
       terms: "anti-usag-1 antibody trg035 congenital tooth agenesis new drug to regenerate lost teeth kyoto university",
@@ -142,7 +142,7 @@ const index = {
     },
   },
 };
-const slugs = (address) => closestClaims(index, address).map((match) => match.slug);
+const slugs = (address) => closestPairs(index, address).map((match) => match.slug);
 
 test("another outlet's report of a tracked story is offered as a close match", () => {
   assert.deepEqual(

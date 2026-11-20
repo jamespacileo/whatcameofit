@@ -3,33 +3,30 @@
 // astro.config.mjs only when a store lists the extension, so this file is never built
 // into a page that offers nothing. Every popup on it is drawn from the export: the
 // answers the extension gives today, dated, and rebuilt with the site.
-import ArrowUpRight from "@lucide/astro/icons/arrow-up-right";
 import InstallControls from "../components/InstallControls.astro";
 import PopupDemo from "../components/PopupDemo.astro";
 import SharePill from "../components/SharePill.astro";
 import Base from "../layouts/Base.astro";
 import { brandAsset } from "../lib/brand";
-import { data } from "../lib/export";
 import {
   HOSTS,
   LEDGER,
   PERMISSIONS,
-  exampleClaim,
-  firstReport,
+  examplePair,
   latestChange,
   registryRecords,
 } from "../lib/extension-page";
-import { lookupClaim } from "../lib/lookup-claim";
+import { bundleMadeAt, pairLookup, pairPages, pairView } from "../lib/pairs";
 import { NOTICES } from "../lib/notices";
 import { formatDate } from "../lib/timetable";
 import { SITE } from "../../site.config.mjs";
 
-const example = exampleClaim(data.claims);
-const shown = example && lookupClaim(example);
-const report = example && firstReport(example);
-const records = example ? registryRecords(example) : [];
-const change = example && latestChange(example);
-const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
+const examplePage = examplePair(Object.values(pairPages()));
+const example = examplePage && pairView(examplePage);
+const shown = examplePage && pairLookup(examplePage);
+const records = examplePage ? registryRecords(examplePage, example!.trials) : [];
+const change = examplePage && latestChange(examplePage);
+const checked = formatDate(bundleMadeAt());
 ---
 
 <Base
@@ -52,25 +49,20 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
     </div>
 
     {
-      shown && report && (
+      shown && example && (
         <ul class="answers">
           <li class="answer">
-            <h2>On a report this site tracks</h2>
+            <h2>On a page about something this site follows</h2>
             <p class="page">
-              <a class="quoted" href={report.url} rel="noopener">
-                “{report.title}”<ArrowUpRight size={15} stroke-width={1.9} aria-hidden="true" />
-              </a>
-              <span class="outlet">
-                {report.outlet}, {formatDate(report.published_date)}
-              </span>
+              <a class="quoted" href={shown.page}>{shown.headline}</a>
             </p>
             <div class="toolbar" aria-hidden="true">
               <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
             </div>
             <div class="shown">
-            <PopupDemo claim={shown} checked={checked} lands />
+            <PopupDemo pair={shown} checked={checked} lands />
             <p class="note">
-              The extension's answer for this report{checked && `, as the registries showed it on ${checked}`}.
+              The extension's answer{checked && `, from records gathered on ${checked}`}.
               It is found inside your browser: the page's address is sent nowhere.
             </p>
             </div>
@@ -81,7 +73,7 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
                 <h2>On a page it does not track</h2>
                 <p class="page">
                   Any other report of a treatment: a news story, a post, a video. An example,
-                  drawn with the trial records of the claim in the first answer.
+                  drawn with the trial records of the first answer.
                 </p>
                 <div class="toolbar" aria-hidden="true">
                   <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
@@ -89,14 +81,14 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
                 <div class="shown">
                 <PopupDemo
                   kind="search"
-                  claim={shown}
-                  subject={{ treatment: example.intervention.name, condition: example.indication }}
+                  pair={shown}
+                  subject={{ treatment: example.intervention, condition: example.condition }}
                   records={records}
                 />
                 <p class="note">
                   A search of the trial registries, marked automatic and unreviewed; a real one
-                  names each trial by its registered title. The percentage is how closely a
-                  record matches the report, never how good a treatment is. It runs only once you
+                  names each trial by its registered title, with how closely the record matches the
+                  report, which is never how good a treatment is. It runs only once you
                   allow it, because it sends the page's words to this site's service and to OpenAI.
                 </p>
                 </div>
@@ -106,18 +98,18 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
           {
             change && (
               <li class="answer">
-                <h2>When a claim you follow moves</h2>
+                <h2>When something you follow moves</h2>
                 <p class="page">
                   Later, with no page open: a notification, then your list. An example, drawn
-                  with the same claim's last change of status on record.
+                  with the same example's last change of status on record.
                 </p>
                 <div class="toolbar" aria-hidden="true">
                   <img src={brandAsset("/favicon.svg")} alt="" width="26" height="26" />
                 </div>
                 <div class="shown">
-                <PopupDemo kind="following" claim={shown} was={change.was} />
+                <PopupDemo kind="following" pair={shown} was={change.was} />
                 <p class="note">
-                  When a claim you follow moves, the extension tells you and marks it in your
+                  When something you follow moves, the extension tells you and marks it in your
                   list. The list is kept in your browser only.
                 </p>
                 </div>
@@ -199,7 +191,7 @@ const checked = data.last_checked_at ? formatDate(data.last_checked_at) : null;
   <p>
     It gives a status and the way to the records behind it. It never says whether a treatment
     works, is safe or is available, and it gives no verdict on a report, an outlet or the people
-    behind a claim.
+    behind a treatment.
   </p>
   <ul class="never">
     {NOTICES.map((notice) => <li>{notice}</li>)}

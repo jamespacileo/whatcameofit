@@ -2,25 +2,26 @@ schema: spec-driven
 
 context: |
   Product: public tracker of what happened to reported medical breakthroughs.
-  The unit is a claim (one intervention for one indication), not an article.
+  The unit is a pair: one coded treatment for one coded condition, made by the separate
+  data lab and handed to the site as a bundle of page files. Claims were removed on
+  2026-11-20.
   SPEC.md is the origin document; OpenSpec holds current behavior.
 
   Guardrails every artifact must respect:
   - Accuracy is the brand, and it is shown, not gated: items are approved by deterministic rules, every match shown carries its confidence score and reasons, and the operator removes a wrong item by archiving it (docs/adr/0001).
-  - Claim status is derived by deterministic rules from approved evidence events.
+  - A status is derived by deterministic rules from approved registry records.
     No model decides status. Every status must list the events that produced it.
   - No editorial verdicts. "No signal" is never worded as "dead" or "abandoned".
   - No medical advice. A registered trial is not presented as a treatment option.
-  - Store the raw API payload and fetch timestamp for every evidence event.
   - Summarise and link to news articles. Never store or display article text.
   - Subscriber emails are the only personal data (UK GDPR: double opt-in,
     one-click unsubscribe, deletion on request). None is collected before Phase 2.
   - Whether and how a news site is asked is the page reader's decision (docs/adr/0006);
-    the pipeline fetches no page another way. Registries and literature indexes are
+    no page is fetched another way. Registries and literature indexes are
     asked within their published rate limits, with a contact User-Agent.
   - Tests use recorded fixtures. No live network calls in CI.
   - No model IDs hardcoded. Provider and model come from environment variables.
-  - Nothing public is served from the home network. Pipeline and database stay private.
+  - Nothing public is served from the home network, except the page reader (docs/adr/0005).
 
 # Project context (optional)
 # Add only constraints that should guide OpenSpec artifacts and workflows.

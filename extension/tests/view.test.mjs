@@ -74,7 +74,7 @@ test("a roundup renders separate claim headings, cards and unchecked notices", (
 
 test("search and privacy controls announce that their destination opens in a new tab", () => {
   for (const [state, label, path] of [
-    [{ kind: "untracked" }, "Search tracked claims", "/"],
+    [{ kind: "untracked" }, "Search followed pages", "/"],
     [{ kind: "sharing", enabled: false }, "Privacy", "/privacy"],
   ]) {
     const root = new Element("main");
@@ -104,14 +104,14 @@ test("each candidate card owns its title, confidence, record details and source 
   assert.equal(root.attributes["aria-busy"], "false");
 });
 
-test("older candidates show unavailable confidence and reviewed claims get no invented score", () => {
+test("older candidates show unavailable confidence and published pages get no invented score", () => {
   const root = new Element("main");
   render(root, { kind: "answer", shown: { ...shown,
     tracked: [{ headline: "Reviewed report", page: "/reviewed" }],
     likely: [{ title: "Older answer", url: "https://clinicaltrials.gov/study/NCT00000001" }],
   } }, site, actions);
   const cards = elements(root, "li");
-  assert.match(cards[0].textContent, /Reviewed claim/);
+  assert.match(cards[0].textContent, /Published page/);
   assert.doesNotMatch(cards[0].textContent, /confidence|100%/);
   assert.match(cards[1].textContent, /Match confidence unavailable/);
 });
@@ -191,7 +191,7 @@ test("no-match uncertainty and explicit first-use sharing stay visible", () => {
   render(root, { kind: "answer", shown: { ...shown, papersUnchecked: unchecked } }, site, actions);
   assert.match(visibleText(root), /A linked paper could not be looked up just now/);
   render(root, { kind: "sharing", enabled: false }, site, { ...actions, enableSharing() {}, disableSharing() {} });
-  assert.match(visibleText(root), /text, links and cleaned address.*OpenAI.*screenshot automatically.*Allow and search.*Use reviewed claims only/s);
+  assert.match(visibleText(root), /text, links and cleaned address.*OpenAI.*screenshot automatically.*Allow and search.*Use published pages only/s);
   assert.equal(elements(root, "details").length, 0);
 });
 
@@ -280,7 +280,7 @@ test("a followed claim that moved says what it was, in words", () => {
   const root = new Element("main");
   render(root, trackedState, site, listActions, { ...kept, followed: ["/reviewed"], was: { "/reviewed": "Trial registered" } });
   assert.match(root.textContent, /Changed since you last looked\. Was: Trial registered\./);
-  assert.match(root.textContent, /You follow this claim\..*Stop following/);
+  assert.match(root.textContent, /You follow this page\..*Stop following/);
   assert.doesNotMatch(root.textContent, /Keep me up to date/);
 });
 
@@ -322,7 +322,7 @@ test("the following list says what changed and what is no longer published", () 
   ] }, site, listActions, kept);
   const cards = elements(root, "li");
   assert.match(cards[0].textContent, /Phase 1 trial.*Changed.*Was: Trial registered\. Now: Phase 1 trial\..*Stop following/);
-  assert.match(cards[1].textContent, /This claim is no longer published\./);
+  assert.match(cards[1].textContent, /This page is no longer published\./);
   assert.doesNotMatch(cards[1].textContent, /Phase 2 trial/);
   assert.equal(elements(cards[1], "a").length, 0);
 });

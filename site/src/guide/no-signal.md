@@ -2,17 +2,16 @@
 shelf: site
 order: 5
 title: No signal
-answer: “No signal” is a note on a status saying how many years have passed since the most recent record on a claim's page.
+answer: “No signal” is a note on a status saying how many years have passed since the most recent record on a page.
 rule: no-signal
-on_site: A claim that has stayed at a stage open to further evidence for several years, with no new approved record, carries the note. The count starts from the most recent record, or from the first report when no record has been found. A new record removes it.
-applies: no-signal
-related: [record, preclinical-only, promise, trials-ended-early]
+on_site: A treatment that has stayed at a stage open to further evidence for several years, with no new approved record, carries the note. The count starts from the most recent record, or from the first report when no record has been found. A new record removes it.
+related: [record, preclinical-only, trials-ended-early]
 checked: false
 ---
 
 ## In the records
 
-The note rests on dates alone. This site takes the most recent record attached to the claim, or the date of the first news report where there is none, and counts the whole years since. Past a fixed number of years the claim page shows the count, such as “No signal for 5 years”.
+The note rests on dates alone. This site takes the most recent record on the page, or the date of the first news report where there is none, and counts the whole years since. Past a fixed number of years the page shows the count, such as “No signal for 5 years”.
 
 It is added only to statuses that further evidence could still move: “Preclinical only” through “Phase 3 trial”, and “No trial record found”. It is not a status, and the status under it is unchanged.
 

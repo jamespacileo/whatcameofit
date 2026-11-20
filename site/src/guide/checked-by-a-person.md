@@ -5,14 +5,13 @@ title: Checked by a person
 answer: A page is “checked by a person” when the person who runs this site has reviewed it; until then the page says that it was put together by software.
 rule: how-a-status-is-set
 on_site: Pages are published by fixed rules without waiting for a person, and each page says whether a person has checked it. The operator removes a page that is wrong; a status is never edited by hand.
-applies: checked
-related: [match-and-confidence, claim, record, trial-missed-its-primary-endpoint]
+related: [match-and-confidence, record, trial-missed-its-primary-endpoint]
 checked: false
 ---
 
 ## In the records
 
-Each claim carries a mark saying whether a person has reviewed it. A page put together by software, from a seed file or by an assistant's decision, carries a notice under its status until the operator has read it against its sources.
+Each page carries a mark saying whether a person has reviewed it. A page put together by software, from a seed file or by an assistant's decision, carries a notice under its status until the operator has read it against its sources.
 
 The same holds for this guide. Each entry is drafted from the sources it lists and says so until it has been read.
 

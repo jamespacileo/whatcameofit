@@ -8,67 +8,133 @@
 // <folder> is what `lab pipeline pages` writes: `p12_<page>/<key>.json` and `schemas/`.
 // Each schema is kept as a `pair_page` row of the model `$schema`, keyed by its page model's
 // name, so a version read back from D1 (scripts/export-pairs.mjs) is the whole folder.
+// The folder is checked against its `manifest.json` (scripts/bundle-manifest.mjs) before any
+// statement is made: a file missing or changed since the lab wrote it, and nothing is loaded.
+// The manifest itself is kept as the `pair_page` row `$manifest`/`manifest`.
 // The bundle's version is the checksum of its files, read as JSON, schemas included. Its rows are written under that
 // version and the last statements mark it current and drop every version but it and the
 // one before, so a load that stops early leaves the site reading what it read. Loading
 // the current version again is refused: nothing would change.
-import { createHash } from "node:crypto";
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { createWriteStream, mkdtempSync, realpathSync, rmSync, statSync } from "node:fs";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { MANIFEST, SCHEMA_MODEL, bundleVersion, checkManifest, files } from "./bundle-manifest.mjs";
 
-const PREFIX = "p12_";
-const SCHEMAS = "schemas";
-/** The reserved model name a schema is kept under in `pair_page`. No page model has it. */
-export const SCHEMA_MODEL = "$schema";
+export { SCHEMA_MODEL, bundleVersion, files };
+
+/** The reserved model the manifest is kept under in `pair_page`, keyed `manifest`, so a version
+ * read back from D1 has the manifest the lab wrote. It is not one of the files it checksums. */
+export const MANIFEST_MODEL = "$manifest";
+const MANIFEST_KEY = MANIFEST.slice(0, -".json".length);
 // Under D1's 100,000 bytes a statement: a character is at most four bytes, a quote doubles.
 const PART_CHARS = 10_000;
-const KEPT_VERSIONS = 2;
+// The store keeps the current version and the one before: a deployment is rolled back by
+// building from the one before (docs/deploy.md). Previews keep more (site/scripts/pairs-preview.mjs).
+export const KEPT_VERSIONS = 2;
 const TABLES = ["pair_page", "pair_intervention", "pair_intervention_name", "pair_condition", "pair", "pair_trial", "pair_trial_facts", "pair_status_change"];
 
-const model = (folder) => folder.slice(PREFIX.length).split("_").map((word) => word[0].toUpperCase() + word.slice(1)).join("");
+// Each table's key (migration 0011): the tables are WITHOUT ROWID, so a chunk is picked by key.
+const KEYS = {
+  pair_page: ["version", "model", "key", "part"],
+  pair_intervention: ["version", "id"],
+  pair_intervention_name: ["version", "intervention_id", "name"],
+  pair_condition: ["version", "descriptor_id"],
+  pair: ["version", "key"],
+  pair_trial: ["version", "pair_key", "nct_id"],
+  pair_trial_facts: ["version", "nct_id"],
+  pair_status_change: ["version", "pair_key", "on_day", "after"],
+};
+
+/**
+ * Rows a delete statement removes at most. D1 gives a query 30 seconds
+ * (https://developers.cloudflare.com/d1/platform/limits/) and asks for large deletes in
+ * batches of about 1,000 rows (the same page); a full bundle's version is about 110,000 page
+ * rows, which one statement could not be trusted to remove in time.
+ */
+export const DELETE_CHUNK = 1000;
+
+/**
+ * The versions the store keeps, as SQL, read when the statement runs: current first, then the
+ * last loaded, then the version itself, so two loaded in the same instant are always kept in
+ * the same order.
+ */
+export const keptVersions = (keep) => `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC, version DESC LIMIT ${keep})`;
+
+/**
+ * The versions a load plans to drop: after it, the store keeps the new version and the
+ * `keep - 1` others first in keptVersions' order. Only how many chunks to write is taken from
+ * this plan; each chunk asks keptVersions again when it runs (chunkedDrops).
+ * @param {{ version: string, loaded_at: string, counts: string | Record<string, number> }[]} held pair_bundle's rows
+ */
+export function droppedVersions(held, version, keep = KEPT_VERSIONS) {
+  const later = (a, b) => (a.loaded_at !== b.loaded_at ? (a.loaded_at < b.loaded_at ? 1 : -1) : a.version < b.version ? 1 : a.version > b.version ? -1 : 0);
+  return held
+    .filter((row) => row.version !== version)
+    .sort(later)
+    .slice(keep - 1)
+    .map((row) => ({ version: row.version, counts: typeof row.counts === "string" ? JSON.parse(row.counts) : row.counts }));
+}
+
+/**
+ * Deletes of the dropped versions' rows in chunks of `chunk`, as many as each table's count for
+ * that version (pair_bundle.counts) needs, each picked by key. Each chunk deletes only while its
+ * version is not one the store keeps at that moment: a version another load made current, or
+ * one kept as the version before, after the plan was made, loses no row. They run where the
+ * load's own deletes do, after the new version is current; those then find nothing left.
+ */
+export function chunkedDrops(dropped, { keep = KEPT_VERSIONS, chunk = DELETE_CHUNK } = {}) {
+  return dropped.flatMap(({ version, counts }) => TABLES.flatMap((table) => {
+    const rows = counts?.[table];
+    if (!Number.isInteger(rows) || rows < 0) throw new Error(`pair_bundle holds no ${table} count for version ${version}, so its rows cannot be deleted in chunks`);
+    const key = KEYS[table].join(", ");
+    const one = `DELETE FROM ${table} WHERE (${key}) IN (SELECT ${key} FROM ${table} WHERE version = ${quote(version)} AND version NOT IN ${keptVersions(keep)} LIMIT ${chunk})`;
+    return Array.from({ length: Math.ceil(rows / chunk) }, () => one);
+  }));
+}
+
+/**
+ * A load's statements with the versions it drops deleted in chunks, planned from pair_bundle's
+ * rows as read before the load (`held`): the command's remote and local loads, and a pull
+ * request preview's, all go through here.
+ */
+export function withChunkedDrops(load, held, chunk = DELETE_CHUNK) {
+  const drops = chunkedDrops(droppedVersions(held, load.version, load.keep), { keep: load.keep, chunk });
+  return [...load.sql.slice(0, load.dropsAt), ...drops, ...load.sql.slice(load.dropsAt)];
+}
+
 const quote = (value) => (value === null || value === undefined ? "NULL"
   : typeof value === "number" ? String(value)
   : typeof value === "boolean" ? (value ? "1" : "0")
   : `'${String(value).replaceAll("'", "''")}'`);
 const insert = (table, row) => `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map(quote).join(", ")})`;
 
-// The bundle's files, in a fixed order: [model, key, text]. Page files first, by folder and
-// name; then each schema, as the model `$schema` keyed by its page model's name.
-export function files(folder) {
-  const out = [];
-  for (const name of readdirSync(folder).filter((entry) => entry.startsWith(PREFIX) && statSync(join(folder, entry)).isDirectory()).sort()) {
-    for (const file of readdirSync(join(folder, name)).filter((entry) => entry.endsWith(".json")).sort()) {
-      out.push([model(name), file.slice(0, -".json".length), readFileSync(join(folder, name, file), "utf8")]);
-    }
-  }
-  if (!out.length) throw new Error(`${folder} holds no page file under a ${PREFIX}* folder: give the folder \`lab pipeline pages\` wrote`);
-  const schemas = join(folder, SCHEMAS);
-  const held = existsSync(schemas) ? readdirSync(schemas).filter((entry) => entry.endsWith(".json")).sort() : [];
-  if (!held.length) throw new Error(`${folder} holds no ${SCHEMAS}/ folder of JSON Schemas: the site reads none of a bundle without them`);
-  for (const file of held) out.push([SCHEMA_MODEL, file.slice(0, -".json".length), readFileSync(join(schemas, file), "utf8")]);
-  return out;
-}
-
-// A bundle's version: the checksum of its page files. The site's build records the same
-// version, the only one its Worker reads pages of (openspec pairs-site).
-export function bundleVersion(folder, pages = files(folder)) {
-  const hash = createHash("sha256");
-  // Each file as compact JSON, so a folder written back from D1 has the version it was loaded
-  // under whatever spacing the lab used.
-  for (const [name, key, text] of pages) hash.update(`${name}/${key}\n${JSON.stringify(JSON.parse(text))}\n`);
-  return hash.digest("hex").slice(0, 16);
+// The statements that store a checked folder's manifest under its version when that version is
+// held without one: a bundle loaded before bundles carried a manifest keeps its version (the
+// manifest is outside the checksum), so it is never loaded again, and without this it could
+// never be exported for a build. A manifest already held is left as it is.
+// It takes the version and manifest a check already returned (`statements(...)` gives both), so
+// the manifest stored is the one checked, even if the folder is replaced in the meantime.
+export function manifestBackfill({ version, manifest }) {
+  const body = JSON.stringify(manifest);
+  // One part, so the guard below sees the whole manifest or none of it.
+  if (body.length > PART_CHARS) throw new Error(`the manifest of bundle ${version} is longer than one part of ${PART_CHARS} characters`);
+  const sql = `INSERT INTO pair_page (version, model, key, part, body) SELECT ${quote(version)}, ${quote(MANIFEST_MODEL)}, ${quote(MANIFEST_KEY)}, 0, ${quote(body)}`
+    + ` WHERE EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)})`
+    + ` AND NOT EXISTS (SELECT 1 FROM pair_page WHERE version = ${quote(version)} AND model = ${quote(MANIFEST_MODEL)})`;
+  return { version, sql: [sql] };
 }
 
 // The statements that load a bundle, its version and its counts. Each statement is one line.
-export function statements(folder, { loadedAt = new Date().toISOString() } = {}) {
-  const pages = files(folder);
-  const version = bundleVersion(folder, pages);
+export function statements(folder, { loadedAt = new Date().toISOString(), keep = KEPT_VERSIONS } = {}) {
+  if (!Number.isInteger(keep) || keep < 2) throw new Error(`keep must be a whole number of at least 2 (the current version and the one before), not ${keep}`);
+  // Nothing is written unless the folder is whole and unchanged since its manifest was made.
+  const { version, manifest, pages } = checkManifest(folder);
   const rows = Object.fromEntries(TABLES.map((table) => [table, new Map()]));
   const put = (table, key, row) => rows[table].set(key, { version, ...row });
 
-  for (const [name, key, text] of pages) {
+  for (const [name, key, text] of [...pages, [MANIFEST_MODEL, MANIFEST_KEY, JSON.stringify(manifest)]]) {
     const body = JSON.stringify(JSON.parse(text));
     for (let part = 0; part * PART_CHARS < body.length; part += 1) {
       put("pair_page", `${name}|${key}|${part}`, { model: name, key, part, body: body.slice(part * PART_CHARS, (part + 1) * PART_CHARS) });
@@ -97,7 +163,7 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
   }
 
   const counts = Object.fromEntries(TABLES.map((table) => [table, rows[table].size]));
-  const kept = `(SELECT version FROM pair_bundle ORDER BY current DESC, loaded_at DESC LIMIT ${KEPT_VERSIONS})`;
+  const kept = keptVersions(keep);
   const sql = [
     // A version left by a load that stopped is cleared before it is loaded again.
     ...TABLES.map((table) => `DELETE FROM ${table} WHERE version = ${quote(version)} AND NOT EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)} AND current = 1)`),
@@ -105,10 +171,78 @@ export function statements(folder, { loadedAt = new Date().toISOString() } = {})
     ...TABLES.flatMap((table) => [...rows[table].values()].map((row) => insert(table, row))),
     `UPDATE pair_bundle SET current = 0 WHERE current = 1 AND version <> ${quote(version)}`,
     `UPDATE pair_bundle SET current = 1 WHERE version = ${quote(version)}`,
-    ...TABLES.map((table) => `DELETE FROM ${table} WHERE version NOT IN ${kept}`),
+    // Only the versions that fall out are deleted, each table by its key's first column, so a
+    // load reads the rows it removes and not the history it keeps.
+    ...TABLES.map((table) => `DELETE FROM ${table} WHERE version IN (SELECT version FROM pair_bundle WHERE version NOT IN ${kept})`),
     `DELETE FROM pair_bundle WHERE version NOT IN (SELECT version FROM (${kept.slice(1, -1)}))`,
   ];
-  return { version, counts, sql };
+  // Where a load against a store it has read puts its chunked deletes (chunkedDrops): just
+  // before the deletes of the versions that fall out.
+  const dropsAt = sql.length - TABLES.length - 1;
+  return { version, manifest, counts, sql, dropsAt, keep };
+}
+
+/**
+ * Writes the statements to a stream one at a time, waiting whenever it asks to. Joined into one
+ * string, a full bundle's statements pass V8's longest string (about 536 million characters;
+ * the rehearsal's 3,825 pairs are 73 million) and the load stops with "Invalid string length"
+ * before anything is sent.
+ * @param {import("node:stream").Writable} stream
+ * @param {string[]} sql
+ */
+export async function writeStatements(stream, sql) {
+  // pipeline waits on the stream's asks to slow down and turns any failure, the last flush's
+  // included, into this promise's rejection.
+  await pipeline(Readable.from(sql.map((statement) => `${statement};\n`), { objectMode: false }), stream);
+}
+
+/** The most a file for D1's local engine holds: Wrangler reads such a file whole, as one string. */
+export const LOCAL_FILE_BYTES = 64 * 2 ** 20;
+
+/**
+ * The statements in files of at most `maxBytes` each, in order, named 1.sql, 2.sql and on. The
+ * statements from the first that marks a version current to the end are kept in the last file
+ * together, so no file boundary falls between the store losing its current version and
+ * gaining the new one.
+ * @returns {Promise<string[]>} the files, in the order they are to run
+ */
+export async function writeStatementFiles(dir, sql, maxBytes = Infinity) {
+  const switchAt = sql.findIndex((statement) => statement.startsWith("UPDATE pair_bundle SET current"));
+  const groups = [];
+  let group = [];
+  let bytes = 0;
+  for (const statement of switchAt < 0 ? sql : sql.slice(0, switchAt)) {
+    const size = Buffer.byteLength(statement) + 2;
+    if (group.length > 0 && bytes + size > maxBytes) {
+      groups.push(group);
+      group = [];
+      bytes = 0;
+    }
+    group.push(statement);
+    bytes += size;
+  }
+  if (switchAt >= 0) group.push(...sql.slice(switchAt));
+  if (group.length > 0) groups.push(group);
+  const files = [];
+  for (const [index, statements_] of groups.entries()) {
+    const file = join(dir, `${index + 1}.sql`);
+    await writeStatements(createWriteStream(file), statements_);
+    files.push(file);
+  }
+  return files;
+}
+
+/**
+ * A folder for the load's SQL on the drive that holds the bundle: beside the bundle's own folder,
+ * found through its real path, so a link on this machine's disk to a bundle elsewhere still
+ * writes there. A bundle folder that is a mount point has no parent on its own drive, so it is
+ * refused rather than written beside on another.
+ */
+export function scratchBeside(folder) {
+  const real = realpathSync(folder);
+  const parent = dirname(real);
+  if (statSync(parent).dev !== statSync(real).dev) throw new Error(`${real} is a mount point: copy the bundle into a folder on that drive, so its SQL can be written beside it`);
+  return mkdtempSync(join(parent, ".thenwhat-pairs-"));
 }
 
 // Run as a command, not imported (an importer may have no script path of its own).
@@ -121,16 +255,27 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   try {
     const load = statements(folder);
     if (argv.includes("--print")) {
-      console.log(load.sql.join(";\n") + ";");
+      // Ended here, so the statements are all out before the process exits.
+      await writeStatements(process.stdout, load.sql);
     } else {
       const { execute, target } = await import("./d1.mjs");
       const to = target(argv);
-      const [held] = (await execute(to, "--command", `SELECT version FROM pair_bundle WHERE current = 1`))[0]?.results ?? [];
-      if (held?.version === load.version) throw new Error(`bundle ${load.version} is already the current one: nothing to load`);
-      const dir = mkdtempSync(join(tmpdir(), "thenwhat-pairs-"));
+      const versions = (await execute(to, "--command", "SELECT version, current, loaded_at, counts FROM pair_bundle"))[0]?.results ?? [];
+      const held = versions.find((row) => row.current === 1);
+      if (held?.version === load.version) {
+        await execute(to, "--command", manifestBackfill(load).sql[0]);
+        console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is held`);
+        process.exit(0);
+      }
+      // Beside the bundle's folder, on the drive that holds it: the statements carry the lab's
+      // pages, which stay off this machine's own disk.
+      const dir = scratchBeside(folder);
       try {
-        writeFileSync(join(dir, "pairs.sql"), load.sql.join(";\n") + ";\n");
-        await execute(to, "--file", join(dir, "pairs.sql"));
+        // D1 itself takes one file of up to 5 GB; the local engine reads each file whole, so it
+        // is given them in parts, in order.
+        // The versions that fall out are deleted a chunk at a time, inside D1's time a query has.
+        const sql = withChunkedDrops(load, versions);
+        for (const file of await writeStatementFiles(dir, sql, to.remote ? Infinity : LOCAL_FILE_BYTES)) await execute(to, "--file", file);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }

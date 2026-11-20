@@ -11,7 +11,7 @@ const index = {
     cancer: { title: "Cancer", count: 161 },
     one: { title: "Lung function tests", count: 1 },
   },
-  claims: {
+  pairs: {
     a: claim("/a", ["double lung transplantation"], "Stage 4 lung cancer", "cancer", "No trial record found"),
     b: claim("/b", ["Agent B", "lungzumab"], "Lung cancer", "cancer", "Phase 3 trial"),
     c: claim("/c", ["Agent C"], "Lung cancer", "cancer"),
@@ -21,7 +21,7 @@ const index = {
   },
 };
 const detail = {
-  claims: {
+  pairs: {
     a: {
       reports: [{ title: "Synthetic lung report one", outlet: "Example Outlet", date: "8 Jul 2026" }],
       trials: [{ id: "NCT00000001", title: "A synthetic study of lung things", phases: ["Phase 2"] }],
@@ -57,10 +57,10 @@ test("the kinds come in one order, each under its name, two rows at most", () =>
   for (const group of groups) assert.ok(group.rows.length <= SUGGEST_ROWS, group.kind);
 });
 
-test("a topic says how many claims it holds and opens its page", () => {
+test("a topic says how many pages it holds and opens its page", () => {
   assert.deepEqual(of(suggest("lung", index, null), "topic"), [
-    { kind: "topic", text: "Lungs and breathing", meta: "24 claims", href: "/topic/lungs" },
-    { kind: "topic", text: "Lung function tests", meta: "1 claim", href: "/topic/one" },
+    { kind: "topic", text: "Lungs and breathing", meta: "24 pages", href: "/topic/lungs" },
+    { kind: "topic", text: "Lung function tests", meta: "1 page", href: "/topic/one" },
   ]);
 });
 
@@ -74,10 +74,10 @@ test("a treatment is named once for its claim, with what it is for and where the
   ]);
 });
 
-test("a condition is one row however many claims are for it, and searches for itself", () => {
+test("a condition is one row however many pages are for it, and searches for itself", () => {
   assert.deepEqual(of(suggest("lung", index, null), "condition"), [
-    { kind: "condition", text: "Lung cancer", meta: "3 claims", query: "Lung cancer" },
-    { kind: "condition", text: "Non-small cell lung cancer", meta: "1 claim", query: "Non-small cell lung cancer" },
+    { kind: "condition", text: "Lung cancer", meta: "3 pages", query: "Lung cancer" },
+    { kind: "condition", text: "Non-small cell lung cancer", meta: "1 page", query: "Non-small cell lung cancer" },
   ]);
 });
 

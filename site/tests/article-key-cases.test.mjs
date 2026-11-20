@@ -1,6 +1,6 @@
 // The comparison form of an article address, against the cases the pipeline's own
-// address key is tested on (pipeline/tests/test_address_key.py). Both read one file,
-// so the site and the pipeline cannot come to disagree about which addresses are one
+// address key was tested on. The cases are fixed in one file,
+// so the site and the extension cannot come to disagree about which addresses are one
 // article. No build and no network.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

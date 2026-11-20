@@ -1,5 +1,7 @@
 # 3. A model may read a stored record into a fixed code; it never decides a status or writes what a reader sees
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-14. Status: accepted. Change: `openspec/changes/claim-at-a-glance`.
 
 ## Context

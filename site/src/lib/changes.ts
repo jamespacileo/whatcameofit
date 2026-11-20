@@ -1,35 +1,17 @@
-// A claim's status changes, as feeds. The history comes from the pipeline, which runs
-// the status rules on what was dated up to each day; nothing is derived here. An export
-// made before the history existed carries none, and then a feed has no entries.
-import type { ExportedClaim, StatusCode } from "./export";
-import { STATUS_LABELS, assertNeutral } from "./status.ts";
+// Status changes as a feed. Each change comes from a pair's own history in the bundle,
+// where the lab ran the status rules on what was dated up to each day; nothing is derived
+// here.
+import { STATUS_LABELS, assertNeutral, type StatusCode } from "./status.ts";
 
 export interface StatusChange {
-  claim: ExportedClaim;
+  /** The pair's address and what an entry is titled by. */
+  address: string;
+  title: string;
   /** The day the status became `code`, as YYYY-MM-DD. */
   on: string;
   code: StatusCode;
-  /** The status before, or null for the claim's first status. */
+  /** The status before, or null for the pair's first status. */
   before: StatusCode | null;
-}
-
-/** One claim's changes, oldest first. */
-export function changesOf(claim: ExportedClaim): StatusChange[] {
-  return (claim.status.history ?? []).map((change, index, history) => ({
-    claim,
-    on: change.on,
-    code: change.code,
-    before: index > 0 ? history[index - 1].code : null,
-  }));
-}
-
-/** Every claim's changes, newest first; on one day, by headline. */
-export function allChanges(claims: ExportedClaim[]): StatusChange[] {
-  return claims
-    .flatMap(changesOf)
-    .sort((a, b) =>
-      a.on === b.on ? a.claim.headline.localeCompare(b.claim.headline) : a.on < b.on ? 1 : -1,
-    );
 }
 
 /** What changed, in the site's own status wording and nothing more. */
@@ -54,11 +36,11 @@ interface Feed {
   self: string;
   /** The page a reader would open instead. */
   page: string;
-  /** The site's address, to build each claim's link. */
+  /** The site's address, to build each pair's link. */
   site: string;
   /** Newest first. */
   changes: StatusChange[];
-  /** The date the export was made, used when there is no change to date the feed by. */
+  /** The date the bundle was made, used when there is no change to date the feed by. */
   generatedAt: string;
 }
 
@@ -69,10 +51,10 @@ export function changesFeed(feed: Feed): string {
   const summaries = changes.map(changeSummary);
   assertNeutral(summaries);
   const entries = changes.map((change, index) => {
-    const link = `${site}/${change.claim.slug}`;
+    const link = `${site}/${change.address}`;
     return [
       "  <entry>",
-      `    <title>${escapeXml(change.claim.headline)}</title>`,
+      `    <title>${escapeXml(change.title)}</title>`,
       `    <id>${escapeXml(`${link}#status-${change.on}-${change.code}`)}</id>`,
       `    <link href="${escapeXml(link)}"/>`,
       `    <updated>${change.on}T00:00:00Z</updated>`,

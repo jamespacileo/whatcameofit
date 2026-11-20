@@ -48,8 +48,9 @@ test("packaged background refreshes the lookup in Safari and keeps undelivered r
   await listeners.installed();
   assert.ok(alarms.includes("refresh"));
   await listeners.alarm({ name: "refresh" });
-  assert.deepEqual(requests, [{ url: `${SITE.url}/lookup.json`, method: "GET" }]);
-  assert.equal(saved.lookup.index.claims.example.status, "Phase 1 trial");
+  assert.deepEqual(requests, [{ url: `${SITE.url}/lookup/2.json`, method: "GET" }]);
+  assert.equal(saved.lookup.file.claims.example.status, "Phase 1 trial");
+  assert.equal(saved.lookup.path, "/lookup/2.json");
   assert.equal(saved.lookup.etag, '"current"');
   assert.deepEqual(saved.told, {});
   await listeners.alarm(reminderAlarm);

@@ -3,15 +3,13 @@ shelf: status
 status: approved
 rule: how-a-status-is-set
 on_site: If a regulator has recorded an approval of the treatment for the condition, the status is “Approved”. Only a retraction of the origin paper is applied before this rule.
-related: [regulatory-approval, phase-3-trial, record, claim]
+related: [regulatory-approval, phase-3-trial, record]
 checked: false
 ---
 
 ## In the records
 
-A regulator has published a decision approving the treatment for the condition the claim is about. The claim page lists that decision as a record, with its date and a link to the regulator's own page.
-
-The page “It happened” lists every tracked claim with this status.
+A regulator has published a decision approving the treatment for the condition the page is about. The page lists that decision as a record, with its date and a link to the regulator's own page.
 
 ## What it does not tell you
 

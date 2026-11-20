@@ -1,10 +1,6 @@
 ---
-// The home page. A build that reads a bundle (openspec pairs-site) shows the pairs; any other
-// build shows the claims home as before. Each is its own component, so a page carries only
-// the scripts of the one it shows.
-import ClaimHome from "../components/ClaimHome.astro";
+// The home page: the lookup box, the latest status changes, the topics and the treatments.
 import PairHome from "../pair/PairHome.astro";
-import { pairBundleFolder } from "../lib/pairs";
 ---
 
-{pairBundleFolder() ? <PairHome /> : <ClaimHome />}
+<PairHome />

@@ -1,9 +1,6 @@
 ---
-// The open data page. A build that reads a bundle (openspec pairs-site) describes the pairs'
-// files; any other build describes the claims' files as before.
-import ClaimData from "../components/ClaimData.astro";
+// The open data page: the pairs' files.
 import PairData from "../pair/PairData.astro";
-import { pairBundleFolder } from "../lib/pairs";
 ---
 
-{pairBundleFolder() ? <PairData /> : <ClaimData />}
+<PairData />

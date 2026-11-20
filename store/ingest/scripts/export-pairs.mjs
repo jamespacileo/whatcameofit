@@ -1,5 +1,6 @@
 // Writes one bundle version back out of the store's pair tables as the folder it was loaded
-// from (openspec pairs-site, task 2.1c): `p12_<page>/<key>.json` and `schemas/<Model>.json`.
+// from (openspec pairs-site, task 2.1c): `p12_<page>/<key>.json`, `schemas/<Model>.json` and
+// the lab's `manifest.json` (task 2.3).
 // The site is built from that folder, so the build reads exactly the version D1 holds.
 //
 //   node scripts/export-pairs.mjs <out folder>                      the current version, this machine's local engine
@@ -11,7 +12,8 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { SCHEMA_MODEL, bundleVersion } from "./load-pairs.mjs";
+import { MANIFEST, checkManifest } from "./bundle-manifest.mjs";
+import { MANIFEST_MODEL, SCHEMA_MODEL } from "./load-pairs.mjs";
 
 const PREFIX = "p12_";
 // Rows read at a time: each part is at most 10,000 characters (load-pairs.mjs).
@@ -40,8 +42,15 @@ export async function exportBundle(read, out, version = null) {
   }
   const counts = {};
   let file = null;
+  let manifest = false;
   const flush = () => {
     if (!file) return;
+    if (file.model === MANIFEST_MODEL) {
+      writeFileSync(join(out, MANIFEST), `${JSON.stringify(JSON.parse(file.body), null, 1)}\n`);
+      manifest = true;
+      file = null;
+      return;
+    }
     const folder = join(out, folderOf(file.model));
     mkdirSync(folder, { recursive: true });
     writeFileSync(join(folder, `${file.key}.json`), `${JSON.stringify(JSON.parse(file.body), null, 1)}\n`);
@@ -70,7 +79,9 @@ export async function exportBundle(read, out, version = null) {
       after = rows.at(-1);
     }
     flush();
-    const written = bundleVersion(out);
+    // A version loaded before bundles carried a manifest cannot be checked, so it is not built from.
+    if (!manifest) throw new Error(`bundle ${wanted} was loaded without a ${MANIFEST}: load a folder that has one`);
+    const written = checkManifest(out).version;
     if (written !== wanted) throw new Error(`the folder written has version ${written}, not ${wanted}: it is removed`);
     return { version: wanted, counts };
   } catch (error) {

@@ -8,9 +8,9 @@ import Mark from "../components/Mark.astro";
 import { CARD_NOTICE } from "../lib/card";
 import { AUDIENCES } from "../lib/audiences";
 import { THEME_COLOR, brandAsset } from "../lib/brand";
-import { data, listedTopics } from "../lib/export";
-import { pairBundleFolder, topicsIndex } from "../lib/pairs";
-import { NOTICES, PREVIEW_NOTE } from "../lib/notices";
+import { bundleMadeAt, topicsIndex } from "../lib/pairs";
+import { PAIR_SOURCES } from "../lib/pair-record";
+import { NOTICES } from "../lib/notices";
 // Stops a public build whose configured address is a local one.
 import "../lib/public-build";
 import {
@@ -77,8 +77,7 @@ const imageUrl = new URL(brandAsset(image ?? "/brand-card.png"), Astro.site).hre
 // What the site's own card says, for a reader who cannot see it.
 const imageText = image ? imageAlt : `${SITE.name} ${SITE.tagline}. ${CARD_NOTICE}.`;
 // One topic is linked by name. With several, the item leads to the list of them all.
-// A build that reads a bundle (openspec pairs-site) links the pairs' topics.
-const topics = pairBundleFolder() ? topicsIndex() : listedTopics;
+const topics = topicsIndex();
 const topicLink =
   topics.length === 1
     ? { href: `/topic/${topics[0].slug}`, label: topics[0].title, here: "page" as const }
@@ -113,12 +112,6 @@ const topicLink =
       title={`${SITE.name} Status changes`}
       href="/changes.xml"
     />
-    <link
-      rel="alternate"
-      type="application/atom+xml"
-      title={`${SITE.name} Anniversaries`}
-      href="/anniversaries.xml"
-    />
     {
       oembed && (
         <link
@@ -145,7 +138,6 @@ const topicLink =
     {imageText && <meta property="og:image:alt" content={imageText} />}
     <meta name="twitter:card" content="summary_large_image" />
     {imageText && <meta name="twitter:image:alt" content={imageText} />}
-    {data.preview && <meta name="robots" content="noindex" />}
     {/* The name's animation plays on the first page of a visit only. */}
     <script is:inline>
       // Folded sections are folded by the stylesheet from the first paint, and only
@@ -194,11 +186,6 @@ const topicLink =
                 </li>
               )
             }
-            <li>
-              <a href="/it-happened" aria-current={current === "approved" ? "page" : undefined}>
-                It happened
-              </a>
-            </li>
           </ul>
         </nav>
         {/* Drawn only where a script can change it; the label is set by the script. The
@@ -215,14 +202,6 @@ const topicLink =
         <p class="theme-status visually-hidden" role="status"></p>
       </div>
     </header>
-
-    {
-      data.preview && (
-        <div class="preview-note" role="note">
-          <div class="wrap">{PREVIEW_NOTE}</div>
-        </div>
-      )
-    }
 
     <main id="content">
       {/* A page's opening band runs the full width, straight under the masthead. */}
@@ -242,7 +221,6 @@ const topicLink =
           <a href="/guide">Guide</a>
           {EXTENSION_OFFERED && <a href="/extension">Extension</a>}
           <a href="/about">About</a>
-          <a href="/anniversaries">Anniversaries</a>
           <a href="/data">Data</a>
           <a href="/privacy">Privacy</a>
         </nav>
@@ -262,7 +240,7 @@ const topicLink =
           <p>
             Data sources:{" "}
             {
-              data.sources.map((source, index) => (
+              PAIR_SOURCES.map((source, index) => (
                 <>
                   {index > 0 && ", "}
                   <a href={source.url}>{source.name}</a>
@@ -270,13 +248,9 @@ const topicLink =
               ))
             }. Records are shown as the registries gave them; summaries are ours.
           </p>
-          <p>
-            {
-              data.last_checked_at
-                ? `Registries last checked ${formatDate(data.last_checked_at)}.`
-                : "Registries not yet checked."
-            }
-            {` Pages built ${formatDate(data.generated_at)}. We will check again.`}
+          {/* Marked, so a page made on request is not told it changed when only this date did (worker/pairs.mjs, contentTag). */}
+          <p data-records-gathered>
+            {`Records gathered ${formatDate(bundleMadeAt())}. We will check again.`}
           </p>
         </div>
       </div>

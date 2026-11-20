@@ -37,28 +37,73 @@ export function pullRequestWorker(number) {
 }
 
 /**
- * Why this export must not be deployed to this address: one sentence each, all at once.
+ * The site's _headers with every file marked noindex: the line goes into the existing rule for
+ * "/*", because Cloudflare keys rules by their path and a second "/*" rule replaces the first,
+ * which would drop the security headers it sets. A file with no "/*" rule gets one.
+ * @param {string} text
+ */
+export function withNoindex(text) {
+  const lines = text.split("\n");
+  const at = lines.findIndex((line) => line.trim() === "/*");
+  if (at === -1) return `${text.replace(/\n*$/, "\n")}\n/*\n  X-Robots-Tag: noindex\n`;
+  let end = at + 1;
+  while (end < lines.length && /^\s+\S/.test(lines[end])) end += 1;
+  if (lines.slice(at + 1, end).some((line) => /^\s*X-Robots-Tag:/i.test(line))) return text;
+  lines.splice(end, 0, "  X-Robots-Tag: noindex");
+  return lines.join("\n");
+}
+
+/** Production's address and staging's Worker (docs/deploy.md, "Staging"). */
+export const PRODUCTION_URL = "https://whatcameofit.com";
+export const STAGING_WORKER = "thenwhat-staging";
+
+/**
+ * Why a staging deployment must not go ahead: one sentence each, all at once. Staging reads a
+ * preview database only, is never the cutover, and never answers at production's address.
+ */
+export function stagingProblems({ siteUrl, database, cutover }) {
+  const problems = [];
+  if (cutover) problems.push("--staging never takes --cutover: staging is not production.");
+  if (!database) problems.push("Staging is built from a database: set PAIRS_DATABASE to one whose name ends in -preview.");
+  else if (!database.endsWith("-preview")) problems.push(`Staging reads only a database whose name ends in -preview, not ${database}.`);
+  try {
+    if (siteUrl && new URL(siteUrl).hostname === new URL(PRODUCTION_URL).hostname) {
+      problems.push(`SITE_URL is production's address (${siteUrl}). Staging answers at its own, such as https://staging.whatcameofit.com.`);
+    }
+  } catch {
+    // addressProblem names an address that does not parse.
+  }
+  return problems;
+}
+
+/**
+ * Why the site must not be deployed to this address: one sentence each, all at once.
  * An empty list means the deployment may go ahead.
  */
-export function deployProblems({ data, siteUrl }) {
-  const problems = [];
-
+export function deployProblems({ siteUrl }) {
   const address = addressProblem(siteUrl);
-  if (address) problems.push(address);
+  return address ? [address] : [];
+}
 
-  if (data.preview) {
-    problems.push(
-      "The export is a preview. A preview is never deployed. Write a normal export first (make public-export).",
-    );
-  }
+const NOT_YET_REGISTERED = /\[code: 10007\]/;
+const HALF_REGISTERED = /Cannot read properties of null \(reading 'tag'\)/;
 
-  const claims = data.claims ?? [];
-  if (claims.length === 0) {
-    problems.push("The export holds no claims. There is nothing to publish.");
-  }
-
-  // A claim no person checked is published: openspec auto-publish, decided 2026-11-13.
-  // The export says which claims a person checked.
-
-  return problems;
+/**
+ * Whether a failed preview publish is sent again, from what Wrangler printed, and whether this
+ * publish has now seen Cloudflare not yet know the new Worker.
+ *
+ * A pull request's first publish creates its Worker, and Cloudflare can answer "This Worker
+ * does not exist on your account. [code: 10007]" before it has registered it (pull requests
+ * 368 and 369). The next send can then find it half registered: Wrangler reads
+ * `default_environment.script.tag` from /workers/services/{name} with no null check and stops
+ * with "Cannot read properties of null (reading 'tag')" (pull request 383, run 44738112545).
+ * Wrangler 4.165 reads the field the same way, so an upgrade does not help. That second answer
+ * is sent again only after a 10007 in the same publish; from any other cause it stops at once.
+ * @param {string} said Wrangler's output of one send
+ * @param {boolean} unregistered whether an earlier send of this publish got a 10007
+ */
+export function publishAgain(said, unregistered) {
+  const missing = NOT_YET_REGISTERED.test(said);
+  const seen = unregistered || missing;
+  return { again: missing || (seen && HALF_REGISTERED.test(said)), unregistered: seen };
 }

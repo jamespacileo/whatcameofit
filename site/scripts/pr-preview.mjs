@@ -10,8 +10,9 @@
 // /build-key.txt. --state reads it back, so a push that changes nothing the site is
 // made from publishes nothing. It needs no installed dependencies.
 //
-// The copy is built from the same reviewed export as production and for the same
-// address, so its canonical links point at the real site. Every file is sent with
+// The copy is built from a bundle of pairs (tests/bundle unless PREVIEW_PAIRS_BUNDLE names
+// another folder) and for production's address, so its canonical links point at the real
+// site. Every file is sent with
 // "noindex", and the registry search is left out: a copy holds no model key.
 // Behaviour: openspec deployment.
 import { spawnSync } from "node:child_process";
@@ -20,8 +21,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { buildKey } from "./build-key.mjs";
-import { deployProblems, pullRequestWorker } from "./deploy-checks.mjs";
-import { prepareSiteRelease, releaseSettings } from "./site-release-deploy.mjs";
+import { deployProblems, publishAgain, pullRequestWorker, withNoindex } from "./deploy-checks.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
 const dryRun = process.argv.includes("--dry-run");
@@ -80,29 +80,24 @@ function stop(lines) {
 
 const worker = pullRequestWorker(process.env.PR_NUMBER);
 if (!worker) stop(["PR_NUMBER is not set to a pull request's number, for example PR_NUMBER=12."]);
-const siteRelease = releaseSettings(true);
-
-const exportFile = path.resolve(SITE_DIR, process.env.EXPORT_FILE ?? "data/published-export.json");
-if (!fs.existsSync(exportFile)) stop([`No export at ${exportFile}.`]);
-const data = JSON.parse(fs.readFileSync(exportFile, "utf8"));
 const siteUrl = process.env.SITE_URL;
-// The listing beside the export is held to what staging holds it to: its schema, its
-// size, and naming only claims this export publishes.
 // --state runs before dependencies are installed, and the listing's schema check needs
-// one, so the listing is checked only where the copy is about to be built.
-const { besideProblems } = stateOnly ? { besideProblems: () => [] } : await import("./listing-checks.mjs");
-const problems = [...deployProblems({ data, siteUrl }), ...besideProblems(exportFile, data)];
+// one, so a listing is checked only where the copy is about to be built.
+const { listingFileProblems } = stateOnly ? { listingFileProblems: () => [] } : await import("./listing-checks.mjs");
+const problems = [...deployProblems({ siteUrl }), ...listingFileProblems()];
 if (problems.length > 0) stop(problems);
+
+// The bundle is a folder of the site unless another is named, so the key below covers it.
+const bundle = path.resolve(process.env.PREVIEW_PAIRS_BUNDLE ?? path.join(SITE_DIR, "tests/bundle"));
 
 // The settings the copy is built with, which are also what its key is made from.
 const settings = {
   ...process.env,
   PUBLIC_BUILD: "1",
   SITE_URL: siteUrl,
-  EXPORT_FILE: exportFile,
+  PAIRS_BUNDLE: bundle,
   ASTRO_TELEMETRY_DISABLED: "1",
   LOOKUP_URL: "",
-  SITE_RELEASE_BUILD: siteRelease ? "1" : "",
 };
 delete settings.CLOUDFLARE_API_TOKEN;
 const key = buildKey(SITE_DIR, settings);
@@ -111,7 +106,7 @@ if (stateOnly) {
   const host = key && (await workersHost());
   const address = host ? `https://${worker}.${host}` : null;
   const same = Boolean(address) && (await publishedKey(address)) === key;
-  // A copy built from a bundle of pair pages says how many it holds, for the comment.
+  // A copy says how many pairs it holds, for the comment.
   const pairsCount = same ? await publishedPairs(address) : null;
   output({ key: key ?? "", published: same, ...(same ? { url: address, worker } : {}), ...(pairsCount === null ? {} : { pairs_count: pairsCount }) });
   console.log(
@@ -126,22 +121,20 @@ if (stateOnly) {
 const seconds = (since) => ((Date.now() - since) / 1000).toFixed(1);
 let started = Date.now();
 
-// Pair pages (openspec pairs-site, task 4.5): the bundle is loaded into the preview account's
-// pairs database and the copy is built from it, so the pages not built ahead are made by its
-// Worker. Without access to that database the copy is the claims site, and the log says why.
-// The copy's key is the same either way: the bundle is a folder of the site, in the key already.
-const { PREVIEW_PAIRS_BUNDLE, findPairsDatabase, loadPairsBundle, pairsConfig } = await import("./pairs-preview.mjs");
+// The pages not built ahead (openspec pairs-site, task 4.5): the bundle is loaded into the
+// preview account's pairs database, so the copy's Worker makes them on request. Without
+// access to that database the copy holds only the pages built ahead, and the log says why.
+const { findPairsDatabase, limitProblems, loadPairsBundle, pairsConfig } = await import("./pairs-preview.mjs");
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-preview-"));
 process.once("exit", () => fs.rmSync(scratch, { force: true, recursive: true }));
 const pairsDatabase = findPairsDatabase();
 let pairs = null;
 if (pairsDatabase.skip) {
-  console.log(`Pair pages left out of this copy: ${pairsDatabase.skip}.`);
-  output({ pairs: "left out" });
+  console.log(`Pages made on request left out of this copy: ${pairsDatabase.skip}.`);
+  output({ pairs_count: fs.readdirSync(path.join(bundle, "p12_pair_page")).filter((name) => name.endsWith(".json")).length });
 } else {
-  const bundle = path.resolve(process.env.PREVIEW_PAIRS_BUNDLE ?? PREVIEW_PAIRS_BUNDLE);
   if (dryRun) {
-    console.log(`Pair pages: bundle ${bundle} would be loaded into ${pairsDatabase.name}. Nothing is written in a dry run.`);
+    console.log(`Bundle ${bundle} would be loaded into ${pairsDatabase.name}. Nothing is written in a dry run.`);
   } else {
     try {
       const load = loadPairsBundle({
@@ -149,17 +142,16 @@ if (pairsDatabase.skip) {
         database: pairsDatabase,
         bundle,
       });
-      console.log(`Pair pages: bundle ${load.version} ${load.loaded ? "loaded into" : "already current in"} ${pairsDatabase.name}, in ${seconds(started)} s.`);
+      console.log(`Bundle ${load.version} ${load.loaded ? "loaded into" : "already current in"} ${pairsDatabase.name}, in ${seconds(started)} s.`);
       output({ pairs: load.version, pairs_count: fs.readdirSync(path.join(bundle, "p12_pair_page")).filter((name) => name.endsWith(".json")).length });
     } catch (error) {
       stop([`Pair pages: ${error.message}`]);
     }
   }
-  pairs = { database: pairsDatabase, bundle };
-  settings.PAIRS_BUNDLE = bundle;
+  pairs = { database: pairsDatabase };
   started = Date.now();
 }
-console.log(`Building ${data.claims.length} claims for ${worker}.`);
+console.log(`Building ${worker} from ${bundle}.`);
 const build = spawnSync("pnpm", ["run", "build"], {
   cwd: SITE_DIR,
   stdio: "inherit",
@@ -168,23 +160,19 @@ const build = spawnSync("pnpm", ["run", "build"], {
 if (build.status !== 0) stop(["The site did not build."]);
 console.log(`Built in ${seconds(started)} s.`);
 
-const built = JSON.parse(fs.readFileSync(path.join(SITE_DIR, "dist/lookup.json"), "utf8"));
-if (built.preview) stop(["The built site is a preview build."]);
-
 // A copy is for the people reviewing the change, never for a search engine.
-fs.appendFileSync(path.join(SITE_DIR, "dist/_headers"), "\n/*\n  X-Robots-Tag: noindex\n");
+// Into the existing "/*" rule: a second one would replace it and drop the security headers.
+fs.writeFileSync(path.join(SITE_DIR, "dist/_headers"), withNoindex(fs.readFileSync(path.join(SITE_DIR, "dist/_headers"), "utf8")));
 // What this copy was made from, so the next push can tell whether it is still current.
 if (key) fs.writeFileSync(path.join(SITE_DIR, "dist", KEY_FILE), `${key}\n`);
 
-const config = siteRelease ? prepareSiteRelease({
-  settings: siteRelease, siteDir: SITE_DIR, dist: path.join(SITE_DIR, "dist"), noindex: true, dryRun,
-  run(command, args) {
-    const result = spawnSync(command, args, { cwd: SITE_DIR, stdio: "inherit" });
-    if (result.status !== 0) stop([`${command} failed while staging the site files.`]);
-  },
-}) : "wrangler.preview.jsonc";
-// With pair pages, the copy's Worker is the one with pairs, given the pairs database.
-const deployConfig = pairs ? pairsConfig({ base: config, database: pairs.database, scratch }) : config;
+// With the pairs database, the copy's Worker is the one that makes pages on request.
+const deployConfig = pairs ? pairsConfig({ base: "wrangler.preview.jsonc", database: pairs.database, scratch }) : "wrangler.preview.jsonc";
+// A configuration with pairs carries the rate limit on pages made on request, or is not published.
+if (pairs) {
+  const unlimited = limitProblems(deployConfig);
+  if (unlimited.length > 0) stop(unlimited);
+}
 const args = ["deploy", "--config", deployConfig, "--name", worker];
 // The contact address is how the trial reader presents itself to the registry.
 if (process.env.CONTACT_EMAIL) args.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
@@ -192,13 +180,14 @@ if (dryRun) args.push("--dry-run");
 started = Date.now();
 // A pull request's first publish creates its Worker. Cloudflare can answer a call Wrangler
 // makes right after the upload with "This Worker does not exist on your account. [code:
-// 10007]" before it has registered the new Worker (seen on pull requests 368 and 369). Only
-// that answer is sent again, after a wait; the upload is idempotent, so a second send uploads
-// nothing already there. Any other failure stops at once.
-const NOT_YET_REGISTERED = /\[code: 10007\]/;
-const ATTEMPTS = 3;
+// 10007]" before it has registered the new Worker. That answer, and the half-registered one
+// that can follow it, are sent again after a wait (`publishAgain` in deploy-checks.mjs says
+// which and why); the upload is idempotent, so a second send uploads nothing already there.
+// Any other failure stops at once.
+const ATTEMPTS = 4;
 const WAIT_MS = 5_000;
 let sent;
+let unregistered = false;
 for (let attempt = 1; ; attempt += 1) {
   sent = spawnSync(process.execPath, [path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js"), ...args], {
     cwd: SITE_DIR,
@@ -207,8 +196,10 @@ for (let attempt = 1; ; attempt += 1) {
   });
   process.stdout.write(sent.stdout ?? "");
   process.stderr.write(sent.stderr ?? "");
-  if (sent.status === 0 || attempt === ATTEMPTS || !NOT_YET_REGISTERED.test(`${sent.stdout}${sent.stderr}`)) break;
-  console.log(`Cloudflare had not yet registered ${worker} (code 10007). Sending again in ${(WAIT_MS * attempt) / 1000} s, attempt ${attempt + 1} of ${ATTEMPTS}.`);
+  const answer = publishAgain(`${sent.stdout}${sent.stderr}`, unregistered);
+  unregistered = answer.unregistered;
+  if (sent.status === 0 || attempt === ATTEMPTS || !answer.again) break;
+  console.log(`Cloudflare had not yet registered ${worker}. Sending again in ${(WAIT_MS * attempt) / 1000} s, attempt ${attempt + 1} of ${ATTEMPTS}.`);
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, WAIT_MS * attempt);
 }
 if (sent.status !== 0) stop([`Wrangler failed. ${worker} was not updated by this step.`]);
