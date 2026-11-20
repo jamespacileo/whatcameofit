@@ -15,6 +15,8 @@ import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { UNCHECKED_BYLINE } from "../src/lib/notices.ts";
 import { narrowerPairs, pairView } from "../src/lib/pair-view.ts";
 import { renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
+import { categoryListing, interventionListing } from "../src/lib/listing-view.ts";
+import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { embedTitle, renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
@@ -510,6 +512,39 @@ test("no page built from the bundle shows one of its codes where its words belon
     const text = document.body.textContent;
     for (const code of codes) assert.ok(!text.includes(code), `${file} shows the code ${code}`);
   }
+});
+
+// Pages show names, never codes (design "Browsing by hierarchy, picking several, and knowledge
+// cards", 2026-11-20): a MeSH descriptor's id and its tree numbers stay in addresses. Each
+// condition's and category's card names its places in MeSH from the descriptors the bundle holds.
+test("a condition's, a category's and a treatment's knowledge card names where it sits, and no page shows a MeSH id or tree number", () => {
+  const bundle = readBundle("tests/bundle");
+  const published = new Set(Object.keys(pages));
+  const categories = new Set(Object.keys(bundle.pages.PairClinicalCategoryPage));
+  const descriptors = [...Object.values(pages).map((file) => file.row.descriptor), ...Object.values(bundle.pages.PairClinicalCategoryPage).flatMap((file) => [file.descriptor, ...file.broader, ...file.narrower])];
+  const codes = new Set(descriptors.flatMap((one) => [one.descriptor_id, ...one.tree_numbers]));
+  const listingDocument = (view) => parseHTML(`<!doctype html><html><body>${renderListingBand(view)}${renderListingSheet(view, "MeSH 2026")}</body></html>`).document;
+  const documents = [
+    ...Object.values(pages).map((file) => [`condition/${file.row.condition.slug}`, page(withBundle, `condition/${file.row.condition.slug}`)]),
+    ...Object.values(bundle.pages.PairClinicalCategoryPage).map((file) => [`clinical/${file.descriptor.descriptor_id}`, listingDocument(categoryListing(file, published, categories))]),
+    ...Object.values(bundle.pages.PairInterventionPage).map((file) => [`intervention/${file.intervention.slug}`, listingDocument(interventionListing(file, published))]),
+  ];
+  for (const [address, document] of documents) {
+    for (const element of document.querySelectorAll("script, style, template")) element.remove();
+    const text = document.body.textContent;
+    for (const code of codes) assert.ok(!new RegExp(`(^|[^\\w.])${code.replace(/\./g, "\\.")}($|[^\\w.])`).test(text), `${address} shows the code ${code}`);
+  }
+
+  // Muscular atrophy sits in two branches of MeSH; its card names both from the top.
+  const atrophy = page(withBundle, "condition/muscular-atrophy").querySelector('.knowledge-card[data-card="condition"]');
+  const paths = [...atrophy.querySelectorAll('[data-tree="Body system"] nav')].map((nav) => nav.textContent);
+  assert.ok(paths.includes("Nervous System Diseases › Neuromuscular Manifestations › Muscular Atrophy"), paths.join(" | "));
+  assert.ok(atrophy.querySelector('a[href="/clinical/D020879"]'), "a step with a page links it");
+
+  // A treatment's kind is a place in the "Kind of treatment" tree; one the rule gave no kind has none.
+  const card = (slug) => listingDocument(interventionListing(bundle.pages.PairInterventionPage[slug], published)).querySelector(".knowledge-card");
+  assert.equal(card("acoziborole").querySelector('[data-tree="Kind of treatment"] dd').textContent, "Drug");
+  assert.equal(card("apitegromab"), null);
 });
 
 test("a bundle carrying a code with no words stops the build, naming the code", () => {

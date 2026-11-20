@@ -3,6 +3,7 @@
 // from a page file goes through `escape`. It fills the same frame as a pair page (/pair-shell).
 import type { ListingView } from "./listing-view.ts";
 import { escape } from "./pair-render.ts";
+import { renderCard } from "./card-render.ts";
 import { breadcrumbData } from "./structured.ts";
 import { UNCHECKED_BYLINE } from "./notices.ts";
 import { formatDate } from "./timetable.ts";
@@ -36,6 +37,7 @@ export function renderListingBand(view: ListingView): string {
       : "",
     `<h1 class="title" data-listing="${escape(view.kind)}">${escape(view.title)}</h1>`,
     `<p class="lede" data-pagefind-ignore>${escape(count(view.rows.length))} followed through the public trial records. Not medical advice. <a href="/how-it-works">How a status is set</a></p>`,
+    view.card ? renderCard(view.card) : "",
     `</div></div></section>`,
   ].join("");
 }

@@ -5979,3 +5979,44 @@ body:has(.band.home) .bar {
   }
 }
 
+
+/* A knowledge card (lib/card-render.ts): what a treatment or condition is, and where it sits
+   in each tree that classifies it, as a short list of named facts. */
+.knowledge-card {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  margin: 0.9rem 0 0;
+  max-width: var(--measure);
+  padding: 0.7rem 0.9rem;
+}
+.knowledge-card .card-type {
+  color: var(--muted);
+  font-size: var(--text-s);
+  margin: 0 0 0.35rem;
+}
+.knowledge-card dl {
+  display: grid;
+  gap: 0.3rem 1rem;
+  grid-template-columns: minmax(7rem, max-content) 1fr;
+  margin: 0;
+}
+.knowledge-card .card-fact {
+  display: contents;
+}
+.knowledge-card dt {
+  color: var(--muted);
+  font-size: var(--text-s);
+}
+.knowledge-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 30rem) {
+  .knowledge-card dl {
+    grid-template-columns: 1fr;
+  }
+  .knowledge-card dd {
+    margin-bottom: 0.3rem;
+  }
+}

@@ -71,6 +71,15 @@ export const PAIR_APPROACH_LABELS: Record<string, string> = {
   diet_or_lifestyle: "Diet or lifestyle",
 };
 
+/** The name of each tree a treatment or condition can be browsed by (design "Browsing by
+ * hierarchy, picking several, and knowledge cards", https://claude.ai/artifact/7Ge7Qvqct18XkwheBMKWTN).
+ * MeSH names no levels of its own, so the condition tree is named for what its top level sorts
+ * by. */
+export const TREE_LABELS = {
+  mesh: "Body system",
+  approach: "Kind of treatment",
+} as const;
+
 /** A registry a pair's search read (`RegistryCheck.registry`), by the source name the
  * pipeline gives ClinicalTrials.gov (`SOURCE_NAMES` in `status.ts`). The schema types the
  * field as free text, so any other registry stops the build, named, until it is worded here. */
@@ -101,6 +110,7 @@ export const PAIR_WORDING: Record<string, Record<string, string>> = {
   approach: PAIR_APPROACH_LABELS,
   registry: PAIR_REGISTRY_NAMES,
   "outcome kind": PAIR_OUTCOME_KIND_WORDS,
+  tree: TREE_LABELS,
 };
 
 /** Throws, naming the words, when any table holds verdict wording ("dead", "abandoned", ...). */
