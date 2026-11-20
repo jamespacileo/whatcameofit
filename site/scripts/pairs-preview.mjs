@@ -119,6 +119,37 @@ export const WORKER_FIRST = [
   "/api/*", "/trials/*",
 ];
 
+/**
+ * The rate limit on addresses made on request (worker/with-pairs.mjs, ON_REQUEST_LIMIT), by
+ * Worker: each its own namespace, so staging never uses up production's counts. 600 a minute
+ * from one address in one location, ten a second: a search engine's crawler asks far fewer of one
+ * location from one address.
+ */
+export const ON_REQUEST_LIMITS = { thenwhat: "4131", "thenwhat-staging": "4132", "thenwhat-pr": "4133" };
+export const ON_REQUEST_LIMIT = { limit: 600, period: 60 };
+
+/**
+ * Why a deployment's configuration may not be published: one that binds the pairs database must
+ * also bind ON_REQUEST_LIMIT, in its own Worker's namespace, at the site's limit. The Worker
+ * answers without a limit when the binding is missing, so that a limiter fault never takes pages
+ * down; this check is what keeps a deployment from going out without it.
+ * @param {string} file a Wrangler configuration, as pairsConfig writes it
+ * @returns {string[]} what is wrong, or nothing
+ */
+export function limitProblems(file) {
+  const config = readConfig(file);
+  if (!(config.d1_databases ?? []).some((binding) => binding.binding === "PAIRS")) return [];
+  const binding = (config.ratelimits ?? []).find((one) => one.name === "ON_REQUEST_LIMIT");
+  if (!binding) return [`${file} binds the pairs database but not ON_REQUEST_LIMIT, the rate limit on pages made on request.`];
+  const problems = [];
+  const namespace = ON_REQUEST_LIMITS[config.name];
+  if (binding.namespace_id !== namespace) problems.push(`${file} gives ON_REQUEST_LIMIT namespace ${binding.namespace_id}, not ${config.name}'s own (${namespace ?? "none"}).`);
+  if (binding.simple?.limit !== ON_REQUEST_LIMIT.limit || binding.simple?.period !== ON_REQUEST_LIMIT.period) {
+    problems.push(`${file} limits ON_REQUEST_LIMIT to ${binding.simple?.limit} a ${binding.simple?.period} s, not ${ON_REQUEST_LIMIT.limit} a ${ON_REQUEST_LIMIT.period} s.`);
+  }
+  return problems;
+}
+
 export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" }) {
   // A name alone is the site's own file, as Wrangler reads it from the site's folder.
   base = path.resolve(SITE_DIR, base);
@@ -135,6 +166,11 @@ export function pairsConfig({ base, database, scratch, worker = "thenwhat-pr" })
     not_found_handling: "none",
     run_worker_first: WORKER_FIRST,
   };
+  if (!ON_REQUEST_LIMITS[worker]) throw new Error(`no rate limit namespace for the ${worker} Worker`);
+  config.ratelimits = [
+    ...(config.ratelimits ?? []).filter((binding) => binding.name !== "ON_REQUEST_LIMIT"),
+    { name: "ON_REQUEST_LIMIT", namespace_id: ON_REQUEST_LIMITS[worker], simple: ON_REQUEST_LIMIT },
+  ];
   config.d1_databases = [
     ...(config.d1_databases ?? []).filter((binding) => binding.binding !== "PAIRS"),
     { binding: "PAIRS", database_name: database.name, database_id: database.id, migrations_dir: MIGRATIONS },

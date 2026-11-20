@@ -199,6 +199,28 @@ Production is published from a tag only. `.github/workflows/release.yml` runs on
 
 To release: `git tag v2026.11.20 <commit of main> && git push origin v2026.11.20`, then approve the run in Actions. `PRODUCTION_PUBLISHING` stays unset until the operator says the cutover can go ahead.
 
+## Rate limits on pages made on request
+
+Two limits stand between a flood of requests and the pages the Worker makes from D1 (openspec pairs-site task 4.6g). Both answer **429 Too Many Requests**, never 403 or 404: Google's crawlers read 429 as the server asking them to slow down, and recover when it stops, while a 403 or 404 would remove the page from Google's index ([reduce crawl rate](https://developers.google.com/crawling/docs/crawlers-fetchers/reduce-crawl-rate)).
+
+**In the Worker** (done in code): the `ON_REQUEST_LIMIT` rate limiting binding, which `pairsConfig` gives every deployment with pairs, each Worker its own namespace (production 4131, staging 4132, previews 4133). 600 requests a minute from one address, per Cloudflare location, on the addresses the Worker makes (a pair's page, record, embed, oEmbed and card addresses, and the listings); past it, 429 with `Retry-After: 60`. Files of the site are never counted. The binding's counts are approximate and per location ([rate limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)).
+
+A fault of the limiter never takes pages down: with the binding missing, or a `limit()` call that throws, the Worker answers the request and logs one line (`ON_REQUEST_LIMIT is not bound` or `ON_REQUEST_LIMIT failed`). The guard is at deploy time instead: `deploy.mjs` (staging and the cutover) and `pr-preview.mjs` refuse a configuration that binds the pairs database without `ON_REQUEST_LIMIT` in its own Worker's namespace at the site's limit (`limitProblems` in `scripts/pairs-preview.mjs`), and nothing is published.
+
+**At the zone** (the operator's, in the dashboard; nothing in this repository changes it): one rate limiting rule, as the Free plan allows: one rule, counted by IP, a 10-second period and a 10-second mitigation timeout, with Path and Verified Bot as the fields an expression may use ([rate limiting rules](https://developers.cloudflare.com/waf/rate-limiting-rules/)). Security › WAF › Rate limiting rules › Create rule:
+
+- **Rule name:** `Pages made on request`
+- **If incoming requests match** (Edit expression):
+
+  ```text
+  (http.request.uri.path contains "--" or http.request.uri.path contains "/intervention/" or http.request.uri.path contains "/topic/" or http.request.uri.path contains "/clinical/D") and not cf.bot_management.verified_bot
+  ```
+
+  Only the shapes the Worker makes from D1: every pair's page, record, embed, oEmbed and card address holds `--` (`/<treatment>--<condition>`), and the listings are `/intervention/<slug>`, `/topic/<slug>` and `/clinical/D<code>`. The built `/clinical/` index and the retired claim embeds (`/embed/<claim>`, answered without D1) are not counted; no file of the build has `--` in its path. Verified bots (Googlebot, Bingbot and the like) are never counted: `cf.bot_management.verified_bot` needs Bot Management elsewhere, "except in rate limiting rules, where this field is available on all plans" ([the field](https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.bot_management.verified_bot/)).
+- **With the same characteristics:** IP.
+- **When rate exceeds:** 100 requests per 10 seconds (ten a second from one address). The threshold is ours: a person's page load asks for a few of these addresses at most (its scripts, styles and images are files at other paths), so a person browsing stays far below it. 10 seconds is the only period, and the only mitigation timeout, the Free plan offers ([availability](https://developers.cloudflare.com/waf/rate-limiting-rules/)).
+- **Then take action:** Block, for 10 seconds. Block's response code defaults to 429 ([parameters](https://developers.cloudflare.com/waf/rate-limiting-rules/parameters/)); if the builder offers a response status, keep 429.
+
 ## GitHub configuration
 
 The GitHub `production` environment releases its secret to tags matching `v*` only (a deployment tag rule, no branch rule) and requires the operator's approval, with administrator bypass off ("Releases", above). `CLOUDFLARE_PRODUCTION_API_TOKEN` is its environment secret. The `staging` environment releases `CLOUDFLARE_STAGING_API_TOKEN` to `main` only ("Staging", above). Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.
