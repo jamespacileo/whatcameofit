@@ -65,6 +65,34 @@ pnpm --dir site exec wrangler delete --name thenwhat-pr-12 --config site/wrangle
 
 `pnpm --dir site exec wrangler deployments list --name thenwhat-pr-12` shows what a preview is serving. A Worker named `thenwhat-pr-*` whose pull request is closed is a leftover and can be deleted.
 
+### Pair pages in a preview
+
+Decided by the operator on 20 November 2026 (openspec `pairs-site`, task 4.5): a preview shows the pair pages, including those made on request, from a D1 database of the preview account's own. Previews run in a separate Cloudflare account, and a Worker cannot be given a database of another account, so the store's databases (`thenwhat-store-preview`, `thenwhat-store`) are never reached from a preview.
+
+| Resource | Account | Jurisdiction |
+| --- | --- | --- |
+| D1 database `thenwhat-pairs-pr-preview` | the preview account (`CLOUDFLARE_PREVIEW_ACCOUNT_ID`) | `eu`, set at creation |
+
+What a preview does (`site/scripts/pairs-preview.mjs`, called by `pr-preview.mjs`):
+
+1. Reads `thenwhat-pairs-pr-preview` with `wrangler d1 info`. When the token cannot read it, it does not exist, or its jurisdiction is not `eu`, the log says `Pair pages left out of this copy: <why>` and the copy is the claims site as before. Nothing else changes.
+2. Applies `store/ingest/migrations` to it and loads the bundle (`site/tests/bundle`, or the folder `PREVIEW_PAIRS_BUNDLE` names) with the store's own loader statements, unless that version is already current there. The log says `Pair pages: bundle <version> loaded into thenwhat-pairs-pr-preview` or `already current in`.
+3. Builds the copy with `PAIRS_BUNDLE` set to that bundle, and deploys it with `worker/with-pairs.mjs` and the database bound as `PAIRS`, in a configuration written for the run. `wrangler.preview.jsonc` itself holds no database id, and production's `wrangler.jsonc` is never read.
+
+The database keeps the current bundle and the one before. Previews built from more than two different bundles at once displace the oldest, whose pages made on request then answer not found until that preview is published again. Previews of the committed small bundle share one version.
+
+To turn it on, the operator, once:
+
+1. Create the database in the preview account, signed in to that account (`wrangler login` as a user of it), then read its jurisdiction back:
+   ```bash
+   cd store/ingest
+   CLOUDFLARE_ACCOUNT_ID=<the preview account's id> npx wrangler d1 create thenwhat-pairs-pr-preview --jurisdiction eu
+   CLOUDFLARE_ACCOUNT_ID=<the preview account's id> npx wrangler d1 info thenwhat-pairs-pr-preview --json   # jurisdiction must read eu
+   ```
+   The migrations and the small bundle are applied by the next preview; nothing else needs loading by hand.
+2. Give the preview token D1 access: in the preview account's dashboard, edit the API token stored as `CLOUDFLARE_PREVIEW_API_TOKEN` in the GitHub `preview` environment and add **Account, D1, Edit**, for the preview account only. No new secret or variable is needed: the database is found by its name.
+3. Run **Pull request preview** again on an open pull request and look for the `Pair pages:` line in its log.
+
 ## GitHub configuration
 
 Restrict the GitHub `production` environment to `main`. Store `CLOUDFLARE_PRODUCTION_API_TOKEN` as an environment secret there before merging the workflow. Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.

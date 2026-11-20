@@ -16,6 +16,7 @@
 // Behaviour: openspec deployment.
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 import { buildKey } from "./build-key.mjs";
@@ -110,6 +111,40 @@ if (stateOnly) {
 // How long each part took, in the log, where the timing report can read it.
 const seconds = (since) => ((Date.now() - since) / 1000).toFixed(1);
 let started = Date.now();
+
+// Pair pages (openspec pairs-site, task 4.5): the bundle is loaded into the preview account's
+// pairs database and the copy is built from it, so the pages not built ahead are made by its
+// Worker. Without access to that database the copy is the claims site, and the log says why.
+// The copy's key is the same either way: the bundle is a folder of the site, in the key already.
+const { PREVIEW_PAIRS_BUNDLE, findPairsDatabase, loadPairsBundle, pairsConfig } = await import("./pairs-preview.mjs");
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-preview-"));
+process.once("exit", () => fs.rmSync(scratch, { force: true, recursive: true }));
+const pairsDatabase = findPairsDatabase();
+let pairs = null;
+if (pairsDatabase.skip) {
+  console.log(`Pair pages left out of this copy: ${pairsDatabase.skip}.`);
+  output({ pairs: "left out" });
+} else {
+  const bundle = path.resolve(process.env.PREVIEW_PAIRS_BUNDLE ?? PREVIEW_PAIRS_BUNDLE);
+  if (dryRun) {
+    console.log(`Pair pages: bundle ${bundle} would be loaded into ${pairsDatabase.name}. Nothing is written in a dry run.`);
+  } else {
+    try {
+      const load = loadPairsBundle({
+        config: pairsConfig({ base: path.join(SITE_DIR, "wrangler.preview.jsonc"), database: pairsDatabase, scratch }),
+        database: pairsDatabase,
+        bundle,
+      });
+      console.log(`Pair pages: bundle ${load.version} ${load.loaded ? "loaded into" : "already current in"} ${pairsDatabase.name}, in ${seconds(started)} s.`);
+      output({ pairs: load.version });
+    } catch (error) {
+      stop([`Pair pages: ${error.message}`]);
+    }
+  }
+  pairs = { database: pairsDatabase, bundle };
+  settings.PAIRS_BUNDLE = bundle;
+  started = Date.now();
+}
 console.log(`Building ${data.claims.length} claims for ${worker}.`);
 const build = spawnSync("pnpm", ["run", "build"], {
   cwd: SITE_DIR,
@@ -134,7 +169,9 @@ const config = siteRelease ? prepareSiteRelease({
     if (result.status !== 0) stop([`${command} failed while staging the site files.`]);
   },
 }) : "wrangler.preview.jsonc";
-const args = ["deploy", "--config", config, "--name", worker];
+// With pair pages, the copy's Worker is the one with pairs, given the pairs database.
+const deployConfig = pairs ? pairsConfig({ base: config, database: pairs.database, scratch }) : config;
+const args = ["deploy", "--config", deployConfig, "--name", worker];
 // The contact address is how the trial reader presents itself to the registry.
 if (process.env.CONTACT_EMAIL) args.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
 if (dryRun) args.push("--dry-run");
