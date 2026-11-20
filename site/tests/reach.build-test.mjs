@@ -16,6 +16,7 @@ import { readBundle } from "../src/lib/bundle.ts";
 import { pairView } from "../src/lib/pair-view.ts";
 import { oembedOf } from "../src/lib/embed-render.ts";
 import { SITE } from "../site.config.mjs";
+import { sitemapAddresses } from "./sitemap-read.mjs";
 
 const BUNDLE = "tests/bundle";
 // A pair, and a topic whose file lists a pair with a page. Both pages are made on request by the
@@ -315,7 +316,7 @@ test("Scenario: A pair's address pasted into a site that reads oEmbed", () => {
 });
 
 test("the sitemap lists every public page and no embed", () => {
-  const listed = [...page("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+  const listed = sitemapAddresses(dist);
   for (const address of ["/", `/${PAIR}`, "/topics", `/topic/${TOPIC}`, "/data", "/about"]) {
     assert.ok(listed.includes(canonicalAddress(address)), `${address} is not listed`);
   }

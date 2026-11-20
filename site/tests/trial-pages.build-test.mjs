@@ -15,6 +15,7 @@ import {
   forbiddenWord, registryDate, resultsPhrase, searchListing, statePhrase,
 } from "../src/lib/trial-page.mjs";
 import { handleTrial } from "../worker/trials.mjs";
+import { sitemapText } from "./sitemap-read.mjs";
 
 const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-pages-"));
 const off = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-pages-off-"));
@@ -200,7 +201,7 @@ test("an uncited trial page is not to be indexed", async () => {
 });
 
 test("Scenario: The sitemap", () => {
-  const sitemap = fs.readFileSync(path.join(dist, "sitemap.xml"), "utf8");
+  const sitemap = sitemapText(dist);
   assert.ok(sitemap.includes(`/${HOLDER}`));
   assert.ok(!sitemap.includes("/trials/") && !sitemap.includes("NCT"), "a trial page is in the sitemap");
 });
