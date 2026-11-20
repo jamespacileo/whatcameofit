@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 STORE_TEST_CONCURRENCY ?= 1
@@ -12,7 +12,7 @@ check: check-fast check-slow
 check-fast: scripts-test site-test extension-test
 
 # The slow set, before a commit is pushed: a few minutes. Every test that builds the
-# site (the site's build tests and browser journeys), the store's ingest service, the
+# site (the site's build tests and browser journeys), the store's pair tables, the
 # site build, and the packaged extension tests.
 check-slow: store-test check-site-build extension-package-test
 
@@ -28,20 +28,14 @@ scripts-test:
 	sh -n scripts/worktree-setup.sh
 	node --test --test-reporter=dot scripts/tests/ci-timing.test.mjs
 
-# The store's ingest service (store/ingest), driven over HTTP on D1's local engine: no
-# Cloudflare account, no network, nothing deployed. The proof's scenarios, each token's
-# scope, checksums, a replayed batch and the limits. Where the local engine cannot start,
-# the tests are skipped and say why; in CI that is a failure, not a skip.
+# The store's pair tables (store/ingest) on D1's local engine: no Cloudflare account, no
+# network, nothing deployed. A bundle loaded and read back whole. Where the local engine
+# cannot start, the tests are skipped and say why; in CI that is a failure, not a skip.
 store/ingest/node_modules: store/ingest/pnpm-lock.yaml
 	sh scripts/worktree-setup.sh store/ingest
 
 store-test: store/ingest/node_modules
 	cd store/ingest && node --test --test-reporter=dot --test-concurrency="$(STORE_TEST_CONCURRENCY)" tests/*.test.mjs
-
-# The ingest service on this machine only: http://localhost:8787. Tokens come from
-# store/ingest/.dev.vars (see .dev.vars.example); the store is a file under .wrangler/.
-store-dev: store/ingest/node_modules
-	cd store/ingest && pnpm exec wrangler d1 migrations apply STORE --local && pnpm exec wrangler dev --local
 
 # Linked from pnpm's shared store: seconds in a new worktree. See scripts/worktree-setup.sh.
 site/node_modules: site/pnpm-lock.yaml
@@ -96,39 +90,6 @@ extension-safari: extension
 
 # Publishing. See docs/deploy.md. SITE_URL must be the public address:
 #   SITE_URL=https://example.org make deploy-check
-# The cut-over of the store, one command and one order (store/ingest/scripts/cutover.mjs,
-# docs/deploy.md): the build proved free of people, the jurisdiction read back, migrations,
-# the store found empty, the bookmark noted, the hot file dumped, replayed here, loaded
-# and held to its checks, the payload objects and the bulk file put in the bucket and the
-# manifest read back. It stops at the first stage that fails and names it; each stage is
-# timed; everything goes to a log in the build's folder.
-#   make store-rehearsal STORE_DIR=/path/build                 the same on this machine, nothing sent
-#   make store-cutover ENV=preview STORE_DIR=/path/build       ARGS="--dry-run" prints the plan
-#   make store-cutover ENV=production STORE_DIR=/path/build CONFIRM=thenwhat-store
-# ARGS: --replace (clear a preview store that is not empty), --skip-export (rehearsal only).
-.PHONY: store-rehearsal store-cutover
-store-rehearsal: store/ingest/node_modules
-	@test -n "$(STORE_DIR)" || { echo "Name the build's folder with STORE_DIR."; exit 1; }
-	node store/ingest/scripts/cutover.mjs --env local --store-dir $(STORE_DIR) $(ARGS)
-
-store-cutover: store/ingest/node_modules
-	@test -n "$(ENV)" -a -n "$(STORE_DIR)" || { echo "Name ENV (preview or production) and STORE_DIR."; exit 1; }
-	@test "$(ENV)" != "local" || { echo "For this machine use make store-rehearsal."; exit 1; }
-	node store/ingest/scripts/cutover.mjs --env $(ENV) --store-dir $(STORE_DIR) $(if $(CONFIRM),--confirm $(CONFIRM)) $(ARGS)
-
-# Deploys the ingest service, the only way it is deployed (store/ingest/scripts/deploy.mjs,
-# docs/deploy.md): writes the configuration for the environment, refuses unless the
-# jurisdiction reads eu and no migration is left to apply, deploys to a workers.dev
-# address, sets the secret INGEST_TOKENS from the file TOKENS names (checksums of tokens;
-# never printed), then asks the deployed service: 401 without a token on every route, 200
-# for the operator's token, read from STORE_TOKEN_OPERATOR.
-#   make store-deploy ENV=preview TOKENS=/path/ingest-tokens-preview.json     ARGS="--dry-run" prints the plan
-#   make store-deploy ENV=production CONFIRM=thenwhat-store-ingest TOKENS=/path/ingest-tokens.json
-.PHONY: store-deploy
-store-deploy: store/ingest/node_modules
-	@test -n "$(ENV)" || { echo "Name ENV: preview or production."; exit 1; }
-	node store/ingest/scripts/deploy.mjs --env $(ENV) $(if $(CONFIRM),--confirm $(CONFIRM)) $(if $(TOKENS),--tokens-file "$(TOKENS)") $(ARGS)
-
 # The site is built from one bundle of pairs (openspec pairs-site). A rehearsal of the
 # public build from the small bundle the tests use: needs no Cloudflare account and
 # publishes nothing. CI runs it.

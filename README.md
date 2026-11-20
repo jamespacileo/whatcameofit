@@ -42,9 +42,8 @@ The browser tests run against one built and indexed fixture. Run them on their o
 | Path | Contents |
 |---|---|
 | `site/` | Astro site and its Cloudflare Worker, built from a bundle of pairs |
-| `store/` | The D1 store and its ingest service |
+| `store/` | The D1 store's migrations and its bundle scripts |
 | `extension/` | Browser extension for Chrome and Safari |
-| `video/` | Remotion project for explainer videos |
 | `scripts/` | Setup and CI timing scripts |
 | `openspec/` | Specifications and the active changes |
 | `docs/` | Architecture decisions, deployment and data source notes |
