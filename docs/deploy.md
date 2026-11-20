@@ -158,11 +158,12 @@ Decided by the operator on 20 November 2026: main's work goes to https://staging
 2. It builds the site from that bundle, marks every file noindex in `_headers` and writes `/bundle-version.txt`.
 3. It publishes with `wrangler versions upload` then `wrangler versions deploy <id>@100%`. Neither changes a trigger, so the custom domain the operator attached, and workers.dev and preview URLs as the operator set them, stay as they are across every deploy. `wrangler deploy` is not used: it sets workers.dev on or off on every run.
 4. The Worker itself adds `X-Robots-Tag: noindex` to every response it gives when `ROBOTS_NOINDEX` is `1`, which only staging's configuration sets (`worker/with-pairs.mjs`, held by `site/tests/staging.build-test.mjs`, "the Worker marks every kind of answer noindex in staging's configuration, and adds none in production's"). The edge's response-header rule on the hostname adds the same; neither depends on the other.
-5. `scripts/staging-smoke.mjs` checks the hostname: `/bundle-version.txt` names the exported bundle, and `/`, a pair page and its data file made on request, an old claim address that leads to its pair (301), one with no pair (410) and `/no-such--pair` (404) each answer as expected with `X-Robots-Tag: noindex`. The addresses are read from the build. Any failure fails the job and names the address.
+5. `scripts/staging-smoke.mjs` checks the hostname: `/build-revision.txt` names the commit deployed and `/bundle-version.txt` the exported bundle (each asked again, up to six times ten seconds, while the new version spreads), and `/`, a pair page and its data file made on request, an old claim address that leads to its pair (301), one with no pair (410) and `/no-such--pair` (404) each answer as expected with `X-Robots-Tag: noindex`. The addresses are read from the build. Any failure fails the job and names the address.
 
 What the smoke step prints when everything passes:
 
 ```text
+OK /build-revision.txt names commit <the commit deployed>
 OK /bundle-version.txt names bundle 8d9a5628d5e3a2e5
 OK / 200, noindex
 OK /<a pair made on request> 200, noindex
@@ -170,7 +171,7 @@ OK /data/pairs/<that pair>.json 200, noindex
 OK /<an old claim address> 301, noindex
 OK /<an old claim address with no pair> 410, noindex
 OK /no-such--pair 404, noindex
-Staging passed all 7 checks at https://staging.whatcameofit.com.
+Staging passed all 8 checks at https://staging.whatcameofit.com.
 ```
 
 Before the domain is attached, or while its certificate is still being issued, it prints this and the job fails:
@@ -193,13 +194,13 @@ To rehearse on this machine, with D1's local engine and nothing sent: `PAIRS_LOC
 
 ## Releases
 
-Production is published from a tag only. `.github/workflows/release.yml` runs on a pushed tag matching `v*` (for example `v2026.11.20`), and publishes only while the repository variable `PRODUCTION_PUBLISHING` is `on`; otherwise its one job says publishing is paused. The publishing job asks for the `production` environment, which releases `CLOUDFLARE_PRODUCTION_API_TOKEN` to `v*` tags only and waits for the operator's approval. It checks that the tagged commit is on `main`, then runs `make deploy ARGS=--cutover` from `thenwhat-store` to https://whatcameofit.com.
+Production is published from a tag only. `.github/workflows/release.yml` runs on a pushed tag matching `v*` (for example `v2026.11.20`), and publishes only while the repository variable `PRODUCTION_PUBLISHING` is `on`; otherwise its one job says publishing is paused. The publishing job asks for the `production` environment, which releases `CLOUDFLARE_PRODUCTION_API_TOKEN` to `v*` tags only and waits for the operator's approval. It checks that the tagged commit is on `main` and that "CI and deploy" passed for it on a push to `main` (read with `actions: read`), runs `make deploy ARGS=--cutover` from `thenwhat-store` to https://whatcameofit.com, then checks the live site (`scripts/smoke-live.mjs`: the deployed commit, a stylesheet, the Worker and public pages).
 
 To release: `git tag v2026.11.20 <commit of main> && git push origin v2026.11.20`, then approve the run in Actions. `PRODUCTION_PUBLISHING` stays unset until the operator says the cutover can go ahead.
 
 ## GitHub configuration
 
-Restrict the GitHub `production` environment to `main`. Store `CLOUDFLARE_PRODUCTION_API_TOKEN` as an environment secret there before merging the workflow. Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.
+The GitHub `production` environment releases its secret to tags matching `v*` only (a deployment tag rule, no branch rule) and requires the operator's approval, with administrator bypass off ("Releases", above). `CLOUDFLARE_PRODUCTION_API_TOKEN` is its environment secret. The `staging` environment releases `CLOUDFLARE_STAGING_API_TOKEN` to `main` only ("Staging", above). Remove the old `CLOUDFLARE_API_TOKEN` repository secret during the cutover so branch workflows lose access to it. Main requires the `Tests and build` check and disallows force pushes and deletion. Repository administrators retain GitHub's standard bypass.
 
 Production deployments are serialized. A superseded revision is skipped when it reaches the queue. Actions are pinned to commit SHAs, and Wrangler is pinned in `site/package.json` and installed using `site/pnpm-lock.yaml`.
 

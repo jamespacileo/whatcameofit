@@ -225,7 +225,7 @@ STAGING_URL ?= https://staging.whatcameofit.com
 STAGING_DATABASE ?= thenwhat-store-preview
 deploy-staging: site/node_modules
 	PAIRS_BUNDLE= SITE_URL=$(STAGING_URL) PAIRS_DATABASE=$(STAGING_DATABASE) node site/scripts/deploy.mjs --staging $(ARGS)
-	$(if $(findstring --dry-run,$(ARGS)),,node site/scripts/staging-smoke.mjs $(STAGING_URL) site/dist)
+	$(if $(findstring --dry-run,$(ARGS)),,node site/scripts/staging-smoke.mjs $(STAGING_URL) site/dist $(BUILD_REVISION))
 
 # The site with its registry search, on this machine only: http://localhost:8787
 # Reads the model settings from .env and builds from PAIRS_BUNDLE (the tests' small bundle unless named).

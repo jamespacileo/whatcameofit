@@ -18,6 +18,8 @@ test("staging runs only after CI on main or by hand on main, never for a pull re
   assert.deepEqual(Object.keys(staging.on).sort(), ["workflow_dispatch", "workflow_run"]);
   assert.deepEqual(staging.on.workflow_run, { workflows: ["CI and deploy"], types: ["completed"], branches: ["main"] });
   assert.deepEqual(staging.permissions, { contents: "read" });
+  // Every waiting run is kept, so a late older run cannot push the tip's run out of the queue.
+  assert.deepEqual(staging.concurrency, { group: "staging", "cancel-in-progress": false, queue: "max" });
   const { publish, off } = staging.jobs;
   assert.equal(publish.environment, "staging");
   assert.match(publish.if, /vars\.STAGING_ENABLED == 'on'/);
@@ -42,13 +44,19 @@ test("staging runs only after CI on main or by hand on main, never for a pull re
 test("production is published from a v* tag only, while the operator has publishing on", () => {
   const release = workflow("release.yml");
   assert.deepEqual(release.on, { push: { tags: ["v*"] } });
-  assert.deepEqual(release.permissions, { contents: "read" });
+  assert.deepEqual(release.permissions, { contents: "read", actions: "read" });
   assert.equal(release.jobs.publish.environment, "production");
   assert.match(release.jobs.publish.if, /vars\.PRODUCTION_PUBLISHING == 'on'/);
   assert.match(release.jobs.paused.if, /vars\.PRODUCTION_PUBLISHING != 'on'/);
   const steps = release.jobs.publish.steps.map((step) => step.run ?? "").join("\n");
   assert.match(steps, /git merge-base --is-ancestor "\$GITHUB_SHA" origin\/main/);
   assert.match(steps, /make deploy ARGS=--cutover/);
+  // CI must have passed for the tagged commit before it is published, and the live site is
+  // checked after, in that order.
+  const order = ["git merge-base --is-ancestor", "actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push&branch=main&status=success", "make deploy ARGS=--cutover", "node site/scripts/smoke-live.mjs"];
+  const at = order.map((text) => steps.indexOf(text));
+  assert.ok(at.every((index) => index >= 0), JSON.stringify(at));
+  assert.deepEqual([...at].sort((a, b) => a - b), at);
   // CI on main publishes nothing.
   assert.doesNotMatch(fs.readFileSync(new URL("../../.github/workflows/ci.yml", import.meta.url), "utf8"), /--cutover|deploy-staging|CLOUDFLARE_STAGING/);
 });

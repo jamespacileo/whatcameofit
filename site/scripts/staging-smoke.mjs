@@ -1,12 +1,14 @@
 // The checks a staging deployment must pass before it counts (docs/deploy.md, "Staging"). Run by
 // the staging job after each deploy, against staging's own address, with the build's folder:
 //
-//   node scripts/staging-smoke.mjs https://staging.whatcameofit.com dist
+//   node scripts/staging-smoke.mjs https://staging.whatcameofit.com dist <commit>
 //
 // Each address must answer with its expected status and carry X-Robots-Tag: noindex: a built
 // page, a pair page and its data file made on request, an old claim address that leads to its
-// pair (301), one with no pair (410), and an address no pair has (404). /bundle-version.txt must
-// name the bundle the build was made from. The addresses are read from the build itself, so the
+// pair (301), one with no pair (410), and an address no pair has (404). First, /build-revision.txt
+// must name the commit deployed and /bundle-version.txt the bundle the build was made from: a
+// deployment of new code with the same bundle could otherwise be answered by the version before.
+// Both are asked again, a bounded number of times, while the new version spreads. The addresses are read from the build itself, so the
 // checks follow whatever bundle staging holds. An address that does not answer at all (no DNS
 // record yet, no certificate yet) fails, and says so: it never counts as a pass.
 import fs from "node:fs";
@@ -51,7 +53,8 @@ export function smokeAddresses(dist) {
  * Check a staging deployment. Returns the lines it printed; throws with every failure named.
  * @param {{ origin: string, dist: string, request?: typeof fetch, attempts?: number, waitMs?: number }} options
  */
-export async function checkStaging({ origin, dist, request = fetch, attempts = 6, waitMs = 10_000 }) {
+export async function checkStaging({ origin, dist, revision, request = fetch, attempts = 6, waitMs = 10_000 }) {
+  if (!/^[0-9a-f]{40}$/.test(revision ?? "")) throw new Error("The commit deployed is needed to check staging: a full SHA.");
   const { version, checks } = smokeAddresses(dist);
   const lines = [];
   const failures = [];
@@ -73,12 +76,21 @@ export async function checkStaging({ origin, dist, request = fetch, attempts = 6
     throw Object.assign(new Error(unanswered(last, origin)), { unanswered: true });
   }
 
-  // The version first: at the start of propagation the previous version can still answer.
+  // What was deployed first: at the start of propagation the version before can still answer.
+  // Asked again until it names what was deployed, or the attempts run out.
+  async function names(pathname, expected, what) {
+    let shown = "";
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      const response = await answer(`${pathname}?v=${expected}`);
+      shown = response.status === 200 ? (await response.text()).trim() : `nothing (${response.status})`;
+      if (shown === expected) return say(`OK ${pathname} names ${what} ${expected}`);
+      if (attempt < attempts) await wait(waitMs);
+    }
+    failures.push(`${pathname} names ${shown}, not ${what} ${expected}, after ${attempts} attempts`);
+  }
   try {
-    const response = await answer(`/bundle-version.txt?v=${version}`);
-    const shown = (await response.text()).trim();
-    if (response.status !== 200 || shown !== version) failures.push(`/bundle-version.txt names ${shown || "nothing"} (${response.status}), not bundle ${version}`);
-    else say(`OK /bundle-version.txt names bundle ${version}`);
+    await names("/build-revision.txt", revision, "commit");
+    await names("/bundle-version.txt", version, "bundle");
   } catch (error) {
     // Nothing answers: every other address would say the same.
     say(`FAIL ${error.message}`);
@@ -106,19 +118,19 @@ export async function checkStaging({ origin, dist, request = fetch, attempts = 6
     else say(`OK ${check.pathname} ${check.status}, noindex`);
   }
   for (const failure of failures) say(`FAIL ${failure}`);
-  if (failures.length) throw new Error(`Staging failed ${failures.length} of ${checks.length + 1} checks.`);
-  say(`Staging passed all ${checks.length + 1} checks at ${origin}.`);
+  if (failures.length) throw new Error(`Staging failed ${failures.length} of ${checks.length + 2} checks.`);
+  say(`Staging passed all ${checks.length + 2} checks at ${origin}.`);
   return lines;
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [origin, dist = "dist"] = process.argv.slice(2);
-  if (!origin) {
-    console.error("Usage: node scripts/staging-smoke.mjs STAGING_ORIGIN [DIST]");
+  const [origin, dist = "dist", revision] = process.argv.slice(2);
+  if (!origin || !revision) {
+    console.error("Usage: node scripts/staging-smoke.mjs STAGING_ORIGIN DIST COMMIT");
     process.exit(2);
   }
   try {
-    await checkStaging({ origin, dist });
+    await checkStaging({ origin, dist, revision });
   } catch (error) {
     console.error(error.message);
     process.exit(1);

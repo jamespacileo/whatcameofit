@@ -20,6 +20,7 @@ const BUNDLE = path.resolve("tests/bundle");
 const DATABASE = "thenwhat-store-preview";
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-staging-test-"));
 const ORIGIN = "https://staging.whatcameofit.com";
+const REVISION = "0123456789abcdef0123456789abcdef01234567";
 let run;
 let mf;
 
@@ -51,7 +52,7 @@ before(async () => {
       PAIRS_DATABASE: DATABASE,
       PAIRS_LOCAL_STATE: database.persistTo,
       PAIRS_BUNDLE: "",
-      BUILD_REVISION: "0123456789abcdef0123456789abcdef01234567",
+      BUILD_REVISION: REVISION,
       ASTRO_TELEMETRY_DISABLED: "1",
       CI: "1",
       WRANGLER_SEND_METRICS: "false",
@@ -107,11 +108,22 @@ test("the staging smoke checks pass against the build's Worker, every answer mar
   const lines = await checkStaging({
     origin: ORIGIN,
     dist: "dist",
+    revision: REVISION,
     request: (url) => mf.dispatchFetch(url, { redirect: "manual" }),
     attempts: 1,
   });
-  assert.match(lines.at(-1), /Staging passed all 7 checks at https:\/\/staging\.whatcameofit\.com\./);
+  assert.match(lines[0], new RegExp(`OK /build-revision.txt names commit ${REVISION}`));
+  assert.match(lines.at(-1), /Staging passed all 8 checks at https:\/\/staging\.whatcameofit\.com\./);
   for (const status of ["200", "301", "410", "404"]) assert.ok(lines.some((line) => line.includes(` ${status}, noindex`)), status);
+});
+
+test("staging answering for another commit fails the smoke checks, after its attempts", async () => {
+  // As the version before would answer while a deployment of new code with the same bundle spreads.
+  const other = "f".repeat(40);
+  await assert.rejects(
+    checkStaging({ origin: ORIGIN, dist: "dist", revision: other, request: (url) => mf.dispatchFetch(url, { redirect: "manual" }), attempts: 2, waitMs: 10 }),
+    /Staging failed 1 of 8 checks/,
+  );
 });
 
 /** One address of every kind of answer the Worker gives, from the build: a built page passed
@@ -161,7 +173,7 @@ test("the Worker marks every kind of answer noindex in staging's configuration, 
 test("a staging address that does not resolve is reported as not answering yet, and fails", async () => {
   // .invalid never resolves (RFC 6761), as staging's own name does not before its domain is attached.
   await assert.rejects(
-    checkStaging({ origin: "https://staging.invalid", dist: "dist", attempts: 1 }),
+    checkStaging({ origin: "https://staging.invalid", dist: "dist", revision: REVISION, attempts: 1 }),
     /staging\.invalid does not answer yet .*attach the custom domain in the dashboard/,
   );
 });

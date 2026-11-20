@@ -15,13 +15,15 @@ on:
 permissions:
   contents: read
 
-# One publish at a time. A run started while one is publishing waits; GitHub keeps one waiting
-# run per group, so a newer one replaces an older waiting run, which is cancelled. The
-# publishing run is never cancelled. The tip guard below then skips any run that is not main's
-# tip, so an old run finishing late or run again never replaces a newer deployment.
+# One publish at a time. A run started while one is publishing waits, and every waiting run is
+# kept (queue: max, up to 100), so a late CI run for an older commit cannot push the tip's run
+# out of the queue. Queue order is not commit order, so the tip guard below still skips any run
+# that is not main's tip when its turn comes.
+# https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency
 concurrency:
   group: staging
   cancel-in-progress: false
+  queue: max
 
 env:
   ASTRO_TELEMETRY_DISABLED: "1"
