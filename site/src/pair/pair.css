@@ -28,3 +28,90 @@
   padding: 0.4rem 0.6rem 0.4rem 0;
   vertical-align: top;
 }
+
+/* A trial's posted results (lib/pair-render.ts, renderOutcomes), as DESIGN.md's "Posted
+   results" sets them: a table to read down, framed, with the quiet head every table has; the
+   values in tabular figures at body size, right-aligned; the notes and the posted comparisons
+   in grey. No colour, size or mark says how a trial turned out. */
+.pair-results {
+  margin-top: 1.25rem;
+}
+.pair-results h4 {
+  margin: 0 0 0.25rem;
+  font-size: var(--text-l);
+}
+.pair-results .note,
+.pair-comparisons {
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+.pair-outcome {
+  margin-top: 1rem;
+}
+.pair-outcome > p {
+  margin: 0 0 0.25rem;
+}
+.pair-outcome table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--rule);
+  border-radius: 0.85rem;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.pair-outcome th,
+.pair-outcome td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--row-pad) 0.85rem;
+  border-top: 1px solid var(--row-rule);
+  /* A long group name wraps rather than widening the page past a phone's width. */
+  overflow-wrap: anywhere;
+}
+.pair-outcome thead th {
+  font-size: var(--label-size);
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--table-head);
+  border-top: 0;
+  padding-block: 0.5rem;
+}
+.pair-outcome tbody th {
+  font-weight: 600;
+}
+/* How many were analysed, and the value: figures to read down a column. */
+.pair-outcome td {
+  text-align: right;
+}
+.pair-outcome thead th:not(:first-child) {
+  text-align: right;
+}
+/* The value leads its cell, so the values line up down the column; its spread sits under it in
+   small grey type. */
+.pair-value {
+  display: block;
+}
+.pair-spread {
+  display: block;
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+.pair-comparisons {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2em;
+}
+@media (max-width: 40rem) {
+  .pair-outcome th,
+  .pair-outcome td {
+    padding-inline: 0.5rem;
+  }
+}
+/* On paper a table has no frame, as every framed table does (global.css, print). */
+@media print {
+  .pair-outcome table {
+    border: 0;
+    border-radius: 0;
+    overflow: visible;
+  }
+}
