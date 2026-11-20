@@ -153,7 +153,7 @@ export function stageTrack(code: string, { ends = false, named = false, off = fa
       `</span>`,
     ].join("");
   }
-  if (off) return `<span class="track off" role="img" aria-label="Not a place on the path from preclinical to approved"><span class="off-mark"></span></span>`;
+  if (off && !named) return `<span class="track off" role="img" aria-label="Not a place on the path from preclinical to approved"><span class="off-mark"></span></span>`;
   return "";
 }
 

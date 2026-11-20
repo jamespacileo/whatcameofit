@@ -17,7 +17,7 @@ import { renderListingBand, renderListingSheet } from "../lib/listing-render";
 import { renderEmbedArticle, renderEmbedRegistries } from "../lib/embed-render";
 import { renderCard } from "../lib/card-render";
 import { trialsTable } from "../lib/trials-table";
-import { recordStrip, stripKey } from "../lib/record-strip";
+import { recordStrip, stripKey, stripKinds, stripOf } from "../lib/record-strip";
 import { SITE } from "../../site.config.mjs";
 import "../pair/pair.css";
 
@@ -49,6 +49,11 @@ const rows = fullestOf(listings.map(([, listing]) => listing))?.rows ?? [];
 const card = listings.map(([, listing]) => (listing.card ? renderCard(listing.card) : "")).find(Boolean) ?? "";
 
 const NO_PAIR = `<p>This bundle has no pair page to draw it with.</p>`;
+
+// The record strip's sample: the pair whose strip has the most events, results among them where
+// any has results; only a pair whose registries have a day of last check has a strip.
+const strips = pairs.map((page) => pairView(page)).map((one) => ({ view: one, strip: stripOf(one) })).filter((one) => one.strip);
+const stripped = strips.sort((a, b) => Number(b.strip!.counts.results > 0) - Number(a.strip!.counts.results > 0) || b.strip!.marks.length - a.strip!.marks.length || a.view.address.localeCompare(b.view.address))[0] ?? null;
 
 /** Each block: its name in lib/blocks.ts, what it is for, and what it draws here. */
 const blocks: { name: string; about: string; html: string; framed?: boolean }[] = [
@@ -93,7 +98,9 @@ const blocks: { name: string; about: string; html: string; framed?: boolean }[] 
   {
     name: "recordStrip",
     about: "A pair's dated trial records on one time axis to the last check (lib/record-strip.ts), with its key. Not on a pair page yet.",
-    html: view ? (recordStrip(view) ? `${recordStrip(view)}${stripKey()}` : `<p>This pair has no dated record to draw.</p>`) : NO_PAIR,
+    html: stripped
+      ? `<p>${escape(stripped.view.title)}</p>${recordStrip(stripped.view)}${stripKey(stripKinds(stripped.strip!))}`
+      : `<p>No pair in this bundle has a day its registries were last checked, so none has a strip.</p>`,
   },
   {
     name: "sectionList",
@@ -111,7 +118,7 @@ const blocks: { name: string; about: string; html: string; framed?: boolean }[] 
         )
       : NO_PAIR,
   },
-  { name: "basisMark", about: "Marks a record the status rests on: the blue diamond, named once in a key.", html: `<p>${basisMark()} Basis of status</p>` },
+  { name: "basisMark", about: "Marks a record the status rests on: the blue diamond, named once in a key.", html: `<p>${basisMark(false)} Basis of status</p>` },
   {
     name: "embedFooter",
     about: "The footer of an embed: the notices every page carries and the data sources by name.",
