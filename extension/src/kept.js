@@ -79,7 +79,7 @@ export function unfollow(follows, page) {
 }
 
 function claimAt(index, page) {
-  return Object.values(index?.claims ?? {}).find((claim) => claim.page === page) ?? null;
+  return Object.values(index?.pairs ?? {}).find((claim) => claim.page === page) ?? null;
 }
 
 /**

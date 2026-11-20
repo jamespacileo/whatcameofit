@@ -63,7 +63,7 @@ test("a newly published exact-source card supersedes the recent index and saved 
   const clinical = { ...answer, about_a_treatment: true, names: ["Topical EX-1"], condition: "Tinnitus in adults", tracked: [] };
   const { controller, calls } = setup({
     storage: {
-      get: async () => ({ lookup: { version: 2, index, savedAt: Date.now(), etag: '"old"' },
+      get: async () => ({ lookup: { version: 3, path: "/lookup/2.json", file: index, savedAt: Date.now(), etag: '"old"' },
         results: remember([], tab.key, "article-print", clinical, Date.now() - 1000) }),
       set: async values => writes.push(values),
     },
@@ -86,7 +86,7 @@ test("a newly published exact-source card supersedes the recent index and saved 
 test("an unchanged index uses no response body and reuses the completed clinical answer", async () => {
   const checkedAt = Date.now() - 1000;
   const clinical = { ...answer, about_a_treatment: true, names: ["EX-1"], condition: "Tinnitus", tracked: [] };
-  const stored = { lookup: { version: 2, index, savedAt: checkedAt, etag: '"same"' },
+  const stored = { lookup: { version: 3, path: "/lookup/2.json", file: index, savedAt: checkedAt, etag: '"same"' },
     results: remember([], tab.key, "article-print", clinical, checkedAt) };
   const { controller, calls } = setup({
     storage: { get: async () => stored, set: async values => Object.assign(stored, values) },
@@ -102,14 +102,14 @@ test("an unchanged index uses no response body and reuses the completed clinical
   assert.equal(calls.fetch.length, 1);
   assert.equal(calls.states.at(-1).kind, "answer");
   assert.equal(calls.states.at(-1).cachedAt, checkedAt);
-  assert.deepEqual(stored.lookup.index, index);
+  assert.deepEqual(stored.lookup.file, index);
   assert.ok(stored.lookup.savedAt >= checkedAt);
 });
 
 test("an updated index removes an old exact-source association", async () => {
   const old = { ...index, articles: { [tab.key]: ["old"] }, claims: { old: { page: "/old", headline: "Old card" } } };
   const { controller, calls } = setup({
-    storage: { get: async () => ({ lookup: { version: 2, index: old, savedAt: Date.now() } }), set: async () => {} },
+    storage: { get: async () => ({ lookup: { version: 3, path: "/lookup/2.json", file: old, savedAt: Date.now() } }), set: async () => {} },
   });
   await controller.open();
   assert.equal(calls.states.at(-1).kind, "answer");
@@ -126,7 +126,7 @@ test("closing while the saved index loads starts no late revalidation", async ()
   const opening = controller.open();
   await begun.promise;
   controller.close();
-  saved.resolve({ lookup: { version: 2, index, etag: '"old"', savedAt: Date.now() } });
+  saved.resolve({ lookup: { version: 3, path: "/lookup/2.json", file: index, etag: '"old"', savedAt: Date.now() } });
   await opening;
   assert.equal(calls.fetch.length, 0);
   assert.equal(writes.length, 0);
@@ -142,7 +142,7 @@ test("failed or stalled revalidation uses the dated saved index and never writes
     let signal;
     const { controller, calls } = setup({
       indexTimeoutMs: 20,
-      storage: { get: async () => ({ lookup: { version: 2, index: saved, savedAt } }), set: async value => writes.push(value) },
+      storage: { get: async () => ({ lookup: { version: 3, path: "/lookup/2.json", file: saved, savedAt } }), set: async value => writes.push(value) },
       fetch: async (_url, options) => {
         signal = options.signal;
         if (failure === "offline") throw new Error("offline");

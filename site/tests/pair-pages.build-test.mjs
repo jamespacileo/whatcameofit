@@ -20,6 +20,7 @@ import { STATUS_LABELS } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
 import { stateFor } from "../../extension/src/lookup.js";
+import { readIndex } from "../../extension/src/index-file.js";
 import { sitemapAddresses, sitemapText } from "./sitemap-read.mjs";
 import { SITEMAP_LIMIT, inFiles } from "../src/lib/sitemap-files.ts";
 import { readLookupFile, readSearchDetail } from "../src/lib/lookup-file.mjs";
@@ -201,16 +202,28 @@ test("the lookup file lists every pair by its address, in the shape the released
   const entryKeys = ["first_reported", "headline", "indication", "latest_promise", "meaning", "names", "no_signal", "page", "place", "status", "unchecked"];
   for (const entry of Object.values(lookup.claims)) assert.deepEqual(Object.keys(entry).sort(), entryKeys);
   const site = new URL(SITE.url).host;
+  // The extension reads either version into one shape (extension/src/index-file.js): the
+  // released one reads version 1, the next release version 2. Both answer alike.
+  const v2 = JSON.parse(fs.readFileSync(path.join(withBundle, "lookup", "2.json"), "utf8"));
+  for (const file of [lookup, v2]) {
+    const index = readIndex(file);
+    for (const address of Object.keys(pages)) {
+      const state = stateFor(`${site}/${address}`, { index, savedAt: null }, site);
+      const read = ["headline", "page", "status", "meaning", "place", "no_signal", "first_reported", "unchecked", "names", "indication"];
+      const pick = (entries) => entries.map((entry) => Object.fromEntries(read.map((key) => [key, entry[key]])));
+      assert.deepEqual(pick(state.claims), pick(stateFor(`${site}/${address}`, { index: readIndex(lookup), savedAt: null }, site).claims), address);
+    }
+  }
   for (const [address, file] of Object.entries(pages)) {
-    const state = stateFor(`${site}/${address}`, { index: lookup, savedAt: null }, site);
+    const state = stateFor(`${site}/${address}`, { index: readIndex(lookup), savedAt: null }, site);
     assert.equal(state.kind, "tracked", address);
     assert.deepEqual(state.claims.map((entry) => entry.page), [`/${address}`]);
     assert.equal(state.claims[0].status, STATUS_LABELS[file.row.status.code]);
     assert.equal(state.claims[0].unchecked === null, file.checked_by_person, address);
   }
   // A page of the site that is no pair's, and an article no pair came from.
-  assert.equal(stateFor(`${site}/how-it-works`, { index: lookup, savedAt: null }, site).kind, "no-page");
-  assert.equal(stateFor("news.example.org/story", { index: lookup, savedAt: null }, site).kind, "untracked");
+  assert.equal(stateFor(`${site}/how-it-works`, { index: readIndex(lookup), savedAt: null }, site).kind, "no-page");
+  assert.equal(stateFor("news.example.org/story", { index: readIndex(lookup), savedAt: null }, site).kind, "untracked");
 });
 
 test("version 2 of the lookup file lists every pair by its address, with the same words as version 1", () => {
