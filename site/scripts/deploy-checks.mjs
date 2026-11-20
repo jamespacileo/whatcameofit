@@ -36,6 +36,23 @@ export function pullRequestWorker(number) {
   return /^[1-9]\d{0,6}$/.test(String(number ?? "")) ? `thenwhat-pr-${number}` : null;
 }
 
+/**
+ * The site's _headers with every file marked noindex: the line goes into the existing rule for
+ * "/*", because Cloudflare keys rules by their path and a second "/*" rule replaces the first,
+ * which would drop the security headers it sets. A file with no "/*" rule gets one.
+ * @param {string} text
+ */
+export function withNoindex(text) {
+  const lines = text.split("\n");
+  const at = lines.findIndex((line) => line.trim() === "/*");
+  if (at === -1) return `${text.replace(/\n*$/, "\n")}\n/*\n  X-Robots-Tag: noindex\n`;
+  let end = at + 1;
+  while (end < lines.length && /^\s+\S/.test(lines[end])) end += 1;
+  if (lines.slice(at + 1, end).some((line) => /^\s*X-Robots-Tag:/i.test(line))) return text;
+  lines.splice(end, 0, "  X-Robots-Tag: noindex");
+  return lines.join("\n");
+}
+
 /** Production's address and staging's Worker (docs/deploy.md, "Staging"). */
 export const PRODUCTION_URL = "https://whatcameofit.com";
 export const STAGING_WORKER = "thenwhat-staging";

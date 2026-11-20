@@ -93,6 +93,10 @@ jobs:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: pnpm
           cache-dependency-path: site/pnpm-lock.yaml
+      # Dependencies are installed before any token is in reach: an install script never sees one.
+      - name: Install dependencies
+        if: steps.tip.outputs.current == 'true'
+        run: make site/node_modules
       - name: See that staging is set up
         id: ready
         if: steps.tip.outputs.current == 'true'

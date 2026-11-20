@@ -37,7 +37,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { STAGING_WORKER, deployProblems, stagingProblems } from "./deploy-checks.mjs";
+import { STAGING_WORKER, deployProblems, stagingProblems, withNoindex } from "./deploy-checks.mjs";
 import { listingFileProblems } from "./listing-checks.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
@@ -75,6 +75,8 @@ const siteUrl = process.env.SITE_URL;
 const problems = [
   ...deployProblems({ siteUrl }),
   ...(staging ? stagingProblems({ siteUrl, database: pairsDatabase, cutover }) : []),
+  // Staging is published only with the commit it is: the smoke checks hold the host to it.
+  ...(staging && !dryRun && !/^[a-f0-9]{40}$/.test(revision ?? "") ? ["Staging is published with the commit it is: set BUILD_REVISION to its full SHA."] : []),
   ...listingFileProblems(),
 ];
 if (problems.length > 0) stop(problems);
@@ -121,7 +123,8 @@ const domain = new URL(siteUrl).hostname;
 
 // The registry search is offered only when its settings are given. The model's key is
 // a secret the operator stores once with `wrangler secret put OPENAI_API_KEY`.
-const lookup = Boolean(process.env.LLM_MODEL && process.env.CONTACT_EMAIL);
+// Staging never offers it: its Worker has no saved-results namespace and no model key.
+const lookup = !staging && Boolean(process.env.LLM_MODEL && process.env.CONTACT_EMAIL);
 const env = {
   ...process.env,
   PUBLIC_BUILD: "1",
@@ -143,7 +146,10 @@ if (!fs.existsSync(path.join(dist, "sitemap.xml"))) {
 
 // Staging is for the operator, never for a search engine: every file it serves says so, and the
 // Worker passes the same mark on to the pages it makes (worker/pairs.mjs).
-if (staging) fs.appendFileSync(path.join(dist, "_headers"), "\n/*\n  X-Robots-Tag: noindex\n");
+if (staging) {
+  const headers = path.join(dist, "_headers");
+  fs.writeFileSync(headers, withNoindex(fs.existsSync(headers) ? fs.readFileSync(headers, "utf8") : ""));
+}
 
 // The build recorded its bundle's version in the frame the Worker fills, and the Worker
 // reads pages of that version only, so it must be the version exported.
@@ -175,6 +181,8 @@ if (staging) {
   // uploads the assets and posts /versions; versions deploy creates a deployment), so the
   // dashboard's custom domain stays attached and workers.dev stays as the operator set it.
   const upload = ["versions", "upload", "--config", pairs.config, "--message", `staging ${revision ?? "local"}`];
+  // The contact address is how the trial reader presents itself to the registry, as in previews.
+  if (process.env.CONTACT_EMAIL) upload.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
   if (dryRun) upload.push("--dry-run");
   const sent = spawnSync(process.execPath, [WRANGLER, ...upload], { cwd: SITE_DIR, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
   process.stdout.write(sent.stdout ?? "");

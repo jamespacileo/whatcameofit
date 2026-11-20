@@ -39,6 +39,13 @@ test("staging runs only after CI on main or by hand on main, never for a pull re
   const withToken = publish.steps.filter((step) => JSON.stringify(step).includes("secrets."));
   assert.deepEqual(withToken.map((step) => step.name), ["See that staging is set up", "Build, publish and check staging"]);
   assert.ok(withToken.every((step) => publish.steps.indexOf(step) > publish.steps.indexOf(checkout)));
+  // Dependencies are installed before any token is in reach, with no secret of their own.
+  for (const job of [publish, workflow("release.yml").jobs.publish]) {
+    const install = job.steps.findIndex((step) => step.name === "Install dependencies");
+    assert.ok(install >= 0);
+    assert.ok(!JSON.stringify(job.steps[install]).includes("secrets."));
+    assert.ok(job.steps.every((step, at) => !JSON.stringify(step).includes("secrets.") || at > install));
+  }
 });
 
 test("production is published from a v* tag only, while the operator has publishing on", () => {
@@ -64,7 +71,7 @@ test("production is published from a v* tag only, while the operator has publish
 function deploy(args, env) {
   return spawnSync(process.execPath, ["scripts/deploy.mjs", ...args], {
     encoding: "utf8",
-    env: { ...process.env, PAIRS_BUNDLE: "", CLOUDFLARE_API_TOKEN: "", CLOUDFLARE_ACCOUNT_ID: "", STAGING_PAIRS_DATABASE_ID: "", ...env },
+    env: { ...process.env, PAIRS_BUNDLE: "", CLOUDFLARE_API_TOKEN: "", CLOUDFLARE_ACCOUNT_ID: "", STAGING_PAIRS_DATABASE_ID: "", BUILD_REVISION: "", ...env },
   });
 }
 
@@ -76,7 +83,9 @@ test("staging refuses production's database, production's address and the cutove
     [["--staging"], { ...STAGING, PAIRS_DATABASE: "" }, /Staging is built from a database/],
     [["--staging"], { ...STAGING, SITE_URL: "https://whatcameofit.com" }, /SITE_URL is production's address/],
     // The database is found by the id pinned for staging, or not at all.
-    [["--staging"], STAGING, /STAGING_PAIRS_DATABASE_ID is not set to the staging database's id/],
+    [["--staging"], { ...STAGING, BUILD_REVISION: "0".repeat(40) }, /STAGING_PAIRS_DATABASE_ID is not set to the staging database's id/],
+    // Staging is published only with the commit it is, which the smoke checks hold it to.
+    [["--staging"], STAGING, /Staging is published with the commit it is: set BUILD_REVISION/],
   ];
   for (const [args, env, refusal] of cases) {
     const run = deploy(args, env);

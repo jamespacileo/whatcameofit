@@ -217,7 +217,7 @@ Set these repository values in Settings → Secrets and variables → Actions:
 | Variable | `CHROME_STORE_URL` | The extension's Chrome Web Store listing, once it is published there |
 | Variable | `SAFARI_STORE_URL` | The extension's Mac App Store listing, once it is published there |
 
-Scope the production token to Workers deployment in Palladio, with Workers Routes editing and Zone read for `whatcameofit.com`. The existing token expires on 12 November 2027.
+Scope the production token to Workers deployment in Palladio, with Workers Routes editing and Zone read for `whatcameofit.com`, and the account's D1 Read: a release reads its bundle from `thenwhat-store` with the same token (`d1 info` and `/query`) before it publishes. The existing token expires on 12 November 2027.
 
 Cloudflare's [GitHub Actions guide](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/) documents deployment credentials. Keep deployment credentials out of workflow logs, and out of any run a fork's pull request starts.
 

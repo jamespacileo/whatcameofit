@@ -110,8 +110,10 @@ export async function checkStaging({ origin, dist, revision, request = fetch, at
     if (response.status !== check.status) problems.push(`answered ${response.status}, not ${check.status}`);
     if (!/\bnoindex\b/i.test(robots)) problems.push(`carries X-Robots-Tag "${robots}", not noindex`);
     if (check.type && !check.type.test(response.headers.get("content-type") ?? "")) problems.push(`is ${response.headers.get("content-type")}, not JSON`);
-    if (check.location && new URL(response.headers.get("location") ?? "", origin).pathname !== check.location) {
-      problems.push(`leads to ${response.headers.get("location")}, not ${check.location}`);
+    // The whole address, origin included: a redirect out of staging fails.
+    const expected = check.location ? new URL(check.location, origin).href : null;
+    if (expected && new URL(response.headers.get("location") ?? "", new URL(check.pathname, origin)).href !== expected) {
+      problems.push(`leads to ${response.headers.get("location")}, not ${expected}`);
     }
     await response.body?.cancel().catch(() => {});
     if (problems.length) failures.push(`${check.pathname} ${problems.join("; ")}`);

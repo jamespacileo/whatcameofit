@@ -6,6 +6,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
+import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { after, before, test } from "node:test";
@@ -53,6 +54,10 @@ before(async () => {
       PAIRS_LOCAL_STATE: database.persistTo,
       PAIRS_BUNDLE: "",
       BUILD_REVISION: REVISION,
+      // Set as an operator's shell might have them: staging still offers no search, and the
+      // trial reader is given its contact address.
+      CONTACT_EMAIL: "registry-contact@example.org",
+      LLM_MODEL: "a-model",
       ASTRO_TELEMETRY_DISABLED: "1",
       CI: "1",
       WRANGLER_SEND_METRICS: "false",
@@ -99,8 +104,19 @@ test("a staging dry run checks a version of thenwhat-staging with the preview st
   assert.match(run.stdout, /ROBOTS_NOINDEX/);
   assert.match(run.stdout, /Dry run finished\. Nothing was published\..*thenwhat-staging \(staging\.whatcameofit\.com once its domain is attached\)/);
   assert.doesNotMatch(run.stdout + run.stderr, /--domain|Custom domains|workers\.dev/);
-  // Every file is marked noindex, and the build says which bundle it was made from.
-  assert.match(fs.readFileSync("dist/_headers", "utf8"), /\/\*\n {2}X-Robots-Tag: noindex/);
+  // Every file is marked noindex inside the one rule for "/*", which keeps its security headers:
+  // a second "/*" rule would replace the first.
+  const headers = fs.readFileSync("dist/_headers", "utf8").split("\n");
+  assert.equal(headers.filter((line) => line.trim() === "/*").length, 1);
+  const rule = headers.slice(headers.indexOf("/*") + 1, headers.findIndex((line, at) => at > headers.indexOf("/*") && !/^\s+\S/.test(line)));
+  for (const name of ["X-Content-Type-Options", "Referrer-Policy", "Strict-Transport-Security", "X-Robots-Tag"]) {
+    assert.ok(rule.some((line) => line.trim().startsWith(`${name}:`)), name);
+  }
+  assert.match(run.stdout, /CONTACT_EMAIL/);
+  assert.match(run.stdout, /Without the registry search: staging has no saved-results namespace and no model key\./);
+  assert.ok(!JSON.parse(fs.readFileSync("dist/lookup.json", "utf8")).live, "the build offers no search");
+  // The build says which bundle and which commit it was made from.
+  assert.equal(fs.readFileSync("dist/build-revision.txt", "utf8").trim(), REVISION);
   assert.equal(fs.readFileSync("dist/bundle-version.txt", "utf8").trim(), version);
 });
 
@@ -170,10 +186,15 @@ test("the Worker marks every kind of answer noindex in staging's configuration, 
   }
 });
 
-test("a staging address that does not resolve is reported as not answering yet, and fails", async () => {
-  // .invalid never resolves (RFC 6761), as staging's own name does not before its domain is attached.
+test("a staging address that does not answer is reported as not answering yet, and fails", async () => {
+  // A port of this machine that was just let go: the connection is refused here, with no
+  // network, as staging's own name answers nothing before its domain is attached.
+  const server = net.createServer();
+  await new Promise((done) => server.listen(0, "127.0.0.1", done));
+  const { port } = server.address();
+  await new Promise((done) => server.close(done));
   await assert.rejects(
-    checkStaging({ origin: "https://staging.invalid", dist: "dist", revision: REVISION, attempts: 1 }),
-    /staging\.invalid does not answer yet .*attach the custom domain in the dashboard/,
+    checkStaging({ origin: `http://127.0.0.1:${port}`, dist: "dist", revision: REVISION, attempts: 1 }),
+    /127\.0\.0\.1 does not answer yet \(ECONNREFUSED\): attach the custom domain in the dashboard/,
   );
 });
