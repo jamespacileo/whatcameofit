@@ -9,11 +9,11 @@ checked: false
 
 ## In the records
 
-A trial registry holds a record of a clinical trial of the treatment for the condition, matched to the claim. The record gives the trial's phase as Phase 1, and the registry shows the trial as started.
+A trial registry holds a record of a clinical trial of the treatment for the condition, matched to the page's treatment and condition. The record gives the trial's phase as Phase 1, and the registry shows the trial as started.
 
-“Furthest” means the highest phase among the claim's trials that have started. A claim can have several trials at different phases; the status names one of them, and the claim page lists them all.
+“Furthest” means the highest phase among the page's trials that have started. A page can list several trials at different phases; the status names one of them, and the page lists them all.
 
-A Phase 1 trial is usually the first time a treatment is given to people. The registry record says how many people the trial plans to enrol and what it sets out to measure; the claim page links that record.
+A Phase 1 trial is usually the first time a treatment is given to people. The registry record says how many people the trial plans to enrol and what it sets out to measure; the page links that record.
 
 ## What it does not tell you
 

@@ -9,7 +9,7 @@ checked: false
 
 ## In the records
 
-A regulator has published a decision approving the treatment for the condition the claim is about. The claim page lists that decision as a record, with its date and a link to the regulator's own page.
+A regulator has published a decision approving the treatment for the condition the page is about. The page lists that decision as a record, with its date and a link to the regulator's own page.
 
 ## What it does not tell you
 

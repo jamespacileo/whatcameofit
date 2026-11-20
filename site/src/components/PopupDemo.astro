@@ -1,5 +1,5 @@
 ---
-// The extension's popup, drawn in a page at its real 360 pixels from a claim as the
+// The extension's popup, drawn in a page at its real 360 pixels from a pair as the
 // lookup file words it: the answer a reader gets, not a picture of it, so it is rebuilt
 // with the site and never goes stale. Its sizes are the popup's own, in pixels
 // (extension/src/popup.css). Nothing in it can be pressed: the controls are drawn, and
@@ -14,17 +14,17 @@ import {
   wasNow,
   type RegistryRecord,
 } from "../lib/extension-page";
-import type { PairLookup as LookupClaim } from "../lib/pairs";
+import type { PairLookup } from "../lib/pairs";
 import { NOTICES } from "../lib/notices";
 import { STAGE_PATH } from "../lib/status";
 
 interface Props {
   /**
-   * Which of the popup's answers is drawn: a tracked claim's status, an automatic
-   * search of an untracked page, or the reader's list of followed claims.
+   * Which of the popup's answers is drawn: a followed pair's status, an automatic
+   * search of an untracked page, or the reader's list of followed pages.
    */
-  kind?: "claim" | "search" | "following";
-  claim: LookupClaim;
+  kind?: "pair" | "search" | "following";
+  pair: PairLookup;
   /** For a search: what the report was read as being about, and the records found. */
   subject?: { treatment: string; condition: string };
   records?: RegistryRecord[];
@@ -32,11 +32,11 @@ interface Props {
   was?: string;
   /** The day the registries were last checked, as the lookup file gives it. */
   checked?: string | null;
-  /** The marker lands once, as on a claim page. One popup a page. */
+  /** The marker lands once, as on a pair page. One popup a page. */
   lands?: boolean;
 }
 
-const { kind = "claim", claim, subject, records = [], was, checked, lands = false } = Astro.props;
+const { kind = "pair", pair, subject, records = [], was, checked, lands = false } = Astro.props;
 const places = STAGE_PATH.length;
 ---
 
@@ -47,44 +47,44 @@ const places = STAGE_PATH.length;
   </div>
   <div class="pp-body">
     {
-      kind === "claim" && (
+      kind === "pair" && (
         <>
-          <p class="pp-headline">{claim.headline}</p>
+          <p class="pp-headline">{pair.headline}</p>
           <dl class="pp-digest">
             <dt>{POPUP_WORDS.standing}</dt>
-            <dd class="pp-status">{claim.status}</dd>
-            {claim.place && (
+            <dd class="pp-status">{pair.status}</dd>
+            {pair.place && (
               <dd class="pp-track">
                 <span
                   class="pp-steps"
                   role="img"
-                  aria-label={`Place ${claim.place} of ${places} on the path from preclinical to approved`}
+                  aria-label={`Place ${pair.place} of ${places} on the path from preclinical to approved`}
                 >
                   {Array.from({ length: places }, (_, index) => (
-                    <span class:list={["pp-step", { "pp-here": index + 1 === claim.place }]} />
+                    <span class:list={["pp-step", { "pp-here": index + 1 === pair.place }]} />
                   ))}
                 </span>
               </dd>
             )}
-            {claim.no_signal && <dd class="pp-no-signal">{claim.no_signal}</dd>}
-            <dd class="pp-meaning">{claim.meaning}</dd>
+            {pair.no_signal && <dd class="pp-no-signal">{pair.no_signal}</dd>}
+            <dd class="pp-meaning">{pair.meaning}</dd>
           </dl>
-          {claim.unchecked && <p class="pp-unchecked">{claim.unchecked}</p>}
+          {pair.unchecked && <p class="pp-unchecked">{pair.unchecked}</p>}
           <dl class="pp-facts">
-            {claim.first_reported && (
+            {pair.first_reported && (
               <div>
                 <dt>{POPUP_WORDS.firstReported}</dt>
-                <dd>{claim.first_reported}</dd>
+                <dd>{pair.first_reported}</dd>
               </div>
             )}
-            {claim.latest_promise && (
+            {pair.latest_promise && (
               <div class="pp-promise">
                 <dt>{POPUP_WORDS.latestPromise}</dt>
-                <dd>{claim.latest_promise}</dd>
+                <dd>{pair.latest_promise}</dd>
               </div>
             )}
           </dl>
-          <a class="pp-button" href={claim.page}>
+          <a class="pp-button" href={pair.page}>
             {POPUP_WORDS.open}
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -177,12 +177,12 @@ const places = STAGE_PATH.length;
           <ul class="pp-records">
             <li class="pp-card">
               <p class="pp-record-title">
-                <a href={claim.page}>{claim.headline}</a>
+                <a href={pair.page}>{pair.headline}</a>
               </p>
-              <p class="pp-kept-status">{claim.status}</p>
+              <p class="pp-kept-status">{pair.status}</p>
               {was && (
                 <p class="pp-moved">
-                  <span class="pp-tag">{POPUP_WORDS.changed}</span> {wasNow(was, claim.status)}
+                  <span class="pp-tag">{POPUP_WORDS.changed}</span> {wasNow(was, pair.status)}
                 </p>
               )}
               <p class="pp-text" aria-hidden="true">{POPUP_WORDS.stop}</p>

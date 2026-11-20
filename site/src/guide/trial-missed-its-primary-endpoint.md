@@ -9,7 +9,7 @@ checked: false
 
 ## In the records
 
-A result has been reported for one of the claim's trials in which the primary endpoint, the main thing the trial set out to measure, was not met. A person has read that report and marked the trial, and the claim page links the source.
+A result has been reported for one of the page's trials in which the primary endpoint, the main thing the trial set out to measure, was not met. A person has read that report and marked the trial, and the page links the source.
 
 No other trial of the treatment for the condition is left standing: none that is neither terminated nor withdrawn, and unmarked.
 

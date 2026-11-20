@@ -4,7 +4,7 @@ order: 8
 title: Retraction
 answer: A retraction is a journal's public notice that a paper it published can no longer be relied on, because its content or data are seriously flawed.
 rule: how-a-status-is-set
-on_site: If a claim's origin paper has a retraction notice, the status is “Origin paper retracted”. That rule is applied first, and the notice is listed on the claim page as a record with a link.
+on_site: If a treatment's origin paper has a retraction notice, the status is “Origin paper retracted”. That rule is applied first, and the notice is listed on the page as a record with a link.
 sources:
   - name: "Committee on Publication Ethics, Retraction guidelines"
     url: https://publicationethics.org/guidance/guideline/retraction-guidelines

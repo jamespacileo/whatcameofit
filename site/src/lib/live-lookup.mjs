@@ -196,11 +196,11 @@ export function describeAnswer(answer) {
     : LIVE.marked;
   const notices = [NOTICES[1], LIVE.source];
   const source = answer.source?.kind === "screenshot"
-    ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post claims; it does not establish that the claim is true."
+    ? "Read from the visible screenshot and caption. A video contributes only its current frame, not its audio. This identifies what the post says; it does not establish that it is true."
     : sourceOf(answer.post, answer.article_tracked);
   const nothing = { subject: null, searchedAlso: null, trialSaid: null, tracked: [], likely: [], mentioned: [], mentionedLead: LIVE.mentionedLead, rest: null, none: null, papersUnchecked: null, research: null };
   if (Array.isArray(answer.claims)) {
-    return { ...nothing, marked, source, notices, lead: `${answer.claims.length} separate treatment claims`,
+    return { ...nothing, marked, source, notices, lead: `${answer.claims.length} separate treatments reported`,
       claims: answer.claims.map(claim => describeAnswer({ ...claim, cache: answer.cache })) };
   }
   // A post that links to an article the site tracks: its reviewed page is the answer,
@@ -255,7 +255,7 @@ export function describeAnswer(answer) {
         : null,
     none: likely.length === 0 && !["partial", "unchecked"].includes(answer.check_state) ? LIVE.none : null,
     unchecked: ["partial", "unchecked"].includes(answer.check_state)
-      ? `${answer.check_state === "partial" ? "This claim was only partly checked" : "This claim remains unchecked"}${answer.check_reason === "timeout" ? " because the search ran out of time" : answer.check_reason === "source_unavailable" ? " because a source could not be reached" : " within this page's search allowance"}. Missing results do not rule out trials. Search this claim separately to continue.`
+      ? `${answer.check_state === "partial" ? "This treatment was only partly checked" : "This treatment remains unchecked"}${answer.check_reason === "timeout" ? " because the search ran out of time" : answer.check_reason === "source_unavailable" ? " because a source could not be reached" : " within this page's search allowance"}. Missing results do not rule out trials. Search this treatment separately to continue.`
       : null,
     papersUnchecked: papersUnchecked(answer.papers_unchecked),
     notices,
