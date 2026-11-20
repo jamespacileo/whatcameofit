@@ -15,9 +15,10 @@
 // version and the last statements mark it current and drop every version but it and the
 // one before, so a load that stops early leaves the site reading what it read. Loading
 // the current version again is refused: nothing would change.
-import { createWriteStream, mkdtempSync, rmSync } from "node:fs";
-import { once } from "node:events";
-import { dirname, join, resolve } from "node:path";
+import { createWriteStream, mkdtempSync, realpathSync, rmSync, statSync } from "node:fs";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { MANIFEST, SCHEMA_MODEL, bundleVersion, checkManifest, files } from "./bundle-manifest.mjs";
 
@@ -118,10 +119,58 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
  * @param {string[]} sql
  */
 export async function writeStatements(stream, sql) {
-  for (const statement of sql) {
-    if (!stream.write(`${statement};\n`)) await once(stream, "drain");
+  // pipeline waits on the stream's asks to slow down and turns any failure, the last flush's
+  // included, into this promise's rejection.
+  await pipeline(Readable.from(sql.map((statement) => `${statement};\n`), { objectMode: false }), stream);
+}
+
+/** The most a file for D1's local engine holds: Wrangler reads such a file whole, as one string. */
+export const LOCAL_FILE_BYTES = 64 * 2 ** 20;
+
+/**
+ * The statements in files of at most `maxBytes` each, in order, named 1.sql, 2.sql and on. The
+ * statements from the first that marks a version current to the end are kept in the last file
+ * together, so no file boundary falls between the store losing its current version and
+ * gaining the new one.
+ * @returns {Promise<string[]>} the files, in the order they are to run
+ */
+export async function writeStatementFiles(dir, sql, maxBytes = Infinity) {
+  const switchAt = sql.findIndex((statement) => statement.startsWith("UPDATE pair_bundle SET current"));
+  const groups = [];
+  let group = [];
+  let bytes = 0;
+  for (const statement of switchAt < 0 ? sql : sql.slice(0, switchAt)) {
+    const size = Buffer.byteLength(statement) + 2;
+    if (group.length > 0 && bytes + size > maxBytes) {
+      groups.push(group);
+      group = [];
+      bytes = 0;
+    }
+    group.push(statement);
+    bytes += size;
   }
-  await new Promise((done, failed) => stream.end((error) => (error ? failed(error) : done())));
+  if (switchAt >= 0) group.push(...sql.slice(switchAt));
+  if (group.length > 0) groups.push(group);
+  const files = [];
+  for (const [index, statements_] of groups.entries()) {
+    const file = join(dir, `${index + 1}.sql`);
+    await writeStatements(createWriteStream(file), statements_);
+    files.push(file);
+  }
+  return files;
+}
+
+/**
+ * A folder for the load's SQL on the drive that holds the bundle: beside the bundle's own folder,
+ * found through its real path, so a link on this machine's disk to a bundle elsewhere still
+ * writes there. A bundle folder that is a mount point has no parent on its own drive, so it is
+ * refused rather than written beside on another.
+ */
+export function scratchBeside(folder) {
+  const real = realpathSync(folder);
+  const parent = dirname(real);
+  if (statSync(parent).dev !== statSync(real).dev) throw new Error(`${real} is a mount point: copy the bundle into a folder on that drive, so its SQL can be written beside it`);
+  return mkdtempSync(join(parent, ".thenwhat-pairs-"));
 }
 
 // Run as a command, not imported (an importer may have no script path of its own).
@@ -147,10 +196,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       }
       // Beside the bundle's folder, on the drive that holds it: the statements carry the lab's
       // pages, which stay off this machine's own disk.
-      const dir = mkdtempSync(join(dirname(resolve(folder)), ".thenwhat-pairs-"));
+      const dir = scratchBeside(folder);
       try {
-        await writeStatements(createWriteStream(join(dir, "pairs.sql")), load.sql);
-        await execute(to, "--file", join(dir, "pairs.sql"));
+        // D1 itself takes one file of up to 5 GB; the local engine reads each file whole, so it
+        // is given them in parts, in order.
+        for (const file of await writeStatementFiles(dir, load.sql, to.remote ? Infinity : LOCAL_FILE_BYTES)) await execute(to, "--file", file);
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
