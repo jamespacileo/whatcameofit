@@ -77,7 +77,9 @@ test("a dry run reads the current version, builds the site from it and checks th
   assert.match(run.stdout, new RegExp(`Bundle ${version}, ${pairs} pairs, from ${DATABASE} \\(local engine\\)`));
   // The build read that version and recorded it for the pages made on request.
   assert.equal(builtVersion("dist"), version);
-  assert.ok(fs.existsSync(path.join("dist", "apitegromab--muscular-atrophy-spinal", "index.html")));
+  // No file is built per pair; the frames the Worker fills are.
+  assert.ok(!fs.existsSync(path.join("dist", "apitegromab--muscular-atrophy-spinal")));
+  assert.ok(fs.existsSync(path.join("dist", "pair-shell", "index.html")) && fs.existsSync(path.join("dist", "embed-shell", "index.html")));
   // Wrangler was given the production Worker with the database bound as PAIRS.
   assert.match(run.stdout, /env\.PAIRS \(thenwhat-store\)/);
   assert.match(run.stdout, new RegExp(`Dry run finished\\. Nothing was published\\..*whatcameofit\\.com, from bundle ${version}`));

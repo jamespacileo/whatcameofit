@@ -1,5 +1,7 @@
 # 10. The store is kept in two tiers: what Cloudflare reads in D1, the rest as one file in R2
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-17. Status: accepted. Change: `openspec/changes/cloudflare-source-of-truth` (`design.md` decision 20). Amends `docs/adr/0008`.
 
 ## Context

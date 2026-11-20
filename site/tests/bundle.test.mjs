@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { modelOf, movedAddresses, readBundle, unwordedPairCodes } from "../src/lib/bundle.ts";
 import { bundleVersion, writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { pairView } from "../src/lib/pair-view.ts";
+import { labShapeCopy } from "./lab-shape.mjs";
 import { assertPairWordingNeutral, PAIR_WORDING, UNWORDED_TRIAL_STATES } from "../src/lib/pair-wording.ts";
 
 const folder = fileURLToPath(new URL("./bundle", import.meta.url));
@@ -87,7 +88,10 @@ test("a claim's address goes to its pair's only when one pair came from it", () 
 
 test("every code the bundle's schemas allow has words, except the expanded access states", () => {
   const defs = JSON.parse(readFileSync(join(folder, "schemas", "PairPage.json"), "utf8")).$defs;
-  const kinds = { ClaimStatusCode: ["status", "status gloss"], TrialPhase: ["phase"], OverallStatus: ["trial state"], TrialEventKind: ["event"], Approach: ["approach"] };
+  // The status codes' definition is found through the pair's status, not by name: lab pull
+  // request 129 renamed it from ClaimStatusCode to StatusCode, and either bundle is read.
+  const statusDef = defs.PairStatus.properties.code.$ref.replace("#/$defs/", "");
+  const kinds = { [statusDef]: ["status", "status gloss"], TrialPhase: ["phase"], OverallStatus: ["trial state"], TrialEventKind: ["event"], Approach: ["approach"] };
   for (const [def, tables] of Object.entries(kinds)) {
     for (const code of defs[def].enum) {
       if (def === "OverallStatus" && UNWORDED_TRIAL_STATES.includes(code)) continue;
@@ -225,5 +229,47 @@ test("a folder with no manifest, or one without an offset on its time, is refuse
   } finally {
     rmSync(none, { recursive: true, force: true });
     rmSync(local, { recursive: true, force: true });
+  }
+});
+
+test("a slug a pair has as its own address and another pair lists too goes to neither", () => {
+  const [one, other] = Object.values(readBundle(folder).pages.PairPage);
+  const own = one.row.pair.address;
+  const moved = movedAddresses([{ row: { ...one.row, claim_slugs: [own] } }, { row: { ...other.row, claim_slugs: [own] } }]);
+  assert.equal(moved.get(own), undefined);
+  // Listed by its own pair alone, it moves nowhere; by another pair alone, it goes there.
+  assert.equal(movedAddresses([{ row: { ...one.row, claim_slugs: [own] } }]).get(own), undefined);
+  assert.equal(movedAddresses([{ row: { ...other.row, claim_slugs: [own] } }]).get(own), other.row.pair.address);
+});
+
+// The lab's shape after its pull requests 125 and 126 (tests/lab-shape.mjs), held until a recut
+// fixture replaces tests/bundle.
+test("in the lab's new shape, a claim's address goes to the pair its claim_slugs name, not its origin's", () => {
+  const FOLLOWED = "isembyld-spinal-muscular-atrophy";
+  const dir = labShapeCopy((page, at) => {
+    if (at === "apitegromab--neuromuscular-diseases") page.row.claim_slugs = [];
+    if (at === "apitegromab--muscular-atrophy-spinal") page.row.claim_slugs = [FOLLOWED];
+  });
+  try {
+    const pages = readBundle(dir).pages.PairPage;
+    assert.equal(pages["apitegromab--neuromuscular-diseases"].row.origin.claim_slug, FOLLOWED);
+    assert.equal(movedAddresses(Object.values(pages)).get(FOLLOWED), "apitegromab--muscular-atrophy-spinal");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("in the lab's new shape, every event is shown on the day it happened, with or without a kept update", () => {
+  const dir = labShapeCopy();
+  try {
+    const now = readBundle(dir).pages.PairPage;
+    const before = readBundle(folder).pages.PairPage;
+    const events = Object.values(now).flatMap((page) => page.trials.flatMap((trial) => trial.events));
+    assert.ok(events.some((event) => event.update_key === null), "the copy holds events whose update the lab did not keep");
+    assert.ok(events.some((event) => event.shown_on !== event.day), "the copy holds events shown in a later record");
+    const shown = (view) => view.trials.map((trial) => trial.events.map((event) => [event.key, event.day, event.label, event.estimated]));
+    for (const [at, page] of Object.entries(now)) assert.deepEqual(shown(pairView(page)), shown(pairView(before[at])), at);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

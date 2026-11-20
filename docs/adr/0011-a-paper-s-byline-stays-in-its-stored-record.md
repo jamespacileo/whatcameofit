@@ -1,5 +1,7 @@
 # 11. A paper's byline stays in its stored record; its abstract and a registry's people do not
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-17. Status: accepted. Change: `openspec/changes/cloudflare-source-of-truth`.
 
 ## Context

@@ -133,10 +133,11 @@ function outcomesOf(findings: any): OutcomeView[] {
     });
 }
 
-/** Whether a pair's page is built ahead (design decision 2): a pair with a claim origin, or
- * with more than one supporting trial. Every other pair's page is made on request. The second
- * half is provisional until a full run's count of pairs is known (task 1.3). */
-export function builtAhead(page: any): boolean {
+/** Whether a pair is one of the examples built pages carry: the lookup's sentences to pass on
+ * and the journalists' picker. A pair with a claim origin, or with more than one supporting
+ * trial. It is no file of the build: every pair's page, record, embed and card is made on
+ * request (openspec pairs-site task 4.6). Kept to a few, so a page never carries every pair. */
+export function featured(page: any): boolean {
   return page.row.origin !== null || page.trials.length > 1;
 }
 

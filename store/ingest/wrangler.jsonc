@@ -1,49 +1,16 @@
-// The ingest service: the one address a writer outside Cloudflare hands records to.
-// It is a Worker of its own, never on the site's hostname, and answers only to tokens.
+// The store's D1 database, as the scripts here reach it with Wrangler. No Worker is
+// deployed from this folder: the ingest service that once stood in front of the store was
+// removed with claims on 2026-11-20. The pairs the site reads are loaded with
+// scripts/load-pairs.mjs and read back with scripts/export-pairs.mjs.
 //
-// Resources are named here by binding only. The operator creates the D1 database, the R2
-// bucket (both in the European Union jurisdiction, which cannot be set afterwards) and the
-// Queue, and their ids are given at deployment, not committed. Nothing in this file
-// creates or names a real Cloudflare resource; locally Wrangler stands each binding up on
-// this machine. Deploy only through `make store-deploy` (scripts/deploy.mjs), which writes
-// the configuration that is deployed from this one: the environment's names, the
-// database's id, a workers.dev address, and no Queue until something consumes it.
+// The database is named here by binding only, and its id is never committed: locally
+// Wrangler stands it up on this machine, and scripts/preview-config.mjs writes the
+// preview's id into the git-ignored wrangler.preview.jsonc.
 {
-  "name": "thenwhat-store-ingest",
-  "main": "./src/index.mjs",
-  // Not newer than the installed Wrangler supports, or `wrangler dev` will not start.
+  "name": "thenwhat-store",
+  // Not newer than the installed Wrangler supports.
   "compatibility_date": "2026-10-01",
-  "workers_dev": false,
-  "preview_urls": false,
-  // Nothing a writer sends is logged: not a token, not a record, not a payload.
-  "observability": { "enabled": false },
   "d1_databases": [
     { "binding": "STORE", "database_name": "thenwhat-store-preview", "migrations_dir": "migrations" }
-  ],
-  "r2_buckets": [
-    { "binding": "PAYLOADS", "bucket_name": "thenwhat-payloads-preview" }
-  ],
-  // How often the service may be asked, counted for a minute in each Cloudflare location
-  // (developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit, read 2026-11-17;
-  // a period is 10 or 60 seconds). A caller with no known token: 60 a minute an address (the deploy's own check asks about 40).
-  // A token: 600 a minute. The namespace ids are this service's own; production's differ.
-  "ratelimits": [
-    { "name": "LIMIT_UNKNOWN", "namespace_id": "1001", "simple": { "limit": 60, "period": 60 } },
-    { "name": "LIMIT_TOKEN", "namespace_id": "1002", "simple": { "limit": 600, "period": 60 } }
-  ],
-  "queues": {
-    "producers": [{ "binding": "WORK", "queue": "thenwhat-work-preview" }]
-  },
-  // The bounds a writer is held to. Each is under a platform limit read on 2026-11-17
-  // (src/limits.mjs names the page for each); the run size is to be set from timings on
-  // D1 itself (task 3.5).
-  "vars": {
-    "MAX_RUN_RECORDS": "20000",
-    "MAX_CHUNK_BYTES": "1900000",
-    "MAX_CHUNK_RECORDS": "5000",
-    "MAX_PAYLOAD_BYTES": "8000000"
-  }
-  // A secret, set with `wrangler secret put` and never written here:
-  //   INGEST_TOKENS   a JSON list of {name, role, device?, sha256}: the SHA-256 of each
-  //                   token, never the token. Locally it is read from .dev.vars.
+  ]
 }

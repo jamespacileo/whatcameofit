@@ -6,6 +6,7 @@
 import Base from "../layouts/Base.astro";
 import { pairBundle, pairBundleVersion } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
+import { rendererDigest } from "../lib/renderer-digest";
 import "./pair.css";
 
 const version = pairBundleVersion();
@@ -15,8 +16,8 @@ const version = pairBundleVersion();
 const edition = meshEdition(pairBundle()?.manifest?.snapshot?.mesh_years ?? []);
 ---
 
-<Base title="__PAIR_TITLE__" description="__PAIR_DESCRIPTION__" canonicalPath="/__PAIR_ADDRESS__" framed>
+<Base title="__PAIR_TITLE__" description="__PAIR_DESCRIPTION__" canonicalPath="/__PAIR_ADDRESS__" oembed="/oembed/__PAIR_ADDRESS__.json" framed>
   <Fragment slot="band" set:html="<!--pair-band-->" />
   <Fragment set:html="<!--pair-sheet-->" />
-  <template data-pair-version={version} data-mesh-edition={edition}></template>
+  <template data-pair-version={version} data-mesh-edition={edition} data-renderer={rendererDigest()}></template>
 </Base>

@@ -12,7 +12,23 @@ import { SITE } from "../site.config.mjs";
 /** A pair's address: two slugs joined by a double hyphen. */
 const ADDRESS = /^\/([a-z0-9]+(?:-[a-z0-9]+)*--[a-z0-9]+(?:-[a-z0-9]+)*)$/;
 const VERSION = /data-pair-version="([0-9a-f]{16})"/;
+const RENDERER = /data-renderer="([0-9a-f]+)"/;
+// The footer's date of the bundle (Base.astro): the same page made from an unchanged file says
+// another date after each load, which is no change to the page itself.
+const GATHERED = /<p data-records-gathered>[^<]*<\/p>/;
 const MESH_EDITION = /data-mesh-edition="([^"]*)"/;
+// The site's address as the build wrote it into the frame's canonical link: the Worker's own
+// SITE_URL is not the build's, so every address a page made here names comes from the frame.
+const SITE_ORIGIN = /<link rel="canonical" href="(https?:\/\/[^/"]+)\/__PAIR_ADDRESS__"/;
+
+/** The headers public/_headers sends with every file of the site ("/*"). A response made here
+ * is no file, so the Worker sets them itself; tests/pair-on-request.build-test.mjs holds the
+ * two lists the same. */
+export const SITE_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Strict-Transport-Security": "max-age=31536000",
+};
 export const SHELL_PATH = "/pair-shell";
 const DAY_SECONDS = 86400;
 // Said when a pair's file does not pass its check: nothing of the file is shown.
@@ -39,6 +55,16 @@ export function recordAddress(pathname) {
  *   a page made here carries the same mark as the files beside it;
  * - `meshEdition`, the MeSH vocabulary's year as the build states it.
  */
+// The frame as read for a request, kept for the rest of that request: the address check, the
+// cache of not-found answers and the page's own step all read it, and the asset is fetched once.
+const framesRead = new WeakMap();
+
+/** `builtVersion` for one request, read once however many steps ask. */
+export function builtFor(request, env) {
+  if (!framesRead.has(request)) framesRead.set(request, builtVersion(env, new URL(request.url)));
+  return framesRead.get(request);
+}
+
 export async function builtVersion(env, url) {
   const frame = await env.ASSETS.fetch(new Request(new URL(SHELL_PATH, url)));
   if (!frame.ok) return null;
@@ -48,15 +74,81 @@ export async function builtVersion(env, url) {
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(shell)));
   const build = [...digest.slice(0, 8)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
   const meshEdition = (MESH_EDITION.exec(shell)?.[1] ?? "").replaceAll("&amp;", "&").replaceAll("&#39;", "'").replaceAll("&quot;", '"').replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-  return { shell, version, build, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
+  const siteUrl = SITE_ORIGIN.exec(shell)?.[1];
+  if (!siteUrl) return null;
+  // The frame as a page's content sees it: the same whatever bundle it was built from (its
+  // version and the date the bundle was made left out), so an HTML page whose file is unchanged
+  // keeps its tag from one bundle to the next.
+  const pageFrame = await digestOf(shell.replace(VERSION, 'data-pair-version=""').replace(GATHERED, "<p data-records-gathered></p>"));
+  const renderer = RENDERER.exec(shell)?.[1];
+  if (!renderer) return null;
+  return { shell, version, build, pageFrame, renderer, siteUrl, robots: frame.headers.get("X-Robots-Tag"), meshEdition };
 }
 
-/** The headers of a page or file made here: its type and caching, and the frame's robots mark. */
+/** The first 12 bytes of the SHA-256 of a text or of bytes, in hex. */
+export async function digestOf(content) {
+  const bytes = typeof content === "string" ? new TextEncoder().encode(content) : content;
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return [...digest.slice(0, 12)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * A page's entity tag, from what it is made of (openspec pairs-site task 4.6e): the code that
+ * writes it (the renderer digest the build put in the frame) and the site's address, then each
+ * format's own inputs, given by the caller: the files it reads from D1, as read, the part of the
+ * sets read with them that reaches the page, and for an HTML page the frame as a page sees it.
+ * A page whose inputs are unchanged keeps its tag across bundle versions, so a crawler asking
+ * again is told it is unchanged (304) rather than sent it whole after every load.
+ *
+ * Weak (`W/`): two pages with one tag are the same page but not the same bytes, since the frame
+ * carries the bundle version it was built from. RFC 9110 8.8.1: a weak validator "might not
+ * change for every change to the representation data"; If-None-Match compares tags weakly, so a
+ * weak tag answers a conditional GET in full (8.8.3.2, 13.1.2).
+ * https://www.rfc-editor.org/rfc/rfc9110#section-8.8
+ */
+export async function contentTag(built, ...parts) {
+  const text = [built.renderer, built.siteUrl, ...parts.map((part) => (part === ABSENT ? "absent" : typeof part === "string" ? part : JSON.stringify(part)))].join("\u0000");
+  return `W/"${await digestOf(text)}"`;
+}
+
+/** Whether the asker holds this tag already (If-None-Match, compared weakly: RFC 9110 13.1.2). */
+export function unchanged(request, tag) {
+  const asked = request.headers.get("If-None-Match");
+  if (!asked || !tag) return false;
+  if (asked.trim() === "*") return true;
+  const opaque = (one) => one.trim().replace(/^W\//, "");
+  return asked.split(",").some((one) => opaque(one) === opaque(tag));
+}
+
+/** The answer for an asker who holds the page: its tag and caching, no body (RFC 9110 15.4.5). */
+export function notModified(built, tag, cacheControl) {
+  const headers = new Headers({ ...SITE_HEADERS, ETag: tag, "Cache-Control": cacheControl });
+  if (built.robots) headers.set("X-Robots-Tag", built.robots);
+  return new Response(null, { status: 304, headers });
+}
+
+/** A kept page, or 304 for an asker who holds it, read from what the cache kept: no D1 read.
+ * The 304 carries the kept page's age and date, so a cache downstream keeps it no longer than
+ * the page's own day (RFC 9111 4.2.3). */
+export function fromCache(request, built, kept) {
+  const tag = kept.headers.get("ETag");
+  if (!(kept.status === 200 && tag && unchanged(request, tag))) return kept;
+  const answer = notModified(built, tag, kept.headers.get("Cache-Control"));
+  for (const name of ["Age", "Date", "Expires"]) if (kept.headers.has(name)) answer.headers.set(name, kept.headers.get(name));
+  return answer;
+}
+
+/** The headers of a page or file made here: the site's own, its type and caching, and the
+ * frame's robots mark. */
 export function madeHeaders(built, type, cacheControl) {
-  const headers = new Headers({ "Content-Type": type, "Cache-Control": cacheControl });
+  const headers = new Headers({ ...SITE_HEADERS, "Content-Type": type, "Cache-Control": cacheControl });
   if (built.robots) headers.set("X-Robots-Tag", built.robots);
   return headers;
 }
+
+/** What a page's step answers when D1 confirms the version holds no such file: the key its page
+ * would be kept under, where the Worker's entry keeps the not-found answer instead. */
+export const notHeld = (key) => ({ notHeld: key });
 
 /** What `bundleFile` gives for a file the version does not hold: distinct from any parsed body,
  * JSON `null` included, so every body found is checked. */
@@ -83,8 +175,11 @@ export async function bundleFile(env, version, model, key) {
 
 /** The frame with a page's parts in their places. Each part is put in by a function, so it goes
  * in as written: a replacement string would read "$$" or "$&" in it as patterns. */
-export function fill(shell, { title, description, address, band, sheet }) {
-  return shell
+// The frame's oEmbed link (PairShell.astro): kept for a pair's page, removed for a listing's.
+const OEMBED_LINK = /<link[^>]*type="application\/json\+oembed"[^>]*>/;
+
+export function fill(shell, { title, description, address, band, sheet, oembed = false }) {
+  return (oembed ? shell : shell.replace(OEMBED_LINK, ""))
     .replaceAll("__PAIR_TITLE__", () => escape(title))
     .replaceAll("__PAIR_DESCRIPTION__", () => escape(description))
     .replaceAll("__PAIR_ADDRESS__", () => escape(address))
@@ -117,16 +212,16 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   const url = new URL(request.url);
   const address = pairAddress(url.pathname);
   if (!address || !env.PAIRS || typeof validate !== "function") return null;
-  const built = await builtVersion(env, url);
+  const built = await builtFor(request, env);
   if (!built) return null;
   const { shell, version } = built;
 
   const key = new Request(new URL(`/__pair/${version}/${built.build}/${address}`, url));
   const kept = cache ? await cache.match(key) : undefined;
-  if (kept) return kept;
+  if (kept) return fromCache(request, built, kept);
 
   const file = await bundleFile(env, version, "PairPage", address);
-  if (file === ABSENT) return null;
+  if (file === ABSENT) return notHeld(key);
   let intervention = ABSENT;
   let published = new Set();
   const valid = validate(file);
@@ -145,6 +240,14 @@ export async function pairPage(request, env, validate, cache, validateInterventi
   if (!valid || (intervention !== ABSENT && !(typeof validateIntervention === "function" && validateIntervention(intervention)))) {
     return unreadablePage(built, address);
   }
+  // The narrower pairs the page links: of the intervention's file and its published pairs, only
+  // these reach the page, so only these go into its tag. A pair added or removed elsewhere, of
+  // this treatment or another, leaves the tag as it was.
+  const narrower = narrowerPairs(file, intervention === ABSENT ? null : intervention, published);
+  // Answered before the page is written: an asker who holds it is told so.
+  const tag = await contentTag(built, "pair", built.pageFrame, file, narrower);
+  const caching = `public, max-age=${DAY_SECONDS}`;
+  if (unchanged(request, tag)) return notModified(built, tag, caching);
 
   const view = pairView(file);
   const page = fill(shell, {
@@ -152,9 +255,12 @@ export async function pairPage(request, env, validate, cache, validateInterventi
     description: pairDescription(view),
     address,
     band: renderPairBand(view),
-    sheet: renderPairSheet(view, narrowerPairs(file, intervention === ABSENT ? null : intervention, published)),
+    oembed: true,
+    sheet: renderPairSheet(view, narrower),
   });
-  const answer = new Response(page, { headers: madeHeaders(built, "text/html; charset=utf-8", `public, max-age=${DAY_SECONDS}`) });
+  const headers = madeHeaders(built, "text/html; charset=utf-8", caching);
+  headers.set("ETag", tag);
+  const answer = new Response(page, { headers });
   if (cache) await cache.put(key, answer.clone());
   return answer;
 }
@@ -173,21 +279,24 @@ export async function pairRecord(request, env, validate, cache) {
   const url = new URL(request.url);
   const address = recordAddress(url.pathname);
   if (!address || !env.PAIRS || typeof validate !== "function") return null;
-  const built = await builtVersion(env, url);
+  const built = await builtFor(request, env);
   if (!built) return null;
 
   const key = new Request(new URL(`/__pair-record/${built.version}/${built.build}/${address}`, url));
   const kept = cache ? await cache.match(key) : undefined;
-  if (kept) return kept;
+  if (kept) return fromCache(request, built, kept);
 
   const file = await bundleFile(env, built.version, "PairDataFile", address);
-  if (file === ABSENT) return null;
+  if (file === ABSENT) return notHeld(key);
   if (!validate(file)) {
     return new Response(JSON.stringify({ error: UNREADABLE }), { status: 500, headers: madeHeaders(built, "application/json; charset=utf-8", "no-store") });
   }
-  const answer = new Response(pairRecordText(file, SITE.name, SITE.url), {
-    headers: madeHeaders(built, "application/json; charset=utf-8", `public, max-age=${DAY_SECONDS}`),
-  });
+  const tag = await contentTag(built, "record", file);
+  const caching = `public, max-age=${DAY_SECONDS}`;
+  if (unchanged(request, tag)) return notModified(built, tag, caching);
+  const headers = madeHeaders(built, "application/json; charset=utf-8", caching);
+  headers.set("ETag", tag);
+  const answer = new Response(pairRecordText(file, SITE.name, built.siteUrl), { headers });
   if (cache) await cache.put(key, answer.clone());
   return answer;
 }

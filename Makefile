@@ -1,89 +1,41 @@
-.PHONY: setup smoke-research check check-fast check-slow check-pipeline check-site check-site-build check-extension check-store lint types db-up test-db-up test test-fast test-slow benchmark scripts-test store-test store-dev site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
-# Tests run on their own Postgres (`test-db` in compose.yaml), never on the working
-# database's server. They drop and recreate one database there, named after this checkout
-# so that two checkouts do not collide (pipeline/tests/conftest.py); set
-# TEST_DATABASE_URL to name another, on that server, ending in _test.
-export TEST_DB_PORT ?= 5434
 STORE_TEST_CONCURRENCY ?= 1
 
-# Everything CI runs: the fast set, then the slow set. Needs Docker for the test
-# database; no internet access is needed once dependencies and the Postgres image are
-# present.
+# Everything CI runs: the fast set, then the slow set. No internet access is needed once
+# dependencies are present.
 check: check-fast check-slow
 
-# The fast set, for every edit: under a minute. Lint, types, every pipeline test that
-# builds nothing, the site and extension tests that build nothing, and the daily job's script.
-check-fast: lint types test-fast scripts-test site-test extension-test
+# The fast set, for every edit: under a minute. The site and extension tests that build
+# nothing, and the scripts' tests.
+check-fast: scripts-test site-test extension-test
 
 # The slow set, before a commit is pushed: a few minutes. Every test that builds the
-# site (the pipeline's round trip, the site's build tests and browser journeys), the
-# store's ingest service, the site build, and the packaged extension tests.
-check-slow: test-slow store-test check-site-build extension-package-test
+# site (the site's build tests and browser journeys), the store's pair tables, the
+# site build, and the packaged extension tests.
+check-slow: store-test check-site-build extension-package-test
 
 # One area in full, fast and slow, for work that touches only that area.
-.PHONY: check-pipeline-fast check-release-inputs
-check-pipeline: check-pipeline-fast test-slow
-check-pipeline-fast: lint types test-fast
+.PHONY: check-release-inputs
 check-site: site-test check-site-build
 check-site-build: site-build-test site-search-test site-build
 check-extension: extension-test extension-package-test
 check-store: store-test
 check-release-inputs: site-test site-build check-extension scripts-test
 
-lint:
-	uv run --directory pipeline ruff check .
-	uv run --directory pipeline ruff format --check .
-	uv run --directory pipeline lint-imports
-
-types:
-	uv run --directory pipeline ty check
-
-db-up:
-	docker compose up -d --wait db
-
-test-db-up:
-	docker compose up -d --wait test-db
-
-# The pipeline's tests, fast then slow.
-test: test-fast test-slow
-
-# One worker per core, each on a database of its own (pipeline/tests/conftest.py).
-test-fast: test-db-up
-	uv run --directory pipeline pytest -q -n auto -m "not slow and not benchmark"
-
-# Tests marked `slow` build the site, so the site's dependencies must be installed.
-test-slow: test-db-up site/node_modules
-	uv run --directory pipeline pytest -q -m "slow and not benchmark"
-
-# The daily job's script, against a stand-in for the pipeline: no database, no network.
-# What measuring costs a step that asks no source: at most a twentieth of its time
-# (openspec processing-metrics). Minutes long, so not part of `make check`.
-benchmark: test-db-up
-	uv run --directory pipeline pytest -m benchmark
-
 scripts-test:
-	sh -n scripts/daily-run.sh
 	sh -n scripts/worktree-setup.sh
-	@if command -v shellcheck >/dev/null; then shellcheck scripts/daily-run.sh scripts/tests/daily-run.test.sh; fi
-	sh scripts/tests/daily-run.test.sh
 	node --test --test-reporter=dot scripts/tests/ci-timing.test.mjs
 
-# The store's ingest service (store/ingest), driven over HTTP on D1's local engine: no
-# Cloudflare account, no network, nothing deployed. The proof's scenarios, each token's
-# scope, checksums, a replayed batch and the limits. Where the local engine cannot start,
-# the tests are skipped and say why; in CI that is a failure, not a skip.
+# The store's pair tables (store/ingest) on D1's local engine: no Cloudflare account, no
+# network, nothing deployed. A bundle loaded and read back whole. Where the local engine
+# cannot start, the tests are skipped and say why; in CI that is a failure, not a skip.
 store/ingest/node_modules: store/ingest/pnpm-lock.yaml
 	sh scripts/worktree-setup.sh store/ingest
 
 store-test: store/ingest/node_modules
 	cd store/ingest && node --test --test-reporter=dot --test-concurrency="$(STORE_TEST_CONCURRENCY)" tests/*.test.mjs
-
-# The ingest service on this machine only: http://localhost:8787. Tokens come from
-# store/ingest/.dev.vars (see .dev.vars.example); the store is a file under .wrangler/.
-store-dev: store/ingest/node_modules
-	cd store/ingest && pnpm exec wrangler d1 migrations apply STORE --local && pnpm exec wrangler dev --local
 
 # Linked from pnpm's shared store: seconds in a new worktree. See scripts/worktree-setup.sh.
 site/node_modules: site/pnpm-lock.yaml
@@ -92,7 +44,6 @@ site/node_modules: site/pnpm-lock.yaml
 # Everything a new checkout or worktree needs before `make check`.
 setup:
 	sh scripts/worktree-setup.sh
-	uv sync --directory pipeline
 	$(MAKE) site-search-browser
 
 # The site's tests that build nothing (tests/*.test.mjs).
@@ -139,52 +90,6 @@ extension-safari: extension
 
 # Publishing. See docs/deploy.md. SITE_URL must be the public address:
 #   SITE_URL=https://example.org make deploy-check
-# Hold the export the truth store gives to the one the database gives, and exit with 1
-# when they differ (openspec truth-store, "The two exports are compared"). The cut-over
-# waits on seven nights of this in a row. DATABASE_URL names the database, which is only
-# read. With STORE_FILE (and STORE_PAYLOADS, the folder of its payload objects) the
-# store's export is read from that snapshot; without it a store file is first made from
-# the database through store/merge.sql, which shows the store can hold the records.
-#   make export-compare
-#   make export-compare ARGS="--every 5 --report /tmp/compare.json"
-#   STORE_FILE=/path/store.db STORE_PAYLOADS=/path/objects make export-compare
-.PHONY: export-compare
-export-compare:
-	uv run --directory pipeline thenwhat export-compare --store-sql $(CURDIR)/store $(ARGS)
-
-# The cut-over of the store, one command and one order (store/ingest/scripts/cutover.mjs,
-# docs/deploy.md): the build proved free of people, the jurisdiction read back, migrations,
-# the store found empty, the bookmark noted, the hot file dumped, replayed here, loaded
-# and held to its checks, the payload objects and the bulk file put in the bucket and the
-# manifest read back. It stops at the first stage that fails and names it; each stage is
-# timed; everything goes to a log in the build's folder.
-#   make store-rehearsal STORE_DIR=/path/build                 the same on this machine, nothing sent
-#   make store-cutover ENV=preview STORE_DIR=/path/build       ARGS="--dry-run" prints the plan
-#   make store-cutover ENV=production STORE_DIR=/path/build CONFIRM=thenwhat-store
-# ARGS: --replace (clear a preview store that is not empty), --skip-export (rehearsal only).
-.PHONY: store-rehearsal store-cutover
-store-rehearsal: store/ingest/node_modules
-	@test -n "$(STORE_DIR)" || { echo "Name the build's folder with STORE_DIR."; exit 1; }
-	node store/ingest/scripts/cutover.mjs --env local --store-dir $(STORE_DIR) $(ARGS)
-
-store-cutover: store/ingest/node_modules
-	@test -n "$(ENV)" -a -n "$(STORE_DIR)" || { echo "Name ENV (preview or production) and STORE_DIR."; exit 1; }
-	@test "$(ENV)" != "local" || { echo "For this machine use make store-rehearsal."; exit 1; }
-	node store/ingest/scripts/cutover.mjs --env $(ENV) --store-dir $(STORE_DIR) $(if $(CONFIRM),--confirm $(CONFIRM)) $(ARGS)
-
-# Deploys the ingest service, the only way it is deployed (store/ingest/scripts/deploy.mjs,
-# docs/deploy.md): writes the configuration for the environment, refuses unless the
-# jurisdiction reads eu and no migration is left to apply, deploys to a workers.dev
-# address, sets the secret INGEST_TOKENS from the file TOKENS names (checksums of tokens;
-# never printed), then asks the deployed service: 401 without a token on every route, 200
-# for the operator's token, read from STORE_TOKEN_OPERATOR.
-#   make store-deploy ENV=preview TOKENS=/path/ingest-tokens-preview.json     ARGS="--dry-run" prints the plan
-#   make store-deploy ENV=production CONFIRM=thenwhat-store-ingest TOKENS=/path/ingest-tokens.json
-.PHONY: store-deploy
-store-deploy: store/ingest/node_modules
-	@test -n "$(ENV)" || { echo "Name ENV: preview or production."; exit 1; }
-	node store/ingest/scripts/deploy.mjs --env $(ENV) $(if $(CONFIRM),--confirm $(CONFIRM)) $(if $(TOKENS),--tokens-file "$(TOKENS)") $(ARGS)
-
 # The site is built from one bundle of pairs (openspec pairs-site). A rehearsal of the
 # public build from the small bundle the tests use: needs no Cloudflare account and
 # publishes nothing. CI runs it.
@@ -226,6 +131,13 @@ STAGING_DATABASE ?= thenwhat-store-preview
 deploy-staging: site/node_modules
 	PAIRS_BUNDLE= SITE_URL=$(STAGING_URL) PAIRS_DATABASE=$(STAGING_DATABASE) node site/scripts/deploy.mjs --staging $(ARGS)
 	$(if $(findstring --dry-run,$(ARGS)),,node site/scripts/staging-smoke.mjs $(STAGING_URL) site/dist $(BUILD_REVISION))
+
+# The pairs site on this machine as a deployment serves it, with the Worker and the bundle in
+# D1's local engine: http://localhost:8788. Astro's dev server has no pair pages, since none is
+# built (site/scripts/pairs-dev.mjs). PAIRS_BUNDLE names another bundle.
+.PHONY: pairs-dev
+pairs-dev: site/node_modules
+	node site/scripts/pairs-dev.mjs
 
 # The site with its registry search, on this machine only: http://localhost:8787
 # Reads the model settings from .env and builds from PAIRS_BUNDLE (the tests' small bundle unless named).

@@ -21,10 +21,14 @@ import { renderListingBand, renderListingSheet } from "../src/lib/listing-render
 import { shownName } from "../src/lib/pair-view.ts";
 import { meshEdition } from "../src/lib/clinical.ts";
 import { canonicalAddress } from "../src/lib/structured.ts";
-import { builtAhead } from "../src/lib/pair-view.ts";
+import { narrowerPairs, pairView } from "../src/lib/pair-view.ts";
+import { renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
+import { pairRecordText } from "../src/lib/pair-record.ts";
+import { embedTitle, oembedOf, renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
+import { SITE } from "../site.config.mjs";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
-import { UNREADABLE } from "../worker/pairs.mjs";
+import { SITE_HEADERS, UNREADABLE } from "../worker/pairs.mjs";
 
 const MARKUP = 'A <script>alert("x")</script> & <b>bold</b> study';
 const ON_REQUEST = "acoziborole--trypanosomiasis";
@@ -103,6 +107,8 @@ const pages = Object.fromEntries(
 const hidden = new Set();
 // Appended to the frame, to stand for a redeploy with the same bundle and another frame.
 let frameChange = "";
+// A frame as another deployment would have it: each rewrites the built frame's text.
+const frameEdits = { "/pair-shell": (text) => text, "/embed-shell": (text) => text };
 let mf;
 
 /** The built files, as the asset binding serves them: a page at its address, else the 404 page. */
@@ -114,7 +120,10 @@ function assets(request) {
     const file = path.join(dist, candidate);
     if (!hidden.has(clean) && fs.existsSync(file) && fs.statSync(file).isFile()) {
       const type = file.endsWith(".html") ? "text/html; charset=utf-8" : file.endsWith(".json") ? "application/json" : "application/octet-stream";
-      const body = clean === "/pair-shell" ? fs.readFileSync(file, "utf8") + frameChange : fs.readFileSync(file);
+      const body =
+        clean === "/pair-shell" ? frameEdits[clean](fs.readFileSync(file, "utf8")) + frameChange
+        : clean === "/embed-shell" ? frameEdits[clean](fs.readFileSync(file, "utf8"))
+        : fs.readFileSync(file);
       // As a preview's _headers mark every asset (scripts/pr-preview.mjs).
       return new Response(body, { headers: { "Content-Type": type, "X-Robots-Tag": "noindex" } });
     }
@@ -171,20 +180,24 @@ before(async () => {
 after(async () => { if (mf) await mf.dispose(); });
 
 const get = (pathname) => mf.dispatchFetch(`https://site.test${pathname}`, { redirect: "manual" });
+// A request no earlier answer is kept for: the Worker keeps each a day under a key that holds
+// the host, so a test that changes the store asks on a host of its own.
+let freshHosts = 0;
+const getFresh = (pathname) => mf.dispatchFetch(`https://fresh-${(freshHosts += 1)}.test${pathname}`, { redirect: "manual" });
 const documentOf = async (response) => parseHTML(await response.text()).document;
 
-test("the rule builds a pair ahead when it came from a claim or rests on more than one trial", () => {
-  for (const [address, page] of Object.entries(pages)) {
-    const expected = page.row.origin !== null || page.trials.length > 1;
-    assert.equal(builtAhead(page), expected, address);
-    assert.equal(fs.existsSync(path.join(dist, address, "index.html")), expected, address);
-    assert.equal(fs.existsSync(path.join(dist, "og", `${address}.png`)), expected, address);
-  }
-  assert.ok(Object.values(pages).some((page) => !builtAhead(page)));
-});
+/** A pair's page as the shared renderer writes it, the Worker's own source of the page. */
+function rendered(address) {
+  const file = pages[address];
+  const view = pairView(file);
+  const intervention = readBundle(bundle).pages.PairInterventionPage[file.row.intervention.slug] ?? null;
+  const narrower = narrowerPairs(file, intervention, new Set(Object.keys(pages)));
+  return parseHTML(`<!doctype html><html><body>${renderPairBand(view)}${renderPairSheet(view, narrower)}</body></html>`).document;
+}
 
-test("a pair not built ahead is made on request from D1, kept a day", async () => {
-  for (const [address, page] of Object.entries(pages).filter(([one, file]) => !builtAhead(file) && one !== BROKEN)) {
+test("no file is built per pair: every pair's page is made on request from D1, kept a day", async () => {
+  for (const [address, page] of Object.entries(pages).filter(([one]) => one !== BROKEN)) {
+    assert.ok(!fs.existsSync(path.join(dist, address)), `${address} is built`);
     const response = await get(`/${address}`);
     assert.equal(response.status, 200, address);
     assert.match(response.headers.get("Cache-Control"), /max-age=86400/);
@@ -193,7 +206,6 @@ test("a pair not built ahead is made on request from D1, kept a day", async () =
     assert.match(document.querySelector("[data-pair-status]").textContent, new RegExp(STATUS_LABELS[page.row.status.code]));
     assert.match(document.querySelector("title").textContent, new RegExp(page.row.descriptor.label.split(",")[0], "i"));
     assert.equal(document.querySelectorAll("[data-trial]").length, page.trials.length);
-    // Posted results and papers are shown on a page made on request as on a built one.
     for (const trial of page.trials) {
       const shown = document.querySelector(`[data-trial="${trial.nct_id}"]`);
       assert.equal(shown.querySelectorAll("[data-outcome]").length, trial.findings?.outcomes.length ?? 0, `${address} ${trial.nct_id}`);
@@ -202,22 +214,26 @@ test("a pair not built ahead is made on request from D1, kept a day", async () =
   }
 });
 
-test("a trial's posted results are shown as the registry wrote them, built ahead and made on request", async () => {
-  const file = pages[WITH_RESULTS];
-  assert.ok(builtAhead(file));
-  const built = parseHTML(fs.readFileSync(path.join(dist, WITH_RESULTS, "index.html"), "utf8")).document;
-  hidden.add(`/${WITH_RESULTS}`);
-  let made;
-  try {
-    const response = await get(`/${WITH_RESULTS}`);
-    assert.equal(response.status, 200);
-    made = await documentOf(response);
-  } finally {
-    hidden.delete(`/${WITH_RESULTS}`);
+test("a pair's page made on request is the shared renderer's for its file, with its own address, preview and oEmbed link", async () => {
+  for (const address of Object.keys(pages).filter((one) => one !== BROKEN)) {
+    const made = await documentOf(await get(`/${address}`));
+    const expected = rendered(address);
+    assert.equal(made.querySelector(".band.record").outerHTML, expected.querySelector(".band.record").outerHTML, address);
+    assert.equal(made.querySelector(".frame").outerHTML, expected.querySelector(".frame").outerHTML, address);
+    assert.equal(made.querySelector('link[rel="canonical"]').getAttribute("href"), canonicalAddress(`/${address}`));
+    assert.equal(made.querySelector('meta[property="og:url"]')?.getAttribute("content") ?? canonicalAddress(`/${address}`), canonicalAddress(`/${address}`));
+    // The site's own card: no pair has a picture of its own.
+    assert.match(made.querySelector('meta[property="og:image"]').getAttribute("content"), /\/brand-card\.png/);
+    assert.equal(made.querySelector('link[type="application/json+oembed"]').getAttribute("href"), canonicalAddress(`/oembed/${address}.json`));
+    assert.equal(made.querySelector("footer.colophon").outerHTML, builtFooter(), address);
   }
-  assert.equal(made.querySelector(".frame").outerHTML, built.querySelector(".frame").outerHTML);
+});
+
+test("a trial's posted results are shown as the registry wrote them", async () => {
+  const file = pages[WITH_RESULTS];
+  const made = await documentOf(await get(`/${WITH_RESULTS}`));
   const [trial] = file.trials;
-  const section = built.querySelector(`[data-trial="${trial.nct_id}"] [data-results]`);
+  const section = made.querySelector(`[data-trial="${trial.nct_id}"] [data-results]`);
   assert.equal(section.querySelectorAll("[data-outcome]").length, trial.findings.outcomes.length);
   assert.equal(section.querySelectorAll("[data-comparison]").length, trial.findings.comparisons.length);
   // A comparison says which groups it covers, by the outcome's own group titles.
@@ -230,65 +246,79 @@ test("a trial's posted results are shown as the registry wrote them, built ahead
   assertNoOutcomeVerdict([section.textContent]);
 });
 
-test("the same file gives the same page built ahead and made on request", async () => {
-  const built = parseHTML(fs.readFileSync(path.join(dist, COMPARED, "index.html"), "utf8")).document;
-  hidden.add(`/${COMPARED}`);
-  try {
-    const response = await get(`/${COMPARED}`);
-    assert.equal(response.status, 200);
-    const made = await documentOf(response);
-    assert.equal(made.querySelector(".band.record").outerHTML, built.querySelector(".band.record").outerHTML);
-    assert.equal(made.querySelector(".frame").outerHTML, built.querySelector(".frame").outerHTML);
-    assert.equal(made.querySelector("title").textContent, built.querySelector("title").textContent);
-  } finally {
-    hidden.delete(`/${COMPARED}`);
-  }
-});
-
-test("a pair's open data record is written by the build only with its page, and served from D1 otherwise", async () => {
-  // Task 1.3: one record a pair would pass the deployment's file limit at full size.
-  for (const [address, page] of Object.entries(pages)) {
-    assert.equal(fs.existsSync(path.join(dist, "data", "pairs", `${address}.json`)), builtAhead(page), address);
-  }
+test("every pair's open data record is served from D1, as the lab's data file with the licence, and none is built", async () => {
+  // Task 4.6: no file per pair, so a full bundle does not grow the deployment.
+  const files = readBundle(bundle).pages.PairDataFile;
   const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "pairs.json"), "utf8"));
   assert.equal(index.entries.length, Object.keys(pages).length);
   for (const entry of index.entries) {
+    assert.ok(!fs.existsSync(path.join(dist, entry.record.slice(1))), `${entry.record} is built`);
     const response = await get(entry.record);
     assert.equal(response.status, 200, entry.record);
     assert.match(response.headers.get("Content-Type"), /application\/json/);
-    const record = await response.json();
-    assert.equal(record.format, "pair-record");
-    assert.equal(record.pair.row.pair.address, entry.address);
-  }
-  // The record made on request is the build's own text for the same file.
-  const recordPath = `/data/pairs/${COMPARED}.json`;
-  const built = fs.readFileSync(path.join(dist, recordPath.slice(1)), "utf8");
-  hidden.add(recordPath);
-  try {
-    const response = await get(recordPath);
-    assert.equal(response.status, 200);
     assert.match(response.headers.get("Cache-Control"), /max-age=86400/);
-    assert.equal(await response.text(), built);
-  } finally {
-    hidden.delete(recordPath);
+    // The text the shared writer gives for the lab's data file.
+    assert.equal(await response.text(), pairRecordText(files[entry.address], SITE.name, SITE.url), entry.record);
   }
   assert.equal((await get("/data/pairs/no-such--pair.json")).status, 404);
 });
 
-test("a title holding markup is shown as text, built ahead and made on request", async () => {
-  const built = fs.readFileSync(path.join(dist, BUILT_WITH_MARKUP, "index.html"), "utf8");
-  const made = await (await get(`/${ON_REQUEST}`)).text();
-  for (const html of [built, made]) {
-    const document = parseHTML(html).document;
-    const trial = document.querySelector("[data-trial] h3");
+test("a title holding markup is shown as text", async () => {
+  for (const address of [BUILT_WITH_MARKUP, ON_REQUEST]) {
+    const html = await (await get(`/${address}`)).text();
+    const trial = parseHTML(html).document.querySelector("[data-trial] h3");
     assert.match(trial.textContent, /A <script>alert\("x"\)<\/script> & <b>bold<\/b> study/);
     assert.equal(trial.querySelector("script, b"), null);
     assert.ok(html.includes("&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;"));
   }
 });
 
+test("a pair's embed is made on request into the embed's frame, noindex, with the footer notices", async () => {
+  for (const [address, file] of Object.entries(pages).filter(([one]) => one !== BROKEN)) {
+    assert.ok(!fs.existsSync(path.join(dist, "embed", address)), `embed/${address} is built`);
+    const response = await get(`/embed/${address}`);
+    assert.equal(response.status, 200, address);
+    assert.match(response.headers.get("Cache-Control"), /max-age=86400/);
+    const made = await documentOf(response);
+    const view = pairView(file);
+    assert.equal(made.querySelector('meta[name="robots"]').getAttribute("content"), "noindex");
+    assert.equal(made.querySelector("title").textContent, `${embedTitle(view)} | ${SITE.name}`);
+    const article = parseHTML(`<!doctype html><html><body><article>${renderEmbedArticle(view, SITE.name, SITE.url)}</article></body></html>`).document;
+    assert.equal(made.querySelector("[data-pair-status]").outerHTML, article.querySelector("[data-pair-status]").outerHTML, address);
+    assert.ok(made.querySelector("footer").textContent.includes(renderEmbedRegistries(view).trim()), address);
+    // Its stylesheet is the build's own, asked of no other host.
+    assert.ok([...made.querySelectorAll('link[rel="stylesheet"]')].every((link) => link.getAttribute("href").startsWith("/")));
+  }
+  assert.equal((await get("/embed/no-such--pair")).status, 404);
+  assert.equal((await get("/embed-shell")).status, 404);
+});
+
+test("a pair's oEmbed description is made on request, its picture the site's own card", async () => {
+  const card = parseHTML(fs.readFileSync(path.join(dist, "pair-shell", "index.html"), "utf8")).document.querySelector('meta[property="og:image"]').getAttribute("content");
+  for (const [address, file] of Object.entries(pages).filter(([one]) => one !== BROKEN)) {
+    assert.ok(!fs.existsSync(path.join(dist, "oembed", `${address}.json`)));
+    const response = await get(`/oembed/${address}.json`);
+    assert.equal(response.status, 200, address);
+    assert.match(response.headers.get("Content-Type"), /application\/json\+oembed/);
+    assert.deepEqual(await response.json(), oembedOf(pairView(file), SITE.name, SITE.url, card));
+  }
+  assert.equal((await get("/oembed/no-such--pair.json")).status, 404);
+});
+
+test("a pair's card addresses answer with the site's own card, and no other address does", async () => {
+  const card = new URL(parseHTML(fs.readFileSync(path.join(dist, "pair-shell", "index.html"), "utf8")).document.querySelector('meta[property="og:image"]').getAttribute("content"));
+  const site = fs.readFileSync(path.join(dist, card.pathname.slice(1)));
+  for (const folder of ["", "square/", "tall/"]) {
+    const response = await get(`/og/${folder}${ON_REQUEST}.png`);
+    assert.equal(response.status, 200, folder);
+    assert.equal(response.headers.get("Content-Type"), "image/png");
+    assert.ok(Buffer.from(await response.arrayBuffer()).equals(site), folder);
+    assert.equal((await get(`/og/${folder}no-such--pair.png`)).status, 404, folder);
+  }
+});
+
 test("an address the bundle does not hold answers the not-found page, and so does the frame", async () => {
-  for (const pathname of ["/no-such--pair", "/pair-shell"]) {
+  for (const pathname of ["/no-such--pair", "/pair-shell", "/embed-shell"]) {
     const response = await get(pathname);
     assert.equal(response.status, 404, pathname);
     assert.doesNotMatch(await response.text(), /__PAIR_TITLE__/);
@@ -548,7 +578,94 @@ test("a listing address no file holds is not found, and one no listing could hav
     for (const pathname of ["/intervention/Not_A_Slug", "/intervention/a--b", "/clinical/X007239", "/clinical/D12", "/topic/x/y", "/topic/"]) {
       assert.equal((await get(pathname)).status, 404, pathname);
     }
-    assert.notEqual((await get("/intervention/no-such-treatment")).status, 404, "the well-formed address reads the table");
+    // Asked on a fresh host: on this one its not-found answer is kept for five minutes.
+    assert.notEqual((await getFresh("/intervention/no-such-treatment")).status, 404, "the well-formed address reads the table");
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+// The address space (openspec pairs-site task 4.6c): only a pair's or a listing's address reads
+// D1; an address of theirs the version holds nothing for is answered 404 and kept five minutes;
+// the query string is no part of an address.
+test("an address no pair or listing could have is answered by the assets, with no read of D1, whatever its family", async () => {
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    for (const pathname of [
+      "/Acoziborole--trypanosomiasis", "/acoziborole---x", "/acoziborole--", "/acoziborole",
+      "/data/pairs/A--b.json", "/data/pairs/a--b.JSON", "/data/pairs/a--b",
+      "/embed/acoziborole", "/embed/a--b/extra", "/oembed/a--b.xml", "/og/a--b.jpg", "/og/huge/a--b.png", "/og/square/A--b.png",
+      `/a--${"b".repeat(400)}`, `/embed/a--${"b".repeat(400)}`,
+    ]) {
+      const response = await getFresh(pathname);
+      assert.equal(response.status, 404, pathname);
+      await response.body?.cancel();
+    }
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+test("a well-formed address the version holds nothing for answers 404, kept five minutes, and is not read again", async () => {
+  const host = "https://missing.test";
+  for (const pathname of ["/no-such--pair", "/data/pairs/no-such--pair.json", "/embed/no-such--pair", "/oembed/no-such--pair.json", "/og/no-such--pair.png", "/topic/no-such-topic"]) {
+    const first = await mf.dispatchFetch(`${host}${pathname}`, { redirect: "manual" });
+    assert.equal(first.status, 404, pathname);
+    assert.equal(first.headers.get("Cache-Control"), "public, max-age=300", pathname);
+    await first.body?.cancel();
+  }
+  // With the page table gone, the same addresses are answered from what was kept.
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    for (const pathname of ["/no-such--pair", "/embed/no-such--pair", "/topic/no-such-topic", "/no-such--pair?x=1"]) {
+      const again = await mf.dispatchFetch(`${host}${pathname}`, { redirect: "manual" });
+      assert.equal(again.status, 404, pathname);
+      await again.body?.cancel();
+    }
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+test("a miss first asked for with HEAD keeps nothing bodiless: the GET after it has the not-found page", async () => {
+  const host = "https://head-first.test";
+  const head = await mf.dispatchFetch(`${host}/no-such--pair`, { method: "HEAD", redirect: "manual" });
+  assert.equal(head.status, 404);
+  await head.body?.cancel();
+  const page = await mf.dispatchFetch(`${host}/no-such--pair`, { redirect: "manual" });
+  assert.equal(page.status, 404);
+  assert.match(await page.text(), /<title>[^<]+<\/title>/);
+});
+
+test("only a confirmed miss in D1 is kept: a page whose frame failed answers again once the frame is back", async () => {
+  const host = "https://frame-back.test";
+  // The embed's frame is missing for a moment, as in a deployment still reaching a location.
+  hidden.add("/embed-shell");
+  try {
+    const failed = await mf.dispatchFetch(`${host}/embed/${ON_REQUEST}`, { redirect: "manual" });
+    assert.equal(failed.status, 404);
+    assert.notEqual(failed.headers.get("Cache-Control"), "public, max-age=300", "a failure is no miss");
+    await failed.body?.cancel();
+  } finally {
+    hidden.delete("/embed-shell");
+  }
+  assert.equal((await mf.dispatchFetch(`${host}/embed/${ON_REQUEST}`, { redirect: "manual" })).status, 200);
+});
+
+test("the query string is no part of an address: the same page, kept once, its canonical address bare", async () => {
+  const host = "https://query.test";
+  const plain = await (await mf.dispatchFetch(`${host}/${ON_REQUEST}`)).text();
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    // Answered from what was kept for the bare address, with no read of D1.
+    const asked = await mf.dispatchFetch(`${host}/${ON_REQUEST}?utm_source=x&ref=y`);
+    assert.equal(asked.status, 200);
+    const text = await asked.text();
+    assert.equal(text, plain);
+    assert.equal(parseHTML(text).document.querySelector('link[rel="canonical"]').getAttribute("href"), canonicalAddress(`/${ON_REQUEST}`));
   } finally {
     await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
   }
@@ -573,36 +690,223 @@ test("a listing file stored as JSON null is checked, and gives the error page", 
   }
 });
 
-test("a pair names the same treatment's pairs for narrower conditions, built ahead and made on request", async () => {
-  // acoziborole--infections (C01, built ahead) and acoziborole--trypanosomiasis (C01.610…, made
-  // on request) from the small bundle; the African form sits beneath both.
-  const named = (html) => [...parseHTML(html).document.querySelectorAll("[data-pair-narrower] [data-narrower]")].map((link) => link.dataset.narrower);
-  assert.deepEqual(named(fs.readFileSync(path.join(dist, "acoziborole--infections", "index.html"), "utf8")), [
-    "acoziborole--trypanosomiasis", "acoziborole--trypanosomiasis-african",
-  ]);
-  const made = await get("/acoziborole--trypanosomiasis");
-  assert.equal(made.status, 200);
-  assert.ok(!fs.existsSync(path.join(dist, "acoziborole--trypanosomiasis", "index.html")), "made on request");
-  assert.deepEqual(named(await made.text()), ["acoziborole--trypanosomiasis-african"]);
+test("every address a page made here names is the build's, read from its frame, whatever the Worker's own setting", async () => {
+  // A deployment built for another address: the frame says so, and the Worker follows it.
+  const built = new URL(canonicalAddress("/")).origin;
+  frameEdits["/pair-shell"] = (text) => text.replaceAll(built, "https://records.example.org");
+  try {
+    const oembed = await (await getFresh(`/oembed/${ON_REQUEST}.json`)).json();
+    assert.match(oembed.html, new RegExp(`https://records\\.example\\.org/embed/${ON_REQUEST}`));
+    assert.equal(oembed.provider_url, "https://records.example.org/");
+    const record = await (await getFresh(`/data/pairs/${ON_REQUEST}.json`)).text();
+    assert.ok(record.includes("https://records.example.org") && !record.includes(built), "the record names the build's address only");
+    const embed = await (await getFresh(`/embed/${ON_REQUEST}`)).text();
+    assert.ok(embed.includes(`https://records.example.org/${ON_REQUEST}`));
+  } finally {
+    frameEdits["/pair-shell"] = (text) => text;
+  }
+});
+
+test("a response made here carries the site's own headers, the ones public/_headers gives every file", async () => {
+  // The "/*" rule of public/_headers, as Cloudflare reads it.
+  const lines = fs.readFileSync("public/_headers", "utf8").split("\n");
+  const at = lines.findIndex((line) => line.trim() === "/*");
+  const rule = {};
+  for (const line of lines.slice(at + 1)) {
+    if (!/^\s+\S/.test(line)) break;
+    const colon = line.indexOf(":");
+    rule[line.slice(0, colon).trim()] = line.slice(colon + 1).trim();
+  }
+  assert.deepEqual(SITE_HEADERS, rule);
+  for (const pathname of [`/${ON_REQUEST}`, `/data/pairs/${ON_REQUEST}.json`, `/embed/${ON_REQUEST}`, `/oembed/${ON_REQUEST}.json`, `/og/${ON_REQUEST}.png`, "/topic/infections"]) {
+    const response = await getFresh(pathname);
+    for (const [name, value] of Object.entries(rule)) assert.equal(response.headers.get(name), value, `${pathname} ${name}`);
+    await response.body?.cancel();
+  }
+});
+
+test("the saved forms of a pair's page and embed address lead to the bare address, keeping the query", async () => {
+  for (const [saved, bare] of [
+    [`/${ON_REQUEST}/`, `/${ON_REQUEST}`],
+    [`/${ON_REQUEST}/index.html`, `/${ON_REQUEST}`],
+    [`/${ON_REQUEST}.html`, `/${ON_REQUEST}`],
+    [`/embed/${ON_REQUEST}/`, `/embed/${ON_REQUEST}`],
+    [`/embed/${ON_REQUEST}.html`, `/embed/${ON_REQUEST}`],
+    [`/embed/${ON_REQUEST}/index.html`, `/embed/${ON_REQUEST}`],
+  ]) {
+    const response = await get(`${saved}?from=saved`);
+    assert.equal(response.status, 301, saved);
+    assert.equal(new URL(response.headers.get("Location")).pathname + new URL(response.headers.get("Location")).search, `${bare}?from=saved`, saved);
+  }
+});
+
+test("an embed kept for one embed frame is not answered for another with the same bundle", async () => {
+  const before = await (await get(`/embed/${ON_REQUEST}`)).text();
+  assert.ok(!before.includes("<!--another-embed-frame-->"));
+  frameEdits["/embed-shell"] = (text) => text.replace("</body>", "<!--another-embed-frame--></body>");
+  try {
+    assert.ok((await (await get(`/embed/${ON_REQUEST}`)).text()).includes("<!--another-embed-frame-->"));
+  } finally {
+    frameEdits["/embed-shell"] = (text) => text;
+  }
+});
+
+test("an embed whose file fails its check is refused in the embed's own frame, with its footer notices", async () => {
+  // BROKEN's file was made to fail its check by an earlier test.
+  const response = await getFresh(`/embed/${BROKEN}`);
+  assert.equal(response.status, 500);
+  assert.equal(response.headers.get("Cache-Control"), "no-store");
+  const document = await documentOf(response);
+  assert.equal(document.querySelector("[data-pair-unreadable]").textContent, UNREADABLE);
+  assert.ok(document.querySelector("footer").textContent.includes("Data sources:"));
+  assert.doesNotMatch(document.body.textContent, /APITEGROMAB/i);
+});
+
+// Entity tags (openspec pairs-site task 4.6e): from what a page is made of, kept across bundle
+// versions while that is unchanged, so an asker who holds a page is told so (304).
+/** The pair frame a real build of a bundle leaves: its version, its bundle's date and all. */
+function builtFrame(folder) {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-next-build-"));
+  const made = spawnSync("npx", ["astro", "build", "--outDir", out], { encoding: "utf8", env: { ...process.env, PAIRS_BUNDLE: folder, ASTRO_TELEMETRY_DISABLED: "1" } });
+  assert.equal(made.status, 0, made.stdout.slice(-2000) + made.stderr.slice(-2000));
+  const frame = fs.readFileSync(path.join(out, "pair-shell", "index.html"), "utf8");
+  fs.rmSync(out, { recursive: true, force: true });
+  return frame;
+}
+
+const ON_REQUEST_KINDS = () => [`/${ON_REQUEST}`, `/data/pairs/${ON_REQUEST}.json`, `/embed/${ON_REQUEST}`, `/oembed/${ON_REQUEST}.json`, `/og/${ON_REQUEST}.png`, "/intervention/acoziborole", "/topic/infections"];
+
+test("every page made on request carries a weak tag, and asking with it answers 304 with no body", async () => {
+  for (const pathname of ON_REQUEST_KINDS()) {
+    const full = await getFresh(pathname);
+    assert.equal(full.status, 200, pathname);
+    const tag = full.headers.get("ETag");
+    assert.match(tag, /^W\/"[0-9a-f]{24}"$/, pathname);
+    await full.body?.cancel();
+    const host = `https://tag-${(freshHosts += 1)}.test`;
+    // Made again on a new host, from D1, and answered before it is written.
+    const asked = await mf.dispatchFetch(`${host}${pathname}`, { headers: { "If-None-Match": tag }, redirect: "manual" });
+    assert.equal(asked.status, 304, pathname);
+    assert.equal(asked.headers.get("ETag"), tag);
+    assert.equal(asked.headers.get("Cache-Control"), full.headers.get("Cache-Control"));
+    assert.equal(await asked.text(), "");
+    // A tag it does not hold, or none, gets the page.
+    assert.equal((await mf.dispatchFetch(`${host}${pathname}`, { headers: { "If-None-Match": 'W/"0000"' } })).status, 200, pathname);
+  }
+});
+
+test("a kept page answers 304 to an asker who holds it, with no read of D1", async () => {
+  const host = "https://tag-kept.test";
+  const full = await mf.dispatchFetch(`${host}/${ON_REQUEST}`);
+  const tag = full.headers.get("ETag");
+  await full.body?.cancel();
+  const db = await mf.getD1Database("PAIRS");
+  await db.prepare("ALTER TABLE pair_page RENAME TO pair_page_away").run();
+  try {
+    const asked = await mf.dispatchFetch(`${host}/${ON_REQUEST}`, { headers: { "If-None-Match": `"other", ${tag}` } });
+    assert.equal(asked.status, 304);
+    assert.equal(asked.headers.get("ETag"), tag);
+  } finally {
+    await db.prepare("ALTER TABLE pair_page_away RENAME TO pair_page").run();
+  }
+});
+
+test("a page whose file is unchanged keeps its tag under a new bundle version; a changed one does not", async () => {
+  const CHANGED = "tulisokibart--scleroderma-diffuse";
+  const before = new Map();
+  for (const pathname of [`/${ON_REQUEST}`, `/${CHANGED}`, `/data/pairs/${ON_REQUEST}.json`]) {
+    const response = await getFresh(pathname);
+    before.set(pathname, response.headers.get("ETag"));
+    await response.body?.cancel();
+  }
+  // The next bundle: this test's own, with one pair's trial title changed and every other file
+  // as it was. Loaded beside the versions the other tests read, none of them dropped.
+  const next = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-next-"));
+  fs.cpSync(bundle, next, { recursive: true });
+  for (const folder of ["p12_pair_page", "p12_pair_data_file"]) {
+    const file = path.join(next, folder, `${CHANGED}.json`);
+    const held = JSON.parse(fs.readFileSync(file, "utf8"));
+    (folder === "p12_pair_page" ? held : held.pair).trials[0].facts.title = "A retitled study";
+    fs.writeFileSync(file, JSON.stringify(held));
+  }
+  fs.rmSync(path.join(next, "manifest.json"));
+  writeManifest(next, { madeAt: "2026-11-21T00:00:00Z" });
+  const db = await mf.getD1Database("PAIRS");
+  for (const sql of statements(next, { keep: 10 }).sql) await db.prepare(sql).run();
+  const version = statements(next).version;
+  assert.notEqual(version, statements(bundle).version);
+  // The frame of a real build of the next bundle: another version and another bundle date.
+  const nextFrame = builtFrame(next);
+  assert.match(nextFrame, new RegExp(`data-pair-version="${version}"`));
+  frameEdits["/pair-shell"] = () => nextFrame;
+  try {
+    const kept = await getFresh(`/${ON_REQUEST}`);
+    assert.equal(kept.headers.get("ETag"), before.get(`/${ON_REQUEST}`), "an unchanged pair keeps its tag");
+    await kept.body?.cancel();
+    const asked = await mf.dispatchFetch(`https://tag-next-${(freshHosts += 1)}.test/${ON_REQUEST}`, { headers: { "If-None-Match": before.get(`/${ON_REQUEST}`) } });
+    assert.equal(asked.status, 304);
+    const record = await getFresh(`/data/pairs/${ON_REQUEST}.json`);
+    assert.equal(record.headers.get("ETag"), before.get(`/data/pairs/${ON_REQUEST}.json`), "an unchanged record keeps its tag");
+    await record.body?.cancel();
+    const changed = await getFresh(`/${CHANGED}`);
+    assert.notEqual(changed.headers.get("ETag"), before.get(`/${CHANGED}`), "a changed pair has a new tag");
+    assert.match(await changed.text(), /A retitled study/);
+  } finally {
+    frameEdits["/pair-shell"] = (text) => text;
+  }
+});
+
+test("a pair added or removed elsewhere leaves a page's tag as it was, even one of the same treatment", async () => {
+  // The narrowest acoziborole pair links no narrower pair: removing the broadest one, of the same
+  // treatment, and an unrelated pair, changes nothing it shows, and so not its tag.
+  const KEPT = "acoziborole--trypanosomiasis-african";
+  const before = await getFresh(`/${KEPT}`);
+  const tag = before.headers.get("ETag");
+  await before.body?.cancel();
+  const next = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-bundle-fewer-"));
+  fs.cpSync(bundle, next, { recursive: true });
+  for (const gone of ["acoziborole--infections", "tulisokibart--scleroderma-diffuse"]) {
+    for (const folder of ["p12_pair_page", "p12_pair_data_file"]) fs.rmSync(path.join(next, folder, `${gone}.json`));
+  }
+  fs.rmSync(path.join(next, "manifest.json"));
+  writeManifest(next, { madeAt: "2026-11-21T01:00:00Z" });
+  const db = await mf.getD1Database("PAIRS");
+  for (const sql of statements(next, { keep: 10 }).sql) await db.prepare(sql).run();
+  const version = statements(next).version;
+  // The frame of a real build of the next bundle: another version and another bundle date.
+  const nextFrame = builtFrame(next);
+  assert.match(nextFrame, new RegExp(`data-pair-version="${version}"`));
+  frameEdits["/pair-shell"] = () => nextFrame;
+  try {
+    const after = await getFresh(`/${KEPT}`);
+    assert.equal(after.headers.get("ETag"), tag);
+    await after.body?.cancel();
+    assert.equal((await mf.dispatchFetch(`https://tag-fewer-${(freshHosts += 1)}.test/${KEPT}`, { headers: { "If-None-Match": tag } })).status, 304);
+    // The broadest pair is gone from this version.
+    assert.equal((await getFresh("/acoziborole--infections")).status, 404);
+  } finally {
+    frameEdits["/pair-shell"] = (text) => text;
+  }
+});
+
+test("a pair names the same treatment's pairs for narrower conditions", async () => {
+  // acoziborole--infections (C01) and acoziborole--trypanosomiasis (C01.610…) from the small
+  // bundle; the African form sits beneath both.
+  const named = async (address) => [...(await documentOf(await get(`/${address}`))).querySelectorAll("[data-pair-narrower] [data-narrower]")].map((link) => link.dataset.narrower);
+  assert.deepEqual(await named("acoziborole--infections"), ["acoziborole--trypanosomiasis", "acoziborole--trypanosomiasis-african"]);
+  assert.deepEqual(await named("acoziborole--trypanosomiasis"), ["acoziborole--trypanosomiasis-african"]);
   // The narrowest has nothing beneath it, and says nothing.
-  assert.deepEqual(named(fs.readFileSync(path.join(dist, "acoziborole--trypanosomiasis-african", "index.html"), "utf8")), []);
-  assert.ok(!fs.readFileSync(path.join(dist, "acoziborole--trypanosomiasis-african", "index.html"), "utf8").includes("data-pair-narrower"));
+  assert.deepEqual(await named("acoziborole--trypanosomiasis-african"), []);
+  assert.ok(!(await (await get("/acoziborole--trypanosomiasis-african")).text()).includes("data-pair-narrower"));
 });
 
 test("an intervention page that fails its check stops a page made on request", async () => {
   const db = await mf.getD1Database("PAIRS");
   const version = statements(bundle).version;
-  // apitegromab--obesity is built ahead; hidden from the asset binding, the Worker makes it, for
-  // the first time in this run (its answers are kept a day, so a page made earlier would be).
+  // Asked on a fresh host, so the page is made again rather than taken from the day's cache.
   await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'apitegromab' AND part > 0").bind(version).run();
   await db.prepare("UPDATE pair_page SET body = ?2 WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'apitegromab'").bind(version, JSON.stringify({ pairs: "not a list" })).run();
-  hidden.add("/apitegromab--obesity");
-  let response;
-  try {
-    response = await get("/apitegromab--obesity");
-  } finally {
-    hidden.delete("/apitegromab--obesity");
-  }
+  const response = await getFresh("/apitegromab--obesity");
   assert.equal(response.status, 500);
   assert.equal(parseHTML(await response.text()).document.querySelector("[data-pair-unreadable]").textContent, UNREADABLE);
 });
@@ -612,22 +916,30 @@ test("a narrower pair the version holds no page for is not linked, and a stored 
   const version = statements(bundle).version;
   // A slice without the African form's page: its intervention listing still names it.
   await db.prepare("DELETE FROM pair WHERE version = ?1 AND address = 'acoziborole--trypanosomiasis-african'").bind(version).run();
-  hidden.add("/acoziborole--infections");
-  try {
-    const made = await get("/acoziborole--infections");
-    assert.equal(made.status, 200);
-    const named = [...parseHTML(await made.text()).document.querySelectorAll("[data-narrower]")].map((link) => link.dataset.narrower);
-    assert.deepEqual(named, ["acoziborole--trypanosomiasis"]);
-  } finally {
-    hidden.delete("/acoziborole--infections");
-  }
+  const made = await getFresh("/acoziborole--infections");
+  assert.equal(made.status, 200);
+  const named = [...parseHTML(await made.text()).document.querySelectorAll("[data-narrower]")].map((link) => link.dataset.narrower);
+  assert.deepEqual(named, ["acoziborole--trypanosomiasis"]);
   // An intervention page file stored as JSON null is a body like any other, and fails its check.
   await db.prepare("DELETE FROM pair_page WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart' AND part > 0").bind(version).run();
   await db.prepare("UPDATE pair_page SET body = 'null' WHERE version = ?1 AND model = 'PairInterventionPage' AND key = 'tulisokibart'").bind(version).run();
-  hidden.add("/tulisokibart--lung-diseases-interstitial");
+  assert.equal((await getFresh("/tulisokibart--lung-diseases-interstitial")).status, 500);
+});
+
+test("the code that writes a page is in its tag: a renderer or wording change gives every page a new one", async () => {
+  const before = await getFresh(`/${ON_REQUEST}`);
+  const tag = before.headers.get("ETag");
+  await before.body?.cancel();
+  // The frame of a build whose renderer digest differs, as after a change to the site's wording.
+  frameEdits["/pair-shell"] = (text) => text.replace(/data-renderer="[0-9a-f]+"/, 'data-renderer="000000000000000000000000"');
   try {
-    assert.equal((await get("/tulisokibart--lung-diseases-interstitial")).status, 500);
+    const after = await getFresh(`/${ON_REQUEST}`);
+    assert.notEqual(after.headers.get("ETag"), tag);
+    await after.body?.cancel();
+    const asked = await mf.dispatchFetch(`https://tag-renderer-${(freshHosts += 1)}.test/${ON_REQUEST}`, { headers: { "If-None-Match": tag } });
+    assert.equal(asked.status, 200, "an outdated page is never called unchanged");
+    await asked.body?.cancel();
   } finally {
-    hidden.delete("/tulisokibart--lung-diseases-interstitial");
+    frameEdits["/pair-shell"] = (text) => text;
   }
 });

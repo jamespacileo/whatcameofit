@@ -12,11 +12,15 @@ import { before, test } from "node:test";
 import { CORRECTION_SUBJECT, SUGGEST_SUBJECT, contactLink } from "../src/lib/contact.mjs";
 import { mastodonShare, shareLinks } from "../src/lib/share.ts";
 import { canonicalAddress } from "../src/lib/structured.ts";
+import { readBundle } from "../src/lib/bundle.ts";
+import { pairView } from "../src/lib/pair-view.ts";
+import { oembedOf } from "../src/lib/embed-render.ts";
+import { SITE } from "../site.config.mjs";
 
 const BUNDLE = "tests/bundle";
-// A pair whose page the build makes ahead, and a topic whose file lists a pair with a page. A
-// topic's page is made on request by the Worker (tests/pair-on-request.build-test.mjs holds its
-// canonical address and its trail); the sitemap lists it.
+// A pair, and a topic whose file lists a pair with a page. Both pages are made on request by the
+// Worker into the frames the build leaves (tests/pair-on-request.build-test.mjs holds their
+// canonical addresses, previews and trails as served); the sitemap lists both.
 const PAIR = "ambroxol--dementia";
 const TOPIC = "infections";
 const ORIGIN = process.env.SITE_URL || "https://whatcameofit.com";
@@ -159,7 +163,6 @@ test("Scenario: Reader chooses not to write", () => {
 test("every page states its own canonical address", () => {
   const expected = {
     "index.html": `${ORIGIN}/`,
-    [`${PAIR}/index.html`]: `${ORIGIN}/${PAIR}`,
     "topics/index.html": `${ORIGIN}/topics`,
   };
   for (const [file, address] of Object.entries(expected)) {
@@ -169,7 +172,8 @@ test("every page states its own canonical address", () => {
   // from the Worker; the public route is checked in trials.test.mjs.
   for (const file of htmlFiles(dist)) {
     const relative = path.relative(dist, file);
-    if (relative.startsWith(`embed${path.sep}`) || relative.startsWith(`pair-shell${path.sep}`)) continue;
+    // The frames the Worker fills state their address once filled.
+    if (relative.startsWith(`embed${path.sep}`) || relative.startsWith(`pair-shell${path.sep}`) || relative.startsWith(`embed-shell${path.sep}`)) continue;
     if (relative === path.join("trial-reader", "index.html")) {
       const html = fs.readFileSync(file, "utf8");
       assert.match(html, /name="robots" content="noindex, follow"/);
@@ -215,10 +219,12 @@ const meta = (html, name) =>
   html.match(new RegExp(`<meta (?:property|name)="${name}" content="([^"]*)"`))?.[1] ?? null;
 
 test("Scenario: A pair's link pasted into a chat", () => {
-  const html = page(`${PAIR}/index.html`);
-  assert.equal(meta(html, "og:url"), `${ORIGIN}/${PAIR}`);
+  // The frame a pair's page is made in: its address goes where the frame marks it, and its
+  // picture is the site's own card, since no pair has a picture of its own (task 4.6).
+  const html = page("pair-shell/index.html");
+  assert.equal(meta(html, "og:url"), `${ORIGIN}/__PAIR_ADDRESS__`);
   const image = new URL(meta(html, "og:image"));
-  assert.equal(image.origin + image.pathname, `${ORIGIN}/og/${PAIR}.png`);
+  assert.equal(image.origin + image.pathname, `${ORIGIN}/brand-card.png`);
   assert.match(image.searchParams.get("v"), /^[a-f0-9]{12}$/);
   assert.equal(meta(html, "og:image:width"), "1200");
   assert.equal(meta(html, "og:image:height"), "630");
@@ -238,7 +244,8 @@ test("Scenario: Home page shared", () => {
 test("every page states the whole link preview and announces the status changes feed", () => {
   for (const file of htmlFiles(dist)) {
     const relative = path.relative(dist, file);
-    if (relative.startsWith(`embed${path.sep}`)) continue;
+    // An embed sits in another site's page and is never shared itself.
+    if (relative.startsWith(`embed${path.sep}`) || relative.startsWith(`embed-shell${path.sep}`)) continue;
     const html = fs.readFileSync(file, "utf8");
     for (const name of ["og:title", "og:description", "og:url", "og:site_name", "og:image", "og:image:alt", "twitter:card", "twitter:image:alt", "theme-color"]) {
       assert.ok(meta(html, name), `${relative} lacks ${name}`);
@@ -294,14 +301,17 @@ test("Scenario: Reader posts to Mastodon for the first time", () => {
 // sharing: An embed can be found from the pair's address
 
 test("Scenario: A pair's address pasted into a site that reads oEmbed", () => {
-  const html = page(`${PAIR}/index.html`);
-  assert.ok(html.includes(`<link rel="alternate" type="application/json+oembed" href="${ORIGIN}/oembed/${PAIR}.json"`));
-  const oembed = JSON.parse(page(`oembed/${PAIR}.json`));
+  // The frame announces the pair's description at the pair's own address once filled; the
+  // Worker writes the description (tests/pair-on-request.build-test.mjs serves it).
+  const html = page("pair-shell/index.html");
+  assert.ok(html.includes(`<link rel="alternate" type="application/json+oembed" href="${ORIGIN}/oembed/__PAIR_ADDRESS__.json"`));
+  const card = meta(html, "og:image");
+  const oembed = oembedOf(pairView(readBundle(BUNDLE).pages.PairPage[PAIR]), SITE.name, ORIGIN, card);
   assert.equal(oembed.type, "rich");
   assert.equal(oembed.version, "1.0");
   assert.ok(oembed.html.includes(`${ORIGIN}/embed/${PAIR}`));
   assert.equal(oembed.width, 440);
-  assert.equal(oembed.thumbnail_url, `${ORIGIN}/og/${PAIR}.png`);
+  assert.equal(new URL(oembed.thumbnail_url).pathname, "/brand-card.png");
 });
 
 test("the sitemap lists every public page and no embed", () => {
@@ -310,7 +320,7 @@ test("the sitemap lists every public page and no embed", () => {
     assert.ok(listed.includes(canonicalAddress(address)), `${address} is not listed`);
   }
   assert.ok(listed.every((address) => address.startsWith(`${ORIGIN}/`)));
-  assert.ok(!listed.some((address) => /\/embed\/|\/404$|\/pair-shell$/.test(address)));
+  assert.ok(!listed.some((address) => /\/embed\/|\/404$|\/pair-shell$|\/embed-shell$/.test(address)));
   // Each built page but these is listed. A pair made on request is listed and not built.
   const built = htmlFiles(dist).map((file) => {
     const relative = path.relative(dist, file).split(path.sep).join("/");
@@ -321,7 +331,7 @@ test("the sitemap lists every public page and no embed", () => {
     /\/topic\/[^/]+$/.test(address) && !page(`${new URL(address).pathname.slice(1)}/index.html`).includes("data-pair=");
   const unlisted = built.filter(
     // Error pages, embeds, the private trial template and the frame for pages made on request.
-    (address) => !listed.includes(address) && !/\/404$|\/embed\/|\/trial-reader$|\/pair-shell$/.test(address) && !emptyTopic(address),
+    (address) => !listed.includes(address) && !/\/404$|\/embed\/|\/trial-reader$|\/pair-shell$|\/embed-shell$/.test(address) && !emptyTopic(address),
   );
   assert.deepEqual(unlisted, []);
 });

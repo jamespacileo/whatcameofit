@@ -71,11 +71,6 @@
   --blue-fill: #14427f;
   /* The lift under the home page's search box. */
   --lift: rgb(11 37 69 / 0.35);
-  /* Photographs and video frames: full strength on the light page. */
-  --media-dim: none;
-  /* A video not yet started, in the dark theme a further step down: its poster is
-     otherwise the brightest patch of the page. */
-  --media-rest: none;
   /* The status card's lift off the navy band. */
   --band-card-shadow: none;
   /* The home band's dots. */
@@ -180,8 +175,6 @@
     --blue-hover: #c4ddf8;
     --blue-fill: #6fa6e0;
     --lift: rgb(0 0 0 / 0.55);
-    --media-dim: brightness(0.85);
-    --media-rest: brightness(0.7);
     --band-card-shadow: 0 14px 32px -14px rgb(0 0 0 / 0.7);
     --dot: rgb(142 193 245 / 0.07);
     --ring: #6d7c90;
@@ -221,8 +214,6 @@
     --blue-hover: #c4ddf8;
     --blue-fill: #6fa6e0;
     --lift: rgb(0 0 0 / 0.55);
-    --media-dim: brightness(0.85);
-    --media-rest: brightness(0.7);
     --band-card-shadow: 0 14px 32px -14px rgb(0 0 0 / 0.7);
     --dot: rgb(142 193 245 / 0.07);
     --ring: #6d7c90;
@@ -1218,50 +1209,7 @@ body.embed {
   max-width: var(--measure);
 }
 
-/* The method page's video: a framed player that waits to be played, its note, and its words. */
-.explainer {
-  margin: 1.5rem 0 0;
-  max-width: 46rem;
-}
-
-.explainer video {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 16 / 9;
-  background: var(--paper);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius);
-  filter: var(--media-dim);
-}
-
-.explainer video {
-  transition: filter 200ms ease-out;
-}
-
-.explainer:not([data-started]) video:not(:hover, :focus-visible) {
-  filter: var(--media-rest);
-}
-
-.explainer figcaption {
-  margin-top: 0.5rem;
-  font-size: var(--text-m);
-  color: var(--muted);
-}
-
-.explainer details {
-  margin-top: 0.5rem;
-  font-size: var(--text-m);
-}
-
-.explainer summary {
-  width: fit-content;
-  color: var(--blue);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-/* How a status is made, under the video: reported, recorded, where it stands. The
+/* How a status is made: reported, recorded, where it stands. The
    drawing is whole as it stands; a reader may ask to see it arrive in order. */
 .made {
   margin: 1.5rem 0 0;
@@ -1390,18 +1338,6 @@ body.embed {
     display: block;
     margin: 0;
     padding-block: 0.6rem;
-  }
-
-  /* Pressed with a thumb, so it gets the room every pressed thing has. */
-  .explainer summary {
-    padding-block: 0.6rem;
-  }
-}
-
-@media print {
-  /* A video cannot be printed. Its words can: the fold is opened by the reader or not at all. */
-  .explainer video {
-    display: none;
   }
 }
 

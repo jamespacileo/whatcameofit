@@ -12,13 +12,13 @@ const text = {
   untrackedTitle: "This page is not a tracked report",
   untrackedBody: (name) =>
     `${name} follows particular news reports of medical breakthroughs, and this page is not one of them. That says nothing about the story itself.`,
-  search: "Search tracked claims",
+  search: "Search followed pages",
   disclosure: (name) =>
     `This page’s text and links go to ${name} for the lookup. If text misses visible media, a screenshot is sent automatically with the page address. OpenAI reads the text and image and may retain it for safety checks. Use public reports only.`,
   privacy: "Privacy",
   confidenceUnavailable: "Match confidence unavailable",
   confidenceMeaning: "Confidence estimates how closely each registry record matches this report.",
-  reviewed: "Reviewed claim",
+  reviewed: "Published page",
   searching: "Reading this page and searching the registry. This can take half a minute.",
   tooLittleTitle: "Too little of this page could be read",
   tooLittleBody: "Select the words of the post or article, then choose Search again. Nothing was sent.",
@@ -28,13 +28,13 @@ const text = {
     not_set_up: (name) => `${name} is not offering the registry search at the moment.`,
     failed: "Nothing was found or ruled out. Try again in a minute.",
     timeout: "The search took too long and was stopped. Nothing was found or ruled out. Choose Search again to try once more.",
-    budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Reviewed claim pages remain available.",
+    budget_exhausted: "Automatic search has used its monthly allowance. It will be available again next month. Published pages remain available.",
     page_changed: "The page changed while this lookup started. Reopen the extension on the page you want to check.",
     post_unreadable: "The linked article could not be read and the post has too little text. Open the article in your browser and reopen the extension.",
     capture_unavailable: "This browser could not capture the visible page. Open the image or article in a normal browser tab, or select its text and search again.",
     capture_sensitive: "A password or editing field is visible, so no screenshot was sent. Close it or open the public report in a separate tab.",
     capture_embedded: "The screenshot would include an embedded page whose private fields cannot be checked. Open that content in its own tab and try again.",
-    image_too_large: "The visible image is too large to send. Zoom in on the claim or select its words and search again.",
+    image_too_large: "The visible image is too large to send. Zoom in on the report or select its words and search again.",
     image_invalid: "The screenshot could not be read. Reopen the extension to try again.",
   },
   again: "Search again",
@@ -64,14 +64,14 @@ const text = {
   inAYear: "in a year",
   remindOn: (date) => `Reminder set for ${date}.`,
   removeReminder: "Remove",
-  followingThis: "You follow this claim.",
+  followingThis: "You follow this page.",
   opens: "(opens in a new tab)",
   stop: "Stop following",
-  followingEmpty: "You follow no claims yet. Open a tracked report and choose Keep me up to date.",
+  followingEmpty: "You follow no pages yet. Open a tracked report and choose Keep me up to date.",
   changed: "Changed",
   wasNow: (was, now) => `Was: ${was}. Now: ${now}.`,
   wasSince: (was) => `Changed since you last looked. Was: ${was}.`,
-  gone: "This claim is no longer published.",
+  gone: "This page is no longer published.",
 };
 
 const day = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -481,7 +481,7 @@ export function render(root, state, site, actions, kept = null) {
       el("p", "small", "Screenshots can include usernames or other visible personal information. Use public reports only. Nothing is read in the background. OpenAI may retain inputs for safety checks. We store no screenshots or article text; public search results may be reused for 24 hours."),
       link(opening(text.privacy), `${site.url}/privacy`, "text-button", actions.open),
       state.enabled ? press("Turn off automatic search", "button quiet", actions.disableSharing) : press("Allow and search", "button", actions.enableSharing),
-      !state.enabled && press("Use reviewed claims only", "button quiet", actions.disableSharing)];
+      !state.enabled && press("Use published pages only", "button quiet", actions.disableSharing)];
   } else if (state.kind === "capturing") {
     children = [waiting("Reading the visible image…"), privacyNote(site, actions)];
   } else if (state.kind === "visual-preview") {

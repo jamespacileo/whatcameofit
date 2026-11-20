@@ -9,14 +9,14 @@ import Audience from "../../layouts/Audience.astro";
 import type { PickerPair } from "../../lib/audiences";
 import { SUGGEST_SUBJECT, contactLink } from "../../lib/contact.mjs";
 import { examplePair } from "../../lib/extension-page";
-import { builtAheadPages, bundleMadeAt, pairView } from "../../lib/pairs";
+import { bundleMadeAt, featuredPages, pairView } from "../../lib/pairs";
 import { DATA_LICENCE, DATA_LICENCE_URL } from "../../lib/open-data";
 import { EMBED_SIZE, checkedMonth, embedSnippet } from "../../lib/share";
 import { canonicalAddress } from "../../lib/structured";
 
-// The pairs with a status box: those whose embed the build makes (`builtAhead`). What the
-// search matches: a treatment's names and the condition.
-const boxed = Object.values(builtAheadPages());
+// The pairs the picker offers: the examples pages carry (`featured`); every pair's embed is
+// made on request. What the search matches: a treatment's names and the condition.
+const boxed = Object.values(featuredPages());
 const pairs: PickerPair[] = boxed.map(pairView).map((pair) => ({
   slug: pair.address,
   name: pair.intervention,

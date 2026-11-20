@@ -10,13 +10,11 @@ import { parseHTML } from "linkedom";
 import { AUDIENCES } from "../src/lib/audiences.ts";
 import { METHOD_SECTIONS, statusSlug } from "../src/lib/guide.ts";
 import { readBundle } from "../src/lib/bundle.ts";
-import { builtAhead } from "../src/lib/pair-view.ts";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS } from "../src/lib/status.ts";
 
 const bundle = readBundle("tests/bundle");
 const pairs = Object.values(bundle.pages.PairPage);
 // A pair whose page the build makes ahead.
-const built = pairs.find((file) => builtAhead(file));
 const codes = Object.keys(STATUS_LABELS);
 const files = fs.readdirSync("src/guide").filter((file) => file.endsWith(".md"));
 
@@ -60,23 +58,16 @@ test("the method page explains the statuses and what is counted", () => {
 
 test("a site with no configured store publishes no extension page or link", () => {
   assert.ok(!exists("extension/index.html"), "the extension page was built with no store");
-  for (const file of ["index.html", `${built.row.pair.address}/index.html`, "how-it-works/index.html"]) {
+  // A pair's page is made on request into the pair frame, whose footer is a built page's.
+  for (const file of ["index.html", "pair-shell/index.html", "how-it-works/index.html"]) {
     const { document } = parseHTML(page(file));
     assert.equal(document.querySelector('a[href="/extension"]'), null, `${file} links a page that does not exist`);
   }
 });
 
-test("the method video waits to be played and carries a date and transcript", () => {
-  const { document } = parseHTML(page("how-it-works/index.html"));
-  const video = document.querySelector("main video");
-  assert.ok(video, "the method video is missing");
-  assert.ok(video.hasAttribute("controls"));
-  assert.equal(video.getAttribute("preload"), "none");
-  assert.ok(!video.hasAttribute("autoplay"));
-  assert.match(video.querySelector("source")?.getAttribute("src") ?? "", /^\/video\/explainer\.mp4(?:\?|$)/);
-  assert.ok(exists("video/explainer.mp4") && exists("video/explainer-poster.jpg"));
-  assert.match(document.querySelector("main").textContent, /as the registries showed them in November 2026/);
-  assert.match(document.querySelector("main").textContent, /What the video says/);
+test("the method page carries no video, which showed the old claim page", () => {
+  assert.equal(parseHTML(page("how-it-works/index.html")).document.querySelector("main video"), null);
+  assert.ok(!exists("video/explainer.mp4"));
 });
 
 test("every status has a published entry with its label and meaning, and cites its rule", () => {
@@ -112,7 +103,8 @@ test("the index lists every entry under its shelf, statuses in path order", () =
 test("the guide is reached from the method page, the footer and the sitemap", () => {
   const method = page("how-it-works/index.html");
   for (const code of codes) assert.ok(method.includes(`href="/guide/${statusSlug(code)}"`), code);
-  const html = page(`${built.row.pair.address}/index.html`);
+  // Every page's footer, the frame of a pair's page made on request among them.
+  const html = page("pair-shell/index.html");
   for (const href of ["/guide", "/about", ...AUDIENCES.map((audience) => `/for/${audience}`)]) {
     assert.ok(html.split("<footer")[1].includes(`href="${href}"`), `the footer does not link ${href}`);
   }

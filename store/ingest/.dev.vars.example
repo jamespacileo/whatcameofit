@@ -1,5 +1,0 @@
-# Local development only. Copy to .dev.vars (never committed) and fill in.
-# A JSON list on one line, quoted. Each entry holds the SHA-256 of a token, never the
-# token: make both with `node scripts/new-token.mjs <role> [device]`.
-# Roles: device, daily, lookup, consumer, export, operator.
-INGEST_TOKENS='[]'

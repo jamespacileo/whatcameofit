@@ -156,7 +156,9 @@ async function everyKind() {
   await db.prepare("UPDATE pair_page SET body = '{}' WHERE version = ?1 AND model = 'PairPage' AND key = ?2").bind(version, broken).run();
   // A listing, made on request from the lab's file (worker/listings.mjs).
   const listing = `/intervention/${fs.readdirSync(path.join(BUNDLE, "p12_pair_intervention_page")).sort()[0].slice(0, -5)}`;
-  return [...checks, { pathname: listing, status: 200 }, { pathname: `/${broken}`, status: 500 }, { pathname: "/pair-shell", status: 404 }];
+  // A saved alias of a pair's address leads to it (301).
+  const alias = `/${pages[0].address}/`;
+  return [...checks, { pathname: listing, status: 200 }, { pathname: alias, status: 301 }, { pathname: `/${broken}`, status: 500 }, { pathname: "/pair-shell", status: 404 }];
 }
 
 test("the Worker marks every kind of answer noindex in staging's configuration, and adds none in production's", async () => {
@@ -169,6 +171,22 @@ test("the Worker marks every kind of answer noindex in staging's configuration, 
     assert.equal(answer.headers.get("X-Robots-Tag"), "noindex", `${pathname} (${status})`);
     await answer.body?.cancel();
   }
+  // A not-found answer kept for a missing pair, asked for again, and a 304 to an asker who holds
+  // a page: both the Worker's, both marked.
+  const missing = "/no-such--pair";
+  for (let at = 0; at < 2; at += 1) {
+    const answer = await mf.dispatchFetch(`${ORIGIN}${missing}`, { redirect: "manual" });
+    assert.equal(answer.status, 404);
+    assert.equal(answer.headers.get("X-Robots-Tag"), "noindex", `${missing}, asked ${at + 1}`);
+    await answer.body?.cancel();
+  }
+  const page = kinds.find((kind) => kind.status === 200 && /^\/[a-z0-9-]+--[a-z0-9-]+$/.test(kind.pathname)).pathname;
+  const full = await mf.dispatchFetch(`${ORIGIN}${page}`);
+  const tag = full.headers.get("ETag");
+  await full.body?.cancel();
+  const held = await mf.dispatchFetch(`${ORIGIN}${page}`, { headers: { "If-None-Match": tag } });
+  assert.equal(held.status, 304);
+  assert.equal(held.headers.get("X-Robots-Tag"), "noindex", `${page} (304)`);
   // The same Worker without staging's variable, as production's configuration has none.
   await mf.setOptions(convertV4MiniflareOptions({
     modules: true,
