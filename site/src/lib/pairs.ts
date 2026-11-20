@@ -344,3 +344,32 @@ export function pairDataIndex(siteName: string, siteUrl: string) {
       }),
   };
 }
+
+// Claims with a pair (openspec pairs-site, task 3.4a; the operator's decision of 2026-11-20,
+// task 1.3): "keep unmatched claims. Preserve public URLs for legacy claims with no verified
+// published pair. Retain the approved 301s where there is a verified published pair and the
+// existing archive 410s." In a build that reads a bundle, a claim that exactly one published
+// pair came from is not built: its address leads to that pair (gone.json, worker/index.mjs),
+// or is that pair's when the two are spelled the same. A claim behind several pairs, or none,
+// is built as before.
+
+let claimsLeadingToPairs: Map<string, string> | undefined;
+
+/** Each claim slug that leads to one pair, with that pair's address. Empty without a bundle. */
+export function claimsWithAPair(): Map<string, string> {
+  if (claimsLeadingToPairs === undefined) {
+    const bySlug = new Map<string, string[]>();
+    for (const page of Object.values(pairPages())) {
+      const slug = page.row.origin?.claim_slug;
+      if (slug) bySlug.set(slug, [...(bySlug.get(slug) ?? []), page.row.pair.address]);
+    }
+    claimsLeadingToPairs = new Map([...bySlug].filter(([, addresses]) => addresses.length === 1).map(([slug, [address]]) => [slug, address]));
+  }
+  return claimsLeadingToPairs;
+}
+
+/** Whether a claim is built: every claim without a bundle, and in a pairs build each claim
+ * that does not lead to one pair. */
+export function claimIsBuilt(slug: string): boolean {
+  return !claimsWithAPair().has(slug);
+}

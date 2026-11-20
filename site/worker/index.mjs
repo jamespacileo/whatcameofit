@@ -128,6 +128,28 @@ async function withLinkedArticle(platform, post, index, { fetch, contact }) {
 }
 
 /** @param {{ model: object, registry: object, papers?: object, fetch?: Function } | undefined} tools stand-ins, for tests */
+// A claim's own files, by its slug, and where each leads when the claim leads to a pair: the
+// pair's embed, oEmbed, cards and open data record, and, for the claim's own feed, the site's
+// feed of status changes (a pair has no feed of its own).
+const CLAIM_FILES = [
+  [/^\/embed\/([a-z0-9-]+)\/?$/, (to) => `/embed/${to}`],
+  [/^\/oembed\/([a-z0-9-]+)\.json$/, (to) => `/oembed/${to}.json`],
+  [/^\/og\/([a-z0-9-]+)\.png$/, (to) => `/og/${to}.png`],
+  [/^\/og\/square\/([a-z0-9-]+)\.png$/, (to) => `/og/square/${to}.png`],
+  [/^\/og\/tall\/([a-z0-9-]+)\.png$/, (to) => `/og/tall/${to}.png`],
+  [/^\/data\/claims\/([a-z0-9-]+)\.json$/, (to) => `/data/pairs/${to}.json`],
+  [/^\/changes\/([a-z0-9-]+)\.xml$/, () => "/changes.xml"],
+];
+
+/** Which claim file a path is, by the claim's slug, or null. */
+export function claimAsset(pathname) {
+  for (const [pattern, at] of CLAIM_FILES) {
+    const slug = pattern.exec(pathname)?.[1];
+    if (slug) return { slug, at };
+  }
+  return null;
+}
+
 export async function handle(request, env, tools) {
   const started = Date.now();
   const here = new URL(request.url);
@@ -137,12 +159,27 @@ export async function handle(request, env, tools) {
     return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
   }
   if (here.pathname !== PATH) {
+    // A claim that leads to its pair (`pair: true` in gone.json, written only by a build that
+    // reads a bundle, openspec pairs-site 3.4a): the build made none of its files, and each
+    // file's address leads to the pair's own. Its page's address is handled below.
+    const asset = claimAsset(here.pathname);
+    if (asset) {
+      const { to, pair } = (await goneList(env.ASSETS, here.origin)).get(asset.slug) ?? {};
+      const target = to && pair ? asset.at(to) : null;
+      if (target && target !== here.pathname) {
+        return new Response(null, {
+          status: 301,
+          headers: { Location: new URL(`${target}${here.search}`, here.origin).href, "Cache-Control": "public, max-age=300" },
+        });
+      }
+    }
     // A page the operator archived answers 410; everything else is a file of the site.
     const slug = here.pathname.replace(/^\/+|\/+$/g, "");
     if (slug && !slug.includes("/") && !slug.includes(".")) {
       const { on, to } = (await goneList(env.ASSETS, here.origin)).get(slug) ?? {};
       // A claim merged into another, or renamed: its address leads to the page it is at now.
-      if (to) {
+      // A claim whose slug is its pair's address leads nowhere: the pair's page is the file.
+      if (to && to !== slug) {
         return new Response(null, {
           status: 301,
           // Kept for five minutes only, so a merge that is undone stops redirecting soon after the next deploy.
