@@ -1,5 +1,7 @@
 // The one comment a pull request carries about its preview: where it is, the pages
-// worth opening, the claims the pull request adds, and where the build came from.
+// worth opening, the claims the pull request adds, and where the build came from. A copy
+// built from a bundle of pair pages (openspec pairs-site) is counted in pairs, and its claims
+// are not listed: they are not what the copy shows.
 // The workflow edits the same comment on every run; MARKER is how it finds it.
 //
 //   STATE=published PREVIEW_URL=https://... PR_NUMBER=12 node scripts/pr-preview-comment.mjs
@@ -43,9 +45,9 @@ const links = (url, pairs) => pairs.map(([name, at]) => `[${name}](${url}${at})`
 /**
  * @param {{ state: "published" | "failed", url?: string, worker: string, sha?: string,
  *   repoUrl?: string, runUrl?: string, accountId?: string, claims?: number,
- *   added?: string[] | null, at?: Date }} build
+ *   added?: string[] | null, pairs?: { count: number, version?: string } | null, at?: Date }} build
  */
-export function previewComment({ state, url, worker, sha, repoUrl, runUrl, accountId, claims, added, at }) {
+export function previewComment({ state, url, worker, sha, repoUrl, runUrl, accountId, claims, added, pairs, at }) {
   const commit = sha ? (repoUrl ? `[\`${sha.slice(0, 7)}\`](${repoUrl}/commit/${sha})` : `\`${sha.slice(0, 7)}\``) : "this commit";
   const log = runUrl ? `[build log](${runUrl})` : null;
   const when = at ? `updated ${at.toISOString().slice(0, 16).replace("T", " ")} UTC` : null;
@@ -62,7 +64,7 @@ export function previewComment({ state, url, worker, sha, repoUrl, runUrl, accou
   }
 
   const lines = [MARKER, "### Preview", "", `**${url}**`, "", `**Pages:** ${links(url, PAGES)}`, "", `**Files:** ${links(url, FILES)}`];
-  if (added?.length) {
+  if (added?.length && !pairs) {
     lines.push("", `**Claims this pull request adds (${added.length}):**`);
     for (const slug of added.slice(0, LISTED)) lines.push(`- [${slug}](${url}/${slug})`);
     if (added.length > LISTED) lines.push(`- and ${added.length - LISTED} more`);
@@ -70,7 +72,10 @@ export function previewComment({ state, url, worker, sha, repoUrl, runUrl, accou
   const dashboard = accountId
     ? `[Worker \`${worker}\`](https://dash.cloudflare.com/${accountId}/workers/services/view/${worker}/production)`
     : `Worker \`${worker}\``;
-  const facts = [`Built from ${commit}`, log, dashboard, claims ? `${claims} claims` : null, when].filter(Boolean);
+  const counted = pairs
+    ? `${pairs.count} ${pairs.count === 1 ? "pair" : "pairs"}${pairs.version ? ` from bundle \`${pairs.version}\`` : ""}`
+    : claims ? `${claims} claims` : null;
+  const facts = [`Built from ${commit}`, log, dashboard, counted, when].filter(Boolean);
   lines.push(
     "",
     `<sub>${facts.join(" · ")}</sub>`,
@@ -106,6 +111,8 @@ if (import.meta.filename === path.resolve(process.argv[1] ?? "")) {
       accountId: env.CLOUDFLARE_ACCOUNT_ID,
       claims: after?.claims?.length,
       added,
+      // Set by pr-preview.mjs when the copy was built from a bundle of pair pages.
+      pairs: /^\d+$/.test(env.PAIRS_COUNT ?? "") ? { count: Number(env.PAIRS_COUNT), version: env.PAIRS_VERSION || undefined } : null,
       at: new Date(),
     }),
   );

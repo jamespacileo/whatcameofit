@@ -61,6 +61,18 @@ async function publishedKey(address) {
   }
 }
 
+// How many pairs the published copy's open data index lists; null when it has none.
+async function publishedPairs(address) {
+  try {
+    const answer = await fetch(`${address}/data/pairs.json`, { signal: AbortSignal.timeout(5000) });
+    if (!answer.ok) return null;
+    const entries = (await answer.json())?.entries;
+    return Array.isArray(entries) ? entries.length : null;
+  } catch {
+    return null;
+  }
+}
+
 function stop(lines) {
   console.error(["Not published.", ...lines.map((line) => `  - ${line}`)].join("\n"));
   process.exit(1);
@@ -99,7 +111,9 @@ if (stateOnly) {
   const host = key && (await workersHost());
   const address = host ? `https://${worker}.${host}` : null;
   const same = Boolean(address) && (await publishedKey(address)) === key;
-  output({ key: key ?? "", published: same, ...(same ? { url: address, worker } : {}) });
+  // A copy built from a bundle of pair pages says how many it holds, for the comment.
+  const pairsCount = same ? await publishedPairs(address) : null;
+  output({ key: key ?? "", published: same, ...(same ? { url: address, worker } : {}), ...(pairsCount === null ? {} : { pairs_count: pairsCount }) });
   console.log(
     same
       ? `${worker} at ${address} is already this commit's copy. Nothing to build or send.`
@@ -136,7 +150,7 @@ if (pairsDatabase.skip) {
         bundle,
       });
       console.log(`Pair pages: bundle ${load.version} ${load.loaded ? "loaded into" : "already current in"} ${pairsDatabase.name}, in ${seconds(started)} s.`);
-      output({ pairs: load.version });
+      output({ pairs: load.version, pairs_count: fs.readdirSync(path.join(bundle, "p12_pair_page")).filter((name) => name.endsWith(".json")).length });
     } catch (error) {
       stop([`Pair pages: ${error.message}`]);
     }
