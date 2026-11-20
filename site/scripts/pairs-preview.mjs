@@ -68,6 +68,8 @@ const readConfig = (file) => JSON.parse(fs.readFileSync(file, "utf8").replace(/^
  * Refuses any configuration that is not a pull request preview's.
  */
 export function pairsConfig({ base, database, scratch }) {
+  // A name alone is the site's own file, as Wrangler reads it from the site's folder.
+  base = path.resolve(SITE_DIR, base);
   const config = readConfig(base);
   if (config.name !== "thenwhat-pr") throw new Error(`${base} is not a pull request preview's configuration (its name is ${config.name})`);
   const from = path.dirname(path.resolve(base));
