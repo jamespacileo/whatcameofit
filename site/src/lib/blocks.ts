@@ -6,6 +6,7 @@
 // placed in the HTML goes through `escape`; a function given HTML says so in its parameter's name.
 
 import { UNCHECKED_BYLINE } from "./notices.ts";
+import { STAGE_PATH } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
 const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -113,4 +114,51 @@ export const sourceNames = (sources: { name: string }[]) => sources.map((source)
  * (pair/EmbedShell.astro) and the styleguide write it alike. */
 export function embedFooter(notices: readonly string[], sources: { name: string }[], registriesHtml: string): string {
   return `<footer>${notices.map((notice) => `<p>${escape(notice)}</p>`).join("")}<p>Data sources: ${escape(sourceNames(sources))}.${registriesHtml}</p></footer>`;
+}
+
+// Short enough to sit under a dot; the full labels are STATUS_LABELS.
+const PLACE_NAMES: Record<string, string> = {
+  preclinical_only: "Pre\u00adclinical",
+  trial_registered: "Regis\u00adtered",
+  phase_1: "Phase 1",
+  phase_2: "Phase 2",
+  phase_3: "Phase 3",
+  approved: "Approved",
+};
+
+/**
+ * Where a status sits on the path from laboratory to approval (DESIGN.md, "Stage track"): six
+ * places, one marked. It shows a position, not progress: a pair can reach a place without
+ * passing the others, and the track is never filled up to its dot. It always sits beside the
+ * status in words, and is never coloured by the status.
+ * - `ends`: the place in words under the dots, the same words a screen reader is given;
+ * - `named`: each place named under its dot, as in a panel that has room to say them;
+ * - `off`: for a status off the path, a square alone, no path.
+ */
+export function stageTrack(code: string, { ends = false, named = false, off = false }: { ends?: boolean; named?: boolean; off?: boolean } = {}): string {
+  const place = (STAGE_PATH as readonly string[]).indexOf(code);
+  const name = `Place ${place + 1} of ${STAGE_PATH.length} on the path from preclinical to approved`;
+  if (place >= 0 && named) {
+    return `<span class="track named" role="img" aria-label="${escape(name)}">${STAGE_PATH.map(
+      (stage, index) => `<span class="${index === place ? "place here" : "place"}">${escape(PLACE_NAMES[stage])}</span>`,
+    ).join("")}</span>`;
+  }
+  if (place >= 0) {
+    return [
+      `<span class="${ends ? "track ends" : "track"}">`,
+      `<span class="steps" role="img" aria-label="${escape(name)}">`,
+      ...STAGE_PATH.map((_, index) => `<span class="${index === place ? "step here" : "step"}"></span>`),
+      `</span>`,
+      ends ? `<span class="ends" aria-hidden="true">Place ${place + 1} of ${STAGE_PATH.length}, from preclinical to approved</span>` : "",
+      `</span>`,
+    ].join("");
+  }
+  if (off) return `<span class="track off" role="img" aria-label="Not a place on the path from preclinical to approved"><span class="off-mark"></span></span>`;
+  return "";
+}
+
+/** Marks a record a status rests on (DESIGN.md, "Key"): a blue diamond, like the status label it
+ * explains, said in words to a screen reader unless `label` is false. */
+export function basisMark(label = true): string {
+  return `<span class="basis-mark"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.4 6 6 11.4 0.6 6z"></path></svg>${label ? `<span class="visually-hidden">basis of status</span>` : ""}</span>`;
 }

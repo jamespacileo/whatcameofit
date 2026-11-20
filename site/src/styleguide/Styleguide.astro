@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { band, bandTitle, crumbs, embedFooter, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { band, bandTitle, basisMark, crumbs, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -17,6 +17,7 @@ import { renderListingBand, renderListingSheet } from "../lib/listing-render";
 import { renderEmbedArticle, renderEmbedRegistries } from "../lib/embed-render";
 import { renderCard } from "../lib/card-render";
 import { trialsTable } from "../lib/trials-table";
+import { recordStrip, stripKey } from "../lib/record-strip";
 import { SITE } from "../../site.config.mjs";
 import "../pair/pair.css";
 
@@ -82,6 +83,19 @@ const blocks: { name: string; about: string; html: string; framed?: boolean }[] 
     about: "A pair's trials as a table (lib/trials-table.ts): results posted first, then by furthest phase; each row opens to its record. Not on a pair page yet.",
     html: view ? sheet([trialsTable(view.trials)]) : NO_PAIR,
   },
+  {
+    name: "stageTrack",
+    about: "Where a status sits on the path, beside the status in words: a position, not progress; with the place named, and each place named.",
+    html: view
+      ? `<p>${statusWords(view.status, view.gloss)}</p>${stageTrack(view.statusCode, { ends: true })}<p>${stageTrack(view.statusCode, { named: true })}</p><p>Off the path: ${stageTrack("not_a_place", { off: true })}</p>`
+      : NO_PAIR,
+  },
+  {
+    name: "recordStrip",
+    about: "A pair's dated trial records on one time axis to the last check (lib/record-strip.ts), with its key. Not on a pair page yet.",
+    html: view ? (recordStrip(view) ? `${recordStrip(view)}${stripKey()}` : `<p>This pair has no dated record to draw.</p>`) : NO_PAIR,
+  },
+  { name: "basisMark", about: "Marks a record the status rests on: the blue diamond, named once in a key.", html: `<p>${basisMark()} Basis of status</p>` },
   {
     name: "embedFooter",
     about: "The footer of an embed: the notices every page carries and the data sources by name.",
