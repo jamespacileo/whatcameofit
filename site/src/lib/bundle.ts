@@ -1,15 +1,12 @@
 // The lab's bundle of page files (openspec pairs-site): one JSON file a page under
 // `p12_<page>/`, one JSON Schema a page model under `schemas/`. The files carry codes;
-// every word a reader sees for a code is here or in the modules this one reads. A file
+// every word a reader sees for a code is in `pair-wording.ts`. A file
 // that does not fit its schema, and a code with no wording, stop the build.
 import fs from "node:fs";
 import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
-import { APPROACH_LABELS } from "./approach.ts";
-import { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES } from "./pair-view.ts";
-import { STATUS_LABELS } from "./status.ts";
-import { PHASE_WORDS } from "./trial-facts.ts";
+import { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES, unwordedPairCodes } from "./pair-wording.ts";
 
 const PREFIX = "p12_";
 const SCHEMAS = "schemas";
@@ -23,7 +20,7 @@ export function modelOf(folder: string): string {
     .join("");
 }
 
-export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
+export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES, unwordedPairCodes };
 
 export interface Bundle {
   /** Page model name to its pages, by key (a pair page's key is its address). */
@@ -71,33 +68,14 @@ export function readBundle(folder: string): Bundle {
       pages[model][file.slice(0, -".json".length)] = page;
     }
   }
-  const unworded = unwordedPairCodes(Object.values(pages.PairPage ?? {}));
+  const unworded = unwordedPairCodes(
+    Object.values(pages.PairPage ?? {}),
+    Object.values(pages.PairInterventionPage ?? {}),
+  );
   if (unworded.length) {
     throw new Error(`The bundle carries codes the site has no words for: ${unworded.join(", ")}.`);
   }
   return { pages, withoutSchema };
-}
-
-/** Codes on pair pages that the site has no words for, as "kind: code", each once. */
-export function unwordedPairCodes(pairPages: any[]): string[] {
-  const found = new Set<string>();
-  const need = (kind: string, code: string | null | undefined, words: Record<string, unknown>) => {
-    if (code !== null && code !== undefined && !(code in words)) found.add(`${kind}: ${code}`);
-  };
-  for (const page of pairPages) {
-    need("status", page.row.status.code, STATUS_LABELS);
-    need("approach", page.approach?.approach, APPROACH_LABELS);
-    for (const change of page.history) {
-      need("status", change.before, STATUS_LABELS);
-      need("status", change.after, STATUS_LABELS);
-    }
-    for (const trial of page.trials) {
-      need("trial state", trial.facts.overall_status, PAIR_TRIAL_STATES);
-      for (const phase of trial.facts.phases ?? []) need("phase", phase, PHASE_WORDS);
-      for (const event of trial.events) need("event", event.kind, PAIR_EVENT_LABELS);
-    }
-  }
-  return [...found].sort();
 }
 
 /** Where a claim's address goes now: the address of the pair that came from it. A claim

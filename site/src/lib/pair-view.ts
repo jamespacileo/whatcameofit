@@ -1,47 +1,20 @@
 // What a pair page shows, in the site's words, from one `PairPage` file (openspec pairs-site).
 // Pure: no file, network or clock, so the build and the Worker read a page the same way. Every
-// code's words are here or in the modules this one reads; `readBundle` stops a build on a code
+// code's words are in `pair-wording.ts`; `readBundle` stops a build on a code
 // with none, and the Worker reads only the bundle version the build read.
-import { APPROACH_LABELS } from "./approach.ts";
-import { assertNeutral, STATUS_GLOSSES, STATUS_LABELS } from "./status.ts";
-import { MEASURE_WORDS, PHASE_WORDS, TEST_WORDS, TRIAL_STATE_WORDS, assertNoOutcomeVerdict, comparisonText } from "./trial-facts.ts";
+import {
+  PAIR_APPROACH_LABELS,
+  PAIR_EVENT_LABELS,
+  PAIR_OUTCOME_KIND_WORDS,
+  PAIR_PHASE_WORDS,
+  PAIR_REGISTRY_NAMES,
+  PAIR_STATUS_GLOSSES,
+  PAIR_STATUS_LABELS,
+  PAIR_TRIAL_STATES,
+} from "./pair-wording.ts";
+import { MEASURE_WORDS, TEST_WORDS, TRIAL_STATE_WORDS, comparisonText } from "./trial-facts.ts";
 
-/** The registry's state of a trial, as the lab codes it, in the site's own states. A code
- * absent here has no wording: the build stops on it. */
-export const PAIR_TRIAL_STATES: Record<string, keyof typeof TRIAL_STATE_WORDS> = {
-  not_yet_recruiting: "not_started",
-  recruiting: "under_way",
-  enrolling_by_invitation: "under_way",
-  active_not_recruiting: "under_way",
-  suspended: "suspended",
-  terminated: "terminated",
-  completed: "completed",
-  withdrawn: "withdrawn",
-  unknown: "unknown",
-};
-
-export const PAIR_EVENT_LABELS: Record<string, string> = {
-  registered: "Trial registered",
-  started: "Trial started",
-  suspended: "Trial suspended",
-  completed: "Trial completed",
-  terminated: "Trial terminated",
-  withdrawn: "Trial withdrawn",
-  results_posted: "Trial results posted",
-  phase_changed: "Trial phase changed",
-};
-
-assertNeutral(Object.values(PAIR_EVENT_LABELS));
-
-/** Which of a trial's measures a posted outcome is, as the registry classes it. */
-export const OUTCOME_KIND_WORDS: Record<string, string> = {
-  primary: "Primary outcome",
-  secondary: "Secondary outcome",
-  other: "Other outcome",
-  post_hoc: "Post hoc outcome",
-};
-
-assertNoOutcomeVerdict(Object.values(OUTCOME_KIND_WORDS));
+export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
 
 export interface PaperLink {
   id: string;
@@ -142,7 +115,7 @@ function outcomesOf(findings: any): OutcomeView[] {
       const measure = [kind, repeats ? null : outcome.unit].filter(Boolean).join(", ") || null;
       return {
         title: outcome.title,
-        kind: OUTCOME_KIND_WORDS[outcome.kind],
+        kind: PAIR_OUTCOME_KIND_WORDS[outcome.kind],
         measure,
         timeFrame: outcome.time_frame,
         rows: outcome.values.map((value: any) => ({
@@ -260,8 +233,8 @@ export function pairView(page: any): PairView {
     conditionId: row.condition.descriptor_id,
     conditionSlug: row.condition.slug,
     statusCode: row.status.code,
-    status: STATUS_LABELS[row.status.code as keyof typeof STATUS_LABELS],
-    gloss: STATUS_GLOSSES[row.status.code as keyof typeof STATUS_GLOSSES],
+    status: PAIR_STATUS_LABELS[row.status.code as keyof typeof PAIR_STATUS_LABELS],
+    gloss: PAIR_STATUS_GLOSSES[row.status.code as keyof typeof PAIR_STATUS_GLOSSES],
     asOf: row.status.as_of,
     explainedBy: row.status.explained_by
       .map((key: string) => events.get(key))
@@ -269,7 +242,7 @@ export function pairView(page: any): PairView {
       .sort(byDay),
     trials: page.trials.map((trial: any): PairTrialView => {
       const facts = trial.facts;
-      const phases = (facts.phases ?? []).map((phase: string) => PHASE_WORDS[phase]);
+      const phases = (facts.phases ?? []).map((phase: string) => PAIR_PHASE_WORDS[phase]);
       return {
         nctId: trial.nct_id,
         title: facts.title,
@@ -294,14 +267,14 @@ export function pairView(page: any): PairView {
     history: page.history
       .map((change: any) => ({
         on: change.on,
-        before: change.before ? STATUS_LABELS[change.before as keyof typeof STATUS_LABELS] : null,
-        after: STATUS_LABELS[change.after as keyof typeof STATUS_LABELS],
+        before: change.before ? PAIR_STATUS_LABELS[change.before as keyof typeof PAIR_STATUS_LABELS] : null,
+        after: PAIR_STATUS_LABELS[change.after as keyof typeof PAIR_STATUS_LABELS],
       }))
       .sort((a: any, b: any) => (a.on < b.on ? -1 : 1)),
     otherNames,
-    approach: page.approach?.approach ? APPROACH_LABELS[page.approach.approach] : null,
+    approach: page.approach?.approach ? PAIR_APPROACH_LABELS[page.approach.approach] : null,
     checkedByPerson: page.checked_by_person,
-    registryChecks: page.checked.map((check: any) => ({ registry: check.registry, through: check.checked_through })),
+    registryChecks: page.checked.map((check: any) => ({ registry: PAIR_REGISTRY_NAMES[check.registry], through: check.checked_through })),
     claimSlug: row.origin?.claim_slug ?? null,
   };
 }
