@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { Service, engineUnavailable } from "./harness.mjs";
-import { scratchBeside, statements, writeStatementFiles, writeStatements } from "../scripts/load-pairs.mjs";
+import { chunkedDrops, droppedVersions, scratchBeside, statements, writeStatementFiles, writeStatements } from "../scripts/load-pairs.mjs";
 import { Writable } from "node:stream";
 import { realpathSync as realpathSync_, symlinkSync } from "node:fs";
 import { dirname } from "node:path";
@@ -29,6 +29,7 @@ after(async () => { if (s) await s.close(); });
 const run = async (sql) => { for (const one of sql) await s.db.prepare(one).run(); };
 const all = async (sql, ...values) => (await s.db.prepare(sql).bind(...values).all()).results;
 const one = async (sql, ...values) => (await all(sql, ...values))[0];
+const one_ = one;
 
 test("a bundle is loaded, becomes current, and gives each pair page back as the lab wrote it", { skip }, async () => {
   const load = statements(bundle, { loadedAt: "2026-11-19T00:00:00.000Z" });
@@ -127,6 +128,53 @@ test("the command refuses a folder that holds no page file", () => {
   } finally {
     rmSync(empty, { recursive: true, force: true });
   }
+});
+
+test("a version that falls out is deleted a few rows at a time, each table in as many chunks as its count needs", { skip }, async () => {
+  // Three versions in a fresh store's tables, keeping two: the oldest is dropped in chunks of 4.
+  const held = async () => all("SELECT version, current, loaded_at, counts FROM pair_bundle");
+  const copies = [];
+  try {
+    const loads = [];
+    for (const [at, gone] of [["2026-12-01", "apitegromab--obesity"], ["2026-12-02", "apitegromab--overweight"], ["2026-12-03", null]]) {
+      const copy = mkdtempSync(join(tmpdir(), "thenwhat-bundle-"));
+      copies.push(copy);
+      cpSync(bundle, copy, { recursive: true });
+      if (gone) rmSync(join(copy, "p12_pair_page", `${gone}.json`));
+      writeManifest(copy, { madeAt: `${at}T00:00:00Z` });
+      loads.push(statements(copy, { loadedAt: `${at}T00:00:00.000Z` }));
+    }
+    for (const load of loads.slice(0, 2)) await run(load.sql);
+    const [oldest, , next] = loads;
+    const dropped = droppedVersions(await held(), next.version);
+    // The rest of the store's versions are older than these three; the oldest of the three is
+    // among those dropped, and neither of the two kept after the load is.
+    assert.ok(dropped.some((one) => one.version === oldest.version));
+    assert.ok(!dropped.some((one) => one.version === loads[1].version || one.version === next.version));
+    const chunk = 4;
+    const drops = chunkedDrops(dropped, chunk);
+    const expected = dropped.reduce((sum, one) => sum + Object.values(one.counts).reduce((n, rows) => n + Math.ceil(rows / chunk), 0), 0);
+    assert.equal(drops.length, expected);
+    // Run as the command runs them: the new version's rows, its switch, the chunks, then the
+    // load's own deletes.
+    await run(next.sql.slice(0, next.dropsAt));
+    for (const sql of drops) {
+      const { meta } = await s.db.prepare(sql).run();
+      assert.ok(meta.changes <= chunk, `${meta.changes} rows in one delete`);
+    }
+    for (const one of dropped) {
+      for (const table of Object.keys(one.counts)) assert.equal((await one_(`SELECT count(*) AS n FROM ${table} WHERE version = ?`, one.version)).n, 0, `${table} ${one.version}`);
+    }
+    await run(next.sql.slice(next.dropsAt));
+    assert.deepEqual((await all("SELECT version FROM pair_bundle ORDER BY loaded_at")).map((row) => row.version), [loads[1].version, next.version]);
+    assert.equal((await one("SELECT count(*) AS n FROM pair WHERE version = ?", next.version)).n, pageFiles.length);
+  } finally {
+    for (const copy of copies) rmSync(copy, { recursive: true, force: true });
+  }
+});
+
+test("a dropped version whose counts the store does not hold is refused, not deleted whole", () => {
+  assert.throws(() => chunkedDrops([{ version: "0123456789abcdef", counts: {} }]), /pair_bundle holds no pair_page count for version 0123456789abcdef/);
 });
 
 // The statements leave the loader one at a time (writeStatements): joined into one string, a
