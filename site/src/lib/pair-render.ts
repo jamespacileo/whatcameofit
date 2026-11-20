@@ -6,6 +6,7 @@ import { UNCHECKED_BYLINE } from "./notices.ts";
 import type { NarrowerPair, PairTrialView, PairView } from "./pair-view.ts";
 import { assertNoOutcomeVerdict } from "./trial-facts.ts";
 import { formatDate } from "./timetable.ts";
+import { trialsTable } from "./trials-table.ts";
 import { registryDate } from "./trial-page.mjs";
 
 export { escape };
@@ -77,6 +78,9 @@ function renderOutcomes(outcomes: PairTrialView["outcomes"]): string {
 }
 
 /** The body of the page: why the status, the trials, the history and the treatment. */
+/** How many trials a pair has before its page shows them as a table rather than one entry each. */
+export const TRIALS_TABLE_FROM = 3;
+
 /** The line that names the same treatment's pairs for narrower conditions. */
 export const NARROWER_LEAD = "Also followed for narrower conditions:";
 
@@ -137,7 +141,9 @@ export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): 
       view.explainedBy.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}, ${escape(event.nctId)}</li>`),
     ),
     sheetHeading("The trials", "trials"),
-    ...trials,
+    // From a few trials up, the trials read across as a table (lib/trials-table.ts), each row
+    // opening to the same record; fewer stay as entries of their own.
+    ...(view.trials.length >= TRIALS_TABLE_FROM ? [trialsTable(view.trials)] : trials),
     sheetHeading("How the status changed", "history"),
     eventList(
       " data-pair-history",
