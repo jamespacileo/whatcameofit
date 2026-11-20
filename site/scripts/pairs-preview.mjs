@@ -10,7 +10,7 @@
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { manifestBackfill, statements } from "../../store/ingest/scripts/load-pairs.mjs";
+import { manifestBackfill, statements, withChunkedDrops } from "../../store/ingest/scripts/load-pairs.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
 const WRANGLER = path.join(SITE_DIR, "node_modules/wrangler/bin/wrangler.js");
@@ -193,9 +193,10 @@ export function loadPairsBundle({ config, database, bundle, local = false, persi
   if (migrated.status !== 0) throw new Error(`the migrations did not apply to ${database.name}: ${lastError(`${migrated.stdout}${migrated.stderr}`)}`);
   const load = statements(bundle, { keep: PREVIEW_KEPT_VERSIONS });
   const held = wrangler(["d1", "execute", database.name, ...where, "--config", config, "--json", "--command",
-    `SELECT current FROM pair_bundle WHERE version = '${load.version}'`]);
+    "SELECT version, current, loaded_at, counts FROM pair_bundle"]);
   if (held.status !== 0) throw new Error(`${database.name} could not be read: ${lastError(`${held.stdout}${held.stderr}`)}`);
-  if (json(held.stdout)[0]?.results?.[0]?.current === 1) {
+  const versions = json(held.stdout)[0]?.results ?? [];
+  if (versions.find((row) => row.version === load.version)?.current === 1) {
     // Already current, perhaps from before bundles carried a manifest: keep the manifest with it.
     const kept = wrangler(["d1", "execute", database.name, ...where, "--config", config, "--json", "--command", manifestBackfill(load).sql[0]]);
     if (kept.status !== 0) throw new Error(`the manifest of bundle ${load.version} was not kept in ${database.name}: ${lastError(`${kept.stdout}${kept.stderr}`)}`);
@@ -204,7 +205,8 @@ export function loadPairsBundle({ config, database, bundle, local = false, persi
   const dir = fs.mkdtempSync(path.join(path.dirname(config), "pairs-sql-"));
   try {
     const file = path.join(dir, "pairs.sql");
-    fs.writeFileSync(file, `${load.sql.join(";\n")};\n`);
+    // The versions that age out are deleted a chunk at a time, inside D1's time a query has.
+    fs.writeFileSync(file, `${withChunkedDrops(load, versions).join(";\n")};\n`);
     const ran = wrangler(["d1", "execute", database.name, ...where, "--config", config, "--yes", "--file", file]);
     if (ran.status !== 0) throw new Error(`bundle ${load.version} did not load into ${database.name}: ${lastError(`${ran.stdout}${ran.stderr}`)}`);
   } finally {
