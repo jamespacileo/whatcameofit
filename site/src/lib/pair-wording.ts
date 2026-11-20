@@ -103,7 +103,9 @@ assertPairWordingNeutral(PAIR_WORDING);
 export function unwordedPairCodes(pairPages: any[], interventionPages: any[] = []): string[] {
   const found = new Set<string>();
   const need = (kind: string, code: string | null | undefined) => {
-    if (code !== null && code !== undefined && !(code in PAIR_WORDING[kind])) found.add(`${kind}: ${code}`);
+    // An entry of the table itself: `in` would also take a name every object inherits, so a
+    // registry the bundle calls "toString" would pass and the page show a function.
+    if (code !== null && code !== undefined && !Object.hasOwn(PAIR_WORDING[kind], code)) found.add(`${kind}: ${code}`);
   };
   for (const page of pairPages) {
     need("status", page.row.status.code);
