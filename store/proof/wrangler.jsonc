@@ -1,9 +1,0 @@
-// Local only: lets `wrangler d1 execute --local` run the schema on D1's own engine.
-// The database id is a placeholder; nothing here names or creates a Cloudflare resource.
-{
-  "name": "thenwhat-store-proof",
-  "compatibility_date": "2026-11-01",
-  "d1_databases": [
-    { "binding": "STORE", "database_name": "thenwhat-store-proof", "database_id": "00000000-0000-0000-0000-000000000000" }
-  ]
-}

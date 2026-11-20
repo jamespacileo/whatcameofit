@@ -1,5 +1,7 @@
 # 13. A claim can start with a registry record
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date 2026-11-18. Status accepted. Implementation is tracked in `openspec/changes/archive/2026-11-19-registry-drafted-claims`.
 
 ## Context

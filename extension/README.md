@@ -1,6 +1,6 @@
 # Browser extension
 
-Open the toolbar popup to see what happened to the breakthrough in the article you are reading. A tracked report shows its reviewed claim and a link to the evidence. An untracked page starts a registry lookup automatically when the service is available.
+Open the toolbar popup to see what happened to the breakthrough in the article you are reading. A tracked report shows its published page and a link to the evidence. An untracked page starts a registry lookup automatically when the service is available.
 
 It compares the page's address with the site's `lookup.json` inside the browser. This initial check sends no page address. It can see a tab only when its button is pressed.
 
@@ -53,7 +53,7 @@ Then open each of these and open the extension's toolbar popup. An untracked pag
 2. A post on Reddit that links to a study or a story.
 3. An article on a site that refuses software, such as the-sun.com or medicalxpress.com.
 4. Any of the above with a sentence selected first: only the selection is searched.
-5. A tracked article. Its reviewed claim appears without a registry search.
+5. A tracked article. Its published page appears without a registry search.
 
 To see what went wrong when something does, right-click inside the popup, choose "Inspect" and read the Console.
 
@@ -103,10 +103,10 @@ As of 13 November 2026, 0.9.0 (9) is Waiting for Review. The [0.9.1 preview](htt
 - `src/short-links.js`: learns where a link through X's shortener leads. Tested in `tests/`.
 - `src/controller.js`: owns one popup's automatic lookup, cache, cancellation and explicit retries.
 - `src/popup.js`: connects the controller to the active tab, shared readers and rendered view.
-- `src/kept.js`: the recently checked pages and followed claims the browser keeps. Pure, tested in `tests/`.
+- `src/kept.js`: the recently checked pages and followed pages the browser keeps. Pure, tested in `tests/`.
 - `src/results.js`: reuse of a previous answer for up to 24 hours. Pure.
 - `src/visual.js`: reads the visible content and captures the screenshot a visual lookup sends.
-- `src/watch.js`: decides which followed claims to tell the reader about and which reminders are due. Pure, tested in `tests/`.
+- `src/watch.js`: decides which followed pages to tell the reader about and which reminders are due. Pure, tested in `tests/`.
 - `src/background.js`: the twice-daily check; wires `watch.js` to alarms and notifications.
 - `src/icons.js`: the icons the popup draws.
 - `build.mjs`: copies the above with what is shared with the site (the address comparison, how an address is told from a post, the page reader, the wording of an answer and the notices), the site's face and icon, and writes the manifest.

@@ -1,5 +1,7 @@
 # 14. A held backfill batch can use a drawn audit
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date 2026-11-18. Status accepted. Amends [ADR 0007](0007-a-read-batch-waits-for-its-audit.md) through `openspec/changes/archive/2026-11-19-registry-drafted-claims`.
 
 ## Decision

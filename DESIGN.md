@@ -1,5 +1,7 @@
 # Design
 
+> **Written while the site tracked claims.** Claims were removed on 2026-11-20: the site now follows treatment and condition pairs, one page a pair, built from the lab's bundle. Where this file says "claim" or "claim page", or describes following, reminders, anniversaries, source pages, report statements or the record strip, it describes pages that no longer exist. It is to be rewritten against the pair pages once their design settles; until then `GLOSSARY.md`, `CLAUDE.md` and `openspec/changes/pairs-site` are the current word.
+
 The visual system of the thenwhat site as built. Product context is in `PRODUCT.md`; behavior is in `openspec/`.
 
 **Direction: evidence digest.** Chosen by the operator on 2026-11-11 from three sketches (`.impeccable/mocks/decision/directions.html`), replacing an earlier yellow "timetable" look that did not suit the subject. The brief: calm, familiar to readers of research-summary sites, relevant to the topic, and as simple as the first version.

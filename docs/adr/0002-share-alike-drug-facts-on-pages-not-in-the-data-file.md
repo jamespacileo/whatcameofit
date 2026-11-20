@@ -1,5 +1,7 @@
 # 2. Share-alike drug facts are shown on claim pages and kept out of the data file
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-14. Status: accepted. Change: `openspec/changes/archive/2026-11-18-knowledge-cards`, task 6.1.
 
 ## Context

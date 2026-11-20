@@ -65,17 +65,9 @@ test("a site with no configured store publishes no extension page or link", () =
   }
 });
 
-test("the method video waits to be played and carries a date and transcript", () => {
-  const { document } = parseHTML(page("how-it-works/index.html"));
-  const video = document.querySelector("main video");
-  assert.ok(video, "the method video is missing");
-  assert.ok(video.hasAttribute("controls"));
-  assert.equal(video.getAttribute("preload"), "none");
-  assert.ok(!video.hasAttribute("autoplay"));
-  assert.match(video.querySelector("source")?.getAttribute("src") ?? "", /^\/video\/explainer\.mp4(?:\?|$)/);
-  assert.ok(exists("video/explainer.mp4") && exists("video/explainer-poster.jpg"));
-  assert.match(document.querySelector("main").textContent, /as the registries showed them in November 2026/);
-  assert.match(document.querySelector("main").textContent, /What the video says/);
+test("the method page carries no video, which showed the old claim page", () => {
+  assert.equal(parseHTML(page("how-it-works/index.html")).document.querySelector("main video"), null);
+  assert.ok(!exists("video/explainer.mp4"));
 });
 
 test("every status has a published entry with its label and meaning, and cites its rule", () => {

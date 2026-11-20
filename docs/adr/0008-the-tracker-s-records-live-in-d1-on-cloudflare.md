@@ -1,5 +1,7 @@
 # 8. The tracker's records live in one D1 database on Cloudflare, with raw payloads in R2
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-16. Status: accepted; not in effect until the migration of `openspec/changes/cloudflare-source-of-truth` has run. Change: `openspec/changes/cloudflare-source-of-truth`.
 
 ## Context

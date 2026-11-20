@@ -1,5 +1,7 @@
 # 9. A reader's lookup leaves records, and a claim it starts is published by rule without the audit hold
 
+**Superseded on 2026-11-20.** The operator removed claims and the claims pipeline that day. Nothing in this repository acts on this decision any more; it is kept as the record of why the removed code worked as it did.
+
 Date: 2026-11-16. Status: accepted; not in effect until `openspec/changes/cloudflare-source-of-truth` turns records from lookups on. Change: `openspec/changes/cloudflare-source-of-truth`. Amends 0001 and 0007; touches 0005.
 
 ## Context
