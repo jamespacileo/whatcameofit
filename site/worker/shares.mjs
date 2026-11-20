@@ -11,7 +11,7 @@ import { embedTitle, oembedOf, renderEmbedArticle, renderEmbedRegistries } from 
 import { escape } from "../src/lib/pair-render.ts";
 import { pairView } from "../src/lib/pair-view.ts";
 import { SITE } from "../site.config.mjs";
-import { ABSENT, UNREADABLE, builtVersion, bundleFile, madeHeaders } from "./pairs.mjs";
+import { ABSENT, UNREADABLE, builtFor, bundleFile, madeHeaders, notHeld } from "./pairs.mjs";
 
 export const EMBED_SHELL_PATH = "/embed-shell";
 const DAY_SECONDS = 86400;
@@ -43,7 +43,7 @@ export async function shareAnswer(request, env, validate, cache) {
   const url = new URL(request.url);
   const share = shareOf(url.pathname);
   if (!share || !env.PAIRS || typeof validate !== "function") return null;
-  const built = await builtVersion(env, url);
+  const built = await builtFor(request, env);
   if (!built) return null;
   const card = OG_IMAGE.exec(built.shell)?.[1];
   if (!card) return null;
@@ -69,14 +69,14 @@ export async function shareAnswer(request, env, validate, cache) {
     const { results } = await env.PAIRS.prepare("SELECT 1 FROM pair_page WHERE version = ?1 AND model = 'PairPage' AND key = ?2 AND part = 0")
       .bind(built.version, share.address)
       .all();
-    if (!results.length) return null;
+    if (!results.length) return notHeld(key);
     const where = new URL(card);
     const image = await env.ASSETS.fetch(new Request(new URL(`${where.pathname}${where.search}`, url)));
     if (!image.ok) return null;
     answer = new Response(image.body, { headers: madeHeaders(built, "image/png", `public, max-age=${DAY_SECONDS}`) });
   } else {
     const file = await bundleFile(env, built.version, "PairPage", share.address);
-    if (file === ABSENT) return null;
+    if (file === ABSENT) return notHeld(key);
     if (!validate(file)) {
       if (share.kind === "oembed") {
         return new Response(JSON.stringify({ error: UNREADABLE }), { status: 500, headers: madeHeaders(built, "application/json; charset=utf-8", "no-store") });
