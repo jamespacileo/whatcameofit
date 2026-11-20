@@ -71,4 +71,20 @@ export async function handleWithPairs(request, env, cache = globalThis.caches?.d
   return notFound;
 }
 
-export default { fetch: (request, env) => handleWithPairs(request, env) };
+/**
+ * The answer with the robots mark set, whatever made it: a page made here, a file from the
+ * assets, a redirect, a not-found or gone page, an error or a 304. Staging's configuration
+ * sets ROBOTS_NOINDEX (wrangler.staging.jsonc); production and previews do not.
+ */
+export function markedNoindex(answer) {
+  const headers = new Headers(answer.headers);
+  headers.set("X-Robots-Tag", "noindex");
+  return new Response(answer.body, { status: answer.status, statusText: answer.statusText, headers });
+}
+
+export default {
+  fetch: async (request, env) => {
+    const answer = await handleWithPairs(request, env);
+    return env.ROBOTS_NOINDEX === "1" ? markedNoindex(answer) : answer;
+  },
+};

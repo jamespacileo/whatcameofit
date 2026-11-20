@@ -1,0 +1,95 @@
+name: Release
+
+# Production is published from a release tag only (docs/deploy.md, "Releases"), and only while
+# the operator has publishing switched on: PRODUCTION_PUBLISHING=on. The `production`
+# environment releases its token to v* tags only and waits for the operator's approval. The
+# tagged commit must be on main, and "CI and deploy" must have passed for it on a push to main;
+# the live site is checked afterwards (openspec/specs/deployment, "Checks precede production
+# deployment").
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  # To read whether CI passed for the tagged commit; nothing is written.
+  actions: read
+
+concurrency:
+  group: production
+  cancel-in-progress: false
+
+env:
+  ASTRO_TELEMETRY_DISABLED: "1"
+  CI_NODE_VERSION: "26.13.1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  paused:
+    name: Production publishing is paused
+    if: vars.PRODUCTION_PUBLISHING != 'on'
+    runs-on: ubuntu-latest
+    steps:
+      # The tag's name is input: it reaches the shell as a quoted variable, never as script text.
+      - run: echo "::notice::Production publishing is paused (PRODUCTION_PUBLISHING is not on). $GITHUB_REF_NAME was not published."
+
+  publish:
+    name: Publish ${{ github.ref_name }} to production
+    if: vars.PRODUCTION_PUBLISHING == 'on' && github.repository == 'jamespacileo/whatcameofit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: site/package.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: ${{ env.CI_NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: site/pnpm-lock.yaml
+      # Dependencies are installed before any token is in reach: an install script never sees one.
+      - name: Install dependencies
+        run: make site/node_modules
+      - name: The tag is a commit of main
+        run: |
+          git fetch --no-tags origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not a commit of main. Nothing was published."; exit 1; }
+      - name: CI passed for the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          passed=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push&branch=main&status=success&per_page=1" --jq '.total_count')
+          if [ "$passed" -lt 1 ]; then
+            echo "::error::CI and deploy has not passed for $GITHUB_SHA on a push to main. Nothing was published."
+            exit 1
+          fi
+          echo "CI and deploy passed for $GITHUB_SHA."
+      - name: Publish
+        run: make deploy ARGS=--cutover
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PRODUCTION_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          SITE_URL: https://whatcameofit.com
+          PAIRS_DATABASE: thenwhat-store
+          BUILD_REVISION: ${{ github.sha }}
+          SUGGEST_URL: ${{ vars.SUGGEST_URL }}
+          CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
+      - name: Check the live site
+        run: node site/scripts/smoke-live.mjs
+        env:
+          SITE_URL: https://whatcameofit.com
+          BUILD_REVISION: ${{ github.sha }}

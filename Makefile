@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 STORE_TEST_CONCURRENCY ?= 1
@@ -121,6 +121,16 @@ deploy-check deploy-pairs-check: site/node_modules
 #   make deploy ARGS=--cutover
 deploy: site/node_modules
 	PAIRS_BUNDLE= PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs $(ARGS)
+
+# Staging (docs/deploy.md, "Staging"): the same build, from the preview store's current bundle,
+# to the thenwhat-staging Worker as a version and a deployment, every response noindex, then the
+# smoke checks against STAGING_URL. Needs CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and
+# STAGING_PAIRS_DATABASE_ID. Rehearse with ARGS=--dry-run (no smoke check then).
+STAGING_URL ?= https://staging.whatcameofit.com
+STAGING_DATABASE ?= thenwhat-store-preview
+deploy-staging: site/node_modules
+	PAIRS_BUNDLE= SITE_URL=$(STAGING_URL) PAIRS_DATABASE=$(STAGING_DATABASE) node site/scripts/deploy.mjs --staging $(ARGS)
+	$(if $(findstring --dry-run,$(ARGS)),,node site/scripts/staging-smoke.mjs $(STAGING_URL) site/dist $(BUILD_REVISION))
 
 # The pairs site on this machine as a deployment serves it, with the Worker and the bundle in
 # D1's local engine: http://localhost:8788. Astro's dev server has no pair pages, since none is
