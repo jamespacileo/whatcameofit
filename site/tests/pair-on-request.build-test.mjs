@@ -943,3 +943,89 @@ test("the code that writes a page is in its tag: a renderer or wording change gi
     frameEdits["/pair-shell"] = (text) => text;
   }
 });
+
+// The rate limit on addresses made on request (openspec pairs-site task 4.6g), in a Worker of its
+// own with a limit of three, so the other tests here are never counted.
+/**
+ * Asks `requests` of a fresh asker inside one window of the limiter: Miniflare counts in fixed
+ * minutes of the clock, so a sequence that crosses one is asked again, from another address.
+ */
+async function inOneWindow(ask) {
+  for (let attempt = 1; ; attempt += 1) {
+    const window = Math.floor(Date.now() / 60_000);
+    const answers = await ask(`192.0.2.${attempt}`);
+    if (Math.floor(Date.now() / 60_000) === window) return answers;
+    for (const answer of answers) await answer.body?.cancel();
+    assert.ok(attempt < 3, "the limiter's window kept changing");
+  }
+}
+
+test("past its limit an asker gets 429 with Retry-After and the site's headers, never 403 or 404, and files are never counted", async () => {
+  const worker = await bundleWorker({ entryPoints: ["worker/with-pairs.mjs"], bundle: true, format: "esm", platform: "browser", conditions: ["workerd", "worker", "browser"], target: "es2022", write: false });
+  const limited = new Miniflare(convertV4MiniflareOptions({
+    modules: true,
+    script: worker.outputFiles[0].text,
+    compatibilityDate: "2026-10-01",
+    cf: false,
+    d1Databases: ["PAIRS"],
+    ratelimits: { ON_REQUEST_LIMIT: { namespace_id: "9001", simple: { limit: 3, period: 60 } } },
+    serviceBindings: { ASSETS: assets },
+  }));
+  try {
+    const db = await limited.getD1Database("PAIRS");
+    for (const sql of migration()) await db.prepare(sql).run();
+    await load(db, bundle);
+    const ask = (host, pathname, from) => limited.dispatchFetch(`https://${host}${pathname}`, { headers: { "CF-Connecting-IP": from }, redirect: "manual" });
+    const [first, second, third, refused, elsewhere, otherHost, file] = await inOneWindow(async (from) => [
+      await ask("limited.test", `/${ON_REQUEST}`, from),
+      await ask("limited.test", `/${ON_REQUEST}`, from),
+      await ask("limited.test", `/${ON_REQUEST}`, from),
+      await ask("limited.test", "/intervention/acoziborole", from),
+      await ask("limited.test", `/${ON_REQUEST}`, `${from}0`),
+      await ask("other-preview.test", `/${ON_REQUEST}`, from),
+      await ask("limited.test", "/about", from),
+    ]);
+    for (const [at, response] of [first, second, third].entries()) assert.equal(response.status, 200, `request ${at + 1}`);
+    assert.equal(refused.status, 429);
+    assert.equal(refused.headers.get("Retry-After"), "60");
+    assert.equal(refused.headers.get("Cache-Control"), "no-store");
+    // The site's headers, and the deployment's robots mark as its pages carry it (a preview's
+    // noindex), on the refusal too.
+    for (const [name, value] of Object.entries(SITE_HEADERS)) assert.equal(refused.headers.get(name), value, name);
+    assert.ok(first.headers.get("X-Robots-Tag"), "the preview build marks its pages");
+    assert.equal(refused.headers.get("X-Robots-Tag"), first.headers.get("X-Robots-Tag"));
+    // Another address is counted on its own, and so is another preview's hostname; a file of
+    // the site is never counted.
+    assert.equal(elsewhere.status, 200);
+    assert.equal(otherHost.status, 200);
+    assert.equal(file.status, 200);
+    for (const response of [first, second, third, refused, elsewhere, otherHost, file]) await response.body?.cancel();
+  } finally {
+    await limited.dispose();
+  }
+});
+
+test("a fault of the limiter never takes a page down: a limit() that throws answers the page", async () => {
+  const worker = await bundleWorker({ entryPoints: ["worker/with-pairs.mjs"], bundle: true, format: "esm", platform: "browser", conditions: ["workerd", "worker", "browser"], target: "es2022", write: false });
+  const faulty = new Miniflare(convertV4MiniflareOptions({
+    modules: [
+      { type: "ESModule", path: "entry.mjs", contents: `import site from "./site.mjs";
+export default { fetch(request, env, ctx) { return site.fetch(request, { ...env, ON_REQUEST_LIMIT: { limit() { throw new Error("limiter unavailable"); } } }, ctx); } };` },
+      { type: "ESModule", path: "site.mjs", contents: worker.outputFiles[0].text },
+    ],
+    compatibilityDate: "2026-10-01",
+    cf: false,
+    d1Databases: ["PAIRS"],
+    serviceBindings: { ASSETS: assets },
+  }));
+  try {
+    const db = await faulty.getD1Database("PAIRS");
+    for (const sql of migration()) await db.prepare(sql).run();
+    await load(db, bundle);
+    const response = await faulty.dispatchFetch(`https://faulty.test/${ON_REQUEST}`, { headers: { "CF-Connecting-IP": "192.0.2.9" } });
+    assert.equal(response.status, 200);
+    await response.body?.cancel();
+  } finally {
+    await faulty.dispose();
+  }
+});

@@ -155,7 +155,7 @@ Decided by the operator on 20 November 2026: main's work goes to https://staging
 **How it is published.** `.github/workflows/staging.yml` runs after every green run of "CI and deploy" on a push to `main`, or when started by hand on `main` (Actions › Staging › Run workflow). It has no pull request trigger (`site/tests/staging-workflow.test.mjs` fails if one appears), asks for the `staging` environment, which releases its token to `main` only, and holds `contents: read` only. Only main's tip is published: the job's first step reads main's tip, skips (saying so, not failing) a CI run for an older commit that finished late or was run again, and checks out the tip itself; by hand, the tip is published. Publishes never interleave: one runs at a time (`concurrency: staging`), a run started meanwhile waits, and a newer waiting run replaces an older one. No `run:` step holds an expression: every value reaches the shell as a quoted variable from `env:`. It runs `make deploy-staging`:
 
 1. `deploy.mjs --staging` refuses `--cutover`, production's address and any database whose name does not end in `-preview`, finds the database by the id pinned in `STAGING_PAIRS_DATABASE_ID` through D1's REST API (refused unless the name and EU jurisdiction match), and exports its current bundle with `wrangler d1 execute --remote --command` (D1's `/query` endpoint, SELECTs only).
-2. It builds the site from that bundle, marks every file noindex in `_headers` and writes `/bundle-version.txt`.
+2. It builds the site from that bundle, marks every file noindex in `_headers` and writes `/bundle-version.txt` and `/bundle-manifest.json`: the bundle's version, `made_at`, `lab_commit`, counts, pairs, and the launch measure (distinct trials on pair pages over the manifest's `coverage.trials_fetched`, or none when the manifest gives no count), also printed in the log with the pair addresses the sitemap lists (`scripts/bundle-facts.mjs`). The smoke step prints the same line from the deployed file, and fails if it names another bundle.
 3. It publishes with `wrangler versions upload` then `wrangler versions deploy <id>@100%`. Neither changes a trigger, so the custom domain the operator attached, and workers.dev and preview URLs as the operator set them, stay as they are across every deploy. `wrangler deploy` is not used: it sets workers.dev on or off on every run.
 4. The Worker itself adds `X-Robots-Tag: noindex` to every response it gives when `ROBOTS_NOINDEX` is `1`, which only staging's configuration sets (`worker/with-pairs.mjs`, held by `site/tests/staging.build-test.mjs`, "the Worker marks every kind of answer noindex in staging's configuration, and adds none in production's"). The edge's response-header rule on the hostname adds the same; neither depends on the other.
 5. `scripts/staging-smoke.mjs` checks the hostname: `/build-revision.txt` names the commit deployed and `/bundle-version.txt` the exported bundle (each asked again, up to six times ten seconds, while the new version spreads), and `/`, a pair page and its data file made on request, an old claim address that leads to its pair (301), one with no pair (410) and `/no-such--pair` (404) each answer as expected with `X-Robots-Tag: noindex`. The addresses are read from the build. Any failure fails the job and names the address.
@@ -165,6 +165,7 @@ What the smoke step prints when everything passes:
 ```text
 OK /build-revision.txt names commit <the commit deployed>
 OK /bundle-version.txt names bundle 8d9a5628d5e3a2e5
+   Bundle 8d9a5628d5e3a2e5: 3,825 pairs, lab commit <the lab's commit>; launch measure <n>% (<distinct trials on pages> distinct trials on pages of <trials fetched> fetched).
 OK / 200, noindex
 OK /<a pair made on request> 200, noindex
 OK /data/pairs/<that pair>.json 200, noindex
@@ -197,6 +198,28 @@ To rehearse on this machine, with D1's local engine and nothing sent: `PAIRS_LOC
 Production is published from a tag only. `.github/workflows/release.yml` runs on a pushed tag matching `v*` (for example `v2026.11.20`), and publishes only while the repository variable `PRODUCTION_PUBLISHING` is `on`; otherwise its one job says publishing is paused. The publishing job asks for the `production` environment, which releases `CLOUDFLARE_PRODUCTION_API_TOKEN` to `v*` tags only and waits for the operator's approval. It checks that the tagged commit is on `main` and that "CI and deploy" passed for it on a push to `main` (read with `actions: read`), runs `make deploy ARGS=--cutover` from `thenwhat-store` to https://whatcameofit.com, then checks the live site (`scripts/smoke-live.mjs`: the deployed commit, a stylesheet, the Worker and public pages).
 
 To release: `git tag v2026.11.20 <commit of main> && git push origin v2026.11.20`, then approve the run in Actions. `PRODUCTION_PUBLISHING` stays unset until the operator says the cutover can go ahead.
+
+## Rate limits on pages made on request
+
+Two limits stand between a flood of requests and the pages the Worker makes from D1 (openspec pairs-site task 4.6g). Both answer **429 Too Many Requests**, never 403 or 404: Google's crawlers read 429 as the server asking them to slow down, and recover when it stops, while a 403 or 404 would remove the page from Google's index ([reduce crawl rate](https://developers.google.com/crawling/docs/crawlers-fetchers/reduce-crawl-rate)).
+
+**In the Worker** (done in code): the `ON_REQUEST_LIMIT` rate limiting binding, which `pairsConfig` gives every deployment with pairs, each Worker its own namespace (production 4131, staging 4132, previews 4133). 600 requests a minute from one address, per Cloudflare location, on the addresses the Worker makes (a pair's page, record, embed, oEmbed and card addresses, and the listings); past it, 429 with `Retry-After: 60`. Files of the site are never counted. The binding's counts are approximate and per location ([rate limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)).
+
+A fault of the limiter never takes pages down: with the binding missing, or a `limit()` call that throws, the Worker answers the request and logs one line (`ON_REQUEST_LIMIT is not bound` or `ON_REQUEST_LIMIT failed`). The guard is at deploy time instead: `deploy.mjs` (staging and the cutover) and `pr-preview.mjs` refuse a configuration that binds the pairs database without `ON_REQUEST_LIMIT` in its own Worker's namespace at the site's limit (`limitProblems` in `scripts/pairs-preview.mjs`), and nothing is published.
+
+**At the zone** (the operator's, in the dashboard; nothing in this repository changes it): one rate limiting rule, as the Free plan allows: one rule, counted by IP, a 10-second period and a 10-second mitigation timeout, with Path and Verified Bot as the fields an expression may use ([rate limiting rules](https://developers.cloudflare.com/waf/rate-limiting-rules/)). Security › WAF › Rate limiting rules › Create rule:
+
+- **Rule name:** `Pages made on request`
+- **If incoming requests match** (Edit expression):
+
+  ```text
+  (http.request.uri.path contains "--" or http.request.uri.path contains "/intervention/" or http.request.uri.path contains "/topic/" or http.request.uri.path contains "/clinical/D") and not cf.bot_management.verified_bot
+  ```
+
+  Only the shapes the Worker makes from D1: every pair's page, record, embed, oEmbed and card address holds `--` (`/<treatment>--<condition>`), and the listings are `/intervention/<slug>`, `/topic/<slug>` and `/clinical/D<code>`. The built `/clinical/` index and the retired claim embeds (`/embed/<claim>`, answered without D1) are not counted; no file of the build has `--` in its path. Verified bots (Googlebot, Bingbot and the like) are never counted: `cf.bot_management.verified_bot` needs Bot Management elsewhere, "except in rate limiting rules, where this field is available on all plans" ([the field](https://developers.cloudflare.com/ruleset-engine/rules-language/fields/reference/cf.bot_management.verified_bot/)).
+- **With the same characteristics:** IP.
+- **When rate exceeds:** 100 requests per 10 seconds (ten a second from one address). The threshold is ours: a person's page load asks for a few of these addresses at most (its scripts, styles and images are files at other paths), so a person browsing stays far below it. 10 seconds is the only period, and the only mitigation timeout, the Free plan offers ([availability](https://developers.cloudflare.com/waf/rate-limiting-rules/)).
+- **Then take action:** Block, for 10 seconds. Block's response code defaults to 429 ([parameters](https://developers.cloudflare.com/waf/rate-limiting-rules/parameters/)); if the builder offers a response status, keep 429.
 
 ## GitHub configuration
 

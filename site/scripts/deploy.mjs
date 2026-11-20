@@ -139,6 +139,20 @@ run("pnpm", ["run", "build"], env);
 if (revision) fs.writeFileSync(path.join(dist, "build-revision.txt"), `${revision}\n`);
 // The bundle version the build was made from, for a smoke check to hold the deployment to.
 if (pairs) fs.writeFileSync(path.join(dist, "bundle-version.txt"), `${pairs.version}\n`);
+// What the bundle holds, for a person to read on the deployment (/bundle-manifest.json, noindex
+// in public/_headers) and in this log: its manifest's facts, its pairs and the launch measure.
+const factsFolder = pairs ? pairs.folder : bundleFolder;
+if (factsFolder) {
+  const { bundleFacts, factsLine } = await import("./bundle-facts.mjs");
+  const facts = bundleFacts(factsFolder);
+  if (pairs && facts.version !== pairs.version) stop([`The exported bundle's manifest names version ${facts.version}, not ${pairs.version}.`]);
+  fs.writeFileSync(path.join(dist, "bundle-manifest.json"), `${JSON.stringify(facts, null, 2)}\n`);
+  console.log(factsLine(facts));
+  // The pair addresses the sitemap lists, beside the pairs: a page left out of it shows here.
+  const sitemapPairs = fs.readdirSync(dist).filter((name) => /^sitemap-pairs(-\d+)?\.xml$/.test(name))
+    .reduce((sum, name) => sum + (fs.readFileSync(path.join(dist, name), "utf8").match(/<url>/g) ?? []).length, 0);
+  console.log(`The sitemap lists ${sitemapPairs.toLocaleString("en-GB")} pair addresses; the manifest counts ${facts.counts?.PairPage?.toLocaleString("en-GB")} pair pages.`);
+}
 
 if (!fs.existsSync(path.join(dist, "sitemap.xml"))) {
   stop(["The built site has no sitemap, so it was not built as a public build."]);
@@ -157,6 +171,14 @@ if (pairs) {
   const { builtVersion } = await import("./pairs-deploy.mjs");
   const recorded = builtVersion(dist);
   if (recorded !== pairs.version) stop([`The built site records bundle ${recorded ?? "none"}, not ${pairs.version}.`]);
+}
+
+// A configuration with pairs carries the rate limit on pages made on request, or is not
+// published: the Worker answers without a limit when the binding is missing.
+if (pairs) {
+  const { limitProblems } = await import("./pairs-preview.mjs");
+  const unlimited = limitProblems(pairs.config);
+  if (unlimited.length > 0) stop(unlimited);
 }
 
 const wranglerArgs = ["deploy", "--domain", domain];

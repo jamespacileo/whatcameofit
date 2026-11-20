@@ -124,7 +124,7 @@ let started = Date.now();
 // The pages not built ahead (openspec pairs-site, task 4.5): the bundle is loaded into the
 // preview account's pairs database, so the copy's Worker makes them on request. Without
 // access to that database the copy holds only the pages built ahead, and the log says why.
-const { findPairsDatabase, loadPairsBundle, pairsConfig } = await import("./pairs-preview.mjs");
+const { findPairsDatabase, limitProblems, loadPairsBundle, pairsConfig } = await import("./pairs-preview.mjs");
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-pairs-preview-"));
 process.once("exit", () => fs.rmSync(scratch, { force: true, recursive: true }));
 const pairsDatabase = findPairsDatabase();
@@ -168,6 +168,11 @@ if (key) fs.writeFileSync(path.join(SITE_DIR, "dist", KEY_FILE), `${key}\n`);
 
 // With the pairs database, the copy's Worker is the one that makes pages on request.
 const deployConfig = pairs ? pairsConfig({ base: "wrangler.preview.jsonc", database: pairs.database, scratch }) : "wrangler.preview.jsonc";
+// A configuration with pairs carries the rate limit on pages made on request, or is not published.
+if (pairs) {
+  const unlimited = limitProblems(deployConfig);
+  if (unlimited.length > 0) stop(unlimited);
+}
 const args = ["deploy", "--config", deployConfig, "--name", worker];
 // The contact address is how the trial reader presents itself to the registry.
 if (process.env.CONTACT_EMAIL) args.push("--var", `CONTACT_EMAIL:${process.env.CONTACT_EMAIL}`);
