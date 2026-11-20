@@ -6,6 +6,7 @@ import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
 import { featured, pairView, shownName } from "./pair-view.ts";
 import { categoryListing, interventionListing, topicListing, type ListingView } from "./listing-view.ts";
+import { conditionCard, type CardView } from "./card-view.ts";
 import { articleKey } from "./article-key.mjs";
 import { UNCHECKED_NOTE } from "./notices.ts";
 import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
@@ -218,6 +219,15 @@ export function categoryListings(): CategoryListing[] {
       };
     })
     .sort((a: CategoryListing, b: CategoryListing) => a.label.localeCompare(b.label));
+}
+
+/** A condition's knowledge card, built ahead: its places in MeSH, named from every descriptor
+ * the bundle's clinical category files hold, each step linked when it has a page. */
+export function conditionCardOf(descriptor: { descriptor_id: string; label: string; tree_numbers: string[] }): CardView {
+  const files = Object.values(pairBundle().pages.PairClinicalCategoryPage ?? {});
+  const categories = new Set(files.map((file: any) => file.descriptor.descriptor_id));
+  const known = files.flatMap((file: any) => [file.descriptor, ...file.broader, ...file.narrower]);
+  return conditionCard(descriptor, known, (id) => (categories.has(id) ? `/clinical/${id}` : undefined));
 }
 
 export interface TopicEntry {
