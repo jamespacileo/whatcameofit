@@ -282,9 +282,8 @@ export function pairChanges(): PairChange[] {
 
 // The lookup file and open data on the pair path (openspec pairs-site, task 3.3).
 
-/** One pair as the lookup file words it, in version 2 (`/lookup/2.json`): keyed by its
- * address, so its page (`/<address>`) is not repeated. */
-export function pairLookupEntry(page: any) {
+/** One pair in the site's words, every field either version of the lookup file gives. */
+function pairWords(page: any) {
   const view = pairView(page);
   const report = page.row.first_report;
   return {
@@ -298,16 +297,23 @@ export function pairLookupEntry(page: any) {
     names: [view.intervention, ...view.otherNames],
     condition: view.condition,
     terms: [view.condition, ...(report ? [report.title] : [])].join(" "),
-    // The site's search answer reads the topic; the extension does not.
     topic: page.row.filing?.vertical ?? null,
   };
 }
 
+/** One pair as the lookup file words it, in version 2 (`/lookup/2.json`): keyed by its
+ * address, so its page (`/<address>`) is not repeated, and with the words every pair of a
+ * status shares given once in the file (`meanings`, `unchecked_note`), not on each pair. */
+export function pairLookupEntry(page: any) {
+  const { meaning, unchecked, ...words } = pairWords(page);
+  return { ...words, unchecked: unchecked !== null };
+}
+
 /** One pair as version 1 of the lookup file (`/lookup.json`) words it: the keys the released
  * extension reads, as the file gave them while the site tracked claims, so the extension needs
- * no release. The same words as version 2, under the old names. */
+ * no release. Only what that extension reads: not the search's `terms` or `topic`. */
 export function pairLookup(page: any) {
-  const entry = pairLookupEntry(page);
+  const entry = pairWords(page);
   return {
     headline: entry.title,
     page: `/${page.row.pair.address}`,
@@ -320,8 +326,6 @@ export function pairLookup(page: any) {
     unchecked: entry.unchecked,
     names: entry.names,
     indication: entry.condition,
-    terms: entry.terms,
-    topic: entry.topic,
   };
 }
 

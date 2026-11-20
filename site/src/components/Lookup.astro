@@ -114,7 +114,7 @@ const sentenceJson = sentences
   import { calendarFile, reminderDate, type ReminderChoice } from "../lib/calendar";
   import { SITE as BRAND } from "../../site.config.mjs";
   import { closestPairs, readAddress } from "../lib/lookup-match.mjs";
-  import { LOOKUP_FILE, readLookupFile } from "../lib/lookup-file.mjs";
+  import { LOOKUP_FILE, readLookupFile, readSearchDetail } from "../lib/lookup-file.mjs";
   import { ranked, searchWords, wordPattern, wordsIn } from "../lib/search-order";
   import { suggest, suggestParts, suggestWords, type Suggestion } from "../lib/suggest";
   import { NO_REPORT, PHASE_WORDS, SEARCH_WORDS, STATE_WORDS, NOT_AN_OPTION, changedShort, findListed, listingWords, registryDate, searchListing, setNote } from "../lib/trial-page.mjs";
@@ -1222,7 +1222,7 @@ const sentenceJson = sentences
     (searchDetail ??= fetch("/search-detail.json").then((response) => {
       if (!response.ok) throw new Error(`search detail ${response.status}`);
       return response.json();
-    }));
+    }).then(readSearchDetail));
 
   // The trial listing: registry facts of the listed trials. Fetched only once a reader
   // has searched, and then kept for the page's life.

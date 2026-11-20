@@ -33,11 +33,11 @@ export const GET: APIRoute = () => {
       trials: page.trials.map((trial: any) => ({
         id: trial.nct_id,
         title: trial.facts.title,
-        registry: "ClinicalTrials.gov",
-        url: `https://clinicaltrials.gov/study/${trial.nct_id}`,
         phases: (trial.facts.phases ?? []).map((phase: string) => PHASE_WORDS[phase] ?? phase),
       })),
     };
   }
-  return Response.json({ schema_version: 2, pairs });
+  // Each trial by its identifier alone: its registry and address are the same rule for
+  // every trial, and the reader adds them (readSearchDetail in src/lib/lookup-file.mjs).
+  return Response.json({ schema_version: 3, pairs });
 };
