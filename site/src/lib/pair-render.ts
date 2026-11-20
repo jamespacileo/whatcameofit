@@ -31,7 +31,9 @@ const when = (day: string, estimated: boolean) => `${escape(registryDay(day))}${
 /** The band at the head of the page: the pair, where it stands, and who checked it. */
 export function renderPairBand(view: PairView): string {
   return [
-    `<section class="band record" aria-label="This pair and where it stands"><div class="wrap band-grid"><div class="band-main">`,
+    // The search index (Pagefind) reads only pages marked as a body, so only pair pages are
+    // found by words; the topic narrows a search to one topic's pairs.
+    `<section class="band record" data-pagefind-body${view.topic ? ` data-pagefind-filter="topic:${escape(view.topic)}"` : ""} aria-label="This pair and where it stands"><div class="wrap band-grid"><div class="band-main">`,
     `<nav class="crumbs" aria-label="The treatment and the condition">`,
     `<a href="/intervention/${escape(view.interventionSlug)}" data-pair-intervention>${escape(view.intervention)}</a> · `,
     `<a href="/condition/${escape(view.conditionSlug)}" data-pair-condition>${escape(view.condition)}</a></nav>`,

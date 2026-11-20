@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-// The plain trial page and the trial listing, checked in a build of tests/fixture-export.json
-// with tests/fixture-trials-listing.json beside it. Every record is synthetic; the registry
-// is a stand-in and nothing is fetched. Scenario names are from openspec trial-pages.
+// The plain trial page and the trial listing, checked in a build of tests/bundle given
+// tests/fixture-trials-listing.json. Every registry answer is synthetic; the registry is a
+// stand-in and nothing is fetched. Scenario names are from openspec trial-pages.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -21,11 +21,13 @@ const off = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-pages-off-"));
 const listing = JSON.parse(fs.readFileSync("tests/fixture-trials-listing.json", "utf8"));
 const now = Date.parse("2026-11-17T12:00:00Z");
 const UNCITED = "NCT09000001";
-const CITED = "NCT00000002";
+// A trial two pairs of the bundle hold.
+const CITED = "NCT05256017";
+const HOLDER = "acoziborole--infections";
 
 function build(outDir, env = {}) {
   return spawnSync("npx", ["astro", "build", "--outDir", outDir], {
-    env: { ...process.env, EXPORT_FILE: "tests/fixture-export.json", ASTRO_TELEMETRY_DISABLED: "1", ...env },
+    env: { ...process.env, PAIRS_BUNDLE: "tests/bundle", TRIALS_LISTING_FILE: "tests/fixture-trials-listing.json", ASTRO_TELEMETRY_DISABLED: "1", ...env },
     encoding: "utf8",
   });
 }
@@ -199,16 +201,16 @@ test("an uncited trial page is not to be indexed", async () => {
 
 test("Scenario: The sitemap", () => {
   const sitemap = fs.readFileSync(path.join(dist, "sitemap.xml"), "utf8");
-  assert.ok(sitemap.includes("/phase-claim"));
+  assert.ok(sitemap.includes(`/${HOLDER}`));
   assert.ok(!sitemap.includes("/trials/") && !sitemap.includes("NCT"), "a trial page is in the sitemap");
 });
 
-test("a trial a claim cites leads to the claim and has no no-report line", async () => {
+test("a trial a pair holds leads to the pair's page and has no no-report line", async () => {
   const payload = record(CITED);
   payload.protocolSection.descriptionModule.briefSummary = "A synthetic summary.";
   const html = await (await site(dist, payload).open(CITED)).text();
-  assert.ok(html.includes("Claims citing this record") && html.includes('href="/phase-claim"'));
-  assert.ok(html.indexOf('href="/phase-claim"') < html.indexOf('<dl class="trial-facts"'), "the claim comes after the facts");
+  assert.ok(html.includes("Followed on this site") && html.includes(`href="/${HOLDER}"`));
+  assert.ok(html.indexOf(`href="/${HOLDER}"`) < html.indexOf('<dl class="trial-facts"'), "the pair comes after the facts");
   assert.ok(!html.includes(NO_REPORT));
   assert.ok(html.includes(STATE_PHRASES.under_way));
   assert.doesNotMatch(html.replace(/<footer[\s\S]*$/, ""), /recruiting/i);
@@ -226,7 +228,7 @@ test("a listed trial the registry no longer has answers 404", async () => {
   assert.equal((await site(dist, null).open(UNCITED)).status, 404);
 });
 
-test("the built listing is the pipeline's file, and a claim page does not fetch it", () => {
+test("the built listing is the file given, and a pair's page does not fetch it", () => {
   // The manifest says which part holds which numbers; the parts together are the file.
   const manifest = JSON.parse(fs.readFileSync(path.join(dist, "trials-listing.json"), "utf8"));
   assert.equal(manifest.total, listing.trials.length);
@@ -244,8 +246,8 @@ test("the built listing is the pipeline's file, and a claim page does not fetch 
   }
   assert.deepEqual(fs.readFileSync(path.join(dist, "trial-listed.txt"), "utf8").trim().split("\n"), listing.trials.map((row) => row[0]));
   // Scenario: A page that needs no search
-  const claim = fs.readFileSync(path.join(dist, "phase-claim/index.html"), "utf8");
-  assert.ok(!claim.includes("trials-listing") && !claim.includes("trial-listed"));
+  const pair = fs.readFileSync(path.join(dist, HOLDER, "index.html"), "utf8");
+  assert.ok(!pair.includes("trials-listing") && !pair.includes("trial-listed"));
 });
 
 test("with the setting off, a listed uncited trial has no page and search finds no listed trial", async () => {
@@ -308,14 +310,15 @@ test("the method page says how a trial comes to have a page, only in a build wit
   assert.ok(!fs.readFileSync(path.join(off, "how-it-works/index.html"), "utf8").includes("a-trial-with-no-report"));
 });
 
-test("an export under a name of its own has no listing beside it, and still builds", () => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-listing-named-"));
-  const file = path.join(directory, "dated.json");
-  fs.copyFileSync("tests/fixture-export.json", file);
+test("a build given no listing has none, and one given a missing file stops", () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-listing-none-"));
   const out = path.join(directory, "dist");
-  const result = build(out, { EXPORT_FILE: file });
+  const result = build(out, { TRIALS_LISTING_FILE: "" });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(out, "trials-listing.json"), "utf8")).parts, []);
+  const missing = build(path.join(directory, "missing"), { TRIALS_LISTING_FILE: path.join(directory, "nowhere.json") });
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stdout + missing.stderr, /No trial listing at/);
 });
 
 test("a sponsor who is a person is never named, on either kind of trial page", async () => {

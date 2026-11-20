@@ -1,7 +1,6 @@
 // The trial listing: the pipeline's file of one named set of stored trials, validated
-// before anything is built from it. It stands beside the export it was written with:
-// data/published-export.json has data/published-trials-listing.json. A build with no
-// listing beside its export has no listed trials, and no page opens for an uncited one.
+// before anything is built from it. TRIALS_LISTING_FILE names it. A build given no
+// listing has no listed trials, and no page opens for a trial no pair holds.
 // Behaviour: openspec trial-pages, "A trial listing built into the site".
 import { createHash } from "node:crypto";
 import fs from "node:fs";
@@ -41,31 +40,18 @@ const EMPTY: TrialsListing = {
   trials: [],
 };
 
-/** Where the listing is: named outright, or beside the export under the export's name
- * with "export" replaced by "trials-listing". */
+/** Where the listing is, when TRIALS_LISTING_FILE names one. */
 export function listingPath(): string | null {
   const configured = process.env.TRIALS_LISTING_FILE;
-  if (configured) return path.resolve(configured);
-  const live = path.resolve("data/export.json");
-  const exported = process.env.EXPORT_FILE
-    ? path.resolve(process.env.EXPORT_FILE)
-    : fs.existsSync(live)
-      ? live
-      : path.resolve("data/seed-export.json");
-  const name = path.basename(exported);
-  const beside = name.replace(/export(?=\.json$)/, "trials-listing");
-  // An export under another name has no listing beside it: never the export itself.
-  return beside === name ? null : path.join(path.dirname(exported), beside);
+  return configured ? path.resolve(configured) : null;
 }
 
 function load(): TrialsListing {
   // The operator's switch: off, the site is built as if there were no listing.
   if (!LISTED_TRIAL_PAGES) return EMPTY;
   const file = listingPath();
-  if (!file || !fs.existsSync(file)) {
-    if (process.env.TRIALS_LISTING_FILE) throw new Error(`No trial listing at ${file}.`);
-    return EMPTY;
-  }
+  if (!file) return EMPTY;
+  if (!fs.existsSync(file)) throw new Error(`No trial listing at ${file}.`);
   const content = JSON.parse(fs.readFileSync(file, "utf8"));
   const schema = JSON.parse(fs.readFileSync(path.resolve("trials-listing.schema.json"), "utf8"));
   const ajv = new Ajv2020({ allErrors: false });

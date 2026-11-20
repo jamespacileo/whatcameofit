@@ -1,7 +1,6 @@
 // The pair pages (openspec pairs-site): what a page shows, from the lab's `PairPage` files.
-// Until the cutover the claims site stays as it is, and pair pages are built only when the
-// build is given a bundle folder in PAIRS_BUNDLE. A build without one is the claims site
-// alone, so a merge to main publishes no pair page.
+// The bundle folder named in PAIRS_BUNDLE is the build's only input (the operator's decision
+// of 2026-11-20 removed the claims export), so a build without one stops.
 import path from "node:path";
 import { PAIR_APPROACH_LABELS } from "./pair-wording.ts";
 import { readBundle, type Bundle } from "./bundle.ts";
@@ -12,34 +11,40 @@ import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
-/** The bundle folder this build reads, or null when it builds no pair page. */
-export function pairBundleFolder(): string | null {
+/** The bundle folder this build reads. */
+export function pairBundleFolder(): string {
   const folder = process.env.PAIRS_BUNDLE;
-  return folder ? path.resolve(folder) : null;
+  if (!folder) {
+    throw new Error(
+      "No bundle to build from: set PAIRS_BUNDLE to a folder of the lab's page files (tests/bundle is the small one the tests build).",
+    );
+  }
+  return path.resolve(folder);
 }
 
-let cached: Bundle | null | undefined;
+let cached: Bundle | undefined;
 
-/** The bundle this build reads, read once; null when it builds no pair page. */
-export function pairBundle(): Bundle | null {
-  if (cached === undefined) {
-    const folder = pairBundleFolder();
-    cached = folder ? readBundle(folder) : null;
-  }
-  return cached;
+/** The bundle this build reads, read once. */
+export function pairBundle(): Bundle {
+  return (cached ??= readBundle(pairBundleFolder()));
+}
+
+/** When the bundle was made, as its manifest states: the date the site's pages speak for. */
+export function bundleMadeAt(): string {
+  return pairBundle().manifest.made_at;
 }
 
 export { builtAhead, pairView, shownName, type PairEventView, type PairTrialView, type PairView } from "./pair-view.ts";
 
 /** The version of the bundle this build reads: the checksum `load-pairs.mjs` loads it into
- * D1 under, as its manifest states and `readBundle` checked. Null when the build reads no bundle. */
-export function pairBundleVersion(): string | null {
-  return pairBundle()?.version ?? null;
+ * D1 under, as its manifest states and `readBundle` checked. */
+export function pairBundleVersion(): string {
+  return pairBundle().version;
 }
 
-/** Every pair the bundle holds, by address. Empty when the build reads no bundle. */
+/** Every pair the bundle holds, by address. */
 export function pairPages(): Record<string, any> {
-  return pairBundle()?.pages.PairPage ?? {};
+  return pairBundle().pages.PairPage ?? {};
 }
 
 /** The pairs whose page, card and embed this build makes (decision 2); the Worker makes
@@ -132,7 +137,7 @@ export interface InterventionListing {
 /** One listing an intervention the bundle has a page for, with its pairs. */
 export function interventionListings(): InterventionListing[] {
   const pages = Object.values(pairPages());
-  return Object.values(pairBundle()?.pages.PairInterventionPage ?? {})
+  return Object.values(pairBundle().pages.PairInterventionPage ?? {})
     .map((file: any) => {
       const preferred = file.intervention.preferred_name;
       return {
@@ -163,7 +168,7 @@ export interface TopicListing {
 
 /** One listing a topic of the bundle's topics page, with the pairs the lab filed under it. */
 export function topicListings(): TopicListing[] {
-  const topics = Object.values(pairBundle()?.pages.PairTopicsPage ?? {})[0];
+  const topics = Object.values(pairBundle().pages.PairTopicsPage ?? {})[0];
   if (!topics) return [];
   const pages = Object.values(pairPages());
   return topics.verticals
@@ -192,7 +197,7 @@ export interface CategoryListing {
 /** One listing a clinical category the bundle has a page for, with every pair at or
  * beneath it. A narrower category with no pair beneath it is left out. */
 export function categoryListings(): CategoryListing[] {
-  const files = Object.values(pairBundle()?.pages.PairClinicalCategoryPage ?? {});
+  const files = Object.values(pairBundle().pages.PairClinicalCategoryPage ?? {});
   const known = new Set(files.map((file: any) => file.descriptor.descriptor_id));
   const short = (descriptor: any) => ({ descriptorId: descriptor.descriptor_id, label: descriptor.label });
   return files
@@ -219,7 +224,7 @@ export interface TopicEntry {
 /** The topics page on the pair path: each topic with a pair filed under it, with its group
  * from the bundle's topics page. */
 export function topicsIndex(): TopicEntry[] {
-  const topics = Object.values(pairBundle()?.pages.PairTopicsPage ?? {})[0];
+  const topics = Object.values(pairBundle().pages.PairTopicsPage ?? {})[0];
   if (!topics) return [];
   const groups = new Map(topics.groups.map((group: any) => [group.slug, group]));
   const counts = new Map(topicListings().map((listing) => [listing.slug, listing.pairs.length]));
@@ -272,7 +277,7 @@ export function pairChanges(): PairChange[] {
 // The lookup file and open data on the pair path (openspec pairs-site, task 3.3).
 
 /** One pair as the lookup file words it: the keys the released extension reads, as
- * `lookupClaim` gives them for a claim, so the extension needs no release at the cutover. */
+ * the lookup file has always given them, so the extension needs no release at the cutover. */
 export function pairLookup(page: any) {
   const view = pairView(page);
   const report = page.row.first_report;
@@ -294,7 +299,9 @@ export function pairLookup(page: any) {
   };
 }
 
-/** The lookup file's `articles` and `claims` on the pair path: every pair by its address,
+export type PairLookup = ReturnType<typeof pairLookup>;
+
+/** The lookup file's `articles` and `claims`: every pair by its address,
  * and each pair's first report by its address in comparison form, where the lab holds one. */
 export function pairLookupMaps(): { articles: Record<string, string[]>; claims: Record<string, unknown> } {
   const articles: Record<string, string[]> = {};
@@ -320,7 +327,7 @@ export const PAIR_INDEX_FORMAT = { format: "pairs-index", format_version: 1 } as
  * whose file limit it would pass (task 1.3; docs/sources.md, Workers static assets). */
 export function builtAheadRecords(): string[] {
   const pages = pairPages();
-  return Object.keys(pairBundle()?.pages.PairDataFile ?? {})
+  return Object.keys(pairBundle().pages.PairDataFile ?? {})
     .filter((address) => !pages[address] || builtAhead(pages[address]))
     .sort();
 }
@@ -330,7 +337,7 @@ export function pairDataIndex(siteName: string, siteUrl: string) {
   return {
     ...PAIR_INDEX_FORMAT,
     ...pairDataHeader(siteName, siteUrl),
-    entries: Object.keys(pairBundle()?.pages.PairDataFile ?? {})
+    entries: Object.keys(pairBundle().pages.PairDataFile ?? {})
       .sort()
       .map((address) => {
         const row = pairRow(pairPages()[address]);
@@ -343,33 +350,4 @@ export function pairDataIndex(siteName: string, siteUrl: string) {
         };
       }),
   };
-}
-
-// Claims with a pair (openspec pairs-site, task 3.4a; the operator's decision of 2026-11-20,
-// task 1.3): "keep unmatched claims. Preserve public URLs for legacy claims with no verified
-// published pair. Retain the approved 301s where there is a verified published pair and the
-// existing archive 410s." In a build that reads a bundle, a claim that exactly one published
-// pair came from is not built: its address leads to that pair (gone.json, worker/index.mjs),
-// or is that pair's when the two are spelled the same. A claim behind several pairs, or none,
-// is built as before.
-
-let claimsLeadingToPairs: Map<string, string> | undefined;
-
-/** Each claim slug that leads to one pair, with that pair's address. Empty without a bundle. */
-export function claimsWithAPair(): Map<string, string> {
-  if (claimsLeadingToPairs === undefined) {
-    const bySlug = new Map<string, string[]>();
-    for (const page of Object.values(pairPages())) {
-      const slug = page.row.origin?.claim_slug;
-      if (slug) bySlug.set(slug, [...(bySlug.get(slug) ?? []), page.row.pair.address]);
-    }
-    claimsLeadingToPairs = new Map([...bySlug].filter(([, addresses]) => addresses.length === 1).map(([slug, [address]]) => [slug, address]));
-  }
-  return claimsLeadingToPairs;
-}
-
-/** Whether a claim is built: every claim without a bundle, and in a pairs build each claim
- * that does not lead to one pair. */
-export function claimIsBuilt(slug: string): boolean {
-  return !claimsWithAPair().has(slug);
 }

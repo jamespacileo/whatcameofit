@@ -1,6 +1,6 @@
 // A readable, cookie-independent copy of a public trial record. No model calls.
-// A trial a published claim cites gets the record's selected text and leads to the claim.
-// A listed trial no claim cites gets the plain page: registry facts in the site's fixed
+// A trial a followed pair holds gets the record's selected text and leads to the pair's page.
+// A listed trial no pair holds gets the plain page: registry facts in the site's fixed
 // phrases, and the line that no news report is linked yet (openspec trial-pages).
 import { peopleIn, withoutPeople } from "./people.mjs";
 import { makeRegistry } from "./registry.mjs";
@@ -72,25 +72,19 @@ function paragraphs(value) {
   return text(value).trim().split(/\n\s*\n/).filter(Boolean).map(line => `<p>${escape(line)}</p>`).join("");
 }
 
-// Claims that cite the record, then claims it is only a possible match for, which is not
-// counted in their status (openspec registry-record-rows).
-function claimLinks(claims) {
-  const safe = items(claims).filter(c => /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(c?.slug) && text(c.headline));
+// The pages of the treatments and conditions whose records hold this trial (the build's
+// trial-index.json). A pair's address joins its two parts with a doubled hyphen.
+function pairLinks(pairs) {
+  const safe = items(pairs).filter(c => /^[a-z0-9]+(?:-+[a-z0-9]+)*$/.test(c?.slug) && text(c.headline));
   if (!safe.length) return `<p><a href="/">Back to ${escape(SITE.name)}</a></p>`;
-  const list = group => `<ul class="trial-links">${group.map(c => `<li><a href="/${escape(c.slug)}">${escape(c.headline)}</a></li>`).join("")}</ul>`;
-  const citing = safe.filter(c => c.possible !== true);
-  const possible = safe.filter(c => c.possible === true);
-  return [
-    citing.length ? `<nav aria-label="Claims citing this trial"><h2>Claims citing this record</h2>${list(citing)}</nav>` : "",
-    possible.length ? `<nav aria-label="Claims this trial may be about"><h2>Claims this record may be about</h2><p class="trial-source">A possible match only: it is not counted in these claims' status.</p>${list(possible)}</nav>` : "",
-  ].join("");
+  return `<nav aria-label="Pages on this site that hold this trial"><h2>Followed on this site</h2><ul class="trial-links">${safe.map(c => `<li><a href="/${escape(c.slug)}">${escape(c.headline)}</a></li>`).join("")}</ul></nav>`;
 }
 
 function sourceLink(id) {
   return id ? `<a href="https://clinicaltrials.gov/study/${id}" rel="noopener">Open the full record on ClinicalTrials.gov</a>` : "";
 }
 
-function content(copy, id, claims) {
+function content(copy, id, pairs) {
   const p = copy.record.protocolSection;
   const info = p.identificationModule;
   const status = p.statusModule ?? {};
@@ -116,9 +110,9 @@ function content(copy, id, claims) {
     <p>${sourceLink(id)}</p>
     <p class="trial-source">Selected fields from ClinicalTrials.gov, formatted for reading. Registry text is reproduced without interpretation.</p>
     <p class="trial-source">Retrieved <time datetime="${retrieved}">${date(retrieved)}</time>. Registry last updated ${dated(status.lastUpdatePostDateStruct)}.</p>
-    ${claimLinks(claims)}
+    ${pairLinks(pairs)}
     <p class="trial-state">${escape(statePhrase(status.overallStatus))}</p>
-    <p class="trial-source">This is the registry’s own record of the study. It may be newer than the evidence on a claim page and does not change that claim’s status.</p>
+    <p class="trial-source">This is the registry’s own record of the study. It may be newer than the records on a page of this site and does not change a status there.</p>
     <dl class="trial-facts">${facts.map(([name,value])=>`<div><dt>${name}</dt><dd>${escape(value)}</dd></div>`).join("")}</dl>
     <section aria-labelledby="trial-overview"><h2 id="trial-overview">Study overview</h2>${summary ? paragraphs(summary) : '<p>No summary is reported in this record.</p>'}</section>
     ${official && official !== info.briefTitle ? `<details><summary>Full study title</summary><p>${escape(official)}</p></details>` : ""}
@@ -136,7 +130,7 @@ function stated(value) {
   return `<span class="trial-date">${escape(shown)}</span>${value?.type === "ESTIMATED" ? ` (${PAGE_LABELS.estimated})` : ""}`;
 }
 
-// The plain page of a listed trial no claim cites. Registry facts only: no summary, no
+// The plain page of a listed trial no pair holds. Registry facts only: no summary, no
 // outcome, no location, no contact, nothing a sponsor wrote about a result.
 function plainContent(copy, id) {
   const p = copy.record.protocolSection;
@@ -213,51 +207,51 @@ async function page(request, env, {id="", title, html, status=200, age=0}) {
   return new Response(request.method === "HEAD" ? null : body, {status,headers});
 }
 
-function failure(request, env, id, claims, status, message) {
+function failure(request, env, id, pairs, status, message) {
   const title = status === 404 ? "Trial record not found" : status === 405 ? "Open this page with a link" : "Trial details are temporarily unavailable";
-  return page(request,env,{id,title,status,html:`<h1>${title}</h1><p>${escape(message)}</p>${id ? `<p class="trial-number">${id}</p><p>${sourceLink(id)}</p>` : ""}${status !== 404 && status !== 405 && id ? `<p><a href="/trials/${id}">Try again</a></p>` : ""}${claimLinks(claims)}`});
+  return page(request,env,{id,title,status,html:`<h1>${title}</h1><p>${escape(message)}</p>${id ? `<p class="trial-number">${id}</p><p>${sourceLink(id)}</p>` : ""}${status !== 404 && status !== 405 && id ? `<p><a href="/trials/${id}">Try again</a></p>` : ""}${pairLinks(pairs)}`});
 }
 
 export async function handleTrial(request, env, {fetch: get=globalThis.fetch, now=()=>Date.now()}={}) {
   const id = new URL(request.url).pathname.match(/^\/trials\/(NCT\d{8})\/?$/)?.[1] ?? "";
   if (!["GET","HEAD"].includes(request.method)) return failure(request,env,id,[],405,"Follow the trial link to read this record.");
   if (!id) return failure(request,env,"",[],404,"This address does not identify a trial record.");
-  let claims;
+  let pairs;
   try {
     const response = await env.ASSETS.fetch(new Request(new URL("/trial-index.json",request.url)));
     if (!response.ok) throw Error("missing index");
     const index = await response.json();
-    claims = index?.trials?.[id];
+    pairs = index?.trials?.[id];
   } catch { return failure(request,env,id,[],503,"We could not load the records cited on this site. Please try again shortly."); }
-  const cited = Array.isArray(claims) && claims.length > 0;
+  const cited = Array.isArray(pairs) && pairs.length > 0;
   if (!cited) {
-    claims = [];
+    pairs = [];
     let plain = false;
     try { plain = await listed(request, env, id); } catch { /* No listing: no page for an uncited trial. */ }
-    if (!plain) return failure(request,env,id,[],404,"This trial is not cited by a published claim on this site, and is not in the site’s list of trials.");
+    if (!plain) return failure(request,env,id,[],404,"This trial is not among the records this site follows, and is not in the site’s list of trials.");
   }
   const at = now();
   const key = PREFIX+id;
   let copy;
   try { copy = await env.LOOKUP_RESULTS?.get(key,"json"); } catch { /* The reader still works without KV. */ }
   if (!validCopy(copy,id,at)) copy = null;
-  const render = saved => page(request,env,{id,title:saved.record.protocolSection.identificationModule.briefTitle,html:cited ? content(saved,id,claims) : plainContent(saved,id),age:at-saved.at});
+  const render = saved => page(request,env,{id,title:saved.record.protocolSection.identificationModule.briefTitle,html:cited ? content(saved,id,pairs) : plainContent(saved,id),age:at-saved.at});
   if (copy) return render(copy);
-  const unavailable = () => failure(request,env,id,claims,503,"We could not retrieve this record from ClinicalTrials.gov. Please try again shortly, or open the official record.");
+  const unavailable = () => failure(request,env,id,pairs,503,"We could not retrieve this record from ClinicalTrials.gov. Please try again shortly, or open the official record.");
   if (!text(env.CONTACT_EMAIL).trim()) return unavailable();
   try {
-    // Pages of listed trials no claim cites are many, and have a smaller allowance of
+    // Pages of listed trials no pair holds are many, and have a smaller allowance of
     // their own: reading through them cannot use up what the cited trials' pages need.
     if (!cited && env.LISTED_TRIAL_READS && !(await env.LISTED_TRIAL_READS.limit({key:"all"})).success) {
-      return failure(request,env,id,claims,503,"The registry reader is busy. Please try again in a minute.");
+      return failure(request,env,id,pairs,503,"The registry reader is busy. Please try again in a minute.");
     }
     if (env.TRIAL_RECORD_READS && !(await env.TRIAL_RECORD_READS.limit({key:"all"})).success) {
-      return failure(request,env,id,claims,503,"The registry reader is busy. Please try again in a minute.");
+      return failure(request,env,id,pairs,503,"The registry reader is busy. Please try again in a minute.");
     }
     const registry = makeRegistry({contact:env.CONTACT_EMAIL, fetch:(url,options={})=>get(url,{...options,signal:AbortSignal.timeout(8000)})});
     // People are removed whatever the registry sends: the field list is not relied on.
     const record = withoutPeople(await registry.fetch(id, {fields:PAGE_FIELDS}));
-    if (!record) return failure(request,env,id,claims,404,"ClinicalTrials.gov has no record at this identifier.");
+    if (!record) return failure(request,env,id,pairs,404,"ClinicalTrials.gov has no record at this identifier.");
     if (!validRecord(record,id)) throw Error("invalid registry record");
     const saved = {version:VERSION,at:now(),record};
     try { await env.LOOKUP_RESULTS?.put(key,JSON.stringify(saved),{expirationTtl:FRESH/1000}); } catch { /* Saving a public copy is optional. */ }

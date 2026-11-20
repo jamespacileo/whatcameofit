@@ -65,10 +65,22 @@ test("a claim's address goes to its pair's only when one pair came from it", () 
   const moved = movedAddresses(pages);
   const bySlug = Map.groupBy(pages.filter((page) => page.row.origin), (page) => page.row.origin.claim_slug);
   for (const [slug, from] of bySlug) {
-    if (from.length === 1 && slug !== from[0].row.pair.address) assert.equal(moved[slug], from[0].row.pair.address);
-    else assert.equal(moved[slug], undefined, slug);
+    if (from.length === 1 && slug !== from[0].row.pair.address) assert.equal(moved.get(slug), from[0].row.pair.address);
+    else assert.equal(moved.get(slug), undefined, slug);
   }
   assert.ok(bySlug.size > 0);
+  // A claim slug named like an object's own property is kept as any other.
+  const [one] = pages;
+  const named = movedAddresses([{ row: { ...one.row, origin: { ...one.row.origin, claim_slug: "constructor" } } }]);
+  assert.equal(named.get("constructor"), one.row.pair.address);
+  // A pair that lists its claims (lab pull request 125): each leads to it, the merged one too,
+  // and the list is read in place of the origin.
+  const merged = movedAddresses([{ row: { ...one.row, claim_slugs: ["kept-claim", "merged-claim"] } }]);
+  assert.deepEqual([...merged], [["kept-claim", one.row.pair.address], ["merged-claim", one.row.pair.address]]);
+  // A claim two pairs list leads to neither.
+  const [, other] = pages;
+  const shared = movedAddresses([{ row: { ...one.row, claim_slugs: ["shared"] } }, { row: { ...other.row, claim_slugs: ["shared", "own"] } }]);
+  assert.deepEqual([...shared], [["own", other.row.pair.address]]);
 });
 
 // Task 2.4: the bundle's codes are worded by the site, keyed as the bundle's schema spells them.

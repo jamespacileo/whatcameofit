@@ -182,9 +182,6 @@ jobs:
     if: ${{ !cancelled() && needs.previous-pass.outputs.run == '' }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
-    outputs:
-      build_digest: ${{ steps.archive.outputs.digest }}
-      build_artifact: ${{ steps.archive.outputs.name }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -204,7 +201,7 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: site/.cache/cards
-          key: site-cards-${{ hashFiles('site/data/published-export.json', 'site/src/lib/card*.ts', 'site/pnpm-lock.yaml') }}
+          key: site-cards-${{ hashFiles('site/tests/bundle/manifest.json', 'site/src/lib/card*.ts', 'site/pnpm-lock.yaml') }}
           restore-keys: site-cards-
       - name: Look for kept dependencies
         id: deps
@@ -216,7 +213,6 @@ jobs:
       - name: Rehearse production build
         run: make deploy-ci-check
         env:
-          BUILD_REVISION: ${{ github.sha }}
           SUGGEST_URL: ${{ vars.SUGGEST_URL }}
           CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
           CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
@@ -224,24 +220,6 @@ jobs:
           LLM_MODEL: ${{ vars.LLM_MODEL }}
           CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
           DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
-      - name: Archive the checked site
-        id: archive
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: |
-          archive="$RUNNER_TEMP/production-site.tar.gz"
-          tar -C site -cf - dist | gzip -1 > "$archive"
-          digest=$(sha256sum "$archive")
-          echo "digest=${digest%% *}" >> "$GITHUB_OUTPUT"
-          echo "name=production-site-$GITHUB_RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
-      - name: Save the checked site
-        if: steps.archive.outcome == 'success'
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
-        with:
-          name: ${{ steps.archive.outputs.name }}
-          path: ${{ runner.temp }}/production-site.tar.gz
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 3
       - name: Keep dependencies
         if: steps.deps.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -287,124 +265,3 @@ jobs:
         with:
           path: ${{ runner.temp }}/thenwhat-ci-pass
           key: ${{ needs.previous-pass.outputs.key }}
-
-  # A rehearsal of task 6.2 of `cloudflare-source-of-truth`: take the export from the truth
-  # store, hold it to the schema and the checks a published snapshot passes, and report how
-  # it compares with the committed snapshot. Off unless the repository variable
-  # EXPORT_FROM_STORE is `true`. Nothing it writes is built or deployed: the committed
-  # snapshot stays the site's source, and the deploy job does not wait for this one.
-  store-export:
-    name: Export from the store (rehearsal)
-    if: vars.EXPORT_FROM_STORE == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    environment: store-rehearsal
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    env:
-      UV_LOCKED: "1"
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
-        with:
-          version: "0.11.20"
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-        with:
-          package_json_file: site/package.json
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: ${{ env.CI_NODE_VERSION }}
-      - run: pnpm --dir store/ingest install --frozen-lockfile
-      - run: pnpm --dir site install --frozen-lockfile
-      - name: Take the export from the store and check it
-        run: make store-export-rehearsal
-        env:
-          # A token that can only read the store's database and bucket.
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_STORE_READ_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          STORE_D1: ${{ vars.STORE_D1 }}
-          STORE_R2_BUCKET: ${{ vars.STORE_R2_BUCKET }}
-          # The export's settings are read with the database's address, which an export
-          # from the store never opens.
-          DATABASE_URL: postgresql+psycopg://unused:unused@127.0.0.1:1/unused
-          LLM_MODEL: ${{ vars.LLM_MODEL }}
-          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
-          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
-
-  deploy:
-    name: Deploy production
-    needs: [check, site]
-    # The PR-only cache lookup is skipped on main. Require the checks that ran here.
-    # Paused by the operator on 2026-11-20 (docs/deploy.md, "Publishing from main is
-    # paused"): claims are being removed from the site, so main no longer builds what
-    # production serves. Production keeps its last deployment until the cutover, which is
-    # `make deploy` with --cutover on the operator's word. Runs only when the repository
-    # variable PUBLISH_PRODUCTION is `true`, which is how it is turned back on.
-    if: >-
-      !cancelled() && vars.PUBLISH_PRODUCTION == 'true' &&
-      needs.check.result == 'success' && needs.site.result == 'success' &&
-      github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment:
-      name: production
-      url: https://whatcameofit.com
-    concurrency:
-      group: cloudflare-production
-      cancel-in-progress: false
-      queue: max
-    env:
-      BUILD_REVISION: ${{ github.sha }}
-    steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
-        with:
-          package_json_file: site/package.json
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version: ${{ env.CI_NODE_VERSION }}
-          cache: pnpm
-          cache-dependency-path: site/pnpm-lock.yaml
-      - run: pnpm --dir site install --frozen-lockfile
-      - name: Download the checked site from this run
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ${{ needs.site.outputs.build_artifact }}
-          path: ${{ runner.temp }}/checked-production-site
-      - name: Verify and unpack the checked site
-        env:
-          BUILD_DIGEST: ${{ needs.site.outputs.build_digest }}
-        run: |
-          [[ "$BUILD_DIGEST" =~ ^[a-f0-9]{64}$ ]]
-          archive="$RUNNER_TEMP/checked-production-site/production-site.tar.gz"
-          printf '%s  %s\n' "$BUILD_DIGEST" "$archive" | sha256sum --check -
-          tar --no-same-owner --no-same-permissions -xzf "$archive" -C site
-      - name: Check this is still the latest main revision
-        id: current
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          latest=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
-          if [ "$latest" = "$GITHUB_SHA" ]; then
-            echo "deploy=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Skipping superseded revision $GITHUB_SHA"
-          fi
-      - name: Deploy reviewed public snapshot
-        if: steps.current.outputs.deploy == 'true'
-        run: |
-          : "${CLOUDFLARE_API_TOKEN:?Set CLOUDFLARE_PRODUCTION_API_TOKEN in the production environment}"
-          : "${CLOUDFLARE_ACCOUNT_ID:?Set the CLOUDFLARE_ACCOUNT_ID repository variable}"
-          make deploy-ci
-        env:
-          DEPLOY_REUSE_BUILD: "1"
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_PRODUCTION_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          LLM_MODEL: ${{ vars.LLM_MODEL }}
-          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
-          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
-      - name: Check live site
-        if: steps.current.outputs.deploy == 'true'
-        run: node site/scripts/smoke-live.mjs

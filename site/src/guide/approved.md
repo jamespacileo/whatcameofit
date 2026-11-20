@@ -3,7 +3,7 @@ shelf: status
 status: approved
 rule: how-a-status-is-set
 on_site: If a regulator has recorded an approval of the treatment for the condition, the status is “Approved”. Only a retraction of the origin paper is applied before this rule.
-related: [regulatory-approval, phase-3-trial, record, claim]
+related: [regulatory-approval, phase-3-trial, record]
 checked: false
 ---
 

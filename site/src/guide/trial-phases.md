@@ -5,7 +5,6 @@ title: Trial phases
 answer: A trial's phase is a label for its stage in the testing of a drug or biological product, from the first small studies in people (Phase 1) to large late-stage studies (Phase 3) and studies after approval (Phase 4).
 rule: how-a-status-is-set
 on_site: A status follows the furthest trial that counts and has started. “Phase 1 trial”, “Phase 2 trial” and “Phase 3 trial” each name that trial's phase as its registry record gives it. A record with no phase gives “Trial registered”.
-applies: phases
 sources:
   - name: "ClinicalTrials.gov, Glossary Terms"
     url: https://clinicaltrials.gov/study-basics/glossary

@@ -1,13 +1,10 @@
-"""The seeded example, end to end: from an article URL to a built page.
+"""The seeded example, end to end: from an article URL to the export.
 
 Every step runs for real except the outside world: registries replay recorded
-responses, the model is scripted, and the article text is synthetic. The site is
-built by Astro from the export this test writes.
+responses, the model is scripted, and the article text is synthetic.
 """
 
 import json
-import os
-import subprocess
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -43,7 +40,6 @@ from thenwhat.statements.service import StatementChecker
 
 NOW = datetime(2026, 11, 11, 12, 0, tzinfo=UTC)
 REPOSITORY = Path(__file__).resolve().parents[2]
-SITE = REPOSITORY / "site"
 SEED = json.loads((REPOSITORY / "data" / "seed" / "tooth-regrowth-usag1.json").read_text())
 SLUG = "tooth-regrowth-usag1"
 DOI = "10.1126/sciadv.abf1798"
@@ -101,7 +97,7 @@ def registries(fixture_json) -> httpx.MockTransport:
 
 
 @pytest.mark.slow
-def test_seeded_example_round_trips_from_article_url_to_built_page(
+def test_seeded_example_round_trips_from_article_url_to_export(
     session: Session, fixture_json, fake_time, tmp_path: Path
 ):
     web = registries(fixture_json)
@@ -184,30 +180,10 @@ def test_seeded_example_round_trips_from_article_url_to_built_page(
     assert pending_items(session, claim_slug=SLUG) == []
     assert claim.current_status is ClaimStatus.PHASE_1
 
-    # 7. Export, then build the site from that file alone.
+    # 7. Export. The site no longer builds from this file: it is built from the lab's bundle
+    # of pairs (openspec pairs-site), so the round trip ends at the export.
     export_file = tmp_path / "export.json"
     export = write_export(session, export_file, now=NOW)
     [exported] = export.claims
     assert len(exported.events) == 3
-
-    dist = tmp_path / "dist"
-    build = subprocess.run(
-        ["npx", "astro", "build", "--outDir", str(dist)],
-        cwd=SITE,
-        env=os.environ | {"EXPORT_FILE": str(export_file), "ASTRO_TELEMETRY_DISABLED": "1"},
-        capture_output=True,
-        text=True,
-        timeout=300,
-    )
-    assert build.returncode == 0, build.stdout[-2000:] + build.stderr[-2000:]
-
-    # 8. The published page shows the status and links every event to its source.
-    page = (dist / SLUG / "index.html").read_text()
-    assert SEED["claim"]["headline"] in page
-    assert "Phase 1 trial" in page
-    assert "basis of status" in page
-    for event in exported.events:
-        assert event.source_url.replace("&", "&amp;") in page, event.source_url
-    assert article["url"] in page
-    assert SYNTHETIC_ARTICLE[:40] not in page
-    assert (dist / "og" / f"{SLUG}.png").stat().st_size > 10_000
+    assert SYNTHETIC_ARTICLE[:40] not in export_file.read_text()

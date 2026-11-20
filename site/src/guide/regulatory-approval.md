@@ -5,7 +5,6 @@ title: Regulatory approval
 answer: Regulatory approval is a regulator's decision that a treatment may be sold in its territory for a stated use, after reviewing the evidence its maker submitted.
 rule: how-a-status-is-set
 on_site: If a regulator has recorded an approval of the treatment for the claim's condition, the status is “Approved”. The decision is listed on the claim page as a record, with its date and a link to the regulator.
-applies: approved
 sources:
   - name: "U.S. Food and Drug Administration, Development and Approval Process: Drugs"
     url: https://www.fda.gov/drugs/development-approval-process-drugs

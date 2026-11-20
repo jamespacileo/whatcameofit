@@ -1,31 +1,27 @@
 ---
 // Why the site exists and who runs it (openspec landing-pages-and-guide). The first
-// screen is one published claim at page scale: what an outlet reported, the years
-// since, and where the records leave it now. Every number on the page is counted from
-// the export; the one cited finding is stated in words and linked. How a status is set
-// is the method page's to say, and is only linked here.
-import ArrowUpRight from "@lucide/astro/icons/arrow-up-right";
+// screen is one pair at page scale: where the records leave it now, and its years on
+// record. Every number on the page is counted from the bundle; the one cited finding is
+// stated in words and linked. How a status is set is the method page's to say, and is
+// only linked here.
 import { SITE } from "../../site.config.mjs";
 import Lookup from "../components/Lookup.astro";
-import Outlet from "../components/Outlet.astro";
 import StageTrack from "../components/StageTrack.astro";
 import Base from "../layouts/Base.astro";
 import { CITED_FINDING, WHO_RUNS_IT, yearStrip } from "../lib/about";
 import { CORRECTION_SUBJECT, contactLink } from "../lib/contact.mjs";
-import { data, listedTopics } from "../lib/export";
-import { exampleClaim, firstReport } from "../lib/extension-page";
+import { examplePair } from "../lib/extension-page";
 import { UNCHECKED_NOTE } from "../lib/notices";
-import { reportedClaimCount } from "../lib/reports";
-import { STATUS_GLOSSES, STATUS_LABELS, latestPromise } from "../lib/status";
+import { bundleMadeAt, pairPages, pairView, topicsIndex } from "../lib/pairs";
+import { STATUS_GLOSSES, STATUS_LABELS, type StatusCode } from "../lib/status";
 import { formatDate } from "../lib/timetable";
 
-const example = exampleClaim(data.claims);
-const report = example && firstReport(example);
-const strip = example ? yearStrip(example, data.last_checked_at) : [];
-const promise = example && latestPromise(example);
+const examplePage = examplePair(Object.values(pairPages()));
+const example = examplePage && pairView(examplePage);
+const strip = example ? yearStrip(example, bundleMadeAt()) : [];
 const corrections = contactLink(SITE.correctionsUrl, "", CORRECTION_SUBJECT);
-const claims = data.claims.length;
-const topics = listedTopics.length;
+const pairs = Object.keys(pairPages()).length;
+const topics = topicsIndex().length;
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 ---
 
@@ -41,46 +37,34 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
         <span>Headlines travel fast.</span> <span>The <span class="unbroken">follow-up</span> rarely does.</span>
       </h1>
       <p class="lede">
-        {SITE.name} keeps one page for each reported medical breakthrough, showing what the public
-        records hold since it was reported.
+        {SITE.name} keeps one page for each treatment and condition it follows, showing what the
+        public trial records hold.
       </p>
 
       {
-        example && report && (
+        example && (
           <figure class="case" data-pagefind-ignore>
             <div class="sides">
               <div class="said">
-                <h2>Reported</h2>
+                <h2>Followed</h2>
                 <p class="quote">
-                  <a href={report.url} rel="noopener">
-                    “{report.title}”
-                    <ArrowUpRight size={16} stroke-width={1.9} aria-hidden="true" />
-                  </a>
-                </p>
-                <p class="by">
-                  <Outlet url={report.url} outlet={report.outlet} link={false} />
-                  <span class="unbroken">{formatDate(report.published_date)}</span>
+                  <a href={`/${example.address}`}>{example.title}</a>
                 </p>
               </div>
               <div class="now">
                 <h2>
-                  On record
-                  {data.last_checked_at && (
-                    <>
-                      , <span class="unbroken">{formatDate(data.last_checked_at)}</span>
-                    </>
-                  )}
+                  On record, <span class="unbroken">{formatDate(bundleMadeAt())}</span>
                 </h2>
-                <p class="status">{STATUS_LABELS[example.status.code]}</p>
-                <p class="gloss">{STATUS_GLOSSES[example.status.code]}</p>
-                <StageTrack code={example.status.code} ends />
+                <p class="status">{STATUS_LABELS[example.statusCode as StatusCode]}</p>
+                <p class="gloss">{STATUS_GLOSSES[example.statusCode as StatusCode]}</p>
+                <StageTrack code={example.statusCode as StatusCode} ends />
                 <p class="open">
-                  <a href={`/${example.slug}`}>The records for {example.intervention.name}</a>
+                  <a href={`/${example.address}`}>The records for {example.intervention}</a>
                 </p>
               </div>
             </div>
 
-            <ol class="years" aria-label={`${example.intervention.name}, year by year`}>
+            <ol class="years" aria-label={`${example.intervention}, year by year`}>
               {strip.map((cell) =>
                 cell.kind === "gap" ? (
                   <li class="gap">
@@ -90,23 +74,21 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
                     <span class="quiet">Nothing on record</span>
                   </li>
                 ) : (
-                  <li class:list={{ promised: cell.promised }}>
+                  <li>
                     <span class="year">{cell.year}</span>
                     {cell.records > 0 && (
                       <span>{plural(cell.records, "registry record", "registry records")}</span>
                     )}
-                    {cell.reports > 0 && <strong>Reported in the news</strong>}
                     {cell.checked && <span class="quiet">Registries checked</span>}
-                    {cell.promised && <span class="promise">Promised by this year</span>}
                   </li>
                 ),
               )}
             </ol>
 
             <figcaption>
-              A tracked claim, picked by a fixed rule and redrawn each time the site is built.
-              {promise && " The amber year is the one a news report named."}
-              {!example.checked_by_person && ` ${UNCHECKED_NOTE}`}
+              One treatment and condition followed here, picked by a fixed rule and redrawn each
+              time the site is built.
+              {!example.checkedByPerson && ` ${UNCHECKED_NOTE}`}
             </figcaption>
           </figure>
         )
@@ -123,7 +105,7 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
       about one in forty later ones. About two thirds of the first studies they covered were not
       confirmed by a later pooled analysis, and only a handful of newspaper articles reported that.
       It studied risk-factor research in the English-language press, not treatments. This site asks
-      the same question of reported treatments, one claim at a time.
+      the same question of treatments, one treatment and condition at a time.
     </p>
     <p class="entry-note cited">
       <a href={CITED_FINDING.url}>
@@ -137,8 +119,7 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
         <h2 class="bar" id="does">What this site does</h2>
         <ul class="plain">
           <li>
-            One page per claim: one treatment for one condition, however many reports there were.{" "}
-            <a href="/guide/claim">What a claim is</a>
+            One page for one treatment and one condition, however many trials there are.
           </li>
           <li>
             A status set by fixed rules from public records. No editor and no AI model decides one.{" "}
@@ -154,7 +135,7 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
         <h2 class="bar" id="does-not">What it does not do</h2>
         <ul class="plain">
           <li>Give medical advice, or say whether a treatment works or is available.</li>
-          <li>Give a verdict on a claim, a researcher or a company.</li>
+          <li>Give a verdict on a treatment, a researcher or a company.</li>
           <li>Grade or score anything. A match's confidence is about the match alone.</li>
           <li>
             Rank or compare news outlets.{" "}
@@ -168,14 +149,9 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
       <section aria-labelledby="check">
         <h2 class="bar" id="check">Check it yourself</h2>
         <p>
-          {plural(claims, "claim is", "claims are")} tracked in {plural(topics, "topic", "topics")}
-          {data.last_checked_at && (
-            <>
-              , and the registries were last checked on{" "}
-              <span class="unbroken">{formatDate(data.last_checked_at)}</span>
-            </>
-          )}
-          . {reportedClaimCount(data.claims)} with a linked report.
+          {plural(pairs, "treatment and condition is", "treatments and conditions are")} followed in{" "}
+          {plural(topics, "topic", "topics")}, from records gathered on{" "}
+          <span class="unbroken">{formatDate(bundleMadeAt())}</span>.
           {" "}See <a href="/data">the data file</a>,{" "}
           <a href="/how-it-works">the method</a> and <a href="/guide">the guide</a> to what each
           word does and does not tell you.
@@ -213,7 +189,7 @@ const plural = (count: number, one: string, many: string) => `${count} ${count =
     display: block;
   }
 
-  /* One claim at page scale: what was said, the years, where the records leave it. */
+  /* One pair at page scale: what is followed, the years, where the records leave it. */
   .case {
     margin: clamp(1.5rem, 4vw, 2.25rem) 0 0;
     background: var(--paper);

@@ -1,8 +1,8 @@
 // Reach and sharing, checked against openspec/specs (reader-contact, site-publishing, site-measurement): the contact
 // links (reader-contact), canonical addresses, structured data, the sitemap and the
 // public-build check (site-publishing), and what a page may ask of other hosts
-// (site-measurement). Builds tests/fixture-export.json (synthetic data) into temporary
-// directories.
+// (site-measurement). Builds tests/bundle (real pair pages from the lab's recorded slice)
+// into temporary directories.
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -11,9 +11,12 @@ import path from "node:path";
 import { before, test } from "node:test";
 import { CORRECTION_SUBJECT, SUGGEST_SUBJECT, contactLink } from "../src/lib/contact.mjs";
 import { mastodonShare, shareLinks } from "../src/lib/share.ts";
-import { canonicalAddress, claimPageData } from "../src/lib/structured.ts";
+import { canonicalAddress } from "../src/lib/structured.ts";
 
-const FIXTURE = "tests/fixture-export.json";
+const BUNDLE = "tests/bundle";
+// A pair whose page the build makes ahead, and the topic it is filed under.
+const PAIR = "ambroxol--dementia";
+const TOPIC = "dementia";
 const ORIGIN = process.env.SITE_URL || "https://whatcameofit.com";
 const SUGGEST_URL = "mailto:tips@example.org";
 const CORRECTIONS_URL = "https://issues.example.org/new?template=correction";
@@ -33,11 +36,11 @@ function files(directory) {
 const htmlFiles = (directory) => files(directory).filter((file) => file.endsWith(".html"));
 
 // No contact address and no public flag reach a build unless a test sets them.
-function build(exportFile, outDir, env = {}) {
+function build(bundle, outDir, env = {}) {
   return spawnSync("npx", ["astro", "build", "--outDir", outDir], {
     env: {
       ...process.env,
-      EXPORT_FILE: exportFile,
+      PAIRS_BUNDLE: bundle,
       ASTRO_TELEMETRY_DISABLED: "1",
       SUGGEST_URL: "",
       CORRECTIONS_URL: "",
@@ -46,14 +49,6 @@ function build(exportFile, outDir, env = {}) {
     },
     encoding: "utf8",
   });
-}
-
-function previewExport() {
-  const fixture = JSON.parse(fs.readFileSync(FIXTURE, "utf8"));
-  fixture.preview = true;
-  const file = path.join(temporary("preview-export"), "export.json");
-  fs.writeFileSync(file, JSON.stringify(fixture));
-  return file;
 }
 
 // The tags that make a browser fetch something as a page loads, and of those the ones
@@ -80,9 +75,9 @@ const COOKIE = /document\.cookie|cookieStore/;
 const POSTING_FORM = /<form\b[^>]*\bmethod\s*=\s*["']?post\b/i;
 
 before(() => {
-  const result = build(FIXTURE, dist);
+  const result = build(BUNDLE, dist);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  const configured = build(FIXTURE, contactDist, { SUGGEST_URL, CORRECTIONS_URL });
+  const configured = build(BUNDLE, contactDist, { SUGGEST_URL, CORRECTIONS_URL });
   assert.equal(configured.status, 0, configured.stdout + configured.stderr);
 });
 
@@ -99,7 +94,7 @@ test("contact link to a mail address carries the value in the body", () => {
   assert.equal(fields.get("subject"), SUGGEST_SUBJECT);
   assert.equal(fields.get("body"), article);
 
-  const correction = contactLink(SUGGEST_URL, `${ORIGIN}/phase-claim`, CORRECTION_SUBJECT);
+  const correction = contactLink(SUGGEST_URL, `${ORIGIN}/ambroxol--dementia`, CORRECTION_SUBJECT);
   assert.equal(new URL(correction.href).searchParams.get("subject"), CORRECTION_SUBJECT);
   // With nothing to carry, the message has its subject and no body.
   const bare = new URL(contactLink(SUGGEST_URL, "", SUGGEST_SUBJECT).href).searchParams;
@@ -108,12 +103,12 @@ test("contact link to a mail address carries the value in the body", () => {
 });
 
 test("contact link to an issue form carries the value as about", () => {
-  const link = contactLink(CORRECTIONS_URL, `${ORIGIN}/phase-claim`, CORRECTION_SUBJECT);
+  const link = contactLink(CORRECTIONS_URL, `${ORIGIN}/ambroxol--dementia`, CORRECTION_SUBJECT);
   assert.equal(link.opens, "an issue form");
   const url = new URL(link.href);
   assert.equal(url.origin + url.pathname, "https://issues.example.org/new");
   assert.equal(url.searchParams.get("template"), "correction");
-  assert.equal(url.searchParams.get("about"), `${ORIGIN}/phase-claim`);
+  assert.equal(url.searchParams.get("about"), `${ORIGIN}/ambroxol--dementia`);
   // With nothing to carry, the link is the form's own address.
   assert.equal(contactLink(CORRECTIONS_URL).href, CORRECTIONS_URL);
 });
@@ -134,15 +129,9 @@ test("Scenario: No suggestion address", () => {
 });
 
 test("Scenario: Pasted link is not tracked", () => {
-  // With an address set, the home page offers a suggestion that carries nothing...
-  const home = page("index.html", contactDist);
-  const line = home.match(/<p class="suggest"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? "";
-  assert.match(line, /address of the news article/);
-  const href = unescape(line.match(/<a href="([^"]+)"[^>]*>Suggest a headline \(opens your mail\)<\/a>/)?.[1] ?? "");
-  assert.ok(href.startsWith(`${SUGGEST_URL}?`), line);
-  assert.equal(new URL(href).searchParams.has("body"), false);
-  // ...and the lookup's answers read the address from the page, to carry a pasted
+  // With an address set, the lookup's answers read it from the page, to carry a pasted
   // article address into their own link. The pasted address is never fetched.
+  const home = page("index.html", contactDist);
   assert.match(home, new RegExp(`id="results"[^>]*data-suggest="${SUGGEST_URL}"`));
   const scripts = files(path.join(contactDist, "_astro"))
     .filter((file) => file.endsWith(".js"))
@@ -150,19 +139,6 @@ test("Scenario: Pasted link is not tracked", () => {
     .join("\n");
   assert.match(scripts + home, /Suggest this headline \(opens /);
 });
-
-test(
-  "Scenario: Reader reports an error",
-  () => {
-    const html = page("phase-claim/index.html", contactDist);
-    const report = html.match(/<p class="report"[^>]*>([\s\S]*?)<\/p>/)?.[1] ?? "";
-    assert.match(report, /Something wrong on this page\? Tell us what, and the source that shows it/);
-    const href = unescape(report.match(/<a href="([^"]+)"[^>]*>Report an error \(opens an issue form\)<\/a>/)?.[1] ?? "");
-    assert.equal(new URL(href).searchParams.get("about"), `${ORIGIN}/phase-claim`);
-    // No reply time is promised.
-    assert.doesNotMatch(report, /\b(reply|respond|within|days?|hours?)\b/i);
-  },
-);
 
 test("Scenario: Reader chooses not to write", () => {
   // No page holds a form that sends anything to a server.
@@ -181,8 +157,8 @@ test("Scenario: Reader chooses not to write", () => {
 test("every page states its own canonical address", () => {
   const expected = {
     "index.html": `${ORIGIN}/`,
-    "phase-claim/index.html": `${ORIGIN}/phase-claim`,
-    "topic/gum-disease/index.html": `${ORIGIN}/topic/gum-disease`,
+    [`${PAIR}/index.html`]: `${ORIGIN}/${PAIR}`,
+    [`topic/${TOPIC}/index.html`]: `${ORIGIN}/topic/${TOPIC}`,
   };
   for (const [file, address] of Object.entries(expected)) {
     assert.ok(page(file).includes(`<link rel="canonical" href="${address}">`), file);
@@ -191,7 +167,7 @@ test("every page states its own canonical address", () => {
   // from the Worker; the public route is checked in trials.test.mjs.
   for (const file of htmlFiles(dist)) {
     const relative = path.relative(dist, file);
-    if (relative.startsWith(`embed${path.sep}`)) continue;
+    if (relative.startsWith(`embed${path.sep}`) || relative.startsWith(`pair-shell${path.sep}`)) continue;
     if (relative === path.join("trial-reader", "index.html")) {
       const html = fs.readFileSync(file, "utf8");
       assert.match(html, /name="robots" content="noindex, follow"/);
@@ -206,23 +182,7 @@ test("every page states its own canonical address", () => {
   }
 });
 
-test("a claim page's structured data describes and never rates", () => {
-  const fixture = JSON.parse(fs.readFileSync(FIXTURE, "utf8"));
-  const claim = fixture.claims.find((entry) => entry.slug === "phase-claim");
-  const structured = claimPageData(claim, fixture.last_checked_at);
-  assert.equal(structured["@type"], "WebPage");
-  assert.equal(structured.name, claim.headline);
-  assert.equal(structured.url, `${ORIGIN}/phase-claim`);
-  assert.equal(structured.datePublished, "2019-05-03");
-  assert.equal(structured.dateModified, "2026-11-11T11:00:00Z");
-  assert.equal(structured.publisher["@type"], "Organization");
-  assert.equal(structured.publisher.name, "What came of it?");
-  assert.equal(structured.publisher.url, `${ORIGIN}/`);
-  assert.equal(structured.publisher.logo.url, `${ORIGIN}/icon-512.png`);
-  // Without the dates, the fields are left out rather than empty.
-  const undated = claimPageData({ ...claim, first_reported_date: null }, null);
-  assert.equal("datePublished" in undated || "dateModified" in undated, false);
-  // Nothing in the build is fact-check, review or rating markup.
+test("no page carries fact-check, review or rating markup", () => {
   for (const file of htmlFiles(dist)) {
     assert.doesNotMatch(
       fs.readFileSync(file, "utf8"),
@@ -231,28 +191,6 @@ test("a claim page's structured data describes and never rates", () => {
     );
   }
 });
-
-test(
-  "Scenario: Claim page read by a search engine",
-  () => {
-    const html = page("phase-claim/index.html");
-    const block = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
-    assert.ok(block, "the claim page has no structured data");
-    const graph = [JSON.parse(block)].flat();
-    const structured = graph.find((entry) => entry["@type"] === "WebPage");
-    assert.ok(structured, "the claim page's data has no WebPage");
-    assert.equal(structured.url, `${ORIGIN}/phase-claim`);
-    assert.equal(structured.datePublished, "2019-05-03");
-    assert.equal(structured.dateModified, "2026-11-11T11:00:00Z");
-    assert.ok(html.includes(`<link rel="canonical" href="${ORIGIN}/phase-claim">`));
-    // The trail runs from the home page through the claim's topic to the claim.
-    const trail = graph.find((entry) => entry["@type"] === "BreadcrumbList");
-    assert.deepEqual(
-      trail.itemListElement.map((crumb) => crumb.item),
-      [`${ORIGIN}/`, `${ORIGIN}/topic/gum-disease`, `${ORIGIN}/phase-claim`],
-    );
-  },
-);
 
 const structuredOf = (html) =>
   [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].flatMap(
@@ -264,11 +202,9 @@ test("the home page names the site and its publisher; the data page describes th
   assert.equal(home.find((entry) => entry["@type"] === "WebSite").url, `${ORIGIN}/`);
   assert.equal(home.find((entry) => entry["@type"] === "Organization").logo.url, `${ORIGIN}/icon-512.png`);
   const dataset = structuredOf(page("data/index.html")).find((entry) => entry["@type"] === "Dataset");
-  assert.equal(dataset.distribution.contentUrl, `${ORIGIN}/data/claims.json`);
+  assert.equal(dataset.distribution.contentUrl, `${ORIGIN}/data/pairs.json`);
   assert.match(dataset.license, /creativecommons\.org/);
-  for (const file of ["topic/gum-disease/index.html", "year/2019/index.html"]) {
-    assert.ok(structuredOf(page(file)).some((entry) => entry["@type"] === "BreadcrumbList"), file);
-  }
+  assert.ok(structuredOf(page(`topic/${TOPIC}/index.html`)).some((entry) => entry["@type"] === "BreadcrumbList"));
 });
 
 // site-publishing: Every page has a complete link preview
@@ -276,18 +212,15 @@ test("the home page names the site and its publisher; the data page describes th
 const meta = (html, name) =>
   html.match(new RegExp(`<meta (?:property|name)="${name}" content="([^"]*)"`))?.[1] ?? null;
 
-test("Scenario: Claim link pasted into a chat", () => {
-  const html = page("phase-claim/index.html");
-  assert.equal(meta(html, "og:type"), "article");
-  assert.equal(meta(html, "og:url"), `${ORIGIN}/phase-claim`);
+test("Scenario: A pair's link pasted into a chat", () => {
+  const html = page(`${PAIR}/index.html`);
+  assert.equal(meta(html, "og:url"), `${ORIGIN}/${PAIR}`);
   const image = new URL(meta(html, "og:image"));
-  assert.equal(image.origin + image.pathname, `${ORIGIN}/og/phase-claim.png`);
+  assert.equal(image.origin + image.pathname, `${ORIGIN}/og/${PAIR}.png`);
   assert.match(image.searchParams.get("v"), /^[a-f0-9]{12}$/);
   assert.equal(meta(html, "og:image:width"), "1200");
   assert.equal(meta(html, "og:image:height"), "630");
   assert.equal(meta(html, "og:image:type"), "image/png");
-  assert.equal(meta(html, "article:published_time"), "2019-05-03");
-  assert.equal(meta(html, "article:modified_time"), "2026-11-11T11:00:00Z");
   assert.equal(meta(html, "twitter:image:alt"), meta(html, "og:image:alt"));
 });
 
@@ -300,7 +233,7 @@ test("Scenario: Home page shared", () => {
   assert.equal(meta(html, "article:published_time"), null);
 });
 
-test("every page states the whole link preview and announces both feeds", () => {
+test("every page states the whole link preview and announces the status changes feed", () => {
   for (const file of htmlFiles(dist)) {
     const relative = path.relative(dist, file);
     if (relative.startsWith(`embed${path.sep}`)) continue;
@@ -310,7 +243,6 @@ test("every page states the whole link preview and announces both feeds", () => 
     }
     assert.equal(meta(html, "og:locale"), "en_GB", relative);
     assert.ok(html.includes('href="/changes.xml"'), relative);
-    assert.ok(html.includes('href="/anniversaries.xml"'), relative);
   }
 });
 
@@ -321,10 +253,10 @@ test("Scenario: Crawler arrives", () => {
   assert.ok(robots.includes(`Sitemap: ${ORIGIN}/sitemap.xml`));
 });
 
-// sharing: A claim can be posted to a network
+// sharing
 
 test("share links carry the sentence and address and nothing else", () => {
-  const url = `${ORIGIN}/phase-claim`;
+  const url = `${ORIGIN}/ambroxol--dementia`;
   const text = "A synthetic claim. First reported May 2019. Status: Phase 2 trial. Not medical advice.";
   const links = shareLinks(text, url, "A synthetic claim");
   assert.deepEqual(
@@ -346,7 +278,7 @@ test("share links carry the sentence and address and nothing else", () => {
 });
 
 test("Scenario: Reader posts to Mastodon for the first time", () => {
-  const url = `${ORIGIN}/phase-claim`;
+  const url = `${ORIGIN}/ambroxol--dementia`;
   for (const typed of ["mastodon.social", " https://Mastodon.Social/about ", "@me@mastodon.social"]) {
     const href = new URL(mastodonShare(typed, "Status: Phase 2 trial.", url));
     assert.equal(href.origin + href.pathname, "https://mastodon.social/share", typed);
@@ -357,73 +289,50 @@ test("Scenario: Reader posts to Mastodon for the first time", () => {
   }
 });
 
-test("Scenario: Reader posts to Bluesky", () => {
-  const html = page("phase-claim/index.html");
-  assert.match(html, /href="https:\/\/bsky\.app\/intent\/compose\?text=[^"]+"/);
-  assert.match(html, /data-mastodon\b/);
-  assert.ok(html.includes('rel="noopener noreferrer"'));
-});
+// sharing: An embed can be found from the pair's address
 
-// sharing: An embed can be found from the claim's address
-
-test("Scenario: Claim address pasted into a site that reads oEmbed", () => {
-  const html = page("phase-claim/index.html");
-  assert.ok(
-    html.includes(`<link rel="alternate" type="application/json+oembed" href="${ORIGIN}/oembed/phase-claim.json"`),
-  );
-  const oembed = JSON.parse(page("oembed/phase-claim.json"));
+test("Scenario: A pair's address pasted into a site that reads oEmbed", () => {
+  const html = page(`${PAIR}/index.html`);
+  assert.ok(html.includes(`<link rel="alternate" type="application/json+oembed" href="${ORIGIN}/oembed/${PAIR}.json"`));
+  const oembed = JSON.parse(page(`oembed/${PAIR}.json`));
   assert.equal(oembed.type, "rich");
   assert.equal(oembed.version, "1.0");
-  assert.ok(oembed.html.includes(`${ORIGIN}/embed/phase-claim`));
+  assert.ok(oembed.html.includes(`${ORIGIN}/embed/${PAIR}`));
   assert.equal(oembed.width, 440);
-  assert.equal(oembed.thumbnail_url, `${ORIGIN}/og/phase-claim.png`);
+  assert.equal(oembed.thumbnail_url, `${ORIGIN}/og/${PAIR}.png`);
 });
 
 test("the sitemap lists every public page and no embed", () => {
   const listed = [...page("sitemap.xml").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-  for (const address of ["/", "/phase-claim", "/quiet-claim", "/approved-claim", "/topics", "/topic/gum-disease", "/it-happened"]) {
+  for (const address of ["/", `/${PAIR}`, "/topics", `/topic/${TOPIC}`, "/data", "/about"]) {
     assert.ok(listed.includes(canonicalAddress(address)), `${address} is not listed`);
   }
   assert.ok(listed.every((address) => address.startsWith(`${ORIGIN}/`)));
-  assert.ok(!listed.some((address) => /\/embed\/|\/404$|empty-topic/.test(address)));
-  // Each address is a built page, and each built page but these is listed.
+  assert.ok(!listed.some((address) => /\/embed\/|\/404$|\/pair-shell$/.test(address)));
+  // Each built page but these is listed. A pair made on request is listed and not built.
   const built = htmlFiles(dist).map((file) => {
     const relative = path.relative(dist, file).split(path.sep).join("/");
     return canonicalAddress(`/${relative.replace(/(\/?index)?\.html$/, "")}`);
   });
-  for (const address of listed) assert.ok(built.includes(address), `${address} is listed but not built`);
+  // A topic no pair is filed under has its page and is not listed.
+  const emptyTopic = (address) =>
+    /\/topic\/[^/]+$/.test(address) && !page(`${new URL(address).pathname.slice(1)}/index.html`).includes("data-pair=");
   const unlisted = built.filter(
-    // Error pages, embeds, the private trial template, and empty topics are unlisted.
-    (address) => !listed.includes(address) && !/\/404$|\/embed\/|\/trial-reader$|\/topic\/empty-topic$/.test(address),
+    // Error pages, embeds, the private trial template and the frame for pages made on request.
+    (address) => !listed.includes(address) && !/\/404$|\/embed\/|\/trial-reader$|\/pair-shell$/.test(address) && !emptyTopic(address),
   );
   assert.deepEqual(unlisted, []);
 });
 
 test("Scenario: Public address not configured", () => {
-  const result = build(FIXTURE, temporary("public"), { PUBLIC_BUILD: "1", SITE_URL: "http://localhost:4321" });
+  const result = build(BUNDLE, temporary("public"), { PUBLIC_BUILD: "1", SITE_URL: "http://localhost:4321" });
   assert.notEqual(result.status, 0);
   assert.match(result.stdout + result.stderr, /public address must be set as SITE\.url in site\/site\.config\.mjs/);
 });
 
-test("Scenario: Preview build publishes no sitemap", () => {
-  // A preview is never public, so the flag does not stop it; it publishes no sitemap
-  // and asks every page not to be indexed.
-  const out = temporary("preview");
-  const result = build(previewExport(), out, { PUBLIC_BUILD: "1" });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.equal(fs.existsSync(path.join(out, "sitemap.xml")), false);
-  assert.match(page("robots.txt", out), /^Disallow: \/$/m);
-  assert.doesNotMatch(page("robots.txt", out), /Sitemap:/);
-  assert.ok(fs.existsSync(path.join(dist, "sitemap.xml")));
-  for (const file of ["index.html", "phase-claim/index.html"]) {
-    assert.match(page(file, out), /<meta name="robots" content="noindex"/, file);
-    assert.ok(page(file, out).includes(`<link rel="canonical" href="${ORIGIN}/`), file);
-  }
-});
-
 // site-measurement
 
-test("Scenario: Reader visits a claim page", () => {
+test("Scenario: Reader visits a page", () => {
   // The checks would catch another party's script, image or stylesheet, and a cookie.
   assert.deepEqual(foreignFetches('<script async src="https://counter.example.com/count.js"></script>'), [
     '<script async src="https://counter.example.com/count.js">',

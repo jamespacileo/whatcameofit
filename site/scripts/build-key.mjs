@@ -16,15 +16,14 @@ export const SETTINGS = [
   "CHROME_STORE_URL",
   "SAFARI_STORE_URL",
   "PUBLIC_BUILD",
-  "EXPORT_FILE",
-  "PUBLISHED_TOPICS_FILE",
+  "PAIRS_BUNDLE",
+  "TRIALS_LISTING_FILE",
   "CONTACT_EMAIL",
-  "PREVIEW_SITE_FILES_BUCKET",
-  "PREVIEW_SITE_FILES_JURISDICTION",
 ];
 
-// Files under site/ that no copy is made from: the tests and the notes.
-const UNREAD = /^site\/(tests\/|README\.md$|AGENTS\.md$|Dockerfile$|\.dockerignore$|\.vscode\/|\.impeccable)/;
+// Files under site/ that no copy is made from: the tests and the notes. tests/bundle is
+// read: it is the bundle a pull request's copy is built from.
+const UNREAD = /^site\/(tests\/(?!bundle\/)|README\.md$|AGENTS\.md$|Dockerfile$|\.dockerignore$|\.vscode\/|\.impeccable)/;
 
 /**
  * Pure: no files, no network.
@@ -58,7 +57,7 @@ export function buildKey(siteDir, settings) {
       return { path: file, blob: meta.split(" ")[2] };
     });
   if (files.length === 0) return null;
-  // The export is named by where it is, not by where this machine keeps the checkout.
-  const exportFile = settings.EXPORT_FILE ? path.relative(siteDir, path.resolve(siteDir, settings.EXPORT_FILE)) : "";
-  return keyFrom(files, { ...settings, EXPORT_FILE: exportFile });
+  // A file is named by where it is, not by where this machine keeps the checkout.
+  const within = (file) => (file ? path.relative(siteDir, path.resolve(siteDir, file)) : "");
+  return keyFrom(files, { ...settings, PAIRS_BUNDLE: within(settings.PAIRS_BUNDLE), TRIALS_LISTING_FILE: within(settings.TRIALS_LISTING_FILE) });
 }

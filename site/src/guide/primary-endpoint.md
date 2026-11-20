@@ -5,7 +5,6 @@ title: Primary endpoint
 answer: A primary endpoint, which registries call the primary outcome measure, is the planned measurement a trial names in advance as the most important for judging the effect of the treatment.
 rule: what-a-trial-entry-shows
 on_site: A trial entry on a claim page shows the primary outcomes the trial's registry record plans to measure, as the record words them. The status “Trial missed its primary endpoint” is set only when a person has marked a trial, with a link to the source that reports it.
-applies: primary-outcomes
 sources:
   - name: "ClinicalTrials.gov, Glossary Terms"
     url: https://clinicaltrials.gov/study-basics/glossary

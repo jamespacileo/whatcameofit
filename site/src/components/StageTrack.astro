@@ -1,8 +1,7 @@
 ---
 // Where a status sits on the path from laboratory to approval: six places, one marked.
-// It shows a position, not progress: a claim can reach a place without passing the others.
-import type { StatusCode } from "../lib/export";
-import { STAGE_PATH } from "../lib/status";
+// It shows a position, not progress: a pair can reach a place without passing the others.
+import { STAGE_PATH, type StatusCode } from "../lib/status";
 
 interface Props {
   code: StatusCode;

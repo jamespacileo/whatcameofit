@@ -1,4 +1,5 @@
-// Pair pages made on request and old claim addresses (openspec pairs-site, tasks 4.1 to 4.3). The site is built from
+// Pair pages made on request and the addresses of the claims the site once tracked (openspec
+// pairs-site, tasks 3.4 and 4.1 to 4.3). The site is built from
 // a copy of tests/bundle (real pair pages from the lab's recorded slice) in which two trial
 // titles hold markup. The Worker is bundled as Wrangler bundles it and run in workerd
 // (Miniflare) against a local D1 holding migration 0011 and that bundle, loaded by the store's
@@ -26,7 +27,11 @@ const BUILT_WITH_MARKUP = "apitegromab--obesity";
 const COMPARED = "apitegromab--neuromuscular-diseases";
 const BROKEN = "apitegromab--overweight";
 const KEPT = "tulisokibart--scleroderma-diffuse";
-// The one pair with posted results; given a claim origin here so that it is also built ahead.
+// The addresses the site served while it tracked claims, frozen when they were removed.
+const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
+// A claim the operator archived: its address stays gone even with a pair that came from it.
+const ARCHIVED = retired.archived[0].slug;
+// The one pair with posted results; given that claim's origin here, so it is also built ahead.
 const WITH_RESULTS = "curcumin--gastritis-atrophic";
 const ORIGIN = JSON.parse(fs.readFileSync(`tests/bundle/p12_pair_page/${BUILT_WITH_MARKUP}.json`, "utf8")).row.origin;
 
@@ -52,7 +57,7 @@ const bundle = copyBundle({
   [ON_REQUEST]: withMarkup,
   [BUILT_WITH_MARKUP]: (page) => { withMarkup(page); page.row.origin.claim_slug = SAME_ADDRESS; },
   [WITH_RESULTS]: (page) => {
-    page.row.origin = { ...ORIGIN, claim_slug: WITH_RESULTS };
+    page.row.origin = { ...ORIGIN, claim_slug: ARCHIVED };
     // An estimate with its interval and no p value, as the lab's NCT05256017 posts one.
     const { findings } = page.trials[0];
     findings.comparisons.push({
@@ -68,22 +73,12 @@ const bundle = copyBundle({
     });
   },
 });
-// The claims export, with the first moved claim also archived: its address still answers 410.
-const moved = movedAddresses(Object.values(Object.fromEntries(
-  fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => [name, JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))]),
-)));
-const [ARCHIVED] = Object.keys(moved).sort();
-const exportFile = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-export-")), "export.json");
-// No topic address was published from the fixture export.
-const publishedTopics = path.join(path.dirname(exportFile), "published-topics.json");
-fs.writeFileSync(publishedTopics, "[]");
-// One claim of the fixture takes the slug of a claim that leads to a pair of the bundle, so the
-// build has a claim with a pair (task 3.4a): "phase-claim" becomes MATCHED.
-const MATCHED = Object.keys(moved).sort().find((slug) => slug !== ARCHIVED);
-const UNMATCHED = "quiet-claim";
-const fixture = JSON.parse(fs.readFileSync("tests/fixture-export.json", "utf8"));
-for (const claim of fixture.claims) if (claim.slug === "phase-claim") claim.slug = MATCHED;
-fs.writeFileSync(exportFile, JSON.stringify({ ...fixture, archived: [{ slug: ARCHIVED, on: "2026-11-01" }] }));
+// Which claim leads to which pair, by the bundle's own record of where each pair came from.
+const moved = movedAddresses(fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))));
+const leads = [...moved].filter(([slug]) => slug !== ARCHIVED && retired.pages.includes(slug));
+// A claim with a pair, and one with none in this bundle.
+const [[MATCHED]] = leads;
+const UNMATCHED = retired.pages.find((slug) => !moved.has(slug) && !retired.archived.some((entry) => entry.slug === slug) && !retired.moved.some((entry) => entry.slug === slug));
 const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-on-request-"));
 const pages = Object.fromEntries(
   fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => [name.slice(0, -5), JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))]),
@@ -122,12 +117,12 @@ async function load(db, folder) {
 
 before(async () => {
   const result = spawnSync("npx", ["astro", "build", "--outDir", dist], {
-    env: { ...process.env, EXPORT_FILE: exportFile, PAIRS_BUNDLE: bundle, ASTRO_TELEMETRY_DISABLED: "1" },
+    env: { ...process.env, PAIRS_BUNDLE: bundle, ASTRO_TELEMETRY_DISABLED: "1" },
     encoding: "utf8",
   });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const redirects = spawnSync(process.execPath, ["scripts/redirects.mjs"], {
-    env: { ...process.env, DIST_DIR: dist, EXPORT_FILE: exportFile, PAIRS_BUNDLE: bundle, PUBLISHED_TOPICS_FILE: publishedTopics },
+    env: { ...process.env, DIST_DIR: dist, PAIRS_BUNDLE: bundle },
     encoding: "utf8",
   });
   assert.equal(redirects.status, 0, redirects.stdout + redirects.stderr);
@@ -305,60 +300,65 @@ test("the Worker reads only the bundle version the build read, whatever is curre
 });
 
 test("a claim whose pair is published leads to it, an archived one is still gone", async () => {
-  const leads = Object.entries(moved).filter(([slug]) => slug !== ARCHIVED);
   assert.ok(leads.length > 0);
   for (const [slug, address] of leads) {
     const response = await get(`/${slug}?from=share`);
     assert.equal(response.status, 301, slug);
     assert.equal(new URL(response.headers.get("Location")).pathname + new URL(response.headers.get("Location")).search, `/${address}?from=share`);
   }
-  assert.equal((await get(`/${ARCHIVED}`)).status, 410);
-  assert.equal(moved[SAME_ADDRESS], undefined);
+  // Archived by the operator: gone, with the day, though a pair came from it.
+  assert.equal(moved.get(ARCHIVED), WITH_RESULTS);
+  const archived = await get(`/${ARCHIVED}`);
+  assert.equal(archived.status, 410);
+  assert.match(await archived.text(), /taken down on \d+ \w+ 20\d\d/);
+  assert.equal(moved.get(SAME_ADDRESS), undefined);
   const same = await get(`/${SAME_ADDRESS}`);
   assert.equal(same.status, 200);
   assert.ok((await documentOf(same)).querySelector("[data-pair-status]"));
 });
 
-test("a claim with a pair is not built, and every file of it leads to the pair's", async () => {
-  const address = moved[MATCHED];
-  assert.ok(address, "the fixture has a claim with a pair");
-  // Not built: its page, record, embed, oEmbed, cards and feed.
+test("no file is built for a claim, and every address of one with a pair leads to the pair's", async () => {
+  const address = moved.get(MATCHED);
   const files = [`${MATCHED}/index.html`, `data/claims/${MATCHED}.json`, `embed/${MATCHED}/index.html`, `oembed/${MATCHED}.json`,
-    `og/${MATCHED}.png`, `og/square/${MATCHED}.png`, `og/tall/${MATCHED}.png`, `changes/${MATCHED}.xml`];
+    `og/${MATCHED}.png`, `og/square/${MATCHED}.png`, `og/tall/${MATCHED}.png`, `changes/${MATCHED}.xml`, "data/claims.json"];
   for (const file of files) assert.ok(!fs.existsSync(path.join(dist, file)), file);
-  const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "claims.json"), "utf8"));
-  assert.ok(!index.entries.some((entry) => entry.slug === MATCHED));
-  for (const feed of fs.readdirSync(path.join(dist, "changes", "topic"))) {
-    assert.ok(!fs.readFileSync(path.join(dist, "changes", "topic", feed), "utf8").includes(`/${MATCHED}`), feed);
-  }
-  // What each of its addresses answers now.
-  const leads = {
+  // What each of its addresses answers now, the saved aliases of its page and embed among them.
+  const to = {
     [`/${MATCHED}`]: `/${address}`,
+    [`/${MATCHED}/`]: `/${address}`,
+    [`/${MATCHED}/index.html`]: `/${address}`,
     [`/data/claims/${MATCHED}.json`]: `/data/pairs/${address}.json`,
     [`/embed/${MATCHED}`]: `/embed/${address}`,
+    [`/embed/${MATCHED}.html`]: `/embed/${address}`,
+    [`/embed/${MATCHED}/index.html`]: `/embed/${address}`,
     [`/oembed/${MATCHED}.json`]: `/oembed/${address}.json`,
     [`/og/${MATCHED}.png`]: `/og/${address}.png`,
     [`/og/square/${MATCHED}.png`]: `/og/square/${address}.png`,
     [`/og/tall/${MATCHED}.png`]: `/og/tall/${address}.png`,
     [`/changes/${MATCHED}.xml`]: "/changes.xml",
   };
-  for (const [from, to] of Object.entries(leads)) {
+  for (const [from, target] of Object.entries(to)) {
     const response = await get(from);
     assert.equal(response.status, 301, from);
-    assert.equal(new URL(response.headers.get("Location")).pathname, to, from);
+    assert.equal(new URL(response.headers.get("Location")).pathname, target, from);
     // And the pair's own file answers.
-    assert.equal((await get(to)).status, 200, to);
+    assert.equal((await get(target)).status, 200, target);
   }
 });
 
-test("a claim with no pair is built and answers as before, and an archived one is still gone", async () => {
-  assert.equal(moved[UNMATCHED], undefined);
-  for (const pathname of [`/${UNMATCHED}`, `/data/claims/${UNMATCHED}.json`, `/embed/${UNMATCHED}`, `/oembed/${UNMATCHED}.json`, `/og/${UNMATCHED}.png`, `/changes/${UNMATCHED}.xml`]) {
-    assert.equal((await get(pathname)).status, 200, pathname);
+test("every address of a claim with no pair answers gone, and so does the claims' data file", async () => {
+  assert.ok(UNMATCHED);
+  for (const pathname of [`/${UNMATCHED}`, `/${UNMATCHED}/index.html`, `/data/claims/${UNMATCHED}.json`, `/embed/${UNMATCHED}`, `/oembed/${UNMATCHED}.json`,
+    `/og/${UNMATCHED}.png`, `/og/square/${UNMATCHED}.png`, `/og/tall/${UNMATCHED}.png`, `/changes/${UNMATCHED}.xml`, "/data/claims.json"]) {
+    const response = await get(pathname);
+    assert.equal(response.status, 410, pathname);
   }
-  const index = JSON.parse(fs.readFileSync(path.join(dist, "data", "claims.json"), "utf8"));
-  assert.ok(index.entries.some((entry) => entry.slug === UNMATCHED));
-  assert.equal((await get(`/${ARCHIVED}`)).status, 410);
+  const page = await get(`/${UNMATCHED}`);
+  const text = await page.text();
+  assert.match(text, /This page has been removed\./);
+  assert.match(text, /noindex/);
+  // An address the site never served is not found, not gone.
+  assert.equal((await get("/never-a-claim-of-this-site")).status, 404);
 });
 
 test("a pair names the same treatment's pairs for narrower conditions, built ahead and made on request", async () => {

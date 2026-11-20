@@ -5,7 +5,6 @@ title: A trial that ends early
 answer: A trial has ended early when its registry record is marked terminated, meaning it stopped after it began and will not start again, or withdrawn, meaning it stopped before anyone was enrolled.
 rule: how-a-status-is-set
 on_site: A trial that was terminated or withdrawn does not count toward a status. If every registered trial of the treatment for the condition is in one of those two states, the status is “Trials ended early”.
-applies: ended-early
 sources:
   - name: "ClinicalTrials.gov, Glossary Terms"
     url: https://clinicaltrials.gov/study-basics/glossary

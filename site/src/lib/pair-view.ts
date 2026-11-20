@@ -195,7 +195,8 @@ export interface PairView {
   approach: string | null;
   checkedByPerson: boolean;
   registryChecks: { registry: string; through: string }[];
-  claimSlug: string | null;
+  /** The topic the lab filed the pair under, or null. */
+  topic: string | null;
 }
 
 function eventView(event: any): PairEventView {
@@ -275,7 +276,7 @@ export function pairView(page: any): PairView {
     approach: page.approach?.approach ? PAIR_APPROACH_LABELS[page.approach.approach] : null,
     checkedByPerson: page.checked_by_person,
     registryChecks: page.checked.map((check: any) => ({ registry: PAIR_REGISTRY_NAMES[check.registry], through: check.checked_through })),
-    claimSlug: row.origin?.claim_slug ?? null,
+    topic: row.filing?.vertical ?? null,
   };
 }
 

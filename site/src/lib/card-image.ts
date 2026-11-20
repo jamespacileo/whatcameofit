@@ -8,19 +8,13 @@ import satori from "satori";
 import { SITE } from "../../site.config.mjs";
 import {
   CARD_NOTICE,
-  CHECKED_LABEL,
   PROMISED_LABEL,
-  cardContent,
   clip,
   pairCardContent,
-  topicCardContent,
   type CardContent,
   type CardFact,
-  type TopicCardContent,
 } from "./card";
-import { data, type ExportedClaim, type ExportedVertical } from "./export";
-import { STAGE_PATH, STATUS_LABELS, latestPromise, overlayText, topicClaimSummary } from "./status";
-import { topicDrawing } from "./topic-drawing";
+import { STAGE_PATH, overlayText } from "./status";
 import { pairView } from "./pairs";
 
 const INK = "#0f1f38";
@@ -115,7 +109,7 @@ const fonts = [
 type Node = { type: string; props: Record<string, unknown> };
 
 // Drawing a card is the slow part of a build: about 35 ms each, and there are three
-// for every claim. A drawn card is kept under the hash of everything that decides its
+// for every pair built ahead. A drawn card is kept under the hash of everything that decides its
 // pixels (the description handed to the renderer, its size, the fonts and the two
 // renderers' versions), so a build redraws only the cards that changed. The store is a
 // convenience and never the record: a missing or unreadable entry is drawn again.
@@ -374,20 +368,6 @@ function draw(card: CardContent, layout: Layout): Node {
   );
 }
 
-export function cardFor(claim: ExportedClaim): CardContent {
-  return { ...content(claim), place: STAGE_PATH.indexOf(claim.status.code) + 1 || null };
-}
-
-function content(claim: ExportedClaim): CardContent {
-  return cardContent(
-    claim,
-    STATUS_LABELS[claim.status.code],
-    overlayText(claim.status.overlay_years),
-    latestPromise(claim)?.parsed_date ?? null,
-    data.last_checked_at,
-  );
-}
-
 /** A pair's card, from its page file (openspec pairs-site). */
 export function pairCardFor(page: any): CardContent {
   const view = pairView(page);
@@ -408,143 +388,6 @@ export async function pairCardPng(page: any, which: Shape): Promise<Uint8Array> 
   return png(draw(pairCardFor(page), layout), layout.width, layout.height);
 }
 
-export async function cardPng(claim: ExportedClaim, which: Shape): Promise<Uint8Array> {
-  const layout = LAYOUTS[which];
-  return png(draw(cardFor(claim), layout), layout.width, layout.height);
-}
-
-type IconLine = [tag: string, attributes: Record<string, string>];
-
-// An icon's lines, read from the icon set's own file. The package ships each icon as
-// an Astro component around one literal, and the literal is all an image needs.
-function iconLines(name: string): IconLine[] {
-  const file = path.resolve(`node_modules/@lucide/astro/src/icons/${name}.ts`);
-  const literal = fs.readFileSync(file, "utf8").match(/const iconData[^=]*=\s*(\{.*\});/)?.[1];
-  if (!literal) throw new Error(`No icon data found in ${file}.`);
-  return JSON.parse(literal).node;
-}
-
-// The topic's drawing as its chip draws it: blue on the chip's pale blue, with the
-// same round line. A topic with no drawing gets the plain ring.
-function topicMark(vertical: ExportedVertical, size: number): Node {
-  const drawing = topicDrawing(vertical);
-  const lines: IconLine[] = !drawing
-    ? [["circle", { cx: "12", cy: "12", r: "7.5" }]]
-    : "icon" in drawing
-      ? iconLines(drawing.icon)
-      : drawing.paths.map((d) => ["path", { d }]);
-  const line = {
-    fill: "none",
-    stroke: BLUE,
-    "stroke-width": 1.7,
-    "stroke-linecap": "round",
-    "stroke-linejoin": "round",
-  };
-  return box(
-    {
-      alignItems: "center",
-      justifyContent: "center",
-      flexShrink: 0,
-      width: size,
-      height: size,
-      borderRadius: size,
-      background: TINT,
-    },
-    [
-      shape("svg", {
-        width: size * 0.58,
-        height: size * 0.58,
-        viewBox: "0 0 24 24",
-        children: lines.map(([tag, attributes]) => shape(tag, { ...attributes, ...line })),
-      }),
-    ],
-  );
-}
-
-// A summary can run past 270 characters; the longest still fits in six lines.
-const summaryType = (length: number) =>
-  length > 220 ? 34 : length > 160 ? 38 : length > 100 ? 44 : 52;
-
-// The claim card's wide shape, for a topic: its drawing and name where a claim's
-// quotation is, and in the panel where its claims stand, then the month checked.
-function drawTopic(vertical: ExportedVertical, card: TopicCardContent): Node {
-  const layout = LAYOUTS.wide;
-  const name = card.title.length > 22 ? 52 : 60;
-  const summary = summaryType(card.summary.length);
-  return box(
-    {
-      width: layout.width,
-      height: layout.height,
-      flexDirection: "column",
-      background: PAPER,
-      color: INK,
-      fontFamily: "Figtree",
-    },
-    [
-      brand(layout),
-      box(
-        {
-          boxSizing: "border-box",
-          flexGrow: 1,
-          flexDirection: "column",
-          justifyContent: "space-between",
-          padding: `${layout.pad * 0.8}px ${layout.pad}px ${layout.pad}px`,
-        },
-        [
-          box({ alignItems: "center" }, [
-            topicMark(vertical, name * 1.6),
-            box(
-              {
-                marginLeft: name * 0.4,
-                fontSize: name,
-                fontWeight: 700,
-                lineHeight: 1.1,
-                letterSpacing: -name / 70,
-              },
-              card.title,
-            ),
-          ]),
-          box(
-            {
-              alignItems: "flex-end",
-              justifyContent: "space-between",
-              background: PANEL,
-              borderRadius: 28,
-              padding: `${layout.pad * 0.5}px ${layout.pad * 0.62}px ${layout.pad * 0.56}px`,
-            },
-            [
-              box({ flexShrink: 1, fontSize: summary, lineHeight: 1.25 }, card.summary),
-              // The date keeps its width; the summary wraps instead.
-              card.checked &&
-                box({ flexShrink: 0 }, [fact({ label: CHECKED_LABEL, value: card.checked }, layout)]),
-            ],
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
-/** What a topic's card says, from the topic's own published claims. */
-export function topicCardFor(vertical: ExportedVertical, claims: ExportedClaim[]): TopicCardContent {
-  const summary = topicClaimSummary(claims);
-  if (!summary) throw new Error(`The topic ${vertical.slug} has no published claim to draw a card for.`);
-  return topicCardContent(vertical.title, summary, data.last_checked_at);
-}
-
-/** A topic's link preview, 1200 by 630. `claims` are the topic's own published claims. */
-export async function topicPng(
-  vertical: ExportedVertical,
-  claims: ExportedClaim[],
-): Promise<Uint8Array> {
-  const { width, height } = LAYOUTS.wide;
-  return png(drawTopic(vertical, topicCardFor(vertical, claims)), width, height);
-}
-
-/**
- * The site's own card, for a page that has no claim to show: the mark, the name, what
- * the site is, and the notice that goes wherever the mark goes.
- */
 export async function sitePng(): Promise<Uint8Array> {
   const { width, height } = LAYOUTS.wide;
   const name = 96;

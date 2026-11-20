@@ -4,19 +4,16 @@
 // registry search. The home page opens with it; other pages may end with it.
 import CalendarPlus from "@lucide/astro/icons/calendar-plus";
 import Unfound from "./Unfound.astro";
-import ReportFilter from "./ReportFilter.astro";
 import { SITE } from "../../site.config.mjs";
 import { shareSentence } from "../lib/card";
-import { data } from "../lib/export";
 import { SEARCH_EXAMPLE } from "../lib/search-example";
-import { hasLinkedReport } from "../lib/reports";
-import { STATUS_LABELS } from "../lib/status";
+import { builtAheadPages, pairView } from "../lib/pairs";
 import { canonicalAddress } from "../lib/structured";
 
 interface Props {
   /** The words over the field. */
   label?: string;
-  /** Carry each claim's sentence and card, so a tracked answer offers them to pass on. */
+  /** Carry each built-ahead pair's sentence and card, so its answer offers them to pass on. */
   sentences?: boolean;
 }
 
@@ -30,27 +27,25 @@ const hint = SITE.lookupUrl
   ? "A pasted link is compared in your browser, and sent only if you ask for a registry search."
   : "A pasted link is compared in your browser and sent nowhere.";
 
-// The field's example: a link, or words chosen by rule from a published claim they
-// lead to (`searchExample`). With no such claim the field offers a link alone.
+// The field's example: a link, or words chosen by rule from a pair they lead to
+// (`searchExample`). With no such pair the field offers a link alone.
 const placeholder = SEARCH_EXAMPLE ? `https://… or ${SEARCH_EXAMPLE.words}` : "https://…";
 
-// Keyed by the claim's page, as the lookup file names it. "<" is escaped so that no
-// text in the data can close the script element.
+// Keyed by the pair's page, as the lookup file names it: the pairs whose card the build
+// draws (`builtAhead`). "<" is escaped so that no text in the data can close the script
+// element.
 const sentenceJson = sentences
   ? JSON.stringify(
       Object.fromEntries(
-        data.claims.map((claim) => [
-          `/${claim.slug}`,
-          {
-            sentence: shareSentence(
-              claim,
-              STATUS_LABELS[claim.status.code],
-              data.last_checked_at,
-              canonicalAddress(`/${claim.slug}`),
-            ),
-            card: `/og/${claim.slug}.png`,
-          },
-        ]),
+        Object.values(builtAheadPages())
+          .map(pairView)
+          .map((pair) => [
+            `/${pair.address}`,
+            {
+              sentence: shareSentence(pair.title, pair.status, pair.asOf, canonicalAddress(`/${pair.address}`)),
+              card: `/og/${pair.address}.png`,
+            },
+          ]),
       ),
     ).replace(/</g, "\\u003c")
   : null;
@@ -78,7 +73,7 @@ const sentenceJson = sentences
 <noscript>
   <p class="results">
     Looking up needs JavaScript. Without it, <a href="/topics">the list of topics</a> leads to
-    every claim.
+    the treatments followed.
   </p>
 </noscript>
 {/* No space inside: an empty answer area is hidden by ":empty". */}
@@ -107,9 +102,6 @@ const sentenceJson = sentences
   </section>
 </template>
 {sentenceJson && <script type="application/json" id="lookup-sentences" is:inline set:html={sentenceJson} />}
-{data.claims.some((claim) => !hasLinkedReport(claim)) && (
-  <template data-search-coverage><ReportFilter /></template>
-)}
 
 <script>
   // A pasted link is compared with the site's lookup file here in the browser. It is
@@ -211,7 +203,7 @@ const sentenceJson = sentences
 
   // Where to go when the box has no answer: never a full stop.
   function listedByTopic() {
-    const line = element("p", "Every tracked claim is listed by ", "entry-note");
+    const line = element("p", "Every treatment and condition followed is listed by ", "entry-note");
     const topics = element("a", "topic") as HTMLAnchorElement;
     topics.href = "/topics";
     line.append(topics, ".");
@@ -651,7 +643,7 @@ const sentenceJson = sentences
       results.replaceChildren(
         element(
           "p",
-          tracked.length === 1 ? "This article is one we track." : "This article reports claims we track.",
+          tracked.length === 1 ? "This article is one we track." : "This article is one we track, on more than one page.",
         ),
         ...tracked.map((claim) => standing(claim, index.places)),
       );
@@ -664,7 +656,7 @@ const sentenceJson = sentences
       results.replaceChildren(
         element(
           "p",
-          "We do not track this exact article. These tracked claims share words with its address. That is a guess: check it is the same treatment for the same condition.",
+          "We do not track this exact article. These pages share words with its address. That is a guess: check it is the same treatment for the same condition.",
         ),
         claimList(close),
         ...liveOffer(address),
@@ -676,7 +668,7 @@ const sentenceJson = sentences
     results.replaceChildren(
       element(
         "p",
-        "This article is not one we track, and no tracked claim looks close. That says nothing about the story itself.",
+        "This article is not one we track, and nothing followed here looks close. That says nothing about the story itself.",
       ),
       ...liveOffer(address),
       ...suggestion(address),
@@ -822,7 +814,7 @@ const sentenceJson = sentences
       list.append(line);
     }
     if (found.length > limit) {
-      list.append(element("li", `And ${found.length - limit} more on the claim's page`, "match-more"));
+      list.append(element("li", `And ${found.length - limit} more on its page`, "match-more"));
     }
     return list;
   }
@@ -871,7 +863,8 @@ const sentenceJson = sentences
     return item;
   }
 
-  const claimsText = (count: number) => `${count} tracked ${count === 1 ? "claim" : "claims"}`;
+  // Each treatment and condition followed has one page, so results are counted in pages.
+  const claimsText = (count: number) => `${count} ${count === 1 ? "page" : "pages"}`;
 
   // How many of the claims a search finds are read and drawn at a time.
   const SHOWN_AT_ONCE = 20;
@@ -1074,7 +1067,7 @@ const sentenceJson = sentences
   function unheldSays(words: string[]) {
     const named = words.map((word) => `“${word}”`);
     const list = named.length > 1 ? `${named.slice(0, -1).join(", ")} or ${named.at(-1)}` : named[0];
-    return `No tracked claim holds ${list}. These claims were found without ${words.length === 1 ? "that word" : "those words"}.`;
+    return `No page holds ${list}. These were found without ${words.length === 1 ? "that word" : "those words"}.`;
   }
 
   // The answer to typed words. Most searches lead with the closest match as a row and
@@ -1125,13 +1118,13 @@ const sentenceJson = sentences
       block.append(reportCard(report, claim, words, index.topics));
       const found = foundIn(claim.page, words, detail).filter((item) => item.kind !== "report" || item.report.url !== report.url);
       const under = found.length ? [element("p", "Also found in", "matched-title"), foundList(found, words, 3)] : [];
-      block.append(standing(claim, index.places, { lead: "Its claim · on record now", heading: "h3", words, under, compact: true }));
+      block.append(standing(claim, index.places, { lead: "Followed here · on record now", heading: "h3", words, under, compact: true }));
       if (others.length) {
-        const jump = element("a", `${others.length} other ${others.length === 1 ? "claim" : "claims"} with these words`, "jump-others") as HTMLAnchorElement;
+        const jump = element("a", `${others.length} other ${others.length === 1 ? "page" : "pages"} with these words`, "jump-others") as HTMLAnchorElement;
         jump.href = "#other-matches";
         block.append(jump);
         const head = element("div", undefined, "search-group");
-        const title = element("h3", "Other claims with these words");
+        const title = element("h3", "Other pages with these words");
         title.id = "other-matches";
         head.append(title);
         const list = element("ol", undefined, "plain hit-list");
@@ -1157,8 +1150,8 @@ const sentenceJson = sentences
     if (cut) {
       // The next of them are drawn under these at a press; the line counts what is left.
       const where = picked ? ` in ${topic}` : "";
-      const message = reading ? "Reading…" : unread ? "The next claims could not be read right now."
-        : `${left} more tracked ${left === 1 ? `claim${where} holds` : `claims${where} hold`} these words.`;
+      const message = reading ? "Reading…" : unread ? "The next pages could not be read right now."
+        : `${left} more ${left === 1 ? `page${where} holds` : `pages${where} hold`} these words.`;
       const line = element("p", message, "match-more show-more-says");
       line.setAttribute("role", "status");
       if (more) {
@@ -1178,10 +1171,10 @@ const sentenceJson = sentences
 
     const subjects = [...new Set(shown.map((claim) => claim.topic))].filter((slug) => index.topics[slug]);
     if (subjects.length > 0) {
-      const more = element("p", "Every claim on the subject: ", "search-more");
+      const more = element("p", "Every page on the subject: ", "search-more");
       subjects.forEach((slug, at) => {
         const topic = index.topics[slug];
-        const link = element("a", `${topic.title}, ${claimsText(topic.count).replace("tracked ", "")}`) as HTMLAnchorElement;
+        const link = element("a", `${topic.title}, ${claimsText(topic.count)}`) as HTMLAnchorElement;
         link.href = `/topic/${slug}`;
         if (at > 0) more.append(" · ");
         more.append(link);
@@ -1195,7 +1188,7 @@ const sentenceJson = sentences
     else {
       const asked = `for “${query}”`;
       const note = picked
-        ? `Claims in ${topic} ${asked}, of ${found}, are`
+        ? `Pages in ${topic} ${asked}, of ${found}, are`
         : cut
           ? `The first ${shown.length} of ${found} ${asked} are`
           : `${found} ${asked},`;
@@ -1483,8 +1476,8 @@ const sentenceJson = sentences
         return;
       }
       results.replaceChildren(
-        element("p", `No trial with the identifier ${id} is matched to a claim tracked here.`),
-        element("p", "This site lists only the trials matched to the claims it tracks."),
+        element("p", `No trial with the identifier ${id} is among the records followed here.`),
+        element("p", "This site lists only the trials in the records it follows."),
       );
       const registry = REGISTRY_PAGES.find(([pattern]) => pattern.test(id));
       if (registry) {
@@ -1500,8 +1493,8 @@ const sentenceJson = sentences
       return;
     }
     const block = element("div", undefined, "search-results");
-    const said = owners.length === 1 ? "one tracked claim" : claimsText(owners.length);
-    block.append(searchHead(trial.id, `On record for ${said}`));
+    const said = owners.length === 1 ? "one page" : claimsText(owners.length);
+    block.append(searchHead(trial.id, `On record on ${said}`));
     const record = element("div", undefined, "trial-record");
     const source = element("p", undefined, "row-source");
     const link = element("a", `${trial.registry} ${trial.id}`) as HTMLAnchorElement;
@@ -1514,7 +1507,7 @@ const sentenceJson = sentences
     record.append(element("p", "A trial on record is not a treatment option.", "trial-note"));
     block.append(record);
     for (const claim of owners) {
-      block.append(standing(claim, index.places, { lead: "Its claim · on record now", heading: "h3", compact: true }));
+      block.append(standing(claim, index.places, { lead: "Followed here · on record now", heading: "h3", compact: true }));
       const [report] = detail.claims[claim.page.slice(1)]?.reports ?? [];
       if (report) block.append(reportCard(report, claim, [], index.topics));
     }
@@ -1742,8 +1735,8 @@ const sentenceJson = sentences
 
     if (all.matches.length === 0 && !exact) {
       show(
-        onlyReported ? `No reported claims match “${query}”.` : `Nothing tracked here matches “${query}”.`,
-        "This site covers only the claims it has tracked so far. To check a story, paste the article's link into the box above.",
+        onlyReported ? `Nothing reported matches “${query}”.` : `Nothing tracked here matches “${query}”.`,
+        "This site covers only the treatments and conditions it follows so far. To check a story, paste the article's link into the box above.",
       );
       const drawing = document.querySelector<HTMLTemplateElement>("#unfound");
       if (drawing) results.prepend(drawing.content.cloneNode(true));
@@ -1807,7 +1800,7 @@ const sentenceJson = sentences
       } catch {
         if (asked !== latest || ticket !== picking) return;
         wanted = picked;
-        draw(onView, { pickedIn: from, said: `The claims in ${index.topics[slug]?.title ?? "that topic"} could not be read right now.` });
+        draw(onView, { pickedIn: from, said: `The pages in ${index.topics[slug]?.title ?? "that topic"} could not be read right now.` });
         return;
       }
       if (asked !== latest || ticket !== picking) return;

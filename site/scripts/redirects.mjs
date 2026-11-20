@@ -1,75 +1,66 @@
-// Runs after every build. Keeps every topic address that was ever published working.
+// Runs after every build. Says what each address the site once served answers now.
 //
-// The export lists vertical slugs retired after launch, each with its successor; each
-// becomes a permanent redirect in dist/_redirects, which Cloudflare serves before the
-// files. `make deploy` records the topic slugs it published in data/published-topics.json.
-// A slug recorded there that is neither a current topic nor retired would leave a
-// published address broken, so the build fails and names it.
+// Until 2026-11-20 the site tracked claims, each with a page at /<slug> and files of its own
+// (an embed, an oEmbed description, three cards, an open data record, a feed). The operator
+// removed claims that day; data/retired-addresses.json is the frozen list of those addresses.
+// A claim that exactly one published pair came from leads to that pair with a permanent
+// redirect (approved by the operator on 2026-11-20, openspec pairs-site task 3.4). Every other
+// claim address answers 410 Gone, as an archived claim's always did. The Worker answers both
+// from dist/gone.json (worker/index.mjs, worker/gone.mjs), so no file is built for any of them.
+//
+// A topic renamed while claims were tracked keeps its redirect, in dist/_redirects, which
+// Cloudflare serves before the files.
 import fs from "node:fs";
 import path from "node:path";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
+const retired = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "../data/retired-addresses.json"), "utf8"));
+if (!process.env.PAIRS_BUNDLE) throw new Error("No bundle: set PAIRS_BUNDLE to the folder the site was built from.");
+const bundle = readBundle(path.resolve(process.env.PAIRS_BUNDLE));
+const pairs = bundle.pages.PairPage ?? {};
 
-function exportPath() {
-  if (process.env.EXPORT_FILE) return path.resolve(process.env.EXPORT_FILE);
-  const live = path.resolve("data/export.json");
-  return fs.existsSync(live) ? live : path.resolve("data/seed-export.json");
+/** What old addresses answer, for the Worker: `to` a pair's address (301), or gone (410),
+ * with the day an archived claim was taken down where the operator archived it. */
+function goneEntries(retiredAddresses, pairPages, dataFiles) {
+  // Each claim slug with the one pair that came from it. A claim behind several pairs leads
+  // to none of them by rule (`movedAddresses`), and so answers 410.
+  const leads = movedAddresses(Object.values(pairPages));
+  const archived = new Map(retiredAddresses.archived.map(({ slug, on }) => [slug, on]));
+  const merged = new Map(retiredAddresses.moved.map(({ slug, to }) => [slug, to]));
+  const entries = [];
+  for (const slug of new Set([...retiredAddresses.pages, ...archived.keys(), ...merged.keys()])) {
+    // An address that is a pair's own is a page of the site and answers as one.
+    if (Object.hasOwn(pairPages, slug)) continue;
+    // A claim the operator archived stays gone, whatever came of its records.
+    if (archived.has(slug)) {
+      entries.push({ slug, on: archived.get(slug) });
+      continue;
+    }
+    // A claim merged into another, or renamed, goes where the claim it became goes.
+    let claim = slug;
+    for (let hops = 0; merged.has(claim) && hops < 10; hops += 1) claim = merged.get(claim);
+    const to = Object.hasOwn(pairPages, claim) ? claim : leads.get(claim);
+    if (!to || archived.has(claim)) {
+      entries.push({ slug, gone: true });
+      continue;
+    }
+    // The pair's record is where the claim's record leads, so it must exist to be led to.
+    if (!Object.hasOwn(dataFiles, to)) {
+      throw new Error(`The address ${slug} leads to the pair ${to}, which has no data file in the bundle.`);
+    }
+    entries.push({ slug, to });
+  }
+  return entries.sort((a, b) => (a.slug < b.slug ? -1 : 1));
 }
 
-const data = JSON.parse(fs.readFileSync(exportPath(), "utf8"));
-const current = new Set(data.verticals.map((vertical) => vertical.slug));
-const retired = new Map((data.retired_verticals ?? []).map((entry) => [entry.slug, entry.successor]));
-
-const recordFile = path.resolve(process.env.PUBLISHED_TOPICS_FILE ?? "data/published-topics.json");
-const published = fs.existsSync(recordFile) ? JSON.parse(fs.readFileSync(recordFile, "utf8")) : [];
-// The old transplant topic split across organs, so no one health area replaces it.
-// Send its readers to the directory rather than choosing an unrelated organ.
-const directoryRedirects = published.filter(slug => slug === "transplants" && !current.has(slug) && !retired.has(slug));
-const lost = published.filter((slug) => !current.has(slug) && !retired.has(slug) && !directoryRedirects.includes(slug));
-if (lost.length > 0) {
-  console.error(
-    `Redirect check failed: these published topics are neither current nor retired: ${lost.join(", ")}.` +
-      " Record each with its successor in RETIRED_VERTICALS (pipeline/src/thenwhat/claims/verticals.py) and export again.",
-  );
-  process.exit(1);
-}
-
-const lines = [...retired].map(([slug, successor]) => `/topic/${slug} /topic/${successor} 301`);
-lines.push(...directoryRedirects.map(slug => `/topic/${slug} /topics 301`));
+const lines = retired.topics.map(({ slug, successor }) => `/topic/${slug} /topic/${successor} 301`);
 const file = path.join(DIST, "_redirects");
 if (lines.length > 0) fs.writeFileSync(file, `${lines.join("\n")}\n`);
 else fs.rmSync(file, { force: true });
-// Archived claims, for the Worker: each address answers 410 (worker/gone.mjs). Written
-// even when empty, so a claim put back is served again after the next deploy. A claim
-// merged into another, or renamed, is listed with the slug its address now leads to,
-// and the Worker answers it with a permanent redirect.
-const gone = [
-  ...(data.archived ?? []).map(({ slug, on }) => ({ slug, on })),
-  ...(data.moved ?? []).map(({ slug, to }) => ({ slug, to })),
-];
-// A build that reads a bundle (openspec pairs-site, task 4.3): each claim whose pair is
-// published leads to the pair's address. An archived claim still answers 410, and a claim
-// already moved keeps its own redirect. A claim whose slug is its pair's address, or that
-// stands behind more than one pair, moves nowhere (`movedAddresses`).
-if (process.env.PAIRS_BUNDLE) {
-  const listed = new Set(gone.map((entry) => entry.slug));
-  const pairs = Object.values(readBundle(path.resolve(process.env.PAIRS_BUNDLE)).pages.PairPage ?? {});
-  // `pair: true` marks a claim that leads to its pair, whose page and files the build does not
-  // make (src/lib/pairs.ts, claimsWithAPair): the Worker sends its files' addresses to the
-  // pair's too. A claim whose slug is its pair's address is listed so, and is not redirected.
-  const single = new Map();
-  for (const page of pairs) {
-    const slug = page.row.origin?.claim_slug;
-    if (slug) single.set(slug, single.has(slug) ? null : page.row.pair.address);
-  }
-  const moved = movedAddresses(pairs);
-  for (const [slug, to] of single) {
-    if (to === null || listed.has(slug)) continue;
-    if (to !== slug && moved[slug] !== to) throw new Error(`The rule for ${slug} disagrees with movedAddresses: ${to} and ${moved[slug]}.`);
-    gone.push({ slug, to, pair: true });
-  }
-}
+
+const gone = goneEntries(retired, pairs, bundle.pages.PairDataFile ?? {});
 fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
 
-console.log(`Redirect check passed: ${lines.length} retired topic ${lines.length === 1 ? "address" : "addresses"}.`);
+const led = gone.filter((entry) => entry.to).length;
+console.log(`Old addresses: ${led} lead to a pair, ${gone.length - led} answer gone; ${lines.length} renamed topic ${lines.length === 1 ? "address" : "addresses"}.`);

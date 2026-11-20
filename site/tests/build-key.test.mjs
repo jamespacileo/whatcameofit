@@ -6,7 +6,7 @@ import { SETTINGS, keyFrom } from "../scripts/build-key.mjs";
 
 const FILES = [
   { path: "site/src/pages/index.astro", blob: "a1" },
-  { path: "site/data/published-export.json", blob: "b2" },
+  { path: "site/tests/bundle/manifest.json", blob: "b2" },
   { path: "site/worker/index.mjs", blob: "c3" },
 ];
 const SET = { SITE_URL: "https://example.org", PUBLIC_BUILD: "1" };
@@ -16,7 +16,7 @@ test("the same files and settings give the same key, in whatever order they are 
   assert.match(keyFrom(FILES, SET), /^[0-9a-f]{64}$/);
 });
 
-test("a changed page, a changed export and a changed Worker each change the key", () => {
+test("a changed page, a changed bundle and a changed Worker each change the key", () => {
   for (const index of FILES.keys()) {
     const changed = FILES.map((file, at) => (at === index ? { ...file, blob: "changed" } : file));
     assert.notEqual(keyFrom(changed, SET), keyFrom(FILES, SET), FILES[index].path);

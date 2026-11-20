@@ -6,7 +6,7 @@ import { DATA_LICENCE, dataCredit } from "./open-data.ts";
 
 export const PAIR_RECORD_FORMAT = { format: "pair-record", format_version: 1 } as const;
 
-const PAIR_SOURCES = [
+export const PAIR_SOURCES = [
   { name: "ClinicalTrials.gov", url: "https://clinicaltrials.gov/" },
   { name: "Medical Subject Headings (MeSH)", url: "https://www.nlm.nih.gov/mesh/" },
 ];

@@ -1,13 +1,16 @@
 ---
 // The credit NLM's terms ask for wherever a MeSH category is shown: the source by name,
 // the year of the vocabulary, and that NLM does not endorse the site (docs/sources.md).
-// Openspec site-publishing: "Clinical pages credit the vocabulary".
-import { data } from "../lib/export";
+// Openspec site-publishing: "Clinical pages credit the vocabulary". The bundle does not
+// yet say which year's MeSH the lab read, so the credit names no year until it does.
 import { meshEdition } from "../lib/clinical";
+import { pairBundle } from "../lib/pairs";
+
+const years: string[] = pairBundle().manifest.snapshot?.mesh_years ?? [];
 ---
 
 <p class="mesh-credit" data-pagefind-ignore>
   Categories are from Medical Subject Headings (MeSH), U.S. National Library of Medicine,
-  courtesy of the U.S. National Library of Medicine: {meshEdition(data.clinical?.mesh_years ?? [])}.
+  courtesy of the U.S. National Library of Medicine: {meshEdition(years)}.
   They may not reflect the most current data available from NLM. NLM does not endorse this site.
 </p>

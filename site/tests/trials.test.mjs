@@ -6,7 +6,6 @@ import {test} from 'node:test';
 import {handle} from '../worker/index.mjs';
 const root=fileURLToPath(new URL('../..', import.meta.url));
 const {handleTrial}=await import(pathToFileURL(path.join(root,'site/worker/trials.mjs')));
-const {trialDetailsPath,buildTrialIndex}=await import(pathToFileURL(path.join(root,'site/src/lib/trial-links.mjs')));
 const id='NCT04605549';
 const now=Date.parse('2026-11-14T12:00:00Z');
 const key='trial-record:v1:'+id;
@@ -21,21 +20,6 @@ function setup({payload=record,status=200,fail=false,entry,deny=false,contact=tr
  const run=(url='/trials/'+id,opts={})=>handleTrial(new Request('http://localhost'+url,opts),env,{fetch,now:()=>now});
  return {calls,cache,puts,env,run};
 }
-await test('recognises only official trial URLs and preserves identity',()=>{
- assert.equal(trialDetailsPath(original),'/trials/'+id);
- assert.equal(trialDetailsPath('https://clinicaltrials.gov/study/'+id+'?tab=results'),'/trials/'+id);
- for(const url of ['https://clinicaltrials.gov.evil.test/study/'+id,'https://evil.test/study/'+id,'javascript:alert(1)',null,'https://clinicaltrials.gov/study/NCT1'])assert.equal(trialDetailsPath(url),null);
- const d=buildTrialIndex({claims:[{slug:'claim',headline:'Claim',events:[{source_url:original}],matches:[{url:original},{url:'https://evil.test/study/NCT07007793'}]}]});
- assert.deepEqual(Object.keys(d.trials),[id]);assert.equal(d.trials[id].length,1);assert.equal(d.trials[id][0].slug,'claim');
-});
-await test('Scenario: Trial page reached from a possible match',async()=>{
- const d=buildTrialIndex({claims:[{slug:'cited',headline:'Cited',events:[],matches:[{url:original,state:'approved'}]},{slug:'maybe',headline:'Maybe',events:[],matches:[{url:original,state:'candidate'}]}]});
- assert.deepEqual(d.trials[id],[{slug:'cited',headline:'Cited'},{slug:'maybe',headline:'Maybe',possible:true}]);
- const s=setup({trialIndex:d});const h=await (await s.run()).text();
- const [citing,maybe]=h.split('Claims this record may be about');
- assert.ok(citing.includes('/cited')&&!citing.includes('/maybe'));
- assert.match(maybe,/not counted in these claims/);assert.ok(maybe.includes('/maybe'));
-});
 await test('serves real readable HTML with source and independent dates',async()=>{
  const s=setup();const r=await s.run();const h=await r.text();assert.equal(r.status,200);assert.match(r.headers.get('content-type'),/text\/html/);
  for(const word of ['A study of CIN-107','Primary aldosteronism','CIN-107','Example Sponsor','15','ClinicalTrials.gov',original,'/primary-aldosteronism-baxdrostat'])assert.ok(h.includes(word),word);
