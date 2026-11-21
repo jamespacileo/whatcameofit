@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { stageCounts, stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -95,6 +95,11 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
     name: "trialsTable",
     about: "A pair's trials as a table (lib/trials-table.ts): results posted first, then by furthest phase; each row opens to its record. A pair page shows it from three trials up (TRIALS_TABLE_FROM in lib/pair-render.ts); fewer stay as entries.",
     html: view ? sheet([trialsTable(view.trials)]) : NO_PAIR,
+  },
+  {
+    name: "stageCounts",
+    about: "The path with how many pairs stand at each place, to read and not to press: the home page's, over every pair.",
+    html: sheet([stageCounts(rows, "Pairs in the styleguide, by status")]),
   },
   {
     name: "statusCell",
