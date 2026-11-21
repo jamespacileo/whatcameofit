@@ -22,6 +22,11 @@ import path from "node:path";
 /** Production's build revision when claims were removed: the bytes kept are its build's. */
 export const KEPT_CLAIMS_COMMIT = "4ea7f23613d9bd390c601b1ef00048c864064e81";
 
+/** The shape of a frozen folder. 2: each claim's year indexes, icons and assets are named in
+ * `needs`, so a build places only what its kept claims reach. A folder frozen in another shape
+ * is refused, never read as if it were this one. */
+export const KEPT_FORMAT = 2;
+
 /** The files a claim had, by its slug, as built paths. */
 export function claimFiles(slug) {
   return [
@@ -72,24 +77,41 @@ export function freeze({ from, to, slugs, commit }) {
     for (const file of files) kept.add(file);
   }
   const own = new Set(kept);
-  const shared = new Set();
   const linked = new Set();
-  const queue = [...kept].filter((file) => /\.(html|css|js)$/.test(file));
-  while (queue.length > 0) {
-    const file = queue.pop();
-    for (const ref of references(file, fs.readFileSync(path.join(from, file), "utf8"))) {
-      const yearIndex = /^year\/\d{4}\/?$/.test(ref);
-      const built = yearIndex ? `${ref.replace(/\/$/, "")}/index.html` : ref;
-      if (own.has(built) || shared.has(built)) continue;
-      const outletIcon = /^outlet-icons\/[^/]+\.[a-z]+$/.test(built);
-      if ((built.startsWith("_astro/") || outletIcon || yearIndex) && fs.existsSync(path.join(from, built))) {
-        shared.add(built);
-        if (/\.(html|css|js)$/.test(built)) queue.push(built);
-      } else if (!claimFiles(ref.replace(/\/$/, "")).some((own) => kept.has(own))) {
-        linked.add(`/${ref}`);
+  // What each file loads or links to, read once however many claims reach it.
+  const refs = new Map();
+  const refsOf = (file) => {
+    if (!refs.has(file)) refs.set(file, references(file, fs.readFileSync(path.join(from, file), "utf8")));
+    return refs.get(file);
+  };
+  // Each claim's own reach: the assets, icons and year indexes it needs, followed through
+  // those it needs in turn, so a build places a year index only when a claim it keeps links it.
+  const needs = {};
+  for (const [slug, files] of Object.entries(claims)) {
+    const reached = new Set();
+    const queue = files.filter((file) => /\.(html|css|js)$/.test(file));
+    const seen = new Set(queue);
+    while (queue.length > 0) {
+      const file = queue.pop();
+      for (const ref of refsOf(file)) {
+        const yearIndex = /^year\/\d{4}\/?$/.test(ref);
+        const built = yearIndex ? `${ref.replace(/\/$/, "")}/index.html` : ref;
+        if (own.has(built) || reached.has(built)) continue;
+        const outletIcon = /^outlet-icons\/[^/]+\.[a-z]+$/.test(built);
+        if ((built.startsWith("_astro/") || outletIcon || yearIndex) && fs.existsSync(path.join(from, built))) {
+          reached.add(built);
+          if (/\.(html|css|js)$/.test(built) && !seen.has(built)) {
+            seen.add(built);
+            queue.push(built);
+          }
+        } else if (!claimFiles(ref.replace(/\/$/, "")).some((one) => kept.has(one))) {
+          linked.add(`/${ref}`);
+        }
       }
     }
+    needs[slug] = [...reached].sort();
   }
+  const shared = new Set(Object.values(needs).flat());
   const sums = {};
   for (const file of [...kept, ...shared].sort()) {
     const target = path.join(to, "files", file);
@@ -99,9 +121,11 @@ export function freeze({ from, to, slugs, commit }) {
   }
   const manifest = {
     about: "Claim pages kept at their own addresses, byte for byte as production built them (site/scripts/kept-claims.mjs).",
+    format: KEPT_FORMAT,
     commit,
     claims,
     shared: [...shared].sort(),
+    needs,
     linked: [...linked].sort(),
     sha256: sums,
   };
@@ -114,6 +138,9 @@ export function readKept(folder) {
   const manifest = JSON.parse(fs.readFileSync(path.join(folder, "manifest.json"), "utf8"));
   if (manifest.commit !== KEPT_CLAIMS_COMMIT) {
     throw new Error(`${folder} was frozen from ${manifest.commit}, not ${KEPT_CLAIMS_COMMIT}: run make kept-claims.`);
+  }
+  if (manifest.format !== KEPT_FORMAT) {
+    throw new Error(`${folder} was frozen in format ${manifest.format ?? 1}, not ${KEPT_FORMAT}: freeze it again into a new folder (make kept-claims).`);
   }
   return manifest;
 }
@@ -161,9 +188,10 @@ export function placeKept({ folder, dist, slugs }) {
     placed += 1;
   };
   for (const slug of slugs) for (const file of manifest.claims[slug]) place(file);
-  if (slugs.length > 0) {
-    for (const file of manifest.shared) if (!fs.existsSync(path.join(dist, file))) place(file);
-  }
+  // Only what the claims kept in this build reach: a year index whose claims all lead to pairs
+  // now is not published.
+  const needed = new Set(slugs.flatMap((slug) => manifest.needs[slug] ?? []));
+  for (const file of [...needed].sort()) if (!fs.existsSync(path.join(dist, file))) place(file);
   return placed;
 }
 

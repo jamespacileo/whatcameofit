@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { KEPT_CLAIMS_COMMIT, claimFiles, freeze, keptProblems, keptSlugs, placeKept } from "../scripts/kept-claims.mjs";
+import { KEPT_CLAIMS_COMMIT, KEPT_FORMAT, claimFiles, freeze, keptProblems, keptSlugs, placeKept } from "../scripts/kept-claims.mjs";
 
 const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
 
@@ -76,11 +76,45 @@ test("staging and production are published only from every kept claim, frozen fr
   const complete = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-"));
   const claims = Object.fromEntries(keptSlugs(retired).map((slug) => [slug, claimFiles(slug)]));
   const write = (manifest) => fs.writeFileSync(path.join(complete, "manifest.json"), JSON.stringify(manifest));
-  write({ commit: KEPT_CLAIMS_COMMIT, claims, shared: [], sha256: {} });
+  write({ format: KEPT_FORMAT, commit: KEPT_CLAIMS_COMMIT, claims, shared: [], needs: {}, sha256: {} });
   assert.deepEqual(keptProblems(complete), []);
+  // A folder frozen before each claim named what it needs is refused, never read as this shape.
+  write({ commit: KEPT_CLAIMS_COMMIT, claims, shared: [], sha256: {} });
+  assert.match(keptProblems(complete).join(), /frozen in format 1, not 2: freeze it again into a new folder/);
   const [first, ...others] = Object.keys(claims);
-  write({ commit: KEPT_CLAIMS_COMMIT, claims: Object.fromEntries(others.map((slug) => [slug, claims[slug]])), shared: [], sha256: {} });
+  write({ format: KEPT_FORMAT, commit: KEPT_CLAIMS_COMMIT, claims: Object.fromEntries(others.map((slug) => [slug, claims[slug]])), shared: [], needs: {}, sha256: {} });
   assert.match(keptProblems(complete).join(), new RegExp(`lacks the pages of 1 claim, such as ${first}`));
-  write({ commit: "f".repeat(40), claims, shared: [], sha256: {} });
+  write({ format: KEPT_FORMAT, commit: "f".repeat(40), claims, shared: [], needs: {}, sha256: {} });
   assert.match(keptProblems(complete).join(), /was frozen from f{40}/);
+});
+
+test("a build places only the year indexes, icons and assets its kept claims reach", () => {
+  // Two claims, each linking its first report to a year index of its own; the build keeps one.
+  const from = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-old-build-"));
+  const write = (file, body) => {
+    fs.mkdirSync(path.dirname(path.join(from, file)), { recursive: true });
+    fs.writeFileSync(path.join(from, file), body);
+  };
+  for (const [slug, year, icon] of [["kept-claim", "2022", "kept.example.png"], ["led-claim", "2023", "led.example.png"]]) {
+    const [page, ...rest] = claimFiles(slug);
+    write(page, `<a href="/year/${year}/">${year}</a><img src="/outlet-icons/${icon}">`);
+    for (const file of rest) write(file, "kept");
+    write(`year/${year}/index.html`, `<link rel="stylesheet" href="/_astro/year-${year}.css">`);
+    write(`_astro/year-${year}.css`, "body{}");
+    write(`outlet-icons/${icon}`, "icon");
+  }
+  const kept = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-")), "kept");
+  freeze({ from, to: kept, slugs: ["kept-claim", "led-claim"], commit: KEPT_CLAIMS_COMMIT });
+  const manifest = JSON.parse(fs.readFileSync(path.join(kept, "manifest.json"), "utf8"));
+  assert.equal(manifest.format, KEPT_FORMAT);
+  assert.deepEqual(manifest.needs["kept-claim"], ["_astro/year-2022.css", "outlet-icons/kept.example.png", "year/2022/index.html"]);
+  const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-dist-"));
+  placeKept({ folder: kept, dist, slugs: ["kept-claim"] });
+  assert.ok(fs.existsSync(path.join(dist, "year/2022/index.html")));
+  assert.ok(fs.existsSync(path.join(dist, "_astro/year-2022.css")));
+  assert.ok(fs.existsSync(path.join(dist, "outlet-icons/kept.example.png")));
+  // The other claim leads to a pair now: its year index, its style and its icon stay unpublished.
+  for (const file of ["year/2023/index.html", "_astro/year-2023.css", "outlet-icons/led.example.png", "led-claim/index.html"]) {
+    assert.ok(!fs.existsSync(path.join(dist, file)), file);
+  }
 });

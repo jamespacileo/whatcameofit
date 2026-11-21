@@ -193,6 +193,17 @@ test("the Worker serves the complete legacy lookup with the original response by
     assert.equal(response.status, 200);
     assert.match(response.headers.get("Content-Type"), /^application\/json/i);
     assert.equal(await response.text(), expected);
+    // A validator from the packed file: an asker who holds it is told it is unchanged, with
+    // nothing sent and nothing decompressed.
+    const tag = response.headers.get("ETag");
+    assert.match(tag ?? "", /^W\/"lookup-/);
+    const held = await mf.dispatchFetch(`https://site.test${LEGACY_LOOKUP}`, { headers: { "If-None-Match": tag } });
+    assert.equal(held.status, 304);
+    assert.equal(await held.text(), "");
+    // A client that takes no gzip is sent the same bytes, decompressed by the Worker.
+    const plain = await mf.dispatchFetch(`https://site.test${LEGACY_LOOKUP}`, { headers: { "Accept-Encoding": "identity" } });
+    assert.equal(plain.headers.get("Content-Encoding"), null);
+    assert.equal(await plain.text(), expected);
   } finally {
     fs.writeFileSync(original, expected);
     fs.rmSync(path.join(dist, PACKED_LOOKUP), { force: true });

@@ -9,7 +9,6 @@ import { handle } from "./index.mjs";
 import { listingOf, listingPage } from "./listings.mjs";
 import { SHELL_PATH, SITE_HEADERS, builtFor, madeHeaders, pairAddress, pairPage, pairRecord, recordAddress } from "./pairs.mjs";
 import { EMBED_SHELL_PATH, shareAnswer, shareOf } from "./shares.mjs";
-import { LEGACY_LOOKUP, PACKED_LOOKUP } from "../src/lib/lookup-assets.mjs";
 
 const { validatePairDataFile, validatePairInterventionPage, validatePairPage } = validators;
 
@@ -116,18 +115,6 @@ export async function handleWithPairs(request, env, cache = globalThis.caches?.d
   if (!READ.has(request.method)) {
     await answer.body?.cancel();
     return new Response(null, { status: 405, headers: { Allow: "GET, HEAD", "Cache-Control": "no-store" } });
-  }
-  if (url.pathname === LEGACY_LOOKUP) {
-    const packed = await env.ASSETS.fetch(new Request(new URL(PACKED_LOOKUP, url), { method: request.method }));
-    if (packed.ok) {
-      await answer.body?.cancel();
-      const headers = new Headers(packed.headers);
-      headers.set("Content-Type", "application/json; charset=utf-8");
-      for (const name of ["Content-Length", "Content-Encoding", "ETag"]) headers.delete(name);
-      const body = packed.body?.pipeThrough(new DecompressionStream("gzip")) ?? null;
-      return new Response(body, { headers });
-    }
-    await packed.body?.cancel();
   }
   const alias = ALIAS.exec(url.pathname)?.[1];
   if (alias) {

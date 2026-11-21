@@ -13,8 +13,13 @@ set -eu
 
 out=${1:?the folder to freeze into}
 if [ -f "$out/manifest.json" ]; then
-  echo "Kept claims already frozen at $out."
-  exit 0
+  # A folder frozen in an older shape is refused rather than reused (KEPT_FORMAT).
+  if (cd "$(git rev-parse --show-toplevel)/site" && node --input-type=module -e 'import { readKept } from "./scripts/kept-claims.mjs"; readKept(process.argv[1]);' "$out"); then
+    echo "Kept claims already frozen at $out."
+    exit 0
+  fi
+  echo "$out holds kept claims frozen another way: freeze into a new folder (KEPT_CLAIMS_DIR)." >&2
+  exit 1
 fi
 
 root=$(git rev-parse --show-toplevel)

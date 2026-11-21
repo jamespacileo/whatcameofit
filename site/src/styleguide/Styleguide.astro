@@ -135,8 +135,9 @@ const pieces: { name: string; html: string; framed?: boolean }[] = [
   ...(view ? [{ name: `A pair's page: ${view.title}`, framed: true, html: renderPairBand(view) + renderPairSheet(view, narrower) }] : []),
   ...(withResults ? [{ name: `Posted results: ${pairView(withResults).title}`, framed: true, html: renderPairBand(pairView(withResults)) + renderPairSheet(pairView(withResults)) }] : []),
   ...listings.map(([name, listing]) => {
+    // The band says how many the listing holds; only the sheet's table is cut short.
     const sample = { ...listing, rows: listing.rows.slice(0, LISTING_SAMPLE_ROWS) };
-    return { name: `${name}: ${listing.title}`, framed: true, html: renderListingBand(sample) + renderListingSheet(sample, edition) };
+    return { name: `${name}: ${listing.title}`, framed: true, html: renderListingBand(listing) + renderListingSheet(sample, edition) };
   }),
   ...(card ? [{ name: "A knowledge card", html: card }] : []),
   ...(view
