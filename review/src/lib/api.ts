@@ -120,3 +120,52 @@ export type PageRecord = {
     snapshot: unknown
   } | null
 }
+
+// The page inventory (phase 3): /api/pages and /api/pages/check.
+export type SiteAnswer = {
+  answer: 'kept page' | 'leads to a pair' | 'leads to a kept claim' | 'archived' | 'gone'
+  status: 200 | 301 | 410
+  to?: string
+  on?: string
+  title?: string | null
+  searchable?: boolean
+}
+
+export type LabScope = {
+  scope: 'verified' | 'held'
+  pair: string | null
+  reason?: string
+}
+
+export type PageRow = {
+  address: string
+  kind: 'pair' | 'old claim'
+  title: string | null
+  status?: string
+  trials?: number
+  claim?: string | null
+  site?: SiteAnswer | null
+  heldFrom?: string | null
+  lab?: LabScope | null
+  differs?: string | null
+}
+
+export type Pages = {
+  version: string | null
+  current: boolean | null
+  origin: string | null
+  files: { pathname: string; status: number | null; error?: string }[]
+  scope: { redirects: number; held: number } | null
+  counts: Record<'pairs' | 'kept' | 'redirects' | 'gone' | 'held' | 'differs', number>
+  rows: PageRow[]
+}
+
+export type Check = {
+  url: string
+  status: number | null
+  location?: string | null
+  type?: string | null
+  robots?: string | null
+  cache?: string | null
+  error?: string
+}

@@ -6,6 +6,7 @@ import { published } from "./published.mjs";
 import { overview } from "./reads.mjs";
 import { AREAS, MODELS } from "./catalogue.mjs";
 import { inventory, pageRecord, rowsOf, tableRecord } from "./inventory.mjs";
+import { check, pages } from "./pages.mjs";
 
 /** Sent with every answer: nothing here is cached by a shared cache, indexed or framed. */
 const PRIVATE = {
@@ -38,6 +39,18 @@ async function api(url, request, env, email) {
     return answer({ ...store, published: served });
   }
   if (url.pathname === "/api/models") return answer(await models(env));
+  if (url.pathname === "/api/pages") {
+    if (!env.STAGING_PAIRS) return answer({ error: "staging store not connected" }, 503);
+    const result = await pages(env.STAGING_PAIRS, env.STAGING_URL, url.searchParams.get("version"));
+    if (result.bad) return answer({ error: `bad ${result.bad}` }, 400);
+    if (result.gone) return answer({ error: "version gone", version: result.gone }, 410);
+    return answer(result);
+  }
+  if (url.pathname === "/api/pages/check") {
+    const result = await check(env.STAGING_URL, url.searchParams.get("path") ?? "");
+    if (result.bad) return answer({ error: `bad ${result.bad}` }, 400);
+    return answer(result);
+  }
   const one = /^\/api\/models\/([^/]+)\/(rows|record)$/.exec(url.pathname);
   if (one) {
     const id = decodeURIComponent(one[1]);

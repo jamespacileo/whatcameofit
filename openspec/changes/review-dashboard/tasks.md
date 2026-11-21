@@ -25,8 +25,9 @@
 
 ## 3. Pages and search
 
-- [ ] 3.1 Page list and page view: page file, schema, bundle version, rendered page
-- [ ] 3.2 HTTP answers on staging: served, redirected, kept, archived, unknown
+- [x] 3.1a Page list bound to one bundle version: every pair address and every old claim address, with staging's answer from its published files (gone.json, kept-claims.json, held-redirects.json, lookup/2.json) beside the lab's claim scope (PairClaimScopePage); a held claim shows the pair it would lead to and the lab's reason beside its own kept page, never as a redirect; rows where the two differ are marked
+- [ ] 3.1b Page view: rendered page beside its page file
+- [x] 3.2 HTTP answers on staging: one address asked without following redirects (status, Location, type, robots, cache); only staging's origin is asked
 - [ ] 3.3 Command menu search by name, alias, condition label, NCT id, address, old claim slug
 
 ## 4. Production, read-only

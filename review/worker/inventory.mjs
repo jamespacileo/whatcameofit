@@ -42,7 +42,7 @@ for (const { table, versioned, key } of TABLES) {
   }
 }
 
-async function present(db) {
+export async function present(db) {
   return new Set((await read(db, S.tables)).map((row) => row.name));
 }
 
@@ -92,7 +92,7 @@ async function hasSchema(db, version, model) {
   return (await read(db, S.pageParts, version, "$schema", model)).length > 0;
 }
 
-function joined(parts) {
+export function joined(parts) {
   return JSON.parse(parts.map((row) => row.body).join(""));
 }
 
@@ -102,13 +102,13 @@ function joined(parts) {
  * version, so a bundle made current in between never changes what they show (the operator's
  * QA, 2026-11-21). `{ gone }` when the version asked for is no longer held.
  */
-async function bundleFor(db, tables, version) {
+export async function bundleFor(db, tables, version) {
   if (!tables.has("pair_bundle")) return version ? { gone: version } : null;
   if (!version) return (await read(db, S.current))[0] ?? null;
   return (await read(db, S.held, version))[0] ?? { gone: version };
 }
 
-const VERSION = /^[a-f0-9]{16}$/;
+export const VERSION = /^[a-f0-9]{16}$/;
 
 /** One page of a model's records in one environment, with its columns as the store has them.
  * Versioned tables and page models are read from the bundle `version` names. */

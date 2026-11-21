@@ -20,6 +20,16 @@ const STAGING = "https://staging.review-test";
 // What staging's two deploy files answer in these tests: the site's last deploy, recorded.
 let servedBundle = null;
 const REVISION = "0123456789abcdef0123456789abcdef01234567";
+// The files staging is published with that say what each old claim address answers, written by
+// the site's own scripts/redirects.mjs from site/tests/bundle and site/tests/kept-claims
+// (tests/staging/README.md says how to write them again).
+const STAGING_FILES = new Set(["/gone.json", "/kept-claims.json", "/held-redirects.json", "/lookup/2.json"]);
+// What staging answers for the addresses asked about one at a time, as staging-smoke.mjs checks.
+const STAGING_ANSWERS = {
+  "/ambroxol-parkinsons-disease-dementia": [301, { Location: "/ambroxol--dementia" }],
+  "/10-person-living-donor-kidney-exchange-chain-kidney-failure": [200, { "Content-Type": "text/html; charset=utf-8" }],
+  "/no-such--pair": [404, { "Content-Type": "text/html; charset=utf-8" }],
+};
 
 let key;
 let jwks;
@@ -52,6 +62,11 @@ async function worker({ bindings = { STAGING_URL: STAGING, ACCESS_ISSUER: TEAM, 
       if (url.origin === TEAM && url.pathname === "/cdn-cgi/access/certs") return Response.json(jwks);
       if (url.origin === STAGING && url.pathname === "/build-revision.txt") return new Response(`${REVISION}\n`);
       if (url.origin === STAGING && url.pathname === "/bundle-version.txt") return servedBundle ? new Response(`${servedBundle}\n`) : new Response("", { status: 404 });
+      if (url.origin === STAGING && STAGING_FILES.has(url.pathname)) return new Response(fs.readFileSync(`tests/staging${url.pathname}`), { headers: { "Content-Type": "application/json" } });
+      if (url.origin === STAGING && Object.hasOwn(STAGING_ANSWERS, url.pathname)) {
+        const [status, headers] = STAGING_ANSWERS[url.pathname];
+        return new Response(status === 301 ? null : "page", { status, headers: { "X-Robots-Tag": "noindex", ...headers } });
+      }
       return new Response("no network in tests", { status: 599 });
     },
   }));
@@ -370,4 +385,84 @@ test("records are paged in primary-key order and one is addressed by its key", a
   const inbox = await (await get(full, `/api/models/inbox/record?key=${encodeURIComponent("[1]")}`, { token })).json();
   assert.equal(inbox.row.body, undefined);
   assert.equal(inbox.row.key, "k1");
+});
+
+// The page inventory (phase 3).
+
+/** Puts the lab's claim scope (thenwhat-lab #174, recorded from its replay lists) in the current bundle. */
+async function withScope(mf) {
+  const db = await mf.getD1Database("STAGING_PAIRS");
+  const { version } = await db.prepare("SELECT version FROM pair_bundle WHERE current = 1").first();
+  const body = fs.readFileSync("tests/staging/claim-scope.json", "utf8");
+  await db.prepare("INSERT INTO pair_page (version, model, key, part, body) VALUES (?, 'PairClaimScopePage', 'claim-scope', 0, ?)").bind(version, body).run();
+  return version;
+}
+
+test("the page inventory lists pairs and every old claim address, each with what decides its answer", async () => {
+  const own = await worker();
+  const version = await withScope(own);
+  const token = await sign();
+  const body = await (await get(own, "/api/pages", { token })).json();
+  assert.equal(body.version, version);
+  assert.deepEqual(body.files.map((f) => [f.pathname, f.status]), [["/gone.json", 200], ["/kept-claims.json", 200], ["/held-redirects.json", 200], ["/lookup/2.json", 200]]);
+  const by = new Map(body.rows.map((row) => [row.address, row]));
+  const manifest = JSON.parse(fs.readFileSync(`${BUNDLE}/manifest.json`, "utf8"));
+  assert.equal(body.counts.pairs, manifest.counts.PairPage);
+
+  // A canonical pair, from the bundle.
+  const pair = by.get("/acoziborole--trypanosomiasis-african");
+  assert.equal(pair.kind, "pair");
+  assert.match(pair.title, /^ACOZIBOROLE for Trypanosomiasis, African$/);
+
+  // The kept-claim regression: the kidney exchange keeps its page, is in search, and the lab
+  // says nothing about it.
+  const kidney = by.get("/10-person-living-donor-kidney-exchange-chain-kidney-failure");
+  assert.deepEqual(kidney.site, { answer: "kept page", status: 200, title: "Ten-person living-donor kidney swap links donors and recipients", searchable: true });
+  assert.equal(kidney.lab, null);
+
+  // A held claim keeps its own page, shown beside the pair the lab would lead it to, with why:
+  // never shown as a redirect.
+  const held = by.get("/exagamglogene-autotemcel-sickle-cell-disease");
+  assert.equal(held.site.status, 200);
+  assert.deepEqual(held.lab, { scope: "held", pair: "/exagamglogene-autotemcel--anemia-sickle-cell", reason: "claim_purposes_differ" });
+  assert.equal(held.differs, null);
+
+  // A verified redirect staging makes as the lab verified it.
+  const verified = by.get("/apitegromab-obesity");
+  assert.deepEqual([verified.site.status, verified.site.to, verified.lab.scope, verified.lab.pair], [301, "/apitegromab--obesity", "verified", "/apitegromab--obesity"]);
+  assert.equal(verified.differs, null);
+
+  // Where the two disagree, the row says so and decides nothing.
+  assert.match(by.get("/ambroxol-parkinsons-disease-dementia").differs, /lab holds this claim \(indication_not_a_mesh_term\); staging leads it to \/ambroxol--dementia/);
+  assert.match(by.get("/amlitelimab-atopic-dermatitis").differs, /lab verified \/amlitelimab--dermatitis-atopic; staging answers 410/);
+
+  // An archived claim, with the day it was taken down.
+  const archived = body.rows.find((row) => row.site?.answer === "archived");
+  assert.ok(archived?.site.on, "an archived claim");
+  assert.equal(body.scope.redirects, 40);
+});
+
+test("the page inventory is bound to one bundle version, and a version gone answers 410", async () => {
+  const own = await worker();
+  const token = await sign();
+  const { version } = await (await get(own, "/api/pages", { token })).json();
+  assert.equal((await get(own, `/api/pages?version=${version}`, { token })).status, 200);
+  const gone = await get(own, `/api/pages?version=${"e".repeat(16)}`, { token });
+  assert.deepEqual([gone.status, (await gone.json()).error], [410, "version gone"]);
+  assert.equal((await get(own, "/api/pages?version=nope", { token })).status, 400);
+});
+
+test("one address is asked of staging without following its redirect, and only staging is asked", async () => {
+  const token = await sign();
+  const ask = async (path) => (await get(site, `/api/pages/check?path=${encodeURIComponent(path)}`, { token })).json();
+  assert.deepEqual(await ask("/ambroxol-parkinsons-disease-dementia"), {
+    url: `${STAGING}/ambroxol-parkinsons-disease-dementia`, status: 301, location: "/ambroxol--dementia", type: null, robots: "noindex", cache: null,
+  });
+  assert.equal((await ask("/10-person-living-donor-kidney-exchange-chain-kidney-failure")).status, 200);
+  assert.equal((await ask("/no-such--pair")).status, 404);
+  for (const path of ["//evil.example/x", "https://evil.example/", "/../x", "x", "/a b"]) {
+    const response = await get(site, `/api/pages/check?path=${encodeURIComponent(path)}`, { token });
+    assert.equal(response.status, 400, path);
+    await response.text();
+  }
 });

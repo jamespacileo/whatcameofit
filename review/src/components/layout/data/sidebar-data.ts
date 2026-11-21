@@ -1,7 +1,7 @@
-import { Database, LayoutDashboard } from 'lucide-react'
+import { Database, FileText, LayoutDashboard } from 'lucide-react'
 import { type SidebarData } from '../types'
 
-// Later phases add Pages, Search and Compare here (plan: Admin dashboard plan).
+// Later phases add Search and Compare here (plan: Admin dashboard plan).
 export const sidebarData: SidebarData = {
   navGroups: [
     {
@@ -9,6 +9,7 @@ export const sidebarData: SidebarData = {
       items: [
         { title: 'Overview', url: '/', icon: LayoutDashboard },
         { title: 'Models', url: '/models', icon: Database },
+        { title: 'Pages', url: '/pages', icon: FileText },
       ],
     },
   ],
