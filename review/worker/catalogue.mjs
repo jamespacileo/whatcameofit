@@ -151,8 +151,10 @@ export const TABLES = Object.freeze([
   table("inbox_fold", "Inbox folds", "Operations", "0005_inbox_fold.sql"),
 ]);
 
-/** The page models of the lab's bundle export: one schema and one page file per record. */
-const page = (model, name) => ({ id: `page:${model}`, kind: "page-model", model, name, area: "Page models", source: "bundle schema" });
+/** The page models of the lab's bundle export: one schema and one page file per record. A model
+ * with `since` is one the lab has started writing that the tests' bundle does not hold yet: it is
+ * catalogued from the lab's change, and shown absent in a bundle made before it. */
+const page = (model, name, extra = {}) => ({ id: `page:${model}`, kind: "page-model", model, name, area: "Page models", source: "bundle schema", ...extra });
 
 export const PAGE_MODELS = Object.freeze([
   page("PairPage", "Pair pages"),
@@ -162,6 +164,10 @@ export const PAGE_MODELS = Object.freeze([
   page("PairClinicalCategoryPage", "Clinical category pages"),
   page("PairDataFile", "Pair data files"),
   page("PairChangesFeed", "Changes feed"),
+  // The lab's p12_pair_claim_scope_page/claim-scope.json (thenwhat-lab #174): each held legacy
+  // claim with its reason, and each verified destination address. The folder names the model
+  // as every other does (export-pairs.mjs: `PairPage` is `p12_pair_page`).
+  page("PairClaimScopePage", "Legacy claim scope", { since: "thenwhat-lab #174" }),
 ]);
 
 export const MODELS = Object.freeze([...TABLES, ...PAGE_MODELS]);

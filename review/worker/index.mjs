@@ -95,7 +95,7 @@ async function models(env) {
       continue;
     }
     const seen = await inventory(store);
-    environments.push({ name: environment.name, label: environment.label, store: environment.store, readable: true, bundle: seen.bundle, unlisted: seen.unlisted });
+    environments.push({ name: environment.name, label: environment.label, store: environment.store, readable: true, bundle: seen.bundle, unlisted: seen.unlisted, unlistedPages: seen.unlistedPages });
     for (const model of MODELS) (states[model.id] ??= {})[environment.name] = seen.states[model.id];
   }
   return { areas: AREAS, environments, models: MODELS.map((model) => ({ ...model, environments: states[model.id] })) };

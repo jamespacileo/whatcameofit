@@ -71,6 +71,12 @@ export function Models() {
                       <span className='font-mono'>{e.unlisted.join(', ')}</span>
                     </CardContent>
                   )}
+                  {!!e.unlistedPages?.length && (
+                    <CardContent className='text-sm'>
+                      Page models in the current bundle the catalogue does not list:{' '}
+                      <span className='font-mono'>{e.unlistedPages.join(', ')}</span>
+                    </CardContent>
+                  )}
                 </Card>
               ))}
             </div>
