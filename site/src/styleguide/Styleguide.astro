@@ -45,7 +45,10 @@ const listings = [
   ["A clinical category's listing", fullestOf(Object.values(pages.PairClinicalCategoryPage ?? {}).map((file) => categoryListing(file, published, categories)))],
   ["A topic's listing", fullestOf(Object.values(pages.PairTopicPage ?? {}).map((file) => topicListing(file, published)))],
 ].filter(([, listing]) => listing) as [string, Listing][];
-const rows = fullestOf(listings.map(([, listing]) => listing))?.rows ?? [];
+// A listing can contain most of the release. The styleguide illustrates its layout with the
+// first rows, and the full listings keep the rest.
+const LISTING_SAMPLE_ROWS = 16;
+const rows = fullestOf(listings.map(([, listing]) => listing))?.rows.slice(0, LISTING_SAMPLE_ROWS) ?? [];
 const card = listings.map(([, listing]) => (listing.card ? renderCard(listing.card) : "")).find(Boolean) ?? "";
 
 const NO_PAIR = `<p>This bundle has no pair page to draw it with.</p>`;
@@ -131,7 +134,10 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
 const pieces: { name: string; html: string; framed?: boolean }[] = [
   ...(view ? [{ name: `A pair's page: ${view.title}`, framed: true, html: renderPairBand(view) + renderPairSheet(view, narrower) }] : []),
   ...(withResults ? [{ name: `Posted results: ${pairView(withResults).title}`, framed: true, html: renderPairBand(pairView(withResults)) + renderPairSheet(pairView(withResults)) }] : []),
-  ...listings.map(([name, listing]) => ({ name: `${name}: ${listing.title}`, framed: true, html: renderListingBand(listing) + renderListingSheet(listing, edition) })),
+  ...listings.map(([name, listing]) => {
+    const sample = { ...listing, rows: listing.rows.slice(0, LISTING_SAMPLE_ROWS) };
+    return { name: `${name}: ${listing.title}`, framed: true, html: renderListingBand(sample) + renderListingSheet(sample, edition) };
+  }),
   ...(card ? [{ name: "A knowledge card", html: card }] : []),
   ...(view
     ? [{ name: "An embed", html: `<div class="embed"><article>${renderEmbedArticle(view, SITE.name, SITE.url)}${embedFooter(NOTICES, PAIR_SOURCES, renderEmbedRegistries(view))}</article></div>` }]
@@ -148,7 +154,7 @@ const namespaced = (html: string, prefix: string) =>
   <h1 class="title">Styleguide</h1>
   <p class="lede styleguide-text">
     The building blocks of the site's pages (<code>site/src/lib/blocks.ts</code>) and the pieces the pages make of them, drawn with
-    bundle {bundle.version}, {pairs.length} pairs. Built for staging and pull request previews only.
+    bundle {bundle.version}, {pairs.length} pairs. Listing examples show up to {LISTING_SAMPLE_ROWS} rows.
   </p>
   <nav aria-label="Styleguide contents">
     <ul>
