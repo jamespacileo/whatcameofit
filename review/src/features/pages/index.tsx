@@ -287,6 +287,7 @@ export function PagesView({ search }: { search: PagesSearch }) {
         )}
         <AddressSheet
           row={open}
+          version={data?.version ?? version}
           address={search.address}
           onClose={() => setSearch({ address: undefined })}
         />
@@ -297,10 +298,12 @@ export function PagesView({ search }: { search: PagesSearch }) {
 
 function AddressSheet({
   row,
+  version,
   address,
   onClose,
 }: {
   row?: PageRow
+  version?: string | null
   address?: string
   onClose: () => void
 }) {
@@ -331,7 +334,8 @@ function AddressSheet({
                 <Link
                   to='/models/$id'
                   params={{ id: 'page:PairPage' }}
-                  search={{ key: row.address.slice(1) }}
+                  // The page file of the bundle this view is bound to, not the current one.
+                  search={{ key: row.address.slice(1), version: version ?? undefined }}
                   className='underline'
                 >
                   PairPage {row.address.slice(1)}
