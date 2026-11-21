@@ -34,5 +34,11 @@ export type Overview = {
     counts: Record<string, number>
   } | null
   versions: { version: string; loaded_at: string; current: boolean }[]
+  // What the host serves, read from its /build-revision.txt and /bundle-version.txt.
+  published: {
+    host: string
+    revision: string | null
+    bundle: string | null
+  } | null
   tables: { name: string; rows: number | null }[]
 }

@@ -15,6 +15,10 @@ const TEAM = "https://review-test.cloudflareaccess.com";
 const AUD = "a".repeat(64);
 const OPERATOR = "operator@example.org";
 const BUNDLE = "../site/tests/bundle";
+const STAGING = "https://staging.review-test";
+// What staging's two deploy files answer in these tests: the site's last deploy, recorded.
+let servedBundle = null;
+const REVISION = "0123456789abcdef0123456789abcdef01234567";
 
 let key;
 let jwks;
@@ -22,14 +26,14 @@ let script;
 const running = [];
 
 async function sign({ email = OPERATOR, audience = AUD, issuer = TEAM, expires = "5m", signer = key.privateKey, kid = "k1" } = {}) {
-  return new SignJWT({ email, type: "app" })
+  const token = new SignJWT({ email, type: "app" })
     .setProtectedHeader({ alg: "RS256", kid })
     .setIssuer(issuer)
     .setAudience(audience)
     .setSubject("operator")
-    .setIssuedAt()
-    .setExpirationTime(expires)
-    .sign(signer);
+    .setIssuedAt();
+  if (expires !== null) token.setExpirationTime(expires);
+  return token.sign(signer);
 }
 
 /** Migration 0011, one statement at a time, as D1 applies it. */
@@ -43,7 +47,7 @@ function migration() {
     .filter(Boolean);
 }
 
-async function worker({ bindings = { ACCESS_ISSUER: TEAM, ACCESS_AUD: AUD, OPERATOR_EMAILS: `Someone@example.org, ${OPERATOR}` }, store = "bundle" } = {}) {
+async function worker({ bindings = { STAGING_URL: STAGING, ACCESS_ISSUER: TEAM, ACCESS_AUD: AUD, OPERATOR_EMAILS: `Someone@example.org, ${OPERATOR}` }, store = "bundle" } = {}) {
   const mf = new Miniflare(convertV4MiniflareOptions({
     modules: true,
     script,
@@ -56,6 +60,8 @@ async function worker({ bindings = { ACCESS_ISSUER: TEAM, ACCESS_AUD: AUD, OPERA
     outboundService: (request) => {
       const url = new URL(request.url);
       if (url.origin === TEAM && url.pathname === "/cdn-cgi/access/certs") return Response.json(jwks);
+      if (url.origin === STAGING && url.pathname === "/build-revision.txt") return new Response(`${REVISION}\n`);
+      if (url.origin === STAGING && url.pathname === "/bundle-version.txt") return servedBundle ? new Response(`${servedBundle}\n`) : new Response("", { status: 404 });
       return new Response("no network in tests", { status: 599 });
     },
   }));
@@ -98,6 +104,7 @@ test("a token Access did not sign for this application is refused", async () => 
     "another application": await sign({ audience: "b".repeat(64) }),
     "another team": await sign({ issuer: "https://other.cloudflareaccess.com" }),
     "expired": await sign({ expires: Math.floor(Date.now() / 1000) - 60 }),
+    "without an expiry": await sign({ expires: null }),
     "another key": await sign({ signer: stranger.privateKey }),
     "not on the operator list": await sign({ email: "reader@example.org" }),
     "garbled": "not.a.token",
@@ -168,4 +175,18 @@ test("a Worker missing the issuer, the audience or the allowlist answers no one 
       assert.doesNotMatch(await response.text(), /pair_bundle|version/, missing);
     }
   }
+});
+
+test("the overview tells the bundle staging serves apart from the one its store marks current", async () => {
+  const token = await sign();
+  servedBundle = null;
+  let body = await (await get(site, "/api/staging/overview", { token })).json();
+  assert.deepEqual(body.published, { host: "staging.review-test", revision: REVISION, bundle: null });
+  servedBundle = "f".repeat(16);
+  body = await (await get(site, "/api/staging/overview", { token })).json();
+  assert.equal(body.published.bundle, servedBundle);
+  assert.notEqual(body.published.bundle, body.current.version);
+  servedBundle = body.current.version;
+  body = await (await get(site, "/api/staging/overview", { token })).json();
+  assert.equal(body.published.bundle, body.current.version);
 });

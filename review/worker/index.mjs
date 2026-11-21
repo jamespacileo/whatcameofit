@@ -2,6 +2,7 @@
 // pages, scripts and the API all sit behind one check of the reader's Access token
 // (access.mjs), as the proposal `private-content-review` asks for one protected surface.
 import { accessSettings, operatorOf } from "./access.mjs";
+import { published } from "./published.mjs";
 import { overview } from "./reads.mjs";
 
 /** Sent with every answer: nothing here is cached by a shared cache, indexed or framed. */
@@ -31,7 +32,8 @@ async function api(url, request, env, email) {
   if (url.pathname === "/api/me") return answer({ email });
   if (url.pathname === "/api/staging/overview") {
     if (!env.STAGING_PAIRS) return answer({ error: "staging store not connected" }, 503);
-    return answer(await overview(env.STAGING_PAIRS, "staging"));
+    const [store, served] = await Promise.all([overview(env.STAGING_PAIRS, "staging"), published(env.STAGING_URL)]);
+    return answer({ ...store, published: served });
   }
   return answer({ error: "not found" }, 404);
 }

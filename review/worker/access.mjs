@@ -45,6 +45,9 @@ export async function operatorOf(request, settings) {
       issuer: settings.teamDomain,
       audience: settings.audience,
       algorithms: ["RS256"],
+      // jose checks `exp` only when the token carries one, so a token without it would never
+      // expire. Access always sets it; a token that lacks it is refused.
+      requiredClaims: ["exp"],
     });
     const email = typeof payload.email === "string" ? payload.email.toLowerCase() : null;
     return email && settings.operators.has(email) ? email : null;

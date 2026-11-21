@@ -10,7 +10,9 @@
 - [x] 1.2 Worker: Access token check on every request, operator allowlist, 503 when unset, 403 otherwise
 - [x] 1.3 Listed read-only statements; staging overview API and page
 - [x] 1.4 Tests on Miniflare with the tests' bundle; `make check-review` in CI
-- [ ] 1.5 Wrangler config and `make review-deploy`, used only after 0.2
+- [x] 1.5a Wrangler config: Worker first for every file, no workers.dev or preview addresses
+- [x] 1.5b Overview shows the current D1 bundle apart from the bundle and revision staging was published with
+- [ ] 1.5c `make review-deploy`, used only after 0.2
 
 ## 2. Model inventory
 

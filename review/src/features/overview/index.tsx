@@ -43,7 +43,9 @@ export function Overview() {
         <div className='mb-4 space-y-1'>
           <h1 className='text-2xl font-bold tracking-tight'>Staging</h1>
           <p className='text-muted-foreground'>
-            What staging.whatcameofit.com reads from its store, read-only.
+            The bundle staging's D1 store marks current, and what the staging
+            site was last published with. A bundle can be loaded before it is
+            published.
           </p>
         </div>
         {overview.isError && (
@@ -56,13 +58,15 @@ export function Overview() {
         )}
         {data?.current && (
           <div className='space-y-4'>
+            <Published data={data} />
             <Card>
               <CardHeader>
                 <CardTitle className='font-mono text-base'>
                   {data.current.version}
                 </CardTitle>
                 <CardDescription>
-                  Current bundle, loaded {data.current.loaded_at}. Rows in this version, by table:
+                  Current D1 bundle, loaded {data.current.loaded_at}. Rows in
+                  this version, by table:
                 </CardDescription>
               </CardHeader>
               <CardContent className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
@@ -130,5 +134,40 @@ export function Overview() {
         )}
       </Main>
     </>
+  )
+}
+
+function Published({ data }: { data: OverviewData }) {
+  const served = data.published
+  const current = data.current?.version
+  const same = served?.bundle && current && served.bundle === current
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Published on {served?.host ?? 'staging'}</CardTitle>
+        <CardDescription>
+          {!served
+            ? 'No staging address is set.'
+            : !served.bundle
+              ? 'The site does not say which bundle it was built from.'
+              : same
+                ? 'Built from the current D1 bundle.'
+                : 'Built from another bundle than the current D1 bundle: the current one is loaded but not yet published.'}
+        </CardDescription>
+      </CardHeader>
+      {served && (
+        <CardContent className='grid gap-2 font-mono text-sm sm:grid-cols-2'>
+          <div>
+            <div className='font-sans text-muted-foreground'>Bundle</div>
+            {served.bundle ?? 'not stated'}{' '}
+            {served.bundle && !same && <Badge variant='outline'>differs</Badge>}
+          </div>
+          <div>
+            <div className='font-sans text-muted-foreground'>Revision</div>
+            {served.revision ? served.revision.slice(0, 12) : 'not stated'}
+          </div>
+        </CardContent>
+      )}
+    </Card>
   )
 }
