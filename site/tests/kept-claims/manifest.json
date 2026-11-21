@@ -1,6 +1,7 @@
 {
  "about": "The tests' kept claims: two synthetic claims in the shape scripts/kept-claims.mjs freezes. Never published (deploy.mjs refuses a fixture).",
  "fixture": true,
+ "format": 2,
  "commit": "4ea7f23613d9bd390c601b1ef00048c864064e81",
  "claims": {
   "10-person-living-donor-kidney-exchange-chain-kidney-failure": [
@@ -27,6 +28,14 @@
  "shared": [
   "_astro/kept-fixture.Ab12Cd34.css"
  ],
+ "needs": {
+  "10-person-living-donor-kidney-exchange-chain-kidney-failure": [
+   "_astro/kept-fixture.Ab12Cd34.css"
+  ],
+  "exagamglogene-autotemcel-sickle-cell-disease": [
+   "_astro/kept-fixture.Ab12Cd34.css"
+  ]
+ },
  "linked": [
   "/topic/kidneys-and-bladder"
  ],

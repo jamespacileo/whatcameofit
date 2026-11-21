@@ -44,7 +44,7 @@ The build SHALL make no file per pair. Every pair's page, open data record, embe
 - **THEN** the reader gets the site's error page, and nothing from the file is shown
 
 ### Requirement: Old addresses answer
-A claim's address whose pair is published SHALL answer with a permanent redirect to the pair's address. An archived claim's address SHALL answer 410 as before. A claim with no pair SHALL keep its page and its other files (embed, oEmbed, cards, data record, feed) at their own addresses, as production last built them (the operator, 2026-11-21).
+A claim's address whose pair is published SHALL answer with a permanent redirect to the pair's address. An archived claim's address SHALL answer 410 as before. A claim with no pair SHALL keep its page and its other files (embed, oEmbed, cards, data record, feed) at their own addresses, as production last built them (the operator, 2026-11-21). Source outlet icons loaded by kept claims SHALL remain at their original addresses. Year indexes linked from these pages SHALL remain available at their original addresses with the assets they load.
 
 #### Scenario: A moved claim
 - **WHEN** a reader opens a claim slug the moved-addresses file maps to a pair
@@ -63,6 +63,8 @@ The home page, an intervention's page, a condition's page, a topic's page, the t
 
 ### Requirement: The extension's index keeps its shape
 `/lookup.json` SHALL keep the keys the released extension reads, with each entry naming a pair's address.
+When the complete response exceeds the asset limit, the build SHALL keep a compressed asset
+and the Worker SHALL return the same JSON at `/lookup.json`.
 
 #### Scenario: The released extension reads the new index
 - **WHEN** the extension's tests run against an index made from the small bundle

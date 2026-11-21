@@ -6,6 +6,7 @@
 // may be cached briefly under a URL digest. Network addresses only count request rates.
 import { PLATFORM_NAMES, readAddress } from "../src/lib/lookup-match.mjs";
 import { LOOKUP_FILE, readLookupFile } from "../src/lib/lookup-file.mjs";
+import { LEGACY_LOOKUP, PACKED_LOOKUP } from "../src/lib/lookup-assets.mjs";
 import { MAX_TEXT_CHARACTERS, readArticle } from "./article.mjs";
 import { lookUp } from "./lookup.mjs";
 import { SITE } from "../site.config.mjs";
@@ -196,6 +197,14 @@ export async function handle(request, env, tools) {
     }
     // The old index of every claim's record has no successor in its format.
     if (here.pathname === "/data/claims.json") return gone();
+    if (here.pathname === LEGACY_LOOKUP) {
+      const plain = await env.ASSETS.fetch(request);
+      if (plain.status !== 404) return plain;
+      const packed = await packedLookup(request, env, here);
+      if (!packed) return plain;
+      await plain.body?.cancel();
+      return packed;
+    }
     return env.ASSETS.fetch(request);
   }
   if (request.method !== "POST") return refuse(405, "method");
@@ -266,6 +275,46 @@ export async function handle(request, env, tools) {
     // Kept once the reader has the whole answer, whether or not they are still reading.
     await keep?.();
   });
+}
+
+/**
+ * The legacy lookup index when the build packed it (scripts/pack-lookup.mjs): the same bytes,
+ * stored gzipped because the plain file passes the size a built file may have. The installed
+ * extension asks for it on every popup and revalidates, so it carries a validator, the digest
+ * of the packed bytes, and a matching request is answered 304 with no body; a client that accepts gzip,
+ * as browsers and the extension's fetch do, is sent the stored bytes as they are, with nothing
+ * decompressed here; any other is sent them decompressed. Null when nothing was packed.
+ */
+async function packedLookup(request, env, here) {
+  const packed = await env.ASSETS.fetch(new Request(new URL(PACKED_LOOKUP, here)));
+  if (!packed.ok) {
+    await packed.body?.cancel();
+    return null;
+  }
+  const headers = new Headers({
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": packed.headers.get("Cache-Control") ?? "public, max-age=0, must-revalidate",
+    Vary: "Accept-Encoding",
+  });
+  // The site's own headers, and any robots mark, as the plain file would have carried them.
+  for (const name of ["X-Content-Type-Options", "Referrer-Policy", "Strict-Transport-Security", "X-Robots-Tag"]) {
+    const value = packed.headers.get(name);
+    if (value) headers.set(name, value);
+  }
+  // The validator is the packed bytes' own digest (1.5 MB hashed, never the 20 MB they hold),
+  // so it changes exactly when the index does, whatever the host sends.
+  const bytes = await packed.arrayBuffer();
+  const digest = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))].slice(0, 12).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  const tag = `W/"lookup-${digest}"`;
+  headers.set("ETag", tag);
+  const held = (request.headers.get("If-None-Match") ?? "").split(",").map((one) => one.trim());
+  if (held.includes(tag) || held.includes("*")) return new Response(null, { status: 304, headers });
+  if (request.method === "HEAD") return new Response(null, { headers });
+  if (/\bgzip\b/i.test(request.headers.get("Accept-Encoding") ?? "")) {
+    headers.set("Content-Encoding", "gzip");
+    return new Response(bytes, { headers, encodeBody: "manual" });
+  }
+  return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip")), { headers });
 }
 
 async function lookupIndex(env, here) {

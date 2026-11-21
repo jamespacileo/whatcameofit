@@ -29,6 +29,8 @@ import { SITE } from "../site.config.mjs";
 import { STATUS_LABELS } from "../src/lib/status.ts";
 import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
 import { SITE_HEADERS, UNREADABLE } from "../worker/pairs.mjs";
+import { packLookup } from "../scripts/pack-lookup.mjs";
+import { LEGACY_LOOKUP, PACKED_LOOKUP } from "../src/lib/lookup-assets.mjs";
 
 const MARKUP = 'A <script>alert("x")</script> & <b>bold</b> study';
 const ON_REQUEST = "acoziborole--trypanosomiasis";
@@ -180,6 +182,33 @@ before(async () => {
 after(async () => { if (mf) await mf.dispose(); });
 
 const get = (pathname) => mf.dispatchFetch(`https://site.test${pathname}`, { redirect: "manual" });
+
+test("the Worker serves the complete legacy lookup with the original response bytes when packed", async () => {
+  const original = path.join(dist, LEGACY_LOOKUP);
+  const expected = fs.readFileSync(original, "utf8");
+  try {
+    packLookup(dist, Buffer.byteLength(expected) - 1);
+    assert.ok(!fs.existsSync(original));
+    const response = await get(LEGACY_LOOKUP);
+    assert.equal(response.status, 200);
+    assert.match(response.headers.get("Content-Type"), /^application\/json/i);
+    assert.equal(await response.text(), expected);
+    // A validator from the packed file: an asker who holds it is told it is unchanged, with
+    // nothing sent and nothing decompressed.
+    const tag = response.headers.get("ETag");
+    assert.match(tag ?? "", /^W\/"lookup-/);
+    const held = await mf.dispatchFetch(`https://site.test${LEGACY_LOOKUP}`, { headers: { "If-None-Match": tag } });
+    assert.equal(held.status, 304);
+    assert.equal(await held.text(), "");
+    // A client that takes no gzip is sent the same bytes, decompressed by the Worker.
+    const plain = await mf.dispatchFetch(`https://site.test${LEGACY_LOOKUP}`, { headers: { "Accept-Encoding": "identity" } });
+    assert.equal(plain.headers.get("Content-Encoding"), null);
+    assert.equal(await plain.text(), expected);
+  } finally {
+    fs.writeFileSync(original, expected);
+    fs.rmSync(path.join(dist, PACKED_LOOKUP), { force: true });
+  }
+});
 // A request no earlier answer is kept for: the Worker keeps each a day under a key that holds
 // the host, so a test that changes the store asks on a host of its own.
 let freshHosts = 0;

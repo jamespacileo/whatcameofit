@@ -25,6 +25,7 @@ The site SHALL be built from one bundle of page files only, with no access to a 
 
 ### Requirement: A styleguide for staging and previews only
 The site SHALL offer a styleguide at `/styleguide` that draws every shared building block of the pages (`site/src/lib/blocks.ts`) and the whole pieces the renderers make of them, with the bundle the build reads. It SHALL be built only for staging and pull request previews, never for production, and SHALL never be indexed.
+Listing examples SHALL use a bounded sample from that bundle. Their individual listing pages keep the full published list.
 
 #### Scenario: Staging and previews
 - **WHEN** staging or a pull request's preview is built
