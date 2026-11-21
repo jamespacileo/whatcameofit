@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check kept-claims pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 STORE_TEST_CONCURRENCY ?= 1
@@ -94,7 +94,14 @@ extension-safari: extension
 # public build from the small bundle the tests use: needs no Cloudflare account and
 # publishes nothing. CI runs it.
 deploy-ci-check: site/node_modules
-	PAIRS_BUNDLE=tests/bundle node site/scripts/deploy.mjs --dry-run
+	PAIRS_BUNDLE=tests/bundle KEPT_CLAIMS_DIR=tests/kept-claims node site/scripts/deploy.mjs --dry-run
+
+# The pages of claims no pair came from, kept as production built them (site/scripts/kept-claims.mjs):
+# built once from production's claims commit and frozen into KEPT_CLAIMS_DIR. Staging and
+# production are never published without them. About four minutes the first time; nothing after.
+KEPT_CLAIMS_DIR ?= $(CURDIR)/site/.cache/kept-claims/4ea7f23613d9bd390c601b1ef00048c864064e81
+kept-claims: site/node_modules
+	sh site/scripts/freeze-kept-claims.sh $(KEPT_CLAIMS_DIR)
 
 # One pull request's copy of the site, on its own Worker thenwhat-pr-<number> at a
 # workers.dev address. Never production. GitHub runs this for every pull request.
@@ -113,14 +120,14 @@ pr-preview: site/node_modules
 # version of PAIRS_DATABASE (the production store by default, read only), exports it,
 # builds the site from it and has Wrangler check the Worker.
 PAIRS_DATABASE ?= thenwhat-store
-deploy-check deploy-pairs-check: site/node_modules
-	PAIRS_BUNDLE= PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs --dry-run
+deploy-check deploy-pairs-check: site/node_modules kept-claims
+	PAIRS_BUNDLE= KEPT_CLAIMS_DIR=$(KEPT_CLAIMS_DIR) PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs --dry-run
 
 # Publish to Cloudflare at SITE_URL's domain, from PAIRS_DATABASE's current bundle version.
 # Refuses a local address, and refuses to publish without the operator's word:
 #   make deploy ARGS=--cutover
-deploy: site/node_modules
-	PAIRS_BUNDLE= PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs $(ARGS)
+deploy: site/node_modules kept-claims
+	PAIRS_BUNDLE= KEPT_CLAIMS_DIR=$(KEPT_CLAIMS_DIR) PAIRS_DATABASE=$(PAIRS_DATABASE) node site/scripts/deploy.mjs $(ARGS)
 
 # Staging (docs/deploy.md, "Staging"): the same build, from the preview store's current bundle,
 # to the thenwhat-staging Worker as a version and a deployment, every response noindex, then the
@@ -128,8 +135,8 @@ deploy: site/node_modules
 # STAGING_PAIRS_DATABASE_ID. Rehearse with ARGS=--dry-run (no smoke check then).
 STAGING_URL ?= https://staging.whatcameofit.com
 STAGING_DATABASE ?= thenwhat-store-preview
-deploy-staging: site/node_modules
-	PAIRS_BUNDLE= SITE_URL=$(STAGING_URL) PAIRS_DATABASE=$(STAGING_DATABASE) node site/scripts/deploy.mjs --staging $(ARGS)
+deploy-staging: site/node_modules kept-claims
+	PAIRS_BUNDLE= KEPT_CLAIMS_DIR=$(KEPT_CLAIMS_DIR) SITE_URL=$(STAGING_URL) PAIRS_DATABASE=$(STAGING_DATABASE) node site/scripts/deploy.mjs --staging $(ARGS)
 	$(if $(findstring --dry-run,$(ARGS)),,node site/scripts/staging-smoke.mjs $(STAGING_URL) site/dist $(BUILD_REVISION))
 
 # The pairs site on this machine as a deployment serves it, with the Worker and the bundle in

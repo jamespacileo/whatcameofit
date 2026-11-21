@@ -73,6 +73,32 @@ jobs:
             exit 1
           fi
           echo "CI and deploy passed for $GITHUB_SHA."
+      # The pages of claims no pair came from, kept as production built them (make kept-claims,
+      # site/scripts/kept-claims.mjs): frozen once from production's claims commit, with the
+      # variables its CI built with, and kept here by what decides their bytes.
+      - name: Restore the kept claims
+        id: kept
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/kept-claims
+          key: kept-claims-${{ hashFiles('site/scripts/kept-claims.mjs', 'site/scripts/freeze-kept-claims.sh', 'site/data/retired-addresses.json') }}
+      - name: Freeze the kept claims
+        if: steps.kept.outputs.cache-hit != 'true'
+        run: make kept-claims
+        env:
+          SUGGEST_URL: ${{ vars.SUGGEST_URL }}
+          CORRECTIONS_URL: ${{ vars.CORRECTIONS_URL }}
+          CHROME_STORE_URL: ${{ vars.CHROME_STORE_URL }}
+          SAFARI_STORE_URL: ${{ vars.SAFARI_STORE_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          CONTACT_EMAIL: ${{ vars.CONTACT_EMAIL }}
+          DECISION_BACKEND: ${{ vars.DECISION_BACKEND }}
+      - name: Keep the kept claims
+        if: steps.kept.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: site/.cache/kept-claims
+          key: ${{ steps.kept.outputs.cache-primary-key }}
       - name: Publish
         run: make deploy ARGS=--cutover
         env:

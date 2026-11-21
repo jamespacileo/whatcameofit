@@ -5,7 +5,9 @@
 //
 // Each address must answer with its expected status and carry X-Robots-Tag: noindex: a built
 // page, a pair page and its data file made on request, an old claim address that leads to its
-// pair (301), one with no pair (410), and an address no pair has (404). First, /build-revision.txt
+// pair (301), a claim with no pair that keeps its page and its data record (200, as production
+// built them: scripts/kept-claims.mjs), one the operator archived (410), and an address no pair
+// has (404). First, /build-revision.txt
 // must name the commit deployed and /bundle-version.txt the bundle the build was made from: a
 // deployment of new code with the same bundle could otherwise be answered by the version before.
 // Both are asked again, a bounded number of times, while the new version spreads. The addresses are read from the build itself, so the
@@ -32,11 +34,14 @@ export function smokeAddresses(dist) {
   const onRequest = read("data/pairs.json").entries.find((entry) => !fs.existsSync(path.join(dist, entry.address, "index.html")));
   if (!onRequest) throw new Error("the build made every pair's page, so no page made on request can be checked");
   const gone = read("gone.json");
-  const moved = gone.find((entry) => entry.to);
-  // An old claim with no pair to lead to: gone, 410 (data/retired-addresses.json, scripts/redirects.mjs).
-  const unmatched = gone.find((entry) => entry.gone);
+  const moved = gone.find((entry) => entry.to && !entry.kept);
+  // An old claim with no pair to lead to keeps its page (kept-claims.json, scripts/redirects.mjs);
+  // one the operator archived is gone, 410 (data/retired-addresses.json).
+  const [kept] = read("kept-claims.json");
+  const archived = gone.find((entry) => entry.on);
   if (!moved) throw new Error("gone.json holds no old claim address that leads to a pair");
-  if (!unmatched) throw new Error("gone.json holds no old claim address with no pair");
+  if (!kept) throw new Error("the build kept no claim's page: was it built with KEPT_CLAIMS_DIR?");
+  if (!archived) throw new Error("gone.json holds no archived claim address");
   return {
     version,
     checks: [
@@ -44,7 +49,9 @@ export function smokeAddresses(dist) {
       { pathname: `/${onRequest.address}`, status: 200 },
       { pathname: onRequest.record, status: 200, type: /^application\/json\b/ },
       { pathname: `/${moved.slug}`, status: 301, location: `/${moved.to}` },
-      { pathname: `/${unmatched.slug}`, status: 410 },
+      { pathname: `/${kept}`, status: 200, type: /^text\/html\b/ },
+      { pathname: `/data/claims/${kept}.json`, status: 200, type: /^application\/json\b/ },
+      { pathname: `/${archived.slug}`, status: 410 },
       { pathname: "/no-such--pair", status: 404 },
     ],
   };
@@ -117,7 +124,7 @@ export async function checkStaging({ origin, dist, revision, request = fetch, at
     const problems = [];
     if (response.status !== check.status) problems.push(`answered ${response.status}, not ${check.status}`);
     if (!/\bnoindex\b/i.test(robots)) problems.push(`carries X-Robots-Tag "${robots}", not noindex`);
-    if (check.type && !check.type.test(response.headers.get("content-type") ?? "")) problems.push(`is ${response.headers.get("content-type")}, not JSON`);
+    if (check.type && !check.type.test(response.headers.get("content-type") ?? "")) problems.push(`is ${response.headers.get("content-type")}, not ${check.type}`);
     // The whole address, origin included: a redirect out of staging fails.
     const expected = check.location ? new URL(check.location, origin).href : null;
     if (expected && new URL(response.headers.get("location") ?? "", new URL(check.pathname, origin)).href !== expected) {

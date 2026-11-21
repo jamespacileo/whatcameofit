@@ -15,8 +15,18 @@ function pages(directory) {
   });
 }
 
+// A kept claim's page and embed are production's own bytes from before claims were removed
+// (scripts/kept-claims.mjs), never written again, so they carry the notices of their day.
+const keptFile = path.join(DIST, "kept-claims.json");
+const kept = new Set(
+  (fs.existsSync(keptFile) ? JSON.parse(fs.readFileSync(keptFile, "utf8")) : []).flatMap((slug) => [
+    path.join(DIST, slug, "index.html"),
+    path.join(DIST, "embed", slug, "index.html"),
+  ]),
+);
+
 const problems = [];
-const found = pages(DIST);
+const found = pages(DIST).filter((page) => !kept.has(page));
 for (const page of found) {
   const html = fs.readFileSync(page, "utf8");
   for (const text of REQUIRED) {
@@ -49,5 +59,5 @@ if (problems.length > 0) {
   process.exit(1);
 }
 console.log(
-  `Build check passed: footer notices present on ${found.length} pages; no file over ${FILE_LIMIT / 2 ** 20} MiB; ${files.toLocaleString("en-GB")} files of the ${FILE_COUNT_LIMIT.toLocaleString("en-GB")} a build may hold.`,
+  `Build check passed: footer notices present on ${found.length} pages${kept.size > 0 ? ` (and ${kept.size / 2} kept claims' pages and embeds as they were)` : ""}; no file over ${FILE_LIMIT / 2 ** 20} MiB; ${files.toLocaleString("en-GB")} files of the ${FILE_COUNT_LIMIT.toLocaleString("en-GB")} a build may hold.`,
 );

@@ -177,11 +177,14 @@ export async function handle(request, env, tools) {
   if (here.pathname !== PATH) {
     // An address the site served while it tracked claims (dist/gone.json, written by
     // scripts/redirects.mjs): one whose claim a single published pair came from leads to the
-    // pair (301); every other answers 410 Gone, so readers and search engines learn it was
-    // removed on purpose. RFC 9110 15.5.11: 410 is for a resource known to be gone for good.
+    // pair (301); one the operator archived answers 410 Gone, so readers and search engines
+    // learn it was removed on purpose (RFC 9110 15.5.11). A claim no pair came from keeps its
+    // files, which the host serves before this runs (scripts/kept-claims.mjs).
     const file = oldFile(here.pathname);
     if (file) {
       const entry = (await goneList(env.ASSETS, here.origin)).get(file.slug);
+      // A claim merged into one that kept its page leads to the same file of that claim.
+      if (entry?.kept) return moved(here.pathname.replace(file.slug, entry.to), here);
       if (entry?.to) return moved(file.at(entry.to), here);
       if (entry) return gone(entry.on);
     }

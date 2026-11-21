@@ -119,6 +119,17 @@ if (pairsDatabase) {
   stop(["No bundle was named. Set PAIRS_DATABASE to the D1 database the site is built from."]);
 }
 
+// The claims no pair came from keep their pages, as production built them (the operator,
+// 2026-11-21; scripts/kept-claims.mjs). A build from a Cloudflare database, which is what staging
+// and production publish, is made only with every one of them frozen; a rehearsal from a folder
+// or from D1's local engine may use the tests' few, or none.
+const keptFolder = process.env.KEPT_CLAIMS_DIR ? path.resolve(SITE_DIR, process.env.KEPT_CLAIMS_DIR) : null;
+if (pairs && !pairs.database.local) {
+  const { keptProblems } = await import("./kept-claims.mjs");
+  const unkept = keptProblems(keptFolder);
+  if (unkept.length > 0) stop(unkept);
+}
+
 const domain = new URL(siteUrl).hostname;
 
 // The registry search is offered only when its settings are given. The model's key is
@@ -132,6 +143,7 @@ const env = {
   ASTRO_TELEMETRY_DISABLED: "1",
   LOOKUP_URL: lookup ? "/api/lookup" : "",
   PAIRS_BUNDLE: pairs ? pairs.folder : bundleFolder,
+  KEPT_CLAIMS_DIR: keptFolder ?? "",
 };
 delete env.CLOUDFLARE_API_TOKEN;
 // The styleguide is for staging only; production never builds it, whatever this shell holds.
