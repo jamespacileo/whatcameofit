@@ -81,7 +81,8 @@ export function freeze({ from, to, slugs, commit }) {
       const yearIndex = /^year\/\d{4}\/?$/.test(ref);
       const built = yearIndex ? `${ref.replace(/\/$/, "")}/index.html` : ref;
       if (own.has(built) || shared.has(built)) continue;
-      if ((built.startsWith("_astro/") || yearIndex) && fs.existsSync(path.join(from, built))) {
+      const outletIcon = /^outlet-icons\/[^/]+\.[a-z]+$/.test(built);
+      if ((built.startsWith("_astro/") || outletIcon || yearIndex) && fs.existsSync(path.join(from, built))) {
         shared.add(built);
         if (/\.(html|css|js)$/.test(built)) queue.push(built);
       } else if (!claimFiles(ref.replace(/\/$/, "")).some((own) => kept.has(own))) {

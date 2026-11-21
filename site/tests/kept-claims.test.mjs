@@ -9,7 +9,7 @@ import { KEPT_CLAIMS_COMMIT, claimFiles, freeze, keptProblems, keptSlugs, placeK
 
 const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
 
-/** An old build in miniature: one claim's eight files, the style, font and scripts it loads, and
+/** An old build in miniature: one claim's eight files, the style, font, scripts and icon it loads, and
  * a page of the site it links to. */
 function oldBuild() {
   const from = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-old-build-"));
@@ -18,7 +18,7 @@ function oldBuild() {
     fs.writeFileSync(path.join(from, file), body);
   };
   const [page, embed, ...rest] = claimFiles("a-claim");
-  write(page, '<link rel="stylesheet" href="/_astro/global.css"><script type="module" src="/_astro/page.js"></script><a href="/topic/teeth">t</a><a href="/embed/a-claim">e</a><img src="/og/a-claim.png">');
+  write(page, '<link rel="stylesheet" href="/_astro/global.css"><script type="module" src="/_astro/page.js"></script><a href="/topic/teeth">t</a><a href="/embed/a-claim">e</a><img src="/og/a-claim.png"><img src="/outlet-icons/news.example.abc.png">');
   write(embed, '<link rel="stylesheet" href="/_astro/global.css">');
   for (const file of rest) write(file, "kept");
   write("_astro/global.css", "@font-face{src:url(/_astro/font.woff2)}");
@@ -26,6 +26,8 @@ function oldBuild() {
   write("_astro/page.js", 'import{a}from"./chunk.js";');
   write("_astro/chunk.js", "export const a=1;");
   write("_astro/unused.js", "not loaded by the claim");
+  write("outlet-icons/news.example.abc.png", "source icon");
+  write("outlet-icons/unused.example.def.png", "not loaded by the claim");
   write("topic/teeth/index.html", "a page of the site");
   return from;
 }
@@ -34,10 +36,10 @@ test("freezing copies a claim's eight files and what they load, and names the pa
   const from = oldBuild();
   const to = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-")), "kept");
   const frozen = freeze({ from, to, slugs: ["a-claim", "never-built"], commit: KEPT_CLAIMS_COMMIT });
-  assert.deepEqual(frozen, { claims: 1, files: 12, missing: ["never-built"] });
+  assert.deepEqual(frozen, { claims: 1, files: 13, missing: ["never-built"] });
   const manifest = JSON.parse(fs.readFileSync(path.join(to, "manifest.json"), "utf8"));
   assert.deepEqual(manifest.claims["a-claim"], claimFiles("a-claim"));
-  assert.deepEqual(manifest.shared, ["_astro/chunk.js", "_astro/font.woff2", "_astro/global.css", "_astro/page.js"]);
+  assert.deepEqual(manifest.shared, ["_astro/chunk.js", "_astro/font.woff2", "_astro/global.css", "_astro/page.js", "outlet-icons/news.example.abc.png"]);
   assert.deepEqual(manifest.linked, ["/topic/teeth"]);
   for (const file of Object.keys(manifest.sha256)) assert.deepEqual(fs.readFileSync(path.join(to, "files", file)), fs.readFileSync(path.join(from, file)), file);
 });
