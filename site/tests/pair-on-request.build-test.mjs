@@ -311,6 +311,31 @@ test("a trial's posted adverse events are shown as counts per group, and its res
   assertNoOutcomeVerdict([section.textContent]);
 });
 
+test("adverse event groups use their registry titles without a link to a registered arm", () => {
+  const page = structuredClone(pages[WITH_RESULTS]);
+  const { findings } = page.trials[0];
+  const [totals, withoutTitle] = findings.harms;
+  totals.group_title = "Registry treatment group";
+  findings.serious_events.push({
+    group_id: withoutTitle.group_id,
+    group_title: "Registry comparison group",
+    term: "Serious event",
+    organ_system: null,
+    affected: 1,
+    at_risk: 20,
+  });
+  assert.deepEqual(findings.arms, []);
+
+  const { document } = parseHTML(renderPairSheet(pairView(page), []));
+  const section = document.querySelector("[data-harms]");
+  const names = [...section.querySelectorAll("[data-harm-group] th")].map((cell) => cell.textContent);
+  const eventHeaders = [...section.querySelectorAll("[data-serious-events] thead th")];
+
+  assert.deepEqual(names, ["Registry treatment group", "Registry comparison group"]);
+  assert.deepEqual(eventHeaders.map((cell) => cell.textContent), ["Event", ...names]);
+  assert.equal(section.querySelector("[data-harms-groups]"), null);
+});
+
 test("every pair's open data record is served from D1, as the lab's data file with the licence, and none is built", async () => {
   // Task 4.6: no file per pair, so a full bundle does not grow the deployment.
   const files = readBundle(bundle).pages.PairDataFile;
