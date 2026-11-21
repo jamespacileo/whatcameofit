@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -85,11 +85,21 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
       : NO_PAIR,
   },
   { name: "pairTable", about: "A list of pairs: each pair's page, where it stands and its trials.", html: sheet([pairTable("Pairs in the styleguide", rows)]) },
+  {
+    name: "stageFilter",
+    about: "The path as a filter: how many of a list's pairs stand at each place, each a button that narrows the table after it, and a box that narrows it by a word. The key to the small tracks in the rows.",
+    html: sheet([stageFilter(rows), pairTable("Pairs the filter narrows", rows)]),
+  },
   { name: "meshCredit", about: "The credit NLM's terms ask for wherever a MeSH category is shown.", html: sheet([meshCredit(edition)]) },
   {
     name: "trialsTable",
     about: "A pair's trials as a table (lib/trials-table.ts): results posted first, then by furthest phase; each row opens to its record. A pair page shows it from three trials up (TRIALS_TABLE_FROM in lib/pair-render.ts); fewer stay as entries.",
     html: view ? sheet([trialsTable(view.trials)]) : NO_PAIR,
+  },
+  {
+    name: "statusCell",
+    about: "A status in a row of a list: its place on the path, its label and the same in plain words.",
+    html: view ? `<p>${statusCell(view.statusCode, view.status)}</p>` : NO_PAIR,
   },
   {
     name: "stageTrack",
@@ -194,6 +204,7 @@ const namespaced = (html: string, prefix: string) =>
 
 <script>
   import "../scripts/section-list";
+  import "../scripts/pair-filter";
 </script>
 
 <style>

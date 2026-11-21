@@ -2,7 +2,8 @@
 // makes on request (worker/listings.mjs), so the two are the same for the same file. Every value
 // from a page file goes through `escape`. It fills the same frame as a pair page (/pair-shell).
 import type { ListingView } from "./listing-view.ts";
-import { band, bandTitle, crumbs, escape, followedLine, meshCredit, pairTable, sheet, sheetHeading } from "./blocks.ts";
+import { band, bandTitle, crumbs, escape, followedLine, meshCredit, pairTable, sheet, sheetHeading, stageFilter } from "./blocks.ts";
+import { standingSummary, statusCounts } from "./status.ts";
 import { renderCard } from "./card-render.ts";
 import { breadcrumbData } from "./structured.ts";
 
@@ -26,7 +27,10 @@ export function renderListingBand(view: ListingView): string {
     band(` aria-label="${escape(view.title)}"`, [
       view.crumbs.length ? crumbs("Where this page sits", view.crumbs) : "",
       bandTitle(view.title, ` data-listing="${escape(view.kind)}"`),
-      followedLine(escape(count(view.rows.length)), "lede"),
+      followedLine(escape(count(view.rows.length)), "what-this-is"),
+      // Where the list's pairs stand, said once in plain words before the list (the claims
+      // site's topic summary). One pair's status is in its row, so it is not said twice.
+      view.rows.length > 1 ? `<p class="lede" data-listing-summary>${escape(standingSummary(statusCounts(view.rows)))}</p>` : "",
       view.card ? renderCard(view.card) : "",
     ])
   );
@@ -44,6 +48,7 @@ export function renderListingSheet(view: ListingView, meshEdition: string): stri
           .join(", ")}</p>`,
     ),
     sheetHeading("Treatments and conditions", "pairs"),
+    stageFilter(view.rows),
     pairTable(view.title, view.rows),
     view.kind === "category" ? renderMeshCredit(meshEdition) : "",
   ]);
