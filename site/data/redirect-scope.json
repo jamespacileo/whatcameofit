@@ -1,4 +1,4 @@
 {
- "about": "Old claims scoped to prevention whose pair the operator has checked is of the same scope, so their address may lead to it (scripts/redirect-scope.mjs). Add a claim here only once that is verified; until then it keeps its own page.",
+ "about": "Redirects from an old claim about preventing a condition (data/claim-scope.json) to a pair, each verified by the operator as the same scope (scripts/redirect-scope.mjs). An entry names the claim and the one pair checked for it: {\"slug\": ..., \"pair\": ...}. A later bundle that sends the claim to another pair holds it again until that pair is checked.",
  "verified": []
 }

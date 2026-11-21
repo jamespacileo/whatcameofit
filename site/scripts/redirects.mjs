@@ -20,7 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 import { placeKept, readKept } from "./kept-claims.mjs";
-import { heldRedirect, verifiedRedirects } from "./redirect-scope.mjs";
+import { heldRedirect, preventionClaims, verifiedRedirects } from "./redirect-scope.mjs";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
 const retired = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "../data/retired-addresses.json"), "utf8"));
@@ -31,7 +31,7 @@ const pairs = bundle.pages.PairPage ?? {};
 /** What old addresses answer, for the Worker: `to` a pair's address (301), `to` a kept claim
  * (`kept`, 301 to its own files), or gone (410), with the day an archived claim was taken down
  * where the operator archived it. A kept claim's own address is in `keep`, not the list. */
-function goneEntries(retiredAddresses, pairPages, dataFiles, keptClaims = new Set(), verified = new Set(), held = []) {
+function goneEntries(retiredAddresses, pairPages, dataFiles, keptClaims, scope, held) {
   // Each claim slug with the one pair that came from it. A claim behind several pairs leads
   // to none of them by rule (`movedAddresses`), and so answers 410.
   const leads = movedAddresses(Object.values(pairPages));
@@ -53,7 +53,7 @@ function goneEntries(retiredAddresses, pairPages, dataFiles, keptClaims = new Se
     let to = Object.hasOwn(pairPages, claim) ? claim : leads.get(claim);
     // A pair of another scope than the claim's is not where its page now lives
     // (scripts/redirect-scope.mjs): the claim keeps its page until that pair is verified.
-    const why = to && to !== claim ? heldRedirect(claim, to, verified) : null;
+    const why = to && to !== claim ? heldRedirect(claim, to, scope) : null;
     if (why) {
       held.push({ slug, pair: to, why });
       to = undefined;
@@ -86,7 +86,7 @@ else fs.rmSync(file, { force: true });
 const keptFolder = process.env.KEPT_CLAIMS_DIR ? path.resolve(process.env.KEPT_CLAIMS_DIR) : null;
 const kept = keptFolder ? readKept(keptFolder) : null;
 const held = [];
-const { entries: gone, keep } = goneEntries(retired, pairs, bundle.pages.PairDataFile ?? {}, new Set(Object.keys(kept?.claims ?? {})), verifiedRedirects(), held);
+const { entries: gone, keep } = goneEntries(retired, pairs, bundle.pages.PairDataFile ?? {}, new Set(Object.keys(kept?.claims ?? {})), { prevention: preventionClaims(), verified: verifiedRedirects() }, held);
 fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
 // The claims held from a pair of another scope, for the staging smoke check to hold to their pages.
 fs.writeFileSync(path.join(DIST, "held-redirects.json"), `${JSON.stringify(held.map(({ slug, pair }) => ({ slug, pair })))}\n`);

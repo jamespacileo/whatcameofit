@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
-import { heldRedirect } from "../scripts/redirect-scope.mjs";
+import { heldRedirect, preventionClaims, verifiedRedirects } from "../scripts/redirect-scope.mjs";
 
 const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
 
@@ -160,12 +160,27 @@ test("a claim about preventing a condition does not lead to a pair about the con
   fs.rmSync(bundle, { recursive: true, force: true });
 });
 
-test("a prevention claim leads to a pair of the same scope, or one the operator verified, and other claims as before", () => {
-  assert.match(heldRedirect("alzheimers-prevention-trontinemab", "trontinemab--alzheimer-disease"), /preventing a condition/);
-  assert.match(heldRedirect("gantenerumab-prevention-of-early-onset-alzheimers-disease", "gantenerumab--alzheimer-disease"), /preventing a condition/);
-  assert.equal(heldRedirect("alzheimers-prevention-trontinemab", "trontinemab--alzheimer-disease-prevention"), null);
-  assert.equal(heldRedirect("alzheimers-prevention-trontinemab", "trontinemab--alzheimer-disease", new Set(["alzheimers-prevention-trontinemab"])), null);
-  // No other claim is held by this rule: words that only contain the scope do not name it.
-  assert.equal(heldRedirect("ambroxol-parkinsons-disease-dementia", "ambroxol--dementia"), null);
-  assert.equal(heldRedirect("preventable-blindness-gene-therapy", "x--blindness"), null);
+test("a prevention claim leads only to the pair the operator verified for it, never another", () => {
+  const prevention = preventionClaims();
+  const none = { prevention, verified: new Set() };
+  assert.match(heldRedirect("alzheimers-prevention-trontinemab", "trontinemab--alzheimer-disease", none), /preventing a condition/);
+  assert.match(heldRedirect("gantenerumab-prevention-of-early-onset-alzheimers-disease", "gantenerumab--alzheimer-disease", none), /preventing a condition/);
+  // Approval binds the claim to destination A; destination B, as a later bundle might give, stays held.
+  const verified = { prevention, verified: new Set(["alzheimers-prevention-trontinemab trontinemab--alzheimer-disease-prevention"]) };
+  assert.equal(heldRedirect("alzheimers-prevention-trontinemab", "trontinemab--alzheimer-disease-prevention", verified), null);
+  assert.match(heldRedirect("alzheimers-prevention-trontinemab", "trontinemab--alzheimer-disease", verified), /preventing a condition/);
+  // Scope is what production recorded as each claim's indication, not words in its address.
+  assert.ok(prevention.has("flu-vaccine-targeting-the-stable-stem-of-hemagglutinin"), "for the prevention of influenza");
+  assert.equal(heldRedirect("brain-mri-surveillance-without-prophylactic-cranial", "x--small-cell-lung-carcinoma", none), null);
+  assert.equal(heldRedirect("ambroxol-parkinsons-disease-dementia", "ambroxol--dementia", none), null);
+  // Every claim listed is one the site served.
+  for (const slug of prevention) assert.ok(retired.pages.includes(slug), slug);
+});
+
+test("a verified redirect names both its claim and its pair", () => {
+  const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-scope-")), "redirect-scope.json");
+  fs.writeFileSync(file, JSON.stringify({ verified: [{ slug: "alzheimers-prevention-trontinemab" }] }));
+  assert.throws(() => verifiedRedirects(file), /without both its claim and its pair/);
+  fs.writeFileSync(file, JSON.stringify({ verified: [{ slug: "a-claim", pair: "x--y" }] }));
+  assert.deepEqual([...verifiedRedirects(file)], ["a-claim x--y"]);
 });
