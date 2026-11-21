@@ -1,0 +1,325 @@
+{
+ "about": "Old claims scoped to preventing a condition, by the indication production's last claims export recorded for each (site/data/published-export.json at commit 4ea7f23613d9bd390c601b1ef00048c864064e81; an indication naming prevention or prophylaxis). Frozen: claims are no longer drafted. scripts/redirect-scope.mjs reads it.",
+ "prevention": [
+  {
+   "slug": "14-day-course-of-metformin-prevention-of-long-covid",
+   "indication": "prevention of long COVID"
+  },
+  {
+   "slug": "abrysvo-prevention-of-rsv-in-infants",
+   "indication": "Prevention of RSV in infants"
+  },
+  {
+   "slug": "ace2-infused-chewing-gum-prevention-of-covid-19",
+   "indication": "Prevention of COVID-19"
+  },
+  {
+   "slug": "alpha-lactalbumin-vaccine-tnbc-prevention",
+   "indication": "Prevention of triple-negative breast cancer"
+  },
+  {
+   "slug": "alvac-hiv-gp120-prevention-of-hiv-infection",
+   "indication": "Prevention of HIV infection"
+  },
+  {
+   "slug": "alzheimers-prevention-trontinemab",
+   "indication": "Prevention of Alzheimer's disease"
+  },
+  {
+   "slug": "amezosvatein-prevention-of-herpes-zoster-shingles",
+   "indication": "Prevention of herpes zoster (shingles)"
+  },
+  {
+   "slug": "atorvastatin-prevention-of-cardiovascular-disease",
+   "indication": "prevention of cardiovascular disease"
+  },
+  {
+   "slug": "av-1959r-prevention-of-alzheimer-s-disease",
+   "indication": "Prevention of Alzheimer's disease"
+  },
+  {
+   "slug": "azd7442-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "azelastine-0-1-nasal-spray-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "bamlanivimab-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "bge-102-prevention-of-cardiovascular-disease",
+   "indication": "Prevention of cardiovascular disease"
+  },
+  {
+   "slug": "bismuth-subsalicylate-prevention-of-travelers-diarrhea",
+   "indication": "prevention of travelers’ diarrhea"
+  },
+  {
+   "slug": "cabotegravir-prevention-of-hiv-infection",
+   "indication": "Prevention of HIV infection"
+  },
+  {
+   "slug": "canakinumab-prevention-of-recurrent-myocardial-infarction",
+   "indication": "Prevention of recurrent myocardial infarction"
+  },
+  {
+   "slug": "colonoscopy-screening-prevention-of-colorectal-cancer",
+   "indication": "Prevention of colorectal cancer"
+  },
+  {
+   "slug": "corbevax-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "cr9114-nasal-spray-prevention-of-influenza",
+   "indication": "prevention of influenza"
+  },
+  {
+   "slug": "dermol-500-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "ensitrelvir-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "erenumab-preventing-migraine-in-people-who-have-at-least",
+   "indication": "Preventing migraine in people who have at least four migraines a month"
+  },
+  {
+   "slug": "ervebo-prevention-of-bundibugyo-ebola-virus-disease",
+   "indication": "Prevention of Bundibugyo Ebola virus disease"
+  },
+  {
+   "slug": "ervebo-prevention-of-ebola-virus-disease",
+   "indication": "Prevention of Ebola virus disease"
+  },
+  {
+   "slug": "evolocumab-prevention-of-major-adverse-cardiovascular-events",
+   "indication": "Prevention of major adverse cardiovascular events"
+  },
+  {
+   "slug": "far-uvc-lamp-prevention-of-influenza",
+   "indication": "prevention of influenza"
+  },
+  {
+   "slug": "flu-vaccine-targeting-the-stable-stem-of-hemagglutinin",
+   "indication": "Prevention of influenza"
+  },
+  {
+   "slug": "flublok-prevention-of-influenza",
+   "indication": "prevention of influenza"
+  },
+  {
+   "slug": "gantenerumab-prevention-of-early-onset-alzheimers-disease",
+   "indication": "prevention of early-onset Alzheimer’s disease"
+  },
+  {
+   "slug": "hospital-oral-care-intervention-with-toothbrushes-toothpaste",
+   "indication": "Prevention of non-ventilator-associated hospital-acquired pneumonia"
+  },
+  {
+   "slug": "hydroxyapatite-toothpaste-prevention-of-dental-caries",
+   "indication": "Prevention of dental caries"
+  },
+  {
+   "slug": "hydroxychloroquine-preventing-covid-19-after-close-exposure",
+   "indication": "Preventing COVID-19 after close exposure to the coronavirus"
+  },
+  {
+   "slug": "ketamine-prevention-of-depression",
+   "indication": "Prevention of depression"
+  },
+  {
+   "slug": "laser-induced-graphene-mask-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "levonorgestrel-plus-piroxicam-prevention-of-pregnancy",
+   "indication": "Prevention of pregnancy"
+  },
+  {
+   "slug": "lubricant-derived-from-cow-salivary-gland-mucus-prevention",
+   "indication": "prevention of HIV infection"
+  },
+  {
+   "slug": "md39-hiv-vaccine-with-alum-and-smnp-prevention-of-hiv",
+   "indication": "prevention of HIV infection"
+  },
+  {
+   "slug": "melatonin-prevention-of-cancer-in-night-shift-workers",
+   "indication": "Prevention of cancer in night-shift workers"
+  },
+  {
+   "slug": "memantine-prevention-of-alzheimer-s-disease",
+   "indication": "prevention of Alzheimer's disease"
+  },
+  {
+   "slug": "mflusiva-prevention-of-influenza",
+   "indication": "Prevention of influenza"
+  },
+  {
+   "slug": "mrna-1018-prevention-of-h5n1-influenza",
+   "indication": "prevention of H5N1 influenza"
+  },
+  {
+   "slug": "mrna-1273-214-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "mrna-1403-prevention-of-norovirus-infection",
+   "indication": "prevention of norovirus infection"
+  },
+  {
+   "slug": "ndv-hxp-s-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "necator-americanus-infection-prevention-of-type-2-diabetes",
+   "indication": "prevention of type 2 diabetes"
+  },
+  {
+   "slug": "niacinamide-prevention-of-skin-cancer",
+   "indication": "prevention of skin cancer"
+  },
+  {
+   "slug": "nicotine-patches-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "nirsevimab-prevention-of-respiratory-syncytial-virus",
+   "indication": "prevention of respiratory syncytial virus infection"
+  },
+  {
+   "slug": "nitisinone-prevention-of-malaria",
+   "indication": "prevention of malaria"
+  },
+  {
+   "slug": "novavax-covid-19-vaccine-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "paediatrician-derived-antibodies-against-rsv-respiratory",
+   "indication": "Respiratory syncytial virus infection prevention"
+  },
+  {
+   "slug": "permethrin-treated-cloth-wraps-prevention-of-malaria",
+   "indication": "prevention of malaria"
+  },
+  {
+   "slug": "pfizer-biontech-covid-19-vaccine-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "polb-001-cytokine-release-syndrome-prevention",
+   "indication": "Cytokine release syndrome prevention"
+  },
+  {
+   "slug": "pronuclear-transfer-prevention-of-mitochondrial-disease",
+   "indication": "Prevention of mitochondrial disease"
+  },
+  {
+   "slug": "psilocybin-prevention-of-chemotherapy-induced-peripheral",
+   "indication": "Prevention of chemotherapy-induced peripheral neuropathy"
+  },
+  {
+   "slug": "r21-prevention-of-malaria",
+   "indication": "prevention of malaria"
+  },
+  {
+   "slug": "release-of-wolbachia-infected-aedes-aegypti-mosquitoes",
+   "indication": "Dengue prevention"
+  },
+  {
+   "slug": "sars-cov-2-spike-s2-targeted-vaccination-prevention-of",
+   "indication": "Prevention of coronavirus infections"
+  },
+  {
+   "slug": "shingrix-prevention-of-cardiovascular-disease",
+   "indication": "Prevention of cardiovascular disease"
+  },
+  {
+   "slug": "shingrix-prevention-of-dementia",
+   "indication": "prevention of dementia"
+  },
+  {
+   "slug": "sinopharm-covid-19-vaccine-covid-19-prevention",
+   "indication": "COVID-19 prevention"
+  },
+  {
+   "slug": "smartstep-prevention-of-falls-in-older-people",
+   "indication": "Prevention of falls in older people"
+  },
+  {
+   "slug": "spike-protein-gene-sequence-modification-prevention-of",
+   "indication": "Prevention of vaccine-associated blood clots"
+  },
+  {
+   "slug": "strength-training-program-during-pregnancy-prevention-of",
+   "indication": "Prevention of gestational diabetes"
+  },
+  {
+   "slug": "sunlenca-prevention-of-hiv-infection",
+   "indication": "Prevention of HIV infection"
+  },
+  {
+   "slug": "tadalafil-prevention-of-cardiovascular-disease",
+   "indication": "Prevention of cardiovascular disease"
+  },
+  {
+   "slug": "targeted-vitamin-d3-treatment-prevention-of-recurrent",
+   "indication": "Prevention of recurrent myocardial infarction"
+  },
+  {
+   "slug": "tetris-prevention-of-post-traumatic-stress-disorder",
+   "indication": "Prevention of post-traumatic stress disorder"
+  },
+  {
+   "slug": "uv-led-disinfection-of-coronavirus-prevention-of-coronavirus",
+   "indication": "Prevention of coronavirus infection"
+  },
+  {
+   "slug": "vanilla-flavored-barrier-panties-prevention-of-sexually",
+   "indication": "Prevention of sexually transmitted infections"
+  },
+  {
+   "slug": "vax-31-prevention-of-pneumococcal-disease",
+   "indication": "prevention of pneumococcal disease"
+  },
+  {
+   "slug": "vitamin-d-supplementation-prevention-of-covid-19",
+   "indication": "prevention of COVID-19"
+  },
+  {
+   "slug": "vitamin-d-supplementation-prevention-of-dementia",
+   "indication": "Prevention of dementia"
+  },
+  {
+   "slug": "vitamin-d-supplements-prevention-of-osteoporosis",
+   "indication": "Prevention of osteoporosis"
+  },
+  {
+   "slug": "vitamin-d3-supplementation-2-000-iu-prevention-of-bone",
+   "indication": "Prevention of bone fractures"
+  },
+  {
+   "slug": "vla15-prevention-of-lyme-disease",
+   "indication": "prevention of Lyme disease"
+  },
+  {
+   "slug": "vxa-g1-1-nn-prevention-of-norovirus-infection",
+   "indication": "Prevention of norovirus infection"
+  },
+  {
+   "slug": "water-fluoridation-prevention-of-dental-caries",
+   "indication": "prevention of dental caries"
+  },
+  {
+   "slug": "zostavax-prevention-of-dementia",
+   "indication": "prevention of dementia"
+  }
+ ]
+}
