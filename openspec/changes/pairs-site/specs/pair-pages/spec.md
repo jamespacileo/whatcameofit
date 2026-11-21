@@ -98,6 +98,13 @@ and the Worker SHALL return the same JSON at `/lookup.json`.
 - **WHEN** a reader searches in the lookup box
 - **THEN** the box reads `/lookup/2.json` and the search detail, and not `/lookup.json`
 
+### Requirement: An approval is shown from the regulator's own record
+A pair page whose status is "Approved" SHALL name the regulator, the product and the regulator's identifier of the record, link the regulator's page for it, give the day the record shows this use was approved or say that the record gives none, and carry the regulator's credit. A trial's phase SHALL never be shown as an approval.
+
+#### Scenario: Approved through EMA with no day for the use
+- **WHEN** a reader opens tirzepatide for obesity, approved through EMA's Mounjaro record, whose table dates only the first authorisation
+- **THEN** "Why this status" says the day is not given in the regulator's record, names the European Medicines Agency and Mounjaro, links EMEA/H/C/005620 to EMA's page, and shows "Source: European Medicines Agency"
+
 ### Requirement: Pages show names, never codes
 No page SHALL show a code where a name belongs: a MeSH descriptor's id, a tree number, a substance code or an intervention key stays in addresses and data files. A step of a path with no name in the bundle SHALL be left out rather than shown as its code.
 

@@ -118,6 +118,23 @@ export const PAIR_RESULTS_DUE_WORDS: Record<string, string> = {
 
 assertNoOutcomeVerdict(Object.values(PAIR_RESULTS_DUE_WORDS));
 
+/** The regulator whose own record gives a pair's approval (`Regulator` in the lab's
+ * `approvals` models, lab change `regulator-approvals`). An approval rests only on a
+ * regulator's own record (openFDA's Drugs@FDA, EMA's medicines table; the operator's
+ * choice, 2026-11-21), so these are the only names an approval is shown under. */
+export const PAIR_REGULATOR_NAMES: Record<string, string> = {
+  EMA: "European Medicines Agency",
+  FDA: "US Food and Drug Administration",
+};
+
+/** How the regulator's condition stands to the pair's (`Fit`). The lab writes an approval
+ * only of `exact` fit, the same MeSH descriptor, so only that code is worded: a bundle that
+ * carries `narrower` or `broader` on a page stops the build until a page says what an
+ * approval for a narrower or broader condition means. */
+export const PAIR_APPROVAL_FIT_WORDS: Record<string, string> = {
+  exact: "The regulator's record names this condition",
+};
+
 /** Every table of words this module holds, by the kind of code it words. */
 export const PAIR_WORDING: Record<string, Record<string, string>> = {
   status: STATUS_LABELS,
@@ -131,6 +148,8 @@ export const PAIR_WORDING: Record<string, Record<string, string>> = {
   registry: PAIR_REGISTRY_NAMES,
   "outcome kind": PAIR_OUTCOME_KIND_WORDS,
   "results due": PAIR_RESULTS_DUE_WORDS,
+  regulator: PAIR_REGULATOR_NAMES,
+  "approval fit": PAIR_APPROVAL_FIT_WORDS,
   tree: TREE_LABELS,
 };
 
@@ -166,6 +185,11 @@ export function unwordedPairCodes(pairPages: any[], interventionPages: any[] = [
       need("results due", trial.findings?.due?.code);
     }
     for (const check of page.checked) need("registry", check.registry);
+    // A bundle cut before the lab's approvals (lab pull request 189) has no `approvals`.
+    for (const approval of page.approvals ?? []) {
+      need("regulator", approval.regulator);
+      need("approval fit", approval.fit);
+    }
   }
   for (const page of interventionPages) need("approach", page.approach?.approach);
   return [...found].sort();

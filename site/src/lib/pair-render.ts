@@ -25,6 +25,9 @@ export function pairDescription(view: PairView): string {
  * or a year. A missing day is never filled in. */
 const registryDay = (value: string) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(value) : (registryDate(value) ?? value));
 
+/** Said in place of a day where the regulator's record shows none for this use (EMA's table
+ * dates a medicine's first authorisation only, not a use added later). */
+export const APPROVAL_UNDATED = "Day not given in the regulator's record";
 const when = (day: string, estimated: boolean) => `${escape(registryDay(day))}${estimated ? " (expected)" : ""}`;
 
 /** An event's date as a page gives it: as precise as the registry gave it, and "(expected)"
@@ -229,8 +232,22 @@ export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): 
     sheetHeading("Why this status", "why"),
     eventList(
       " data-pair-explained",
-      view.explainedBy.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}, ${escape(event.nctId)}</li>`),
+      [
+        // A regulator's approval first: the lab dates one only where the record shows the day
+        // this use was approved, and says so where it does not, never borrowing the day of an
+        // authorisation for another use (lab `RegulatorApproval.approved_on`).
+        ...view.explainedByApprovals.map(
+          (approval) =>
+            `<li data-approval="${escape(approval.key)}">${approval.day ? escape(formatDate(approval.day)) : escape(APPROVAL_UNDATED)}: Approved by the ${escape(approval.regulator)}, as ${escape(approval.brand)} (<a href="${escape(approval.url)}" rel="external">${escape(approval.record)}</a>)</li>`,
+        ),
+        ...view.explainedBy.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}, ${escape(event.nctId)}</li>`),
+      ],
     ),
+    // Each regulator's terms ask for its acknowledgement in every copy (EMA's legal notice;
+    // lab `lab.sources.ema.TERMS`), carried by the lab as `credit`.
+    view.explainedByApprovals.length
+      ? `<p class="note" data-approval-credit>${[...new Set(view.explainedByApprovals.map((approval) => approval.credit))].map(escape).join(" ")}</p>`
+      : "",
     sheetHeading("The trials", "trials"),
     // Where the trials' dated events fall, on one axis to the last check, with its key
     // (lib/record-strip.ts). No strip without a day the registries were last checked.

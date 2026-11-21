@@ -9,6 +9,7 @@ import {
   PAIR_RESULTS_DUE_WORDS,
   PAIR_PHASE_WORDS,
   PAIR_REGISTRY_NAMES,
+  PAIR_REGULATOR_NAMES,
   PAIR_STATUS_GLOSSES,
   PAIR_STATUS_LABELS,
   PAIR_TRIAL_STATES,
@@ -280,6 +281,21 @@ export interface PairTrialView {
   registryUrl: string;
 }
 
+/** A regulator's approval of the pair, from its own record (`PairApproval`). */
+export interface PairApprovalView {
+  key: string;
+  regulator: string;
+  /** The regulator's identifier of the record (an EMA product number, an FDA application). */
+  record: string;
+  brand: string;
+  /** The day the record shows this use was approved; null where no record shows one. The lab
+   * never puts a first authorisation's day for another use here (lab `RegulatorApproval`). */
+  day: string | null;
+  url: string;
+  /** The acknowledgement the regulator's terms ask for in each copy, as the lab carries it. */
+  credit: string;
+}
+
 export interface PairView {
   address: string;
   title: string;
@@ -294,6 +310,10 @@ export interface PairView {
   asOf: string;
   /** The events that set the status, oldest first. */
   explainedBy: PairEventView[];
+  /** The regulators' approvals that set the status (an approved pair's), in key order. */
+  explainedByApprovals: PairApprovalView[];
+  /** Every approval of the pair the bundle carries. */
+  approvals: PairApprovalView[];
   trials: PairTrialView[];
   history: { on: string; before: string | null; after: string }[];
   otherNames: string[];
@@ -317,9 +337,24 @@ function eventView(event: any): PairEventView {
 
 const byDay = (a: { day: string }, b: { day: string }) => (a.day < b.day ? -1 : a.day > b.day ? 1 : 0);
 
+function approvalView(approval: any): PairApprovalView {
+  return {
+    key: approval.key,
+    regulator: PAIR_REGULATOR_NAMES[approval.regulator],
+    record: approval.record,
+    brand: approval.brand,
+    day: approval.approved_on,
+    url: approval.url,
+    credit: approval.credit,
+  };
+}
+
 /** What a pair page shows, in the site's words. */
 export function pairView(page: any): PairView {
   const { row } = page;
+  // A bundle cut before the lab's approvals (lab pull request 189) has no `approvals`.
+  const approvals: PairApprovalView[] = (page.approvals ?? []).map(approvalView).sort((a: PairApprovalView, b: PairApprovalView) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  const explaining = new Set<string>(row.status.explained_by);
   const events = new Map<string, PairEventView>();
   for (const trial of page.trials) for (const event of trial.events) events.set(event.key, eventView(event));
   const preferred = row.intervention.preferred_name;
@@ -347,6 +382,8 @@ export function pairView(page: any): PairView {
       .map((key: string) => events.get(key))
       .filter((event: PairEventView | undefined): event is PairEventView => Boolean(event))
       .sort(byDay),
+    explainedByApprovals: approvals.filter((approval) => explaining.has(approval.key)),
+    approvals,
     trials: page.trials.map((trial: any): PairTrialView => {
       const facts = trial.facts;
       const phases = (facts.phases ?? []).map((phase: string) => PAIR_PHASE_WORDS[phase]);

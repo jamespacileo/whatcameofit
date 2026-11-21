@@ -1,0 +1,12 @@
+{
+ "key": "substance:OYN3CCI6QE|D009765|approved_for|EMEA/H/C/005620",
+ "intervention_id": "substance:OYN3CCI6QE",
+ "condition_id": "D009765",
+ "regulator": "EMA",
+ "record": "EMEA/H/C/005620",
+ "brand": "Mounjaro",
+ "fit": "exact",
+ "approved_on": null,
+ "url": "https://www.ema.europa.eu/en/medicines/human/EPAR/mounjaro",
+ "credit": "Source: European Medicines Agency, https://www.ema.europa.eu."
+}

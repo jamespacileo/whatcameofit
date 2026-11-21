@@ -3,8 +3,8 @@
 // furthest phase each reached, furthest first, then those with no phase. A row gives the
 // trial, how many people, its phase, its state and whether it posted results, and opens to its
 // record. Built from the pair's own trial views: nothing here says how a trial turned out, a
-// phase is only ever named ("Phase 4" is a study after approval, not an approval: the lab
-// tracks no regulator's decision), and no colour marks a state.
+// phase is only ever named ("Phase 4" is a study after approval, not an approval: an approval
+// comes only from a regulator's own record, `PairPage.approvals`), and no colour marks a state.
 import { escape } from "./blocks.ts";
 import { trialRecord } from "./pair-render.ts";
 import type { PairTrialView } from "./pair-view.ts";
