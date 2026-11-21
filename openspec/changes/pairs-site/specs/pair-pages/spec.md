@@ -44,11 +44,19 @@ The build SHALL make no file per pair. Every pair's page, open data record, embe
 - **THEN** the reader gets the site's error page, and nothing from the file is shown
 
 ### Requirement: Old addresses answer
-A claim's address whose pair is published SHALL answer with a permanent redirect to the pair's address. An archived claim's address SHALL answer 410 as before. A claim with no pair SHALL keep its page and its other files (embed, oEmbed, cards, data record, feed) at their own addresses, as production last built them (the operator, 2026-11-21). Source outlet icons loaded by kept claims SHALL remain at their original addresses. Year indexes linked from these pages SHALL remain available at their original addresses with the assets they load.
+A claim's address whose pair is published SHALL answer with a permanent redirect to the pair's address. An archived claim's address SHALL answer 410 as before. A claim with no pair SHALL keep its page and its other files (embed, oEmbed, cards, data record, feed) at their own addresses, as production last built them (the operator, 2026-11-21). Source outlet icons loaded by kept claims SHALL remain at their original addresses. Year indexes linked from these pages SHALL remain available at their original addresses with the assets they load. A claim whose recorded indication is the prevention of a condition SHALL NOT redirect to a pair unless the operator has verified that very pair as the same scope; until then it SHALL keep its page as a claim with no pair does (the operator, 2026-11-21).
 
 #### Scenario: A moved claim
 - **WHEN** a reader opens a claim slug the moved-addresses file maps to a pair
 - **THEN** the answer is a 301 to that pair's address
+
+#### Scenario: A prevention claim and a broader pair
+- **WHEN** a claim recorded as preventing a condition (alzheimers-prevention-trontinemab) maps to a pair about the condition (trontinemab--alzheimer-disease) that the operator has not verified for it
+- **THEN** the claim's address answers its kept page, not a redirect, and the build log names the hold
+
+#### Scenario: A verified prevention redirect
+- **WHEN** the operator has verified a claim with one pair, and a later bundle maps the claim to another pair
+- **THEN** it redirects only to the verified pair, and to the other it is held again
 
 #### Scenario: A claim whose slug equals its pair's address
 - **WHEN** the two are the same

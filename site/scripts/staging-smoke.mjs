@@ -37,7 +37,16 @@ export function smokeAddresses(dist) {
   const moved = gone.find((entry) => entry.to && !entry.kept);
   // An old claim with no pair to lead to keeps its page (kept-claims.json, scripts/redirects.mjs);
   // one the operator archived is gone, 410 (data/retired-addresses.json).
-  const [kept] = read("kept-claims.json");
+  const keptList = read("kept-claims.json");
+  const [kept] = keptList;
+  const keptSet = new Set(keptList);
+  // Every claim held from a pair of another scope (held-redirects.json, scripts/redirect-scope.mjs)
+  // must keep its page: one that is neither kept nor led to a kept claim is a build that lost it.
+  const held = read("held-redirects.json");
+  const keptLeads = new Map(gone.filter((entry) => entry.kept).map((entry) => [entry.slug, entry.to]));
+  for (const { slug } of held) {
+    if (!keptSet.has(slug) && !keptSet.has(keptLeads.get(slug))) throw new Error(`the claim ${slug} is held from its pair but keeps no page in this build`);
+  }
   const archived = gone.find((entry) => entry.on);
   if (!moved) throw new Error("gone.json holds no old claim address that leads to a pair");
   if (!kept) throw new Error("the build kept no claim's page: was it built with KEPT_CLAIMS_DIR?");
@@ -53,6 +62,13 @@ export function smokeAddresses(dist) {
       { pathname: `/data/claims/${kept}.json`, status: 200, type: /^application\/json\b/ },
       { pathname: `/${archived.slug}`, status: 410 },
       { pathname: "/no-such--pair", status: 404 },
+      // A claim held from a pair of another scope (held-redirects.json, scripts/redirect-scope.mjs)
+      // answers its own kept page, never a redirect to that pair.
+      ...held.slice(0, 1).map((one) =>
+        keptSet.has(one.slug)
+          ? { pathname: `/${one.slug}`, status: 200, type: /^text\/html\b/ }
+          : { pathname: `/${one.slug}`, status: 301, location: `/${keptLeads.get(one.slug)}` },
+      ),
     ],
   };
 }
