@@ -6,7 +6,7 @@
 // placed in the HTML goes through `escape`; a function given HTML says so in its parameter's name.
 
 import { UNCHECKED_BYLINE } from "./notices.ts";
-import { STAGE_PATH } from "./status.ts";
+import { OFF_PATH, STAGE_PATH, STATUS_GLOSSES, STATUS_LABELS, statusCounts } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
 const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -19,10 +19,11 @@ export function escape(value: unknown): string {
 /**
  * The band at the head of a record page: navy, holding where the page sits, its title and what
  * it is (global.css, "record band"). `attributes` is the section's own, written as HTML after its
- * class (an aria-label, data attributes).
+ * class (an aria-label, data attributes). `sideHtml` is the card at the band's right, level with
+ * the title (a pair's "Where it stands"); under the title on a narrow screen.
  */
-export function band(attributes: string, html: string[]): string {
-  return [`<section class="band record"${attributes}><div class="wrap band-grid"><div class="band-main">`, ...html, `</div></div></section>`].join("");
+export function band(attributes: string, html: string[], sideHtml = ""): string {
+  return [`<section class="band record"${attributes}><div class="wrap band-grid"><div class="band-main">`, ...html, `</div>`, sideHtml, `</div></section>`].join("");
 }
 
 export interface Crumb {
@@ -54,9 +55,10 @@ export function followedLine(subjectHtml: string, className: string): string {
 /** A status and its gloss, as a sentence: the status in bold, never coloured. */
 export const statusWords = (status: string, gloss: string) => `<strong>${escape(status)}</strong>. ${escape(gloss)}.`;
 
-/** The sheet under a band: the page's content in the site's frame, with no section rail. */
-export function sheet(html: string[]): string {
-  return [`<div class="frame no-rail"><div class="sheet">`, ...html, `</div></div>`].join("");
+/** The sheet under a band: the page's content in the site's frame. With `railHtml` (a
+ * `sectionList`) the frame keeps its first column for it; with none it has no section rail. */
+export function sheet(html: string[], railHtml = ""): string {
+  return [railHtml ? `<div class="frame">${railHtml}<div class="sheet">` : `<div class="frame no-rail"><div class="sheet">`, ...html, `</div></div>`].join("");
 }
 
 /** A heading of the sheet, with the address of its place on the page. */
@@ -79,20 +81,94 @@ export interface PairTableRow {
   trials: number;
 }
 
+/** How many pairs a list holds before it has a stage filter: six, as the claims site's tables
+ * had (DESIGN.md, "Stage filter"). A shorter list is read at a glance. */
+export const STAGE_FILTER_FROM = 6;
+
+/**
+ * The path as a filter (DESIGN.md, "Stage filter"; the claims site's StageFilter, recovered for
+ * pairs): how many of a list's pairs stand at each place, each count a button that narrows the
+ * table after it to that place, and a box that narrows it by a word. It doubles as the key to
+ * the small tracks in the table's rows. scripts/pair-filter.ts does the narrowing; with no
+ * script the counts still read as a summary. A place with no pair is disabled. Nothing here
+ * is coloured by status.
+ */
+export function stageFilter(rows: { statusCode: string }[]): string {
+  if (rows.length < STAGE_FILTER_FROM) return "";
+  const counts = statusCounts(rows);
+  const place = (code: string, off: boolean) => {
+    const count = counts.get(code) ?? 0;
+    const label = STATUS_LABELS[code as keyof typeof STATUS_LABELS];
+    return (
+      `<button type="button" class="${off ? "place off" : "place"}" data-status="${escape(code)}" data-label="${escape(label)}" aria-pressed="false"${count === 0 ? " disabled" : ""}>` +
+      `${off ? "" : `<span class="dot" aria-hidden="true"></span>`}<strong>${count}</strong><span class="place-name">${escape(label)}</span></button>`
+    );
+  };
+  const offPath = OFF_PATH.filter((code) => counts.has(code));
+  return [
+    `<div class="stage-filter" data-stage-filter data-pagefind-ignore>`,
+    `<label class="word-field"><span class="visually-hidden">Filter this list by a word</span><input type="search" placeholder="Find a treatment or condition" autocomplete="off" data-words></label>`,
+    `<div class="places" role="group" aria-label="Show only the pairs at one status">`,
+    ...STAGE_PATH.map((code) => place(code, false)),
+    `</div>`,
+    offPath.length ? `<div class="off-path" role="group" aria-label="Statuses off the path">${offPath.map((code) => place(code, true)).join("")}</div>` : "",
+    `<p class="shown" hidden data-shown><span aria-live="polite" data-shown-text></span> <button type="button" data-show-all>Show all</button></p>`,
+    `<div class="no-match" hidden data-none><p><strong>Nothing here matches.</strong> <span data-none-what></span></p><button type="button" class="share" data-show-all>Show all ${rows.length}</button></div>`,
+    `</div>`,
+  ].join("");
+}
+
+/**
+ * The path with how many pairs stand at each place, to read and not to press: the stage
+ * filter's drawing with no table to narrow (the home page, over every pair). Statuses off the
+ * path follow as outlined counts. Nothing is coloured by status.
+ */
+export function stageCounts(rows: { statusCode: string }[], label: string): string {
+  const counts = statusCounts(rows);
+  const place = (code: string, off: boolean) =>
+    `<li class="${off ? "place off" : "place"}" data-status="${escape(code)}">${off ? "" : `<span class="dot" aria-hidden="true"></span>`}<strong>${(counts.get(code) ?? 0).toLocaleString("en-GB")}</strong> <span class="place-name">${escape(STATUS_LABELS[code as keyof typeof STATUS_LABELS])}</span></li>`;
+  const offPath = OFF_PATH.filter((code) => counts.has(code));
+  return [
+    `<div class="stage-filter stage-counts" data-stage-counts>`,
+    `<ul class="places" aria-label="${escape(label)}">${STAGE_PATH.map((code) => place(code, false)).join("")}</ul>`,
+    offPath.length ? `<ul class="off-path" aria-label="Statuses off the path">${offPath.map((code) => place(code, true)).join("")}</ul>` : "",
+    `</div>`,
+  ].join("");
+}
+
+/** A status in a row of a list: its place on the path, its label and the same in plain words
+ * (the claims site's StatusCell). The track is the path's shape only, never coloured by status. */
+export function statusCell(code: string, status: string): string {
+  const gloss = STATUS_GLOSSES[code as keyof typeof STATUS_GLOSSES];
+  return `<span class="status-line">${stageTrack(code, { off: true })}<strong class="status-name">${escape(status)}</strong></span>${gloss ? `<span class="gloss">${escape(gloss)}</span>` : ""}`;
+}
+
+/** The one value every row shares, or null when they differ (or there are none). */
+const shared = <T,>(values: T[]): T | null => (values.length > 0 && values.every((value) => value === values[0]) ? values[0] : null);
+
 /** A list of pairs as a table (pair/pair.css, "pair-table"): each pair's page, where it stands
- * and as of when, and its trials; `caption` names the list for a screen reader. */
+ * on the path and in words, and its trials; `caption` names the list for a screen reader.
+ * The day the statuses are as of, and that no person has checked a page yet, are said once
+ * above the table when every row shares them, and in the row only when rows differ: on the
+ * rehearsal bundle every row of every list repeated the same two notes. */
 export function pairTable(caption: string, rows: PairTableRow[]): string {
   if (rows.length === 0) return `<p>No pair is listed here yet.</p>`;
+  const asOf = shared(rows.map((row) => row.asOf));
+  const unchecked = shared(rows.map((row) => row.checkedByPerson)) === false;
+  const said = [asOf ? `Statuses as of ${escape(formatDate(asOf))}.` : "", unchecked ? `${escape(UNCHECKED_BYLINE[0])} ${escape(UNCHECKED_BYLINE[1])}.` : ""].filter(Boolean);
   return [
-    `<table class="pair-table" data-pair-table><caption class="visually-hidden">${escape(caption)}</caption>`,
-    `<thead><tr><th scope="col">Treatment and condition</th><th scope="col">Where it stands</th><th scope="col">Trials</th></tr></thead><tbody>`,
+    said.length ? `<p class="note pair-table-note" data-pair-table-note>${said.join(" ")}</p>` : "",
+    `<div class="table-frame"><table class="index pair-table" data-pair-table><caption class="visually-hidden">${escape(caption)}</caption>`,
+    `<thead><tr><th scope="col">Treatment and condition</th><th scope="col">Where it stands</th><th scope="col" class="trials">Trials</th></tr></thead><tbody>`,
     ...rows.map(
       (row) =>
-        `<tr data-pair="${escape(row.address)}"><th scope="row"><a href="/${escape(row.address)}">${escape(row.intervention)} for ${escape(row.condition.toLowerCase())}</a></th>` +
-        `<td data-status="${escape(row.statusCode)}">${escape(row.status)}, as of ${escape(formatDate(row.asOf))}${row.checkedByPerson ? "" : ` <span class="note">(${escape(UNCHECKED_BYLINE[1])})</span>`}</td>` +
-        `<td>${row.trials}</td></tr>`,
+        `<tr data-pair="${escape(row.address)}" data-status="${escape(row.statusCode)}"><th scope="row" class="claim"><a href="/${escape(row.address)}">${escape(row.intervention)} for ${escape(row.condition.toLowerCase())}</a></th>` +
+        `<td class="status" data-label="Where it stands">${statusCell(row.statusCode, row.status)}` +
+        `${asOf ? "" : `<span class="gloss">As of ${escape(formatDate(row.asOf))}</span>`}` +
+        `${unchecked || row.checkedByPerson ? "" : `<span class="gloss">${escape(UNCHECKED_BYLINE[1])}</span>`}</td>` +
+        `<td class="trials" data-label="Trials">${row.trials}</td></tr>`,
     ),
-    `</tbody></table>`,
+    `</tbody></table></div>`,
   ].join("");
 }
 
@@ -161,6 +237,25 @@ export function stageTrack(code: string, { ends = false, named = false, off = fa
  * explains, said in words to a screen reader unless `label` is false. */
 export function basisMark(label = true): string {
   return `<span class="basis-mark"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.4 6 6 11.4 0.6 6z"></path></svg>${label ? `<span class="visually-hidden">basis of status</span>` : ""}</span>`;
+}
+
+/**
+ * Where a pair stands, as the card at the right of its band (DESIGN.md, "Digest panel"; the
+ * claim page's "Where it stands" card, recovered for pairs): the status as the card's largest
+ * words, the same in plain words, its place on the path said under the track, then each of
+ * `linesHtml` as a quiet row (the latest record, the trials counted, when the status was set).
+ * The label is blue as every status label is, never a colour of its status; a status off the
+ * path has the square alone. `attributes` is the label's own, as HTML.
+ */
+export function standingCard(code: string, status: string, gloss: string, linesHtml: string[], attributes = ""): string {
+  return [
+    `<div class="digest" data-standing-card><h2 class="card-tab">Where it stands</h2><div class="standing">`,
+    `<div class="label-row"><span class="label"${attributes}>${escape(status)}</span></div>`,
+    `<p class="gloss">${escape(gloss)}</p>`,
+    stageTrack(code, { ends: true, off: true }),
+    ...linesHtml.filter(Boolean).map((line) => `<p class="changed" data-pagefind-ignore>${line}</p>`),
+    `</div></div>`,
+  ].join("");
 }
 
 export interface SectionItem {

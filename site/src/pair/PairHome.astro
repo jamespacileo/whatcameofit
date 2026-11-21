@@ -1,19 +1,29 @@
 ---
-// The home page on the pair path: the lookup box, then the latest status changes, the topics
-// and the treatments followed. The first version shows no reports (design decision 6).
+// The home page on the pair path: the lookup box with what the site holds under it, where
+// every pair stands along the path, the latest dated records of their trials by day, the
+// topics, and every treatment followed, folded. The claims home's parts (its counts line, its
+// "Try" chips, its day-by-day list with a status beside each entry), recovered for pairs. The
+// first version shows no reports (design decision 6).
 import Base from "../layouts/Base.astro";
 import Lookup from "../components/Lookup.astro";
 import { SITE } from "../../site.config.mjs";
-import { STATUS_LABELS } from "../lib/status";
+import { stageCounts, statusCell } from "../lib/blocks";
 import { siteData } from "../lib/structured";
-import { interventionListings, pairChanges, topicsIndex } from "../lib/pairs";
+import { interventionListings, latestRecords, pairTotals, topicsIndex, type LatestRecord } from "../lib/pairs";
 import { formatDate } from "../lib/timetable";
+import "./pair.css";
 
-const LATEST = 10;
-const changes = pairChanges().slice(0, LATEST);
+const LATEST = 12;
+// The topics a reader is offered to try: the three with the most pairs.
+const TRY = 3;
+const latest = latestRecords(LATEST);
+const days = new Map<string, LatestRecord[]>();
+for (const record of latest) days.set(record.day, [...(days.get(record.day) ?? []), record]);
 const topics = topicsIndex();
+const tried = [...topics].sort((a, b) => b.count - a.count || a.title.localeCompare(b.title)).slice(0, TRY);
 const interventions = interventionListings().filter((listing) => listing.pairs.length > 0);
-const label = (code: string) => STATUS_LABELS[code as keyof typeof STATUS_LABELS];
+const totals = pairTotals();
+const n = (count: number) => count.toLocaleString("en-GB");
 ---
 
 <Base current="home" structured={siteData()}>
@@ -21,63 +31,256 @@ const label = (code: string) => STATUS_LABELS[code as keyof typeof STATUS_LABELS
     <div class="wrap">
       <h1 class="title" id="lookup-title">What happened to that breakthrough?</h1>
       <p class="lede">{SITE.description}</p>
-      <Lookup />
+      <Lookup>
+        <div class="under-box">
+          {
+            tried.length > 0 && (
+              <p class="try" data-home="try">
+                <span>Try</span>
+                {tried.map((topic) => <a class="chip" href={`/topic/${topic.slug}`}>{topic.title.toLowerCase()}</a>)}
+              </p>
+            )
+          }
+          {
+            totals.pairs > 0 && (
+              <p class="holds" data-home="holds">
+                {n(totals.pairs)} {totals.pairs === 1 ? "treatment and condition" : "treatments and conditions"} followed in{" "}
+                <a href="/topics">{topics.length} {topics.length === 1 ? "topic" : "topics"}</a>, through {n(totals.trials)}{" "}
+                {totals.trials === 1 ? "registered trial" : "registered trials"}.
+              </p>
+            )
+          }
+        </div>
+      </Lookup>
     </div>
   </section>
 
-  <section aria-labelledby="latest" data-home="changes">
-    <h2 class="bar sheet-title" id="latest">Latest status changes</h2>
+  {
+    totals.pairs > 0 && (
+      <section class="home-part" aria-labelledby="home-standing" data-home="standing">
+        <h2 class="bar sheet-title" id="home-standing">Where they stand</h2>
+        <p class="note">
+          Each treatment and condition is counted once, at the furthest place its trials have reached. A place is a
+          position in the records, not a result. <a href="/how-it-works">How a status is set</a>
+        </p>
+        <Fragment set:html={stageCounts(totals.rows, "Treatments and conditions followed, by status")} />
+      </section>
+    )
+  }
+
+  <section class="home-part" aria-labelledby="latest" data-home="latest">
+    <h2 class="bar sheet-title" id="latest">Latest records</h2>
     {
-      changes.length === 0 ? (
-        <p>No status has changed yet.</p>
+      latest.length === 0 ? (
+        <p>No dated record yet.</p>
       ) : (
-        <ol class="home-changes">
-          {changes.map((change) => (
-            <li data-pair={change.address}>
-              {formatDate(change.on)}: <a href={`/${change.address}`}>{change.title}</a>,{" "}
-              {change.before ? `${label(change.before)} to ${label(change.code)}` : `first set: ${label(change.code)}`}
-            </li>
-          ))}
-        </ol>
+        <>
+          <p class="note">The newest dated events in the registry records of the trials followed, and where each treatment stands now.</p>
+          <div class="days">
+            {[...days].map(([day, records]) => (
+              <section class="day" aria-label={formatDate(day)}>
+                <h3 class="day-head">{formatDate(day)}</h3>
+                <ul class="day-rows">
+                  {records.map((record) => (
+                    <li class="day-row" data-pair={record.address} data-event={record.key}>
+                      <div class="what">
+                        <p class="row-note">Registry record · {record.nctId}</p>
+                        <p class="said">
+                          {record.label}: <a href={`/${record.address}`}>{record.title}</a>
+                        </p>
+                        {record.others > 0 && (
+                          <p class="row-note">
+                            The same trial is followed for {record.others} other{" "}
+                            {record.others === 1 ? "treatment and condition" : "treatments and conditions"}.
+                          </p>
+                        )}
+                      </div>
+                      <div class="now">
+                        <p class="row-note">Status now</p>
+                        <Fragment set:html={statusCell(record.statusCode, record.status)} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </>
       )
     }
-    <p><a href="/changes.xml">Status changes feed</a></p>
+    <p class="more"><a href="/changes.xml">Status changes feed</a></p>
   </section>
 
-  <section aria-labelledby="home-topics" data-home="topics">
+  <section class="home-part" aria-labelledby="home-topics" data-home="topics">
     <h2 class="bar sheet-title" id="home-topics">Topics</h2>
-    <ul class="home-list">
+    <ul class="topic-chips">
       {
         topics.map((topic) => (
           <li data-topic={topic.slug}>
-            <a href={`/topic/${topic.slug}`}>{topic.title}</a> ({topic.count})
+            <a class="chip" href={`/topic/${topic.slug}`}>
+              {topic.title} <span class="count">{n(topic.count)}</span>
+            </a>
           </li>
         ))
       }
     </ul>
-    <p><a href="/topics">Every topic</a> · <a href="/clinical">Clinical categories</a></p>
+    <p class="more"><a href="/topics">Every topic</a> · <a href="/clinical">Clinical categories</a> · <a href="/explore">Pick several at once</a></p>
   </section>
 
-  <section aria-labelledby="home-treatments" data-home="treatments">
+  <section class="home-part" aria-labelledby="home-treatments" data-home="treatments">
     <h2 class="bar sheet-title" id="home-treatments">Treatments followed</h2>
-    <ul class="home-list">
-      {
-        interventions.map((listing) => (
-          <li data-intervention={listing.slug}>
-            <a href={`/intervention/${listing.slug}`}>{listing.name}</a> ({listing.pairs.length})
-          </li>
-        ))
-      }
-    </ul>
+    {/* Every treatment's page stays one link from the home page, folded: on the rehearsal
+        bundle the list is some 3,000 names, and it stood open as most of the page. */}
+    <details class="all-treatments">
+      <summary>All {n(interventions.length)} {interventions.length === 1 ? "treatment" : "treatments"}, A to Z</summary>
+      <ul>
+        {
+          interventions.map((listing) => (
+            <li data-intervention={listing.slug}>
+              <a href={`/intervention/${listing.slug}`}>{listing.name}</a> <span class="count">{listing.pairs.length}</span>
+            </li>
+          ))
+        }
+      </ul>
+    </details>
   </section>
 </Base>
 
 <style>
-  .home-changes,
-  .home-list {
-    padding-left: 1.2em;
+  .home-part {
+    max-width: 60rem;
+    margin: 0 auto var(--section-space, 2.5rem);
   }
-  section[data-home] {
-    margin-block: 2rem;
+  .home-part:first-of-type {
+    margin-top: var(--section-space, 2.5rem);
+  }
+  .home-part .note,
+  .row-note {
+    margin: 0;
+    font-size: var(--note-size);
+    color: var(--muted);
+  }
+  .home-part > .note {
+    max-width: var(--measure);
+    margin-bottom: 0.9rem;
+  }
+  .more {
+    margin: 1rem 0 0;
+  }
+
+  /* Under the box: topics to try, and what the site holds. */
+  .under-box {
+    margin-top: 1.1rem;
+    display: grid;
+    gap: 0.6rem;
+    justify-items: center;
+  }
+  .try {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: var(--text-s);
+  }
+  .try .chip {
+    padding-inline: 0.8rem;
+  }
+  .holds {
+    margin: 0;
+    font-size: var(--text-s);
+    color: var(--muted);
+  }
+
+  /* The latest records: a white sheet a day, each record a row with its status beside it. */
+  .days {
+    display: grid;
+    gap: 1.1rem;
+  }
+  .day {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .day-head {
+    margin: 0;
+    padding: 0.5rem 1.1rem;
+    font-family: inherit;
+    font-size: var(--label-size);
+    font-weight: 600;
+    color: var(--muted);
+    background: var(--table-head);
+  }
+  .day-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  .day-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 17rem;
+    gap: 0.6rem 1.5rem;
+    padding: 0.95rem 1.1rem;
+    border-top: 1px solid var(--row-rule);
+  }
+  .said {
+    margin: 0.2rem 0;
+    font-size: var(--text-l);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+  .now {
+    padding: 0.6rem 0.8rem;
+    border-radius: var(--radius-s);
+    background: var(--panel);
+    align-self: start;
+  }
+  .now .row-note {
+    margin-bottom: 0.25rem;
+  }
+  @media (max-width: 40rem) {
+    .day-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  .topic-chips {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .topic-chips .chip {
+    padding: 0.35rem 0.8rem;
+    font-size: var(--text-m);
+  }
+  .topic-chips .count {
+    margin-right: -0.4rem;
+  }
+
+  .all-treatments summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--blue);
+  }
+  .all-treatments ul {
+    margin: 0.9rem 0 0;
+    padding: 0;
+    list-style: none;
+    columns: 18rem;
+    column-gap: 2rem;
+  }
+  .all-treatments li {
+    break-inside: avoid;
+    padding-block: 0.15rem;
+  }
+  .all-treatments .count {
+    color: var(--muted);
+    font-size: var(--text-s);
   }
 </style>

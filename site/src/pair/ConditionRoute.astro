@@ -21,3 +21,8 @@ const view = conditionListing(listing, conditionCardOf({ descriptor_id: listing.
   {/* A condition's page credits no MeSH category, so no edition is named. */}
   <Fragment set:html={renderListingSheet(view, "")} />
 </Base>
+
+<script>
+  // Narrows a listing's table by status or by a word (lib/blocks.ts, stageFilter).
+  import "../scripts/pair-filter";
+</script>

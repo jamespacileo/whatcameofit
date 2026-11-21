@@ -17,16 +17,253 @@
   margin: 0;
 }
 
-/* A list of pairs, as listing pages draw it (lib/listing-render.ts). */
-.pair-table {
-  width: 100%;
-  border-collapse: collapse;
+/* A list of pairs, as listing pages draw it (lib/blocks.ts, pairTable): the site's index table
+   (global.css, ".index") in its frame, each row's status as its place on the path, its label
+   and the same in plain words. */
+.pair-table th.claim {
+  font-weight: 600;
 }
-.pair-table th,
-.pair-table td {
-  text-align: left;
-  padding: 0.4rem 0.6rem 0.4rem 0;
-  vertical-align: top;
+.pair-table .trials {
+  text-align: right;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+.pair-table td.status {
+  width: 19rem;
+}
+.pair-table tr[hidden] {
+  display: none;
+}
+.pair-table-note {
+  margin: 0 0 0.6rem;
+  font-size: var(--note-size);
+  color: var(--muted);
+}
+.status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.7rem;
+}
+@media (min-width: 40.01rem) {
+  .index .status-line {
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+}
+/* On a phone a row is a block: the pair, then where it stands, then its trials by name. */
+@media (max-width: 40rem) {
+  .pair-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .pair-table tr {
+    display: block;
+    padding-block: var(--row-pad);
+    border-top: 1px solid var(--row-rule);
+  }
+  .pair-table tbody tr:first-child {
+    border-top: 0;
+  }
+  .pair-table th,
+  .pair-table td {
+    display: block;
+    width: auto;
+    padding-block: 0.15rem;
+    border-top: 0;
+    text-align: left;
+  }
+  .pair-table td.status {
+    width: auto;
+  }
+  .pair-table td.trials {
+    text-align: left;
+    font-size: var(--note-size);
+  }
+  .pair-table td.trials::before {
+    content: attr(data-label) ": ";
+    color: var(--muted);
+  }
+}
+
+/* The path as a filter (lib/blocks.ts, stageFilter): the claims site's stage filter, as
+   production drew it. The line through the dots is the path; a pressed place is tinted and its
+   dot filled blue, the colour of every control, never a colour of its status. */
+.stage-filter {
+  margin: 1.5rem 0 0.9rem;
+}
+.stage-filter .places {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+}
+.stage-filter .place {
+  font: inherit;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.25rem 0.5rem;
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 0.1rem;
+  text-align: center;
+  position: relative;
+}
+.stage-filter .places .place::before {
+  content: "";
+  position: absolute;
+  top: calc(0.8rem - 0.75px);
+  left: 0;
+  right: 0;
+  border-top: 1.5px solid var(--rule);
+}
+.stage-filter .places .place:first-child::before {
+  left: 50%;
+}
+.stage-filter .places .place:last-child::before {
+  right: 50%;
+}
+.stage-filter .dot {
+  position: relative;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1.5px solid var(--ring);
+}
+.stage-filter .place strong {
+  font-size: var(--text-xl);
+  line-height: 1.2;
+}
+.stage-filter .place-name {
+  font-size: var(--text-xs);
+  line-height: 1.25;
+  color: var(--muted);
+}
+.stage-filter .place:hover:not(:disabled) {
+  background: var(--panel);
+}
+.stage-filter .place[aria-pressed="true"] {
+  background: var(--tint);
+}
+.stage-filter .place[aria-pressed="true"] .dot {
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.stage-filter .place[aria-pressed="true"] .place-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+.stage-filter .place:disabled {
+  cursor: default;
+}
+.stage-filter .place:disabled strong {
+  color: var(--muted);
+  font-weight: 400;
+}
+/* The same drawing with nothing to press (lib/blocks.ts, stageCounts). */
+.stage-counts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.stage-counts .place {
+  cursor: default;
+}
+.stage-counts .place:hover {
+  background: none;
+}
+.stage-filter .off-path {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+.stage-filter .place.off {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  border: 1px solid var(--rule);
+  padding: 0.2rem 0.7rem;
+}
+.stage-filter .place.off strong {
+  font-size: var(--text-m);
+}
+.stage-filter .shown {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0.7rem 0 0;
+  font-size: var(--text-m);
+  color: var(--muted);
+}
+.stage-filter .shown[hidden] {
+  display: none;
+}
+.stage-filter .shown button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  padding: 0.2rem 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+.stage-filter .shown button:hover {
+  text-decoration-thickness: 2px;
+}
+.word-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 24rem;
+  min-height: 2.75rem;
+  margin-bottom: 0.9rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--ring);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  color: var(--muted);
+}
+.word-field:focus-within {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+.word-field input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  color: var(--ink);
+}
+.word-field input::placeholder {
+  color: var(--muted);
+}
+.no-match {
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+  margin-top: 0.9rem;
+  padding: 1.4rem 1.5rem;
+  border: 1px dashed var(--ring);
+  border-radius: var(--radius);
+}
+.no-match[hidden] {
+  display: none;
+}
+.no-match p {
+  margin: 0;
+  max-width: 34rem;
 }
 
 /* A trial's posted results (lib/pair-render.ts, renderOutcomes), as DESIGN.md's "Posted
@@ -449,4 +686,70 @@
 .pair-harms summary {
   cursor: pointer;
   margin-bottom: 0.5rem;
+}
+
+/* A pair's "Where it stands" card (lib/blocks.ts, standingCard), as the claim page drew it
+   (production commit 4ea7f23, global.css; the card itself is still global.css's
+   ".band.record .digest"): its heading is a tab standing on the card's top edge, and its facts
+   are quiet rows under the track, each a line of words with no mark before it. */
+/* The card's accent is the masthead's: blue lifted to read on navy. global.css names the token
+   only on the masthead, so without this the card's blue (its label, links and the marked place
+   on the track) resolved to nothing and the marked place was drawn hollow. */
+.band.record .digest {
+  --on-navy: #8ec1f5;
+}
+.band.record .digest .card-tab {
+  position: absolute;
+  left: -1px;
+  bottom: 100%;
+  display: flex;
+  align-items: center;
+  height: 2.15rem;
+  margin: 0;
+  padding: 0 1rem;
+  border: 1px solid rgb(142 193 245 / 0.3);
+  border-bottom: 0;
+  border-radius: var(--radius-s) var(--radius-s) 0 0;
+  background: var(--band-card);
+  color: var(--on-navy-ink);
+  font-family: inherit;
+  font-size: var(--text-s);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.digest .label-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.band.record .digest .gloss {
+  margin: 0.2rem 0 0;
+}
+.band.record .digest[data-standing-card] .changed {
+  display: block;
+}
+.band.record .digest[data-standing-card] .track + .changed {
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--rule);
+}
+@media print {
+  .band.record .digest .card-tab {
+    position: static;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+  }
+}
+
+/* The record strip on a pair page, under "The trials": its note, the strip, its key. */
+.pair-strip {
+  margin: 0.4rem 0 1.4rem;
+}
+.pair-strip .note {
+  margin: 0 0 0.5rem;
+  font-size: var(--note-size);
+  color: var(--muted);
 }
