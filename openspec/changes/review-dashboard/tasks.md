@@ -20,6 +20,7 @@
 - [x] 2.2 Per environment: present (rows; current-bundle rows for versioned tables), absent (with the migration or bundle that would hold it), or not readable yet; unlisted tables shown
 - [x] 2.3 Records a page at a time; details show the exact table or model, record key, migration or schema, bundle version and the manifest's provenance
 - [x] 2.4 Columns never shown (article words, raw payloads, bytes), left out before they reach the browser
+- [x] 2.5 Lists and records read one named bundle version (in the address with offset and record key); a version no longer held answers unavailable (410); rows page in primary-key order; each row opens from a focusable link
 
 ## 3. Pages and search
 

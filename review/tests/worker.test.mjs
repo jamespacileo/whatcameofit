@@ -279,3 +279,76 @@ test("a page record shows its file, its schema and the bundle's provenance", asy
   assert.equal(none.status, 404);
   await none.text();
 });
+
+test("a list and the records opened from it stay on their bundle when another becomes current", async () => {
+  const store = await worker({ store: "bundle" });
+  const db = await store.getD1Database("STAGING_PAIRS");
+  const token = await sign();
+  const pages = encodeURIComponent("page:PairPage");
+  const list = await (await get(store, `/api/models/${pages}/rows`, { token })).json();
+  const old = list.version;
+  const key = list.rows[0].key;
+  // A second bundle, made current: the same files under another version, one of them changed.
+  const next = "f".repeat(16);
+  await db.prepare("UPDATE pair_bundle SET current = 0").run();
+  await db.prepare("INSERT INTO pair_bundle (version, loaded_at, counts, current) VALUES (?, '2026-11-21T13:00:00Z', '{}', 1)").bind(next).run();
+  await db.prepare("INSERT INTO pair_page SELECT ?, model, key, part, body FROM pair_page WHERE version = ?").bind(next, old).run();
+  await db.prepare("INSERT INTO pair SELECT ?, key, address, intervention_id, condition_id, status_code, status_as_of, vertical, checked_by_person, trials, claim_slug FROM pair WHERE version = ?").bind(next, old).run();
+  await db.prepare("UPDATE pair_page SET body = '{\"changed\":true}' WHERE version = ? AND model = 'PairPage' AND key = ? AND part = 0").bind(next, key).run();
+  await db.prepare("DELETE FROM pair_page WHERE version = ? AND model = 'PairPage' AND key = ? AND part > 0").bind(next, key).run();
+
+  const record = await (await get(store, `/api/models/${pages}/record?version=${old}&key=${encodeURIComponent(key)}`, { token })).json();
+  assert.equal(record.version, old);
+  assert.equal(record.current, false);
+  assert.notDeepEqual(record.body, { changed: true });
+  const again = await (await get(store, `/api/models/${pages}/rows?version=${old}`, { token })).json();
+  assert.equal(again.version, old);
+  const pairs = await (await get(store, `/api/models/pair/rows?version=${old}`, { token })).json();
+  assert.ok(pairs.rows.every((row) => row.version === old));
+  const fresh = await (await get(store, `/api/models/${pages}/record?key=${encodeURIComponent(key)}`, { token })).json();
+  assert.equal(fresh.version, next);
+  assert.deepEqual(fresh.body, { changed: true });
+
+  // The old bundle dropped: what was bound to it says so, and never answers from the new one.
+  for (const table of ["pair_page", "pair", "pair_intervention", "pair_intervention_name", "pair_condition", "pair_trial", "pair_trial_facts", "pair_status_change", "pair_bundle"]) await db.prepare(`DELETE FROM ${table} WHERE version = ?`).bind(old).run();
+  for (const pathname of [
+    `/api/models/${pages}/record?version=${old}&key=${encodeURIComponent(key)}`,
+    `/api/models/${pages}/rows?version=${old}`,
+    `/api/models/pair/rows?version=${old}`,
+    `/api/models/pair/record?key=${encodeURIComponent(JSON.stringify([old, pairs.rows[0].key]))}`,
+  ]) {
+    const response = await get(store, pathname, { token });
+    assert.equal(response.status, 410, pathname);
+    assert.deepEqual(await response.json(), { error: "version gone", version: old });
+  }
+  const bad = await get(store, `/api/models/${pages}/rows?version=nope`, { token });
+  assert.equal(bad.status, 400);
+  await bad.text();
+});
+
+test("records are paged in primary-key order and one is addressed by its key", async () => {
+  const full = await worker({ store: "full" });
+  const db = await full.getD1Database("STAGING_PAIRS");
+  // Inserted out of key order.
+  for (const step of ["zeta", "alpha", "mid"]) await db.prepare("INSERT INTO store_step (step, version) VALUES (?, 1)").bind(step).run();
+  const token = await sign();
+  const steps = await (await get(full, "/api/models/store_step/rows", { token })).json();
+  assert.deepEqual(steps.rows.map((row) => row.step), ["alpha", "mid", "zeta"]);
+  assert.deepEqual(steps.key, ["step"]);
+  const pairs = await (await get(full, "/api/models/pair/rows", { token })).json();
+  const keys = pairs.rows.map((row) => row.key);
+  assert.deepEqual(keys, [...keys].sort());
+  const one = await (await get(full, `/api/models/pair/record?key=${encodeURIComponent(JSON.stringify([pairs.version, keys[3]]))}`, { token })).json();
+  assert.equal(one.row.key, keys[3]);
+  assert.equal(one.version, pairs.version);
+  assert.deepEqual(one.key, ["version", "key"]);
+  for (const key of ["[1]", "not json", JSON.stringify([pairs.version, { a: 1 }])]) {
+    const response = await get(full, `/api/models/pair/record?key=${encodeURIComponent(key)}`, { token });
+    assert.equal(response.status, 400, key);
+    await response.text();
+  }
+  await db.prepare("INSERT INTO inbox (run_id, kind, key, body) VALUES ('r1', 'claim', 'k1', 'raw words')").run();
+  const inbox = await (await get(full, `/api/models/inbox/record?key=${encodeURIComponent("[1]")}`, { token })).json();
+  assert.equal(inbox.row.body, undefined);
+  assert.equal(inbox.row.key, "k1");
+});
