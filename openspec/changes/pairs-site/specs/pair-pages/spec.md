@@ -44,7 +44,7 @@ The build SHALL make no file per pair. Every pair's page, open data record, embe
 - **THEN** the reader gets the site's error page, and nothing from the file is shown
 
 ### Requirement: Old addresses answer
-A claim's address whose pair is published SHALL answer with a permanent redirect to the pair's address. An archived claim's address SHALL answer 410 as before. A claim with no pair SHALL keep its page and its other files (embed, oEmbed, cards, data record, feed) at their own addresses, as production last built them (the operator, 2026-11-21).
+A claim's address whose pair is published SHALL answer with a permanent redirect to the pair's address. An archived claim's address SHALL answer 410 as before. A claim with no pair SHALL keep its page and its other files (embed, oEmbed, cards, data record, feed) at their own addresses, as production last built them (the operator, 2026-11-21). Year indexes linked from these pages SHALL remain available at their original addresses with the assets they load.
 
 #### Scenario: A moved claim
 - **WHEN** a reader opens a claim slug the moved-addresses file maps to a pair

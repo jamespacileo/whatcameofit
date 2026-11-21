@@ -5,7 +5,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { KEPT_CLAIMS_COMMIT, claimFiles, freeze, keptProblems, keptSlugs } from "../scripts/kept-claims.mjs";
+import { KEPT_CLAIMS_COMMIT, claimFiles, freeze, keptProblems, keptSlugs, placeKept } from "../scripts/kept-claims.mjs";
 
 const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
 
@@ -46,6 +46,24 @@ test("the claims kept are every claim the site served but those archived or merg
   const slugs = keptSlugs(retired);
   for (const { slug } of [...retired.archived, ...retired.moved]) assert.ok(!slugs.includes(slug), slug);
   assert.ok(slugs.includes("10-person-living-donor-kidney-exchange-chain-kidney-failure"));
+});
+
+test("a kept claim's year link still opens its original index", () => {
+  const from = oldBuild();
+  const work = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-years-"));
+  const kept = path.join(work, "kept");
+  const dist = path.join(work, "dist");
+  fs.appendFileSync(path.join(from, "a-claim/index.html"), '<a href="/year/2022">2022</a>');
+  fs.mkdirSync(path.join(from, "year/2022"), { recursive: true });
+  const year = '<link rel="stylesheet" href="/_astro/year.css"><a href="/a-claim">Claim</a>';
+  fs.writeFileSync(path.join(from, "year/2022/index.html"), year);
+  fs.writeFileSync(path.join(from, "_astro/year.css"), "body { color: black }");
+
+  freeze({ from, to: kept, slugs: ["a-claim"], commit: KEPT_CLAIMS_COMMIT });
+  placeKept({ folder: kept, dist, slugs: ["a-claim"] });
+
+  assert.equal(fs.readFileSync(path.join(dist, "year/2022/index.html"), "utf8"), year);
+  assert.ok(fs.existsSync(path.join(dist, "_astro/year.css")));
 });
 
 test("staging and production are published only from every kept claim, frozen from the pinned commit", () => {

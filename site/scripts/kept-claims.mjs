@@ -51,9 +51,10 @@ function references(builtPath, text) {
 }
 
 /**
- * Copy the kept claims' files out of an old build, with the styles, scripts and fonts they
- * load (everything under _astro/ they reach). Other site addresses they link to (a topic, a
- * guide page, the site's feed) are the current site's, and are listed as `linked`.
+ * Copy the kept claims' files out of an old build with their assets and year indexes.
+ * Each claim links its first report date to a year index. The pair site does not build
+ * those indexes, so take the original pages and follow the assets they load too.
+ * Other site addresses are listed as `linked`.
  * @param {{ from: string, to: string, slugs: string[], commit: string }} options
  */
 export function freeze({ from, to, slugs, commit }) {
@@ -77,10 +78,12 @@ export function freeze({ from, to, slugs, commit }) {
   while (queue.length > 0) {
     const file = queue.pop();
     for (const ref of references(file, fs.readFileSync(path.join(from, file), "utf8"))) {
-      if (own.has(ref) || shared.has(ref)) continue;
-      if (ref.startsWith("_astro/") && fs.existsSync(path.join(from, ref))) {
-        shared.add(ref);
-        if (/\.(css|js)$/.test(ref)) queue.push(ref);
+      const yearIndex = /^year\/\d{4}\/?$/.test(ref);
+      const built = yearIndex ? `${ref.replace(/\/$/, "")}/index.html` : ref;
+      if (own.has(built) || shared.has(built)) continue;
+      if ((built.startsWith("_astro/") || yearIndex) && fs.existsSync(path.join(from, built))) {
+        shared.add(built);
+        if (/\.(html|css|js)$/.test(built)) queue.push(built);
       } else if (!claimFiles(ref.replace(/\/$/, "")).some((own) => kept.has(own))) {
         linked.add(`/${ref}`);
       }
@@ -139,7 +142,7 @@ export function keptProblems(folder) {
 }
 
 /**
- * Put the files of each slug in the build, with the shared files they load, each checked
+ * Put the files of each slug in the build, with the shared files they need, each checked
  * against its SHA-256. A shared file the build already holds is the build's own. Returns
  * how many files were placed.
  * @param {{ folder: string, dist: string, slugs: string[] }} options
