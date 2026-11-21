@@ -31,3 +31,15 @@ The overview SHALL name the bundle staging's D1 store marks current and, apart f
 #### Scenario: Staging holds a bundle
 - **WHEN** the operator opens the overview
 - **THEN** it shows the current version and the loader's counts for it
+
+### Requirement: Every model has a coverage entry in every environment
+
+The model inventory SHALL list every table the store's migrations leave and every page model of the lab's bundle export, each under a readable name, and for each environment SHALL show it as present (with its records), absent (with the migration or bundle that would hold it), or not readable yet. A table the store holds that the catalogue does not list SHALL be shown. The details view SHALL show the exact table or page model, the record key, where the model is defined, and for page records the bundle version, its load time and the manifest's provenance. Columns that hold article text, raw payloads or bytes SHALL never be sent to the browser.
+
+#### Scenario: A store of the pair tables alone
+- **WHEN** staging's store has only migration 0011
+- **THEN** each legacy and operational table is shown absent, naming its migration (for example `trial_paper`, 0006)
+
+#### Scenario: A migration adds a table
+- **WHEN** a migration makes a table the catalogue does not list
+- **THEN** the catalogue test fails until it is listed
