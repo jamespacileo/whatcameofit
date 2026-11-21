@@ -3,11 +3,20 @@
 ## ADDED Requirements
 
 ### Requirement: A published pair has a page
-Each pair in the bundle SHALL have a page at `/{address}` that shows its intervention and condition, its status with the events that produced it, each supporting trial with the arms that test the intervention, the registry's facts, its events, papers and posted results, and the history of the status.
+Each pair in the bundle SHALL have a page at `/{address}` that shows its intervention and condition, its status with the events that produced it, each supporting trial with the arms that test the intervention, the registry's facts, its events, papers, posted results and posted adverse events, and the history of the status.
 
 #### Scenario: A pair with two trials
 - **WHEN** a reader opens the page of a pair two trials support
 - **THEN** the page shows the status, the events that produced it, and both trials with their arms and registry facts
+
+#### Scenario: A trial with posted adverse events
+- **WHEN** a reader opens the page of a pair whose trial posted adverse events to the registry
+- **THEN** the trial's record shows, for each group, deaths from any cause, serious events and other events as the number affected of the number at risk, as posted, with no share worked out, the period they were counted over, and a line saying an event is counted whether or not the treatment caused it
+- **AND** a group is named by its arm only where the bundle joins it to one; a group it does not join is shown by its place, with a link to the registry record that names it
+
+#### Scenario: A completed trial with no results a year on
+- **WHEN** the bundle says a trial has no results on the registry a year after its primary completion
+- **THEN** the trial's results line says so with the day the lab read the record, and never that the sponsor is late
 
 #### Scenario: An address no pair has
 - **WHEN** a reader opens an address the bundle does not hold and no claim had

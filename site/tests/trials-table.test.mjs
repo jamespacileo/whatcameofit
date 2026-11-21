@@ -26,7 +26,7 @@ test("every trial of every pair is in the table once, under its group, groups in
       }
     }
     // Each row opens to its record, the same record the pair page gives the trial.
-    assert.equal(document.querySelectorAll(".trials-record details").length, view.trials.length);
+    assert.equal(document.querySelectorAll(".trials-record > td > details").length, view.trials.length);
   }
 });
 
