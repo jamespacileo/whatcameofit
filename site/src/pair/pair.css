@@ -836,3 +836,40 @@
   font-size: var(--note-size);
   color: var(--muted);
 }
+/* "What the record shows": progress on record as five steps in the one blue, filled or empty
+   (docs/adr/0015; no colour scale, docs/adr/0010), then its caution facts in a quiet panel. */
+.pair-progress > p {
+  margin: 0 0 0.35rem;
+}
+.progress-name {
+  font-size: var(--label-size);
+  font-weight: 600;
+  color: var(--muted);
+}
+.progress-steps {
+  display: flex;
+  gap: 0.25rem;
+  max-width: 15rem;
+}
+.progress-steps span {
+  flex: 1;
+  height: 0.6rem;
+  border-radius: 2px;
+  background: var(--rule);
+}
+.progress-steps span.on {
+  background: var(--blue);
+}
+.pair-cautions {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.85rem;
+  border-left: 3px solid var(--blue);
+  background: var(--table-head);
+}
+.pair-cautions p,
+.pair-cautions ul {
+  margin: 0;
+}
+.pair-cautions ul {
+  padding-left: 1.1rem;
+}

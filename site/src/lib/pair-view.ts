@@ -2,10 +2,13 @@
 // Pure: no file, network or clock, so the build and the Worker read a page the same way. Every
 // code's words are in `pair-wording.ts`; `readBundle` stops a build on a code
 // with none, and the Worker reads only the bundle version the build read.
+import { progressOf, type Caution, type ProgressStep } from "./progress.ts";
 import {
   PAIR_APPROACH_LABELS,
   PAIR_EVENT_LABELS,
   PAIR_OUTCOME_KIND_WORDS,
+  PAIR_PROGRESS_GLOSSES,
+  PAIR_PROGRESS_STEPS,
   PAIR_RESULTS_DUE_WORDS,
   PAIR_PHASE_WORDS,
   PAIR_REGISTRY_NAMES,
@@ -13,6 +16,7 @@ import {
   PAIR_STATUS_LABELS,
   PAIR_TRIAL_STATES,
 } from "./pair-wording.ts";
+import { formatDate } from "./timetable.ts";
 import { MEASURE_WORDS, TEST_WORDS, TRIAL_STATE_WORDS, comparisonText } from "./trial-facts.ts";
 
 export { PAIR_EVENT_LABELS, PAIR_TRIAL_STATES };
@@ -302,6 +306,63 @@ export interface PairView {
   registryChecks: { registry: string; through: string }[];
   /** The topic the lab filed the pair under, or null. */
   topic: string | null;
+  /** Progress on record and its caution facts (lib/progress.ts); null with no trial. */
+  progress: ProgressView | null;
+}
+
+export interface CautionView {
+  kind: Caution["kind"];
+  nctId: string | null;
+  /** The fact, in the site's words. */
+  text: string;
+  /** The registry's own stated reason a trial stopped, quoted as written, where it gives one. */
+  quoted: string | null;
+}
+
+export interface ProgressView {
+  step: ProgressStep;
+  place: number;
+  of: number;
+  name: string;
+  gloss: string;
+  /** The record that put the pair on this step: its trial, and its day where it is dated. */
+  nctId: string | null;
+  day: string | null;
+  eventKey: string | null;
+  cautions: CautionView[];
+}
+
+/** The registry's reporting facts are worded as the reporting literature advises: dated, of
+ * the registry alone, and saying results may be elsewhere (FDAAA TrialsTracker,
+ * https://fdaaa.trialstracker.net; research doc "Evidence-strength ratings for trials", brief
+ * finding on reporting events). Never "overdue": which trials the law covers cannot be read
+ * from the record. */
+export const noResultsWords = (nctId: string, asOf: string, days: number) =>
+  `${nctId}: no summary results were on ClinicalTrials.gov when checked on ${asOf}, ${days.toLocaleString("en-GB")} days after primary completion. Results may be available elsewhere.`;
+export const RETRACTED_CAUTION = "The paper this pair began with has been retracted.";
+
+function progressView(page: any): ProgressView | null {
+  const progress = progressOf(page);
+  if (!progress) return null;
+  return {
+    step: progress.step,
+    place: progress.place,
+    of: Object.keys(PAIR_PROGRESS_STEPS).length,
+    name: PAIR_PROGRESS_STEPS[progress.step],
+    gloss: PAIR_PROGRESS_GLOSSES[progress.step],
+    ...progress.reason,
+    cautions: progress.cautions.map((caution): CautionView => {
+      if (caution.kind === "retracted") return { kind: caution.kind, nctId: null, text: RETRACTED_CAUTION, quoted: null };
+      if (caution.kind === "no_results")
+        return { kind: caution.kind, nctId: caution.nctId, text: noResultsWords(caution.nctId, formatDate(caution.asOf), caution.days), quoted: null };
+      return {
+        kind: caution.kind,
+        nctId: caution.nctId,
+        text: `${caution.nctId}: ${TRIAL_STATE_WORDS[PAIR_TRIAL_STATES[caution.state]].toLowerCase()}.`,
+        quoted: caution.reason,
+      };
+    }),
+  };
 }
 
 function eventView(event: any): PairEventView {
@@ -387,6 +448,7 @@ export function pairView(page: any): PairView {
     checkedByPerson: page.checked_by_person,
     registryChecks: page.checked.map((check: any) => ({ registry: PAIR_REGISTRY_NAMES[check.registry], through: check.checked_through })),
     topic: row.filing?.vertical ?? null,
+    progress: progressView(page),
   };
 }
 
