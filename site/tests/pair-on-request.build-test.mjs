@@ -16,6 +16,7 @@ import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
+import { heldClaims, heldRedirect, preventionClaims, verifiedRedirects } from "../scripts/redirect-scope.mjs";
 import { categoryListing, interventionListing, topicListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { shownName } from "../src/lib/pair-view.ts";
@@ -97,7 +98,9 @@ const DOLLARS = "ACOZIBOROLE $$ $& $'";
 }
 // Which claim leads to which pair, by the bundle's own record of where each pair came from.
 const moved = movedAddresses(fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))));
-const leads = [...moved].filter(([slug]) => slug !== ARCHIVED && retired.pages.includes(slug));
+// A claim held from a pair of another scope (scripts/redirect-scope.mjs) keeps its own page instead.
+const scope = { prevention: preventionClaims(), verified: verifiedRedirects(), held: heldClaims() };
+const leads = [...moved].filter(([slug, address]) => slug !== ARCHIVED && retired.pages.includes(slug) && !heldRedirect(slug, address, scope));
 // A claim with a pair, and one with none in this bundle.
 const [[MATCHED]] = leads;
 const UNMATCHED = retired.pages.find((slug) => !moved.has(slug) && !retired.archived.some((entry) => entry.slug === slug) && !retired.moved.some((entry) => entry.slug === slug));

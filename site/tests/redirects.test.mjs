@@ -8,7 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
-import { heldRedirect, preventionClaims, verifiedRedirects } from "../scripts/redirect-scope.mjs";
+import { heldClaims, heldRedirect, preventionClaims, verifiedRedirects } from "../scripts/redirect-scope.mjs";
 
 const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
 
@@ -34,7 +34,7 @@ test("a claim one published pair came from leads to that pair, and every other c
   const { result, gone } = run();
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const by = new Map(gone.map((entry) => [entry.slug, entry]));
-  assert.deepEqual(by.get("ambroxol-parkinsons-disease-dementia"), { slug: "ambroxol-parkinsons-disease-dementia", to: "ambroxol--dementia" });
+  assert.deepEqual(by.get("apitegromab-obesity"), { slug: "apitegromab-obesity", to: "apitegromab--obesity" });
   // Every address the site once served is listed once, and none is left without an answer.
   assert.equal(new Set(gone.map((entry) => entry.slug)).size, gone.length);
   for (const slug of retired.pages) assert.ok(by.has(slug), slug);
@@ -68,7 +68,7 @@ test("with kept claims, a matched claim leads to its pair, an archived one is go
   assert.equal(result.status, 0, result.stdout + result.stderr);
   const by = new Map(gone.map((entry) => [entry.slug, entry]));
   // Matched: still a 301 to the pair.
-  assert.deepEqual(by.get("ambroxol-parkinsons-disease-dementia"), { slug: "ambroxol-parkinsons-disease-dementia", to: "ambroxol--dementia" });
+  assert.deepEqual(by.get("apitegromab-obesity"), { slug: "apitegromab-obesity", to: "apitegromab--obesity" });
   // Archived: still gone, with its day.
   for (const { slug, on } of retired.archived) assert.deepEqual(by.get(slug), { slug, on });
   // Unmatched and kept: not in the list the Worker answers from, and its eight files built,
@@ -119,11 +119,11 @@ test("the build stops when a pair an old address leads to has no data file", () 
   const bundle = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-redirects-bundle-"));
   fs.cpSync("tests/bundle", bundle, { recursive: true });
   const folder = fs.readdirSync(bundle).find((name) => name.endsWith("pair_data_file"));
-  fs.rmSync(path.join(bundle, folder, "ambroxol--dementia.json"));
+  fs.rmSync(path.join(bundle, folder, "apitegromab--obesity.json"));
   writeManifest(bundle, { madeAt: "2026-11-20T00:00:00Z" });
   const { result, gone } = run(bundle);
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /ambroxol-parkinsons-disease-dementia leads to the pair ambroxol--dementia, which has no data file/);
+  assert.match(result.stderr, /apitegromab-obesity leads to the pair apitegromab--obesity, which has no data file/);
   assert.equal(gone, null);
 });
 
@@ -156,7 +156,7 @@ test("a claim about preventing a condition does not lead to a pair about the con
   assert.equal(entry?.gone, true, "with no kept page in this run, it answers gone rather than lead elsewhere");
   assert.match(result.stdout, /Held: \/alzheimers-prevention-trontinemab does not lead to \/ambroxol--dementia/);
   // Written for the staging smoke check, which holds the claim to its own page.
-  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dist, "held-redirects.json"), "utf8")), [{ slug: claim, pair: "ambroxol--dementia" }]);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dist, "held-redirects.json"), "utf8")).filter((one) => one.slug === claim), [{ slug: claim, pair: "ambroxol--dementia" }]);
   fs.rmSync(bundle, { recursive: true, force: true });
 });
 
@@ -183,4 +183,28 @@ test("a verified redirect names both its claim and its pair", () => {
   assert.throws(() => verifiedRedirects(file), /without both its claim and its pair/);
   fs.writeFileSync(file, JSON.stringify({ verified: [{ slug: "a-claim", pair: "x--y" }] }));
   assert.deepEqual([...verifiedRedirects(file)], ["a-claim x--y"]);
+});
+
+// The release review, 2026-11-21: the lab's scope rule (thenwhat-lab topics.t14_claim_scope)
+// holds claims whose pair is not of their scope for reasons beside prevention. Each keeps its own
+// page; a redirect verified for that exact pair goes through.
+test("a claim the lab's scope rule holds keeps its page, and only a pair verified for it is led to", () => {
+  const scope = JSON.parse(fs.readFileSync("data/redirect-scope.json", "utf8"));
+  assert.equal(scope.held.length, 63);
+  assert.equal(scope.verified.length, 40);
+  for (const { slug } of [...scope.held, ...scope.verified]) assert.ok(retired.pages.includes(slug), slug);
+  const { result, gone, dist } = run();
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const by = new Map(gone.map((entry) => [entry.slug, entry]));
+  // Ambroxol for Parkinson's disease dementia: its indication is narrower than the pair's dementia.
+  assert.deepEqual(by.get("ambroxol-parkinsons-disease-dementia"), { slug: "ambroxol-parkinsons-disease-dementia", gone: true });
+  assert.match(result.stdout, /Held: \/ambroxol-parkinsons-disease-dementia does not lead to \/ambroxol--dementia \(held by the scope rule: its indication is narrower than any condition code\)/);
+  const held = JSON.parse(fs.readFileSync(path.join(dist, "held-redirects.json"), "utf8"));
+  assert.ok(held.some((one) => one.slug === "ambroxol-parkinsons-disease-dementia"));
+  // Verified for its pair: still a 301.
+  assert.deepEqual(by.get("tulisokibart-hidradenitis-suppurativa"), { slug: "tulisokibart-hidradenitis-suppurativa", to: "tulisokibart--hidradenitis-suppurativa" });
+  // A held claim verified for one exact pair goes there and nowhere else.
+  const rule = { prevention: new Set(), verified: new Set(["ambroxol-parkinsons-disease-dementia ambroxol--parkinson-disease-dementia"]), held: heldClaims() };
+  assert.equal(heldRedirect("ambroxol-parkinsons-disease-dementia", "ambroxol--parkinson-disease-dementia", rule), null);
+  assert.match(heldRedirect("ambroxol-parkinsons-disease-dementia", "ambroxol--dementia", rule), /held by the scope rule/);
 });
