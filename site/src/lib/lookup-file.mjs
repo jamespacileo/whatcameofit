@@ -10,6 +10,9 @@ export const LOOKUP_FORMAT = { format: "lookup", format_version: 2 };
  * its status's meaning and its unchecked note filled in from the file's own tables,
  * and under `headline` and `indication` too, the names their matching and drawing code was
  * written with. Those two go when that code is renamed; the file itself never carries them.
+ * A claim kept at its own address (scripts/kept-claims.mjs) is in the file's `kept`, by its
+ * slug, as production's lookup gave it: it joins the pairs with its own page, its own words and
+ * `kept` set, so it is found by its words and its articles' addresses as before.
  * A file of another format, or none, reads as no pairs.
  * @param {any} file
  */
@@ -26,6 +29,10 @@ export function readLookupFile(file) {
       indication: entry.condition,
     };
   }
+  for (const [slug, entry] of Object.entries(ours ? file.kept ?? {} : {})) {
+    if (Object.hasOwn(pairs, slug)) continue;
+    pairs[slug] = { ...entry, page: `/${slug}`, title: entry.headline, condition: entry.indication, kept: true };
+  }
   return { ...(ours ? file : {}), articles: ours ? file.articles ?? {} : {}, topics: ours ? file.topics ?? {} : {}, pairs };
 }
 
@@ -35,7 +42,8 @@ export const TRIAL_REGISTRY = "ClinicalTrials.gov";
 export const trialUrl = (id) => `https://clinicaltrials.gov/study/${id}`;
 
 /**
- * The search detail as the box holds it: each trial with its registry and address added.
+ * The search detail as the box holds it: each trial with its registry and address added. A kept
+ * claim's reports and trials (`kept`, by slug) are as production gave them, registry and all.
  * @param {any} file
  */
 export function readSearchDetail(file) {
@@ -43,5 +51,6 @@ export function readSearchDetail(file) {
   for (const [address, held] of Object.entries(file?.pairs ?? {})) {
     pairs[address] = { ...held, trials: (held.trials ?? []).map((trial) => ({ ...trial, registry: TRIAL_REGISTRY, url: trialUrl(trial.id) })) };
   }
+  for (const [slug, held] of Object.entries(file?.kept ?? {})) if (!Object.hasOwn(pairs, slug)) pairs[slug] = held;
   return { ...file, pairs };
 }

@@ -155,6 +155,8 @@ const sentenceJson = sentences
     indication: string;
     terms?: string;
     topic: string;
+    /** A claim kept at its own address as it was last published (scripts/kept-claims.mjs). */
+    kept?: boolean;
   }
   interface Topic {
     title: string;
@@ -259,6 +261,7 @@ const sentenceJson = sentences
         .filter(Boolean)
         .join(" ");
       note.append(` ${rest}`);
+      if (claim.kept) note.append(` ${KEPT_NOTE}`);
       item.append(link, note);
       if (claim.unchecked && !once) item.append(element("span", claim.unchecked, "entry-note"));
       list.append(item);
@@ -346,6 +349,9 @@ const sentenceJson = sentences
   // words, its place on the path, the no-signal note, then what the status means. A
   // search's best match is drawn the same way, under its own heading level, with the
   // searched words marked.
+  const KEPT_LABEL = "Earlier page, kept as published";
+  const KEPT_NOTE = "An earlier page of this site, kept as it was last published. It is no longer updated.";
+
   function standing(
     claim: LookupClaim,
     places: number,
@@ -369,6 +375,8 @@ const sentenceJson = sentences
     // In a search the notice is one grey line, not a framed box in every answer.
     if (claim.unchecked && !shown.compact) about.append(element("p", claim.unchecked, "unchecked"));
     about.append(element("p", claim.meaning));
+    // A kept claim's page is as it was last published, and says so before it is opened.
+    if (claim.kept) about.append(element("p", KEPT_NOTE, "unchecked-line"));
     const more = element("p", undefined, "changed");
     if (claim.first_reported) more.append(`First reported ${claim.first_reported}. `);
     const link = element("a", "See the records") as HTMLAnchorElement;
@@ -647,7 +655,14 @@ const sentenceJson = sentences
       results.replaceChildren(
         element(
           "p",
-          tracked.length === 1 ? "This article is one we track." : "This article is one we track, on more than one page.",
+          // An article only an earlier, kept page reports is not one this site still follows.
+          tracked.every((claim) => claim.kept)
+            ? tracked.length === 1
+              ? "This article is reported on an earlier page of this site."
+              : "This article is reported on earlier pages of this site."
+            : tracked.length === 1
+              ? "This article is one we track."
+              : "This article is one we track, on more than one page.",
         ),
         ...tracked.map((claim) => standing(claim, index.places)),
       );
@@ -843,7 +858,8 @@ const sentenceJson = sentences
     const item = element("li", undefined, closest ? "hit-row is-closest" : "hit-row");
     const now = element("div", undefined, "hit-now");
     if (closest) now.append(element("span", "Closest match", "row-label"));
-    now.append(element("span", "On record now: ", "visually-hidden"), element("strong", claim.status, "status-name"));
+    if (claim.kept) now.append(element("span", KEPT_LABEL, "row-label"));
+    now.append(element("span", claim.kept ? "As last published: " : "On record now: ", "visually-hidden"), element("strong", claim.status, "status-name"));
     const track = stageTrack(claim.place, places);
     if (track) now.append(track);
     if (claim.first_reported) now.append(element("span", `First reported ${claim.first_reported}`, "hit-when"));

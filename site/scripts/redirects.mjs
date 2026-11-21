@@ -19,7 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
-import { placeKept, readKept } from "./kept-claims.mjs";
+import { addKeptToLookup, placeKept, readKept } from "./kept-claims.mjs";
 import { heldRedirect, preventionClaims, verifiedRedirects } from "./redirect-scope.mjs";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
@@ -93,12 +93,14 @@ fs.writeFileSync(path.join(DIST, "held-redirects.json"), `${JSON.stringify(held.
 // Which claims kept their pages, for the build check and the staging smoke check.
 fs.writeFileSync(path.join(DIST, "kept-claims.json"), `${JSON.stringify(keep)}\n`);
 const placed = keptFolder ? placeKept({ folder: keptFolder, dist: DIST, slugs: keep }) : 0;
+// Found as before: by search and by the addresses of their articles (the operator, 2026-11-21).
+const searchable = keptFolder ? addKeptToLookup({ folder: keptFolder, dist: DIST, slugs: keep }) : 0;
 
 const led = gone.filter((entry) => entry.to && !entry.kept).length;
 const archivedCount = gone.filter((entry) => entry.on).length;
 const unkept = gone.length - gone.filter((entry) => entry.to).length - archivedCount;
 console.log(
-  `Old addresses: ${led} lead to a pair, ${keep.length} claims keep their pages (${placed.toLocaleString("en-GB")} files), ` +
+  `Old addresses: ${led} lead to a pair, ${keep.length} claims keep their pages (${placed.toLocaleString("en-GB")} files, ${searchable} in search), ` +
     `${archivedCount} archived stay gone, ${unkept} more answer gone; ${lines.length} renamed topic ${lines.length === 1 ? "address" : "addresses"}.`,
 );
 // Each claim held from its pair, named, so a reader of the log sees what waits on verifying.

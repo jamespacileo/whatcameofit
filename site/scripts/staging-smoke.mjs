@@ -50,6 +50,8 @@ export function smokeAddresses(dist) {
   const archived = gone.find((entry) => entry.on);
   if (!moved) throw new Error("gone.json holds no old claim address that leads to a pair");
   if (!kept) throw new Error("the build kept no claim's page: was it built with KEPT_CLAIMS_DIR?");
+  // A kept claim is found by search and by its articles' addresses (scripts/kept-claims.mjs).
+  if (!read("lookup/2.json").kept?.[kept]) throw new Error(`the build's search does not find the kept claim ${kept}`);
   if (!archived) throw new Error("gone.json holds no archived claim address");
   return {
     version,
