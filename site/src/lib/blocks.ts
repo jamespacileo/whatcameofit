@@ -143,6 +143,27 @@ export function statusCell(code: string, status: string): string {
   return `<span class="status-line">${stageTrack(code, { off: true })}<strong class="status-name">${escape(status)}</strong></span>${gloss ? `<span class="gloss">${escape(gloss)}</span>` : ""}`;
 }
 
+/** How many rows of a list one page holds: 25, as the claims site's tables had. */
+export const PAGE_SIZE = 25;
+
+/**
+ * Steps through a long list a page at a time (DESIGN.md, "Pager"; the claims site's Pager,
+ * recovered for pairs): Previous, which rows of how many are in view, Next. It follows the
+ * table it pages, and `pairTable` writes it itself. Every row is in the page as sent, so with
+ * no script, to a search engine and on paper the whole list is there: the pager is hidden
+ * until scripts/pair-filter.ts takes it up, and pages the rows the stage filter has left in.
+ * A list that fits one page has none.
+ */
+export function pager(total: number, size = PAGE_SIZE): string {
+  if (total <= size) return "";
+  return (
+    `<nav class="pager" aria-label="Pages of this list" data-pager data-size="${size}" data-pagefind-ignore hidden>` +
+    `<button type="button" data-step="-1" aria-disabled="true" tabindex="-1">Previous</button>` +
+    `<span class="pager-at" aria-live="polite" data-at></span>` +
+    `<button type="button" data-step="1">Next</button></nav>`
+  );
+}
+
 /** The one value every row shares, or null when they differ (or there are none). */
 const shared = <T,>(values: T[]): T | null => (values.length > 0 && values.every((value) => value === values[0]) ? values[0] : null);
 
@@ -150,8 +171,9 @@ const shared = <T,>(values: T[]): T | null => (values.length > 0 && values.every
  * on the path and in words, and its trials; `caption` names the list for a screen reader.
  * The day the statuses are as of, and that no person has checked a page yet, are said once
  * above the table when every row shares them, and in the row only when rows differ: on the
- * rehearsal bundle every row of every list repeated the same two notes. */
-export function pairTable(caption: string, rows: PairTableRow[]): string {
+ * rehearsal bundle every row of every list repeated the same two notes. A list longer than a
+ * page is followed by its pager. */
+export function pairTable(caption: string, rows: PairTableRow[], pageSize = PAGE_SIZE): string {
   if (rows.length === 0) return `<p>No pair is listed here yet.</p>`;
   const asOf = shared(rows.map((row) => row.asOf));
   const unchecked = shared(rows.map((row) => row.checkedByPerson)) === false;
@@ -169,6 +191,7 @@ export function pairTable(caption: string, rows: PairTableRow[]): string {
         `<td class="trials" data-label="Trials">${row.trials}</td></tr>`,
     ),
     `</tbody></table></div>`,
+    pager(rows.length, pageSize),
   ].join("");
 }
 

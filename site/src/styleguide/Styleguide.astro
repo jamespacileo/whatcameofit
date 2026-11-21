@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { stageCounts, stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { pager, stageCounts, stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -89,6 +89,11 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
     name: "stageFilter",
     about: "The path as a filter: how many of a list's pairs stand at each place, each a button that narrows the table after it, and a box that narrows it by a word. The key to the small tracks in the rows.",
     html: sheet([stageFilter(rows), pairTable("Pairs the filter narrows", rows)]),
+  },
+  {
+    name: "pager",
+    about: "Under a list longer than a page (25 rows): Previous, the rows in view, Next. Hidden until its script runs, so the whole list is there without one; it pages the rows the stage filter leaves in. Shown here at three rows a page.",
+    html: sheet([pairTable("Pairs the pager steps through", rows, 3)]),
   },
   { name: "meshCredit", about: "The credit NLM's terms ask for wherever a MeSH category is shown.", html: sheet([meshCredit(edition)]) },
   {

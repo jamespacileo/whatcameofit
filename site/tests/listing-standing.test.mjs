@@ -9,7 +9,7 @@ import { parseHTML } from "linkedom";
 import { readBundle } from "../src/lib/bundle.ts";
 import { interventionListing, topicListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
-import { STAGE_FILTER_FROM } from "../src/lib/blocks.ts";
+import { PAGE_SIZE, STAGE_FILTER_FROM, pairTable, stageFilter } from "../src/lib/blocks.ts";
 import { STAGE_PATH, STATUS_LABELS, assertNeutral, standingSummary } from "../src/lib/status.ts";
 
 const { pages } = readBundle(fileURLToPath(new URL("./bundle", import.meta.url)));
@@ -99,4 +99,53 @@ test("the filter script shows only the pairs at the picked place, and all of the
   assert.equal(shown().length, 0);
   assert.equal(document.querySelector("[data-none]").hidden, false);
   assert.match(document.querySelector("[data-none-what]").textContent, /zzzz/);
+});
+
+test("a list longer than a page is stepped through, and the filter's rows are paged from the first", async () => {
+  // No fixture listing is longer than a page, so the fullest one is paged three rows at a time.
+  const view = listings.filter((one) => one.rows.length >= STAGE_FILTER_FROM).sort((a, b) => b.rows.length - a.rows.length)[0];
+  assert.ok(view.rows.length <= PAGE_SIZE, "a fixture listing now fills a page: page it at its own size here");
+  assert.equal(parseHTML(`<main>${renderListingSheet(view, "")}</main>`).document.querySelector("[data-pager]"), null, "a list that fits one page has no pager");
+  const size = 3;
+  const { document } = parseHTML(`<html><body><main>${stageFilter(view.rows)}${pairTable(view.title, view.rows, size)}</main></body></html>`);
+  const rows = [...document.querySelectorAll("tr[data-pair]")];
+  const nav = document.querySelector("nav[data-pager]");
+  // As sent: every row in the page and the pager hidden, so nothing is lost without the script.
+  assert.equal(rows.filter((row) => row.hidden).length, 0);
+  assert.equal(nav.hasAttribute("hidden"), true);
+
+  const address = new URL("https://example.test/topic/x?page=2");
+  Object.assign(globalThis, { document, location: address, history: { state: null, replaceState: (state, title, url) => (address.href = String(url)) } });
+  await import("../src/scripts/pair-filter.ts?paged");
+  const shown = () => rows.filter((row) => !row.hidden);
+  const press = (element) => element.dispatchEvent(new document.defaultView.Event("click"));
+  const [previous, next] = nav.querySelectorAll("button[data-step]");
+  const at = nav.querySelector("[data-at]");
+  // The address named the second page.
+  assert.equal(nav.hidden, false);
+  assert.deepEqual(shown(), rows.slice(size, size * 2));
+  assert.equal(at.textContent, `${size + 1}–${Math.min(size * 2, rows.length)} of ${rows.length}`);
+  press(previous);
+  assert.deepEqual(shown(), rows.slice(0, size));
+  assert.equal(previous.getAttribute("aria-disabled"), "true");
+  assert.equal(address.searchParams.has("page"), false, "the first page is the address with no page");
+  // A row another page holds is marked, so paper can show it; a row in view is not.
+  assert.deepEqual(rows.filter((row) => row.hasAttribute("data-paged")), rows.slice(size));
+  // Every page in turn holds every row once, and Next ends at the last.
+  const seen = [...shown()];
+  while (next.getAttribute("aria-disabled") !== "true") {
+    press(next);
+    seen.push(...shown());
+  }
+  assert.deepEqual(seen, rows);
+  assert.equal(address.searchParams.get("page"), String(Math.ceil(rows.length / size)));
+
+  // The filter's rows are paged from the first page again, and counted in the pager's line.
+  const status = [...new Set(view.rows.map((row) => row.statusCode))].sort((a, b) => view.rows.filter((row) => row.statusCode === b).length - view.rows.filter((row) => row.statusCode === a).length)[0];
+  const kept = rows.filter((row) => row.dataset.status === status);
+  press(document.querySelector(`.stage-filter button[data-status="${status}"]`));
+  assert.deepEqual(shown(), kept.slice(0, size));
+  assert.equal(address.searchParams.has("page"), false);
+  assert.equal(nav.hidden, kept.length <= size);
+  assert.equal(document.querySelector("[data-shown-text]").textContent, `Showing ${kept.length} of ${rows.length}.`);
 });

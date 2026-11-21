@@ -34,6 +34,54 @@
 .pair-table tr[hidden] {
   display: none;
 }
+/* The pager under a long list (lib/blocks.ts, pager): Previous, the rows in view, Next. */
+.pager {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: var(--text-m);
+  color: var(--muted);
+}
+.pager[hidden] {
+  display: none;
+}
+.pager-at {
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.pager button {
+  font: inherit;
+  font-weight: 600;
+  color: var(--blue);
+  background: none;
+  border: 0;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.2rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+.pager button:hover {
+  text-decoration-thickness: 2px;
+}
+.pager button[aria-disabled="true"] {
+  color: var(--muted);
+  font-weight: 400;
+  text-decoration: none;
+  cursor: default;
+}
+/* Paper gets the whole list: the rows another page holds are printed, the pager is not. */
+@media print {
+  .pair-table tr[data-paged] {
+    display: table-row;
+  }
+  .pager {
+    display: none;
+  }
+}
 .pair-table-note {
   margin: 0 0 0.6rem;
   font-size: var(--note-size);
