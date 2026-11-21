@@ -77,6 +77,49 @@ function renderOutcomes(outcomes: PairTrialView["outcomes"]): string {
   ].join("");
 }
 
+/** Said once above a trial's posted adverse events. The registry counts an event whether or
+ * not it is thought related to the treatment (its results data elements, "Adverse Event
+ * Information", https://clinicaltrials.gov/policy/results-definitions), and the page says so,
+ * since a count beside a treatment's name is otherwise read as the treatment's doing. */
+export const HARMS_NOTE =
+  "People who had an unwanted medical event during the trial, as the sponsor posted them to the registry: the number affected, of those at risk. An event is counted whether or not the treatment caused it.";
+/** For groups the bundle joins to no arm. */
+export const HARMS_GROUPS_NOTE = "The registry record names each group.";
+const HARMS_COLUMNS = ["Deaths, any cause", "Serious events", "Other events"];
+const NOT_POSTED = "Not posted";
+
+assertNoOutcomeVerdict([HARMS_NOTE, HARMS_GROUPS_NOTE, NOT_POSTED, "Adverse events", "Serious events by name", "Event", ...HARMS_COLUMNS]);
+
+function renderHarms(harms: NonNullable<PairTrialView["harms"]>, registryUrl: string): string {
+  const count = (text: string | null) => `<td>${escape(text ?? NOT_POSTED)}</td>`;
+  const notes = [
+    HARMS_NOTE,
+    harms.timeFrame ? `Counted over: ${harms.timeFrame}.` : "",
+    // The registry's threshold is a share of a group, in per cent, that an other event must pass to be listed.
+    harms.threshold !== null ? `Other events are listed in the record only above ${harms.threshold}% of a group.` : "",
+  ].filter(Boolean);
+  return [
+    `<section class="pair-results pair-harms" data-harms><h4>Adverse events</h4><p class="note">${escape(notes.join(" "))}`,
+    harms.named ? "" : ` <a href="${escape(registryUrl)}" rel="external" data-harms-groups>${escape(HARMS_GROUPS_NOTE)}</a>`,
+    `</p><div class="pair-outcome"><table><thead><tr><th scope="col">Group</th>${HARMS_COLUMNS.map((label) => `<th scope="col">${escape(label)}</th>`).join("")}</tr></thead><tbody>`,
+    ...harms.groups.map((group) => `<tr data-harm-group><th scope="row">${escape(group.group)}</th>${count(group.deaths)}${count(group.serious)}${count(group.other)}</tr>`),
+    `</tbody></table></div>`,
+    harms.seriousEvents.length
+      ? [
+          // Closed until asked for: a large trial lists hundreds of serious events.
+          `<details class="pair-outcome" data-serious-events><summary>Serious events by name (${harms.seriousEvents.length})</summary>`,
+          `<table><thead><tr><th scope="col">Event</th>${harms.groups.map((group) => `<th scope="col">${escape(group.group)}</th>`).join("")}</tr></thead><tbody>`,
+          ...harms.seriousEvents.map(
+            (event) =>
+              `<tr data-serious-event><th scope="row">${escape(event.term)}${event.organSystem ? `<br><span class="note">${escape(event.organSystem)}</span>` : ""}</th>${event.counts.map(count).join("")}</tr>`,
+          ),
+          `</tbody></table></details>`,
+        ].join("")
+      : "",
+    `</section>`,
+  ].join("");
+}
+
 /** The body of the page: why the status, the trials, the history and the treatment. */
 /** How many trials a pair has before its page shows them as a table rather than one entry each. */
 export const TRIALS_TABLE_FROM = 3;
@@ -103,7 +146,7 @@ export function trialRecord(trial: PairTrialView): string {
         : null,
     ),
     fact("Why it stopped, in the record", trial.whyStopped && escape(trial.whyStopped)),
-    fact("Results", trial.resultsPosted ? "Posted on the registry" : "None posted"),
+    fact("Results", `<span data-results-state>${escape(trial.results.words)}${trial.results.asOf ? `, as of ${escape(formatDate(trial.results.asOf))}` : ""}</span>`),
     fact(
       "Papers",
       trial.papers.length
@@ -115,6 +158,7 @@ export function trialRecord(trial: PairTrialView): string {
     `</dl>`,
     eventList("", trial.events.map((event) => `<li data-event="${escape(event.key)}">${when(event.day, event.estimated)}: ${escape(event.label)}</li>`)),
     trial.outcomes.length ? renderOutcomes(trial.outcomes) : "",
+    trial.harms ? renderHarms(trial.harms, trial.registryUrl) : "",
   ].join("");
 }
 

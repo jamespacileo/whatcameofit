@@ -105,6 +105,19 @@ export const PAIR_OUTCOME_KIND_WORDS: Record<string, string> = {
 
 assertNoOutcomeVerdict(Object.values(PAIR_OUTCOME_KIND_WORDS));
 
+/** Whether a trial whose primary completion has passed has results on the registry
+ * (`DueCode`). Each line states what the record holds on the day the lab read it, never that
+ * a sponsor is late: the year is the window US rules give the trials they cover
+ * (42 CFR 11.64, https://www.ecfr.gov/current/title-42/section-11.64), and which trials they
+ * cover cannot be read from the record (the lab's `DueCode`, trial-findings design 3.5). */
+export const PAIR_RESULTS_DUE_WORDS: Record<string, string> = {
+  results_posted: "Posted on the registry",
+  results_submitted_not_posted: "Submitted to the registry, not yet posted there",
+  no_results_a_year_after_completion: "None posted, more than a year after primary completion",
+};
+
+assertNoOutcomeVerdict(Object.values(PAIR_RESULTS_DUE_WORDS));
+
 /** Every table of words this module holds, by the kind of code it words. */
 export const PAIR_WORDING: Record<string, Record<string, string>> = {
   status: STATUS_LABELS,
@@ -117,6 +130,7 @@ export const PAIR_WORDING: Record<string, Record<string, string>> = {
   approach: PAIR_APPROACH_LABELS,
   registry: PAIR_REGISTRY_NAMES,
   "outcome kind": PAIR_OUTCOME_KIND_WORDS,
+  "results due": PAIR_RESULTS_DUE_WORDS,
   tree: TREE_LABELS,
 };
 
@@ -149,6 +163,7 @@ export function unwordedPairCodes(pairPages: any[], interventionPages: any[] = [
       for (const phase of trial.facts.phases ?? []) need("phase", phase);
       for (const event of trial.events) need("event", event.kind);
       for (const outcome of trial.findings?.outcomes ?? []) need("outcome kind", outcome.kind);
+      need("results due", trial.findings?.due?.code);
     }
     for (const check of page.checked) need("registry", check.registry);
   }

@@ -63,7 +63,7 @@ for (const order of document.querySelectorAll<HTMLElement>("[data-said-order]"))
 // A trial's record in a trials table (lib/trials-table.ts) is written open, so it is read and
 // printed whole with no script; with one, it is folded until asked for, and prints open too.
 for (const record of document.querySelectorAll<HTMLDetailsElement>("details[data-fold-on-load]")) record.open = false;
-const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why, .entry-more .match-why, .record-all, .trials-record details")];
+const whys = [...document.querySelectorAll<HTMLDetailsElement>(".fact-more .match-why, .entry-more .match-why, .record-all, .trials-record > td > details")];
 addEventListener("beforeprint", () => {
   for (const why of whys) {
     why.toggleAttribute("data-was-open", why.open);
