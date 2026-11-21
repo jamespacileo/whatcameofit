@@ -19,10 +19,11 @@ export function escape(value: unknown): string {
 /**
  * The band at the head of a record page: navy, holding where the page sits, its title and what
  * it is (global.css, "record band"). `attributes` is the section's own, written as HTML after its
- * class (an aria-label, data attributes).
+ * class (an aria-label, data attributes). `sideHtml` is the card at the band's right, level with
+ * the title (a pair's "Where it stands"); under the title on a narrow screen.
  */
-export function band(attributes: string, html: string[]): string {
-  return [`<section class="band record"${attributes}><div class="wrap band-grid"><div class="band-main">`, ...html, `</div></div></section>`].join("");
+export function band(attributes: string, html: string[], sideHtml = ""): string {
+  return [`<section class="band record"${attributes}><div class="wrap band-grid"><div class="band-main">`, ...html, `</div>`, sideHtml, `</div></section>`].join("");
 }
 
 export interface Crumb {
@@ -54,9 +55,10 @@ export function followedLine(subjectHtml: string, className: string): string {
 /** A status and its gloss, as a sentence: the status in bold, never coloured. */
 export const statusWords = (status: string, gloss: string) => `<strong>${escape(status)}</strong>. ${escape(gloss)}.`;
 
-/** The sheet under a band: the page's content in the site's frame, with no section rail. */
-export function sheet(html: string[]): string {
-  return [`<div class="frame no-rail"><div class="sheet">`, ...html, `</div></div>`].join("");
+/** The sheet under a band: the page's content in the site's frame. With `railHtml` (a
+ * `sectionList`) the frame keeps its first column for it; with none it has no section rail. */
+export function sheet(html: string[], railHtml = ""): string {
+  return [railHtml ? `<div class="frame">${railHtml}<div class="sheet">` : `<div class="frame no-rail"><div class="sheet">`, ...html, `</div></div>`].join("");
 }
 
 /** A heading of the sheet, with the address of its place on the page. */
@@ -217,6 +219,25 @@ export function stageTrack(code: string, { ends = false, named = false, off = fa
  * explains, said in words to a screen reader unless `label` is false. */
 export function basisMark(label = true): string {
   return `<span class="basis-mark"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M6 0.6 11.4 6 6 11.4 0.6 6z"></path></svg>${label ? `<span class="visually-hidden">basis of status</span>` : ""}</span>`;
+}
+
+/**
+ * Where a pair stands, as the card at the right of its band (DESIGN.md, "Digest panel"; the
+ * claim page's "Where it stands" card, recovered for pairs): the status as the card's largest
+ * words, the same in plain words, its place on the path said under the track, then each of
+ * `linesHtml` as a quiet row (the latest record, the trials counted, when the status was set).
+ * The label is blue as every status label is, never a colour of its status; a status off the
+ * path has the square alone. `attributes` is the label's own, as HTML.
+ */
+export function standingCard(code: string, status: string, gloss: string, linesHtml: string[], attributes = ""): string {
+  return [
+    `<div class="digest" data-standing-card><h2 class="card-tab">Where it stands</h2><div class="standing">`,
+    `<div class="label-row"><span class="label"${attributes}>${escape(status)}</span></div>`,
+    `<p class="gloss">${escape(gloss)}</p>`,
+    stageTrack(code, { ends: true, off: true }),
+    ...linesHtml.filter(Boolean).map((line) => `<p class="changed" data-pagefind-ignore>${line}</p>`),
+    `</div></div>`,
+  ].join("");
 }
 
 export interface SectionItem {
