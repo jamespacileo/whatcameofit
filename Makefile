@@ -1,4 +1,4 @@
-.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check kept-claims pr-preview-check pr-preview-state pr-preview lookup-dev
+.PHONY: setup smoke-research check check-fast check-slow check-site check-site-build check-extension check-store check-review review-test review-build scripts-test store-test site-test site-build-test site-search-test site-search-browser site-build extension-test extension-package-test extension extension-safari deploy-check deploy-pairs-check deploy deploy-staging deploy-ci-check kept-claims pr-preview-check pr-preview-state pr-preview lookup-dev
 
 export SITE_URL ?= https://whatcameofit.com
 STORE_TEST_CONCURRENCY ?= 1
@@ -9,12 +9,12 @@ check: check-fast check-slow
 
 # The fast set, for every edit: under a minute. The site and extension tests that build
 # nothing, and the scripts' tests.
-check-fast: scripts-test site-test extension-test
+check-fast: scripts-test site-test extension-test review-test
 
 # The slow set, before a commit is pushed: a few minutes. Every test that builds the
 # site (the site's build tests and browser journeys), the store's pair tables, the
 # site build, and the packaged extension tests.
-check-slow: store-test check-site-build extension-package-test
+check-slow: store-test check-site-build extension-package-test review-build
 
 # One area in full, fast and slow, for work that touches only that area.
 .PHONY: check-release-inputs
@@ -22,6 +22,7 @@ check-site: site-test check-site-build
 check-site-build: site-build-test site-search-test site-build
 check-extension: extension-test extension-package-test
 check-store: store-test
+check-review: review-test review-build
 check-release-inputs: site-test site-build check-extension scripts-test
 
 scripts-test:
@@ -41,9 +42,21 @@ store-test: store/ingest/node_modules
 site/node_modules: site/pnpm-lock.yaml
 	sh scripts/worktree-setup.sh site
 
+# The private review site (review/, openspec change `review-dashboard`): its Worker against a
+# local D1 holding the tests' bundle, then its pages built. Nothing is deployed.
+review/node_modules: review/pnpm-lock.yaml
+	sh scripts/worktree-setup.sh review
+
+review-test: review/node_modules
+	pnpm --dir review test
+
+review-build: review/node_modules
+	pnpm --dir review run build
+
 # Everything a new checkout or worktree needs before `make check`.
 setup:
 	sh scripts/worktree-setup.sh
+	sh scripts/worktree-setup.sh review
 	$(MAKE) site-search-browser
 
 # The site's tests that build nothing (tests/*.test.mjs).

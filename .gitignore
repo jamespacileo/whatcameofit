@@ -57,3 +57,9 @@ store/ingest/wrangler.production.jsonc
 *.jsonl.gz
 *.jsonl.gz.part
 store/ingest/wrangler.deploy-*.jsonc
+
+# review site
+review/dist/
+review/src/routeTree.gen.ts
+review/.wrangler/
+review/.dev.vars
