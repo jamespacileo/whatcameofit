@@ -146,7 +146,7 @@ function outcomesOf(findings: any): OutcomeView[] {
 }
 
 export interface HarmGroupView {
-  /** The arm the group is, where the lab joined it to one; else its place among the groups. */
+  /** The registry's title for the group; else its arm's label where joined; else its place. */
   group: string;
   /** "0 of 26": people affected, of those at risk, as posted. Null where the record gives none. */
   deaths: string | null;
@@ -181,10 +181,13 @@ function affectedOf(affected: number | null, atRisk: number | null): string | nu
 
 /** A trial's posted adverse events: each group's totals, then the serious events by name.
  *
- * The registry numbers the adverse events' groups on their own (`EG000`) and the bundle joins
- * a group to an arm only where the group's title is exactly the arm's label (the lab's
- * `ResultGroupArm`, `outcome_key` null). A group not joined is shown by its place ("Group 1"),
- * never by a guess from the outcome groups, which are numbered apart. */
+ * A group is named by the registry's own title for it (`group_title` on the lab's `PostedHarms`
+ * and `PostedEvent`, lab pull request 181), as an outcome's groups are. A bundle made before
+ * that carries no title: the group then takes its arm's label where the bundle joins it to one
+ * (`ResultGroupArm`, `outcome_key` null), and otherwise its place ("Group 1"). It is never
+ * named by a guess from the outcome groups: the registry numbers the adverse events' groups on
+ * their own (`EG000`; https://clinicaltrials.gov/policy/results-definitions, "Arm/Group Title"
+ * under Adverse Event Information). */
 function harmsOf(findings: any): HarmsView | null {
   if (!findings) return null;
   const harms: any[] = findings.harms ?? [];
@@ -194,6 +197,7 @@ function harmsOf(findings: any): HarmsView | null {
   const arm = new Map<string, string>(
     (findings.arms ?? []).filter((row: any) => row.outcome_key === null && row.arm_label).map((row: any) => [row.group_id, row.arm_label]),
   );
+  for (const row of [...harms, ...serious]) if (row.group_title) arm.set(row.group_id, row.group_title);
   const totals = new Map<string, any>(harms.map((row) => [row.group_id, row]));
   const events = new Map<string, SeriousEventView>();
   for (const row of serious) {

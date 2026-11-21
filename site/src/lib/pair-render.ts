@@ -118,7 +118,8 @@ function renderHarms(harms: NonNullable<PairTrialView["harms"]>, registryUrl: st
   const count = (text: string | null) => `<td>${escape(text ?? NOT_POSTED)}</td>`;
   const notes = [
     HARMS_NOTE,
-    harms.timeFrame ? `Counted over: ${harms.timeFrame}.` : "",
+    // The registry's time frame is free text and may end with its own full stop.
+    harms.timeFrame ? `Counted over: ${harms.timeFrame.replace(/\.\s*$/, "")}.` : "",
     // The registry's threshold is a share of a group, in per cent, that an other event must pass to be listed.
     harms.threshold !== null ? `Other events are listed in the record only above ${harms.threshold}% of a group.` : "",
   ].filter(Boolean);
