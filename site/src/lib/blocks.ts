@@ -6,7 +6,7 @@
 // placed in the HTML goes through `escape`; a function given HTML says so in its parameter's name.
 
 import { UNCHECKED_BYLINE } from "./notices.ts";
-import { OFF_PATH, STAGE_PATH, STATUS_GLOSSES, STATUS_LABELS, statusCounts } from "./status.ts";
+import { NOT_FOLLOWED_YET, OFF_PATH, STAGE_PATH, STATUS_GLOSSES, STATUS_LABELS, statusCounts, type StatusCode } from "./status.ts";
 import { formatDate } from "./timetable.ts";
 
 const ENTITIES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -149,8 +149,15 @@ export function stageFilter(rows: { statusCode: string }[]): string {
  */
 export function stageCounts(rows: { statusCode: string }[], label: string): string {
   const counts = statusCounts(rows);
-  const place = (code: string, off: boolean) =>
-    `<li class="${off ? "place off" : "place"}" data-status="${escape(code)}">${off ? "" : `<span class="dot" aria-hidden="true"></span>`}<strong>${(counts.get(code) ?? 0).toLocaleString("en-GB")}</strong> <span class="place-name">${escape(STATUS_LABELS[code as keyof typeof STATUS_LABELS])}</span></li>`;
+  const place = (code: string, off: boolean) => {
+    const count = counts.get(code) ?? 0;
+    const name = `<span class="place-name">${escape(STATUS_LABELS[code as keyof typeof STATUS_LABELS])}</span>`;
+    // A place the bundle cannot fill yet says so: its 0 would read as a finding (lib/status.ts).
+    if (count === 0 && NOT_FOLLOWED_YET.includes(code as StatusCode)) {
+      return `<li class="place unfollowed" data-status="${escape(code)}" data-not-followed><span class="dot" aria-hidden="true"></span>${name} <span class="place-note">Not followed yet</span></li>`;
+    }
+    return `<li class="${off ? "place off" : "place"}" data-status="${escape(code)}">${off ? "" : `<span class="dot" aria-hidden="true"></span>`}<strong>${count.toLocaleString("en-GB")}</strong> ${name}</li>`;
+  };
   const offPath = OFF_PATH.filter((code) => counts.has(code));
   return [
     `<div class="stage-filter stage-counts" data-stage-counts>`,
