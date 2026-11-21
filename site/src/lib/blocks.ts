@@ -118,6 +118,24 @@ export function stageFilter(rows: { statusCode: string }[]): string {
   ].join("");
 }
 
+/**
+ * The path with how many pairs stand at each place, to read and not to press: the stage
+ * filter's drawing with no table to narrow (the home page, over every pair). Statuses off the
+ * path follow as outlined counts. Nothing is coloured by status.
+ */
+export function stageCounts(rows: { statusCode: string }[], label: string): string {
+  const counts = statusCounts(rows);
+  const place = (code: string, off: boolean) =>
+    `<li class="${off ? "place off" : "place"}" data-status="${escape(code)}">${off ? "" : `<span class="dot" aria-hidden="true"></span>`}<strong>${(counts.get(code) ?? 0).toLocaleString("en-GB")}</strong> <span class="place-name">${escape(STATUS_LABELS[code as keyof typeof STATUS_LABELS])}</span></li>`;
+  const offPath = OFF_PATH.filter((code) => counts.has(code));
+  return [
+    `<div class="stage-filter stage-counts" data-stage-counts>`,
+    `<ul class="places" aria-label="${escape(label)}">${STAGE_PATH.map((code) => place(code, false)).join("")}</ul>`,
+    offPath.length ? `<ul class="off-path" aria-label="Statuses off the path">${offPath.map((code) => place(code, true)).join("")}</ul>` : "",
+    `</div>`,
+  ].join("");
+}
+
 /** A status in a row of a list: its place on the path, its label and the same in plain words
  * (the claims site's StatusCell). The track is the path's shape only, never coloured by status. */
 export function statusCell(code: string, status: string): string {

@@ -166,6 +166,18 @@
   color: var(--muted);
   font-weight: 400;
 }
+/* The same drawing with nothing to press (lib/blocks.ts, stageCounts). */
+.stage-counts ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.stage-counts .place {
+  cursor: default;
+}
+.stage-counts .place:hover {
+  background: none;
+}
 .stage-filter .off-path {
   display: flex;
   flex-wrap: wrap;
