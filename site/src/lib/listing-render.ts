@@ -2,7 +2,9 @@
 // makes on request (worker/listings.mjs), so the two are the same for the same file. Every value
 // from a page file goes through `escape`. It fills the same frame as a pair page (/pair-shell).
 import type { ListingView } from "./listing-view.ts";
-import { band, bandTitle, crumbs, escape, followedLine, meshCredit, pairTable, sheet, sheetHeading } from "./blocks.ts";
+import { band, bandTitle, crumbs, escape, followedLine, meshCredit, pageActions, pairTable, sheet, sheetHeading, stageFilter } from "./blocks.ts";
+import { topicSentence } from "./share.ts";
+import { standingSummary, statusCounts } from "./status.ts";
 import { renderCard } from "./card-render.ts";
 import { breadcrumbData } from "./structured.ts";
 
@@ -19,15 +21,29 @@ function trailData(view: ListingView): string {
  * category. */
 export const renderMeshCredit = meshCredit;
 
-/** The band: where the page sits, its title, and what it is. */
+/** What "Copy sentence" copies on a listing, before the page's address: the page's name, where
+ * its pairs stand (the summary the band shows) and the month of the latest status among them.
+ * Null where the band has no summary: one pair's sentence is on its own page. */
+export function listingSentence(view: ListingView): string | null {
+  const summary = view.rows.length > 1 ? standingSummary(statusCounts(view.rows)) : null;
+  if (!summary) return null;
+  const latest = view.rows.map((row) => row.asOf).sort().at(-1) ?? null;
+  return topicSentence(`${view.title.replace(/[.\s]+$/, "")}. ${summary}`, latest, "").trim();
+}
+
+/** The band: where the page sits, its title, what it is, and the pills that pass it on. */
 export function renderListingBand(view: ListingView): string {
   return (
     trailData(view) +
     band(` aria-label="${escape(view.title)}"`, [
       view.crumbs.length ? crumbs("Where this page sits", view.crumbs) : "",
       bandTitle(view.title, ` data-listing="${escape(view.kind)}"`),
-      followedLine(escape(count(view.rows.length)), "lede"),
+      followedLine(escape(count(view.rows.length)), "what-this-is"),
+      // Where the list's pairs stand, said once in plain words before the list (the claims
+      // site's topic summary). One pair's status is in its row, so it is not said twice.
+      view.rows.length > 1 ? `<p class="lede" data-listing-summary>${escape(standingSummary(statusCounts(view.rows)))}</p>` : "",
       view.card ? renderCard(view.card) : "",
+      pageActions(listingSentence(view)),
     ])
   );
 }
@@ -44,6 +60,7 @@ export function renderListingSheet(view: ListingView, meshEdition: string): stri
           .join(", ")}</p>`,
     ),
     sheetHeading("Treatments and conditions", "pairs"),
+    stageFilter(view.rows),
     pairTable(view.title, view.rows),
     view.kind === "category" ? renderMeshCredit(meshEdition) : "",
   ]);

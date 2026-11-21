@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { pageActions, pager, stageCounts, stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -85,11 +85,36 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
       : NO_PAIR,
   },
   { name: "pairTable", about: "A list of pairs: each pair's page, where it stands and its trials.", html: sheet([pairTable("Pairs in the styleguide", rows)]) },
+  {
+    name: "stageFilter",
+    about: "The path as a filter: how many of a list's pairs stand at each place, each a button that narrows the table after it, and a box that narrows it by a word. The key to the small tracks in the rows.",
+    html: sheet([stageFilter(rows), pairTable("Pairs the filter narrows", rows)]),
+  },
+  {
+    name: "pageActions",
+    about: "The pills under a band's title that pass the page on: Share (the device's share sheet, or the address copied) and Copy sentence (a dated sentence in the site's own words, then the address). Hidden until their script finds they can work; never printed.",
+    html: band(` aria-label="Page actions in the styleguide"`, [bandTitle("A page to pass on"), pageActions("Apitegromab for obesity. Status when checked in November 2026: Phase 2 trial. Not medical advice.")]),
+  },
+  {
+    name: "pager",
+    about: "Under a list longer than a page (25 rows): Previous, the rows in view, Next. Hidden until its script runs, so the whole list is there without one; it pages the rows the stage filter leaves in. Shown here at three rows a page.",
+    html: sheet([pairTable("Pairs the pager steps through", rows, 3)]),
+  },
   { name: "meshCredit", about: "The credit NLM's terms ask for wherever a MeSH category is shown.", html: sheet([meshCredit(edition)]) },
   {
     name: "trialsTable",
     about: "A pair's trials as a table (lib/trials-table.ts): results posted first, then by furthest phase; each row opens to its record. A pair page shows it from three trials up (TRIALS_TABLE_FROM in lib/pair-render.ts); fewer stay as entries.",
     html: view ? sheet([trialsTable(view.trials)]) : NO_PAIR,
+  },
+  {
+    name: "stageCounts",
+    about: "The path with how many pairs stand at each place, to read and not to press: the home page's, over every pair.",
+    html: sheet([stageCounts(rows, "Pairs in the styleguide, by status")]),
+  },
+  {
+    name: "statusCell",
+    about: "A status in a row of a list: its place on the path, its label and the same in plain words.",
+    html: view ? `<p>${statusCell(view.statusCode, view.status)}</p>` : NO_PAIR,
   },
   {
     name: "stageTrack",
@@ -100,27 +125,23 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
   },
   {
     name: "recordStrip",
-    about: "A pair's dated trial records on one time axis to the last check (lib/record-strip.ts), with its key. Not on a pair page yet.",
+    about: "A pair's dated trial records on one time axis to the last check (lib/record-strip.ts), with its key. A pair page shows it under \"The trials\".",
     html: stripped
       ? `<p>${escape(stripped.view.title)}</p>${recordStrip(stripped.view)}${stripKey(stripKinds(stripped.strip!))}`
       : `<p>No pair in this bundle has a day its registries were last checked, so none has a strip.</p>`,
   },
   {
     name: "sectionList",
-    about: "The sections of a page beside its sheet, the one in view marked; one row of chips on a narrow screen. Not on a pair page yet.",
+    about: "The sections of a page beside its sheet, the one in view marked; one row of chips on a narrow screen. Drawn here as a pair page's sheet draws it.",
     framed: true,
     railed: true,
-    html: view
-      ? renderPairSheet(view, narrower).replace(
-          `<div class="frame no-rail"><div class="sheet">`,
-          `<div class="frame">${sectionList("On this page", [
-            { id: "why", name: "Why this status" },
-            { id: "trials", name: "The trials", count: view.trials.length },
-            { id: "history", name: "How the status changed" },
-            ...(view.otherNames.length > 0 || view.approach ? [{ id: "about", name: "About the treatment" }] : []),
-          ])}<div class="sheet">`,
-        )
-      : NO_PAIR,
+    html: view ? renderPairSheet(view, narrower) : NO_PAIR,
+  },
+  {
+    name: "standingCard",
+    about: "Where a pair stands, as the card at the right of its band: the status, the same in plain words, its place on the path, then quiet rows. Drawn here on the band it sits on.",
+    framed: true,
+    html: view ? renderPairBand(view) : NO_PAIR,
   },
   { name: "basisMark", about: "Marks a record the status rests on: the blue diamond, named once in a key.", html: `<p>${basisMark(false)} Basis of status</p>` },
   {
@@ -194,6 +215,8 @@ const namespaced = (html: string, prefix: string) =>
 
 <script>
   import "../scripts/section-list";
+  import "../scripts/pair-filter";
+  import "../scripts/page-actions";
 </script>
 
 <style>

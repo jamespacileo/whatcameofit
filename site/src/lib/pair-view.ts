@@ -6,6 +6,7 @@ import {
   PAIR_APPROACH_LABELS,
   PAIR_EVENT_LABELS,
   PAIR_OUTCOME_KIND_WORDS,
+  PAIR_RESULTS_DUE_WORDS,
   PAIR_PHASE_WORDS,
   PAIR_REGISTRY_NAMES,
   PAIR_STATUS_GLOSSES,
@@ -144,6 +145,91 @@ function outcomesOf(findings: any): OutcomeView[] {
     });
 }
 
+export interface HarmGroupView {
+  /** The registry's title for the group; else its arm's label where joined; else its place. */
+  group: string;
+  /** "0 of 26": people affected, of those at risk, as posted. Null where the record gives none. */
+  deaths: string | null;
+  serious: string | null;
+  other: string | null;
+}
+
+export interface SeriousEventView {
+  term: string;
+  organSystem: string | null;
+  /** One per group, in the groups' order: "1 of 26", or null where the record has no row. */
+  counts: (string | null)[];
+}
+
+export interface HarmsView {
+  groups: HarmGroupView[];
+  /** Whether every group has its arm's name. Where one has not, the page says where the names are. */
+  named: boolean;
+  timeFrame: string | null;
+  /** The share of a group an "other" event must pass to be listed, as the record states it. */
+  threshold: string | null;
+  seriousEvents: SeriousEventView[];
+}
+
+/** "3 of 26", as posted. Nothing is divided: CONSORT Harms 2022 asks for the number affected
+ * and the number at risk per group (https://pubmed.ncbi.nlm.nih.gov/37100738/), and a share
+ * worked out here would invite comparing trials that counted over different periods. */
+function affectedOf(affected: number | null, atRisk: number | null): string | null {
+  if (affected === null) return null;
+  return atRisk === null ? String(affected) : `${affected} of ${atRisk}`;
+}
+
+/** A trial's posted adverse events: each group's totals, then the serious events by name.
+ *
+ * A group is named by the registry's own title for it (`group_title` on the lab's `PostedHarms`
+ * and `PostedEvent`, lab pull request 181), as an outcome's groups are. A bundle made before
+ * that carries no title: the group then takes its arm's label where the bundle joins it to one
+ * (`ResultGroupArm`, `outcome_key` null), and otherwise its place ("Group 1"). It is never
+ * named by a guess from the outcome groups: the registry numbers the adverse events' groups on
+ * their own (`EG000`; https://clinicaltrials.gov/policy/results-definitions, "Arm/Group Title"
+ * under Adverse Event Information). */
+function harmsOf(findings: any): HarmsView | null {
+  if (!findings) return null;
+  const harms: any[] = findings.harms ?? [];
+  const serious: any[] = findings.serious_events ?? [];
+  if (!harms.length && !serious.length) return null;
+  const ids = [...new Set([...harms, ...serious].map((row) => row.group_id as string))].sort();
+  const arm = new Map<string, string>(
+    (findings.arms ?? []).filter((row: any) => row.outcome_key === null && row.arm_label).map((row: any) => [row.group_id, row.arm_label]),
+  );
+  for (const row of [...harms, ...serious]) if (row.group_title) arm.set(row.group_id, row.group_title);
+  const totals = new Map<string, any>(harms.map((row) => [row.group_id, row]));
+  const events = new Map<string, SeriousEventView>();
+  for (const row of serious) {
+    const key = JSON.stringify([row.organ_system, row.term]);
+    if (!events.has(key)) events.set(key, { term: row.term, organSystem: row.organ_system, counts: ids.map(() => null) });
+    events.get(key)!.counts[ids.indexOf(row.group_id)] = affectedOf(row.affected, row.at_risk);
+  }
+  return {
+    groups: ids.map((id, place) => {
+      const row = totals.get(id);
+      return {
+        group: arm.get(id) ?? `Group ${place + 1}`,
+        deaths: row ? affectedOf(row.deaths_affected, row.deaths_at_risk) : null,
+        serious: row ? affectedOf(row.serious_affected, row.serious_at_risk) : null,
+        other: row ? affectedOf(row.other_affected, row.other_at_risk) : null,
+      };
+    }),
+    named: ids.every((id) => arm.has(id)),
+    timeFrame: harms[0]?.time_frame ?? null,
+    threshold: harms[0]?.frequency_threshold ?? null,
+    seriousEvents: [...events.values()],
+  };
+}
+
+/** What the page says of a trial's results on the registry. Posted wins: an event or posted
+ * figures on the page are the record itself. Otherwise the lab's dated fact where it has one
+ * (`ResultsDue`), with the day it was read, since the record may have changed since. */
+function resultsWords(posted: boolean, due: any): { words: string; asOf: string | null } {
+  if (posted || !due) return { words: posted ? PAIR_RESULTS_DUE_WORDS.results_posted : "None posted", asOf: null };
+  return { words: PAIR_RESULTS_DUE_WORDS[due.code], asOf: due.code === "results_posted" ? null : due.as_of };
+}
+
 /** Whether a pair is one of the examples built pages carry: the lookup's sentences to pass on
  * and the journalists' picker. A pair with a claim origin, or with more than one supporting
  * trial. It is no file of the build: every pair's page, record, embed and card is made on
@@ -187,7 +273,10 @@ export interface PairTrialView {
   events: PairEventView[];
   papers: PaperLink[];
   resultsPosted: boolean;
+  /** What the record holds of results, in words, and the day that was read where it matters. */
+  results: { words: string; asOf: string | null };
   outcomes: OutcomeView[];
+  harms: HarmsView | null;
   registryUrl: string;
 }
 
@@ -261,6 +350,8 @@ export function pairView(page: any): PairView {
     trials: page.trials.map((trial: any): PairTrialView => {
       const facts = trial.facts;
       const phases = (facts.phases ?? []).map((phase: string) => PAIR_PHASE_WORDS[phase]);
+      // Posted when the registry dated their posting, or when the page carries them.
+      const resultsPosted = trial.events.some((event: any) => event.kind === "results_posted") || Boolean(trial.findings?.outcomes.length);
       return {
         nctId: trial.nct_id,
         title: facts.title,
@@ -277,9 +368,10 @@ export function pairView(page: any): PairView {
         whyStopped: facts.why_stopped,
         events: trial.events.map(eventView).sort(byDay),
         papers: trial.paper_ids.map(paperLink),
-        // Posted when the registry dated their posting, or when the page carries them.
-        resultsPosted: trial.events.some((event: any) => event.kind === "results_posted") || Boolean(trial.findings?.outcomes.length),
+        resultsPosted,
+        results: resultsWords(resultsPosted, trial.findings?.due ?? null),
         outcomes: outcomesOf(trial.findings),
+        harms: harmsOf(trial.findings),
         registryUrl: `https://clinicaltrials.gov/study/${encodeURIComponent(trial.nct_id)}`,
       };
     }),

@@ -18,7 +18,7 @@ import { renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
 import { categoryListing, interventionListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { embedTitle, renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
-import { STATUS_LABELS } from "../src/lib/status.ts";
+import { NOT_FOLLOWED_YET, STATUS_LABELS, assertNeutral } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
 import { stateFor } from "../../extension/src/lookup.js";
@@ -339,13 +339,66 @@ test("the sitemap is an index of files for the site's pages, its listings and it
   }
 });
 
-test("the home page opens with the lookup box, then the latest changes, topics and treatments of pairs", () => {
+test("the home page opens with the lookup box, then where the pairs stand, their latest records, topics and treatments", () => {
   const document = page(withBundle, "");
   assert.ok(document.querySelector("#lookup-title"));
-  const latest = [...document.querySelectorAll('[data-home="changes"] [data-pair]')].map((item) => item.dataset.pair);
-  const changes = Object.values(pages).flatMap((file) => file.history.map((change) => ({ on: change.on, address: file.row.pair.address })));
-  assert.equal(latest.length, Math.min(10, changes.length));
-  for (const address of latest) assert.ok(pages[address], address);
+  // What the site holds, under the box: every pair, and each trial once.
+  const trials = new Set(Object.values(pages).flatMap((file) => file.row.pair.nct_ids));
+  assert.match(document.querySelector('[data-home="holds"]').textContent.replace(/\s+/g, " "), new RegExp(`${Object.keys(pages).length} treatments and conditions followed in .* through ${trials.size} registered trials\\.`));
+  for (const chip of document.querySelectorAll('[data-home="try"] a')) assert.match(chip.getAttribute("href"), /^\/topic\//);
+  // The path counts every pair once, at its status.
+  const places = [...document.querySelectorAll('[data-home="standing"] [data-status]')];
+  // A place the bundle cannot fill yet says "not followed yet" in place of a 0, and holds no pair.
+  const unfollowed = places.filter((place) => place.hasAttribute("data-not-followed"));
+  assert.deepEqual(unfollowed.map((place) => place.dataset.status).sort(), NOT_FOLLOWED_YET.filter((code) => !Object.values(pages).some((file) => file.row.status.code === code)).sort());
+  for (const place of unfollowed) {
+    assert.equal(place.querySelector("strong"), null);
+    assert.match(place.textContent, /Not followed yet/);
+  }
+  const counted = places.filter((place) => !unfollowed.includes(place));
+  assert.equal(counted.reduce((sum, place) => sum + Number(place.querySelector("strong").textContent), 0), Object.keys(pages).length);
+  for (const place of counted) {
+    assert.equal(Number(place.querySelector("strong").textContent), Object.values(pages).filter((file) => file.row.status.code === place.dataset.status).length, place.dataset.status);
+  }
+  // The latest records are the trials' own dated events, newest first, one entry an event: never
+  // an expected date, and never a day after the bundle was made.
+  const made = readBundle("tests/bundle").manifest.made_at.slice(0, 10);
+  const events = new Map();
+  for (const file of Object.values(pages)) {
+    for (const event of file.trials.flatMap((trial) => trial.events)) {
+      if (event.day_basis === "registry_date" && /^\d{4}-\d{2}-\d{2}$/.test(event.day) && event.day <= made) events.set(event.key, event.day);
+    }
+  }
+  const rows = [...document.querySelectorAll('[data-home="latest"] [data-event]')];
+  assert.equal(rows.length, Math.min(12, events.size));
+  assert.equal(new Set(rows.map((row) => row.dataset.event)).size, rows.length, "one entry an event");
+  const days = rows.map((row) => events.get(row.dataset.event));
+  assert.ok(days.every(Boolean), "each entry is a dated event of a trial in the bundle");
+  assert.deepEqual(days, [...days].sort().reverse(), "newest first");
+  assert.deepEqual(days.slice(0, 1), [[...events.values()].sort().at(-1)], "the newest event leads");
+  for (const row of rows) {
+    const file = pages[row.dataset.pair];
+    assert.ok(file, row.dataset.pair);
+    assert.ok(file.trials.some((trial) => trial.events.some((event) => event.key === row.dataset.event)), "the pair it leads to follows that trial");
+    assert.equal(row.querySelector(".status-name").textContent, STATUS_LABELS[file.row.status.code]);
+  }
+  // The example under the box: the pair followed through the most trials (then the oldest first
+  // record, then the address), its first dated record, and its status as its own page says it.
+  const card = document.querySelector('.band.home a[data-home="then-now"]');
+  const dated = (file) => file.trials.flatMap((trial) => trial.events).filter((event) => event.day_basis === "registry_date" && /^\d{4}-\d{2}-\d{2}$/.test(event.day) && event.day <= made).sort((a, b) => a.day.localeCompare(b.day) || a.key.localeCompare(b.key));
+  const [chosen] = Object.entries(pages)
+    .filter(([, file]) => dated(file).length > 0)
+    .sort(([a, one], [b, other]) => other.trials.length - one.trials.length || dated(one)[0].day.localeCompare(dated(other)[0].day) || (a < b ? -1 : 1));
+  assert.equal(card.getAttribute("href"), `/${chosen[0]}`);
+  assert.equal(card.dataset.event, dated(chosen[1])[0].key);
+  assert.ok(card.querySelector(".then-when").textContent.includes(dated(chosen[1])[0].nct_id));
+  assert.equal(card.querySelector(".now-label").textContent, STATUS_LABELS[chosen[1].row.status.code]);
+  assert.equal(card.querySelector(".now-label").dataset.status, chosen[1].row.status.code);
+  // Whole years from the first record to the day the bundle was made; under a year, nothing.
+  const then = dated(chosen[1])[0].day;
+  const years = Number(made.slice(0, 4)) - Number(then.slice(0, 4)) - (made.slice(5) < then.slice(5) ? 1 : 0);
+  assert.equal(card.querySelector("[data-years-on]")?.textContent ?? null, years < 1 ? null : `${years} ${years === 1 ? "year" : "years"} on`);
+  assertNeutral([card.textContent]);
   const topics = [...document.querySelectorAll('[data-home="topics"] [data-topic]')].map((item) => item.dataset.topic);
   // Each topic whose own file lists a pair with a page, as its page lists them.
   const listing = Object.entries(readBundle("tests/bundle").pages.PairTopicPage).filter(([, file]) => filed(file).length > 0).map(([slug]) => slug);

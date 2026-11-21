@@ -13,6 +13,7 @@ import { UNCHECKED_NOTE } from "./notices.ts";
 import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "./status.ts";
 import { formatDate } from "./timetable.ts";
+import { yearsOn } from "./then-now.ts";
 
 /** The bundle folder this build reads. */
 export function pairBundleFolder(): string {
@@ -265,6 +266,118 @@ export function clinicalTops(): { descriptorId: string; label: string; count: nu
   return categoryListings()
     .filter((listing) => listing.broader.length === 0 && listing.pairs.length > 0)
     .map((listing) => ({ descriptorId: listing.descriptorId, label: listing.label, count: listing.pairs.length }));
+}
+
+export interface LatestRecord {
+  /** The event's key in the bundle: one entry for one dated event of one trial. */
+  key: string;
+  day: string;
+  /** What the registry recorded, in the site's words ("Trial started"). */
+  label: string;
+  nctId: string;
+  /** The pair the entry leads to: the first by title of those the trial is listed under. */
+  address: string;
+  title: string;
+  statusCode: string;
+  status: string;
+  /** How many other pairs follow the same trial. */
+  others: number;
+}
+
+/**
+ * The latest dated events the registries record across every pair's trials, newest first: the
+ * home page's list. It reads the trials' own records, not the pairs' status history: a bundle
+ * loaded in one go sets every status on the same day, so "latest status changes" was every pair
+ * "first set" on that day, in alphabetical order (staging, 2026-11-21). An expected date is not
+ * a record yet, and nothing after the day the bundle was made is listed. One trial listed under
+ * several pairs is one entry, which names the first pair by title and counts the rest.
+ */
+export function latestRecords(limit: number): LatestRecord[] {
+  const through = bundleMadeAt().slice(0, 10);
+  const byKey = new Map<string, LatestRecord & { pairs: Set<string> }>();
+  for (const page of Object.values(pairPages())) {
+    const view = pairView(page);
+    for (const event of view.trials.flatMap((trial) => trial.events)) {
+      // A day the registry gives in full only: a month or a year cannot be placed among days.
+      if (event.estimated || !/^\d{4}-\d{2}-\d{2}$/.test(event.day) || event.day > through) continue;
+      const entry = byKey.get(event.key);
+      if (!entry) {
+        byKey.set(event.key, { key: event.key, day: event.day, label: event.label, nctId: event.nctId, address: view.address, title: view.title, statusCode: view.statusCode, status: view.status, others: 0, pairs: new Set([view.address]) });
+      } else if (!entry.pairs.has(view.address)) {
+        entry.pairs.add(view.address);
+        if (view.title.localeCompare(entry.title) < 0) Object.assign(entry, { address: view.address, title: view.title, statusCode: view.statusCode, status: view.status });
+      }
+    }
+  }
+  return [...byKey.values()]
+    .sort((a, b) => (a.day === b.day ? a.title.localeCompare(b.title) || a.key.localeCompare(b.key) : a.day < b.day ? 1 : -1))
+    .slice(0, limit)
+    .map(({ pairs, ...entry }) => ({ ...entry, others: pairs.size - 1 }));
+}
+
+export interface ThenAndNow {
+  address: string;
+  title: string;
+  /** The pair's earliest dated registry record. */
+  first: { key: string; day: string; label: string; nctId: string };
+  /** The day of its latest dated registry record. */
+  latestDay: string;
+  /** "5 years on", from the first record to the day the bundle was made; null under a year. */
+  on: string | null;
+  statusCode: string;
+  status: string;
+  gloss: string;
+  trials: number;
+}
+
+/**
+ * The home page's example, as the site's idea in one look: one pair's first registry record,
+ * then where it stands now. The claims home showed a report's headline there; a pair has no
+ * report yet (design decision 6), so "then" is the day its first trial entered the records.
+ * Chosen by rule, never by hand: the pair followed through the most trials, then the one whose
+ * first record is oldest, then by address. Only records dated to the day, already past when
+ * the bundle was made, count. Null when no pair has one.
+ */
+export function thenAndNow(): ThenAndNow | null {
+  const through = bundleMadeAt().slice(0, 10);
+  let best: ThenAndNow | null = null;
+  for (const page of Object.values(pairPages())) {
+    const view = pairView(page);
+    const dated = view.trials
+      .flatMap((trial) => trial.events)
+      .filter((event) => !event.estimated && /^\d{4}-\d{2}-\d{2}$/.test(event.day) && event.day <= through)
+      .sort((a, b) => a.day.localeCompare(b.day) || a.key.localeCompare(b.key));
+    if (dated.length === 0) continue;
+    const first = dated[0];
+    const leads =
+      best === null ||
+      view.trials.length > best.trials ||
+      (view.trials.length === best.trials && (first.day < best.first.day || (first.day === best.first.day && view.address < best.address)));
+    if (!leads) continue;
+    best = {
+      address: view.address,
+      title: view.title,
+      first: { key: first.key, day: first.day, label: first.label, nctId: first.nctId },
+      latestDay: dated.at(-1)!.day,
+      on: yearsOn(first.day, through),
+      statusCode: view.statusCode,
+      status: view.status,
+      gloss: view.gloss,
+      trials: view.trials.length,
+    };
+  }
+  return best;
+}
+
+/** How many pairs the bundle publishes, how many distinct trials they are followed through,
+ * and how many stand at each status: the home page's counts. */
+export function pairTotals(): { pairs: number; trials: number; rows: { statusCode: string }[] } {
+  const pages = Object.values(pairPages());
+  return {
+    pairs: pages.length,
+    trials: new Set(pages.flatMap((page) => page.row.pair.nct_ids)).size,
+    rows: pages.map((page) => ({ statusCode: page.row.status.code })),
+  };
 }
 
 export interface PairChange {

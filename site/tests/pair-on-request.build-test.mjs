@@ -16,6 +16,7 @@ import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
 import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
+import { heldClaims, heldRedirect, preventionClaims, verifiedRedirects } from "../scripts/redirect-scope.mjs";
 import { categoryListing, interventionListing, topicListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { shownName } from "../src/lib/pair-view.ts";
@@ -97,7 +98,9 @@ const DOLLARS = "ACOZIBOROLE $$ $& $'";
 }
 // Which claim leads to which pair, by the bundle's own record of where each pair came from.
 const moved = movedAddresses(fs.readdirSync(path.join(bundle, "p12_pair_page")).map((name) => JSON.parse(fs.readFileSync(path.join(bundle, "p12_pair_page", name), "utf8"))));
-const leads = [...moved].filter(([slug]) => slug !== ARCHIVED && retired.pages.includes(slug));
+// A claim held from a pair of another scope (scripts/redirect-scope.mjs) keeps its own page instead.
+const scope = { prevention: preventionClaims(), verified: verifiedRedirects(), held: heldClaims() };
+const leads = [...moved].filter(([slug, address]) => slug !== ARCHIVED && retired.pages.includes(slug) && !heldRedirect(slug, address, scope));
 // A claim with a pair, and one with none in this bundle.
 const [[MATCHED]] = leads;
 const UNMATCHED = retired.pages.find((slug) => !moved.has(slug) && !retired.archived.some((entry) => entry.slug === slug) && !retired.moved.some((entry) => entry.slug === slug));
@@ -275,6 +278,36 @@ test("a trial's posted results are shown as the registry wrote them", async () =
   assert.equal(estimate.textContent, "Risk Difference (RD) -1.5, 95% interval -7.2 to 3.7. Posted for: Arm I (Curcumin)");
   const oneSided = [...section.querySelectorAll("[data-comparison]")].find((line) => /Mean Difference/.test(line.textContent));
   assert.equal(oneSided.textContent, "Mean Difference (Final Values) 0.4, 97.5% interval from -0.2. Posted for: Arm II (Placebo)");
+  assertNoOutcomeVerdict([section.textContent]);
+});
+
+test("a trial's posted adverse events are shown as counts per group, and its results line states the record's fact", async () => {
+  const file = pages[WITH_RESULTS];
+  const made = await documentOf(await get(`/${WITH_RESULTS}`));
+  const [trial] = file.trials;
+  const shown = made.querySelector(`[data-trial="${trial.nct_id}"]`);
+  const section = shown.querySelector("[data-harms]");
+  const rows = [...section.querySelectorAll("[data-harm-group]")];
+  assert.equal(rows.length, trial.findings.harms.length);
+  // Affected of at risk, as posted, for deaths, serious and other events; nothing divided.
+  const [first] = trial.findings.harms;
+  assert.deepEqual(
+    [...rows[0].querySelectorAll("td")].map((cell) => cell.textContent),
+    [`${first.deaths_affected} of ${first.deaths_at_risk}`, `${first.serious_affected} of ${first.serious_at_risk}`, `${first.other_affected} of ${first.other_at_risk}`],
+  );
+  assert.doesNotMatch(section.textContent, /%\)|per cent of people/);
+  // The bundle joins neither group to an arm, so neither is named from the outcome groups,
+  // and the page says where the names are.
+  assert.equal(trial.findings.arms.length, 0);
+  assert.deepEqual(rows.map((row) => row.querySelector("th").textContent), ["Group 1", "Group 2"]);
+  assert.equal(section.querySelector("[data-harms-groups]").getAttribute("href"), `https://clinicaltrials.gov/study/${trial.nct_id}`);
+  assert.match(section.textContent, /whether or not the treatment caused it/);
+  assert.match(section.textContent, new RegExp(`Counted over: ${first.time_frame}\\.`));
+  // No serious event is listed for this trial, so no list of them is drawn.
+  assert.equal(trial.findings.serious_events.length, 0);
+  assert.equal(section.querySelector("[data-serious-events]"), null);
+  assert.equal(trial.findings.due.code, "results_posted");
+  assert.equal(shown.querySelector("[data-results-state]").textContent, "Posted on the registry");
   assertNoOutcomeVerdict([section.textContent]);
 });
 
