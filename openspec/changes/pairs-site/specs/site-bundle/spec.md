@@ -46,6 +46,14 @@ The bundle MAY include the public registry listing at `p12_pair_trial_listing/li
 - **WHEN** a deployment is rebuilt from an older bundle that includes a trial listing
 - **THEN** its listed trial search and records use that older bundle's listing
 
+#### Scenario: A separate listing file is published
+- **WHEN** a deployment to staging or production is given `TRIALS_LISTING_FILE`
+- **THEN** it is refused before anything is built; only a rehearsal (`--dry-run`) may use the file
+
+#### Scenario: The same pages come with a corrected manifest
+- **WHEN** the current version is loaded again with a manifest that differs only outside the checksum
+- **THEN** the version is kept and the manifest held for it is replaced, so the cutover reads the corrected run report
+
 #### Scenario: The bundle lacks a trial listing
 - **WHEN** the selected bundle has no trial listing and the build is given no separate file
 - **THEN** only trials cited by pairs have a trial page

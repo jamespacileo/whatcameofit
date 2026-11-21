@@ -106,9 +106,22 @@ test("a sampled trial listing cannot pass a cutover rehearsal", (t) => {
   fs.copyFileSync("tests/fixture-trials-listing.json", path.join(listing, "listed.json"));
   fs.copyFileSync("trials-listing.schema.json", path.join(dir, "schemas/PairTrialListing.json"));
   const count = JSON.parse(fs.readFileSync(path.join(listing, "listed.json"), "utf8")).trials.length;
-  writeManifest(dir, { snapshot: { trial_listing: { complete: false, registry_total: count + 1, trials_read: count, trials_listed: count } } });
+  writeManifest(dir, { snapshot: { trial_listing: { run_id: "164310e2a14b", complete: false, registry_total: count + 1, trials_read: count, trials_listed: count } } });
   const run = deploy(["--dry-run", "--cutover"], { PAIRS_BUNDLE: dir });
   assert.equal(run.status, 1);
   assert.match(run.stderr, /no verified full registry run/);
   assert.doesNotMatch(run.stdout, /Building/);
+  // Built as if there were no listing, the run's coverage is not asked for.
+  const off = deploy(["--dry-run", "--cutover"], { PAIRS_BUNDLE: dir, LISTED_TRIAL_PAGES: "0" });
+  assert.doesNotMatch(off.stderr, /no verified full registry run/);
+  assert.match(off.stdout, /Building/);
+});
+
+test("a trial listing from a local file is never published, to staging or the cutover", () => {
+  for (const args of [["--cutover"], ["--staging"]]) {
+    const run = deploy(args, { PAIRS_DATABASE: DATABASE, TRIALS_LISTING_FILE: "tests/fixture-trials-listing.json", BUILD_REVISION: "0".repeat(40) });
+    assert.equal(run.status, 1, args.join(" "));
+    assert.match(run.stderr, /TRIALS_LISTING_FILE is for a rehearsal/);
+    assert.doesNotMatch(run.stdout, /Building|Bundle /);
+  }
 });

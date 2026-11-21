@@ -29,7 +29,7 @@ export { SCHEMA_MODEL, bundleVersion, files };
 export const MANIFEST_MODEL = "$manifest";
 const MANIFEST_KEY = MANIFEST.slice(0, -".json".length);
 // Under D1's 100,000 bytes a statement: a character is at most four bytes, a quote doubles.
-const PART_CHARS = 10_000;
+export const PART_CHARS = 10_000;
 // The store keeps the current version and the one before: a deployment is rolled back by
 // building from the one before (docs/deploy.md). Previews keep more (site/scripts/pairs-preview.mjs).
 export const KEPT_VERSIONS = 2;
@@ -110,19 +110,38 @@ const quote = (value) => (value === null || value === undefined ? "NULL"
   : `'${String(value).replaceAll("'", "''")}'`);
 const insert = (table, row) => `INSERT INTO ${table} (${Object.keys(row).join(", ")}) VALUES (${Object.values(row).map(quote).join(", ")})`;
 
+// A body in parts of at most PART_CHARS UTF-16 units, never cut inside a character: a part
+// that ended on the first half of a surrogate pair would leave a lone half in each of two
+// SQL strings, which D1 stores as a replacement character, so the joined file would differ.
+export function bodyParts(body, size = PART_CHARS) {
+  const parts = [];
+  for (let start = 0; start < body.length || parts.length === 0;) {
+    let end = Math.min(start + size, body.length);
+    const last = body.charCodeAt(end - 1);
+    if (end < body.length && last >= 0xd800 && last <= 0xdbff) end -= 1;
+    parts.push(body.slice(start, end));
+    start = end;
+  }
+  return parts;
+}
+
 // The statements that store a checked folder's manifest under its version when that version is
 // held without one: a bundle loaded before bundles carried a manifest keeps its version (the
 // manifest is outside the checksum), so it is never loaded again, and without this it could
-// never be exported for a build. A manifest already held is left as it is.
+// never be exported for a build.
 // It takes the version and manifest a check already returned (`statements(...)` gives both), so
 // the manifest stored is the one checked, even if the folder is replaced in the meantime.
+// A manifest already held is replaced when the same pages come with a different one: the
+// manifest is outside the checksum, so a run that only corrected its report (such as
+// snapshot.trial_listing) keeps the version, and without this the cutover would go on
+// reading the old report.
 export function manifestBackfill({ version, manifest }) {
   const body = JSON.stringify(manifest);
   // One part, so the guard below sees the whole manifest or none of it.
   if (body.length > PART_CHARS) throw new Error(`the manifest of bundle ${version} is longer than one part of ${PART_CHARS} characters`);
   const sql = `INSERT INTO pair_page (version, model, key, part, body) SELECT ${quote(version)}, ${quote(MANIFEST_MODEL)}, ${quote(MANIFEST_KEY)}, 0, ${quote(body)}`
     + ` WHERE EXISTS (SELECT 1 FROM pair_bundle WHERE version = ${quote(version)})`
-    + ` AND NOT EXISTS (SELECT 1 FROM pair_page WHERE version = ${quote(version)} AND model = ${quote(MANIFEST_MODEL)})`;
+    + ` ON CONFLICT (version, model, key, part) DO UPDATE SET body = excluded.body WHERE body <> excluded.body`;
   return { version, sql: [sql] };
 }
 
@@ -136,9 +155,7 @@ export function statements(folder, { loadedAt = new Date().toISOString(), keep =
 
   for (const [name, key, text] of [...pages, [MANIFEST_MODEL, MANIFEST_KEY, JSON.stringify(manifest)]]) {
     const body = JSON.stringify(JSON.parse(text));
-    for (let part = 0; part * PART_CHARS < body.length; part += 1) {
-      put("pair_page", `${name}|${key}|${part}`, { model: name, key, part, body: body.slice(part * PART_CHARS, (part + 1) * PART_CHARS) });
-    }
+    bodyParts(body).forEach((text, part) => put("pair_page", `${name}|${key}|${part}`, { model: name, key, part, body: text }));
     if (name !== "PairPage") continue;
     const page = JSON.parse(text);
     const { pair, intervention, condition, descriptor, status, filing, origin } = page.row;
@@ -264,7 +281,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       const held = versions.find((row) => row.current === 1);
       if (held?.version === load.version) {
         await execute(to, "--command", manifestBackfill(load).sql[0]);
-        console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is held`);
+        console.log(`bundle ${load.version} is already the current one: nothing loaded; its manifest is the one given`);
         process.exit(0);
       }
       // Beside the bundle's folder, on the drive that holds it: the statements carry the lab's

@@ -31,9 +31,17 @@ The pair bundle can include the registry listing as `p12_pair_trial_listing/list
 with `schemas/PairTrialListing.json`. Both are covered by the bundle checksum.
 Staging and production build search and trial pages from the listing in the
 selected D1 version. An older bundle can still be rehearsed with an explicit
-`TRIALS_LISTING_FILE`. A build with both sources fails so that the listing
-matches the selected bundle. A bundle without a listing still serves the trial
-records its pairs cite.
+`TRIALS_LISTING_FILE`, but `make deploy` refuses that file without `--dry-run`, so
+it never reaches staging or production. A build with both sources fails so that
+the listing matches the selected bundle. A bundle without a listing still serves
+the trial records its pairs cite.
+
+The cutover refuses a bundled listing unless the manifest's
+`snapshot.trial_listing` (`run_id`, `complete`, `registry_total`, `trials_read`,
+`trials_listed`) shows a complete run that read the whole registry, unless the
+build is made with `LISTED_TRIAL_PAGES=0`. The manifest is outside the checksum,
+so loading the same pages with a corrected report keeps the version and replaces
+the manifest D1 holds for it.
 
 The claims pipeline used to write the listing and was removed on 2026-11-20.
 The replacement producer and release cohort still need to be agreed. The
