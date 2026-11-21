@@ -12,4 +12,4 @@ make review-build    # the pages, to review/dist
 pnpm --dir review dev   # the pages alone, without the API
 ```
 
-Settings the Worker needs, given at deployment and never written here: `ACCESS_TEAM_DOMAIN` (`https://<team>.cloudflareaccess.com`), `ACCESS_AUD` (the Access application's AUD tag), `OPERATOR_EMAILS` (comma separated). With any missing it answers 503 to everyone. It is not deployed until the Access application for review.whatcameofit.com exists.
+Settings the Worker needs, given at deployment and never written here: `ACCESS_ISSUER` (the team domain, `https://<team>.cloudflareaccess.com`), `ACCESS_AUD` (the Access application's AUD tag), `OPERATOR_EMAILS` (comma separated). With any missing it answers 503 to everyone. It is not deployed until the Access application for review.whatcameofit.com exists.

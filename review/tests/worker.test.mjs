@@ -43,7 +43,7 @@ function migration() {
     .filter(Boolean);
 }
 
-async function worker({ bindings = { ACCESS_TEAM_DOMAIN: TEAM, ACCESS_AUD: AUD, OPERATOR_EMAILS: `Someone@example.org, ${OPERATOR}` }, store = "bundle" } = {}) {
+async function worker({ bindings = { ACCESS_ISSUER: TEAM, ACCESS_AUD: AUD, OPERATOR_EMAILS: `Someone@example.org, ${OPERATOR}` }, store = "bundle" } = {}) {
   const mf = new Miniflare(convertV4MiniflareOptions({
     modules: true,
     script,
@@ -157,13 +157,15 @@ test("a store without the pair tables is shown as holding none, not as an error"
   assert.ok(body.tables.every((t) => t.rows === null));
 });
 
-test("a Worker missing any Access setting answers no one", async () => {
-  const settings = { ACCESS_TEAM_DOMAIN: TEAM, ACCESS_AUD: AUD, OPERATOR_EMAILS: OPERATOR };
+test("a Worker missing the issuer, the audience or the allowlist answers no one and reads no store", async () => {
+  const settings = { ACCESS_ISSUER: TEAM, ACCESS_AUD: AUD, OPERATOR_EMAILS: OPERATOR };
   for (const missing of Object.keys(settings)) {
     const bindings = { ...settings, [missing]: "" };
-    const unset = await worker({ bindings, store: null });
-    const response = await get(unset, "/api/me", { token: await sign() });
-    assert.equal(response.status, 503, missing);
-    await response.text();
+    const unset = await worker({ bindings });
+    for (const pathname of ["/", "/api/me", "/api/staging/overview"]) {
+      const response = await get(unset, pathname, { token: await sign() });
+      assert.equal(response.status, 503, `${missing} ${pathname}`);
+      assert.doesNotMatch(await response.text(), /pair_bundle|version/, missing);
+    }
   }
 });

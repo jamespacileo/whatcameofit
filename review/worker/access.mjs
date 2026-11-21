@@ -18,9 +18,11 @@ function keySet(teamDomain) {
 }
 
 /** The settings a request is checked against, or null when any is missing: the site then
- * answers no one, rather than everyone. */
+ * answers no one, rather than everyone. Issuer and audience are both set explicitly (the
+ * operator, 2026-11-21): the issuer is the team domain Access signs as, and its key set is
+ * read from that same origin, so no setting is derived from another. */
 export function accessSettings(env) {
-  const teamDomain = env.ACCESS_TEAM_DOMAIN?.trim();
+  const teamDomain = env.ACCESS_ISSUER?.trim();
   const audience = env.ACCESS_AUD?.trim();
   const operators = (env.OPERATOR_EMAILS ?? "")
     .split(",")

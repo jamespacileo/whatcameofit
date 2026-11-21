@@ -2,7 +2,7 @@
 
 - [ ] 0.1 Add the Cloudflare identity provider in Zero Trust, restricted to Palladio account members
 - [ ] 0.2 Create the Access application for review.whatcameofit.com: policy Cloudflare Account Member (Palladio) and the operator's email
-- [ ] 0.3 Give the AUD tag and team domain for `ACCESS_AUD` and `ACCESS_TEAM_DOMAIN`
+- [ ] 0.3 Give the AUD tag and team domain for `ACCESS_AUD` and `ACCESS_ISSUER`
 
 ## 1. Shell and auth
 
