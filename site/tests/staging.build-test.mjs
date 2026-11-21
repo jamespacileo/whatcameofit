@@ -37,7 +37,7 @@ function assets(request) {
   for (const candidate of candidates) {
     const file = path.join("dist", candidate);
     if (fs.existsSync(file) && fs.statSync(file).isFile()) {
-      const type = file.endsWith(".html") ? "text/html; charset=utf-8" : file.endsWith(".json") ? "application/json" : "text/plain";
+      const type = file.endsWith(".html") ? "text/html; charset=utf-8" : file.endsWith(".json") ? "application/json" : file.endsWith(".png") ? "image/png" : "text/plain";
       return new Response(fs.readFileSync(file), { headers: { "Content-Type": type } });
     }
   }
@@ -58,6 +58,8 @@ before(async () => {
       PAIRS_DATABASE: DATABASE,
       PAIRS_LOCAL_STATE: database.persistTo,
       PAIRS_BUNDLE: "",
+      // The tests' two kept claims (tests/kept-claims), as staging holds production's.
+      KEPT_CLAIMS_DIR: "tests/kept-claims",
       BUILD_REVISION: REVISION,
       // Set as an operator's shell might have them: staging still offers no search, and the
       // trial reader is given its contact address.
@@ -147,8 +149,11 @@ test("the staging smoke checks pass against the build's Worker, every answer mar
   // What the bundle holds, read back from the deployment: the fixture's manifest gives no
   // trials fetched, so it states no launch measure.
   assert.ok(lines.includes("   Bundle " + fs.readFileSync("dist/bundle-version.txt", "utf8").trim() + ": 15 pairs, lab commit not given; no launch measure: the manifest gives no coverage.trials_fetched."), lines.join("\n"));
-  assert.match(lines.at(-1), /Staging passed all 8 checks at https:\/\/staging\.whatcameofit\.com\./);
+  assert.match(lines.at(-1), /Staging passed all 10 checks at https:\/\/staging\.whatcameofit\.com\./);
   for (const status of ["200", "301", "410", "404"]) assert.ok(lines.some((line) => line.includes(` ${status}, noindex`)), status);
+  // A claim with no pair keeps its page and its record; one the operator archived stays gone.
+  assert.ok(lines.includes("OK /10-person-living-donor-kidney-exchange-chain-kidney-failure 200, noindex"), lines.join("\n"));
+  assert.ok(lines.includes("OK /data/claims/10-person-living-donor-kidney-exchange-chain-kidney-failure.json 200, noindex"), lines.join("\n"));
 });
 
 test("staging answering for another commit fails the smoke checks, after its attempts", async () => {
@@ -156,7 +161,7 @@ test("staging answering for another commit fails the smoke checks, after its att
   const other = "f".repeat(40);
   await assert.rejects(
     checkStaging({ origin: ORIGIN, dist: "dist", revision: other, request: (url) => mf.dispatchFetch(url, { redirect: "manual" }), attempts: 2, waitMs: 10 }),
-    /Staging failed 1 of 8 checks/,
+    /Staging failed 1 of 10 checks/,
   );
 });
 

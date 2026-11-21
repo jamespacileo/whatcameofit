@@ -16,7 +16,7 @@ make deploy ARGS=--cutover  # publishes, once the operator has said the cutover 
 
 A bundle folder alone (`PAIRS_BUNDLE`, no database) is only ever a dry run: `deploy.mjs` refuses to publish one. A pull request's preview is built from `site/tests/bundle` unless `PREVIEW_PAIRS_BUNDLE` names another folder; without the preview account's pairs database it holds the pages built ahead only.
 
-Addresses the site served while it tracked claims are frozen in `site/data/retired-addresses.json`. The build writes what each answers to `dist/gone.json`, and the Worker answers from it: a claim that one published pair lists (the bundle's `claim_slugs`, or `origin.claim_slug` in a bundle made before that field) leads to the pair with a 301, with its embed, cards, oEmbed and data record; every other claim address answers 410 Gone, as does `/data/claims.json`. No file is built for any of them.
+Addresses the site served while it tracked claims are frozen in `site/data/retired-addresses.json`. The build writes what each answers to `dist/gone.json`, and the Worker answers from it: a claim that one published pair lists (the bundle's `claim_slugs`, or `origin.claim_slug` in a bundle made before that field) leads to the pair with a 301, with its embed, cards, oEmbed and data record; a claim the operator archived answers 410 Gone, as does `/data/claims.json`. Every other claim keeps its page and its files at their own addresses, byte for byte as production built them at commit 4ea7f23 (the operator, 2026-11-21): its page, embed, oEmbed, three cards, data record and feed, with the styles, scripts and fonts they load. `make kept-claims` builds that commit once in a worktree of its own and freezes those files into `site/.cache/kept-claims/` (`site/scripts/kept-claims.mjs`, about four minutes the first time), and each build places the files of the claims no published pair came from, so the host serves them without the Worker. A claim merged into a kept one leads to it. Staging and production are not published without every claim frozen; a rehearsal from a folder or from D1's local engine may use the tests' two (`site/tests/kept-claims`). The Staging and Release workflows keep the frozen folder in the Actions cache. With the rehearsal bundle the build holds about 9,430 files (731 before, plus 1,086 claims' eight files and 13 shared ones), under the 18,000 the build check allows.
 
 The sections "Normal publishing workflow", "Local checks and emergency deployment" and the split release below describe publishing from the claims snapshot as it was. They are kept for the record until this file is rewritten for the cutover, and their commands (`make publish-data`, `make deploy-ci`, `SITE_FILES_BUCKET`) no longer exist.
 
@@ -158,7 +158,7 @@ Decided by the operator on 20 November 2026: main's work goes to https://staging
 2. It builds the site from that bundle, marks every file noindex in `_headers` and writes `/bundle-version.txt` and `/bundle-manifest.json`: the bundle's version, `made_at`, `lab_commit`, counts, pairs, and the launch measure (distinct trials on pair pages over the manifest's `coverage.trials_fetched`, or none when the manifest gives no count), also printed in the log with the pair addresses the sitemap lists (`scripts/bundle-facts.mjs`). The smoke step prints the same line from the deployed file, and fails if it names another bundle.
 3. It publishes with `wrangler versions upload` then `wrangler versions deploy <id>@100%`. Neither changes a trigger, so the custom domain the operator attached, and workers.dev and preview URLs as the operator set them, stay as they are across every deploy. `wrangler deploy` is not used: it sets workers.dev on or off on every run.
 4. The Worker itself adds `X-Robots-Tag: noindex` to every response it gives when `ROBOTS_NOINDEX` is `1`, which only staging's configuration sets (`worker/with-pairs.mjs`, held by `site/tests/staging.build-test.mjs`, "the Worker marks every kind of answer noindex in staging's configuration, and adds none in production's"). The edge's response-header rule on the hostname adds the same; neither depends on the other.
-5. `scripts/staging-smoke.mjs` checks the hostname: `/build-revision.txt` names the commit deployed and `/bundle-version.txt` the exported bundle (each asked again, up to six times ten seconds, while the new version spreads), and `/`, a pair page and its data file made on request, an old claim address that leads to its pair (301), one with no pair (410) and `/no-such--pair` (404) each answer as expected with `X-Robots-Tag: noindex`. The addresses are read from the build. Any failure fails the job and names the address.
+5. `scripts/staging-smoke.mjs` checks the hostname: `/build-revision.txt` names the commit deployed and `/bundle-version.txt` the exported bundle (each asked again, up to six times ten seconds, while the new version spreads), and `/`, a pair page and its data file made on request, an old claim address that leads to its pair (301), a claim with no pair that keeps its page and its data record (200 each), an archived claim (410) and `/no-such--pair` (404) each answer as expected with `X-Robots-Tag: noindex`. The addresses are read from the build. Any failure fails the job and names the address.
 
 What the smoke step prints when everything passes:
 
@@ -170,9 +170,11 @@ OK / 200, noindex
 OK /<a pair made on request> 200, noindex
 OK /data/pairs/<that pair>.json 200, noindex
 OK /<an old claim address> 301, noindex
-OK /<an old claim address with no pair> 410, noindex
+OK /<a claim with no pair, kept> 200, noindex
+OK /data/claims/<that claim>.json 200, noindex
+OK /<an archived claim> 410, noindex
 OK /no-such--pair 404, noindex
-Staging passed all 8 checks at https://staging.whatcameofit.com.
+Staging passed all 10 checks at https://staging.whatcameofit.com.
 ```
 
 Before the domain is attached, or while its certificate is still being issued, it prints this and the job fails:

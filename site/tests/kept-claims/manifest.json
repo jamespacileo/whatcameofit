@@ -1,0 +1,52 @@
+{
+ "about": "The tests' kept claims: two synthetic claims in the shape scripts/kept-claims.mjs freezes. Never published (deploy.mjs refuses a fixture).",
+ "fixture": true,
+ "commit": "4ea7f23613d9bd390c601b1ef00048c864064e81",
+ "claims": {
+  "10-person-living-donor-kidney-exchange-chain-kidney-failure": [
+   "10-person-living-donor-kidney-exchange-chain-kidney-failure/index.html",
+   "embed/10-person-living-donor-kidney-exchange-chain-kidney-failure/index.html",
+   "oembed/10-person-living-donor-kidney-exchange-chain-kidney-failure.json",
+   "og/10-person-living-donor-kidney-exchange-chain-kidney-failure.png",
+   "og/square/10-person-living-donor-kidney-exchange-chain-kidney-failure.png",
+   "og/tall/10-person-living-donor-kidney-exchange-chain-kidney-failure.png",
+   "data/claims/10-person-living-donor-kidney-exchange-chain-kidney-failure.json",
+   "changes/10-person-living-donor-kidney-exchange-chain-kidney-failure.xml"
+  ],
+  "exagamglogene-autotemcel-sickle-cell-disease": [
+   "exagamglogene-autotemcel-sickle-cell-disease/index.html",
+   "embed/exagamglogene-autotemcel-sickle-cell-disease/index.html",
+   "oembed/exagamglogene-autotemcel-sickle-cell-disease.json",
+   "og/exagamglogene-autotemcel-sickle-cell-disease.png",
+   "og/square/exagamglogene-autotemcel-sickle-cell-disease.png",
+   "og/tall/exagamglogene-autotemcel-sickle-cell-disease.png",
+   "data/claims/exagamglogene-autotemcel-sickle-cell-disease.json",
+   "changes/exagamglogene-autotemcel-sickle-cell-disease.xml"
+  ]
+ },
+ "shared": [
+  "_astro/kept-fixture.Ab12Cd34.css"
+ ],
+ "linked": [
+  "/topic/kidneys-and-bladder"
+ ],
+ "sha256": {
+  "10-person-living-donor-kidney-exchange-chain-kidney-failure/index.html": "7c5155070f0ff445dc861c96b42a28d59d18b41c83df185ebb77d1670e3a23d0",
+  "_astro/kept-fixture.Ab12Cd34.css": "6d6068180a5c710c68c8ee0e290cb9b37b3450492d3f9e3ae46083deb152fbcf",
+  "changes/10-person-living-donor-kidney-exchange-chain-kidney-failure.xml": "33baca9e2799438e0f105802dc7e3ca4ca67d0e492b627217d7948d67fe10f15",
+  "changes/exagamglogene-autotemcel-sickle-cell-disease.xml": "a3526cc81f0a1c8d6678ecd3090973c8540787a3af64befb0c5394e4af645222",
+  "data/claims/10-person-living-donor-kidney-exchange-chain-kidney-failure.json": "aafdacd777077bec10c75104632f691c59176062b202d3b7e3e6205ab1e6698d",
+  "data/claims/exagamglogene-autotemcel-sickle-cell-disease.json": "9c0e52f366cfda06eecd64cc63da3276aedd255591b308a87c9d9065de4c8f6a",
+  "embed/10-person-living-donor-kidney-exchange-chain-kidney-failure/index.html": "15a3f598ee083d39f5dbc4d717b325729b9f85e5381a4cbe3a336e8baf027a13",
+  "embed/exagamglogene-autotemcel-sickle-cell-disease/index.html": "e911c59d17159949c80f53a09dc0f0a1e5d44e128b2f3d9c1e892af3a1d5c834",
+  "exagamglogene-autotemcel-sickle-cell-disease/index.html": "b6df7a93a137c6a7b422e6cb62d16d25554eaefa186b470786ab9318c8174aeb",
+  "oembed/10-person-living-donor-kidney-exchange-chain-kidney-failure.json": "7f4e11f47844579a0ff117189717e27bade0ef66d611566686d6fca2f5befd37",
+  "oembed/exagamglogene-autotemcel-sickle-cell-disease.json": "7fbca4370f9b388994144641625690b1c95a992d0cf57eb36c6138300eb7c4ac",
+  "og/10-person-living-donor-kidney-exchange-chain-kidney-failure.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
+  "og/exagamglogene-autotemcel-sickle-cell-disease.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
+  "og/square/10-person-living-donor-kidney-exchange-chain-kidney-failure.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
+  "og/square/exagamglogene-autotemcel-sickle-cell-disease.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
+  "og/tall/10-person-living-donor-kidney-exchange-chain-kidney-failure.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
+  "og/tall/exagamglogene-autotemcel-sickle-cell-disease.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e"
+ }
+}

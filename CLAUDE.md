@@ -20,7 +20,7 @@ worktrees via `wt`, archive via quarantine).
 
 ## Conventions and guardrails
 
-- Claims were removed on 2026-11-20 (the operator's decision): the site, its tests and its copy know only pairs. The old claim addresses answer from `site/data/retired-addresses.json`: a 301 to the one published pair that lists the claim's slug, otherwise 410 Gone.
+- Claims were removed on 2026-11-20 (the operator's decision): the site, its tests and its copy know only pairs. The old claim addresses answer from `site/data/retired-addresses.json`: a 301 to the one published pair that lists the claim's slug, 410 Gone for a claim the operator archived, and otherwise the claim's own page and files, kept byte for byte as production built them (the operator, 2026-11-21; `site/scripts/kept-claims.mjs`, `make kept-claims`).
 - A merge to `main` publishes nothing. Production is published only by `make deploy ARGS=--cutover`, on the operator's go-ahead (`docs/deploy.md`).
 - Accuracy is the brand, and it is shown, not gated (`docs/adr/0001-publish-by-rule-archive-to-remove.md`): items are approved by deterministic rules, every match the site shows carries its confidence score and reasons, and the operator removes a wrong item by archiving it. Live lookup answers are shown to the reader who asked, with scores, and are never worded as a status.
 - A status is derived by deterministic rules from approved registry records. No model decides status, and every status lists the records that produced it.

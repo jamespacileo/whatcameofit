@@ -997,6 +997,24 @@ test("a merged or renamed claim's address leads to the page it is at now", async
   assert.equal((await handle(new Request("https://example.org/tooth-regrowth"), env)).status, 410);
 });
 
+test("a claim merged into one that kept its page leads to the same file of that claim", async () => {
+  forgetGoneList();
+  const env = { ASSETS: assetsWithGone([{ slug: "vsv-ebov", to: "ervebo", kept: true }]) };
+  for (const [asked, led] of [
+    ["/vsv-ebov", "/ervebo"],
+    ["/embed/vsv-ebov", "/embed/ervebo"],
+    ["/og/square/vsv-ebov.png", "/og/square/ervebo.png"],
+    ["/data/claims/vsv-ebov.json", "/data/claims/ervebo.json"],
+    ["/changes/vsv-ebov.xml", "/changes/ervebo.xml"],
+  ]) {
+    const response = await handle(new Request(`https://example.org${asked}`), env);
+    assert.equal(response.status, 301, asked);
+    assert.equal(response.headers.get("Location"), `https://example.org${led}`, asked);
+  }
+  // The kept claim's own files are the host's: handed on unchanged.
+  assert.equal(await (await handle(new Request("https://example.org/data/claims/ervebo.json"), env)).text(), "file /data/claims/ervebo.json");
+});
+
 test("every other page is handed to the files unchanged", async () => {
   forgetGoneList();
   const env = { ASSETS: assetsWithGone([{ slug: "tooth-regrowth", on: "2026-11-14" }]) };

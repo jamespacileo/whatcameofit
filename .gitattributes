@@ -1,2 +1,4 @@
 # Compared byte for byte with what the renderers write (site/tests/goldens.mjs).
 site/tests/goldens/** text eol=lf
+# Checked against their SHA-256 when placed (site/scripts/kept-claims.mjs): never converted.
+site/tests/kept-claims/** -text

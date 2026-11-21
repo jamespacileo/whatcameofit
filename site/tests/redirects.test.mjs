@@ -11,16 +11,19 @@ import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 
 const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
 
-function run(bundle = "tests/bundle") {
+function run(bundle = "tests/bundle", kept = "") {
   const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-redirects-"));
   const result = spawnSync("node", ["scripts/redirects.mjs"], {
-    env: { ...process.env, PAIRS_BUNDLE: bundle, DIST_DIR: dist },
+    env: { ...process.env, PAIRS_BUNDLE: bundle, DIST_DIR: dist, KEPT_CLAIMS_DIR: kept },
     encoding: "utf8",
   });
   const goneFile = path.join(dist, "gone.json");
   const file = path.join(dist, "_redirects");
+  const keptFile = path.join(dist, "kept-claims.json");
   return {
     result,
+    dist,
+    kept: fs.existsSync(keptFile) ? JSON.parse(fs.readFileSync(keptFile, "utf8")) : null,
     gone: fs.existsSync(goneFile) ? JSON.parse(fs.readFileSync(goneFile, "utf8")) : null,
     redirects: fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null,
   };
@@ -53,6 +56,56 @@ test("a claim merged into another goes where the claim it became goes", () => {
     const after = by.get(to);
     assert.deepEqual(by.get(slug), after.to ? { slug, to: after.to } : { slug, gone: true });
   }
+});
+
+// The three answers an old claim address has (the operator, 2026-11-21): a claim a published
+// pair came from leads to it, one the operator archived stays gone, and every other keeps its
+// page and files as production built them (scripts/kept-claims.mjs; tests/kept-claims holds two).
+test("with kept claims, a matched claim leads to its pair, an archived one is gone, and an unmatched one keeps its files", () => {
+  const KEPT = "10-person-living-donor-kidney-exchange-chain-kidney-failure";
+  const { result, gone, kept, dist } = run("tests/bundle", "tests/kept-claims");
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const by = new Map(gone.map((entry) => [entry.slug, entry]));
+  // Matched: still a 301 to the pair.
+  assert.deepEqual(by.get("ambroxol-parkinsons-disease-dementia"), { slug: "ambroxol-parkinsons-disease-dementia", to: "ambroxol--dementia" });
+  // Archived: still gone, with its day.
+  for (const { slug, on } of retired.archived) assert.deepEqual(by.get(slug), { slug, on });
+  // Unmatched and kept: not in the list the Worker answers from, and its eight files built,
+  // byte for byte the frozen ones, with the style they load.
+  assert.deepEqual(kept, [KEPT, "exagamglogene-autotemcel-sickle-cell-disease"].sort());
+  assert.equal(by.has(KEPT), false);
+  const manifest = JSON.parse(fs.readFileSync("tests/kept-claims/manifest.json", "utf8"));
+  for (const file of [...manifest.claims[KEPT], ...manifest.shared]) {
+    assert.deepEqual(fs.readFileSync(path.join(dist, file)), fs.readFileSync(path.join("tests/kept-claims/files", file)), file);
+  }
+  // A claim merged into a kept one leads to it.
+  assert.deepEqual(by.get("crispr-edited-autologous-bone-marrow-cells-sickle-cell"), {
+    slug: "crispr-edited-autologous-bone-marrow-cells-sickle-cell",
+    to: "exagamglogene-autotemcel-sickle-cell-disease",
+    kept: true,
+  });
+  // Unmatched and not among the kept (the tests hold two): gone, as before.
+  assert.ok(gone.some((entry) => entry.gone === true));
+  assert.match(result.stdout, /claims keep their pages \(17 files\), 11 archived stay gone/);
+});
+
+test("a kept file that is not the one frozen stops the build", () => {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-"));
+  fs.cpSync("tests/kept-claims", folder, { recursive: true });
+  fs.appendFileSync(path.join(folder, "files/data/claims/10-person-living-donor-kidney-exchange-chain-kidney-failure.json"), " ");
+  const { result } = run("tests/bundle", folder);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /is not the file frozen/);
+});
+
+test("kept claims frozen from another commit stop the build", () => {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-"));
+  fs.cpSync("tests/kept-claims", folder, { recursive: true });
+  const file = path.join(folder, "manifest.json");
+  fs.writeFileSync(file, JSON.stringify({ ...JSON.parse(fs.readFileSync(file, "utf8")), commit: "f".repeat(40) }));
+  const { result } = run("tests/bundle", folder);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /was frozen from f{40}/);
 });
 
 test("a topic renamed while claims were tracked keeps its redirect", () => {
