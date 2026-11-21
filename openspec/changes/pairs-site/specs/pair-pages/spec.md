@@ -18,6 +18,12 @@ Each pair in the bundle SHALL have a page at `/{address}` that shows its interve
 - **WHEN** the bundle says a trial has no results on the registry a year after its primary completion
 - **THEN** the trial's results line says so with the day the lab read the record, and never that the sponsor is late
 
+#### Scenario: A pair's progress on record
+- **WHEN** a reader opens the page of a pair with a trial on record
+- **THEN** a section "What the record shows" gives the furthest of five steps a record exists for (registered, trial started, trial finished, results on record, regulator has decided), the trial and day of the record that reached it, and a sentence saying it counts records and says nothing of what a trial found
+- **AND** its caution facts are drawn with it: each trial ended early with the registry's stated reason as written, each trial with no results on the registry a year after primary completion with the day that was read, and a retraction; or, where the records hold none, a sentence saying so
+- **AND** no caution fact changes the step, and no colour or word says how a trial turned out
+
 #### Scenario: An address no pair has
 - **WHEN** a reader opens an address the bundle does not hold and no claim had
 - **THEN** the not-found page is shown

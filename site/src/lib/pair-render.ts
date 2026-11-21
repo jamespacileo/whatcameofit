@@ -196,6 +196,48 @@ export function trialRecord(trial: PairTrialView): string {
   ].join("");
 }
 
+/** Said under the steps, every time: what the level counts and what it does not. */
+export const PROGRESS_NOTE =
+  "Progress on record counts how far testing has gone on the public registries. It says nothing of what a trial found.";
+export const CAUTIONS_LEAD = "Beside it, from the same records:";
+/** Said when the records hold none of the caution facts, so the level never stands alone. */
+export const NO_CAUTIONS =
+  "No trial of this pair is recorded as ended early, none is past a year from primary completion with no results on the registry, and no retraction is on record.";
+export const STOP_REASON_LEAD = "The registry record gives this reason:";
+
+assertNoOutcomeVerdict([PROGRESS_NOTE, CAUTIONS_LEAD, NO_CAUTIONS, STOP_REASON_LEAD, "What the record shows", "Progress on record"]);
+
+/** "What the record shows": the pair's progress on record as five steps in one hue, the
+ * record that put it there, and its caution facts, which are always drawn with it (the
+ * operator's choice of 2026-11-21, docs/adr/0015: a 5-person trial that ended early and
+ * posted results reaches step 4, so the level may never be shown alone). No colour says how
+ * a trial turned out (docs/adr/0010). */
+export function renderProgress(view: PairView): string {
+  const progress = view.progress;
+  if (!progress) return "";
+  const said = `Step ${progress.place} of ${progress.of}: ${progress.name}`;
+  const from = progress.nctId
+    ? ` From <a href="#trials"${progress.eventKey ? ` data-progress-event="${escape(progress.eventKey)}"` : ""}>${escape(progress.nctId)}</a>${progress.day ? `, ${escape(registryDay(progress.day))}` : ""}.`
+    : "";
+  return [
+    `<div class="pair-progress" data-progress="${escape(progress.step)}">`,
+    `<p class="progress-name">Progress on record</p>`,
+    `<p class="progress-steps" role="img" aria-label="${escape(said)}">${Array.from({ length: progress.of }, (_, index) => `<span class="${index < progress.place ? "on" : ""}"></span>`).join("")}</p>`,
+    `<p><strong data-progress-step>${escape(said)}</strong>. ${escape(progress.gloss)}.${from}</p>`,
+    `<p class="note">${escape(PROGRESS_NOTE)}</p>`,
+    `<div class="pair-cautions" data-cautions>`,
+    progress.cautions.length
+      ? `<p>${escape(CAUTIONS_LEAD)}</p><ul>${progress.cautions
+          .map(
+            (caution) =>
+              `<li data-caution="${escape(caution.kind)}">${escape(caution.text)}${caution.quoted ? ` ${escape(STOP_REASON_LEAD)} <q>${escape(caution.quoted)}</q>` : ""}</li>`,
+          )
+          .join("")}</ul>`
+      : `<p data-caution="none">${escape(NO_CAUTIONS)}</p>`,
+    `</div></div>`,
+  ].join("");
+}
+
 export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): string {
   // From a few trials up, the trials read across as a table (lib/trials-table.ts), each row
   // opening to the same record; fewer stay as entries of their own. Only the one used is made.
@@ -215,6 +257,7 @@ export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): 
   // The page's sections beside the sheet, as the claim pages had them (DESIGN.md, "Section
   // list"): each by name, the trials with their count.
   const rail = sectionList("On this page", [
+    ...(view.progress ? [{ id: "record", name: "What the record shows" }] : []),
     { id: "why", name: "Why this status" },
     { id: "trials", name: "The trials", count: view.trials.length },
     { id: "history", name: "How the status changed" },
@@ -226,6 +269,8 @@ export function renderPairSheet(view: PairView, narrower: NarrowerPair[] = []): 
           .map((pair) => `<a href="/${escape(pair.address)}" data-narrower="${escape(pair.address)}">${escape(pair.condition)}</a>`)
           .join(", ")}</p>`
       : "",
+    view.progress ? sheetHeading("What the record shows", "record") : "",
+    renderProgress(view),
     sheetHeading("Why this status", "why"),
     eventList(
       " data-pair-explained",

@@ -118,6 +118,26 @@ export const PAIR_RESULTS_DUE_WORDS: Record<string, string> = {
 
 assertNoOutcomeVerdict(Object.values(PAIR_RESULTS_DUE_WORDS));
 
+/** The five steps of a pair's progress on record (`ProgressStep`, lib/progress.ts), each with
+ * the sentence that says what record put the pair there. Named for what is counted, records,
+ * and never as strength, certainty or a grade (docs/adr/0015). */
+export const PAIR_PROGRESS_STEPS: Record<string, string> = {
+  registered: "Registered",
+  started: "Trial started",
+  finished: "Trial finished",
+  results: "Results on record",
+  regulator: "Regulator has decided",
+};
+export const PAIR_PROGRESS_GLOSSES: Record<string, string> = {
+  registered: "A trial is registered. No record shows one has started",
+  started: "A trial has started. No record shows one has finished",
+  finished: "A trial has finished. No results are on the registry",
+  results: "A trial has results on the registry. No regulator decision is on record",
+  regulator: "A regulator's decision is on record",
+};
+
+assertNoOutcomeVerdict([...Object.values(PAIR_PROGRESS_STEPS), ...Object.values(PAIR_PROGRESS_GLOSSES)]);
+
 /** Every table of words this module holds, by the kind of code it words. */
 export const PAIR_WORDING: Record<string, Record<string, string>> = {
   status: STATUS_LABELS,
@@ -131,6 +151,8 @@ export const PAIR_WORDING: Record<string, Record<string, string>> = {
   registry: PAIR_REGISTRY_NAMES,
   "outcome kind": PAIR_OUTCOME_KIND_WORDS,
   "results due": PAIR_RESULTS_DUE_WORDS,
+  "progress step": PAIR_PROGRESS_STEPS,
+  "progress gloss": PAIR_PROGRESS_GLOSSES,
   tree: TREE_LABELS,
 };
 
