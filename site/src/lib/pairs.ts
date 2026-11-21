@@ -13,6 +13,7 @@ import { UNCHECKED_NOTE } from "./notices.ts";
 import { PAIR_RECORD_FORMAT, pairDataHeader, pairRecordOf } from "./pair-record.ts";
 import { STAGE_PATH, STATUS_LABELS, STATUS_MEANINGS, overlayText } from "./status.ts";
 import { formatDate } from "./timetable.ts";
+import { yearsOn } from "./then-now.ts";
 
 /** The bundle folder this build reads. */
 export function pairBundleFolder(): string {
@@ -312,6 +313,60 @@ export function latestRecords(limit: number): LatestRecord[] {
     .sort((a, b) => (a.day === b.day ? a.title.localeCompare(b.title) || a.key.localeCompare(b.key) : a.day < b.day ? 1 : -1))
     .slice(0, limit)
     .map(({ pairs, ...entry }) => ({ ...entry, others: pairs.size - 1 }));
+}
+
+export interface ThenAndNow {
+  address: string;
+  title: string;
+  /** The pair's earliest dated registry record. */
+  first: { key: string; day: string; label: string; nctId: string };
+  /** The day of its latest dated registry record. */
+  latestDay: string;
+  /** "5 years on", from the first record to the day the bundle was made; null under a year. */
+  on: string | null;
+  statusCode: string;
+  status: string;
+  gloss: string;
+  trials: number;
+}
+
+/**
+ * The home page's example, as the site's idea in one look: one pair's first registry record,
+ * then where it stands now. The claims home showed a report's headline there; a pair has no
+ * report yet (design decision 6), so "then" is the day its first trial entered the records.
+ * Chosen by rule, never by hand: the pair followed through the most trials, then the one whose
+ * first record is oldest, then by address. Only records dated to the day, already past when
+ * the bundle was made, count. Null when no pair has one.
+ */
+export function thenAndNow(): ThenAndNow | null {
+  const through = bundleMadeAt().slice(0, 10);
+  let best: ThenAndNow | null = null;
+  for (const page of Object.values(pairPages())) {
+    const view = pairView(page);
+    const dated = view.trials
+      .flatMap((trial) => trial.events)
+      .filter((event) => !event.estimated && /^\d{4}-\d{2}-\d{2}$/.test(event.day) && event.day <= through)
+      .sort((a, b) => a.day.localeCompare(b.day) || a.key.localeCompare(b.key));
+    if (dated.length === 0) continue;
+    const first = dated[0];
+    const leads =
+      best === null ||
+      view.trials.length > best.trials ||
+      (view.trials.length === best.trials && (first.day < best.first.day || (first.day === best.first.day && view.address < best.address)));
+    if (!leads) continue;
+    best = {
+      address: view.address,
+      title: view.title,
+      first: { key: first.key, day: first.day, label: first.label, nctId: first.nctId },
+      latestDay: dated.at(-1)!.day,
+      on: yearsOn(first.day, through),
+      statusCode: view.statusCode,
+      status: view.status,
+      gloss: view.gloss,
+      trials: view.trials.length,
+    };
+  }
+  return best;
 }
 
 /** How many pairs the bundle publishes, how many distinct trials they are followed through,
