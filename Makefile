@@ -112,7 +112,7 @@ deploy-ci-check: site/node_modules
 # The pages of claims no pair came from, kept as production built them (site/scripts/kept-claims.mjs):
 # built once from production's claims commit and frozen into KEPT_CLAIMS_DIR. Staging and
 # production are never published without them. About four minutes the first time; nothing after.
-KEPT_CLAIMS_DIR ?= $(CURDIR)/site/.cache/kept-claims/4ea7f23613d9bd390c601b1ef00048c864064e81-format2
+KEPT_CLAIMS_DIR ?= $(CURDIR)/site/.cache/kept-claims/4ea7f23613d9bd390c601b1ef00048c864064e81-format3
 kept-claims: site/node_modules
 	sh site/scripts/freeze-kept-claims.sh $(KEPT_CLAIMS_DIR)
 

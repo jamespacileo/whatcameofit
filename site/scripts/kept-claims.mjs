@@ -23,9 +23,11 @@ import path from "node:path";
 export const KEPT_CLAIMS_COMMIT = "4ea7f23613d9bd390c601b1ef00048c864064e81";
 
 /** The shape of a frozen folder. 2: each claim's year indexes, icons and assets are named in
- * `needs`, so a build places only what its kept claims reach. A folder frozen in another shape
- * is refused, never read as if it were this one. */
-export const KEPT_FORMAT = 2;
+ * `needs`, so a build places only what its kept claims reach. 3: each claim's entry in the
+ * search and article lookup is kept in `lookup`, as production's lookup.json and
+ * search-detail.json gave it, so a kept claim is still found by its words and its articles'
+ * addresses. A folder frozen in another shape is refused, never read as if it were this one. */
+export const KEPT_FORMAT = 3;
 
 /** The files a claim had, by its slug, as built paths. */
 export function claimFiles(slug) {
@@ -112,6 +114,21 @@ export function freeze({ from, to, slugs, commit }) {
     needs[slug] = [...reached].sort();
   }
   const shared = new Set(Object.values(needs).flat());
+  // How search and the article lookup found each claim: its entry in the old lookup.json, the
+  // article keys that led to it, and its reports and trials in the old search-detail.json.
+  const readOld = (file) => (fs.existsSync(path.join(from, file)) ? JSON.parse(fs.readFileSync(path.join(from, file), "utf8")) : null);
+  const oldLookup = readOld("lookup.json");
+  const oldDetail = readOld("search-detail.json");
+  const keysOf = new Map();
+  for (const [key, slugs] of Object.entries(oldLookup?.articles ?? {})) {
+    for (const slug of slugs) keysOf.set(slug, [...(keysOf.get(slug) ?? []), key]);
+  }
+  const lookup = {};
+  for (const slug of Object.keys(claims)) {
+    const entry = oldLookup?.claims?.[slug];
+    if (!entry) continue;
+    lookup[slug] = { entry, articles: (keysOf.get(slug) ?? []).sort(), detail: oldDetail?.claims?.[slug] ?? { reports: [], trials: [] } };
+  }
   const sums = {};
   for (const file of [...kept, ...shared].sort()) {
     const target = path.join(to, "files", file);
@@ -126,11 +143,12 @@ export function freeze({ from, to, slugs, commit }) {
     claims,
     shared: [...shared].sort(),
     needs,
+    lookup,
     linked: [...linked].sort(),
     sha256: sums,
   };
   fs.writeFileSync(path.join(to, "manifest.json"), `${JSON.stringify(manifest, null, 1)}\n`);
-  return { claims: Object.keys(claims).length, files: Object.keys(sums).length, missing };
+  return { claims: Object.keys(claims).length, files: Object.keys(sums).length, missing, unsearchable: Object.keys(claims).filter((slug) => !lookup[slug]) };
 }
 
 /** The kept folder's manifest, checked to be from the pinned commit. */
@@ -195,14 +213,69 @@ export function placeKept({ folder, dist, slugs }) {
   return placed;
 }
 
+/**
+ * Make each kept claim findable as production's search and article lookup found it: its entry,
+ * by slug, in the lookup files (`kept` in /lookup/2.json; `claims` in /lookup.json, the released
+ * extension's), the addresses of its articles in their `articles`, and its reports and trials in
+ * /search-detail.json (`kept`). A report's outlet icon is given only where the build holds it.
+ * Returns how many claims were added.
+ * @param {{ folder: string, dist: string, slugs: string[] }} options
+ */
+export function addKeptToLookup({ folder, dist, slugs }) {
+  const manifest = readKept(folder);
+  const kept = slugs.filter((slug) => manifest.lookup?.[slug]);
+  const edit = (file, change) => {
+    const target = path.join(dist, file);
+    if (!fs.existsSync(target)) return;
+    const body = JSON.parse(fs.readFileSync(target, "utf8"));
+    change(body);
+    fs.writeFileSync(target, JSON.stringify(body));
+  };
+  const addArticles = (articles, slug) => {
+    for (const key of manifest.lookup[slug].articles) {
+      const listed = (articles[key] ??= []);
+      if (!listed.includes(slug)) listed.push(slug);
+    }
+  };
+  edit("lookup/2.json", (body) => {
+    body.kept = {};
+    for (const slug of kept) {
+      body.kept[slug] = manifest.lookup[slug].entry;
+      addArticles((body.articles ??= {}), slug);
+    }
+  });
+  edit("lookup.json", (body) => {
+    for (const slug of kept) {
+      if (Object.hasOwn(body.claims ?? {}, slug)) throw new Error(`/lookup.json already lists ${slug}, which is a kept claim.`);
+      (body.claims ??= {})[slug] = manifest.lookup[slug].entry;
+      addArticles((body.articles ??= {}), slug);
+    }
+  });
+  edit("search-detail.json", (body) => {
+    body.kept = {};
+    for (const slug of kept) {
+      const { reports, trials } = manifest.lookup[slug].detail;
+      body.kept[slug] = {
+        reports: reports.map((report) => ({ ...report, icon: report.icon && fs.existsSync(path.join(dist, report.icon)) ? report.icon : null })),
+        trials,
+      };
+    }
+  });
+  return kept.length;
+}
+
 if (import.meta.main && process.argv[2] === "freeze") {
   const [, , , from, to] = process.argv;
   if (!from || !to) throw new Error("Usage: node scripts/kept-claims.mjs freeze <old dist> <folder>");
   const slugs = keptSlugs(JSON.parse(fs.readFileSync(RETIRED, "utf8")));
-  const { claims, files, missing } = freeze({ from: path.resolve(from), to: path.resolve(to), slugs, commit: process.env.KEPT_CLAIMS_FROM ?? KEPT_CLAIMS_COMMIT });
+  const { claims, files, missing, unsearchable } = freeze({ from: path.resolve(from), to: path.resolve(to), slugs, commit: process.env.KEPT_CLAIMS_FROM ?? KEPT_CLAIMS_COMMIT });
   console.log(`Kept ${claims} claims' pages in ${files.toLocaleString("en-GB")} files at ${to}.`);
   if (missing.length > 0) {
     console.error(`No page was built for ${missing.length} of them: ${missing.join(", ")}`);
+    process.exit(1);
+  }
+  if (unsearchable.length > 0) {
+    console.error(`The old build's lookup.json lists no entry for ${unsearchable.length} of them: ${unsearchable.join(", ")}`);
     process.exit(1);
   }
 }

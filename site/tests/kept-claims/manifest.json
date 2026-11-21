@@ -1,7 +1,7 @@
 {
  "about": "The tests' kept claims: two synthetic claims in the shape scripts/kept-claims.mjs freezes. Never published (deploy.mjs refuses a fixture).",
  "fixture": true,
- "format": 2,
+ "format": 3,
  "commit": "4ea7f23613d9bd390c601b1ef00048c864064e81",
  "claims": {
   "10-person-living-donor-kidney-exchange-chain-kidney-failure": [
@@ -57,5 +57,144 @@
   "og/square/exagamglogene-autotemcel-sickle-cell-disease.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
   "og/tall/10-person-living-donor-kidney-exchange-chain-kidney-failure.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e",
   "og/tall/exagamglogene-autotemcel-sickle-cell-disease.png": "e878950f8091ec010cf5cc723bdea027a8539cf7147cfea199c2f666232dcd4e"
+ },
+ "lookup": {
+  "10-person-living-donor-kidney-exchange-chain-kidney-failure": {
+   "entry": {
+    "headline": "Ten-person living-donor kidney swap links donors and recipients",
+    "page": "/10-person-living-donor-kidney-exchange-chain-kidney-failure",
+    "status": "No trial record found",
+    "meaning": "No clinical trial was found in the registries checked. This does not establish whether the treatment has been studied in people.",
+    "place": null,
+    "no_signal": "No signal for 4 years",
+    "first_reported": "19 Mar 2022",
+    "latest_promise": null,
+    "unchecked": "This page has not yet been checked by a person. It was put together by software from the public records it links to.",
+    "names": [
+     "10-person living-donor kidney exchange chain"
+    ],
+    "indication": "Kidney failure",
+    "terms": "Kidney failure 10 strangers come together for a life-changing kidney swap",
+    "topic": "kidneys-and-bladder"
+   },
+   "articles": [
+    "npr.org/2022/03/19/1086245705/10-strangers-come-together-for-a-life-changing-kidney-swap"
+   ],
+   "detail": {
+    "reports": [
+     {
+      "title": "10 strangers come together for a life-changing kidney swap",
+      "outlet": "NPR",
+      "domain": "npr.org",
+      "icon": null,
+      "url": "https://www.npr.org/2022/03/19/1086245705/10-strangers-come-together-for-a-life-changing-kidney-swap",
+      "date": "19 Mar 2022"
+     }
+    ],
+    "trials": []
+   }
+  },
+  "exagamglogene-autotemcel-sickle-cell-disease": {
+   "entry": {
+    "headline": "England approves exa-cel gene therapy for NHS use in severe sickle cell disease",
+    "page": "/exagamglogene-autotemcel-sickle-cell-disease",
+    "status": "Phase 3 trial",
+    "meaning": "The furthest trial that has started is a Phase 3 trial.",
+    "place": 5,
+    "no_signal": null,
+    "first_reported": "29 Jul 2019",
+    "latest_promise": null,
+    "unchecked": "This page has not yet been checked by a person. It was put together by software from the public records it links to.",
+    "names": [
+     "exagamglogene autotemcel",
+     "exa-cel",
+     "Casgevy"
+    ],
+    "indication": "Sickle cell disease",
+    "terms": "Sickle cell disease In A 1st, Doctors In U.S. Use CRISPR Tool To Treat Patient With Genetic Disorder ‘Groundbreaking’ sickle cell disease treatment approved for NHS use in England Louisiana man becomes first in region functionally cured of sickle cell disease",
+    "topic": "heart-and-circulation"
+   },
+   "articles": [
+    "npr.org/sections/health-shots/2019/07/29/744826505/sickle-cell-patient-reveals-why-she-is-volunteering-for-landmark-gene-editing-st",
+    "theguardian.com/society/2025/jan/31/groundbreaking-potential-cure-for-sickle-cell-in-england-approved-for-nhs-use",
+    "theguardian.com/us-news/2026/jun/24/louisiana-man-sickle-cell-functionally-cured"
+   ],
+   "detail": {
+    "reports": [
+     {
+      "title": "In A 1st, Doctors In U.S. Use CRISPR Tool To Treat Patient With Genetic Disorder",
+      "outlet": "NPR",
+      "domain": "npr.org",
+      "icon": null,
+      "url": "https://www.npr.org/sections/health-shots/2019/07/29/744826505/sickle-cell-patient-reveals-why-she-is-volunteering-for-landmark-gene-editing-st",
+      "date": "29 Jul 2019"
+     },
+     {
+      "title": "‘Groundbreaking’ sickle cell disease treatment approved for NHS use in England",
+      "outlet": "The Guardian",
+      "domain": "theguardian.com",
+      "icon": "/outlet-icons/theguardian.com.3ab143505f59.png",
+      "url": "https://www.theguardian.com/society/2025/jan/31/groundbreaking-potential-cure-for-sickle-cell-in-england-approved-for-nhs-use",
+      "date": "31 Jan 2025"
+     },
+     {
+      "title": "Louisiana man becomes first in region functionally cured of sickle cell disease",
+      "outlet": "The Guardian",
+      "domain": "theguardian.com",
+      "icon": "/outlet-icons/theguardian.com.3ab143505f59.png",
+      "url": "https://www.theguardian.com/us-news/2026/jun/24/louisiana-man-sickle-cell-functionally-cured",
+      "date": "24 Jun 2026"
+     }
+    ],
+    "trials": [
+     {
+      "id": "NCT03745287",
+      "title": "A Safety and Efficacy Study Evaluating CTX001 in Subjects With Severe Sickle Cell Disease",
+      "registry": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/study/NCT03745287",
+      "phases": [
+       "Phase 2",
+       "Phase 3"
+      ]
+     },
+     {
+      "id": "NCT04208529",
+      "title": "A Long-term Follow-up Study in Participants Who Received CTX001",
+      "registry": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/study/NCT04208529",
+      "phases": [
+       "Phase 3"
+      ]
+     },
+     {
+      "id": "NCT05329649",
+      "title": "Evaluation of Safety and Efficacy of CTX001 in Pediatric Participants With Severe Sickle Cell Disease (SCD)",
+      "registry": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/study/NCT05329649",
+      "phases": [
+       "Phase 3"
+      ]
+     },
+     {
+      "id": "NCT05477563",
+      "title": "Evaluation of Efficacy and Safety of a Single Dose of CTX001 in Participants With Transfusion-Dependent β-Thalassemia and Severe Sickle Cell Disease",
+      "registry": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/study/NCT05477563",
+      "phases": [
+       "Phase 3"
+      ]
+     },
+     {
+      "id": "NCT05951205",
+      "title": "Evaluation of Efficacy and Safety of a Single Dose of Exa-cel in Participants With Severe Sickle Cell Disease, βS/ βC Genotype",
+      "registry": "ClinicalTrials.gov",
+      "url": "https://clinicaltrials.gov/study/NCT05951205",
+      "phases": [
+       "Phase 3"
+      ]
+     }
+    ]
+   }
+  }
  }
 }
