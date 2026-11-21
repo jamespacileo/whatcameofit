@@ -1,0 +1,363 @@
+{
+ "row": {
+  "pair": {
+   "intervention_id": "substance:X7K762X1IJ",
+   "condition_id": "D000077195",
+   "key": "substance:X7K762X1IJ|D000077195",
+   "address": "evorpacept--squamous-cell-carcinoma-of-head-and-neck",
+   "nct_ids": [
+    "NCT04675294",
+    "NCT04675333"
+   ],
+   "checked_by_person": false
+  },
+  "intervention": {
+   "id": "substance:X7K762X1IJ",
+   "key_kind": "substance",
+   "key_value": "X7K762X1IJ",
+   "preferred_name": "EVORPACEPT",
+   "slug": "evorpacept",
+   "components": []
+  },
+  "condition": {
+   "descriptor_id": "D000077195",
+   "slug": "squamous-cell-carcinoma-of-head-and-neck"
+  },
+  "descriptor": {
+   "descriptor_id": "D000077195",
+   "label": "Squamous Cell Carcinoma of Head and Neck",
+   "tree_numbers": [
+    "C04.557.470.200.400.565",
+    "C04.588.443.177"
+   ]
+  },
+  "status": {
+   "intervention_id": "substance:X7K762X1IJ",
+   "condition_id": "D000077195",
+   "code": "phase_2",
+   "overlay_years": 5,
+   "explained_by": [
+    "NCT04675294|registered|2020-12-19",
+    "NCT04675333|registered|2020-12-19",
+    "NCT04675294|started|2021-04-02",
+    "NCT04675333|started|2021-05-10"
+   ],
+   "as_of": "2026-11-21",
+   "highest_phase": "phase_2",
+   "highest_phase_trials": [
+    "NCT04675294",
+    "NCT04675333"
+   ],
+   "highest_phase_combined_with": null,
+   "trials_without_a_phase": 0
+  },
+  "filing": {
+   "intervention_id": "substance:X7K762X1IJ",
+   "condition_id": "D000077195",
+   "vertical": "cancer",
+   "basis": "one_derived_topic"
+  },
+  "origin": {
+   "intervention_id": "substance:X7K762X1IJ",
+   "condition_id": "D000077195",
+   "condition_fit": "exact",
+   "indication": "Head and neck squamous cell carcinoma",
+   "claim_slug": "evorpacept-head-and-neck-squamous-cell-carcinoma"
+  },
+  "claim_slugs": [
+   "evorpacept-head-and-neck-squamous-cell-carcinoma"
+  ],
+  "first_report": null
+ },
+ "names": [
+  {
+   "intervention_id": "substance:X7K762X1IJ",
+   "name": "CD47 Antagonist ALX148",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:X7K762X1IJ",
+   "name": "EVORPACEPT",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:X7K762X1IJ",
+   "name": "Evorpacept (ALX148)",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  }
+ ],
+ "checked_by_person": false,
+ "trials": [
+  {
+   "nct_id": "NCT04675294",
+   "arms": [
+    "evorpacept (ALX148) + pembrolizumab"
+   ],
+   "claim_arm": "evorpacept (ALX148) + pembrolizumab",
+   "facts": {
+    "nct_id": "NCT04675294",
+    "as_of": "2025-08-01",
+    "title": "Evorpacept (ALX148) in Combination With Pembrolizumab in Patients With Advanced Head and Neck Squamous Cell Carcinoma (ASPEN-03)",
+    "phases": [
+     "phase_2"
+    ],
+    "overall_status": "active_not_recruiting",
+    "participants": {
+     "count": 189,
+     "actual": true
+    },
+    "start": {
+     "day": "2021-04-02",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2025-03-03",
+     "basis": "registry_date"
+    },
+    "completion": {
+     "day": "2026-06-30",
+     "basis": "registry_date_estimated"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "18 Years",
+    "maximum_age": null,
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT04675294|registered|2020-12-19",
+     "nct_id": "NCT04675294",
+     "kind": "registered",
+     "day": "2020-12-19",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "shown_on": "2025-08-01",
+     "update_key": null
+    },
+    {
+     "key": "NCT04675294|started|2021-04-02",
+     "nct_id": "NCT04675294",
+     "kind": "started",
+     "day": "2021-04-02",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "shown_on": "2025-08-01",
+     "update_key": null
+    }
+   ],
+   "paper_ids": [],
+   "findings": {
+    "outcomes": [],
+    "comparisons": [],
+    "arms": [],
+    "harms": [],
+    "serious_events": [],
+    "registered": [
+     {
+      "key": "NCT04675294|primary|000",
+      "nct_id": "NCT04675294",
+      "kind": "primary",
+      "measure": "Objective response rate per RECIST 1.1",
+      "time_frame": "Last randomized patient reaching at least 24 weeks of follow-up"
+     },
+     {
+      "key": "NCT04675294|secondary|000",
+      "nct_id": "NCT04675294",
+      "kind": "secondary",
+      "measure": "Duration of response",
+      "time_frame": "Up to 36 months"
+     },
+     {
+      "key": "NCT04675294|secondary|001",
+      "nct_id": "NCT04675294",
+      "kind": "secondary",
+      "measure": "Progression-free survival",
+      "time_frame": "Up to 36 months"
+     },
+     {
+      "key": "NCT04675294|secondary|002",
+      "nct_id": "NCT04675294",
+      "kind": "secondary",
+      "measure": "Overall survival",
+      "time_frame": "Up to 36 months"
+     },
+     {
+      "key": "NCT04675294|secondary|003",
+      "nct_id": "NCT04675294",
+      "kind": "secondary",
+      "measure": "Adverse events",
+      "time_frame": "Up to 36 months"
+     }
+    ],
+    "due": {
+     "nct_id": "NCT04675294",
+     "primary_completion": "2025-03-03",
+     "code": "no_results_a_year_after_completion",
+     "days_since_completion": 628,
+     "as_of": "2026-11-21"
+    }
+   }
+  },
+  {
+   "nct_id": "NCT04675333",
+   "arms": [
+    "evorpacept (ALX148) + pembrolizumab + Chemotherapy"
+   ],
+   "claim_arm": "evorpacept (ALX148) + pembrolizumab + Chemotherapy",
+   "facts": {
+    "nct_id": "NCT04675333",
+    "as_of": "2025-08-03",
+    "title": "Evorpacept (ALX148) in Combination With Pembrolizumab and Chemotherapy in Patients With Advanced Head and Neck Squamous Cell Carcinoma (ASPEN-04)",
+    "phases": [
+     "phase_2"
+    ],
+    "overall_status": "active_not_recruiting",
+    "participants": {
+     "count": 172,
+     "actual": true
+    },
+    "start": {
+     "day": "2021-05-10",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2025-03-03",
+     "basis": "registry_date"
+    },
+    "completion": {
+     "day": "2026-06-30",
+     "basis": "registry_date_estimated"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "18 Years",
+    "maximum_age": null,
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT04675333|registered|2020-12-19",
+     "nct_id": "NCT04675333",
+     "kind": "registered",
+     "day": "2020-12-19",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "shown_on": "2025-08-03",
+     "update_key": null
+    },
+    {
+     "key": "NCT04675333|started|2021-05-10",
+     "nct_id": "NCT04675333",
+     "kind": "started",
+     "day": "2021-05-10",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_2"
+     ],
+     "shown_on": "2025-08-03",
+     "update_key": null
+    }
+   ],
+   "paper_ids": [],
+   "findings": {
+    "outcomes": [],
+    "comparisons": [],
+    "arms": [],
+    "harms": [],
+    "serious_events": [],
+    "registered": [
+     {
+      "key": "NCT04675333|primary|000",
+      "nct_id": "NCT04675333",
+      "kind": "primary",
+      "measure": "Objective response rate per RECIST 1.1",
+      "time_frame": "Last randomized patient reaching at least 24 weeks of follow-up"
+     },
+     {
+      "key": "NCT04675333|secondary|000",
+      "nct_id": "NCT04675333",
+      "kind": "secondary",
+      "measure": "Duration of response",
+      "time_frame": "Up to 36 months"
+     },
+     {
+      "key": "NCT04675333|secondary|001",
+      "nct_id": "NCT04675333",
+      "kind": "secondary",
+      "measure": "Progression-free survival",
+      "time_frame": "Up to 36 months"
+     },
+     {
+      "key": "NCT04675333|secondary|002",
+      "nct_id": "NCT04675333",
+      "kind": "secondary",
+      "measure": "Overall survival",
+      "time_frame": "Up to 36 months"
+     },
+     {
+      "key": "NCT04675333|secondary|003",
+      "nct_id": "NCT04675333",
+      "kind": "secondary",
+      "measure": "Adverse events",
+      "time_frame": "Up to 36 months"
+     }
+    ],
+    "due": {
+     "nct_id": "NCT04675333",
+     "primary_completion": "2025-03-03",
+     "code": "no_results_a_year_after_completion",
+     "days_since_completion": 628,
+     "as_of": "2026-11-21"
+    }
+   }
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:X7K762X1IJ",
+  "approach": "drug",
+  "basis": "registry_intervention_type",
+  "registry_type": "DRUG",
+  "trials": 3
+ },
+ "history": [
+  {
+   "intervention_id": "substance:X7K762X1IJ",
+   "condition_id": "D000077195",
+   "before": null,
+   "after": "phase_2",
+   "on": "2026-11-21",
+   "observed_in_run": "6c86b5de06b1"
+  }
+ ],
+ "checked": [
+  {
+   "registry": "clinicaltrials.gov",
+   "checked_through": "2026-11-17"
+  }
+ ]
+}

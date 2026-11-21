@@ -1,0 +1,338 @@
+{
+ "intervention": {
+  "id": "substance:53AXN4NNHX",
+  "key_kind": "substance",
+  "key_value": "53AXN4NNHX",
+  "preferred_name": "Semaglutide",
+  "slug": "semaglutide",
+  "components": []
+ },
+ "names": [
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "12 weeks of weekly subcutaneous semaglutide injection",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Arm 2 - DehydraTECH-semaglutide alone",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Dose escalation to 2 mg semaglutide weekly then no semaglutide",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Dose escalation to 2 mg semaglutide weekly then semaglutide microdosing at 0.5 mg weekly",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Gradual dose reduction of semaglutide",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "OZEMPIC",
+   "origin": "substance_registry",
+   "role": "brand",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "RYBELSUS",
+   "origin": "substance_registry",
+   "role": "brand",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide (Rybelsus®)",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide (Wegovy®)",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 0.25 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 0.5 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 1.0 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 1.7mg subcutaneous",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 2.4 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Injectable Product",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Injectable Product (Wegovy and/or Ozempic)",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Pen Injector",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Pen Injector 2.4mg weekly",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide oral",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide with 4 meal strategies",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide, 1.0 mg/mL",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide, 1.34 mg/mL",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "WEGOVY",
+   "origin": "substance_registry",
+   "role": "brand",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "oral Semaglutide/Rybelsus",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "semaglutide 2.4mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:53AXN4NNHX",
+  "approach": null,
+  "basis": "registry_intervention_type",
+  "registry_type": null,
+  "trials": 72
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:53AXN4NNHX",
+    "condition_id": "D000437",
+    "key": "substance:53AXN4NNHX|D000437",
+    "address": "semaglutide--alcoholism",
+    "nct_ids": [
+     "NCT05520775",
+     "NCT05891587",
+     "NCT05895643",
+     "NCT06015893",
+     "NCT07040592",
+     "NCT07218354"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:53AXN4NNHX",
+    "key_kind": "substance",
+    "key_value": "53AXN4NNHX",
+    "preferred_name": "Semaglutide",
+    "slug": "semaglutide",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D000437",
+    "slug": "alcoholism"
+   },
+   "descriptor": {
+    "descriptor_id": "D000437",
+    "label": "Alcoholism",
+    "tree_numbers": [
+     "C25.775.100.250",
+     "F03.900.100.350"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:53AXN4NNHX",
+    "condition_id": "D000437",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT07218354|registered|2025-10-20",
+     "NCT07218354|started|2026-07-28"
+    ],
+    "as_of": "2026-11-21",
+    "highest_phase": "phase_3",
+    "highest_phase_trials": [
+     "NCT07218354"
+    ],
+    "highest_phase_combined_with": null,
+    "trials_without_a_phase": 0
+   },
+   "filing": {
+    "intervention_id": "substance:53AXN4NNHX",
+    "condition_id": "D000437",
+    "vertical": "mental-health",
+    "basis": "one_derived_topic"
+   },
+   "origin": null,
+   "claim_slugs": [],
+   "first_report": null
+  },
+  {
+   "pair": {
+    "intervention_id": "substance:53AXN4NNHX",
+    "condition_id": "D011085",
+    "key": "substance:53AXN4NNHX|D011085",
+    "address": "semaglutide--polycystic-ovary-syndrome",
+    "nct_ids": [
+     "NCT05702905",
+     "NCT05819853",
+     "NCT06222437"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:53AXN4NNHX",
+    "key_kind": "substance",
+    "key_value": "53AXN4NNHX",
+    "preferred_name": "Semaglutide",
+    "slug": "semaglutide",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D011085",
+    "slug": "polycystic-ovary-syndrome"
+   },
+   "descriptor": {
+    "descriptor_id": "D011085",
+    "label": "Polycystic Ovary Syndrome",
+    "tree_numbers": [
+     "C04.182.612.765",
+     "C12.050.351.500.056.630.580.765",
+     "C12.100.250.056.630.580.765",
+     "C19.391.630.580.765"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:53AXN4NNHX",
+    "condition_id": "D011085",
+    "code": "phase_3",
+    "overlay_years": null,
+    "explained_by": [
+     "NCT05702905|registered|2023-01-27",
+     "NCT05819853|registered|2023-04-19",
+     "NCT05702905|started|2023-05-09",
+     "NCT05819853|started|2023-11-03"
+    ],
+    "as_of": "2026-11-21",
+    "highest_phase": "phase_4",
+    "highest_phase_trials": [
+     "NCT05702905"
+    ],
+    "highest_phase_combined_with": null,
+    "trials_without_a_phase": 0
+   },
+   "filing": {
+    "intervention_id": "substance:53AXN4NNHX",
+    "condition_id": "D011085",
+    "vertical": "diabetes-and-hormones",
+    "basis": "one_derived_topic"
+   },
+   "origin": {
+    "intervention_id": "substance:53AXN4NNHX",
+    "condition_id": "D011085",
+    "condition_fit": "exact",
+    "indication": "Polycystic ovary syndrome",
+    "claim_slug": "semaglutide-polycystic-ovary-syndrome"
+   },
+   "claim_slugs": [
+    "semaglutide-polycystic-ovary-syndrome"
+   ],
+   "first_report": null
+  }
+ ]
+}

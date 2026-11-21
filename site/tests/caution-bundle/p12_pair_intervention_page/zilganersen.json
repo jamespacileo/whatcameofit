@@ -1,0 +1,92 @@
+{
+ "intervention": {
+  "id": "substance:AXQ9493NT2",
+  "key_kind": "substance",
+  "key_value": "AXQ9493NT2",
+  "preferred_name": "ZILGANERSEN",
+  "slug": "zilganersen",
+  "components": []
+ },
+ "names": [
+  {
+   "intervention_id": "substance:AXQ9493NT2",
+   "name": "ZILGANERSEN",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:AXQ9493NT2",
+  "approach": "drug",
+  "basis": "registry_intervention_type",
+  "registry_type": "DRUG",
+  "trials": 1
+ },
+ "pairs": [
+  {
+   "pair": {
+    "intervention_id": "substance:AXQ9493NT2",
+    "condition_id": "D038261",
+    "key": "substance:AXQ9493NT2|D038261",
+    "address": "zilganersen--alexander-disease",
+    "nct_ids": [
+     "NCT04849741"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:AXQ9493NT2",
+    "key_kind": "substance",
+    "key_value": "AXQ9493NT2",
+    "preferred_name": "ZILGANERSEN",
+    "slug": "zilganersen",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D038261",
+    "slug": "alexander-disease"
+   },
+   "descriptor": {
+    "descriptor_id": "D038261",
+    "label": "Alexander Disease",
+    "tree_numbers": [
+     "C10.228.140.163.100.362.312",
+     "C10.228.140.695.625.312",
+     "C10.314.400.312",
+     "C10.574.500.024",
+     "C16.320.400.024",
+     "C16.320.565.189.362.312",
+     "C18.452.132.100.362.312",
+     "C18.452.648.189.362.312"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:AXQ9493NT2",
+    "condition_id": "D038261",
+    "code": "phase_3",
+    "overlay_years": 5,
+    "explained_by": [
+     "NCT04849741|registered|2021-04-19",
+     "NCT04849741|started|2021-06-01"
+    ],
+    "as_of": "2026-11-21",
+    "highest_phase": "phase_3",
+    "highest_phase_trials": [
+     "NCT04849741"
+    ],
+    "highest_phase_combined_with": null,
+    "trials_without_a_phase": 0
+   },
+   "filing": {
+    "intervention_id": "substance:AXQ9493NT2",
+    "condition_id": "D038261",
+    "vertical": "brain-and-nerves",
+    "basis": "main_disease"
+   },
+   "origin": null,
+   "claim_slugs": [],
+   "first_report": null
+  }
+ ]
+}
