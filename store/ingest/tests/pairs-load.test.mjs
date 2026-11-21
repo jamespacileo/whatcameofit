@@ -112,6 +112,17 @@ test("a folder that differs from its manifest is refused before any statement is
   }
 });
 
+test("a listing outside the versioned bundle is refused before any statement is made", () => {
+  const folder = mkdtempSync(join(tmpdir(), "thenwhat-root-listing-"));
+  try {
+    cpSync(bundle, folder, { recursive: true });
+    writeFileSync(join(folder, "trials-listing.json"), "{}");
+    assert.throws(() => statements(folder), /unversioned trial listing/);
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
 test("a load keeps the current version and the one before unless told to keep more, never fewer", () => {
   assert.throws(() => statements(bundle, { keep: 1 }), /at least 2/);
   const kept = (sql) => sql.find((one) => one.startsWith("DELETE FROM pair_bundle"));

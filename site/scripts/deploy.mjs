@@ -38,7 +38,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { STAGING_WORKER, deployProblems, stagingProblems, withNoindex } from "./deploy-checks.mjs";
-import { listingFileProblems } from "./listing-checks.mjs";
+import { listingCoverageProblems, listingFileProblems } from "./listing-checks.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
 const dist = path.join(SITE_DIR, "dist");
@@ -117,6 +117,10 @@ if (pairsDatabase) {
   console.log(`Bundle folder ${bundleFolder}, with no database: a rehearsal of the build.`);
 } else {
   stop(["No bundle was named. Set PAIRS_DATABASE to the D1 database the site is built from."]);
+}
+if (cutover) {
+  const incomplete = listingCoverageProblems(pairs ? pairs.folder : bundleFolder);
+  if (incomplete.length) stop(incomplete);
 }
 
 // The claims no pair came from keep their pages, as production built them (the operator,

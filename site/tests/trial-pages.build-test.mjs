@@ -9,6 +9,7 @@ import os from "node:os";
 import path from "node:path";
 import { before, test } from "node:test";
 import { parseHTML } from "linkedom";
+import { writeManifest } from "../../store/ingest/scripts/bundle-manifest.mjs";
 import { NOTICES } from "../src/lib/notices.ts";
 import {
   FIXED_WORDING, NO_REPORT, NO_RESULTS, STATE_PHRASES, assertPlainWording, findListed,
@@ -321,6 +322,30 @@ test("a build given no listing has none, and one given a missing file stops", ()
   const missing = build(path.join(directory, "missing"), { TRIALS_LISTING_FILE: path.join(directory, "nowhere.json") });
   assert.notEqual(missing.status, 0);
   assert.match(missing.stdout + missing.stderr, /No trial listing at/);
+});
+
+test("the versioned bundle supplies the listing to the build and the trial reader", async (t) => {
+  const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-trial-listing-bundle-"));
+  t.after(() => fs.rmSync(scratch, { recursive: true, force: true }));
+  const bundle = path.join(scratch, "bundle");
+  fs.cpSync("tests/bundle", bundle, { recursive: true });
+  const folder = path.join(bundle, "p12_pair_trial_listing");
+  fs.mkdirSync(folder);
+  fs.copyFileSync("tests/fixture-trials-listing.json", path.join(folder, "listed.json"));
+  fs.copyFileSync("trials-listing.schema.json", path.join(bundle, "schemas/PairTrialListing.json"));
+  writeManifest(bundle);
+
+  const out = path.join(scratch, "dist");
+  const result = build(out, { PAIRS_BUNDLE: bundle, TRIALS_LISTING_FILE: "" });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const offered = JSON.parse(fs.readFileSync(path.join(out, "trials-listing.json"), "utf8"));
+  assert.equal(offered.total, listing.trials.length);
+  assert.deepEqual(fs.readFileSync(path.join(out, "trial-listed.txt"), "utf8").trim().split("\n"), listing.trials.map((row) => row[0]));
+  assert.equal((await site(out, record(UNCITED)).open(UNCITED)).status, 200);
+
+  const conflict = build(path.join(scratch, "conflict"), { PAIRS_BUNDLE: bundle });
+  assert.notEqual(conflict.status, 0);
+  assert.match(conflict.stdout + conflict.stderr, /Remove TRIALS_LISTING_FILE/);
 });
 
 test("a sponsor who is a person is never named, on either kind of trial page", async () => {

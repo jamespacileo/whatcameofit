@@ -39,6 +39,17 @@ The build SHALL read the store's current version, check the bundle's checksum ag
 - **WHEN** the files' checksum differs from the manifest's
 - **THEN** the build stops before any page is written
 
+### Requirement: A listed trial belongs to the built bundle version
+The bundle MAY include the public registry listing at `p12_pair_trial_listing/listed.json` with the `PairTrialListing` schema. The build SHALL validate it against the site listing schema and use it for listed trial search and standalone records. A build supplied both a bundled and a separate listing SHALL refuse the conflicting inputs.
+
+#### Scenario: An older bundle is selected
+- **WHEN** a deployment is rebuilt from an older bundle that includes a trial listing
+- **THEN** its listed trial search and records use that older bundle's listing
+
+#### Scenario: The bundle lacks a trial listing
+- **WHEN** the selected bundle has no trial listing and the build is given no separate file
+- **THEN** only trials cited by pairs have a trial page
+
 ### Requirement: A bundle the site does not know is refused
 The build SHALL generate its types and validators from the bundle's schemas and SHALL stop when a page model the site renders is absent, when a file does not fit its schema, or when a status code has no wording in the site.
 

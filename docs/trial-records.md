@@ -27,7 +27,17 @@ On 13 November 2026, removing only `ncbi_sid` in Safari changed ClinicalTrials.g
 
 ## A listed trial no pair supports
 
-**Dormant since 2026-11-20.** The listing below was written by the claims pipeline, which was removed that day. The site still builds it when `TRIALS_LISTING_FILE` names a listing file, and builds nothing of it otherwise. Until something else writes the file, no build has a listing. What follows is the design as it was built.
+The pair bundle can include the registry listing as `p12_pair_trial_listing/listed.json`
+with `schemas/PairTrialListing.json`. Both are covered by the bundle checksum.
+Staging and production build search and trial pages from the listing in the
+selected D1 version. An older bundle can still be rehearsed with an explicit
+`TRIALS_LISTING_FILE`. A build with both sources fails so that the listing
+matches the selected bundle. A bundle without a listing still serves the trial
+records its pairs cite.
+
+The claims pipeline used to write the listing and was removed on 2026-11-20.
+The replacement producer and release cohort still need to be agreed. The
+following sections describe the previous producer and the listing behavior.
 
 Decided by the operator on 2026-11-17 (change `trial-first-route`): before the store on Cloudflare exists, a trial with no claim may open a plain page, for the listed set only. The listing is one static file the pipeline writes, `thenwhat trials-listing` (set `active-since-2025`: phase 2 or 3, under way or not yet started, record changed by the registry since 1 January 2025). `make publish-data` stages it as `site/data/published-trials-listing.json` beside the export; the site finds it by that name, validates it against `site/trials-listing.schema.json`, and builds two files from it: `/trials-listing.json`, which the search box fetches only when a reader searches, and `/trial-listed.txt`, the registry numbers alone, which is all the Worker reads before it opens a page.
 

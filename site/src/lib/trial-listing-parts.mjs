@@ -5,6 +5,8 @@
 // About how large one part is before compression. A registry number costs a reader one
 // part; Cloudflare refuses any single file over 25 MiB.
 export const PART_BYTES = 1024 * 1024;
+// A reader who searches by words can ask for every part, so cap their combined input.
+export const LISTING_LIMIT_BYTES = 64 * 1024 * 1024;
 // A listing of this many parts or fewer is searched for words as soon as a reader
 // searches. A larger one is fetched whole only when the reader asks for it.
 export const PARTS_SEARCHED_AT_ONCE = 2;
