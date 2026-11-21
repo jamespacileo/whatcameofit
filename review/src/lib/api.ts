@@ -86,6 +86,7 @@ export type Inventory = {
 
 export type Rows = {
   columns: { name: string; key: boolean }[]
+  key: string[]
   hiddenColumns?: string[]
   rows: Record<string, unknown>[]
   total: number
@@ -95,11 +96,20 @@ export type Rows = {
   absent?: boolean
 }
 
+export type TableRecord = {
+  table: string
+  key: string[]
+  values: (string | number)[]
+  version: string | null
+  row: Record<string, unknown>
+}
+
 export type PageRecord = {
   model: string
   key: string
   version: string
   loaded_at: string
+  current: boolean
   body: unknown
   schema: { properties?: Record<string, { description?: string; type?: unknown }> } | null
   manifest: {

@@ -11,7 +11,71 @@
 // bytes; the row's other columns still are.
 // Search indexes (`*_fts` and their shadow tables) and SQLite's own tables are not models.
 
-const table = (id, name, area, migration, extra = {}) => ({ id, kind: "table", table: id, name, area, migration, ...extra });
+// Each table's primary key, in key order: records are paged in this order and one record is
+// addressed by its key's values. tests/catalogue.test.mjs holds these to the migrated schema.
+export const KEYS = Object.freeze({
+  pair_bundle: ["version"],
+  pair: ["version", "key"],
+  pair_intervention: ["version", "id"],
+  pair_intervention_name: ["version", "intervention_id", "name"],
+  pair_condition: ["version", "descriptor_id"],
+  pair_trial: ["version", "pair_key", "nct_id"],
+  pair_trial_facts: ["version", "nct_id"],
+  pair_status_change: ["version", "pair_key", "on_day", "after"],
+  pair_page: ["version", "model", "key", "part"],
+  registry_trial: ["id"],
+  registry_trial_status: ["trial_id", "seen_at"],
+  registry_load: ["registry_name", "condition"],
+  trial_read: ["id"],
+  trial_paper: ["id"],
+  trial_slice: ["rule", "year", "number"],
+  source_record: ["kind", "source_name", "external_id"],
+  entity_substance: ["entity_id"],
+  claim: ["id"],
+  claim_alias: ["slug"],
+  claim_action: ["id"],
+  claim_term: ["id"],
+  source_article: ["id"],
+  promise: ["id"],
+  reported_statement: ["id"],
+  entity: ["id"],
+  entity_article: ["entity_id", "source_article_id"],
+  entity_match: ["id"],
+  evidence_event: ["id"],
+  evidence_conflict: ["id"],
+  failure_flag: ["id"],
+  measure_claim: ["claim_id"],
+  deployment: ["id"],
+  outlet_icon: ["domain"],
+  article_lead: ["id"],
+  link_lead: ["id"],
+  link_share: ["link_lead_id", "platform", "community", "shared_at"],
+  link_lead_link: ["link_lead_id", "record_kind", "record_key", "reason"],
+  link_lead_label: ["link_lead_id", "labelled_by"],
+  lead_reading: ["link_lead_id"],
+  unlisted_domain_count: ["domain", "day"],
+  store_step: ["step"],
+  run: ["id"],
+  run_step: ["run_id", "step"],
+  run_stated: ["run_id", "kind"],
+  stg: ["run_id", "kind", "key"],
+  merging: ["id"],
+  merge_report: ["run_id", "kind"],
+  merge_guard: ["run_id"],
+  payload: ["sha256"],
+  work_item: ["record_kind", "record_key", "step"],
+  work_entry: ["record_kind", "record_key", "step", "step_version"],
+  work_slice: ["platform", "community", "month"],
+  decision_log: ["run_id", "seq"],
+  llm_usage: ["run_id", "seq"],
+  measure_daily: ["day", "step", "step_version", "writer", "outcome"],
+  ingest_chunk: ["run_id", "sha256"],
+  inbox: ["seq"],
+  inbox_folded: ["run_id"],
+  inbox_fold: ["object"],
+});
+
+const table = (id, name, area, migration, extra = {}) => ({ id, kind: "table", table: id, name, area, migration, key: KEYS[id], ...extra });
 
 export const AREAS = Object.freeze(["Pairs", "Page models", "Registry", "Legacy claims", "Leads", "Operations"]);
 

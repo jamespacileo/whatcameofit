@@ -28,6 +28,11 @@ test("every table the migrations leave is listed, with the migration that made i
       }
     }
   }
+  for (const entry of TABLES) {
+    const columns = (await db.prepare("SELECT name, pk FROM pragma_table_info(?)").bind(entry.table).all()).results;
+    const key = columns.filter((c) => c.pk > 0).sort((a, b) => a.pk - b.pk).map((c) => c.name);
+    assert.deepEqual(entry.key, key, `${entry.table}'s primary key`);
+  }
   const listed = new Map(TABLES.map((entry) => [entry.table, entry.migration]));
   assert.deepEqual([...listed.keys()].sort(), [...madeBy.keys()].sort());
   for (const [name, file] of madeBy) assert.equal(listed.get(name), file, name);

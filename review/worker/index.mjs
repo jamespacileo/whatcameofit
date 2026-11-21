@@ -5,7 +5,7 @@ import { accessSettings, operatorOf } from "./access.mjs";
 import { published } from "./published.mjs";
 import { overview } from "./reads.mjs";
 import { AREAS, MODELS } from "./catalogue.mjs";
-import { inventory, pageRecord, rowsOf } from "./inventory.mjs";
+import { inventory, pageRecord, rowsOf, tableRecord } from "./inventory.mjs";
 
 /** Sent with every answer: nothing here is cached by a shared cache, indexed or framed. */
 const PRIVATE = {
@@ -43,16 +43,32 @@ async function api(url, request, env, email) {
     const id = decodeURIComponent(one[1]);
     const store = storeOf(env, url.searchParams.get("env") ?? "staging");
     if (!store) return answer({ error: "this environment's store is not readable yet" }, 409);
+    const version = url.searchParams.get("version");
+    let result;
     if (one[2] === "rows") {
       const offset = Number(url.searchParams.get("offset") ?? 0);
       if (!Number.isInteger(offset) || offset < 0 || offset > 1_000_000) return answer({ error: "bad offset" }, 400);
-      const page = await rowsOf(store, id, offset);
-      return page ? answer(page) : answer({ error: "no such model" }, 404);
+      result = await rowsOf(store, id, { offset, version });
+    } else {
+      const key = url.searchParams.get("key");
+      if (!key || key.length > 1024) return answer({ error: "bad key" }, 400);
+      if (id.startsWith("page:")) result = await pageRecord(store, id, key, version);
+      else {
+        let values;
+        try {
+          values = JSON.parse(key);
+        } catch {
+          return answer({ error: "bad key" }, 400);
+        }
+        result = await tableRecord(store, id, values);
+      }
     }
-    const key = url.searchParams.get("key");
-    if (!key || key.length > 512) return answer({ error: "bad key" }, 400);
-    const record = await pageRecord(store, id, key);
-    return record ? answer(record) : answer({ error: "no such record" }, 404);
+    if (!result) return answer({ error: "no such record" }, 404);
+    if (result.bad) return answer({ error: `bad ${result.bad}` }, 400);
+    // The bundle this list or record was bound to has been dropped: say so, never answer from
+    // another version.
+    if (result.gone) return answer({ error: "version gone", version: result.gone }, 410);
+    return answer(result);
   }
   return answer({ error: "not found" }, 404);
 }
