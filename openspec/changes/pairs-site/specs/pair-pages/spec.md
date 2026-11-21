@@ -12,7 +12,7 @@ Each pair in the bundle SHALL have a page at `/{address}` that shows its interve
 #### Scenario: A trial with posted adverse events
 - **WHEN** a reader opens the page of a pair whose trial posted adverse events to the registry
 - **THEN** the trial's record shows, for each group, deaths from any cause, serious events and other events as the number affected of the number at risk, as posted, with no share worked out, the period they were counted over, and a line saying an event is counted whether or not the treatment caused it
-- **AND** a group is named by its arm only where the bundle joins it to one; a group it does not join is shown by its place, with a link to the registry record that names it
+- **AND** a group is named by the registry's own title where the bundle carries it, else by its arm where the bundle joins it to one; a group with neither is shown by its place, with a link to the registry record that names it
 
 #### Scenario: A completed trial with no results a year on
 - **WHEN** the bundle says a trial has no results on the registry a year after its primary completion
