@@ -1,4 +1,483 @@
 {
- "about": "Redirects from an old claim about preventing a condition (data/claim-scope.json) to a pair, each verified by the operator as the same scope (scripts/redirect-scope.mjs). An entry names the claim and the one pair checked for it: {\"slug\": ..., \"pair\": ...}. A later bundle that sends the claim to another pair holds it again until that pair is checked.",
- "verified": []
+ "about": "Redirects from old claims to pairs, by scope (scripts/redirect-scope.mjs). `verified`: each a claim and the one pair checked as its scope, {\"slug\", \"pair\"}; a claim about preventing a condition (data/claim-scope.json) leads only to a pair verified for it, and a later bundle that sends it to another pair holds it again. `held`: claims the lab's scope rule (thenwhat-lab topics.t14_claim_scope, main c589539, release review 2026-11-21) found not of their pair's scope, each with the pair it would lead to and the rule's reason; each keeps its own page and never leads to a pair unless verified for that exact pair.",
+ "verified": [
+  {
+   "slug": "amlitelimab-atopic-dermatitis",
+   "pair": "amlitelimab--dermatitis-atopic"
+  },
+  {
+   "slug": "anselamimab-al-amyloidosis",
+   "pair": "anselamimab--immunoglobulin-light-chain-amyloidosis"
+  },
+  {
+   "slug": "anvs401-alzheimer-disease",
+   "pair": "buntanetap--alzheimer-disease"
+  },
+  {
+   "slug": "anx005-guillain-barre-syndrome",
+   "pair": "tanruprubart--guillain-barre-syndrome"
+  },
+  {
+   "slug": "apitegromab-obesity",
+   "pair": "apitegromab--obesity"
+  },
+  {
+   "slug": "aticaprant-major-depressive-disorder",
+   "pair": "aticaprant--major-depressive-disorder"
+  },
+  {
+   "slug": "azetukalner-major-depressive-disorder",
+   "pair": "azetukalner--major-depressive-disorder"
+  },
+  {
+   "slug": "beqvez-hemophilia-b",
+   "pair": "fidanacogene-elaparvovec--hemophilia-b"
+  },
+  {
+   "slug": "cor388-alzheimer-s-disease",
+   "pair": "atuzaginstat--alzheimer-disease"
+  },
+  {
+   "slug": "datopotamab-deruxtecan-dlnk-triple-negative-breast-cancer",
+   "pair": "datopotamab-deruxtecan--triple-negative-breast-neoplasms"
+  },
+  {
+   "slug": "emvistegrast-ulcerative-colitis",
+   "pair": "emvistegrast--colitis-ulcerative"
+  },
+  {
+   "slug": "epidiolex-epilepsy",
+   "pair": "cannabidiol--epilepsy"
+  },
+  {
+   "slug": "etentamig-multiple-myeloma",
+   "pair": "etentamig--multiple-myeloma"
+  },
+  {
+   "slug": "evorpacept-head-and-neck-squamous-cell-carcinoma",
+   "pair": "evorpacept--squamous-cell-carcinoma-of-head-and-neck"
+  },
+  {
+   "slug": "fasudil-alzheimer-disease",
+   "pair": "fasudil--alzheimer-disease"
+  },
+  {
+   "slug": "fenebrutinib-multiple-sclerosis",
+   "pair": "fenebrutinib--multiple-sclerosis"
+  },
+  {
+   "slug": "hepatitis-b-bepirovirsen",
+   "pair": "bepirovirsen--hepatitis-b-chronic"
+  },
+  {
+   "slug": "izalontamab-brengitecan-triple-negative-breast-cancer",
+   "pair": "izalontamab-brengitecan--triple-negative-breast-neoplasms"
+  },
+  {
+   "slug": "jcar017-diffuse-large-b-cell-lymphoma",
+   "pair": "lisocabtagene-maraleucel--lymphoma-large-b-cell-diffuse"
+  },
+  {
+   "slug": "mevidalen-alzheimer-s-disease",
+   "pair": "mevidalen--alzheimer-disease"
+  },
+  {
+   "slug": "mm120-generalized-anxiety-disorder",
+   "pair": "lysergide-d-tartrate--generalized-anxiety-disorder"
+  },
+  {
+   "slug": "mrna-4157-melanoma",
+   "pair": "intismeran-autogene--melanoma"
+  },
+  {
+   "slug": "niraparib-mesothelioma",
+   "pair": "niraparib--mesothelioma"
+  },
+  {
+   "slug": "obesity-survodutide",
+   "pair": "survodutide--obesity"
+  },
+  {
+   "slug": "psilocybin-obsessive-compulsive-disorder",
+   "pair": "psilocybin--obsessive-compulsive-disorder"
+  },
+  {
+   "slug": "psilocybin-parkinson-disease",
+   "pair": "psilocybin--parkinson-disease"
+  },
+  {
+   "slug": "rp1-melanoma",
+   "pair": "vusolimogene-oderparepvec--melanoma"
+  },
+  {
+   "slug": "sefaxersen-iga-nephropathy",
+   "pair": "sefaxersen--glomerulonephritis-iga"
+  },
+  {
+   "slug": "semaglutide-polycystic-ovary-syndrome",
+   "pair": "semaglutide--polycystic-ovary-syndrome"
+  },
+  {
+   "slug": "solanezumab-alzheimer-s-disease",
+   "pair": "solanezumab--alzheimer-disease"
+  },
+  {
+   "slug": "taladegib-idiopathic-pulmonary-fibrosis",
+   "pair": "taladegib--idiopathic-pulmonary-fibrosis"
+  },
+  {
+   "slug": "tara-002-non-muscle-invasive-bladder-cancer",
+   "pair": "ok-432--non-muscle-invasive-bladder-neoplasms"
+  },
+  {
+   "slug": "tavneos-anca-associated-vasculitis",
+   "pair": "avacopan--anti-neutrophil-cytoplasmic-antibody-associated-vasculitis"
+  },
+  {
+   "slug": "tulisokibart-hidradenitis-suppurativa",
+   "pair": "tulisokibart--hidradenitis-suppurativa"
+  },
+  {
+   "slug": "upadacitinib-alopecia-areata",
+   "pair": "upadacitinib--alopecia-areata"
+  },
+  {
+   "slug": "valacyclovir-alzheimer-disease",
+   "pair": "valacyclovir--alzheimer-disease"
+  },
+  {
+   "slug": "valiltramiprosate-alzheimer-s-disease",
+   "pair": "valiltramiprosate--alzheimer-disease"
+  },
+  {
+   "slug": "vepdegestrant-breast-cancer",
+   "pair": "vepdegestrant--breast-neoplasms"
+  },
+  {
+   "slug": "volrustomig-non-small-cell-lung-cancer",
+   "pair": "volrustomig--carcinoma-non-small-cell-lung"
+  },
+  {
+   "slug": "zasocitinib-psoriasis",
+   "pair": "zasocitinib--psoriasis"
+  }
+ ],
+ "source": "thenwhat-lab main c589539 (AbstractMeld/thenwhat-lab#174), replay copy, eval slice of 109 claims; paxlovid-long-covid left out of verified until lab hold 4",
+ "held": [
+  {
+   "slug": "acoziborole-gambiense-sleeping-sickness",
+   "pair": "acoziborole--trypanosomiasis-african",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "ad5-ncov-covid-19",
+   "pair": "ad5-ncov--covid-19",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "alexander-disease-zilganersen",
+   "pair": "zilganersen--alexander-disease",
+   "reason": "purpose_not_coded"
+  },
+  {
+   "slug": "ambroxol-parkinsons-disease-dementia",
+   "pair": "ambroxol--dementia",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "baxdrostat-resistant-hypertension",
+   "pair": "baxdrostat--hypertension",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "bemarituzumab-gastric-cancer",
+   "pair": "bemarituzumab--stomach-neoplasms",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "bemdaneprocel-parkinson-s-disease",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "breast-cancer-trastuzumab-deruxtecan-her2-low",
+   "pair": "trastuzumab-deruxtecan--breast-neoplasms",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "coronavac-covid-19",
+   "pair": "sars-cov-2-cn2-strain-beta-propiolactone-inactivated-vaccine-antigen--covid-19",
+   "reason": "purpose_not_coded"
+  },
+  {
+   "slug": "deep-brain-stimulation-treatment-resistant-depression",
+   "pair": "deep-brain-stimulation--depressive-disorder-treatment-resistant",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "divarasib-kras-g12c-mutated-non-small-cell-lung-cancer",
+   "pair": "divarasib--carcinoma-non-small-cell-lung",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "dupilumab-atopic-dermatitis",
+   "pair": "dupilumab--dermatitis-atopic",
+   "reason": "purpose_not_coded"
+  },
+  {
+   "slug": "eloralintide-obesity",
+   "pair": "eloralintide--obesity",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "empagliflozin-heart-failure",
+   "pair": "empagliflozin--heart-failure",
+   "reason": "purpose_not_coded"
+  },
+  {
+   "slug": "exagamglogene-autotemcel-sickle-cell-disease",
+   "pair": "exagamglogene-autotemcel--anemia-sickle-cell",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "exercise-depression",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "favipiravir-covid-19",
+   "pair": "favipiravir--covid-19",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "finasteride-androgenetic-alopecia",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "fluoxetine-sepsis",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "folic-acid-suicide-attempt",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "forzinity-barth-syndrome",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "giredestrant-breast-cancer",
+   "pair": "giredestrant--breast-neoplasms",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "hearing-aids-hearing-loss",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "imlygic-skin-cancer",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "imm2510-non-small-cell-lung-cancer",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "infliximab-crohns-disease",
+   "pair": "infliximab--crohn-disease",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "isembyld-spinal-muscular-atrophy",
+   "pair": "apitegromab--spinal-muscular-atrophies-of-childhood",
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "itovebi-pik3ca-mutated-hr-positive-her2-negative-locally",
+   "pair": "inavolisib--breast-neoplasms",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "ivermectin-malaria",
+   "pair": "ivermectin--malaria",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "ivonescimab-lung-cancer",
+   "pair": "ivonescimab--carcinoma-non-small-cell-lung",
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "leucovorin-autism",
+   "pair": "leucovorin--autistic-disorder",
+   "reason": "pair_not_shown"
+  },
+  {
+   "slug": "low-back-pain-rexlemestrocel-l",
+   "pair": "rexlemestrocel-l--intervertebral-disc-degeneration",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "lutetium-lu-177-vipivotide-tetraxetan-psma-positive",
+   "pair": "lutetium-lu-177-vipivotide-tetraxetan--prostatic-neoplasms",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "lyr-210-chronic-rhinosinusitis",
+   "pair": "mometasone-furoate--disease",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "malaria-cabamiquine-pyronaridine",
+   "pair": "cabamiquine--malaria-falciparum",
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "metformin-colon-cancer",
+   "pair": "metformin--colonic-neoplasms",
+   "reason": "purpose_not_coded"
+  },
+  {
+   "slug": "mindfulness-based-stress-reduction-anxiety-disorders",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "nicotinamide-riboside-werner-syndrome",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "olomorasib-previously-treated-advanced-kras-g12c-mutant",
+   "pair": "olomorasib--pancreatic-neoplasms",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "oxytocin-obesity",
+   "pair": "oxytocin--obesity",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "parkinsons-solengepras",
+   "pair": "solengepras--parkinson-disease",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "pasatru-fibrodysplasia-ossificans-progressiva",
+   "pair": "garetosmab--myositis-ossificans",
+   "reason": "pair_not_shown"
+  },
+  {
+   "slug": "prasinezumab-parkinsons-disease",
+   "pair": "prasinezumab--parkinson-disease",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "primary-aldosteronism-baxdrostat",
+   "pair": "baxdrostat--hyperaldosteronism",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "risvutatug-rezetecan-relapsed-osteosarcoma",
+   "pair": "risvutatug-rezetecan--osteosarcoma",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "semaglutide-alcohol-use-disorder",
+   "pair": "semaglutide--alcoholism",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "silver-diamine-fluoride-dental-caries",
+   "pair": "silver-diammine-fluoride--dental-caries",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "sng001-covid-19",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "sunharbo-ischemic-stroke",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "suzetrigine-acute-pain",
+   "pair": "suzetrigine--acute-pain",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "tavapadon-parkinson-disease",
+   "pair": "tavapadon--parkinson-disease",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "teclistamab-high-risk-smoldering-multiple-myeloma",
+   "pair": "teclistamab--smoldering-multiple-myeloma",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "teplizumab-type-1-diabetes",
+   "pair": "teplizumab--diabetes-mellitus-type-1",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "ticagrelor-acute-coronary-syndrome",
+   "pair": "ticagrelor--acute-coronary-syndrome",
+   "reason": "purpose_not_coded"
+  },
+  {
+   "slug": "tonmya-fibromyalgia",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "tozorakimab-chronic-obstructive-pulmonary-disease",
+   "pair": "tozorakimab--pulmonary-disease-chronic-obstructive",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "trastuzumab-pamirtecan-her2-low-metastatic-breast-cancer",
+   "pair": "trastuzumab-pamirtecan--breast-neoplasms",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "tukysa-her2-positive-advanced-breast-cancer",
+   "pair": "tucatinib--breast-neoplasms",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "tulisokibart-systemic-sclerosis-associated-interstitial-lung",
+   "pair": "tulisokibart--lung-diseases-interstitial",
+   "reason": "indication_not_a_mesh_term"
+  },
+  {
+   "slug": "type-2-diabetes-insulin-efsitora-alfa",
+   "pair": "insulin-efsitora-alfa--diabetes-mellitus-type-2",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "z944-autism-spectrum-disorder",
+   "pair": null,
+   "reason": "no_pair_for_the_indication"
+  },
+  {
+   "slug": "ziltivekimab-atherosclerosis",
+   "pair": "ziltivekimab--atherosclerosis",
+   "reason": "claim_purposes_differ"
+  },
+  {
+   "slug": "zipalertinib-egfr-exon-20-insertion-mutated-non-small-cell",
+   "pair": "zipalertinib--lung-diseases",
+   "reason": "indication_not_a_mesh_term"
+  }
+ ]
 }

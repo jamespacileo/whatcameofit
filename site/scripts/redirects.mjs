@@ -20,7 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 import { addKeptToLookup, placeKept, readKept } from "./kept-claims.mjs";
-import { heldRedirect, preventionClaims, verifiedRedirects } from "./redirect-scope.mjs";
+import { heldClaims, heldRedirect, preventionClaims, verifiedRedirects } from "./redirect-scope.mjs";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
 const retired = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "../data/retired-addresses.json"), "utf8"));
@@ -86,10 +86,18 @@ else fs.rmSync(file, { force: true });
 const keptFolder = process.env.KEPT_CLAIMS_DIR ? path.resolve(process.env.KEPT_CLAIMS_DIR) : null;
 const kept = keptFolder ? readKept(keptFolder) : null;
 const held = [];
-const { entries: gone, keep } = goneEntries(retired, pairs, bundle.pages.PairDataFile ?? {}, new Set(Object.keys(kept?.claims ?? {})), { prevention: preventionClaims(), verified: verifiedRedirects() }, held);
+const { entries: gone, keep } = goneEntries(retired, pairs, bundle.pages.PairDataFile ?? {}, new Set(Object.keys(kept?.claims ?? {})), { prevention: preventionClaims(), verified: verifiedRedirects(), held: heldClaims() }, held);
 fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
 // The claims held from a pair of another scope, for the staging smoke check to hold to their pages.
 fs.writeFileSync(path.join(DIST, "held-redirects.json"), `${JSON.stringify(held.map(({ slug, pair }) => ({ slug, pair })))}\n`);
+// A build from production's kept claims (not the tests' few) keeps every held claim's page, or
+// leads it to the kept claim it was merged into: otherwise the hold would leave it gone.
+if (kept && !kept.fixture) {
+  const keptSet = new Set(keep);
+  const ledToKept = new Map(gone.filter((entry) => entry.kept).map((entry) => [entry.slug, entry.to]));
+  const lost = held.filter(({ slug }) => !keptSet.has(slug) && !keptSet.has(ledToKept.get(slug)));
+  if (lost.length > 0) throw new Error(`${lost.length} claims held from a pair keep no page, such as ${lost[0].slug}: freeze the kept claims again.`);
+}
 // Which claims kept their pages, for the build check and the staging smoke check.
 fs.writeFileSync(path.join(DIST, "kept-claims.json"), `${JSON.stringify(keep)}\n`);
 const placed = keptFolder ? placeKept({ folder: keptFolder, dist: DIST, slugs: keep }) : 0;
