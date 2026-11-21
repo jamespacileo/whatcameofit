@@ -63,6 +63,8 @@ The home page, an intervention's page, a condition's page, a topic's page, the t
 
 ### Requirement: The extension's index keeps its shape
 `/lookup.json` SHALL keep the keys the released extension reads, with each entry naming a pair's address.
+When the complete response exceeds the asset limit, the build SHALL keep a compressed asset
+and the Worker SHALL return the same JSON at `/lookup.json`.
 
 #### Scenario: The released extension reads the new index
 - **WHEN** the extension's tests run against an index made from the small bundle
