@@ -26,6 +26,30 @@ export function band(attributes: string, html: string[], sideHtml = ""): string 
   return [`<section class="band record"${attributes}><div class="wrap band-grid"><div class="band-main">`, ...html, `</div>`, sideHtml, `</div></section>`].join("");
 }
 
+const icon = (paths: string) =>
+  `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
+// The two icons the claims site's pills had (Lucide "share-2" and "copy"), as their paths: a
+// page the Worker writes is a string, with no component to draw them.
+const SHARE_ICON = icon(`<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/>`);
+const COPY_ICON = icon(`<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>`);
+
+/**
+ * The pills under a band's title that pass the page on (DESIGN.md, "Page actions"; the claims
+ * site's SharePill and CopyButton, recovered for pairs): "Share" opens the device's share sheet
+ * or copies the page's address, and "Copy sentence" copies `sentence` followed by the page's
+ * address. The sentence is dated and says where things stand in the site's own neutral words,
+ * so it stays true wherever it is pasted; with none there is only "Share". Both stay hidden
+ * until scripts/page-actions.ts finds they can work, and neither is printed.
+ */
+export function pageActions(sentence: string | null): string {
+  return [
+    `<div class="page-actions band-actions" data-page-actions data-pagefind-ignore>`,
+    `<button type="button" class="share" data-share hidden>${SHARE_ICON}<span data-share-text aria-live="polite">Share</span></button>`,
+    sentence ? `<button type="button" class="share" data-copy hidden>${COPY_ICON}<span data-copy-text aria-live="polite">Copy sentence</span></button><p hidden data-share-sentence>${escape(sentence)}</p>` : "",
+    `</div>`,
+  ].join("");
+}
+
 export interface Crumb {
   href: string;
   label: string;

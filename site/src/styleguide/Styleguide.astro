@@ -5,7 +5,7 @@
 // and pull request previews set and production never does (astro.config.mjs; scripts/deploy.mjs
 // stops a production build that holds it). Never indexed.
 import Base from "../layouts/Base.astro";
-import { pager, stageCounts, stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
+import { pageActions, pager, stageCounts, stageFilter, statusCell, band, bandTitle, basisMark, crumbs, sectionList, embedFooter, stageTrack, escape, eventList, followedLine, meshCredit, pairTable, sheet, sheetHeading, statusWords } from "../lib/blocks";
 import { pairBundle } from "../lib/pairs";
 import { meshEdition } from "../lib/clinical";
 import { NOTICES } from "../lib/notices";
@@ -89,6 +89,11 @@ const blocks: { name: string; about: string; html: string; framed?: boolean; rai
     name: "stageFilter",
     about: "The path as a filter: how many of a list's pairs stand at each place, each a button that narrows the table after it, and a box that narrows it by a word. The key to the small tracks in the rows.",
     html: sheet([stageFilter(rows), pairTable("Pairs the filter narrows", rows)]),
+  },
+  {
+    name: "pageActions",
+    about: "The pills under a band's title that pass the page on: Share (the device's share sheet, or the address copied) and Copy sentence (a dated sentence in the site's own words, then the address). Hidden until their script finds they can work; never printed.",
+    html: band(` aria-label="Page actions in the styleguide"`, [bandTitle("A page to pass on"), pageActions("Apitegromab for obesity. Status when checked in November 2026: Phase 2 trial. Not medical advice.")]),
   },
   {
     name: "pager",
@@ -211,6 +216,7 @@ const namespaced = (html: string, prefix: string) =>
 <script>
   import "../scripts/section-list";
   import "../scripts/pair-filter";
+  import "../scripts/page-actions";
 </script>
 
 <style>
