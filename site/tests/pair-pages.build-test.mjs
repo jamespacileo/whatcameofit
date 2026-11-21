@@ -18,7 +18,7 @@ import { renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
 import { categoryListing, interventionListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { embedTitle, renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
-import { STATUS_LABELS } from "../src/lib/status.ts";
+import { STATUS_LABELS, assertNeutral } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
 import { stateFor } from "../../extension/src/lookup.js";
@@ -374,6 +374,23 @@ test("the home page opens with the lookup box, then where the pairs stand, their
     assert.ok(file.trials.some((trial) => trial.events.some((event) => event.key === row.dataset.event)), "the pair it leads to follows that trial");
     assert.equal(row.querySelector(".status-name").textContent, STATUS_LABELS[file.row.status.code]);
   }
+  // The example under the box: the pair followed through the most trials (then the oldest first
+  // record, then the address), its first dated record, and its status as its own page says it.
+  const card = document.querySelector('.band.home a[data-home="then-now"]');
+  const dated = (file) => file.trials.flatMap((trial) => trial.events).filter((event) => event.day_basis === "registry_date" && /^\d{4}-\d{2}-\d{2}$/.test(event.day) && event.day <= made).sort((a, b) => a.day.localeCompare(b.day) || a.key.localeCompare(b.key));
+  const [chosen] = Object.entries(pages)
+    .filter(([, file]) => dated(file).length > 0)
+    .sort(([a, one], [b, other]) => other.trials.length - one.trials.length || dated(one)[0].day.localeCompare(dated(other)[0].day) || (a < b ? -1 : 1));
+  assert.equal(card.getAttribute("href"), `/${chosen[0]}`);
+  assert.equal(card.dataset.event, dated(chosen[1])[0].key);
+  assert.ok(card.querySelector(".then-when").textContent.includes(dated(chosen[1])[0].nct_id));
+  assert.equal(card.querySelector(".now-label").textContent, STATUS_LABELS[chosen[1].row.status.code]);
+  assert.equal(card.querySelector(".now-label").dataset.status, chosen[1].row.status.code);
+  // Whole years from the first record to the day the bundle was made; under a year, nothing.
+  const then = dated(chosen[1])[0].day;
+  const years = Number(made.slice(0, 4)) - Number(then.slice(0, 4)) - (made.slice(5) < then.slice(5) ? 1 : 0);
+  assert.equal(card.querySelector("[data-years-on]")?.textContent ?? null, years < 1 ? null : `${years} ${years === 1 ? "year" : "years"} on`);
+  assertNeutral([card.textContent]);
   const topics = [...document.querySelectorAll('[data-home="topics"] [data-topic]')].map((item) => item.dataset.topic);
   // Each topic whose own file lists a pair with a page, as its page lists them.
   const listing = Object.entries(readBundle("tests/bundle").pages.PairTopicPage).filter(([, file]) => filed(file).length > 0).map(([slug]) => slug);

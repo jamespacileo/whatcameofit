@@ -7,9 +7,9 @@
 import Base from "../layouts/Base.astro";
 import Lookup from "../components/Lookup.astro";
 import { SITE } from "../../site.config.mjs";
-import { stageCounts, statusCell } from "../lib/blocks";
+import { stageCounts, stageTrack, statusCell } from "../lib/blocks";
 import { siteData } from "../lib/structured";
-import { interventionListings, latestRecords, pairTotals, topicsIndex, type LatestRecord } from "../lib/pairs";
+import { interventionListings, latestRecords, pairTotals, thenAndNow, topicsIndex, type LatestRecord } from "../lib/pairs";
 import { formatDate } from "../lib/timetable";
 import "./pair.css";
 
@@ -23,6 +23,7 @@ const topics = topicsIndex();
 const tried = [...topics].sort((a, b) => b.count - a.count || a.title.localeCompare(b.title)).slice(0, TRY);
 const interventions = interventionListings().filter((listing) => listing.pairs.length > 0);
 const totals = pairTotals();
+const example = thenAndNow();
 const n = (count: number) => count.toLocaleString("en-GB");
 ---
 
@@ -52,6 +53,39 @@ const n = (count: number) => count.toLocaleString("en-GB");
           }
         </div>
       </Lookup>
+
+      {/* The site's idea in one look (the claims home's "then and now" card, on pairs): one
+          pair's first registry record, how long ago that was, and where it stands now, in
+          the well a pair page shows its status in. The pair is chosen by rule (lib/pairs,
+          thenAndNow). Not drawn on a phone, where the first screen keeps to the box. */}
+      {
+        example && (
+          <a class="then-now" href={`/${example.address}`} data-home="then-now" data-pair={example.address} data-event={example.first.key} data-pagefind-ignore>
+            <div class="then">
+              <p class="then-when">
+                First registry record <span class="unbroken">{formatDate(example.first.day)}</span> · {example.first.label}, {example.first.nctId}
+              </p>
+              <p class="then-title">{example.title}</p>
+            </div>
+            <p class="then-gap">
+              {example.on && <span data-years-on>{example.on}</span>}
+              <svg class="then-arrow" viewBox="0 0 44 16" width="44" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M1 8h41" />
+                <path d="m36 2 6 6-6 6" />
+              </svg>
+            </p>
+            <div class="now-well">
+              <p class="now-tab">Where it stands</p>
+              <p class="now-label" data-status={example.statusCode}>{example.status}</p>
+              <p class="now-gloss">{example.gloss}</p>
+              <Fragment set:html={stageTrack(example.statusCode, { ends: true, off: true })} />
+              <p class="now-latest">
+                Latest record {formatDate(example.latestDay)} · {example.trials} {example.trials === 1 ? "registered trial" : "registered trials"}
+              </p>
+            </div>
+          </a>
+        )
+      }
     </div>
   </section>
 
@@ -192,6 +226,143 @@ const n = (count: number) => count.toLocaleString("en-GB");
     margin: 0;
     font-size: var(--text-s);
     color: var(--muted);
+  }
+
+  /* The example under the box, in the claims home's drawing: a white card that is one link,
+     "then" at its left, the gap between, and "now" as the record band's dark well with its
+     heading a tab on its top edge. Nothing in it is coloured by status. */
+  .then-now {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 19rem);
+    align-items: center;
+    column-gap: 1.75rem;
+    max-width: 54rem;
+    margin: 2.1rem auto 0;
+    padding: 1.25rem 1.25rem 1.25rem 1.75rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius);
+    background: var(--paper);
+    color: var(--ink);
+    text-align: left;
+    text-decoration: none;
+    transition: border-color 160ms var(--ease-out);
+  }
+  .then-now:hover {
+    border-color: var(--ring);
+  }
+  .then-now:focus-visible {
+    outline-offset: 4px;
+    border-radius: var(--radius);
+  }
+  .then-now p {
+    margin: 0;
+  }
+  .then-when {
+    font-size: var(--text-s);
+    color: var(--muted);
+  }
+  .then-now .then-title {
+    margin-top: 0.35rem;
+    font-family: var(--display);
+    font-size: clamp(1.4rem, 3vw, 1.75rem);
+    font-weight: 500;
+    line-height: 1.16;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+    overflow-wrap: anywhere;
+  }
+  .then-now:hover .then-title {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.16em;
+  }
+  .then-arrow {
+    display: block;
+  }
+  .then-gap {
+    display: grid;
+    justify-items: center;
+    gap: 0.3rem;
+    color: var(--muted);
+    font-size: var(--text-s);
+    white-space: nowrap;
+  }
+  .now-well {
+    /* The band's light blue is the masthead's own: named here so the marked step is filled. */
+    --on-navy: #8ec1f5;
+    --ink: var(--on-navy-ink);
+    --blue: var(--on-navy);
+    --muted: var(--navy-soft);
+    --ring: #9db4d2;
+    --paper: var(--band-card);
+    position: relative;
+    margin-top: 1.9rem;
+    padding: 0.85rem 1.1rem 0.95rem;
+    border: 1px solid var(--band-card-rule);
+    border-radius: 0 var(--radius-s) var(--radius-s) var(--radius-s);
+    background: var(--band-card);
+    color: var(--on-navy-ink);
+  }
+  .now-tab {
+    position: absolute;
+    bottom: 100%;
+    left: -1px;
+    display: flex;
+    align-items: center;
+    height: 1.9rem;
+    padding: 0 0.95rem;
+    border: 1px solid var(--band-card-rule);
+    border-bottom: 0;
+    border-radius: var(--radius-s) var(--radius-s) 0 0;
+    background: var(--band-card);
+    font-size: var(--text-xs);
+    font-weight: 700;
+  }
+  .now-label {
+    font-size: var(--text-status);
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--on-navy);
+  }
+  .then-now .now-gloss,
+  .then-now .now-latest {
+    margin-top: 0.25rem;
+    font-size: var(--text-s);
+    color: var(--navy-soft);
+  }
+  .now-well :global(.track) {
+    margin-top: 0.6rem;
+  }
+  @media (max-width: 52rem) {
+    .then-now {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: 0.9rem;
+      padding: 1.1rem;
+    }
+    /* Stacked, the arrow is short and points down, from the first record to where it stands. */
+    .then-gap {
+      grid-auto-flow: column;
+      justify-content: start;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 1.75rem;
+    }
+    .then-arrow {
+      width: 1.65rem;
+      height: auto;
+      transform: rotate(90deg);
+    }
+  }
+  @media (max-width: 40rem) {
+    .then-now {
+      display: none;
+    }
+  }
+  @media print {
+    .then-now {
+      border: 0;
+      padding: 0;
+    }
   }
 
   /* The latest records: a white sheet a day, each record a row with its status beside it. */
