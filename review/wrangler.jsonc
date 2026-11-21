@@ -1,0 +1,26 @@
+// The review site's Worker (openspec change `review-dashboard`). Not deployed until the Cloudflare
+// Access application for review.whatcameofit.com exists (tasks 0.2 and 1.5).
+{
+  "name": "thenwhat-review",
+  "compatibility_date": "2026-10-01",
+  "main": "./worker/index.mjs",
+  // Only the address Access guards: no workers.dev address, no per-version preview addresses.
+  "workers_dev": false,
+  "preview_urls": false,
+  // Nothing a reader sends is logged.
+  "observability": { "enabled": false },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // The pages are one app: an address with no file is the app's page.
+    "not_found_handling": "single-page-application",
+    // The Worker runs before every file, built assets included, so its Access check guards
+    // every path on the host, not only the ones Access's own policy names (the operator,
+    // 2026-11-21). tests/config.test.mjs holds this.
+    "run_worker_first": true
+  },
+  "vars": { "STAGING_URL": "https://staging.whatcameofit.com" }
+  // Given at deployment and never written here:
+  //   ACCESS_ISSUER, ACCESS_AUD, OPERATOR_EMAILS   (plain values, from the Access application)
+  //   STAGING_PAIRS                                 (D1 binding to the database STAGING_PAIRS_DATABASE_ID pins)
+}

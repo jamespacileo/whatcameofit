@@ -97,6 +97,7 @@ jobs:
           - { name: Site build tests 2 and browser search, targets: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '2/3', browser_search: true }
           - { name: Site build tests 3, targets: site-build-test, lockfile: site/pnpm-lock.yaml, shard: '3/3' }
           - { name: 'Site, extension and shell tests', targets: 'site-test site-build check-extension scripts-test', lockfile: site/pnpm-lock.yaml }
+          - { name: Review site tests, targets: check-review, lockfile: review/pnpm-lock.yaml }
     env:
       SITE_TEST_SHARD: ${{ matrix.suite.shard }}
       STORE_TEST_CONCURRENCY: "3"
@@ -136,6 +137,9 @@ jobs:
       - name: make scripts-test
         if: contains(env.TARGETS, ' scripts-test ')
         run: make scripts-test
+      - name: make check-review
+        if: contains(env.TARGETS, ' check-review ')
+        run: make check-review
       - name: Run site browser tests in Chromium
         if: matrix.suite.browser_search == true
         run: |
