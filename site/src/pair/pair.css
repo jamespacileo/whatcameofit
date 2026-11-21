@@ -667,3 +667,11 @@
     display: none;
   }
 }
+/* The serious events by name open under the groups' totals. */
+.pair-harms details {
+  font-size: var(--note-size);
+}
+.pair-harms summary {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
