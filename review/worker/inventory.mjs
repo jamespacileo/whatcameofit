@@ -1,7 +1,7 @@
 // The model inventory: for each catalogued model, whether an environment's store holds it and
 // how many records, and the records themselves a page at a time. Every statement is built here
 // from the catalogue's fixed table names, never from a request, and goes through `read`.
-import { MODELS, TABLES, modelById, notAModel } from "./catalogue.mjs";
+import { MODELS, TABLES, modelById, notAModel, PAGE_MODELS } from "./catalogue.mjs";
 import { allow, read } from "./reads.mjs";
 
 export const PAGE_ROWS = 50;
@@ -79,7 +79,13 @@ export async function inventory(db) {
   }
   const listed = new Set(TABLES.map((t) => t.table));
   const unlisted = [...tables].filter((name) => !notAModel(name) && !listed.has(name));
-  return { bundle, states, unlisted };
+  // A page model the bundle holds that the catalogue does not name is shown, as a table is: a new
+  // model from the lab must not go unseen until someone adds it here.
+  const catalogued = new Set(PAGE_MODELS.map((m) => m.model));
+  const schemas = bundle && pages.has("$schema") ? (await read(db, S.pageKeys, bundle.version, "$schema", 1000, 0)).map((row) => row.key) : [];
+  const unlistedPages = [...new Set([...pages.keys(), ...schemas])]
+    .filter((name) => !name.startsWith("$") && !catalogued.has(name)).sort();
+  return { bundle, states, unlisted, unlistedPages };
 }
 
 async function hasSchema(db, version, model) {

@@ -76,6 +76,7 @@ export type EnvironmentState = {
   reason?: string
   bundle?: { version: string; loaded_at: string } | null
   unlisted?: string[]
+  unlistedPages?: string[]
 }
 
 export type Inventory = {

@@ -49,5 +49,7 @@ test("every model has a readable name and a unique id", () => {
 
 test("the page models are the bundle's schemas", () => {
   const schemas = fs.readdirSync("../site/tests/bundle/schemas").map((name) => name.replace(/\.json$/, "")).sort();
-  assert.deepEqual(MODELS.filter((m) => m.kind === "page-model").map((m) => m.model).sort(), schemas);
+  // A model the lab has started writing (`since`) is catalogued ahead of the tests' bundle.
+  assert.deepEqual(MODELS.filter((m) => m.kind === "page-model" && !m.since).map((m) => m.model).sort(), schemas);
+  for (const m of MODELS.filter((m) => m.since)) assert.ok(!schemas.includes(m.model), `${m.model} is in the tests' bundle now: drop its since`);
 });

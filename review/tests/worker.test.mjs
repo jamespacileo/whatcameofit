@@ -210,6 +210,12 @@ test("page models count the current bundle's files, as its manifest does", async
   const body = await modelsOf(site);
   for (const model of body.models.filter((m) => m.kind === "page-model")) {
     const state = model.environments.staging;
+    if (model.since) {
+      // Catalogued from the lab's change, not in this older bundle: absent, saying which bundle.
+      assert.equal(state.status, "absent", model.model);
+      assert.match(state.reason, new RegExp(`bundle [0-9a-f]{16} has no ${model.model} files`));
+      continue;
+    }
     assert.equal(state.status, "present", model.model);
     assert.equal(state.rows, manifest.counts[model.model], model.model);
     assert.equal(state.schema, true, model.model);
@@ -221,8 +227,21 @@ test("a store with every migration holds every table, and an unlisted table is s
   const db = await full.getD1Database("STAGING_PAIRS");
   await db.prepare("CREATE TABLE something_new (id INTEGER PRIMARY KEY)").run();
   const body = await modelsOf(full);
-  for (const model of body.models) assert.equal(model.environments.staging.status, "present", model.id);
+  for (const model of body.models.filter((m) => !m.since)) assert.equal(model.environments.staging.status, "present", model.id);
   assert.deepEqual(body.environments[0].unlisted, ["something_new"]);
+});
+
+test("the lab's claim-scope page shows as its model once a bundle holds it, and an uncatalogued page model is shown", async () => {
+  const own = await worker();
+  const db = await own.getD1Database("STAGING_PAIRS");
+  const { version } = await db.prepare("SELECT version FROM pair_bundle WHERE current = 1").first();
+  const add = (model, key) => db.prepare("INSERT INTO pair_page (version, model, key, part, body) VALUES (?, ?, ?, 0, '{}')").bind(version, model, key).run();
+  await add("PairClaimScopePage", "claim-scope");
+  await add("PairSomethingNewPage", "x");
+  const body = await modelsOf(own);
+  const scope = body.models.find((m) => m.id === "page:PairClaimScopePage").environments.staging;
+  assert.deepEqual([scope.status, scope.rows, scope.version], ["present", 1, version]);
+  assert.deepEqual(body.environments[0].unlistedPages, ["PairSomethingNewPage"]);
 });
 
 test("a table's rows come a page at a time, without the columns that are never shown", async () => {
