@@ -1,7 +1,8 @@
 // A pair page's content as HTML (openspec pairs-site, design decision 3 as revised): one
 // renderer for the page built ahead and the page the Worker makes on request, so the two are
 // the same for the same file. Every value read from a page file goes through `escape`.
-import { band, bandTitle, crumbs, escape, eventList, followedLine, sectionList, sheet, sheetHeading, standingCard } from "./blocks.ts";
+import { band, bandTitle, crumbs, escape, eventList, followedLine, pageActions, sectionList, sheet, sheetHeading, standingCard } from "./blocks.ts";
+import { shareSentence } from "./card.ts";
 import { recordStrip, stripKey, stripKinds, stripOf } from "./record-strip.ts";
 import { UNCHECKED_BYLINE } from "./notices.ts";
 import type { NarrowerPair, PairTrialView, PairView } from "./pair-view.ts";
@@ -54,6 +55,9 @@ export function renderPairBand(view: PairView): string {
       bandTitle(view.title),
       followedLine("A treatment and a condition,", "what-this-is"),
       view.checkedByPerson ? "" : `<p class="byline" data-pair-unchecked>${escape(UNCHECKED_BYLINE[0])} ${escape(UNCHECKED_BYLINE[1])}</p>`,
+      // The sentence the home page's answer copies for the same pair (lib/card.ts), less the
+      // address, which the script adds from where the reader is.
+      pageActions(shareSentence(view.title, view.status, view.asOf, "").trim()),
     ],
     standingCard(
       view.statusCode,

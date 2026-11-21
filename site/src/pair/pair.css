@@ -34,6 +34,31 @@
 .pair-table tr[hidden] {
   display: none;
 }
+/* The pills under a band's title that pass the page on (lib/blocks.ts, pageActions), in the
+   claims site's drawing: outlined on the navy, filled white once a copy has landed. */
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.2rem;
+}
+.band.record .band-actions .share {
+  color: var(--on-navy-ink);
+  background: rgb(255 255 255 / 0.08);
+  border-color: rgb(255 255 255 / 0.4);
+}
+.band.record .band-actions .share:hover {
+  background: rgb(255 255 255 / 0.18);
+  border-color: var(--on-navy-ink);
+}
+.band.record .band-actions .share.done {
+  background: var(--on-navy-ink);
+  border-color: var(--on-navy-ink);
+  color: var(--footer);
+}
+.page-actions .share[hidden] {
+  display: none;
+}
 /* The pager under a long list (lib/blocks.ts, pager): Previous, the rows in view, Next. */
 .pager {
   display: flex;
