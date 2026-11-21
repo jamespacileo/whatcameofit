@@ -87,7 +87,7 @@ test("with kept claims, a matched claim leads to its pair, an archived one is go
   });
   // Unmatched and not among the kept (the tests hold two): gone, as before.
   assert.ok(gone.some((entry) => entry.gone === true));
-  assert.match(result.stdout, /claims keep their pages \(17 files\), 11 archived stay gone/);
+  assert.match(result.stdout, /claims keep their pages \(17 files, 2 in search\), 11 archived stay gone/);
 });
 
 test("a kept file that is not the one frozen stops the build", () => {

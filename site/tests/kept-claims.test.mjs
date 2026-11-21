@@ -5,7 +5,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { KEPT_CLAIMS_COMMIT, KEPT_FORMAT, claimFiles, freeze, keptProblems, keptSlugs, placeKept } from "../scripts/kept-claims.mjs";
+import { KEPT_CLAIMS_COMMIT, KEPT_FORMAT, addKeptToLookup, claimFiles, freeze, keptProblems, keptSlugs, placeKept } from "../scripts/kept-claims.mjs";
+import { readLookupFile, readSearchDetail } from "../src/lib/lookup-file.mjs";
 
 const retired = JSON.parse(fs.readFileSync("data/retired-addresses.json", "utf8"));
 
@@ -36,7 +37,7 @@ test("freezing copies a claim's eight files and what they load, and names the pa
   const from = oldBuild();
   const to = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-")), "kept");
   const frozen = freeze({ from, to, slugs: ["a-claim", "never-built"], commit: KEPT_CLAIMS_COMMIT });
-  assert.deepEqual(frozen, { claims: 1, files: 13, missing: ["never-built"] });
+  assert.deepEqual(frozen, { claims: 1, files: 13, missing: ["never-built"], unsearchable: ["a-claim"] });
   const manifest = JSON.parse(fs.readFileSync(path.join(to, "manifest.json"), "utf8"));
   assert.deepEqual(manifest.claims["a-claim"], claimFiles("a-claim"));
   assert.deepEqual(manifest.shared, ["_astro/chunk.js", "_astro/font.woff2", "_astro/global.css", "_astro/page.js", "outlet-icons/news.example.abc.png"]);
@@ -80,7 +81,7 @@ test("staging and production are published only from every kept claim, frozen fr
   assert.deepEqual(keptProblems(complete), []);
   // A folder frozen before each claim named what it needs is refused, never read as this shape.
   write({ commit: KEPT_CLAIMS_COMMIT, claims, shared: [], sha256: {} });
-  assert.match(keptProblems(complete).join(), /frozen in format 1, not 2: freeze it again into a new folder/);
+  assert.match(keptProblems(complete).join(), /frozen in format 1, not 3: freeze it again into a new folder/);
   const [first, ...others] = Object.keys(claims);
   write({ format: KEPT_FORMAT, commit: KEPT_CLAIMS_COMMIT, claims: Object.fromEntries(others.map((slug) => [slug, claims[slug]])), shared: [], needs: {}, sha256: {} });
   assert.match(keptProblems(complete).join(), new RegExp(`lacks the pages of 1 claim, such as ${first}`));
@@ -117,4 +118,67 @@ test("a build places only the year indexes, icons and assets its kept claims rea
   for (const file of ["year/2023/index.html", "_astro/year-2023.css", "outlet-icons/led.example.png", "led-claim/index.html"]) {
     assert.ok(!fs.existsSync(path.join(dist, file)), file);
   }
+});
+
+// The operator, 2026-11-21: searching the kidney claim's treatment name, or pasting its NPR
+// article's address, found it on production and nothing on staging. A kept claim is found by its
+// words and its articles' addresses as production's lookup found it, at its own address.
+test("a kept claim is found by its words and its article's address, as production's lookup found it", () => {
+  const SLUG = "10-person-living-donor-kidney-exchange-chain-kidney-failure";
+  const NPR = "npr.org/2022/03/19/1086245705/10-strangers-come-together-for-a-life-changing-kidney-swap";
+  const entry = {
+    headline: "Ten-person living-donor kidney swap links donors and recipients",
+    page: `/${SLUG}`,
+    status: "No trial record found",
+    meaning: "No clinical trial was found in the registries checked.",
+    place: null,
+    no_signal: "No signal for 4 years",
+    first_reported: "19 Mar 2022",
+    latest_promise: null,
+    unchecked: "This page has not yet been checked by a person.",
+    names: ["10-person living-donor kidney exchange chain"],
+    indication: "Kidney failure",
+    terms: "Kidney failure 10 strangers come together for a life-changing kidney swap",
+    topic: "kidneys-and-bladder",
+  };
+  const report = { title: "10 strangers come together for a life-changing kidney swap", outlet: "NPR", domain: "npr.org", icon: "/outlet-icons/npr.org.abc.png", url: `https://www.${NPR}`, date: "19 Mar 2022" };
+  // The old build: the claim's files, and its entries in the old lookup and search detail.
+  const from = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-old-build-"));
+  const write = (file, body) => {
+    fs.mkdirSync(path.dirname(path.join(from, file)), { recursive: true });
+    fs.writeFileSync(path.join(from, file), body);
+  };
+  for (const file of claimFiles(SLUG)) write(file, "kept");
+  write("lookup.json", JSON.stringify({ schema_version: 1, articles: { [NPR]: [SLUG], "other.example/a": ["not-kept"] }, claims: { [SLUG]: entry, "not-kept": entry } }));
+  write("search-detail.json", JSON.stringify({ schema_version: 1, claims: { [SLUG]: { reports: [report], trials: [] } } }));
+  const kept = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-kept-")), "kept");
+  assert.deepEqual(freeze({ from, to: kept, slugs: [SLUG], commit: KEPT_CLAIMS_COMMIT }).unsearchable, []);
+  assert.deepEqual(JSON.parse(fs.readFileSync(path.join(kept, "manifest.json"), "utf8")).lookup[SLUG], { entry, articles: [NPR], detail: { reports: [report], trials: [] } });
+
+  // A build's lookup files, with one pair of their own.
+  const dist = fs.mkdtempSync(path.join(os.tmpdir(), "thenwhat-dist-"));
+  const pair = { title: "Kidney transplant for kidney failure", status: "Phase 2", names: ["Kidney transplant"], condition: "Kidney failure", terms: "", topic: "kidneys", unchecked: true };
+  fs.mkdirSync(path.join(dist, "lookup"));
+  fs.writeFileSync(path.join(dist, "lookup/2.json"), JSON.stringify({ format: "lookup", format_version: 2, meanings: {}, articles: { "pair.example/a": ["kidney--failure"] }, pairs: { "kidney--failure": pair } }));
+  fs.writeFileSync(path.join(dist, "lookup.json"), JSON.stringify({ schema_version: 1, articles: {}, claims: { "kidney--failure": { headline: pair.title } } }));
+  fs.writeFileSync(path.join(dist, "search-detail.json"), JSON.stringify({ schema_version: 3, pairs: { "kidney--failure": { reports: [], trials: [] } } }));
+  assert.equal(addKeptToLookup({ folder: kept, dist, slugs: [SLUG] }), 1);
+
+  // The site's box and the Worker: the kept claim beside the pair, at its own address.
+  const index = readLookupFile(JSON.parse(fs.readFileSync(path.join(dist, "lookup/2.json"), "utf8")));
+  assert.deepEqual(index.articles[NPR], [SLUG]);
+  assert.equal(index.pairs[SLUG].page, `/${SLUG}`);
+  assert.equal(index.pairs[SLUG].kept, true);
+  assert.deepEqual(index.pairs[SLUG].names, ["10-person living-donor kidney exchange chain"]);
+  assert.equal(index.pairs[SLUG].meaning, entry.meaning);
+  assert.equal(index.pairs["kidney--failure"].page, "/kidney--failure");
+  assert.equal(index.pairs["kidney--failure"].kept, undefined);
+  // The released extension's file: the claim as production gave it.
+  const v1 = JSON.parse(fs.readFileSync(path.join(dist, "lookup.json"), "utf8"));
+  assert.deepEqual(v1.claims[SLUG], entry);
+  assert.deepEqual(v1.articles[NPR], [SLUG]);
+  // Its report, for the search's "found in" line; its icon is not in this build, so a letter tile.
+  const detail = readSearchDetail(JSON.parse(fs.readFileSync(path.join(dist, "search-detail.json"), "utf8")));
+  assert.deepEqual(detail.pairs[SLUG].reports, [{ ...report, icon: null }]);
+  assert.deepEqual(detail.pairs["kidney--failure"], { reports: [], trials: [] });
 });
