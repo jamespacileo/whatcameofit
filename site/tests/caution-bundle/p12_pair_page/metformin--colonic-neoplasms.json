@@ -1,0 +1,196 @@
+{
+ "row": {
+  "pair": {
+   "intervention_id": "substance:9100L32L2N",
+   "condition_id": "D003110",
+   "key": "substance:9100L32L2N|D003110",
+   "address": "metformin--colonic-neoplasms",
+   "nct_ids": [
+    "NCT01440127"
+   ],
+   "checked_by_person": false
+  },
+  "intervention": {
+   "id": "substance:9100L32L2N",
+   "key_kind": "substance",
+   "key_value": "9100L32L2N",
+   "preferred_name": "Metformin",
+   "slug": "metformin",
+   "components": []
+  },
+  "condition": {
+   "descriptor_id": "D003110",
+   "slug": "colonic-neoplasms"
+  },
+  "descriptor": {
+   "descriptor_id": "D003110",
+   "label": "Colonic Neoplasms",
+   "tree_numbers": [
+    "C04.588.274.476.411.307.180",
+    "C06.301.371.411.307.180",
+    "C06.405.249.411.307.180",
+    "C06.405.469.158.356.180",
+    "C06.405.469.491.307.180"
+   ]
+  },
+  "status": {
+   "intervention_id": "substance:9100L32L2N",
+   "condition_id": "D003110",
+   "code": "trial_registered",
+   "overlay_years": 15,
+   "explained_by": [
+    "NCT01440127|registered|2011-09-26"
+   ],
+   "as_of": "2026-11-21",
+   "highest_phase": null,
+   "highest_phase_trials": [],
+   "highest_phase_combined_with": null,
+   "trials_without_a_phase": 0
+  },
+  "filing": {
+   "intervention_id": "substance:9100L32L2N",
+   "condition_id": "D003110",
+   "vertical": "cancer",
+   "basis": "special_group"
+  },
+  "origin": null,
+  "claim_slugs": [],
+  "first_report": null
+ },
+ "names": [
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "name": "Metformin",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "name": "Metformin 1500 mg daily",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "name": "Metformin 850Mg Tab",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "name": "Metformin Hydrochloride Extended-Release Tablets",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "name": "Metformin Hydrochloride tablet",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "name": "Topical 30% metformin cream",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "name": "extended release metformin",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  }
+ ],
+ "checked_by_person": false,
+ "trials": [
+  {
+   "nct_id": "NCT01440127",
+   "arms": [
+    "Metformin"
+   ],
+   "claim_arm": "Metformin",
+   "facts": {
+    "nct_id": "NCT01440127",
+    "as_of": "2015-03-26",
+    "title": "Impact of Pretreatment With Metformin on Colorectal Cancer Stem Cells (CCSC) and Related Pharmacodynamic Markers",
+    "phases": [
+     "phase_1"
+    ],
+    "overall_status": "terminated",
+    "participants": {
+     "count": 9,
+     "actual": true
+    },
+    "start": {
+     "day": "2011-08",
+     "basis": null
+    },
+    "primary_completion": {
+     "day": "2012-10",
+     "basis": "registry_date"
+    },
+    "completion": {
+     "day": "2012-10",
+     "basis": "registry_date"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "18 Years",
+    "maximum_age": "79 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT01440127|registered|2011-09-26",
+     "nct_id": "NCT01440127",
+     "kind": "registered",
+     "day": "2011-09-26",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_1"
+     ],
+     "shown_on": "2015-03-26",
+     "update_key": null
+    }
+   ],
+   "paper_ids": [],
+   "findings": null
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:9100L32L2N",
+  "approach": "drug",
+  "basis": "registry_intervention_type",
+  "registry_type": "DRUG",
+  "trials": 35
+ },
+ "history": [
+  {
+   "intervention_id": "substance:9100L32L2N",
+   "condition_id": "D003110",
+   "before": null,
+   "after": "trial_registered",
+   "on": "2026-11-21",
+   "observed_in_run": "6c86b5de06b1"
+  }
+ ],
+ "checked": [
+  {
+   "registry": "clinicaltrials.gov",
+   "checked_through": "2026-11-17"
+  }
+ ]
+}

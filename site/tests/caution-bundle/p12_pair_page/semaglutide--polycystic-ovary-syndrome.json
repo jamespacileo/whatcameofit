@@ -1,0 +1,540 @@
+{
+ "row": {
+  "pair": {
+   "intervention_id": "substance:53AXN4NNHX",
+   "condition_id": "D011085",
+   "key": "substance:53AXN4NNHX|D011085",
+   "address": "semaglutide--polycystic-ovary-syndrome",
+   "nct_ids": [
+    "NCT05702905",
+    "NCT05819853",
+    "NCT06222437"
+   ],
+   "checked_by_person": false
+  },
+  "intervention": {
+   "id": "substance:53AXN4NNHX",
+   "key_kind": "substance",
+   "key_value": "53AXN4NNHX",
+   "preferred_name": "Semaglutide",
+   "slug": "semaglutide",
+   "components": []
+  },
+  "condition": {
+   "descriptor_id": "D011085",
+   "slug": "polycystic-ovary-syndrome"
+  },
+  "descriptor": {
+   "descriptor_id": "D011085",
+   "label": "Polycystic Ovary Syndrome",
+   "tree_numbers": [
+    "C04.182.612.765",
+    "C12.050.351.500.056.630.580.765",
+    "C12.100.250.056.630.580.765",
+    "C19.391.630.580.765"
+   ]
+  },
+  "status": {
+   "intervention_id": "substance:53AXN4NNHX",
+   "condition_id": "D011085",
+   "code": "phase_3",
+   "overlay_years": null,
+   "explained_by": [
+    "NCT05702905|registered|2023-01-27",
+    "NCT05819853|registered|2023-04-19",
+    "NCT05702905|started|2023-05-09",
+    "NCT05819853|started|2023-11-03"
+   ],
+   "as_of": "2026-11-21",
+   "highest_phase": "phase_4",
+   "highest_phase_trials": [
+    "NCT05702905"
+   ],
+   "highest_phase_combined_with": null,
+   "trials_without_a_phase": 0
+  },
+  "filing": {
+   "intervention_id": "substance:53AXN4NNHX",
+   "condition_id": "D011085",
+   "vertical": "diabetes-and-hormones",
+   "basis": "one_derived_topic"
+  },
+  "origin": {
+   "intervention_id": "substance:53AXN4NNHX",
+   "condition_id": "D011085",
+   "condition_fit": "exact",
+   "indication": "Polycystic ovary syndrome",
+   "claim_slug": "semaglutide-polycystic-ovary-syndrome"
+  },
+  "claim_slugs": [
+   "semaglutide-polycystic-ovary-syndrome"
+  ],
+  "first_report": null
+ },
+ "names": [
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "12 weeks of weekly subcutaneous semaglutide injection",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Arm 2 - DehydraTECH-semaglutide alone",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Dose escalation to 2 mg semaglutide weekly then no semaglutide",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Dose escalation to 2 mg semaglutide weekly then semaglutide microdosing at 0.5 mg weekly",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Gradual dose reduction of semaglutide",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "OZEMPIC",
+   "origin": "substance_registry",
+   "role": "brand",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "RYBELSUS",
+   "origin": "substance_registry",
+   "role": "brand",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide",
+   "origin": "substance_registry",
+   "role": "preferred",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide (Rybelsus®)",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide (Wegovy®)",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 0.25 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 0.5 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 1.0 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 1.7mg subcutaneous",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide 2.4 mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Injectable Product",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Injectable Product (Wegovy and/or Ozempic)",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Pen Injector",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide Pen Injector 2.4mg weekly",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide oral",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide with 4 meal strategies",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide, 1.0 mg/mL",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "Semaglutide, 1.34 mg/mL",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "WEGOVY",
+   "origin": "substance_registry",
+   "role": "brand",
+   "searchable": true
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "oral Semaglutide/Rybelsus",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  },
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "name": "semaglutide 2.4mg",
+   "origin": "registry_intervention",
+   "role": "other",
+   "searchable": false
+  }
+ ],
+ "checked_by_person": false,
+ "trials": [
+  {
+   "nct_id": "NCT05702905",
+   "arms": [
+    "semaglutide"
+   ],
+   "claim_arm": "semaglutide",
+   "facts": {
+    "nct_id": "NCT05702905",
+    "as_of": "2024-03-25",
+    "title": "Semaglutide Improves Metabolic Abnormalities and Fertility in Obese Infertile Women With Polycystic Ovary Syndrome",
+    "phases": [
+     "phase_4"
+    ],
+    "overall_status": "unknown",
+    "participants": {
+     "count": 75,
+     "actual": false
+    },
+    "start": {
+     "day": "2023-05-09",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2024-12-31",
+     "basis": "registry_date_estimated"
+    },
+    "completion": {
+     "day": "2025-06-30",
+     "basis": "registry_date_estimated"
+    },
+    "allocation": "RANDOMIZED",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "22 Years",
+    "maximum_age": "40 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT05702905|registered|2023-01-27",
+     "nct_id": "NCT05702905",
+     "kind": "registered",
+     "day": "2023-01-27",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_4"
+     ],
+     "shown_on": "2024-03-25",
+     "update_key": null
+    },
+    {
+     "key": "NCT05702905|started|2023-05-09",
+     "nct_id": "NCT05702905",
+     "kind": "started",
+     "day": "2023-05-09",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_4"
+     ],
+     "shown_on": "2024-03-25",
+     "update_key": null
+    }
+   ],
+   "paper_ids": [
+    "10.1007/bf03401383",
+    "10.1007/s00404-022-06700-3",
+    "10.1007/s40618-021-01666-6",
+    "10.1016/j.rbmo.2019.04.017",
+    "10.1097/cm9.0000000000001712",
+    "10.1111/cen.13454",
+    "10.1210/clinem/dgaa285",
+    "10.1530/eje-13-0797",
+    "10.1530/eje-18-0175",
+    "10.17219/acem/151695",
+    "10.3389/fendo.2022.945609"
+   ],
+   "findings": null
+  },
+  {
+   "nct_id": "NCT05819853",
+   "arms": [
+    "Untreated PCOS",
+    "PCOS on Metformin"
+   ],
+   "claim_arm": null,
+   "facts": {
+    "nct_id": "NCT05819853",
+    "as_of": "2026-08-31",
+    "title": "Role of Semaglutide in Restoring Ovulation in Youth and Adults With Polycystic Ovary Syndrome",
+    "phases": [
+     "phase_3"
+    ],
+    "overall_status": "recruiting",
+    "participants": {
+     "count": 80,
+     "actual": false
+    },
+    "start": {
+     "day": "2023-11-03",
+     "basis": "registry_date"
+    },
+    "primary_completion": {
+     "day": "2028-02-01",
+     "basis": "registry_date_estimated"
+    },
+    "completion": {
+     "day": "2028-06-30",
+     "basis": "registry_date_estimated"
+    },
+    "allocation": "NON_RANDOMIZED",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "12 Years",
+    "maximum_age": "35 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT05819853|registered|2023-04-19",
+     "nct_id": "NCT05819853",
+     "kind": "registered",
+     "day": "2023-04-19",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_3"
+     ],
+     "shown_on": "2026-08-31",
+     "update_key": null
+    },
+    {
+     "key": "NCT05819853|started|2023-11-03",
+     "nct_id": "NCT05819853",
+     "kind": "started",
+     "day": "2023-11-03",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_3"
+     ],
+     "shown_on": "2026-08-31",
+     "update_key": null
+    }
+   ],
+   "paper_ids": [],
+   "findings": {
+    "outcomes": [],
+    "comparisons": [],
+    "arms": [],
+    "harms": [],
+    "serious_events": [],
+    "registered": [
+     {
+      "key": "NCT05819853|primary|000",
+      "nct_id": "NCT05819853",
+      "kind": "primary",
+      "measure": "Change in ovulation frequency before and after semaglutide in females with PCOS",
+      "time_frame": "14 months"
+     },
+     {
+      "key": "NCT05819853|secondary|000",
+      "nct_id": "NCT05819853",
+      "kind": "secondary",
+      "measure": "Change in Whole Body Insulin Sensitivity",
+      "time_frame": "Baseline and 10 months"
+     },
+     {
+      "key": "NCT05819853|secondary|001",
+      "nct_id": "NCT05819853",
+      "kind": "secondary",
+      "measure": "Change in ovarian morphology",
+      "time_frame": "Baseline and 10 months"
+     }
+    ],
+    "due": null
+   }
+  },
+  {
+   "nct_id": "NCT06222437",
+   "arms": [
+    "Protocol group"
+   ],
+   "claim_arm": "Protocol group",
+   "facts": {
+    "nct_id": "NCT06222437",
+    "as_of": "2026-03-23",
+    "title": "Semaglutide and Polycystic Ovarian Syndrome: an Emerging Treatment Strategy",
+    "phases": [
+     "phase_1"
+    ],
+    "overall_status": "withdrawn",
+    "participants": {
+     "count": 0,
+     "actual": true
+    },
+    "start": {
+     "day": "2026-02",
+     "basis": "registry_date_estimated"
+    },
+    "primary_completion": {
+     "day": "2026-02",
+     "basis": "registry_date_estimated"
+    },
+    "completion": {
+     "day": "2027-02",
+     "basis": "registry_date_estimated"
+    },
+    "allocation": "NA",
+    "masking": "NONE",
+    "primary_purpose": "TREATMENT",
+    "healthy_volunteers": false,
+    "minimum_age": "18 Years",
+    "maximum_age": "45 Years",
+    "sponsor_name": null,
+    "sponsor_class": null,
+    "primary_outcomes": null,
+    "why_stopped": null,
+    "results": null
+   },
+   "events": [
+    {
+     "key": "NCT06222437|registered|2024-01-24",
+     "nct_id": "NCT06222437",
+     "kind": "registered",
+     "day": "2024-01-24",
+     "day_basis": "registry_date",
+     "phases": [
+      "phase_1"
+     ],
+     "shown_on": "2026-03-23",
+     "update_key": null
+    },
+    {
+     "key": "NCT06222437|withdrawn|2026-03-23",
+     "nct_id": "NCT06222437",
+     "kind": "withdrawn",
+     "day": "2026-03-23",
+     "day_basis": "seen_in_update",
+     "phases": [
+      "phase_1"
+     ],
+     "shown_on": "2026-03-23",
+     "update_key": null
+    }
+   ],
+   "paper_ids": [],
+   "findings": null
+  }
+ ],
+ "approach": {
+  "intervention_id": "substance:53AXN4NNHX",
+  "approach": null,
+  "basis": "registry_intervention_type",
+  "registry_type": null,
+  "trials": 72
+ },
+ "history": [
+  {
+   "intervention_id": "substance:53AXN4NNHX",
+   "condition_id": "D011085",
+   "before": null,
+   "after": "phase_3",
+   "on": "2026-11-21",
+   "observed_in_run": "6c86b5de06b1"
+  }
+ ],
+ "checked": [
+  {
+   "registry": "clinicaltrials.gov",
+   "checked_through": "2026-11-17"
+  }
+ ]
+}

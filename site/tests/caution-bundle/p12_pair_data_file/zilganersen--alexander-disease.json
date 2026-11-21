@@ -1,0 +1,308 @@
+{
+ "pair": {
+  "row": {
+   "pair": {
+    "intervention_id": "substance:AXQ9493NT2",
+    "condition_id": "D038261",
+    "key": "substance:AXQ9493NT2|D038261",
+    "address": "zilganersen--alexander-disease",
+    "nct_ids": [
+     "NCT04849741"
+    ],
+    "checked_by_person": false
+   },
+   "intervention": {
+    "id": "substance:AXQ9493NT2",
+    "key_kind": "substance",
+    "key_value": "AXQ9493NT2",
+    "preferred_name": "ZILGANERSEN",
+    "slug": "zilganersen",
+    "components": []
+   },
+   "condition": {
+    "descriptor_id": "D038261",
+    "slug": "alexander-disease"
+   },
+   "descriptor": {
+    "descriptor_id": "D038261",
+    "label": "Alexander Disease",
+    "tree_numbers": [
+     "C10.228.140.163.100.362.312",
+     "C10.228.140.695.625.312",
+     "C10.314.400.312",
+     "C10.574.500.024",
+     "C16.320.400.024",
+     "C16.320.565.189.362.312",
+     "C18.452.132.100.362.312",
+     "C18.452.648.189.362.312"
+    ]
+   },
+   "status": {
+    "intervention_id": "substance:AXQ9493NT2",
+    "condition_id": "D038261",
+    "code": "phase_3",
+    "overlay_years": 5,
+    "explained_by": [
+     "NCT04849741|registered|2021-04-19",
+     "NCT04849741|started|2021-06-01"
+    ],
+    "as_of": "2026-11-21",
+    "highest_phase": "phase_3",
+    "highest_phase_trials": [
+     "NCT04849741"
+    ],
+    "highest_phase_combined_with": null,
+    "trials_without_a_phase": 0
+   },
+   "filing": {
+    "intervention_id": "substance:AXQ9493NT2",
+    "condition_id": "D038261",
+    "vertical": "brain-and-nerves",
+    "basis": "main_disease"
+   },
+   "origin": null,
+   "claim_slugs": [],
+   "first_report": null
+  },
+  "names": [
+   {
+    "intervention_id": "substance:AXQ9493NT2",
+    "name": "ZILGANERSEN",
+    "origin": "substance_registry",
+    "role": "preferred",
+    "searchable": true
+   }
+  ],
+  "checked_by_person": false,
+  "trials": [
+   {
+    "nct_id": "NCT04849741",
+    "arms": [
+     "zilganersen"
+    ],
+    "claim_arm": "zilganersen",
+    "facts": {
+     "nct_id": "NCT04849741",
+     "as_of": "2026-08-21",
+     "title": "A Study to Evaluate the Safety and Efficacy of Zilganersen (ION373) in Patients With Alexander Disease (AxD)",
+     "phases": [
+      "phase_3"
+     ],
+     "overall_status": "active_not_recruiting",
+     "participants": {
+      "count": 54,
+      "actual": true
+     },
+     "start": {
+      "day": "2021-06-01",
+      "basis": "registry_date"
+     },
+     "primary_completion": {
+      "day": "2025-08-22",
+      "basis": "registry_date"
+     },
+     "completion": {
+      "day": "2034-07",
+      "basis": "registry_date_estimated"
+     },
+     "allocation": "RANDOMIZED",
+     "masking": "DOUBLE",
+     "primary_purpose": "TREATMENT",
+     "healthy_volunteers": false,
+     "minimum_age": "2 Years",
+     "maximum_age": "65 Years",
+     "sponsor_name": null,
+     "sponsor_class": null,
+     "primary_outcomes": null,
+     "why_stopped": null,
+     "results": null
+    },
+    "events": [
+     {
+      "key": "NCT04849741|registered|2021-04-19",
+      "nct_id": "NCT04849741",
+      "kind": "registered",
+      "day": "2021-04-19",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_3"
+      ],
+      "shown_on": "2026-08-21",
+      "update_key": null
+     },
+     {
+      "key": "NCT04849741|started|2021-06-01",
+      "nct_id": "NCT04849741",
+      "kind": "started",
+      "day": "2021-06-01",
+      "day_basis": "registry_date",
+      "phases": [
+       "phase_3"
+      ],
+      "shown_on": "2026-08-21",
+      "update_key": null
+     }
+    ],
+    "paper_ids": [],
+    "findings": {
+     "outcomes": [],
+     "comparisons": [],
+     "arms": [],
+     "harms": [],
+     "serious_events": [],
+     "registered": [
+      {
+       "key": "NCT04849741|primary|000",
+       "nct_id": "NCT04849741",
+       "kind": "primary",
+       "measure": "Percent Change from Baseline in the 10-Meter Walk Test (10MWT)",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|000",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Most Bothersome Symptom (MBS)",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|001",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Patient Global Impression of Severity (PGIS) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|002",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Patient Global Impression of Change (PGIC) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|003",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Clinical Global Impression of Change (CGIC) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|004",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Gross Motor Function Measure-88, Dimensions C, D and E (GMFM-88, Dimensions C-E) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|005",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in 9-Hole Peg Test (9HPT) Score",
+       "time_frame": "Baseline to Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|006",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Vineland Adaptive Behavior Scales, Third Edition (Vineland-3) Motor Skills Domain Score",
+       "time_frame": "Baseline to Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|007",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Pediatrics Quality of Life Inventory Gastrointestinal Symptoms Scale (PedsQL GI) Score",
+       "time_frame": "Baseline to Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|008",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Vineland Adaptive Behavior Composite, Third Edition (Vineland-3 ABC) Score",
+       "time_frame": "Baseline to Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|009",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Composite Autonomic Symptom Score 31 (COMPASS-31) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|010",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Cerebrospinal Fluid (CSF) Glial Fibrillary Acid Protein (GFAP) Levels",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|011",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Clinical Global Impression of Severity (CGIS) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|012",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Alexander Disease Patient Domain Impression of Severity (AxD-PDIS) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|013",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Alexander Disease Patient Domain Impression of Change (AxD-PDIC) Score",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|secondary|014",
+       "nct_id": "NCT04849741",
+       "kind": "secondary",
+       "measure": "Change From Baseline in Body Weight Percentile (for participants < 18 years old at screening) or body weight (for participants ≥ 18 years old at screening)",
+       "time_frame": "Baseline and Week 61"
+      },
+      {
+       "key": "NCT04849741|other|000",
+       "nct_id": "NCT04849741",
+       "kind": "other",
+       "measure": "Change From Baseline in Pediatrics Quality of Life Inventory (PedsQL) Generic Core Scales Score",
+       "time_frame": "Baseline and Week 61"
+      }
+     ],
+     "due": {
+      "nct_id": "NCT04849741",
+      "primary_completion": "2025-08-22",
+      "code": "no_results_a_year_after_completion",
+      "days_since_completion": 456,
+      "as_of": "2026-11-21"
+     }
+    }
+   }
+  ],
+  "approach": {
+   "intervention_id": "substance:AXQ9493NT2",
+   "approach": "drug",
+   "basis": "registry_intervention_type",
+   "registry_type": "DRUG",
+   "trials": 1
+  },
+  "history": [
+   {
+    "intervention_id": "substance:AXQ9493NT2",
+    "condition_id": "D038261",
+    "before": null,
+    "after": "phase_3",
+    "on": "2026-11-21",
+    "observed_in_run": "6c86b5de06b1"
+   }
+  ],
+  "checked": [
+   {
+    "registry": "clinicaltrials.gov",
+    "checked_through": "2026-11-17"
+   }
+  ]
+ }
+}

@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { parseHTML } from "linkedom";
 import { readBundle } from "../src/lib/bundle.ts";
 import { pairView } from "../src/lib/pair-view.ts";
-import { NO_CAUTIONS, PROGRESS_NOTE, renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
+import { CAUTIONS_LEAD, NO_CAUTIONS, PROGRESS_NOTE, STOP_REASON_LEAD, renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
 import { PROGRESS_STEPS, progressOf } from "../src/lib/progress.ts";
 import { PAIR_PROGRESS_STEPS } from "../src/lib/pair-wording.ts";
 import { assertNoOutcomeVerdict } from "../src/lib/trial-facts.ts";
@@ -75,14 +75,83 @@ test("the page draws the level in one hue with its name, its record and, always,
   }
 });
 
-test("a pair whose records hold no caution fact says so; the fixture holds no trial that ended early or is past its year", () => {
+test("a pair whose records hold no caution fact says so, in the one sentence", () => {
   for (const file of Object.values(files)) {
-    // What the fixture can show. A pair with a trial ended early, or a year past completion with
-    // no results, is on staging and not in this bundle (docs/adr/0015, "Known defects").
+    // The small bundle's pairs hold no caution fact; four that do are in tests/caution-bundle.
     assert.ok(file.trials.every((trial) => !["terminated", "suspended", "withdrawn"].includes(trial.facts.overall_status)));
     assert.ok(file.trials.every((trial) => trial.findings?.due?.code !== "no_results_a_year_after_completion"));
     const view = pairView(file);
     assert.deepEqual(view.progress.cautions, []);
     assert.equal(pageOf(view).querySelector('[data-caution="none"]').textContent, NO_CAUTIONS);
+  }
+});
+
+// Four real pairs with caution facts, copied byte for byte from the lab's store at lab commit
+// 3274611d, with that version's own schemas (docs/adr/0015, known defect 6). A bundle of their
+// own, because the small bundle's schemas are an older lab version's and the two are never mixed.
+const caution = readBundle(fileURLToPath(new URL("./caution-bundle", import.meta.url))).pages.PairPage;
+const NBSP = " ";
+const cautionLines = (address) =>
+  [...pageOf(pairView(caution[address])).querySelectorAll("[data-cautions] li")].map((line) => [line.dataset.caution, line.textContent]);
+
+test("a trial with no results a year after primary completion is said so, with the day checked and the days since", () => {
+  // The day and the days are the lab's `findings.due` for the trial (as_of, days_since_completion).
+  assert.deepEqual(cautionLines("zilganersen--alexander-disease"), [
+    [
+      "no_results",
+      `NCT04849741: no summary results were on ClinicalTrials.gov when checked on 21${NBSP}Nov${NBSP}2026, 456 days after primary completion. Results may be available elsewhere.`,
+    ],
+  ]);
+  // Both of the pair's trials, each on its own line.
+  assert.deepEqual(cautionLines("evorpacept--squamous-cell-carcinoma-of-head-and-neck"), [
+    [
+      "no_results",
+      `NCT04675294: no summary results were on ClinicalTrials.gov when checked on 21${NBSP}Nov${NBSP}2026, 628 days after primary completion. Results may be available elsewhere.`,
+    ],
+    [
+      "no_results",
+      `NCT04675333: no summary results were on ClinicalTrials.gov when checked on 21${NBSP}Nov${NBSP}2026, 628 days after primary completion. Results may be available elsewhere.`,
+    ],
+  ]);
+});
+
+test("a trial that ended early is said so in the registry's state, with no reason clause when the record carries none", () => {
+  // The store at 3274611d carries no why_stopped for any trial (docs/adr/0015, known defects),
+  // so neither the reason's lead nor an empty quotation is drawn.
+  assert.equal(caution["metformin--colonic-neoplasms"].trials[0].facts.why_stopped, null);
+  assert.deepEqual(cautionLines("metformin--colonic-neoplasms"), [["ended_early", "NCT01440127: stopped early."]]);
+  const withdrawn = caution["semaglutide--polycystic-ovary-syndrome"].trials.find((trial) => trial.nct_id === "NCT06222437");
+  assert.equal(withdrawn.facts.why_stopped, null);
+  assert.deepEqual(cautionLines("semaglutide--polycystic-ovary-syndrome"), [["ended_early", "NCT06222437: withdrawn before it started."]]);
+  for (const address of ["metformin--colonic-neoplasms", "semaglutide--polycystic-ovary-syndrome"]) {
+    const cautions = pageOf(pairView(caution[address])).querySelector("[data-cautions]");
+    assert.equal(cautions.querySelector("q"), null, address);
+    assert.ok(!cautions.textContent.includes(STOP_REASON_LEAD), address);
+  }
+});
+
+test("a caution fact never moves the step: each pair stands where its recorded events put it", () => {
+  const expected = {
+    "zilganersen--alexander-disease": ["started", "NCT04849741", "2021-06-01"],
+    "evorpacept--squamous-cell-carcinoma-of-head-and-neck": ["started", "NCT04675294", "2021-04-02"],
+    // Terminated with 9 taking part, but its start is a month with no basis, so it has no
+    // started event and stays on the first step (docs/adr/0015, known defects).
+    "metformin--colonic-neoplasms": ["registered", "NCT01440127", "2011-09-26"],
+    "semaglutide--polycystic-ovary-syndrome": ["started", "NCT05702905", "2023-05-09"],
+  };
+  assert.deepEqual(Object.keys(caution).sort(), Object.keys(expected).sort());
+  for (const [address, [step, nctId, day]] of Object.entries(expected)) {
+    const file = caution[address];
+    const progress = progressOf(file);
+    assert.ok(progress.cautions.length > 0, address);
+    assert.deepEqual([progress.step, progress.reason.nctId, progress.reason.day], [step, nctId, day], address);
+    const panel = pageOf(pairView(file)).querySelector("[data-progress]");
+    assert.equal(panel.dataset.progress, step, address);
+    assert.equal(panel.querySelector("[data-progress-step]").textContent, `Step ${progress.place} of 5: ${PAIR_PROGRESS_STEPS[step]}`, address);
+    assert.equal(panel.querySelectorAll(".progress-steps span.on").length, progress.place, address);
+    // The caution facts are drawn under their lead, and the sentence that there are none is not.
+    assert.equal(panel.querySelector('[data-caution="none"]'), null, address);
+    assert.equal(panel.querySelector("[data-cautions] > p").textContent, CAUTIONS_LEAD, address);
+    assertNoOutcomeVerdict([...panel.querySelectorAll("li")].map((line) => line.textContent));
   }
 });
