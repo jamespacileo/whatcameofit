@@ -90,7 +90,8 @@
         "minItems": 9,
         "prefixItems": [
           {
-            "type": "string"
+            "type": "string",
+            "pattern": "^NCT[0-9]{8}$"
           },
           {
             "type": "string"
@@ -172,8 +173,12 @@
     }
   },
   "required": [
+    "schema_version",
     "set",
-    "records_read"
+    "registry",
+    "records_read",
+    "columns",
+    "trials"
   ],
   "title": "TrialsListing",
   "type": "object"

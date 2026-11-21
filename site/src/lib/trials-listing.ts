@@ -1,6 +1,6 @@
 // The trial listing: the pipeline's file of one named set of stored trials, validated
-// before anything is built from it. TRIALS_LISTING_FILE names it. A build given no
-// listing has no listed trials, and no page opens for a trial no pair holds.
+// before anything is built from it. The bundle's version covers the listing,
+// so a rollback restores both the pairs and the listed trials in one build.
 // Behaviour: openspec trial-pages, "A trial listing built into the site".
 import { createHash } from "node:crypto";
 import fs from "node:fs";
@@ -8,7 +8,8 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 import { LISTED_TRIAL_PAGES } from "../../site.config.mjs";
-import { PART_BYTES, splitListing } from "./trial-listing-parts.mjs";
+import { pairBundle } from "./pairs.ts";
+import { LISTING_LIMIT_BYTES, PART_BYTES, splitListing } from "./trial-listing-parts.mjs";
 
 export type ListedRow = [
   id: string,
@@ -40,19 +41,22 @@ const EMPTY: TrialsListing = {
   trials: [],
 };
 
-/** Where the listing is, when TRIALS_LISTING_FILE names one. */
-export function listingPath(): string | null {
-  const configured = process.env.TRIALS_LISTING_FILE;
-  return configured ? path.resolve(configured) : null;
-}
-
 function load(): TrialsListing {
   // The operator's switch: off, the site is built as if there were no listing.
   if (!LISTED_TRIAL_PAGES) return EMPTY;
-  const file = listingPath();
-  if (!file) return EMPTY;
-  if (!fs.existsSync(file)) throw new Error(`No trial listing at ${file}.`);
-  const content = JSON.parse(fs.readFileSync(file, "utf8"));
+  const bundle = pairBundle();
+  const bundled = bundle.pages.PairTrialListing;
+  const bundledFile = "p12_pair_trial_listing/listed.json";
+  if (bundle.withoutSchema.includes("PairTrialListing") ||
+      (bundled && (Object.keys(bundled).length !== 1 || !Object.hasOwn(bundled, "listed")))) {
+    throw new Error(`A bundled trial listing needs ${bundledFile} and schemas/PairTrialListing.json.`);
+  }
+  const configured = process.env.TRIALS_LISTING_FILE;
+  if (bundled && configured) throw new Error("Remove TRIALS_LISTING_FILE to use the bundle's trial listing.");
+  if (!bundled && !configured) return EMPTY;
+  const file = configured ? path.resolve(configured) : bundledFile;
+  if (configured && !fs.existsSync(file)) throw new Error(`No trial listing at ${file}.`);
+  const content = bundled ? bundled.listed : JSON.parse(fs.readFileSync(file, "utf8"));
   const schema = JSON.parse(fs.readFileSync(path.resolve("trials-listing.schema.json"), "utf8"));
   const ajv = new Ajv2020({ allErrors: false });
   addFormats(ajv);
@@ -61,7 +65,18 @@ function load(): TrialsListing {
     const problems = (validate.errors ?? []).map((error) => `  ${error.instancePath || "/"} ${error.message}`).join("\n");
     throw new Error(`The trial listing at ${file} does not match trials-listing.schema.json:\n${problems}`);
   }
-  return content as TrialsListing;
+  const listing = content as TrialsListing;
+  if (Buffer.byteLength(JSON.stringify(listing)) + 1 > LISTING_LIMIT_BYTES) {
+    throw new Error(`The trial listing at ${file} exceeds ${LISTING_LIMIT_BYTES / (1024 * 1024)} MiB.`);
+  }
+  if (new Set(listing.trials.map(([id]) => id)).size !== listing.trials.length) {
+    throw new Error(`The trial listing at ${file} repeats a registry number.`);
+  }
+  const measured = bundle.manifest.snapshot?.trial_listing?.trials_listed;
+  if (bundled && measured !== undefined && measured !== listing.trials.length) {
+    throw new Error(`The manifest reports ${measured} listed trials; the bundle has ${listing.trials.length}.`);
+  }
+  return listing;
 }
 
 export const listing: TrialsListing = load();

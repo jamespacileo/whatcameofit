@@ -2,14 +2,15 @@
 // D1's local engine. The bundle is real: site/tests/bundle holds the pair pages and schemas
 // the lab's own pipeline test writes from its recorded slice.
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before, test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { Service, engineUnavailable } from "./harness.mjs";
 import { exportBundle } from "../scripts/export-pairs.mjs";
-import { SCHEMA_MODEL, bundleVersion, manifestBackfill, statements } from "../scripts/load-pairs.mjs";
+import { PART_CHARS, SCHEMA_MODEL, bodyParts, bundleVersion, manifestBackfill, statements } from "../scripts/load-pairs.mjs";
+import { writeManifest } from "../scripts/bundle-manifest.mjs";
 
 const skip = (await engineUnavailable()) ?? false;
 if (skip && process.env.CI) throw new Error(skip);
@@ -77,4 +78,63 @@ test("a version with a part missing is refused, and nothing is left behind", { s
   await assert.rejects(exportBundle(read, out), /not whole|version/);
   assert.equal(existsSync(out), false);
   await assert.rejects(exportBundle(read, scratch(), "0000000000000000"), /holds no bundle 0000000000000000/);
+});
+
+// A copy of the small bundle that also carries a trial listing whose stored body has a character
+// outside the Basic Multilingual Plane (two UTF-16 units) across the boundary of its first part.
+function bundleWithListing() {
+  const folder = scratch();
+  cpSync(bundle, folder, { recursive: true });
+  const site = fileURLToPath(new URL("../../../site/", import.meta.url));
+  const listing = JSON.parse(readFileSync(join(site, "tests/fixture-trials-listing.json"), "utf8"));
+  listing.trials[0][1] = "@@";
+  const at = JSON.stringify(listing).indexOf("@@");
+  listing.trials[0][1] = `${"a".repeat(PART_CHARS - 1 - at)}\u{1F600} trial`;
+  assert.equal(JSON.stringify(listing).codePointAt(PART_CHARS - 1), 0x1f600);
+  mkdirSync(join(folder, "p12_pair_trial_listing"));
+  writeFileSync(join(folder, "p12_pair_trial_listing/listed.json"), `${JSON.stringify(listing)}\n`);
+  copyFileSync(join(site, "trials-listing.schema.json"), join(folder, "schemas/PairTrialListing.json"));
+  rmSync(join(folder, "manifest.json"));
+  writeManifest(folder, { snapshot: { trial_listing: { complete: false, registry_total: 9, trials_read: 1, trials_listed: listing.trials.length } } });
+  return folder;
+}
+
+test("a body is never cut inside a character, and its parts join back to it", () => {
+  const body = `${"a".repeat(PART_CHARS - 1)}\u{1F600}${"b".repeat(PART_CHARS)}`;
+  const parts = bodyParts(body);
+  assert.equal(parts.join(""), body);
+  assert.equal(parts[0].length, PART_CHARS - 1);
+  for (const part of parts) {
+    assert.ok(part.length <= PART_CHARS);
+    assert.ok(part.isWellFormed(), "no part holds half a character");
+  }
+  assert.deepEqual(bodyParts(""), [""]);
+});
+
+test("a listing with a two-unit character across a part boundary is written back as it was loaded", { skip }, async () => {
+  const folder = bundleWithListing();
+  const listed = statements(folder);
+  for (const sql of listed.sql) await s.db.prepare(sql).run();
+  const out = scratch();
+  assert.equal((await exportBundle(read, out)).version, listed.version);
+  assert.deepEqual(filesOf(out), filesOf(folder));
+  assert.equal(bundleVersion(out), listed.version);
+});
+
+test("the same pages with a corrected manifest keep their version, and the corrected manifest is the one held", { skip }, async () => {
+  const folder = bundleWithListing();
+  const first = statements(folder);
+  // As the loader does: a version already current is not loaded again.
+  const [current] = await read("SELECT version FROM pair_bundle WHERE current = 1");
+  if (current?.version !== first.version) for (const sql of first.sql) await s.db.prepare(sql).run();
+  const count = JSON.parse(readFileSync(join(folder, "p12_pair_trial_listing/listed.json"), "utf8")).trials.length;
+  rmSync(join(folder, "manifest.json"));
+  const corrected = writeManifest(folder, { snapshot: { trial_listing: { complete: true, registry_total: count, trials_read: count, trials_listed: count } } });
+  const again = statements(folder);
+  assert.equal(again.version, first.version);
+  for (const sql of manifestBackfill(again).sql) await s.db.prepare(sql).run();
+  assert.equal((await read(`SELECT count(*) AS n FROM pair_page WHERE version = '${again.version}' AND model = '$manifest'`))[0].n, 1);
+  const out = scratch();
+  await exportBundle(read, out);
+  assert.deepEqual(JSON.parse(readFileSync(join(out, "manifest.json"), "utf8")).snapshot, corrected.snapshot);
 });

@@ -5,11 +5,9 @@ import path from "node:path";
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 
-// The site's build cuts the listing into parts of about a mebibyte, so no file a reader
-// fetches holds all of it (src/lib/trial-listing-parts.mjs). This bounds the whole: the
-// build reads it into memory, and a reader who searches it by words fetches every part.
-// 29 MiB held 102,877 trials on 2026-11-17.
-export const LISTING_LIMIT_BYTES = 64 * 1024 * 1024;
+import { LISTING_LIMIT_BYTES } from "../src/lib/trial-listing-parts.mjs";
+
+export { LISTING_LIMIT_BYTES };
 
 const SCHEMA_FILE = path.resolve(import.meta.dirname, "../trials-listing.schema.json");
 
@@ -48,4 +46,17 @@ export function listingFileProblems() {
   const file = path.resolve(process.env.TRIALS_LISTING_FILE);
   if (!fs.existsSync(file)) return [`No trial listing at ${file}.`];
   return listingProblems({ text: fs.readFileSync(file, "utf8") }).problems;
+}
+
+/** A cutover can use a versioned listing only after its source run accounted for the full set. */
+export function listingCoverageProblems(folder) {
+  const manifest = JSON.parse(fs.readFileSync(path.join(folder, "manifest.json"), "utf8"));
+  if (!manifest.counts.PairTrialListing) return [];
+  const report = manifest.snapshot?.trial_listing;
+  if (report?.complete !== true ||
+      !Number.isInteger(report.registry_total) || report.trials_read !== report.registry_total ||
+      !Number.isInteger(report.trials_listed) || report.trials_listed < 1 || report.trials_listed > report.trials_read) {
+    return ["The bundle's trial listing has no verified full registry run. Run the lab listing without a page cap, then export and load the bundle."];
+  }
+  return [];
 }

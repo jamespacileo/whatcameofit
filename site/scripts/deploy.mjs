@@ -38,7 +38,8 @@ import os from "node:os";
 import path from "node:path";
 
 import { STAGING_WORKER, deployProblems, stagingProblems, withNoindex } from "./deploy-checks.mjs";
-import { listingFileProblems } from "./listing-checks.mjs";
+import { listingCoverageProblems, listingFileProblems } from "./listing-checks.mjs";
+import { LISTED_TRIAL_PAGES } from "../site.config.mjs";
 
 const SITE_DIR = path.resolve(import.meta.dirname, "..");
 const dist = path.join(SITE_DIR, "dist");
@@ -77,6 +78,9 @@ const problems = [
   ...(staging ? stagingProblems({ siteUrl, database: pairsDatabase, cutover }) : []),
   // Staging is published only with the commit it is: the smoke checks hold the host to it.
   ...(staging && !dryRun && !/^[a-f0-9]{40}$/.test(revision ?? "") ? ["Staging is published with the commit it is: set BUILD_REVISION to its full SHA."] : []),
+  // A listing from a local file is in no bundle version, so a rollback could not restore it with
+  // its pairs: it may be rehearsed, and is never published (staging or the cutover).
+  ...(process.env.TRIALS_LISTING_FILE && !dryRun ? ["TRIALS_LISTING_FILE is for a rehearsal: publish the trial listing inside the bundle (p12_pair_trial_listing/listed.json), or add --dry-run."] : []),
   ...listingFileProblems(),
 ];
 if (problems.length > 0) stop(problems);
@@ -117,6 +121,12 @@ if (pairsDatabase) {
   console.log(`Bundle folder ${bundleFolder}, with no database: a rehearsal of the build.`);
 } else {
   stop(["No bundle was named. Set PAIRS_DATABASE to the D1 database the site is built from."]);
+}
+// With LISTED_TRIAL_PAGES=0 the site is built as if there were no listing, so its run's
+// coverage does not matter.
+if (cutover && LISTED_TRIAL_PAGES) {
+  const incomplete = listingCoverageProblems(pairs ? pairs.folder : bundleFolder);
+  if (incomplete.length) stop(incomplete);
 }
 
 // The claims no pair came from keep their pages, as production built them (the operator,
