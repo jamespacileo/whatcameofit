@@ -20,6 +20,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { movedAddresses, readBundle } from "../src/lib/bundle.ts";
 import { placeKept, readKept } from "./kept-claims.mjs";
+import { heldRedirect, verifiedRedirects } from "./redirect-scope.mjs";
 
 const DIST = path.resolve(process.env.DIST_DIR ?? "dist");
 const retired = JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, "../data/retired-addresses.json"), "utf8"));
@@ -30,7 +31,7 @@ const pairs = bundle.pages.PairPage ?? {};
 /** What old addresses answer, for the Worker: `to` a pair's address (301), `to` a kept claim
  * (`kept`, 301 to its own files), or gone (410), with the day an archived claim was taken down
  * where the operator archived it. A kept claim's own address is in `keep`, not the list. */
-function goneEntries(retiredAddresses, pairPages, dataFiles, keptClaims = new Set()) {
+function goneEntries(retiredAddresses, pairPages, dataFiles, keptClaims = new Set(), verified = new Set(), held = []) {
   // Each claim slug with the one pair that came from it. A claim behind several pairs leads
   // to none of them by rule (`movedAddresses`), and so answers 410.
   const leads = movedAddresses(Object.values(pairPages));
@@ -49,7 +50,14 @@ function goneEntries(retiredAddresses, pairPages, dataFiles, keptClaims = new Se
     // A claim merged into another, or renamed, goes where the claim it became goes.
     let claim = slug;
     for (let hops = 0; merged.has(claim) && hops < 10; hops += 1) claim = merged.get(claim);
-    const to = Object.hasOwn(pairPages, claim) ? claim : leads.get(claim);
+    let to = Object.hasOwn(pairPages, claim) ? claim : leads.get(claim);
+    // A pair of another scope than the claim's is not where its page now lives
+    // (scripts/redirect-scope.mjs): the claim keeps its page until that pair is verified.
+    const why = to && to !== claim ? heldRedirect(claim, to, verified) : null;
+    if (why) {
+      held.push({ slug, pair: to, why });
+      to = undefined;
+    }
     if (archived.has(claim)) {
       entries.push({ slug, gone: true });
       continue;
@@ -77,8 +85,11 @@ else fs.rmSync(file, { force: true });
 
 const keptFolder = process.env.KEPT_CLAIMS_DIR ? path.resolve(process.env.KEPT_CLAIMS_DIR) : null;
 const kept = keptFolder ? readKept(keptFolder) : null;
-const { entries: gone, keep } = goneEntries(retired, pairs, bundle.pages.PairDataFile ?? {}, new Set(Object.keys(kept?.claims ?? {})));
+const held = [];
+const { entries: gone, keep } = goneEntries(retired, pairs, bundle.pages.PairDataFile ?? {}, new Set(Object.keys(kept?.claims ?? {})), verifiedRedirects(), held);
 fs.writeFileSync(path.join(DIST, "gone.json"), `${JSON.stringify(gone)}\n`);
+// The claims held from a pair of another scope, for the staging smoke check to hold to their pages.
+fs.writeFileSync(path.join(DIST, "held-redirects.json"), `${JSON.stringify(held.map(({ slug, pair }) => ({ slug, pair })))}\n`);
 // Which claims kept their pages, for the build check and the staging smoke check.
 fs.writeFileSync(path.join(DIST, "kept-claims.json"), `${JSON.stringify(keep)}\n`);
 const placed = keptFolder ? placeKept({ folder: keptFolder, dist: DIST, slugs: keep }) : 0;
@@ -90,3 +101,5 @@ console.log(
   `Old addresses: ${led} lead to a pair, ${keep.length} claims keep their pages (${placed.toLocaleString("en-GB")} files), ` +
     `${archivedCount} archived stay gone, ${unkept} more answer gone; ${lines.length} renamed topic ${lines.length === 1 ? "address" : "addresses"}.`,
 );
+// Each claim held from its pair, named, so a reader of the log sees what waits on verifying.
+for (const { slug, pair, why } of held) console.log(`Held: /${slug} does not lead to /${pair} (${why}); listed in data/redirect-scope.json once verified.`);
