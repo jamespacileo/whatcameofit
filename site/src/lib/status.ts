@@ -116,6 +116,16 @@ export const STAGE_PATH: StatusCode[] = [
 /** Every status off the path, in the order the labels list them. */
 export const OFF_PATH: StatusCode[] = (Object.keys(STATUS_LABELS) as StatusCode[]).filter((code) => !STAGE_PATH.includes(code));
 
+/**
+ * The places on the path no pair can stand at yet, so a count of none there is not a finding:
+ * a pair is made from a registered trial, so none is "preclinical only", and the bundle carries
+ * no regulator's decision (the lab's page model says they "come with S10"), so none is
+ * "approved". The home page says "not followed yet" at such a place rather than 0 (the
+ * operator read the two zeros as missing data, 2026-11-21). A place with a pair shows its
+ * count as any other; take a code out of this list once the bundle can fill it.
+ */
+export const NOT_FOLLOWED_YET: StatusCode[] = ["preclinical_only", "approved"];
+
 /** How many of the rows stand at each status. */
 export function statusCounts(rows: { statusCode: string }[]): Map<string, number> {
   const counts = new Map<string, number>();

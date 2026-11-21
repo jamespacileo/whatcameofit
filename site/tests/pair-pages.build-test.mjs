@@ -18,7 +18,7 @@ import { renderPairBand, renderPairSheet } from "../src/lib/pair-render.ts";
 import { categoryListing, interventionListing } from "../src/lib/listing-view.ts";
 import { renderListingBand, renderListingSheet } from "../src/lib/listing-render.ts";
 import { embedTitle, renderEmbedArticle, renderEmbedRegistries } from "../src/lib/embed-render.ts";
-import { STATUS_LABELS, assertNeutral } from "../src/lib/status.ts";
+import { NOT_FOLLOWED_YET, STATUS_LABELS, assertNeutral } from "../src/lib/status.ts";
 import { SITE } from "../site.config.mjs";
 // The released extension's own decision of what its popup shows, run on the built file.
 import { stateFor } from "../../extension/src/lookup.js";
@@ -348,8 +348,16 @@ test("the home page opens with the lookup box, then where the pairs stand, their
   for (const chip of document.querySelectorAll('[data-home="try"] a')) assert.match(chip.getAttribute("href"), /^\/topic\//);
   // The path counts every pair once, at its status.
   const places = [...document.querySelectorAll('[data-home="standing"] [data-status]')];
-  assert.equal(places.reduce((sum, place) => sum + Number(place.querySelector("strong").textContent), 0), Object.keys(pages).length);
-  for (const place of places) {
+  // A place the bundle cannot fill yet says "not followed yet" in place of a 0, and holds no pair.
+  const unfollowed = places.filter((place) => place.hasAttribute("data-not-followed"));
+  assert.deepEqual(unfollowed.map((place) => place.dataset.status).sort(), NOT_FOLLOWED_YET.filter((code) => !Object.values(pages).some((file) => file.row.status.code === code)).sort());
+  for (const place of unfollowed) {
+    assert.equal(place.querySelector("strong"), null);
+    assert.match(place.textContent, /Not followed yet/);
+  }
+  const counted = places.filter((place) => !unfollowed.includes(place));
+  assert.equal(counted.reduce((sum, place) => sum + Number(place.querySelector("strong").textContent), 0), Object.keys(pages).length);
+  for (const place of counted) {
     assert.equal(Number(place.querySelector("strong").textContent), Object.values(pages).filter((file) => file.row.status.code === place.dataset.status).length, place.dataset.status);
   }
   // The latest records are the trials' own dated events, newest first, one entry an event: never

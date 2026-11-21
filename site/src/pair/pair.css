@@ -248,6 +248,16 @@
 .stage-counts .place {
   cursor: default;
 }
+/* A place the bundle cannot fill yet: its name where the count would be, and a quiet note. */
+.stage-counts .place.unfollowed .place-name {
+  margin-top: 0.35rem;
+}
+.stage-counts .place-note {
+  display: block;
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-style: italic;
+}
 .stage-counts .place:hover {
   background: none;
 }
