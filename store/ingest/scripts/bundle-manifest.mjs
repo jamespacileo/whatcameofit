@@ -113,6 +113,11 @@ export function checkManifest(folder) {
   if (manifest.format !== MANIFEST_FORMAT || manifest.format_version !== MANIFEST_FORMAT_VERSION) {
     throw new Error(`${file} is ${manifest.format} version ${manifest.format_version}; this site reads ${MANIFEST_FORMAT} version ${MANIFEST_FORMAT_VERSION}`);
   }
+  // Lab #184 put the rolling listing outside the checksum. The loader would otherwise drop
+  // it and reuse the same D1 version whenever only the listing changed.
+  if (manifest.files?.["trials-listing.json"] || existsSync(join(folder, "trials-listing.json"))) {
+    throw new Error(`${folder} holds an unversioned trial listing: export it as p12_pair_trial_listing/listed.json with its schema before loading.`);
+  }
   for (const [field, ok] of [
     ["made_at", typeof manifest.made_at === "string" && OFFSET_TIME.test(manifest.made_at) && !Number.isNaN(Date.parse(manifest.made_at))],
     ["checksum", typeof manifest.checksum === "string" && /^sha256:[0-9a-f]{64}$/.test(manifest.checksum)],
