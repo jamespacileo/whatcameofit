@@ -16,8 +16,10 @@
 
 ## 2. Model inventory
 
-- [ ] 2.1 Every pair table, page model and legacy table with rows per version; generic table and record views from the JSON Schemas
-- [ ] 2.2 Column deny list (no personal data, no article text), checked by a test
+- [x] 2.1 Catalogue: every table the migrations leave (58, test-held to the migrations, with the migration that made each) and the bundle's 7 page models, with readable names
+- [x] 2.2 Per environment: present (rows; current-bundle rows for versioned tables), absent (with the migration or bundle that would hold it), or not readable yet; unlisted tables shown
+- [x] 2.3 Records a page at a time; details show the exact table or model, record key, migration or schema, bundle version and the manifest's provenance
+- [x] 2.4 Columns never shown (article words, raw payloads, bytes), left out before they reach the browser
 
 ## 3. Pages and search
 

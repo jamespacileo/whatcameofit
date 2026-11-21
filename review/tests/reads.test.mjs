@@ -1,10 +1,12 @@
 // The review site's statements only read, and nothing else can be sent.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { STATEMENTS, read } from "../worker/reads.mjs";
+import { STATEMENTS, allow, listed, read } from "../worker/reads.mjs";
+import "../worker/inventory.mjs";
 
 test("every listed statement is one SELECT", () => {
-  for (const [name, sql] of Object.entries(STATEMENTS)) {
+  assert.ok(listed().length > 100);
+  for (const [name, sql] of listed().entries()) {
     assert.match(sql, /^SELECT /, name);
     assert.doesNotMatch(sql, /;|\b(INSERT|UPDATE|DELETE|REPLACE|CREATE|DROP|ALTER|ATTACH|PRAGMA|VACUUM)\b/i, name);
   }
@@ -14,4 +16,10 @@ test("a statement that is not listed is refused before it reaches the store", as
   const store = { prepare: () => assert.fail("the store was asked") };
   await assert.rejects(read(store, "DELETE FROM pair"), /only its listed statements/);
   await assert.rejects(read(store, `${STATEMENTS.current} OR 1 = 1`), /only its listed statements/);
+});
+
+test("a statement that writes cannot be listed", () => {
+  for (const sql of ["DELETE FROM pair", "SELECT 1; DROP TABLE pair", "UPDATE pair SET trials = 0", "SELECT * FROM pair WHERE key IN (SELECT key FROM pair) ; VACUUM"]) {
+    assert.throws(() => allow(sql), /not a read/, sql);
+  }
 });

@@ -10,6 +10,7 @@ import { build } from "esbuild";
 import { Miniflare, convertV4MiniflareOptions } from "miniflare";
 import { SignJWT, exportJWK, generateKeyPair } from "jose";
 import { statements } from "../../store/ingest/scripts/load-pairs.mjs";
+import { migrate } from "./store.mjs";
 
 const TEAM = "https://review-test.cloudflareaccess.com";
 const AUD = "a".repeat(64);
@@ -36,17 +37,6 @@ async function sign({ email = OPERATOR, audience = AUD, issuer = TEAM, expires =
   return token.sign(signer);
 }
 
-/** Migration 0011, one statement at a time, as D1 applies it. */
-function migration() {
-  return fs.readFileSync("../store/ingest/migrations/0011_pairs.sql", "utf8")
-    .split("\n")
-    .filter((line) => !line.trim().startsWith("--"))
-    .join("\n")
-    .split(/;\s*\n/)
-    .map((one) => one.trim())
-    .filter(Boolean);
-}
-
 async function worker({ bindings = { STAGING_URL: STAGING, ACCESS_ISSUER: TEAM, ACCESS_AUD: AUD, OPERATOR_EMAILS: `Someone@example.org, ${OPERATOR}` }, store = "bundle" } = {}) {
   const mf = new Miniflare(convertV4MiniflareOptions({
     modules: true,
@@ -66,9 +56,11 @@ async function worker({ bindings = { STAGING_URL: STAGING, ACCESS_ISSUER: TEAM, 
     },
   }));
   running.push(mf);
-  if (store === "bundle") {
+  // "bundle": the pair tables alone, as staging's store began; "full": every migration, as a
+  // store that has held claims too. Both hold the tests' bundle.
+  if (store === "bundle" || store === "full") {
     const db = await mf.getD1Database("STAGING_PAIRS");
-    for (const sql of migration()) await db.prepare(sql).run();
+    await migrate(db, store === "bundle" ? { only: ["0011"] } : {});
     for (const sql of statements(BUNDLE).sql) await db.prepare(sql).run();
   }
   return mf;
@@ -189,4 +181,101 @@ test("the overview tells the bundle staging serves apart from the one its store 
   servedBundle = body.current.version;
   body = await (await get(site, "/api/staging/overview", { token })).json();
   assert.equal(body.published.bundle, body.current.version);
+});
+
+// The model inventory (phase 2).
+
+const modelsOf = async (mf) => (await get(mf, "/api/models", { token: await sign() })).json();
+
+test("every model is listed for every environment, with production shown as not readable yet", async () => {
+  const body = await modelsOf(site);
+  assert.deepEqual(body.environments.map((e) => [e.name, e.readable]), [["staging", true], ["production", false]]);
+  assert.match(body.environments[1].reason, /phase 4/);
+  for (const model of body.models) {
+    assert.ok(model.name, model.id);
+    assert.equal(model.environments.production.status, "unavailable", model.id);
+    assert.ok(["present", "absent"].includes(model.environments.staging.status), model.id);
+  }
+  const byId = Object.fromEntries(body.models.map((m) => [m.id, m]));
+  // A store of the pair tables alone: the legacy and operational tables are absent, each with
+  // the migration that would make it.
+  assert.equal(byId.trial_paper.environments.staging.status, "absent");
+  assert.match(byId.trial_paper.environments.staging.reason, /0006_trial_papers_and_slices\.sql/);
+  assert.equal(byId.trial_slice.migration, "0006_trial_papers_and_slices.sql");
+  assert.equal(byId.pair.environments.staging.status, "present");
+});
+
+test("page models count the current bundle's files, as its manifest does", async () => {
+  const manifest = JSON.parse(fs.readFileSync(`${BUNDLE}/manifest.json`, "utf8"));
+  const body = await modelsOf(site);
+  for (const model of body.models.filter((m) => m.kind === "page-model")) {
+    const state = model.environments.staging;
+    assert.equal(state.status, "present", model.model);
+    assert.equal(state.rows, manifest.counts[model.model], model.model);
+    assert.equal(state.schema, true, model.model);
+  }
+});
+
+test("a store with every migration holds every table, and an unlisted table is shown", async () => {
+  const full = await worker({ store: "full" });
+  const db = await full.getD1Database("STAGING_PAIRS");
+  await db.prepare("CREATE TABLE something_new (id INTEGER PRIMARY KEY)").run();
+  const body = await modelsOf(full);
+  for (const model of body.models) assert.equal(model.environments.staging.status, "present", model.id);
+  assert.deepEqual(body.environments[0].unlisted, ["something_new"]);
+});
+
+test("a table's rows come a page at a time, without the columns that are never shown", async () => {
+  const full = await worker({ store: "full" });
+  const db = await full.getD1Database("STAGING_PAIRS");
+  await db.prepare("INSERT INTO inbox (run_id, kind, key, body) VALUES ('r1', 'claim', 'k1', 'raw words')").run();
+  const token = await sign();
+  const inbox = await (await get(full, "/api/models/inbox/rows", { token })).json();
+  assert.equal(inbox.total, 1);
+  assert.deepEqual(inbox.hiddenColumns, ["body"]);
+  assert.ok(!inbox.columns.some((c) => c.name === "body"));
+  assert.equal(inbox.rows[0].body, undefined);
+  assert.equal(inbox.rows[0].key, "k1");
+  assert.ok(inbox.columns.find((c) => c.name === "seq").key);
+
+  const pages = await (await get(full, "/api/models/pair_page/rows", { token })).json();
+  assert.ok(pages.rows.length > 0 && pages.rows.length <= 50);
+  assert.ok(pages.rows.every((row) => row.body === undefined && row.body_chars > 0));
+  assert.ok(pages.rows.every((row) => row.version === pages.version));
+
+  const manifest = JSON.parse(fs.readFileSync(`${BUNDLE}/manifest.json`, "utf8"));
+  const pairs = await (await get(full, "/api/models/pair/rows", { token })).json();
+  assert.equal(pairs.total, manifest.counts.PairPage);
+  const second = await (await get(full, "/api/models/pair/rows?offset=10", { token })).json();
+  assert.equal(second.offset, 10);
+  assert.equal(second.rows.length, manifest.counts.PairPage - 10);
+
+  for (const bad of ["/api/models/pair/rows?offset=-1", "/api/models/pair/rows?offset=1.5", "/api/models/pair/record"]) {
+    const response = await get(full, bad, { token });
+    assert.equal(response.status, 400, bad);
+    await response.text();
+  }
+  const missing = await get(full, "/api/models/no_such_table/rows", { token });
+  assert.equal(missing.status, 404);
+  await missing.text();
+  const production = await get(full, "/api/models/pair/rows?env=production", { token });
+  assert.equal(production.status, 409);
+  await production.text();
+});
+
+test("a page record shows its file, its schema and the bundle's provenance", async () => {
+  const token = await sign();
+  const keys = await (await get(site, `/api/models/${encodeURIComponent("page:PairPage")}/rows`, { token })).json();
+  const key = keys.rows[0].key;
+  const record = await (await get(site, `/api/models/${encodeURIComponent("page:PairPage")}/record?key=${encodeURIComponent(key)}`, { token })).json();
+  const file = fs.readdirSync(BUNDLE).find((name) => name.endsWith("_pair_page"));
+  assert.deepEqual(record.body, JSON.parse(fs.readFileSync(`${BUNDLE}/${file}/${key}.json`, "utf8")));
+  assert.deepEqual(record.schema, JSON.parse(fs.readFileSync(`${BUNDLE}/schemas/PairPage.json`, "utf8")));
+  const manifest = JSON.parse(fs.readFileSync(`${BUNDLE}/manifest.json`, "utf8"));
+  assert.equal(record.manifest.checksum, manifest.checksum);
+  assert.equal(record.manifest.made_at, manifest.made_at);
+  assert.equal(record.version, keys.version);
+  const none = await get(site, `/api/models/${encodeURIComponent("page:PairPage")}/record?key=nope`, { token });
+  assert.equal(none.status, 404);
+  await none.text();
 });
